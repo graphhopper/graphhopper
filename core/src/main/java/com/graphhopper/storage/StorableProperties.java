@@ -19,6 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
+
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
@@ -27,7 +28,7 @@ import java.util.Map;
 
 /**
  * Writes an in-memory HashMap into a file on flush.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class StorableProperties implements Storable<StorableProperties>
@@ -113,7 +114,7 @@ public class StorableProperties implements Storable<StorableProperties>
     public boolean isClosed()
     {
         return da.isClosed();
-    }        
+    }
 
     @Override
     public StorableProperties create( long size )
@@ -135,6 +136,7 @@ public class StorableProperties implements Storable<StorableProperties>
         put("geometry.version", Constants.VERSION_GEOMETRY);
         put("locationIndex.version", Constants.VERSION_LOCATION_IDX);
         put("nameIndex.version", Constants.VERSION_NAME_IDX);
+        put("shortcuts.version", Constants.VERSION_SHORTCUT);
     }
 
     public String versionsToString()
@@ -149,25 +151,25 @@ public class StorableProperties implements Storable<StorableProperties>
     public boolean checkVersions( boolean silent )
     {
         if (!check("nodes", Constants.VERSION_NODE, silent))
-        {
             return false;
-        }
+
         if (!check("edges", Constants.VERSION_EDGE, silent))
-        {
             return false;
-        }
+
         if (!check("geometry", Constants.VERSION_GEOMETRY, silent))
-        {
             return false;
-        }
+
         if (!check("locationIndex", Constants.VERSION_LOCATION_IDX, silent))
-        {
             return false;
-        }
+
         if (!check("nameIndex", Constants.VERSION_NAME_IDX, silent))
-        {
             return false;
-        }
+
+        if (!check("shortcuts", Constants.VERSION_SHORTCUT, silent))
+            return false;
+
+        // The check for the encoder version is done in EncoderManager, as this class does not know about the
+        // registered encoders and their version
         return true;
     }
 

@@ -17,22 +17,21 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.storage.LevelGraph;
+import com.graphhopper.storage.CHGraph;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.EdgeSkipIterState;
-import com.graphhopper.util.EdgeSkipIterator;
+import com.graphhopper.util.CHEdgeIteratorState;
 
 /**
  * Only certain nodes are accepted and therefor the others are ignored.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class LevelEdgeFilter implements EdgeFilter
 {
-    private final LevelGraph graph;
+    private final CHGraph graph;
     private final int maxNodes;
 
-    public LevelEdgeFilter( LevelGraph g )
+    public LevelEdgeFilter( CHGraph g )
     {
         graph = g;
         maxNodes = g.getNodes();
@@ -48,7 +47,7 @@ public class LevelEdgeFilter implements EdgeFilter
             return true;
 
         // minor performance improvement: shortcuts in wrong direction are disconnected, so no need to exclude them
-        if (((EdgeSkipIterState) edgeIterState).isShortcut())
+        if (((CHEdgeIteratorState) edgeIterState).isShortcut())
             return true;
 
         return graph.getLevel(base) <= graph.getLevel(adj);

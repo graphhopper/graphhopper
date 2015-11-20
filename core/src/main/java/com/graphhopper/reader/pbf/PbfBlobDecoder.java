@@ -12,16 +12,16 @@ import gnu.trove.list.TLongList;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Converts PBF block data into decoded entities ready to be passed into an Osmosis pipeline. This
  * class is designed to be passed into a pool of worker threads to allow multi-threaded decoding.
- * <p/>
+ * <p>
  * @author Brett Henderson
  */
 public class PbfBlobDecoder implements Runnable
@@ -35,7 +35,7 @@ public class PbfBlobDecoder implements Runnable
 
     /**
      * Creates a new instance.
-     * <p/>
+     * <p>
      * @param blobType The type of blob.
      * @param rawBlob The raw data of the blob.
      * @param listener The listener for receiving decoding results.
@@ -85,13 +85,11 @@ public class PbfBlobDecoder implements Runnable
 
         // Build the list of active and unsupported features in the file.
         List<String> supportedFeatures = Arrays.asList("OsmSchema-V0.6", "DenseNodes");
-        List<String> activeFeatures = new ArrayList<String>();
         List<String> unsupportedFeatures = new ArrayList<String>();
         for (String feature : header.getRequiredFeaturesList())
         {
             if (supportedFeatures.contains(feature))
             {
-                activeFeatures.add(feature);
             } else
             {
                 unsupportedFeatures.add(feature);
@@ -140,7 +138,7 @@ public class PbfBlobDecoder implements Runnable
         Iterator<Integer> valueIterator = values.iterator();
         if (keyIterator.hasNext())
         {
-            Map<String, String> tags = new HashMap<String, String>();
+            Map<String, String> tags = new HashMap<String, String>(keys.size());
             while (keyIterator.hasNext())
             {
                 String key = fieldDecoder.decodeString(keyIterator.next());
@@ -291,8 +289,8 @@ public class PbfBlobDecoder implements Runnable
     }
 
     private void buildRelationMembers( OSMRelation relation,
-            List<Long> memberIds, List<Integer> memberRoles, List<Osmformat.Relation.MemberType> memberTypes,
-            PbfFieldDecoder fieldDecoder )
+                                       List<Long> memberIds, List<Integer> memberRoles, List<Osmformat.Relation.MemberType> memberTypes,
+                                       PbfFieldDecoder fieldDecoder )
     {
 
         ArrayList<OSMRelation.Member> members = relation.getMembers();

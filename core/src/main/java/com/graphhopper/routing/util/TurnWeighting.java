@@ -97,6 +97,12 @@ public class TurnWeighting implements Weighting
     }
 
     @Override
+    public FlagEncoder getFlagEncoder()
+    {
+        return superWeighting.getFlagEncoder();
+    }
+
+    @Override
     public String toString()
     {
         return "TURN|" + superWeighting.toString();

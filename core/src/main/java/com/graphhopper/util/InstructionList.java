@@ -18,7 +18,6 @@
 package com.graphhopper.util;
 
 import java.text.SimpleDateFormat;
-
 import java.util.*;
 
 /**
@@ -44,6 +43,14 @@ public class InstructionList implements Iterable<Instruction>
     {
         instructions = new ArrayList<Instruction>(cap);
         this.tr = tr;
+    }
+
+    public void replaceLast( Instruction instr )
+    {
+        if (instructions.isEmpty())
+            throw new IllegalStateException("Cannot replace last instruction as list is empty");
+
+        instructions.set(instructions.size() - 1, instr);
     }
 
     public void add( Instruction instr )
@@ -155,28 +162,25 @@ public class InstructionList implements Iterable<Instruction>
     /**
      * Creates the standard GPX string out of the points according to the schema found here:
      * https://graphhopper.com/public/schema/gpx-1.1.xsd
-     * <p/>
+     * <p>
      * @return string to be stored as gpx file
      */
     public String createGPX()
     {
-        return createGPX("GraphHopper", 0, "GMT");
+        return createGPX("GraphHopper", new Date().getTime());
     }
 
-    public String createGPX( String trackName, long startTimeMillis, String timeZoneId )
+    public String createGPX( String trackName, long startTimeMillis )
     {
         boolean includeElevation = getSize() > 0 ? get(0).getPoints().is3D() : false;
-        return createGPX(trackName, startTimeMillis, timeZoneId, includeElevation);
+        return createGPX(trackName, startTimeMillis, includeElevation);
     }
 
-    public String createGPX( String trackName, long startTimeMillis, String timeZoneId, boolean includeElevation )
+    public String createGPX( String trackName, long startTimeMillis, boolean includeElevation )
     {
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-        TimeZone tz = TimeZone.getDefault();
-        if (!Helper.isEmpty(timeZoneId))
-            tz = TimeZone.getTimeZone(timeZoneId);
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 
-        formatter.setTimeZone(tz);
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
                 + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
                 + " creator='Graphhopper' version='1.1'"
@@ -188,7 +192,7 @@ public class InstructionList implements Iterable<Instruction>
                 + "<link href='http://graphhopper.com'>"
                 + "<text>GraphHopper GPX</text>"
                 + "</link>"
-                + "<time>" + tzHack(formatter.format(startTimeMillis)) + "</time>"
+                + "<time>" + formatter.format(startTimeMillis) + "</time>"
                 + "</metadata>";
         StringBuilder track = new StringBuilder(header);
         if (!isEmpty())
@@ -215,7 +219,7 @@ public class InstructionList implements Iterable<Instruction>
             track.append("' lon='").append(Helper.round6(entry.getLon())).append("'>");
             if (includeElevation)
                 track.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
-            track.append("<time>").append(tzHack(formatter.format(startTimeMillis + entry.getMillis()))).append("</time>");
+            track.append("<time>").append(formatter.format(startTimeMillis + entry.getTime())).append("</time>");
             track.append("</trkpt>");
         }
         track.append("</trkseg>");
@@ -224,14 +228,6 @@ public class InstructionList implements Iterable<Instruction>
         // we could now use 'wpt' for via points
         track.append("</gpx>");
         return track.toString().replaceAll("\\'", "\"");
-    }
-
-    /**
-     * Hack to form valid timezone ala +01:00 instead +0100
-     */
-    private static String tzHack( String str )
-    {
-        return str.substring(0, str.length() - 2) + ":" + str.substring(str.length() - 2);
     }
 
     private void createRteptBlock( StringBuilder output, Instruction instruction, Instruction nextI )
@@ -317,6 +313,8 @@ public class InstructionList implements Iterable<Instruction>
                         } else
                         {
                             distance = distCalc.calcNormalizedDist(lat, lon, currLat, currLon);
+                            if (pointIndex > 0)
+                                index++;
                         }
 
                         if (distance < foundMinDistance)
@@ -325,7 +323,6 @@ public class InstructionList implements Iterable<Instruction>
                             foundInstruction = index;
                         }
                     }
-
                     prevLat = currLat;
                     prevLon = currLon;
                 }

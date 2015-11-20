@@ -1,7 +1,7 @@
 ## Routing Web API Docs
 
 In order to communicate with your or [our](http://graphhopper.com/#enterprise) hosted GraphHopper 
-server you need to understand how to use it.
+server you need to understand how to use it. There is a separate [JavaScript](https://github.com/graphhopper/directions-api-js-client) and [Java](https://github.com/graphhopper/directions-api-java-client) client for this API or use the plain JSON response for your language.
 
 ### A simple example
 [http://localhost:8989/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959](http://localhost:8989/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959)
@@ -14,7 +14,7 @@ All official parameters are shown in the following table
 
 Parameter   | Default | Description
 :-----------|:--------|:-----------
-point       | -       | Specifiy multiple points for which the route should be calculated. The order is important. Specify at least two points.
+point       | -       | Specify multiple points for which the route should be calculated. The order is important. Specify at least two points.
 locale      | en      | The locale of the result. E.g. `pt_PT` for Portuguese or `de` for German
 instructions| true    | If instruction should be calculated and returned
 vehicle     | car     | The vehicle for which the route should be calculated. Other vehicles are foot and bike
@@ -25,6 +25,9 @@ points_encoded     | true    | If `false` a GeoJson array in `point` is returned
 debug              | false   | If true, the output will be formated.
 calc_points        | true    | If the points for the route should be calculated at all. Sometimes only the distance and time is necessary.
 type               | json    | Specifies the resulting format of the route, for json the content type will be application/json. Other possible format options: <br> jsonp you'll need to provide the callback function via the callback parameter. The content type will be application/javascript<br> gpx, the content type will be application/xml
+heading            | NaN     | Favored heading direction for points. Specify either one heading for the start point or as many as there are points. In this case headings are associated by their order to the specific points. Headings are given as north based clockwise angle between 0 and 360 degree, NaN indicates non specific heading. Does only give valid results in the flexibility mode.
+heading_penalty    | 120     | Penalty for omitting a specified heading. The penalty corresponds to the accepted time delay in seconds in comparison to the route without a heading.
+pass_through       | false   | If `true` u-turns are avoided at via-points with regard to the heading_penalty. Does only give valid results in the flexibility mode.
 
 ## Example output for the case type=json
 
@@ -49,7 +52,7 @@ paths[0].instructions[0].sign                 | A number which specifies the sig
 paths[0].instructions[0].annotation_text      | [optional] A text describing the instruction in more detail, e.g. like surface of the way, warnings or involved costs
 paths[0].instructions[0].annotation_importance| [optional] 0 stands for INFO, 1 for warning, 2 for costs, 3 for costs and warning
 paths[0].instructions[0].exit_number          | [optional] Only available for USE_ROUNDABOUT instructions. The count of exits at which the route leaves the roundabout.
-paths[0].instructions[0].turn_angle           | [optional] Only available for USE_ROUNDABOUT instructions. The radian of the route within the roundabout: 0<r<2*PI for clockwise and -2PI<r<0 for counterclockwise transit. Is null the direction of rotation is undefined.
+paths[0].instructions[0].turn_angle           | [optional] Only available for USE_ROUNDABOUT instructions. The radian of the route within the roundabout: 0<r<2*PI for clockwise and -2PI<r<0 for counterclockwise transit. Null if the direction of rotation is undefined.
 
 ```json
 {
@@ -147,13 +150,11 @@ import_date         | [optional] The date time at which the OSM import was done
 prepare_date        | [optional] The date time at which the preparation (contraction hierarchies) was done. If nothing was done this is empty
 supported_vehicles  | [deprecated] An array of strings for all supported vehicles
 
-### Output if expected error(s) while routing:
+### Error Output
 ```json
 {
-  "info": {"errors": [{
-    "details": "java.lang.IllegalArgumentException",
-    "message": "Cannot find point 2: 2248.224673, 3.867187"
-  }]}
+  "message": "Cannot find point 2: 2248.224673, 3.867187",
+  "hints": [{"message": "something", ...}]
 }
 ```
 
@@ -162,9 +163,8 @@ indicate a bug in the routing engine and is expected to a certain degree if too 
 
 JSON path/attribute    | Description
 :----------------------|:------------
-info.errors            | A list of error messages
-info.errors[0].details | E.g. to see the underlying exception, if any
-info.errors[0].message | Not intended to be displayed to the user as it is currently not translated
+message                | Not intended to be displayed to the user as it is not translated
+hints                  | An optional list of details regarding the error message e.g. `[{"message": "first error message in hints"}]`
 
 
 ### HTTP Error codes

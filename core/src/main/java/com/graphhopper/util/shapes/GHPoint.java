@@ -84,9 +84,9 @@ public class GHPoint
     public Double[] toGeoJson()
     {
         return new Double[]
-        {
-            lon, lat
-        };
+                {
+                        lon, lat
+                };
     }
 
     public static GHPoint parse( String str )

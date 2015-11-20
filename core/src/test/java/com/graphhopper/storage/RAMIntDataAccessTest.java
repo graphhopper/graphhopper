@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 /**
- *
  * @author Peter Karich
  */
 public class RAMIntDataAccessTest extends DataAccessTest

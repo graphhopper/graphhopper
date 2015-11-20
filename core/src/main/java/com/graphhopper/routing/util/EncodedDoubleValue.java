@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 /**
  * Encapsulates a bit-encoded value.
- * <p/>
+ * <p>
  * @author Nop
  */
 public class EncodedDoubleValue extends EncodedValue
@@ -55,7 +55,10 @@ public class EncodedDoubleValue extends EncodedValue
 
     public long setDoubleValue( long flags, double value )
     {
-        // scale value        
+        if (Double.isNaN(value))
+            throw new IllegalStateException("Value cannot be NaN");
+
+        // scale value
         long tmpValue = Math.round(value / factor);
         checkValue(Math.round(tmpValue * factor));
         tmpValue <<= shift;
@@ -71,7 +74,7 @@ public class EncodedDoubleValue extends EncodedValue
     {
         // find value
         flags &= mask;
-        flags >>= shift;
+        flags >>>= shift;
         return flags * factor;
     }
 

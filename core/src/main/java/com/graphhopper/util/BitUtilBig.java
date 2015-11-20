@@ -19,7 +19,7 @@ package com.graphhopper.util;
 
 /**
  * Conversion between "the memory" (integer/long/float/double/string) to bytes via BIG endianess.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class BitUtilBig extends BitUtil

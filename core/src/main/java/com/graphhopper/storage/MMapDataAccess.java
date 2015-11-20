@@ -20,6 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NotThreadSafe;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -32,8 +33,8 @@ import java.util.List;
 
 /**
  * This is a data structure which uses the operating system to synchronize between disc and memory.
- * Use SynchDAWrapper if you intent to use this from multiple threads!
- * <p/>
+ * Use {@link SynchedDAWrapper} if you intent to use this from multiple threads!
+ * <p>
  * @author Peter Karich
  */
 @NotThreadSafe
@@ -171,7 +172,7 @@ public class MMapDataAccess extends AbstractDataAccess
         ByteBuffer buf = null;
         IOException ioex = null;
         // One retry if it fails. It could fail e.g. if previously buffer wasn't yet unmapped from the jvm
-        for (int trial = 0; trial < 1;)
+        for (int trial = 0; trial < 1; )
         {
             try
             {
@@ -299,7 +300,7 @@ public class MMapDataAccess extends AbstractDataAccess
     @Override
     public final void setInt( long bytePos, int value )
     {
-        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         segments.get(bufferIndex).putInt(index, value);
     }
@@ -307,7 +308,7 @@ public class MMapDataAccess extends AbstractDataAccess
     @Override
     public final int getInt( long bytePos )
     {
-        int bufferIndex = (int) (bytePos >>> segmentSizePower);
+        int bufferIndex = (int) (bytePos >> segmentSizePower);
         int index = (int) (bytePos & indexDivisor);
         return segments.get(bufferIndex).getInt(index);
     }
@@ -393,7 +394,7 @@ public class MMapDataAccess extends AbstractDataAccess
     /**
      * Cleans up MappedByteBuffers. Be sure you bring the segments list in a consistent state
      * afterwards.
-     * <p/>
+     * <p>
      * @param from inclusive
      * @param to exclusive
      */

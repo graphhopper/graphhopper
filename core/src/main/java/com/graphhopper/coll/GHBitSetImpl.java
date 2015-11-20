@@ -34,41 +34,36 @@ public class GHBitSetImpl extends BitSet implements GHBitSet
     }
 
     @Override
-    public boolean contains( int index )
+    public final boolean contains( int index )
     {
         return super.get(index);
     }
 
     @Override
-    public void add( int index )
+    public final void add( int index )
     {
         super.set(index);
     }
 
     @Override
-    public int getCardinality()
+    public final int getCardinality()
     {
         return super.cardinality();
     }
 
     @Override
-    public void ensureCapacity( int size )
-    {
-    }
-
-    @Override
-    public int next( int index )
+    public final int next( int index )
     {
         return super.nextSetBit(index);
     }
 
-    public int nextClear( int index )
+    public final int nextClear( int index )
     {
         return super.nextClearBit(index);
     }
 
     @Override
-    public GHBitSet copyTo( GHBitSet bs )
+    public final GHBitSet copyTo( GHBitSet bs )
     {
         bs.clear();
         if (bs instanceof GHBitSetImpl)
@@ -77,9 +72,8 @@ public class GHBitSetImpl extends BitSet implements GHBitSet
         } else
         {
             int len = size();
-            bs.ensureCapacity(len);
             for (int index = super.nextSetBit(0); index >= 0;
-                    index = super.nextSetBit(index + 1))
+                 index = super.nextSetBit(index + 1))
             {
                 bs.add(index);
             }

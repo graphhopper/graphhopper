@@ -7,7 +7,7 @@ import com.graphhopper.reader.OSMElement;
 
 /**
  * Stores the results for a decoded Blob.
- * <p/>
+ * <p>
  * @author Brett Henderson
  */
 public class PbfBlobResult
@@ -29,7 +29,7 @@ public class PbfBlobResult
 
     /**
      * Stores the results of a successful blob decoding operation.
-     * <p/>
+     * <p>
      * @param decodedEntities The entities from the blob.
      */
     public void storeSuccessResult( List<OSMElement> decodedEntities )
@@ -51,7 +51,7 @@ public class PbfBlobResult
 
     /**
      * Gets the complete flag.
-     * <p/>
+     * <p>
      * @return True if complete.
      */
     public boolean isComplete()
@@ -61,7 +61,7 @@ public class PbfBlobResult
 
     /**
      * Gets the success flag. This is only valid after complete becomes true.
-     * <p/>
+     * <p>
      * @return True if successful.
      */
     public boolean isSuccess()
@@ -77,7 +77,7 @@ public class PbfBlobResult
     /**
      * Gets the entities decoded from the blob. This is only valid after complete becomes true, and
      * if success is true.
-     * <p/>
+     * <p>
      * @return The list of decoded entities.
      */
     public List<OSMElement> getEntities()

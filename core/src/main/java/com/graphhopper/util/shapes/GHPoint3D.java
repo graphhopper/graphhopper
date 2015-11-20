@@ -77,8 +77,8 @@ public class GHPoint3D extends GHPoint
     public Double[] toGeoJson()
     {
         return new Double[]
-        {
-            lon, lat, ele
-        };
+                {
+                        lon, lat, ele
+                };
     }
 }

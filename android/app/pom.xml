@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-android</artifactId>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
     <name>GraphHopper Android</name>
     <packaging>apk</packaging>    
     <organization>
@@ -16,10 +16,10 @@
         <relativePath>../..</relativePath>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.4.0</version>
+        <version>0.5.0</version>
     </parent>
     <properties>
-        <mapsforge.version>0.5.0</mapsforge.version>
+        <mapsforge.version>0.5.1</mapsforge.version>
         <!-- do not put the properties here as it differs from dev to dev <android.sdk.path>/home/peterk/Programme/android-sdk-linux_x86</android.sdk.path>
         instead use your IDE to set it up or specify android sdk via command line
         using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
@@ -33,12 +33,6 @@
             <version>${project.parent.version}</version>            
             <type>jar</type>
             <exclusions>
-                <!--
-                <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>                    
-                </exclusion> 
-                -->
                 <exclusion>
                     <groupId>com.google.protobuf</groupId>
                     <artifactId>protobuf-java</artifactId>                    
@@ -82,13 +76,13 @@
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-android</artifactId>
-            <version>1.7.10</version>
+            <version>1.7.12</version>
         </dependency>
         
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
-            <version>1.7.10</version>
+            <version>1.7.12</version>
         </dependency>
 
         <!-- Make sure this is above (!) the android dependencies -->
@@ -113,15 +107,14 @@
         <finalName>${project.artifactId}</finalName>        
         
         <plugins>     
-            <!-- android (apache harmony) is nearly java but not really 1.6 -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <!-- <compilerArgument>-Xlint:unchecked</compilerArgument>
                     -->
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
             </plugin>       
             <plugin>
@@ -133,7 +126,7 @@
                 <configuration>
                     <sdk>
                         <!-- platform or api level (api level 8 = platform 2.2) -->                        
-                        <platform>10</platform>
+                        <platform>22</platform>
                     </sdk>
                     <deleteConflictingFiles>true</deleteConflictingFiles>
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>

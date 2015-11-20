@@ -21,7 +21,7 @@ import com.graphhopper.coll.GHBitSet;
 
 /**
  * Implementattion of breadth first search (BFS)
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class BreadthFirstSearch extends XFirstSearch

@@ -43,8 +43,6 @@ public class TurnCostExtension implements GraphExtension
     private int turnCostsEntryIndex = -4;
     private int turnCostsEntryBytes;
     private int turnCostsCount;
-
-    private GraphStorage graph;
     private NodeAccess nodeAccess;
 
     public TurnCostExtension()
@@ -58,14 +56,13 @@ public class TurnCostExtension implements GraphExtension
     }
 
     @Override
-    public void init( GraphStorage graph )
+    public void init( Graph graph, Directory dir )
     {
         if (turnCostsCount > 0)
             throw new AssertionError("The turn cost storage must be initialized only once.");
 
-        this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
-        this.turnCosts = this.graph.getDirectory().find("turn_costs");
+        this.turnCosts = dir.find("turn_costs");
     }
 
     private int nextTurnCostEntryIndex()

@@ -25,7 +25,7 @@ Download the [Android SDK](http://developer.android.com/sdk/installing/index.htm
 go to the Android SDK Manager and install at least 2.3 (API 9).
 
 ### Maven or NetBeans
- 1. Download [Maven SDK Deployer](https://github.com/mosabua/maven-android-sdk-deployer) and execute `mvn install -P 2.3` - it uses [Android Maven Plugin](http://code.google.com/p/maven-android-plugin/wiki/GettingStarted) under the hood where you need to set up ANDROID_HOME
+ 1. Download [Maven Android SDK Deployer](https://github.com/simpligility/maven-android-sdk-deployer) and execute `mvn install -P 5.1` - it uses [Android Maven Plugin](http://simpligility.github.io/android-maven-plugin/) under the hood where you need to set up ANDROID_HOME
  2. Now do `./graphhopper.sh android`
 
 ### Gradle
@@ -47,6 +47,14 @@ Now that you have a running android app you need to copy somehow the routing and
  4. Copy berlin.map into the created berlin-gh folder
  5. Optional Compression Step: Bundle a graphhopper zip file via `cd berlin-gh; zip -r berlin.ghz *`
  6. Now copy the berlin-gh folder from step 4 (or the .ghz file from step 5) to your Android device. /[download-folder]/graphhopper/maps, where the download-folder can e.g. be /mnt/sdcard/download or /storage/sdcard/Download/ - e.g. use [SSHDroid](https://play.google.com/store/apps/details?id=berserker.android.apps.sshdroid): `scp -P 2222 berlin.ghz root@$URL:/mnt/sdcard/download/graphhopper/maps/`
+  
+## Locus Add-On
+
+The developer of Locus has create a routing plugin for [locus](http://www.locusmap.eu/) the source code for the add-on is available [here](https://bitbucket.org/asamm/locus-add-on-graphhopper) and could be useful for other Map-apps too. The discussion is happing [here](http://forum.locusmap.eu/index.php?topic=4036.0).
+
+## Cruiser App
+
+The free offline map app [Cruiser](https://play.google.com/store/apps/details?id=gr.talent.cruiser) is using GraphHopper routing and allows also other things.
 
 ## Limitations
 

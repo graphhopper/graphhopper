@@ -25,14 +25,15 @@ import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Before;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author jan
  */
-public class DepthFirstSearchTest {
-    
+public class DepthFirstSearchTest
+{
+
     int counter;
     TIntHashSet set = new TIntHashSet();
     TIntList list = new TIntArrayList();
@@ -42,7 +43,7 @@ public class DepthFirstSearchTest {
     {
         counter = 0;
     }
-    
+
     @Test
     public void testDFS1()
     {
@@ -58,13 +59,13 @@ public class DepthFirstSearchTest {
                 return super.goFurther(v);
             }
         };
-        
+
         EncodingManager em = new EncodingManager("CAR");
         FlagEncoder fe = em.getEncoder("CAR");
         Graph g = new GraphBuilder(em).create();
         g.edge(1, 2, 1, false);
         g.edge(1, 5, 1, false);
-        g.edge(1, 4, 1, false);       
+        g.edge(1, 4, 1, false);
         g.edge(2, 3, 1, false);
         g.edge(3, 4, 1, false);
         g.edge(5, 6, 1, false);
@@ -75,7 +76,7 @@ public class DepthFirstSearchTest {
         assertTrue(counter > 0);
         assertEquals("{1, 2, 3, 4, 5, 6}", list.toString());
     }
-    
+
     @Test
     public void testDFS2()
     {
@@ -91,7 +92,7 @@ public class DepthFirstSearchTest {
                 return super.goFurther(v);
             }
         };
-        
+
         EncodingManager em = new EncodingManager("CAR");
         FlagEncoder fe = em.getEncoder("CAR");
         Graph g = new GraphBuilder(em).create();
@@ -106,5 +107,5 @@ public class DepthFirstSearchTest {
         assertTrue(counter > 0);
         assertEquals("{1, 2, 3, 4}", list.toString());
     }
-    
+
 }

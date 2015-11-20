@@ -18,6 +18,7 @@
 package com.graphhopper.http;
 
 import com.graphhopper.util.PointList;
+
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

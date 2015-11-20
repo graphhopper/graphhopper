@@ -19,7 +19,7 @@ import com.graphhopper.util.Helper;
 
 /**
  * Copied from Android project. android.util.SparseArray.java
- * <p/>
+ * <p>
  * SparseArrays map ints to ints. Unlike a normal array of ints, there can be gaps in the indices.
  */
 public class SparseIntIntArray
@@ -67,7 +67,7 @@ public class SparseIntIntArray
 
     /**
      * Sets all supplied keys to the given unique value.
-     * <p/>
+     * <p>
      * @param keys Keys to set
      * @param uniqueValue Value to set all supplied keys to
      */
@@ -396,7 +396,8 @@ public class SparseIntIntArray
         int high = start + len, low = start - 1, guess;
         while (high - low > 1)
         {
-            guess = (high + low) / 2;
+            // use >>> for average or we could get an integer overflow. 
+            guess = (high + low) >>> 1;
 
             if (a[guess] < key)
             {
@@ -434,6 +435,7 @@ public class SparseIntIntArray
             }
         }
     }
+
     private int[] mKeys;
     private int[] mValues;
     private int mSize;

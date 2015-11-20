@@ -20,10 +20,10 @@ package com.graphhopper.util.shapes;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
 import org.junit.*;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class BBoxTest

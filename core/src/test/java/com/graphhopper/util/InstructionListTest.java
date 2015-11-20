@@ -27,6 +27,7 @@ import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
+
 import java.io.*;
 import java.util.*;
 import javax.xml.XMLConstants;
@@ -38,12 +39,13 @@ import javax.xml.validation.Validator;
 
 import org.json.JSONObject;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 import org.xml.sax.SAXException;
 
 /**
- *
  * @author Peter Karich
  */
 public class InstructionListTest
@@ -53,9 +55,10 @@ public class InstructionListTest
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private EncodingManager carManager;
     private FlagEncoder carEncoder;
-    
+
     @Before
-    public void setUp() {
+    public void setUp()
+    {
         carEncoder = new CarFlagEncoder();
         carManager = new EncodingManager(carEncoder);
     }
@@ -63,7 +66,7 @@ public class InstructionListTest
     @SuppressWarnings("unchecked")
     @Test
     public void testWayList()
-    {                
+    {
         Graph g = new GraphBuilder(carManager).create();
         // 0-1-2
         // | | |
@@ -109,17 +112,17 @@ public class InstructionListTest
         iter2.setName("8-9");
         iter2.setWayGeometry(list);
 
-        Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(), tMode).calcPath(0, 10);
+        Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(carEncoder), tMode).calcPath(0, 10);
         InstructionList wayList = p.calcInstructions(usTR);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
-                "Turn left onto 7-8", "Continue onto 8-9", "Turn right", "Finish!"),
+                        "Turn left onto 7-8", "Continue onto 8-9", "Turn right", "Finish!"),
                 tmpList);
 
         wayList = p.calcInstructions(trMap.getWithFallBack(Locale.GERMAN));
         tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Geradeaus auf 4-7",
-                "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen", "Ziel erreicht!"),
+                        "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen", "Ziel erreicht!"),
                 tmpList);
 
         assertEquals(70000.0, sumDistances(wayList), 1e-1);
@@ -136,10 +139,10 @@ public class InstructionListTest
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
 
         compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1),
-                asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
+                        asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
                 wayList.createStartPoints());
 
-        p = new Dijkstra(g, carEncoder, new ShortestWeighting(), tMode).calcPath(6, 2);
+        p = new Dijkstra(g, carEncoder, new ShortestWeighting(carEncoder), tMode).calcPath(6, 2);
         assertEquals(42000, p.getDistance(), 1e-2);
         assertEquals(Helper.createTList(6, 7, 8, 5, 2), p.calcNodes());
 
@@ -152,7 +155,7 @@ public class InstructionListTest
                 wayList.createStartPoints());
 
         // special case of identical start and end
-        p = new Dijkstra(g, carEncoder, new ShortestWeighting(), tMode).calcPath(0, 0);
+        p = new Dijkstra(g, carEncoder, new ShortestWeighting(carEncoder), tMode).calcPath(0, 0);
         wayList = p.calcInstructions(usTR);
         assertEquals(1, wayList.size());
         assertEquals("Finish!", wayList.get(0).getTurnDescription(usTR));
@@ -234,14 +237,14 @@ public class InstructionListTest
         list.add(10.20, 10.05);
         iter.setWayGeometry(list);
 
-        Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(), tMode).calcPath(2, 3);
+        Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(carEncoder), tMode).calcPath(2, 3);
 
         InstructionList wayList = p.calcInstructions(usTR);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 2-4", "Turn slight right onto 3-4", "Finish!"),
                 tmpList);
 
-        p = new Dijkstra(g, carEncoder, new ShortestWeighting(), tMode).calcPath(3, 5);
+        p = new Dijkstra(g, carEncoder, new ShortestWeighting(carEncoder), tMode).calcPath(3, 5);
         wayList = p.calcInstructions(usTR);
         tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 3-4", "Continue onto 4-5", "Finish!"),
@@ -273,7 +276,7 @@ public class InstructionListTest
         list.add(10.20, 10.05);
         iter.setWayGeometry(list);
 
-        Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(), tMode).calcPath(2, 3);
+        Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(carEncoder), tMode).calcPath(2, 3);
         InstructionList wayList = p.calcInstructions(usTR);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto street", "Finish!"), tmpList);
@@ -300,7 +303,7 @@ public class InstructionListTest
         g.edge(3, 4, 9000, true).setName("3-4").setFlags(flagsForSpeed(carManager, 90));
         g.edge(4, 5, 10000, true).setName("4-5").setFlags(flagsForSpeed(carManager, 100));
 
-        Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(), tMode).calcPath(1, 5);
+        Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(carEncoder), tMode).calcPath(1, 5);
         InstructionList wayList = p.calcInstructions(usTR);
         assertEquals(5, wayList.size());
 
@@ -308,8 +311,8 @@ public class InstructionListTest
         assertEquals(34000, p.getDistance(), 1e-1);
         assertEquals(34000, sumDistances(wayList), 1e-1);
         assertEquals(5, gpxList.size());
-        assertEquals(1604120, p.getMillis());
-        assertEquals(1604120, gpxList.get(gpxList.size() - 1).getMillis());
+        assertEquals(1604120, p.getTime());
+        assertEquals(1604120, gpxList.get(gpxList.size() - 1).getTime());
 
         assertEquals(Instruction.CONTINUE_ON_STREET, wayList.get(0).getSign());
         assertEquals(15, wayList.get(0).getFirstLat(), 1e-3);
@@ -327,10 +330,10 @@ public class InstructionListTest
         assertEquals(15.2, wayList.get(3).getFirstLat(), 1e-3);
         assertEquals(9.9, wayList.get(3).getFirstLon(), 1e-3);
 
-        String gpxStr = wayList.createGPX("test", 0, "GMT+1");
+        String gpxStr = wayList.createGPX("test", 0);
         verifyGPX(gpxStr);
 
-        assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T01:00:00+01:00</time>"));
+        assertTrue(gpxStr, gpxStr.contains("<trkpt lat=\"15.0\" lon=\"10.0\"><time>1970-01-01T00:00:00Z</time>"));
         assertTrue(gpxStr, gpxStr.contains("<extensions>") && gpxStr.contains("</extensions>"));
         assertTrue(gpxStr, gpxStr.contains("<rtept lat=\"15.1\" lon=\"10.0\">"));
         assertTrue(gpxStr, gpxStr.contains("<gh:distance>8000.0</gh:distance>"));
@@ -407,7 +410,7 @@ public class InstructionListTest
                 return fakeList;
             }
         };
-        String gpxStr = il.createGPX("test", 0, "GMT");
+        String gpxStr = il.createGPX("test", 0);
         verifyGPX(gpxStr);
         assertFalse(gpxStr, gpxStr.contains("NaN"));
         assertFalse(gpxStr, gpxStr.contains("<ele>"));
@@ -415,7 +418,7 @@ public class InstructionListTest
         fakeList.clear();
         fakeList.add(new GPXEntry(12, 13, 11, 0));
         fakeList.add(new GPXEntry(12.5, 13, 10, 1000));
-        gpxStr = il.createGPX("test", 0, "GMT", true);
+        gpxStr = il.createGPX("test", 0, true);
 
         assertTrue(gpxStr, gpxStr.contains("<ele>11.0</ele>"));
         assertFalse(gpxStr, gpxStr.contains("NaN"));
@@ -443,11 +446,11 @@ public class InstructionListTest
         List<GPXEntry> result = instructions.createGPXList();
         assertEquals(5, result.size());
 
-        assertEquals(0, result.get(0).getMillis());
-        assertEquals(10391, result.get(1).getMillis());
-        assertEquals(15000, result.get(2).getMillis());
-        assertEquals(19000, result.get(3).getMillis());
-        assertEquals(22000, result.get(4).getMillis());
+        assertEquals(0, result.get(0).getTime());
+        assertEquals(10391, result.get(1).getTime());
+        assertEquals(15000, result.get(2).getTime());
+        assertEquals(19000, result.get(3).getTime());
+        assertEquals(22000, result.get(4).getTime());
 
         verifyGPX(instructions.createGPX());
     }
@@ -462,9 +465,9 @@ public class InstructionListTest
 
     @Test
     public void testEmptyList()
-    {        
+    {
         Graph g = new GraphBuilder(carManager).create();
-        Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(), tMode).calcPath(0, 1);
+        Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(carEncoder), tMode).calcPath(0, 1);
         InstructionList il = p.calcInstructions(usTR);
         assertEquals(0, il.size());
         assertEquals(0, il.createStartPoints().size());
@@ -492,5 +495,46 @@ public class InstructionListTest
         {
             throw new RuntimeException(e);
         }
+    }
+    
+    @Test
+    public void testFind()
+    {
+        Graph g = new GraphBuilder(carManager).create();
+        //   n-4-5   (n: pillar node)
+        //   |
+        //   3-2
+        //     |
+        //     1
+        NodeAccess na = g.getNodeAccess();
+        na.setNode(1, 15.0, 10);
+        na.setNode(2, 15.1, 10);
+        na.setNode(3, 15.1, 9.9);
+        PointList waypoint = new PointList();
+        waypoint.add(15.2, 9.9);
+        na.setNode(4, 15.2, 10);
+        na.setNode(5, 15.2, 10.1);
+
+        g.edge(1, 2, 10000, true).setName("1-2");
+        g.edge(2, 3, 10000, true).setName("2-3");
+        g.edge(3, 4, 10000, true).setName("3-4").setWayGeometry(waypoint);
+        g.edge(4, 5, 10000, true).setName("4-5");
+
+
+        Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(carEncoder), tMode).calcPath(1, 5);
+        InstructionList wayList = p.calcInstructions(usTR);
+        
+        // query on first edge, get instruction for second edge
+        assertEquals("2-3", wayList.find(15.05, 10, 1000).getName());
+        
+        // query east of first edge, get instruction for second edge
+        assertEquals("2-3", wayList.find(15.05, 10.001, 1000).getName());
+
+        // query south-west of node 3, get instruction for third edge
+        assertEquals("3-4", wayList.find(15.099, 9.9, 1000).getName());
+
+        // query north-west of pillar node n , get instruction for fourth edge
+        assertEquals("4-5", wayList.find(15.21, 9.85, 100000).getName());
+
     }
 }

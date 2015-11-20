@@ -18,6 +18,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
+
 import java.io.File;
 import java.nio.ByteOrder;
 import java.util.Collection;
@@ -26,7 +27,7 @@ import java.util.Map;
 
 /**
  * Implements some common methods for the subclasses.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHDirectory implements Directory
@@ -120,7 +121,7 @@ public class GHDirectory implements Directory
                     da = new RAMDataAccess(name, location, false, byteOrder);
             }
         } else if (type.isMMap())
-        {            
+        {
             da = new MMapDataAccess(name, location, byteOrder, type.isAllowWrites());
         } else
         {
@@ -196,7 +197,8 @@ public class GHDirectory implements Directory
             new File(location).mkdirs();
     }
 
-    Collection<DataAccess> getAll()
+    @Override
+    public Collection<DataAccess> getAll()
     {
         return map.values();
     }

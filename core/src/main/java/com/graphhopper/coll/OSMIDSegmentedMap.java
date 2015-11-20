@@ -19,12 +19,13 @@ package com.graphhopper.coll;
 
 import com.graphhopper.storage.VLongStorage;
 import com.graphhopper.util.Helper;
+
 import java.util.Arrays;
 
 /**
  * This is a special purpose map for writing increasing OSM IDs with consecutive values. It stores
  * the keys in vlong format and values are determined by the resulting index.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class OSMIDSegmentedMap implements LongIntMap

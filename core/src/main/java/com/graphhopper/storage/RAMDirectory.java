@@ -19,10 +19,10 @@ package com.graphhopper.storage;
 
 /**
  * Manages in-memory DataAccess objects.
- * <p/>
+ * <p>
+ * @author Peter Karich
  * @see RAMDataAccess
  * @see RAMIntDataAccess
- * @author Peter Karich
  */
 public class RAMDirectory extends GHDirectory
 {

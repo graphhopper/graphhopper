@@ -19,13 +19,14 @@ package com.graphhopper.coll;
 
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.set.hash.TIntHashSet;
+
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
 /**
  * A priority queue implemented by a treemap to allow fast key update. Or should we use a standard
  * b-tree?
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHSortedCollection

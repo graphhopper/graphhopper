@@ -18,10 +18,10 @@
 package com.graphhopper.coll;
 
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class GHSortedCollectionTest

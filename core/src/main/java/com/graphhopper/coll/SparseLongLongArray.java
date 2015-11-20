@@ -19,7 +19,7 @@ import com.graphhopper.util.Helper;
 
 /**
  * Copied from Android project. android.util.LongSparseArray.java
- * <p/>
+ * <p>
  * SparseArrays map longs to longs. Unlike a normal array of longs, there can be gaps in the
  * indices.
  */
@@ -68,7 +68,7 @@ public class SparseLongLongArray
 
     /**
      * Sets all supplied keys to the given unique value.
-     * <p/>
+     * <p>
      * @param keys Keys to set
      * @param uniqueValue Value to set all supplied keys to
      */
@@ -400,7 +400,8 @@ public class SparseLongLongArray
         int high = start + len, low = start - 1, guess;
         while (high - low > 1)
         {
-            guess = (high + low) / 2;
+            // use >>> for average or we could get an integer overflow. 
+            guess = (high + low) >>> 1;
 
             if (a[guess] < key)
             {
@@ -438,6 +439,7 @@ public class SparseLongLongArray
             }
         }
     }
+
     private long[] mKeys;
     private long[] mValues;
     private int mSize;

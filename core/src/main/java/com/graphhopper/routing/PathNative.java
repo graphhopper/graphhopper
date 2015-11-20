@@ -23,7 +23,7 @@ import com.graphhopper.util.EdgeIterator;
 
 /**
  * This class creates a Path from a DijkstraOneToMany node
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class PathNative extends Path

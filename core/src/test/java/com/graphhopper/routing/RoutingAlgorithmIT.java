@@ -33,18 +33,21 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 import org.junit.Test;
 
 /**
  * Try algorithms, indices and graph storages with real data
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class RoutingAlgorithmIT
@@ -95,6 +98,35 @@ public class RoutingAlgorithmIT
     }
 
     @Test
+    public void testMonacoMotorcycle()
+    {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2697, 117));
+        list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3749, 170));
+        list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 3164, 165));
+        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
+        list.add(new OneRun(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
+        list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
+        runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-mc-gh",
+                list, "motorcycle", true, "motorcycle", "fastest", true);
+
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testBike2_issue432()
+    {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(52.349969, 8.013813, 52.349713, 8.013293, 56, 7));
+        // reverse route avoids the location
+//        list.add(new OneRun(52.349713, 8.013293, 52.349969, 8.013813, 293, 21));
+        runAlgo(testCollector, "files/map-bug432.osm.gz", "target/map-bug432-gh",
+                list, "bike2", true, "bike2", "fastest", true);
+
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
     public void testMonacoAllAlgorithmsWithBaseGraph()
     {
         String vehicle = "car";
@@ -116,17 +148,17 @@ public class RoutingAlgorithmIT
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
         Weighting weighting = hopper.createWeighting(new WeightingMap("shortest"), encoder);
 
-        List<AlgoHelperEntry> prepares = createAlgos(hopper.getGraph(), hopper.getLocationIndex(),
+        List<AlgoHelperEntry> prepares = createAlgos(hopper.getGraphHopperStorage(), hopper.getLocationIndex(),
                 encoder, true, TraversalMode.NODE_BASED, weighting, hopper.getEncodingManager());
         AlgoHelperEntry chPrepare = prepares.get(prepares.size() - 1);
-        if (!(chPrepare.getQueryGraph() instanceof LevelGraph))
-            throw new IllegalStateException("Last prepared queryGraph has to be a levelGraph");
+        if (!(chPrepare.getQueryGraph() instanceof CHGraph))
+            throw new IllegalStateException("Last prepared QueryGraph has to be a CHGraph");
 
         // set all normal algorithms to baseGraph of already prepared to see if all algorithms still work
-        Graph baseGraphOfCHPrepared = chPrepare.getQueryGraph().getBaseGraph();
+        Graph baseGraphOfCHPrepared = chPrepare.getBaseGraph();
         for (AlgoHelperEntry ahe : prepares)
         {
-            if (!(ahe.getQueryGraph() instanceof LevelGraph))
+            if (!(ahe.getQueryGraph() instanceof CHGraph))
             {
                 ahe.setQueryGraph(baseGraphOfCHPrepared);
             }
@@ -194,6 +226,22 @@ public class RoutingAlgorithmIT
     }
 
     @Test
+    public void testSidewalkNo()
+    {
+        List<OneRun> list = new ArrayList<OneRun>();
+        // roundabout contains sidewalk=no which should be avoided
+        list.add(new OneRun(57.154888, -2.101822, 57.153445, -2.099869, 329, 31));
+        // longer path should go through tertiary, see discussion in #476
+        list.add(new OneRun(57.154888, -2.101822, 57.147299, -2.096286, 1118, 68));
+
+        boolean testAlsoCH = false, is3D = false;
+        runAlgo(testCollector, "files/map-sidewalk-no.osm.gz", "target/graph-sidewalkno",
+                list, "foot", testAlsoCH, "foot", "fastest", is3D);
+
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
     public void testMonacoFastest()
     {
         List<OneRun> list = createMonacoCar();
@@ -242,10 +290,10 @@ public class RoutingAlgorithmIT
                 createMonacoFoot(), "FOOT", true, "FOOT", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
-        // see testMonaco for similar ID test
-        assertEquals(GHUtility.asSet(2, 906, 570), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
-        assertEquals(GHUtility.asSet(443, 952, 739), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(440)));
-        assertEquals(GHUtility.asSet(909, 580, 912), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(911)));
+        // see testMonaco for a similar ID test
+        assertEquals(GHUtility.asSet(2, 908, 570), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
+        assertEquals(GHUtility.asSet(443, 954, 739), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(440)));
+        assertEquals(GHUtility.asSet(910, 403, 122, 913), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(911)));
 
         assertEquals(43.743705, g.getNodeAccess().getLat(100), 1e-6);
         assertEquals(7.426362, g.getNodeAccess().getLon(701), 1e-6);
@@ -275,8 +323,8 @@ public class RoutingAlgorithmIT
         List<OneRun> list = new ArrayList<OneRun>();
         // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'        
         list.add(new OneRun(49.974972, 11.515657, 49.991022, 11.512299, 2365, 66));
-        // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach'
-        list.add(new OneRun(49.986111, 11.550407, 50.023182, 11.555386, 5165, 133));
+        // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
+        list.add(new OneRun(49.990967, 11.545258, 50.023182, 11.555386, 5636, 97));
         runAlgo(testCollector, "files/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
                 list, "FOOT", true, "FOOT", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -327,7 +375,7 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 2322, 110));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3613, 178));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2331, 121));
-        // hard to select between secondard and primary (both are AVOID for mtb)
+        // hard to select between secondary and primary (both are AVOID for mtb)
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1459, 88));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
                 list, "MTB", true, "MTB", "fastest", false);
@@ -360,6 +408,7 @@ public class RoutingAlgorithmIT
     {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12491, 159));
+        // 3109m is better as cyclepath is used
         list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3113, 87));
         list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 94));
 
@@ -490,8 +539,8 @@ public class RoutingAlgorithmIT
      * takes a bit longer
      */
     Graph runAlgo( TestAlgoCollector testCollector, String osmFile,
-            String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
-            boolean testAlsoCH, String vehicle, String weightStr, boolean is3D )
+                   String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
+                   boolean testAlsoCH, String vehicle, String weightStr, boolean is3D )
     {
         AlgoHelperEntry algoEntry = null;
         OneRun tmpOneRun = null;
@@ -516,8 +565,8 @@ public class RoutingAlgorithmIT
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             Weighting weighting = hopper.createWeighting(new WeightingMap(weightStr), encoder);
 
-            Collection<AlgoHelperEntry> prepares = createAlgos(hopper.getGraph(), hopper.getLocationIndex(),
-                    encoder, testAlsoCH, tMode, weighting, hopper.getEncodingManager());
+            Collection<AlgoHelperEntry> prepares = createAlgos(hopper.getGraphHopperStorage(),
+                    hopper.getLocationIndex(), encoder, testAlsoCH, tMode, weighting, hopper.getEncodingManager());
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (AlgoHelperEntry entry : prepares)
             {
@@ -531,7 +580,7 @@ public class RoutingAlgorithmIT
                 }
             }
 
-            return hopper.getGraph();
+            return hopper.getGraphHopperStorage();
         } catch (Exception ex)
         {
             if (algoEntry == null)
@@ -554,12 +603,12 @@ public class RoutingAlgorithmIT
         Random rand = new Random(0);
         EncodingManager eManager = new EncodingManager("CAR");
         FlagEncoder encoder = eManager.getEncoder("CAR");
-        Graph graph = new GraphBuilder(eManager).create();
+        GraphHopperStorage graph = new GraphBuilder(eManager).create();
 
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile))).read();
         Collection<AlgoHelperEntry> prepares = createAlgos(graph, null, encoder, false, TraversalMode.NODE_BASED,
-                new ShortestWeighting(), eManager);
+                new ShortestWeighting(encoder), eManager);
         for (AlgoHelperEntry entry : prepares)
         {
             StopWatch sw = new StopWatch();
@@ -601,7 +650,7 @@ public class RoutingAlgorithmIT
                 setOSMFile("files/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).
                 importOrLoad();
-        final Graph g = hopper.getGraph();
+        final Graph g = hopper.getGraphHopperStorage();
         final LocationIndex idx = hopper.getLocationIndex();
         final List<OneRun> instances = createMonacoCar();
         List<Thread> threads = new ArrayList<Thread>();
@@ -612,7 +661,7 @@ public class RoutingAlgorithmIT
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
-        final Weighting weighting = new ShortestWeighting();
+        final Weighting weighting = new ShortestWeighting(encodingManager.getEncoder("CAR"));
         final EdgeFilter filter = new DefaultEdgeFilter(carEncoder);
         for (int no = 0; no < MAX; no++)
         {
@@ -633,7 +682,7 @@ public class RoutingAlgorithmIT
                         {
                             OneRun oneRun = instances.get(instanceIndex);
                             AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(weighting).algorithm(algoStr).build();
-                            testCollector.assertDistance(new AlgoHelperEntry(g, opts, idx),
+                            testCollector.assertDistance(new AlgoHelperEntry(g, g, opts, idx),
                                     oneRun.getList(idx, filter), oneRun);
                             integ.addAndGet(1);
                         }
@@ -660,29 +709,35 @@ public class RoutingAlgorithmIT
         hopper.close();
     }
 
-    static List<AlgoHelperEntry> createAlgos( Graph g,
-            LocationIndex idx, final FlagEncoder encoder, boolean withCh,
-            final TraversalMode tMode, final Weighting weighting, final EncodingManager manager )
+    static List<AlgoHelperEntry> createAlgos( GraphHopperStorage ghStorage,
+                                              LocationIndex idx, final FlagEncoder encoder, boolean withCh,
+                                              final TraversalMode tMode, final Weighting weighting,
+                                              final EncodingManager manager )
     {
         List<AlgoHelperEntry> prepare = new ArrayList<AlgoHelperEntry>();
-        prepare.add(new AlgoHelperEntry(g, new AlgorithmOptions(AlgorithmOptions.ASTAR, encoder, weighting, tMode), idx));
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(AlgorithmOptions.ASTAR, encoder, weighting, tMode), idx));
         // later: include dijkstraOneToMany        
-        prepare.add(new AlgoHelperEntry(g, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA, encoder, weighting, tMode), idx));
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA, encoder, weighting, tMode), idx));
 
         final AlgorithmOptions astarbiOpts = new AlgorithmOptions(AlgorithmOptions.ASTAR_BI, encoder, weighting, tMode);
         astarbiOpts.getHints().put(AlgorithmOptions.ASTAR_BI + ".approximation", "BeelineSimplification");
         final AlgorithmOptions dijkstrabiOpts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting, tMode);
-        prepare.add(new AlgoHelperEntry(g, astarbiOpts, idx));
-        prepare.add(new AlgoHelperEntry(g, dijkstrabiOpts, idx));
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, astarbiOpts, idx));
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, dijkstrabiOpts, idx));
 
         if (withCh)
         {
-            final LevelGraph graphCH = (LevelGraph) ((GraphStorage) g).copyTo(new GraphBuilder(manager).
-                    set3D(g.getNodeAccess().is3D()).levelGraphCreate());
-            final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(graphCH, encoder, weighting, tMode);
+            GraphHopperStorage storageCopy = new GraphBuilder(manager).
+                    set3D(ghStorage.getNodeAccess().is3D()).setCHGraph(weighting).
+                    create();
+            ghStorage.copyTo(storageCopy);
+            storageCopy.freeze();
+            final CHGraph graphCH = storageCopy.getGraph(CHGraph.class, weighting);
+            final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(
+                    new GHDirectory("", DAType.RAM_INT), storageCopy, graphCH, encoder, weighting, tMode);
             prepareCH.doWork();
-            LocationIndex idxCH = new LocationIndexTree(graphCH.getBaseGraph(), new RAMDirectory()).prepareIndex();
-            prepare.add(new AlgoHelperEntry(graphCH, dijkstrabiOpts, idxCH)
+            LocationIndex idxCH = new LocationIndexTree(storageCopy, new RAMDirectory()).prepareIndex();
+            prepare.add(new AlgoHelperEntry(graphCH, storageCopy, dijkstrabiOpts, idxCH)
             {
                 @Override
                 public RoutingAlgorithm createAlgo( Graph qGraph )
@@ -691,7 +746,7 @@ public class RoutingAlgorithmIT
                 }
             });
 
-            prepare.add(new AlgoHelperEntry(graphCH, astarbiOpts, idxCH)
+            prepare.add(new AlgoHelperEntry(graphCH, storageCopy, astarbiOpts, idxCH)
             {
                 @Override
                 public RoutingAlgorithm createAlgo( Graph qGraph )

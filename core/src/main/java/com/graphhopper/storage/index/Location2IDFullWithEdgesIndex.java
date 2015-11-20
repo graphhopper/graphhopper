@@ -28,7 +28,7 @@ import com.graphhopper.util.Helper;
 
 /**
  * Same as full index but calculates distance to all edges too
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class Location2IDFullWithEdgesIndex implements LocationIndex

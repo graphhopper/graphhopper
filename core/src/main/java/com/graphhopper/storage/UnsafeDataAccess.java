@@ -18,6 +18,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.NotThreadSafe;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -34,7 +35,7 @@ import java.nio.ByteOrder;
  * 2. Compared to MMAP no syncDAWrapper is need to make it read and write safe from multiple threads
  * <p>
  * 3. Cannot be used on Android as no memory allocation methods are available there
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 @NotThreadSafe
@@ -42,11 +43,11 @@ public class UnsafeDataAccess extends AbstractDataAccess
 {
 
     private long address;
-    private long capacity; 
+    private long capacity;
 
     UnsafeDataAccess( String name, String location, ByteOrder order )
     {
-		super(name, location, order);
+        super(name, location, order);
     }
 
     @Override
@@ -60,7 +61,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public final boolean ensureCapacity(long bytes)
+    public final boolean ensureCapacity( long bytes )
     {
         return ensureCapacity(bytes, true);
     }
@@ -68,8 +69,8 @@ public class UnsafeDataAccess extends AbstractDataAccess
     final boolean ensureCapacity( long bytes, boolean clearNewMem )
     {
         long oldCap = getCapacity();
-        long todoBytes = bytes - oldCap;
-        if (todoBytes <= 0)
+        long newBytes = bytes - oldCap;
+        if (newBytes <= 0)
             return false;
 
         // avoid frequent increase of allocation area, instead increase by segment size
@@ -84,7 +85,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
         } catch (OutOfMemoryError err)
         {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
-                    + oldCap + ", new bytes:" + todoBytes + ", segmentSizeIntsPower:" + segmentSizePower);
+                    + oldCap + ", new bytes:" + newBytes + ", segmentSizeIntsPower:" + segmentSizePower);
         }
 
 //         if (clearNewMem)
@@ -97,8 +98,7 @@ public class UnsafeDataAccess extends AbstractDataAccess
     {
         if (da instanceof UnsafeDataAccess)
         {
-            // TODO
-            // unsafe.copyMemory(address, da.address, capacity);
+            // TODO unsafe.copyMemory(address, da.address, capacity);
             // return this;
         }
         return super.copyTo(da);

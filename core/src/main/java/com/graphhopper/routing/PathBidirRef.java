@@ -24,7 +24,7 @@ import com.graphhopper.util.EdgeIterator;
 
 /**
  * This class creates a DijkstraPath from two Edge's resulting from a BidirectionalDijkstra
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class PathBidirRef extends Path

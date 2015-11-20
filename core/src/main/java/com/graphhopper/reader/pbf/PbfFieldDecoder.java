@@ -7,9 +7,9 @@ import org.openstreetmap.osmosis.osmbinary.Osmformat;
 
 /**
  * Manages decoding of the lower level PBF data structures.
- * <p/>
+ * <p>
  * @author Brett Henderson
- * <p/>
+ *         <p>
  */
 public class PbfFieldDecoder
 {
@@ -22,7 +22,7 @@ public class PbfFieldDecoder
 
     /**
      * Creates a new instance.
-     * <p/>
+     * <p>
      * @param primitiveBlock The primitive block containing the fields to be decoded.
      */
     public PbfFieldDecoder( Osmformat.PrimitiveBlock primitiveBlock )
@@ -42,7 +42,7 @@ public class PbfFieldDecoder
 
     /**
      * Decodes a raw latitude value into degrees.
-     * <p/>
+     * <p>
      * @param rawLatitude The PBF encoded value.
      * @return The latitude in degrees.
      */
@@ -53,7 +53,7 @@ public class PbfFieldDecoder
 
     /**
      * Decodes a raw longitude value into degrees.
-     * <p/>
+     * <p>
      * @param rawLongitude The PBF encoded value.
      * @return The longitude in degrees.
      */
@@ -64,7 +64,7 @@ public class PbfFieldDecoder
 
     /**
      * Decodes a raw timestamp value into a Date.
-     * <p/>
+     * <p>
      * @param rawTimestamp The PBF encoded timestamp.
      * @return The timestamp as a Date.
      */
@@ -75,7 +75,7 @@ public class PbfFieldDecoder
 
     /**
      * Decodes a raw string into a String.
-     * <p/>
+     * <p>
      * @param rawString The PBF encoding string.
      * @return The string as a String.
      */

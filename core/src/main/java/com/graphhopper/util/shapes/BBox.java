@@ -19,6 +19,7 @@ package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,10 +27,10 @@ import java.util.List;
  * A simple bounding box defined as follows: minLon, maxLon followed by minLat which is south(!) and
  * maxLat. Equally to EX_GeographicBoundingBox in the ISO 19115 standard see
  * http://osgeo-org.1560.n6.nabble.com/Boundingbox-issue-for-discussion-td3875533.html
- * <p/>
+ * <p>
  * Nice German overview:
  * http://www.geoinf.uni-jena.de/fileadmin/Geoinformatik/Lehre/Diplomarbeiten/DA_Andres.pdf
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class BBox implements Shape, Cloneable

@@ -19,13 +19,15 @@ package com.graphhopper.coll;
 
 import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.util.EdgeIterator;
+
 import java.util.PriorityQueue;
 import java.util.Random;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public abstract class AbstractBinHeapTest

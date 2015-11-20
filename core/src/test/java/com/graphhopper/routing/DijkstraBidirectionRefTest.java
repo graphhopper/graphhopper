@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.*;
+
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -26,9 +27,9 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
 
 /**
- *
  * @author Peter Karich
  */
 @RunWith(Parameterized.class)
@@ -41,12 +42,12 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
     public static Collection<Object[]> configs()
     {
         return Arrays.asList(new Object[][]
-        {
-            { TraversalMode.NODE_BASED },
-            { TraversalMode.EDGE_BASED_1DIR },
-            { TraversalMode.EDGE_BASED_2DIR },
-            { TraversalMode.EDGE_BASED_2DIR_UTURN }
-        });
+                {
+                        {TraversalMode.NODE_BASED},
+                        {TraversalMode.EDGE_BASED_1DIR},
+                        {TraversalMode.EDGE_BASED_2DIR},
+                        {TraversalMode.EDGE_BASED_2DIR_UTURN}
+                });
     }
 
     private final TraversalMode traversalMode;
@@ -57,7 +58,7 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    public RoutingAlgorithmFactory createFactory( Graph prepareGraph, AlgorithmOptions prepareOpts )
+    public RoutingAlgorithmFactory createFactory( GraphHopperStorage prepareGraph, AlgorithmOptions prepareOpts )
     {
         return new RoutingAlgorithmFactory()
         {
@@ -66,6 +67,6 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester
             {
                 return new DijkstraBidirectionRef(g, opts.getFlagEncoder(), opts.getWeighting(), traversalMode);
             }
-        };    
+        };
     }
 }

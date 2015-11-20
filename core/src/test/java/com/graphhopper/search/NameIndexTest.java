@@ -18,11 +18,13 @@
 package com.graphhopper.search;
 
 import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.util.Helper;
+import java.io.File;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class NameIndexTest
@@ -89,5 +91,27 @@ public class NameIndexTest
         }
         index.put(str);
         index.close();
+    }
+
+    @Test
+    public void testFlush()
+    {
+        String location = "./target/nameindex-store";
+        Helper.removeDir(new File(location));
+
+        NameIndex index = new NameIndex(new RAMDirectory(location, true)).create(1000);
+        long pointer = index.put("test");
+        index.flush();
+        index.close();
+
+        index = new NameIndex(new RAMDirectory(location, true));
+        assertTrue(index.loadExisting());
+        assertEquals("test", index.get(pointer));
+        // make sure bytePointer is correctly set after loadExisting
+        long newPointer = index.put("testing");
+        assertEquals(newPointer + ">" + pointer, pointer + "test".getBytes().length + 1, newPointer);
+        index.close();
+
+        Helper.removeDir(new File(location));
     }
 }

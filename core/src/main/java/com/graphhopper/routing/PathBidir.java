@@ -23,7 +23,7 @@ import com.graphhopper.util.EdgeWrapper;
 
 /**
  * This class creates a Path from two Edge's resulting from a BidirectionalDijkstra
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class PathBidir extends Path
@@ -35,7 +35,7 @@ public class PathBidir extends Path
     private EdgeWrapper edgeWTo;
 
     public PathBidir( Graph g, FlagEncoder encoder,
-            EdgeWrapper edgesFrom, EdgeWrapper edgesTo )
+                      EdgeWrapper edgesFrom, EdgeWrapper edgesTo )
     {
         super(g, encoder);
         this.edgeWFrom = edgesFrom;

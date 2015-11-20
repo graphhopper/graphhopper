@@ -20,13 +20,14 @@ package com.graphhopper.http;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.Translation;
+
 import java.io.IOException;
 import java.util.Locale;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import static javax.servlet.http.HttpServletResponse.*;
+
 import org.json.JSONObject;
 
 /**
@@ -40,33 +41,26 @@ public class I18NServlet extends GHBaseServlet
     @Override
     public void doGet( HttpServletRequest req, HttpServletResponse res ) throws ServletException, IOException
     {
-        try
+        String locale = "";
+        String path = req.getPathInfo();
+        if (!Helper.isEmpty(path) && path.startsWith("/"))
+            locale = path.substring(1);
+
+        if (Helper.isEmpty(locale))
         {
-            String locale = "";
-            String path = req.getPathInfo();
-            if (!Helper.isEmpty(path) && path.startsWith("/"))
-                locale = path.substring(1);
-
-            if (Helper.isEmpty(locale))
-            {
-                // fall back to language specified in header e.g. via browser settings
-                String acceptLang = req.getHeader("Accept-Language");
-                if (!Helper.isEmpty(acceptLang))
-                    locale = acceptLang.split(",")[0];
-            }
-
-            Translation tr = map.get(locale);
-            JSONObject json = new JSONObject();
-            if (tr != null && !Locale.US.equals(tr.getLocale()))
-                json.put("default", tr.asMap());
-
-            json.put("locale", locale.toString());
-            json.put("en", map.get("en").asMap());
-            writeJson(req, res, json);
-        } catch (Exception ex)
-        {
-            logger.error("Error while executing request: " + req.getQueryString(), ex);
-            writeError(res, SC_INTERNAL_SERVER_ERROR, "Problem occured:" + ex.getMessage());
+            // fall back to language specified in header e.g. via browser settings
+            String acceptLang = req.getHeader("Accept-Language");
+            if (!Helper.isEmpty(acceptLang))
+                locale = acceptLang.split(",")[0];
         }
+
+        Translation tr = map.get(locale);
+        JSONObject json = new JSONObject();
+        if (tr != null && !Locale.US.equals(tr.getLocale()))
+            json.put("default", tr.asMap());
+
+        json.put("locale", locale.toString());
+        json.put("en", map.get("en").asMap());
+        writeJson(req, res, json);
     }
 }

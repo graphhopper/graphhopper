@@ -14,8 +14,8 @@ See GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps)
 
 GraphHopper Maps uses the [Directions API for Business](https://graphhopper.com/#directions-api), which provides 
 routing and matrix routing through GraphHopper and also a fast address search via [Photon](https://github.com/komoot/photon).
-Additionally the map tiles from various Providers like [Lyrk](https://geodienste.lyrk.de/pakete)
-are used and all is available for free and through HTTPS for a secure route planning experience!
+Additionally the map tiles from various Providers are used and all is 
+available for free for a nice route planning experience!
 
 
 GraphHopper for Mobile
@@ -29,7 +29,7 @@ and [iOS](http://github.com/graphhopper/graphhopper-ios)
 Get Started
 ---------------
 
-Read through [our Documentation](https://github.com/graphhopper/graphhopper/blob/0.4/docs/index.md),
+Read through our Documentation ([0.5](https://github.com/graphhopper/graphhopper/blob/0.5/docs/index.md), [unstable](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)), 
 ask questions on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper)
 and sign up to the [mailing list](http://graphhopper.com/#developers).
 

@@ -20,26 +20,26 @@ package com.graphhopper.util;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.AllEdgesSkipIterator;
+import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
+
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * A helper class to avoid cluttering the Graph interface with all the common methods. Most of the
  * methods are useful for unit tests or debugging only.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHUtility
 {
     /**
-     * @throws could throw exception if uncatched problems like index out of bounds etc
+     * This method could throw exception if uncatched problems like index out of bounds etc
      */
     public static List<String> getProblems( Graph g )
     {
@@ -109,7 +109,8 @@ public class GHUtility
 
     public static Set<Integer> getNeighbors( EdgeIterator iter )
     {
-        Set<Integer> list = new HashSet<Integer>();
+        // make iteration order over set static => linked
+        Set<Integer> list = new LinkedHashSet<Integer>();
         while (iter.next())
         {
             list.add(iter.getAdjNode());
@@ -129,18 +130,18 @@ public class GHUtility
 
     public static void printEdgeInfo( final Graph g, FlagEncoder encoder )
     {
-        System.out.println("-- Graph n:" + g.getNodes() + " e:" + g.getAllEdges().getCount() + " ---");
+        System.out.println("-- Graph n:" + g.getNodes() + " e:" + g.getAllEdges().getMaxId() + " ---");
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next())
         {
             String sc = "";
-            if (iter instanceof AllEdgesSkipIterator)
+            if (iter instanceof AllCHEdgesIterator)
             {
-                AllEdgesSkipIterator aeSkip = (AllEdgesSkipIterator) iter;
+                AllCHEdgesIterator aeSkip = (AllCHEdgesIterator) iter;
                 sc = aeSkip.isShortcut() ? "sc" : "  ";
             }
-            String fwdStr = encoder.isForward(iter.getFlags()) ? "fwd" : "   ";
-            String bckStr = encoder.isBackward(iter.getFlags()) ? "bckwd" : "";
+            String fwdStr = iter.isForward(encoder) ? "fwd" : "   ";
+            String bckStr = iter.isBackward(encoder) ? "bckwd" : "";
             System.out.println(sc + " " + iter + " " + fwdStr + " " + bckStr);
         }
     }
@@ -164,10 +165,10 @@ public class GHUtility
         }.start(g.createEdgeExplorer(), startNode);
     }
 
-    public static String getNodeInfo( LevelGraph g, int nodeId, EdgeFilter filter )
+    public static String getNodeInfo( CHGraph g, int nodeId, EdgeFilter filter )
     {
-        EdgeSkipExplorer ex = g.createEdgeExplorer(filter);
-        EdgeSkipIterator iter = ex.setBaseNode(nodeId);
+        CHEdgeExplorer ex = g.createEdgeExplorer(filter);
+        CHEdgeIterator iter = ex.setBaseNode(nodeId);
         NodeAccess na = g.getNodeAccess();
         String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
         while (iter.next())
@@ -312,72 +313,37 @@ public class GHUtility
         return outdir;
     }
 
-    static GraphStorage guessStorage( Graph g, Directory outdir, EncodingManager encodingManager )
-    {
-        GraphStorage store;
-        boolean is3D = g.getNodeAccess().is3D();
-        if (g instanceof LevelGraphStorage)
-            store = new LevelGraphStorage(outdir, encodingManager, is3D);
-        else
-            store = new GraphHopperStorage(outdir, encodingManager, is3D);
-
-        return store;
-    }
-
     /**
      * Create a new storage from the specified one without copying the data.
      */
-    public static GraphStorage newStorage( GraphStorage store )
+    public static GraphHopperStorage newStorage( GraphHopperStorage store )
     {
-        return guessStorage(store, guessDirectory(store), store.getEncodingManager()).create(store.getNodes());
-    }
+        Directory outdir = guessDirectory(store);
+        boolean is3D = store.getNodeAccess().is3D();
 
-    /**
-     * @return the graph outGraph
-     */
-    public static Graph clone( Graph g, GraphStorage outGraph )
-    {
-        return g.copyTo(outGraph.create(g.getNodes()));
+        return new GraphHopperStorage(store.getCHWeightings(), outdir, store.getEncodingManager(),
+                is3D, store.getExtension()).
+                create(store.getNodes());
     }
 
     public static int getAdjNode( Graph g, int edge, int adjNode )
     {
         if (EdgeIterator.Edge.isValid(edge))
         {
-            EdgeIteratorState iterTo = g.getEdgeProps(edge, adjNode);
+            EdgeIteratorState iterTo = g.getEdgeIteratorState(edge, adjNode);
             return iterTo.getAdjNode();
         }
         return adjNode;
     }
 
-    public static class DisabledEdgeIterator implements EdgeSkipIterator
+    /**
+     * This edge iterator can be used in tests to mock specific iterator behaviour via overloading
+     * certain methods.
+     */
+    public static class DisabledEdgeIterator implements CHEdgeIterator
     {
         @Override
         public EdgeIterator detach( boolean reverse )
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public boolean isShortcut()
-        {
-            return false;
-        }
-
-        @Override
-        public int getSkippedEdge1()
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public int getSkippedEdge2()
-        {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public void setSkippedEdges( int edge1, int edge2 )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -455,6 +421,24 @@ public class GHUtility
         }
 
         @Override
+        public boolean getBoolean( int key, boolean reverse, boolean _default )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public boolean isBackward( FlagEncoder encoder )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public boolean isForward( FlagEncoder encoder )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
         public int getAdditionalField()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
@@ -473,13 +457,43 @@ public class GHUtility
         }
 
         @Override
+        public boolean isShortcut()
+        {
+            return false;
+        }
+
+        @Override
+        public int getSkippedEdge1()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int getSkippedEdge2()
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public void setSkippedEdges( int edge1, int edge2 )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
         public double getWeight()
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public EdgeSkipIterState setWeight( double weight )
+        public CHEdgeIteratorState setWeight( double weight )
+        {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public boolean canBeOverwritten( long flags )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -519,5 +533,13 @@ public class GHUtility
     public static boolean isSameEdgeKeys( int edgeKey1, int edgeKey2 )
     {
         return edgeKey1 / 2 == edgeKey2 / 2;
+    }
+
+    /**
+     * Returns the edgeKey of the opposite direction
+     */
+    public static int reverseEdgeKey( int edgeKey )
+    {
+        return edgeKey % 2 == 0 ? edgeKey + 1 : edgeKey - 1;
     }
 }

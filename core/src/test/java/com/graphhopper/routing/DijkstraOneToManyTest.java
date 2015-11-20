@@ -20,18 +20,21 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+
 import java.util.Arrays;
 import java.util.Collection;
+
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
 /**
- *
  * @author Peter Karich
  */
 @RunWith(Parameterized.class)
@@ -62,7 +65,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    public RoutingAlgorithmFactory createFactory( Graph prepareGraph, AlgorithmOptions prepareOpts )
+    public RoutingAlgorithmFactory createFactory( GraphHopperStorage prepareGraph, AlgorithmOptions prepareOpts )
     {
         return new RoutingAlgorithmFactory()
         {
@@ -113,7 +116,9 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     @Test
     public void testIssue182()
     {
-        RoutingAlgorithm algo = createAlgo(initGraph(createGraph(false)));
+        GraphHopperStorage storage = createGHStorage(false);
+        initGraph(storage);
+        RoutingAlgorithm algo = createAlgo(storage);
         Path p = algo.calcPath(0, 8);
         assertEquals(Helper.createTList(0, 7, 8), p.calcNodes());
 
@@ -123,9 +128,9 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     }
 
     @Test
-    public void testIssue239()
+    public void testIssue239_and362()
     {
-        Graph g = createGraph(false);
+        GraphHopperStorage g = createGHStorage(false);
         g.edge(0, 1, 1, true);
         g.edge(1, 2, 1, true);
         g.edge(2, 0, 1, true);
@@ -137,12 +142,15 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         DijkstraOneToMany algo = (DijkstraOneToMany) createAlgo(g);
         assertEquals(-1, algo.findEndNode(0, 4));
         assertEquals(-1, algo.findEndNode(0, 4));
+
+        assertEquals(1, algo.findEndNode(0, 1));
+        assertEquals(1, algo.findEndNode(0, 1));
     }
 
     @Test
     public void testUseCache()
     {
-        RoutingAlgorithm algo = createAlgo(createTestGraph());
+        RoutingAlgorithm algo = createAlgo(createTestStorage());
         Path p = algo.calcPath(0, 4);
         assertEquals(Helper.createTList(0, 4), p.calcNodes());
 
@@ -158,7 +166,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
     @Test
     public void testDifferentEdgeFilter()
     {
-        Graph g = new GraphBuilder(encodingManager).levelGraphCreate();
+        GraphHopperStorage g = new GraphBuilder(encodingManager).setCHGraph(new FastestWeighting(carEncoder)).create();
         g.edge(4, 3, 10, true);
         g.edge(3, 6, 10, true);
 

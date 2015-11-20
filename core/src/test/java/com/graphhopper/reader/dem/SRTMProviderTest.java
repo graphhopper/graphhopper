@@ -19,15 +19,18 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DAType;
+
 import java.io.File;
 import java.io.IOException;
+
 import org.junit.After;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 
 /**
- *
  * @author Peter Karich
  */
 public class SRTMProviderTest

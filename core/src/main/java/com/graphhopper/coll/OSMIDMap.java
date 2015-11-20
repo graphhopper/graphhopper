@@ -24,8 +24,8 @@ import com.graphhopper.util.Helper;
 
 /**
  * This is a special purpose map for writing increasing OSM IDs with consecutive values. It stores
- * long->int in a memory friendly way and but does NOT provide O(1) access.
- * <p/>
+ * a map from long to int in a memory friendly way and but does NOT provide O(1) access.
+ * <p>
  * @author Peter Karich
  */
 public class OSMIDMap implements LongIntMap
@@ -104,6 +104,7 @@ public class OSMIDMap implements LongIntMap
         byte[] longBytes = new byte[8];
         while (high - low > 1)
         {
+            // use >>> for average or we could get an integer overflow. 
             guess = (high + low) >>> 1;
             long tmp = guess << 3;
             da.getBytes(tmp, longBytes, 8);

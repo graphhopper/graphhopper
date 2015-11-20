@@ -25,6 +25,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +33,7 @@ import java.util.List;
  * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
  * edge determination faster and less complex as there could be several edges (u,v) especially for
  * graphs with shortcuts.
- * <p/>
+ * <p>
  * @author Peter Karich
  * @author Ottavio Campana
  * @author jan soe
@@ -45,7 +46,7 @@ public class Path
     protected double distance;
     // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
-    protected long millis;
+    protected long time;
     private boolean found;
     protected EdgeEntry edgeEntry;
     final StopWatch extractSW = new StopWatch("extract");
@@ -142,10 +143,19 @@ public class Path
 
     /**
      * @return time in millis
+     * @deprecated use getTime instead
      */
     public long getMillis()
     {
-        return millis;
+        return time;
+    }
+
+    /**
+     * @return time in millis
+     */
+    public long getTime()
+    {
+        return time;
     }
 
     /**
@@ -186,6 +196,14 @@ public class Path
     }
 
     /**
+     * Yields the final edge of the path
+     */
+    public EdgeIteratorState getFinalEdge()
+    {
+        return graph.getEdgeIteratorState(edgeIds.get(edgeIds.size() - 1), endNode);
+    }
+
+    /**
      * @return the time it took to extract the path in nano (!) seconds
      */
     public long getExtractTime()
@@ -203,10 +221,10 @@ public class Path
      */
     protected void processEdge( int edgeId, int adjNode )
     {
-        EdgeIteratorState iter = graph.getEdgeProps(edgeId, adjNode);
+        EdgeIteratorState iter = graph.getEdgeIteratorState(edgeId, adjNode);
         double dist = iter.getDistance();
         distance += dist;
-        millis += calcMillis(dist, iter.getFlags(), false);
+        time += calcMillis(dist, iter.getFlags(), false);
         addEdge(edgeId);
     }
 
@@ -252,14 +270,14 @@ public class Path
         int len = edgeIds.size();
         for (int i = 0; i < len; i++)
         {
-            EdgeIteratorState edgeBase = graph.getEdgeProps(edgeIds.get(i), tmpNode);
+            EdgeIteratorState edgeBase = graph.getEdgeIteratorState(edgeIds.get(i), tmpNode);
             if (edgeBase == null)
                 throw new IllegalStateException("Edge " + edgeIds.get(i) + " was empty when requested with node " + tmpNode
                         + ", array index:" + i + ", edges:" + edgeIds.size());
 
             tmpNode = edgeBase.getBaseNode();
             // more efficient swap, currently not implemented for virtual edges: visitor.next(edgeBase.detach(true), i);
-            edgeBase = graph.getEdgeProps(edgeBase.getEdge(), tmpNode);
+            edgeBase = graph.getEdgeIteratorState(edgeBase.getEdge(), tmpNode);
             visitor.next(edgeBase, i);
         }
     }
@@ -407,7 +425,7 @@ public class Path
                 double latitude, longitude;
 
                 PointList wayGeo = edge.fetchWayGeometry(3);
-                boolean isRoundabout = encoder.isBool(flags, encoder.K_ROUNDABOUT);
+                boolean isRoundabout = encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT);
 
                 if (wayGeo.getSize() <= 2)
                 {
@@ -446,10 +464,10 @@ public class Path
                             {
                                 // check if there is an exit at the same node the roundabout was entered
                                 EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
-                                while (edgeIter.next()) 
+                                while (edgeIter.next())
                                 {
-                                    if ((edgeIter.getAdjNode() != prevNode) 
-                                         && !encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT))
+                                    if ((edgeIter.getAdjNode() != prevNode)
+                                            && !encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT))
                                     {
                                         roundaboutInstruction.increaseExitNumber();
                                         break;
@@ -481,7 +499,7 @@ public class Path
                         EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(adjNode);
                         while (edgeIter.next())
                         {
-                            if (!encoder.isBool(edgeIter.getFlags(), encoder.K_ROUNDABOUT))
+                            if (!encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT))
                             {
                                 ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
                                 break;
@@ -569,7 +587,7 @@ public class Path
                     doublePrevLat = wayGeo.getLatitude(beforeLast);
                     doublePrevLong = wayGeo.getLongitude(beforeLast);
                 }
-                
+
                 prevInRoundabout = isRoundabout;
                 prevNode = baseNode;
                 prevLat = adjLat;

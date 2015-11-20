@@ -34,7 +34,7 @@ import java.util.zip.ZipInputStream;
 
 /**
  * A readable OSM file.
- * <p/>
+ * <p>
  * @author Nop
  */
 public class OSMInputFile implements Sink, Closeable
@@ -240,6 +240,7 @@ public class OSMInputFile implements Sink, Closeable
                 pbfReaderThread.interrupt();
         }
     }
+
     Thread pbfReaderThread;
 
     private void openPBFReader( InputStream stream )

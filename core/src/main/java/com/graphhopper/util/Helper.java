@@ -20,6 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
+
 import java.io.*;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
@@ -31,6 +32,7 @@ import java.security.PrivilegedExceptionAction;
 import java.text.NumberFormat;
 import java.util.*;
 import java.util.Map.Entry;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,9 +42,9 @@ import org.slf4j.LoggerFactory;
  * to translate the class.
  *
  * Several utility classes which are compatible with Java6 on Android.
- * <p/>
- * @see Helper7 for none-Android compatible methods.
+ * <p>
  * @author Peter Karich
+ * @see Helper7 for none-Android compatible methods.
  */
 public class Helper
 {
@@ -66,6 +68,10 @@ public class Helper
 
     public static Locale getLocale( String param )
     {
+        int pointIndex = param.indexOf('.');
+        if (pointIndex > 0)
+            param = param.substring(0, pointIndex);
+
         param = param.replace("-", "_");
         int index = param.indexOf("_");
         if (index < 0)
@@ -358,7 +364,7 @@ public class Helper
      * Converts into an integer to be compatible with the still limited DataAccess class (accepts
      * only integer values). But this conversion also reduces memory consumption where the precision
      * loss is accceptable. As +- 180° and +-90° are assumed as maximum values.
-     * <p/>
+     * <p>
      * @return the integer of the specified degree
      */
     public static final int degreeToInt( double deg )
@@ -372,7 +378,7 @@ public class Helper
 
     /**
      * Converts back the integer value.
-     * <p/>
+     * <p>
      * @return the degree value of the specified integer
      */
     public static final double intToDegree( int storedInt )
@@ -494,6 +500,6 @@ public class Helper
 
     public static final double round2( double value )
     {
-        return Math.round(value * 100) / 100;
+        return Math.round(value * 100) / 100d;
     }
 }

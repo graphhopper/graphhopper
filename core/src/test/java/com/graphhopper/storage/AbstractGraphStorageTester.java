@@ -17,24 +17,27 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.*;
-import com.graphhopper.util.*;
-import static com.graphhopper.util.GHUtility.*;
-import com.graphhopper.util.shapes.BBox;
+import static com.graphhopper.util.GHUtility.count;
+import static org.junit.Assert.*;
+
 import java.io.Closeable;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import static org.junit.Assert.*;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.graphhopper.routing.util.*;
+import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
+
 /**
  * Abstract test class to be extended for implementations of the Graph interface. Graphs
  * implementing GraphStorage should extend GraphStorageTest instead.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public abstract class AbstractGraphStorageTester
@@ -50,22 +53,22 @@ public abstract class AbstractGraphStorageTester
     EdgeExplorer carOutExplorer;
     EdgeExplorer carInExplorer;
     EdgeExplorer carAllExplorer;
-    protected GraphStorage graph;
+    protected GraphHopperStorage graph;
 
-    protected GraphStorage createGraph()
+    protected GraphHopperStorage createGHStorage()
     {
-        GraphStorage g = createGraph(defaultGraphLoc, false);
+        GraphHopperStorage g = createGHStorage(defaultGraphLoc, false);
         carOutExplorer = g.createEdgeExplorer(carOutFilter);
         carInExplorer = g.createEdgeExplorer(carInFilter);
         carAllExplorer = g.createEdgeExplorer();
         return g;
     }
 
-    abstract GraphStorage createGraph( String location, boolean is3D );
+    abstract GraphHopperStorage createGHStorage( String location, boolean is3D );
 
-    protected GraphStorage newRAMGraph()
+    protected final GraphHopperStorage newRAMGHStorage()
     {
-        return new GraphHopperStorage(new RAMDirectory(), encodingManager, false);
+        return new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension());
     }
 
     @Before
@@ -84,7 +87,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testInfinityWeight()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         EdgeIteratorState edge = graph.edge(0, 1);
         edge.setDistance(Double.POSITIVE_INFINITY);
         assertTrue(Double.isInfinite(edge.getDistance()));
@@ -93,7 +96,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testSetNodes()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         for (int i = 0; i < defaultSize * 2; i++)
         {
@@ -107,7 +110,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testPropertiesWithNoInit()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         assertEquals(0, graph.edge(0, 1).getFlags());
         assertEquals(0, graph.edge(0, 2).getDistance(), 1e-6);
     }
@@ -115,7 +118,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testCreateLocation()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(3, 1, 50, true);
         assertEquals(1, count(carOutExplorer.setBaseNode(1)));
 
@@ -126,7 +129,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testEdges()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(2, 1, 12, true);
         assertEquals(1, count(carOutExplorer.setBaseNode(2)));
 
@@ -139,7 +142,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testUnidirectional()
     {
-        graph = createGraph();
+        graph = createGHStorage();
 
         graph.edge(1, 2, 12, false);
         graph.edge(1, 11, 12, false);
@@ -173,7 +176,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testUnidirectionalEdgeFilter()
     {
-        graph = createGraph();
+        graph = createGHStorage();
 
         graph.edge(1, 2, 12, false);
         graph.edge(1, 11, 12, false);
@@ -209,7 +212,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testUpdateUnidirectional()
     {
-        graph = createGraph();
+        graph = createGHStorage();
 
         graph.edge(1, 2, 12, false);
         graph.edge(3, 2, 112, false);
@@ -233,7 +236,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testClone()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(1, 2, 10, true);
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 12, 23);
@@ -242,19 +245,19 @@ public abstract class AbstractGraphStorageTester
         na.setNode(3, 5, 9);
         graph.edge(1, 3, 10, true);
 
-        Graph clone = graph.copyTo(createGraph(locationParent + "/clone", false));
-        assertEquals(graph.getNodes(), clone.getNodes());
-        assertEquals(count(carOutExplorer.setBaseNode(1)), count(clone.createEdgeExplorer(carOutFilter).setBaseNode(1)));
-        clone.edge(1, 4, 10, true);
-        assertEquals(3, count(clone.createEdgeExplorer(carOutFilter).setBaseNode(1)));
-        assertEquals(graph.getBounds(), clone.getBounds());
-        Helper.close((Closeable) clone);
+        Graph cloneGraph = graph.copyTo(AbstractGraphStorageTester.this.createGHStorage(locationParent + "/clone", false));
+        assertEquals(graph.getNodes(), cloneGraph.getNodes());
+        assertEquals(count(carOutExplorer.setBaseNode(1)), count(cloneGraph.createEdgeExplorer(carOutFilter).setBaseNode(1)));
+        cloneGraph.edge(1, 4, 10, true);
+        assertEquals(3, count(cloneGraph.createEdgeExplorer(carOutFilter).setBaseNode(1)));
+        assertEquals(graph.getBounds(), cloneGraph.getBounds());
+        Helper.close((Closeable) cloneGraph);
     }
 
     @Test
     public void testCopyProperties()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         EdgeIteratorState edge = graph.edge(1, 3, 10, false).setName("testing").setWayGeometry(Helper.createPointList(1, 2));
 
         EdgeIteratorState newEdge = graph.edge(1, 3, 10, false);
@@ -268,7 +271,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testGetLocations()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 12, 23);
         na.setNode(1, 22, 23);
@@ -281,16 +284,16 @@ public abstract class AbstractGraphStorageTester
         assertEquals(3, graph.getNodes());
         Helper.close((Closeable) graph);
 
-        graph = createGraph();
+        graph = createGHStorage();
         assertEquals(0, graph.getNodes());
     }
 
     @Test
     public void testCopyTo()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         initExampleGraph(graph);
-        GraphStorage gs = newRAMGraph();
+        GraphHopperStorage gs = newRAMGHStorage();
         gs.setSegmentSize(8000);
         gs.create(10);
         try
@@ -306,7 +309,7 @@ public abstract class AbstractGraphStorageTester
         try
         {
             Helper.close((Closeable) graph);
-            graph = createGraph();
+            graph = createGHStorage();
             gs.copyTo(graph);
             checkExampleGraph(graph);
         } catch (Exception ex)
@@ -320,7 +323,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testAddLocation()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         initExampleGraph(graph);
         checkExampleGraph(graph);
     }
@@ -371,7 +374,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testDirectional()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(1, 2, 12, true);
         graph.edge(2, 3, 12, false);
         graph.edge(3, 4, 12, false);
@@ -402,7 +405,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testDozendEdges()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(1, 2, 12, true);
         assertEquals(1, count(carAllExplorer.setBaseNode(1)));
 
@@ -435,7 +438,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testCheckFirstNode()
     {
-        graph = createGraph();
+        graph = createGHStorage();
 
         assertEquals(0, count(carAllExplorer.setBaseNode(1)));
         graph.edge(0, 1, 12, true);
@@ -445,7 +448,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testDeleteNodeForUnidir()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(10, 10, 1);
         na.setNode(6, 6, 1);
@@ -488,7 +491,7 @@ public abstract class AbstractGraphStorageTester
 
     public void testDeleteNodes( int fillToSize )
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 12, 23);
         na.setNode(1, 38.33f, 135.3f);
@@ -560,7 +563,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testSimpleDelete()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 12, 23);
         na.setNode(1, 38.33f, 135.3f);
@@ -591,7 +594,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testSimpleDelete2()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         assertEquals(-1, getIdOf(graph, 12));
         na.setNode(9, 9, 1);
@@ -640,7 +643,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testSimpleDelete3()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(7, 7, 1);
         na.setNode(8, 8, 1);
@@ -672,7 +675,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testDeleteAndOptimize()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(20, 10, 10);
         na.setNode(21, 10, 11);
@@ -684,7 +687,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testBounds()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         BBox b = graph.getBounds();
         assertEquals(BBox.createInverse(false).maxLat, b.maxLat, 1e-6);
 
@@ -703,7 +706,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testFlags()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(0, 1).setDistance(10).setFlags(carEncoder.setProperties(100, true, true));
         graph.edge(2, 3).setDistance(10).setFlags(carEncoder.setProperties(10, true, false));
 
@@ -727,30 +730,30 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testEdgeProperties()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         EdgeIteratorState iter1 = graph.edge(0, 1, 10, true);
         EdgeIteratorState iter2 = graph.edge(0, 2, 20, true);
 
         int edgeId = iter1.getEdge();
-        EdgeIteratorState iter = graph.getEdgeProps(edgeId, 0);
+        EdgeIteratorState iter = graph.getEdgeIteratorState(edgeId, 0);
         assertEquals(10, iter.getDistance(), 1e-5);
 
         edgeId = iter2.getEdge();
-        iter = graph.getEdgeProps(edgeId, 0);
+        iter = graph.getEdgeIteratorState(edgeId, 0);
         assertEquals(2, iter.getBaseNode());
         assertEquals(0, iter.getAdjNode());
         assertEquals(20, iter.getDistance(), 1e-5);
 
-        iter = graph.getEdgeProps(edgeId, 2);
+        iter = graph.getEdgeIteratorState(edgeId, 2);
         assertEquals(0, iter.getBaseNode());
         assertEquals(2, iter.getAdjNode());
         assertEquals(20, iter.getDistance(), 1e-5);
 
-        iter = graph.getEdgeProps(edgeId, Integer.MIN_VALUE);
+        iter = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
         assertFalse(iter == null);
         assertEquals(0, iter.getBaseNode());
         assertEquals(2, iter.getAdjNode());
-        iter = graph.getEdgeProps(edgeId, 1);
+        iter = graph.getEdgeIteratorState(edgeId, 1);
         assertTrue(iter == null);
 
         // delete
@@ -760,7 +763,7 @@ public abstract class AbstractGraphStorageTester
         // throw exception if accessing deleted edge
         try
         {
-            graph.getEdgeProps(iter1.getEdge(), -1);
+            graph.getEdgeIteratorState(iter1.getEdge(), -1);
             assertTrue(false);
         } catch (Exception ex)
         {
@@ -770,26 +773,26 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testCreateDuplicateEdges()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(2, 1, 12, true);
         graph.edge(2, 3, 12, true);
         graph.edge(2, 3, 13, false);
         assertEquals(3, GHUtility.count(carOutExplorer.setBaseNode(2)));
 
         // no exception        
-        graph.getEdgeProps(1, 3);
+        graph.getEdgeIteratorState(1, 3);
 
         // raise exception
         try
         {
-            graph.getEdgeProps(4, 3);
+            graph.getEdgeIteratorState(4, 3);
             assertTrue(false);
         } catch (Exception ex)
         {
         }
         try
         {
-            graph.getEdgeProps(-1, 3);
+            graph.getEdgeIteratorState(-1, 3);
             assertTrue(false);
         } catch (Exception ex)
         {
@@ -797,13 +800,13 @@ public abstract class AbstractGraphStorageTester
 
         EdgeIterator iter = carOutExplorer.setBaseNode(2);
         assertTrue(iter.next());
-        EdgeIteratorState oneIter = graph.getEdgeProps(iter.getEdge(), 3);
+        EdgeIteratorState oneIter = graph.getEdgeIteratorState(iter.getEdge(), 3);
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(2, oneIter.getBaseNode());
         assertTrue(carEncoder.isForward(oneIter.getFlags()));
         assertFalse(carEncoder.isBackward(oneIter.getFlags()));
 
-        oneIter = graph.getEdgeProps(iter.getEdge(), 2);
+        oneIter = graph.getEdgeIteratorState(iter.getEdge(), 2);
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(3, oneIter.getBaseNode());
         assertFalse(carEncoder.isForward(oneIter.getFlags()));
@@ -816,7 +819,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testIdenticalNodes()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(0, 0, 100, true);
         assertEquals(1, GHUtility.count(carAllExplorer.setBaseNode(0)));
     }
@@ -824,7 +827,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testIdenticalNodes2()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(0, 0, 100, false);
         graph.edge(0, 0, 100, false);
         assertEquals(2, GHUtility.count(carAllExplorer.setBaseNode(0)));
@@ -833,7 +836,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testEdgeReturn()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         EdgeIteratorState iter = graph.edge(4, 10).setDistance(100).setFlags(carEncoder.setProperties(10, true, false));
         assertEquals(4, iter.getBaseNode());
         assertEquals(10, iter.getAdjNode());
@@ -845,7 +848,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testPillarNodes()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.01, 0.01);
         na.setNode(4, 0.4, 0.4);
@@ -895,7 +898,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testFootMix()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(0, 1).setDistance(10).setFlags(footEncoder.setProperties(10, true, true));
         graph.edge(0, 2).setDistance(10).setFlags(carEncoder.setProperties(10, true, true));
         graph.edge(0, 3).setDistance(10).setFlags(footEncoder.setProperties(10, true, true) | carEncoder.setProperties(10, true, true));
@@ -907,7 +910,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testGetAllEdges()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(0, 1, 2, true);
         graph.edge(3, 1, 1, false);
         graph.edge(3, 2, 1, false);
@@ -935,7 +938,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testGetAllEdgesWithDelete()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0, 5);
         na.setNode(1, 1, 5);
@@ -947,26 +950,26 @@ public abstract class AbstractGraphStorageTester
         graph.edge(2, 3, 1, true);
         AllEdgesIterator iter = graph.getAllEdges();
         assertEquals(4, GHUtility.count(iter));
-        assertEquals(4, iter.getCount());
+        assertEquals(4, iter.getMaxId());
 
         // delete
         graph.markNodeRemoved(1);
         graph.optimize();
         iter = graph.getAllEdges();
         assertEquals(2, GHUtility.count(iter));
-        assertEquals(4, iter.getCount());
+        assertEquals(4, iter.getMaxId());
 
         iter = graph.getAllEdges();
-        iter.next();
+        assertTrue(iter.next());
         EdgeIteratorState eState = iter.detach(false);
         assertEquals(iter.toString(), eState.toString());
-        iter.next();
+        assertTrue(iter.next());
         assertNotEquals(iter.toString(), eState.toString());
 
         EdgeIteratorState eState2 = iter.detach(true);
         assertEquals(iter.getAdjNode(), eState2.getBaseNode());
-        iter.next();
-        assertNotEquals(iter.getAdjNode(), eState2.getBaseNode());
+        assertEquals(iter.getBaseNode(), eState2.getAdjNode());
+        assertFalse(iter.next());
     }
 
     public static void assertPList( PointList expected, PointList list )
@@ -1010,15 +1013,15 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testNameIndex()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         EdgeIteratorState iter1 = graph.edge(0, 1, 10, true);
         iter1.setName("named street1");
 
         EdgeIteratorState iter2 = graph.edge(0, 1, 10, true);
         iter2.setName("named street2");
 
-        assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), iter1.getAdjNode()).getName());
-        assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), iter2.getAdjNode()).getName());
+        assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
+        assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
     }
 
     @Test
@@ -1029,7 +1032,7 @@ public abstract class AbstractGraphStorageTester
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
         EncodingManager manager = new EncodingManager(list, 8);
-        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+        graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);
         edge.setFlags(Long.MAX_VALUE / 3);
@@ -1037,30 +1040,32 @@ public abstract class AbstractGraphStorageTester
         assertEquals(Long.MAX_VALUE / 3, edge.getFlags());
         graph.close();
 
-        graph = new GraphHopperStorage(dir, manager, false).create(defaultSize);
+        graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         edge = graph.edge(0, 1);
         edge.setFlags(list.get(0).setProperties(99.123, true, true));
         assertEquals(99.123, list.get(0).getSpeed(edge.getFlags()), 1e-3);
-        long flags = GHUtility.getEdge(graph, 1, 0).getFlags();
+        EdgeIteratorState edgeIter = GHUtility.getEdge(graph, 1, 0);
+        long flags = edgeIter.getFlags();
         assertEquals(99.123, list.get(0).getSpeed(flags), 1e-3);
-        assertTrue(list.get(0).isForward(flags));
-        assertTrue(list.get(0).isBackward(flags));
+        assertTrue(edgeIter.isForward(list.get(0)));
+        assertTrue(edgeIter.isBackward(list.get(0)));
         edge = graph.edge(2, 3);
         edge.setFlags(list.get(1).setProperties(44.123, true, false));
         assertEquals(44.123, list.get(1).getSpeed(edge.getFlags()), 1e-3);
 
-        flags = GHUtility.getEdge(graph, 3, 2).getFlags();
+        edgeIter = GHUtility.getEdge(graph, 3, 2);
+        flags = edgeIter.getFlags();
         assertEquals(44.123, list.get(1).getSpeed(flags), 1e-3);
         assertEquals(44.123, list.get(1).getReverseSpeed(flags), 1e-3);
-        assertFalse(list.get(1).isForward(flags));
-        assertTrue(list.get(1).isBackward(flags));
+        assertFalse(edgeIter.isForward(list.get(1)));
+        assertTrue(edgeIter.isBackward(list.get(1)));
     }
 
     @Test
     public void testEnabledElevation()
     {
-        graph = createGraph(defaultGraphLoc, true);
+        graph = createGHStorage(defaultGraphLoc, true);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
         na.setNode(0, 10, 20, -10);
@@ -1077,7 +1082,7 @@ public abstract class AbstractGraphStorageTester
     @Test
     public void testDetachEdge()
     {
-        graph = createGraph();
+        graph = createGHStorage();
         graph.edge(0, 1, 2, true);
         long flags = carEncoder.setProperties(10, true, false);
         graph.edge(0, 2, 2, true).setWayGeometry(Helper.createPointList(1, 2, 3, 4)).setFlags(flags);
@@ -1094,35 +1099,37 @@ public abstract class AbstractGraphStorageTester
         }
 
         iter.next();
-        EdgeIteratorState edgeState2 = iter.detach(false);
+        EdgeIteratorState edgeState02 = iter.detach(false);
         assertEquals(2, iter.getAdjNode());
-        assertEquals(1, edgeState2.fetchWayGeometry(0).getLatitude(0), 1e-1);
-        assertEquals(2, edgeState2.getAdjNode());
-        assertTrue(carEncoder.isForward(edgeState2.getFlags()));
+        assertEquals(1, edgeState02.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertEquals(2, edgeState02.getAdjNode());
+        assertTrue(carEncoder.isForward(edgeState02.getFlags()));
 
-        EdgeIteratorState edgeState3 = iter.detach(true);
-        assertEquals(0, edgeState3.getAdjNode());
-        assertEquals(2, edgeState3.getBaseNode());
-        assertEquals(3, edgeState3.fetchWayGeometry(0).getLatitude(0), 1e-1);
-        assertFalse(carEncoder.isForward(edgeState3.getFlags()));
-        assertEquals(GHUtility.getEdge(graph, 0, 2).getFlags(), edgeState2.getFlags());
-        assertEquals(GHUtility.getEdge(graph, 2, 0).getFlags(), edgeState3.getFlags());
+        EdgeIteratorState edgeState20 = iter.detach(true);
+        assertEquals(0, edgeState20.getAdjNode());
+        assertEquals(2, edgeState20.getBaseNode());
+        assertEquals(3, edgeState20.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertFalse(carEncoder.isForward(edgeState20.getFlags()));
+        assertEquals(GHUtility.getEdge(graph, 0, 2).getFlags(), edgeState02.getFlags());
+        assertEquals(GHUtility.getEdge(graph, 2, 0).getFlags(), edgeState20.getFlags());
 
         iter.next();
         assertEquals(1, iter.getAdjNode());
-        assertEquals(2, edgeState2.getAdjNode());
-        assertEquals(2, edgeState3.getBaseNode());
+        assertEquals(2, edgeState02.getAdjNode());
+        assertEquals(2, edgeState20.getBaseNode());
 
         assertEquals(0, iter.fetchWayGeometry(0).size());
-        assertEquals(1, edgeState2.fetchWayGeometry(0).getLatitude(0), 1e-1);
-        assertEquals(3, edgeState3.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertEquals(1, edgeState02.fetchWayGeometry(0).getLatitude(0), 1e-1);
+        assertEquals(3, edgeState20.fetchWayGeometry(0).getLatitude(0), 1e-1);
 
         // #162 a directed self referencing edge should be able to reverse its state too
         graph.edge(3, 3, 2, true).setFlags(flags);
-        EdgeIterator iter2 = graph.createEdgeExplorer().setBaseNode(3);
-        iter2.next();
-        assertEquals(edgeState2.getFlags(), iter2.detach(false).getFlags());
-        assertEquals(edgeState3.getFlags(), iter2.detach(true).getFlags());
+        EdgeIterator edgeState33 = graph.createEdgeExplorer().setBaseNode(3);
+        edgeState33.next();
+        assertEquals(3, edgeState33.getBaseNode());
+        assertEquals(3, edgeState33.getAdjNode());
+        assertEquals(edgeState02.getFlags(), edgeState33.detach(false).getFlags());
+        assertEquals(edgeState20.getFlags(), edgeState33.detach(true).getFlags());
     }
 
     static class TmpCarFlagEncoder extends CarFlagEncoder

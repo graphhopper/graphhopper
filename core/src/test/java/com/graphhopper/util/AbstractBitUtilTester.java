@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import static org.junit.Assert.assertEquals;
+
 import org.junit.Test;
 
 /**

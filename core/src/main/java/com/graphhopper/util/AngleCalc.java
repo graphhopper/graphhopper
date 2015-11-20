@@ -17,6 +17,10 @@
  */
 package com.graphhopper.util;
 
+import static java.lang.Math.PI;
+import static java.lang.Math.cos;
+import static java.lang.Math.toRadians;
+
 /**
  * Calculates the angle of a turn, defined by three points. The fast atan2 method is from Jim Shima,
  * 1999, http://www.dspguru.com/dsp/tricks/fixed-point-atan2-with-self-normalization
@@ -27,6 +31,7 @@ package com.graphhopper.util;
 public class AngleCalc
 {
     private final static double PI_4 = Math.PI / 4.0;
+    private final static double PI_2 = Math.PI / 2.0;
     private final static double PI3_4 = 3.0 * Math.PI / 4.0;
 
     static final double atan2( double y, double x )
@@ -58,7 +63,23 @@ public class AngleCalc
      */
     public double calcOrientation( double lat1, double lon1, double lat2, double lon2 )
     {
-        return atan2((lat2 - lat1), (lon2 - lon1));
+        double shrinkFactor = cos(toRadians((lat1 + lat2) / 2));
+        return Math.atan2((lat2 - lat1), shrinkFactor * (lon2 - lon1));
+    }
+
+    /**
+     * convert north based clockwise azimuth (0, 360) into x-axis/east based angle (-Pi, Pi)
+     */
+    public double convertAzimuth2xaxisAngle(double azimuth)
+    {
+        if (Double.compare(azimuth, 360)>0 || Double.compare(azimuth, 0)<0)
+        {
+            throw new IllegalArgumentException("Azimuth " + azimuth + " must be in (0, 360)");
+        }
+        double angleXY = PI_2 - azimuth/180.*Math.PI;
+        if (angleXY<-Math.PI) angleXY += 2*Math.PI;
+        if (angleXY>Math.PI) angleXY -= 2*Math.PI;
+        return angleXY;
     }
 
     /**

@@ -1,8 +1,8 @@
 To do routing in your Java code you'll need just a few lines of code:
 
 ```java
+// create singleton
 GraphHopper hopper = new GraphHopper().forServer();
-hopper.setInMemory(true);
 hopper.setOSMFile(osmFile);
 // where to store graphhopper files?
 hopper.setGraphHopperLocation(graphFolder);
@@ -15,7 +15,8 @@ hopper.importOrLoad();
 // simple configuration of the request object, see the GraphHopperServlet classs for more possibilities.
 GHRequest req = new GHRequest(latFrom, lonFrom, latTo, lonTo).
     setWeighting("fastest").
-    setVehicle("car");
+    setVehicle("car").
+    setLocale(Locale.US);
 GHResponse rsp = hopper.route(req);
 
 // first check for errors
@@ -25,22 +26,20 @@ if(rsp.hasErrors()) {
    return;
 }
 
-// route was found? e.g. if disconnected areas (like island) 
-// no route can ever be found
-if(!rsp.isFound()) {
-   // handle properly
-   return;
-}
-
 // points, distance in meters and time in millis of the full path
 PointList pointList = rsp.getPoints();
 double distance = rsp.getDistance();
-long millis = rsp.getMillis();
+long timeInMs = rsp.getTime();
 
-// get the turn instructions for the path
 InstructionList il = rsp.getInstructions();
-Translation tr = trMap.getWithFallBack(Locale.US);
-List<String> iList = il.createDescription(tr);
+// iterate over every turn instruction
+for(Instruction instruction : il) {
+   instruction.getDistance();
+   ...
+}
+
+// or get the json
+List<Map<String, Object>> iList = il.createJson();
 
 // or get the result as gpx entries:
 List<GPXEntry> list = il.createGPXList();
@@ -55,8 +54,7 @@ Then pick one vehicle and optionally the algorithm like 'bidirectional astar' as
 
 ```java
 GraphHopper hopper = new GraphHopper().forServer();
-hopper.disableCHShortcuts();
-hopper.setInMemory(true);
+hopper.setCHEnable(false);
 hopper.setOSMFile(osmFile);
 hopper.setGraphHopperLocation(graphFolder);
 hopper.setEncodingManager(new EncodingManager("car,bike"));
@@ -68,8 +66,22 @@ GHRequest req = new GHRequest(latFrom, lonFrom, latTo, lonTo).
 GHResponse res = hopper.route(req);
 ```
 
+In the flexibility mode it is also possible to add a desired heading (north based azimuth between 0 and 360 degree)
+to any point:
+```java
+GHRequest req = new GHRequest().addPoint(new GHPoint (latFrom, lonFrom), favoredHeading).addPoint(new GHPoint (latTo, lonTo));
+```
+or to avoid u-turns at via points
+```java
+req.getHints().put("pass_through", true);
+```
+
+A heading with the value 'NaN' won't be enforced and a heading not within [0, 360] will trigger an IllegalStateException.
+It is important to note that if you force the heading at via or end points the outgoing heading needs to be specified.
+I.e. if you want to force "coming from south" to a destination you need to specify the resulting "heading towards north" instead, which is 0.
+ 
 In case you need a web access in a Java or an Android application the GraphHopperWeb class comes handy,
- see the 'web' sub module.
+ see the 'web' sub module or [the Java client for the GraphHopper Directions API](https://github.com/graphhopper/directions-api-java-client).
 
 ```java
 GraphHopperAPI gh = new GraphHopperWeb();

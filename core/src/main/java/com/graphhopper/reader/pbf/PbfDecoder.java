@@ -2,6 +2,7 @@
 package com.graphhopper.reader.pbf;
 
 import com.graphhopper.reader.OSMElement;
+
 import java.util.Date;
 
 import java.util.LinkedList;
@@ -15,7 +16,7 @@ import java.util.concurrent.locks.ReentrantLock;
 /**
  * Decodes all blocks from a PBF stream using worker threads, and passes the results to the
  * downstream sink.
- * <p/>
+ * <p>
  * @author Brett Henderson
  */
 public class PbfDecoder implements Runnable
@@ -30,14 +31,14 @@ public class PbfDecoder implements Runnable
 
     /**
      * Creates a new instance.
-     * <p/>
+     * <p>
      * @param streamSplitter The PBF stream splitter providing the source of blobs to be decoded.
      * @param executorService The executor service managing the thread pool.
      * @param maxPendingBlobs The maximum number of blobs to have in progress at any point in time.
      * @param sink The sink to send all decoded entities to.
      */
     public PbfDecoder( PbfStreamSplitter streamSplitter, ExecutorService executorService, int maxPendingBlobs,
-            Sink sink )
+                       Sink sink )
     {
         this.streamSplitter = streamSplitter;
         this.executorService = executorService;

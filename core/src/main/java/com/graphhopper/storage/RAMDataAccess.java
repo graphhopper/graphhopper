@@ -22,12 +22,13 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteOrder;
 import java.util.Arrays;
+
 import org.slf4j.LoggerFactory;
 
 /**
  * This is an in-memory byte-based data structure with the possibility to be stored on flush().
  * Thread safe.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class RAMDataAccess extends AbstractDataAccess
@@ -92,18 +93,18 @@ public class RAMDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public boolean ensureCapacity(long bytes)
+    public boolean ensureCapacity( long bytes )
     {
         if (bytes < 0)
             throw new IllegalArgumentException("new capacity has to be strictly positive");
 
         long cap = getCapacity();
-        long todoBytes = bytes - cap;
-        if (todoBytes <= 0)
+        long newBytes = bytes - cap;
+        if (newBytes <= 0)
             return false;
 
-        int segmentsToCreate = (int) (todoBytes / segmentSizeInBytes);
-        if (todoBytes % segmentSizeInBytes != 0)
+        int segmentsToCreate = (int) (newBytes / segmentSizeInBytes);
+        if (newBytes % segmentSizeInBytes != 0)
             segmentsToCreate++;
 
         try
@@ -117,7 +118,7 @@ public class RAMDataAccess extends AbstractDataAccess
         } catch (OutOfMemoryError err)
         {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
-                    + cap + ", new bytes:" + todoBytes + ", segmentSizeIntsPower:" + segmentSizePower
+                    + cap + ", new bytes:" + newBytes + ", segmentSizeIntsPower:" + segmentSizePower
                     + ", new segments:" + segmentsToCreate + ", existing:" + segments.length);
         }
         return true;

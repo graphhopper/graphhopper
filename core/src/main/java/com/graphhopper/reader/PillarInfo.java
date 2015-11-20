@@ -61,7 +61,7 @@ public class PillarInfo implements PointAccess
     {
         long tmp = (long) nodeId * rowSizeInBytes;
         da.ensureCapacity(tmp + rowSizeInBytes);
-    }        
+    }
 
     @Override
     public void setNode( int nodeId, double lat, double lon )

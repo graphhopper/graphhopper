@@ -25,7 +25,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
-
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -33,16 +32,14 @@ import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.procedure.TObjectProcedure;
 import gnu.trove.set.hash.TIntHashSet;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 /**
  * A class which is used to query the underlying graph with real GPS points. It does so by
  * introducing virtual nodes and edges. It is lightweight in order to be created every time a new
  * query comes in, which makes the behaviour thread safe.
- * <p/>
+ * <p>
+ *
  * @author Peter Karich
  */
 public class QueryGraph implements Graph
@@ -58,20 +55,22 @@ public class QueryGraph implements Graph
      * Virtual edges are created between existing graph and new virtual tower nodes. For every
      * virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
      */
-    private List<EdgeIteratorState> virtualEdges;
-    private final static int VE_BASE = 0, VE_BASE_REV = 1, VE_ADJ = 2, VE_ADJ_REV = 3;
+    List<VirtualEdgeIteratorState> virtualEdges;
+    final static int VE_BASE = 0, VE_BASE_REV = 1, VE_ADJ = 2, VE_ADJ_REV = 3;
 
     /**
      * Store lat,lon of virtual tower nodes.
      */
     private PointList virtualNodes;
+    private static final AngleCalc ac = new AngleCalc();
+    private List<VirtualEdgeIteratorState> modifiedEdges = new ArrayList<VirtualEdgeIteratorState>(5);
 
     public QueryGraph( Graph graph )
     {
         mainGraph = graph;
         mainNodeAccess = graph.getNodeAccess();
         mainNodes = graph.getNodes();
-        mainEdges = graph.getAllEdges().getCount();
+        mainEdges = graph.getAllEdges().getMaxId();
 
         if (mainGraph.getExtension() instanceof TurnCostExtension)
             wrappedExtension = new QueryGraphTurnExt(this);
@@ -117,7 +116,7 @@ public class QueryGraph implements Graph
             throw new IllegalStateException("Call lookup only once. Otherwise you'll have problems for queries sharing the same edge.");
 
         // initialize all none-final variables
-        virtualEdges = new ArrayList<EdgeIteratorState>(resList.size() * 2);
+        virtualEdges = new ArrayList<VirtualEdgeIteratorState>(resList.size() * 2);
         virtualNodes = new PointList(resList.size(), mainNodeAccess.is3D());
         queryResults = new ArrayList<QueryResult>(resList.size());
         baseGraph.virtualEdges = virtualEdges;
@@ -131,11 +130,10 @@ public class QueryGraph implements Graph
         for (QueryResult res : resList)
         {
             // Do not create virtual node for a query result if it is directly on a tower node or not found
-            EdgeIteratorState closestEdge = res.getClosestEdge();
-
             if (res.getSnappedPosition() == QueryResult.Position.TOWER)
                 continue;
 
+            EdgeIteratorState closestEdge = res.getClosestEdge();
             if (closestEdge == null)
                 throw new IllegalStateException("Do not call QueryGraph.lookup with invalid QueryResult " + res);
 
@@ -219,6 +217,8 @@ public class QueryGraph implements Graph
 
                 GHPoint3D prevPoint = fullPL.toGHPoint(0);
                 int adjNode = closestEdge.getAdjNode();
+                int origTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), false);
+                int origRevTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), true);
                 long reverseFlags = closestEdge.detach(true).getFlags();
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
@@ -244,7 +244,8 @@ public class QueryGraph implements Graph
                     }
 
                     queryResults.add(res);
-                    createEdges(prevPoint, prevWayIndex,
+                    createEdges(origTraversalKey, origRevTraversalKey,
+                            prevPoint, prevWayIndex,
                             res.getSnappedPoint(), res.getWayIndex(),
                             fullPL, closestEdge, prevNodeId, virtNodeId, reverseFlags);
 
@@ -267,7 +268,9 @@ public class QueryGraph implements Graph
 
                 // two edges between last result and adjacent node are still missing if not all points skipped
                 if (addedEdges)
-                    createEdges(prevPoint, prevWayIndex, fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
+                    createEdges(origTraversalKey, origRevTraversalKey,
+                            prevPoint, prevWayIndex,
+                            fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
                             fullPL, closestEdge, virtNodeId - 1, adjNode, reverseFlags);
 
                 return true;
@@ -278,7 +281,7 @@ public class QueryGraph implements Graph
     @Override
     public Graph getBaseGraph()
     {
-        // Note: if the mainGraph of this QueryGraph is a LevelGraph then ignoring the shortcuts will produce a 
+        // Note: if the mainGraph of this QueryGraph is a CHGraph then ignoring the shortcuts will produce a 
         // huge gap of edgeIds between base and virtual edge ids. The only solution would be to move virtual edges
         // directly after normal edge ids which is ugly as we limit virtual edges to N edges and waste memory or make everything more complex.        
         return baseGraph;
@@ -328,9 +331,10 @@ public class QueryGraph implements Graph
         }
     }
 
-    private void createEdges( GHPoint3D prevSnapped, int prevWayIndex, GHPoint3D currSnapped, int wayIndex,
-            PointList fullPL, EdgeIteratorState closestEdge,
-            int prevNodeId, int nodeId, long reverseFlags )
+    private void createEdges( int origTraversalKey, int origRevTraversalKey,
+                              GHPoint3D prevSnapped, int prevWayIndex, GHPoint3D currSnapped, int wayIndex,
+                              PointList fullPL, EdgeIteratorState closestEdge,
+                              int prevNodeId, int nodeId, long reverseFlags )
     {
         int max = wayIndex + 1;
         // basePoints must have at least the size of 2 to make sure fetchWayGeometry(3) returns at least 2
@@ -347,13 +351,106 @@ public class QueryGraph implements Graph
         int virtEdgeId = mainEdges + virtualEdges.size();
 
         // edges between base and snapped point
-        VirtualEdgeIState baseEdge = new VirtualEdgeIState(virtEdgeId, prevNodeId, nodeId,
-                baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints);
-        VirtualEdgeIState baseReverseEdge = new VirtualEdgeIState(virtEdgeId, nodeId, prevNodeId,
-                baseDistance, reverseFlags, closestEdge.getName(), baseReversePoints);
+        VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origTraversalKey,
+                virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints);
+        VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevTraversalKey,
+                virtEdgeId, nodeId, prevNodeId, baseDistance, reverseFlags, closestEdge.getName(), baseReversePoints);
 
         virtualEdges.add(baseEdge);
         virtualEdges.add(baseReverseEdge);
+    }
+
+    /**
+     * set edges at virtual node unfavored which require at least a turn of 100° from favoredHeading
+     * <p>
+     * @param nodeId VirtualNode at which edges get unfavored
+     * @param favoredHeading north based azimuth of favored heading between 0 and 360
+     * @param incoming if true, incoming edges are unfavored, else outgoing edges
+     * @return boolean indicating if enforcement took place
+     */
+    public boolean enforceHeading( int nodeId, double favoredHeading, boolean incoming )
+    {
+        if (!isInitialized())
+            throw new IllegalStateException("QueryGraph.lookup has to be called in before heading enforcement");
+
+        if (Double.isNaN(favoredHeading))
+            return false;
+
+        if (!isVirtualNode(nodeId))
+            return false;
+
+        int virtNodeIDintern = nodeId - mainNodes;
+        favoredHeading = ac.convertAzimuth2xaxisAngle(favoredHeading);
+
+        // either penalize incoming or outgoing edges
+        List<Integer> edgePositions = incoming ? Arrays.asList(VE_BASE, VE_ADJ_REV) : Arrays.asList(VE_BASE_REV, VE_ADJ);
+        boolean enforcementOccured = false;
+        for (int edgePos : edgePositions)
+        {
+            VirtualEdgeIteratorState edge = virtualEdges.get(virtNodeIDintern * 4 + edgePos);
+
+            PointList wayGeo = edge.fetchWayGeometry(3);
+            double edgeOrientation;
+            if (incoming)
+            {
+                int numWayPoints = wayGeo.getSize();
+                edgeOrientation = ac.calcOrientation(wayGeo.getLat(numWayPoints - 2), wayGeo.getLon(numWayPoints - 2),
+                        wayGeo.getLat(numWayPoints - 1), wayGeo.getLon(numWayPoints - 1));
+            } else
+            {
+                edgeOrientation = ac.calcOrientation(wayGeo.getLat(0), wayGeo.getLon(0),
+                        wayGeo.getLat(1), wayGeo.getLon(1));
+            }
+
+            edgeOrientation = ac.alignOrientation(favoredHeading, edgeOrientation);
+            double delta = (edgeOrientation - favoredHeading);
+
+            if (Math.abs(delta) > 1.74) // penalize if a turn of more than 100°
+            {
+                edge.setVirtualEdgePreference(true);
+                modifiedEdges.add(edge);
+                //also apply to opposite edge for reverse routing
+                VirtualEdgeIteratorState reverseEdge = virtualEdges.get(virtNodeIDintern * 4 + getPosOfReverseEdge(edgePos));
+                reverseEdge.setVirtualEdgePreference(true);
+                modifiedEdges.add(reverseEdge);
+                enforcementOccured = true;
+            }
+
+        }
+        return enforcementOccured;
+    }
+
+    /**
+     * set specific edge at virtual node unfavored, to enforce routing along other edges
+     * <p>
+     * @param nodeId VirtualNode at which edges get unfavored
+     * @param edgeId edge to become unfavored
+     * @param incoming if true, incoming edge is unfavored, else outgoing edge
+     * @return boolean indicating if enforcement took place
+     */
+    public boolean enforceHeadingByEdgeId( int nodeId, int edgeId, boolean incoming )
+    {
+        if (!isVirtualNode(nodeId))
+            return false;
+
+        VirtualEdgeIteratorState incomingEdge = (VirtualEdgeIteratorState) getEdgeIteratorState(edgeId, nodeId);
+        VirtualEdgeIteratorState reverseEdge = (VirtualEdgeIteratorState) getEdgeIteratorState(edgeId, incomingEdge.getBaseNode());
+        incomingEdge.setVirtualEdgePreference(true);
+        modifiedEdges.add(incomingEdge);
+        reverseEdge.setVirtualEdgePreference(true);
+        modifiedEdges.add(reverseEdge);
+        return true;
+    }
+
+    /**
+     * removes the unfavored status of all virtual edges
+     */
+    public void clearUnfavoredStatus()
+    {
+        for (VirtualEdgeIteratorState edge : modifiedEdges)
+        {
+            edge.setVirtualEdgePreference(false);
+        }
     }
 
     @Override
@@ -464,26 +561,33 @@ public class QueryGraph implements Graph
     }
 
     @Override
-    public EdgeIteratorState getEdgeProps( int origEdgeId, int adjNode )
+    public EdgeIteratorState getEdgeIteratorState( int origEdgeId, int adjNode )
     {
         if (!isVirtualEdge(origEdgeId))
-            return mainGraph.getEdgeProps(origEdgeId, adjNode);
+            return mainGraph.getEdgeIteratorState(origEdgeId, adjNode);
 
         int edgeId = origEdgeId - mainEdges;
         EdgeIteratorState eis = virtualEdges.get(edgeId);
         if (eis.getAdjNode() == adjNode || adjNode == Integer.MIN_VALUE)
             return eis;
+        edgeId = getPosOfReverseEdge(edgeId);
 
-        // find reverse edge via convention. see virtualEdges comment above
-        if (edgeId % 2 == 0)
-            edgeId++;
-        else
-            edgeId--;
         EdgeIteratorState eis2 = virtualEdges.get(edgeId);
         if (eis2.getAdjNode() == adjNode)
             return eis2;
         throw new IllegalStateException("Edge " + origEdgeId + " not found with adjNode:" + adjNode
                 + ". found edges were:" + eis + ", " + eis2);
+    }
+
+    private int getPosOfReverseEdge( int edgeId )
+    {
+        // find reverse edge via convention. see virtualEdges comment above
+        if (edgeId % 2 == 0)
+            edgeId++;
+        else
+            edgeId--;
+
+        return edgeId;
     }
 
     @Override
@@ -568,7 +672,7 @@ public class QueryGraph implements Graph
      * Creates a fake edge iterator pointing to multiple edge states.
      */
     private void addVirtualEdges( TIntObjectMap<VirtualEdgeIterator> node2EdgeMap, EdgeFilter filter, boolean base,
-            int node, int virtNode )
+                                  int node, int virtNode )
     {
         VirtualEdgeIterator existingIter = node2EdgeMap.get(node);
         if (existingIter == null)

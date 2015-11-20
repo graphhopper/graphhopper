@@ -18,12 +18,13 @@
 package com.graphhopper.coll;
 
 import com.graphhopper.util.BitUtil;
+
 import java.util.TreeMap;
 
 /**
  * A priority queue implemented by a TreeMap. As the tree map does not allow duplicated we compose
  * the key via priority | nodeId.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHTreeMapComposed
@@ -67,7 +68,7 @@ public class GHTreeMapComposed
     public int peekValue()
     {
         long key = map.firstEntry().getKey();
-        return (int) (key >>> 32);
+        return (int) (key >> 32);
     }
 
     public int peekKey()

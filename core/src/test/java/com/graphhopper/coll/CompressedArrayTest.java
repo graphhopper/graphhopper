@@ -18,12 +18,14 @@
 package com.graphhopper.coll;
 
 import com.graphhopper.util.shapes.GHPoint;
+
 import java.util.Random;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class CompressedArrayTest

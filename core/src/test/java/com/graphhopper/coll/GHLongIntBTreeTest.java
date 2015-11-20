@@ -20,11 +20,12 @@ package com.graphhopper.coll;
 import java.util.LinkedHashSet;
 import java.util.Random;
 import java.util.Set;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class GHLongIntBTreeTest

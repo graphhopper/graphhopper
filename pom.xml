@@ -6,7 +6,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>0.4.0</version>
+    <version>0.5.0</version>
     <packaging>pom</packaging> 
     <url>http://graphhopper.com</url> 
     <inceptionYear>2012</inceptionYear>
@@ -23,7 +23,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <slf4j.version>1.7.10</slf4j.version>
+        <slf4j.version>1.7.12</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
         
         <!-- netbeans formatting rules -->
@@ -44,6 +44,8 @@
         <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.allowConvertToStarImport>true</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.allowConvertToStarImport>
         <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.countForUsingStaticStarImport>2</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.countForUsingStaticStarImport>
         <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.importGroupsOrder>*</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.importGroupsOrder>        
+        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineMethodParams>true</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineMethodParams>
+        <org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineAnnotationArgs>true</org-netbeans-modules-editor-indent.text.x-java.CodeStyle.project.alignMultilineAnnotationArgs>        
     </properties>
     
     <scm>
@@ -55,11 +57,6 @@
         <developer>
             <id>karussell</id>
             <name>Peter Karich</name>
-            <email>my.name@graphhopper.com</email>
-        </developer>
-        <developer>
-            <id>jansoe</id>
-            <name>Jan Sölter</name>
             <email>my.name@graphhopper.com</email>
         </developer>
     </developers>
@@ -91,7 +88,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.2</version>
+                <version>3.3</version>
                 <configuration>
                     <!--
                     <compilerArgument>-Xlint:unchecked</compilerArgument>
@@ -137,7 +134,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.1</version>
+                <version>2.10.3</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -147,12 +144,12 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.5.3</version>                    
+                <version>2.5.5</version>                    
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>2.5</version>
+                <version>2.6</version>
             </plugin>
             <plugin>
                 <artifactId>maven-war-plugin</artifactId>
@@ -185,7 +182,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
+                        <version>1.6</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>

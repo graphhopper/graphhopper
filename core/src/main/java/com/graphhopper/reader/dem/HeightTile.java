@@ -19,6 +19,7 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DataAccess;
+
 // import java.awt.Color;
 // import java.awt.Graphics;
 // import java.awt.image.BufferedImage;

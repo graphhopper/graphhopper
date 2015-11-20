@@ -19,16 +19,16 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+
 import static org.junit.Assert.*;
 import static com.graphhopper.util.GHUtility.*;
+
 import java.util.Arrays;
 import java.util.Collection;
+
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -56,13 +56,13 @@ public class EdgeBasedRoutingAlgorithmTest
     public static Collection<Object[]> configs()
     {
         return Arrays.asList(new Object[][]
-        {
-            { AlgorithmOptions.DIJKSTRA },
-            { AlgorithmOptions.DIJKSTRA_BI },
-            { AlgorithmOptions.ASTAR },
-            { AlgorithmOptions.ASTAR_BI }
-        // TODO { AlgorithmOptions.DIJKSTRA_ONE_TO_MANY }
-        });
+                {
+                        {AlgorithmOptions.DIJKSTRA},
+                        {AlgorithmOptions.DIJKSTRA_BI},
+                        {AlgorithmOptions.ASTAR},
+                        {AlgorithmOptions.ASTAR_BI}
+                        // TODO { AlgorithmOptions.DIJKSTRA_ONE_TO_MANY }
+                });
     }
 
     private final String algoStr;
@@ -78,7 +78,7 @@ public class EdgeBasedRoutingAlgorithmTest
         return new RoutingAlgorithmFactorySimple().createAlgo(g, opts);
     }
 
-    protected GraphStorage createGraph( EncodingManager em )
+    protected GraphHopperStorage createStorage( EncodingManager em )
     {
         return new GraphBuilder(em).create();
     }
@@ -138,7 +138,7 @@ public class EdgeBasedRoutingAlgorithmTest
     @Test
     public void testBasicTurnRestriction()
     {
-        GraphStorage g = createGraph(createEncodingManager(true));
+        GraphHopperStorage g = createStorage(createEncodingManager(true));
         initGraph(g);
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
         initTurnRestrictions(g, tcs, carEncoder);
@@ -168,7 +168,7 @@ public class EdgeBasedRoutingAlgorithmTest
     @Test
     public void testUTurns()
     {
-        GraphStorage g = createGraph(createEncodingManager(true));
+        GraphHopperStorage g = createStorage(createEncodingManager(true));
         initGraph(g);
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
 
@@ -186,7 +186,7 @@ public class EdgeBasedRoutingAlgorithmTest
                 flagEncoder(carEncoder).
                 weighting(createWeighting(carEncoder, tcs, 50)).
                 traversalMode(TraversalMode.EDGE_BASED_2DIR_UTURN).build();
-        Path p = createAlgo(g, opts).calcPath(7, 5);        
+        Path p = createAlgo(g, opts).calcPath(7, 5);
 
         assertEquals(Helper.createTList(7, 6, 3, 6, 5), p.calcNodes());
 
@@ -204,7 +204,7 @@ public class EdgeBasedRoutingAlgorithmTest
     @Test
     public void testBasicTurnCosts()
     {
-        GraphStorage g = createGraph(createEncodingManager(false));
+        GraphHopperStorage g = createStorage(createEncodingManager(false));
         initGraph(g);
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
         Path p = createAlgo(g, AlgorithmOptions.start().

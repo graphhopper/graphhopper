@@ -22,7 +22,7 @@ import gnu.trove.stack.array.TIntArrayStack;
 
 /**
  * Implementation of depth first search (DFS) by LIFO queue
- * <p/>
+ * <p>
  * @author Peter Karich
  * @author Jan Sölter
  */

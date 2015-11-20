@@ -21,9 +21,7 @@ package com.graphhopper.util;
  * Iterates through all edges of one node. Avoids object creation in-between via direct access
  * methods. If you want to access some properties of an 'edge' (i.e. the current state) for later
  * usage store it via edgeIterator.detach() or edgeIterator.getEdge() instead of the iterator
- * itself.
- * <p/>
- * Usage:
+ * itself. Usage:
  * <pre>
  * EdgeExplorer explorer = graph.createEdgeExplorer();
  * EdgeIterator iter = explorer.setBaseNode(nodeId);
@@ -33,10 +31,11 @@ package com.graphhopper.util;
  *   int adjacentNodeId = iter.getAdjNode(); // this is the node where this edge state is "pointing to"
  *   ...
  * }
- *
+ * </pre>
+ * <p>
+ * @author Peter Karich
  * @see EdgeIteratorState
  * @see EdgeExplorer
- * @author Peter Karich
  */
 public interface EdgeIterator extends EdgeIteratorState
 {

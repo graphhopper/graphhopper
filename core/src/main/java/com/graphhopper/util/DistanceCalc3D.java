@@ -22,7 +22,7 @@ package com.graphhopper.util;
  * geometry mixed with Haversine formula used for the on earth distance. The haversine formula makes
  * not so much sense as it is only important for large distances where then the rather smallish
  * heights would becomes neglectable.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class DistanceCalc3D extends DistanceCalcEarth
@@ -32,7 +32,7 @@ public class DistanceCalc3D extends DistanceCalcEarth
      * @param toHeight in meters above 0
      */
     public double calcDist( double fromLat, double fromLon, double fromHeight,
-            double toLat, double toLon, double toHeight )
+                            double toLat, double toLon, double toHeight )
     {
         double len = super.calcDist(fromLat, fromLon, toLat, toLon);
         double delta = Math.abs(toHeight - fromHeight);

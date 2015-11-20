@@ -18,14 +18,12 @@
 package com.graphhopper;
 
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class GraphHopperAPITest
@@ -35,7 +33,7 @@ public class GraphHopperAPITest
     @Test
     public void testLoad()
     {
-        GraphStorage graph = new GraphBuilder(encodingManager).create();
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 42, 10);
         na.setNode(1, 42.1, 10.1);
@@ -68,7 +66,7 @@ public class GraphHopperAPITest
     @Test
     public void testDisconnected179()
     {
-        GraphStorage graph = new GraphBuilder(encodingManager).create();
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 42, 10);
         na.setNode(1, 42.1, 10.1);

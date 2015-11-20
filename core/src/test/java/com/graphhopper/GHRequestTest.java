@@ -18,11 +18,17 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
- *
  * @author Peter Karich
  */
 public class GHRequestTest
@@ -35,5 +41,72 @@ public class GHRequestTest
         assertEquals(1, instance.getHints().getInt("something", 2));
         // #173 - will throw an error: Integer cannot be cast to Double
         assertEquals(1, instance.getHints().getDouble("something", 2d), 1e1);
+    }
+
+    @Test
+    public void testCorrectInit()
+    {
+        double lat0 = 51, lon0 = 1, lat1 = 52, lon1 = 2, lat2 = 53, lon2 = 3;
+
+        ArrayList<GHPoint> points = new ArrayList<GHPoint>(3);
+        points.add(new GHPoint(lat0, lon0));
+        points.add(new GHPoint(lat1, lon1));
+        points.add(new GHPoint(lat2, lon2));
+        List<Double> favoredHeadings = Arrays.asList(3.14, 4.15, Double.NaN);
+        List<Double> emptyHeadings = Arrays.asList(Double.NaN, Double.NaN, Double.NaN);
+
+        GHRequest instance;
+
+        instance = new GHRequest(points, favoredHeadings);
+        compareFavoredHeadings(instance, favoredHeadings);
+        assertEquals("Points not initialized correct", points, instance.getPoints());
+
+        instance = new GHRequest(points.get(0), points.get(1), favoredHeadings.get(0), favoredHeadings.get(1));
+        compareFavoredHeadings(instance, favoredHeadings.subList(0, 2));
+        assertEquals("Points not initialized correct", points.subList(0, 2), instance.getPoints());
+
+        instance = new GHRequest(lat0, lon0, lat1, lon1, favoredHeadings.get(0), favoredHeadings.get(1));
+        compareFavoredHeadings(instance, favoredHeadings.subList(0, 2));
+        assertEquals("Points not initialized correct", points.subList(0, 2), instance.getPoints());
+
+        instance = new GHRequest(3).addPoint(points.get(0), favoredHeadings.get(0)).
+                addPoint(points.get(1), favoredHeadings.get(1)).
+                addPoint(points.get(2), favoredHeadings.get(2));
+        compareFavoredHeadings(instance, favoredHeadings);
+        assertEquals("Points not initialized correct", points, instance.getPoints());
+
+        instance = new GHRequest().addPoint(points.get(0), favoredHeadings.get(0)).
+                addPoint(points.get(1), favoredHeadings.get(1)).
+                addPoint(points.get(2), favoredHeadings.get(2));
+        assertEquals("Points not initialized correct", points, instance.getPoints());
+        compareFavoredHeadings(instance, favoredHeadings);
+
+        // check init without favoredHeadings
+        instance = new GHRequest(points);
+        assertEquals("Points not initialized correct", points, instance.getPoints());
+        compareFavoredHeadings(instance, emptyHeadings);
+
+        instance = new GHRequest(points.get(0), points.get(1));
+        assertEquals("Points not initialized correct", points.subList(0, 2), instance.getPoints());
+        compareFavoredHeadings(instance, emptyHeadings.subList(0, 2));
+
+        instance = new GHRequest(lat0, lon0, lat1, lon1);
+        assertEquals("Points not initialized correct", points.subList(0, 2), instance.getPoints());
+        compareFavoredHeadings(instance, emptyHeadings.subList(0, 2));
+
+        instance = new GHRequest().addPoint(points.get(0)).addPoint(points.get(1)).addPoint(points.get(2));
+        assertEquals("Points not initialized correct", points, instance.getPoints());
+        compareFavoredHeadings(instance, emptyHeadings);
+    }
+
+    private void compareFavoredHeadings( GHRequest request, List<Double> expected )
+    {
+        for (int ind = 0; ind < expected.size(); ind++)
+        {
+            double favoredHeading = request.getFavoredHeading(ind);
+            assertEquals(ind + " favored Heading does not match" + expected.get(ind) + " vs ." + favoredHeading,
+                    expected.get(ind), favoredHeading, 0.01);
+        }
+
     }
 }

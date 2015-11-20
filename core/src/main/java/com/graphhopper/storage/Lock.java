@@ -32,6 +32,6 @@ public interface Lock
     boolean isLocked();
 
     void release();
-    
+
     Exception getObtainFailedReason();
 }

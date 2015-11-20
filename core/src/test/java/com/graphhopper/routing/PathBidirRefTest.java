@@ -24,7 +24,9 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
+
 import static org.junit.Assert.*;
+
 import org.junit.Test;
 
 /**

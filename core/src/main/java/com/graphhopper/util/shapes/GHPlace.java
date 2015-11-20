@@ -21,7 +21,7 @@ import com.graphhopper.util.Helper;
 
 /**
  * Specifies a place by its coordinates or name
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHPlace extends GHPoint

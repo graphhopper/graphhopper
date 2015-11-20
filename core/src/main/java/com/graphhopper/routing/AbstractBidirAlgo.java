@@ -24,7 +24,7 @@ import com.graphhopper.storage.Graph;
 
 /**
  * Common subclass for bidirectional algorithms.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
@@ -40,9 +40,9 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
 
     protected abstract Path createAndInitPath();
 
-    protected abstract boolean isWeightLimitReached();
+    protected abstract double getCurrentFromWeight();
 
-    abstract void checkState( int fromBase, int fromAdj, int toBase, int toAdj );
+    protected abstract double getCurrentToWeight();
 
     abstract boolean fillEdgesFrom();
 
@@ -66,13 +66,21 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
 
     protected void runAlgo()
     {
-        while (!finished() && !isWeightLimitReached())
+        while (!finished() && !isWeightLimitExceeded())
         {
-            if (!finishedFrom)
+            if (!finishedFrom && !finishedTo)
+            {
+                if (getCurrentFromWeight() < getCurrentToWeight())
+                    finishedFrom = !fillEdgesFrom();
+                else
+                    finishedTo = !fillEdgesTo();
+            } else if (!finishedFrom)
+            {
                 finishedFrom = !fillEdgesFrom();
-
-            if (!finishedTo)
+            } else
+            {
                 finishedTo = !fillEdgesTo();
+            }
         }
     }
 

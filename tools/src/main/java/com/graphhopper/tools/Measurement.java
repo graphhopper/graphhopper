@@ -20,20 +20,15 @@ package com.graphhopper.tools;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphStorage;
-import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.MiniPerfTest;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -44,6 +39,7 @@ import java.util.Random;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -56,6 +52,7 @@ public class Measurement
     {
         new Measurement().start(CmdArgs.read(strs));
     }
+
     private static final Logger logger = LoggerFactory.getLogger(Measurement.class);
     private final Map<String, String> properties = new TreeMap<String, String>();
     private long seed;
@@ -75,16 +72,21 @@ public class Measurement
             // skip check. we know what we are doing
         }
 
-        public void doPostProcessing()
+        public void doPostProcessing( Weighting w )
         {
-            // re-create index to avoid bug as pickNode in locationIndex.prepare could be wrong while indexing if level is not taken into account and assumed to be 0 for pre-initialized graph            
+            // re-create index to avoid bug as pickNode in locationIndex.prepare could be wrong while indexing if level is not taken into account and assumed to be 0 for pre-initialized graph
             StopWatch sw = new StopWatch().start();
-            int edges = getGraph().getAllEdges().getCount();
-            setAlgorithmFactory(createPrepare());
+
+            // let algo routing factory convert simple to CH preparation
+            putAlgorithmFactory(w, null);
+            createCHPreparations();
             super.prepare();
+
             setLocationIndex(createLocationIndex(new RAMDirectory()));
             put("prepare.time", sw.stop().getTime());
-            put("prepare.shortcuts", getGraph().getAllEdges().getCount() - edges);
+            int edges = getGraphHopperStorage().getAllEdges().getMaxId();
+            int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, w).getAllEdges().getMaxId();
+            put("prepare.shortcuts", edgesAndShortcuts - edges);
         }
     }
 
@@ -110,30 +112,38 @@ public class Measurement
         MeasureHopper hopper = new MeasureHopper();
         hopper.forDesktop();
         if (!hopper.load(graphLocation))
-            throw new IllegalStateException("Cannot load existing levelgraph at " + graphLocation);
-
-        GraphStorage g = hopper.getGraph();
+            throw new IllegalStateException("Cannot load existing graph at " + graphLocation);
+        
+        GraphHopperStorage g = hopper.getGraphHopperStorage();
         if ("true".equals(g.getProperties().get("prepare.done")))
             throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
-        String vehicleStr = args.get("graph.flagEncoders", "");
+        String chWeighting = args.get("prepare.chWeighting", "fastest");        
+        String vehicleStr = args.get("graph.flagEncoders", "car");
+        FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicleStr);
+        Weighting weighting = hopper.getWeightingForCH(new WeightingMap(chWeighting), encoder);
         StopWatch sw = new StopWatch().start();
         try
         {
             maxNode = g.getNodes();
-            printGraphDetails(g, vehicleStr);
+            GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
+            printMiscUnitPerfTests(false, g, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
 
             // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
             // => values are not really comparable to routingCH as e.g. the mean distance etc is different            
-            hopper.setCHEnable(false);
+            hopper.setCHEnable(false);            
+            hopper.putAlgorithmFactory(weighting, new RoutingAlgorithmFactorySimple());
             printTimeOfRouteQuery(hopper, count / 20, "routing", vehicleStr, true);
 
             System.gc();
 
             // route via CH. do preparation before                        
-            hopper.setCHEnable(true);
-            hopper.doPostProcessing();
+            hopper.setCHEnable(true);            
+            hopper.doPostProcessing(weighting);
+            CHGraph lg = g.getGraph(CHGraph.class, weighting);
+            fillAllowedEdges(lg.getAllEdges(), allowedEdges);
+            printMiscUnitPerfTests(true, lg, encoder, count * 100, allowedEdges);
             printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr, true);
             printTimeOfRouteQuery(hopper, count, "routingCH_no_instr", vehicleStr, false);
             logger.info("store into " + propLocation);
@@ -161,13 +171,29 @@ public class Measurement
         }
     }
 
-    private void printGraphDetails( GraphStorage g, String vehicleStr )
+    void fillAllowedEdges( AllEdgesIterator iter, GHBitSet bs )
+    {
+        bs.clear();
+        while (iter.next())
+        {
+            bs.add(iter.getEdge());
+        }
+    }
+
+    private GHBitSet printGraphDetails( GraphHopperStorage g, String vehicleStr )
     {
         // graph size (edge, node and storage size)
         put("graph.nodes", g.getNodes());
-        put("graph.edges", g.getAllEdges().getCount());
+        put("graph.edges", g.getAllEdges().getMaxId());
         put("graph.sizeInMB", g.getCapacity() / Helper.MB);
         put("graph.encoder", vehicleStr);
+
+        AllEdgesIterator iter = g.getAllEdges();
+        final int maxEdgesId = g.getAllEdges().getMaxId();
+        final GHBitSet allowedEdges = new GHBitSetImpl(maxEdgesId);
+        fillAllowedEdges(iter, allowedEdges);
+        put("graph.valid_edges", allowedEdges.getCardinality());
+        return allowedEdges;
     }
 
     private void printLocationIndexQuery( Graph g, final LocationIndex idx, int count )
@@ -195,10 +221,92 @@ public class Measurement
         print("location2id", miniPerf);
     }
 
-    private void printTimeOfRouteQuery( final GraphHopper hopper, int count, String prefix,
-            final String vehicle, final boolean withInstructions )
+    private void printMiscUnitPerfTests( boolean isCH, final Graph graph, final FlagEncoder encoder,
+                                         int count, final GHBitSet allowedEdges )
     {
-        final Graph g = hopper.getGraph();
+        final Random rand = new Random(seed);
+        String description = "";
+        if (isCH)
+        {
+            description = "CH";
+            CHGraph lg = (CHGraph) graph;
+            final CHEdgeExplorer chExplorer = lg.createEdgeExplorer(new LevelEdgeFilter(lg));
+            MiniPerfTest miniPerf = new MiniPerfTest()
+            {
+                @Override
+                public int doCalc( boolean warmup, int run )
+                {
+                    int nodeId = rand.nextInt(maxNode);
+                    return GHUtility.count(chExplorer.setBaseNode(nodeId));
+                }
+            }.setIterations(count).start();
+            print("unit_testsCH.level_edge_state_next", miniPerf);
+
+            final CHEdgeExplorer chExplorer2 = lg.createEdgeExplorer();
+            miniPerf = new MiniPerfTest()
+            {
+                @Override
+                public int doCalc( boolean warmup, int run )
+                {
+                    int nodeId = rand.nextInt(maxNode);
+                    CHEdgeIterator iter = chExplorer2.setBaseNode(nodeId);
+                    while (iter.next())
+                    {
+                        if (iter.isShortcut())
+                            nodeId += (int) iter.getWeight();
+                    }
+                    return nodeId;
+                }
+            }.setIterations(count).start();
+            print("unit_testsCH.get_weight", miniPerf);
+        }
+
+        EdgeFilter outFilter = new DefaultEdgeFilter(encoder, false, true);
+        final EdgeExplorer outExplorer = graph.createEdgeExplorer(outFilter);
+        MiniPerfTest miniPerf = new MiniPerfTest()
+        {
+            @Override
+            public int doCalc( boolean warmup, int run )
+            {
+                int nodeId = rand.nextInt(maxNode);
+                return GHUtility.count(outExplorer.setBaseNode(nodeId));
+            }
+        }.setIterations(count).start();
+        print("unit_tests" + description + ".out_edge_state_next", miniPerf);
+
+        final EdgeExplorer allExplorer = graph.createEdgeExplorer();
+        miniPerf = new MiniPerfTest()
+        {
+            @Override
+            public int doCalc( boolean warmup, int run )
+            {
+                int nodeId = rand.nextInt(maxNode);
+                return GHUtility.count(allExplorer.setBaseNode(nodeId));
+            }
+        }.setIterations(count).start();
+        print("unit_tests" + description + ".all_edge_state_next", miniPerf);
+
+        final int maxEdgesId = graph.getAllEdges().getMaxId();
+        miniPerf = new MiniPerfTest()
+        {
+            @Override
+            public int doCalc( boolean warmup, int run )
+            {
+                while (true)
+                {
+                    int edgeId = rand.nextInt(maxEdgesId);
+                    if (allowedEdges.contains(edgeId))
+                        return graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE).getEdge();
+                }
+            }
+        }.setIterations(count).start();
+        print("unit_tests" + description + ".get_edge_state", miniPerf);
+    }
+
+    private void printTimeOfRouteQuery( final GraphHopper hopper, int count, String prefix,
+                                        final String vehicle, final boolean withInstructions )
+    {
+        final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
         final AtomicLong distSum = new AtomicLong(0);
@@ -206,6 +314,7 @@ public class Measurement
         final AtomicInteger failedCount = new AtomicInteger(0);
         final DistanceCalc distCalc = new DistanceCalcEarth();
 
+        final AtomicLong visitedNodesSum = new AtomicLong(0);
 //        final AtomicLong extractTimeSum = new AtomicLong(0);
 //        final AtomicLong calcPointsTimeSum = new AtomicLong(0);
 //        final AtomicLong calcDistTimeSum = new AtomicLong(0);
@@ -251,6 +360,7 @@ public class Measurement
 
                 if (!warmup)
                 {
+                    visitedNodesSum.addAndGet(res.getHints().getLong("visited_nodes.sum", 0));
                     long dist = (long) res.getDistance();
                     distSum.addAndGet(dist);
 
@@ -278,6 +388,7 @@ public class Measurement
         put(prefix + ".distanceMean", (float) distSum.get() / count);
         put(prefix + ".airDistanceMean", (float) airDistSum.get() / count);
         put(prefix + ".distanceMax", maxDistance.get());
+        put(prefix + ".visitedNodesMean", (float) visitedNodesSum.get() / count);
 
 //        put(prefix + ".extractTime", (float) extractTimeSum.get() / count / 1000000f);
 //        put(prefix + ".calcPointsTime", (float) calcPointsTimeSum.get() / count / 1000000f);
@@ -287,7 +398,7 @@ public class Measurement
 
     void print( String prefix, MiniPerfTest perf )
     {
-        logger.info(perf.getReport());
+        logger.info(prefix + ": " + perf.getReport());
         put(prefix + ".sum", perf.getSum());
 //        put(prefix+".rms", perf.getRMS());
         put(prefix + ".min", perf.getMin());

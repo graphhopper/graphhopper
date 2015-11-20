@@ -56,7 +56,7 @@ public class NameIndex implements Storable<NameIndex>
     {
         if (names.loadExisting())
         {
-            bytePointer = BitUtil.LITTLE.combineIntsToLong(names.getHeader(0), names.getHeader(1));
+            bytePointer = BitUtil.LITTLE.combineIntsToLong(names.getHeader(0), names.getHeader(4));
             return true;
         }
 
@@ -87,10 +87,6 @@ public class NameIndex implements Storable<NameIndex>
         bytePointer++;
         names.setBytes(bytePointer, bytes, bytes.length);
         bytePointer += bytes.length;
-        if (bytePointer < 0)
-        {
-            throw new IllegalStateException("Way index is too large. Cannot contain more than 2GB");
-        }
         lastName = name;
         lastIndex = oldPointer;
         return oldPointer;
@@ -123,13 +119,12 @@ public class NameIndex implements Storable<NameIndex>
     public String get( long pointer )
     {
         if (pointer < 0)
-        {
-            throw new IllegalStateException("pointer cannot be negative:" + pointer);
-        }
+            throw new IllegalStateException("Pointer to access NameIndex cannot be negative:" + pointer);
+
+        // default
         if (pointer == 0)
-        {
             return "";
-        }
+
         byte[] sizeBytes = new byte[1];
         names.getBytes(pointer, sizeBytes, 1);
         int size = sizeBytes[0] & 0xFF;

@@ -7,6 +7,7 @@ import java.util.Map;
 import com.graphhopper.routing.util.TurnCostEncoder;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+
 import java.util.*;
 
 /**
@@ -75,7 +76,7 @@ public class OSMTurnRelation
      * @return a collection of node cost entries which can be added to the graph later
      */
     public Collection<TurnCostTableEntry> getRestrictionAsEntries( TurnCostEncoder encoder,
-            EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, OSMReader osmReader )
+                                                                   EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, OSMReader osmReader )
     {
         int nodeVia = osmReader.getInternalNodeIdOfOsmNode(this.viaOsmNodeId);
 

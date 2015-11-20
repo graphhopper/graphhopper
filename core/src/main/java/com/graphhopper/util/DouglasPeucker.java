@@ -20,9 +20,9 @@ package com.graphhopper.util;
 /**
  * Simplyfies a list of 2D points which are not too far away.
  * http://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm
- * <p/>
+ * <p>
  * Calling simplify is thread safe.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class DouglasPeucker
@@ -58,7 +58,7 @@ public class DouglasPeucker
 
     /**
      * This method removes points which are close to the line (defined by maxDist).
-     * <p/>
+     * <p>
      * @return removed nodes
      */
     public int simplify( PointList points )
@@ -172,5 +172,5 @@ public class DouglasPeucker
         return counter;
     }
 
-    
+
 }

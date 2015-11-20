@@ -17,15 +17,20 @@
  */
 package com.graphhopper.routing.util;
 
+import static com.graphhopper.routing.util.PriorityCode.BEST;
+import static com.graphhopper.routing.util.PriorityCode.PREFER;
+import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
+import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
+
+import java.util.TreeMap;
+
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
-import static com.graphhopper.routing.util.PriorityCode.*;
-import java.util.TreeMap;
+import com.graphhopper.util.PMap;
 
 /**
  * Specifies the settings for mountain biking
- * <p/>
+ * <p>
  * @author ratrun
  * @author Peter Karich
  */
@@ -36,11 +41,20 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
         this(4, 2, 0);
     }
 
+    public MountainBikeFlagEncoder( PMap properties )
+    {
+        this(
+                (int) properties.getLong("speedBits", 4),
+                properties.getDouble("speedFactor", 2),
+                properties.getBool("turnCosts", false) ? 1 : 0
+        );
+        this.properties = properties;
+        this.setBlockFords(properties.getBool("blockFords", true));
+    }
+
     public MountainBikeFlagEncoder( String propertiesStr )
     {
-        this((int) parseLong(propertiesStr, "speedBits", 4),
-                parseDouble(propertiesStr, "speedFactor", 2),
-                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+        this(new PMap(propertiesStr));
     }
 
     public MountainBikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
@@ -128,6 +142,15 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
         preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
+
+        potentialBarriers.add("kissing_gate");
+        setSpecificBicycleClass("mtb");
+    }
+
+    @Override
+    public int getVersion()
+    {
+        return 1;
     }
 
     @Override
@@ -172,7 +195,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
 
     @Override
     public String toString()
-    {        
+    {
         return "mtb";
     }
 }

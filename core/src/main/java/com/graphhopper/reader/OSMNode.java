@@ -18,12 +18,13 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.util.PointAccess;
+
 //import javax.xml.stream.XMLStreamException; 
 //import javax.xml.stream.XMLStreamReader;
 
 /**
  * Represents an OSM Node
- * <p/>
+ * <p>
  * @author Nop
  */
 public class OSMNode extends OSMElement

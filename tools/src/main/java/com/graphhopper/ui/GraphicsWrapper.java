@@ -20,9 +20,11 @@ package com.graphhopper.ui;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.shapes.BBox;
+
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Graphics2D;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +76,7 @@ public class GraphicsWrapper
         g2.drawString(text, (int) getX(lon) + 5, (int) getY(lat) + 5);
     }
 
-    public void plotEdge( Graphics2D g2, double lat, double lon, double lat2, double lon2, int width )
+    public void plotEdge( Graphics2D g2, double lat, double lon, double lat2, double lon2, float width )
     {
         g2.setStroke(new BasicStroke(width));
         g2.drawLine((int) getX(lon), (int) getY(lat), (int) getX(lon2), (int) getY(lat2));
@@ -126,6 +128,7 @@ public class GraphicsWrapper
         double y = getY(lat);
         g2.fillOval((int) x, (int) y, width, width);
     }
+
     private Logger logger = LoggerFactory.getLogger(getClass());
 
     void scale( int x, int y, boolean zoomIn )

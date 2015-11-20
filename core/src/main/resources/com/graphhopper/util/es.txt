@@ -41,5 +41,5 @@ paved=pavimentado
 unpaved=no pavimentado
 stopover=pasando por %1$s
 roundaboutEnter=Entre en la rotonda
-roundaboutExit=En la rotonda, tome la salida %1$s
-roundaboutExitOnto=En la rotonda, tome la salida %1$s hacia %2$s
+roundaboutExit=En la rotonda, tome la %1$sª salida
+roundaboutExitOnto=En la rotonda, tome la %1$sª salida hacia %2$s

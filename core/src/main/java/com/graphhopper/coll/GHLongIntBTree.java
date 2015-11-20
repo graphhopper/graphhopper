@@ -18,14 +18,16 @@
 package com.graphhopper.coll;
 
 import com.graphhopper.util.Helper;
+
 import java.util.Arrays;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * An in-memory simple B-Tree. Later we'll use DataAccess to allow on-disc storage for very large
  * data sets. Delete not supported.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHLongIntBTree implements LongIntMap
@@ -472,6 +474,7 @@ public class GHLongIntBTree implements LongIntMap
         int high = start + len, low = start - 1, guess;
         while (high - low > 1)
         {
+            // use >>> for average or we could get an integer overflow. 
             guess = (high + low) >>> 1;
             long guessedKey = keys[guess];
             if (guessedKey < key)

@@ -22,9 +22,14 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Downloader;
+import com.graphhopper.util.Helper;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.HttpURLConnection;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
@@ -95,13 +100,19 @@ public class BaseServletTester
         server = null;
     }
 
-    protected String getTestAPIUrl()
+    protected String getTestRouteAPIUrl()
     {
         String host = "localhost";
         return "http://" + host + ":" + port + "/route";
     }
 
-    protected JSONObject query( String query ) throws Exception
+    protected String getTestNearestAPIUrl()
+    {
+        String host = "localhost";
+        return "http://" + host + ":" + port + "/nearest";
+    }
+
+    protected String queryString( String query, int code ) throws Exception
     {
         String resQuery = "";
         for (String q : query.split("\\&"))
@@ -114,8 +125,34 @@ public class BaseServletTester
 
             resQuery += "&";
         }
-        String url = getTestAPIUrl() + "?" + resQuery;
+        String url = getTestRouteAPIUrl() + "?" + resQuery;
+        Downloader downloader = new Downloader("web integration tester").setTimeout(1000);
+        HttpURLConnection conn = downloader.createConnection(url);
+        conn.connect();
+        assertEquals(code, conn.getResponseCode());
+        return Helper.isToString(downloader.fetch(conn, true));
+    }
+
+    protected JSONObject query( String query, int code ) throws Exception
+    {
+        return new JSONObject(queryString(query, code));
+    }
+
+    protected JSONObject nearestQuery( String query ) throws Exception
+    {
+        String resQuery = "";
+        for (String q : query.split("\\&"))
+        {
+            int index = q.indexOf("=");
+            if (index > 0)
+                resQuery += q.substring(0, index + 1) + WebHelper.encodeURL(q.substring(index + 1));
+            else
+                resQuery += WebHelper.encodeURL(q);
+
+            resQuery += "&";
+        }
+        String url = getTestNearestAPIUrl() + "?" + resQuery;
         Downloader downloader = new Downloader("web integration tester");
-        return new JSONObject(downloader.downloadAsString(url));
-    }    
+        return new JSONObject(downloader.downloadAsString(url, true));
+    }
 }

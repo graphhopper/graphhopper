@@ -18,11 +18,12 @@
 package com.graphhopper.search;
 
 import com.graphhopper.util.shapes.GHPlace;
+
 import java.util.List;
 
 /**
  * Interface to convert from place names to points.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public interface Geocoding

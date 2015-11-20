@@ -17,10 +17,14 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
@@ -35,6 +39,30 @@ public class FastestWeightingTest
         FastestWeighting instance = new FastestWeighting(encoder);
         long flags = encoder.setProperties(encoder.getMaxSpeed(), true, true);
         assertEquals(instance.getMinWeight(10), instance.calcWeight(createEdge(10, flags), false, EdgeIterator.NO_EDGE), 1e-8);
+    }
+
+    @Test
+    public void testWeightWrongHeading()
+    {
+        FastestWeighting instance = new FastestWeighting(encoder, new PMap().put("heading_penalty", "100"));
+        VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, 1, 1, 2, 10,
+                encoder.setProperties(10, true, true), "test", Helper.createPointList(51, 0, 51, 1));
+        double time = instance.calcWeight(virtEdge, false, 0);
+
+        virtEdge.setVirtualEdgePreference(true);
+        // heading penalty on edge
+        assertEquals(time + 100, instance.calcWeight(virtEdge, false, 0), 1e-8);
+        // only after setting it
+        virtEdge.setVirtualEdgePreference(true);
+        assertEquals(time + 100, instance.calcWeight(virtEdge, true, 0), 1e-8);
+        // but not after releasing it
+        virtEdge.setVirtualEdgePreference(false);
+        assertEquals(time, instance.calcWeight(virtEdge, true, 0), 1e-8);
+        
+        // test default penalty
+        virtEdge.setVirtualEdgePreference(true);
+        instance = new FastestWeighting(encoder);
+        assertEquals(time + FastestWeighting.DEFAULT_HEADING_PENALTY, instance.calcWeight(virtEdge, false, 0), 1e-8);
     }
 
     @Test
@@ -62,6 +90,12 @@ public class FastestWeightingTest
             public long getFlags()
             {
                 return flags;
+            }
+
+            @Override
+            public boolean getBoolean( int key, boolean reverse, boolean _default )
+            {
+                return _default;
             }
         };
     }

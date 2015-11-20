@@ -19,6 +19,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -240,7 +241,7 @@ public class NativeFSLockFactory implements LockFactory
 
         file.createNewFile();
         FileChannel channel = new RandomAccessFile(file, "r").getChannel();
-        
+
         boolean shared = true;
         FileLock lock1 = channel.tryLock(0, Long.MAX_VALUE, shared);
 

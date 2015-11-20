@@ -18,10 +18,11 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.PMap;
 
 /**
  * Specifies the settings for cycletouring/trekking
- * <p/>
+ * <p>
  * @author ratrun
  * @author Peter Karich
  */
@@ -32,11 +33,18 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         this(4, 2, 0);
     }
 
-    public BikeFlagEncoder( String propertiesStr )
+    public BikeFlagEncoder( String propertiesString )
     {
-        this((int) parseLong(propertiesStr, "speedBits", 4),
-                parseDouble(propertiesStr, "speedFactor", 2),
-                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+        this(new PMap(propertiesString));
+    }
+
+    public BikeFlagEncoder( PMap properties )
+    {
+        this((int) properties.getLong("speedBits", 4),
+                properties.getLong("speedFactor", 2),
+                properties.getBool("turnCosts", false) ? 1 : 0);
+        this.properties = properties;
+        this.setBlockFords(properties.getBool("blockFords", true));
     }
 
     public BikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
@@ -60,6 +68,15 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         preferHighwayTags.add("tertiary_link");
         preferHighwayTags.add("residential");
         preferHighwayTags.add("unclassified");
+
+        absoluteBarriers.add("kissing_gate");
+        setSpecificBicycleClass("touring");
+    }
+
+    @Override
+    public int getVersion()
+    {
+        return 1;
     }
 
     @Override
@@ -68,6 +85,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         String highway = way.getTag("highway");
         String trackType = way.getTag("tracktype");
         return way.hasTag("highway", pushingSections)
+                || way.hasTag("railway", "platform")
                 || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
     }
 

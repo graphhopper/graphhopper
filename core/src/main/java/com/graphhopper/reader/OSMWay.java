@@ -26,7 +26,7 @@ import gnu.trove.list.array.TLongArrayList;
 
 /**
  * Represents an OSM Way
- * <p/>
+ * <p>
  * @author Nop
  */
 public class OSMWay extends OSMElement

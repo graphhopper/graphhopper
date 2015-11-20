@@ -22,11 +22,24 @@ import com.graphhopper.util.EdgeIteratorState;
 /**
  * Calculates the shortest route - independent of a vehicle as the calculation is based on the
  * distance only.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class ShortestWeighting implements Weighting
 {
+    private final FlagEncoder flagEncoder;
+
+    public ShortestWeighting( FlagEncoder flagEncoder )
+    {
+        this.flagEncoder = flagEncoder;
+    }
+
+    @Override
+    public FlagEncoder getFlagEncoder()
+    {
+        return flagEncoder;
+    }
+
     @Override
     public double getMinWeight( double currDistToGoal )
     {
@@ -34,7 +47,7 @@ public class ShortestWeighting implements Weighting
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId)
+    public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
     {
         return edgeState.getDistance();
     }
@@ -42,6 +55,6 @@ public class ShortestWeighting implements Weighting
     @Override
     public String toString()
     {
-        return "SHORTEST";
+        return "SHORTEST|" + flagEncoder;
     }
 }

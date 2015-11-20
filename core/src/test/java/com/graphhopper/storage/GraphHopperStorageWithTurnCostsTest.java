@@ -28,7 +28,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
- *
  * @author Karl Hübner
  */
 public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
@@ -36,23 +35,17 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
     private TurnCostExtension turnCostStorage;
 
     @Override
-    protected GraphStorage newGraph( Directory dir, boolean is3D )
+    protected GraphHopperStorage newGHStorage( Directory dir, boolean is3D )
     {
         turnCostStorage = new TurnCostExtension();
         return new GraphHopperStorage(dir, encodingManager, is3D, turnCostStorage);
     }
 
     @Override
-    protected GraphStorage newRAMGraph()
-    {
-        return newGraph(new RAMDirectory(), false);
-    }
-
-    @Override
     @Test
     public void testSave_and_fileFormat() throws IOException
     {
-        graph = newGraph(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
+        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
         na.setNode(0, 10, 10, 0);
@@ -78,14 +71,14 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
         graph.flush();
         graph.close();
 
-        graph = newGraph(new MMapDirectory(defaultGraphLoc), true);
+        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), true);
         assertTrue(graph.loadExisting());
 
         assertEquals(12, graph.getNodes());
         checkGraph(graph);
 
-        assertEquals("named street1", graph.getEdgeProps(iter1.getEdge(), iter1.getAdjNode()).getName());
-        assertEquals("named street2", graph.getEdgeProps(iter2.getEdge(), iter2.getAdjNode()).getName());
+        assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
+        assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
 
         assertEquals(1337, turnCostStorage.getTurnCostFlags(iter1.getEdge(), 0, iter2.getEdge()));
         assertEquals(666, turnCostStorage.getTurnCostFlags(iter2.getEdge(), 0, iter1.getEdge()));
@@ -99,7 +92,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest
     @Test
     public void testEnsureCapacity() throws IOException
     {
-        graph = newGraph(new MMapDirectory(defaultGraphLoc), false);
+        graph = newGHStorage(new MMapDirectory(defaultGraphLoc), false);
         graph.setSegmentSize(128);
         graph.create(100); // 100 is the minimum size
 

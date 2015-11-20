@@ -21,14 +21,17 @@ import com.graphhopper.geohash.KeyAlgo;
 import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
+
 import java.util.ArrayList;
 import java.util.Arrays;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 
 /**
- *
  * @author Peter Karich
  */
 public class BresenhamLineTest

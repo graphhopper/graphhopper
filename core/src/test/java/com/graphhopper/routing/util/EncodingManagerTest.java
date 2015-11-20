@@ -22,18 +22,22 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.junit.Rule;
 import org.junit.Test;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.BitUtil;
+import org.junit.rules.ExpectedException;
 
 /**
- *
  * @author Peter Karich
  */
 public class EncodingManagerTest
 {
+    @Rule
+    public ExpectedException thrown = ExpectedException.none();
+
     @Test
     public void testCompatibility()
     {
@@ -66,6 +70,13 @@ public class EncodingManagerTest
     }
 
     @Test
+    public void testEncoderWithWrongVersionIsRejected()
+    {
+        thrown.expect(IllegalArgumentException.class);
+        EncodingManager manager = new EncodingManager("CAR|version=0");
+    }
+
+    @Test
     public void testWrongEncoders()
     {
         try
@@ -84,9 +95,55 @@ public class EncodingManagerTest
             assertTrue(false);
         } catch (Exception ex)
         {
-            assertEquals("Encoders are requesting more than 32 bits of way flags. Decrease the number of vehicles or increase the flags to take long.",
-                    ex.getMessage());
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoders are requesting more than 32 bits of way flags. Decrease the"));
         }
+    }
+
+    @Test
+    public void testToDetailsStringIncludesEncoderVersionNumber()
+    {
+        FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 3)
+        {
+            @Override
+            public int getVersion()
+            {
+                return 10;
+            }
+
+            @Override
+            public String toString()
+            {
+                return "newEncoder";
+            }
+
+            @Override
+            protected String getPropertiesString()
+            {
+                return "myProperties";
+            }
+
+            @Override
+            public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+            {
+                return 0;
+            }
+
+            @Override
+            public long acceptWay( OSMWay way )
+            {
+                return 0;
+            }
+
+            @Override
+            public long handleWayTags( OSMWay way, long allowed, long relationFlags )
+            {
+                return 0;
+            }
+        };
+
+        EncodingManager subject = new EncodingManager(encoder);
+
+        assertEquals("newEncoder|myProperties|version=10", subject.toDetailsString());
     }
 
     @Test
@@ -208,5 +265,33 @@ public class EncodingManagerTest
 
         assertEquals(5, foot.getSpeed(flags), 1e-2);
         assertEquals(5, foot.getReverseSpeed(flags), 1e-2);
+    }
+
+    @Test
+    public void testSupportFords()
+    {
+        // 1) no encoder crossing fords
+        String flagEncodersStr = "car,bike,foot";
+        EncodingManager manager = new EncodingManager(flagEncodersStr, 8);
+
+        assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
+        assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
+        assertTrue(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+
+        // 2) two encoders crossing fords
+        flagEncodersStr = "car,bike|blockFords=false,foot|blockFords=false";
+        manager = new EncodingManager(flagEncodersStr, 8);
+
+        assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
+
+        // 2) Try combined with another tag
+        flagEncodersStr = "car|turnCosts=true|blockFords=true,bike,foot|blockFords=false";
+        manager = new EncodingManager(flagEncodersStr, 8);
+
+        assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
+        assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
+        assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
     }
 }

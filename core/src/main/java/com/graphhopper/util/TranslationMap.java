@@ -22,18 +22,18 @@ import java.util.*;
 import java.util.Map.Entry;
 
 /**
- * A class which manages the translations in-memory. Translations are managed here:
- * https://docs.google.com/spreadsheet/ccc?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc#gid=0
- * <p/>
- * See here for more information: ./docs/core/translations.md
+ * A class which manages the translations in-memory. See here for more information:
+ * ./docs/core/translations.md
  * <p>
  * @author Peter Karich
  */
 public class TranslationMap
 {
     // ISO codes (639-1), use 'en_US' as reference
-    private static final List<String> LOCALES = Arrays.asList("bg", "ca", "de_DE", "el", "en_US", "es", "fil",
-            "fi", "fr", "gl", "he", "it", "ja", "ne", "nl", "pt_BR", "pt_PT", "ro", "ru", "si", "sk", "sv_SE", "tr", "uk",
+    private static final List<String> LOCALES = Arrays.asList("ar", "ast", "bg", "ca",
+            "cs_CZ", "da_DK", "de_DE", "el", "en_US", "es", "fa", "fil", "fi", "fr",
+            "gl", "he", "hsb", "hu_HU", "it", "ja", "lt_LT", "ne", "nl", "pl_PL",
+            "pt_BR", "pt_PT", "ro", "ru", "si", "sk", "sv_SE", "tr", "uk",
             "vi_VI", "zh_CN");
     private final Map<String, Translation> translations = new HashMap<String, Translation>();
 
@@ -154,8 +154,23 @@ public class TranslationMap
                 int expectedCount = countOccurence(enEntry.getValue(), "\\%");
                 if (expectedCount != countOccurence(value, "\\%"))
                 {
-                    sb.append(tr.getLocale()).append(" - error in ").append(enEntry.getKey()).append("->").
+                    sb.append(tr.getLocale()).append(" - error in ").
+                            append(enEntry.getKey()).append("->").
                             append(value).append("\n");
+                } else
+                {
+                    // try if formatting works, many times e.g. '%1$' instead of '%1$s'
+                    Object[] strs = new String[expectedCount];
+                    Arrays.fill(strs, "tmp");
+                    try
+                    {
+                        String.format(value, strs);
+                    } catch (Exception ex)
+                    {
+                        sb.append(tr.getLocale()).append(" - error ").append(ex.getMessage()).append("in ").
+                                append(enEntry.getKey()).append("->").
+                                append(value).append("\n");
+                    }
                 }
             }
         }

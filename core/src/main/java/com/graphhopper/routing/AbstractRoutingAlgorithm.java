@@ -63,7 +63,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     {
         this.weightLimit = weight;
     }
-       
+
     public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
     {
         this.additionalEdgeFilter = additionalEdgeFilter;
@@ -90,15 +90,15 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         alreadyRun = true;
     }
 
-    protected EdgeEntry createEdgeEntry( int node, double dist )
+    protected EdgeEntry createEdgeEntry( int node, double weight )
     {
-        return new EdgeEntry(EdgeIterator.NO_EDGE, node, dist);
+        return new EdgeEntry(EdgeIterator.NO_EDGE, node, weight);
     }
 
     /**
      * To be overwritten from extending class. Should we make this available in RoutingAlgorithm
      * interface?
-     * <p/>
+     * <p>
      * @return true if finished.
      */
     protected abstract boolean finished();
@@ -106,10 +106,12 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     /**
      * To be overwritten from extending class. Should we make this available in RoutingAlgorithm
      * interface?
-     * <p/>
+     * <p>
      * @return true if finished.
      */
     protected abstract Path extractPath();
+
+    protected abstract boolean isWeightLimitExceeded();
 
     protected Path createEmptyPath()
     {

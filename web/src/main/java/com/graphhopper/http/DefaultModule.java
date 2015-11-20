@@ -57,7 +57,7 @@ public class DefaultModule extends AbstractModule
         logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
                 + ", source:" + tmp.getOSMFile()
                 + ", flagEncoders:" + tmp.getEncodingManager()
-                + ", class:" + tmp.getGraph().getClass().getSimpleName());
+                + ", class:" + tmp.getGraphHopperStorage().toDetailsString());
         return tmp;
     }
 
@@ -77,6 +77,8 @@ public class DefaultModule extends AbstractModule
                 logger.info("jsonp disabled");
 
             bind(Boolean.class).annotatedWith(Names.named("jsonpAllowed")).toInstance(jsonpAllowed);
+
+            bind(RouteSerializer.class).toInstance(new SimpleRouteSerializer(graphHopper.getGraphHopperStorage().getBounds()));
         } catch (Exception ex)
         {
             throw new IllegalStateException("Couldn't load graph", ex);

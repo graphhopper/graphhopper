@@ -21,10 +21,10 @@ package com.graphhopper.storage;
  * Abstraction of the underlying datastructure with a unique id and location. To ensure that the id
  * is unique use a Directory.attach or findAttach, if you don't need uniqueness call
  * Directory.create. Current implementations are RAM and memory mapped access.
- * <p/>
+ * <p>
  * Life cycle: (1) object creation, (2) configuration (e.g. segment size), (3) create or
  * loadExisting, (4) usage and calling ensureCapacity if necessary, (5) close
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public interface DataAccess extends Storable<DataAccess>
@@ -37,7 +37,7 @@ public interface DataAccess extends Storable<DataAccess>
     /**
      * Renames the underlying DataAccess object. (Flushing shouldn't be necessary before or
      * afterwards)
-     * <p/>
+     * <p>
      * @throws IllegalStateException if a rename is not possible
      */
     void rename( String newName );
@@ -69,7 +69,7 @@ public interface DataAccess extends Storable<DataAccess>
 
     /**
      * Get bytes from position 'index'
-     * <p/>
+     * <p>
      * @param values acts as output
      */
     void getBytes( long bytePos, byte[] values, int length );
@@ -95,10 +95,10 @@ public interface DataAccess extends Storable<DataAccess>
      * Ensures that the capacity of this object is at least the specified bytes. The first time you
      * have to call 'create' instead.
      * <p>
-     * @see #create(long)
      * @return true if size was increased
+     * @see #create(long)
      */
-    boolean ensureCapacity(long bytes);
+    boolean ensureCapacity( long bytes );
 
     /**
      * Reduces the allocate space to the specified bytes. Warning: it'll free the space even if it

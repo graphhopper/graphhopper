@@ -19,13 +19,14 @@ package com.graphhopper.reader;
 
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.Helper;
+
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
  * Data taken from here http://algs4.cs.princeton.edu/44sp/
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class PrinctonReader

@@ -24,6 +24,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
+
 // import java.awt.image.Raster;
 import java.io.*;
 import java.net.SocketTimeoutException;
@@ -31,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+
 // import org.apache.xmlgraphics.image.codec.tiff.TIFFDecodeParam;
 // import org.apache.xmlgraphics.image.codec.tiff.TIFFImageDecoder;
 // import org.apache.xmlgraphics.image.codec.util.SeekableStream;
@@ -60,7 +62,7 @@ public class CGIARProvider implements ElevationProvider
     private final Map<String, HeightTile> cacheData = new HashMap<String, HeightTile>();
     private File cacheDir = new File("/tmp/cgiar");
     // for alternatives see #346
-    private String baseUrl = "http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff";    
+    private String baseUrl = "http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff";
     private Directory dir;
     private DAType daType = DAType.MMAP;
     final double precision = 1e7;
@@ -104,6 +106,11 @@ public class CGIARProvider implements ElevationProvider
         }
         return this;
     }
+
+    protected File getCacheDir()
+    {
+        return cacheDir;
+    }        
 
     @Override
     public ElevationProvider setBaseURL( String baseUrl )
@@ -211,7 +218,7 @@ public class CGIARProvider implements ElevationProvider
                     {
                         entry = zis.getNextEntry();
                     }
-
+                    
                     ss = SeekableStream.wrapInputStream(zis, true);
                     TIFFImageDecoder imageDecoder = new TIFFImageDecoder(ss, new TIFFDecodeParam());
                     raster = imageDecoder.decodeAsRaster();
@@ -316,6 +323,9 @@ public class CGIARProvider implements ElevationProvider
     public static void main( String[] args )
     {
         CGIARProvider provider = new CGIARProvider();
+        
+        System.out.println(provider.getEle(46, -20));
+        
         // 337.0
         System.out.println(provider.getEle(49.949784, 11.57517));
         // 453.0

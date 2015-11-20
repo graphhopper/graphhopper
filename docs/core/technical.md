@@ -38,9 +38,14 @@ Some explanations:
  * One node has several edges which is implemented as a linked list. E.g. node 3 points to its first edge in the edge area at position 0 to edge 0-3 (nodeA-nodeB where nodeA is always smaller than nodeB). To get the next edge of node 3 you need nextB and this goes to edge 1-3, again node 3 is nodeB, but for the next edge 3-5 node 3 is nodeA ... and so on.
  * For you custom data import keep in mind that although the nodes 4 and 6 have no edges they still 'exist' and consume space in the current implementations of DataAccess. For OSMReader this cannot be the case as separate networks with only a small number of nodes are removed (very likely OSM bugs).
 
-For some algorithms there are special implementations of the Graph. E.g. there is a LevelGraphStorage which is a Graph with the possibility to store shortcut edges and a level for every node. This special storage is necessary for _Contraction Hierarchies_. For this the graph needs also some preprocessing (which can take several hours for bigger areas like Europe) which is done in the OSMReader when configured (prepare.chWeighting=fastest) or via API in PrepareContractionHierarchies. In order to use the shortcuts and get the benefits of the optimized graph you must use the algorithm returned from createAlgo() in the preparation class.
+For some algorithms there are special implementations of the Graph (CHGraph). You enable this in GraphHopperStorage
+to store shortcut edges and a level for every node. This special storage is necessary for _Contraction Hierarchies_. 
+For this the graph needs also some preprocessing (which can take several minutes for bigger areas) 
+which is done in the OSMReader when configured (prepare.chWeighting=fastest) or via API in PrepareContractionHierarchies. 
+In order to use the shortcuts and get the benefits of the optimized graph you must use the algorithm returned from 
+createAlgo() in the preparation class.
 
-A LevelGraphStorage (and all subclasses of GraphStorage) cannot read files created with GraphStorage and vice versa. Also there is a file version which is changed if the data structure of GraphHopper gets incompatible to the previous versions.
+Also there is a file version which is changed if the data structure of GraphHopper gets incompatible to the previous versions.
 
 ### 3. The Algorithms
 
@@ -51,12 +56,12 @@ An algorithm needs a kind of path extraction: from the shortest-path-tree one ne
 (list of edges) including the distance and time. Afterwards from this list the exact point (latitude,longitude) 
 can be determined. For bidirectional algorithms this is a bit more complicated and done in PathBidirRef. 
 For [_Contraction Hierarchies_](http://ad-wiki.informatik.uni-freiburg.de/teaching/EfficientRoutePlanningSS2012)
- we use the _LevelGraph_ which additionally holds shortcuts. While path extraction we need to identify those
+ we use the _CHGraph_ which additionally holds shortcuts. While path extraction we need to identify those
  shortcuts and get the edges recursivly, this is done in Path4CH.
 
 ## 3.1 Base Graph
 
-In order to traverse the _LevelGraph_ like a normal _Graph_ one needs to hide the shortcuts, which
+In order to traverse the _CHGraph_ like a normal _Graph_ one needs to hide the shortcuts, which
 is done automatically for you if you call graph.getBaseGraph(). This is necessary in a 
 _LocationIndex_ and in the _Path_ class in order to identify how many streets leave a junction
 or similar. See issue #116 for more information.

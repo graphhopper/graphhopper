@@ -23,11 +23,17 @@ import com.graphhopper.util.Translation;
 /**
  * This class provides methods to define how a value (like speed or direction) converts to a flag
  * (currently an integer value), which is stored in an edge .
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public interface FlagEncoder extends TurnCostEncoder
 {
+    /**
+     * @return the version of this FlagEncoder to enforce none-compatibility when new attributes are
+     * introduced
+     */
+    int getVersion();
+
     /**
      * @return the maximum speed in km/h
      */
@@ -105,8 +111,8 @@ public interface FlagEncoder extends TurnCostEncoder
     long setLong( long flags, int key, long value );
 
     /**
-     * Returns arbitrary long value identified by the specified key. E.g. can be used to return the
-     * maximum width or height allowed for an edge.
+     * Returns arbitrary double value identified by the specified key. E.g. can be used to return
+     * the maximum width or height allowed for an edge.
      */
     double getDouble( long flags, int key );
 
@@ -121,4 +127,9 @@ public interface FlagEncoder extends TurnCostEncoder
      * @return additional cost or warning information for an instruction like ferry or road charges.
      */
     InstructionAnnotation getAnnotation( long flags, Translation tr );
+
+    /**
+     * @return true if already registered in an EncodingManager
+     */
+    boolean isRegistered();
 }

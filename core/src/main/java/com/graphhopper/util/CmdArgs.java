@@ -28,7 +28,7 @@ import java.util.Properties;
 
 /**
  * Stores command line options in a map. The capitalization of the key is ignored.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class CmdArgs extends PMap

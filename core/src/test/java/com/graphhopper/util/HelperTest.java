@@ -19,13 +19,15 @@ package com.graphhopper.util;
 
 import java.io.File;
 import java.util.Locale;
+
 import org.junit.After;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
+
 import org.junit.Before;
 
 /**
- *
  * @author Peter Karich
  */
 public class HelperTest
@@ -69,6 +71,7 @@ public class HelperTest
         assertEquals(Locale.GERMANY, Helper.getLocale("de-DE"));
         assertEquals(Locale.ENGLISH, Helper.getLocale("en"));
         assertEquals(Locale.US, Helper.getLocale("en_US"));
+        assertEquals(Locale.US, Helper.getLocale("en_US.UTF-8"));
     }
 
     @Test

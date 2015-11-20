@@ -23,7 +23,7 @@ import javax.xml.stream.XMLStreamReader;
 /**
  * Put the usage of proprietary "sun" classes and after jdk6 classes into this class. To use Helper
  * class under Android as well.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class Helper7

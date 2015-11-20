@@ -25,6 +25,8 @@ import java.util.Set;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
+
 import java.util.*;
 
 /**
@@ -52,11 +54,18 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         this(5, 5, 0);
     }
 
+    public CarFlagEncoder( PMap properties )
+    {
+        this((int) properties.getLong("speedBits", 5),
+                properties.getDouble("speedFactor", 5),
+                properties.getBool("turnCosts", false) ? 1 : 0);
+        this.properties = properties;
+        this.setBlockFords(properties.getBool("blockFords", true));
+    }
+
     public CarFlagEncoder( String propertiesStr )
     {
-        this((int) parseLong(propertiesStr, "speedBits", 5),
-                parseDouble(propertiesStr, "speedFactor", 5),
-                parseBoolean(propertiesStr, "turnCosts", false) ? 3 : 0);
+        this(new PMap(propertiesStr));
     }
 
     public CarFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
@@ -101,6 +110,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         badSurfaceSpeedMap.add("ground");
         badSurfaceSpeedMap.add("grass");
 
+        maxPossibleSpeed = 140;
+
         // autobahn
         defaultSpeedMap.put("motorway", 100);
         defaultSpeedMap.put("motorway_link", 70);
@@ -128,6 +139,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("track", 15);
     }
 
+    @Override
+    public int getVersion()
+    {
+        return 1;
+    }
+
     /**
      * Define the place of the speedBits in the edge flags for car.
      */
@@ -136,7 +153,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"), defaultSpeedMap.get("motorway"));
+        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"),
+                maxPossibleSpeed);
         return shift + speedEncoder.getBits();
     }
 
@@ -192,13 +210,18 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
             return 0;
 
-        // do not drive street cars into fords
-        boolean carsAllowed = way.hasTag(restrictions, intendedValues);
-        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")) && !carsAllowed)
-            return 0;
+        // multiple restrictions needs special handling compared to foot and bike, see also motorcycle
+        String firstValue = way.getFirstPriorityTag(restrictions);
+        if (!firstValue.isEmpty())
+        {
+            if (restrictedValues.contains(firstValue))
+                return 0;
+            if (intendedValues.contains(firstValue))
+                return acceptBit;
+        }
 
-        // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues) && !carsAllowed)
+        // do not drive street cars into fords
+        if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return 0;
 
         // do not drive cars over railways (sometimes incorrectly mapped!)

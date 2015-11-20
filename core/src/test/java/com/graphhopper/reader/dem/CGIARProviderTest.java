@@ -18,11 +18,12 @@
  */
 package com.graphhopper.reader.dem;
 
+import java.io.File;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class CGIARProviderTest
@@ -56,5 +57,23 @@ public class CGIARProviderTest
         assertEquals("srtm_34_08", instance.getFileName(20, -14));
         assertEquals("srtm_34_08", instance.getFileName(20, -15));
         assertEquals("srtm_37_02", instance.getFileName(52.1943832, 0.1363176));
+    }
+
+    @Test
+    public void testFileNotFound()
+    {
+        CGIARProvider instance = new CGIARProvider();
+        File file = new File(instance.getCacheDir(), instance.getFileName(46, -20) + ".gh");
+        File zipFile = new File(instance.getCacheDir(), instance.getFileName(46, -20) + ".zip");
+        file.delete();
+        zipFile.delete();
+        
+        assertEquals(0, instance.getEle(46, -20), 1);
+
+        // file not found => small!
+        assertTrue(file.exists());
+        assertEquals(228, file.length());        
+        file.delete();
+        zipFile.delete();
     }
 }

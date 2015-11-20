@@ -15,22 +15,20 @@
  */
 package com.graphhopper.http;
 
+import org.json.JSONObject;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import org.json.JSONObject;
 
 public class InvalidRequestServlet extends GHBaseServlet
 {
     @Override
     protected void service( HttpServletRequest req, HttpServletResponse res ) throws ServletException, IOException
     {
-        res.setStatus(HttpServletResponse.SC_NOT_FOUND);
-        res.setContentType("text/plain");
-        res.setContentType("UTF-8");
         JSONObject json = new JSONObject();
-        json.put("error_code", "404");
-        writeJson(req, res, json);
+        json.put("message", "Not found");
+        writeJsonError(res, HttpServletResponse.SC_NOT_FOUND, json);
     }
 }

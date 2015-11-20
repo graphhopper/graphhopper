@@ -24,5 +24,5 @@ import com.graphhopper.storage.Graph;
  */
 public interface RoutingAlgorithmFactory
 {
-    RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts );   
+    RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts );
 }

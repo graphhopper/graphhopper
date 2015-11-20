@@ -18,7 +18,6 @@
 package com.graphhopper.coll;
 
 /**
- *
  * @author Peter Karich
  */
 public class IntDoubleBinHeapTest extends AbstractBinHeapTest

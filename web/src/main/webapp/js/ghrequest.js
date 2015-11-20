@@ -37,24 +37,18 @@ if (!Function.prototype.bind) {
 }
 
 GHRequest = function (host) {
-    this.way_point_max_distance = 1;
     this.host = host;
     this.route = new GHroute(new GHInput(), new GHInput());
     this.from = this.route.first();
     this.to = this.route.last();
-    this.vehicle = "car";
-    this.weighting = "fastest";
-    this.points_encoded = true;
-    this.instructions = true;
-    this.elevation = false;
+
     this.features = {};
-    this.debug = false;
-    this.locale = "en";
+
     this.do_zoom = true;
     // use jsonp here if host allows CORS
     this.dataType = "json";
-    // all URL parameters starting with "api." will be forwarded to GraphHopper directly    
-    this.api_params = [];
+
+    this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "elevation": false};
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     // We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!      
@@ -78,11 +72,7 @@ GHRequest = function (host) {
         this.to = this.route.last();
         log("Foo just moved.");
     }.bind(this));
-//    this.route.addListener('route.set', function (evt) {
-//        this.from = this.route.first();
-//        this.to = this.route.last();
-//        log("Foo just moved.");
-//    }.bind(this));
+    
     this.route.addListener('route.reverse', function (evt) {
         this.from = this.route.first();
         this.to = this.route.last();
@@ -306,50 +296,31 @@ GHroute.prototype = {
 };
 
 GHRequest.prototype.init = function (params) {
+
     for (var key in params) {
         var val = params[key];
         if (val === "false")
             val = false;
         else if (val === "true")
             val = true;
-        else {
-            if (parseFloat(val) != NaN)
-                val = parseFloat(val)
-        }
 
-        // todo
-        // this[key] = val;
+        if (key === "point" || key === "mathRandom" || key === "do_zoom" || key === "layer")
+            continue;
 
-        if (key.indexOf('api.') === 0) {
-            this.api_params[key.substring(4)] = val;
-        }
+        this.api_params[key] = val;
     }
-
-    if (params.minPathPrecision)
-        this.minPathPrecision = params.minPathPrecision;
-    if (params.vehicle)
-        this.vehicle = params.vehicle;
-    if (params.weighting)
-        this.weighting = params.weighting;
-    if (params.algorithm)
-        this.algorithm = params.algorithm;
-    if (params.locale)
-        this.locale = params.locale;
 
     if ('do_zoom' in params)
         this.do_zoom = params.do_zoom;
-    if ('instructions' in params)
-        this.instructions = params.instructions;
-    if ('points_encoded' in params)
-        this.points_encoded = params.points_encoded;
 
-    this.elevation = false;
+    // overwrite elevation e.g. important if not supported from feature set
+    this.api_params.elevation = false;
     var featureSet = this.features[this.vehicle];
     if (featureSet && featureSet.elevation) {
         if ('elevation' in params)
-            this.elevation = params.elevation;
+            this.api_params.elevation = params.elevation;
         else
-            this.elevation = true;
+            this.api_params.elevation = true;
     }
 
     if (params.q) {
@@ -381,16 +352,21 @@ GHRequest.prototype.init = function (params) {
 };
 
 GHRequest.prototype.initVehicle = function (vehicle) {
-    this.vehicle = vehicle;
+    this.api_params.vehicle = vehicle;
     var featureSet = this.features[this.vehicle];
+
     if (featureSet && featureSet.elevation)
-        this.elevation = true;
+        this.api_params.elevation = true;
     else
-        this.elevation = false;
+        this.api_params.elevation = false;
 };
 
 GHRequest.prototype.hasElevation = function () {
-    return this.elevation;
+    return this.api_params.elevation;
+};
+
+GHRequest.prototype.getVehicle = function () {
+    return this.api_params.vehicle;
 };
 
 GHRequest.prototype.createGeocodeURL = function (host, prevIndex) {
@@ -398,7 +374,7 @@ GHRequest.prototype.createGeocodeURL = function (host, prevIndex) {
     if (host)
         tmpHost = host;
 
-    var path = this.createPath(tmpHost + "/geocode?limit=8&type=" + this.dataType + "&key=" + this.key);
+    var path = this.createPath(tmpHost + "/geocode?limit=6&type=" + this.dataType + "&key=" + this.key);
     if (prevIndex >= 0 && prevIndex < this.route.size()) {
         var point = this.route.getIndex(prevIndex);
         path += "&lat=" + point.lat + "&lon=" + point.lng;
@@ -434,30 +410,15 @@ GHRequest.prototype.createPointParams = function (useRawInput) {
 };
 
 GHRequest.prototype.createPath = function (url) {
-    if (this.vehicle && this.vehicle !== "car")
-        url += "&vehicle=" + this.vehicle;
-    // fastest or shortest
-    if (this.weighting && this.weighting !== "fastest")
-        url += "&weighting=" + this.weighting;
-    if (this.locale && this.locale !== "en")
-        url += "&locale=" + this.locale;
-    // dijkstra, dijkstrabi, astar, astarbi
-    if (this.algorithm && this.algorithm !== "dijkstrabi")
-        url += "&algorithm=" + this.algorithm;
-    if (this.way_point_max_distance !== 1)
-        url += "&way_point_max_distance=" + this.way_point_max_distance;
-    if (!this.instructions)
-        url += "&instructions=false";
-    if (!this.points_encoded)
-        url += "&points_encoded=false";
-
-    if (this.elevation)
-        url += "&elevation=true";
-    if (this.debug)
-        url += "&debug=true";
-
     for (var key in this.api_params) {
-        url += "&" + key + "=" + this.api_params[key];
+        var val = this.api_params[key];
+        if (GHroute.isArray(val)) {
+            for (var keyIndex in val) {
+                url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val[keyIndex]);
+            }
+        } else {
+            url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val);
+        }
     }
     return url;
 };
@@ -539,22 +500,20 @@ GHRequest.prototype.doRequest = function (url, callback) {
             // problematic: this callback is not invoked when using JSONP!
             // http://stackoverflow.com/questions/19035557/jsonp-request-error-handling
             var msg = "API did not respond! ";
-            if (err && err.responseText && err.responseText.indexOf('{') >= 0) {
-                var jsonError = JSON.parse(err.responseText);
-                msg += jsonError.message;
-            } else if (err && err.statusText && err.statusText !== "OK")
-                msg += err.statusText;
+            var json;
 
+            if (err && err.responseText && err.responseText.indexOf('{') >= 0) {
+                json = JSON.parse(err.responseText);
+            } else if (err && err.statusText && err.statusText !== "OK") {
+                msg += err.statusText;
+                var details = "Error for " + url;
+                json = {
+                    message: msg,
+                    hints: [{"message": msg, "details": details}]
+                };
+            }
             log(msg + " " + JSON.stringify(err));
-            var details = "Error for " + url;
-            var json = {
-                "info": {
-                    "errors": [{
-                            "message": msg,
-                            "details": details
-                        }]
-                }
-            };
+
             callback(json);
         },
         type: "GET",
@@ -637,7 +596,7 @@ GHInput.prototype.toString = function () {
 
 GHRequest.prototype.setLocale = function (locale) {
     if (locale)
-        this.locale = locale;
+        this.api_params.locale = locale;
 };
 
 GHRequest.prototype.fetchTranslationMap = function (urlLocaleParam) {

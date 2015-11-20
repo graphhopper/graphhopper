@@ -19,6 +19,7 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DAType;
+
 import java.io.File;
 
 /**

@@ -24,18 +24,25 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest
 {
-    private Graph initExampleGraph( FlagEncoder instance )
+    private final EncodingManager em = new EncodingManager("bike,bike2");
+
+    @Override
+    protected BikeCommonFlagEncoder createBikeEncoder()
     {
-        EncodingManager em = new EncodingManager(instance);
-        GraphStorage gs = new GraphHopperStorage(new RAMDirectory(), em, true).create(1000);
+        return (BikeCommonFlagEncoder) em.getEncoder("bike2");
+    }
+
+    private Graph initExampleGraph()
+    {
+        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), em, true, new GraphExtension.NoOpExtension()).create(1000);
         NodeAccess na = gs.getNodeAccess();
         // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
         na.setNode(0, 51.1, 12.001, 50);
@@ -44,37 +51,47 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
         edge.setDistance(100);
 
-        edge.setFlags(instance.setReverseSpeed(instance.setProperties(10, true, true), 15));
+        edge.setFlags(encoder.setReverseSpeed(encoder.setProperties(10, true, true), 15));
         return gs;
     }
 
     @Test
     public void testApplyWayTags()
     {
-        Bike2WeightFlagEncoder instance = new Bike2WeightFlagEncoder();
-        Graph graph = initExampleGraph(instance);
+        Graph graph = initExampleGraph();
         EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
         OSMWay way = new OSMWay(1);
-        instance.applyWayTags(way, edge);
+        encoder.applyWayTags(way, edge);
 
         long flags = edge.getFlags();
         // decrease speed
-        assertEquals(2, instance.getSpeed(flags), 1e-1);
+        assertEquals(2, encoder.getSpeed(flags), 1e-1);
         // increase speed but use maximum speed (calculated was 24)
-        assertEquals(18, instance.getReverseSpeed(flags), 1e-1);
+        assertEquals(18, encoder.getReverseSpeed(flags), 1e-1);
     }
-        
+
     @Test
     public void testUnchangedForStepsBridgeAndTunnel()
     {
-        Bike2WeightFlagEncoder instance = new Bike2WeightFlagEncoder();
-        Graph graph = initExampleGraph(instance);
+        Graph graph = initExampleGraph();
         EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
         long oldFlags = edge.getFlags();
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "steps");
-        instance.applyWayTags(way, edge);
+        encoder.applyWayTags(way, edge);
 
         assertEquals(oldFlags, edge.getFlags());
+    }
+
+    @Test
+    public void testSetSpeed0_issue367()
+    {
+        long flags = encoder.setProperties(10, true, true);
+        flags = encoder.setSpeed(flags, 0);
+
+        assertEquals(0, encoder.getSpeed(flags), .1);
+        assertEquals(10, encoder.getReverseSpeed(flags), .1);
+        assertFalse(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
     }
 }

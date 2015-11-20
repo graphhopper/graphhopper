@@ -26,7 +26,7 @@ import java.util.Arrays;
 /**
  * This is an in-memory data structure based on an integer array. With the possibility to be stored
  * on flush().
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 class RAMIntDataAccess extends AbstractDataAccess
@@ -95,18 +95,18 @@ class RAMIntDataAccess extends AbstractDataAccess
     }
 
     @Override
-    public boolean ensureCapacity(long bytes)
+    public boolean ensureCapacity( long bytes )
     {
         if (bytes < 0)
             throw new IllegalArgumentException("new capacity has to be strictly positive");
 
         long cap = getCapacity();
-        long todoBytes = bytes - cap;
-        if (todoBytes <= 0)
+        long newBytes = bytes - cap;
+        if (newBytes <= 0)
             return false;
 
-        int segmentsToCreate = (int) (todoBytes / segmentSizeInBytes);
-        if (todoBytes % segmentSizeInBytes != 0)
+        int segmentsToCreate = (int) (newBytes / segmentSizeInBytes);
+        if (newBytes % segmentSizeInBytes != 0)
             segmentsToCreate++;
 
         try
@@ -121,7 +121,7 @@ class RAMIntDataAccess extends AbstractDataAccess
         } catch (OutOfMemoryError err)
         {
             throw new OutOfMemoryError(err.getMessage() + " - problem when allocating new memory. Old capacity: "
-                    + cap + ", new bytes:" + todoBytes + ", segmentSizeIntsPower:" + segmentSizeIntsPower
+                    + cap + ", new bytes:" + newBytes + ", segmentSizeIntsPower:" + segmentSizeIntsPower
                     + ", new segments:" + segmentsToCreate + ", existing:" + segments.length);
         }
     }
@@ -266,8 +266,8 @@ class RAMIntDataAccess extends AbstractDataAccess
         if (bytePos % 4 != 0 && bytePos % 4 != 2)
             throw new IllegalMonitorStateException("bytePos of wrong multiple for RAMInt " + bytePos);
 
-        long tmpIndex = bytePos >>> 1;
-        int bufferIndex = (int) (tmpIndex >>> segmentSizeIntsPower);
+        long tmpIndex = bytePos >> 1;
+        int bufferIndex = (int) (tmpIndex >> segmentSizeIntsPower);
         int index = (int) (tmpIndex & indexDivisor);
         if (tmpIndex * 2 == bytePos)
             return (short) segments[bufferIndex][index];

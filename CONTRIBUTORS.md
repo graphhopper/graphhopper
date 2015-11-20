@@ -1,15 +1,22 @@
 [Members](https://github.com/graphhopper?tab=members) and [Contributors](https://github.com/graphhopper/graphhopper/contributors)
 
- * AnahitaS
+ * AnahitaS, docs for Android, Android, Tomcat
+ * andreaswolf, flag encoder versioning and more
  * agouge, discussion and API refactoring
  * b3nn0, Android improvements
  * cgarreau, increase of routing success rate via subnetwork cleanup
  * daisy1754, fixed usage of graphhopper.sh script
  * dardin88, instructions improved
- * dewos
+ * dewos, web API bug fixes
+ * devemux86, improvements regarding Android and GPX
+ * dos65, bug fixes in routing algo
+ * drnextgis, ru translation and JS fixes
+ * duongnt, fixes in storage
  * lmar, improved instructions information
- * fredao, translations
- * jansoe, one of the core developers
+ * florent-morel, improvements regarding fords, #320
+ * fredao, translations 
+ * henningvs, doc improvements
+ * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config
  * JohannesPelzer, improved GPX information and various other things
  * karussell, one of the core developers
@@ -18,8 +25,10 @@
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
  * ocampana, initial implementation for instructions
  * ratrun, route relations, GPX information, bike handling etc
- * rodneyodonnell, improved dead end removal
+ * rajanski, script to do routing via PostGIS
+ * rodneyodonnell, improved dead end removal and fords
  * rodo, more descriptions
+ * Svantulden, improved documentation and nearest API
 
 # Translations
 

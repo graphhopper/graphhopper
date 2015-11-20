@@ -24,6 +24,7 @@ import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
+
 import java.io.*;
 import java.net.URLEncoder;
 import java.util.*;
@@ -31,12 +32,13 @@ import java.util.Map.Entry;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * Reads log files and queries the live service
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class QueryTorture
@@ -45,6 +47,7 @@ public class QueryTorture
     {
         new QueryTorture().start(CmdArgs.read(args));
     }
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private ExecutorService service;
     private BlockingQueue<Query> queryQueue;
@@ -176,7 +179,7 @@ public class QueryTorture
         try
         {
             String url = baseUrl + query.createQueryString();
-            String res = new Downloader("QueryTorture!").setTimeout(timeout).downloadAsString(url);
+            String res = new Downloader("QueryTorture!").setTimeout(timeout).downloadAsString(url, false);
             if (res.contains("errors"))
                 routingErrorCounter.incrementAndGet();
             else

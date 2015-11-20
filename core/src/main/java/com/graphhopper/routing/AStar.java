@@ -36,9 +36,9 @@ import com.graphhopper.util.EdgeIterator;
 /**
  * This class implements the A* algorithm according to
  * http://en.wikipedia.org/wiki/A*_search_algorithm
- * <p/>
+ * <p>
  * Different distance calculations can be used via setApproximation.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class AStar extends AbstractRoutingAlgorithm
@@ -79,8 +79,10 @@ public class AStar extends AbstractRoutingAlgorithm
     {
         checkAlreadyRun();
         to1 = to;
+
         weightApprox.setGoalNode(to);
-        currEdge = createEdgeEntry(from, 0);
+        double weightToGoal = weightApprox.approximate(from);
+        currEdge = new AStarEdge(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
         if (!traversalMode.isEdgeBased())
         {
             fromMap.put(from, currEdge);
@@ -96,7 +98,7 @@ public class AStar extends AbstractRoutingAlgorithm
         {
             int currVertex = currEdge.adjNode;
             visitedCount++;
-            if (isWeightLimitReached())
+            if (isWeightLimitExceeded())
                 return createEmptyPath();
 
             if (finished())
@@ -159,9 +161,9 @@ public class AStar extends AbstractRoutingAlgorithm
     }
 
     @Override
-    protected AStarEdge createEdgeEntry( int node, double dist )
+    protected EdgeEntry createEdgeEntry( int node, double weight )
     {
-        return new AStarEdge(EdgeIterator.NO_EDGE, node, dist, dist);
+        throw new IllegalStateException("use AStarEdge constructor directly");
     }
 
     @Override
@@ -176,9 +178,10 @@ public class AStar extends AbstractRoutingAlgorithm
         return visitedCount;
     }
 
-    protected boolean isWeightLimitReached()
+    @Override
+    protected boolean isWeightLimitExceeded()
     {
-        return currEdge.weight >= weightLimit;
+        return currEdge.weight > weightLimit;
     }
 
     public static class AStarEdge extends EdgeEntry

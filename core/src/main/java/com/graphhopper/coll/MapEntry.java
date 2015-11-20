@@ -22,7 +22,7 @@ import java.util.Map;
 
 /**
  * Simple impl of Map.Entry. So that we can have ordered maps.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class MapEntry<K, V> implements Map.Entry<K, V>, Serializable

@@ -18,14 +18,16 @@
 package com.graphhopper;
 
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Wrapper to simplify output of GraphHopper.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class GHResponse
@@ -36,7 +38,8 @@ public class GHResponse
     private double distance;
     private double routeWeight;
     private long time;
-    private InstructionList instructions = null;
+    private InstructionList instructions;
+    private final PMap hintsMap = new PMap();
 
     public GHResponse()
     {
@@ -119,7 +122,7 @@ public class GHResponse
         return distance;
     }
 
-    public GHResponse setMillis( long timeInMillis )
+    public GHResponse setTime( long timeInMillis )
     {
         this.time = timeInMillis;
         return this;
@@ -127,10 +130,20 @@ public class GHResponse
 
     /**
      * @return time in millis
+     * @deprecated use getTime instead
      */
     public long getMillis()
     {
         check("getMillis");
+        return time;
+    }
+
+    /**
+     * @return time in millis
+     */
+    public long getTime()
+    {
+        check("getTimes");
         return time;
     }
 
@@ -181,8 +194,8 @@ public class GHResponse
     @Override
     public String toString()
     {
-        String str = "nodes:" + list.getSize() + ": " + list.toString();
-        if (!instructions.isEmpty())
+        String str = "nodes:" + list.getSize() + "; " + list.toString();
+        if (instructions != null && !instructions.isEmpty())
             str += ", " + instructions.toString();
 
         if (hasErrors())
@@ -203,5 +216,10 @@ public class GHResponse
             throw new IllegalArgumentException("To access instructions you need to enable creation before routing");
 
         return instructions;
+    }
+
+    public PMap getHints()
+    {
+        return hintsMap;
     }
 }

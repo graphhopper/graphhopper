@@ -18,6 +18,7 @@
 package com.graphhopper.coll;
 
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
@@ -29,17 +30,17 @@ public class SparseLongLongArrayTest
     public void testBinarySearch()
     {
         long a[] = new long[]
-        {
-            9, 53, 100
-        };
+                {
+                        9, 53, 100
+                };
         assertEquals(~1, SparseLongLongArray.binarySearch(a, 0, 3, 50));
         assertEquals(~2, SparseLongLongArray.binarySearch(a, 0, 3, 55));
         assertEquals(~3, SparseLongLongArray.binarySearch(a, 0, 3, 155));
 
         a = new long[]
-        {
-            9
-        };
+                {
+                        9
+                };
         assertEquals(~0, SparseLongLongArray.binarySearch(a, 0, 1, 5));
         assertEquals(~1, SparseLongLongArray.binarySearch(a, 0, 1, 50));
     }

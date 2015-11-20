@@ -19,7 +19,7 @@ package com.graphhopper.storage;
 
 /**
  * Defines how a DataAccess object is created.
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class DAType
@@ -61,7 +61,9 @@ public class DAType
     {
         HEAP, MMAP, UNSAFE /*, DIRECT */
 
-    };
+    }
+
+    ;
     private final MemRef memRef;
     private final boolean storing;
     private final boolean integ;

@@ -20,10 +20,10 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class EncodedDoubleValueTest
@@ -53,7 +53,7 @@ public class EncodedDoubleValueTest
         long swappedFlags = instance1.swap(flags, instance2);
         assertEquals(expectedFlags, swappedFlags);
 
-        CarFlagEncoder carEncoder = new CarFlagEncoder(8, 0.5, 0);
+        CarFlagEncoder carEncoder = new CarFlagEncoder(10, 0.5, 0);
         new EncodingManager(carEncoder);
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "motorway_link");
@@ -62,6 +62,14 @@ public class EncodedDoubleValueTest
 
         // double speed = AbstractFlagEncoder.parseSpeed("70 mph");
         flags = carEncoder.reverseFlags(flags);
-        assertEquals(100, carEncoder.getSpeed(flags), 1e-1);
+        assertEquals(101.5, carEncoder.getSpeed(flags), 1e-1);
+    }
+
+    @Test
+    public void testUnsignedRightShift_issue417()
+    {
+        EncodedDoubleValue speedEncoder = new EncodedDoubleValue("Speed", 56, 8, 1, 30, 255);
+        Long flags = -72057594037927936L;
+        assertEquals(255, speedEncoder.getDoubleValue(flags), 0.01);
     }
 }

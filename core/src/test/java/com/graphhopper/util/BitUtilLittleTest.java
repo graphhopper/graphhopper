@@ -18,10 +18,10 @@
 package com.graphhopper.util;
 
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class BitUtilLittleTest extends AbstractBitUtilTester

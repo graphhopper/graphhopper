@@ -78,7 +78,7 @@ public class VLongStorage
      * take fewer bytes. Negative numbers are not supported.
      * <p>
      * The format is described further in Lucene its DataOutput#writeVInt(int)
-     * <p/>
+     * <p>
      * See DataInput readVLong of Lucene
      */
     public final void writeVLong( long i )
@@ -96,7 +96,7 @@ public class VLongStorage
      * Reads a long stored in variable-length format. Reads between one and nine bytes. Smaller
      * values take fewer bytes. Negative numbers are not supported.
      * <p>
-     * The format is described further in DataOutput writeVInt(int) -> Lucene.
+     * The format is described further in DataOutput writeVInt(int) from Lucene.
      */
     public long readVLong()
     {

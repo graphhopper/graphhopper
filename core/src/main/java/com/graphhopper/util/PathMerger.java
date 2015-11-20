@@ -20,6 +20,7 @@ package com.graphhopper.util;
 
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.Path;
+
 import java.util.List;
 
 /**
@@ -38,8 +39,7 @@ public class PathMerger
     public void doWork( GHResponse rsp, List<Path> paths, Translation tr )
     {
         int origPoints = 0;
-        StopWatch sw;
-        long fullMillis = 0;
+        long fullTimeInMillis = 0;
         double fullWeight = 0;
         double fullDistance = 0;
         boolean allFound = true;
@@ -49,13 +49,12 @@ public class PathMerger
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++)
         {
             Path path = paths.get(pathIndex);
-            fullMillis += path.getMillis();
+            fullTimeInMillis += path.getTime();
             fullDistance += path.getDistance();
             fullWeight += path.getWeight();
             if (enableInstructions)
             {
                 InstructionList il = path.calcInstructions(tr);
-                sw = new StopWatch().start();
 
                 if (!il.isEmpty())
                 {
@@ -76,13 +75,13 @@ public class PathMerger
                         fullInstructions.add(i);
                         fullPoints.add(i.getPoints());
                     }
-                    sw.stop();
 
                     // if not yet reached finish replace with 'reached via'
                     if (pathIndex + 1 < paths.size())
                     {
-                        FinishInstruction fi = (FinishInstruction) fullInstructions.get(fullInstructions.size() - 1);
-                        fi.setVia(pathIndex + 1);
+                        ViaInstruction newInstr = new ViaInstruction(fullInstructions.get(fullInstructions.size() - 1));
+                        newInstr.setViaCount(pathIndex + 1);
+                        fullInstructions.replaceLast(newInstr);
                     }
                 }
 
@@ -95,9 +94,7 @@ public class PathMerger
                 if (simplifyResponse)
                 {
                     origPoints = tmpPoints.getSize();
-                    sw = new StopWatch().start();
                     douglasPeucker.simplify(tmpPoints);
-                    sw.stop();
                 }
                 fullPoints.add(tmpPoints);
             }
@@ -116,13 +113,12 @@ public class PathMerger
 
         if (!allFound)
         {
-            rsp.addError(new RuntimeException("Not found"));
+            rsp.addError(new RuntimeException("Connection between locations not found"));
         }
 
         rsp.setPoints(fullPoints).
                 setRouteWeight(fullWeight).
-                setDistance(fullDistance).
-                setMillis(fullMillis);
+                setDistance(fullDistance).setTime(fullTimeInMillis);
     }
 
     public PathMerger setCalcPoints( boolean calcPoints )

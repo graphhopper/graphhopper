@@ -18,10 +18,10 @@
 package com.graphhopper.routing.util;
 
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
 public class AbstractFlagEncoderTest
@@ -29,15 +29,22 @@ public class AbstractFlagEncoderTest
     @Test
     public void testAcceptsCar()
     {
-        assertEquals(40, AbstractFlagEncoder.parseSpeed("40 km/h"), 1e-3);
-        assertEquals(40, AbstractFlagEncoder.parseSpeed("40km/h"), 1e-3);
-        assertEquals(40, AbstractFlagEncoder.parseSpeed("40kmh"), 1e-3);
-        assertEquals(64.374, AbstractFlagEncoder.parseSpeed("40mph"), 1e-3);
-        assertEquals(48.28, AbstractFlagEncoder.parseSpeed("30 mph"), 1e-3);
-        assertEquals(-1, AbstractFlagEncoder.parseSpeed(null), 1e-3);
-        assertEquals(18.52, AbstractFlagEncoder.parseSpeed("10 knots"), 1e-3);
-        assertEquals(19, AbstractFlagEncoder.parseSpeed("19 kph"), 1e-3);
-        assertEquals(19, AbstractFlagEncoder.parseSpeed("19kph"), 1e-3);
+        CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 0);
+        assertEquals(40, encoder.parseSpeed("40 km/h"), 1e-3);
+        assertEquals(40, encoder.parseSpeed("40km/h"), 1e-3);
+        assertEquals(40, encoder.parseSpeed("40kmh"), 1e-3);
+        assertEquals(64.374, encoder.parseSpeed("40mph"), 1e-3);
+        assertEquals(48.28, encoder.parseSpeed("30 mph"), 1e-3);
+        assertEquals(-1, encoder.parseSpeed(null), 1e-3);
+        assertEquals(18.52, encoder.parseSpeed("10 knots"), 1e-3);
+        assertEquals(19, encoder.parseSpeed("19 kph"), 1e-3);
+        assertEquals(19, encoder.parseSpeed("19kph"), 1e-3);
+
+        assertEquals(50, encoder.parseSpeed("RO:urban"), 1e-3);
+
+        assertEquals(80, encoder.parseSpeed("RU:rural"), 1e-3);
+
+        assertEquals(6, encoder.parseSpeed("walk"), 1e-3);
     }
 
     @Test
@@ -50,12 +57,5 @@ public class AbstractFlagEncoderTest
         assertEquals(60 * 20, AbstractFlagEncoder.parseDuration("20:00"));
         assertEquals(60 * 20, AbstractFlagEncoder.parseDuration("0:20:00"));
         assertEquals(60 * 24 * 2 + 60 * 20 + 2, AbstractFlagEncoder.parseDuration("02:20:02"));
-    }
-    
-    @Test
-    public void testParseProperties()
-    {
-        assertEquals(10, AbstractFlagEncoder.parseDouble("car|x", "prop", 10), .1);
-        assertEquals(12.2, AbstractFlagEncoder.parseDouble("car|x|prop=12.2", "prop", 10), .1);
     }
 }

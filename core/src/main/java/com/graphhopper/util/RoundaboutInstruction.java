@@ -1,3 +1,20 @@
+/*
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
+ *  additional information regarding copyright ownership.
+ * 
+ *  GraphHopper licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.util;
 
 import java.util.HashMap;
@@ -9,7 +26,8 @@ import java.util.Map;
 public class RoundaboutInstruction extends Instruction
 {
     private int exitNumber = 0;
-    private int clockwise = 0; // 0 undetermined, 1 clockwise, -1 counterclockwise, 2 inconsistent
+    // 0 undetermined, 1 clockwise, -1 counterclockwise, 2 inconsistent
+    private int clockwise = 0;
     private boolean exited = false;
     private double radian = Double.NaN;
 
@@ -67,22 +85,24 @@ public class RoundaboutInstruction extends Instruction
     }
 
     /**
-     * @return radian of angle -2PI < x < 2PI between roundabout entrance and exit
-     *         values > 0 are clockwise rotation, <0 counterclockwise, NaN if direction of rotation unclear
+     * @return radian of angle -2PI &lt; x &lt; 2PI between roundabout entrance and exit values
+     * <ul>
+     * <li>&gt; 0 is for clockwise rotation</li>
+     * <li>&lt; 0 is for counterclockwise rotation</li>
+     * <li>NaN if direction of rotation is unclear</li>
+     * </ul>
      */
-    public double getRadian()
+    public double getTurnAngle()
     {
         if (Math.abs(clockwise) != 1)
-        {
             return Double.NaN;
-        } else
-        {
-            double tmpRadian = Math.PI - clockwise * radian;
-            tmpRadian *= clockwise;
-            return tmpRadian;
-        }
+        else
+            return Math.PI * clockwise - radian;
     }
 
+    /**
+     * The radian value between entrance (in) and exit (out) of this roundabout.
+     */
     public RoundaboutInstruction setRadian( double radian )
     {
         this.radian = radian;
@@ -94,11 +114,9 @@ public class RoundaboutInstruction extends Instruction
     {
         Map<String, Object> tmpMap = new HashMap<String, Object>(2);
         tmpMap.put("exit_number", getExitNumber());
-        double radian = getRadian();
-        if (!Double.isNaN(radian))
-        {
-            tmpMap.put("turn_angle", Helper.round(radian, 2));
-        }
+        double tmpAngle = getTurnAngle();
+        if (!Double.isNaN(tmpAngle))
+            tmpMap.put("turn_angle", Helper.round(tmpAngle, 2));
 
         return tmpMap;
 
@@ -107,6 +125,9 @@ public class RoundaboutInstruction extends Instruction
     @Override
     public String getTurnDescription( Translation tr )
     {
+        if (rawName)
+            return getName();
+
         String str;
         String streetName = getName();
         int indi = getSign();
