@@ -144,6 +144,11 @@ body {
 #header_img img {
     width: 230px;
 }
+
+#gpx_dialog {
+    display: none;
+}
+
 #gpxExportButton {
     margin-top: -3px;
 }
