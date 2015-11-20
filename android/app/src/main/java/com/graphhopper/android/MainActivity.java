@@ -265,17 +265,18 @@ public class MainActivity extends Activity
             @Override
             protected void onPostExecute( List<String> nameList )
             {
-                if (nameList == null || nameList.isEmpty())
-                {
-                    logUser("No maps created for your version!? " + fileListURL);
-                    return;
-                } else if (hasError())
+                if (hasError())
                 {
                     getError().printStackTrace();
                     logUser("Are you connected to the internet? Problem while fetching remote area list: "
                             + getErrorMessage());
                     return;
+                } else if (nameList == null || nameList.isEmpty())
+                {
+                    logUser("No maps created for your version!? " + fileListURL);
+                    return;
                 }
+
                 MySpinnerListener spinnerListener = new MySpinnerListener()
                 {
                     @Override

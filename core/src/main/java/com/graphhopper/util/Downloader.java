@@ -64,21 +64,30 @@ public class Downloader
         return this;
     }
 
-    public InputStream fetch( HttpURLConnection conn, boolean readErrorStreamNoException ) throws IOException
+    /**
+     * This method initiates a connect call of the provided connection and returns the response
+     * stream. It only returns the error stream if it is available and readErrorStreamNoException is
+     * true otherwise it throws an IOException if an error happens. Furthermore it wraps the stream
+     * to decompress it if the connection content encoding is specified.
+     */
+    public InputStream fetch( HttpURLConnection connection, boolean readErrorStreamNoException ) throws IOException
     {
         // create connection but before reading get the correct inputstream based on the compression and if error
-        conn.connect();
+        connection.connect();
 
         InputStream is;
-        if (readErrorStreamNoException && conn.getResponseCode() >= 400 && conn.getErrorStream() != null)
-            is = conn.getErrorStream();
+        if (readErrorStreamNoException && connection.getResponseCode() >= 400 && connection.getErrorStream() != null)
+            is = connection.getErrorStream();
         else
-            is = conn.getInputStream();
+            is = connection.getInputStream();
+
+        if (is == null)
+            throw new IOException("Stream is null. Message:" + connection.getResponseMessage());
 
         // wrap
         try
         {
-            String encoding = conn.getContentEncoding();
+            String encoding = connection.getContentEncoding();
             if (encoding != null && encoding.equalsIgnoreCase("gzip"))
                 is = new GZIPInputStream(is);
             else if (encoding != null && encoding.equalsIgnoreCase("deflate"))
@@ -99,8 +108,8 @@ public class Downloader
     {
         URL url = new URL(urlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-        // conn.setDoInput(true); // Will yield in a POST request
-        conn.setDoOutput(true);
+        // Will yield in a POST request: conn.setDoOutput(true);
+        conn.setDoInput(true);
         conn.setUseCaches(true);
         conn.setRequestProperty("Referrer", referrer);
         conn.setRequestProperty("User-Agent", userAgent);
@@ -147,7 +156,7 @@ public class Downloader
             {
                 progressListener.update((int) (100 * sumBytes / length));
             }
-        });    
+        });
     }
 
     public String downloadAsString( String url, boolean readErrorStreamNoException ) throws IOException
