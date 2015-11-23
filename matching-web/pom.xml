@@ -127,9 +127,10 @@
                             <mainClass>com.graphhopper.matching.http.MatchServer</mainClass>
                         </manifest>
                     </archive>
-                    <descriptors>
-                        <descriptor>src/main/assembly/jar.xml</descriptor>                        
-                    </descriptors>
+                    <!-- for standalone usage -->
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
                 </configuration>
                 <executions>
                     <execution>

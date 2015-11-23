@@ -50,7 +50,17 @@ This will produce gpx results similar named as the input files.
 
 ### Matching Service
 
-There is also a new web service under development where you post a GPX file and get back a snapped result as GPX or as compatible GraphHopper JSON.
+Start via:
+```bash
+./map-matching.sh action=start-server
+```
+
+Now you can post GPX files and get back snapped results as GPX or as compatible GraphHopper JSON. An example curl request is:
+```bash
+curl -XPOST -H "Content-Type: application/xml" -d @/path/to/gpx/file.gpx "localhost:8989/match?vehicle=car&max_nodes_to_visit=1000&force_repair=true&type=json"
+```
+
+Keep in mind that camelCase variables are converted to under_score variables like seen in the example (maxNodesToVisit=>max_nodes_to_visit).
 
 #### Development tools
 

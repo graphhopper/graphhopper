@@ -158,7 +158,9 @@ public class MapMatchingMain {
             System.out.println("Usage: Do an import once, then do the matching\n"
                     + "./map-matching action=import datasource=your.pbf\n"
                     + "./map-matching action=match gpx=your.gpx\n"
-                    + "./map-matching action=match gpx=.*gpx\n\n");
+                    + "./map-matching action=match gpx=.*gpx\n\n"
+                    + "Or start in-built matching web service\n"
+                    + "./map-matching action=start-server\n\n");
         }
     }
 

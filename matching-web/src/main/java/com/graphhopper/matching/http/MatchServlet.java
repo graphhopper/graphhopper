@@ -31,7 +31,6 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.Translation;
 import com.graphhopper.util.TranslationMap;
