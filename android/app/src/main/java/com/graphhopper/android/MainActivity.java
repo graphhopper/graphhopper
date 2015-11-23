@@ -23,6 +23,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.graphhopper.PathWrapper;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
@@ -72,7 +73,7 @@ public class MainActivity extends Activity
     private volatile boolean prepareInProgress = false;
     private volatile boolean shortestPathRunning = false;
     private String currentArea = "berlin";
-    private String fileListURL = "http://download2.graphhopper.com/public/maps/0.6/";
+    private String fileListURL = "http://download2.graphhopper.com/public/maps/0.7/";
     private String prefixURL = fileListURL;
     private String downloadURL;
     private File mapsFolder;
@@ -461,7 +462,7 @@ public class MainActivity extends Activity
         prepareInProgress = false;
     }
 
-    private Polyline createPolyline( GHResponse response )
+    private Polyline createPolyline( PathWrapper response )
     {
         Paint paintStroke = AndroidGraphicFactory.INSTANCE.createPaint();
         paintStroke.setStyle(Style.STROKE);
@@ -495,11 +496,11 @@ public class MainActivity extends Activity
     {
 
         log("calculating path ...");
-        new AsyncTask<Void, Void, GHResponse>()
+        new AsyncTask<Void, Void, PathWrapper>()
         {
             float time;
 
-            protected GHResponse doInBackground( Void... v )
+            protected PathWrapper doInBackground( Void... v )
             {
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
@@ -508,10 +509,10 @@ public class MainActivity extends Activity
                         put("instructions", "false");
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
-                return resp;
+                return resp.getBest();
             }
 
-            protected void onPostExecute( GHResponse resp )
+            protected void onPostExecute( PathWrapper resp )
             {
                 if (!resp.hasErrors())
                 {

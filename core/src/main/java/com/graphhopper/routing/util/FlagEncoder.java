@@ -76,12 +76,12 @@ public interface FlagEncoder extends TurnCostEncoder
     long setProperties( double speed, boolean forward, boolean backward );
 
     /**
-     * Reports wether the edge is available in forward direction for a certain vehicle
+     * Reports whether the edge is available in forward direction for a certain vehicle
      */
     boolean isForward( long flags );
 
     /**
-     * Reports wether the edge is available in backward direction for a certain vehicle
+     * Reports whether the edge is available in backward direction for a certain vehicle
      */
     boolean isBackward( long flags );
 
@@ -91,7 +91,7 @@ public interface FlagEncoder extends TurnCostEncoder
      * Currently this means starting from 100, and subclasses of this class start from 10000 and so on.
      */
     /**
-     * Reports wether this edge is part of a roundabout.
+     * Reports whether this edge is part of a roundabout.
      */
     static final int K_ROUNDABOUT = 2;
 

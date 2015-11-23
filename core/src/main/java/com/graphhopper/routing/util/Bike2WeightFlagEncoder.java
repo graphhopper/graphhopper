@@ -25,6 +25,8 @@ import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
 import static com.graphhopper.util.Helper.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Stores two speed values into an edge to support avoiding too much incline
@@ -172,10 +174,8 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
             double fullDist2D = edge.getDistance();
 
             if (Double.isInfinite(fullDist2D))
-            {
-                System.err.println("infinity distance? for way:" + way.getId());
-                return;
-            }
+                throw new IllegalStateException("Infinite distance should not happen due to #435. OSMID=" + way.getId());
+
             // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
             if (fullDist2D < 1)
                 return;
@@ -222,7 +222,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
             double maxSpeed = getHighwaySpeed("cycleway");
             if (isForward(flags))
             {
-                // use weighted mean so that longer incline infuences speed more than shorter
+                // use weighted mean so that longer incline influences speed more than shorter
                 double speed = getSpeed(flags);
                 double fwdFaster = 1 + 2 * keepIn(fwdDecline, 0, 0.2);
                 fwdFaster = fwdFaster * fwdFaster;

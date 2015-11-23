@@ -22,11 +22,15 @@ import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
 
 /**
- *
+ * This class currently parses the duration tag only.
+ * <p/>
  * @author ratrun
  */
 public class OSMTagParser
 {
+    // use a day somewhere within July 1970 which then makes two identical long months ala 31 days, see #588
+    private final static Date STATIC_DATE = new Date((31 * 6) * 24 * 3600 * 1000);
+
     /**
      * Parser according to http://wiki.openstreetmap.org/wiki/Key:duration The value consists of a
      * string ala 'hh:mm', format for hours and minutes 'mm', 'hh:mm' or 'hh:mm:ss', or
@@ -43,13 +47,13 @@ public class OSMTagParser
         // Check for ISO_8601 format
         if (str.startsWith("P"))
         {
-                // A common mistake is the the minutes format is intended but month format specified 
+            // A common mistake is when the minutes format is intended but the month format is specified 
             // e.g. one month "P1M" is set, but on minute "PT1M" is meant.
             Duration dur;
             try
             {
                 dur = DatatypeFactory.newInstance().newDuration(str);
-                seconds = dur.getTimeInMillis(new Date()) / 1000;
+                seconds = dur.getTimeInMillis(STATIC_DATE) / 1000;
             } catch (Exception ex)
             {
                 throw new IllegalArgumentException("Cannot parse duration tag value: " + str, ex);

@@ -19,7 +19,11 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.Helper;
+import java.text.DateFormat;
 import org.junit.Test;
+
+import java.util.Date;
 
 import static org.junit.Assert.*;
 
@@ -102,11 +106,24 @@ public class CarFlagEncoderTest
         way.setTag("highway", "service");
         way.setTag("access", "emergency");
         assertFalse(encoder.acceptWay(way) > 0);
-        
+
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("motor_vehicle", "emergency");
         assertFalse(encoder.acceptWay(way) > 0);
+
+        DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
+
+        way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("access", "no");
+        way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
+        assertTrue(encoder.acceptWay(way) > 0);
     }
 
     @Test

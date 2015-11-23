@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +83,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected final int speedBits;
     protected final double speedFactor;
     private boolean registered;
+
+    protected ConditionalTagsInspector conditionalTagsInspector;
 
     public AbstractFlagEncoder( PMap properties )
     {
@@ -496,7 +499,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                     // If duration AND distance is available we can calculate the speed more precisely
                     // and set both speed to the same value. Factor 1.4 slower because of waiting time!
                     double calculatedTripSpeed = val / durationInHours / 1.4;
-                    // Plausibility check especially for the case of wongly used PxM format with the intension to 
+                    // Plausibility check especially for the case of wrongly used PxM format with the intention to
                     // specify the duration in minutes, but actually using months
                     if (calculatedTripSpeed > 0.01d)
                     {
@@ -744,63 +747,19 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
     }
 
-    @Deprecated
-    protected static double parseDouble( String str, String key, double defaultD )
-    {
-        String val = getStr(str, key);
-        if (val.isEmpty())
-            return defaultD;
-        return Double.parseDouble(val);
-    }
-
-    @Deprecated
-    protected static long parseLong( String str, String key, long defaultL )
-    {
-        String val = getStr(str, key);
-        if (val.isEmpty())
-            return defaultL;
-        return Long.parseLong(val);
-    }
-
-    @Deprecated
-    protected static boolean parseBoolean( String str, String key, boolean defaultB )
-    {
-        String val = getStr(str, key);
-        if (val.isEmpty())
-            return defaultB;
-        return Boolean.parseBoolean(val);
-    }
-
-    @Deprecated
-    protected static String getStr( String str, String key )
-    {
-        key = key.toLowerCase();
-        for (String s : str.split("\\|"))
-        {
-            s = s.trim().toLowerCase();
-            int index = s.indexOf("=");
-            if (index < 0)
-                continue;
-
-            String field = s.substring(0, index);
-            String valueStr = s.substring(index + 1);
-            if (key.equals(field))
-                return valueStr;
-        }
-        return "";
-    }
-
     /**
-     * @param force should be false if speed should be changed only if it is bigger than maxspeed.
+     * @param way: needed to retrieve OSM tags
+     * @param speed: speed guessed e.g. from the road type or other tags
+     * @return The assumed speed. 
      */
-    protected double applyMaxSpeed( OSMWay way, double speed, boolean force )
+    protected double applyMaxSpeed( OSMWay way, double speed )
     {
         double maxSpeed = getMaxSpeed(way);
-        // apply only if smaller maxSpeed
+        // We obay speed limits
         if (maxSpeed >= 0)
         {
-            if (force || maxSpeed < speed)
-                return maxSpeed * 0.9;
+            // We assume that the average speed is 90% of the allowed maximum
+            return maxSpeed * 0.9;
         }
         return speed;
     }
@@ -818,4 +777,5 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
         return false;
     }
+
 }

@@ -5,14 +5,14 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-tools-lgpl</artifactId>
-    <version>0.6-SNAPSHOT</version>
+    <version>0.7-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>GraphHopper Tools LGPL licensed</name>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.6-SNAPSHOT</version>
+        <version>0.7-SNAPSHOT</version>
     </parent>
 
     <dependencies>

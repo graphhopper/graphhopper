@@ -13,7 +13,6 @@ import org.openstreetmap.osmosis.osmbinary.Osmformat;
 import gnu.trove.list.TLongList;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.zip.DataFormatException;
 import java.util.zip.Inflater;

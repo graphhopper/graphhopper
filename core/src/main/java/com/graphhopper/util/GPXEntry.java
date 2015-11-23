@@ -62,24 +62,6 @@ public class GPXEntry extends GHPoint3D
         this.time = time;
     }
 
-    /**
-     * The time relative to the start time in milli seconds.
-     * <p>
-     * @deprecated use getTime instead
-     */
-    public long getMillis()
-    {
-        return time;
-    }
-
-    /**
-     * @deprecated use setTime instead
-     */
-    public void setMillis( long time )
-    {
-        this.time = time;
-    }
-
     @Override
     public boolean equals( Object obj )
     {
