@@ -68,7 +68,7 @@ public class MapMatching {
     private final Graph graph;
     private final LocationIndexMatch locationIndex;
     private final FlagEncoder encoder;
-    private TraversalMode traversalMode;
+    private final TraversalMode traversalMode;
     // we split the incoming list into smaller parts (hopefully) without loops
     // later we'll detect loops and insert the correctly detected road recursivly
     // see #1
@@ -256,7 +256,7 @@ public class MapMatching {
                 int edge = qr.getClosestEdge().getEdge();
                 List<GPXExtension> extensionList = extensionMap.get(edge);
                 if (extensionList == null) {
-                    extensionList = new ArrayList(5);
+                    extensionList = new ArrayList<GPXExtension>(5);
                     extensionMap.put(edge, extensionList);
                 }
 
@@ -656,26 +656,30 @@ public class MapMatching {
         }
 
         @Override
-        public void addEdge(int edge) {
-            super.addEdge(edge);
-        }
-
-        @Override
         public Path setFromNode(int from) {
             return super.setFromNode(from);
         }
+
+        @Override
+        public void processEdge(int edgeId, int adjNode) {
+            super.processEdge(edgeId, adjNode);
+        }
     };
 
-    public InstructionList calcInstructions(MatchResult mr, Translation tr) {
+    public Path calcPath(MatchResult mr) {
         MyPath p = new MyPath(graph, encoder);
         if (!mr.getEdgeMatches().isEmpty()) {
             p.setFromNode(mr.getEdgeMatches().get(0).getEdgeState().getBaseNode());
             for (EdgeMatch em : mr.getEdgeMatches()) {
-                p.addEdge(em.getEdgeState().getEdge());
+                p.processEdge(em.getEdgeState().getEdge(), em.getEdgeState().getAdjNode());
             }
-            return p.calcInstructions(tr);
+
+            // TODO p.setWeight(weight);
+            p.setFound(true);
+
+            return p;
         } else {
-            return new InstructionList(tr);
+            return p;
         }
     }
 }

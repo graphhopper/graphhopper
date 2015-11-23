@@ -1,73 +1,100 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>com.graphhopper</groupId>
-    <artifactId>map-matching</artifactId>
+    <artifactId>map-matching-parent</artifactId>
+    <name>GraphHopper Map Matching Parent Project</name>
     <version>0.6-SNAPSHOT</version>
-    <packaging>jar</packaging>
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.6</maven.compiler.source>
-        <maven.compiler.target>1.6</maven.compiler.target>
-        <slf4j.version>1.7.7</slf4j.version>
-        <log4j.version>1.2.17</log4j.version>   
-    </properties>
-    <name>GraphHopper Map Matching</name>
-    
+    <packaging>pom</packaging> 
+    <url>https://graphhopper.com</url> 
+    <inceptionYear>2012</inceptionYear>
+    <description>
+        Super pom of the GraphHopper Map Matching component
+    </description>
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
         <version>9</version>
         <relativePath></relativePath>
     </parent>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <slf4j.version>1.7.12</slf4j.version>
+        <log4j.version>1.2.17</log4j.version>
+    </properties>
     
-    <dependencies>
-        <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper</artifactId>
-            <version>0.6-SNAPSHOT</version>            
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
+    <scm>
+        <connection>scm:git:git@github.com:graphhopper/map-matching.git</connection>
+        <developerConnection>scm:git:git@github.com:graphhopper/map-matching.git</developerConnection>
+        <url>git@github.com:graphhopper/map-matching.git</url>
+    </scm>
+    <developers>
+        <developer>
+            <id>karussell</id>
+            <name>Peter Karich</name>
+            <email>my.name@graphhopper.com</email>
+        </developer>
+    </developers>
+    
+    <mailingLists>
+        <mailingList>
+            <name>GraphHopper</name>
+            <subscribe>https://discuss.graphhopper.com/</subscribe>
+            <archive>https://discuss.graphhopper.com/</archive>
+        </mailingList>
+    </mailingLists>
+    <issueManagement>
+        <system>GitHub</system>
+        <url>https://github.com/graphhopper/map-matching/issues</url>
+    </issueManagement>
+    <modules>
+        <module>matching-core</module>
+        <module>matching-web</module>
+    </modules>
         
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-log4j12</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>log4j</groupId>
-            <artifactId>log4j</artifactId>
-            <version>${log4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.10</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
-    <build>
+    <build>        
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.5.3</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.graphhopper.matching.MapMatchingMain</mainClass>
-                        </manifest>
-                    </archive>
-                        	                    
-                    <!-- for standalone usage -->
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.3</version>
+                <configuration>        
+                    <!--             
+                    <compilerArgument>-Xlint:unchecked</compilerArgument>
+                    -->
+                                        
+                    <fork>true</fork>
+                    <source>1.6</source>
+                    <target>1.6</target>
                 </configuration>
+            </plugin>
+            
+            <!-- to run single tests -->
+            <plugin>                
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.18.1</version>
+                <configuration>
+                    <argLine>-Xmx100m -Xms100m</argLine>
+                </configuration>
+            </plugin>
+                        
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.18.1</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>integration-test</goal>
+                            <goal>verify</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
             
             <plugin>
@@ -78,7 +105,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.10.1</version>
+                <version>2.10.3</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -87,23 +114,29 @@
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.5</version>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>2.5.5</version>                    
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.6</version>
+            </plugin>
+            <plugin>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>2.6</version>                
+            </plugin>            
         </plugins>
-    </build>
-    <repositories>
-        <repository>
-            <id>sonatype-oss-public</id>
-            <url>https://oss.sonatype.org/content/groups/public/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
+    </build>    
+    
+    <dependencies>      
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>        
+    </dependencies>
     
     <!-- mvn deploy -DperformRelease=true -->
     <profiles>
@@ -120,7 +153,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.5</version>
+                        <version>1.6</version>
                         <executions>
                             <execution>
                                 <id>sign-artifacts</id>
@@ -134,5 +167,16 @@
                 </plugins>
             </build>
         </profile>
+        
+        <profile>
+            <id>include-android</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
+                <module>android/app</module>
+            </modules>
+        </profile>
     </profiles>
+    
 </project>

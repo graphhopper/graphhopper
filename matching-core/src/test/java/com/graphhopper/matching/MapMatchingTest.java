@@ -33,6 +33,7 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.Translation;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.GHPoint;
@@ -52,15 +53,15 @@ import org.junit.Test;
  */
 public class MapMatchingTest {
 
-    // enable turn restrictions in encoder:
-    private static final CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
+    // disable turn restrictions in encoder:
+    private static final CarFlagEncoder encoder = new CarFlagEncoder();
     private static final TestGraphHopper hopper = new TestGraphHopper();
     public final static TranslationMap SINGLETON = new TranslationMap().doImport();
 
     @BeforeClass
     public static void doImport() {
-        hopper.setOSMFile("./map-data/leipzig_germany.osm.pbf");
-        hopper.setGraphHopperLocation("./target/mapmatchingtest");
+        hopper.setOSMFile("../map-data/leipzig_germany.osm.pbf");
+        hopper.setGraphHopperLocation("../target/mapmatchingtest");
         hopper.setEncodingManager(new EncodingManager(encoder));
         hopper.setCHEnable(false);
         // hopper.clean();
@@ -97,7 +98,12 @@ public class MapMatchingTest {
                 fetchStreets(mr.getEdgeMatches()));
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 1.5);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
-        InstructionList il = mapMatching.calcInstructions(mr, SINGLETON.get("en"));
+
+        Path path = mapMatching.calcPath(mr);
+        GHResponse matchGHRsp = new GHResponse();
+        new PathMerger().doWork(matchGHRsp, Collections.singletonList(path), SINGLETON.get("en"));
+        InstructionList il = matchGHRsp.getInstructions();
+
         assertEquals(il.toString(), 2, il.size());
         assertEquals("Platnerstraße", il.get(0).getName());
 
@@ -112,7 +118,11 @@ public class MapMatchingTest {
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), .1);
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
 
-        il = mapMatching.calcInstructions(mr, SINGLETON.get("en"));
+        path = mapMatching.calcPath(mr);
+        matchGHRsp = new GHResponse();
+        new PathMerger().doWork(matchGHRsp, Collections.singletonList(path), SINGLETON.get("en"));
+        il = matchGHRsp.getInstructions();
+
         assertEquals(il.toString(), 3, il.size());
         assertEquals("Windmühlenstraße", il.get(0).getName());
         assertEquals("Bayrischer Platz", il.get(1).getName());

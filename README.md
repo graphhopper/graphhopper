@@ -48,6 +48,10 @@ forceRepair=false           # default=false, type=boolean, when merging two path
 
 This will produce gpx results similar named as the input files.
 
+### Matching Service
+
+There is also a new web service under development where you post a GPX file and get back a snapped result as GPX or as compatible GraphHopper JSON.
+
 #### Development tools
 
 Determine the maximum bounds of one or more GPX file:
