@@ -224,7 +224,7 @@ $(document).ready(function (e) {
                                 hiddenVehicles[i].show();
                             }
                         });
-                        vehiclesDiv.append($("<a class='vehicle-info-link' href='https://github.com/graphhopper/directions-api/blob/master/supported-vehicle-profiles.md'>?</a>"))
+                        vehiclesDiv.append($("<a class='vehicle-info-link' href='https://graphhopper.com/api/1/docs/supported-vehicle-profiles/'>?</a>"))
                         vehiclesDiv.append(moreBtn);
                     }
                 }
