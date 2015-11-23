@@ -31,31 +31,34 @@ import java.util.List;
  */
 public class PathMerger
 {
+    private static final DouglasPeucker DP = new DouglasPeucker();
     private boolean enableInstructions = true;
     private boolean simplifyResponse = true;
-    private DouglasPeucker douglasPeucker;
+    private DouglasPeucker douglasPeucker = DP;
     private boolean calcPoints = true;
 
-    private void calcAscendDescend( final GHResponse rsp, final PointList pointList )
+    public PathMerger setCalcPoints( boolean calcPoints )
     {
-        double ascendMeters = 0;
-        double descendMeters = 0;
-        double lastEle = pointList.getElevation(0);
-        for (int i = 1; i < pointList.size(); ++i)
-        {
-            double ele = pointList.getElevation(i);
-            double diff = Math.abs(ele - lastEle);
+        this.calcPoints = calcPoints;
+        return this;
+    }
 
-            if (ele > lastEle)
-                ascendMeters += diff;
-            else
-                descendMeters += diff;
+    public PathMerger setDouglasPeucker( DouglasPeucker douglasPeucker )
+    {
+        this.douglasPeucker = douglasPeucker;
+        return this;
+    }
 
-            lastEle = ele;
+    public PathMerger setSimplifyResponse( boolean simplifyRes )
+    {
+        this.simplifyResponse = simplifyRes;
+        return this;
+    }
 
-        }
-        rsp.setAscend(ascendMeters);
-        rsp.setDescend(descendMeters);
+    public PathMerger setEnableInstructions( boolean enableInstructions )
+    {
+        this.enableInstructions = enableInstructions;
+        return this;
     }
 
     public void doWork( GHResponse rsp, List<Path> paths, Translation tr )
@@ -144,27 +147,25 @@ public class PathMerger
                 setTime(fullTimeInMillis);
     }
 
-    public PathMerger setCalcPoints( boolean calcPoints )
+    private void calcAscendDescend( final GHResponse rsp, final PointList pointList )
     {
-        this.calcPoints = calcPoints;
-        return this;
-    }
+        double ascendMeters = 0;
+        double descendMeters = 0;
+        double lastEle = pointList.getElevation(0);
+        for (int i = 1; i < pointList.size(); ++i)
+        {
+            double ele = pointList.getElevation(i);
+            double diff = Math.abs(ele - lastEle);
 
-    public PathMerger setDouglasPeucker( DouglasPeucker douglasPeucker )
-    {
-        this.douglasPeucker = douglasPeucker;
-        return this;
-    }
+            if (ele > lastEle)
+                ascendMeters += diff;
+            else
+                descendMeters += diff;
 
-    public PathMerger setSimplifyResponse( boolean simplifyRes )
-    {
-        this.simplifyResponse = simplifyRes;
-        return this;
-    }
+            lastEle = ele;
 
-    public PathMerger setEnableInstructions( boolean enableInstructions )
-    {
-        this.enableInstructions = enableInstructions;
-        return this;
+        }
+        rsp.setAscend(ascendMeters);
+        rsp.setDescend(descendMeters);
     }
 }
