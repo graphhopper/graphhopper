@@ -1,0 +1,12 @@
+<code_scheme name="GraphHopper">
+  <option name="ENABLE_JAVADOC_FORMATTING" value="false" />
+  <XML>
+    <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
+  </XML>
+  <codeStyleSettings language="JAVA">
+    <option name="BRACE_STYLE" value="2" />
+    <option name="CLASS_BRACE_STYLE" value="2" />
+    <option name="METHOD_BRACE_STYLE" value="2" />
+    <option name="SPACE_WITHIN_METHOD_PARENTHESES" value="true" />
+  </codeStyleSettings>
+</code_scheme>

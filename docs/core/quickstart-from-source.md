@@ -35,7 +35,8 @@ installed when executing graphhopper.sh.
 
 ### NetBeans, IntelliJ, Eclipse
 
- * For IntelliJ you need to import the code formatting settings (File|Import Settings). Load them from core/files/intellij-settings.jar. See the [special setup](../android/android-studio-setup.md) for Android if using Android studio.
+ * For IntelliJ you need to import the code formatting settings (File|Import Settings). Load them from `core/files/intellij-settings.jar`. See the [special setup](../android/android-studio-setup.md) for Android if using Android studio.
+   * For IntelliJ15 there is also a formatting description, that should be imported using (Preferences|Editor|Code Style|Java|Manage|Import) from `core/files/IntelliJ15GraphHopperFormatting.xml`. 
  * For Eclipse please refer to [this separate setup documentation](./eclipse-setup.md).
  * Nothing special needs to be done for NetBeans.
 
