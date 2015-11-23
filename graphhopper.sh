@@ -223,7 +223,7 @@ if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
   fi
   WEB_JAR="$GH_HOME/web/target/graphhopper-web-$VERSION-with-dep.jar"
   if [ ! -s "$WEB_JAR" ]; then         
-    "$MAVEN_HOME/bin/mvn" --projects web -DskipTests=true install assembly:single > /tmp/graphhopper-web-compile.log
+    "$MAVEN_HOME/bin/mvn" --projects web,core -DskipTests=true install assembly:single > /tmp/graphhopper-web-compile.log
     returncode=$?
     if [[ $returncode != 0 ]] ; then
       echo "## compilation of web failed"
