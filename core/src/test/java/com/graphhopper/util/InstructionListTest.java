@@ -534,6 +534,13 @@ public class InstructionListTest
 
         // query north-west of pillar node n , get instruction for fourth edge
         assertEquals("4-5", wayList.find(15.21, 9.85, 100000).getName());
+    }
 
+    @Test
+    public void testXMLEscape_issue572()
+    {
+        assertEquals("_", InstructionList.simpleXMLEscape("<"));
+        assertEquals("_blup_", InstructionList.simpleXMLEscape("<blup>"));
+        assertEquals("a&amp;b", InstructionList.simpleXMLEscape("a&b"));
     }
 }
