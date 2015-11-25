@@ -1328,7 +1328,7 @@ function addInstruction(main, instr, instrIndex, lngLat) {
         sign = "roundabout";
     else
         throw "did not find sign " + sign;
-    var title = "<script>alert('test')</script>";
+    var title = instr.text;
     if (instr.annotation_text) {
         if (!title)
             title = instr.annotation_text;
