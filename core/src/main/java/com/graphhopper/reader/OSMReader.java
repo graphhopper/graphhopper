@@ -17,36 +17,40 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.coll.GHLongIntBTree;
-import com.graphhopper.coll.LongIntMap;
-import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
-import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.TurnWeighting;
-import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import static com.graphhopper.util.Helper.nf;
+
 import gnu.trove.list.TLongList;
 import gnu.trove.list.array.TLongArrayList;
 import gnu.trove.map.TIntLongMap;
 import gnu.trove.map.TLongLongMap;
-import gnu.trove.map.TLongObjectMap;
 import gnu.trove.map.hash.TIntLongHashMap;
 import gnu.trove.map.hash.TLongLongHashMap;
-import gnu.trove.map.hash.TLongObjectHashMap;
 import gnu.trove.set.TLongSet;
 import gnu.trove.set.hash.TLongHashSet;
+
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import javax.xml.stream.XMLStreamException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.xml.stream.XMLStreamException;
-import java.io.File;
-import java.io.IOException;
-import java.util.*;
+import com.graphhopper.coll.GHLongIntBTree;
+import com.graphhopper.coll.LongIntMap;
+import com.graphhopper.reader.OSMTurnRelation.TurnCostTableEntry;
+import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.storage.*;
+import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPoint;
+import gnu.trove.map.TLongObjectMap;
+import gnu.trove.map.hash.TLongObjectHashMap;
 
-import static com.graphhopper.util.Helper.nf;
+import java.util.*;
 
 /**
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
@@ -69,7 +73,6 @@ import static com.graphhopper.util.Helper.nf;
  * When creating an edge the pillar node information from the intermediate datastructure will be
  * stored in the way geometry of that edge.
  * <p>
- *
  * @author Peter Karich
  */
 public class OSMReader implements DataReader
@@ -191,24 +194,30 @@ public class OSMReader implements DataReader
                                     + getNodeMap().getMemoryUsage() + "MB) " + Helper.getMemInfo());
                         }
                     }
-                } else if (item.isType(OSMElement.RELATION))
+                } else
                 {
-                    final OSMRelation relation = (OSMRelation) item;
-                    if (!relation.isMetaRelation() && relation.hasTag("type", "route"))
-                        prepareWaysWithRelationInfo(relation);
-
-                    if (relation.hasTag("type", "restriction"))
-                        prepareRestrictionRelation(relation);
-
-                    if (++tmpRelationCounter % 50000 == 0)
+                    if (item.isType(OSMElement.RELATION))
                     {
-                        logger.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMap().size())
-                                + " " + Helper.getMemInfo());
+                        final OSMRelation relation = (OSMRelation) item;
+                        if (!relation.isMetaRelation() && relation.hasTag("type", "route"))
+                            prepareWaysWithRelationInfo(relation);
+
+                        if (relation.hasTag("type", "restriction"))
+                            prepareRestrictionRelation(relation);
+
+                        if (++tmpRelationCounter % 50000 == 0)
+                        {
+                            logger.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMap().size())
+                                    + " " + Helper.getMemInfo());
+                        }
+                    } else
+                    {
+                        if (item.isType(OSMElement.FILEHEADER))
+                        {
+                            final OSMFileHeader fileHeader = (OSMFileHeader) item;
+                            osmDataDate = Helper.createFormatter().parse(fileHeader.getTag("timestamp"));
+                        }
                     }
-                } else if (item.isType(OSMElement.FILEHEADER))
-                {
-                    final OSMFileHeader fileHeader = (OSMFileHeader) item;
-                    osmDataDate = Helper.createFormatter().parse(fileHeader.getTag("timestamp"));
                 }
 
             }
@@ -251,7 +260,6 @@ public class OSMReader implements DataReader
      * Filter ways but do not analyze properties wayNodes will be filled with participating node
      * ids.
      * <p>
-     *
      * @return true the current xml entry is a way entry and has nodes
      */
     boolean filterWay( OSMWay item )
@@ -853,10 +861,13 @@ public class OSMReader implements DataReader
             // convert pillarNode type to towerNode, make pillar values invalid
             pillarInfo.setNode(tmpNode, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
             tmpNode = addTowerNode(osmId, lat, lon, ele);
-        } else if (pointList.is3D())
-            pointList.add(lat, lon, ele);
-        else
-            pointList.add(lat, lon);
+        } else
+        {
+            if (pointList.is3D())
+                pointList.add(lat, lon, ele);
+            else
+                pointList.add(lat, lon);
+        }
 
         return (int) tmpNode;
     }
@@ -918,7 +929,6 @@ public class OSMReader implements DataReader
     /**
      * Creates an OSM turn relation out of an unspecified OSM relation
      * <p>
-     *
      * @return the OSM turn relation, <code>null</code>, if unsupported turn relation
      */
     OSMTurnRelation createTurnRelation( OSMRelation relation )

@@ -365,8 +365,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     {
         double speed = this.getSpeed(edge.getFlags());
         double roadDistance = edge.getDistance();
-        double beelineDistance = getBeelineDistance(edge);
         PointList pointList = edge.fetchWayGeometry(3);
+        double beelineDistance = getBeelineDistance(pointList);
 
         // Don't care about short passages
         if (beelineDistance < 50 || roadDistance < 100 || pointList.size() <= 2)
@@ -378,7 +378,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         double bendiness = beelineDistance / roadDistance;
 
         bendiness = discriminateSlowStreets(bendiness, speed);
-        bendiness = preferSlopes(bendiness, edge);
+        bendiness = preferSlopes(bendiness, roadDistance, pointList);
         bendiness = increaseBendinessImpact(bendiness);
         bendiness = influenceBendinessByTags(bendiness, way);
         bendiness = correctErrors(bendiness);
@@ -411,9 +411,12 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         edge.setFlags(this.curvatureEncoder.setValue(edge.getFlags(), convertToInt(bendiness)));
     }
 
-    private double getBeelineDistance( EdgeIteratorState edge )
+    /**
+     * Calculates the beeline distance by using the first and last node of the edge. If elevation
+     * data is available we will also use that information.
+     */
+    private double getBeelineDistance( PointList pointList )
     {
-        PointList pointList = edge.fetchWayGeometry(3);
         int lastElement = pointList.size() - 1;
         if (pointList.is3D())
         {
@@ -462,10 +465,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     /**
      * Slopes shall be prefered. Only works when elevation data is available.
      */
-    protected double preferSlopes( double bendiness, EdgeIteratorState edge )
+    protected double preferSlopes( double bendiness, double roadDistance, PointList pointList )
     {
-        double roadDistance = edge.getDistance();
-        PointList pointList = edge.fetchWayGeometry(3);
         if (!pointList.is3D())
         {
             return bendiness;
