@@ -18,11 +18,13 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.util.*;
+import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
+
+import static com.graphhopper.routing.util.PriorityCode.*;
 
 import java.util.HashSet;
-
-import static com.graphhopper.routing.util.PriorityCode.BEST;
 
 /**
  * Defines bit layout for motorbikes
@@ -40,15 +42,6 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     private EncodedValue curvatureEncoder;
     private final HashSet<String> avoidSet = new HashSet<String>();
     private final HashSet<String> preferSet = new HashSet<String>();
-
-    // If these tags are set, the route is probably more enjoyable
-    private final HashSet<String> enjoyableTags = new HashSet<String>();
-
-    // If these tags are set, the route is probably frustrating (city, urban, ...)
-    private final HashSet<String> frustratingTags = new HashSet<String>();
-
-    private final DistanceCalc distCalc = Helper.DIST_EARTH;
-    private final DistanceCalc3D distCalc3D = Helper.DIST_3D;
 
     public MotorcycleFlagEncoder()
     {
@@ -100,36 +93,29 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
 
         // autobahn
         defaultSpeedMap.put("motorway", 100);
-        defaultSpeedMap.put("motorway_link", 80);
+        defaultSpeedMap.put("motorway_link", 70);
         defaultSpeedMap.put("motorroad", 90);
         // bundesstraße
         defaultSpeedMap.put("trunk", 80);
         defaultSpeedMap.put("trunk_link", 75);
         // linking bigger town
-        defaultSpeedMap.put("primary", 100);
-        defaultSpeedMap.put("primary_link", 80);
+        defaultSpeedMap.put("primary", 65);
+        defaultSpeedMap.put("primary_link", 60);
         // linking towns + villages
-        defaultSpeedMap.put("secondary", 90);
-        defaultSpeedMap.put("secondary_link", 70);
+        defaultSpeedMap.put("secondary", 60);
+        defaultSpeedMap.put("secondary_link", 50);
         // streets without middle line separation
-        defaultSpeedMap.put("tertiary", 80);
-        defaultSpeedMap.put("tertiary_link", 60);
-        defaultSpeedMap.put("unclassified", 40);
+        defaultSpeedMap.put("tertiary", 50);
+        defaultSpeedMap.put("tertiary_link", 40);
+        defaultSpeedMap.put("unclassified", 30);
         defaultSpeedMap.put("residential", 30);
         // spielstraße
         defaultSpeedMap.put("living_street", 5);
         defaultSpeedMap.put("service", 20);
         // unknown road
-        defaultSpeedMap.put("road", 40);
+        defaultSpeedMap.put("road", 20);
         // forestry stuff
         defaultSpeedMap.put("track", 15);
-
-        enjoyableTags.add("scenic");
-
-        // List is typcially set in urban areas
-        frustratingTags.add("lit");
-        frustratingTags.add("motorroad");
-        frustratingTags.add("sidewalk");
 
     }
 
@@ -348,8 +334,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     private int handlePriority( OSMWay way, long relationFlags )
     {
         String highway = way.getTag("highway", "");
-        String motorWay = way.getTag("motorroad", "");
-        if (avoidSet.contains(highway) || motorWay.equals("yes"))
+        if (avoidSet.contains(highway))
         {
             return PriorityCode.WORST.getValue();
         } else if (preferSet.contains(highway))
@@ -365,66 +350,19 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     {
         double speed = this.getSpeed(edge.getFlags());
         double roadDistance = edge.getDistance();
-        PointList pointList = edge.fetchWayGeometry(3);
-        double beelineDistance = getBeelineDistance(pointList);
-
-        // Don't care about short passages
-        if (beelineDistance < 50 || roadDistance < 100 || pointList.size() <= 2)
-        {
-            setBendiness(edge, 1);
-            return;
-        }
-
+        double beelineDistance = getBeelineDistance(way);
         double bendiness = beelineDistance / roadDistance;
 
         bendiness = discriminateSlowStreets(bendiness, speed);
-        bendiness = preferSlopes(bendiness, roadDistance, pointList);
         bendiness = increaseBendinessImpact(bendiness);
-        bendiness = influenceBendinessByTags(bendiness, way);
         bendiness = correctErrors(bendiness);
 
-        setBendiness(edge, bendiness);
-    }
-
-    /**
-     * Check the given tags. In general the less tags given, the better the road ;)
-     */
-    private double influenceBendinessByTags( double bendiness, OSMWay way )
-    {
-        for (String tag : enjoyableTags)
-        {
-            if (!way.getTag(tag, "no").equals("no"))
-                bendiness = bendiness / 2;
-        }
-
-        for (String tag : frustratingTags)
-        {
-            if (!way.getTag(tag, "no").equals("no"))
-                bendiness += .1;
-        }
-
-        return bendiness;
-    }
-
-    private void setBendiness( EdgeIteratorState edge, double bendiness )
-    {
         edge.setFlags(this.curvatureEncoder.setValue(edge.getFlags(), convertToInt(bendiness)));
     }
 
-    /**
-     * Calculates the beeline distance by using the first and last node of the edge. If elevation
-     * data is available we will also use that information.
-     */
-    private double getBeelineDistance( PointList pointList )
+    private double getBeelineDistance( OSMWay way )
     {
-        int lastElement = pointList.size() - 1;
-        if (pointList.is3D())
-        {
-            return distCalc3D.calcDist(pointList.getLat(0), pointList.getLon(0), pointList.getLat(lastElement), pointList.getLon(lastElement));
-        } else
-        {
-            return distCalc.calcDist(pointList.getLat(0), pointList.getLon(0), pointList.getLat(lastElement), pointList.getLon(lastElement));
-        }
+        return way.getTag("estimated_distance", Double.POSITIVE_INFINITY);
     }
 
     /**
@@ -441,15 +379,15 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
 
     /**
      * A really small bendiness or a bendiness greater than 1 indicates an error in the calculation.
-     * Just fix these values.
+     * Just ignore them. We use bendiness > 1.2 since the beelineDistance is only approximated,
+     * therefore it can happen on straight roads, that the beeline is longer than the road.
      */
     protected double correctErrors( double bendiness )
     {
-        if (bendiness > 1)
+        if (bendiness < 0.01 || bendiness > 1)
+        {
             return 1;
-        if (bendiness < .1)
-            return .1;
-
+        }
         return bendiness;
     }
 
@@ -460,35 +398,6 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     protected double increaseBendinessImpact( double bendiness )
     {
         return (Math.pow(bendiness, 2));
-    }
-
-    /**
-     * Slopes shall be prefered. Only works when elevation data is available.
-     */
-    protected double preferSlopes( double bendiness, double roadDistance, PointList pointList )
-    {
-        if (!pointList.is3D())
-        {
-            return bendiness;
-        }
-
-        double eleA = pointList.getEle(0);
-        double eleB = pointList.getEle(pointList.size() - 1);
-
-        double eleDiff = Math.abs(eleA - eleB);
-        double gradient = eleDiff / roadDistance;
-
-        if (bendiness < .7)
-        {
-            if (gradient > .1)
-                bendiness = bendiness * .2;
-            else if (gradient > .06)
-                bendiness = bendiness * .5;
-            else if (gradient > .04)
-                bendiness = bendiness * .8;
-        }
-
-        return bendiness;
     }
 
     @Override
