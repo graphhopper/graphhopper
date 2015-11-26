@@ -35,3 +35,6 @@ android/.gradle
 .classpath
 .project
 local.properties
+**/node_modules
+*.zip
+
