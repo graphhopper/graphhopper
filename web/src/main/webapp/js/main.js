@@ -1334,7 +1334,7 @@ function addInstruction(main, instr, instrIndex, lngLat) {
             title = instr.annotation_text;
         else
             title = title + ", " + instr.annotation_text;
-    }    
+    }
 
     var instructionDiv = $("<tr class='instruction'/>");
     if (sign !== "continue") {
@@ -1343,10 +1343,10 @@ function addInstruction(main, instr, instrIndex, lngLat) {
         instructionDiv.append("<td class='instr_pic'>" + indiPic + "</td>");
     } else
         instructionDiv.append("<td class='instr_pic'/>");
-        
+
     var tdVar = $("<td class='instr_title'>");
     tdVar.text(title);
-        
+
     instructionDiv.append(tdVar);
     var distance = instr.distance;
     if (distance > 0) {
@@ -1354,7 +1354,7 @@ function addInstruction(main, instr, instrIndex, lngLat) {
                 + createDistanceString(distance) + "<br/>"
                 + createTimeString(instr.time) + "</span></td>");
     }
-    
+
     if (lngLat) {
         instructionDiv.click(function () {
             if (routeSegmentPopup)
@@ -1563,7 +1563,7 @@ function hideAutoComplete() {
 
 function formatValue(orig, query) {
     var pattern = '(' + $.Autocomplete.utils.escapeRegExChars(query) + ')';
-    return orig.replace(new RegExp(pattern, 'gi'), '<strong>$1<\/strong>');
+    return orig.replace(/[<>]/g, "_").replace(new RegExp(pattern, 'gi'), '<strong>$1<\/strong>');
 }
 
 function setAutoCompleteList(index) {
