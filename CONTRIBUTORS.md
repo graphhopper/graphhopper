@@ -18,6 +18,7 @@
  * florent-morel, improvements regarding fords, #320
  * fredao, translations 
  * HarelM, improvements regarding elevation
+ * HelgeKrueger, modularize javascript, #590
  * henningvs, doc improvements
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config

@@ -3,6 +3,11 @@ cd $HOME/../..
 
 mvn clean test verify
 
+cd $HOME/../../web
+
+npm install
+npm test && npm run lint
+
 #modules="core web tools"
 #for module in $modules; do
 #  echo "====== INSTALL $module ====="
