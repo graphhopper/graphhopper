@@ -573,6 +573,13 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             if (classBicycle != null)
                 weightToPrioMap.put(100d, convertClassValueToPriority(classBicycle).getValue());
         }
+
+        if (way.hasTag("scenic", "yes"))
+        {
+            if (weightToPrioMap.lastEntry().getValue() < BEST.getValue() )
+            // Increase the prio by one step
+            weightToPrioMap.put(110d,  weightToPrioMap.lastEntry().getValue() + 1);
+        }
     }
 
     /**

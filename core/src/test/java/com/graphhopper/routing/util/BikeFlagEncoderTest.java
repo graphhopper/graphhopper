@@ -50,6 +50,10 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertEquals(18, encoder.getSpeed(way));
         assertPriority(REACH_DEST.getValue(), way);
 
+        way.setTag("scenic", "yes");
+        assertEquals(18, encoder.getSpeed(way));
+        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
+
         // Pushing section !! This is fine as we obey the law!
         way.clearTags();
         way.setTag("highway", "footway");
@@ -517,6 +521,10 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("highway", "tertiary");
         way.setTag("class:bicycle", "3");
         assertPriority(BEST.getValue(), way);
+        // Test that priority cannot get better than best
+        way.setTag("scenic", "yes");
+        assertPriority(BEST.getValue(), way);
+        way.setTag("scenic", "no");
         way.setTag("class:bicycle", "2");
         assertPriority(VERY_NICE.getValue(), way);
         way.setTag("class:bicycle", "1");
