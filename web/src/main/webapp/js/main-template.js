@@ -17,15 +17,15 @@ if (!host) {
 global.d3 = require('d3');
 var L = require('leaflet');
 require('leaflet-loading');
-require('./leaflet.contextmenu.js');
-require('./Leaflet.Elevation-0.0.2.min.js');
-require('./leaflet_numbered_markers.js');
+require('./lib/leaflet.contextmenu.js');
+require('./lib/Leaflet.Elevation-0.0.2.min.js');
+require('./lib/leaflet_numbered_markers.js');
 
 global.jQuery = require('jquery');
 global.$  = global.jQuery;
-require('./jquery-ui-custom-1.11.4.min.js');
-require('./jquery.history.js');
-require('./jquery.autocomplete.js');
+require('./lib/jquery-ui-custom-1.11.4.min.js');
+require('./lib/jquery.history.js');
+require('./lib/jquery.autocomplete.js');
 
 var GHRequest = require('./graphhopper/GHRequest.js');
 var AutoComplete = require('./autocomplete.js');
