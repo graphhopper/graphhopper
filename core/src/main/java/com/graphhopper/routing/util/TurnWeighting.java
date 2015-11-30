@@ -27,14 +27,13 @@ import com.graphhopper.util.EdgeIteratorState;
  * @author Karl Hübner
  * @author Peter Karich
  */
-public class TurnWeighting implements Weighting
+public class TurnWeighting extends AbstractAdjustedWeighting
 {
     /**
      * Encoder, which decodes the turn flags
      */
     private final TurnCostEncoder turnCostEncoder;
     private final TurnCostExtension turnCostExt;
-    private final Weighting superWeighting;
     private double defaultUTurnCost = 40;
 
     /**
@@ -42,8 +41,8 @@ public class TurnWeighting implements Weighting
      */
     public TurnWeighting( Weighting superWeighting, TurnCostEncoder encoder, TurnCostExtension turnCostExt )
     {
+        super(superWeighting);
         this.turnCostEncoder = encoder;
-        this.superWeighting = superWeighting;
         this.turnCostExt = turnCostExt;
         if (encoder == null)
             throw new IllegalArgumentException("No encoder set to calculate turn weight");

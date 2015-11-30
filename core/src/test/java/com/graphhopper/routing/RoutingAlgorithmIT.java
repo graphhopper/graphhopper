@@ -17,13 +17,11 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
 import com.graphhopper.storage.*;
@@ -33,17 +31,20 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 
-import static org.junit.Assert.*;
-
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Try algorithms, indices and graph storages with real data
@@ -104,13 +105,14 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(43.730729, 7.42135, 43.727697, 7.419199, 2703, 119));
         list.add(new OneRun(43.727687, 7.418737, 43.74958, 7.436566, 3749, 170));
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.4277, 3175, 169));
-        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 2423, 141));
-        list.add(new OneRun(43.730949, 7.412338, 43.739643, 7.424542, 2253, 120));
+        list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 5636, 298));
+        list.add(new OneRun(43.730949, 7.412338, 43.739643, 7.424542, 5467, 277));
         list.add(new OneRun(43.727592, 7.419333, 43.727712, 7.419333, 0, 1));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-mc-gh",
                 list, "motorcycle", true, "motorcycle", "fastest", true);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+
     }
 
     @Test
