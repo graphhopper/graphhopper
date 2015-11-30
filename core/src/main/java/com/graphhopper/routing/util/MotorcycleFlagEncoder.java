@@ -18,20 +18,18 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
-
-import static com.graphhopper.routing.util.PriorityCode.*;
+import com.graphhopper.util.*;
 
 import java.util.HashSet;
+
+import static com.graphhopper.routing.util.PriorityCode.BEST;
 
 /**
  * Defines bit layout for motorbikes
  * <p>
  *
  * @author Peter Karich
- * @author boldtrn
+ * @author Robin Boldt
  */
 public class MotorcycleFlagEncoder extends CarFlagEncoder
 {
@@ -42,6 +40,9 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     private EncodedValue curvatureEncoder;
     private final HashSet<String> avoidSet = new HashSet<String>();
     private final HashSet<String> preferSet = new HashSet<String>();
+
+    private final DistanceCalc distCalc = Helper.DIST_EARTH;
+    private final DistanceCalc3D distCalc3D = Helper.DIST_3D;
 
     public MotorcycleFlagEncoder()
     {
@@ -311,7 +312,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         // swap access
         flags = super.reverseFlags(flags);
 
-        // swap speeds 
+        // swap speeds
         double otherValue = reverseSpeedEncoder.getDoubleValue(flags);
         flags = setReverseSpeed(flags, speedEncoder.getDoubleValue(flags));
         return setSpeed(flags, otherValue);
@@ -334,7 +335,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     private int handlePriority( OSMWay way, long relationFlags )
     {
         String highway = way.getTag("highway", "");
-        if (avoidSet.contains(highway))
+        String motorWay = way.getTag("motorroad", "");
+        if (avoidSet.contains(highway) || motorWay.equals("yes"))
         {
             return PriorityCode.WORST.getValue();
         } else if (preferSet.contains(highway))
@@ -350,19 +352,36 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     {
         double speed = this.getSpeed(edge.getFlags());
         double roadDistance = edge.getDistance();
-        double beelineDistance = getBeelineDistance(way);
+        PointList pointList = edge.fetchWayGeometry(3);
+        double beelineDistance = getBeelineDistance(pointList);
         double bendiness = beelineDistance / roadDistance;
 
         bendiness = discriminateSlowStreets(bendiness, speed);
         bendiness = increaseBendinessImpact(bendiness);
         bendiness = correctErrors(bendiness);
 
+        setBendiness(edge, bendiness);
+    }
+
+    private void setBendiness( EdgeIteratorState edge, double bendiness )
+    {
         edge.setFlags(this.curvatureEncoder.setValue(edge.getFlags(), convertToInt(bendiness)));
     }
 
-    private double getBeelineDistance( OSMWay way )
+    /**
+     * Calculates the beeline distance by using the first and last node of the edge. If elevation
+     * data is available we will also use that information.
+     */
+    private double getBeelineDistance( PointList pointList )
     {
-        return way.getTag("estimated_distance", Double.POSITIVE_INFINITY);
+        int lastElement = pointList.size() - 1;
+        if (pointList.is3D())
+        {
+            return distCalc3D.calcDist(pointList.getLat(0), pointList.getLon(0), pointList.getLat(lastElement), pointList.getLon(lastElement));
+        } else
+        {
+            return distCalc.calcDist(pointList.getLat(0), pointList.getLon(0), pointList.getLat(lastElement), pointList.getLon(lastElement));
+        }
     }
 
     /**
@@ -379,15 +398,15 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
 
     /**
      * A really small bendiness or a bendiness greater than 1 indicates an error in the calculation.
-     * Just ignore them. We use bendiness > 1.2 since the beelineDistance is only approximated,
-     * therefore it can happen on straight roads, that the beeline is longer than the road.
+     * Just fix these values.
      */
     protected double correctErrors( double bendiness )
     {
-        if (bendiness < 0.01 || bendiness > 1)
-        {
+        if (bendiness > 1)
             return 1;
-        }
+        if (bendiness < .1)
+            return .1;
+
         return bendiness;
     }
 
