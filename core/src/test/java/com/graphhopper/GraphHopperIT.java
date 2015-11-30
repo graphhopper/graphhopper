@@ -221,6 +221,31 @@ public class GraphHopperIT
     }
 
     @Test
+    public void testMonacoUniquePath()
+    {
+        GHPoint start = new GHPoint(43.744437,7.429032);
+        GHPoint turn = new GHPoint(43.729336,7.413111);
+        GHRequest regularRequest = new GHRequest().
+                addPoint(start).
+                addPoint(turn).
+                addPoint(start).
+                setVehicle(vehicle).setWeighting("shortest");
+
+        GHRequest uniqueRequest = new GHRequest().
+                addPoint(start).
+                addPoint(turn).
+                addPoint(start).
+                setVehicle(vehicle).setWeighting("shortest");
+        uniqueRequest.getHints().put("additional_weighting", "unique_paths");
+
+        GHResponse regularResponse = hopper.route(regularRequest);
+        GHResponse uniqueResponse = hopper.route(uniqueRequest);
+
+        // Since shortest will go the shortest way back, but unique will find a longer way
+        assertTrue(regularResponse.getDistance() < uniqueResponse.getDistance());
+    }
+
+    @Test
     public void testSRTMWithInstructions() throws Exception
     {
         GraphHopper tmpHopper = new GraphHopper().
