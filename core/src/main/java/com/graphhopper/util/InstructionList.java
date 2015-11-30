@@ -179,28 +179,39 @@ public class InstructionList implements Iterable<Instruction>
     private void createWayPointBlock( StringBuilder output, Instruction instruction )
     {
         output.append("\n<wpt ");
-        output.append("lat='").append(Helper.round6(instruction.getFirstLat()));
-        output.append("' lon='").append(Helper.round6(instruction.getFirstLon())).append("'>");
+        output.append("lat=\"").append(Helper.round6(instruction.getFirstLat()));
+        output.append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
+        String name;
         if (instruction.getName().isEmpty())
-            output.append(" <name>").append(instruction.getTurnDescription(tr)).append("</name>");
+            name = instruction.getTurnDescription(tr);
         else
-            output.append(" <name>").append(instruction.getName()).append("</name>");
+            name = instruction.getName();
+
+        output.append(" <name>").append(simpleXMLEscape(name)).append("</name>");
         output.append("</wpt>");
+    }
+
+    static String simpleXMLEscape( String str )
+    {
+        // We could even use the 'more flexible' CDATA section but for now do the following. The 'and' could be important sometimes:
+        return str.replaceAll("&", "&amp;").
+                // but do not care for:
+                replaceAll("[\\<\\>]", "_");
     }
 
     public String createGPX( String trackName, long startTimeMillis, boolean includeElevation, boolean withRoute, boolean withTrack, boolean withWayPoints )
     {
         DateFormat formatter = Helper.createFormatter();
-        
-        String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
-                + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
-                + " creator='Graphhopper version " + Constants.VERSION + "' version='1.1'"
+
+        String header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
+                + "<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
+                + " creator=\"Graphhopper version " + Constants.VERSION + "\" version=\"1.1\""
                 // This xmlns:gh acts only as ID, no valid URL necessary.
                 // Use a separate namespace for custom extensions to make basecamp happy.
-                + " xmlns:gh='https://graphhopper.com/public/schema/gpx/1.1'>"
+                + " xmlns:gh=\"https://graphhopper.com/public/schema/gpx/1.1\">"
                 + "\n<metadata>"
                 + "<copyright author=\"OpenStreetMap contributors\"/>"
-                + "<link href='http://graphhopper.com'>"
+                + "<link href=\"http://graphhopper.com\">"
                 + "<text>GraphHopper GPX</text>"
                 + "</link>"
                 + "<time>" + formatter.format(startTimeMillis) + "</time>"
@@ -242,8 +253,8 @@ public class InstructionList implements Iterable<Instruction>
             gpxOutput.append("<trkseg>");
             for (GPXEntry entry : createGPXList())
             {
-                gpxOutput.append("\n<trkpt lat='").append(Helper.round6(entry.getLat()));
-                gpxOutput.append("' lon='").append(Helper.round6(entry.getLon())).append("'>");
+                gpxOutput.append("\n<trkpt lat=\"").append(Helper.round6(entry.getLat()));
+                gpxOutput.append("\" lon=\"").append(Helper.round6(entry.getLon())).append("\">");
                 if (includeElevation)
                     gpxOutput.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
                 gpxOutput.append("<time>").append(formatter.format(startTimeMillis + entry.getTime())).append("</time>");
@@ -255,7 +266,7 @@ public class InstructionList implements Iterable<Instruction>
 
         // we could now use 'wpt' for via points
         gpxOutput.append("\n</gpx>");
-        return gpxOutput.toString().replaceAll("\\'", "\"");
+        return gpxOutput.toString();
     }
 
     public void createRteptBlock( StringBuilder output, Instruction instruction, Instruction nextI )
@@ -264,7 +275,7 @@ public class InstructionList implements Iterable<Instruction>
                 append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
 
         if (!instruction.getName().isEmpty())
-            output.append("<desc>").append(instruction.getTurnDescription(tr)).append("</desc>");
+            output.append("<desc>").append(simpleXMLEscape(instruction.getTurnDescription(tr))).append("</desc>");
 
         output.append("<extensions>");
         output.append("<gh:distance>").append(Helper.round(instruction.getDistance(), 1)).append("</gh:distance>");

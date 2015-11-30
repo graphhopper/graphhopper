@@ -573,6 +573,13 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             if (classBicycle != null)
                 weightToPrioMap.put(100d, convertClassValueToPriority(classBicycle).getValue());
         }
+
+        if (way.hasTag("scenic", "yes"))
+        {
+            if (weightToPrioMap.lastEntry().getValue() < BEST.getValue())
+                // Increase the prio by one step
+                weightToPrioMap.put(110d, weightToPrioMap.lastEntry().getValue() + 1);
+        }
     }
 
     /**
@@ -597,18 +604,17 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             wayType = WayType.ROAD;
         else
             wayType = WayType.OTHER_SMALL_WAY;
-        
+
         boolean isPushingSection = isPushingSection(way);
         if (isPushingSection && !partOfCycleRelation || "steps".equals(highway))
             wayType = WayType.PUSHING_SECTION;
-        
+
         if (way.hasTag("bicycle", intendedValues))
         {
             if (isPushingSection && !way.hasTag("bicycle", "designated"))
                 wayType = WayType.OTHER_SMALL_WAY;
-            else
-                if ( (wayType == WayType.OTHER_SMALL_WAY ) || (wayType == WayType.PUSHING_SECTION) )
-                    wayType = WayType.CYCLEWAY;
+            else if (wayType == WayType.OTHER_SMALL_WAY || wayType == WayType.PUSHING_SECTION)
+                wayType = WayType.CYCLEWAY;
         } else if ("cycleway".equals(highway))
             wayType = WayType.CYCLEWAY;
 
