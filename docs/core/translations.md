@@ -9,6 +9,8 @@ and add a column for your language. Revisit it regularly to update or add new it
 
 de -> German, en -> Englisch, zh -> Simplified Chinese, ...
 
+There are already many existing :jp: :cn: :us: :fr: :es: :it: :ru: :de:
+
 ## Questions
 
  1. **What does the string after the language name mean ala 'Spanish: es'?**
