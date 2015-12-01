@@ -23,7 +23,8 @@ import org.junit.Test;
 
 /**
  *
- * @author Peter Karich, ratrun
+ * @author Peter Karich
+ * @author ratrun
  */
 public class OSMTagParserTest
 {
@@ -38,8 +39,14 @@ public class OSMTagParserTest
         assertEquals(60 * 20 * 60, OSMTagParser.parseDuration("20:00"));
         assertEquals(20 * 60, OSMTagParser.parseDuration("0:20:00"));
         assertEquals((60 * 2 + 20) * 60 + 2, OSMTagParser.parseDuration("02:20:02"));
-        assertTrue(87840 * 60 <= OSMTagParser.parseDuration("P2M"));
-        assertTrue(87900 * 60 >= OSMTagParser.parseDuration("P2M"));
+
+        // two months, see #588
+        // 28+31
+        assertTrue(2 * 28 * 24 * 60 * 60 <= OSMTagParser.parseDuration("P2M"));
+        // 31+31
+        assertTrue(2 * 31 * 24 * 60 * 60 >= OSMTagParser.parseDuration("P2M"));
+
+        // two minutes
         assertEquals(2 * 60, OSMTagParser.parseDuration("PT2M"));
         assertEquals((5 * 60 + 12) * 60 + 36, OSMTagParser.parseDuration("PT5H12M36S"));
     }
