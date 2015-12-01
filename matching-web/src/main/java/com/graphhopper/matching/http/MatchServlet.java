@@ -113,7 +113,8 @@ public class MatchServlet extends GraphHopperServlet {
             matchGHRsp.addError(ex);
         }
 
-        logger.info(httpReq.getQueryString() + ", took:" + sw.stop().getSeconds() + ", entries:" + gpxFile.getEntries().size() + ", " + matchGHRsp.getDebugInfo());
+        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
+        logger.info(httpReq.getQueryString() + ", " + infoStr + ", took:" + sw.stop().getSeconds() + ", entries:" + gpxFile.getEntries().size() + ", " + matchGHRsp.getDebugInfo());
 
         if (writeGPX) {
             String xml = createGPXString(httpReq, httpRes, matchGHRsp);
