@@ -33,4 +33,4 @@ else
   ARGS="$@"
 fi
 
-exec "$JAVA" $JAVA_OPTS -jar $JAR "$ARGS"
+exec "$JAVA" $JAVA_OPTS -jar $JAR $ARGS
