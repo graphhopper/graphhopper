@@ -73,9 +73,9 @@ class BaseGraph implements Graph
     final NodeAccess nodeAccess;
     final GraphExtension extStorage;
     // length | nodeA | nextNode | ... | nodeB
-    // as we use integer index in 'egdes' area => 'geometry' area is limited to 2GB (currently ~311M for world wide)
-    final DataAccess wayGeometry;
-    private int maxGeoRef;
+    // as we use integer index in 'egdes' area => 'geometry' area is limited to 4GB (we use pos&neg values!)
+    private final DataAccess wayGeometry;
+    private long maxGeoRef;
     final NameIndex nameIndex;
     final BitUtil bitUtil;
     private final Directory dir;
@@ -220,13 +220,14 @@ class BaseGraph implements Graph
 
     protected int loadWayGeometryHeader()
     {
-        maxGeoRef = wayGeometry.getHeader(0);
+        maxGeoRef = bitUtil.combineIntsToLong(wayGeometry.getHeader(0), wayGeometry.getHeader(4));
         return 1;
     }
 
     protected int setWayGeometryHeader()
     {
-        wayGeometry.setHeader(0, maxGeoRef);
+        wayGeometry.setHeader(0, bitUtil.getIntLow(maxGeoRef));
+        wayGeometry.setHeader(4, bitUtil.getIntHigh(maxGeoRef));
         return 1;
     }
 
@@ -824,8 +825,8 @@ class BaseGraph implements Graph
 
             int len = pillarNodes.getSize();
             int dim = nodeAccess.getDimension();
-            int tmpRef = nextGeoRef(len * dim);
-            edges.setInt(edgePointer + E_GEO, tmpRef);
+            long tmpRef = nextGeoRef(len * dim);
+            edges.setInt(edgePointer + E_GEO, Helper.toSignedInt(tmpRef));
             long geoRef = (long) tmpRef * 4;
             byte[] bytes = new byte[len * dim * 4 + 4];
             ensureGeometry(geoRef, bytes.length);
@@ -859,15 +860,15 @@ class BaseGraph implements Graph
 
     private PointList fetchWayGeometry_( long edgePointer, boolean reverse, int mode, int baseNode, int adjNode )
     {
-        long geoRef = edges.getInt(edgePointer + E_GEO);
+        long geoRef = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO));
         int count = 0;
         byte[] bytes = null;
         if (geoRef > 0)
         {
-            geoRef *= 4;
+            geoRef *= 4L;
             count = wayGeometry.getInt(geoRef);
 
-            geoRef += 4;
+            geoRef += 4L;
             bytes = new byte[count * nodeAccess.getDimension() * 4];
             wayGeometry.getBytes(geoRef, bytes, bytes.length);
         } else if (mode == 0)
@@ -944,11 +945,13 @@ class BaseGraph implements Graph
         wayGeometry.ensureCapacity(bytePos + byteLength);
     }
 
-    private int nextGeoRef( int arrayLength )
+    private long nextGeoRef( int arrayLength )
     {
-        int tmp = maxGeoRef;
-        // one more integer to store also the size itself
-        maxGeoRef += arrayLength + 1;
+        long tmp = maxGeoRef;
+        maxGeoRef += arrayLength + 1L;
+        if (maxGeoRef >= 0xFFFFffffL)
+            throw new IllegalStateException("Geometry too large, does not fit in 32 bits " + maxGeoRef);
+
         return tmp;
     }
 
