@@ -29,6 +29,7 @@ abstract class EdgeAccess
 {
     // distance of around +-1000 000 meter are ok
     private static final double INT_DIST_FACTOR = 1000d;
+    static double MAX_DIST = (Integer.MAX_VALUE - 1) / INT_DIST_FACTOR;
     static final int NO_NODE = -1;
     int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS;
     final DataAccess edges;
@@ -83,15 +84,9 @@ abstract class EdgeAccess
     {
         int integ = (int) (distance * INT_DIST_FACTOR);
         if (integ < 0)
-            throw new IllegalArgumentException("Distance cannot be empty: "
-                    + distance + ", maybe overflow issue? integer: " + integ);
-
-        // Due to rounding errors e.g. when getting the distance from another DataAccess object
-        // the following exception is not a good idea: 
-        // Allow integ to be 0 only if distance is 0
-        // if (integ == 0 && distance > 0)
-        //    throw new IllegalStateException("Distance wasn't 0 but converted integer was: " + 
-        //            distance + ", integer: " + integ);
+            throw new IllegalArgumentException("Distance cannot be negative: " + distance);
+        if (integ >= Integer.MAX_VALUE)
+            throw new IllegalArgumentException("Distance too large leading to overflowed integer (#435): " + distance + " ");
         return integ;
     }
 
@@ -101,9 +96,7 @@ abstract class EdgeAccess
     final double getDist( long pointer )
     {
         int val = edges.getInt(pointer + E_DIST);
-        if (val == Integer.MAX_VALUE)
-            return Double.POSITIVE_INFINITY;
-
+        // do never return infinity even if INT MAX, see #435
         return val / INT_DIST_FACTOR;
     }
 
