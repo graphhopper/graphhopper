@@ -32,6 +32,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PathMerger;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.Translation;
 import com.graphhopper.util.TranslationMap;
 import java.io.IOException;
@@ -92,6 +93,7 @@ public class MatchServlet extends GraphHopperServlet {
         Locale locale = Helper.getLocale(getParam(httpReq, "locale", "en"));
         GHResponse matchGHRsp = new GHResponse();
         MatchResult matchRsp = null;
+        StopWatch sw = new StopWatch().start();
 
         try {
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
@@ -110,6 +112,8 @@ public class MatchServlet extends GraphHopperServlet {
         } catch (Exception ex) {
             matchGHRsp.addError(ex);
         }
+
+        logger.info(httpReq.getQueryString() + ", took:" + sw.stop().getSeconds() + ", entries:" + gpxFile.getEntries().size() + ", " + matchGHRsp.getDebugInfo());
 
         if (writeGPX) {
             String xml = createGPXString(httpReq, httpRes, matchGHRsp);
