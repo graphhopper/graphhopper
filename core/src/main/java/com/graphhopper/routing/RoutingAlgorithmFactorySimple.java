@@ -54,6 +54,17 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
             AStar aStar = new AStar(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
             aStar.setApproximation(getApproximation(AlgorithmOptions.ASTAR, opts, g.getNodeAccess()));
             return aStar;
+        } else if (AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoStr))
+        {
+            AlternativeRoute altRouteAlgo = new AlternativeRoute(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            altRouteAlgo.setMaxPaths(opts.getHints().getInt("alternative_route.max_num", 1) + 1);
+            altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble("alternative_route.max_weight_factor", 1.3));
+            return altRouteAlgo;
+        } else if (AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoStr))
+        {
+            RoundTripAltAlgorithm altRouteAlgo = new RoundTripAltAlgorithm(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            altRouteAlgo.setMaxWeightFactor(opts.getHints().getInt("round_trip.max_weight_factor", 1));
+            return altRouteAlgo;
         } else
         {
             throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());

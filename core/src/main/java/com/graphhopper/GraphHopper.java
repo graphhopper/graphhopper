@@ -1070,10 +1070,10 @@ public class GraphHopper implements GraphHopperAPI
         Locale locale = request.getLocale();
         Translation tr = trMap.getWithFallBack(locale);
 
-        // Every altpaths makes one AltResponse BUT if via points exists then reuse altResponse
+        // Every alternative path makes one AltResponse BUT if via points exists then reuse the altResponse object
         AltResponse altResponse = new AltResponse();
         ghRsp.addAlternative(altResponse);
-        boolean alternativeRoutes = false;
+        boolean alternativeRoutes = AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoOpts.getAlgorithm());      
 
         for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
         {
@@ -1124,12 +1124,12 @@ public class GraphHopper implements GraphHopperAPI
             fromQResult = toQResult;
         }
 
-        if (points.size() - 1 != altPaths.size())
-            throw new RuntimeException("There should be exactly one more places than paths. places:" + points.size() + ", routes:" + altPaths.size());
-
-        // if alternative route calculation specified then do not merge paths        
         if (alternativeRoutes)
         {
+            if (altPaths.isEmpty())
+                throw new RuntimeException("Empty paths for alternative route calculation not expected");
+
+            // if alternative route calculation was done then create the responses from single paths
             pathMerger.doWork(altResponse, Collections.singletonList(altPaths.get(0)), tr);
             for (int index = 1; index < altPaths.size(); index++)
             {
@@ -1139,6 +1139,9 @@ public class GraphHopper implements GraphHopperAPI
             }
         } else
         {
+            if (points.size() - 1 != altPaths.size())
+                throw new RuntimeException("There should be exactly one more points than paths. points:" + points.size() + ", paths:" + altPaths.size());
+
             pathMerger.doWork(altResponse, altPaths, tr);
         }
         ghRsp.getHints().put("visited_nodes.sum", visitedNodesSum);

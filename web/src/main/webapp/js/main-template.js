@@ -495,32 +495,38 @@ function routeLatLng(request, doQuery) {
             }
             return;
         }
-        var path = json.paths[0];
-        var geojsonFeature = {
-            "type": "Feature",
-            // "style": myStyle,
-            "geometry": path.points
-        };
 
-        if (request.hasElevation()) {
-            mapLayer.addElevation(geojsonFeature);
+        for (var pathIndex in json.paths) {
+            var path = json.paths[pathIndex];
+            var geojsonFeature = {
+                "type": "Feature",
+                // "style": myStyle,
+                "geometry": path.points
+            };
+
+            if (request.hasElevation()) {
+                mapLayer.addElevation(geojsonFeature);
+            }
+
+            mapLayer.addDataToRoutingLayer(geojsonFeature);
         }
 
-        mapLayer.addDataToRoutingLayer(geojsonFeature);
-        if (path.bbox && doZoom) {
-            var minLon = path.bbox[0];
-            var minLat = path.bbox[1];
-            var maxLon = path.bbox[2];
-            var maxLat = path.bbox[3];
+        // TODO include all alternatives
+        var firstPath = json.paths[0];
+        if (firstPath.bbox && doZoom) {
+            var minLon = firstPath.bbox[0];
+            var minLat = firstPath.bbox[1];
+            var maxLon = firstPath.bbox[2];
+            var maxLat = firstPath.bbox[3];
             var tmpB = new L.LatLngBounds(new L.LatLng(minLat, minLon), new L.LatLng(maxLat, maxLon));
             mapLayer.fitMapToBounds(tmpB);
         }
 
-        var tmpTime = translate.createTimeString(path.time);
-        var tmpDist = translate.createDistanceString(path.distance);
+        var tmpTime = translate.createTimeString(firstPath.time);
+        var tmpDist = translate.createDistanceString(firstPath.distance);
         var tmpEleInfoStr = "";
         if (request.hasElevation())
-            tmpEleInfoStr = translate.createEleInfoString(path.ascend, path.descend);
+            tmpEleInfoStr = translate.createEleInfoString(firstPath.ascend, firstPath.descend);
 
         descriptionDiv.append(translate.tr("routeInfo", [tmpDist, tmpTime]));
         descriptionDiv.append(tmpEleInfoStr);
@@ -529,9 +535,9 @@ function routeLatLng(request, doQuery) {
             $(element).css("color", "black");
         });
 
-        if (path.instructions) {
+        if (firstPath.instructions) {
             var instructions = require('./instructions.js');
-            instructions.addInstructions(mapLayer, path, urlForHistory, request);
+            instructions.addInstructions(mapLayer, firstPath, urlForHistory, request);
         }
     });
 }

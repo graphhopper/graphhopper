@@ -65,7 +65,7 @@ public class AltResponse
 
     /**
      * This method returns all points on the path. Keep in mind that calculating the distance from
-     * these point might yield different results compared to getDistance as points could have been
+     * these points might yield different results compared to getDistance as points could have been
      * simplified on import or after querying.
      */
     public PointList getPoints()
