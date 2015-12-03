@@ -20,8 +20,7 @@ function createAmbiguityList(locCoord) {
         tmpDefer.resolve([locCoord]);
         return tmpDefer;
     } else if (locCoord.lat && locCoord.lng) {
-        var url = nominatimReverseURL + "?lat=" + locCoord.lat + "&lon="
-                + locCoord.lng + "&format=json&zoom=16";
+        var url = nominatimReverseURL + "?lat=" + locCoord.lat + "&lon=" + locCoord.lng + "&format=json&zoom=16";
         return $.ajax({
             url: url,
             type: "GET",

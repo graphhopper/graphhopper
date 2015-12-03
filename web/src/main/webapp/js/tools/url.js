@@ -26,8 +26,7 @@ function parseUrl(query) {
         value = decodeURIComponent(value.replace(/\+/g, ' '));
 
         // force array for heading and point
-        if (typeof res[key] === "undefined"
-                && key !== "heading" && key !== "point") {
+        if (typeof res[key] === "undefined" && key !== "heading" && key !== "point") {
             if (value === 'true')
                 value = true;
             else if (value === 'false')

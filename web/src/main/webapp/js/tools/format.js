@@ -23,8 +23,7 @@ function formatLocationEntry(address) {
         locationDetails.postcode = address.postcode;
     locationDetails.country = address.country;
 
-    if (address.city || address.suburb || address.town
-            || address.village || address.hamlet || address.locality) {
+    if (address.city || address.suburb || address.town || address.village || address.hamlet || address.locality) {
         text = "";
         if (address.locality)
             text = insComma(text, address.locality);
@@ -66,4 +65,4 @@ module.exports.insComma = insComma;
 module.exports.formatValue = function (orig, query) {
     var pattern = '(' + $.Autocomplete.utils.escapeRegExChars(query) + ')';
     return orig.replace(/[<>]/g, "_").replace(new RegExp(pattern, 'gi'), '<strong>$1<\/strong>');
-}
+};

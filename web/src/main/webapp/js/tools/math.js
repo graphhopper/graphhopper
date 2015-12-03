@@ -8,18 +8,18 @@ module.exports.getCenter = function (bounds) {
         center.lng = (bounds.minLon + bounds.maxLon) / 2;
     }
     return center;
-}
+};
 
 module.exports.floor = function (val, precision) {
     if (!precision)
         precision = 1e6;
     return Math.floor(val * precision) / precision;
-}
+};
 
 module.exports.round = function (val, precision) {
     if (precision === undefined)
         precision = 1e6;
     return Math.round(val * precision) / precision;
-}
+};
 
 

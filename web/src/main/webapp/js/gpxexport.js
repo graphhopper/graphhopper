@@ -65,7 +65,7 @@ module.exports.addGpxExport = function(ghRequest) {
         exportGPX($("#gpx_route").is(':checked'), $("#gpx_track").is(':checked'), $("#gpx_waypoints").is(':checked'));
         dialog.dialog("close");
         return false;
-    };
+    }
 
     $(function () {
         dialog = $("#gpx_dialog").dialog({
@@ -89,5 +89,4 @@ module.exports.addGpxExport = function(ghRequest) {
         e.preventDefault();
         $("#gpx_dialog").dialog('open');
     });
-
 };

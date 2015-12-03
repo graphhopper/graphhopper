@@ -24,7 +24,7 @@ var dataToHtml = function (data, query) {
     } else
         element += "<span class='moreseg'>" + data.osm_key + "</span>";
     return element;
-}
+};
 
 var dataToText = function (data) {
     var text = "";
@@ -41,7 +41,7 @@ var dataToText = function (data) {
     if (data.country && text.indexOf(data.country) < 0)
         text = formatTools.insComma(text, data.country);
     return text;
-}
+};
 
 var AutoComplete = function (host, key) {
     this.host = host;
@@ -74,11 +74,11 @@ AutoComplete.prototype.createGeocodeURL = function (ghRequest, prevIndex) {
 
 AutoComplete.prototype.getAutoCompleteDiv = function (index) {
     return $('#locationpoints > div.pointDiv').eq(index).find(".pointInput");
-}
+};
 
 AutoComplete.prototype.hide = function () {
     $(':input[id$="_Input"]').autocomplete().hide();
-}
+};
 
 AutoComplete.prototype.showListForIndex = function (ghRequest, routeIfAllResolved, index) {
     var myAutoDiv = this.getAutoCompleteDiv(index);
@@ -151,7 +151,7 @@ AutoComplete.prototype.showListForIndex = function (ghRequest, routeIfAllResolve
 //    $("#" + fromOrTo + "Input").focusin(function() {
 //        myAutoDiv.autocomplete().enable();
 //    });
-}
+};
 
 AutoComplete.prototype.createStub = function () {
     return {

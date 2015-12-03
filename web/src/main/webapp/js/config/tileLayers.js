@@ -96,7 +96,7 @@ module.exports.getAvailableTileLayers = function () {
 module.exports.selectLayer = function (layerName) {
     var defaultLayer = availableTileLayers[layerName];
     if (!defaultLayer)
-        defaultLayer = availableTileLayers["Omniscale"];
+        defaultLayer = availableTileLayers.Omniscale;
 
     return defaultLayer;
-}
+};

@@ -16,5 +16,5 @@ module.exports.getSortedVehicleKeys = function (vehicleHashMap, prefer) {
         return intValA - intValB;
     });
     return keys;
-}
+};
 

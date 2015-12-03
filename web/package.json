@@ -7,7 +7,8 @@
     "bundle": "browserify src/main/webapp/js/main-template.js -o src/main/webapp/js/main.js",
     "bundleDebug": "browserify src/main/webapp/js/main-template.js --debug -o src/main/webapp/js/main.js",
     "bundleUgly": "browserify -g uglifyify src/main/webapp/js/main-template.js -o src/main/webapp/js/main.js",
-    "test": "JASMINE_CONFIG_PATH=src/test/webapp/spec/jasmine.json jasmine"
+    "test": "JASMINE_CONFIG_PATH=src/test/webapp/spec/jasmine.json jasmine",
+    "lint": "jshint src/main/webapp/js/"
   },
   "author": "",
   "license": "ISC",
@@ -19,5 +20,8 @@
     "leaflet": "^0.7.7",
     "leaflet-loading": "^0.1.15",
     "uglifyify": "^3.0.1"
+  },
+  "devDependencies": {
+    "jshint": "^2.8.0"
   }
 }

@@ -31,9 +31,7 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat) {
     instructionDiv.append(tdVar);
     var distance = instr.distance;
     if (distance > 0) {
-        instructionDiv.append("<td class='instr_distance'><span>"
-                + translate.createDistanceString(distance) + "<br/>"
-                + translate.createTimeString(instr.time) + "</span></td>");
+        instructionDiv.append("<td class='instr_distance'><span>" + translate.createDistanceString(distance) + "<br/>" + translate.createTimeString(instr.time) + "</span></td>");
     }
 
     if (lngLat) {
@@ -95,8 +93,7 @@ module.exports.addInstructions = function(mapLayer, path, urlForHistory, request
     if (request.getVehicle().toUpperCase() === "FOOT") {
         osmVehicle = "foot";
     }
-    osmRouteLink.attr("href", "http://www.openstreetmap.org/directions?engine=graphhopper_"
-            + osmVehicle + "&route=" + encodeURIComponent(request.from.lat + "," + request.from.lng + ";" + request.to.lat + "," + request.to.lng));
+    osmRouteLink.attr("href", "http://www.openstreetmap.org/directions?engine=graphhopper_" + osmVehicle + "&route=" + encodeURIComponent(request.from.lat + "," + request.from.lng + ";" + request.to.lat + "," + request.to.lng));
     hiddenDiv.append(osmRouteLink);
 
     var osrmLink = $("<a>OSRM</a>");
@@ -124,4 +121,4 @@ module.exports.addInstructions = function(mapLayer, path, urlForHistory, request
         hiddenDiv.append(metaVersionInfo);
 
     $("#info").append(hiddenDiv);
-}
+};

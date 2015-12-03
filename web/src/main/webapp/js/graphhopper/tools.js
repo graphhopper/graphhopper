@@ -48,6 +48,6 @@ var decodePath = function (encoded, is3D) {
     // var end = new Date().getTime();
     // console.log("decoded " + len + " coordinates in " + ((end - start) / 1000) + "s");
     return array;
-}
+};
 
 module.exports.decodePath = decodePath;

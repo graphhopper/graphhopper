@@ -12,7 +12,7 @@ module.exports.extractMetaVersionInfo = function (json) {
         metaVersionInfo += "<br/>Jar date: " + json.build_date;
 
     return metaVersionInfo;
-}
+};
 
 module.exports.getSignName = function (sign) {
     if (sign === -3)

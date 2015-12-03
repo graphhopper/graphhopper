@@ -98,7 +98,7 @@ $(document).ready(function (e) {
             .then(function (arg1, arg2) {
                 // init translation retrieved from first call (fetchTranslationMap)
                 var translations = arg1[0];
-                ghRequest.setLocale(translations["locale"]);
+                ghRequest.setLocale(translations.locale);
                 translate.init(translations);
 
                 // init bounding box from getInfo result
@@ -153,7 +153,7 @@ $(document).ready(function (e) {
                                 hiddenVehicles[i].show();
                             }
                         });
-                        vehiclesDiv.append($("<a class='vehicle-info-link' href='https://graphhopper.com/api/1/docs/supported-vehicle-profiles/'>?</a>"))
+                        vehiclesDiv.append($("<a class='vehicle-info-link' href='https://graphhopper.com/api/1/docs/supported-vehicle-profiles/'>?</a>"));
                         vehiclesDiv.append(moreBtn);
                     }
                 }
@@ -165,8 +165,7 @@ $(document).ready(function (e) {
                 initFromParams(urlParams, true);
             }, function (err) {
                 log(err);
-                $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps">Refresh</a>'
-                        + '<br/>Status: ' + err.statusText + '<br/>' + host);
+                $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps">Refresh</a>' + '<br/>Status: ' + err.statusText + '<br/>' + host);
 
                 bounds = {
                     "minLon": -180,
@@ -276,6 +275,13 @@ function checkInput() {
     // properly unbind previously click handlers
     $("#locationpoints .pointDelete").off();
 
+    var deleteClickHandler = function () {
+        var index = $(this).parent().data('index');
+        ghRequest.route.removeSingle(index);
+        mapLayer.clearLayers();
+        routeLatLng(ghRequest, false);
+    };
+
     // console.log("## new checkInput");
     for (var i = 0; i < len; i++) {
         var div = $('#locationpoints > div.pointDiv').eq(i);
@@ -291,12 +297,7 @@ function checkInput() {
                 (toFrom === FROM) ? 'img/marker-small-green.png' :
                 ((toFrom === TO) ? 'img/marker-small-red.png' : 'img/marker-small-blue.png'));
         if (len > 2) {
-            div.find(".pointDelete").click(function () {
-                var index = $(this).parent().data('index');
-                ghRequest.route.removeSingle(index);
-                mapLayer.clearLayers();
-                routeLatLng(ghRequest, false);
-            }).show();
+            div.find(".pointDelete").click(deleteClickHandler).show();
         } else {
             div.find(".pointDelete").hide();
         }

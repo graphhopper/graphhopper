@@ -73,7 +73,7 @@ module.exports.createDistanceString = function (dist) {
     if (dist > 100)
         dist = mathTools.round(dist, 1);
     return dist + tr2("kmAbbr");
-}
+};
 
 module.exports.createEleInfoString = function (ascend, descend) {
     var str = "";
@@ -87,7 +87,7 @@ module.exports.createEleInfoString = function (ascend, descend) {
     }
 
     return str;
-}
+};
 
 module.exports.createTimeString = function (time) {
     var tmpTime = mathTools.round(time / 60 / 1000, 1000);
@@ -107,7 +107,7 @@ module.exports.createTimeString = function (time) {
     } else
         resTimeStr = mathTools.round(tmpTime % 60, 1) + tr2("minAbbr");
     return resTimeStr;
-}
+};
 
 module.exports.tr = tr;
 
@@ -118,14 +118,14 @@ module.exports.nanoTemplate = function (template, data) {
             v = v[this];
         return (typeof v !== "undefined" && v !== null) ? v : "";
     });
-}
+};
 
 module.exports.init = function (translations) {
     // init language
     // 1. determined by Accept-Language header, falls back to 'en' if no translation map available
     // 2. can be overwritten by url parameter
     defaultTranslationMap = translations["default"];
-    enTranslationMap = translations["en"];
+    enTranslationMap = translations.en;
     if (!defaultTranslationMap)
         defaultTranslationMap = enTranslationMap;
 

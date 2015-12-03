@@ -35,7 +35,7 @@ GHroute.prototype = {
         return this.getIndex((this.length - 1));
     },
     getIndex: function (index) {
-        var index = (isNaN(index)) ? 0 : index;
+        index = (isNaN(index)) ? 0 : index;
         if (this[index] instanceof GHInput) {
             return this[index];
         } else
