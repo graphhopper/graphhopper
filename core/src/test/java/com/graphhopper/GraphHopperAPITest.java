@@ -19,6 +19,7 @@ package com.graphhopper;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
+import com.graphhopper.util.PointList;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -54,12 +55,15 @@ public class GraphHopperAPITest
                 loadGraph(graph);
         GHResponse rsp = instance.route(new GHRequest(42, 10.4, 42, 10));
         assertFalse(rsp.hasErrors());
-        assertEquals(80, rsp.getDistance(), 1e-6);
-        assertEquals(42, rsp.getPoints().getLatitude(0), 1e-5);
-        assertEquals(10.4, rsp.getPoints().getLongitude(0), 1e-5);
-        assertEquals(41.9, rsp.getPoints().getLatitude(1), 1e-5);
-        assertEquals(10.2, rsp.getPoints().getLongitude(1), 1e-5);
-        assertEquals(3, rsp.getPoints().getSize());
+        AltResponse arsp = rsp.getFirst();
+        assertEquals(80, arsp.getDistance(), 1e-6);
+        
+        PointList points = arsp.getPoints();
+        assertEquals(42, points.getLatitude(0), 1e-5);
+        assertEquals(10.4, points.getLongitude(0), 1e-5);
+        assertEquals(41.9, points.getLatitude(1), 1e-5);
+        assertEquals(10.2, points.getLongitude(1), 1e-5);
+        assertEquals(3, points.getSize());
         instance.close();
     }
 
@@ -86,7 +90,7 @@ public class GraphHopperAPITest
 
         try
         {
-            rsp.getPoints();
+            rsp.getFirst().getPoints();
             assertTrue(false);
         } catch (Exception ex)
         {
