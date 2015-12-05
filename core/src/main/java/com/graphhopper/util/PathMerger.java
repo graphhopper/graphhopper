@@ -18,9 +18,9 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.GHResponse;
+import com.graphhopper.AltResponse;
+import com.graphhopper.routing.AltPaths;
 import com.graphhopper.routing.Path;
-
 import java.util.List;
 
 /**
@@ -61,8 +61,8 @@ public class PathMerger
         return this;
     }
 
-    public void doWork( GHResponse rsp, List<Path> paths, Translation tr )
-    {
+    public void doWork( AltResponse altRsp, List<Path> paths, Translation tr )
+    {        
         int origPoints = 0;
         long fullTimeInMillis = 0;
         double fullWeight = 0;
@@ -129,25 +129,25 @@ public class PathMerger
 
         if (!fullPoints.isEmpty())
         {
-            String debug = rsp.getDebugInfo() + ", simplify (" + origPoints + "->" + fullPoints.getSize() + ")";
-            rsp.setDebugInfo(debug);
+            String debug = altRsp.getDebugInfo() + ", simplify (" + origPoints + "->" + fullPoints.getSize() + ")";
+            altRsp.addDebugInfo(debug);
             if (fullPoints.is3D)
-                calcAscendDescend(rsp, fullPoints);
+                calcAscendDescend(altRsp, fullPoints);
         }
 
         if (enableInstructions)
-            rsp.setInstructions(fullInstructions);
+            altRsp.setInstructions(fullInstructions);
 
         if (!allFound)
-            rsp.addError(new RuntimeException("Connection between locations not found"));
+            altRsp.addError(new RuntimeException("Connection between locations not found"));
 
-        rsp.setPoints(fullPoints).
+        altRsp.setPoints(fullPoints).
                 setRouteWeight(fullWeight).
                 setDistance(fullDistance).
                 setTime(fullTimeInMillis);
     }
 
-    private void calcAscendDescend( final GHResponse rsp, final PointList pointList )
+    private void calcAscendDescend( final AltResponse rsp, final PointList pointList )
     {
         double ascendMeters = 0;
         double descendMeters = 0;

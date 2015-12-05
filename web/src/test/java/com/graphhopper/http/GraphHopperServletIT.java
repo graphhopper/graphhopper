@@ -17,6 +17,7 @@
  */
 package com.graphhopper.http;
 
+import com.graphhopper.AltResponse;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
@@ -97,7 +98,6 @@ public class GraphHopperServletIT extends BaseServletTester
         assertTrue("distance wasn't correct:" + distance, distance < 325);
     }
 
-
     @Test
     public void testJsonRounding() throws Exception
     {
@@ -121,19 +121,23 @@ public class GraphHopperServletIT extends BaseServletTester
         GraphHopperAPI hopper = new GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
-        assertTrue("distance wasn't correct:" + rsp.getDistance(), rsp.getDistance() > 9000);
-        assertTrue("distance wasn't correct:" + rsp.getDistance(), rsp.getDistance() < 9500);
+
+        AltResponse arsp = rsp.getFirst();
+        assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() > 9000);
+        assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() < 9500);
 
         rsp = hopper.route(new GHRequest().
                 addPoint(new GHPoint(42.554851, 1.536198)).
                 addPoint(new GHPoint(42.531896, 1.553278)).
                 addPoint(new GHPoint(42.510071, 1.548128)));
         assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
-        assertTrue("distance wasn't correct:" + rsp.getDistance(), rsp.getDistance() > 20000);
-        assertTrue("distance wasn't correct:" + rsp.getDistance(), rsp.getDistance() < 21000);
+        arsp = rsp.getFirst();
+        assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() > 20000);
+        assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() < 21000);
 
-        List<Map<String, Object>> instructions = rsp.getInstructions().createJson();
+        List<Map<String, Object>> instructions = arsp.getInstructions().createJson();
         assertEquals(23, instructions.size());
         assertEquals("Continue onto la Callisa", instructions.get(0).get("text"));
         assertEquals("At roundabout, take exit 2", instructions.get(3).get("text"));
@@ -189,10 +193,10 @@ public class GraphHopperServletIT extends BaseServletTester
     {
         String str = queryString("point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false", 200);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
-        assertFalse(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));        
+        assertFalse(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));
         assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
     }
-    
+
     @Test
     public void testGPXWithTrackAndWaypointsSelection() throws Exception
     {
