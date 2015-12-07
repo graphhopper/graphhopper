@@ -77,26 +77,7 @@ The routing API (json,jsonp,gpx) is optimized regarding several aspects:
 
 #### Routing Service Deployment
 
-For simplicity you could just start jetty from maven and schedule it as background job: 
-`export GH_FOREGROUND=false && export JETTY_PORT=11111 && ./graphhopper.sh web europe_germany_berlin.pbf`. 
-Then the service will be accessible on port 11111.
-
-For production usage you can install the latest jetty (8 or 9) as a service but we prefer to have it bundled as a 
-simple jar. Tomcat should work too. To create a war file do `mvn clean install war:war` and copy it from the target/ 
-folder to your jetty installation. Then copy web/config.properties also there and change this properties 
-file to point to the required graphhopper folder. Increase the Xmx/Xms values of your jetty server e.g. 
-for world wide coverage with a hierarchical graph I do the following in bin/jetty.sh
-```bash
-export JAVA=java-home/bin/java
-export JAVA_OPTIONS="-server -Xconcurrentio -Xmx17000m -Xms17000m"
-```
-
-For [World-Wide-Road-Network](./world-wide.md) we have a separate information page.
-
-Important notes:
- * jsonp support needs to be enabled in the config.properties
- * none-hierarchical graphs should be limited to a certain distance otherwise you'll require lots of RAM per request! See [#104](https://github.com/graphhopper/graphhopper/issues/104)
- * if you have strange speed problems which could be related to low memory you can try to [entire disable swap](http://askubuntu.com/questions/103915/how-do-i-configure-swappiness). Or just try it out via `sudo swapoff -a`. Swapping out is very harmful to Java programs especially when the GC kicks in.
+If you want to setup graphhopper on your own server, we have a separate information page [Deploy](./deploy.md).
 
 ### JavaScript Usage
 
