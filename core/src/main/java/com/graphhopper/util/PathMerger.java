@@ -19,7 +19,6 @@
 package com.graphhopper.util;
 
 import com.graphhopper.AltResponse;
-import com.graphhopper.routing.AltPaths;
 import com.graphhopper.routing.Path;
 import java.util.List;
 
