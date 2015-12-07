@@ -5,9 +5,7 @@ jdk:
   - oraclejdk8
 # do not install anything instead return true via unix command true
 install: true
-script:
-  - ./core/files/travis-build.sh
-  - ./web/files/travis-build.sh
+script: ./core/files/travis-build.sh
 notifications:
   email:
     - github@graphhopper.com

@@ -11,7 +11,7 @@
     "lint": "jshint src/main/webapp/js/"
   },
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "dependencies": {
     "browserify": "^12.0.1",
     "d3": "^3.5.9",
