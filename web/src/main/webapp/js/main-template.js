@@ -533,7 +533,7 @@ function routeLatLng(request, doQuery) {
             }
             oneTab.append(routeInfo);
 
-            if (pathIndex == 0) {
+            if ((+pathIndex) === 0) {
                 tabHeader.addClass("current");
                 oneTab.addClass("current");
             }

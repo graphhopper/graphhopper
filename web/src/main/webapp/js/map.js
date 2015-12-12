@@ -27,11 +27,10 @@ function adjustMapSize() {
     // console.log("adjustMapSize " + height + "x" + width);
 
     // reduce info size depending on how heigh the input_header is and reserve space for footer
-    $(".instructions_info").css("max-height", height - 65
-            - $(".route_description").height()
-            - $("#route_result_tabs li").height()
-            - $("#input_header").height()
-            - $("#footer").height());
+    $(".instructions_info").css("max-height",
+            height - 65 -
+            $(".route_description").height() - $("#route_result_tabs li").height() -
+            $("#input_header").height() - $("#footer").height());
 }
 
 function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer) {
