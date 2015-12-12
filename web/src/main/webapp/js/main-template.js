@@ -313,8 +313,6 @@ function checkInput() {
                 $(input).attr("placeholder", translate.tr("viaHint"));
         }
     }
-
-    mapLayer.adjustMapSize();
 }
 
 function setToStart(e) {
@@ -464,11 +462,11 @@ function routeLatLng(request, doQuery) {
         History.pushState(params, messages.browserTitle, urlForHistory);
         return;
     }
-
-    $("#info").empty();
-    $("#info").show();
-    var descriptionDiv = $("<div/>");
-    $("#info").append(descriptionDiv);
+    var infoDiv = $("#info");
+    infoDiv.empty();
+    infoDiv.show();
+    var routeResultsDiv = $("<div class='route_results'/>");
+    infoDiv.append(routeResultsDiv);
 
     mapLayer.clearElevation();
     mapLayer.clearLayers();
@@ -480,38 +478,74 @@ function routeLatLng(request, doQuery) {
     $("button#" + request.getVehicle().toLowerCase()).addClass("selectvehicle");
 
     var urlForAPI = request.createURL();
-    descriptionDiv.html('<img src="img/indicator.gif"/> Search Route ...');
+    routeResultsDiv.html('<img src="img/indicator.gif"/> Search Route ...');
     request.doRequest(urlForAPI, function (json) {
-        descriptionDiv.html("");
+        routeResultsDiv.html("");
         if (json.message) {
             var tmpErrors = json.message;
             log(tmpErrors);
             if (json.hints) {
                 for (var m = 0; m < json.hints.length; m++) {
-                    descriptionDiv.append("<div class='error'>" + json.hints[m].message + "</div>");
+                    routeResultsDiv.append("<div class='error'>" + json.hints[m].message + "</div>");
                 }
             } else {
-                descriptionDiv.append("<div class='error'>" + tmpErrors + "</div>");
+                routeResultsDiv.append("<div class='error'>" + tmpErrors + "</div>");
             }
             return;
         }
 
+        function createClickHandler(tabHeader, oneTab) {
+            return function () {
+                // TODO highlight route geometry somehow
+                headerTabs.find("li").removeClass("current");
+                routeResultsDiv.find("div").removeClass("current");
+                tabHeader.addClass("current");
+                oneTab.addClass("current");
+            };
+        }
+
+        var headerTabs = $("<ul id='route_result_tabs'/>");
+        if (json.paths.length > 1) {
+            routeResultsDiv.append(headerTabs);
+            routeResultsDiv.append("<div class='clear'/>");
+        }
+
         for (var pathIndex in json.paths) {
+            var tabHeader = $("<li>").append((+pathIndex + 1) + "<img class='alt_route_img' src='img/alt_route.png'/>");
+            headerTabs.append(tabHeader);
             var path = json.paths[pathIndex];
             var geojsonFeature = {
                 "type": "Feature",
-                // "style": myStyle,
                 "geometry": path.points
             };
 
+            mapLayer.addDataToRoutingLayer(geojsonFeature);
+            var oneTab = $("<div class='route_result_tab'>");
+            routeResultsDiv.append(oneTab);
+            tabHeader.click(createClickHandler(tabHeader, oneTab));
+
+            var tmpTime = translate.createTimeString(path.time);
+            var tmpDist = translate.createDistanceString(path.distance);
+            var routeInfo = $("<div class='route_description'>").append(translate.tr("routeInfo", [tmpDist, tmpTime]));
             if (request.hasElevation()) {
+                routeInfo.append(translate.createEleInfoString(path.ascend, path.descend));
                 mapLayer.addElevation(geojsonFeature);
             }
+            oneTab.append(routeInfo);
 
-            mapLayer.addDataToRoutingLayer(geojsonFeature);
+            if (pathIndex == 0) {
+                tabHeader.addClass("current");
+                oneTab.addClass("current");
+            }
+            if (path.instructions) {
+                var instructions = require('./instructions.js');
+                oneTab.append(instructions.create(mapLayer, path, urlForHistory, request));
+            }
         }
 
-        // TODO include all alternatives
+        mapLayer.adjustMapSize();
+
+        // TODO change bounding box on click
         var firstPath = json.paths[0];
         if (firstPath.bbox && doZoom) {
             var minLon = firstPath.bbox[0];
@@ -522,23 +556,9 @@ function routeLatLng(request, doQuery) {
             mapLayer.fitMapToBounds(tmpB);
         }
 
-        var tmpTime = translate.createTimeString(firstPath.time);
-        var tmpDist = translate.createDistanceString(firstPath.distance);
-        var tmpEleInfoStr = "";
-        if (request.hasElevation())
-            tmpEleInfoStr = translate.createEleInfoString(firstPath.ascend, firstPath.descend);
-
-        descriptionDiv.append(translate.tr("routeInfo", [tmpDist, tmpTime]));
-        descriptionDiv.append(tmpEleInfoStr);
-
         $('.defaulting').each(function (index, element) {
             $(element).css("color", "black");
         });
-
-        if (firstPath.instructions) {
-            var instructions = require('./instructions.js');
-            instructions.addInstructions(mapLayer, firstPath, urlForHistory, request);
-        }
     });
 }
 

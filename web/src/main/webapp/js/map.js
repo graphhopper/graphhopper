@@ -7,21 +7,31 @@ var menuIntermediate;
 var menuEnd;
 var elevationControl = null;
 
-
+// called if window changes or before map is created
 function adjustMapSize() {
     var mapDiv = $("#map");
     var width = $(window).width() - 295;
     if (width < 400) {
-        width = 290;
+        width = 400;
         mapDiv.attr("style", "position: relative; float: right;");
     } else {
         mapDiv.attr("style", "position: absolute; right: 0;");
     }
     var height = $(window).height();
+    if (height < 500)
+        height = 500;
+
     mapDiv.width(width).height(height);
     $("#input").height(height);
+
+    // console.log("adjustMapSize " + height + "x" + width);
+
     // reduce info size depending on how heigh the input_header is and reserve space for footer
-    $("#info").css("max-height", height - $("#input_header").height() - 58);
+    $(".instructions_info").css("max-height", height - 65
+            - $(".route_description").height()
+            - $("#route_result_tabs li").height()
+            - $("#input_header").height()
+            - $("#footer").height());
 }
 
 function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer) {
