@@ -44,4 +44,12 @@ public class GPXExtension
                 + ", query distance:" + queryResult.getQueryDistance()
                 + ", gpxListIndex:" + gpxListIndex;
     }
+
+	public QueryResult getQueryResult() {
+		return this.queryResult;
+	}
+	
+	public GPXEntry getEntry() {
+		return entry;
+	}
 }
