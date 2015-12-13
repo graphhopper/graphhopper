@@ -988,173 +988,236 @@ public class GraphHopper implements GraphHopperAPI
         return response;
     }
 
-    protected List<Path> calcPaths( GHRequest request, GHResponse ghRsp )
-    {
+    protected List<Path> calcPaths( GHRequest request, GHResponse response ){
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Call load or importOrLoad before routing");
 
         if (ghStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
 
-        String vehicle = request.getVehicle();
-        if (vehicle.isEmpty())
-            vehicle = getDefaultVehicle().toString();
-
-        if (!encodingManager.supports(vehicle))
-        {
-            ghRsp.addError(new IllegalArgumentException("Vehicle " + vehicle + " unsupported. "
-                    + "Supported are: " + getEncodingManager()));
-            return Collections.emptyList();
+        try{
+            PathCalculator pathCalc = new PathCalculator(request, response);
+            return pathCalc.calc();
+        }catch (Exception e){
+            response.addError(e);
         }
-
-        TraversalMode tMode;
-        String tModeStr = request.getHints().get("traversal_mode", traversalMode.toString());
-        try
-        {
-            tMode = TraversalMode.fromString(tModeStr);
-        } catch (Exception ex)
-        {
-            ghRsp.addError(ex);
-            return Collections.emptyList();
-        }
-
-        FlagEncoder encoder = encodingManager.getEncoder(vehicle);
-        List<GHPoint> points = request.getPoints();
-
-        StopWatch sw = new StopWatch().start();
-        List<QueryResult> qResults = lookup(points, encoder, ghRsp);
-        ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-        if (ghRsp.hasRawErrors())
-            return Collections.emptyList();
-
-        Weighting weighting;
-        Graph routingGraph = ghStorage;
-        if (chEnabled)
-        {
-            boolean forceCHHeading = request.getHints().getBool("force_heading_ch", false);
-            if (!forceCHHeading && request.hasFavoredHeading(0))
-                throw new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483");
-            weighting = getWeightingForCH(request.getHints(), encoder);
-            routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
-        } else
-            weighting = createWeighting(request.getHints(), encoder);
-
-        RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(weighting);
-        QueryGraph queryGraph = new QueryGraph(routingGraph);
-        queryGraph.lookup(qResults);
-        weighting = createTurnWeighting(weighting, queryGraph, encoder);
-
-        List<Path> altPaths = new ArrayList<Path>(points.size() - 1);
-        QueryResult fromQResult = qResults.get(0);
-
-        double weightLimit = request.getHints().getDouble("defaultWeightLimit", defaultWeightLimit);
-        String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
-        AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
-                hints(request.getHints()).
-                build();
-
-        boolean viaTurnPenalty = request.getHints().getBool("pass_through", false);
-        long visitedNodesSum = 0;
-
-        boolean tmpEnableInstructions = request.getHints().getBool("instructions", enableInstructions);
-        boolean tmpCalcPoints = request.getHints().getBool("calcPoints", calcPoints);
-        double wayPointMaxDistance = request.getHints().getDouble("wayPointMaxDistance", 1d);
-        DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
-        PathMerger pathMerger = new PathMerger().
-                setCalcPoints(tmpCalcPoints).
-                setDouglasPeucker(peucker).
-                setEnableInstructions(tmpEnableInstructions).
-                setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
-
-        Locale locale = request.getLocale();
-        Translation tr = trMap.getWithFallBack(locale);
-
-        // Every alternative path makes one AltResponse BUT if via points exists then reuse the altResponse object
-        AltResponse altResponse = new AltResponse();
-        ghRsp.addAlternative(altResponse);
-        boolean alternativeRoutes = AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoOpts.getAlgorithm());      
-
-        for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
-        {
-            if (placeIndex == 1)
-            {
-                // enforce start direction
-                queryGraph.enforceHeading(fromQResult.getClosestNode(), request.getFavoredHeading(0), false);
-            } else if (viaTurnPenalty)
-            {
-                if (alternativeRoutes)
-                    throw new IllegalStateException("Alternative paths and a viaTurnPenalty at the same time is currently not supported");
-
-                // enforce straight start after via stop
-                Path prevRoute = altPaths.get(placeIndex - 2);
-                EdgeIteratorState incomingVirtualEdge = prevRoute.getFinalEdge();
-                queryGraph.enforceHeadingByEdgeId(fromQResult.getClosestNode(), incomingVirtualEdge.getEdge(), false);
-            }
-
-            QueryResult toQResult = qResults.get(placeIndex);
-
-            // enforce end direction
-            queryGraph.enforceHeading(toQResult.getClosestNode(), request.getFavoredHeading(placeIndex), true);
-
-            sw = new StopWatch().start();
-            RoutingAlgorithm algo = tmpAlgoFactory.createAlgo(queryGraph, algoOpts);
-            algo.setWeightLimit(weightLimit);
-            String debug = ", algoInit:" + sw.stop().getSeconds() + "s";
-
-            sw = new StopWatch().start();
-            List<Path> pathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode());
-            debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s";
-
-            for (Path path : pathList)
-            {
-                if (path.getTime() < 0)
-                    throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
-
-                altPaths.add(path);
-                debug += ", " + path.getDebugInfo();
-            }
-
-            altResponse.addDebugInfo(debug);
-
-            // reset all direction enforcements in queryGraph to avoid influencing next path
-            queryGraph.clearUnfavoredStatus();
-
-            visitedNodesSum += algo.getVisitedNodes();
-            fromQResult = toQResult;
-        }
-
-        if (alternativeRoutes)
-        {
-            if (altPaths.isEmpty())
-                throw new RuntimeException("Empty paths for alternative route calculation not expected");
-
-            // if alternative route calculation was done then create the responses from single paths
-            pathMerger.doWork(altResponse, Collections.singletonList(altPaths.get(0)), tr);
-            for (int index = 1; index < altPaths.size(); index++)
-            {
-                altResponse = new AltResponse();
-                ghRsp.addAlternative(altResponse);
-                pathMerger.doWork(altResponse, Collections.singletonList(altPaths.get(index)), tr);
-            }
-        } else
-        {
-            if (points.size() - 1 != altPaths.size())
-                throw new RuntimeException("There should be exactly one more points than paths. points:" + points.size() + ", paths:" + altPaths.size());
-
-            pathMerger.doWork(altResponse, altPaths, tr);
-        }
-        ghRsp.getHints().put("visited_nodes.sum", visitedNodesSum);
-        ghRsp.getHints().put("visited_nodes.average", (float) visitedNodesSum / (points.size() - 1));
-        return altPaths;
+        return Collections.emptyList();
     }
+
+    private class PathCalculator{
+
+        private final GHRequest request;
+        private final GHResponse response;
+        private final String vehicle;
+        private final TraversalMode traversalMode;
+        private final FlagEncoder encoder;
+        private final List<GHPoint> points;
+        private final List<QueryResult> qResults;
+
+        private Weighting weighting;
+        private final QueryGraph queryGraph;
+
+        private StopWatch sw;
+
+        private final RoutingAlgorithmFactory algorithmFactory;
+
+        private final double weightLimit;
+        private final AlgorithmOptions algoOpts;
+        private final boolean viaTurnPenalty;
+
+        private final PathMerger pathMerger;
+        private final Translation tr;
+        private final boolean alternativeRoutes;
+
+        public PathCalculator(GHRequest request, GHResponse response){
+            this.request = request;
+            this.response = response;
+
+            checkForIllegalStates();
+            this.vehicle = getVehicleForRequest();
+            this.traversalMode = getTraversalModeForRequest();
+            this.encoder = encodingManager.getEncoder(vehicle);
+            this.points = request.getPoints();
+
+            sw = new StopWatch().start();
+            qResults = lookup(points, encoder, response);
+            response.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+
+            weighting = getWeightingForRequest();
+            queryGraph = getQueryGraphForRequest();
+            // TODO: Do we really need the queryGraph for this?
+            weighting = createTurnWeighting(weighting, queryGraph, encoder);
+
+            algorithmFactory = getAlgorithmFactory(weighting);
+
+
+            weightLimit = request.getHints().getDouble("defaultWeightLimit", defaultWeightLimit);
+            String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
+            algoOpts = AlgorithmOptions.start().
+                    algorithm(algoStr).traversalMode(traversalMode).flagEncoder(encoder).weighting(weighting).
+                    hints(request.getHints()).
+                    build();
+
+            viaTurnPenalty = request.getHints().getBool("pass_through", false);
+
+            boolean tmpEnableInstructions = request.getHints().getBool("instructions", enableInstructions);
+            boolean tmpCalcPoints = request.getHints().getBool("calcPoints", calcPoints);
+            double wayPointMaxDistance = request.getHints().getDouble("wayPointMaxDistance", 1d);
+            DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
+            pathMerger = new PathMerger().
+                    setCalcPoints(tmpCalcPoints).
+                    setDouglasPeucker(peucker).
+                    setEnableInstructions(tmpEnableInstructions).
+                    setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
+
+            Locale locale = request.getLocale();
+            tr = trMap.getWithFallBack(locale);
+
+            alternativeRoutes = AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoOpts.getAlgorithm());
+
+
+        }
+
+        void checkForIllegalStates(){
+            if (chEnabled && request.getHints().getBool("force_heading_ch", false) && request.hasFavoredHeading(0))
+                throw new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483");
+
+        }
+
+        String getVehicleForRequest(){
+            String vehicle = request.getVehicle();
+            if (vehicle.isEmpty())
+                vehicle = getDefaultVehicle().toString();
+
+            if (!encodingManager.supports(vehicle))
+            {
+                throw new IllegalArgumentException("Vehicle " + vehicle + " unsupported. "
+                        + "Supported are: " + getEncodingManager());
+            }
+            return vehicle;
+        }
+
+        TraversalMode getTraversalModeForRequest(){
+            String tModeStr = request.getHints().get("traversal_mode", GraphHopper.this.traversalMode.toString());
+            return TraversalMode.fromString(tModeStr);
+        }
+
+        Weighting getWeightingForRequest(){
+            Weighting weighting;
+            if (chEnabled)
+            {
+                weighting = getWeightingForCH(request.getHints(), encoder);
+            }else {
+                weighting = createWeighting(request.getHints(), encoder);
+            }
+            return weighting;
+        }
+
+        QueryGraph getQueryGraphForRequest(){
+            Graph routingGraph = ghStorage;
+            if (chEnabled)
+                routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
+            QueryGraph queryGraph = new QueryGraph(routingGraph);
+            queryGraph.lookup(qResults);
+            return queryGraph;
+        }
+
+        List<Path> calc(){
+            List<Path> altPaths = new ArrayList<Path>(points.size() - 1);
+            QueryResult fromQResult = qResults.get(0);
+            long visitedNodesSum = 0;
+
+            // Every alternative path makes one AltResponse BUT if via points exists then reuse the altResponse object
+            AltResponse altResponse = new AltResponse();
+            response.addAlternative(altResponse);
+
+            for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
+            {
+                if (placeIndex == 1)
+                {
+                    // enforce start direction
+                    queryGraph.enforceHeading(fromQResult.getClosestNode(), request.getFavoredHeading(0), false);
+                } else if (viaTurnPenalty)
+                {
+                    if (alternativeRoutes)
+                        throw new IllegalStateException("Alternative paths and a viaTurnPenalty at the same time is currently not supported");
+
+                    // enforce straight start after via stop
+                    Path prevRoute = altPaths.get(placeIndex - 2);
+                    EdgeIteratorState incomingVirtualEdge = prevRoute.getFinalEdge();
+                    queryGraph.enforceHeadingByEdgeId(fromQResult.getClosestNode(), incomingVirtualEdge.getEdge(), false);
+                }
+
+                QueryResult toQResult = qResults.get(placeIndex);
+
+                // enforce end direction
+                queryGraph.enforceHeading(toQResult.getClosestNode(), request.getFavoredHeading(placeIndex), true);
+
+                sw = new StopWatch().start();
+                RoutingAlgorithm algo = algorithmFactory.createAlgo(queryGraph, algoOpts);
+                algo.setWeightLimit(weightLimit);
+                String debug = ", algoInit:" + sw.stop().getSeconds() + "s";
+
+                sw = new StopWatch().start();
+                List<Path> pathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode());
+                debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s";
+
+                for (Path path : pathList)
+                {
+                    if (path.getTime() < 0)
+                        throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
+
+                    altPaths.add(path);
+                    debug += ", " + path.getDebugInfo();
+                }
+
+                altResponse.addDebugInfo(debug);
+
+                // reset all direction enforcements in queryGraph to avoid influencing next path
+                queryGraph.clearUnfavoredStatus();
+
+                visitedNodesSum += algo.getVisitedNodes();
+                fromQResult = toQResult;
+            }
+
+            if (alternativeRoutes)
+            {
+                if (altPaths.isEmpty())
+                    throw new RuntimeException("Empty paths for alternative route calculation not expected");
+
+                // if alternative route calculation was done then create the responses from single paths
+                pathMerger.doWork(altResponse, Collections.singletonList(altPaths.get(0)), tr);
+                for (int index = 1; index < altPaths.size(); index++)
+                {
+                    altResponse = new AltResponse();
+                    response.addAlternative(altResponse);
+                    pathMerger.doWork(altResponse, Collections.singletonList(altPaths.get(index)), tr);
+                }
+            } else
+            {
+                if (points.size() - 1 != altPaths.size())
+                    throw new RuntimeException("There should be exactly one more points than paths. points:" + points.size() + ", paths:" + altPaths.size());
+
+                pathMerger.doWork(altResponse, altPaths, tr);
+            }
+            response.getHints().put("visited_nodes.sum", visitedNodesSum);
+            response.getHints().put("visited_nodes.average", (float) visitedNodesSum / (points.size() - 1));
+
+            return altPaths;
+        }
+
+        GHResponse getResponse(){
+            return this.response;
+        }
+
+    }
+
 
     List<QueryResult> lookup( List<GHPoint> points, FlagEncoder encoder, GHResponse rsp )
     {
         if (points.size() < 2)
         {
-            rsp.addError(new IllegalStateException("At least 2 points have to be specified, but was:" + points.size()));
-            return Collections.emptyList();
+            throw new IllegalStateException("At least 2 points have to be specified, but was:" + points.size());
         }
 
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
@@ -1164,7 +1227,7 @@ public class GraphHopper implements GraphHopperAPI
             GHPoint point = points.get(placeIndex);
             QueryResult res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
             if (!res.isValid())
-                rsp.addError(new IllegalArgumentException("Cannot find point " + placeIndex + ": " + point));
+                throw new IllegalArgumentException("Cannot find point " + placeIndex + ": " + point);
 
             qResults.add(res);
         }
