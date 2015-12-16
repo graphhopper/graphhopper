@@ -37,4 +37,4 @@ android/.gradle
 local.properties
 **/node_modules
 *.zip
-
+.DS_Store
