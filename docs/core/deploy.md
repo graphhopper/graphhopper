@@ -33,9 +33,7 @@ Either you get a plan there or you have to remove Omniscale from the [JavaScript
 GraphHopper uses the [GraphHopper Directions API](https://graphhopper.com/api/1/docs/) for geocoding. To be able to use the autocomplete feature of the point inputs you have to:
 
  * Get your API Token at: https://graphhopper.com/
- * Insert the token in the [GHRequest.js `this.key`](https://github.com/graphhopper/graphhopper/blob/master/web/src/main/webapp/js/graphhopper/GHRequest.js#L50)
- * Set the GraphHopper Directions API host in the [GHRequest.js `createGeocodeURL`](https://github.com/graphhopper/graphhopper/blob/master/web/src/main/webapp/js/graphhopper/GHRequest.js#L153)
-   * `tmpHost = "https://graphhopper.com/api/1";`
+ * Uncomment this [line](https://github.com/graphhopper/graphhopper/blob/master/web/src/main/webapp/js/main-template.js#L37) and insert your API Token as second parameter.
    * Don't forget the Attribution
  
 ## World Wide 
