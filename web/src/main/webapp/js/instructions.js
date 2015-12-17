@@ -61,7 +61,7 @@ module.exports.addInstructions = function(mapLayer, path, urlForHistory, request
     $("#info").append(instructionsElement);
 
     if (partialInstr) {
-        var moreDiv = $("<button id='moreButton'>" + tr("moreButton") + "..</button>");
+        var moreDiv = $("<button id='moreButton'>" + translate.tr("moreButton") + "..</button>");
         moreDiv.click(function () {
             moreDiv.remove();
             for (var m = len; m < path.instructions.length; m++) {
