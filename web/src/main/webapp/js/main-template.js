@@ -27,6 +27,7 @@ require('./lib/jquery-ui-custom-1.11.4.min.js');
 require('./lib/jquery.history.js');
 require('./lib/jquery.autocomplete.js');
 
+var GHInput = require('./graphhopper/GHInput.js');
 var GHRequest = require('./graphhopper/GHRequest.js');
 var AutoComplete = require('./autocomplete.js');
 
