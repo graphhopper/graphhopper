@@ -1,6 +1,6 @@
 # Translation
 
-You can help improve GraphHopper by adding your language!
+You can help improve GraphHopper by adding your language! We have a dedicated [forum for translations](https://discuss.graphhopper.com/c/developers/translations) in case you are unsure or want to discuss before changing things.
 
 See [this spreadsheet](https://docs.google.com/spreadsheets/d/10HKSFmxGVEIO92loVQetVmjXT0qpf3EA2jxuQSSYTdU/edit?pli=1#gid=0)
 and add a column for your language. Revisit it regularly to update or add new items. And see your language live at GraphHopper Maps e.g. explicitely specify the locale via:
