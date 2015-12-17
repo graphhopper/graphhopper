@@ -2,7 +2,7 @@ var GHRoute = require('./GHRoute.js');
 var GHInput = require('./GHInput.js');
 var graphhopperTools = require('./tools.js');
 
-// compatiblity script taken from http://stackoverflow.com/a/11054570/194609
+// compatibility script taken from http://stackoverflow.com/a/11054570/194609
 if (!Function.prototype.bind) {
     Function.prototype.bind = function (oThis) {
         if (typeof this !== 'function') {
@@ -43,9 +43,9 @@ var GHRequest = function (host) {
     this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "elevation": false};
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!      
+    // We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!
     // Our routing service is also free for certain applications or smaller volume. Be fair, grab an API key and support us:
-    // https://graphhopper.com/#directions-api Misuse of API keys that you don't own is prohibited and you'll be blocked.                    
+    // https://graphhopper.com/#directions-api Misuse of API keys that you don't own is prohibited and you'll be blocked.
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     this.key = "Cmmtvx01R56rdHcQQo7VjI6rgPgxuFLvqI8cR31u";
 
@@ -107,7 +107,7 @@ GHRequest.prototype.init = function (params) {
         var indexFrom = qStr.indexOf("from:");
         var indexTo = qStr.indexOf("to:");
         if (indexFrom >= 0 && indexTo >= 0) {
-            // google-alike query schema            
+            // google-alike query schema
             if (indexFrom < indexTo) {
                 params.point.push(qStr.substring(indexFrom + 5, indexTo).trim());
                 params.point.push(qStr.substring(indexTo + 3).trim());
