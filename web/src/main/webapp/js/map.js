@@ -1,3 +1,4 @@
+var mainTemplate = require('./main-template.js');
 var tileLayers = require('./config/tileLayers.js');
 
 var routingLayer;
@@ -20,7 +21,7 @@ function adjustMapSize() {
     var height = $(window).height();
     mapDiv.width(width).height(height);
     $("#input").height(height);
-    // reduce info size depending on how heigh the input_header is and reserve space for footer
+    // reduce info size depending on how high the input_header is and reserve space for footer
     $("#info").css("max-height", height - $("#input_header").height() - 58);
 }
 
@@ -177,7 +178,7 @@ function focus(coord, zoom, index) {
             zoom = 11;
         routingLayer.clearLayers();
         map.setView(new L.LatLng(coord.lat, coord.lng), zoom);
-        setFlag(coord, index);
+        mainTemplate.setFlag(coord, index);
     }
 }
 
@@ -221,9 +222,6 @@ module.exports.addElevation = function (geoJsonFeature) {
             theme: "white-theme", //default: lime-theme
             width: 450,
             height: 125,
-            yAxisMin: 0, // set min domain y axis
-            // yAxisMax: 550, // set max domain y axis
-            forceAxisBounds: false,
             margins: {
                 top: 10,
                 right: 20,
@@ -233,8 +231,8 @@ module.exports.addElevation = function (geoJsonFeature) {
             useHeightIndicator: true, //if false a marker is drawn at map position
             interpolation: "linear", //see https://github.com/mbostock/d3/wiki/SVG-Shapes#wiki-area_interpolate
             hoverNumber: {
-                decimalsX: 3, //decimals on distance (always in km)
-                decimalsY: 0, //deciamls on height (always in m)
+                decimalsX: 2, //decimals on distance (always in km)
+                decimalsY: 0, //decimals on height (always in m)
                 formatter: undefined //custom formatter function may be injected
             },
             xTicks: undefined, //number of ticks in x axis, calculated by default according to width

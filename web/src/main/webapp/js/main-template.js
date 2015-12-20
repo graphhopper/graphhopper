@@ -2,9 +2,9 @@ var host;
 
 // Deployment-scripts can insert host here.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!      
+// We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!
 // Our routing service is also free for certain applications or smaller volume. Be fair, grab an API key and support us:
-// https://graphhopper.com/#directions-api Misuse of API keys that you don't own is prohibited and you'll be blocked.                    
+// https://graphhopper.com/#directions-api Misuse of API keys that you don't own is prohibited and you'll be blocked.
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 if (!host) {
     if (location.port === '') {
@@ -248,7 +248,7 @@ function resolveCoords(pointsAsStr, doQuery) {
         resolveAll();
         routeLatLng(ghRequest, doQuery);
     } else {
-        // at least one text input from user -> wait for resolve as we need the coord for routing     
+        // at least one text input from user -> wait for resolve as we need the coord for routing
         $.when.apply($, resolveAll()).done(function () {
             routeLatLng(ghRequest, doQuery);
         });
@@ -454,7 +454,7 @@ function routeLatLng(request, doQuery) {
     var urlForHistory = request.createHistoryURL() + "&layer=" + activeLayer;
 
     // not enabled e.g. if no cookies allowed (?)
-    // if disabled we have to do the query and cannot rely on the statechange history event    
+    // if disabled we have to do the query and cannot rely on the statechange history event
     if (!doQuery && History.enabled) {
         // 2. important workaround for encoding problems in history.js
         var params = urlTools.parseUrl(urlForHistory);
@@ -590,3 +590,5 @@ function mySubmit() {
 function isProduction() {
     return host.indexOf("graphhopper.com") > 0;
 }
+
+module.exports.setFlag = setFlag;
