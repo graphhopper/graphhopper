@@ -22,6 +22,7 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.storage.EdgeEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -29,6 +30,7 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
+import gnu.trove.map.TIntObjectMap;
 
 import java.awt.*;
 import java.awt.event.*;
@@ -40,10 +42,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A rough graphical user interface for visualizing the OSM graph. Mainly for debugging algorithms
- * and spatial datastructures.
- * <p>
- * Use the project at https://github.com/graphhopper/graphhopper-web for a
- * better/faster/userfriendly/... alternative!
+ * and spatial datastructures. Use the 'web' module for a more userfriendly UI as shown at
+ * graphhopper.com/maps
  * <p>
  * @author Peter Karich
  */
@@ -532,5 +532,54 @@ public class MiniGraphUI
         roadsLayer.repaint();
         mainPanel.repaint();
         logger.info("roads painting took " + sw.stop().getSeconds() + " sec");
+    }
+
+    static class MyBiDi extends DijkstraBidirectionRef
+    {
+
+        public MyBiDi( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
+        {
+            super(graph, encoder, weighting, tMode);
+        }
+
+        @Override
+        public boolean finished()
+        {
+            // we need to finish BOTH searches identical to CH
+            if (finishedFrom && finishedTo)
+                return true;
+
+            if (currFrom.weight + currTo.weight > weightLimit)
+                return true;
+
+            // The following condition is necessary to avoid traversing the full graph if areas are disconnected
+            // but it is only valid for none-CH e.g. for CH it can happen that finishedTo is true but the from-SPT could still reach 'to'
+            if (!bestPath.isFound() && (finishedFrom || finishedTo))
+                return true;
+
+            return currFrom.weight > bestPath.getWeight() && currTo.weight > bestPath.getWeight();
+        }
+
+        public TIntObjectMap<EdgeEntry> getBestWeightMapFrom()
+        {
+            return bestWeightMapFrom;
+        }
+
+        public TIntObjectMap<EdgeEntry> getBestWeightMapTo()
+        {
+            return bestWeightMapTo;
+        }
+
+        @Override
+        protected double getCurrentFromWeight()
+        {
+            return super.getCurrentFromWeight();
+        }
+
+        @Override
+        protected double getCurrentToWeight()
+        {
+            return super.getCurrentToWeight();
+        }
     }
 }

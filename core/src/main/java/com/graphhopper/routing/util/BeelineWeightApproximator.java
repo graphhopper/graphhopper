@@ -2,7 +2,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.Helper;
 
 /**

@@ -1073,7 +1073,14 @@ public class GraphHopper implements GraphHopperAPI
         // Every alternative path makes one AltResponse BUT if via points exists then reuse the altResponse object
         AltResponse altResponse = new AltResponse();
         ghRsp.addAlternative(altResponse);
-        boolean alternativeRoutes = AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoOpts.getAlgorithm());      
+        boolean isRoundTrip = AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoOpts.getAlgorithm());
+        boolean isAlternativeRoute = AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoOpts.getAlgorithm());
+
+        if ((isAlternativeRoute || isRoundTrip) && points.size() > 2)
+        {
+            ghRsp.addError(new RuntimeException("Via points are not yet supported when alternative paths or round trips are requested. The returned paths would just need an additional identification for the via point index."));
+            return Collections.emptyList();
+        }
 
         for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
         {
@@ -1083,7 +1090,7 @@ public class GraphHopper implements GraphHopperAPI
                 queryGraph.enforceHeading(fromQResult.getClosestNode(), request.getFavoredHeading(0), false);
             } else if (viaTurnPenalty)
             {
-                if (alternativeRoutes)
+                if (isAlternativeRoute)
                     throw new IllegalStateException("Alternative paths and a viaTurnPenalty at the same time is currently not supported");
 
                 // enforce straight start after via stop
@@ -1105,6 +1112,8 @@ public class GraphHopper implements GraphHopperAPI
             sw = new StopWatch().start();
             List<Path> pathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode());
             debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s";
+            if (pathList.isEmpty())
+                throw new IllegalStateException("At least one path has to be returned for " + fromQResult + " -> " + toQResult);
 
             for (Path path : pathList)
             {
@@ -1124,7 +1133,7 @@ public class GraphHopper implements GraphHopperAPI
             fromQResult = toQResult;
         }
 
-        if (alternativeRoutes)
+        if (isAlternativeRoute)
         {
             if (altPaths.isEmpty())
                 throw new RuntimeException("Empty paths for alternative route calculation not expected");
@@ -1137,6 +1146,12 @@ public class GraphHopper implements GraphHopperAPI
                 ghRsp.addAlternative(altResponse);
                 pathMerger.doWork(altResponse, Collections.singletonList(altPaths.get(index)), tr);
             }
+        } else if (isRoundTrip)
+        {
+            if (points.size() != altPaths.size())
+                throw new RuntimeException("There should be exactly one more points than paths. points:" + points.size() + ", paths:" + altPaths.size());
+
+            pathMerger.doWork(altResponse, altPaths, tr);
         } else
         {
             if (points.size() - 1 != altPaths.size())

@@ -45,25 +45,22 @@ public class RoundTripAltAlgorithmTest
         rtAlgo.setMaxWeightFactor(2);
         List<Path> paths = rtAlgo.calcRoundTrips(5, maxDist, 1.2);
         assertEquals(2, paths.size());
-        assertEquals(Helper.createTList(5, 6, 3), paths.get(0).calcNodes());
-
-        // no plateau filter => prefer the longer path
-        // assertEquals(Helper.createTList(10, 4, 8, 7, 6, 5), paths.get(1).calcNodes());
-        assertEquals(Helper.createTList(3, 2, 9, 1, 5), paths.get(1).calcNodes());
+        assertEquals(Helper.createTList(5, 6, 3, 4), paths.get(0).calcNodes());
+        assertEquals(Helper.createTList(4, 8, 7, 6, 5), paths.get(1).calcNodes());
 
         rtAlgo = new RoundTripAltAlgorithm(g, carFE, weighting, tMode);
         rtAlgo.setMaxWeightFactor(2);
-        paths = rtAlgo.calcRoundTrips(6, maxDist, 1.2);
+        paths = rtAlgo.calcRoundTrips(6, maxDist, 2);
         assertEquals(2, paths.size());
-        assertEquals(Helper.createTList(6, 3), paths.get(0).calcNodes());
-        assertEquals(Helper.createTList(3, 2, 9, 1, 5, 6), paths.get(1).calcNodes());
+        assertEquals(Helper.createTList(6, 3, 4), paths.get(0).calcNodes());
+        assertEquals(Helper.createTList(4, 8, 7, 6), paths.get(1).calcNodes());
 
         rtAlgo = new RoundTripAltAlgorithm(g, carFE, weighting, tMode);
         rtAlgo.setMaxWeightFactor(2);
         paths = rtAlgo.calcRoundTrips(6, maxDist, 1);
         assertEquals(2, paths.size());
         assertEquals(Helper.createTList(6, 3, 4), paths.get(0).calcNodes());
-        assertEquals(Helper.createTList(4, 8, 7, 6), paths.get(1).calcNodes());
+        assertEquals(Helper.createTList(4, 3, 6), paths.get(1).calcNodes());
     }
 
     // TODO how to select alternative when the second best is the 'bestForwardPath' backwards?
@@ -93,7 +90,7 @@ public class RoundTripAltAlgorithmTest
         RoundTripAltAlgorithm rtAlgo = new RoundTripAltAlgorithm(g, carFE, weighting, tMode);
         rtAlgo.setMaxWeightFactor(2);
         double maxDist = Helper.DIST_EARTH.calcDist(0, 0, 0.05, 0.25) * 2;
-        List<Path> paths = rtAlgo.calcRoundTrips(5, maxDist, 1);
+        List<Path> paths = rtAlgo.calcRoundTrips(5, maxDist, 1.4);
         assertEquals(2, paths.size());
         assertEquals(Helper.createTList(5, 6, 3, 4), paths.get(0).calcNodes());
         assertEquals(Helper.createTList(4, 8, 7, 6, 5), paths.get(1).calcNodes());
@@ -101,6 +98,6 @@ public class RoundTripAltAlgorithmTest
 
     private Graph createTestGraph( boolean b )
     {
-        return new AlternativeRouteTest().createTestGraph(b);
+        return new AlternativeRouteTest(tMode).createTestGraph(b, em);
     }
 }

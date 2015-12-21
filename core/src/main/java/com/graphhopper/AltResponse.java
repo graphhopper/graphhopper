@@ -21,6 +21,7 @@ import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -30,6 +31,7 @@ import java.util.List;
  */
 public class AltResponse
 {
+    private List<String> description;
     private double distance;
     private double ascend;
     private double descend;
@@ -39,6 +41,23 @@ public class AltResponse
     private InstructionList instructions;
     private PointList list = PointList.EMPTY;
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
+
+    /**
+     * @return the description of this route alternative to make it meaningful for the user e.g. it
+     * displays one or two main roads of the route.
+     */
+    public List<String> getDescription()
+    {
+        if (description == null)
+            return Collections.emptyList();
+        return description;
+    }
+
+    public AltResponse setDescription( List<String> names )
+    {
+        this.description = names;
+        return this;
+    }
 
     public AltResponse addDebugInfo( String debugInfo )
     {

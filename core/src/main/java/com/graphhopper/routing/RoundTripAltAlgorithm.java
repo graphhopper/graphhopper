@@ -47,7 +47,8 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
     private final Weighting weighting;
     private final TraversalMode traversalMode;
     private double weightLimit = Double.MAX_VALUE;
-    private double maxWeightFactor = 1;
+    private int visitedNodes;
+    private double maxWeightFactor = 2;
 
     public RoundTripAltAlgorithm( Graph graph, FlagEncoder flagEncoder, Weighting weighting, TraversalMode traversalMode )
     {
@@ -57,7 +58,7 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
 
         this.traversalMode = traversalMode;
         if (this.traversalMode != TraversalMode.NODE_BASED)
-            throw new IllegalArgumentException("Only node based traversal currently supported for alternative route calculation");
+            throw new IllegalArgumentException("Only node based traversal currently supported for round trip calculation");
     }
 
     public void setMaxWeightFactor( double maxWeightFactor )
@@ -73,9 +74,10 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
     public List<Path> calcRoundTrips( int from, double maxFullDistance, final double penaltyFactor )
     {
         AltSingleDijkstra altDijkstra = new AltSingleDijkstra(graph, flagEncoder, weighting, traversalMode);
-        // altDijkstra.setWeightLimit(weightLimit);
+        altDijkstra.setWeightLimit(weightLimit);
         altDijkstra.beforeRun(from);
         EdgeEntry currFrom = altDijkstra.searchBest(from, maxFullDistance);
+        visitedNodes = altDijkstra.getVisitedNodes();
         if (currFrom == null)
             return Collections.emptyList();
 
@@ -117,7 +119,7 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
             }
         };
         AlternativeRoute.AltDijkstraBidirectionRef altBidirDijktra = new AlternativeRoute.AltDijkstraBidirectionRef(graph, flagEncoder,
-                altWeighting, traversalMode);
+                altWeighting, traversalMode, 1);
         altBidirDijktra.setWeightLimit(weightLimit);
         // find an alternative for backward direction starting from 'to'
         Path bestBackwardPath = altBidirDijktra.searchBest(to, from);
@@ -126,7 +128,15 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
         if (Double.isInfinite(bestBackwardPath.getWeight()))
             return Collections.emptyList();
 
-        List<AlternativeRoute.AlternativeInfo> infos = altBidirDijktra.calcAlternatives(2, penaltyFactor * maxWeightFactor, 0.05, 0.1);
+        // less weight influence, stronger share avoiding than normal alternative search to increase area between best&alternative
+        double weightInfluence = 0.05, maxShareFactor = 0.05, shareInfluence = 2 /*use penaltyFactor?*/,
+                minPlateauFactor = 0.1, plateauInfluence = 0.1;
+        List<AlternativeRoute.AlternativeInfo> infos = altBidirDijktra.calcAlternatives(2,
+                penaltyFactor * maxWeightFactor, weightInfluence,
+                maxShareFactor, shareInfluence,
+                minPlateauFactor, plateauInfluence);
+
+        visitedNodes += altBidirDijktra.getVisitedNodes();
         if (infos.isEmpty())
             return Collections.emptyList();
 
@@ -134,13 +144,13 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
         {
             // fallback to same path for backward direction (or at least VERY similar path as optimal)
             paths.add(bestForwardPath);
-            paths.add(infos.get(0).getPath().extract());
+            paths.add(infos.get(0).getPath());
         } else
         {
             AlternativeRoute.AlternativeInfo secondBest = null;
             for (AlternativeRoute.AlternativeInfo i : infos)
             {
-                if (1 - i.getPlateauWeight() / i.getPath().getWeight() > 1e-8)
+                if (1 - i.getShareWeight() / i.getPath().getWeight() > 1e-8)
                 {
                     secondBest = i;
                     break;
@@ -149,15 +159,8 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
             if (secondBest == null)
                 throw new RuntimeException("no second best found. " + infos);
 
-            EdgeEntry newTo = secondBest.getPlateauStart();
-            // find first sharing edge
-            while (newTo.parent != null)
-            {
-                if (forwardEdgeSet.contains(newTo.parent.edge))
-                    break;
-                newTo = newTo.parent;
-            }
-
+            // correction: remove end standing path
+            EdgeEntry newTo = secondBest.getShareStart();
             if (newTo.parent != null)
             {
                 // in case edge was found in forwardEdgeSet we calculate the first sharing end
@@ -172,11 +175,11 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
                 newTo = newTo.parent;
                 // force new 'to'
                 newTo.edge = EdgeIterator.NO_EDGE;
-                secondBest.getPath().setWeight(secondBest.getPath().getWeight() - newTo.weight);
+                secondBest.getPath().setWeight(secondBest.getPath().getWeight() - newTo.weight).extract();
             }
 
             paths.add(bestForwardPath);
-            paths.add(secondBest.getPath().extract());
+            paths.add(secondBest.getPath());
         }
         return paths;
     }
@@ -184,13 +187,19 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
     @Override
     public Path calcPath( int from, int to )
     {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
     public List<Path> calcPaths( int from, int to )
     {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        // TODO use to-point to indicate direction too, not only distance
+        double fromLat = graph.getNodeAccess().getLat(from), fromLon = graph.getNodeAccess().getLon(from);
+        double toLat = graph.getNodeAccess().getLat(to), toLon = graph.getNodeAccess().getLon(to);
+
+        double maxDist = Helper.DIST_EARTH.calcDist(fromLat, fromLon, toLat, toLon) * 2;
+        double penaltyFactor = 2;
+        return calcRoundTrips(from, maxDist, penaltyFactor);
     }
 
     @Override
@@ -208,7 +217,7 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
     @Override
     public int getVisitedNodes()
     {
-        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+        return visitedNodes;
     }
 
     /**

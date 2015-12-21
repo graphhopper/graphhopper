@@ -37,4 +37,4 @@ android/.gradle
 local.properties
 **/node_modules
 *.zip
-
+web/src/main/webapp/js/options_prod.js

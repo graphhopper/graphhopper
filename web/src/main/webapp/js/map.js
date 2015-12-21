@@ -10,7 +10,7 @@ var elevationControl = null;
 // called if window changes or before map is created
 function adjustMapSize() {
     var mapDiv = $("#map");
-    var width = $(window).width() - 295;
+    var width = $(window).width() - 280;
     if (width < 400) {
         width = 400;
         mapDiv.attr("style", "position: relative; float: right;");
@@ -151,8 +151,12 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         }).addTo(map);
 
     routingLayer = L.geoJson().addTo(map);
+
     routingLayer.options = {
-        style: {color: "#00cc33", "weight": 5, "opacity": 0.6}, // route color and style
+        // use style provided by the 'properties' entry of the geojson added by addDataToRoutingLayer
+        style: function (feature) {
+            return feature.properties && feature.properties.style;
+        },
         contextmenu: true,
         contextmenuItems: [{
                 text: 'Route ',
@@ -171,13 +175,6 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
             }],
         contextmenuAtiveState: 3
     };
-    /*
-     routingLayer.options = {style: {color: "#1F40C4", "weight": 5, "opacity": 0.6}, onEachFeature: function (feature, layer) {
-     layer.on('contextmenu', function (e) {
-     alert('The GeoJSON layer has been clicked');
-     });
-     }}; // route color and style
-     */
 }
 
 function focus(coord, zoom, index) {
@@ -200,6 +197,10 @@ module.exports.getRoutingLayer = function () {
 
 module.exports.addDataToRoutingLayer = function (geoJsonFeature) {
     routingLayer.addData(geoJsonFeature);
+};
+
+module.exports.eachLayer = function (callback) {
+    routingLayer.eachLayer(callback);
 };
 
 module.exports.setDisabledForMapsContextMenu = function (entry, value) {

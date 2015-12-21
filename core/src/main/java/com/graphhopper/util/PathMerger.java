@@ -20,6 +20,7 @@ package com.graphhopper.util;
 
 import com.graphhopper.AltResponse;
 import com.graphhopper.routing.Path;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -70,9 +71,11 @@ public class PathMerger
 
         InstructionList fullInstructions = new InstructionList(tr);
         PointList fullPoints = PointList.EMPTY;
+        List<String> description = new ArrayList<String>();
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++)
         {
             Path path = paths.get(pathIndex);
+            description.addAll(path.getDescription());
             fullTimeInMillis += path.getTime();
             fullDistance += path.getDistance();
             fullWeight += path.getWeight();
@@ -140,7 +143,8 @@ public class PathMerger
         if (!allFound)
             altRsp.addError(new RuntimeException("Connection between locations not found"));
 
-        altRsp.setPoints(fullPoints).
+        altRsp.setDescription(description).
+                setPoints(fullPoints).
                 setRouteWeight(fullWeight).
                 setDistance(fullDistance).
                 setTime(fullTimeInMillis);

@@ -494,11 +494,31 @@ function routeLatLng(request, doQuery) {
             return;
         }
 
-        function createClickHandler(tabHeader, oneTab) {
+        function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation) {
             return function () {
-                // TODO highlight route geometry somehow
+
+                var currentGeoJson = geoJsons[currentLayerIndex];
+                mapLayer.eachLayer(function (layer) {
+                    // skip markers etc
+                    if (!layer.setStyle)
+                        return;
+
+                    var doHighlight = layer.feature === currentGeoJson;
+                    layer.setStyle(doHighlight ? highlightRouteStyle : alternativeRouteStye);
+                    if (doHighlight) {
+                        if (!L.Browser.ie && !L.Browser.opera)
+                            layer.bringToFront();
+                    }
+                });
+
+                if (hasElevation) {
+                    mapLayer.clearElevation();
+                    mapLayer.addElevation(currentGeoJson);
+                }
+
                 headerTabs.find("li").removeClass("current");
                 routeResultsDiv.find("div").removeClass("current");
+
                 tabHeader.addClass("current");
                 oneTab.addClass("current");
             };
@@ -510,41 +530,56 @@ function routeLatLng(request, doQuery) {
             routeResultsDiv.append("<div class='clear'/>");
         }
 
-        for (var pathIndex in json.paths) {
-            var tabHeader = $("<li>").append((+pathIndex + 1) + "<img class='alt_route_img' src='img/alt_route.png'/>");
+        // the routing layer uses the geojson properties.style for the style, see map.js
+        var defaultRouteStyle = {color: "#00cc33", "weight": 5, "opacity": 0.6};
+        var highlightRouteStyle = {color: "#00cc33", "weight": 6, "opacity": 0.8};
+        var alternativeRouteStye = {color: "darkgray", "weight": 6, "opacity": 0.8};
+        var geoJsons = [];
+        var firstHeader;
+
+        for (var pathIndex = 0; pathIndex < json.paths.length; pathIndex++) {
+            var tabHeader = $("<li>").append((pathIndex + 1) + "<img class='alt_route_img' src='img/alt_route.png'/>");
+            if (pathIndex === 0)
+                firstHeader = tabHeader;
+
             headerTabs.append(tabHeader);
             var path = json.paths[pathIndex];
+            var style = (pathIndex === 0) ? defaultRouteStyle : alternativeRouteStye;
+
             var geojsonFeature = {
                 "type": "Feature",
-                "geometry": path.points
+                "geometry": path.points,
+                "properties": {"style": style}
             };
 
+            geoJsons.push(geojsonFeature);
             mapLayer.addDataToRoutingLayer(geojsonFeature);
             var oneTab = $("<div class='route_result_tab'>");
             routeResultsDiv.append(oneTab);
-            tabHeader.click(createClickHandler(tabHeader, oneTab));
+            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation()));
 
             var tmpTime = translate.createTimeString(path.time);
             var tmpDist = translate.createDistanceString(path.distance);
-            var routeInfo = $("<div class='route_description'>").append(translate.tr("routeInfo", [tmpDist, tmpTime]));
+            var routeInfo = $("<div class='route_description'>");
+            if (path.description && path.description.length > 0) {
+                routeInfo.text(path.description);
+                routeInfo.append("<br/>");
+            }
+            routeInfo.append(translate.tr("routeInfo", [tmpDist, tmpTime]));
             if (request.hasElevation()) {
                 routeInfo.append(translate.createEleInfoString(path.ascend, path.descend));
-                mapLayer.addElevation(geojsonFeature);
             }
             oneTab.append(routeInfo);
 
-            if ((+pathIndex) === 0) {
-                tabHeader.addClass("current");
-                oneTab.addClass("current");
-            }
             if (path.instructions) {
                 var instructions = require('./instructions.js');
                 oneTab.append(instructions.create(mapLayer, path, urlForHistory, request));
             }
         }
+        // already select best path
+        firstHeader.click();
 
         mapLayer.adjustMapSize();
-
         // TODO change bounding box on click
         var firstPath = json.paths[0];
         if (firstPath.bbox && doZoom) {

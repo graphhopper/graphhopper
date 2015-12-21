@@ -129,12 +129,12 @@ public class GraphHopperIT
     {
         GHRequest req = new GHRequest(43.729057, 7.41251, 43.740298, 7.423561).
                 setAlgorithm(AlgorithmOptions.ALT_ROUTE).setVehicle(vehicle).setWeighting(weightCalcStr);
-        // req.getHints().put("alternative_route.max_weight_factor", "1.5");
 
         GHResponse rsp = hopper.route(req);
         assertEquals(2, rsp.getAlternatives().size());
 
-        req.getHints().put("alternative_route.max_num", "2");
+        req.getHints().put("alternative_route.max_paths", "3");
+        req.getHints().put("alternative_route.min_plateau_factor", "0.1");
         rsp = hopper.route(req);
         assertEquals(3, rsp.getAlternatives().size());
     }
