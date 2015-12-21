@@ -102,9 +102,9 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
 
     map.on('baselayerchange', function (a) {
         if (a.name) {
-            activeLayer = a.name;
+            tileLayers.activeLayerName = a.name;
             $("#export-link a").attr('href', function (i, v) {
-                return v.replace(/(layer=)([\w\s]+)/, '$1' + activeLayer);
+                return v.replace(/(layer=)([\w\s]+)/, '$1' + tileLayers.activeLayerName);
             });
         }
     });

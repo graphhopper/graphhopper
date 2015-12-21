@@ -89,6 +89,9 @@ var availableTileLayers = {
     "Sorbian Language": sorbianLang
 };
 
+module.exports.activeLayerName = "Omniscale";
+module.exports.defaultLayer = omniscale;
+
 module.exports.getAvailableTileLayers = function () {
     return availableTileLayers;
 };
@@ -96,7 +99,7 @@ module.exports.getAvailableTileLayers = function () {
 module.exports.selectLayer = function (layerName) {
     var defaultLayer = availableTileLayers[layerName];
     if (!defaultLayer)
-        defaultLayer = availableTileLayers.Omniscale;
+        defaultLayer = module.exports.defaultLayer;
 
     return defaultLayer;
 };

@@ -40,12 +40,12 @@ var translate = require('./translate.js');
 var format = require('./tools/format.js');
 var urlTools = require('./tools/url.js');
 var vehicle = require('./tools/vehicle.js');
+var tileLayers = require('./config/tileLayers.js');
 
 var debug = false;
 var ghRequest = new GHRequest(host, ghenv.routing.api_key);
 var bounds = {};
 
-var activeLayer = '';
 var metaVersionInfo;
 
 // usage: log('inside coolFunc',this,arguments);
@@ -445,7 +445,7 @@ function routeLatLng(request, doQuery) {
     var doZoom = request.do_zoom;
     request.do_zoom = true;
 
-    var urlForHistory = request.createHistoryURL() + "&layer=" + activeLayer;
+    var urlForHistory = request.createHistoryURL() + "&layer=" + tileLayers.activeLayerName;
 
     // not enabled e.g. if no cookies allowed (?)
     // if disabled we have to do the query and cannot rely on the statechange history event
