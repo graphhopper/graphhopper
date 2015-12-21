@@ -35,17 +35,22 @@ import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.Translation;
 import com.graphhopper.util.TranslationMap;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
@@ -53,6 +58,9 @@ import org.json.JSONObject;
  * @author Peter Karich
  */
 public class MatchServlet extends GraphHopperServlet {
+
+    private static final String GPX_FORMAT = "gpx";
+    private static final String EXTENDED_JSON_FORMAT = "extended_json";
 
     @Inject
     private GraphHopper hopper;
@@ -82,8 +90,8 @@ public class MatchServlet extends GraphHopperServlet {
         } else {
             throw new IllegalArgumentException("content type not supported " + type);
         }
-
-        boolean writeGPX = "gpx".equals(getParam(httpReq, "type", "json"));
+        final String format = getParam(httpReq, "type", "json");
+        boolean writeGPX = GPX_FORMAT.equals(format);
         boolean pointsEncoded = getBooleanParam(httpReq, "points_encoded", true);
         boolean enableInstructions = writeGPX || getBooleanParam(httpReq, "instructions", true);
         boolean enableElevation = getBooleanParam(httpReq, "elevation", false);
@@ -122,7 +130,15 @@ public class MatchServlet extends GraphHopperServlet {
 
         logger.info(httpReq.getQueryString() + ", " + infoStr + ", took:" + sw.stop().getSeconds() + ", entries:" + gpxFile.getEntries().size() + ", " + matchGHRsp.getDebugInfo());
 
-        if (writeGPX) {
+        if (EXTENDED_JSON_FORMAT.equals(format)) {
+            if (matchGHRsp.hasErrors()) {
+                httpRes.setStatus(SC_BAD_REQUEST);
+                httpRes.getWriter().append(new JSONArray(matchGHRsp.getErrors()).toString());
+            } else {
+                httpRes.getWriter().write(new MatchResultToJson(matchRsp).exportTo().toString());
+            }
+
+        } else if (GPX_FORMAT.equals(format)) {
             String xml = createGPXString(httpReq, httpRes, matchGHRsp);
             if (matchGHRsp.hasErrors()) {
                 httpRes.setStatus(SC_BAD_REQUEST);
@@ -130,7 +146,6 @@ public class MatchServlet extends GraphHopperServlet {
             } else {
                 writeResponse(httpRes, xml);
             }
-
         } else {
             Map<String, Object> map = routeSerializer.toJSON(matchGHRsp, true, pointsEncoded,
                     enableElevation, enableInstructions);
