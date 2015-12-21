@@ -1,19 +1,3 @@
-var host;
-
-// Deployment-scripts can insert host here.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!
-// Our routing service is also free for certain applications or smaller volume. Be fair, grab an API key and support us:
-// https://graphhopper.com/#directions-api Misuse of API keys that you don't own is prohibited and you'll be blocked.
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-if (!host) {
-    if (location.port === '') {
-        host = location.protocol + '//' + location.hostname;
-    } else {
-        host = location.protocol + '//' + location.hostname + ":" + location.port;
-    }
-}
-
 global.d3 = require('d3');
 var L = require('leaflet');
 require('leaflet-loading');
@@ -27,15 +11,25 @@ require('./lib/jquery-ui-custom-1.11.4.min.js');
 require('./lib/jquery.history.js');
 require('./lib/jquery.autocomplete.js');
 
+var ghenv = require("./options.js").options;
+console.log(ghenv.environment);
+
 var GHInput = require('./graphhopper/GHInput.js');
 var GHRequest = require('./graphhopper/GHRequest.js');
-var AutoComplete = require('./autocomplete.js');
+var host = ghenv.routing.host;
+if (!host) {
+    if (location.port === '') {
+        host = location.protocol + '//' + location.hostname;
+    } else {
+        host = location.protocol + '//' + location.hostname + ":" + location.port;
+    }
+}
 
-// To enable autocomplete
-// - Remove the first line
-// - Uncomment the second line and add a valid API token
-var autocomplete = AutoComplete.prototype.createStub();
-// var autocomplete = new AutoComplete('http://graphhopper.com/api/1', 'your api token goes here');
+var AutoComplete = require('./autocomplete.js');
+if (ghenv.environment === 'development')
+    var autocomplete = AutoComplete.prototype.createStub();
+else
+    var autocomplete = new AutoComplete(ghenv.geocoding.host, ghenv.geocoding.api_key);
 
 var mapLayer = require('./map.js');
 var nominatim = require('./nominatim.js');
@@ -48,7 +42,7 @@ var urlTools = require('./tools/url.js');
 var vehicle = require('./tools/vehicle.js');
 
 var debug = false;
-var ghRequest = new GHRequest(host);
+var ghRequest = new GHRequest(host, ghenv.routing.api_key);
 var bounds = {};
 
 var activeLayer = '';

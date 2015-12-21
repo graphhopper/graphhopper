@@ -93,13 +93,21 @@ then there is a highly experimental version of GraphHopper using TeaVM.
 Have a look into this [blog post](http://karussell.wordpress.com/2014/05/04/graphhopper-in-the-browser-teavm-makes-offline-routing-via-openstreetmap-possible-in-javascript/) 
 for a demo and more information.
 
-If you want to change the JavaScript you have to setup the JavaScript environment:
-```
+If you want to change the JavaScript you have to setup the JavaScript environment - 
+i.e. install the node package manager (npm):
+
+For linux do
+```bash
 curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.29.0/install.sh | bash
 # close and reopen terminal now
 nvm install 4.2.2
 nvm use 4.2.2
+```
 
+For windows download either [nvm](https://github.com/coreybutler/nvm-windows) or [node](https://nodejs.org/en/download/) directly.
+
+Then create the main.js
+```bash
 # git clone https://github.com/graphhopper/graphhopper.git
 cd graphhopper/web
 # download required packages:
@@ -107,25 +115,28 @@ npm install
 npm test
 # create main.js
 npm run bundle
-
-cd ..
-./graphhopper.sh web africa_canary-islands.pbf
-firefox localhost:8989
 ```
 
-Using these Commands you can create the main.js:
-```
+Finally start GraphHopper e.g. via `graphhopper.sh` script and with the browser open `localhost:8989`.
+
+There are more npm commands e.g. to change the main.js on the fly or create an uglified main.js for production:
+```bash
 # For development just use watchify:
 npm run watch
-# see the package.json where several other scripts like bundleDebug are defined
+
 # bundle creates the main file
 npm run bundle
+
 # create main.js for debugging
 npm run bundleDebug
-npm run bundleUgly
 
-# Forcing consistent code style with jshint. JsHint can be run with:
+# create main.js for production and specify as CLI parameter `export NODE_ENV=development` which `options_*.js` should be selected
+npm run bundleProduction
+
+# Forcing consistent code style with jshint:
 npm run jshint
+
+# see the package.json where more scripts are defined
 ```
 
 ### Android Usage

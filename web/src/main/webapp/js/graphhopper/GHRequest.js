@@ -28,8 +28,9 @@ if (!Function.prototype.bind) {
 }
 
 
-var GHRequest = function (host) {
+var GHRequest = function (host, api_key) {
     this.host = host;
+    this.key = api_key;
     this.route = new GHRoute(new GHInput(), new GHInput());
     this.from = this.route.first();
     this.to = this.route.last();
@@ -39,15 +40,7 @@ var GHRequest = function (host) {
     this.do_zoom = true;
     // use jsonp here if host allows CORS
     this.dataType = "json";
-
-    this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "elevation": false};
-
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    // We know that you love 'free', we love it too :)! And so our entire software stack is free and even Open Source!
-    // Our routing service is also free for certain applications or smaller volume. Be fair, grab an API key and support us:
-    // https://graphhopper.com/#directions-api Misuse of API keys that you don't own is prohibited and you'll be blocked.
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    this.key = "Cmmtvx01R56rdHcQQo7VjI6rgPgxuFLvqI8cR31u";
+    this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "elevation": false};        
 
     // register events
     this.route.addListener('route.add', function (evt) {
