@@ -230,7 +230,7 @@ public class MapMatchingTest {
     @Test
     public void testCheckOrRepair() {
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
-        MapMatching mm = new MapMatching(graph, null, null);
+        MapMatching mm = new MapMatching(graph, null, graph.getEncodingManager().getEncoder("car"));
         List<EdgeMatch> list = new ArrayList<EdgeMatch>();
 
         // System.out.println(GHUtility.getNeighbors(graph.createEdgeExplorer().setBaseNode(24594)));
@@ -265,7 +265,7 @@ public class MapMatchingTest {
     @Test
     public void testRepairUTurn() {
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
-        MapMatching mm = new MapMatching(graph, null, null);
+        MapMatching mm = new MapMatching(graph, null, graph.getEncodingManager().getEncoder("car"));
         List<EdgeMatch> list = new ArrayList<EdgeMatch>();
 
         // System.out.println(GHUtility.getNeighbors(graph.createEdgeExplorer().setBaseNode(24594)));

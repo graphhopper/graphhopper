@@ -66,12 +66,19 @@ public class MatchServlet extends GraphHopperServlet {
     @Override
     public void doPost(HttpServletRequest httpReq, HttpServletResponse httpRes)
             throws ServletException, IOException {
+
+        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String type = httpReq.getContentType();
         GPXFile gpxFile;
-        if (type.contains("application/json")) {
-            gpxFile = parseJSON(httpReq);
-        } else if (type.contains("application/xml")) {
-            gpxFile = parseXML(httpReq);
+        if (type.contains("application/xml")) {
+            try {
+                gpxFile = parseXML(httpReq);
+            } catch (Exception ex) {
+                logger.warn("Cannot parse XML for " + httpReq.getQueryString() + ", " + infoStr);
+                httpRes.setStatus(SC_BAD_REQUEST);
+                httpRes.getWriter().append(errorsToXML(Collections.<Throwable>singletonList(ex)));
+                return;
+            }
         } else {
             throw new IllegalArgumentException("content type not supported " + type);
         }
@@ -113,7 +120,6 @@ public class MatchServlet extends GraphHopperServlet {
             matchGHRsp.addError(ex);
         }
 
-        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         logger.info(httpReq.getQueryString() + ", " + infoStr + ", took:" + sw.stop().getSeconds() + ", entries:" + gpxFile.getEntries().size() + ", " + matchGHRsp.getDebugInfo());
 
         if (writeGPX) {

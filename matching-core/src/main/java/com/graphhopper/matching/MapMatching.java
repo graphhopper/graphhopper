@@ -20,6 +20,7 @@ package com.graphhopper.matching;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.QueryGraph;
+import com.graphhopper.routing.util.AbstractWeighting;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FastestWeighting;
@@ -78,6 +79,9 @@ public class MapMatching {
     private final int nodeCount;
     private DistanceCalc distanceCalc = new DistancePlaneProjection();
     private boolean forceRepair;
+    private boolean ignoreOneways;
+    private Weighting weighting;
+
     private static final Comparator<QueryResult> CLOSEST_MATCH = new Comparator<QueryResult>() {
         @Override
         public int compare(QueryResult o1, QueryResult o2) {
@@ -96,6 +100,21 @@ public class MapMatching {
 //                ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;                
         this.traversalMode = TraversalMode.NODE_BASED;
         this.encoder = encoder;
+        this.weighting = new FastestWeighting(encoder);
+    }
+
+    /**
+     * This method overwrites the default fastest weighting.
+     */
+    public void setWeighting(Weighting weighting) {
+        this.weighting = weighting;
+    }
+
+    /**
+     * This methods forces ignoring oneway directions.
+     */
+    public void setIgnoreOneways(boolean ignoreOneways) {
+        this.ignoreOneways = ignoreOneways;
     }
 
     public void setDistanceCalc(DistanceCalc distanceCalc) {
@@ -227,7 +246,7 @@ public class MapMatching {
                 = new TIntObjectHashMap<List<GPXExtension>>(gpxList.size() * guessedEdgesPerPoint, 0.5f, -1);
         final TIntDoubleHashMap minFactorMap = new TIntDoubleHashMap(gpxList.size() * guessedEdgesPerPoint, 0.5f, -1, -1);
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        int startIndex = -1, endIndex = -1;
+        int startIndex = -1;
         List<QueryResult> startQRList = null, endQRList = null;
 
         //////// Lookup Phase (1) ////////
@@ -247,7 +266,6 @@ public class MapMatching {
                 startIndex = gpxIndex;
                 startQRList = qResults;
             } else {
-                endIndex = gpxIndex;
                 endQRList = qResults;
             }
 
@@ -275,16 +293,26 @@ public class MapMatching {
 
         //////// Custom Weighting Phase (2) ////////
         final DoubleRef maxWeight = new DoubleRef(0);
-        FastestWeighting customWeighting = new FastestWeighting(encoder) {
+        AbstractWeighting customWeighting = new AbstractWeighting(encoder) {
             @Override
             public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
                 double matchFactor = minFactorMap.get(edge.getEdge());
-                double weight = super.calcWeight(edge, reverse, prevOrNextEdgeId);
+                double weight = weighting.calcWeight(edge, reverse, prevOrNextEdgeId);
                 if (matchFactor < 0) {
                     return maxWeight.value * weight;
                 }
 
                 return matchFactor * weight;
+            }
+
+            @Override
+            public double getMinWeight(double distance) {
+                return weighting.getMinWeight(distance);
+            }
+
+            @Override
+            public String getName() {
+                return weighting.getName();
             }
         };
 
@@ -332,9 +360,9 @@ public class MapMatching {
             goalSet.add(qr.getClosestNode());
         }
 
-        //////// Search Phase (3) ////////        
+        //////// Search Phase (3) ////////
         CustomDijkstra algo = new CustomDijkstra(goalSet, queryGraph, encoder, customWeighting,
-                traversalMode, maxNodesToVisit, maxSearchWeightMultiplier);
+                traversalMode, maxNodesToVisit, maxSearchWeightMultiplier, ignoreOneways);
 
         // Set an approximative weight for start nodes.
         // The method initFrom uses minimum weight if two QueryResult edges share same node        
@@ -439,7 +467,7 @@ public class MapMatching {
 
         MatchResult res = new MatchResult(edgeMatches);
         res.setMatchLength(path.getDistance());
-        res.setMatchMillis(path.getMillis());
+        res.setMatchMillis(path.getTime());
 
         return res;
     }
@@ -463,14 +491,16 @@ public class MapMatching {
         private final TIntHashSet goalNodeSet;
         private boolean oneNodeWasReached = false;
         private final int maxNodesToVisit;
+        private final boolean ignoreOneways;
         private final double maxSearchWeightMultiplier;
 
         public CustomDijkstra(TIntHashSet goalNodeSet, Graph g, FlagEncoder encoder, Weighting weighting,
-                TraversalMode tMode, int maxNodesToVisit, double maxSearchWeightMultiplier) {
+                TraversalMode tMode, int maxNodesToVisit, double maxSearchWeightMultiplier, boolean allowBothDirections) {
             super(g, encoder, weighting, tMode);
             this.goalNodeSet = goalNodeSet;
             this.maxNodesToVisit = maxNodesToVisit;
             this.maxSearchWeightMultiplier = maxSearchWeightMultiplier;
+            this.ignoreOneways = allowBothDirections;
         }
 
         public void initFrom(int node, double weight) {
@@ -489,6 +519,10 @@ public class MapMatching {
         @Override
         public void runAlgo() {
             checkAlreadyRun();
+
+            if (ignoreOneways) {
+                outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, true));
+            }
             super.runAlgo();
         }
 
