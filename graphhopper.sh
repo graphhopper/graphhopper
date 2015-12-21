@@ -21,10 +21,11 @@ fi
 
 ACTION=$1
 FILE=$2
+SHAPES_FILE=$3
 
 function printUsage {
  echo
- echo "./graphhopper.sh import|web <your-osm-file>"
+ echo "./graphhopper.sh import|web <your-osm-file> <your-shape-files-directory>"
  echo "./graphhopper.sh clean|build|help"
  echo
  echo "  help        this message"
@@ -43,8 +44,35 @@ if [ "$ACTION" = "" ]; then
  printUsage
 fi
 
+function ensureOsmShp {
+  if [ "$SHAPES_FILE" = "" ] ; then
+    # skip
+    return
+  elif [ ! -s "$SHAPES_FILE" ]; then
+    echo "File not found '$SHAPES_FILE'. Press ENTER to get it from: $LINK"
+    echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
+    read -e
+
+    echo "## now downloading Shape file from $SHP_LINK and extracting to $SHAPES_FILE"
+
+    TMP_SHP=temp.shp
+    wget -S -nv -O  "$TMP_SHP" "$SHP_LINK"
+    unzip "$TMP_SHP" -d "$SHAPES_FILE"
+    rm $TMP_SHP
+
+    if [[ ! -s "$SHAPES_FILE" ]]; then
+      echo "ERROR couldn't download or extract Shape file $SHAPES_FILE ... exiting"
+      exit
+    fi
+
+  else
+    echo "## using existing shape files at '$SHAPES_FILE'"
+  fi
+}
+
 function ensureOsmXml { 
-  if [ "$OSM_FILE" = "" ]; then
+  if [ "$OSM_FILE" = "" ] ; then
+
     # skip
     return
   elif [ ! -s "$OSM_FILE" ]; then
@@ -165,6 +193,7 @@ fi
 
 # NAME = file without extension if any
 NAME="${FILE%.*}"
+SHP_NAME="${SHAPES_FILE%.*}"
 
 if [ "$FILE" == "-" ]; then
    OSM_FILE=
@@ -187,17 +216,23 @@ else
    OSM_FILE=
 fi
 
-GRAPH=$NAME-gh
+
+
+if [ "$NAME" == "-" ]; then
+  GRAPH=$SHP_NAME-gh
+else
+  GRAPH=$NAME-gh
+fi
 VERSION=$(grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
 JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
 
 LINK=$(echo $NAME | tr '_' '/')
 if [ "$FILE" == "-" ]; then
    LINK=
-elif [ ${FILE: -4} == ".osm" ]; then 
+elif [ ${FILE: -4} == ".osm" ]; then
    LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
 elif [ ${FILE: -4} == ".ghz" ]; then
-   LINK="http://graphhopper.com/public/maps/0.1/$FILE"      
+   LINK="http://graphhopper.com/public/maps/0.1/$FILE"
 elif [ ${FILE: -4} == ".pbf" ]; then
    LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
 else
@@ -205,12 +240,19 @@ else
    LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
 fi
 
+SHP_LINK=$(echo $SHP_NAME | tr '_' '/')
+if [ "$SHAPES_FILE" == "-" ]; then
+   SHP_LINK=
+else
+   SHP_LINK="http://download.geofabrik.de/$SHP_LINK-latest.shp.zip"
+fi
+
 if [ "$JAVA_OPTS" = "" ]; then
   JAVA_OPTS="-Xmx1000m -Xms1000m -server"
 fi
 
-
 ensureOsmXml
+ensureOsmShp
 ensureMaven
 packageCoreJar
 
@@ -237,12 +279,12 @@ if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
   if [ "$GH_FOREGROUND" = "" ]; then
     exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE \
 	jetty.port=$JETTY_PORT jetty.host=$JETTY_HOST \
-    	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
+    	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE" shpreader.osm="$SHAPES_FILE"
     # foreground => we never reach this here
   else
     exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE \
     	jetty.port=$JETTY_PORT jetty.host=$JETTY_HOST \
-    	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE" <&- &
+    	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE" shpreader.osm="$SHAPES_FILE" <&- &
     if [ "$GH_PID_FILE" != "" ]; then
        echo $! > $GH_PID_FILE
     fi
@@ -251,7 +293,7 @@ if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
 
 elif [ "$ACTION" = "import" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS config=$CONFIG \
-      $GH_IMPORT_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
+      $GH_IMPORT_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE" shpreader.osm="$SHAPES_FILE"
 
 
 elif [ "$ACTION" = "torture" ]; then
@@ -261,12 +303,12 @@ elif [ "$ACTION" = "torture" ]; then
 elif [ "$ACTION" = "miniui" ]; then
  "$MAVEN_HOME/bin/mvn" --projects tools -DskipTests clean install assembly:single
  JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI osmreader.osm="$OSM_FILE" config=$CONFIG \
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI osmreader.osm="$OSM_FILE" shpreader.osm="$SHAPES_FILE" config=$CONFIG \
               graph.location="$GRAPH"
 
 
 elif [ "$ACTION" = "measurement" ]; then
- ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chWeighting=fastest graph.flagEncoders=CAR"
+ ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE shpreader.osm=$SHAPES_FILE prepare.chWeighting=fastest graph.flagEncoders=CAR"
  echo -e "\ncreate graph via $ARGS, $JAR"
  START=$(date +%s)
  # avoid islands for measurement at all costs

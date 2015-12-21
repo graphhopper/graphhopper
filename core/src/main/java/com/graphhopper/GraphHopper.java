@@ -19,6 +19,8 @@ package com.graphhopper;
 
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.OSMReader;
+import com.graphhopper.reader.OSMShapeFileReader;
+import com.graphhopper.reader.ShapeFileReader;
 import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
@@ -85,11 +87,14 @@ public class GraphHopper implements GraphHopperAPI
     private int prepareNeighborUpdates = -1;
     private int prepareContractedNodes = -1;
     private double prepareLogMessages = -1;
+    private boolean useShapeFiles = false;
     // for OSM import
     private String osmFile;
     private double osmReaderWayPointMaxDistance = 1;
     private int workerThreads = -1;
     private boolean calcPoints = true;
+    // for Shape file import
+    private String shapeFileDir;
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
@@ -430,6 +435,21 @@ public class GraphHopper implements GraphHopperAPI
         return osmFile;
     }
 
+    public GraphHopper setShapeFileDir(String shapeFileDir)
+    {
+        ensureNotLoaded();
+        if (Helper.isEmpty(shapeFileDir))
+            throw new IllegalArgumentException("Shape files can not be empty.");
+
+        this.shapeFileDir = shapeFileDir;
+        return this;
+    }
+
+    public String getShapeFileDir()
+    {
+        return shapeFileDir;
+    }
+
     /**
      * The underlying graph used in algorithms.
      * <p>
@@ -511,13 +531,22 @@ public class GraphHopper implements GraphHopperAPI
         if (!Helper.isEmpty(tmpOsmFile))
             osmFile = tmpOsmFile;
 
+        String tmpShpFile = args.get("shpreader.osm", "");
+        if (!Helper.isEmpty(tmpShpFile)) {
+            shapeFileDir = tmpShpFile;
+            useShapeFiles = true;
+        }
+
         String graphHopperFolder = args.get("graph.location", "");
         if (Helper.isEmpty(graphHopperFolder) && Helper.isEmpty(ghLocation))
         {
-            if (Helper.isEmpty(osmFile))
+            if (!useShapeFiles && Helper.isEmpty(osmFile))
                 throw new IllegalArgumentException("You need to specify an OSM file.");
 
-            graphHopperFolder = Helper.pruneFileEnd(osmFile) + "-gh";
+            if (useShapeFiles && Helper.isEmpty(shapeFileDir))
+                throw new IllegalArgumentException("You need to specify Shape file.");
+
+            graphHopperFolder = Helper.pruneFileEnd(useShapeFiles ? shapeFileDir : osmFile) + "-gh";
         }
 
         // graph
@@ -662,7 +691,11 @@ public class GraphHopper implements GraphHopperAPI
         if (ghStorage == null)
             throw new IllegalStateException("Load graph before importing OSM data");
 
-        if (osmFile == null)
+        if (useShapeFiles && shapeFileDir == null)
+            throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
+                    + " but also cannot import from Shape files as they were not specified!");
+
+        if (!useShapeFiles && osmFile == null)
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
                     + " but also cannot import from OSM file as it wasn't specified!");
 
@@ -675,7 +708,10 @@ public class GraphHopper implements GraphHopperAPI
 
     protected DataReader createReader( GraphHopperStorage ghStorage )
     {
-        return initOSMReader(new OSMReader(ghStorage));
+        if (useShapeFiles)
+            return initShapeFileReader(new OSMShapeFileReader(ghStorage));
+        else
+            return initOSMReader(new OSMReader(ghStorage));
     }
 
     protected OSMReader initOSMReader( OSMReader reader )
@@ -690,6 +726,16 @@ public class GraphHopper implements GraphHopperAPI
                 setWorkerThreads(workerThreads).
                 setEncodingManager(encodingManager).
                 setWayPointMaxDistance(osmReaderWayPointMaxDistance);
+    }
+
+    protected ShapeFileReader initShapeFileReader( ShapeFileReader reader)
+    {
+        if (Helper.isEmpty(shapeFileDir))
+            throw new IllegalStateException("No shape files specified");
+
+        logger.info("Start creating graph from " + shapeFileDir);
+        return reader.setShapeFileDir(shapeFileDir).
+                setEncodingManager(encodingManager);
     }
 
     /**
@@ -1200,5 +1246,13 @@ public class GraphHopper implements GraphHopperAPI
     {
         if (!allowWrites)
             throw new IllegalStateException("Writes are not allowed!");
+    }
+
+    public boolean isUseShapeFiles() {
+        return useShapeFiles;
+    }
+
+    public void setUseShapeFiles(boolean useShapeFiles) {
+        this.useShapeFiles = useShapeFiles;
     }
 }
