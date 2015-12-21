@@ -1,5 +1,6 @@
 var formatTools = require('./tools/format.js');
 var GHInput = require('./graphhopper/GHInput.js');
+var mapLayer = require('./map.js');
 
 var dataToHtml = function (data, query) {
     var element = "";
