@@ -26,6 +26,9 @@ import com.graphhopper.util.GHUtility;
 
 import org.junit.Test;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 import static org.junit.Assert.*;
 
 /**
@@ -154,6 +157,20 @@ public class FootFlagEncoderTest
         assertTrue(footEncoder.acceptWay(way) > 0);
         way.setTag("foot", "no");
         assertFalse(footEncoder.acceptWay(way) > 0);
+
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy MMM dd");
+
+        way.clearTags();
+        way.setTag("highway", "footway");
+        way.setTag("access:conditional", "no @ ("+simpleDateFormat.format(calendar.getTime())+")");
+        assertFalse(footEncoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "footway");
+        way.setTag("access", "no");
+        way.setTag("access:conditional", "yes @ ("+simpleDateFormat.format(calendar.getTime())+")");
+        assertTrue(footEncoder.acceptWay(way) > 0);
     }
 
     @Test

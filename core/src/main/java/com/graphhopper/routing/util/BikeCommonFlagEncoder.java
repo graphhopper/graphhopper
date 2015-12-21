@@ -17,16 +17,16 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
-
-import static com.graphhopper.routing.util.PriorityCode.*;
-
+import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.osm.ConditionalTagsInspector;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionAnnotation;
 import com.graphhopper.util.Translation;
 
 import java.util.*;
+
+import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
  * Defines bit layout of bicycles (not motorcycles) for speed, access and relations (network).
@@ -199,6 +199,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         setCyclingNetworkPreference("deprecated", PriorityCode.AVOID_AT_ALL_COSTS.getValue());
 
         setAvoidSpeedLimit(71);
+
+        conditionalTagsInspector = new ConditionalTagsInspector(restrictions, restrictedValues, intendedValues);
     }
 
     @Override
@@ -274,7 +276,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues))
+        if (way.hasTag(restrictions, restrictedValues) && !conditionalTagsInspector.isRestrictedWayConditionallyPermitted(way))
             return 0;
 
         // do not accept railways (sometimes incorrectly mapped!)
@@ -290,7 +292,11 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             if (!allowedSacScale(sacScale))
                 return 0;
         }
-        return acceptBit;
+
+        if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))
+            return 0;
+        else
+            return acceptBit;
     }
 
     boolean allowedSacScale( String sacScale )
