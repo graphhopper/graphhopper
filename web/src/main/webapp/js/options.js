@@ -1,8 +1,15 @@
-// we use envify to pick the correct options_*.js config see https://github.com/hughsk/envify
-// on command line do: export NODE_ENV=development
-if (!process.env.NODE_ENV || process.env.NODE_ENV === "development") {
-    console.log("running development (" + process.env.NODE_ENV + ")");
-    exports.options = require("./options_dev.js").options;
-} else if (process.env.NODE_ENV === "production") {
-    exports.options = require("./options_prod.js").options;
-}
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+// We know that you love 'free', we love it too :)! And so the entire GraphHopper routing engine is not 
+// only free but even Open Source! The GraphHopper Directions API is also free for development. 
+// Grab an API key and have fun with installing anything: https://graphhopper.com/#directions-api
+// Misuse of API keys that you don't own is prohibited and you'll be blocked.
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// Easily replace this options.js with an additional file that you prodive as options_prod.js activate via:
+// BROWSERIFYSWAP_ENV='production' npm run watch
+// see also package.json and https://github.com/thlorenz/browserify-swap
+exports.options = {
+    environment: "development",
+    routing: {host: '', api_key: ''},
+    geocoding: {host: '', api_key: ''}
+};
