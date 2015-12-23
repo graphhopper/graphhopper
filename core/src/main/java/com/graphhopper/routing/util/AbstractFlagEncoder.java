@@ -496,7 +496,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                     // If duration AND distance is available we can calculate the speed more precisely
                     // and set both speed to the same value. Factor 1.4 slower because of waiting time!
                     double calculatedTripSpeed = val / durationInHours / 1.4;
-                    // Plausibility check especially for the case of wongly used PxM format with the intension to 
+                    // Plausibility check especially for the case of wrongly used PxM format with the intention to
                     // specify the duration in minutes, but actually using months
                     if (calculatedTripSpeed > 0.01d)
                     {

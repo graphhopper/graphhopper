@@ -21,7 +21,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Storable;
 
 /**
- * Provides a way to map realword data "lat,lon" to internal ids/indices of a memory efficient graph
+ * Provides a way to map real world data "lat,lon" to internal ids/indices of a memory efficient graph
  * - often just implemented as an array.
  * <p>
  * The implementations of findID needs to be thread safe!
@@ -56,7 +56,7 @@ public interface LocationIndex extends Storable<LocationIndex>
      *   new DefaultEdgeFilter(footFlagEncoder);
      * </pre>
      * <p>
-     * @return An object containing the closest node and edge for the specfied location. The node id
+     * @return An object containing the closest node and edge for the specified location. The node id
      * has at least one edge which is accepted from the specified edgeFilter. If nothing is found
      * the method QueryResult.isValid will return false.
      */

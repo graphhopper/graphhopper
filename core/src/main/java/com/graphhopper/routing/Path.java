@@ -94,7 +94,7 @@ public class Path
     }
 
     /**
-     * We need to remember fromNode explicitely as its not saved in one edgeId of edgeIds.
+     * We need to remember fromNode explicitly as its not saved in one edgeId of edgeIds.
      */
     protected Path setFromNode( int from )
     {
@@ -494,7 +494,7 @@ public class Path
                             ways.add(prevInstruction);
                         }
 
-                        // Add passed exits to instruction. A node is countet if there is at least one outgoing edge
+                        // Add passed exits to instruction. A node is counted if there is at least one outgoing edge
                         // out of the roundabout
                         EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(adjNode);
                         while (edgeIter.next())

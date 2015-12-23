@@ -255,7 +255,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         StopWatch lazySW = new StopWatch();
 
         // Recompute priority of uncontracted neighbors.
-        // Without neighborupdates preparation is faster but we need them
+        // Without neighbor updates preparation is faster but we need them
         // to slightly improve query time. Also if not applied too often it decreases the shortcut number.
         boolean neighborUpdate = true;
         if (neighborUpdatePercentage == 0)
@@ -530,7 +530,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
      * Calculates the priority of adjNode v without changing the graph. Warning: the calculated
      * priority must NOT depend on priority(v) and therefor findShortcuts should also not depend on
      * the priority(v). Otherwise updating the priority before contracting in contractNodes() could
-     * lead to a slowishor even endless loop.
+     * lead to a slowish or even endless loop.
      */
     int calculatePriority( int v )
     {

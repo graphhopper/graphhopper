@@ -38,7 +38,7 @@ import java.util.*;
 public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 {
     /**
-     * Reports wether this edge is unpaved.
+     * Reports whether this edge is unpaved.
      */
     public static final int K_UNPAVED = 100;
     protected static final int PUSHING_SECTION_SPEED = 4;
@@ -242,7 +242,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         {
             if (way.hasTag("route", ferries))
             {
-                // if bike is NOT explictly tagged allow bike but only if foot is not specified
+                // if bike is NOT explicitly tagged allow bike but only if foot is not specified
                 String bikeTag = way.getTag("bicycle");
                 if (bikeTag == null && !way.hasTag("foot") || "yes".equals(bikeTag))
                     return acceptBit | ferryBit;
@@ -262,7 +262,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         if (way.hasTag("bicycle", intendedValues))
             return acceptBit;
 
-        // accept only if explicitely tagged for bike usage
+        // accept only if explicitly tagged for bike usage
         if ("motorway".equals(highwayValue) || "motorway_link".equals(highwayValue))
             return 0;
 
@@ -712,7 +712,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         {
             return value;
         }
-    };
+    }
 
     protected void setHighwaySpeed( String highway, int speed )
     {
@@ -760,6 +760,6 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
     public void setSpecificBicycleClass( String subkey )
     {
-        specificBicycleClass = "class:bicycle:" + subkey.toString();
+        specificBicycleClass = "class:bicycle:" + subkey;
     }
 }

@@ -25,7 +25,7 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 import java.util.TreeMap;
 
 /**
- * Specifies the settings for racebikeing
+ * Specifies the settings for race biking
  * <p>
  * @author ratrun
  * @author Peter Karich
