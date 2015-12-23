@@ -18,36 +18,59 @@
 package com.graphhopper.routing.util.WayAcceptor;
 
 import com.graphhopper.reader.OSMWay;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Calendar;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+
 /**
  * @author Robin boldt
  */
-public class ConditionalTagWayAcceptorTest
+public class ConditionalTagWayAcceptorTest extends CalendarBasedTest
 {
 
-    @Test
-    public void testConditionalTag()
-    {
-        //  TODO: Fix
-        assertCondition("tag", "no @ (Aug 10-Aug 14)", null, null);
+    ConditionalTagWayAcceptor acceptor;
+
+    @Before
+    public void setup(){
+        Set<String> restrictedValues = new HashSet<String>();
+        restrictedValues.add("private");
+        restrictedValues.add("agricultural");
+        restrictedValues.add("forestry");
+        restrictedValues.add("no");
+        restrictedValues.add("restricted");
+        restrictedValues.add("delivery");
+        restrictedValues.add("military");
+        restrictedValues.add("emergency");
+
+        Calendar cal = getCalendar(2014, Calendar.MARCH, 10);
+
+        Set<String> conditionalTags = new HashSet<String>();
+        conditionalTags.add("vehicle:conditional");
+        conditionalTags.add("access:conditional");
+
+        acceptor = new ConditionalTagWayAcceptor(cal, conditionalTags, restrictedValues);
     }
 
-    private void assertCondition( String conditionalTagName, String conditionalTagValue, Calendar forbiddenDay, Calendar allowedDay){
+    @Test
+    public void testConditionalAccept()
+    {
         OSMWay way = new OSMWay(1);
-        way.setTag(conditionalTagName, conditionalTagValue);
+        way.setTag("vehicle:conditional", "no @ (Aug 10-Aug 14)");
+        assertTrue(acceptor.accept(way));
+    }
 
-        ConditionalTagWayAcceptor deny = new ConditionalTagWayAcceptor(forbiddenDay);
-        assertFalse(deny.accept(way));
-
-        if(allowedDay != null){
-            ConditionalTagWayAcceptor accept = new ConditionalTagWayAcceptor(allowedDay);
-            assertTrue(accept.accept(way));
-        }
+    @Test
+    public void testConditionalReject()
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("vehicle:conditional", "no @ (Mar 10-Aug 14)");
+        assertFalse(acceptor.accept(way));
     }
 }
