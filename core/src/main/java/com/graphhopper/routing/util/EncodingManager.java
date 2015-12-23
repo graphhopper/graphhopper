@@ -458,7 +458,7 @@ public class EncodingManager
             throw new IllegalStateException("Cannot load properties to fetch EncodingManager configuration at: "
                     + dir.getLocation());
 
-        // check encoding for compatiblity
+        // check encoding for compatibility
         properties.checkVersions(false);
         String acceptStr = properties.get("graph.flagEncoders");
 

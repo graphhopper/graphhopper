@@ -90,7 +90,7 @@ public interface GraphExtension extends Storable<GraphExtension>
         }
 
         @Override
-        public void init( Graph grap, Directory dir )
+        public void init( Graph graph, Directory dir )
         {
             // noop
         }

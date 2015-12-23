@@ -30,7 +30,7 @@ import com.graphhopper.util.PMap;
 public class FastestWeighting extends AbstractWeighting
 {
     /**
-     * Converting to seconds is not necessary but makes adding other penalities easier (e.g. turn
+     * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
      * costs or traffic light costs etc)
      */
     protected final static double SPEED_CONV = 3.6;

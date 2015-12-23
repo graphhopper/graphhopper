@@ -222,7 +222,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
             double maxSpeed = getHighwaySpeed("cycleway");
             if (isForward(flags))
             {
-                // use weighted mean so that longer incline infuences speed more than shorter
+                // use weighted mean so that longer incline influences speed more than shorter
                 double speed = getSpeed(flags);
                 double fwdFaster = 1 + 2 * keepIn(fwdDecline, 0, 0.2);
                 fwdFaster = fwdFaster * fwdFaster;

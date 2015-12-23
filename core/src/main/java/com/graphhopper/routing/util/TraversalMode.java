@@ -27,7 +27,7 @@ import java.util.Arrays;
  * Defines how the graph can be traversed while Dijkstra or similar RoutingAlgorithm is in progress.
  * Different options define how precise turn restrictions and costs are taken into account, but
  * still all are without via-way support. BTW: this would not be done at runtime, this would be a
- * pre-processing step to avoid performance penalities.
+ * pre-processing step to avoid performance penalties.
  * <p>
  * @author Peter Karich
  */

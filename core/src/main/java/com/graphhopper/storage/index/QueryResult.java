@@ -96,8 +96,8 @@ public class QueryResult
 
     /**
      * References to a tower node or the index of wayGeometry of the closest edge. If wayGeometry
-     * has lengh L then the wayIndex 0 refers to the *base* node, 1 to L (inclusive) refer to the
-     * wayGeometry indices (minus one) and L+1 to the *adjacent* node. Currently only intialized if
+     * has length L then the wayIndex 0 refers to the *base* node, 1 to L (inclusive) refer to the
+     * wayGeometry indices (minus one) and L+1 to the *adjacent* node. Currently only initialized if
      * returned from Location2NodesNtree.
      */
     public int getWayIndex()

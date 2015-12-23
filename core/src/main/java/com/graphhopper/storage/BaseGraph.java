@@ -1234,7 +1234,7 @@ class BaseGraph implements Graph
         }
 
         /**
-         * Reports wether the edge is available in forward direction for the specified encoder.
+         * Reports whether the edge is available in forward direction for the specified encoder.
          */
         @Override
         public boolean isForward( FlagEncoder encoder )
@@ -1243,7 +1243,7 @@ class BaseGraph implements Graph
         }
 
         /**
-         * Reports wether the edge is available in backward direction for the specified encoder.
+         * Reports whether the edge is available in backward direction for the specified encoder.
          */
         @Override
         public boolean isBackward( FlagEncoder encoder )
