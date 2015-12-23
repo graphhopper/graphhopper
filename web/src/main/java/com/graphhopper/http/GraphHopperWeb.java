@@ -118,7 +118,7 @@ public class GraphHopperWeb implements GraphHopperAPI
                     + "&instructions=" + tmpInstructions
                     + "&points_encoded=true"
                     + "&calc_points=" + tmpCalcPoints
-                    + "&algo=" + request.getAlgorithm()
+                    + "&algorithm=" + request.getAlgorithm()
                     + "&locale=" + request.getLocale().toString()
                     + "&elevation=" + tmpElevation;
 
@@ -127,6 +127,10 @@ public class GraphHopperWeb implements GraphHopperAPI
 
             if (!tmpKey.isEmpty())
                 url += "&key=" + tmpKey;
+            int altMax = request.getHints().getInt("alternative_route.max_num", 0);
+            if(altMax!=0){
+            	url += "&alternative_route.max_num=" + altMax;            	
+            }
 
             String str = downloader.downloadAsString(url, true);
             JSONObject json = new JSONObject(str);
