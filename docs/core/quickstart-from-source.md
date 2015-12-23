@@ -19,12 +19,18 @@ now go to http://localhost:8989/
   3. Then it creates routable files for graphhopper in the folder europe_germany_berlin-gh. It'll skip this step if files are already present.
   4. Also check the instructions for [Android](../android/index.md)
 
-For you favourite area do
+For your favourite area do
 
 ```bash
 $ ./graphhopper.sh web europe_france.pbf
 $ ./graphhopper.sh web north-america_us_new-york.pbf
 # the format follows the link structure at http://download.geofabrik.de
+```
+
+For using shape files do
+
+```bash
+$ ./graphhopper.sh web - asia_india.shp
 ```
 
 ## Start Development
