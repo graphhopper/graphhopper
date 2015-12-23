@@ -1,18 +1,14 @@
-package com.graphhopper.routing.util.WayAcceptor;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+package com.graphhopper.reader.osm.conditional;
 
 import java.util.Calendar;
 
 /**
+ * This class represents a date range and is able to determine if a given date is in that range.
+ *
  * @author Robin Boldt
  */
 public class DateRange
 {
-
-    private static final Logger logger = LoggerFactory.getLogger(DateRange.class);
-
     private Calendar from;
     private Calendar to;
 

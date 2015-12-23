@@ -15,31 +15,30 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.WayAcceptor;
+package com.graphhopper.reader.osm.conditional;
 
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.osm.CalendarBasedTest;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.text.ParseException;
 import java.util.Calendar;
 import java.util.HashSet;
-import java.util.Set;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
+import static org.junit.Assert.*;
 
 /**
  * @author Robin boldt
  */
-public class ConditionalTagWayAcceptorTest extends CalendarBasedTest
+public class ConditionalParserTest extends CalendarBasedTest
 {
 
-    ConditionalTagWayAcceptor acceptor;
+    ConditionalParser parser;
 
     @Before
-    public void setup(){
-        Set<String> restrictedValues = new HashSet<String>();
+    public void setup()
+    {
+        HashSet<String> restrictedValues = new HashSet<String>();
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -49,28 +48,22 @@ public class ConditionalTagWayAcceptorTest extends CalendarBasedTest
         restrictedValues.add("military");
         restrictedValues.add("emergency");
 
-        Calendar cal = getCalendar(2014, Calendar.MARCH, 10);
-
-        Set<String> conditionalTags = new HashSet<String>();
-        conditionalTags.add("vehicle:conditional");
-        conditionalTags.add("access:conditional");
-
-        acceptor = new ConditionalTagWayAcceptor(cal, conditionalTags, restrictedValues);
+        parser = new ConditionalParser(restrictedValues);
     }
 
     @Test
-    public void testConditionalAccept()
+    public void testParseConditional() throws ParseException
     {
-        OSMWay way = new OSMWay(1);
-        way.setTag("vehicle:conditional", "no @ (Aug 10-Aug 14)");
-        assertTrue(acceptor.accept(way));
+        DateRange dateRange = parser.getRestrictiveDateRange("no @ (2015 Sep 1-2015 Sep 30)");
+        assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.AUGUST, 31)));
+        assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.SEPTEMBER, 30)));
+
     }
 
     @Test
-    public void testConditionalReject()
+    public void testParseAllowingCondition() throws ParseException
     {
-        OSMWay way = new OSMWay(1);
-        way.setTag("vehicle:conditional", "no @ (Mar 10-Aug 14)");
-        assertFalse(acceptor.accept(way));
+        DateRange dateRange = parser.getRestrictiveDateRange("yes @ (2015 Sep 1-2015 Sep 30)");
+        assertNull(dateRange);
     }
 }

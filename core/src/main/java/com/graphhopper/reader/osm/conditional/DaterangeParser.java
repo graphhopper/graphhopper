@@ -1,13 +1,16 @@
-package com.graphhopper.routing.util.WayAcceptor;
+package com.graphhopper.reader.osm.conditional;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 /**
- * Created by robin on 20/12/15.
+ * Parses a DateRange. Currently only DateRanges that last at least one day are supported.
+ * The Syntax is allowed inputs is described here: http://wiki.openstreetmap.org/wiki/Key:opening_hours.
+ *
+ * @author Robin Boldt
  */
-public class DaterangeParser
+public class DateRangeParser
 {
 
     static SimpleDateFormat yearMonthDayFormat = new SimpleDateFormat("yyyy MMM dd");
@@ -15,16 +18,9 @@ public class DaterangeParser
     static SimpleDateFormat yearMonthFormat = new SimpleDateFormat("yyyy MMM");
     static SimpleDateFormat monthFormat = new SimpleDateFormat("MMM");
 
-    /**
-     * Possible Inputs are:
-     *
-     * 2014␣Oct␣20
-     *
-     * @param dateString
-     * @return
-     */
-    public static ParsedCalendar parseDateString(String dateString) throws ParseException
+    public static ParsedCalendar parseDateString( String dateString ) throws ParseException
     {
+        dateString = dateString.trim();
         Calendar calendar = Calendar.getInstance();
         ParsedCalendar parsedCalendar;
         try
@@ -37,12 +33,14 @@ public class DaterangeParser
             {
                 calendar.setTime(monthDayFormat.parse(dateString));
                 parsedCalendar = new ParsedCalendar(ParsedCalendar.ParseType.MONTH_DAY, calendar);
-            }catch (ParseException e2){
+            } catch (ParseException e2)
+            {
                 try
                 {
                     calendar.setTime(yearMonthFormat.parse(dateString));
                     parsedCalendar = new ParsedCalendar(ParsedCalendar.ParseType.YEAR_MONTH, calendar);
-                }catch (ParseException e3){
+                } catch (ParseException e3)
+                {
                     calendar.setTime(monthFormat.parse(dateString));
                     parsedCalendar = new ParsedCalendar(ParsedCalendar.ParseType.MONTH, calendar);
                 }
@@ -51,27 +49,24 @@ public class DaterangeParser
         return parsedCalendar;
     }
 
-    /**
-     * Possible Inputs are:
-     * 2015␣Sep␣1-2015␣Sep␣30
-     *
-     * @param dateRangeString
-     * @return
-     */
-    public static DateRange parseDateRange(String dateRangeString) throws ParseException
+    public static DateRange parseDateRange( String dateRangeString ) throws ParseException
     {
-        if(dateRangeString == null || dateRangeString.isEmpty()){
+        if (dateRangeString == null || dateRangeString.isEmpty())
+        {
             throw new IllegalArgumentException("Passing empty Strings is not allowed");
         }
         String[] dateArr = dateRangeString.split("-");
-        if(dateArr.length > 2 || dateArr.length < 1){
+        if (dateArr.length > 2 || dateArr.length < 1)
+        {
             throw new IllegalArgumentException("Only Strings containing two Date separated by a '-' or a single Date are allowed");
         }
         ParsedCalendar from = parseDateString(dateArr[0]);
         ParsedCalendar to;
-        if(dateArr.length == 2){
+        if (dateArr.length == 2)
+        {
             to = parseDateString(dateArr[1]);
-        }else{
+        } else
+        {
             to = parseDateString(dateArr[0]);
         }
 

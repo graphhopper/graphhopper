@@ -1,8 +1,10 @@
-package com.graphhopper.routing.util.WayAcceptor;
+package com.graphhopper.reader.osm;
 
 import java.util.Calendar;
 
 /**
+ * Base Test for calendar based tasks.
+ *
  * @author Robin Boldt
  */
 public abstract class CalendarBasedTest

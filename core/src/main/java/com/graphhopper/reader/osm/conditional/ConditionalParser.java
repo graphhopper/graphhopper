@@ -1,9 +1,11 @@
-package com.graphhopper.routing.util.WayAcceptor;
+package com.graphhopper.reader.osm.conditional;
 
 import java.text.ParseException;
 import java.util.Set;
 
 /**
+ * Parses a conditional tag according to http://wiki.openstreetmap.org/wiki/Conditional_restrictions.
+ *
  * @author Robin Boldt
  */
 public class ConditionalParser
@@ -19,10 +21,11 @@ public class ConditionalParser
     public DateRange getRestrictiveDateRange( String conditionalTag ) throws ParseException
     {
 
-        if(conditionalTag == null || !conditionalTag.contains("@"))
+        if (conditionalTag == null || !conditionalTag.contains("@"))
             return null;
 
-        if (conditionalTag.contains(";")){
+        if (conditionalTag.contains(";"))
+        {
             // TODO We should split these here
 
             throw new IllegalStateException("split conditional value not implemented yet");
@@ -31,11 +34,11 @@ public class ConditionalParser
 
         String[] conditionalArr = conditionalTag.split("@");
 
-        if(conditionalArr.length != 2)
+        if (conditionalArr.length != 2)
             throw new IllegalStateException("could not split this condition: " + conditionalTag);
 
         String restrictiveValue = conditionalArr[0].trim();
-        if(!restrictedTags.contains(restrictiveValue))
+        if (!restrictedTags.contains(restrictiveValue))
             return null;
 
         String conditional = conditionalArr[1];
@@ -43,7 +46,7 @@ public class ConditionalParser
         conditional = conditional.replace(')', ' ');
         conditional = conditional.trim();
 
-        return DaterangeParser.parseDateRange(conditional);
+        return DateRangeParser.parseDateRange(conditional);
     }
 
 }

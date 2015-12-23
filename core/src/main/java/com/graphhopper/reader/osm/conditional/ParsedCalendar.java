@@ -1,8 +1,10 @@
-package com.graphhopper.routing.util.WayAcceptor;
+package com.graphhopper.reader.osm.conditional;
 
 import java.util.Calendar;
 
 /**
+ * This class represents a parsed Date and the parse type.
+ *
  * @author Robin Boldt
  */
 public class ParsedCalendar
@@ -16,16 +18,20 @@ public class ParsedCalendar
         this.parsedCalendar = parsedCalendar;
     }
 
-    public boolean yearless(){
+    public boolean yearless()
+    {
         return parseType == ParseType.MONTH || parseType == ParseType.MONTH_DAY;
     }
 
-    public boolean dayless(){
+    public boolean dayless()
+    {
         return parseType == ParseType.MONTH || parseType == ParseType.YEAR_MONTH;
     }
 
-    public Calendar getMax(){
-        if(dayless()){
+    public Calendar getMax()
+    {
+        if (dayless())
+        {
             parsedCalendar.set(Calendar.DAY_OF_MONTH, parsedCalendar.getActualMaximum(Calendar.DAY_OF_MONTH));
         }
         parsedCalendar.set(Calendar.HOUR_OF_DAY, parsedCalendar.getActualMaximum(Calendar.HOUR_OF_DAY));
@@ -36,8 +42,10 @@ public class ParsedCalendar
         return parsedCalendar;
     }
 
-    public Calendar getMin(){
-        if(dayless()){
+    public Calendar getMin()
+    {
+        if (dayless())
+        {
             parsedCalendar.set(Calendar.DAY_OF_MONTH, parsedCalendar.getActualMinimum(Calendar.DAY_OF_MONTH));
         }
         parsedCalendar.set(Calendar.HOUR_OF_DAY, parsedCalendar.getActualMinimum(Calendar.HOUR_OF_DAY));
@@ -48,7 +56,8 @@ public class ParsedCalendar
         return parsedCalendar;
     }
 
-    public enum ParseType{
+    public enum ParseType
+    {
         YEAR_MONTH_DAY,
         YEAR_MONTH,
         MONTH_DAY,

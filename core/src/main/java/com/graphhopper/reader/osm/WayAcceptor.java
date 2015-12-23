@@ -1,4 +1,4 @@
-package com.graphhopper.routing.util.WayAcceptor;
+package com.graphhopper.reader.osm;
 
 import com.graphhopper.reader.OSMWay;
 
@@ -9,5 +9,5 @@ import com.graphhopper.reader.OSMWay;
  */
 public interface WayAcceptor
 {
-    public boolean accept(OSMWay way);
+    public boolean accept( OSMWay way );
 }

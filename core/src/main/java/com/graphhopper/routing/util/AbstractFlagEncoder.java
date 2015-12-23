@@ -818,4 +818,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
         return false;
     }
+
+    public Set<String> getConditionalTagsToConsider(){
+        Set<String> conditionalTags = new HashSet<String>();
+        conditionalTags.add("vehicle:conditional");
+        conditionalTags.add("access:conditional");
+        return conditionalTags;
+    }
 }

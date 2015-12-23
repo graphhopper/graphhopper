@@ -17,13 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.osm.ConditionalTagWayAcceptor;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
@@ -45,6 +41,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
      * http://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed
      */
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<String, Integer>();
+
+    protected ConditionalTagWayAcceptor conditionalTagWayAcceptor;
 
     public CarFlagEncoder()
     {
@@ -135,6 +133,9 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("road", 20);
         // forestry stuff
         defaultSpeedMap.put("track", 15);
+
+        // TODO Add an arbitrary Date?
+        conditionalTagWayAcceptor = new ConditionalTagWayAcceptor(getConditionalTagsToConsider(), restrictedValues);
     }
 
     @Override
@@ -226,7 +227,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        return acceptBit;
+        if(conditionalTagWayAcceptor.accept(way))
+            return acceptBit;
+        else
+            return 0;
     }
 
     @Override
