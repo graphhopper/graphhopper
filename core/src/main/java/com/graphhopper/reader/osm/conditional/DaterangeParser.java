@@ -2,7 +2,9 @@ package com.graphhopper.reader.osm.conditional;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.List;
 
 /**
  * Parses a DateRange. Currently only DateRanges that last at least one day are supported.
@@ -17,9 +19,13 @@ public class DateRangeParser
     static SimpleDateFormat monthDayFormat = new SimpleDateFormat("MMM dd");
     static SimpleDateFormat yearMonthFormat = new SimpleDateFormat("yyyy MMM");
     static SimpleDateFormat monthFormat = new SimpleDateFormat("MMM");
+    static SimpleDateFormat dayFormat = new SimpleDateFormat("E");
+    static List<String> dayNames = Arrays.asList(new String[]{"Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"});
 
     public static ParsedCalendar parseDateString( String dateString ) throws ParseException
     {
+        // Replace occurences of Public Holidays
+        dateString = dateString.replaceAll("(,( )*)?(PH|SH)", "");
         dateString = dateString.trim();
         Calendar calendar = Calendar.getInstance();
         ParsedCalendar parsedCalendar;
@@ -41,8 +47,21 @@ public class DateRangeParser
                     parsedCalendar = new ParsedCalendar(ParsedCalendar.ParseType.YEAR_MONTH, calendar);
                 } catch (ParseException e3)
                 {
-                    calendar.setTime(monthFormat.parse(dateString));
-                    parsedCalendar = new ParsedCalendar(ParsedCalendar.ParseType.MONTH, calendar);
+                    try
+                    {
+                        calendar.setTime(monthFormat.parse(dateString));
+                        parsedCalendar = new ParsedCalendar(ParsedCalendar.ParseType.MONTH, calendar);
+                    } catch (ParseException e4)
+                    {
+                        int index = dayNames.indexOf(dateString);
+                        if(index < 0){
+                            throw new ParseException("Unparseable date: \""+dateString+"\"",0);
+                        }
+                        // Ranges from 1-7
+                        calendar.set(Calendar.DAY_OF_WEEK, index+1);
+                        parsedCalendar = new ParsedCalendar(ParsedCalendar.ParseType.DAY, calendar);
+                    }
+
                 }
             }
         }

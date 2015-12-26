@@ -150,6 +150,60 @@ public class DateRangeParserTest extends CalendarBasedTest
         assertFalse(dateRange.isInRange(getCalendar(2014, Calendar.OCTOBER, 1)));
     }
 
+    @Test
+    public void testParseSingleDateRangeOneDayOnly() throws ParseException
+    {
+        DateRange dateRange = DateRangeParser.parseDateRange("Sa");
+        assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 25)));
+        assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 26)));
+        assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 27)));
+    }
+
+    @Test
+    public void testParseSingleDateRangeOneDayOnlyIncludingPh() throws ParseException
+    {
+        DateRange dateRange = DateRangeParser.parseDateRange("Su, PH");
+        assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 26)));
+        assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 27)));
+        assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 28)));
+    }
+
+    @Test
+    public void testParseSingleDateRangeDayOnly() throws ParseException
+    {
+        DateRange dateRange = DateRangeParser.parseDateRange("Mo-Fr");
+        assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 20)));
+        assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 21)));
+        assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 25)));
+        assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 26)));
+        assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 28)));
+    }
+
+    @Test
+    public void testParseReverseDateRangeDayOnly() throws ParseException
+    {
+        // This is reverse since Sa=7 and So=1
+        DateRange dateRange = DateRangeParser.parseDateRange("Sa-Su");
+        assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 25)));
+        assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 26)));
+        assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 27)));
+        assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 28)));
+    }
+
+    @Test(expected = ParseException.class)
+    public void testParseUnparsableDate() throws ParseException
+    {
+        DateRangeParser.parseDateRange("Sat");
+        fail();
+    }
+
+    @Test(expected = ParseException.class)
+    public void testParseUnparsableDate2() throws ParseException
+    {
+        DateRangeParser.parseDateRange("31.03.2014");
+        fail();
+    }
+
     private void assertSameDate( int year, int month, int day, String dateString ) throws ParseException
     {
         Calendar expected = getCalendar(year, month, day);

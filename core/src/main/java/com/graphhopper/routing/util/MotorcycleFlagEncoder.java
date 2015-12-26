@@ -18,13 +18,14 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.osm.ConditionalTagWayAcceptor;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
-import static com.graphhopper.routing.util.PriorityCode.*;
-
 import java.util.HashSet;
+
+import static com.graphhopper.routing.util.PriorityCode.BEST;
 
 /**
  * Defines bit layout for motorbikes
@@ -117,6 +118,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         // forestry stuff
         defaultSpeedMap.put("track", 15);
 
+        conditionalTagWayAcceptor = new ConditionalTagWayAcceptor(restrictions, restrictedValues);
     }
 
     @Override
@@ -194,7 +196,10 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        return acceptBit;
+        if (conditionalTagWayAcceptor.accept(way))
+            return acceptBit;
+        else
+            return 0;
     }
 
     @Override

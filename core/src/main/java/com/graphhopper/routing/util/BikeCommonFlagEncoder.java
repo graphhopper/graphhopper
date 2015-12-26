@@ -17,16 +17,16 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.OSMRelation;
-
-import static com.graphhopper.routing.util.PriorityCode.*;
-
+import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.osm.ConditionalTagWayAcceptor;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionAnnotation;
 import com.graphhopper.util.Translation;
 
 import java.util.*;
+
+import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
  * Defines bit layout of bicycles (not motorcycles) for speed, access and relations (network).
@@ -199,6 +199,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         setCyclingNetworkPreference("deprecated", PriorityCode.AVOID_AT_ALL_COSTS.getValue());
 
         setAvoidSpeedLimit(71);
+
+        conditionalTagWayAcceptor = new ConditionalTagWayAcceptor(restrictions, restrictedValues);
     }
 
     @Override
@@ -290,7 +292,11 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             if (!allowedSacScale(sacScale))
                 return 0;
         }
-        return acceptBit;
+
+        if (conditionalTagWayAcceptor.accept(way))
+            return acceptBit;
+        else
+            return 0;
     }
 
     boolean allowedSacScale( String sacScale )

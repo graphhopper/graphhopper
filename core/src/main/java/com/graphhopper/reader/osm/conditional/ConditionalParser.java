@@ -21,7 +21,7 @@ public class ConditionalParser
     public DateRange getRestrictiveDateRange( String conditionalTag ) throws ParseException
     {
 
-        if (conditionalTag == null || !conditionalTag.contains("@"))
+        if (conditionalTag == null || conditionalTag.isEmpty() || !conditionalTag.contains("@"))
             return null;
 
         if (conditionalTag.contains(";"))

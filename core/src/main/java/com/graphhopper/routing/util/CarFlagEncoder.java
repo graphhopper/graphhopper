@@ -42,8 +42,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder
      */
     protected final Map<String, Integer> defaultSpeedMap = new HashMap<String, Integer>();
 
-    protected ConditionalTagWayAcceptor conditionalTagWayAcceptor;
-
     public CarFlagEncoder()
     {
         this(5, 5, 0);
@@ -135,7 +133,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("track", 15);
 
         // TODO Add an arbitrary Date?
-        conditionalTagWayAcceptor = new ConditionalTagWayAcceptor(getConditionalTagsToConsider(), restrictedValues);
+        conditionalTagWayAcceptor = new ConditionalTagWayAcceptor(restrictions, restrictedValues);
     }
 
     @Override
@@ -227,7 +225,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        if(conditionalTagWayAcceptor.accept(way))
+        if (conditionalTagWayAcceptor.accept(way))
             return acceptBit;
         else
             return 0;

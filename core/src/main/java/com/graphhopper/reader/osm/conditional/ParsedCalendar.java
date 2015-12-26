@@ -28,6 +28,11 @@ public class ParsedCalendar
         return parseType == ParseType.MONTH || parseType == ParseType.YEAR_MONTH;
     }
 
+    public boolean dayOnly()
+    {
+        return parseType == ParseType.DAY;
+    }
+
     public Calendar getMax()
     {
         if (dayless())
@@ -61,7 +66,8 @@ public class ParsedCalendar
         YEAR_MONTH_DAY,
         YEAR_MONTH,
         MONTH_DAY,
-        MONTH
+        MONTH,
+        DAY
     }
 
 }

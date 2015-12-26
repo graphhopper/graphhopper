@@ -15,6 +15,8 @@ public class DateRange
     // Do not compare years
     boolean yearless = false;
 
+    boolean dayOnly = false;
+
     boolean reverse = false;
 
     // TODO Gets to complex? Create Factory?
@@ -34,11 +36,16 @@ public class DateRange
             yearless = true;
         }
 
+        if (from.dayOnly() && to.dayOnly())
+        {
+            dayOnly = true;
+        }
+
         if (fromCal.after(toCal))
         {
-            if (!yearless)
+            if (!yearless && !dayOnly)
             {
-                throw new IllegalArgumentException("From after to makes no sense, except for yearless DateRanges. From:" + from + " To:" + to);
+                throw new IllegalArgumentException("From after to makes no sense, except for yearless and dayOnly DateRanges. From:" + from + " To:" + to);
             } else
             {
                 reverse = true;
@@ -52,8 +59,16 @@ public class DateRange
 
     public boolean isInRange( Calendar date )
     {
-        if (!yearless)
+        if (!yearless && !dayOnly)
             return date.after(from) && date.before(to);
+
+        if(dayOnly){
+            if(reverse){
+                return (from.get(Calendar.DAY_OF_WEEK) <= date.get(Calendar.DAY_OF_WEEK) || date.get(Calendar.DAY_OF_WEEK) <= to.get(Calendar.DAY_OF_WEEK));
+            }else{
+                return (from.get(Calendar.DAY_OF_WEEK) <= date.get(Calendar.DAY_OF_WEEK) && date.get(Calendar.DAY_OF_WEEK) <= to.get(Calendar.DAY_OF_WEEK));
+            }
+        }
 
         if (reverse)
             return isInRangeYearlessReverse(date);

@@ -17,16 +17,14 @@
  */
 package com.graphhopper.routing.util;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.osm.ConditionalTagWayAcceptor;
 import com.graphhopper.util.PMap;
 
-import static com.graphhopper.routing.util.PriorityCode.*;
-
 import java.util.*;
+
+import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
  * Defines bit layout for pedestrians (speed, access, surface, ...).
@@ -131,6 +129,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         hikingNetworkToCode.put("lwn", VERY_NICE.getValue());
 
         maxPossibleSpeed = FERRY_SPEED;
+
+        conditionalTagWayAcceptor = new ConditionalTagWayAcceptor(restrictions, restrictedValues);
     }
 
     @Override
@@ -255,7 +255,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        return acceptBit;
+        if (conditionalTagWayAcceptor.accept(way))
+            return acceptBit;
+        else
+            return 0;
     }
 
     @Override

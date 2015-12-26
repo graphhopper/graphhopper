@@ -18,12 +18,9 @@
 package com.graphhopper.reader.osm;
 
 import com.graphhopper.reader.OSMWay;
-import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -35,11 +32,47 @@ import static org.junit.Assert.assertTrue;
 public class ConditionalTagWayAcceptorTest extends CalendarBasedTest
 {
 
-    ConditionalTagWayAcceptor acceptor;
-
-    @Before
-    public void setup()
+    @Test
+    public void testConditionalAccept()
     {
+        Calendar cal = getCalendar(2014, Calendar.MARCH, 10);
+        ConditionalTagWayAcceptor acceptor = new ConditionalTagWayAcceptor(cal, getSampleConditionalTags(), getSampleRestrictedValues());
+        OSMWay way = new OSMWay(1);
+        way.setTag("vehicle:conditional", "no @ (Aug 10-Aug 14)");
+        assertTrue(acceptor.accept(way));
+    }
+
+    @Test
+    public void testConditionalAcceptNextYear()
+    {
+        Calendar cal = getCalendar(2014, Calendar.MARCH, 10);
+        ConditionalTagWayAcceptor acceptor = new ConditionalTagWayAcceptor(cal, getSampleConditionalTags(), getSampleRestrictedValues());
+        OSMWay way = new OSMWay(1);
+        way.setTag("vehicle:conditional", "no @ (2013 Mar 1-2013 Mar 31)");
+        assertTrue(acceptor.accept(way));
+    }
+
+    @Test
+    public void testConditionalReject()
+    {
+        Calendar cal = getCalendar(2014, Calendar.MARCH, 10);
+        ConditionalTagWayAcceptor acceptor = new ConditionalTagWayAcceptor(cal, getSampleConditionalTags(), getSampleRestrictedValues());
+        OSMWay way = new OSMWay(1);
+        way.setTag("vehicle:conditional", "no @ (Mar 10-Aug 14)");
+        assertFalse(acceptor.accept(way));
+    }
+
+    @Test
+    public void testConditionalSingleDay()
+    {
+        Calendar cal = getCalendar(2015, Calendar.DECEMBER, 27);
+        ConditionalTagWayAcceptor acceptor = new ConditionalTagWayAcceptor(cal, getSampleConditionalTags(), getSampleRestrictedValues());
+        OSMWay way = new OSMWay(1);
+        way.setTag("vehicle:conditional", "no @ (Su)");
+        assertFalse(acceptor.accept(way));
+    }
+
+    private static Set<String> getSampleRestrictedValues(){
         Set<String> restrictedValues = new HashSet<String>();
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
@@ -49,38 +82,16 @@ public class ConditionalTagWayAcceptorTest extends CalendarBasedTest
         restrictedValues.add("delivery");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
-
-        Calendar cal = getCalendar(2014, Calendar.MARCH, 10);
-
-        Set<String> conditionalTags = new HashSet<String>();
-        conditionalTags.add("vehicle:conditional");
-        conditionalTags.add("access:conditional");
-
-        acceptor = new ConditionalTagWayAcceptor(cal, conditionalTags, restrictedValues);
+        return restrictedValues;
     }
 
-    @Test
-    public void testConditionalAccept()
-    {
-        OSMWay way = new OSMWay(1);
-        way.setTag("vehicle:conditional", "no @ (Aug 10-Aug 14)");
-        assertTrue(acceptor.accept(way));
+    private static List<String> getSampleConditionalTags(){
+        List<String> conditionalTags = new ArrayList<String>();
+        conditionalTags.add("vehicle");
+        conditionalTags.add("access");
+        return conditionalTags;
     }
 
-    @Test
-    public void testConditionalAcceptNextYear()
-    {
-        OSMWay way = new OSMWay(1);
-        way.setTag("vehicle:conditional", "no @ (2013 Mar 1-2013 Mar 31)");
-        assertTrue(acceptor.accept(way));
-    }
 
-    @Test
-    public void testConditionalReject()
-    {
-        OSMWay way = new OSMWay(1);
-        way.setTag("vehicle:conditional", "no @ (Mar 10-Aug 14)");
-        assertFalse(acceptor.accept(way));
-    }
 
 }
