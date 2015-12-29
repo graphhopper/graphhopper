@@ -24,22 +24,26 @@ public class ConditionalTagWayAcceptor implements WayAcceptor
     private final List<String> tagsToCheck;
     private final ConditionalParser parser;
 
+    // If true, we match allowing restriction-values (e.g. yes or permissive)
+    private final boolean alllowanceCheck;
+
     /**
      * Create with todays date
      */
-    public ConditionalTagWayAcceptor( List<String> tagsToCheck, Set<String> restricedValues )
+    public ConditionalTagWayAcceptor( List<String> tagsToCheck, Set<String> restricedValues, boolean alllowanceCheck )
     {
-        this(Calendar.getInstance(), tagsToCheck, restricedValues);
+        this(Calendar.getInstance(), tagsToCheck, restricedValues, alllowanceCheck);
     }
 
     /**
      * Create with given date
      */
-    public ConditionalTagWayAcceptor( Calendar date, List<String> tagsToCheck, Set<String> restricedValues )
+    public ConditionalTagWayAcceptor( Calendar date, List<String> tagsToCheck, Set<String> restricedValues, boolean alllowanceCheck )
     {
         this.calendar = date;
         this.tagsToCheck = tagsToCheck;
         this.parser = new ConditionalParser(restricedValues);
+        this.alllowanceCheck = alllowanceCheck;
     }
 
     @Override
@@ -55,7 +59,7 @@ public class ConditionalTagWayAcceptor implements WayAcceptor
                 {
                     DateRange dateRange = parser.getRestrictiveDateRange(val);
                     if (dateRange != null && dateRange.isInRange(calendar))
-                        return false;
+                        return alllowanceCheck;
                 } catch (Exception e)
                 {
                     logger.info("Could not parse the value:" + val + " of tag:" + tagToCheck + ". The Exception Message is:" + e.getMessage());
@@ -63,6 +67,6 @@ public class ConditionalTagWayAcceptor implements WayAcceptor
             }
         }
 
-        return true;
+        return !alllowanceCheck;
     }
 }

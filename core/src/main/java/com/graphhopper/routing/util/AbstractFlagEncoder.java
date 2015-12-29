@@ -84,7 +84,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected final double speedFactor;
     private boolean registered;
 
-    protected ConditionalTagWayAcceptor conditionalTagWayAcceptor;
+    protected ConditionalTagWayAcceptor conditionalRejector;
+    protected ConditionalTagWayAcceptor conditionalAcceptor;
 
     public AbstractFlagEncoder( PMap properties )
     {

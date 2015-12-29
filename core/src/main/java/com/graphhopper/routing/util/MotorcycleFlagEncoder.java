@@ -118,7 +118,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         // forestry stuff
         defaultSpeedMap.put("track", 15);
 
-        conditionalTagWayAcceptor = new ConditionalTagWayAcceptor(restrictions, restrictedValues);
+        conditionalRejector = new ConditionalTagWayAcceptor(restrictions, restrictedValues, false);
+        conditionalAcceptor = new ConditionalTagWayAcceptor(restrictions, intendedValues, true);
     }
 
     @Override
@@ -182,7 +183,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (!firstValue.isEmpty())
         {
-            if (restrictedValues.contains(firstValue))
+            if (restrictedValues.contains(firstValue) && !conditionalAcceptor.accept(way))
                 return 0;
             if (intendedValues.contains(firstValue))
                 return acceptBit;
@@ -196,7 +197,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        if (conditionalTagWayAcceptor.accept(way))
+        if (conditionalRejector.accept(way))
             return acceptBit;
         else
             return 0;

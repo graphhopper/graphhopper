@@ -130,7 +130,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         maxPossibleSpeed = FERRY_SPEED;
 
-        conditionalTagWayAcceptor = new ConditionalTagWayAcceptor(restrictions, restrictedValues);
+        conditionalRejector = new ConditionalTagWayAcceptor(restrictions, restrictedValues, false);
+        conditionalAcceptor = new ConditionalTagWayAcceptor(restrictions, intendedValues, true);
     }
 
     @Override
@@ -248,14 +249,14 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues))
+        if (way.hasTag(restrictions, restrictedValues) && !conditionalAcceptor.accept(way))
             return 0;
 
         // do not accept railways (sometimes incorrectly mapped!)
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        if (conditionalTagWayAcceptor.accept(way))
+        if (conditionalRejector.accept(way))
             return acceptBit;
         else
             return 0;

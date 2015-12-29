@@ -21,6 +21,9 @@ import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
 import org.junit.Test;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 import static org.junit.Assert.*;
 
 /**
@@ -107,6 +110,20 @@ public class CarFlagEncoderTest
         way.setTag("highway", "service");
         way.setTag("motor_vehicle", "emergency");
         assertFalse(encoder.acceptWay(way) > 0);
+
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy MMM dd");
+
+        way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("access:conditional", "no @ ("+simpleDateFormat.format(calendar.getTime())+")");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("access", "no");
+        way.setTag("access:conditional", "yes @ ("+simpleDateFormat.format(calendar.getTime())+")");
+        assertTrue(encoder.acceptWay(way) > 0);
     }
 
     @Test

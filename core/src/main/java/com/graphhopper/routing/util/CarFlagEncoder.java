@@ -133,7 +133,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("track", 15);
 
         // TODO Add an arbitrary Date?
-        conditionalTagWayAcceptor = new ConditionalTagWayAcceptor(restrictions, restrictedValues);
+        conditionalRejector = new ConditionalTagWayAcceptor(restrictions, restrictedValues, false);
+        conditionalAcceptor = new ConditionalTagWayAcceptor(restrictions, intendedValues, true);
     }
 
     @Override
@@ -179,6 +180,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     @Override
     public long acceptWay( OSMWay way )
     {
+        // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
         {
@@ -211,7 +213,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (!firstValue.isEmpty())
         {
-            if (restrictedValues.contains(firstValue))
+            if (restrictedValues.contains(firstValue) && !conditionalAcceptor.accept(way))
                 return 0;
             if (intendedValues.contains(firstValue))
                 return acceptBit;
@@ -225,7 +227,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        if (conditionalTagWayAcceptor.accept(way))
+        if (conditionalRejector.accept(way))
             return acceptBit;
         else
             return 0;
