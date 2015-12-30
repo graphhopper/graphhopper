@@ -29,7 +29,7 @@ body {
     padding-right: 5px;
 }
 
-#input, #instructions {
+#input, #instructions, #footer {
     width: 280px;
 }
 .pointInput {
@@ -180,7 +180,7 @@ body {
 #footer {
     position: fixed;
     bottom: 5px;
-    left: 45px;
+    left: 30px;    
 }
 
 #hosting a, .footer-link {
@@ -335,4 +335,17 @@ td img.pic {
 .ui-dialog .ui-dialog-titlebar {
     padding: 10px;
     background: #00cc33;
+}
+
+#donate_form {
+    padding: 0;    
+}
+
+#donate_form_button {
+    background: none;
+    border: none;
+    padding-left: 0px;
+    margin-top: 5px;
+    cursor: pointer;
+    float: left;
 }
