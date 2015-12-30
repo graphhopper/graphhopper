@@ -283,7 +283,7 @@ public class GraphHopperTest
         instance = new GraphHopper().
                 setStoreOnFlush(false).
                 setEncodingManager(new EncodingManager("CAR")).
-                setCHWeighting("shortest").
+                setCHWeightings(Arrays.asList("shortest")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance.importOrLoad();
@@ -544,7 +544,7 @@ public class GraphHopperTest
     public void testPrepareOnly()
     {
         instance = new GraphHopper().setStoreOnFlush(true).
-                setCHWeighting("shortest").
+                setCHWeightings(Arrays.asList("shortest")).
                 setEncodingManager(new EncodingManager("FOOT")).
                 setDoPrepare(false).
                 setGraphHopperLocation(ghLoc).
@@ -553,7 +553,7 @@ public class GraphHopperTest
         instance.close();
 
         instance = new GraphHopper().setStoreOnFlush(true).
-                setCHWeighting("shortest").
+                setCHWeightings(Arrays.asList("shortest")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
 
@@ -571,7 +571,7 @@ public class GraphHopperTest
         // use the encoding manager from the graph
         instance = new GraphHopper().setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager("FOOT")).
-                setCHWeighting("shortest").
+                setCHWeightings(Arrays.asList("shortest")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
         instance.load(ghLoc);
@@ -800,7 +800,7 @@ public class GraphHopperTest
         GraphHopper tmp = new GraphHopper().
                 putAlgorithmFactory(weighting, null).
                 setCHEnable(withCH).
-                setCHWeighting("fastest").
+                setCHWeightings(Arrays.asList("shortest")).
                 setEncodingManager(encodingManager);
         tmp.setGraphHopperStorage(g);
         tmp.postProcessing();
@@ -916,5 +916,17 @@ public class GraphHopperTest
 
         assertEquals("fastest|truck", hopper.getWeightingForCH(new WeightingMap("fastest"), truck).toString());
         assertEquals("fastest|simple_truck", hopper.getWeightingForCH(new WeightingMap("fastest"), sTruck).toString());
+    }
+
+    @Test
+    public void testGetMultipleWeightingsForCH()
+    {
+        EncodingManager em = new EncodingManager(Arrays.asList(new CarFlagEncoder()), 8);
+
+        GraphHopper tmpGH = new GraphHopper().setStoreOnFlush(false).
+                setEncodingManager(em).
+                setCHWeightings("fastest", "shortest");
+
+        assertEquals(2, tmpGH.getCHWeightings().size());
     }
 }
