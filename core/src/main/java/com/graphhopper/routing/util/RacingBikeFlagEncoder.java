@@ -142,9 +142,9 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    void collect( OSMWay way, TreeMap<Double, Integer> weightToPrioMap )
+    void collect( OSMWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap )
     {
-        super.collect(way, weightToPrioMap);
+        super.collect(way, wayTypeSpeed, weightToPrioMap);
 
         String highway = way.getTag("highway");
         if ("service".equals(highway))

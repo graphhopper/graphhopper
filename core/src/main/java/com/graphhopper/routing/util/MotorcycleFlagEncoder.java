@@ -208,7 +208,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         {
             // get assumed speed from highway type
             double speed = getSpeed(way);
-            speed = applyMaxSpeed(way, speed, true);
+            speed = applyMaxSpeed(way, speed);
 
             double maxMCSpeed = parseSpeed(way.getTag("maxspeed:motorcycle"));
             if (maxMCSpeed > 0 && maxMCSpeed < speed)
