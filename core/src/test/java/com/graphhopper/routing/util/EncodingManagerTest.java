@@ -172,7 +172,7 @@ public class EncodingManagerTest
             }
 
             @Override
-            protected int handlePriority( OSMWay way, int priorityFromRelation )
+            protected int handlePriority( OSMWay way, double wayTypeSpeed, int priorityFromRelation )
             {
                 return priorityFromRelation;
             }
