@@ -1069,8 +1069,12 @@ public class GraphHopper implements GraphHopperAPI
             boolean forceCHHeading = request.getHints().getBool("force_heading_ch", false);
             if (!forceCHHeading && request.hasFavoredHeading(0))
                 throw new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483");
-            weighting = getWeightingForCH(request.getHints(), encoder);
-            routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
+            try{
+                weighting = getWeightingForCH(request.getHints(), encoder);
+                routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
+            }catch (IllegalStateException e){
+                weighting = createWeighting(request.getHints(), encoder);
+            }
         } else
             weighting = createWeighting(request.getHints(), encoder);
 
