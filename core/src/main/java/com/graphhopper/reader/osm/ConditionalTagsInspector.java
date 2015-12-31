@@ -44,11 +44,11 @@ public class ConditionalTagsInspector
         this.permisiveParser = new ConditionalParser(permissiveValues);
     }
 
-    public boolean restricedWayIsConditionallyPermissed(OSMWay way){
+    public boolean isRestrictedWayConditionallyPermissed( OSMWay way){
         return applies(way, true);
     }
 
-    public boolean permissedWayIsConditionallyRestriced(OSMWay way){
+    public boolean isPermissedWayConditionallyRestriced( OSMWay way){
         return applies(way, false);
     }
 

@@ -248,14 +248,14 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues) && !conditionalTagsInspector.restricedWayIsConditionallyPermissed(way))
+        if (way.hasTag(restrictions, restrictedValues) && !conditionalTagsInspector.isRestrictedWayConditionallyPermissed(way))
             return 0;
 
         // do not accept railways (sometimes incorrectly mapped!)
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        if (conditionalTagsInspector.permissedWayIsConditionallyRestriced(way))
+        if (conditionalTagsInspector.isPermissedWayConditionallyRestriced(way))
             return 0;
         else
             return acceptBit;
