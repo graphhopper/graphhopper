@@ -579,6 +579,8 @@ public class MainActivity extends Activity
                         + end.latitude + "," + end.longitude));
                 startActivity(intent);
                 break;
+            default:
+                break;
         }
         return true;
     }

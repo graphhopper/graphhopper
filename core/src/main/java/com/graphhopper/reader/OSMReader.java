@@ -320,6 +320,8 @@ public class OSMReader implements DataReader
                         }
                         processRelation((OSMRelation) item);
                         break;
+                    default:
+                        break;
                 }
                 if (++counter % 100000000 == 0)
                 {
