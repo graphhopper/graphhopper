@@ -429,7 +429,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess
     {
         for (String latlon : str.split("\\["))
         {
-            if (latlon.trim().length() == 0)
+            if (latlon.trim().isEmpty())
                 continue;
 
             String ll[] = latlon.split(",");

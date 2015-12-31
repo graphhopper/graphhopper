@@ -102,7 +102,7 @@ public class PbfBlobDecoder implements Runnable
         // We can't continue if there are any unsupported features. We wait
         // until now so that we can display all unsupported features instead of
         // just the first one we encounter.
-        if (unsupportedFeatures.size() > 0)
+        if (!unsupportedFeatures.isEmpty())
         {
             throw new RuntimeException("PBF file contains unsupported features " + unsupportedFeatures);
         }

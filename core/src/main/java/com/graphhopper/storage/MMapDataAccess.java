@@ -225,7 +225,7 @@ public class MMapDataAccess extends AbstractDataAccess
     @Override
     public boolean loadExisting()
     {
-        if (segments.size() > 0)
+        if (!segments.isEmpty())
             throw new IllegalStateException("already initialized");
 
         if (isClosed())
