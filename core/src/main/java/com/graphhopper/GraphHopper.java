@@ -31,7 +31,6 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1069,10 +1068,12 @@ public class GraphHopper implements GraphHopperAPI
             boolean forceCHHeading = request.getHints().getBool("force_heading_ch", false);
             if (!forceCHHeading && request.hasFavoredHeading(0))
                 throw new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483");
-            try{
+            try
+            {
                 weighting = getWeightingForCH(request.getHints(), encoder);
                 routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
-            }catch (IllegalStateException e){
+            } catch (IllegalStateException e)
+            {
                 weighting = createWeighting(request.getHints(), encoder);
             }
         } else
