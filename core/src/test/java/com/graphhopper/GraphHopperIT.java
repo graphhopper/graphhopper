@@ -398,8 +398,8 @@ public class GraphHopperIT
         rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setVehicle("bike"));
         assertFalse("bike routing for " + str + " should not have errors:" + rsp.getErrors(), rsp.hasErrors());
-        assertEquals(494, rsp.getTime() / 1000f, 1);
-        assertEquals(2192, rsp.getDistance(), 1);
+        assertEquals(529, rsp.getTime() / 1000f, 1);
+        assertEquals(2523, rsp.getDistance(), 1);
 
         rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setVehicle("foot"));

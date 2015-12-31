@@ -139,6 +139,12 @@ public class EncodingManagerTest
             {
                 return 0;
             }
+
+            @Override
+            public double defaultPriorityBoostLevel()
+            {
+                return 1.0;
+            }
         };
 
         EncodingManager subject = new EncodingManager(encoder);

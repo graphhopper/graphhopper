@@ -32,6 +32,7 @@ public class PriorityWeighting extends FastestWeighting
      * For now used only in BikeCommonFlagEncoder, FootEncoder and MotorcycleFlagEncoder
      */
     public static final int KEY = 101;
+    private double prioBoost;
     private final double minFactor;
 
     public PriorityWeighting( FlagEncoder encoder )
@@ -42,8 +43,9 @@ public class PriorityWeighting extends FastestWeighting
     public PriorityWeighting( FlagEncoder encoder, PMap pMap )
     {
         super(encoder, pMap);
+        prioBoost = encoder.defaultPriorityBoostLevel();
         double maxPriority = 1; // BEST / BEST
-        minFactor = 1 / (0.5 + maxPriority);
+        minFactor = 1 / ( 0.5 / prioBoost + prioBoost * maxPriority);
     }
 
     @Override
@@ -58,6 +60,6 @@ public class PriorityWeighting extends FastestWeighting
         double weight = super.calcWeight(edgeState, reverse, prevOrNextEdgeId);
         if (Double.isInfinite(weight))
             return Double.POSITIVE_INFINITY;
-        return weight / (0.5 + flagEncoder.getDouble(edgeState.getFlags(), KEY));
+        return weight / ( 0.5 / prioBoost + prioBoost * flagEncoder.getDouble(edgeState.getFlags(), KEY));
     }
 }

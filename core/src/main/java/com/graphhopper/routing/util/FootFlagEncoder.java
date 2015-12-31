@@ -385,6 +385,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         return PriorityWeighting.class.isAssignableFrom(feature);
     }
+    
+    @Override
+    public double defaultPriorityBoostLevel()
+    {
+        return 1.0;
+    }
 
     @Override
     public String toString()

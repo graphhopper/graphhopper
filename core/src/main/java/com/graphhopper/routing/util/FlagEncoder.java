@@ -132,4 +132,9 @@ public interface FlagEncoder extends TurnCostEncoder
      * @return true if already registered in an EncodingManager
      */
     boolean isRegistered();
+
+    /**
+     * @return the default boost level for the priority
+     */
+    public double defaultPriorityBoostLevel();
 }

@@ -317,6 +317,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         else
             return "destination: " + str;
     }
+    
+    @Override
+    public double defaultPriorityBoostLevel()
+    {
+        return 1.0;
+    }
 
     @Override
     public String toString()

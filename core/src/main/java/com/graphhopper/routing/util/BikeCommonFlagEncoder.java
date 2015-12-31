@@ -785,4 +785,10 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     {
         specificBicycleClass = "class:bicycle:" + subkey;
     }
+    
+    @Override
+    public double defaultPriorityBoostLevel()
+    {
+        return 2.0;
+    }
 }
