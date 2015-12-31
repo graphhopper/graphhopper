@@ -28,6 +28,9 @@ import javax.xml.datatype.Duration;
  */
 public class OSMTagParser
 {
+    private OSMTagParser() {
+    }
+
     /**
      * Parser according to http://wiki.openstreetmap.org/wiki/Key:duration The value consists of a
      * string ala 'hh:mm', format for hours and minutes 'mm', 'hh:mm' or 'hh:mm:ss', or

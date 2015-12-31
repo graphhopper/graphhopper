@@ -24,6 +24,9 @@ public class NumHelper
 {
     private final static double DEFAULT_PRECISION = 1e-6;
 
+    private NumHelper() {
+    }
+
     public static boolean equalsEps( double d1, double d2 )
     {
         return equalsEps(d1, d2, DEFAULT_PRECISION);

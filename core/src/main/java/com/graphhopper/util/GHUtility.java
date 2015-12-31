@@ -38,6 +38,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class GHUtility
 {
+    private GHUtility() {
+    }
+
     /**
      * This method could throw exception if uncatched problems like index out of bounds etc
      */

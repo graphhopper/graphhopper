@@ -50,6 +50,9 @@ public class Helper7
         UNMAP_SUPPORTED = v;
     }
 
+    private Helper7() {
+    }
+
     public static String getBeanMemInfo()
     {
         java.lang.management.OperatingSystemMXBean mxbean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();

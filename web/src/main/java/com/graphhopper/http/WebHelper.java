@@ -36,7 +36,10 @@ import java.net.URLEncoder;
  */
 public class WebHelper
 {
-    public static String encodeURL( String str )
+    private WebHelper() {
+    }
+
+    public static String encodeURL(String str )
     {
         try
         {

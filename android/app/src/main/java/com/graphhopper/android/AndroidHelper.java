@@ -12,6 +12,10 @@ import android.net.NetworkInfo;
 
 public class AndroidHelper
 {
+    private AndroidHelper()
+    {
+    }
+
     public static List<String> readFile( Reader simpleReader ) throws IOException
     {
         BufferedReader reader = new BufferedReader(simpleReader);
