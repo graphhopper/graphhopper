@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.osm.ConditionalTagWayAcceptor;
+import com.graphhopper.reader.osm.ConditionalTagsInspector;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionAnnotation;
 import com.graphhopper.util.Translation;
@@ -200,8 +200,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
         setAvoidSpeedLimit(71);
 
-        conditionalRejector = new ConditionalTagWayAcceptor(restrictions, restrictedValues, false);
-        conditionalAcceptor = new ConditionalTagWayAcceptor(restrictions, intendedValues, true);
+        conditionalTagsInspector = new ConditionalTagsInspector(restrictions, restrictedValues, intendedValues);
     }
 
     @Override
@@ -277,7 +276,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues) && !conditionalAcceptor.accept(way))
+        if (way.hasTag(restrictions, restrictedValues) && !conditionalTagsInspector.restricedWayIsConditionallyPermissed(way))
             return 0;
 
         // do not accept railways (sometimes incorrectly mapped!)
@@ -294,10 +293,10 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 return 0;
         }
 
-        if (conditionalRejector.accept(way))
-            return acceptBit;
-        else
+        if (conditionalTagsInspector.permissedWayIsConditionallyRestriced(way))
             return 0;
+        else
+            return acceptBit;
     }
 
     boolean allowedSacScale( String sacScale )

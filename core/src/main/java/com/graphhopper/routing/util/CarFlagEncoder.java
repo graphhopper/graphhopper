@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.osm.ConditionalTagWayAcceptor;
+import com.graphhopper.reader.osm.ConditionalTagsInspector;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
@@ -132,9 +132,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         // forestry stuff
         defaultSpeedMap.put("track", 15);
 
-        // TODO Add an arbitrary Date?
-        conditionalRejector = new ConditionalTagWayAcceptor(restrictions, restrictedValues, false);
-        conditionalAcceptor = new ConditionalTagWayAcceptor(restrictions, intendedValues, true);
+        conditionalTagsInspector = new ConditionalTagsInspector(restrictions, restrictedValues, intendedValues);
     }
 
     @Override
@@ -213,7 +211,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (!firstValue.isEmpty())
         {
-            if (restrictedValues.contains(firstValue) && !conditionalAcceptor.accept(way))
+            if (restrictedValues.contains(firstValue) && !conditionalTagsInspector.restricedWayIsConditionallyPermissed(way))
                 return 0;
             if (intendedValues.contains(firstValue))
                 return acceptBit;
@@ -227,10 +225,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        if (conditionalRejector.accept(way))
-            return acceptBit;
-        else
+        if (conditionalTagsInspector.permissedWayIsConditionallyRestriced(way))
             return 0;
+        else
+            return acceptBit;
     }
 
     @Override

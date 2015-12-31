@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.osm.ConditionalTagWayAcceptor;
+import com.graphhopper.reader.osm.ConditionalTagsInspector;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -118,8 +118,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         // forestry stuff
         defaultSpeedMap.put("track", 15);
 
-        conditionalRejector = new ConditionalTagWayAcceptor(restrictions, restrictedValues, false);
-        conditionalAcceptor = new ConditionalTagWayAcceptor(restrictions, intendedValues, true);
+        conditionalTagsInspector = new ConditionalTagsInspector(restrictions, restrictedValues, intendedValues);
     }
 
     @Override
@@ -183,7 +182,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (!firstValue.isEmpty())
         {
-            if (restrictedValues.contains(firstValue) && !conditionalAcceptor.accept(way))
+            if (restrictedValues.contains(firstValue) && !conditionalTagsInspector.restricedWayIsConditionallyPermissed(way))
                 return 0;
             if (intendedValues.contains(firstValue))
                 return acceptBit;
@@ -197,10 +196,10 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        if (conditionalRejector.accept(way))
-            return acceptBit;
-        else
+        if (conditionalTagsInspector.permissedWayIsConditionallyRestriced(way))
             return 0;
+        else
+            return acceptBit;
     }
 
     @Override
