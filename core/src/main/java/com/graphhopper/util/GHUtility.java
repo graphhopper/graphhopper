@@ -497,7 +497,7 @@ public class GHUtility
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
-    };
+    }
 
     /**
      * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if
