@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Accepts an OSMWay according to the given conditional tags.
+ * Inspects the conditional tags of an OSMWay according to the given conditional tags.
  *
  * @author Robin Boldt
  */
@@ -23,32 +23,32 @@ public class ConditionalTagsInspector
     private final Calendar calendar;
     private final List<String> tagsToCheck;
     private final ConditionalParser restrictiveParser;
-    private final ConditionalParser permisiveParser;
+    private final ConditionalParser permitParser;
 
     /**
      * Create with todays date
      */
-    public ConditionalTagsInspector( List<String> tagsToCheck, Set<String> restrictiveValues, Set<String> permissiveValues )
+    public ConditionalTagsInspector( List<String> tagsToCheck, Set<String> restrictiveValues, Set<String> permittedValues )
     {
-        this(Calendar.getInstance(), tagsToCheck, restrictiveValues, permissiveValues);
+        this(Calendar.getInstance(), tagsToCheck, restrictiveValues, permittedValues);
     }
 
     /**
      * Create with given date
      */
-    public ConditionalTagsInspector( Calendar date, List<String> tagsToCheck, Set<String> restrictiveValues, Set<String> permissiveValues )
+    public ConditionalTagsInspector( Calendar date, List<String> tagsToCheck, Set<String> restrictiveValues, Set<String> permittedValues )
     {
         this.calendar = date;
         this.tagsToCheck = tagsToCheck;
         this.restrictiveParser = new ConditionalParser(restrictiveValues);
-        this.permisiveParser = new ConditionalParser(permissiveValues);
+        this.permitParser = new ConditionalParser(permittedValues);
     }
 
     public boolean isRestrictedWayConditionallyPermissed( OSMWay way){
         return applies(way, true);
     }
 
-    public boolean isPermissedWayConditionallyRestriced( OSMWay way){
+    public boolean isPermittedWayConditionallyRestriced( OSMWay way){
         return applies(way, false);
     }
 
@@ -64,7 +64,7 @@ public class ConditionalTagsInspector
                 {
                     DateRange dateRange;
                     if(checkPermissiveValues)
-                        dateRange = permisiveParser.getRestrictiveDateRange(val);
+                        dateRange = permitParser.getRestrictiveDateRange(val);
                     else
                         dateRange = restrictiveParser.getRestrictiveDateRange(val);
 

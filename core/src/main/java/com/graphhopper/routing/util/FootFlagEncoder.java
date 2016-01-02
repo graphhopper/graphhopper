@@ -255,7 +255,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        if (conditionalTagsInspector.isPermissedWayConditionallyRestriced(way))
+        if (conditionalTagsInspector.isPermittedWayConditionallyRestriced(way))
             return 0;
         else
             return acceptBit;

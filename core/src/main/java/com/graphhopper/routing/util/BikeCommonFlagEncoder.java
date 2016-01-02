@@ -293,7 +293,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 return 0;
         }
 
-        if (conditionalTagsInspector.isPermissedWayConditionallyRestriced(way))
+        if (conditionalTagsInspector.isPermittedWayConditionallyRestriced(way))
             return 0;
         else
             return acceptBit;

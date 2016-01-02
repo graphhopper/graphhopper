@@ -26,7 +26,7 @@ import java.util.Calendar;
 import static org.junit.Assert.*;
 
 /**
- * @author Robin boldt
+ * @author Robin Boldt
  */
 public class DateRangeParserTest extends CalendarBasedTest
 {
