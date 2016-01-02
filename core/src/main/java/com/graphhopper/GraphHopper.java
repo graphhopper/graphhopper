@@ -82,6 +82,8 @@ public class GraphHopper implements GraphHopperAPI
     // for CH prepare    
     private boolean doPrepare = true;
     private boolean chEnabled = true;
+    // If enabled, allows a user to run non-CH prepared Weightings on a CH graph
+    private boolean chFlexibleMode = false;
     private String chWeightingStr = "fastest";
     private int chPrepareThreads = -1;
     private ExecutorService chPreparePool;
@@ -622,7 +624,10 @@ public class GraphHopper implements GraphHopperAPI
         String tmpCHWeighting = args.get("prepare.chWeighting", "fastest");
         chEnabled = "fastest".equals(tmpCHWeighting) || "shortest".equals(tmpCHWeighting);
         if (chEnabled)
+        {
             setCHWeighting(tmpCHWeighting);
+            chFlexibleMode = args.getBool("ch.flexibleMode", false);
+        }
 
         preparePeriodicUpdates = args.getInt("prepare.updates.periodic", preparePeriodicUpdates);
         prepareLazyUpdates = args.getInt("prepare.updates.lazy", prepareLazyUpdates);
@@ -1074,7 +1079,10 @@ public class GraphHopper implements GraphHopperAPI
                 routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
             } catch (IllegalStateException e)
             {
-                weighting = createWeighting(request.getHints(), encoder);
+                if(chFlexibleMode)
+                    weighting = createWeighting(request.getHints(), encoder);
+                else
+                    throw e;
             }
         } else
             weighting = createWeighting(request.getHints(), encoder);
