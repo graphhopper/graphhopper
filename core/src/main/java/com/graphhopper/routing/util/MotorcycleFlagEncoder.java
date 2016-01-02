@@ -182,7 +182,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (!firstValue.isEmpty())
         {
-            if (restrictedValues.contains(firstValue) && !conditionalTagsInspector.isRestrictedWayConditionallyPermissed(way))
+            if (restrictedValues.contains(firstValue) && !conditionalTagsInspector.isRestrictedWayConditionallyPermitted(way))
                 return 0;
             if (intendedValues.contains(firstValue))
                 return acceptBit;
@@ -196,7 +196,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        if (conditionalTagsInspector.isPermittedWayConditionallyRestriced(way))
+        if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))
             return 0;
         else
             return acceptBit;

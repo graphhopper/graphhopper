@@ -1,3 +1,20 @@
+/*
+ *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.reader.osm.conditional;
 
 import java.util.Calendar;
@@ -18,24 +35,24 @@ public class ParsedCalendar
         this.parsedCalendar = parsedCalendar;
     }
 
-    public boolean yearless()
+    public boolean isYearless()
     {
         return parseType == ParseType.MONTH || parseType == ParseType.MONTH_DAY;
     }
 
-    public boolean dayless()
+    public boolean isDayless()
     {
         return parseType == ParseType.MONTH || parseType == ParseType.YEAR_MONTH;
     }
 
-    public boolean dayOnly()
+    public boolean isDayOnly()
     {
         return parseType == ParseType.DAY;
     }
 
     public Calendar getMax()
     {
-        if (dayless())
+        if (isDayless())
         {
             parsedCalendar.set(Calendar.DAY_OF_MONTH, parsedCalendar.getActualMaximum(Calendar.DAY_OF_MONTH));
         }
@@ -49,7 +66,7 @@ public class ParsedCalendar
 
     public Calendar getMin()
     {
-        if (dayless())
+        if (isDayless())
         {
             parsedCalendar.set(Calendar.DAY_OF_MONTH, parsedCalendar.getActualMinimum(Calendar.DAY_OF_MONTH));
         }

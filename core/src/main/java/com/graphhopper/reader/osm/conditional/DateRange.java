@@ -31,12 +31,12 @@ public class DateRange
             throw new IllegalArgumentException("Different ERAs are not allowed. From:" + from + " To:" + to);
         }
 
-        if (from.yearless() && to.yearless())
+        if (from.isYearless() && to.isYearless())
         {
             yearless = true;
         }
 
-        if (from.dayOnly() && to.dayOnly())
+        if (from.isDayOnly() && to.isDayOnly())
         {
             dayOnly = true;
         }
@@ -45,7 +45,7 @@ public class DateRange
         {
             if (!yearless && !dayOnly)
             {
-                throw new IllegalArgumentException("From after to makes no sense, except for yearless and dayOnly DateRanges. From:" + from + " To:" + to);
+                throw new IllegalArgumentException("From after to makes no sense, except for isYearless and isDayOnly DateRanges. From:" + from + " To:" + to);
             } else
             {
                 reverse = true;

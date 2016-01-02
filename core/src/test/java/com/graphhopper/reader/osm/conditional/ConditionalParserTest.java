@@ -54,7 +54,7 @@ public class ConditionalParserTest extends CalendarBasedTest
     @Test
     public void testParseConditional() throws ParseException
     {
-        DateRange dateRange = parser.getRestrictiveDateRange("no @ (2015 Sep 1-2015 Sep 30)");
+        DateRange dateRange = parser.getDateRange("no @ (2015 Sep 1-2015 Sep 30)");
         assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.AUGUST, 31)));
         assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.SEPTEMBER, 30)));
 
@@ -63,7 +63,7 @@ public class ConditionalParserTest extends CalendarBasedTest
     @Test
     public void testParseAllowingCondition() throws ParseException
     {
-        DateRange dateRange = parser.getRestrictiveDateRange("yes @ (2015 Sep 1-2015 Sep 30)");
+        DateRange dateRange = parser.getDateRange("yes @ (2015 Sep 1-2015 Sep 30)");
         assertNull(dateRange);
     }
 }

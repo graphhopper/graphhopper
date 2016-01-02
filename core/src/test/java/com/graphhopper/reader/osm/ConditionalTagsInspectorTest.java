@@ -39,7 +39,7 @@ public class ConditionalTagsInspectorTest extends CalendarBasedTest
         ConditionalTagsInspector acceptor = new ConditionalTagsInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         OSMWay way = new OSMWay(1);
         way.setTag("vehicle:conditional", "no @ (Aug 10-Aug 14)");
-        assertFalse(acceptor.isPermittedWayConditionallyRestriced(way));
+        assertFalse(acceptor.isPermittedWayConditionallyRestricted(way));
     }
 
     @Test
@@ -49,7 +49,7 @@ public class ConditionalTagsInspectorTest extends CalendarBasedTest
         ConditionalTagsInspector acceptor = new ConditionalTagsInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         OSMWay way = new OSMWay(1);
         way.setTag("vehicle:conditional", "no @ (2013 Mar 1-2013 Mar 31)");
-        assertFalse(acceptor.isPermittedWayConditionallyRestriced(way));
+        assertFalse(acceptor.isPermittedWayConditionallyRestricted(way));
     }
 
     @Test
@@ -59,7 +59,7 @@ public class ConditionalTagsInspectorTest extends CalendarBasedTest
         ConditionalTagsInspector acceptor = new ConditionalTagsInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         OSMWay way = new OSMWay(1);
         way.setTag("vehicle:conditional", "no @ (Mar 10-Aug 14)");
-        assertTrue(acceptor.isPermittedWayConditionallyRestriced(way));
+        assertTrue(acceptor.isPermittedWayConditionallyRestricted(way));
     }
 
     @Test
@@ -69,7 +69,7 @@ public class ConditionalTagsInspectorTest extends CalendarBasedTest
         ConditionalTagsInspector acceptor = new ConditionalTagsInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         OSMWay way = new OSMWay(1);
         way.setTag("vehicle:conditional", "yes @ (Mar 10-Aug 14)");
-        assertTrue(acceptor.isRestrictedWayConditionallyPermissed(way));
+        assertTrue(acceptor.isRestrictedWayConditionallyPermitted(way));
     }
 
     @Test
@@ -79,7 +79,7 @@ public class ConditionalTagsInspectorTest extends CalendarBasedTest
         ConditionalTagsInspector acceptor = new ConditionalTagsInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         OSMWay way = new OSMWay(1);
         way.setTag("vehicle:conditional", "no @ (Mar 10-Aug 14)");
-        assertTrue(acceptor.isPermittedWayConditionallyRestriced(way));
+        assertTrue(acceptor.isPermittedWayConditionallyRestricted(way));
     }
 
     @Test
@@ -89,7 +89,7 @@ public class ConditionalTagsInspectorTest extends CalendarBasedTest
         ConditionalTagsInspector acceptor = new ConditionalTagsInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         OSMWay way = new OSMWay(1);
         way.setTag("vehicle:conditional", "no @ (Su)");
-        assertTrue(acceptor.isPermittedWayConditionallyRestriced(way));
+        assertTrue(acceptor.isPermittedWayConditionallyRestricted(way));
     }
 
     @Test
@@ -99,7 +99,7 @@ public class ConditionalTagsInspectorTest extends CalendarBasedTest
         ConditionalTagsInspector acceptor = new ConditionalTagsInspector(cal, getSampleConditionalTags(), getSampleRestrictedValues(), getSamplePermissiveValues());
         OSMWay way = new OSMWay(1);
         way.setTag("vehicle:conditional", "yes @ (Su)");
-        assertTrue(acceptor.isRestrictedWayConditionallyPermissed(way));
+        assertTrue(acceptor.isRestrictedWayConditionallyPermitted(way));
     }
 
     private static Set<String> getSampleRestrictedValues(){
