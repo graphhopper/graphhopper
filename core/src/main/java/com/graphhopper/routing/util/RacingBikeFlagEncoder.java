@@ -176,7 +176,13 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         // for racing bike it is only allowed if empty
         return false;
     }
-
+    
+    @Override
+    public double defaultPriorityBoostLevel()
+    {
+        return 1.5;
+    }
+    
     @Override
     public String toString()
     {
