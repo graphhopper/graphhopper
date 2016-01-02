@@ -27,6 +27,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.junit.*;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -432,7 +433,7 @@ public class GraphHopperIT
         GraphHopper tmpHopper = new GraphHopper().
                 setStoreOnFlush(true).
                 setOSMFile(tmpOsmFile).
-                setCHWeighting(weightCalcStr).
+                setCHWeightings(Arrays.asList(weightCalcStr)).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(tmpImportVehicles)).
                 importOrLoad();
