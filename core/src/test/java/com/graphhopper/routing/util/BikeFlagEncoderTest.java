@@ -80,9 +80,14 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertPriority(UNCHANGED.getValue(), way);
 
         way.clearTags();
+        way.setTag("highway", "cycleway");
+        assertEquals(18, encoder.getSpeed(way));
+        int cyclwayspeed = encoder.getSpeed(way);
+
+        way.clearTags();
         way.setTag("highway", "path");
         way.setTag("bicycle", "yes");
-        assertEquals(12, encoder.getSpeed(way));
+        assertEquals(cyclwayspeed, encoder.getSpeed(way));
         assertPriority(UNCHANGED.getValue(), way);
 
         // Pushing section Ok !!
