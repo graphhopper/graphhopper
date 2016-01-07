@@ -70,7 +70,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         preferHighwayTags.add("unclassified");
 
         absoluteBarriers.add("kissing_gate");
-        setSpecificBicycleClass("touring");
+        setSpecificClassBicycle("touring");
     }
 
     @Override

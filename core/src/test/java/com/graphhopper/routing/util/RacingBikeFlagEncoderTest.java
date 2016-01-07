@@ -138,7 +138,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         OSMWay osmWay = new OSMWay(1);
         osmWay.setTag("highway", "track");
         assertEquals(PUSHING_SECTION_SPEED / 2, getSpeedFromFlags(osmWay), 1e-1);
-        assertEquals("get off the bike, unpaved", getWayTypeFromFlags(osmWay, 0));
+        assertEquals("way, unpaved", getWayTypeFromFlags(osmWay, 0));
 
         // relation code is PREFER
         long allowed = encoder.acceptBit;
@@ -171,7 +171,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(20, encoder.getSpeed(flags), 1e-1);
         assertPriority(PREFER.getValue(), osmWay, relFlags);
-        assertEquals("", getWayTypeFromFlags(osmWay, relFlags));
+        assertEquals("cycleway", getWayTypeFromFlags(osmWay, relFlags));
 
         // Now we assume bicycle=yes, and unpaved as part of a cycle relation
         osmWay.setTag("tracktype", "grade2");
@@ -189,7 +189,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         osmWay.setTag("tracktype", "grade3");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
-        assertEquals(4, encoder.getSpeed(flags), 1e-1);
+        assertEquals(PUSHING_SECTION_SPEED, encoder.getSpeed(flags), 1e-1);
         assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, relFlags);
         assertEquals("get off the bike, unpaved", getWayTypeFromFlags(osmWay, relFlags));
 
@@ -201,7 +201,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(2, encoder.getSpeed(flags), 1e-1);
         assertPriority(AVOID_AT_ALL_COSTS.getValue(), osmWay, relFlags);
-        assertEquals("get off the bike, unpaved", getWayTypeFromFlags(osmWay, relFlags));
+        assertEquals("way, unpaved", getWayTypeFromFlags(osmWay, relFlags));
     }
 
     @Test
@@ -267,7 +267,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testclassBicycle()
+    public void testClassBicycle()
     {
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "tertiary");
@@ -277,5 +277,4 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("class:bicycle", "-2");
         assertPriority(BEST.getValue(), way);
     }
-
 }
