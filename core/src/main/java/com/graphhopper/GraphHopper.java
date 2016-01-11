@@ -964,7 +964,7 @@ public class GraphHopper implements GraphHopperAPI
         String weightingStr = weightingMap.getWeighting().toLowerCase();
         if (weightingStr.isEmpty())
             weightingStr = chWeightingStr;
-        
+
         for (Weighting w : algoFactories.keySet())
         {
             if (w.matches(weightingStr, encoder))
@@ -1068,22 +1068,21 @@ public class GraphHopper implements GraphHopperAPI
         Weighting weighting;
         Graph routingGraph = ghStorage;
 
-        if (chEnabled)
+        String perRequestCHFlexibleMode = request.getHints().get("ch.flexible_mode", false);
+        if (perRequestCHFlexibleMode && !chFlexibleMode)
+        {
+            rsp.addError(new IllegalStateException("Flexible mode has to be enabled on the server-side and client-side"));
+            return Collections.emptyList();
+        }
+
+        if (chEnabled && !perRequestCHFlexibleMode)
         {
             boolean forceCHHeading = request.getHints().getBool("force_heading_ch", false);
             if (!forceCHHeading && request.hasFavoredHeading(0))
                 throw new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483");
-            try
-            {
-                weighting = getWeightingForCH(request.getHints(), encoder);
-                routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
-            } catch (IllegalStateException e)
-            {
-                if(chFlexibleMode)
-                    weighting = createWeighting(request.getHints(), encoder);
-                else
-                    throw e;
-            }
+            weighting = getWeightingForCH(request.getHints(), encoder);
+            routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
+            weighting = createWeighting(request.getHints(), encoder);
         } else
             weighting = createWeighting(request.getHints(), encoder);
 
