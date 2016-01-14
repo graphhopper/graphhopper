@@ -12,5 +12,3 @@ notifications:
 
 # enable container-based stack
 sudo: false
-before_install:
-  - "mkdir ~/.npm"
