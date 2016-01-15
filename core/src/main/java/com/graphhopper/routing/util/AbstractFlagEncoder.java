@@ -496,7 +496,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                     // If duration AND distance is available we can calculate the speed more precisely
                     // and set both speed to the same value. Factor 1.4 slower because of waiting time!
                     double calculatedTripSpeed = val / durationInHours / 1.4;
-                    // Plausibility check especially for the case of wongly used PxM format with the intension to 
+                    // Plausibility check especially for the case of wrongly used PxM format with the intention to
                     // specify the duration in minutes, but actually using months
                     if (calculatedTripSpeed > 0.01d)
                     {
@@ -791,16 +791,18 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     /**
-     * @param force should be false if speed should be changed only if it is bigger than maxspeed.
+     * @param way: needed to retrieve OSM tags
+     * @param speed: speed guessed e.g. from the road type or other tags
+     * @return The assumed speed. 
      */
-    protected double applyMaxSpeed( OSMWay way, double speed, boolean force )
+    protected double applyMaxSpeed( OSMWay way, double speed )
     {
         double maxSpeed = getMaxSpeed(way);
-        // apply only if smaller maxSpeed
+        // We obay speed limits
         if (maxSpeed >= 0)
         {
-            if (force || maxSpeed < speed)
-                return maxSpeed * 0.9;
+            // We assume that the average speed is 90% of the allowed maximum
+            return maxSpeed * 0.9;
         }
         return speed;
     }

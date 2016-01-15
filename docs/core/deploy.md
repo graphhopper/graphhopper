@@ -27,8 +27,14 @@ Important notes:
 
 ### API Tokens
 
-By default, graphhopper uses [Omniscale](http://omniscale.com/) as layer service. 
+By default, GraphHopper uses [Omniscale](http://omniscale.com/) as layer service. 
 Either you get a plan there or you have to remove Omniscale from the [JavaScript file](https://github.com/graphhopper/graphhopper/blob/master/web/src/main/webapp/js/main.js). 
+ 
+GraphHopper uses the [GraphHopper Directions API](https://graphhopper.com/api/1/docs/) for geocoding. To be able to use the autocomplete feature of the point inputs you have to:
+
+ * Get your API Token at: https://graphhopper.com/
+ * Uncomment this [line](https://github.com/graphhopper/graphhopper/blob/master/web/src/main/webapp/js/main-template.js#L37) and insert your API Token as second parameter.
+   * Don't forget the Attribution
  
 ## World Wide 
 

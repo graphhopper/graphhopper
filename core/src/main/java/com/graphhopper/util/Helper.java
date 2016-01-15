@@ -17,15 +17,7 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPlace;
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
-import com.sun.org.apache.bcel.internal.generic.AASTORE;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 

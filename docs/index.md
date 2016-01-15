@@ -26,6 +26,7 @@
  * [Technical overview](./core/technical.md): Technical details about how GraphHopper its calculations are working.
  * [Slides](https://graphhopper.com/public/slides/): Small presentations about how GraphHopper is working.
  * [Contraction Hierarchies](./core/ch.md): Details about speeding up the track calculations by [Contraction Hierarchies](http://en.wikipedia.org/wiki/Contraction_hierarchies).
+ * [Deployment Guide](./core/deploy.md): Details about deploying GraphHopper.
 
 ## Web
 

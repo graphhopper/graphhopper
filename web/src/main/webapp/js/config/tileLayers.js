@@ -24,8 +24,8 @@ var mapquestAerial = L.tileLayer('http://{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{
     subdomains: ['otile1', 'otile2', 'otile3', 'otile4']
 });
 
-var openMapSurfer = L.tileLayer('http://openmapsurfer.uni-hd.de/tiles/roads/x={x}&y={y}&z={z}', {
-    attribution: osmAttr + ', <a href="http://openmapsurfer.uni-hd.de/contact.html">GIScience Heidelberg</a>'
+var openMapSurfer = L.tileLayer('http://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}', {
+    attribution: osmAttr + ', <a href="http://korona.geog.uni-heidelberg.de/contact.html">GIScience Heidelberg</a>'
 });
 
 // not an option as too fast over limit
@@ -89,6 +89,9 @@ var availableTileLayers = {
     "Sorbian Language": sorbianLang
 };
 
+module.exports.activeLayerName = "Omniscale";
+module.exports.defaultLayer = omniscale;
+
 module.exports.getAvailableTileLayers = function () {
     return availableTileLayers;
 };
@@ -96,7 +99,7 @@ module.exports.getAvailableTileLayers = function () {
 module.exports.selectLayer = function (layerName) {
     var defaultLayer = availableTileLayers[layerName];
     if (!defaultLayer)
-        defaultLayer = availableTileLayers.Omniscale;
+        defaultLayer = module.exports.defaultLayer;
 
     return defaultLayer;
 };

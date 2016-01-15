@@ -206,7 +206,7 @@ public class GraphHopperServlet extends GHBaseServlet
         return rsp.getInstructions().createGPX(trackName, time, includeElevation, withRoute, withTrack, withWayPoints);
     }
 
-    String errorsToXML( List<Throwable> list )
+    protected String errorsToXML( List<Throwable> list )
     {
         if (list.isEmpty())
             throw new RuntimeException("errorsToXML should not be called with an empty list");

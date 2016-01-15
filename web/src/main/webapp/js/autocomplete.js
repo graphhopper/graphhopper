@@ -1,5 +1,6 @@
 var formatTools = require('./tools/format.js');
 var GHInput = require('./graphhopper/GHInput.js');
+var mapLayer = require('./map.js');
 
 var dataToHtml = function (data, query) {
     var element = "";
@@ -143,7 +144,7 @@ AutoComplete.prototype.showListForIndex = function (ghRequest, routeIfAllResolve
 
     myAutoDiv.autocomplete(options);
 
-    // with the following more stable code we cannot click on suggestions anylonger
+    // with the following more stable code we cannot click on suggestions any longer
 //    $("#" + fromOrTo + "Input").focusout(function() {
 //        myAutoDiv.autocomplete().disable();
 //        myAutoDiv.autocomplete().hide();
