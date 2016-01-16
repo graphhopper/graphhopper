@@ -1025,6 +1025,19 @@ public class GraphHopper implements GraphHopperAPI
         return weighting;
     }
 
+    /**
+     * Analyze the request for adjusted weightings and wrap them around the current weighting.
+     * @return Potentially an AdjustedWeighting
+     */
+    public Weighting createAdjustedWeighting( Weighting weighting, GHRequest request )
+    {
+        //TODO How to pass multiple additional weightings?
+        String additionalWeighting = request.getHints().get("additional_weighting", "");
+        if (additionalWeighting.equals("unique_paths"))
+            weighting = new UniquePathWeighting(weighting);
+        return weighting;
+    }
+
     @Override
     public GHResponse route( GHRequest request )
     {
@@ -1122,6 +1135,7 @@ public class GraphHopper implements GraphHopperAPI
         RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(weighting);
         QueryGraph queryGraph = new QueryGraph(routingGraph);
         queryGraph.lookup(qResults);
+        weighting = createAdjustedWeighting(weighting, request);
         weighting = createTurnWeighting(weighting, queryGraph, encoder);
 
         List<Path> paths = new ArrayList<Path>(points.size() - 1);
@@ -1162,6 +1176,9 @@ public class GraphHopper implements GraphHopperAPI
             Path path = algo.calcPath(fromQResult.getClosestNode(), toQResult.getClosestNode());
             if (path.getTime() < 0)
                 throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
+
+            if (weighting instanceof UniquePathWeighting)
+                ((UniquePathWeighting) weighting).addPath(path);
 
             paths.add(path);
             debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s, " + path.getDebugInfo();
