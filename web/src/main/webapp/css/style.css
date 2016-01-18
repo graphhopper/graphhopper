@@ -180,7 +180,7 @@ body {
 #footer {
     position: fixed;
     bottom: 5px;
-    left: 30px;    
+    left: 30px;
 }
 
 #hosting a, .footer-link {
@@ -244,6 +244,7 @@ td img.pic {
 .vehicle-btn img {
     width: 24px;
     height: 24px;
+    vertical-align: middle;
 }
 
 .selectvehicle {
@@ -338,7 +339,7 @@ td img.pic {
 }
 
 #donate_form {
-    padding: 0;    
+    padding: 0;
 }
 
 #donate_form_button {
