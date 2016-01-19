@@ -28,6 +28,9 @@ import javax.xml.datatype.Duration;
  */
 public class OSMTagParser
 {
+    // Calendar cal = Calendar.getInstance();cal.set(2015, 11, 1); cal.getTimeInMillis(), see #588
+    private final static Date STATIC_DATE = new Date(1448924400000L);
+
     /**
      * Parser according to http://wiki.openstreetmap.org/wiki/Key:duration The value consists of a
      * string ala 'hh:mm', format for hours and minutes 'mm', 'hh:mm' or 'hh:mm:ss', or
@@ -50,7 +53,7 @@ public class OSMTagParser
             try
             {
                 dur = DatatypeFactory.newInstance().newDuration(str);
-                seconds = dur.getTimeInMillis(new Date()) / 1000;
+                seconds = dur.getTimeInMillis(STATIC_DATE) / 1000;
             } catch (Exception ex)
             {
                 throw new IllegalArgumentException("Cannot parse duration tag value: " + str, ex);
