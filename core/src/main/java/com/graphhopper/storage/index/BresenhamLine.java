@@ -30,8 +30,11 @@ package com.graphhopper.storage.index;
  */
 public class BresenhamLine
 {
-    public static void calcPoints( int y1, int x1, int y2, int x2,
-                                   PointEmitter emitter )
+    private BresenhamLine() {
+    }
+
+    public static void calcPoints(int y1, int x1, int y2, int x2,
+                                  PointEmitter emitter )
     {
         bresenham(y1, x1, y2, x2, emitter);
     }

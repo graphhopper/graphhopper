@@ -30,6 +30,9 @@ public class PrepareEncoder
     private static final long scBwdDir = 0x2;
     private static final long scDirMask = 0x3;
 
+    private PrepareEncoder() {
+    }
+
     public static final long getScDirMask()
     {
         return scDirMask;
