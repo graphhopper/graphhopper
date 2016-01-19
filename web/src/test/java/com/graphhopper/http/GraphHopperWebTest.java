@@ -17,6 +17,7 @@
  */
 package com.graphhopper.http;
 
+import com.graphhopper.AltResponse;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.util.Downloader;
@@ -49,11 +50,12 @@ public class GraphHopperWebTest
         };
         GraphHopperWeb instance = new GraphHopperWeb();
         instance.setDownloader(downloader);
-        GHResponse res = instance.route(new GHRequest(52.47379, 13.362808, 52.4736925, 13.3904394));
-        assertEquals(2138.3, res.getDistance(), 1e-1);
-        assertEquals(17, res.getPoints().getSize());
-        assertEquals(5, res.getInstructions().getSize());
-        assertEquals("(0,Geradeaus auf A 100,1268.519329705091,65237)", res.getInstructions().get(0).toString());
-        assertEquals(11, res.getInstructions().get(0).getPoints().size());
+        GHResponse rsp = instance.route(new GHRequest(52.47379, 13.362808, 52.4736925, 13.3904394));
+        AltResponse arsp = rsp.getFirst();
+        assertEquals(2138.3, arsp.getDistance(), 1e-1);
+        assertEquals(17, arsp.getPoints().getSize());
+        assertEquals(5, arsp.getInstructions().getSize());
+        assertEquals("(0,Geradeaus auf A 100,1268.519329705091,65237)", arsp.getInstructions().get(0).toString());
+        assertEquals(11, arsp.getInstructions().get(0).getPoints().size());
     }
 }

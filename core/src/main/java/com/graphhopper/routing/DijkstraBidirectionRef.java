@@ -43,8 +43,8 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
 {
     private PriorityQueue<EdgeEntry> openSetFrom;
     private PriorityQueue<EdgeEntry> openSetTo;
-    private TIntObjectMap<EdgeEntry> bestWeightMapFrom;
-    private TIntObjectMap<EdgeEntry> bestWeightMapTo;
+    protected TIntObjectMap<EdgeEntry> bestWeightMapFrom;
+    protected TIntObjectMap<EdgeEntry> bestWeightMapTo;
     protected TIntObjectMap<EdgeEntry> bestWeightMapOther;
     protected EdgeEntry currFrom;
     protected EdgeEntry currTo;
