@@ -54,6 +54,20 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
             AStar aStar = new AStar(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
             aStar.setApproximation(getApproximation(AlgorithmOptions.ASTAR, opts, g.getNodeAccess()));
             return aStar;
+        } else if (AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoStr))
+        {
+            AlternativeRoute altRouteAlgo = new AlternativeRoute(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            altRouteAlgo.setMaxPaths(opts.getHints().getInt("alternative_route.max_paths", 2));
+            altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble("alternative_route.max_weight_factor", 1.4));
+            altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble("alternative_route.max_share_factor", 0.6));
+            altRouteAlgo.setMinPlateauFactor(opts.getHints().getDouble("alternative_route.min_plateau_factor", 0.2));
+            altRouteAlgo.setMaxExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
+            return altRouteAlgo;
+        } else if (AlgorithmOptions.ROUND_TRIP_ALT.equalsIgnoreCase(algoStr))
+        {
+            RoundTripAltAlgorithm altRouteAlgo = new RoundTripAltAlgorithm(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            altRouteAlgo.setMaxWeightFactor(opts.getHints().getInt("round_trip_alt.max_weight_factor", 2));
+            return altRouteAlgo;
         } else
         {
             throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());

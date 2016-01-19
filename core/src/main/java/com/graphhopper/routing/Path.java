@@ -27,6 +27,7 @@ import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,6 +42,7 @@ import java.util.List;
 public class Path
 {
     private static final AngleCalc ac = new AngleCalc();
+    private List<String> description;
     protected Graph graph;
     private FlagEncoder encoder;
     protected double distance;
@@ -74,6 +76,23 @@ public class Path
         weight = p.weight;
         edgeIds = new TIntArrayList(p.edgeIds);
         edgeEntry = p.edgeEntry;
+    }
+
+    /**
+     * @return the description of this route alternative to make it meaningful for the user e.g. it
+     * displays one or two main roads of the route.
+     */
+    public List<String> getDescription()
+    {
+        if (description == null)
+            return Collections.emptyList();
+        return description;
+    }
+
+    public Path setDescription( List<String> description )
+    {
+        this.description = description;
+        return this;
     }
 
     public Path setEdgeEntry( EdgeEntry edgeEntry )

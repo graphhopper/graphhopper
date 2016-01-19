@@ -5,7 +5,7 @@ body {
     color: #111111;
     background-color: white;
     margin: 0;
-    min-width: 600px;
+    min-width: 700px;
 }
 #map {
     /* set size via JS */
@@ -18,22 +18,39 @@ body {
     /*padding-right: 15px; */
 }
 
-#info {
+#info {    
     margin-top: 10px;
-    border: lightgray groove thin;
     display: none;
     padding: 5px;
-    overflow: auto;
 }
+
 #info a {
     padding-right: 5px;
+}
+
+.route_results {    
+    max-height: 40%;
+}
+
+#input {
+    min-height: 400px;
+    max-width: 270px;
+}
+
+.instructions_info {
+    overflow: auto;
+}
+
+.route_description {
+    padding: 7px 5px;
 }
 
 #input, #instructions, #footer {
     width: 280px;
 }
+
 .pointInput {
-    width: 235px;
+    width: 220px;
     float: left;
 }
 
@@ -158,6 +175,7 @@ body {
 #searchButton {
     float: right;
     margin-bottom: 5px;
+    margin-right: 5px;
 }
 
 #searchButton:hover {
@@ -202,16 +220,17 @@ tr.instruction {
     cursor: pointer;
     border-bottom: #dadada dashed thin;
 }
-#instructions {
+
+.instructions {    
     table-layout:fixed;
     border-collapse: collapse;
     padding-top: 10px;
-    width: 100%;
+    width: 98%;
     font-size: smaller;
 }
 
-#instructions th, #instructions td {
-    padding: 6px 3px;
+.instructions td {
+    padding: 7px 5px;
 }
 
 td.instr_title {
@@ -224,7 +243,7 @@ td.instr_distance {
     text-align: right;
 }
 
-#instructions tr .instr_pic {
+.instructions tr .instr_pic {
     width: 20px;
 }
 td img.pic {
@@ -300,8 +319,11 @@ td img.pic {
     padding-left: 2px;
 }
 .pointDelete:hover, .pointAdd:hover { cursor: pointer; }
+.pointDelete:disabled {
+    background: red;
+} 
 
-#expandDetails {
+.expandDetails {
     color: gray;
     font-size:11px;
     float: right;
@@ -309,7 +331,7 @@ td img.pic {
     width: 20px;
     height: 20px;
     height: 20px;
-    margin: 0px;
+    margin: 0px 10px;
     padding: 0px;
     background-image: linear-gradient(to bottom, white, #e7e7e7);
 }
@@ -336,6 +358,40 @@ td img.pic {
 .ui-dialog .ui-dialog-titlebar {
     padding: 10px;
     background: #00cc33;
+}
+
+.alt_route_img {
+    padding-left: 2px;
+    margin-bottom: -3px;
+}
+
+#route_result_tabs {
+    list-style: none; 
+    padding: 0; 
+    margin: 0;
+}
+
+#route_result_tabs li {
+    background-color: #FFF;
+    cursor: pointer;
+    float: left;
+    padding: 5px 10px;
+}
+
+#route_result_tabs li.current {
+    font-weight: bold;
+    background-image: linear-gradient(to bottom, #e7e7e7, white);
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.route_result_tab {
+    border: lightgray groove thin;
+    display: none;
+}
+
+.route_result_tab.current {
+    display: block;    
 }
 
 #donate_form {
