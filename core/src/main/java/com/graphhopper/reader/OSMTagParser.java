@@ -28,8 +28,8 @@ import javax.xml.datatype.Duration;
  */
 public class OSMTagParser
 {
-    // Calendar cal = Calendar.getInstance();cal.set(2015, 11, 1); cal.getTimeInMillis(), see #588
-    private final static Date STATIC_DATE = new Date(1448924400000L);
+    // use a day somewhere within July 1970 which then makes two identical long months ala 31 days, see #588
+    private final static Date STATIC_DATE = new Date((31 * 6) * 24 * 3600 * 1000);
 
     /**
      * Parser according to http://wiki.openstreetmap.org/wiki/Key:duration The value consists of a
