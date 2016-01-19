@@ -324,9 +324,6 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess
             return false;
 
         PointList other = (PointList) obj;
-        if (other.isEmpty() && other.isEmpty())
-            return true;
-
         if (this.getSize() != other.getSize() || this.is3D() != other.is3D())
             return false;
 
