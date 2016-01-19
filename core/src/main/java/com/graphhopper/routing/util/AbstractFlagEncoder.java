@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.osm.ConditionalTagsInspector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +83,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected final int speedBits;
     protected final double speedFactor;
     private boolean registered;
+
+    protected ConditionalTagsInspector conditionalTagsInspector;
 
     public AbstractFlagEncoder( PMap properties )
     {
@@ -820,4 +823,5 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
         return false;
     }
+
 }
