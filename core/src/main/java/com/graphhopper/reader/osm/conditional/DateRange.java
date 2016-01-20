@@ -27,7 +27,7 @@ public class DateRange
         Calendar toCal = to.parsedCalendar;
 
         // This should never happen
-        if (fromCal.get(Calendar.ERA) != fromCal.get(Calendar.ERA))
+        if (fromCal.get(Calendar.ERA) != toCal.get(Calendar.ERA))
         {
             throw new IllegalArgumentException("Different ERAs are not allowed. From:" + from + " To:" + to);
         }
