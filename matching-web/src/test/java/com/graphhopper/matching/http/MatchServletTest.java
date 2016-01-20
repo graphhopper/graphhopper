@@ -3,10 +3,6 @@ package com.graphhopper.matching.http;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
-import java.io.BufferedInputStream;
-import java.io.File;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -33,7 +29,7 @@ public class MatchServletTest extends BaseServletTester {
     public void setUp() {
         CmdArgs args = new CmdArgs().
                 put("graph.flagEncoders", "car").
-                put("prepare.chWeighting", "false").
+                put("prepare.chWeighting", "no").
                 put("osmreader.osm", pbf).
                 put("graph.location", dir);
         setUpJetty(args);
