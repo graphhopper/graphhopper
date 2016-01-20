@@ -17,11 +17,12 @@
  */
 package com.graphhopper.reader.osm.conditional;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 /**
  * This class represents a parsed Date and the parse type.
- *
+ * <p>
  * @author Robin Boldt
  */
 public class ParsedCalendar
@@ -76,6 +77,12 @@ public class ParsedCalendar
         parsedCalendar.set(Calendar.MILLISECOND, parsedCalendar.getActualMinimum(Calendar.MILLISECOND));
 
         return parsedCalendar;
+    }
+
+    @Override
+    public String toString()
+    {
+        return parseType + "; " + new SimpleDateFormat().format(parsedCalendar.getTime());
     }
 
     public enum ParseType

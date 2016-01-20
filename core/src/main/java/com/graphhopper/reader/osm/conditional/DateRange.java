@@ -1,10 +1,11 @@
 package com.graphhopper.reader.osm.conditional;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
 
 /**
  * This class represents a date range and is able to determine if a given date is in that range.
- *
+ * <p>
  * @author Robin Boldt
  */
 public class DateRange
@@ -54,7 +55,6 @@ public class DateRange
 
         this.from = from.getMin();
         this.to = to.getMax();
-
     }
 
     public boolean isInRange( Calendar date )
@@ -62,10 +62,13 @@ public class DateRange
         if (!yearless && !dayOnly)
             return date.after(from) && date.before(to);
 
-        if(dayOnly){
-            if(reverse){
+        if (dayOnly)
+        {
+            if (reverse)
+            {
                 return (from.get(Calendar.DAY_OF_WEEK) <= date.get(Calendar.DAY_OF_WEEK) || date.get(Calendar.DAY_OF_WEEK) <= to.get(Calendar.DAY_OF_WEEK));
-            }else{
+            } else
+            {
                 return (from.get(Calendar.DAY_OF_WEEK) <= date.get(Calendar.DAY_OF_WEEK) && date.get(Calendar.DAY_OF_WEEK) <= to.get(Calendar.DAY_OF_WEEK));
             }
         }
@@ -106,25 +109,27 @@ public class DateRange
 
     private boolean isInRangeYearlessReverse( Calendar date )
     {
-        if (from.get(Calendar.MONTH) < date.get(Calendar.MONTH) || date.get(Calendar.MONTH) < to.get(Calendar.MONTH))
+        int currMonth = date.get(Calendar.MONTH);
+        if (from.get(Calendar.MONTH) < currMonth || currMonth < to.get(Calendar.MONTH))
             return true;
-        if (from.get(Calendar.MONTH) == date.get(Calendar.MONTH) && to.get(Calendar.MONTH) == date.get(Calendar.MONTH))
+        if (from.get(Calendar.MONTH) == currMonth && to.get(Calendar.MONTH) == currMonth)
         {
-            if (from.get(Calendar.DAY_OF_MONTH) < date.get(Calendar.DAY_OF_MONTH) || date.get(Calendar.DAY_OF_MONTH) < to.get(Calendar.DAY_OF_MONTH))
+            if (from.get(Calendar.DAY_OF_MONTH) < date.get(Calendar.DAY_OF_MONTH)
+                    || date.get(Calendar.DAY_OF_MONTH) < to.get(Calendar.DAY_OF_MONTH))
                 return true;
             else
                 return false;
         }
-        if (from.get(Calendar.MONTH) == date.get(Calendar.MONTH))
+        if (from.get(Calendar.MONTH) == currMonth)
         {
             if (from.get(Calendar.DAY_OF_MONTH) <= date.get(Calendar.DAY_OF_MONTH))
                 return true;
             else
                 return false;
         }
-        if (to.get(Calendar.MONTH) == date.get(Calendar.MONTH))
+        if (to.get(Calendar.MONTH) == currMonth)
         {
-            if (date.get(Calendar.DAY_OF_MONTH) >= to.get(Calendar.DAY_OF_MONTH))
+            if (date.get(Calendar.DAY_OF_MONTH) <= to.get(Calendar.DAY_OF_MONTH))
                 return true;
             else
                 return false;
@@ -132,5 +137,11 @@ public class DateRange
         return false;
     }
 
-
+    @Override
+    public String toString()
+    {
+        SimpleDateFormat f = new SimpleDateFormat();
+        return "yearless:" + yearless + ", dayOnly:" + dayOnly + ", reverse:" + reverse
+                + ", from:" + f.format(from.getTime()) + ", to:" + f.format(to.getTime());
+    }
 }
