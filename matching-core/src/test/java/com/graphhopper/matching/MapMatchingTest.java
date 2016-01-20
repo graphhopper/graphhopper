@@ -17,6 +17,7 @@
  */
 package com.graphhopper.matching;
 
+import com.graphhopper.AltResponse;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -100,7 +101,7 @@ public class MapMatchingTest {
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
 
         Path path = mapMatching.calcPath(mr);
-        GHResponse matchGHRsp = new GHResponse();
+        AltResponse matchGHRsp = new AltResponse();
         new PathMerger().doWork(matchGHRsp, Collections.singletonList(path), SINGLETON.get("en"));
         InstructionList il = matchGHRsp.getInstructions();
 
@@ -119,7 +120,7 @@ public class MapMatchingTest {
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
 
         path = mapMatching.calcPath(mr);
-        matchGHRsp = new GHResponse();
+        matchGHRsp = new AltResponse();
         new PathMerger().doWork(matchGHRsp, Collections.singletonList(path), SINGLETON.get("en"));
         il = matchGHRsp.getInstructions();
 
@@ -356,8 +357,8 @@ public class MapMatchingTest {
         }
 
         @Override
-        protected List<Path> getPaths(GHRequest request, GHResponse rsp) {
-            paths = super.getPaths(request, rsp);
+        protected List<Path> calcPaths(GHRequest request, GHResponse rsp) {
+            paths = super.calcPaths(request, rsp);
             return paths;
         }
     }
