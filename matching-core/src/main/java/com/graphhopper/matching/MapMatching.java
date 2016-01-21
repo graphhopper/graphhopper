@@ -27,7 +27,7 @@ import com.graphhopper.routing.util.FastestWeighting;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -504,12 +504,12 @@ public class MapMatching {
         }
 
         public void initFrom(int node, double weight) {
-            EdgeEntry entry = createEdgeEntry(node, weight);
+            SPTEntry entry = createEdgeEntry(node, weight);
             if (currEdge == null || currEdge.weight > weight) {
                 currEdge = entry;
             }
 
-            EdgeEntry old = fromMap.get(node);
+            SPTEntry old = fromMap.get(node);
             if (old == null || old.weight > weight) {
                 fromHeap.add(entry);
                 fromMap.put(node, entry);
@@ -552,7 +552,7 @@ public class MapMatching {
             double bestWeight = Double.MAX_VALUE;
             for (QueryResult qr : endQRs) {
                 int node = qr.getClosestNode();
-                EdgeEntry tmp1 = fromMap.get(node);
+                SPTEntry tmp1 = fromMap.get(node);
                 double w = weighting.getMinWeight(qr.getQueryDistance() * maxSearchWeightMultiplier);
                 if (tmp1 != null && bestWeight > tmp1.weight + w) {
                     currEdge = tmp1;
