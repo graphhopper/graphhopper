@@ -21,7 +21,7 @@ import com.graphhopper.routing.util.FastestWeighting;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
@@ -76,7 +76,7 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
         AltSingleDijkstra altDijkstra = new AltSingleDijkstra(graph, flagEncoder, weighting, traversalMode);
         altDijkstra.setWeightLimit(weightLimit);
         altDijkstra.beforeRun(from);
-        EdgeEntry currFrom = altDijkstra.searchBest(from, maxFullDistance);
+        SPTEntry currFrom = altDijkstra.searchBest(from, maxFullDistance);
         visitedNodes = altDijkstra.getVisitedNodes();
         if (currFrom == null)
             return Collections.emptyList();
@@ -160,14 +160,14 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
                 throw new RuntimeException("no second best found. " + infos);
 
             // correction: remove end standing path
-            EdgeEntry newTo = secondBest.getShareStart();
+            SPTEntry newTo = secondBest.getShareStart();
             if (newTo.parent != null)
             {
                 // in case edge was found in forwardEdgeSet we calculate the first sharing end
                 int tKey = traversalMode.createTraversalId(newTo.adjNode, newTo.parent.adjNode, newTo.edge, false);
 
                 // do new extract
-                EdgeEntry tmpFromEdgeEntry = altDijkstra.getFromEntry(tKey);
+                SPTEntry tmpFromEdgeEntry = altDijkstra.getFromEntry(tKey);
 
                 // if (tmpFromEdgeEntry.parent != null) tmpFromEdgeEntry = tmpFromEdgeEntry.parent;
                 bestForwardPath = new Path(graph, flagEncoder).setEdgeEntry(tmpFromEdgeEntry).setWeight(tmpFromEdgeEntry.weight).extract();
@@ -237,12 +237,12 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
             initFrom(from, 0);
         }
 
-        public EdgeEntry getFromEntry( int key )
+        public SPTEntry getFromEntry( int key )
         {
             return bestWeightMapFrom.get(key);
         }
 
-        EdgeEntry searchBest( int from, double maxFullDistance )
+        SPTEntry searchBest( int from, double maxFullDistance )
         {
             NodeAccess na = graph.getNodeAccess();
             DistanceCalc distanceCalc = Helper.DIST_PLANE;
@@ -252,7 +252,7 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
             double lat1 = na.getLatitude(from), lon1 = na.getLongitude(from);
             double lastNormedDistance = -1;
             boolean tmpFinishedFrom = false;
-            EdgeEntry tmp = null;
+            SPTEntry tmp = null;
 
             while (!tmpFinishedFrom)
             {

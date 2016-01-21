@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
@@ -80,7 +80,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 
-    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry bestEdgeEntry, int traversalId )
+    protected void updateBestPath( EdgeIteratorState edgeState, SPTEntry bestEdgeEntry, int traversalId )
     {
     }
 
@@ -92,9 +92,9 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         alreadyRun = true;
     }
 
-    protected EdgeEntry createEdgeEntry( int node, double weight )
+    protected SPTEntry createEdgeEntry( int node, double weight )
     {
-        return new EdgeEntry(EdgeIterator.NO_EDGE, node, weight);
+        return new SPTEntry(EdgeIterator.NO_EDGE, node, weight);
     }
 
     /**

@@ -22,14 +22,14 @@ package com.graphhopper.storage;
  * <p>
  * @author Peter Karich
  */
-public class EdgeEntry implements Cloneable, Comparable<EdgeEntry>
+public class SPTEntry implements Cloneable, Comparable<SPTEntry>
 {
     public int edge;
     public int adjNode;
     public double weight;
-    public EdgeEntry parent;
+    public SPTEntry parent;
 
-    public EdgeEntry( int edgeId, int adjNode, double weight )
+    public SPTEntry( int edgeId, int adjNode, double weight )
     {
         this.edge = edgeId;
         this.adjNode = adjNode;
@@ -37,16 +37,16 @@ public class EdgeEntry implements Cloneable, Comparable<EdgeEntry>
     }
 
     @Override
-    public EdgeEntry clone()
+    public SPTEntry clone()
     {
-        return new EdgeEntry(edge, adjNode, weight);
+        return new SPTEntry(edge, adjNode, weight);
     }
 
-    public EdgeEntry cloneFull()
+    public SPTEntry cloneFull()
     {
-        EdgeEntry de = clone();
-        EdgeEntry tmpPrev = parent;
-        EdgeEntry cl = de;
+        SPTEntry de = clone();
+        SPTEntry tmpPrev = parent;
+        SPTEntry cl = de;
         while (tmpPrev != null)
         {
             cl.parent = tmpPrev.clone();
@@ -57,7 +57,7 @@ public class EdgeEntry implements Cloneable, Comparable<EdgeEntry>
     }
 
     @Override
-    public int compareTo( EdgeEntry o )
+    public int compareTo( SPTEntry o )
     {
         if (weight < o.weight)
             return -1;

@@ -28,7 +28,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.routing.util.WeightApproximator;
 import com.graphhopper.routing.util.BeelineWeightApproximator;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -162,7 +162,7 @@ public class AStar extends AbstractRoutingAlgorithm
     }
 
     @Override
-    protected EdgeEntry createEdgeEntry( int node, double weight )
+    protected SPTEntry createEdgeEntry( int node, double weight )
     {
         throw new IllegalStateException("use AStarEdge constructor directly");
     }
@@ -185,7 +185,7 @@ public class AStar extends AbstractRoutingAlgorithm
         return currEdge.weight > weightLimit;
     }
 
-    public static class AStarEdge extends EdgeEntry
+    public static class AStarEdge extends SPTEntry
     {
         // the variable 'weight' is used to let heap select smallest *full* distance.
         // but to compare distance we need it only from start:

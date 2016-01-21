@@ -30,13 +30,13 @@ public class EdgeTest
     @Test
     public void testCloneFull()
     {
-        EdgeEntry de = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 10);
-        EdgeEntry de2 = de.parent = new EdgeEntry(EdgeIterator.NO_EDGE, -2, 20);
-        EdgeEntry de3 = de2.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 3, 30);
+        SPTEntry de = new SPTEntry(EdgeIterator.NO_EDGE, 1, 10);
+        SPTEntry de2 = de.parent = new SPTEntry(EdgeIterator.NO_EDGE, -2, 20);
+        SPTEntry de3 = de2.parent = new SPTEntry(EdgeIterator.NO_EDGE, 3, 30);
 
-        EdgeEntry cloning = de.cloneFull();
-        EdgeEntry tmp1 = de;
-        EdgeEntry tmp2 = cloning;
+        SPTEntry cloning = de.cloneFull();
+        SPTEntry tmp1 = de;
+        SPTEntry tmp2 = cloning;
 
         assertNotNull(tmp1);
         while (tmp1 != null)

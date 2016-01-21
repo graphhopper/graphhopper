@@ -22,7 +22,7 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -560,12 +560,12 @@ public class MiniGraphUI
             return currFrom.weight > bestPath.getWeight() && currTo.weight > bestPath.getWeight();
         }
 
-        public TIntObjectMap<EdgeEntry> getBestWeightMapFrom()
+        public TIntObjectMap<SPTEntry> getBestWeightMapFrom()
         {
             return bestWeightMapFrom;
         }
 
-        public TIntObjectMap<EdgeEntry> getBestWeightMapTo()
+        public TIntObjectMap<SPTEntry> getBestWeightMapTo()
         {
             return bestWeightMapTo;
         }

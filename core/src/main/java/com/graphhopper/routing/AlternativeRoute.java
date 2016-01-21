@@ -22,7 +22,7 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -201,12 +201,12 @@ public class AlternativeRoute implements RoutingAlgorithm
     {
         private final double sortBy;
         private final Path path;
-        private final EdgeEntry shareStart;
-        private final EdgeEntry shareEnd;
+        private final SPTEntry shareStart;
+        private final SPTEntry shareEnd;
         private final double shareWeight;
         private final List<String> names;
 
-        public AlternativeInfo( double sortBy, Path path, EdgeEntry shareStart, EdgeEntry shareEnd,
+        public AlternativeInfo( double sortBy, Path path, SPTEntry shareStart, SPTEntry shareEnd,
                                 double shareWeight, List<String> altNames )
         {
             this.names = altNames;
@@ -223,12 +223,12 @@ public class AlternativeRoute implements RoutingAlgorithm
             return path;
         }
 
-        public EdgeEntry getShareStart()
+        public SPTEntry getShareStart()
         {
             return shareStart;
         }
 
-        public EdgeEntry getShareEnd()
+        public SPTEntry getShareEnd()
         {
             return shareEnd;
         }
@@ -322,14 +322,14 @@ public class AlternativeRoute implements RoutingAlgorithm
             final AlternativeInfo bestAlt = new AlternativeInfo(sortBy, bestPath,
                     bestPath.edgeEntry, bestPath.edgeTo, bestShare, getAltNames(graph, bestPath.edgeEntry));
             alternatives.add(bestAlt);
-            final List<EdgeEntry> bestPathEntries = new ArrayList<EdgeEntry>(2);
+            final List<SPTEntry> bestPathEntries = new ArrayList<SPTEntry>(2);
 
-            bestWeightMapFrom.forEachEntry(new TIntObjectProcedure<EdgeEntry>()
+            bestWeightMapFrom.forEachEntry(new TIntObjectProcedure<SPTEntry>()
             {
                 @Override
-                public boolean execute( final int traversalId, final EdgeEntry fromEdgeEntry )
+                public boolean execute( final int traversalId, final SPTEntry fromEdgeEntry )
                 {
-                    EdgeEntry toEdgeEntry = bestWeightMapTo.get(traversalId);
+                    SPTEntry toEdgeEntry = bestWeightMapTo.get(traversalId);
                     if (toEdgeEntry == null)
                         return true;
 
@@ -362,7 +362,7 @@ public class AlternativeRoute implements RoutingAlgorithm
                         return true;
 
                     // For edge based traversal we need the next entry to find out the plateau start
-                    EdgeEntry tmpFromEntry = traversalMode.isEdgeBased() ? fromEdgeEntry.parent : fromEdgeEntry;
+                    SPTEntry tmpFromEntry = traversalMode.isEdgeBased() ? fromEdgeEntry.parent : fromEdgeEntry;
                     if (tmpFromEntry == null || tmpFromEntry.parent == null)
                     {
                         // we can be here only if edge based and only if entry is not part of the best path 
@@ -372,7 +372,7 @@ public class AlternativeRoute implements RoutingAlgorithm
                     {
                         int nextToTraversalId = traversalMode.createTraversalId(tmpFromEntry.adjNode,
                                 tmpFromEntry.parent.adjNode, tmpFromEntry.edge, true);
-                        EdgeEntry tmpNextToEdgeEntry = bestWeightMapTo.get(nextToTraversalId);
+                        SPTEntry tmpNextToEdgeEntry = bestWeightMapTo.get(nextToTraversalId);
                         if (tmpNextToEdgeEntry == null)
                             return true;
 
@@ -395,14 +395,14 @@ public class AlternativeRoute implements RoutingAlgorithm
                     // that the from-EdgeEntry is the start of the plateau or there is no plateau at all
                     //
                     double plateauWeight = 0;
-                    EdgeEntry prevToEdgeEntry = toEdgeEntry;
+                    SPTEntry prevToEdgeEntry = toEdgeEntry;
                     // List<Integer> plateauEdges = new ArrayList<Integer>();
                     while (prevToEdgeEntry.parent != null)
                     {
                         int nextFromTraversalId = traversalMode.createTraversalId(prevToEdgeEntry.adjNode, prevToEdgeEntry.parent.adjNode,
                                 prevToEdgeEntry.edge, false);
 
-                        EdgeEntry nextFromEdgeEntry = bestWeightMapFrom.get(nextFromTraversalId);
+                        SPTEntry nextFromEdgeEntry = bestWeightMapFrom.get(nextFromTraversalId);
                         // end of a plateau
                         if (nextFromEdgeEntry == null)
                             break;
@@ -423,8 +423,8 @@ public class AlternativeRoute implements RoutingAlgorithm
                         throw new IllegalStateException("not implemented yet. in case of an edge based traversal the parent of fromEdgeEntry could be null");
 
                     // (3b) calculate share                    
-                    EdgeEntry fromEE = getFirstShareEE(fromEdgeEntry.parent, true);
-                    EdgeEntry toEE = getFirstShareEE(toEdgeEntry.parent, false);
+                    SPTEntry fromEE = getFirstShareEE(fromEdgeEntry.parent, true);
+                    SPTEntry toEE = getFirstShareEE(toEdgeEntry.parent, false);
                     double shareWeight = fromEE.weight + toEE.weight;
                     boolean smallShare = shareWeight / bestPath.getWeight() < maxShareFactor;
                     if (smallShare)
@@ -461,7 +461,7 @@ public class AlternativeRoute implements RoutingAlgorithm
                 /**
                  * Extract path until we stumble over an existing traversal id
                  */
-                EdgeEntry getFirstShareEE( EdgeEntry startEE, boolean reverse )
+                SPTEntry getFirstShareEE( SPTEntry startEE, boolean reverse )
                 {
                     while (startEE.parent != null)
                     {
@@ -503,7 +503,7 @@ public class AlternativeRoute implements RoutingAlgorithm
                 }
 
                 // returns true if fromEdgeEntry is identical to the specified best path
-                boolean isBestPath( EdgeEntry fromEdgeEntry, Path bestPath )
+                boolean isBestPath( SPTEntry fromEdgeEntry, Path bestPath )
                 {
                     if (traversalMode.isEdgeBased())
                     {
@@ -566,7 +566,7 @@ public class AlternativeRoute implements RoutingAlgorithm
         }
     }
 
-    static List<String> getAltNames( Graph graph, EdgeEntry ee )
+    static List<String> getAltNames( Graph graph, SPTEntry ee )
     {
         if (ee == null)
             return Collections.emptyList();

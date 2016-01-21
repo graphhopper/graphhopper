@@ -19,7 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
@@ -50,7 +50,7 @@ public class Path
     protected boolean reverseOrder = true;
     protected long time;
     private boolean found;
-    protected EdgeEntry edgeEntry;
+    protected SPTEntry edgeEntry;
     final StopWatch extractSW = new StopWatch("extract");
     private int fromNode = -1;
     protected int endNode = -1;
@@ -95,7 +95,7 @@ public class Path
         return this;
     }
 
-    public Path setEdgeEntry( EdgeEntry edgeEntry )
+    public Path setEdgeEntry( SPTEntry edgeEntry )
     {
         this.edgeEntry = edgeEntry;
         return this;
@@ -200,7 +200,7 @@ public class Path
             throw new IllegalStateException("Extract can only be called once");
 
         extractSW.start();
-        EdgeEntry goalEdge = edgeEntry;
+        SPTEntry goalEdge = edgeEntry;
         setEndNode(goalEdge.adjNode);
         while (EdgeIterator.Edge.isValid(goalEdge.edge))
         {

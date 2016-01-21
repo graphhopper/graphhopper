@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 
@@ -29,7 +29,7 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class PathBidirRef extends Path
 {
-    protected EdgeEntry edgeTo;
+    protected SPTEntry edgeTo;
     private boolean switchWrapper = false;
 
     public PathBidirRef( Graph g, FlagEncoder encoder )
@@ -50,7 +50,7 @@ public class PathBidirRef extends Path
         return this;
     }
 
-    public PathBidirRef setEdgeEntryTo( EdgeEntry edgeTo )
+    public PathBidirRef setEdgeEntryTo( SPTEntry edgeTo )
     {
         this.edgeTo = edgeTo;
         return this;
@@ -71,12 +71,12 @@ public class PathBidirRef extends Path
         extractSW.start();
         if (switchWrapper)
         {
-            EdgeEntry ee = edgeEntry;
+            SPTEntry ee = edgeEntry;
             edgeEntry = edgeTo;
             edgeTo = ee;
         }
 
-        EdgeEntry currEdge = edgeEntry;
+        SPTEntry currEdge = edgeEntry;
         while (EdgeIterator.Edge.isValid(currEdge.edge))
         {
             processEdge(currEdge.edge, currEdge.adjNode);

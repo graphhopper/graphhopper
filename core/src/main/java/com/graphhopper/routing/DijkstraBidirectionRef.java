@@ -25,7 +25,7 @@ import java.util.PriorityQueue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -41,13 +41,13 @@ import com.graphhopper.util.GHUtility;
  */
 public class DijkstraBidirectionRef extends AbstractBidirAlgo
 {
-    private PriorityQueue<EdgeEntry> openSetFrom;
-    private PriorityQueue<EdgeEntry> openSetTo;
-    protected TIntObjectMap<EdgeEntry> bestWeightMapFrom;
-    protected TIntObjectMap<EdgeEntry> bestWeightMapTo;
-    protected TIntObjectMap<EdgeEntry> bestWeightMapOther;
-    protected EdgeEntry currFrom;
-    protected EdgeEntry currTo;
+    private PriorityQueue<SPTEntry> openSetFrom;
+    private PriorityQueue<SPTEntry> openSetTo;
+    protected TIntObjectMap<SPTEntry> bestWeightMapFrom;
+    protected TIntObjectMap<SPTEntry> bestWeightMapTo;
+    protected TIntObjectMap<SPTEntry> bestWeightMapOther;
+    protected SPTEntry currFrom;
+    protected SPTEntry currTo;
     protected PathBidirRef bestPath;
     private boolean updateBestPath = true;
 
@@ -59,11 +59,11 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
 
     protected void initCollections( int nodes )
     {
-        openSetFrom = new PriorityQueue<EdgeEntry>(nodes / 10);
-        bestWeightMapFrom = new TIntObjectHashMap<EdgeEntry>(nodes / 10);
+        openSetFrom = new PriorityQueue<SPTEntry>(nodes / 10);
+        bestWeightMapFrom = new TIntObjectHashMap<SPTEntry>(nodes / 10);
 
-        openSetTo = new PriorityQueue<EdgeEntry>(nodes / 10);
-        bestWeightMapTo = new TIntObjectHashMap<EdgeEntry>(nodes / 10);
+        openSetTo = new PriorityQueue<SPTEntry>(nodes / 10);
+        bestWeightMapTo = new TIntObjectHashMap<SPTEntry>(nodes / 10);
     }
 
     @Override
@@ -190,8 +190,8 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         return currFrom.weight + currTo.weight > weightLimit;
     }
 
-    void fillEdges( EdgeEntry currEdge, PriorityQueue<EdgeEntry> prioQueue,
-                    TIntObjectMap<EdgeEntry> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
+    void fillEdges( SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
+                    TIntObjectMap<SPTEntry> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
     {        
         EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
         while (iter.next())
@@ -204,10 +204,10 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
             if (Double.isInfinite(tmpWeight))
                 continue;
 
-            EdgeEntry ee = shortestWeightMap.get(traversalId);
+            SPTEntry ee = shortestWeightMap.get(traversalId);
             if (ee == null)
             {
-                ee = new EdgeEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
+                ee = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
                 ee.parent = currEdge;
                 shortestWeightMap.put(traversalId, ee);
                 prioQueue.add(ee);
@@ -227,9 +227,9 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     }
 
     @Override
-    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry entryCurrent, int traversalId )
+    protected void updateBestPath( EdgeIteratorState edgeState, SPTEntry entryCurrent, int traversalId )
     {
-        EdgeEntry entryOther = bestWeightMapOther.get(traversalId);
+        SPTEntry entryOther = bestWeightMapOther.get(traversalId);
         if (entryOther == null)
             return;
 
@@ -264,17 +264,17 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         }
     }
 
-    TIntObjectMap<EdgeEntry> getBestFromMap()
+    TIntObjectMap<SPTEntry> getBestFromMap()
     {
         return bestWeightMapFrom;
     }
 
-    TIntObjectMap<EdgeEntry> getBestToMap()
+    TIntObjectMap<SPTEntry> getBestToMap()
     {
         return bestWeightMapTo;
     }
 
-    void setBestOtherMap( TIntObjectMap<EdgeEntry> other )
+    void setBestOtherMap( TIntObjectMap<SPTEntry> other )
     {
         bestWeightMapOther = other;
     }
