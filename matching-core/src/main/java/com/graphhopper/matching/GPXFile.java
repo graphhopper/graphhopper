@@ -199,7 +199,7 @@ public class GPXFile {
             if (includeElevation) {
                 gpxOutput.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
             }
-            gpxOutput.append("<time>").append(formatter.format(startTimeMillis + entry.getMillis())).append("</time>");
+            gpxOutput.append("<time>").append(formatter.format(startTimeMillis + entry.getTime())).append("</time>");
             gpxOutput.append("</trkpt>");
         }
         gpxOutput.append("</trkseg>");

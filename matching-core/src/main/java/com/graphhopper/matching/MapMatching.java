@@ -220,7 +220,7 @@ public class MapMatching {
             prevEntry = entry;
         }
 
-        long gpxMillis = gpxList.get(gpxList.size() - 1).getMillis() - gpxList.get(0).getMillis();
+        long gpxMillis = gpxList.get(gpxList.size() - 1).getTime()- gpxList.get(0).getTime();
         matchResult.setGPXEntriesMillis(gpxMillis);
         matchResult.setGPXEntriesLength(gpxLength);
 
