@@ -128,8 +128,9 @@ public class GraphHopperWeb implements GraphHopperAPI
             if (!tmpKey.isEmpty())
                 url += "&key=" + tmpKey;
             int altMax = request.getHints().getInt("alternative_route.max_num", 0);
-            if(altMax!=0){
-            	url += "&alternative_route.max_num=" + altMax;            	
+            if (altMax != 0)
+            {
+                url += "&alternative_route.max_num=" + altMax;
             }
 
             String str = downloader.downloadAsString(url, true);
@@ -247,15 +248,6 @@ public class GraphHopperWeb implements GraphHopperAPI
                 errors.add(new RuntimeException(json.getString("message")));
                 return errors;
             }
-        } else if (json.has("info"))
-        {
-            // deprecated JSON format for errors, remove in 0.5 release
-            JSONObject jsonInfo = json.getJSONObject("info");
-            if (jsonInfo.has("errors"))
-                errorJson = jsonInfo.getJSONArray("errors");
-            else
-                return errors;
-
         } else
             return errors;
 

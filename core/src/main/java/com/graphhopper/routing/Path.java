@@ -162,15 +162,6 @@ public class Path
 
     /**
      * @return time in millis
-     * @deprecated use getTime instead
-     */
-    public long getMillis()
-    {
-        return time;
-    }
-
-    /**
-     * @return time in millis
      */
     public long getTime()
     {

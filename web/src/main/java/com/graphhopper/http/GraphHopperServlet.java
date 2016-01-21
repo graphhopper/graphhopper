@@ -160,7 +160,7 @@ public class GraphHopperServlet extends GHBaseServlet
                     + ", time0: " + Math.round(altRsp0.getTime() / 60000f) + "min"
                     + ", points0: " + altRsp0.getPoints().getSize()
                     + ", debugInfo: " + ghRsp.getDebugInfo());
-        }
+        }               
 
         if (writeGPX)
         {
@@ -178,12 +178,7 @@ public class GraphHopperServlet extends GHBaseServlet
         {
             Map<String, Object> map = routeSerializer.toJSON(ghRsp, calcPoints, pointsEncoded,
                     enableElevation, enableInstructions);
-
-            // deprecated - remove in 0.5
-            Object infoMap = map.get("info");
-            if (infoMap != null)
-                ((Map) infoMap).put("took", Math.round(took * 1000));
-
+            
             if (ghRsp.hasErrors())
                 writeJsonError(httpRes, SC_BAD_REQUEST, new JSONObject(map));
             else

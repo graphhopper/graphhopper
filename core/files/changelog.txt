@@ -1,4 +1,5 @@
 0.6
+    removed methods deprecated in 0.4 and 0.5
     renamed EdgeEntry to SPTEntry
     parameter force removed from AbstractFlagEncoder.applyMaxSpeed
     GHResponse now wraps multiple AltResponse; renames GraphHopper.getPaths to calcPaths as 'get' sounds too cheap; a new method RoutingAlgorithm.calcPaths is added; see #596
