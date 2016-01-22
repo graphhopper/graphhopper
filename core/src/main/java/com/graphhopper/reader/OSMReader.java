@@ -752,6 +752,7 @@ public class OSMReader implements DataReader
         if (pointList.getDimension() != nodeAccess.getDimension())
             throw new AssertionError("Dimension does not match for pointList vs. nodeAccess " + pointList.getDimension() + " <-> " + nodeAccess.getDimension());
 
+		pointList = preprocessGeometry(pointList);
         double towerNodeDistance = 0;
         double prevLat = pointList.getLatitude(0);
         double prevLon = pointList.getLongitude(0);
@@ -805,6 +806,11 @@ public class OSMReader implements DataReader
         return iter;
     }
 
+	protected PointList preprocessGeometry(PointList pillarNodes)
+	{
+		return pillarNodes;
+	}
+
     /**
      * Stores the way geometry. Overwrite this method for custom simplification.
      *
@@ -856,7 +862,7 @@ public class OSMReader implements DataReader
                 pointList.add(lat, lon);
         }
 
-        return (int) tmpNode;
+        return tmpNode;
     }
 
     protected void finishedReading()
