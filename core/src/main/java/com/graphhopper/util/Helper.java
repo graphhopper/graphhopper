@@ -51,6 +51,7 @@ public class Helper
     public static final DistancePlaneProjection DIST_PLANE = new DistancePlaneProjection();
     private static final Logger logger = LoggerFactory.getLogger(Helper.class);
     public static Charset UTF_CS = Charset.forName("UTF-8");
+    public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
 
     public static ArrayList<Integer> tIntListToArrayList( TIntList from )
@@ -497,7 +498,7 @@ public class Helper
     public static final double round2( double value )
     {
         return Math.round(value * 100) / 100d;
-    }
+    }    
 
     /**
      * This creates a date formatter for yyyy-MM-dd'T'HH:mm:ss'Z' which is has to be identical to
@@ -505,8 +506,16 @@ public class Helper
      */
     public static DateFormat createFormatter()
     {
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return createFormatter("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    }
+
+    /**
+     * Creates a SimpleDateFormat with the UK locale.
+     */
+    public static DateFormat createFormatter( String str )
+    {
+        DateFormat df = new SimpleDateFormat(str, Locale.UK);
+        df.setTimeZone(UTC);
         return df;
     }
 

@@ -17,37 +17,44 @@
  */
 package com.graphhopper.reader.osm.conditional;
 
+import com.graphhopper.util.Helper;
+import static com.graphhopper.util.Helper.createFormatter;
+import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Calendar;
-import java.util.List;
+import java.util.*;
 
 /**
- * Parses a DateRange. Currently only DateRanges that last at least one day are supported. The
- * Syntax is allowed inputs is described here: http://wiki.openstreetmap.org/wiki/Key:opening_hours.
+ * Parses a DateRange from OpenStreetMap. Currently only DateRanges that last at least one day are
+ * supported. The Syntax is allowed inputs is described here:
+ * http://wiki.openstreetmap.org/wiki/Key:opening_hours.
  * <p>
  * @author Robin Boldt
  */
 public class DateRangeParser
 {
-    static SimpleDateFormat yearMonthDayFormat = new SimpleDateFormat("yyyy MMM dd");
-    static SimpleDateFormat monthDayFormat = new SimpleDateFormat("MMM dd");
-    static SimpleDateFormat monthDay2Format = new SimpleDateFormat("dd.MM");
-    static SimpleDateFormat yearMonthFormat = new SimpleDateFormat("yyyy MMM");
-    static SimpleDateFormat monthFormat = new SimpleDateFormat("MMM");
-    static SimpleDateFormat dayFormat = new SimpleDateFormat("E");
-    static List<String> dayNames = Arrays.asList(new String[]
+    private static final DateFormat yearMonthDayFormat = createFormatter("yyyy MMM dd");
+    private static final DateFormat monthDayFormat = createFormatter("MMM dd");
+    private static final DateFormat monthDay2Format = createFormatter("dd.MM");
+    private static final DateFormat yearMonthFormat = createFormatter("yyyy MMM");
+    private static final DateFormat monthFormat = createFormatter("MMM");
+    private static final List<String> dayNames = Arrays.asList(new String[]
     {
         "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"
     });
+
+    static Calendar createCalendar()
+    {
+        // Use locale US as exception here (instead of UK) to match week order "Su-Sa" used in Calendar for day_of_week.
+        // Inconsistent but we should not use US for other date handling stuff like strange default formatting, related to #647.
+        return Calendar.getInstance(Helper.UTC, Locale.US);
+    }
 
     public static ParsedCalendar parseDateString( String dateString ) throws ParseException
     {
         // Replace occurences of public holidays
         dateString = dateString.replaceAll("(,( )*)?(PH|SH)", "");
         dateString = dateString.trim();
-        Calendar calendar = Calendar.getInstance();
+        Calendar calendar = createCalendar();
         ParsedCalendar parsedCalendar;
         try
         {
@@ -109,6 +116,8 @@ public class DateRangeParser
         if (dateArr.length == 2)
             to = parseDateString(dateArr[1]);
         else
+            // faster and safe?
+            // to = new ParsedCalendar(from.parseType, (Calendar) from.parsedCalendar.clone());
             to = parseDateString(dateArr[0]);
 
         return new DateRange(from, to);

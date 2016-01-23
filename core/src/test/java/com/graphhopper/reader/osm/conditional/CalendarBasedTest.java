@@ -15,25 +15,23 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.osm;
+package com.graphhopper.reader.osm.conditional;
 
 import java.util.Calendar;
 
 /**
  * Base Test for calendar based tasks.
- *
+ * <p>
  * @author Robin Boldt
  */
 public abstract class CalendarBasedTest
 {
-
     protected Calendar getCalendar( int year, int month, int day )
     {
-        Calendar calendar = Calendar.getInstance();
+        Calendar calendar = DateRangeParser.createCalendar();
         calendar.set(Calendar.YEAR, year);
         calendar.set(Calendar.MONTH, month);
         calendar.set(Calendar.DAY_OF_MONTH, day);
         return calendar;
     }
-
 }

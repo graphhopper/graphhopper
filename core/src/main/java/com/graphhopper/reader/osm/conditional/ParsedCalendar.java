@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.osm.conditional;
 
-import java.text.SimpleDateFormat;
+import com.graphhopper.util.Helper;
 import java.util.Calendar;
 
 /**
@@ -82,7 +82,7 @@ public class ParsedCalendar
     @Override
     public String toString()
     {
-        return parseType + "; " + new SimpleDateFormat().format(parsedCalendar.getTime());
+        return parseType + "; " + Helper.createFormatter().format(parsedCalendar.getTime());
     }
 
     public enum ParseType

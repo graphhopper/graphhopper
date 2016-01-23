@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.osm.ConditionalTagsInspector;
+import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

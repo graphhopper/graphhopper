@@ -23,12 +23,13 @@ import com.graphhopper.util.Translation;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Locale;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
+import com.graphhopper.util.Helper;
 import static com.graphhopper.util.TranslationMapTest.SINGLETON;
+import java.text.DateFormat;
+import java.util.Date;
 import static org.junit.Assert.*;
 
 /**
@@ -173,18 +174,17 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("railway", "abandoned");
         assertTrue(encoder.acceptWay(way) > 0);
 
-        Calendar calendar = Calendar.getInstance();
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy MMM dd");
+        DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
 
         way.clearTags();
         way.setTag("highway", "road");
-        way.setTag("bicycle:conditional", "no @ (" + simpleDateFormat.format(calendar.getTime()) + ")");
+        way.setTag("bicycle:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
         assertFalse(encoder.acceptWay(way) > 0);
 
         way.clearTags();
         way.setTag("highway", "road");
         way.setTag("access", "no");
-        way.setTag("bicycle:conditional", "yes @ (" + simpleDateFormat.format(calendar.getTime()) + ")");
+        way.setTag("bicycle:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
         assertTrue(encoder.acceptWay(way) > 0);
     }
 

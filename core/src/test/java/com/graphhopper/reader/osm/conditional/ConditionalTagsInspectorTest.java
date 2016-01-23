@@ -15,8 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.osm;
+package com.graphhopper.reader.osm.conditional;
 
+import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
 import com.graphhopper.reader.OSMWay;
 import org.junit.Test;
 

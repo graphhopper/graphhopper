@@ -15,11 +15,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.reader.osm;
+package com.graphhopper.reader.osm.conditional;
 
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.osm.conditional.ConditionalParser;
 import com.graphhopper.reader.osm.conditional.DateRange;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,15 +49,15 @@ public class ConditionalTagsInspector
      */
     public ConditionalTagsInspector( List<String> tagsToCheck, Set<String> restrictiveValues, Set<String> permittedValues )
     {
-        this(Calendar.getInstance(), tagsToCheck, restrictiveValues, permittedValues);
+        this(DateRangeParser.createCalendar(), tagsToCheck, restrictiveValues, permittedValues);
     }
 
     /**
      * Create with given date
      */
-    public ConditionalTagsInspector( Calendar date, List<String> tagsToCheck, Set<String> restrictiveValues, Set<String> permittedValues )
+    public ConditionalTagsInspector( Calendar cal, List<String> tagsToCheck, Set<String> restrictiveValues, Set<String> permittedValues )
     {
-        this.calendar = date;
+        this.calendar = cal;
         this.tagsToCheck = tagsToCheck;
         this.restrictiveParser = new ConditionalParser(restrictiveValues, enabledLogs);
         this.permitParser = new ConditionalParser(permittedValues, enabledLogs);

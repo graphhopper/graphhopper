@@ -18,8 +18,6 @@
 package com.graphhopper.reader.osm.conditional;
 
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.osm.CalendarBasedTest;
-import com.graphhopper.reader.osm.ConditionalTagsInspector;
 import org.junit.Before;
 import org.junit.Test;
 

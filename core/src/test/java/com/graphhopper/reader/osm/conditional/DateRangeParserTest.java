@@ -17,7 +17,6 @@
  */
 package com.graphhopper.reader.osm.conditional;
 
-import com.graphhopper.reader.osm.CalendarBasedTest;
 import org.junit.Test;
 
 import java.text.ParseException;
@@ -38,6 +37,13 @@ public class DateRangeParserTest extends CalendarBasedTest
         assertSameDate(2015, Calendar.MARCH, 1, "2015 Mar");
         assertSameDate(1970, Calendar.MARCH, 31, "Mar 31");
         assertSameDate(1970, Calendar.DECEMBER, 1, "Dec");
+    }
+
+    @Test
+    public void testToString() throws ParseException
+    {
+        DateRange instance = DateRangeParser.parseDateRange("Mar-Oct");
+        assertEquals("yearless:true, dayOnly:false, reverse:false, from:1970-03-01T00:00:00Z, to:1970-10-31T23:59:59Z", instance.toString());
     }
 
     @Test
@@ -125,7 +131,7 @@ public class DateRangeParserTest extends CalendarBasedTest
         assertTrue(dateRange.isInRange(getCalendar(2016, Calendar.AUGUST, 10)));
         assertTrue(dateRange.isInRange(getCalendar(2016, Calendar.JANUARY, 1)));
         assertTrue(dateRange.isInRange(getCalendar(2016, Calendar.JANUARY, 20)));
-        assertTrue(dateRange.isInRange(getCalendar(2016, Calendar.JANUARY, 31)));        
+        assertTrue(dateRange.isInRange(getCalendar(2016, Calendar.JANUARY, 31)));
         assertFalse(dateRange.isInRange(getCalendar(2016, Calendar.FEBRUARY, 1)));
     }
 
@@ -183,6 +189,8 @@ public class DateRangeParserTest extends CalendarBasedTest
     public void testParseSingleDateRangeDayOnly() throws ParseException
     {
         DateRange dateRange = DateRangeParser.parseDateRange("Mo-Fr");
+        assertTrue(dateRange.dayOnly);
+        assertFalse(dateRange.reverse);
         assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 20)));
         assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 21)));
         assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 25)));
@@ -193,8 +201,12 @@ public class DateRangeParserTest extends CalendarBasedTest
     @Test
     public void testParseReverseDateRangeDayOnly() throws ParseException
     {
-        // This is reverse since Sa=7 and So=1
+        // This is reverse since Su=7 and Mo=1 
+        // Note: If we use Locale.Germany or Locale.UK for calendar creation 
+        // then cal.set(DAY_OF_WEEK, 7) results in a "time in millis" after Saturday leading to reverse=false
         DateRange dateRange = DateRangeParser.parseDateRange("Sa-Su");
+        assertTrue(dateRange.dayOnly);
+        assertTrue(dateRange.reverse);
         assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 25)));
         assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 26)));
         assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 27)));
