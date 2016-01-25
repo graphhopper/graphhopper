@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.AStar.AStarEdge;
+import com.graphhopper.routing.AStar.AStarEntry;
 import static com.graphhopper.routing.AlgorithmOptions.ALT_ROUTE;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
@@ -268,12 +268,12 @@ public class AlternativeRoute implements RoutingAlgorithm
             this.explorationFactor = explorationFactor;
         }
 
-        public TIntObjectMap<AStarEdge> getBestWeightMapFrom()
+        public TIntObjectMap<AStarEntry> getBestWeightMapFrom()
         {
             return bestWeightMapFrom;
         }
 
-        public TIntObjectMap<AStarEdge> getBestWeightMapTo()
+        public TIntObjectMap<AStarEntry> getBestWeightMapTo()
         {
             return bestWeightMapTo;
         }

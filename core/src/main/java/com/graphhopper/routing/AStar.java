@@ -45,9 +45,9 @@ public class AStar extends AbstractRoutingAlgorithm
 {
     private WeightApproximator weightApprox;
     private int visitedCount;
-    private TIntObjectMap<AStarEdge> fromMap;
-    private PriorityQueue<AStarEdge> prioQueueOpenSet;
-    private AStarEdge currEdge;
+    private TIntObjectMap<AStarEntry> fromMap;
+    private PriorityQueue<AStarEntry> prioQueueOpenSet;
+    private AStarEntry currEdge;
     private int to1 = -1;
 
     public AStar( Graph g, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
@@ -70,8 +70,8 @@ public class AStar extends AbstractRoutingAlgorithm
 
     protected void initCollections( int size )
     {
-        fromMap = new TIntObjectHashMap<AStarEdge>();
-        prioQueueOpenSet = new PriorityQueue<AStarEdge>(size);
+        fromMap = new TIntObjectHashMap<AStarEntry>();
+        prioQueueOpenSet = new PriorityQueue<AStarEntry>(size);
     }
 
     @Override
@@ -82,7 +82,7 @@ public class AStar extends AbstractRoutingAlgorithm
 
         weightApprox.setGoalNode(to);
         double weightToGoal = weightApprox.approximate(from);
-        currEdge = new AStarEdge(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
+        currEdge = new AStarEntry(EdgeIterator.NO_EDGE, from, 0 + weightToGoal, 0);
         if (!traversalMode.isEdgeBased())
         {
             fromMap.put(from, currEdge);
@@ -117,14 +117,14 @@ public class AStar extends AbstractRoutingAlgorithm
                 if (Double.isInfinite(alreadyVisitedWeight))
                     continue;
 
-                AStarEdge ase = fromMap.get(traversalId);
+                AStarEntry ase = fromMap.get(traversalId);
                 if (ase == null || ase.weightOfVisitedPath > alreadyVisitedWeight)
                 {
                     currWeightToGoal = weightApprox.approximate(neighborNode);
                     estimationFullWeight = alreadyVisitedWeight + currWeightToGoal;
                     if (ase == null)
                     {
-                        ase = new AStarEdge(iter.getEdge(), neighborNode, estimationFullWeight, alreadyVisitedWeight);
+                        ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, alreadyVisitedWeight);
                         fromMap.put(traversalId, ase);
                     } else
                     {
@@ -185,11 +185,11 @@ public class AStar extends AbstractRoutingAlgorithm
         return currEdge.weight > weightLimit;
     }
 
-    public static class AStarEdge extends SPTEntry
+    public static class AStarEntry extends SPTEntry
     {
         double weightOfVisitedPath;
 
-        public AStarEdge( int edgeId, int adjNode, double weightForHeap, double weightOfVisitedPath )
+        public AStarEntry( int edgeId, int adjNode, double weightForHeap, double weightOfVisitedPath )
         {
             super(edgeId, adjNode, weightForHeap);
             this.weightOfVisitedPath = weightOfVisitedPath;
