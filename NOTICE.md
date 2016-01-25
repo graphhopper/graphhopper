@@ -1,6 +1,6 @@
 GraphHopper licensed under the Apache license, Version 2.0
 
-Copyright 2012-2015 Peter Karich
+Copyright 2012-2016 Peter Karich
 
 The core product includes the following software
  * slf4j.org - SLF4J distributed under the MIT license. 
