@@ -187,14 +187,18 @@ public class AStar extends AbstractRoutingAlgorithm
 
     public static class AStarEdge extends SPTEntry
     {
-        // the variable 'weight' is used to let heap select smallest *full* distance.
-        // but to compare distance we need it only from start:
         double weightOfVisitedPath;
 
         public AStarEdge( int edgeId, int adjNode, double weightForHeap, double weightOfVisitedPath )
         {
             super(edgeId, adjNode, weightForHeap);
-            this.weightOfVisitedPath = (float) weightOfVisitedPath;
+            this.weightOfVisitedPath = weightOfVisitedPath;
+        }
+
+        @Override
+        public final double getWeightOfVisitedPath()
+        {
+            return weightOfVisitedPath;
         }
     }
 

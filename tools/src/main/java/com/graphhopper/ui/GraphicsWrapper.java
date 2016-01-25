@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  */
 public class GraphicsWrapper
 {
-    private final Graph g;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final NodeAccess na;
     private double scaleX;
     private double scaleY;
@@ -43,7 +43,6 @@ public class GraphicsWrapper
 
     public GraphicsWrapper( Graph g )
     {
-        this.g = g;
         this.na = g.getNodeAccess();
         BBox b = g.getBounds();
         scaleX = scaleY = 0.002 * (b.maxLat - b.minLat);
@@ -128,8 +127,6 @@ public class GraphicsWrapper
         double y = getY(lat);
         g2.fillOval((int) x, (int) y, width, width);
     }
-
-    private Logger logger = LoggerFactory.getLogger(getClass());
 
     void scale( int x, int y, boolean zoomIn )
     {

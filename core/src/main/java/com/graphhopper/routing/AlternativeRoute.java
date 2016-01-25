@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.AStar.AStarEdge;
 import static com.graphhopper.routing.AlgorithmOptions.ALT_ROUTE;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
@@ -27,6 +27,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.util.ArrayList;
@@ -71,7 +72,8 @@ public class AlternativeRoute implements RoutingAlgorithm
     private int visitedNodes;
     private double maxWeightFactor = 1.4;
     // the higher the maxWeightFactor the higher the explorationFactor needs to be
-    private double maxExplorationFactor = 1;
+    // 1 is default for bidir Dijkstra, 0.8 seems to be a very similar value for bidir A* but roughly 1/2 of the nodes explored
+    private double maxExplorationFactor = 0.8;
 
     private double maxShareFactor = 0.6;
     private double minPlateauFactor = 0.2;
@@ -147,14 +149,14 @@ public class AlternativeRoute implements RoutingAlgorithm
      */
     public List<AlternativeInfo> calcAlternatives( int from, int to )
     {
-        AltDijkstraBidirectionRef altBidirDijktra = new AltDijkstraBidirectionRef(
+        AlternativeBidirSearch altBidirDijktra = new AlternativeBidirSearch(
                 graph, flagEncoder, weighting, traversalMode, maxExplorationFactor * 2);
         altBidirDijktra.searchBest(from, to);
         altBidirDijktra.setWeightLimit(weightLimit);
         visitedNodes = altBidirDijktra.getVisitedNodes();
 
         List<AlternativeInfo> alternatives = altBidirDijktra.
-                calcAlternatives(maxPaths, maxWeightFactor, 10, maxShareFactor, 0.5, minPlateauFactor, -0.2);
+                calcAlternatives(maxPaths, maxWeightFactor, 7, maxShareFactor, 0.8, minPlateauFactor, -0.2);
         return alternatives;
     }
 
@@ -253,15 +255,48 @@ public class AlternativeRoute implements RoutingAlgorithm
     /**
      * Helper class to find alternatives and alternatives for round trip.
      */
-    public static class AltDijkstraBidirectionRef extends DijkstraBidirectionRef
+    public static class AlternativeBidirSearch
+            extends AStarBidirection
+    //      extends DijkstraBidirectionRef            
     {
         private final double explorationFactor;
 
-        public AltDijkstraBidirectionRef( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode,
-                                          double explorationFactor )
+        public AlternativeBidirSearch( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode,
+                                       double explorationFactor )
         {
             super(graph, encoder, weighting, tMode);
             this.explorationFactor = explorationFactor;
+        }
+
+        public TIntObjectMap<AStarEdge> getBestWeightMapFrom()
+        {
+            return bestWeightMapFrom;
+        }
+
+        public TIntObjectMap<AStarEdge> getBestWeightMapTo()
+        {
+            return bestWeightMapTo;
+        }
+//        public TIntObjectMap<SPTEntry> getBestWeightMapFrom()
+//        {
+//            return bestWeightMapFrom;
+//        }
+//
+//        public TIntObjectMap<SPTEntry> getBestWeightMapTo()
+//        {
+//            return bestWeightMapTo;
+//        }
+
+        @Override
+        protected double getCurrentFromWeight()
+        {
+            return super.getCurrentFromWeight();
+        }
+
+        @Override
+        protected double getCurrentToWeight()
+        {
+            return super.getCurrentToWeight();
         }
 
         @Override
@@ -281,8 +316,8 @@ public class AlternativeRoute implements RoutingAlgorithm
 
             // increase overlap of both searches:
             return currFrom.weight + currTo.weight > explorationFactor * bestPath.getWeight();
-            // this is more precise but takes roughly 20% longer:
-            // return currFrom.weight > bestPath.getWeight() && currTo.weight > bestPath.getWeight();
+            // This is more precise but takes roughly 20% longer: return currFrom.weight > bestPath.getWeight() && currTo.weight > bestPath.getWeight();
+            // For bidir A* and AStarEdge.getWeightOfVisitedPath see comment in AStarBidirection.finished
         }
 
         public Path searchBest( int to, int from )
@@ -350,7 +385,7 @@ public class AlternativeRoute implements RoutingAlgorithm
                     }
 
                     // (1) skip too long paths
-                    final double weight = fromEdgeEntry.weight + toEdgeEntry.weight;
+                    final double weight = fromEdgeEntry.getWeightOfVisitedPath() + toEdgeEntry.getWeightOfVisitedPath();
                     if (weight > maxWeight)
                         return true;
 
@@ -412,7 +447,7 @@ public class AlternativeRoute implements RoutingAlgorithm
                             break;
 
                         // plateauEdges.add(prevToEdgeEntry.edge);
-                        plateauWeight += (prevToEdgeEntry.weight - prevToEdgeEntry.parent.weight);
+                        plateauWeight += (prevToEdgeEntry.getWeightOfVisitedPath() - prevToEdgeEntry.parent.getWeightOfVisitedPath());
                         prevToEdgeEntry = prevToEdgeEntry.parent;
                     }
 
@@ -425,11 +460,12 @@ public class AlternativeRoute implements RoutingAlgorithm
                     // (3b) calculate share                    
                     SPTEntry fromEE = getFirstShareEE(fromEdgeEntry.parent, true);
                     SPTEntry toEE = getFirstShareEE(toEdgeEntry.parent, false);
-                    double shareWeight = fromEE.weight + toEE.weight;
+                    double shareWeight = fromEE.getWeightOfVisitedPath() + toEE.getWeightOfVisitedPath();
                     boolean smallShare = shareWeight / bestPath.getWeight() < maxShareFactor;
                     if (smallShare)
                     {
                         List<String> altNames = getAltNames(graph, fromEdgeEntry);
+
                         double sortBy = calcSortBy(weightInfluence, weight, shareInfluence, shareWeight, plateauInfluence, plateauWeight);
                         double worstSortBy = getWorstSortBy();
 
@@ -465,7 +501,7 @@ public class AlternativeRoute implements RoutingAlgorithm
                 {
                     while (startEE.parent != null)
                     {
-                        // TODO we could make use of traversal ID directly if stored in EdgeEntry
+                        // TODO we could make use of traversal ID directly if stored in SPTEntry
                         int tid = traversalMode.createTraversalId(startEE.adjNode, startEE.parent.adjNode, startEE.edge, reverse);
                         if (isAlreadyExisting(tid))
                             return startEE;
@@ -568,7 +604,7 @@ public class AlternativeRoute implements RoutingAlgorithm
 
     static List<String> getAltNames( Graph graph, SPTEntry ee )
     {
-        if (ee == null)
+        if (ee == null || !EdgeIterator.Edge.isValid(ee.edge))
             return Collections.emptyList();
 
         EdgeIteratorState iter = graph.getEdgeIteratorState(ee.edge, Integer.MIN_VALUE);

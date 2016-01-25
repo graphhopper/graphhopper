@@ -132,12 +132,60 @@ public class GraphHopperIT
                 setAlgorithm(AlgorithmOptions.ALT_ROUTE).setVehicle(vehicle).setWeighting(weightCalcStr);
 
         GHResponse rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors());
         assertEquals(2, rsp.getAlternatives().size());
+
+        assertEquals(1310, rsp.getAlternatives().get(0).getTime() / 1000);
+        assertEquals(1356, rsp.getAlternatives().get(1).getTime() / 1000);
 
         req.getHints().put("alternative_route.max_paths", "3");
         req.getHints().put("alternative_route.min_plateau_factor", "0.1");
         rsp = hopper.route(req);
+        assertFalse(rsp.hasErrors());
         assertEquals(3, rsp.getAlternatives().size());
+
+        assertEquals(1310, rsp.getAlternatives().get(0).getTime() / 1000);
+        assertEquals(1356, rsp.getAlternatives().get(1).getTime() / 1000);
+        assertEquals(1416, rsp.getAlternatives().get(2).getTime() / 1000);
+    }
+
+    @Test
+    public void testAlternativeRoutesBikeAndCar()
+    {
+        GraphHopper tmpHopper = new GraphHopper().
+                setOSMFile("files/north-bayreuth.osm.gz").
+                setCHEnable(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("bike, car"));
+        tmpHopper.importOrLoad();
+
+        GHRequest req = new GHRequest(50.028917, 11.496506, 49.985228, 11.600876).
+                setAlgorithm(AlgorithmOptions.ALT_ROUTE).setVehicle("bike").setWeighting("fastest");
+        req.getHints().put("alternative_route.max_paths", "3");
+        GHResponse rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+
+        assertEquals(3, rsp.getAlternatives().size());
+        // via ramsenthal
+        assertEquals(2864, rsp.getAlternatives().get(0).getTime() / 1000);
+        // via unterwaiz
+        assertEquals(3320, rsp.getAlternatives().get(1).getTime() / 1000);
+        // via eselslohe -> theta; BTW: here decreasing time as priority influences time order
+        assertEquals(3094, rsp.getAlternatives().get(2).getTime() / 1000);
+
+        req = new GHRequest(50.023513, 11.548862, 49.969441, 11.537876).
+                setAlgorithm(AlgorithmOptions.ALT_ROUTE).setVehicle("car").setWeighting("fastest");
+        req.getHints().put("alternative_route.max_paths", "3");
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+
+        assertEquals(3, rsp.getAlternatives().size());
+        // directly via obergräfenthal
+        assertEquals(870, rsp.getAlternatives().get(0).getTime() / 1000);
+        // via ramsenthal -> lerchenhof
+        assertEquals(913, rsp.getAlternatives().get(1).getTime() / 1000);
+        // via neudrossenfeld
+        assertEquals(958, rsp.getAlternatives().get(2).getTime() / 1000);
     }
 
     @Test

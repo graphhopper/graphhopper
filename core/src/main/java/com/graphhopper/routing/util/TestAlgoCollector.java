@@ -59,8 +59,8 @@ public class TestAlgoCollector
 
         for (int i = 0; i < queryList.size() - 1; i++)
         {
-            Path path = algoEntry.createAlgo(queryGraph).
-                    calcPath(queryList.get(i).getClosestNode(), queryList.get(i + 1).getClosestNode());
+            RoutingAlgorithm algo = algoEntry.createAlgo(queryGraph);
+            Path path = algo.calcPath(queryList.get(i).getClosestNode(), queryList.get(i + 1).getClosestNode());
             // System.out.println(path.calcInstructions().createGPX("temp", 0, "GMT"));
             altPaths.add(path);
         }

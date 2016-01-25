@@ -16,7 +16,7 @@ import org.junit.Test;
 import java.util.List;
 
 import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
-import com.graphhopper.routing.AlternativeRoute.AltDijkstraBidirectionRef;
+import com.graphhopper.routing.AlternativeRoute.AlternativeBidirSearch;
 import com.graphhopper.storage.*;
 import java.util.Arrays;
 import java.util.Collection;
@@ -175,7 +175,7 @@ public class AlternativeRouteTest
         updateDistancesFor(g, 20, 0.00, -0.01);
 
         Weighting weighting = new FastestWeighting(carFE);
-        AltDijkstraBidirectionRef altDijkstra = new AltDijkstraBidirectionRef(g, carFE, weighting, traversalMode, 1);
+        AlternativeBidirSearch altDijkstra = new AlternativeBidirSearch(g, carFE, weighting, traversalMode, 1);
         Path path = altDijkstra.calcPath(1, 20);
         assertFalse(path.isFound());
 

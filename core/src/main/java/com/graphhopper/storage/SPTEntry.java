@@ -36,6 +36,16 @@ public class SPTEntry implements Cloneable, Comparable<SPTEntry>
         this.weight = weight;
     }
 
+    /**
+     * This method returns the weight to the origin e.g. to the start for the forward SPT and to the
+     * destination for the backward SPT. Where the variable 'weight' is used to let heap select
+     * smallest *full* weight (from start to destination).
+     */
+    public double getWeightOfVisitedPath()
+    {
+        return weight;
+    }
+
     @Override
     public SPTEntry clone()
     {

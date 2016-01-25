@@ -118,7 +118,7 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
                 return factor * weighting.calcWeight(edge, reverse, prevOrNextEdgeId);
             }
         };
-        AlternativeRoute.AltDijkstraBidirectionRef altBidirDijktra = new AlternativeRoute.AltDijkstraBidirectionRef(graph, flagEncoder,
+        AlternativeRoute.AlternativeBidirSearch altBidirDijktra = new AlternativeRoute.AlternativeBidirSearch(graph, flagEncoder,
                 altWeighting, traversalMode, 1);
         altBidirDijktra.setWeightLimit(weightLimit);
         // find an alternative for backward direction starting from 'to'

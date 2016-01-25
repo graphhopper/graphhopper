@@ -57,9 +57,9 @@ public class AStarBidirection extends AbstractBidirAlgo
 {
     private ConsistentWeightApproximator weightApprox;
     private PriorityQueue<AStarEdge> prioQueueOpenSetFrom;
-    private TIntObjectMap<AStarEdge> bestWeightMapFrom;
+    protected TIntObjectMap<AStarEdge> bestWeightMapFrom;
     private PriorityQueue<AStarEdge> prioQueueOpenSetTo;
-    private TIntObjectMap<AStarEdge> bestWeightMapTo;
+    protected TIntObjectMap<AStarEdge> bestWeightMapTo;
     private TIntObjectMap<AStarEdge> bestWeightMapOther;
     protected AStarEdge currFrom;
     protected AStarEdge currTo;
@@ -201,6 +201,7 @@ public class AStarBidirection extends AbstractBidirAlgo
         if (finishedFrom || finishedTo)
             return true;
 
+        // using 'weight' is important and correct here e.g. approximation can get negative and smaller than 'weightOfVisitedPath'
         return currFrom.weight + currTo.weight >= bestPath.getWeight();
     }
 
@@ -252,12 +253,12 @@ public class AStarBidirection extends AbstractBidirAlgo
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
             double alreadyVisitedWeight = weighting.calcWeight(iter, reverse, currEdge.edge)
-                    + currEdge.weightOfVisitedPath;
+                    + currEdge.getWeightOfVisitedPath();
             if (Double.isInfinite(alreadyVisitedWeight))
                 continue;
 
             AStarEdge ase = bestWeightMap.get(traversalId);
-            if (ase == null || ase.weightOfVisitedPath > alreadyVisitedWeight)
+            if (ase == null || ase.getWeightOfVisitedPath() > alreadyVisitedWeight)
             {
                 double currWeightToGoal = weightApprox.approximate(neighborNode, reverse);
                 double estimationFullWeight = alreadyVisitedWeight + currWeightToGoal;
@@ -268,8 +269,8 @@ public class AStarBidirection extends AbstractBidirAlgo
                 } else
                 {
                     assert (ase.weight > 0.999999 * estimationFullWeight) : "Inconsistent distance estimate "
-                                + ase.weight + " vs " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and:"
-                                + ase.weightOfVisitedPath + " vs " + alreadyVisitedWeight + " (" + ase.weightOfVisitedPath / alreadyVisitedWeight + ")";
+                            + ase.weight + " vs " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and:"
+                            + ase.getWeightOfVisitedPath() + " vs " + alreadyVisitedWeight + " (" + ase.getWeightOfVisitedPath() / alreadyVisitedWeight + ")";
                     prioQueueOpenSet.remove(ase);
                     ase.edge = iter.getEdge();
                     ase.weight = estimationFullWeight;
