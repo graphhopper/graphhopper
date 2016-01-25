@@ -203,7 +203,22 @@ public class GraphHopperWeb implements GraphHopperAPI
                     Instruction instr;
                     if (sign == Instruction.USE_ROUNDABOUT || sign == Instruction.LEAVE_ROUNDABOUT)
                     {
-                        instr = new RoundaboutInstruction(sign, text, ia, instPL);
+                        RoundaboutInstruction ri = new RoundaboutInstruction(sign, text, ia, instPL);
+
+                        if (jsonObj.has("exit_number"))
+                        {
+                            ri.setExitNumber(jsonObj.getInt("exit_number"));
+                        }
+
+                        if (jsonObj.has("turn_angle"))
+                        {
+                            // TODO provide setTurnAngle setter
+                            double angle = jsonObj.getDouble("turn_angle");
+                            ri.setDirOfRotation(angle);
+                            ri.setRadian((angle < 0 ? -Math.PI : Math.PI) - angle);
+                        }
+
+                        instr = ri;
                     } else if (sign == Instruction.REACHED_VIA)
                     {
                         ViaInstruction tmpInstr = new ViaInstruction(text, ia, instPL);
