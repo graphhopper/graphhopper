@@ -30,7 +30,7 @@ and [iOS](http://github.com/graphhopper/graphhopper-ios)
 Get Started
 ---------------
 
-Read through our Documentation ([0.5](https://github.com/graphhopper/graphhopper/blob/0.5/docs/index.md), [unstable](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)), 
+Read through our Documentation ([0.6](https://github.com/graphhopper/graphhopper/blob/0.6/docs/index.md), [unstable](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)), 
 ask questions on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper)
 and sign up to the [discussion](https://discuss.graphhopper.com/).
 

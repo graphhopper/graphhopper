@@ -23,7 +23,7 @@ import javax.xml.datatype.Duration;
 
 /**
  * This class currently parses the duration tag only.
- * <p/>
+ * <p>
  * @author ratrun
  */
 public class OSMTagParser

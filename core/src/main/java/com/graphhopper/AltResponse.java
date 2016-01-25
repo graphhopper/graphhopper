@@ -26,7 +26,7 @@ import java.util.List;
 
 /**
  * This class holds one possibility of a route
- * <p/>
+ * <p>
  * @author Peter Karich
  */
 public class AltResponse

@@ -30,14 +30,14 @@ public interface RoutingAlgorithm
 {
     /**
      * Calculates the best path between the specified nodes.
-     * <p/>
+     * <p>
      * @return the path. Call the method found() to make sure that the path is valid.
      */
     Path calcPath( int from, int to );
 
     /**
-     * Calculates multiple possibilities for a path.
-     * <p/>
+     * Calculates multiple possibilities for a path
+     * <p>
      * @see #calcPath(int, int)
      */
     List<Path> calcPaths( int from, int to );

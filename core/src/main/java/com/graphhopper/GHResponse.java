@@ -90,7 +90,7 @@ public class GHResponse
 
     /**
      * This method returns true only if the response itself is errornous.
-     * <p/>
+     * <p>
      * @see #hasErrors()
      */
     public boolean hasRawErrors()
@@ -101,7 +101,7 @@ public class GHResponse
     /**
      * This method returns true if no alternative is available, if one of these has an error or if
      * the response itself is errornous.
-     * <p/>
+     * <p>
      * @see #hasRawErrors()
      */
     public boolean hasErrors()
