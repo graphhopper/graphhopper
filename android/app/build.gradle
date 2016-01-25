@@ -35,7 +35,7 @@ configurations.all {
  **/
 
 dependencies {
-    compile(group: 'com.graphhopper', name: 'graphhopper', version: '0.6-SNAPSHOT') {
+    compile(group: 'com.graphhopper', name: 'graphhopper', version: '0.7-SNAPSHOT') {
        exclude group: 'com.google.protobuf', module: 'protobuf-java'
        exclude group: 'org.openstreetmap.osmosis', module: 'osmosis-osm-binary'
        exclude group: 'org.apache.xmlgraphics', module: 'xmlgraphics-commons'
