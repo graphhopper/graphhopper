@@ -94,7 +94,7 @@ public class ConditionalTagsInspector
                 } catch (Exception e)
                 {
                     if (enabledLogs)
-                        logger.warn("Could not parse the conditional value:" + val + " of tag:" + tagToCheck + ". Exception:" + e.getMessage());
+                        logger.warn(way.getId() + " - could not parse the conditional value:" + val + " of tag:" + tagToCheck + ". Exception:" + e.getMessage());
                 }
             }
         }
