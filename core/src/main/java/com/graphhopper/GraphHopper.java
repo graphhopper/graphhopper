@@ -1294,7 +1294,7 @@ public class GraphHopper implements GraphHopperAPI
                             ghStorage.getProperties().put("prepare.date." + name, Helper.createFormatter().format(new Date()));
                         } catch (Exception ex)
                         {
-                            logger.error("Problem while CH preparation " + name);
+                            logger.error("Problem while CH preparation " + name, ex);
                             ghStorage.getProperties().put(errorKey, ex.getMessage());
                         }
                     }
