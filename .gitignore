@@ -18,6 +18,8 @@ android/libs/graphhopper-*-android.jar
 *iml
 debug.sh
 *.pbf
+web/src/main/webapp/js/options_prod.js
+!/core/src/test/resources/com/graphhopper/reader/*.pbf
 *.dem
 *.log
 core/TODO*.txt
@@ -33,3 +35,7 @@ android/.gradle
 .settings/
 .classpath
 .project
+local.properties
+**/node_modules
+*.zip
+.DS_Store

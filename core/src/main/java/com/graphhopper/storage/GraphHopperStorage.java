@@ -267,7 +267,11 @@ public final class GraphHopperStorage implements GraphStorage, Graph
 
             String byteOrder = properties.get("graph.byteOrder");
             if (!byteOrder.equalsIgnoreCase("" + dir.getByteOrder()))
-                throw new IllegalStateException("Configured byteOrder (" + byteOrder + ") is not equal to byteOrder of loaded graph (" + dir.getByteOrder() + ")");
+                throw new IllegalStateException("Configured graph.byteOrder (" + dir.getByteOrder() + ") is not equal to loaded " + byteOrder + "");
+
+            String bytesForFlags = properties.get("graph.bytesForFlags");
+            if (!bytesForFlags.equalsIgnoreCase("" + encodingManager.getBytesForFlags()))
+                throw new IllegalStateException("Configured graph.bytesForFlags (" + encodingManager.getBytesForFlags() + ") is not equal to loaded " + bytesForFlags);
 
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);
@@ -335,7 +339,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
      * Avoid that edges and nodes of the base graph are further modified. Necessary as hook for e.g.
      * ch graphs on top to initilize themself
      */
-    public void freeze()
+    public synchronized void freeze()
     {
         if (!baseGraph.isFrozen())
             baseGraph.freeze();

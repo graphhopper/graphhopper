@@ -1,30 +1,5 @@
 package com.graphhopper.android;
 
-import java.io.File;
-import java.io.FilenameFilter;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import org.mapsforge.core.graphics.Bitmap;
-import org.mapsforge.core.graphics.Paint;
-import org.mapsforge.core.graphics.Style;
-import org.mapsforge.core.model.LatLong;
-import org.mapsforge.core.model.MapPosition;
-import org.mapsforge.core.model.Point;
-import org.mapsforge.map.android.graphics.AndroidGraphicFactory;
-import org.mapsforge.map.android.util.AndroidUtil;
-import org.mapsforge.map.android.view.MapView;
-import org.mapsforge.map.layer.Layers;
-import org.mapsforge.map.layer.cache.TileCache;
-import org.mapsforge.map.layer.overlay.Marker;
-import org.mapsforge.map.layer.overlay.Polyline;
-import org.mapsforge.map.layer.renderer.TileRendererLayer;
-import org.mapsforge.map.reader.MapDataStore;
-import org.mapsforge.map.reader.MapFile;
-import org.mapsforge.map.rendertheme.InternalRenderTheme;
-
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
@@ -48,6 +23,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import com.graphhopper.AltResponse;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
@@ -58,6 +34,31 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.ProgressListener;
 import com.graphhopper.util.StopWatch;
+
+import org.mapsforge.core.graphics.Bitmap;
+import org.mapsforge.core.graphics.Paint;
+import org.mapsforge.core.graphics.Style;
+import org.mapsforge.core.model.LatLong;
+import org.mapsforge.core.model.MapPosition;
+import org.mapsforge.core.model.Point;
+import org.mapsforge.map.android.graphics.AndroidGraphicFactory;
+import org.mapsforge.map.android.util.AndroidUtil;
+import org.mapsforge.map.android.view.MapView;
+import org.mapsforge.map.datastore.MapDataStore;
+import org.mapsforge.map.layer.Layers;
+import org.mapsforge.map.layer.cache.TileCache;
+import org.mapsforge.map.layer.overlay.Marker;
+import org.mapsforge.map.layer.overlay.Polyline;
+import org.mapsforge.map.layer.renderer.TileRendererLayer;
+import org.mapsforge.map.reader.MapFile;
+import org.mapsforge.map.rendertheme.InternalRenderTheme;
+
+import java.io.File;
+import java.io.FilenameFilter;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class MainActivity extends Activity
 {
@@ -72,7 +73,7 @@ public class MainActivity extends Activity
     private volatile boolean prepareInProgress = false;
     private volatile boolean shortestPathRunning = false;
     private String currentArea = "berlin";
-    private String fileListURL = "https://graphhopper.com/public/maps/0.5/";
+    private String fileListURL = "http://download2.graphhopper.com/public/maps/0.6/";
     private String prefixURL = fileListURL;
     private String downloadURL;
     private File mapsFolder;
@@ -180,12 +181,7 @@ public class MainActivity extends Activity
         System.gc();
 
         // Cleanup Mapsforge
-        this.mapView.getLayerManager().getLayers().remove(this.tileRendererLayer);
-        this.tileRendererLayer.onDestroy();
-        this.tileCache.destroy();
-        this.mapView.getModel().mapViewPosition.destroy();
-        this.mapView.destroy();
-        AndroidGraphicFactory.clearResourceMemoryCache();
+        this.mapView.destroyAll();
     }
 
     boolean isReady()
@@ -270,17 +266,18 @@ public class MainActivity extends Activity
             @Override
             protected void onPostExecute( List<String> nameList )
             {
-                if (nameList.isEmpty())
-                {
-                    logUser("No maps created for your version!? " + fileListURL);
-                    return;
-                } else if (hasError())
+                if (hasError())
                 {
                     getError().printStackTrace();
                     logUser("Are you connected to the internet? Problem while fetching remote area list: "
                             + getErrorMessage());
                     return;
+                } else if (nameList == null || nameList.isEmpty())
+                {
+                    logUser("No maps created for your version!? " + fileListURL);
+                    return;
                 }
+
                 MySpinnerListener spinnerListener = new MySpinnerListener()
                 {
                     @Override
@@ -465,20 +462,17 @@ public class MainActivity extends Activity
         prepareInProgress = false;
     }
 
-    private Polyline createPolyline( GHResponse response )
+    private Polyline createPolyline( AltResponse response )
     {
         Paint paintStroke = AndroidGraphicFactory.INSTANCE.createPaint();
         paintStroke.setStyle(Style.STROKE);
-        paintStroke.setColor(Color.argb(200, 0, 0xCC, 0x33));
+        paintStroke.setColor(Color.argb(128, 0, 0xCC, 0x33));
         paintStroke.setDashPathEffect(new float[]
         {
             25, 15
         });
         paintStroke.setStrokeWidth(8);
 
-        // TODO: new mapsforge version wants an mapsforge-paint, not an android paint.
-        // This doesn't seem to support transparceny
-        //paintStroke.setAlpha(128);
         Polyline line = new Polyline((org.mapsforge.core.graphics.Paint) paintStroke, AndroidGraphicFactory.INSTANCE);
         List<LatLong> geoPoints = line.getLatLongs();
         PointList tmp = response.getPoints();
@@ -502,11 +496,11 @@ public class MainActivity extends Activity
     {
 
         log("calculating path ...");
-        new AsyncTask<Void, Void, GHResponse>()
+        new AsyncTask<Void, Void, AltResponse>()
         {
             float time;
 
-            protected GHResponse doInBackground( Void... v )
+            protected AltResponse doInBackground( Void... v )
             {
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
@@ -515,10 +509,10 @@ public class MainActivity extends Activity
                         put("instructions", "false");
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
-                return resp;
+                return resp.getFirst();
             }
 
-            protected void onPostExecute( GHResponse resp )
+            protected void onPostExecute( AltResponse resp )
             {
                 if (!resp.hasErrors())
                 {

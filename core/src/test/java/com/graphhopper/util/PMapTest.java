@@ -35,6 +35,9 @@ public class PMapTest
         assertEquals("valueA", subject.get("foo", ""));
         assertEquals("valueA", subject.get("FOO", ""));
         assertEquals("valueA", subject.get("Foo", ""));
+        
+        subject.remove("FoO");        
+        assertEquals("", subject.get("foo", ""));
     }
 
     @Test

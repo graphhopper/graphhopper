@@ -18,9 +18,9 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.GHResponse;
+import com.graphhopper.AltResponse;
 import com.graphhopper.routing.Path;
-
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,12 +31,37 @@ import java.util.List;
  */
 public class PathMerger
 {
+    private static final DouglasPeucker DP = new DouglasPeucker();
     private boolean enableInstructions = true;
     private boolean simplifyResponse = true;
-    private DouglasPeucker douglasPeucker;
+    private DouglasPeucker douglasPeucker = DP;
     private boolean calcPoints = true;
 
-    public void doWork( GHResponse rsp, List<Path> paths, Translation tr )
+    public PathMerger setCalcPoints( boolean calcPoints )
+    {
+        this.calcPoints = calcPoints;
+        return this;
+    }
+
+    public PathMerger setDouglasPeucker( DouglasPeucker douglasPeucker )
+    {
+        this.douglasPeucker = douglasPeucker;
+        return this;
+    }
+
+    public PathMerger setSimplifyResponse( boolean simplifyRes )
+    {
+        this.simplifyResponse = simplifyRes;
+        return this;
+    }
+
+    public PathMerger setEnableInstructions( boolean enableInstructions )
+    {
+        this.enableInstructions = enableInstructions;
+        return this;
+    }
+
+    public void doWork( AltResponse altRsp, List<Path> paths, Translation tr )
     {
         int origPoints = 0;
         long fullTimeInMillis = 0;
@@ -46,9 +71,11 @@ public class PathMerger
 
         InstructionList fullInstructions = new InstructionList(tr);
         PointList fullPoints = PointList.EMPTY;
+        List<String> description = new ArrayList<String>();
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++)
         {
             Path path = paths.get(pathIndex);
+            description.addAll(path.getDescription());
             fullTimeInMillis += path.getTime();
             fullDistance += path.getDistance();
             fullWeight += path.getWeight();
@@ -104,44 +131,44 @@ public class PathMerger
 
         if (!fullPoints.isEmpty())
         {
-            String debug = rsp.getDebugInfo() + ", simplify (" + origPoints + "->" + fullPoints.getSize() + ")";
-            rsp.setDebugInfo(debug);
+            String debug = altRsp.getDebugInfo() + ", simplify (" + origPoints + "->" + fullPoints.getSize() + ")";
+            altRsp.addDebugInfo(debug);
+            if (fullPoints.is3D)
+                calcAscendDescend(altRsp, fullPoints);
         }
 
         if (enableInstructions)
-            rsp.setInstructions(fullInstructions);
+            altRsp.setInstructions(fullInstructions);
 
         if (!allFound)
-        {
-            rsp.addError(new RuntimeException("Connection between locations not found"));
-        }
+            altRsp.addError(new RuntimeException("Connection between locations not found"));
 
-        rsp.setPoints(fullPoints).
+        altRsp.setDescription(description).
+                setPoints(fullPoints).
                 setRouteWeight(fullWeight).
-                setDistance(fullDistance).setTime(fullTimeInMillis);
+                setDistance(fullDistance).
+                setTime(fullTimeInMillis);
     }
 
-    public PathMerger setCalcPoints( boolean calcPoints )
+    private void calcAscendDescend( final AltResponse rsp, final PointList pointList )
     {
-        this.calcPoints = calcPoints;
-        return this;
-    }
+        double ascendMeters = 0;
+        double descendMeters = 0;
+        double lastEle = pointList.getElevation(0);
+        for (int i = 1; i < pointList.size(); ++i)
+        {
+            double ele = pointList.getElevation(i);
+            double diff = Math.abs(ele - lastEle);
 
-    public PathMerger setDouglasPeucker( DouglasPeucker douglasPeucker )
-    {
-        this.douglasPeucker = douglasPeucker;
-        return this;
-    }
+            if (ele > lastEle)
+                ascendMeters += diff;
+            else
+                descendMeters += diff;
 
-    public PathMerger setSimplifyResponse( boolean simplifyRes )
-    {
-        this.simplifyResponse = simplifyRes;
-        return this;
-    }
+            lastEle = ele;
 
-    public PathMerger setEnableInstructions( boolean enableInstructions )
-    {
-        this.enableInstructions = enableInstructions;
-        return this;
+        }
+        rsp.setAscend(ascendMeters);
+        rsp.setDescend(descendMeters);
     }
 }

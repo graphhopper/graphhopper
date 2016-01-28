@@ -32,15 +32,24 @@ public class PriorityWeighting extends FastestWeighting
      * For now used only in BikeCommonFlagEncoder, FootEncoder and MotorcycleFlagEncoder
      */
     public static final int KEY = 101;
-
-    public PriorityWeighting( FlagEncoder encoder, PMap pMap )
-    {
-        super(encoder, pMap);
-    }
+    private final double minFactor;
 
     public PriorityWeighting( FlagEncoder encoder )
     {
         this(encoder, new PMap(0));
+    }
+
+    public PriorityWeighting( FlagEncoder encoder, PMap pMap )
+    {
+        super(encoder, pMap);
+        double maxPriority = 1; // BEST / BEST
+        minFactor = 1 / (0.5 + maxPriority);
+    }
+
+    @Override
+    public double getMinWeight( double distance )
+    {
+        return minFactor * super.getMinWeight(distance);
     }
 
     @Override

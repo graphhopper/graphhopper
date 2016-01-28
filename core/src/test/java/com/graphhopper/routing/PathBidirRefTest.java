@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeExplorer;
@@ -52,9 +52,9 @@ public class PathBidirRefTest
         EdgeExplorer explorer = g.createEdgeExplorer(carOutEdges);
         EdgeIterator iter = explorer.setBaseNode(1);
         iter.next();
-        pw.edgeEntry = new EdgeEntry(iter.getEdge(), 2, 0);
-        pw.edgeEntry.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 10);
-        pw.edgeTo = new EdgeEntry(EdgeIterator.NO_EDGE, 2, 0);
+        pw.edgeEntry = new SPTEntry(iter.getEdge(), 2, 0);
+        pw.edgeEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 10);
+        pw.edgeTo = new SPTEntry(EdgeIterator.NO_EDGE, 2, 0);
         Path p = pw.extract();
         assertEquals(Helper.createTList(1, 2), p.calcNodes());
         assertEquals(10, p.getDistance(), 1e-4);
@@ -70,14 +70,14 @@ public class PathBidirRefTest
         EdgeIterator iter = explorer.setBaseNode(1);
         iter.next();
         PathBidirRef pw = new PathBidirRef(g, carEncoder);
-        pw.edgeEntry = new EdgeEntry(iter.getEdge(), 2, 10);
-        pw.edgeEntry.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 1, 0);
+        pw.edgeEntry = new SPTEntry(iter.getEdge(), 2, 10);
+        pw.edgeEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);
 
         explorer = g.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, false));
         iter = explorer.setBaseNode(3);
         iter.next();
-        pw.edgeTo = new EdgeEntry(iter.getEdge(), 2, 20);
-        pw.edgeTo.parent = new EdgeEntry(EdgeIterator.NO_EDGE, 3, 0);
+        pw.edgeTo = new SPTEntry(iter.getEdge(), 2, 20);
+        pw.edgeTo.parent = new SPTEntry(EdgeIterator.NO_EDGE, 3, 0);
         Path p = pw.extract();
         assertEquals(Helper.createTList(1, 2, 3), p.calcNodes());
         assertEquals(30, p.getDistance(), 1e-4);

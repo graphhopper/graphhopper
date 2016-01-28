@@ -18,7 +18,14 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.storage.*;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
+import java.text.DateFormat;
 import org.junit.Test;
+
+import java.util.Date;
 
 import static org.junit.Assert.*;
 
@@ -29,6 +36,95 @@ public class MotorcycleFlagEncoderTest
 {
     private final EncodingManager em = new EncodingManager("motorcycle,foot");
     private final MotorcycleFlagEncoder encoder = (MotorcycleFlagEncoder) em.getEncoder("motorcycle");
+
+    private Graph initExampleGraph()
+    {
+        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), em, true, new GraphExtension.NoOpExtension()).create(1000);
+        NodeAccess na = gs.getNodeAccess();
+        // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
+        na.setNode(0, 51.1, 12.001, 50);
+        na.setNode(1, 51.1, 12.002, 60);
+        EdgeIteratorState edge = gs.edge(0, 1).
+                setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
+        edge.setDistance(100);
+
+        edge.setFlags(encoder.setReverseSpeed(encoder.setProperties(10, true, true), 15));
+        return gs;
+    }
+
+    @Test
+    public void testAccess()
+    {
+        OSMWay way = new OSMWay(1);
+        assertFalse(encoder.acceptWay(way) > 0);
+        way.setTag("highway", "service");
+        assertTrue(encoder.acceptWay(way) > 0);
+        way.setTag("access", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "track");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "delivery");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "unclassified");
+        way.setTag("ford", "yes");
+        assertFalse(encoder.acceptWay(way) > 0);
+        way.setTag("motorcycle", "yes");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("route", "ferry");
+        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.isFerry(encoder.acceptWay(way)));
+        way.setTag("motorcycle", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("foot", "yes");
+        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.isFerry(encoder.acceptWay(way)));
+
+        way.clearTags();
+        way.setTag("access", "yes");
+        way.setTag("motor_vehicle", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "yes");
+        way.setTag("motor_vehicle", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "emergency");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("motor_vehicle", "emergency");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
+
+        way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("access", "no");
+        way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
+        assertTrue(encoder.acceptWay(way) > 0);
+    }
 
     @Test
     public void testHandleWayTags()
@@ -52,5 +148,29 @@ public class MotorcycleFlagEncoderTest
         assertEquals(10, encoder.getReverseSpeed(flags), .1);
         assertFalse(encoder.isForward(flags));
         assertTrue(encoder.isBackward(flags));
+    }
+
+    @Test
+    public void testCurvature()
+    {
+        Graph graph = initExampleGraph();
+        EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
+
+        double bendinessOfStraightWay = getBendiness(edge, 100.0);
+        double bendinessOfCurvyWay = getBendiness(edge, 10.0);
+
+        assertTrue("The bendiness of the straight road is smaller than the one of the curvy road", bendinessOfCurvyWay < bendinessOfStraightWay);
+    }
+
+    private double getBendiness( EdgeIteratorState edge, double estimatedDistance )
+    {
+        OSMWay way = new OSMWay(1);
+        way.setTag("highway", "primary");
+        way.setTag("estimated_distance", estimatedDistance);
+        long includeWay = encoder.acceptWay(way);
+        long flags = encoder.handleWayTags(way, includeWay, 0l);
+        edge.setFlags(flags);
+        encoder.applyWayTags(way, edge);
+        return encoder.getDouble(edge.getFlags(), MotorcycleFlagEncoder.CURVATURE_KEY);
     }
 }

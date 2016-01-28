@@ -19,19 +19,18 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
-
-import static com.graphhopper.routing.util.PriorityCode.*;
-
 import com.graphhopper.util.Translation;
-
-import static com.graphhopper.util.TranslationMapTest.SINGLETON;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Locale;
 
+import static com.graphhopper.routing.util.PriorityCode.*;
+import com.graphhopper.util.Helper;
+import static com.graphhopper.util.TranslationMapTest.SINGLETON;
+import java.text.DateFormat;
+import java.util.Date;
 import static org.junit.Assert.*;
-
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * @author Peter Karich
@@ -56,7 +55,7 @@ public abstract class AbstractBikeFlagEncoderTester
 
     protected void assertPriority( int expectedPrio, OSMWay way, long relationFlags )
     {
-        assertEquals(expectedPrio, encoder.handlePriority(way, (int) encoder.relationCodeEncoder.getValue(relationFlags)));
+        assertEquals(expectedPrio, encoder.handlePriority(way, 18, (int) encoder.relationCodeEncoder.getValue(relationFlags)));
     }
 
     protected double getSpeedFromFlags( OSMWay way )
@@ -174,6 +173,19 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("cycleway", "track");
         way.setTag("railway", "abandoned");
         assertTrue(encoder.acceptWay(way) > 0);
+
+        DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
+
+        way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("bicycle:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("access", "no");
+        way.setTag("bicycle:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
+        assertTrue(encoder.acceptWay(way) > 0);
     }
 
     @Test
@@ -281,6 +293,24 @@ public abstract class AbstractBikeFlagEncoderTester
         assertPriority(PREFER.getValue(), way);
 
         way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("bicycle", "yes");
+        wayType = getWayTypeFromFlags(way);
+        assertEquals("", wayType);
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("bicycle", "designated");
+        wayType = getWayTypeFromFlags(way);
+        assertEquals("", wayType);
+
+        way.clearTags();
+        way.setTag("highway", "track");
+        way.setTag("bicycle", "designated");
+        wayType = getWayTypeFromFlags(way);
+        assertEquals("cycleway, unpaved", wayType);
+
+        way.clearTags();
         way.setTag("highway", "cycleway");
         wayType = getWayTypeFromFlags(way);
         assertEquals("cycleway", wayType);
@@ -355,7 +385,7 @@ public abstract class AbstractBikeFlagEncoderTester
     {
         OSMWay way = new OSMWay(12);
         way.setTag("maxspeed", "90");
-        assertEquals(12, encoder.applyMaxSpeed(way, 12, false), 1e-2);
+        assertEquals(12, encoder.applyMaxSpeed(way, 12), 1e-2);
     }
 
     @Test
@@ -363,7 +393,7 @@ public abstract class AbstractBikeFlagEncoderTester
     {
         OSMWay osmWay = new OSMWay(1);
         osmWay.setTag("highway", "tertiary");
-        assertEquals(30, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(osmWay, 49, false))), 1e-1);
+        assertEquals(30, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(osmWay, 49))), 1e-1);
         assertPriority(PREFER.getValue(), osmWay);
     }
 
@@ -431,6 +461,19 @@ public abstract class AbstractBikeFlagEncoderTester
         node = new OSMNode(1, -1, -1);
         node.setTag("barrier", "gate");
         node.setTag("access", "no");
+        node.setTag("bicycle", "yes");
+        // no barrier!
+        assertTrue(encoder.handleNodeTags(node) == 0);
+    }
+
+    @Test
+    public void testBarrierAccessFord()
+    {
+        OSMNode node = new OSMNode(1, -1, -1);
+        node.setTag("ford", "yes");
+        // barrier!
+        assertTrue(encoder.handleNodeTags(node) > 0);
+
         node.setTag("bicycle", "yes");
         // no barrier!
         assertTrue(encoder.handleNodeTags(node) == 0);

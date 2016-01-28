@@ -304,15 +304,15 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess
         {
             if (includeElevation)
                 points.add(new Double[]
-                        {
-                                Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i)),
-                                Helper.round2(getElevation(i))
-                        });
+                {
+                    Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i)),
+                    Helper.round2(getElevation(i))
+                });
             else
                 points.add(new Double[]
-                        {
-                                Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i))
-                        });
+                {
+                    Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i))
+                });
         }
         return points;
     }
@@ -324,7 +324,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess
             return false;
 
         PointList other = (PointList) obj;
-        if (other.isEmpty() && other.isEmpty())
+        if (this.isEmpty() && other.isEmpty())
             return true;
 
         if (this.getSize() != other.getSize() || this.is3D() != other.is3D())

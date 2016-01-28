@@ -60,6 +60,12 @@ public class PMap
         }
     }
 
+    public PMap put( PMap map )
+    {
+        this.map.putAll(map.map);
+        return this;
+    }
+
     public PMap put( String key, Object str )
     {
         if (str == null)
@@ -71,7 +77,7 @@ public class PMap
 
     public PMap remove( String key )
     {
-        map.remove(key);
+        map.remove(key.toLowerCase());
         return this;
     }
 

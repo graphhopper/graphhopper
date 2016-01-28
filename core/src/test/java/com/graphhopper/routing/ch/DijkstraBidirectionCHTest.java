@@ -45,7 +45,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     }
 
     @Override
-    protected GraphHopperStorage createGHStorage( EncodingManager em, 
+    protected GraphHopperStorage createGHStorage( EncodingManager em,
                                                   List<? extends Weighting> weightings, boolean is3D )
     {
         return new GraphHopperStorage(weightings, new RAMDirectory(),
@@ -68,8 +68,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     {
         // use an encoder where it is possible to store 2 weights per edge        
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
-        ShortestWeighting weighting = new ShortestWeighting(encoder);
         EncodingManager em = new EncodingManager(encoder);
+        ShortestWeighting weighting = new ShortestWeighting(encoder);
         GraphHopperStorage ghStorage = createGHStorage(em, Arrays.asList(weighting), false);
         CHGraphImpl g2 = (CHGraphImpl) ghStorage.getGraph(CHGraph.class, weighting);
         g2.edge(0, 1, 1, true);
@@ -118,10 +118,12 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
     public void testBaseGraph()
     {
         CarFlagEncoder carFE = new CarFlagEncoder();
+        EncodingManager em = new EncodingManager(carFE);
         AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carFE).
                 weighting(new ShortestWeighting(carFE)).build();
-        GraphHopperStorage ghStorage = createGHStorage(new EncodingManager(carFE),
+        GraphHopperStorage ghStorage = createGHStorage(em,
                 Arrays.asList(opts.getWeighting()), false);
+
         initDirectedAndDiffSpeed(ghStorage, carFE);
 
         // do CH preparation for car        
@@ -165,11 +167,5 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester
         assertEquals(p3.toString(), 17000, p3.getDistance(), 1e-6);
         assertEquals(p3.toString(), 12240 * 1000, p3.getTime());
         assertEquals(Helper.createTList(0, 4, 5, 7), p3.calcNodes());
-    }
-
-    @Override
-    public void testRekeyBugOfIntBinHeap()
-    {
-        super.testRekeyBugOfIntBinHeap(); //To change body of generated methods, choose Tools | Templates.
     }
 }

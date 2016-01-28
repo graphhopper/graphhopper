@@ -6,9 +6,13 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
+<<<<<<< HEAD
     <version>0.5.0</version>
+=======
+    <version>0.6.0-RC1</version>
+>>>>>>> 0.6.0-RC1
     <packaging>pom</packaging> 
-    <url>http://graphhopper.com</url> 
+    <url>https://graphhopper.com</url> 
     <inceptionYear>2012</inceptionYear>
     <description>
         Super pom of GraphHopper core, a fast Java road routing engine.
@@ -64,11 +68,8 @@
     <mailingLists>
         <mailingList>
             <name>GraphHopper</name>
-            <subscribe>http://lists.openstreetmap.org/listinfo/graphhopper</subscribe>      
-            <archive>http://lists.openstreetmap.org/pipermail/graphhopper/</archive>
-            <otherArchives>
-                <otherArchive>http://graphhopper.1087335.n5.nabble.com/</otherArchive>
-            </otherArchives>
+            <subscribe>https://discuss.graphhopper.com/</subscribe>
+            <archive>https://discuss.graphhopper.com/</archive>
         </mailingList>
     </mailingLists>
     <issueManagement>
@@ -76,6 +77,7 @@
         <url>https://github.com/graphhopper/graphhopper/issues</url>
     </issueManagement>
     <modules>
+        <module>tools-lgpl</module>
         <module>core</module>
         <module>tools</module>
         <module>web</module>

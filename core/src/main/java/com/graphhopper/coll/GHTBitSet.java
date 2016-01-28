@@ -75,6 +75,12 @@ public class GHTBitSet implements GHBitSet
     }
 
     @Override
+    public void remove( int index )
+    {
+        tHash.remove(index);
+    }
+
+    @Override
     public final GHBitSet copyTo( GHBitSet bs )
     {
         bs.clear();

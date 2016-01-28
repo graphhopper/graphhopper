@@ -1,45 +1,63 @@
-body {                
+body {
     color: #000;
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;    
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     line-height: 1.4;
     color: #111111;
     background-color: white;
     margin: 0;
-    min-width: 600px;
+    min-width: 700px;
 }
-#map {    
+#map {
     /* set size via JS */
     cursor: default;
 }
 
 #input {
-    float: left;                
-    margin-left: 10px; 
+    float: left;
+    margin-left: 10px;
     /*padding-right: 15px; */
 }
 
-#info {
+#info {    
     margin-top: 10px;
-    border: lightgray groove thin;
     display: none;
     padding: 5px;
-    overflow: auto;
 }
+
 #info a {
     padding-right: 5px;
 }
-#input, #instructions {
+
+.route_results {    
+    max-height: 40%;
+}
+
+#input {
+    min-height: 400px;
+    max-width: 270px;
+}
+
+.instructions_info {
+    overflow: auto;
+}
+
+.route_description {
+    padding: 7px 5px;
+}
+
+#input, #instructions, #footer {
     width: 280px;
 }
+
 .pointInput {
-    width: 235px;
+    width: 220px;
     float: left;
 }
 
 .pointResolveFound a {
     background-color: white;
     padding-left: 4px;
-    padding-right: 3px;    
+    padding-right: 3px;
 }
 .pointResolveFound {
     overflow: hidden;
@@ -47,9 +65,9 @@ body {
     font-size: 10px;
     color: blue;
     float: right;
-    cursor: pointer;    
+    cursor: pointer;
     margin-top: -20px;
-    margin-right: 2px;    
+    margin-right: 2px;
 }
 
 .pointResolveError {
@@ -77,13 +95,13 @@ body {
 }
 #moreattribution {
     padding-top: 20px;
-    color: #666666                    
+    color: #666666
 }
 #locationpoints {
     padding-bottom: 10px;
     float: left;
 }
-.pointDiv { 
+.pointDiv {
     margin: 6px 0;
 }
 .pointDiv > img {
@@ -99,8 +117,15 @@ body {
     float: right;
 }
 #routeDetails {
-    padding: 20px;
+    padding: 15px;
     font-size: 12px;
+    padding-bottom: 4px;
+}
+#versionDetails {
+    font-size: 10px;
+    padding-top: 4px;
+    padding-left: 15px;
+    padding-right: 15px;
 }
 .hidden {
     display: none;
@@ -118,6 +143,12 @@ body {
 #options {
     padding-bottom: 10px;
     padding-left: 20px;
+    padding-right: 20px;
+}
+.vehicle-info-link {
+    padding-top: 3px;
+    float: right;
+    text-decoration: none;
 }
 .bold {
     font-weight: bold;
@@ -130,6 +161,11 @@ body {
 #header_img img {
     width: 230px;
 }
+
+#gpx_dialog {
+    display: none;
+}
+
 #gpxExportButton {
     margin-top: -3px;
 }
@@ -139,10 +175,11 @@ body {
 #searchButton {
     float: right;
     margin-bottom: 5px;
+    margin-right: 5px;
 }
 
-#searchButton:hover { 
-    cursor: pointer; 
+#searchButton:hover {
+    cursor: pointer;
 }
 .clear {
     clear: both;
@@ -161,16 +198,16 @@ body {
 #footer {
     position: fixed;
     bottom: 5px;
-    left: 45px;
+    left: 30px;
 }
 
 #hosting a, .footer-link {
     text-decoration: none;
     color: #00cc33;
 }
-.footer-link {    
-    padding-right: 12px;    
-    font-size: 12px;    
+.footer-link {
+    padding-right: 12px;
+    font-size: 12px;
 }
 
 #export-link {
@@ -183,16 +220,17 @@ tr.instruction {
     cursor: pointer;
     border-bottom: #dadada dashed thin;
 }
-#instructions {
+
+.instructions {    
     table-layout:fixed;
     border-collapse: collapse;
     padding-top: 10px;
-    width: 100%;
+    width: 98%;
     font-size: smaller;
 }
 
-#instructions th, #instructions td {
-    padding: 6px 3px;
+.instructions td {
+    padding: 7px 5px;
 }
 
 td.instr_title {
@@ -200,15 +238,15 @@ td.instr_title {
 }
 td.instr_distance {
     min-width: 50px;
-    float: right;    
+    float: right;
     color: gray;
     text-align: right;
 }
 
-#instructions tr .instr_pic {
+.instructions tr .instr_pic {
     width: 20px;
 }
-td img.pic {    
+td img.pic {
     max-height: 24px;
     max-width: 16px;
 }
@@ -225,35 +263,39 @@ td img.pic {
 .vehicle-btn img {
     width: 24px;
     height: 24px;
+    vertical-align: middle;
 }
 
 .selectvehicle {
-    // background-clip: padding-box;
     background-color: #bbb;
     -moz-border-radius: 0px;
     -webkit-border-radius: 0px;
-    background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);    
+    background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);
+}
+
+#more-vehicle-btn {
+    cursor: pointer;
 }
 
 .autocomplete {
-    border: 1px solid #999; 
-    background: #FFF; 
-    overflow: auto; 
+    border: 1px solid #999;
+    background: #FFF;
+    overflow: auto;
 }
-.autocomplete strong { 
+.autocomplete strong {
     font-weight: normal;
-    color: #04B431; 
+    color: #04B431;
 }
-.autocomplete-suggestion { 
-    padding: 5px 5px; 
-    white-space: nowrap; 
+.autocomplete-suggestion {
+    padding: 5px 5px;
+    white-space: nowrap;
     overflow: hidden;
     font-size: small;
     background-image: linear-gradient(to bottom, white, #e7e7e7);
 }
-.autocomplete-selected { 
-    padding: 5px 5px; 
-    background: #e7e7e7; 
+.autocomplete-selected {
+    padding: 5px 5px;
+    background: #e7e7e7;
     background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);
 }
 .light { font-weight: lighter; color: #9f9f9f; font-size: smaller }
@@ -273,21 +315,94 @@ td img.pic {
     padding-left: 3px;
 }
 .pointDelete {
-    float: left;    
+    float: left;
     padding-left: 2px;
 }
 .pointDelete:hover, .pointAdd:hover { cursor: pointer; }
+.pointDelete:disabled {
+    background: red;
+} 
 
-#expandDetails {
+.expandDetails {
     color: gray;
-    font-size:14px; 
+    font-size:11px;
     float: right;
-    font-weight: bold;    
-
+    font-weight: bold;
     width: 20px;
-    height: 20px;    
+    height: 20px;
+    height: 20px;
+    margin: 0px 10px;
+    padding: 0px;
     background-image: linear-gradient(to bottom, white, #e7e7e7);
 }
 #moreButton {
     background-image: linear-gradient(to bottom, white, #e7e7e7);
+}
+
+.ui-dialog > .ui-widget-header{
+    padding:1em
+}
+
+.ui-dialog .ui-dialog-content {
+    padding:1em
+}
+
+.ui-dialog .ui-widget-content {
+    background: white;
+}
+
+.ui-widget-content {
+    background-image: none;
+}
+
+.ui-dialog .ui-dialog-titlebar {
+    padding: 10px;
+    background: #00cc33;
+}
+
+.alt_route_img {
+    padding-left: 2px;
+    margin-bottom: -3px;
+}
+
+#route_result_tabs {
+    list-style: none; 
+    padding: 0; 
+    margin: 0;
+}
+
+#route_result_tabs li {
+    background-color: #FFF;
+    cursor: pointer;
+    float: left;
+    padding: 5px 10px;
+}
+
+#route_result_tabs li.current {
+    font-weight: bold;
+    background-image: linear-gradient(to bottom, #e7e7e7, white);
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+}
+
+.route_result_tab {
+    border: lightgray groove thin;
+    display: none;
+}
+
+.route_result_tab.current {
+    display: block;    
+}
+
+#donate_form {
+    padding: 0;
+}
+
+#donate_form_button {
+    background: none;
+    border: none;
+    padding-left: 0px;
+    margin-top: 5px;
+    cursor: pointer;
+    float: left;
 }

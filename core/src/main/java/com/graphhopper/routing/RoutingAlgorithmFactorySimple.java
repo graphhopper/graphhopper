@@ -54,30 +54,40 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
             AStar aStar = new AStar(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
             aStar.setApproximation(getApproximation(AlgorithmOptions.ASTAR, opts, g.getNodeAccess()));
             return aStar;
+        } else if (AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoStr))
+        {
+            AlternativeRoute altRouteAlgo = new AlternativeRoute(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            altRouteAlgo.setMaxPaths(opts.getHints().getInt("alternative_route.max_paths", 2));
+            altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble("alternative_route.max_weight_factor", 1.4));
+            altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble("alternative_route.max_share_factor", 0.6));
+            altRouteAlgo.setMinPlateauFactor(opts.getHints().getDouble("alternative_route.min_plateau_factor", 0.2));
+            altRouteAlgo.setMaxExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
+            return altRouteAlgo;
+        } else if (AlgorithmOptions.ROUND_TRIP_ALT.equalsIgnoreCase(algoStr))
+        {
+            RoundTripAltAlgorithm altRouteAlgo = new RoundTripAltAlgorithm(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            altRouteAlgo.setMaxWeightFactor(opts.getHints().getInt("round_trip_alt.max_weight_factor", 2));
+            return altRouteAlgo;
         } else
         {
             throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());
         }
-
     }
 
     private WeightApproximator getApproximation( String prop, AlgorithmOptions opts, NodeAccess na )
     {
         String approxAsStr = opts.getHints().get(prop + ".approximation", "BeelineSimplification");
-        if ("BeelineSimplification".equals(approxAsStr))
-        {
-            BeelineWeightApproximator approx = new BeelineWeightApproximator(na, opts.getWeighting());
-            approx.setDistanceCalc(Helper.DIST_PLANE);
-            return approx;
+        double epsilon = opts.getHints().getDouble(prop + ".epsilon", 1);
 
-        } else if ("BeelineAccurate".equals(approxAsStr))
-        {
-            BeelineWeightApproximator approx = new BeelineWeightApproximator(na, opts.getWeighting());
+        BeelineWeightApproximator approx = new BeelineWeightApproximator(na, opts.getWeighting());
+        approx.setEpsilon(epsilon);
+        if ("BeelineSimplification".equals(approxAsStr))
+            approx.setDistanceCalc(Helper.DIST_PLANE);
+        else if ("BeelineAccurate".equals(approxAsStr))
             approx.setDistanceCalc(Helper.DIST_EARTH);
-            return approx;
-        } else
-        {
+        else
             throw new IllegalArgumentException("Approximation " + approxAsStr + " not found in " + getClass().getName());
-        }
+
+        return approx;
     }
 }

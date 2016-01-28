@@ -37,6 +37,7 @@ public abstract class OSMElement
     public static final int NODE = 0;
     public static final int WAY = 1;
     public static final int RELATION = 2;
+    public static final int FILEHEADER = 3;
     private final int type;
     private final long id;
     private final Map<String, Object> properties = new HashMap<String, Object>(5);
@@ -127,7 +128,7 @@ public abstract class OSMElement
     }
 
     /**
-     * Chaeck that the object has a given tag with a given value.
+     * Check that the object has a given tag with a given value.
      */
     public boolean hasTag( String key, Object value )
     {

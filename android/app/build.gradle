@@ -1,8 +1,8 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 19
-    buildToolsVersion "21.1.2"
+    compileSdkVersion 23
+    buildToolsVersion "23.0.2"
 
     defaultConfig {
         applicationId "com.graphhopper.android"
@@ -35,16 +35,16 @@ configurations.all {
  **/
 
 dependencies {
-    compile(group: 'com.graphhopper', name: 'graphhopper', version: '0.5.0') {
+    compile(group: 'com.graphhopper', name: 'graphhopper', version: '0.6.0-RC1') {
        exclude group: 'com.google.protobuf', module: 'protobuf-java'
        exclude group: 'org.openstreetmap.osmosis', module: 'osmosis-osm-binary'
        exclude group: 'org.apache.xmlgraphics', module: 'xmlgraphics-commons'
     }
 
-    compile group: 'org.mapsforge', name: 'mapsforge-core', version: '0.5.1'
-    compile group: 'org.mapsforge', name: 'mapsforge-map', version: '0.5.1'
-    compile group: 'org.mapsforge', name: 'mapsforge-map-android', version: '0.5.1'
-    compile group: 'org.mapsforge', name: 'mapsforge-map-reader', version: '0.5.1'
+    compile group: 'org.mapsforge', name: 'mapsforge-core', version: '0.6.0'
+    compile group: 'org.mapsforge', name: 'mapsforge-map', version: '0.6.0'
+    compile group: 'org.mapsforge', name: 'mapsforge-map-android', version: '0.6.0'
+    compile group: 'org.mapsforge', name: 'mapsforge-map-reader', version: '0.6.0'
 
     compile group: 'org.slf4j', name: 'slf4j-android', version: '1.7.12'
     compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.12'

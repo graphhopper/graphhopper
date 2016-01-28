@@ -19,12 +19,20 @@
 package com.graphhopper.reader;
 
 import java.io.IOException;
+import java.util.Date;
 
 /**
  * @author Peter Karich
  */
 public interface DataReader
 {
-
+    /**
+     * This method triggers reading the underlying data to create a graph
+     */
     void readGraph() throws IOException;
+
+    /**
+     * This method returns the date of the most recent change for the underlying data.
+     */
+    Date getDataDate();
 }

@@ -79,7 +79,7 @@ function ensureMaven {
   # maven home existent?
   if [ "$MAVEN_HOME" = "" ]; then
     # not existent but probably is maven in the path?
-    MAVEN_HOME=$(mvn -v | grep "Maven home" | cut -d' ' -f3)
+    MAVEN_HOME=$(mvn -v | grep "Maven home" | cut -d' ' -f3,4,5,6)
     if [ "$MAVEN_HOME" = "" ]; then
       # try to detect previous downloaded version
       MAVEN_HOME="$GH_HOME/maven"
@@ -96,29 +96,29 @@ function ensureMaven {
   fi
 }
 
+function execMvn {
+  # echo "exec maven with $@"
+  "$MAVEN_HOME/bin/mvn" "$@" > /tmp/graphhopper-compile.log
+  returncode=$?
+  if [[ $returncode != 0 ]] ; then
+    echo "## compilation of parent failed"
+    cat /tmp/graphhopper-compile.log
+    exit $returncode
+  fi
+}
+
 function packageCoreJar {
   if [ ! -d "./target" ]; then
     echo "## building parent"
-    "$MAVEN_HOME/bin/mvn" --non-recursive install > /tmp/graphhopper-compile.log
-     returncode=$?
-     if [[ $returncode != 0 ]] ; then
-       echo "## compilation of parent failed"
-       cat /tmp/graphhopper-compile.log
-       exit $returncode
-     fi                                     
+    execMvn --non-recursive install
   fi
   
   if [ ! -f "$JAR" ]; then
     echo "## now building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
-    #mvn clean
-    "$MAVEN_HOME/bin/mvn" --projects core,tools -DskipTests=true install assembly:single > /tmp/graphhopper-compile.log
-    returncode=$?
-    if [[ $returncode != 0 ]] ; then
-        echo "## compilation of core failed"
-        cat /tmp/graphhopper-compile.log
-        exit $returncode
-    fi      
+    
+    execMvn --projects tools -am -DskipTests=true install
+    execMvn --projects tools -DskipTests=true install assembly:single
   else
     echo "## existing jar found $JAR"
   fi
@@ -134,6 +134,7 @@ function prepareEclipse {
 ## now handle actions which do not take an OSM file
 if [ "$ACTION" = "clean" ]; then
  rm -rf ./*/target
+ rm -rf ./target
  exit
 
 elif [ "$ACTION" = "eclipse" ]; then
@@ -153,7 +154,7 @@ elif [ "$ACTION" = "extract" ]; then
  
 elif [ "$ACTION" = "android" ]; then
  prepareEclipse
- "$MAVEN_HOME/bin/mvn" -P include-android --projects android install android:deploy android:run
+ "$MAVEN_HOME/bin/mvn" -P include-android --projects android/app install android:deploy android:run
  exit
 fi
 
@@ -223,13 +224,7 @@ if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
   fi
   WEB_JAR="$GH_HOME/web/target/graphhopper-web-$VERSION-with-dep.jar"
   if [ ! -s "$WEB_JAR" ]; then         
-    "$MAVEN_HOME/bin/mvn" --projects web -DskipTests=true install assembly:single > /tmp/graphhopper-web-compile.log
-    returncode=$?
-    if [[ $returncode != 0 ]] ; then
-      echo "## compilation of web failed"
-      cat /tmp/graphhopper-web-compile.log
-      exit $returncode
-    fi
+    execMvn --projects web -DskipTests=true install assembly:single
   fi
 
   RC_BASE=./web/src/main/webapp
@@ -288,7 +283,7 @@ elif [ "$ACTION" = "measurement" ]; then
   
  if [ "$last_commits" = "" ]; then
    # use current version
-   "$MAVEN_HOME/bin/mvn" --projects core,tools -DskipTests clean install assembly:single
+   "$MAVEN_HOME/bin/mvn" --projects tools -DskipTests clean install assembly:single
    startMeasurement
    exit
  fi
@@ -301,7 +296,7 @@ elif [ "$ACTION" = "measurement" ]; then
    M_FILE_NAME="measurement$M_FILE_NAME.properties"
    echo -e "\nusing commit $commit and $M_FILE_NAME"
    
-   "$MAVEN_HOME/bin/mvn" --projects core,tools -DskipTests clean install assembly:single
+   "$MAVEN_HOME/bin/mvn" --projects tools -DskipTests clean install assembly:single
    startMeasurement
    echo -e "\nmeasurement.commit=$commit\n" >> "$M_FILE_NAME"
  done

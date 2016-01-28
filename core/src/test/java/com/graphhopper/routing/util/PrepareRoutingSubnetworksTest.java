@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.PrepareRoutingSubnetworks.PrepEdgeFilter;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -203,7 +204,7 @@ public class PrepareRoutingSubnetworksTest
         assertEquals(GHUtility.asSet(7, 2, 1), GHUtility.getNeighbors(carExplorer.setBaseNode(3)));
         EdgeExplorer bikeExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(bikeEncoder));
         assertEquals(GHUtility.asSet(7, 2, 1, 4), GHUtility.getNeighbors(bikeExplorer.setBaseNode(3)));
-        
+
         GHUtility.getEdge(g, 3, 4).setFlags(carEncoder.setProperties(10, false, false) | bikeEncoder.setProperties(5, false, false));
         instance = new PrepareRoutingSubnetworks(g, em2.fetchEdgeEncoders());
         instance.setMinNetworkSize(5);
@@ -279,7 +280,8 @@ public class PrepareRoutingSubnetworksTest
         // Requires a single vehicle type, otherwise we throw.
         final EdgeFilter filter = new DefaultEdgeFilter(carFlagEncoder, false, true);
 
-        TarjansStronglyConnectedComponentsAlgorithm tarjan = new TarjansStronglyConnectedComponentsAlgorithm(g, filter);
+        TarjansSCCAlgorithm tarjan
+                = new TarjansSCCAlgorithm(g, new GHBitSetImpl(), filter);
 
         List<TIntArrayList> components = tarjan.findComponents();
 

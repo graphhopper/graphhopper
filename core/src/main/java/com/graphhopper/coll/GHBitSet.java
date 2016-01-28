@@ -29,6 +29,8 @@ public interface GHBitSet
 
     void add( int index );
 
+    void remove( int index );
+
     int getCardinality();
 
     void clear();

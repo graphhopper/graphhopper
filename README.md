@@ -12,10 +12,11 @@ See GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps)
 
 [![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](https://graphhopper.com/maps)
 
-GraphHopper Maps uses the [Directions API for Business](https://graphhopper.com/#directions-api), which provides 
-routing and matrix routing through GraphHopper and also a fast address search via [Photon](https://github.com/komoot/photon).
-Additionally the map tiles from various Providers are used and all is 
-available for free for a nice route planning experience!
+GraphHopper Maps uses the [Directions API for Business](https://graphhopper.com/#directions-api) under the hood, which provides 
+a Routing API via GraphHopper, a Route Optimization API via [jsprit](http://jsprit.github.io/), a fast Matrix API
+and an address search via [Photon](https://github.com/komoot/photon). Additionally the map tiles from various providers are used 
+where the default is [Omniscale](http://omniscale.com/), and all is available for free, via encrypted connections and from German servers
+for a nice and private route planning experience!
 
 
 GraphHopper for Mobile
@@ -29,9 +30,9 @@ and [iOS](http://github.com/graphhopper/graphhopper-ios)
 Get Started
 ---------------
 
-Read through our Documentation ([0.5](https://github.com/graphhopper/graphhopper/blob/0.5/docs/index.md), [unstable](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)), 
+Read through our Documentation ([0.6](https://github.com/graphhopper/graphhopper/blob/0.6/docs/index.md), [unstable](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)), 
 ask questions on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper)
-and sign up to the [mailing list](http://graphhopper.com/#developers).
+and sign up to the [discussion](https://discuss.graphhopper.com/).
 
 
 Contribute

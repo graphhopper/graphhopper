@@ -18,7 +18,11 @@
 package com.graphhopper.util;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.StringReader;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 import org.junit.After;
 import org.junit.Test;
@@ -88,5 +92,37 @@ public class HelperTest
         assertEquals(2, Helper.keepIn(2, 1, 4), 1e-2);
         assertEquals(3, Helper.keepIn(2, 3, 4), 1e-2);
         assertEquals(3, Helper.keepIn(-2, 3, 4), 1e-2);
+    }
+
+    @Test
+    public void testLoadProperties() throws IOException
+    {
+        Map<String, String> map = new HashMap<String, String>();
+        Helper.loadProperties(map, new StringReader("blup=test\n blup2 = xy"));
+        assertEquals("test", map.get("blup"));
+        assertEquals("xy", map.get("blup2"));
+    }
+
+    @Test
+    public void testUnsignedConversions()
+    {
+        long l = Helper.toUnsignedLong(-1);
+        assertEquals(4294967295L, l);
+        assertEquals(-1, Helper.toSignedInt(l));
+
+        int intVal = Integer.MAX_VALUE;
+        long maxInt = (long) intVal;
+        assertEquals(intVal, Helper.toSignedInt(maxInt));
+
+        intVal++;
+        maxInt = Helper.toUnsignedLong(intVal);
+        assertEquals(intVal, Helper.toSignedInt(maxInt));
+
+        intVal++;
+        maxInt = Helper.toUnsignedLong(intVal);
+        assertEquals(intVal, Helper.toSignedInt(maxInt));
+
+        assertEquals(0xFFFFffffL, (1L << 32) - 1);
+        assertTrue(0xFFFFffffL > 0L);
     }
 }

@@ -35,7 +35,7 @@ public class ConsistentWeightApproximator
                 * (uniDirApproximatorForward.approximate(fromNode) - uniDirApproximatorReverse.approximate(fromNode));
 
         if (reverse)
-            weightApproximation *= -1;
+            return -weightApproximation;
 
         return weightApproximation;
     }

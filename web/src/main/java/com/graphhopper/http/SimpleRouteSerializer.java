@@ -17,6 +17,7 @@
  */
 package com.graphhopper.http;
 
+import com.graphhopper.AltResponse;
 import com.graphhopper.GHResponse;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
@@ -62,31 +63,43 @@ public class SimpleRouteSerializer implements RouteSerializer
             json.put("info", jsonInfo);
             json.put("hints", rsp.getHints().toMap());
             jsonInfo.put("copyrights", Arrays.asList("GraphHopper", "OpenStreetMap contributors"));
-            Map<String, Object> jsonPath = new HashMap<String, Object>();
-            jsonPath.put("distance", Helper.round(rsp.getDistance(), 3));
-            jsonPath.put("weight", Helper.round6(rsp.getDistance()));
-            jsonPath.put("time", rsp.getTime());
 
-            if (calcPoints)
+            List<Map<String, Object>> jsonPathList = new ArrayList<Map<String, Object>>();
+            for (AltResponse ar : rsp.getAlternatives())
             {
-                jsonPath.put("points_encoded", pointsEncoded);
+                Map<String, Object> jsonPath = new HashMap<String, Object>();
+                jsonPath.put("distance", Helper.round(ar.getDistance(), 3));
+                jsonPath.put("weight", Helper.round6(ar.getRouteWeight()));
+                jsonPath.put("time", ar.getTime());
+                if (!ar.getDescription().isEmpty())
+                    jsonPath.put("description", ar.getDescription());
 
-                PointList points = rsp.getPoints();
-                if (points.getSize() >= 2)
+                if (calcPoints)
                 {
-                    BBox maxBounds2D = new BBox(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat);
-                    jsonPath.put("bbox", rsp.calcRouteBBox(maxBounds2D).toGeoJson());
+                    jsonPath.put("points_encoded", pointsEncoded);
+
+                    PointList points = ar.getPoints();
+                    if (points.getSize() >= 2)
+                    {
+                        BBox maxBounds2D = new BBox(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat);
+                        jsonPath.put("bbox", ar.calcRouteBBox(maxBounds2D).toGeoJson());
+                    }
+
+                    jsonPath.put("points", createPoints(points, pointsEncoded, includeElevation));
+
+                    if (enableInstructions)
+                    {
+                        InstructionList instructions = ar.getInstructions();
+                        jsonPath.put("instructions", instructions.createJson());
+                    }
+
+                    jsonPath.put("ascend", ar.getAscend());
+                    jsonPath.put("descend", ar.getDescend());
                 }
 
-                jsonPath.put("points", createPoints(points, pointsEncoded, includeElevation));
-
-                if (enableInstructions)
-                {
-                    InstructionList instructions = rsp.getInstructions();
-                    jsonPath.put("instructions", instructions.createJson());
-                }
+                jsonPathList.add(jsonPath);
             }
-            json.put("paths", Collections.singletonList(jsonPath));
+            json.put("paths", jsonPathList);
         }
         return json;
     }

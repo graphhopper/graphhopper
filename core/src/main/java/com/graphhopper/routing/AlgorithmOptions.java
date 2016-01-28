@@ -55,6 +55,14 @@ public class AlgorithmOptions
      * Bidirectional A*
      */
     public static final String ASTAR_BI = "astarbi";
+    /**
+     * alternative route algorithm
+     */
+    public static final String ALT_ROUTE = "alternativeRoute";
+    /**
+     * round trip algorithm based on alternative route algorithm
+     */
+    public static final String ROUND_TRIP_ALT = "roundTripAlt";
     private String algorithm = DIJKSTRA_BI;
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
@@ -183,6 +191,12 @@ public class AlgorithmOptions
         public Builder flagEncoder( FlagEncoder flagEncoder )
         {
             this.opts.flagEncoder = flagEncoder;
+            return this;
+        }
+
+        public Builder hints( PMap hints )
+        {
+            this.opts.hints.put(hints);
             return this;
         }
 

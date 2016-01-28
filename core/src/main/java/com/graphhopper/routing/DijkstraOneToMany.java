@@ -231,7 +231,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     }
 
     /**
-     * List currently used memory in MB (approximatively)
+     * List currently used memory in MB (approximately)
      */
     public String getMemoryUsageAsString()
     {

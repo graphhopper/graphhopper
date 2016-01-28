@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html>
-    <head>        
+    <head>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
         <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
         <meta name="keywords" content="road routing,shortest path,maps,openstreetmap,android,navigation,routenplaner,gis"/>
@@ -9,25 +9,12 @@
         <title>Driving Directions - GraphHopper Maps</title>
         <meta name="description" content="A fast route planner for biking, hiking and more! Based on OpenStreetMap including elevation data. Try out for free!"/>
         <link rel="stylesheet" href="css/leaflet.css?v=0.7.3" />
-        <script type="text/javascript" src="js/leaflet.js?v=0.7.3"></script>
         <link rel="stylesheet" href="css/Leaflet.Elevation-0.0.2.css" />
-        <script type="text/javascript" src="js/d3.min.js"></script>
-        <script type="text/javascript" src="js/Leaflet.Elevation-0.0.2.min.js"></script>        
-
+        <link rel="stylesheet" href="css/leaflet_numbered_markers.css" />
         <link rel="stylesheet" href="css/leaflet.contextmenu.css" />
         <link rel="stylesheet" href="css/leaflet.loading.css" />
-        <link rel="stylesheet" href="css/ui-lightness/jquery-ui-1.10.4.css" />
-        <script type="text/javascript" src="js/leaflet.contextmenu.js"></script>
-        <script type="text/javascript" src="js/leaflet.loading.js"></script>
-        <script type="text/javascript" src="js/jquery-2.1.0.min.js"></script>        
-        <script type="text/javascript" src="js/jquery-ui-1.10.4.custom.min.js"></script>      
-        <script type="text/javascript" src="js/jquery.history.js"></script>
-        <!--
-        <script type="text/javascript" src="js/jquery.autocomplete.min.js"></script>
-        -->
-        <script type="text/javascript" src="js/jquery.autocomplete.js"></script>
-        <script type="text/javascript" src="js/ghrequest.js?v=0.4.4"></script>
-        <script type="text/javascript" src="js/main.js?v=0.4.4"></script>
+        <link rel="stylesheet" href="css/ui-lightness/jquery-ui-custom-1.11.4.min.css" />
+        <script type="text/javascript" src="js/main.js?v=0.6.1"></script>
         <link rel="stylesheet" type="text/css" href="css/style.css" />
     </head>
     <body>
@@ -35,9 +22,10 @@
             <div id="input_header">
                 <div id="header_img">
                     <a class="no_link" href="https://graphhopper.com">
-                        <img alt="GraphHopper" src="./img/header.png"/>                    
+                        <img alt="GraphHopper" src="./img/header.png"/>
                     </a>
                 </div>
+
                 <div id="options">
                     <span id="vehicles">
 
@@ -47,12 +35,12 @@
                     <div id="locationpoints">
                         <div id="x_pointAdd" class="pointAdd"><img src="./img/point_add.png"/></div>
                     </div>
-                    <div class="clear"> </div>                
-                    <input id="searchButton" type="submit" value="Search">                
-                </form>      
+                    <div class="clear"> </div>
+                    <input id="searchButton" type="submit" value="Search">
+                </form>
                 <div id="export-link" title="Static Link" class="left"><a href="/maps"><img src='img/link.png'></a></div>
                 <div id="gpxExportButton" title="GPX Download"><a href=""><img alt="gpx" src='img/gpx.png'></a></div>
-                <div id="hosting">Powered by <a href='https://graphhopper.com/#directions-api'>GraphHopper API</a></div>                
+                <div id="hosting">Powered by <a href='https://graphhopper.com/#directions-api'>GraphHopper API</a></div>
             </div>
             <div class="clear"> </div>
             <div id="info" class="small_text">
@@ -62,11 +50,16 @@
 
             <div id="footer">
                 <div id="link_line">
-                    <a class="footer-link" href='https://graphhopper.com/#contact'>Contact</a>
+                    <form id="donate_form" action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
+                        <input type="hidden" name="cmd" value="_s-xclick"/>
+                        <input type="hidden" name="hosted_button_id" value="P9JQECJKH46JN"/>                        
+                        <input id="donate_form_button" class="footer-link" type="submit" name="submit" value="Donate"/>
+                    </form>
+                    <a class="footer-link" href='https://graphhopper.com/#contact'>Imprint</a>
                     <a class="footer-link" href='https://graphhopper.com/terms.html'>Terms</a>
                     <a class="footer-link" href='https://graphhopper.com/privacy.html'>Privacy</a>
                 </div>
-            </div>  
+            </div>
 
             <div id="pointTemplate" class="hidden">
                 <div id="{id}_Div" class="pointDiv">
@@ -78,9 +71,21 @@
                     <div id="{id}_ResolveFound" class="pointResolveFound"></div>
                     <div id="{id}_ResolveError" class="pointResolveError"></div>
                 </div>
-            </div>   
+            </div>
         </div>
-
+        <div id="gpx_dialog" title="Included GPX data:">
+            <form id="GPXOptions" name="GPXOptions">
+                <label class="inline">
+                    <input type="checkbox" id="gpx_route" name="GPXOptions" value="route">Route</label>
+                <br>
+                <label class="inline">
+                    <input type="checkbox" id="gpx_track" name="GPXOptions" value="track" checked="checked">Track</label>
+                <br>
+                <label class="inline">
+                    <input type="checkbox" id="gpx_waypoints" name="GPXOptions" value="waypoints">Waypoints</label>
+                <br>
+            </form>
+        </div>
         <div id="map">
         </div>
         <!-- Piwik -->
@@ -91,14 +96,14 @@
                 _paq.push(['trackPageView']);
                 _paq.push(['enableLinkTracking']);
                 (function () {
-                    var u = (("https:" == document.location.protocol) ? "https" : "http") + "://graphhopper.com/piwik/";
-                    _paq.push(['setTrackerUrl', u + 'piwik.php']);
+                    var url = "https://graphhopper.com/piwik/";
+                    _paq.push(['setTrackerUrl', url + 'piwik.php']);
                     _paq.push(['setSiteId', 1]);
                     var d = document, g = d.createElement('script'), s = d.getElementsByTagName('script')[0];
                     g.type = 'text/javascript';
                     g.defer = true;
                     g.async = true;
-                    g.src = u + 'piwik.js';
+                    g.src = url + 'piwik.js';
                     s.parentNode.insertBefore(g, s);
                 })();
             }

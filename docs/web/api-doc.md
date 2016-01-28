@@ -28,6 +28,9 @@ type               | json    | Specifies the resulting format of the route, for 
 heading            | NaN     | Favored heading direction for points. Specify either one heading for the start point or as many as there are points. In this case headings are associated by their order to the specific points. Headings are given as north based clockwise angle between 0 and 360 degree, NaN indicates non specific heading. Does only give valid results in the flexibility mode.
 heading_penalty    | 120     | Penalty for omitting a specified heading. The penalty corresponds to the accepted time delay in seconds in comparison to the route without a heading.
 pass_through       | false   | If `true` u-turns are avoided at via-points with regard to the heading_penalty. Does only give valid results in the flexibility mode.
+gpx.track       | true   | Include `<trk>` tag in gpx result. Only applicable if `type=gpx` is specified.
+gpx.route       | true   | Include `<rte>` tag in gpx result. Only applicable if `type=gpx` is specified.
+gpx.waypoints   | false  | Include `<wpt>` tag in gpx result. Only applicable if `type=gpx` is specified.
 
 ## Example output for the case type=json
 

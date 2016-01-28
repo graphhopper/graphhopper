@@ -50,6 +50,10 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertEquals(18, encoder.getSpeed(way));
         assertPriority(REACH_DEST.getValue(), way);
 
+        way.setTag("scenic", "yes");
+        assertEquals(18, encoder.getSpeed(way));
+        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
+
         // Pushing section !! This is fine as we obey the law!
         way.clearTags();
         way.setTag("highway", "footway");
@@ -419,18 +423,29 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         long allowed = encoder.acceptWay(way);
         long encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(10, encoder.getSpeed(encoded), 1e-1);
+        assertPriority(VERY_NICE.getValue(), way);
 
         way = new OSMWay(1);
         way.setTag("highway", "tertiary");
         way.setTag("maxspeed", "90");
-        assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(way, 20, false))), 1e-1);
+        assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(way, 20))), 1e-1);
         assertPriority(UNCHANGED.getValue(), way);
 
         way = new OSMWay(1);
         way.setTag("highway", "track");
         way.setTag("maxspeed", "90");
-        assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(way, 20, false))), 1e-1);
+        assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(way, 20))), 1e-1);
         assertPriority(UNCHANGED.getValue(), way);
+
+        way = new OSMWay(1);
+        way.setTag("highway", "residential");
+        way.setTag("maxspeed", "15");
+        assertEquals(15, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(way, 15))), 1.0);
+        allowed = encoder.acceptWay(way);
+        encoded = encoder.handleWayTags(way, allowed, 0);
+        assertEquals(15, encoder.getSpeed(encoded), 1.0);
+        assertPriority(VERY_NICE.getValue(), way);
+
     }
 
     @Test
@@ -511,12 +526,16 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testclassBicycle()
+    public void testClassBicycle()
     {
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "tertiary");
         way.setTag("class:bicycle", "3");
         assertPriority(BEST.getValue(), way);
+        // Test that priority cannot get better than best
+        way.setTag("scenic", "yes");
+        assertPriority(BEST.getValue(), way);
+        way.setTag("scenic", "no");
         way.setTag("class:bicycle", "2");
         assertPriority(VERY_NICE.getValue(), way);
         way.setTag("class:bicycle", "1");
@@ -531,10 +550,18 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertPriority(REACH_DEST.getValue(), way);
         way.setTag("class:bicycle", "-3");
         assertPriority(AVOID_AT_ALL_COSTS.getValue(), way);
+        
+        way.setTag("highway", "residential");
+        way.setTag("bicycle", "designated");
+        way.setTag("class:bicycle", "3");
+        assertPriority(BEST.getValue(), way); 
 
         // Now we test overriding by a specific class subtype
         way.setTag("class:bicycle:touring", "2");
         assertPriority(VERY_NICE.getValue(), way);
+
+        way.setTag("maxspeed", "15");
+        assertPriority(BEST.getValue(), way);
     }
 
 }

@@ -32,9 +32,9 @@ import org.slf4j.LoggerFactory;
 import gnu.trove.list.array.TIntArrayList;
 
 /**
- * Removes nodes which are not part of the largest network. Ie. mostly nodes with no edges at all
- * but also small subnetworks which are nearly always bugs in OSM data or indicate otherwise
- * disconnected areas e.g. via barriers - see #86.
+ * Removes nodes which are not part of the large networks. Ie. mostly nodes with no edges at all but
+ * also small subnetworks which are often bugs in OSM data or indicate otherwise disconnected areas
+ * e.g. via barriers or one way problems - see #86.
  * <p>
  * @author Peter Karich
  */
@@ -82,6 +82,7 @@ public class PrepareRoutingSubnetworks
             List<TIntArrayList> components = findSubnetworks(filter);
             keepLargeNetworks(filter, components);
             subnetworks = Math.max(components.size(), subnetworks);
+            logger.info(components.size() + " subnetworks found for " + encoder + ", " + Helper.getMemInfo());
         }
 
         markNodesRemovedIfUnreachable();
@@ -220,10 +221,29 @@ public class PrepareRoutingSubnetworks
      */
     int removeDeadEndUnvisitedNetworks( final PrepEdgeFilter bothFilter )
     {
-        // partition ghStorage into strongly connected components using Tarjan's algorithm
+        StopWatch sw = new StopWatch(bothFilter.getEncoder() + " findComponents").start();
         final EdgeFilter outFilter = new DefaultEdgeFilter(bothFilter.getEncoder(), false, true);
-        List<TIntArrayList> components = new TarjansStronglyConnectedComponentsAlgorithm(ghStorage, outFilter).
-                findComponents();
+
+        // Very important special case for single entry components: we don't need them! See #520
+        // But they'll be created a lot for multiple vehicles as many nodes e.g. for foot are not accessible at all for car.
+        // We can ignore these single entry components as they are already set 'not accessible'
+        EdgeExplorer explorer = ghStorage.createEdgeExplorer(outFilter);
+        int nodes = ghStorage.getNodes();
+        GHBitSet ignoreSet = new GHBitSetImpl(ghStorage.getNodes());
+        for (int start = 0; start < nodes; start++)
+        {
+            if (!ghStorage.isNodeRemoved(start))
+            {
+                EdgeIterator iter = explorer.setBaseNode(start);
+                if (!iter.next())
+                    ignoreSet.add(start);
+            }
+        }
+
+        // partition graph into strongly connected components using Tarjan's algorithm        
+        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, ignoreSet, outFilter);
+        List<TIntArrayList> components = tarjan.findComponents();
+        logger.info(sw.stop() + ", size:" + components.size());
 
         return removeEdges(bothFilter, components, minOneWayNetworkSize);
     }

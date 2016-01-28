@@ -384,7 +384,7 @@ public class QueryGraph implements Graph
 
         // either penalize incoming or outgoing edges
         List<Integer> edgePositions = incoming ? Arrays.asList(VE_BASE, VE_ADJ_REV) : Arrays.asList(VE_BASE_REV, VE_ADJ);
-        boolean enforcementOccured = false;
+        boolean enforcementOccurred = false;
         for (int edgePos : edgePositions)
         {
             VirtualEdgeIteratorState edge = virtualEdges.get(virtNodeIDintern * 4 + edgePos);
@@ -413,11 +413,11 @@ public class QueryGraph implements Graph
                 VirtualEdgeIteratorState reverseEdge = virtualEdges.get(virtNodeIDintern * 4 + getPosOfReverseEdge(edgePos));
                 reverseEdge.setVirtualEdgePreference(true);
                 modifiedEdges.add(reverseEdge);
-                enforcementOccured = true;
+                enforcementOccurred = true;
             }
 
         }
-        return enforcementOccured;
+        return enforcementOccurred;
     }
 
     /**
