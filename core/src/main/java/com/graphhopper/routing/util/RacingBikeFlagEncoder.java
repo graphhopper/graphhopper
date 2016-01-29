@@ -117,7 +117,6 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         setHighwaySpeed("tertiary_link", 20);
 
         addPushingSection("path");
-        addPushingSection("track");
         addPushingSection("footway");
         addPushingSection("pedestrian");
         addPushingSection("steps");
