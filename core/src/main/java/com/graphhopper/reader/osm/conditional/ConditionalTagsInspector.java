@@ -18,9 +18,7 @@
 package com.graphhopper.reader.osm.conditional;
 
 import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.osm.conditional.ConditionalParser;
-import com.graphhopper.reader.osm.conditional.DateRange;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,7 +33,6 @@ import java.util.Set;
  */
 public class ConditionalTagsInspector
 {
-
     private static final Logger logger = LoggerFactory.getLogger(ConditionalTagsInspector.class);
 
     private final Calendar calendar;
@@ -58,7 +55,11 @@ public class ConditionalTagsInspector
     public ConditionalTagsInspector( Calendar cal, List<String> tagsToCheck, Set<String> restrictiveValues, Set<String> permittedValues )
     {
         this.calendar = cal;
-        this.tagsToCheck = tagsToCheck;
+        this.tagsToCheck = new ArrayList(tagsToCheck.size());
+        for (String tagToCheck : tagsToCheck)
+        {
+            this.tagsToCheck.add(tagToCheck + ":conditional");
+        }
         this.restrictiveParser = new ConditionalParser(restrictiveValues, enabledLogs);
         this.permitParser = new ConditionalParser(permittedValues, enabledLogs);
     }
@@ -75,9 +76,9 @@ public class ConditionalTagsInspector
 
     protected boolean applies( OSMWay way, boolean checkPermissiveValues )
     {
-        for (String tagToCheck : tagsToCheck)
+        for (int index = 0; index < tagsToCheck.size(); index++)
         {
-            tagToCheck = tagToCheck + ":conditional";
+            String tagToCheck = tagsToCheck.get(index);
             String val = way.getTag(tagToCheck);
             if (val != null && !val.isEmpty())
             {
