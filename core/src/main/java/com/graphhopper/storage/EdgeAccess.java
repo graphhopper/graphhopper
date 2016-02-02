@@ -86,7 +86,8 @@ abstract class EdgeAccess
         if (integ < 0)
             throw new IllegalArgumentException("Distance cannot be negative: " + distance);
         if (integ >= Integer.MAX_VALUE)
-            throw new IllegalArgumentException("Distance too large leading to overflowed integer (#435): " + distance + " ");
+            return Integer.MAX_VALUE;
+            // throw new IllegalArgumentException("Distance too large leading to overflowed integer (#435): " + distance + " ");
         return integ;
     }
 

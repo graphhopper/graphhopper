@@ -31,9 +31,8 @@ import java.util.Set;
  */
 public class ConditionalParser
 {
-
-    private final Set<String> restrictedTags;
     private static final Logger logger = LoggerFactory.getLogger(ConditionalParser.class);
+    private final Set<String> restrictedTags;
     private final boolean enabledLogs;
 
     public ConditionalParser( Set<String> restrictedTags )
@@ -49,7 +48,6 @@ public class ConditionalParser
 
     public DateRange getDateRange( String conditionalTag ) throws ParseException
     {
-
         if (conditionalTag == null || conditionalTag.isEmpty() || !conditionalTag.contains("@"))
             return null;
 

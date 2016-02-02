@@ -55,7 +55,7 @@ public class GraphHopperAPITest
                 loadGraph(graph);
         GHResponse rsp = instance.route(new GHRequest(42, 10.4, 42, 10));
         assertFalse(rsp.hasErrors());
-        AltResponse arsp = rsp.getFirst();
+        PathWrapper arsp = rsp.getBest();
         assertEquals(80, arsp.getDistance(), 1e-6);
         
         PointList points = arsp.getPoints();
@@ -90,7 +90,7 @@ public class GraphHopperAPITest
 
         try
         {
-            rsp.getFirst().getPoints();
+            rsp.getBest().getPoints();
             assertTrue(false);
         } catch (Exception ex)
         {
