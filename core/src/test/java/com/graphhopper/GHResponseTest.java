@@ -8,15 +8,15 @@ public class GHResponseTest
     @Test
     public void testToString() throws Exception
     {
-        assertEquals("no alternatives", new GHResponse().toString());
+        assertEquals("no paths", new GHResponse().toString());
     }
 
     @Test
-    public void testHasError() throws Exception
+    public void testHasNoErrorIfEmpty() throws Exception
     {
-        assertTrue(new GHResponse().hasErrors());
+        assertFalse(new GHResponse().hasErrors());
         GHResponse rsp = new GHResponse();
-        rsp.addAlternative(new AltResponse());
+        rsp.add(new PathWrapper());
         assertFalse(rsp.hasErrors());
     }
 }

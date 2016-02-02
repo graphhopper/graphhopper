@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.AltResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.CHGraph;
@@ -69,7 +69,7 @@ public class TestAlgoCollector
                 setCalcPoints(true).
                 setSimplifyResponse(false).
                 setEnableInstructions(true);
-        AltResponse rsp = new AltResponse();
+        PathWrapper rsp = new PathWrapper();
         pathMerger.doWork(rsp, altPaths, trMap.getWithFallBack(Locale.US));
 
         if (rsp.hasErrors())

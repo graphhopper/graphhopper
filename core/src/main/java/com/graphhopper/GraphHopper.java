@@ -1069,7 +1069,7 @@ public class GraphHopper implements GraphHopperAPI
         StopWatch sw = new StopWatch().start();
         List<QueryResult> qResults = lookup(points, encoder, ghRsp);
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-        if (ghRsp.hasRawErrors())
+        if (ghRsp.hasErrors())
             return Collections.emptyList();
 
         Weighting weighting;
@@ -1116,8 +1116,8 @@ public class GraphHopper implements GraphHopperAPI
         Translation tr = trMap.getWithFallBack(locale);
 
         // Every alternative path makes one AltResponse BUT if via points exists then reuse the altResponse object
-        AltResponse altResponse = new AltResponse();
-        ghRsp.addAlternative(altResponse);
+        PathWrapper altResponse = new PathWrapper();
+        ghRsp.add(altResponse);
         boolean isRoundTrip = AlgorithmOptions.ROUND_TRIP_ALT.equalsIgnoreCase(algoOpts.getAlgorithm());
         boolean isAlternativeRoute = AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoOpts.getAlgorithm());
 
@@ -1187,14 +1187,14 @@ public class GraphHopper implements GraphHopperAPI
             pathMerger.doWork(altResponse, Collections.singletonList(altPaths.get(0)), tr);
             for (int index = 1; index < altPaths.size(); index++)
             {
-                altResponse = new AltResponse();
-                ghRsp.addAlternative(altResponse);
+                altResponse = new PathWrapper();
+                ghRsp.add(altResponse);
                 pathMerger.doWork(altResponse, Collections.singletonList(altPaths.get(index)), tr);
             }
         } else if (isRoundTrip)
         {
             if (points.size() != altPaths.size())
-                throw new RuntimeException("There should be exactly one more points than paths. points:" + points.size() + ", paths:" + altPaths.size());
+                throw new RuntimeException("There should be the same number of points as paths. points:" + points.size() + ", paths:" + altPaths.size());
 
             pathMerger.doWork(altResponse, altPaths, tr);
         } else

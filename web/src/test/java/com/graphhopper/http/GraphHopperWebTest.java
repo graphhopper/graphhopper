@@ -17,7 +17,7 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.AltResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.util.Downloader;
@@ -51,7 +51,7 @@ public class GraphHopperWebTest
         GraphHopperWeb instance = new GraphHopperWeb();
         instance.setDownloader(downloader);
         GHResponse rsp = instance.route(new GHRequest(52.47379, 13.362808, 52.4736925, 13.3904394));
-        AltResponse arsp = rsp.getFirst();
+        PathWrapper arsp = rsp.getBest();
         assertEquals(2138.3, arsp.getDistance(), 1e-1);
         assertEquals(17, arsp.getPoints().getSize());
         assertEquals(5, arsp.getInstructions().getSize());

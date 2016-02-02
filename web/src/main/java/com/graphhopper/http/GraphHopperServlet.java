@@ -17,7 +17,7 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.AltResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -145,7 +145,7 @@ public class GraphHopperServlet extends GHBaseServlet
                 + took + ", " + algoStr + ", " + weighting + ", " + vehicleStr;
         httpRes.setHeader("X-GH-Took", "" + Math.round(took * 1000));
 
-        int alternatives = ghRsp.getAlternatives().size();
+        int alternatives = ghRsp.getAll().size();
         if (writeGPX && alternatives > 1)
             ghRsp.addError(new IllegalAccessException("Alternatives are currently not supported for GPX"));
 
@@ -154,7 +154,7 @@ public class GraphHopperServlet extends GHBaseServlet
             logger.error(logStr + ", errors:" + ghRsp.getErrors());
         } else
         {
-            AltResponse altRsp0 = ghRsp.getFirst();
+            PathWrapper altRsp0 = ghRsp.getBest();
             logger.info(logStr + ", alternatives: " + alternatives
                     + ", distance0: " + altRsp0.getDistance()
                     + ", time0: " + Math.round(altRsp0.getTime() / 60000f) + "min"
@@ -171,7 +171,7 @@ public class GraphHopperServlet extends GHBaseServlet
             } else
             {
                 // no error => we can now safely call getFirst
-                String xml = createGPXString(httpReq, httpRes, ghRsp.getFirst());
+                String xml = createGPXString(httpReq, httpRes, ghRsp.getBest());
                 writeResponse(httpRes, xml);
             }
         } else
@@ -191,7 +191,7 @@ public class GraphHopperServlet extends GHBaseServlet
         }
     }
 
-    protected String createGPXString( HttpServletRequest req, HttpServletResponse res, AltResponse rsp )
+    protected String createGPXString( HttpServletRequest req, HttpServletResponse res, PathWrapper rsp )
     {
         boolean includeElevation = getBooleanParam(req, "elevation", false);
         // default to false for the route part in next API version, see #437

@@ -18,7 +18,7 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.AltResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,7 +61,7 @@ public class PathMerger
         return this;
     }
 
-    public void doWork( AltResponse altRsp, List<Path> paths, Translation tr )
+    public void doWork( PathWrapper altRsp, List<Path> paths, Translation tr )
     {
         int origPoints = 0;
         long fullTimeInMillis = 0;
@@ -150,7 +150,7 @@ public class PathMerger
                 setTime(fullTimeInMillis);
     }
 
-    private void calcAscendDescend( final AltResponse rsp, final PointList pointList )
+    private void calcAscendDescend( final PathWrapper rsp, final PointList pointList )
     {
         double ascendMeters = 0;
         double descendMeters = 0;
