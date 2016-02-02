@@ -17,7 +17,7 @@
  */
 package com.graphhopper.tools;
 
-import com.graphhopper.AltResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -367,7 +367,7 @@ public class Measurement
                     return 0;
                 }
 
-                AltResponse arsp = rsp.getFirst();
+                PathWrapper arsp = rsp.getBest();
                 if (!warmup)
                 {
                     visitedNodesSum.addAndGet(rsp.getHints().getLong("visited_nodes.sum", 0));

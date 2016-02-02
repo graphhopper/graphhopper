@@ -23,7 +23,7 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.graphhopper.AltResponse;
+import com.graphhopper.PathWrapper;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
@@ -462,7 +462,7 @@ public class MainActivity extends Activity
         prepareInProgress = false;
     }
 
-    private Polyline createPolyline( AltResponse response )
+    private Polyline createPolyline( PathWrapper response )
     {
         Paint paintStroke = AndroidGraphicFactory.INSTANCE.createPaint();
         paintStroke.setStyle(Style.STROKE);
@@ -496,11 +496,11 @@ public class MainActivity extends Activity
     {
 
         log("calculating path ...");
-        new AsyncTask<Void, Void, AltResponse>()
+        new AsyncTask<Void, Void, PathWrapper>()
         {
             float time;
 
-            protected AltResponse doInBackground( Void... v )
+            protected PathWrapper doInBackground( Void... v )
             {
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
@@ -509,10 +509,10 @@ public class MainActivity extends Activity
                         put("instructions", "false");
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
-                return resp.getFirst();
+                return resp.getBest();
             }
 
-            protected void onPostExecute( AltResponse resp )
+            protected void onPostExecute( PathWrapper resp )
             {
                 if (!resp.hasErrors())
                 {
