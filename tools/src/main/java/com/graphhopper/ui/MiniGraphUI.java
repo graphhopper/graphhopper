@@ -24,18 +24,14 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.procedure.TIntObjectProcedure;
-import java.awt.*;
 
+import java.awt.*;
 import java.awt.event.*;
-import java.util.List;
 import java.util.Random;
 import javax.swing.*;
 
@@ -44,8 +40,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * A rough graphical user interface for visualizing the OSM graph. Mainly for debugging algorithms
- * and spatial datastructures. Use the 'web' module for a more userfriendly UI as shown at
- * graphhopper.com/maps
+ * and spatial datastructures.
+ * <p>
+ * Use the project at https://github.com/graphhopper/graphhopper-web for a
+ * better/faster/userfriendly/... alternative!
  * <p>
  * @author Peter Karich
  */
@@ -79,27 +77,24 @@ public class MiniGraphUI
     public MiniGraphUI( GraphHopper hopper, boolean debug )
     {
         this.graph = hopper.getGraphHopperStorage();
-
+        this.na = graph.getNodeAccess();
         encoder = hopper.getEncodingManager().getEncoder("car");
         weighting = hopper.createWeighting(new WeightingMap("fastest"), encoder);
         algoFactory = hopper.getAlgorithmFactory(weighting);
         algoOpts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting);
-        this.index = (LocationIndexTree) hopper.getLocationIndex();
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algoOpts:" + algoOpts);
+        mg = new GraphicsWrapper(graph);
 
-//        final double fromLat = 49.576995, fromLon = 10.937233;
-//        final double toLat = 49.298263, toLon = 11.289139;
-        final double fromLat = 51.718521, fromLon = 6.531372;
-        final double toLat = 51.138001, toLon = 6.536865;
-
-        QueryResult tmpFromRes = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
-        QueryResult tmpToRes = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
-        final QueryGraph qGraph = new QueryGraph(graph);
-
-        this.na = qGraph.getNodeAccess();
-        mg = new GraphicsWrapper(qGraph);
-
+        // prepare node quadtree to 'enter' the graph. create a 313*313 grid => <3km
+//         this.index = new DebugLocation2IDQuadtree(roadGraph, mg);
+        this.index = (LocationIndexTree) hopper.getLocationIndex();
+//        this.algo = new DebugDijkstraBidirection(graph, mg);
+        // this.algo = new DijkstraBidirection(graph);
+//        this.algo = new DebugAStar(graph, mg);
+//        this.algo = new AStar(graph);
+//        this.algo = new DijkstraSimple(graph);
+//        this.algo = new DebugDijkstraSimple(graph, mg);
         infoPanel = new JPanel()
         {
             @Override
@@ -120,180 +115,113 @@ public class MiniGraphUI
 
         mainPanel = new LayeredPanel();
 
-        qGraph.lookup(tmpFromRes, tmpToRes);
-
-        int max = qGraph.getNodes();
-        final GHBitSet bitset = new GHTBitSet(max);
-
-        final int refCountFrom[] = new int[max];
-        final int refCountTo[] = new int[max];
-
-//        final MyBiDi bidi = new MyBiDi(qGraph, encoder, weighting, TraversalMode.NODE_BASED);
-//        bidi.calcPath(tmpFromRes.getClosestNode(), tmpToRes.getClosestNode());
-//        while (bidi.fillEdgesFrom())
-//        {
-////            if(bidi.getCurrentFromWeight() > 1000)
-////                break;
-//        }
-        final AlternativeRoute.AlternativeBidirSearch altRoute = new AlternativeRoute.AlternativeBidirSearch(
-                qGraph, encoder, weighting, TraversalMode.NODE_BASED, 2);
-        List<Path> alts = altRoute.calcPaths(tmpFromRes.getClosestNode(), tmpToRes.getClosestNode());
-
-        logger.info("alts:" + alts.size() 
-                + ", from:" + altRoute.getBestWeightMapFrom().size() + ", to:" + altRoute.getBestWeightMapTo().size() + ", visited:" + altRoute.getVisitedNodes());
-        for (int nodeIdx = 0; nodeIdx < max; nodeIdx++)
-        {
-            SPTEntry ee = altRoute.getBestWeightMapFrom().get(nodeIdx);
-            if (ee != null)
-                while (ee.parent != null)
-                {
-                    refCountFrom[ee.parent.adjNode]++;
-                    ee = ee.parent;
-                }
-
-            ee = altRoute.getBestWeightMapTo().get(nodeIdx);
-            if (ee != null)
-                while (ee.parent != null)
-                {
-                    refCountTo[ee.parent.adjNode]++;
-                    ee = ee.parent;
-                }
-        }
-
-        final Color[] fromColors = new Color[]
-        {
-            new Color(0f, 0f, 1f, 0.3f)
-        };
-        final Color[] toColors = new Color[]
-        {
-            new Color(1f, 0.5f, 0f, 0.3f)
-        };
-
+        // TODO make it correct with bitset-skipping too
+        final GHBitSet bitset = new GHTBitSet(graph.getNodes());
         mainPanel.addLayer(roadsLayer = new DefaultMapLayer()
         {
             Random rand = new Random();
 
             @Override
-            public void paintComponent( final Graphics2D g2 )
+            public void paintComponent( Graphics2D g2 )
             {
                 clearGraphics(g2);
+                int locs = graph.getNodes();
                 Rectangle d = getBounds();
-                final BBox bbox = mg.setBounds(0, d.width, 0, d.height);
+                BBox b = mg.setBounds(0, d.width, 0, d.height);
                 if (fastPaint)
                 {
                     rand.setSeed(0);
                     bitset.clear();
                 }
 
+//                g2.setColor(Color.BLUE);
+//                double fromLat = 42.56819, fromLon = 1.603231;
+//                mg.plotText(g2, fromLat, fromLon, "from");
+//                QueryResult from = index.findClosest(fromLat, fromLon, EdgeFilter.ALL_EDGES);
+//                double toLat = 42.571034, toLon = 1.520662;
+//                mg.plotText(g2, toLat, toLon, "to");
+//                QueryResult to = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
+//
+//                g2.setColor(Color.RED.brighter().brighter());
+//                path = prepare.createAlgo().calcPath(from, to);
+//                System.out.println("now: " + path.toDetailsString());
+//                plotPath(path, g2, 1);
                 g2.setColor(Color.black);
 
-                final EdgeExplorer explorer = qGraph.createEdgeExplorer(EdgeFilter.ALL_EDGES);
+                EdgeExplorer explorer = graph.createEdgeExplorer(EdgeFilter.ALL_EDGES);
+                Color[] speedColors = generateColors(15);
 
-                altRoute.getBestWeightMapFrom().forEachEntry(new TIntObjectProcedure<SPTEntry>()
+                for (int nodeIndex = 0; nodeIndex < locs; nodeIndex++)
                 {
-                    @Override
-                    public boolean execute( int tid, SPTEntry fromEE )
+                    if (fastPaint && rand.nextInt(30) > 1)
+                        continue;
+                    double lat = na.getLatitude(nodeIndex);
+                    double lon = na.getLongitude(nodeIndex);
+
+                    // mg.plotText(g2, lat, lon, "" + nodeIndex);
+                    if (lat < b.minLat || lat > b.maxLat || lon < b.minLon || lon > b.maxLon)
+                        continue;
+
+                    EdgeIterator edge = explorer.setBaseNode(nodeIndex);
+                    while (edge.next())
                     {
-                        if (fromEE.edge >= 0)
-                            plot(qGraph.getEdgeIteratorState(fromEE.edge, fromEE.adjNode),
-                                    fromEE.weight, g2, bbox, explorer,
-                                    fromColors, refCountFrom[tid]);
+                        int nodeId = edge.getAdjNode();
+                        int sum = nodeIndex + nodeId;
+                        if (fastPaint)
+                        {
+                            if (bitset.contains(sum))
+                                continue;
 
-                        return true;
+                            bitset.add(sum);
+                        }
+                        double lat2 = na.getLatitude(nodeId);
+                        double lon2 = na.getLongitude(nodeId);
+
+                        // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, iter.getName());
+                        //mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
+                        double speed = encoder.getSpeed(edge.getFlags());
+                        Color color;
+                        if (speed >= 120)
+                        {
+                            // red
+                            color = speedColors[12];
+                        } else if (speed >= 100)
+                        {
+                            color = speedColors[10];
+                        } else if (speed >= 80)
+                        {
+                            color = speedColors[8];
+                        } else if (speed >= 60)
+                        {
+                            color = speedColors[6];
+                        } else if (speed >= 50)
+                        {
+                            color = speedColors[5];
+                        } else if (speed >= 40)
+                        {
+                            color = speedColors[4];
+                        } else if (speed >= 30)
+                        {
+                            color = Color.GRAY;
+                        } else
+                        {
+                            color = Color.LIGHT_GRAY;
+                        }
+
+                        g2.setColor(color);
+                        mg.plotEdge(g2, lat, lon, lat2, lon2, 1.2f);
                     }
-                });
-
-                altRoute.getBestWeightMapTo().forEachEntry(new TIntObjectProcedure<SPTEntry>()
-                {
-                    @Override
-                    public boolean execute( int tid, SPTEntry toEE )
-                    {
-                        if (toEE.edge >= 0)
-                            plot(qGraph.getEdgeIteratorState(toEE.edge, toEE.adjNode),
-                                    toEE.weight, g2, bbox, explorer,
-                                    toColors, refCountTo[tid]);
-
-                        return true;
-                    }
-                });
-
-                g2.setColor(Color.RED);
-                mg.plotText(g2, fromLat, fromLon, "from");
-                mg.plotText(g2, toLat, toLon, "to");
-
-//                g2.setColor(Color.WHITE);
-//                g2.fillRect(0, 0, 1000, 20);
-//                for (int i = 4; i < speedColors.length; i++)
-//                {
-//                    g2.setColor(speedColors[i]);
-//                    g2.drawString("" + (i * 10), i * 30 - 100, 10);
-//                }
-                g2.setColor(Color.BLACK);
-            }
-
-            void plot( EdgeIteratorState fromEdge,
-                       double fromSPTWeight,
-                       Graphics2D g2, BBox bbox,
-                       EdgeExplorer explorer, Color[] speedColors, int count )
-            {
-                if (count < 5)
-                    return;
-
-                if (fastPaint && rand.nextInt(30) > 1)
-                    return;
-
-                int baseNode = fromEdge.getBaseNode();
-                double lat = na.getLatitude(baseNode);
-                double lon = na.getLongitude(baseNode);
-
-                if (lat < bbox.minLat || lat > bbox.maxLat || lon < bbox.minLon || lon > bbox.maxLon)
-                    return;
-
-                int sum = fromEdge.getEdge();
-                if (fastPaint)
-                {
-                    if (bitset.contains(sum))
-                        return;
-
-                    bitset.add(sum);
                 }
 
-                int adjNode = fromEdge.getAdjNode();
-                double lat2 = na.getLatitude(adjNode);
-                double lon2 = na.getLongitude(adjNode);
+                g2.setColor(Color.WHITE);
+                g2.fillRect(0, 0, 1000, 20);
+                for (int i = 4; i < speedColors.length; i++)
+                {
+                    g2.setColor(speedColors[i]);
+                    g2.drawString("" + (i * 10), i * 30 - 100, 10);
+                }
 
-//                double weight = fromSPTWeight; // encoder.getSpeed(edge.getFlags());
-//                Color color;
-//                if (weight >= 1500)
-//                {
-//                    // red
-//                    color = speedColors[12];
-//                } else if (weight >= 1300)
-//                {
-//                    color = speedColors[10];
-//                } else if (weight >= 1100)
-//                {
-//                    color = speedColors[8];
-//                } else if (weight >= 900)
-//                {
-//                    color = speedColors[6];
-//                } else if (weight >= 700)
-//                {
-//                    color = speedColors[5];
-//                } else if (weight >= 500)
-//                {
-//                    color = speedColors[4];
-//                } else if (weight >= 300)
-//                {
-//                    color = Color.GRAY;
-//                } else
-//                {
-//                    color = Color.LIGHT_GRAY;
-//                }
-                g2.setColor(speedColors[0]);
-
-                // mg.plotEdge(g2, lat, lon, lat2, lon2, 1.3f);
-                mg.plotEdge(g2, lat, lon, lat2, lon2, (float) Math.max(Math.log(count) * 0.8, 1));
+                g2.setColor(Color.BLACK);
             }
         });
 
@@ -316,6 +244,20 @@ public class MiniGraphUI
                 StopWatch sw = new StopWatch().start();
                 logger.info("start searching from:" + fromRes + " to:" + toRes + " " + weighting);
 
+//                GHPoint qp = fromRes.getQueryPoint();
+//                TIntHashSet set = index.findNetworkEntries(qp.lat, qp.lon, 1);
+//                TIntIterator nodeIter = set.iterator();
+//                DistanceCalc distCalc = new DistancePlaneProjection();
+//                System.out.println("set:" + set.size());
+//                while (nodeIter.hasNext())
+//                {
+//                    int nodeId = nodeIter.next();
+//                    double lat = graph.getNodeAccess().getLat(nodeId);
+//                    double lon = graph.getNodeAccess().getLon(nodeId);
+//                    int dist = (int) Math.round(distCalc.calcDist(qp.lat, qp.lon, lat, lon));
+//                    mg.plotText(g2, lat, lon, nodeId + ": " + dist);
+//                    mg.plotNode(g2, nodeId, Color.red);
+//                }
                 path = algo.calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
                 sw.stop();
 
@@ -350,6 +292,20 @@ public class MiniGraphUI
             cols[i] = Color.getHSBColor((float) i / (float) n, 0.85f, 1.0f);
         }
         return cols;
+    }
+
+    // for debugging
+    private Path calcPath( RoutingAlgorithm algo )
+    {
+//        int from = index.findID(50.042, 10.19);
+//        int to = index.findID(50.049, 10.23);
+//
+////        System.out.println("path " + from + "->" + to);
+//        return algo.calcPath(from, to);
+        // System.out.println(GraphUtility.getNodeInfo(graph, 60139, new DefaultEdgeFilter(new CarFlagEncoder()).direction(false, true)));
+        // System.out.println(((GraphStorage) graph).debug(202947, 10));
+//        GraphUtility.printInfo(graph, 106511, 10);
+        return algo.calcPath(162810, 35120);
     }
 
     void plotNodeName( Graphics2D g2, int node )
@@ -429,6 +385,24 @@ public class MiniGraphUI
                         }
                     });
 
+                    // listener to investigate findID behavior
+//                    MouseAdapter ml = new MouseAdapter() {
+//
+//                        @Override public void mouseClicked(MouseEvent e) {
+//                            findIDLat = mg.getLat(e.getY());
+//                            findIDLon = mg.getLon(e.getX());
+//                            findIdLayer.repaint();
+//                            mainPanel.repaint();
+//                        }
+//
+//                        @Override public void mouseMoved(MouseEvent e) {
+//                            updateLatLon(e);
+//                        }
+//
+//                        @Override public void mousePressed(MouseEvent e) {
+//                            updateLatLon(e);
+//                        }
+//                    };
                     MouseAdapter ml = new MouseAdapter()
                     {
                         // for routing:
@@ -558,35 +532,5 @@ public class MiniGraphUI
         roadsLayer.repaint();
         mainPanel.repaint();
         logger.info("roads painting took " + sw.stop().getSeconds() + " sec");
-    }
-
-    static class MyBiDi extends DijkstraBidirectionRef
-    {
-        public MyBiDi( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
-        {
-            super(graph, encoder, weighting, tMode);
-        }
-
-        public TIntObjectMap<SPTEntry> getBestWeightMapFrom()
-        {
-            return bestWeightMapFrom;
-        }
-
-        public TIntObjectMap<SPTEntry> getBestWeightMapTo()
-        {
-            return bestWeightMapTo;
-        }
-
-        @Override
-        protected double getCurrentFromWeight()
-        {
-            return super.getCurrentFromWeight();
-        }
-
-        @Override
-        protected double getCurrentToWeight()
-        {
-            return super.getCurrentToWeight();
-        }
     }
 }

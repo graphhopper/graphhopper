@@ -25,11 +25,11 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This class holds one possibility of a route
+ * This class holds the data like points and instructions of a Path.
  * <p>
  * @author Peter Karich
  */
-public class AltResponse
+public class PathWrapper
 {
     private List<String> description;
     private double distance;
@@ -53,13 +53,13 @@ public class AltResponse
         return description;
     }
 
-    public AltResponse setDescription( List<String> names )
+    public PathWrapper setDescription( List<String> names )
     {
         this.description = names;
         return this;
     }
 
-    public AltResponse addDebugInfo( String debugInfo )
+    public PathWrapper addDebugInfo( String debugInfo )
     {
         if (debugInfo == null)
             throw new IllegalStateException("Debug information has to be none null");
@@ -76,7 +76,7 @@ public class AltResponse
         return debugInfo;
     }
 
-    public AltResponse setPoints( PointList points )
+    public PathWrapper setPoints( PointList points )
     {
         list = points;
         return this;
@@ -93,7 +93,7 @@ public class AltResponse
         return list;
     }
 
-    public AltResponse setDistance( double distance )
+    public PathWrapper setDistance( double distance )
     {
         this.distance = distance;
         return this;
@@ -111,7 +111,7 @@ public class AltResponse
         return distance;
     }
 
-    public AltResponse setAscend( double ascend )
+    public PathWrapper setAscend( double ascend )
     {
         if (ascend < 0)
             throw new IllegalArgumentException("ascend has to be strictly positive");
@@ -130,7 +130,7 @@ public class AltResponse
         return ascend;
     }
 
-    public AltResponse setDescend( double descend )
+    public PathWrapper setDescend( double descend )
     {
         if (descend < 0)
             throw new IllegalArgumentException("descend has to be strictly positive");
@@ -149,7 +149,7 @@ public class AltResponse
         return descend;
     }
 
-    public AltResponse setTime( long timeInMillis )
+    public PathWrapper setTime( long timeInMillis )
     {
         this.time = timeInMillis;
         return this;
@@ -164,7 +164,7 @@ public class AltResponse
         return time;
     }
 
-    public AltResponse setRouteWeight( double weight )
+    public PathWrapper setRouteWeight( double weight )
     {
         this.routeWeight = weight;
         return this;
@@ -257,13 +257,13 @@ public class AltResponse
         return errors;
     }
 
-    public AltResponse addError( Throwable error )
+    public PathWrapper addError( Throwable error )
     {
         errors.add(error);
         return this;
     }
 
-    public AltResponse addErrors( List<Throwable> errors )
+    public PathWrapper addErrors( List<Throwable> errors )
     {
         this.errors.addAll(errors);
         return this;

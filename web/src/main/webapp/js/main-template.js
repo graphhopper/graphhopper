@@ -325,14 +325,14 @@ function setToEnd(e) {
 }
 
 function setStartCoord(e) {
-    ghRequest.route.set(e.latlng, 0);
+    ghRequest.route.set(e.latlng.wrap(), 0);
     resolveFrom();
     routeIfAllResolved();
 }
 
 function setIntermediateCoord(e) {
     var index = ghRequest.route.size() - 1;
-    ghRequest.route.add(e.latlng, index);
+    ghRequest.route.add(e.latlng.wrap(), index);
     resolveIndex(index);
     routeIfAllResolved();
 }
@@ -346,7 +346,7 @@ function deleteCoord(e) {
 
 function setEndCoord(e) {
     var index = ghRequest.route.size() - 1;
-    ghRequest.route.set(e.latlng, index);
+    ghRequest.route.set(e.latlng.wrap(), index);
     resolveTo();
     routeIfAllResolved();
 }

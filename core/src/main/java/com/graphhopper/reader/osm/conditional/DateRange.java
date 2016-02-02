@@ -20,7 +20,6 @@ package com.graphhopper.reader.osm.conditional;
 import com.graphhopper.util.Helper;
 import java.text.DateFormat;
 import java.util.Calendar;
-import java.util.Date;
 
 /**
  * This class represents a date range and is able to determine if a given date is in that range.

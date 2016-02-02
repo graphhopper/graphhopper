@@ -17,7 +17,7 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.AltResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
@@ -124,7 +124,7 @@ public class GraphHopperServletIT extends BaseServletTester
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
 
-        AltResponse arsp = rsp.getFirst();
+        PathWrapper arsp = rsp.getBest();
         assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() > 9000);
         assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() < 9500);
 
@@ -133,7 +133,7 @@ public class GraphHopperServletIT extends BaseServletTester
                 addPoint(new GHPoint(42.531896, 1.553278)).
                 addPoint(new GHPoint(42.510071, 1.548128)));
         assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
-        arsp = rsp.getFirst();
+        arsp = rsp.getBest();
         assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() > 20000);
         assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() < 21000);
 

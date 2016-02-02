@@ -1,10 +1,10 @@
-Submit a new issue only if you are sure it is a missing feature or a bug. Otherwise [discuss the topic](http://graphhopper.com/#developers) first. 
-For new translations or fixes to existing translations
+Submit a new issue only if you are sure it is a missing feature or a bug. Otherwise, [discuss the topic](http://graphhopper.com/#developers) first. 
+For new translations or fixes to existing translations,
 please refer to [this documentation](https://github.com/graphhopper/graphhopper/blob/master/docs/core/translations.md).
 
 Issues for newcomers are tagged with 
 ['good first issue'](https://github.com/graphhopper/graphhopper/labels/good%20first%20issue) 
-and documentation issues are taged with 
+and documentation issues are tagged with 
 ['documentation'](https://github.com/graphhopper/graphhopper/labels/documentation).
 
 ## We love pull requests. Here's a quick guide:

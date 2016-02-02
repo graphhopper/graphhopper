@@ -17,7 +17,7 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.AltResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
@@ -138,15 +138,15 @@ public class GraphHopperWeb implements GraphHopperAPI
 
             GHResponse res = new GHResponse();
             res.addErrors(readErrors(json));
-            if (res.hasRawErrors())
+            if (res.hasErrors())
                 return res;
 
             JSONArray paths = json.getJSONArray("paths");
             for (int index = 0; index < paths.length(); index++)
             {
                 JSONObject path = paths.getJSONObject(index);
-                AltResponse altRsp = createAltResponse(path, tmpCalcPoints, tmpInstructions, tmpElevation);
-                res.addAlternative(altRsp);
+                PathWrapper altRsp = createPathWrapper(path, tmpCalcPoints, tmpInstructions, tmpElevation);
+                res.add(altRsp);
             }
             return res;
 
@@ -156,10 +156,10 @@ public class GraphHopperWeb implements GraphHopperAPI
         }
     }
 
-    public static AltResponse createAltResponse( JSONObject path,
+    public static PathWrapper createPathWrapper( JSONObject path,
                                                  boolean tmpCalcPoints, boolean tmpInstructions, boolean tmpElevation )
     {
-        AltResponse altRsp = new AltResponse();
+        PathWrapper altRsp = new PathWrapper();
         altRsp.addErrors(readErrors(path));
         if (altRsp.hasErrors())
             return altRsp;
@@ -203,7 +203,22 @@ public class GraphHopperWeb implements GraphHopperAPI
                     Instruction instr;
                     if (sign == Instruction.USE_ROUNDABOUT || sign == Instruction.LEAVE_ROUNDABOUT)
                     {
-                        instr = new RoundaboutInstruction(sign, text, ia, instPL);
+                        RoundaboutInstruction ri = new RoundaboutInstruction(sign, text, ia, instPL);
+
+                        if (jsonObj.has("exit_number"))
+                        {
+                            ri.setExitNumber(jsonObj.getInt("exit_number"));
+                        }
+
+                        if (jsonObj.has("turn_angle"))
+                        {
+                            // TODO provide setTurnAngle setter
+                            double angle = jsonObj.getDouble("turn_angle");
+                            ri.setDirOfRotation(angle);
+                            ri.setRadian((angle < 0 ? -Math.PI : Math.PI) - angle);
+                        }
+
+                        instr = ri;
                     } else if (sign == Instruction.REACHED_VIA)
                     {
                         ViaInstruction tmpInstr = new ViaInstruction(text, ia, instPL);
