@@ -23,9 +23,10 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import java.util.ArrayList;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -127,11 +128,16 @@ public class GraphHopperWeb implements GraphHopperAPI
 
             if (!tmpKey.isEmpty())
                 url += "&key=" + tmpKey;
-            int altMax = request.getHints().getInt("alternative_route.max_num", 0);
-            if (altMax != 0)
-            {
-                url += "&alternative_route.max_num=" + altMax;
-            }
+            
+            Set<String> keys = request.getHints().toMap().keySet();
+            for(String key:keys){
+            	if(key.startsWith("alternative_route.")){
+            		String val = request.getHints().get(key, null);
+            		if(val!=null){
+            			url += "&"+key+"=" + val;
+            		}
+            	}            	
+            }            
 
             String str = downloader.downloadAsString(url, true);
             JSONObject json = new JSONObject(str);

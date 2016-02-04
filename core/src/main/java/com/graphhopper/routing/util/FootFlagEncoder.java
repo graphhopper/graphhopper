@@ -103,15 +103,25 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         safeHighwayTags.add("track");
         safeHighwayTags.add("residential");
         safeHighwayTags.add("service");
+        
+        safeHighwayTags.add("trunk");
+        safeHighwayTags.add("trunk_link");
+        safeHighwayTags.add("primary");
+        safeHighwayTags.add("primary_link");
+        safeHighwayTags.add("secondary");
+        safeHighwayTags.add("secondary_link");
+        safeHighwayTags.add("tertiary");
+        safeHighwayTags.add("tertiary_link");
+        
 
-        avoidHighwayTags.add("trunk");
-        avoidHighwayTags.add("trunk_link");
-        avoidHighwayTags.add("primary");
-        avoidHighwayTags.add("primary_link");
-        avoidHighwayTags.add("secondary");
-        avoidHighwayTags.add("secondary_link");
-        avoidHighwayTags.add("tertiary");
-        avoidHighwayTags.add("tertiary_link");
+//        avoidHighwayTags.add("trunk");
+//        avoidHighwayTags.add("trunk_link");
+//        avoidHighwayTags.add("primary");
+//        avoidHighwayTags.add("primary_link");
+//        avoidHighwayTags.add("secondary");
+//        avoidHighwayTags.add("secondary_link");
+//        avoidHighwayTags.add("tertiary");
+//        avoidHighwayTags.add("tertiary_link");
 
         // for now no explicit avoiding #257
         //avoidHighwayTags.add("cycleway"); 
