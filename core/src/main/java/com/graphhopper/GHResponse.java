@@ -97,8 +97,6 @@ public class GHResponse
     /**
      * This method returns true if one of the paths has an error or if the response itself is
      * errornous.
-     * <p/>
-     * @see #hasRawErrors()
      */
     public boolean hasErrors()
     {
