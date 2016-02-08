@@ -17,7 +17,7 @@
  */
 package com.graphhopper.matching.http;
 
-import com.graphhopper.AltResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.http.GraphHopperServlet;
@@ -107,7 +107,7 @@ public class MatchServlet extends GraphHopperServlet {
         String vehicle = getParam(httpReq, "vehicle", "car");
 
         Locale locale = Helper.getLocale(getParam(httpReq, "locale", "en"));
-        AltResponse matchGHRsp = new AltResponse();
+        PathWrapper matchGHRsp = new PathWrapper();
         MatchResult matchRsp = null;
         StopWatch sw = new StopWatch().start();
 
@@ -149,7 +149,7 @@ public class MatchServlet extends GraphHopperServlet {
             }
         } else {
             GHResponse rsp = new GHResponse();
-            rsp.addAlternative(matchGHRsp);
+            rsp.add(matchGHRsp);
             Map<String, Object> map = routeSerializer.toJSON(rsp, true, pointsEncoded,
                     enableElevation, enableInstructions);
 

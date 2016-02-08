@@ -17,10 +17,10 @@
  */
 package com.graphhopper.matching;
 
-import com.graphhopper.AltResponse;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -101,7 +101,7 @@ public class MapMatchingTest {
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
 
         Path path = mapMatching.calcPath(mr);
-        AltResponse matchGHRsp = new AltResponse();
+        PathWrapper matchGHRsp = new PathWrapper();
         new PathMerger().doWork(matchGHRsp, Collections.singletonList(path), SINGLETON.get("en"));
         InstructionList il = matchGHRsp.getInstructions();
 
@@ -120,7 +120,7 @@ public class MapMatchingTest {
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis());
 
         path = mapMatching.calcPath(mr);
-        matchGHRsp = new AltResponse();
+        matchGHRsp = new PathWrapper();
         new PathMerger().doWork(matchGHRsp, Collections.singletonList(path), SINGLETON.get("en"));
         il = matchGHRsp.getInstructions();
 

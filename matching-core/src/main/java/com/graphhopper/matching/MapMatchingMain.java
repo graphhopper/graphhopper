@@ -17,8 +17,8 @@
  */
 package com.graphhopper.matching;
 
-import com.graphhopper.AltResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -107,7 +107,7 @@ public class MapMatchingMain {
                     if (instructions.isEmpty()) {
                         il = new InstructionList(null);
                     } else {
-                        AltResponse matchGHRsp = new AltResponse();
+                        PathWrapper matchGHRsp = new PathWrapper();
                         Path path = mapMatching.calcPath(mr);
                         new PathMerger().doWork(matchGHRsp, Collections.singletonList(path), tr);
                         il = matchGHRsp.getInstructions();
