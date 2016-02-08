@@ -55,14 +55,15 @@ Features
 ## Overview
 
 GraphHopper supports several algorithms like Dijkstra and A* and its bidirectional variants. 
-Furthermore it allows you to use Contraction Hierarchies (CH) very easily, we call this **speed mode** and in contrast
-to the speed mode we call everything without CH the **flexibility mode**.
+Furthermore it allows you to use Contraction Hierarchies (CH) very easily, we call this 
+**speed mode** and in contrast to the speed mode we call everything without CH the
+**flexibility mode**. BTW: This does not mean that the flexibility mode is *slow*.
 
-The speed mode comes with much faster and lightweight (less RAM) responses and it does not use heuristics but
-can provide this speed only for a pre-defined vehicle profile as the speed mode needs a rather lengthly preparation.
-Furthermore the speed mode also has drawbacks e.g. implementing certain features are not possible or 
-very complex compared to the flexibility mode. BTW: This does not mean that the flexibility mode is 'slow' and
-you can use both modes at the same time since 0.4 - see [here](https://github.com/graphhopper/graphhopper/pull/631) for more details.
+The speed mode comes with much faster and lightweight (less RAM) responses and it does not use heuristics.
+The downsides are that the speed mode allows only a pre-defined vehicle profile and requires a time 
+consuming and resource intense preparation. And implementing certain features are not possible or 
+very complex compared to the flexibility mode. But since 0.4 you can use both modes at the same time since. 
+See [here](https://github.com/graphhopper/graphhopper/pull/631) for more details.
 
 Here is a list of the more detailed features including a link to the documentation:
 
