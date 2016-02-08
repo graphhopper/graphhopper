@@ -72,7 +72,7 @@ public class GraphHopperWebTest
                 assertFalse(url.contains("algo1"));
                 assertTrue(url.contains("alternative_route.max_paths=4"));
 
-                assertEquals("https://graphhopper.com/api/1/route?point=52.0,13.0&point=52.0,14.0&&type=json&instructions=true&points_encoded=true&calc_points=true&algorithm=&locale=en_US&elevation=false&key=blup", url);
+                assertEquals("https://graphhopper.com/api/1/route?point=52.0,13.0&point=52.0,14.0&&type=json&instructions=true&points_encoded=true&calc_points=true&algorithm=&locale=en_US&elevation=false&key=blup&alternative_route.max_paths=4", url);
                 return Helper.isToString(getClass().getResourceAsStream("test_encoded.json"));
             }
         };
