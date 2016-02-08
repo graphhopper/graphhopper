@@ -24,9 +24,13 @@ appear on your fork its github page afterwards.
 
 ## License Agreement
 
-For contributions like pull requests, bug fixes and translations please read and electronically sign 
-the <a href="http://www.clahub.com/agreements/graphhopper/graphhopper">GraphHopper License Agreement</a>,
-which gives not away your rights but it will make sure for others that you agree to the Apache License, Version 2.
+For contributions like pull requests, bug fixes and translations please read 
+the <a href="https://graphhopper.com/agreements/individual-cla.html">GraphHopper License Agreement</a>, which includes our
+<a href="https://graphhopper.com/agreements/cccoc.html">contributor covenant code of conduct</a>.
+<a href="https://graphhopper.com/#contact">Send us</a> an email with the signed print out of it OR a request to do 
+this via signaturit.com which is simpler and faster but requires storing your Email there.
+Our CLA does not influence your rights on your contribution but it makes sure for others that you agree to the Apache License, Version 2.
+After this you'll appear in the <a href="CONTRIBUTORS.md">contributors list</a> and you pull request can be also technically discussed.
 
 ## Syntax:
 
