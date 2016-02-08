@@ -2,7 +2,7 @@
     removed methods deprecated in 0.4 and 0.5
     renamed EdgeEntry to SPTEntry and AStar.AStarEdge to AStar.AStarEntry
     parameter force removed from AbstractFlagEncoder.applyMaxSpeed
-    GHResponse now wraps multiple AltResponse; renames GraphHopper.getPaths to calcPaths as 'get' sounds too cheap; a new method RoutingAlgorithm.calcPaths is added; see #596
+    GHResponse now wraps multiple PathWrapper; renamed GraphHopper.getPaths to calcPaths as 'get' sounded too cheap; a new method RoutingAlgorithm.calcPaths is added; see #596
     moving lgpl licensed file into own submodule graphhopper-tools-lgpl
     renaming of Tarjans algorithm class to TarjansSCCAlgorithm
     more strict naming for Weighting enforced and more strict matching to select Weighting (equals check), #490
