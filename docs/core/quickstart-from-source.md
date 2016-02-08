@@ -9,7 +9,7 @@ Now, before you proceed install git and jdk7 or 8, then do:
 
 ```bash
 $ git clone git://github.com/graphhopper/graphhopper.git
-$ cd graphhopper; git checkout master
+$ cd graphhopper; git checkout 0.6
 $ ./graphhopper.sh web europe_germany_berlin.pbf
 now go to http://localhost:8989/
 ```
