@@ -51,4 +51,31 @@ Features
  * Highly customizable
  * Works on the desktop, as a web service and offline on Android or iOS
  * Large test suite
- * [... more](http://graphhopper.com/#overview)
+
+## Overview
+
+GraphHopper supports several algorithms like Dijkstra and A* and its bidirectional variants. 
+Furthermore it allows you to use Contraction Hierarchies (CH) very easily, we call this 
+**speed mode** and in contrast to the speed mode we call everything without CH the
+**flexibility mode**. BTW: This does not mean that the flexibility mode is *slow*.
+
+The speed mode comes with much faster and lightweight (less RAM) responses and it does not use heuristics.
+The downsides are that the speed mode allows only a pre-defined vehicle profile and requires a time 
+consuming and resource intense preparation. And implementing certain features are not possible or 
+very complex compared to the flexibility mode. But since 0.4 you can use both modes at the same time since. 
+See [here](https://github.com/graphhopper/graphhopper/pull/631) for more details.
+
+Here is a list of the more detailed features including a link to the documentation:
+
+ * [a web API](./docs/web/api-doc.md) including JavaScript and Java clients
+ * turn instructions in more than 30 languages, contribute or improve [here](./docs/core/translations.md)
+ * [including elevation](./docs/core/elevation.md) (per default disabled)
+ * [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexibility only)
+ * Customized routing profiles per request (flexibility only)
+ * A '[heading](./docs/core/routing.md)' for start, end and via points for navigation applications via pass_through or favoredHeading parameters (flexibility only)
+ * [alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424) (flexibility only)
+ * [conditional access restrictions](https://github.com/graphhopper/graphhopper/pull/621)
+ * [turn costs and restrictions](https://github.com/graphhopper/graphhopper/pull/55#issuecomment-31089096) (flexibility only)
+ * multiple profiles and weightings (flexibility and speed mode since 0.5)
+ * several pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle
+ * [map matching](https://github.com/graphhopper/map-matching) (flexibility only)
