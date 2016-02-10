@@ -20,7 +20,7 @@ if [ "$1" = "action=start-server" ]; then
   
 elif [ "$1" = "action=test" ]; then
 
-  export MAVEN_OPTS="-Xmx1g -Xms1g"
+  export MAVEN_OPTS="-Xmx400m -Xms400m"
   mvn clean test verify
   # return exit code of mvn
   exit $?
