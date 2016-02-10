@@ -3,7 +3,7 @@ jdk:
   - openjdk7
   - oraclejdk7
   - oraclejdk8
-script: ./map-matching.sh action=test
+# script: ./map-matching.sh action=test
 notifications:
   email:
     - github@graphhopper.com
