@@ -18,6 +18,13 @@ if [ "$1" = "action=start-server" ]; then
   
   ARGS="graph.location=./graph-cache"
   
+elif [ "$1" = "action=test" ]; then
+
+  export MAVEN_OPTS="-Xmx1g -Xms1g"
+  mvn clean test verify
+  # return exit code of mvn
+  exit $?
+  
 else
   function set_jar_path {
     JAR=$(ls matching-core/target/map-matching-*-dependencies.jar)
