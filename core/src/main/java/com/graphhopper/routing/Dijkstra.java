@@ -61,7 +61,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     {
         checkAlreadyRun();
         this.to = to;
-        currEdge = createEdgeEntry(from, 0);
+        currEdge = createSPTEntry(from, 0);
         if (!traversalMode.isEdgeBased())
         {
             fromMap.put(from, currEdge);
@@ -132,7 +132,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         if (currEdge == null || isWeightLimitExceeded() || !finished())
             return createEmptyPath();
 
-        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setEdgeEntry(currEdge).extract();
+        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setSPTEntry(currEdge).extract();
     }
 
     @Override

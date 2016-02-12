@@ -158,11 +158,11 @@ public class AStar extends AbstractRoutingAlgorithm
     @Override
     protected Path extractPath()
     {
-        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setEdgeEntry(currEdge).extract();
+        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setSPTEntry(currEdge).extract();
     }
 
     @Override
-    protected SPTEntry createEdgeEntry( int node, double weight )
+    protected SPTEntry createSPTEntry( int node, double weight )
     {
         throw new IllegalStateException("use AStarEdge constructor directly");
     }

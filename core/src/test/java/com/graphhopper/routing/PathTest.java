@@ -92,7 +92,7 @@ public class PathTest
         SPTEntry e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 0, 1);
-        path.setEdgeEntry(e1);
+        path.setSPTEntry(e1);
         path.extract();
         // 0-1-2
         assertPList(Helper.createPointList(0, 0.1, 8, 1, 9, 1, 1, 0.1, 10, 1, 11, 1, 2, 0.1), path.calcPoints());
@@ -118,7 +118,7 @@ public class PathTest
         e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 0, 1);
-        path.setEdgeEntry(e1);
+        path.setSPTEntry(e1);
         path.extract();
         instr = path.calcInstructions(tr);
         res = instr.createJson();
@@ -142,7 +142,7 @@ public class PathTest
         e1 = new SPTEntry(edge1.getEdge(), 0, 1);
         e1.parent = new SPTEntry(edge2.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 2, 1);
-        path.setEdgeEntry(e1);
+        path.setSPTEntry(e1);
         path.extract();
         // 2-1-0
         assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
@@ -194,7 +194,7 @@ public class PathTest
         e1.parent.parent = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent.parent.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent.parent.parent = new SPTEntry(-1, 0, 1);
-        path.setEdgeEntry(e1);
+        path.setSPTEntry(e1);
         path.extract();
 
         InstructionList il = path.calcInstructions(tr);

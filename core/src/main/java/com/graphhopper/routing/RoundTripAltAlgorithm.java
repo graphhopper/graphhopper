@@ -99,7 +99,7 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
             }
         };
 
-        bestForwardPath.setEdgeEntry(currFrom);
+        bestForwardPath.setSPTEntry(currFrom);
         bestForwardPath.setWeight(currFrom.weight);
         bestForwardPath.extract();
         if (forwardEdgeSet.isEmpty())
@@ -167,10 +167,10 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
                 int tKey = traversalMode.createTraversalId(newTo.adjNode, newTo.parent.adjNode, newTo.edge, false);
 
                 // do new extract
-                SPTEntry tmpFromEdgeEntry = altDijkstra.getFromEntry(tKey);
+                SPTEntry tmpFromSPTEntry = altDijkstra.getFromEntry(tKey);
 
-                // if (tmpFromEdgeEntry.parent != null) tmpFromEdgeEntry = tmpFromEdgeEntry.parent;
-                bestForwardPath = new Path(graph, flagEncoder).setEdgeEntry(tmpFromEdgeEntry).setWeight(tmpFromEdgeEntry.weight).extract();
+                // if (tmpFromSPTEntry.parent != null) tmpFromSPTEntry = tmpFromSPTEntry.parent;
+                bestForwardPath = new Path(graph, flagEncoder).setSPTEntry(tmpFromSPTEntry).setWeight(tmpFromSPTEntry.weight).extract();
 
                 newTo = newTo.parent;
                 // force new 'to'

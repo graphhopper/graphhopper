@@ -46,11 +46,14 @@ public class Path
     protected Graph graph;
     private FlagEncoder encoder;
     protected double distance;
-    // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
+    // we go upwards (via SPTEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
     protected long time;
     private boolean found;
-    protected SPTEntry edgeEntry;
+    /**
+     * Shortest path tree entry
+     */
+    protected SPTEntry sptEntry;
     final StopWatch extractSW = new StopWatch("extract");
     private int fromNode = -1;
     protected int endNode = -1;
@@ -75,7 +78,7 @@ public class Path
         this(p.graph, p.encoder);
         weight = p.weight;
         edgeIds = new TIntArrayList(p.edgeIds);
-        edgeEntry = p.edgeEntry;
+        sptEntry = p.sptEntry;
     }
 
     /**
@@ -95,9 +98,9 @@ public class Path
         return this;
     }
 
-    public Path setEdgeEntry( SPTEntry edgeEntry )
+    public Path setSPTEntry( SPTEntry sptEntry )
     {
-        this.edgeEntry = edgeEntry;
+        this.sptEntry = sptEntry;
         return this;
     }
 
@@ -183,7 +186,7 @@ public class Path
     }
 
     /**
-     * Extracts the Path from the shortest-path-tree determined by edgeEntry.
+     * Extracts the Path from the shortest-path-tree determined by sptEntry.
      */
     public Path extract()
     {
@@ -191,7 +194,7 @@ public class Path
             throw new IllegalStateException("Extract can only be called once");
 
         extractSW.start();
-        SPTEntry goalEdge = edgeEntry;
+        SPTEntry goalEdge = sptEntry;
         setEndNode(goalEdge.adjNode);
         while (EdgeIterator.Edge.isValid(goalEdge.edge))
         {
