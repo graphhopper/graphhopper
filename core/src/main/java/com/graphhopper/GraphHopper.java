@@ -1118,7 +1118,8 @@ public class GraphHopper implements GraphHopperAPI
         // Every alternative path makes one AltResponse BUT if via points exists then reuse the altResponse object
         PathWrapper altResponse = new PathWrapper();
         ghRsp.add(altResponse);
-        boolean isRoundTrip = AlgorithmOptions.ROUND_TRIP_ALT.equalsIgnoreCase(algoOpts.getAlgorithm());
+        boolean isRandomRoundTrip = AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoOpts.getAlgorithm());
+        boolean isRoundTrip = AlgorithmOptions.ROUND_TRIP_ALT.equalsIgnoreCase(algoOpts.getAlgorithm()) || isRandomRoundTrip;
         boolean isAlternativeRoute = AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoOpts.getAlgorithm());
 
         if ((isAlternativeRoute || isRoundTrip) && points.size() > 2)
@@ -1151,6 +1152,9 @@ public class GraphHopper implements GraphHopperAPI
 
             sw = new StopWatch().start();
             RoutingAlgorithm algo = tmpAlgoFactory.createAlgo(queryGraph, algoOpts);
+            if(algo instanceof RoundTripAlgorithm){
+                ((RoundTripAlgorithm) algo).prepare(locationIndex, new DefaultEdgeFilter(encoder), points.get(0));
+            }
             algo.setWeightLimit(weightLimit);
             String debug = ", algoInit:" + sw.stop().getSeconds() + "s";
 
@@ -1193,7 +1197,7 @@ public class GraphHopper implements GraphHopperAPI
             }
         } else if (isRoundTrip)
         {
-            if (points.size() != altPaths.size())
+            if (points.size() != altPaths.size() && !isRandomRoundTrip)
                 throw new RuntimeException("There should be the same number of points as paths. points:" + points.size() + ", paths:" + altPaths.size());
 
             pathMerger.doWork(altResponse, altPaths, tr);
