@@ -60,4 +60,19 @@ abstract class TourStrategy
         return distance + distanceModification;
     }
 
+    /**
+     * Allows to add a value to the current bearing. If the value becomse greater than 360 start from 0.
+     */
+    protected double addToBearing(double bearing, double add){
+        // Fix initial values
+        add = add % 360;
+        bearing = bearing % 360;
+
+        bearing = bearing + add;
+        if(bearing < 0)
+            bearing = 360 + bearing; // + since the number is negative
+
+        return bearing % 360;
+    }
+
 }
