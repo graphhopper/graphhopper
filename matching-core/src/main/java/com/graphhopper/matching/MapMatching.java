@@ -504,7 +504,7 @@ public class MapMatching {
         }
 
         public void initFrom(int node, double weight) {
-            SPTEntry entry = createEdgeEntry(node, weight);
+            SPTEntry entry = createSPTEntry(node, weight);
             if (currEdge == null || currEdge.weight > weight) {
                 currEdge = entry;
             }
@@ -560,7 +560,7 @@ public class MapMatching {
                 }
             }
 
-            return new Path(graph, flagEncoder).setWeight(currEdge.weight).setEdgeEntry(currEdge).extract();
+            return new Path(graph, flagEncoder).setWeight(currEdge.weight).setSPTEntry(currEdge).extract();
         }
     }
 
