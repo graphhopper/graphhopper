@@ -32,7 +32,7 @@ public class CurvatureWeighting extends PriorityWeighting
     {
         super(flagEncoder, pMap);
 
-        double minBendiness = 1; // see correctErrors
+        double minBendiness = .1;
         double maxPriority = 1; // BEST / BEST
         minFactor = minBendiness / Math.log(flagEncoder.getMaxSpeed()) / (0.5 + maxPriority);
     }
