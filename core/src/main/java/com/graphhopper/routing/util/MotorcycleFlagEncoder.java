@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
 import com.graphhopper.util.*;
 
 import java.util.HashSet;
@@ -118,6 +119,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         // forestry stuff
         defaultSpeedMap.put("track", 15);
 
+        conditionalTagsInspector = new ConditionalTagsInspector(restrictions, restrictedValues, intendedValues);
     }
 
     @Override
@@ -181,7 +183,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (!firstValue.isEmpty())
         {
-            if (restrictedValues.contains(firstValue))
+            if (restrictedValues.contains(firstValue) && !conditionalTagsInspector.isRestrictedWayConditionallyPermitted(way))
                 return 0;
             if (intendedValues.contains(firstValue))
                 return acceptBit;
@@ -195,7 +197,10 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        return acceptBit;
+        if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))
+            return 0;
+        else
+            return acceptBit;
     }
 
     @Override
@@ -209,7 +214,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         {
             // get assumed speed from highway type
             double speed = getSpeed(way);
-            speed = applyMaxSpeed(way, speed, true);
+            speed = applyMaxSpeed(way, speed);
 
             double maxMCSpeed = parseSpeed(way.getTag("maxspeed:motorcycle"));
             if (maxMCSpeed > 0 && maxMCSpeed < speed)

@@ -82,7 +82,7 @@ class Location2IDQuadtree implements LocationIndex
 
     /**
      * Loads the index from disc if exists. Make sure you are using the identical graph which was
-     * used while flusing this index.
+     * used while flushing this index.
      * <p>
      * @return if loading from file was successfully.
      */
@@ -224,7 +224,7 @@ class Location2IDQuadtree implements LocationIndex
         int initializedCounter = filledIndices.getCardinality();
         // fan out initialized entries to avoid "nose-artifacts"
         // we 1. do not use the same index for check and set and iterate until all indices are set
-        // and 2. use a taken-from array to decide which of the colliding should be prefered
+        // and 2. use a taken-from array to decide which of the colliding should be preferred
         int[] takenFrom = new int[len];
         Arrays.fill(takenFrom, -1);
         for (int i = filledIndices.next(0); i >= 0; i = filledIndices.next(i + 1))

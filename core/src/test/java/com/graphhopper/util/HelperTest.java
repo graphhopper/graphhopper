@@ -102,4 +102,27 @@ public class HelperTest
         assertEquals("test", map.get("blup"));
         assertEquals("xy", map.get("blup2"));
     }
+
+    @Test
+    public void testUnsignedConversions()
+    {
+        long l = Helper.toUnsignedLong(-1);
+        assertEquals(4294967295L, l);
+        assertEquals(-1, Helper.toSignedInt(l));
+
+        int intVal = Integer.MAX_VALUE;
+        long maxInt = (long) intVal;
+        assertEquals(intVal, Helper.toSignedInt(maxInt));
+
+        intVal++;
+        maxInt = Helper.toUnsignedLong(intVal);
+        assertEquals(intVal, Helper.toSignedInt(maxInt));
+
+        intVal++;
+        maxInt = Helper.toUnsignedLong(intVal);
+        assertEquals(intVal, Helper.toSignedInt(maxInt));
+
+        assertEquals(0xFFFFffffL, (1L << 32) - 1);
+        assertTrue(0xFFFFffffL > 0L);
+    }
 }

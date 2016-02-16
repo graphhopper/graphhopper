@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 
@@ -29,7 +29,7 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class PathBidirRef extends Path
 {
-    protected EdgeEntry edgeTo;
+    protected SPTEntry edgeTo;
     private boolean switchWrapper = false;
 
     public PathBidirRef( Graph g, FlagEncoder encoder )
@@ -50,7 +50,7 @@ public class PathBidirRef extends Path
         return this;
     }
 
-    public PathBidirRef setEdgeEntryTo( EdgeEntry edgeTo )
+    public PathBidirRef setSPTEntryTo( SPTEntry edgeTo )
     {
         this.edgeTo = edgeTo;
         return this;
@@ -62,21 +62,21 @@ public class PathBidirRef extends Path
     @Override
     public Path extract()
     {
-        if (edgeEntry == null || edgeTo == null)
+        if (sptEntry == null || edgeTo == null)
             return this;
 
-        if (edgeEntry.adjNode != edgeTo.adjNode)
-            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString() + ", fromEntry:" + edgeEntry + ", toEntry:" + edgeTo);
+        if (sptEntry.adjNode != edgeTo.adjNode)
+            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString() + ", fromEntry:" + sptEntry + ", toEntry:" + edgeTo);
 
         extractSW.start();
         if (switchWrapper)
         {
-            EdgeEntry ee = edgeEntry;
-            edgeEntry = edgeTo;
+            SPTEntry ee = sptEntry;
+            sptEntry = edgeTo;
             edgeTo = ee;
         }
 
-        EdgeEntry currEdge = edgeEntry;
+        SPTEntry currEdge = sptEntry;
         while (EdgeIterator.Edge.isValid(currEdge.edge))
         {
             processEdge(currEdge.edge, currEdge.adjNode);

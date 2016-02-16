@@ -1,0 +1,38 @@
+{
+  "name": "graphhopper-js-ui",
+  "version": "1.0.0",
+  "description": "A Route Planner Frontend for GraphHopper",
+  "author": "GraphHopper Community",
+  "license": "Apache-2.0",
+  "main": "main.js",
+  "scripts": {
+    "watch": "watchify src/main/webapp/js/main-template.js -o src/main/webapp/js/main.js --debug --verbose",
+    "bundle": "browserify src/main/webapp/js/main-template.js -o src/main/webapp/js/main.js",
+    "bundleDebug": "browserify src/main/webapp/js/main-template.js --debug -o src/main/webapp/js/main.js",
+    "bundleProduction": "browserify -g uglifyify src/main/webapp/js/main-template.js -o src/main/webapp/js/main.js",
+    "test": "JASMINE_CONFIG_PATH=src/test/webapp/spec/jasmine.json jasmine",
+    "lint": "jshint src/main/webapp/js/"
+  },
+  "browserify": {
+    "transform": [ "browserify-swap" ]
+  },
+  "browserify-swap": {
+    "production": {
+      "options.js$": "./src/main/webapp/js/options_prod.js"
+    }
+  },
+  "dependencies": {
+    "browserify": "^12.0.1",
+    "browserify-swap": "^0.2.2",
+    "d3": "^3.5.9",
+    "jasmine": "^2.3.2",
+    "jquery": "^2.1.4",
+    "leaflet": "^0.7.7",
+    "leaflet-loading": "^0.1.15",
+    "uglifyify": "^3.0.1"
+  },
+  "devDependencies": {
+    "jshint": "^2.8.0",
+    "watchify": "^3.6.1"
+  }
+}

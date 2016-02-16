@@ -17,16 +17,14 @@
  */
 package com.graphhopper.routing.util;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
 import com.graphhopper.util.PMap;
 
-import static com.graphhopper.routing.util.PriorityCode.*;
-
 import java.util.*;
+
+import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
  * Defines bit layout for pedestrians (speed, access, surface, ...).
@@ -131,6 +129,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         hikingNetworkToCode.put("lwn", VERY_NICE.getValue());
 
         maxPossibleSpeed = FERRY_SPEED;
+
+        conditionalTagsInspector = new ConditionalTagsInspector(restrictions, restrictedValues, intendedValues);
     }
 
     @Override
@@ -248,14 +248,17 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues))
+        if (way.hasTag(restrictions, restrictedValues) && !conditionalTagsInspector.isRestrictedWayConditionallyPermitted(way))
             return 0;
 
         // do not accept railways (sometimes incorrectly mapped!)
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        return acceptBit;
+        if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))
+            return 0;
+        else
+            return acceptBit;
     }
 
     @Override
