@@ -194,30 +194,24 @@ public class OSMReader implements DataReader
                                     + getNodeMap().getMemoryUsage() + "MB) " + Helper.getMemInfo());
                         }
                     }
-                } else
+                } else if (item.isType(OSMElement.RELATION))
                 {
-                    if (item.isType(OSMElement.RELATION))
-                    {
-                        final OSMRelation relation = (OSMRelation) item;
-                        if (!relation.isMetaRelation() && relation.hasTag("type", "route"))
-                            prepareWaysWithRelationInfo(relation);
+                    final OSMRelation relation = (OSMRelation) item;
+                    if (!relation.isMetaRelation() && relation.hasTag("type", "route"))
+                        prepareWaysWithRelationInfo(relation);
 
-                        if (relation.hasTag("type", "restriction"))
-                            prepareRestrictionRelation(relation);
+                    if (relation.hasTag("type", "restriction"))
+                        prepareRestrictionRelation(relation);
 
-                        if (++tmpRelationCounter % 50000 == 0)
-                        {
-                            logger.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMap().size())
-                                    + " " + Helper.getMemInfo());
-                        }
-                    } else
+                    if (++tmpRelationCounter % 50000 == 0)
                     {
-                        if (item.isType(OSMElement.FILEHEADER))
-                        {
-                            final OSMFileHeader fileHeader = (OSMFileHeader) item;
-                            osmDataDate = Helper.createFormatter().parse(fileHeader.getTag("timestamp"));
-                        }
+                        logger.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMap().size())
+                                + " " + Helper.getMemInfo());
                     }
+                } else if (item.isType(OSMElement.FILEHEADER))
+                {
+                    final OSMFileHeader fileHeader = (OSMFileHeader) item;
+                    osmDataDate = Helper.createFormatter().parse(fileHeader.getTag("timestamp"));
                 }
 
             }
@@ -791,10 +785,12 @@ public class OSMReader implements DataReader
             if (pointList.is3D())
             {
                 ele = pointList.getElevation(i);
-                towerNodeDistance += distCalc3D.calcDist(prevLat, prevLon, prevEle, lat, lon, ele);
+                if (!distCalc.isCrossBoundary(lon, prevLon))
+                    towerNodeDistance += distCalc3D.calcDist(prevLat, prevLon, prevEle, lat, lon, ele);
                 prevEle = ele;
-            } else
+            } else if (!distCalc.isCrossBoundary(lon, prevLon))
                 towerNodeDistance += distCalc.calcDist(prevLat, prevLon, lat, lon);
+
             prevLat = lat;
             prevLon = lon;
             if (nodes > 2 && i < nodes - 1)
@@ -870,13 +866,10 @@ public class OSMReader implements DataReader
             // convert pillarNode type to towerNode, make pillar values invalid
             pillarInfo.setNode(tmpNode, Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE);
             tmpNode = addTowerNode(osmId, lat, lon, ele);
-        } else
-        {
-            if (pointList.is3D())
-                pointList.add(lat, lon, ele);
-            else
-                pointList.add(lat, lon);
-        }
+        } else if (pointList.is3D())
+            pointList.add(lat, lon, ele);
+        else
+            pointList.add(lat, lon);
 
         return (int) tmpNode;
     }

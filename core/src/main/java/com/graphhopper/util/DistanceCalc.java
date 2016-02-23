@@ -63,7 +63,7 @@ public interface DistanceCalc
      *   r
      *  .
      * a-------b
-     *
+     * <p>
      * case 2:
      * r
      *  .
@@ -91,4 +91,10 @@ public interface DistanceCalc
     GHPoint calcCrossingPointToEdge( double r_lat_deg, double r_lon_deg,
                                      double a_lat_deg, double a_lon_deg,
                                      double b_lat_deg, double b_lon_deg );
+
+    /**
+     * Simple heuristic to detect if the specified two points are crossing the boundary +-180°. See
+     * #667
+     */
+    boolean isCrossBoundary( double lon1, double lon2 );
 }
