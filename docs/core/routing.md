@@ -26,12 +26,15 @@ if(rsp.hasErrors()) {
    return;
 }
 
-// points, distance in meters and time in millis of the full path
-PointList pointList = rsp.getPoints();
-double distance = rsp.getDistance();
-long timeInMs = rsp.getTime();
+// use the best path, see the GHResponse class for more possibilities.
+PathWrapper path = rsp.getBest();
 
-InstructionList il = rsp.getInstructions();
+// points, distance in meters and time in millis of the full path
+PointList pointList = path.getPoints();
+double distance = path.getDistance();
+long timeInMs = path.getTime();
+
+InstructionList il = path.getInstructions();
 // iterate over every turn instruction
 for(Instruction instruction : il) {
    instruction.getDistance();
