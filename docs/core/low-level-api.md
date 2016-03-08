@@ -19,6 +19,24 @@ That splitting into pillar and tower nodes is also the reason why there can't be
 one OSM node ID to exactly one GraphHopper node ID. And as one OSM Way is often splitted into multiple 
 edges the same applies for edge IDs too.
 
+### What are virtual edges and nodes?
+
+For a route you do not only need *junction-precision*, i.e. from tower node to tower node, but we want *GPS-precise* routes, otherwise [you'll get lots of trouble](https://github.com/graphhopper/graphhopper/issues/27) for oneways and similar.
+
+To make GPS precise routes possible, although we route from tower node to tower node, we introduce one new virtual node x and virtual edges A-x, x-B for every query point located on an edge A-B:
+
+```bash
+\                /
+ A---x---------B
+/                \
+```
+
+But we need to decouple requests from each other and therefor we create a very lightweight graph called `QueryGraph` for every request which handles also stuff like two query points on the same edge.
+
+The virtual nodes and edges have a higher `int` ID than `graph.getNodes()` or `allEdges.getMaxId()`
+
+A call `queryGraph.lookup(allQRs)` will determine the correct node for all `QueryResult`s: and either create new virtual nodes or if close enough use the existing junction node.
+
 ### Create and save the graph
 
 ```java
