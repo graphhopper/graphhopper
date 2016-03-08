@@ -1068,7 +1068,7 @@ public class GraphHopper implements GraphHopperAPI
         Weighting weighting;
         Graph routingGraph = ghStorage;
 
-        String perRequestCHFlexibleMode = request.getHints().get("ch.flexible_mode", false);
+        boolean perRequestCHFlexibleMode = request.getHints().getBool("ch.flexible_mode", false);
         if (perRequestCHFlexibleMode && !chFlexibleMode)
         {
             rsp.addError(new IllegalStateException("Flexible mode has to be enabled on the server-side and client-side"));
@@ -1082,7 +1082,6 @@ public class GraphHopper implements GraphHopperAPI
                 throw new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483");
             weighting = getWeightingForCH(request.getHints(), encoder);
             routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
-            weighting = createWeighting(request.getHints(), encoder);
         } else
             weighting = createWeighting(request.getHints(), encoder);
 
