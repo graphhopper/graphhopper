@@ -134,7 +134,7 @@ npm run bundleDebug
 npm run bundleProduction
 
 # Forcing consistent code style with jshint:
-npm run jshint
+npm run lint
 
 # see the package.json where more scripts are defined
 ```
