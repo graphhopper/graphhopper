@@ -92,7 +92,8 @@ public class PrepareContractionHierarchiesTest
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
 
         algo.clear();
-        nodeEntry = algo.setLimitVisitedNodes(1).findEndNode(4, 2);
+        algo.setMaxVisitedNodes(1);
+        nodeEntry = algo.findEndNode(4, 2);
         assertEquals(-1, nodeEntry);
     }
 

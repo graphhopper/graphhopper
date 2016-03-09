@@ -76,7 +76,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         while (true)
         {
             visitedNodes++;
-            if (isWeightLimitExceeded() || finished())
+            if (isWeightLimitExceeded() || finished() || isMaxVisitedNodesExceeded())
                 break;
 
             int startNode = currEdge.adjNode;

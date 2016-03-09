@@ -45,7 +45,6 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     private IntDoubleBinHeap heap;
     private int visitedNodes;
     private boolean doClear = true;
-    private int limitVisitedNodes = Integer.MAX_VALUE;
     private int endNode;
     private int currNode, fromNode, to;
 
@@ -65,12 +64,6 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
 
         heap = new IntDoubleBinHeap();
         changedNodes = new TIntArrayListWithCap();
-    }
-
-    public DijkstraOneToMany setLimitVisitedNodes( int nodes )
-    {
-        this.limitVisitedNodes = nodes;
-        return this;
     }
 
     @Override
@@ -142,7 +135,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             if (parentNode != EMPTY_PARENT && weights[to] <= weights[currNode])
                 return to;
 
-            if (heap.isEmpty() || visitedNodes >= limitVisitedNodes)
+            if (heap.isEmpty() || isMaxVisitedNodesExceeded())
                 return NOT_FOUND;
 
             currNode = heap.poll_element();
@@ -186,7 +179,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                 }
             }
 
-            if (heap.isEmpty() || visitedNodes >= limitVisitedNodes || isWeightLimitExceeded())
+            if (heap.isEmpty() || isMaxVisitedNodesExceeded() || isWeightLimitExceeded())
                 return NOT_FOUND;
 
             // calling just peek and not poll is important if the next query is cached

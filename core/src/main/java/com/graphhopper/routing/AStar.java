@@ -98,7 +98,7 @@ public class AStar extends AbstractRoutingAlgorithm
         {
             int currVertex = currEdge.adjNode;
             visitedCount++;
-            if (isWeightLimitExceeded())
+            if (isWeightLimitExceeded() || isMaxVisitedNodesExceeded())
                 return createEmptyPath();
 
             if (finished())

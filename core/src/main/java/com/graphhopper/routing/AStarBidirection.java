@@ -211,6 +211,8 @@ public class AStarBidirection extends AbstractBidirAlgo
         return currFrom.weight + currTo.weight > weightLimit;
     }
 
+
+
     @Override
     boolean fillEdgesFrom()
     {

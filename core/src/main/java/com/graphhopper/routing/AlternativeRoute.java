@@ -70,6 +70,7 @@ public class AlternativeRoute implements RoutingAlgorithm
     private final TraversalMode traversalMode;
     private double weightLimit = Double.MAX_VALUE;
     private int visitedNodes;
+    private int maxVisitedNodes;
     private double maxWeightFactor = 1.4;
     // the higher the maxWeightFactor the higher the explorationFactor needs to be
     // 1 is default for bidir Dijkstra, 0.8 seems to be a very similar value for bidir A* but roughly 1/2 of the nodes explored
@@ -91,6 +92,12 @@ public class AlternativeRoute implements RoutingAlgorithm
     public void setWeightLimit( double weightLimit )
     {
         this.weightLimit = weightLimit;
+    }
+
+    @Override
+    public void setMaxVisitedNodes( int numberOfNodes )
+    {
+        this.maxVisitedNodes = numberOfNodes;
     }
 
     /**
@@ -257,7 +264,7 @@ public class AlternativeRoute implements RoutingAlgorithm
      */
     public static class AlternativeBidirSearch
             extends AStarBidirection
-    //      extends DijkstraBidirectionRef            
+    //      extends DijkstraBidirectionRef
     {
         private final double explorationFactor;
 
@@ -306,7 +313,7 @@ public class AlternativeRoute implements RoutingAlgorithm
             if (finishedFrom && finishedTo)
                 return true;
 
-            if (currFrom.weight + currTo.weight > weightLimit)
+            if (currFrom.weight + currTo.weight > weightLimit || isMaxVisitedNodesExceeded())
                 return true;
 
             // The following condition is necessary to avoid traversing the full graph if areas are disconnected
