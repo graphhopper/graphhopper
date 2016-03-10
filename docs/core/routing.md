@@ -1,3 +1,5 @@
+# Routing via Java API
+
 To do routing in your Java code you'll need just a few lines of code:
 
 ```java
@@ -48,11 +50,12 @@ List<Map<String, Object>> iList = il.createJson();
 List<GPXEntry> list = il.createGPXList();
 ```
 
-The default is to use the speed-up mode for one profile. If you need multiple profiles you 
-specify a list of profiles (e.g. car,bike) and the speed-up mode is applied to the first profile only (e.g. car).
-The other vehicles then use a more flexible routing.
+## Speed mode vs. Flexibility mode
 
-You can also completely disable the speed-up mode to make all vehicles using the flexibility mode.
+The default is to use the speed-up mode. If you need multiple profiles you specify a list of profiles (e.g. car,bike). 
+
+You can also completely disable the speed-up mode to make all vehicles using the flexibility mode via setting `prepare.chWeighting=no` also see issue #631 for a "per request" configuration.
+
 Then pick one vehicle and optionally the algorithm like 'bidirectional astar' as algorithm:
 
 ```java
@@ -69,6 +72,8 @@ GHRequest req = new GHRequest(latFrom, lonFrom, latTo, lonTo).
 GHResponse res = hopper.route(req);
 ```
 
+## Heading
+
 In the flexibility mode it is also possible to add a desired heading (north based azimuth between 0 and 360 degree)
 to any point:
 ```java
@@ -82,6 +87,8 @@ req.getHints().put("pass_through", true);
 A heading with the value 'NaN' won't be enforced and a heading not within [0, 360] will trigger an IllegalStateException.
 It is important to note that if you force the heading at via or end points the outgoing heading needs to be specified.
 I.e. if you want to force "coming from south" to a destination you need to specify the resulting "heading towards north" instead, which is 0.
+
+## Java client
  
 In case you need a web access in a Java or an Android application the GraphHopperWeb class comes handy,
  see the 'web' sub module or [the Java client for the GraphHopper Directions API](https://github.com/graphhopper/directions-api-java-client).
