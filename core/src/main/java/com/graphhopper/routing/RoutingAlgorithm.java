@@ -49,6 +49,11 @@ public interface RoutingAlgorithm
     void setWeightLimit( double weight );
 
     /**
+     * Limit the search to numberOfNodes
+     */
+    void setMaxVisitedNodes( int numberOfNodes );
+
+    /**
      * @return name of this algorithm
      */
     String getName();

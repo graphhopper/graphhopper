@@ -386,6 +386,22 @@ public abstract class AbstractRoutingAlgorithmTester
         assertEquals(p.toString(), 10007.7, p.getDistance(), .1);
     }
 
+    @Test
+    public void testMaxVisitedNodes()
+    {
+        GraphHopperStorage graph = createGHStorage(false);
+        initBiGraph(graph);
+
+        RoutingAlgorithm algo = createAlgo(graph);
+        Path p = algo.calcPath(0, 4);
+        assertTrue(p.isFound());
+
+        algo = createAlgo(graph);
+        algo.setMaxVisitedNodes(3);
+        p = algo.calcPath(0, 4);
+        assertFalse(p.isFound());
+    }
+
     // 1-2-3-4-5
     // |     / |
     // |    9  |

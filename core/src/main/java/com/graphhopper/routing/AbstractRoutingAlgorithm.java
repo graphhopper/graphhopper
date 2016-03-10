@@ -18,12 +18,14 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.*;
+import com.graphhopper.storage.InternalGraphEventListener;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -41,6 +43,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     protected final FlagEncoder flagEncoder;
     protected final TraversalMode traversalMode;
     protected double weightLimit = Double.MAX_VALUE;
+    protected int maxVisitedNodes = Integer.MAX_VALUE;
     private boolean alreadyRun;
 
     /**
@@ -64,6 +67,12 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     public void setWeightLimit( double weight )
     {
         this.weightLimit = weight;
+    }
+
+    @Override
+    public void setMaxVisitedNodes( int numberOfNodes )
+    {
+        this.maxVisitedNodes = numberOfNodes;
     }
 
     public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
@@ -136,5 +145,10 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     public String toString()
     {
         return getName() + "|" + weighting;
+    }
+
+    protected boolean isMaxVisitedNodesExceeded()
+    {
+        return maxVisitedNodes < getVisitedNodes();
     }
 }

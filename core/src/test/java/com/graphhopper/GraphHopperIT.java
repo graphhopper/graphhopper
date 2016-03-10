@@ -278,6 +278,29 @@ public class GraphHopperIT
     }
 
     @Test
+    public void testMonacoMaxVisitedNodes()
+    {
+        GHPoint from = new GHPoint(43.741069, 7.426854);
+        GHPoint to = new GHPoint(43.744445, 7.429483);
+        GHRequest req = new GHRequest().
+                addPoint(from).
+                addPoint(to).
+                setVehicle(vehicle).setWeighting("fastest");
+        req.getHints().put("routing.maxVisitedNodes", 5);
+        GHResponse rsp = hopper.route(req);
+
+        assertTrue(rsp.hasErrors());
+
+        req = new GHRequest().
+                addPoint(from).
+                addPoint(to).
+                setVehicle(vehicle).setWeighting("fastest");
+        rsp = hopper.route(req);
+
+        assertFalse(rsp.hasErrors());
+    }
+
+    @Test
     public void testMonacoStraightVia()
     {
         GHRequest rq = new GHRequest().

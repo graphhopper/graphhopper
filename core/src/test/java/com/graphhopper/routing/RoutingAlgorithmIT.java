@@ -272,6 +272,7 @@ public class RoutingAlgorithmIT
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
+
     @Test
     public void testMonacoMixed()
     {

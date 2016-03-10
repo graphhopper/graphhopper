@@ -72,6 +72,7 @@ public class GraphHopper implements GraphHopperAPI
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private final Map<Weighting, RoutingAlgorithmFactory> algoFactories = new LinkedHashMap<Weighting, RoutingAlgorithmFactory>();
+    private int maxVisitedNodes = Integer.MAX_VALUE;
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -686,6 +687,8 @@ public class GraphHopper implements GraphHopperAPI
 
         // routing
         defaultWeightLimit = args.getDouble("routing.defaultWeightLimit", defaultWeightLimit);
+        maxVisitedNodes = args.getInt("routing.maxVisitedNodes", Integer.MAX_VALUE);
+
         return this;
     }
 
@@ -1093,10 +1096,16 @@ public class GraphHopper implements GraphHopperAPI
         QueryResult fromQResult = qResults.get(0);
 
         double weightLimit = request.getHints().getDouble("defaultWeightLimit", defaultWeightLimit);
+        int maxVisistedNodesForRequest = request.getHints().getInt("routing.maxVisitedNodes", maxVisitedNodes);
+        if(maxVisistedNodesForRequest > maxVisitedNodes){
+            ghRsp.addError(new IllegalStateException("The routing.maxVisitedNodes parameter has to be below or equal to:"+maxVisitedNodes));
+            return Collections.emptyList();
+        }
+
         String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
         AlgorithmOptions algoOpts = AlgorithmOptions.start().
                 algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
-                hints(request.getHints()).
+                maxVisitedNodes(maxVisistedNodesForRequest).hints(request.getHints()).
                 build();
 
         boolean viaTurnPenalty = request.getHints().getBool("pass_through", false);

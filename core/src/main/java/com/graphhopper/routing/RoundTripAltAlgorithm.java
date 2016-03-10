@@ -48,6 +48,7 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
     private final TraversalMode traversalMode;
     private double weightLimit = Double.MAX_VALUE;
     private int visitedNodes;
+    private int maxVisitedNodes = Integer.MAX_VALUE;
     private double maxWeightFactor = 2;
 
     public RoundTripAltAlgorithm( Graph graph, FlagEncoder flagEncoder, Weighting weighting, TraversalMode traversalMode )
@@ -75,6 +76,7 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
     {
         AltSingleDijkstra altDijkstra = new AltSingleDijkstra(graph, flagEncoder, weighting, traversalMode);
         altDijkstra.setWeightLimit(weightLimit);
+        altDijkstra.setMaxVisitedNodes(maxVisitedNodes);
         altDijkstra.beforeRun(from);
         SPTEntry currFrom = altDijkstra.searchBest(from, maxFullDistance);
         visitedNodes = altDijkstra.getVisitedNodes();
@@ -121,6 +123,7 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
         AlternativeRoute.AlternativeBidirSearch altBidirDijktra = new AlternativeRoute.AlternativeBidirSearch(graph, flagEncoder,
                 altWeighting, traversalMode, 1);
         altBidirDijktra.setWeightLimit(weightLimit);
+        altBidirDijktra.setMaxVisitedNodes(maxVisitedNodes);
         // find an alternative for backward direction starting from 'to'
         Path bestBackwardPath = altBidirDijktra.searchBest(to, from);
 
@@ -206,6 +209,12 @@ public class RoundTripAltAlgorithm implements RoutingAlgorithm
     public void setWeightLimit( double weightLimit )
     {
         this.weightLimit = weightLimit;
+    }
+
+    @Override
+    public void setMaxVisitedNodes( int numberOfNodes )
+    {
+        this.maxVisitedNodes = numberOfNodes;
     }
 
     @Override
