@@ -26,6 +26,8 @@ and [iOS](http://github.com/graphhopper/graphhopper-ios)
 
 # Community
 
+We have a prosper community and welcome everyone. Let us know your problems, use cases or just [say hello](https://discuss.graphhopper.com/). Please see our [community guidelines](https://graphhopper.com/agreements/cccoc.html).
+
 ## Get Started
 
 To get started read through our documentation ([0.6](https://github.com/graphhopper/graphhopper/blob/0.6/docs/index.md), [unstable](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)). 
