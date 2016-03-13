@@ -34,7 +34,7 @@ To get started read through our documentation ([0.6](https://github.com/graphhop
 
 ## Questions
 
-All questions can go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specicially for developers, mobiles usage (iOS&Android) and our map matching component. Another place to ask questions would be on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper) but please do NOT use our issues. Create new issues if you are sure that this is a bug and see how to contribute in the next section.
+All questions can go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specicially for developers, mobiles usage (iOS&Android) and our map matching component. Another place to ask questions would be on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper) but please do NOT use our issue section. Create new issues ONLY if you are sure that this is a bug and see how to contribute in the next section.
 
 ## Contribute
 
