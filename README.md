@@ -24,13 +24,15 @@ There are subprojects to make GraphHopper working offline
 on [Android](https://github.com/graphhopper/graphhopper/tree/master/android)
 and [iOS](http://github.com/graphhopper/graphhopper-ios)
 
+# Community
 
 ## Get Started
 
-Read through our Documentation ([0.6](https://github.com/graphhopper/graphhopper/blob/0.6/docs/index.md), [unstable](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)), 
-ask questions on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper)
-and sign up to the [discussion](https://discuss.graphhopper.com/).
+To get started read through our documentation ([0.6](https://github.com/graphhopper/graphhopper/blob/0.6/docs/index.md), [unstable](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)). 
 
+## Questions
+
+All questions can go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specicially for developers, mobiles usage (iOS&Android) and our map matching component. Another place to ask questions would be on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper) but please do NOT use our issues. Create new issues if you are sure that this is a bug and see how to contribute in the next section.
 
 ## Contribute
 
