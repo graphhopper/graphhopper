@@ -38,7 +38,7 @@ All questions can go to our [forum](https://discuss.graphhopper.com/) where we a
 
 ## Contribute
 
-Read through [how to contribute](https://github.com/graphhopper/graphhopper/blob/master/CONTRIBUTING.md)
+Read through [how to contribute](.github/CONTRIBUTING.md)
 like finding and fixing bugs and improving our documentation or translations!
 
 
