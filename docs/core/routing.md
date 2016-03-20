@@ -95,6 +95,8 @@ In the flexibility mode you can get alternative routes via:
 req.setAlgorithm(AlgorithmOptions.ALT_ROUTE)
 ```
 
+Note that this setting can affect speed of your routing requests. 
+
 You can tune the maximum numbers via:
 ```java
 req.getHints().put("alternative_route.max_paths", "3");
