@@ -88,6 +88,20 @@ A heading with the value 'NaN' won't be enforced and a heading not within [0, 36
 It is important to note that if you force the heading at via or end points the outgoing heading needs to be specified.
 I.e. if you want to force "coming from south" to a destination you need to specify the resulting "heading towards north" instead, which is 0.
 
+## Alternative Routes
+
+In the flexibility mode you can get alternative routes via:
+```java
+req.setAlgorithm(AlgorithmOptions.ALT_ROUTE)
+```
+
+You can tune the maximum numbers via:
+```java
+req.getHints().put("alternative_route.max_paths", "3");
+```
+
+See the [forum discussion](https://discuss.graphhopper.com/t/alternative-routes/424/11) for further hints.
+
 ## Java client
  
 In case you need a web access in a Java or an Android application the GraphHopperWeb class comes handy,
