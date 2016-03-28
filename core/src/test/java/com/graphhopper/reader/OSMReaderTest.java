@@ -626,7 +626,7 @@ public class OSMReaderTest
 
         lonMap.put(1, 1.0d);
         lonMap.put(2, 1.0d);
-        final AtomicInteger increased = new AtomicInteger(0);
+
         OSMReader osmreader = new OSMReader(ghStorage)
         {
             // mock data access

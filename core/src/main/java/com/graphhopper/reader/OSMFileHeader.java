@@ -28,7 +28,6 @@ import javax.xml.stream.XMLStreamReader;
  */
 public class OSMFileHeader extends OSMElement
 {
-
     /**
      * Constructor for XML Parser
      */
@@ -39,7 +38,7 @@ public class OSMFileHeader extends OSMElement
         return header;
     }
 
-    public OSMFileHeader( )
+    public OSMFileHeader()
     {
         super(0, FILEHEADER);
     }
@@ -49,11 +48,6 @@ public class OSMFileHeader extends OSMElement
         int event = parser.getEventType();
         while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("osm"))
         {
-            if (event == XMLStreamConstants.START_ELEMENT)
-            {
-                String timestamp = parser.getAttributeValue(null, "timestamp");
-            }
-
             event = parser.nextTag();
         }
     }

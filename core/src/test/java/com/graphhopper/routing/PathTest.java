@@ -42,12 +42,9 @@ public class PathTest
 {
     private final FlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager carManager = new EncodingManager(encoder);
-//    private final EncodingManager mixedEncoders = new EncodingManager(
-//            new CarFlagEncoder(), new FootFlagEncoder(), new BikeFlagEncoder());
     private final EncodingManager mixedEncoders = new EncodingManager(new CarFlagEncoder());
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
-    private final AngleCalc ac = new AngleCalc();
     private final RoundaboutGraph roundaboutGraph = new RoundaboutGraph();
 
     @Test
@@ -301,9 +298,9 @@ public class PathTest
 
         private double getAngle( int n1, int n2, int n3, int n4 )
         {
-            double inOrientation = ac.calcOrientation(na.getLat(n1), na.getLon(n1), na.getLat(n2), na.getLon(n2));
-            double outOrientation = ac.calcOrientation(na.getLat(n3), na.getLon(n3), na.getLat(n4), na.getLon(n4));
-            outOrientation = ac.alignOrientation(inOrientation, outOrientation);
+            double inOrientation = Helper.ANGLE_CALC.calcOrientation(na.getLat(n1), na.getLon(n1), na.getLat(n2), na.getLon(n2));
+            double outOrientation = Helper.ANGLE_CALC.calcOrientation(na.getLat(n3), na.getLon(n3), na.getLat(n4), na.getLon(n4));
+            outOrientation = Helper.ANGLE_CALC.alignOrientation(inOrientation, outOrientation);
             double delta = (inOrientation - outOrientation);
             delta = clockwise ? (Math.PI + delta) : -1 * (Math.PI - delta);
             return delta;

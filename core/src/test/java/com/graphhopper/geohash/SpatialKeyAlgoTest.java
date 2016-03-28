@@ -114,7 +114,6 @@ public class SpatialKeyAlgoTest
             GHPoint coord2 = new GHPoint();
             algo.decode(keyY, coord2);
 
-            double precision = DistanceCalcEarth.C / (1 << (i / 2 - 2)) / 4;
             double dist = new DistanceCalcEarth().calcDist(coord.lat, coord.lon, coord2.lat, coord2.lon);
             assertEquals(0, dist, 1e-5);
 //            System.out.println("\n\n##" + i + "\nkeyX:" + BitUtil.BIG.toBitString(keyX));

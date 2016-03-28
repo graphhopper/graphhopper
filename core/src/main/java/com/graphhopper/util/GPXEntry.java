@@ -63,6 +63,12 @@ public class GPXEntry extends GHPoint3D
     }
 
     @Override
+    public int hashCode()
+    {
+        return 59 * super.hashCode() + (int) (time ^ (time >>> 32));
+    }
+
+    @Override
     public boolean equals( Object obj )
     {
         if (obj == null)

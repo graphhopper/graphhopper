@@ -19,11 +19,6 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.util.AbstractAlgoPreparation;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.LevelEdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
@@ -929,7 +924,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         };
     }
 
-    class Shortcut
+    static class Shortcut
     {
         int from;
         int to;

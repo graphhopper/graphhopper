@@ -60,7 +60,7 @@ public interface ElevationProvider
      */
     void release();
 
-    public final static ElevationProvider NOOP = new ElevationProvider()
+    ElevationProvider NOOP = new ElevationProvider()
     {
         @Override
         public double getEle( double lat, double lon )

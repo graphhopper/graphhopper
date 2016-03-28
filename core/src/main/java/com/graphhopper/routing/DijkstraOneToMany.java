@@ -237,6 +237,10 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
 
     private static class TIntArrayListWithCap extends TIntArrayList
     {
+        public TIntArrayListWithCap()
+        {
+        }
+
         public int getCapacity()
         {
             return _data.length;

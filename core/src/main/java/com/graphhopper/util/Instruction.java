@@ -23,7 +23,7 @@ import java.util.Map;
 
 public class Instruction
 {
-    private static final AngleCalc ac = new AngleCalc();
+    private static final AngleCalc AC = Helper.ANGLE_CALC;
 
     public static final int LEAVE_ROUNDABOUT = -6; // for future use
     public static final int TURN_SHARP_LEFT = -3;
@@ -215,7 +215,7 @@ public class Instruction
         if (Double.isNaN(azimuth))
             return "";
 
-        return ac.azimuth2compassPoint(azimuth);
+        return AC.azimuth2compassPoint(azimuth);
     }
 
     /**
@@ -243,7 +243,7 @@ public class Instruction
 
         double lat = points.getLatitude(0);
         double lon = points.getLongitude(0);
-        return ac.calcAzimuth(lat, lon, nextLat, nextLon);
+        return AC.calcAzimuth(lat, lon, nextLat, nextLon);
     }
 
     void checkOne()

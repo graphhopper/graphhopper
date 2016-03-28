@@ -85,10 +85,10 @@ public class DateRange
             int currentDayOfWeek = date.get(Calendar.DAY_OF_WEEK);
             if (reverse)
             {
-                return (from.get(Calendar.DAY_OF_WEEK) <= currentDayOfWeek || currentDayOfWeek <= to.get(Calendar.DAY_OF_WEEK));
+                return from.get(Calendar.DAY_OF_WEEK) <= currentDayOfWeek || currentDayOfWeek <= to.get(Calendar.DAY_OF_WEEK);
             } else
             {
-                return (from.get(Calendar.DAY_OF_WEEK) <= currentDayOfWeek && currentDayOfWeek <= to.get(Calendar.DAY_OF_WEEK));
+                return from.get(Calendar.DAY_OF_WEEK) <= currentDayOfWeek && currentDayOfWeek <= to.get(Calendar.DAY_OF_WEEK);
             }
         }
 

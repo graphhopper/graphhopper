@@ -239,7 +239,7 @@ public class DistanceCalcEarth implements DistanceCalc
     @Override
     public boolean isCrossBoundary( double lon1, double lon2 )
     {
-        return Math.abs(lon1 - lon2) > 300;
+        return abs(lon1 - lon2) > 300;
     }
 
     @Override

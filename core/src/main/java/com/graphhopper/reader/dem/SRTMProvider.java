@@ -320,6 +320,7 @@ public class SRTMProvider implements ElevationProvider
             os.write(buffer, 0, len);
         }
         os.flush();
+        Helper.close(buff);
         return os.toByteArray();
     }
 

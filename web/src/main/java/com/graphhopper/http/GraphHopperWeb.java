@@ -32,8 +32,6 @@ import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Main wrapper of the GraphHopper Directions API for a simple and efficient usage.
@@ -42,7 +40,6 @@ import org.slf4j.LoggerFactory;
  */
 public class GraphHopperWeb implements GraphHopperAPI
 {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
     private Downloader downloader = new Downloader("GraphHopper Java Client");
     private String routeServiceUrl = "https://graphhopper.com/api/1/route";
     private String key = "";

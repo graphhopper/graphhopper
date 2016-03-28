@@ -94,7 +94,8 @@ public class OSMInputFile implements Sink, Closeable
 
         // check file header
         byte header[] = new byte[6];
-        ips.read(header);
+        if (ips.read(header) < 0)
+            throw new IllegalArgumentException("Input file is not of valid type " + file.getPath());
 
         /*     can parse bz2 directly with additional lib
          if (header[0] == 'B' && header[1] == 'Z')
@@ -147,7 +148,7 @@ public class OSMInputFile implements Sink, Closeable
             throws XMLStreamException
     {
         XMLInputFactory factory = XMLInputFactory.newInstance();
-        parser = factory.createXMLStreamReader(bis, "UTF-8");
+        parser = factory.createXMLStreamReader(in, "UTF-8");
 
         int event = parser.next();
         if (event != XMLStreamConstants.START_ELEMENT || !parser.getLocalName().equalsIgnoreCase("osm"))
@@ -157,17 +158,16 @@ public class OSMInputFile implements Sink, Closeable
         // See https://wiki.openstreetmap.org/wiki/PBF_Format#Definition_of_the_OSMHeader_fileblock
         String timestamp = parser.getAttributeValue(null, "osmosis_replication_timestamp");
 
-        if (timestamp==null)
+        if (timestamp == null)
             timestamp = parser.getAttributeValue(null, "timestamp");
 
-        if (timestamp!=null)
+        if (timestamp != null)
         {
             try
             {
-                fileheader = new OSMFileHeader();                
+                fileheader = new OSMFileHeader();
                 fileheader.setTag("timestamp", timestamp);
-            }
-            catch (Exception ex)
+            } catch (Exception ex)
             {
             }
         }
@@ -197,7 +197,7 @@ public class OSMInputFile implements Sink, Closeable
     {
 
         int event = parser.next();
-        if (fileheader!=null)
+        if (fileheader != null)
         {
             OSMElement copyfileheader = fileheader;
             fileheader = null;

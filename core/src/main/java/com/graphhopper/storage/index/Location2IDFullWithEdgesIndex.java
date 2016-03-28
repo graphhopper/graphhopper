@@ -21,9 +21,7 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
 import com.graphhopper.util.Helper;
 
 /**

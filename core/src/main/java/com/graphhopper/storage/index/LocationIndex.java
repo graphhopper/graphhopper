@@ -42,6 +42,7 @@ public interface LocationIndex extends Storable<LocationIndex>
     LocationIndex prepareIndex();
 
     /**
+     * @deprecated will be removed with 0.8 use 'QueryResult findClosest' instead
      * @return the closest node id for the specified geo location (latitude,longitude)
      */
     int findID( double lat, double lon );

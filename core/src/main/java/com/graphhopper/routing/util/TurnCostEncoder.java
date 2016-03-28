@@ -48,7 +48,7 @@ public interface TurnCostEncoder
      * whether turn costs nor turn restrictions will be encoded by this encoder, should be used for
      * pedestrians
      */
-    static class NoTurnCostsEncoder implements TurnCostEncoder
+    class NoTurnCostsEncoder implements TurnCostEncoder
     {
 
         @Override

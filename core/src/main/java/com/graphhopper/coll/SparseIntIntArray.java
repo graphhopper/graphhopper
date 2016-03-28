@@ -55,32 +55,6 @@ public class SparseIntIntArray
     }
 
     /**
-     * @return A copy of all keys contained in the sparse array.
-     */
-    private int[] getKeys()
-    {
-        int length = mKeys.length;
-        int[] result = new int[length];
-        System.arraycopy(mKeys, 0, result, 0, length);
-        return result;
-    }
-
-    /**
-     * Sets all supplied keys to the given unique value.
-     * <p>
-     * @param keys Keys to set
-     * @param uniqueValue Value to set all supplied keys to
-     */
-    private void setValues( int[] keys, int uniqueValue )
-    {
-        int length = keys.length;
-        for (int i = 0; i < length; i++)
-        {
-            put(keys[i], uniqueValue);
-        }
-    }
-
-    /**
      * Gets the Object mapped from the specified key, or <code>null</code> if no such mapping has
      * been made.
      */
@@ -111,13 +85,10 @@ public class SparseIntIntArray
     public void remove( int key )
     {
         int i = binarySearch(mKeys, 0, mSize, key);
-        if (i >= 0)
+        if (i >= 0 && mValues[i] != DELETED)
         {
-            if (mValues[i] != DELETED)
-            {
-                mValues[i] = DELETED;
-                mGarbage = true;
-            }
+            mValues[i] = DELETED;
+            mGarbage = true;
         }
     }
 
@@ -274,44 +245,6 @@ public class SparseIntIntArray
     }
 
     /**
-     * Returns the index for which {@link #keyAt} would return the specified key, or a negative
-     * number if the specified key is not mapped.
-     */
-    private int indexOfKey( int key )
-    {
-        if (mGarbage)
-        {
-            gc();
-        }
-
-        return binarySearch(mKeys, 0, mSize, key);
-    }
-
-    /**
-     * Returns an index for which {@link #valueAt} would return the specified key, or a negative
-     * number if no keys map to the specified value. Beware that this is a linear search, unlike
-     * lookups by key, and that multiple keys can map to the same value and this will find only one
-     * of them.
-     */
-    private int indexOfValue( int value )
-    {
-        if (mGarbage)
-        {
-            gc();
-        }
-
-        for (int i = 0; i < mSize; i++)
-        {
-            if (mValues[i] == value)
-            {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
-    /**
      * Removes all key-value mappings from this SparseIntIntArray.
      */
     public void clear()
@@ -417,22 +350,6 @@ public class SparseIntIntArray
         } else
         {
             return ~high;
-        }
-    }
-
-    private void checkIntegrity()
-    {
-        for (int i = 1; i < mSize; i++)
-        {
-            if (mKeys[i] <= mKeys[i - 1])
-            {
-                for (int j = 0; j < mSize; j++)
-                {
-                    System.err.println("FAIL " + j + ": " + mKeys[j] + " -> " + mValues[j]);
-                }
-
-                throw new RuntimeException();
-            }
         }
     }
 

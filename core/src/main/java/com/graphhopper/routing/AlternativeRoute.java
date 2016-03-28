@@ -70,7 +70,7 @@ public class AlternativeRoute implements RoutingAlgorithm
     private final TraversalMode traversalMode;
     private double weightLimit = Double.MAX_VALUE;
     private int visitedNodes;
-    private int maxVisitedNodes;
+    private int maxVisitedNodes = Integer.MAX_VALUE;
     private double maxWeightFactor = 1.4;
     // the higher the maxWeightFactor the higher the explorationFactor needs to be
     // 1 is default for bidir Dijkstra, 0.8 seems to be a very similar value for bidir A* but roughly 1/2 of the nodes explored
@@ -158,8 +158,9 @@ public class AlternativeRoute implements RoutingAlgorithm
     {
         AlternativeBidirSearch altBidirDijktra = new AlternativeBidirSearch(
                 graph, flagEncoder, weighting, traversalMode, maxExplorationFactor * 2);
-        altBidirDijktra.searchBest(from, to);
+        altBidirDijktra.setMaxVisitedNodes(maxVisitedNodes);
         altBidirDijktra.setWeightLimit(weightLimit);
+        altBidirDijktra.searchBest(from, to);
         visitedNodes = altBidirDijktra.getVisitedNodes();
 
         List<AlternativeInfo> alternatives = altBidirDijktra.
@@ -262,9 +263,7 @@ public class AlternativeRoute implements RoutingAlgorithm
     /**
      * Helper class to find alternatives and alternatives for round trip.
      */
-    public static class AlternativeBidirSearch
-            extends AStarBidirection
-    //      extends DijkstraBidirectionRef
+    public static class AlternativeBidirSearch extends AStarBidirection
     {
         private final double explorationFactor;
 
@@ -283,27 +282,6 @@ public class AlternativeRoute implements RoutingAlgorithm
         public TIntObjectMap<AStarEntry> getBestWeightMapTo()
         {
             return bestWeightMapTo;
-        }
-//        public TIntObjectMap<SPTEntry> getBestWeightMapFrom()
-//        {
-//            return bestWeightMapFrom;
-//        }
-//
-//        public TIntObjectMap<SPTEntry> getBestWeightMapTo()
-//        {
-//            return bestWeightMapTo;
-//        }
-
-        @Override
-        protected double getCurrentFromWeight()
-        {
-            return super.getCurrentFromWeight();
-        }
-
-        @Override
-        protected double getCurrentToWeight()
-        {
-            return super.getCurrentToWeight();
         }
 
         @Override
@@ -384,12 +362,9 @@ public class AlternativeRoute implements RoutingAlgorithm
                             toSPTEntry = toSPTEntry.parent;
                         // TODO else if fromSPTEntry.parent != null fromSPTEntry = fromSPTEntry.parent;
 
-                    } else
-                    {
-                        // The alternative path is suboptimal when both entries are parallel
+                    } else // The alternative path is suboptimal when both entries are parallel
                         if (fromSPTEntry.edge == toSPTEntry.edge)
                             return true;
-                    }
 
                     // (1) skip too long paths
                     final double weight = fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath();
@@ -558,20 +533,17 @@ public class AlternativeRoute implements RoutingAlgorithm
                             return true;
                         }
 
-                    } else
+                    } else if (fromSPTEntry.parent == null)
                     {
-                        if (fromSPTEntry.parent == null)
-                        {
-                            bestPathEntries.add(fromSPTEntry);
-                            if (bestPathEntries.size() > 1)
-                                throw new IllegalStateException("There is only one best path but was: " + bestPathEntries);
+                        bestPathEntries.add(fromSPTEntry);
+                        if (bestPathEntries.size() > 1)
+                            throw new IllegalStateException("There is only one best path but was: " + bestPathEntries);
 
-                            if (startTID.get() != fromSPTEntry.adjNode)
-                                throw new IllegalStateException("Start traversal ID has to be identical to root edge entry "
-                                        + "which is the plateau start of the best path but was: " + startTID + " vs. adjNode: " + fromSPTEntry.adjNode);
+                        if (startTID.get() != fromSPTEntry.adjNode)
+                            throw new IllegalStateException("Start traversal ID has to be identical to root edge entry "
+                                    + "which is the plateau start of the best path but was: " + startTID + " vs. adjNode: " + fromSPTEntry.adjNode);
 
-                            return true;
-                        }
+                        return true;
                     }
 
                     return false;
