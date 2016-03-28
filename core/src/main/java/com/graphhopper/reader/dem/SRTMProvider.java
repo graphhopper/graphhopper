@@ -80,7 +80,7 @@ public class SRTMProvider implements ElevationProvider
     // possible alternatives see #451
     // http://mirror.ufs.ac.za/datasets/SRTM3/
     //"http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/"
-    private String baseUrl = "http://srtm.motoroute.me/SRTM3/";
+    private String baseUrl = "https://srtm.kurviger.de/SRTM3/";
     private boolean calcMean = false;
 
     public SRTMProvider()
