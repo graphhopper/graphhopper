@@ -555,4 +555,22 @@ public class GraphHopperIT
         assertEquals(89, arsp.getPoints().getSize());
         tmpHopper.close();
     }
+
+    @Test
+    public void testRoundTour()
+    {
+        GHRequest rq = new GHRequest().
+                addPoint(new GHPoint(43.741069, 7.426854)).
+                addPoint(new GHPoint(43.741069, 7.426854)).
+                setVehicle(vehicle).setWeighting("fastest").
+                setAlgorithm("roundTrip")
+                ;
+        rq.getHints().put("round_trip.distance", 1);
+        GHResponse rsp = hopper.route(rq);
+
+        for (PathWrapper altRsp: rsp.getAll()){
+            assertTrue(altRsp.getPoints().size() > 2);
+        }
+    }
+
 }

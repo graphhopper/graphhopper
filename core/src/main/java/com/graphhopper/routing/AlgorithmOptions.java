@@ -62,6 +62,10 @@ public class AlgorithmOptions
     /**
      * round trip algorithm based on alternative route algorithm
      */
+    public static final String ROUND_TRIP = "roundTrip";
+    /**
+     * round trip algorithm based on alternative route algorithm
+     */
     public static final String ROUND_TRIP_ALT = "roundTripAlt";
     private String algorithm = DIJKSTRA_BI;
     private Weighting weighting;

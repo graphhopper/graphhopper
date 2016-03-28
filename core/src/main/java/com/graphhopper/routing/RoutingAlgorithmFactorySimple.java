@@ -72,6 +72,10 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
             altRouteAlgo.setMaxExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
             altRouteAlgo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
             return altRouteAlgo;
+        } else if (AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoStr))
+        {
+            double distanceInKm = opts.getHints().getDouble("round_trip.distance", 1);
+            return new RoundTripAlgorithm(opts.getWeighting(), distanceInKm, g, opts);
         } else if (AlgorithmOptions.ROUND_TRIP_ALT.equalsIgnoreCase(algoStr))
         {
             RoundTripAltAlgorithm altRouteAlgo = new RoundTripAltAlgorithm(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
