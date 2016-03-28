@@ -68,7 +68,6 @@ public class GraphHopper implements GraphHopperAPI
     private String preferredLanguage = "";
     private boolean fullyLoaded = false;
     // for routing
-    private double defaultWeightLimit = Double.MAX_VALUE;
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private final Map<Weighting, RoutingAlgorithmFactory> algoFactories = new LinkedHashMap<Weighting, RoutingAlgorithmFactory>();
@@ -378,11 +377,6 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
-     * Disabling CH is only recommended for short routes or in combination with
-     * setDefaultWeightLimit and called flexibility mode
-     * <p>
-     *
-     * @see #setDefaultWeightLimit(double)
      */
     public GraphHopper setCHEnable( boolean enable )
     {
@@ -393,13 +387,11 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * This methods stops the algorithm from searching further if the resulting path would go over
-     * specified weight, important if CH is disabled. The unit is defined by the used weighting
-     * created from createWeighting, e.g. distance for shortest or seconds for the standard
-     * FastestWeighting implementation.
+     * the specified node count, important if CH is disabled.
      */
-    public void setDefaultWeightLimit( double defaultWeightLimit )
+    public void setMaxVisitedNodes( int maxVisitedNodes )
     {
-        this.defaultWeightLimit = defaultWeightLimit;
+        this.maxVisitedNodes = maxVisitedNodes;
     }
 
     public boolean isCHEnabled()
@@ -686,7 +678,6 @@ public class GraphHopper implements GraphHopperAPI
         maxRegionSearch = args.getInt("index.maxRegionSearch", maxRegionSearch);
 
         // routing
-        defaultWeightLimit = args.getDouble("routing.defaultWeightLimit", defaultWeightLimit);
         maxVisitedNodes = args.getInt("routing.maxVisitedNodes", Integer.MAX_VALUE);
 
         return this;
@@ -1095,10 +1086,10 @@ public class GraphHopper implements GraphHopperAPI
         List<Path> altPaths = new ArrayList<Path>(points.size() - 1);
         QueryResult fromQResult = qResults.get(0);
 
-        double weightLimit = request.getHints().getDouble("defaultWeightLimit", defaultWeightLimit);
         int maxVisistedNodesForRequest = request.getHints().getInt("routing.maxVisitedNodes", maxVisitedNodes);
-        if(maxVisistedNodesForRequest > maxVisitedNodes){
-            ghRsp.addError(new IllegalStateException("The routing.maxVisitedNodes parameter has to be below or equal to:"+maxVisitedNodes));
+        if (maxVisistedNodesForRequest > maxVisitedNodes)
+        {
+            ghRsp.addError(new IllegalStateException("The routing.maxVisitedNodes parameter has to be below or equal to:" + maxVisitedNodes));
             return Collections.emptyList();
         }
 
@@ -1160,7 +1151,6 @@ public class GraphHopper implements GraphHopperAPI
 
             sw = new StopWatch().start();
             RoutingAlgorithm algo = tmpAlgoFactory.createAlgo(queryGraph, algoOpts);
-            algo.setWeightLimit(weightLimit);
             String debug = ", algoInit:" + sw.stop().getSeconds() + "s";
 
             sw = new StopWatch().start();

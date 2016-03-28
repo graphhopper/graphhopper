@@ -68,7 +68,6 @@ public class AlternativeRoute implements RoutingAlgorithm
     private final FlagEncoder flagEncoder;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
-    private double weightLimit = Double.MAX_VALUE;
     private int visitedNodes;
     private int maxVisitedNodes = Integer.MAX_VALUE;
     private double maxWeightFactor = 1.4;
@@ -86,12 +85,6 @@ public class AlternativeRoute implements RoutingAlgorithm
         this.flagEncoder = flagEncoder;
         this.weighting = weighting;
         this.traversalMode = traversalMode;
-    }
-
-    @Override
-    public void setWeightLimit( double weightLimit )
-    {
-        this.weightLimit = weightLimit;
     }
 
     @Override
@@ -131,8 +124,7 @@ public class AlternativeRoute implements RoutingAlgorithm
      * This method sets the graph exploration percentage for alternative paths. Default is 1 (100%).
      * Specify a higher value to get more alternatives (especially if maxWeightFactor is higher than
      * 1.5) and a lower value to improve query time but reduces the possibility to find
-     * alternatives. Similar to weightLimit but instead an absolute value a relative percentage to
-     * the best found path is used.
+     * alternatives.
      */
     public void setMaxExplorationFactor( double explorationFactor )
     {
@@ -159,7 +151,6 @@ public class AlternativeRoute implements RoutingAlgorithm
         AlternativeBidirSearch altBidirDijktra = new AlternativeBidirSearch(
                 graph, flagEncoder, weighting, traversalMode, maxExplorationFactor * 2);
         altBidirDijktra.setMaxVisitedNodes(maxVisitedNodes);
-        altBidirDijktra.setWeightLimit(weightLimit);
         altBidirDijktra.searchBest(from, to);
         visitedNodes = altBidirDijktra.getVisitedNodes();
 
@@ -291,7 +282,7 @@ public class AlternativeRoute implements RoutingAlgorithm
             if (finishedFrom && finishedTo)
                 return true;
 
-            if (currFrom.weight + currTo.weight > weightLimit || isMaxVisitedNodesExceeded())
+            if (isMaxVisitedNodesExceeded())
                 return true;
 
             // The following condition is necessary to avoid traversing the full graph if areas are disconnected

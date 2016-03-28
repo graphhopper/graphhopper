@@ -206,14 +206,6 @@ public class AStarBidirection extends AbstractBidirAlgo
     }
 
     @Override
-    protected boolean isWeightLimitExceeded()
-    {
-        return currFrom.weight + currTo.weight > weightLimit;
-    }
-
-
-
-    @Override
     boolean fillEdgesFrom()
     {
         if (prioQueueOpenSetFrom.isEmpty())

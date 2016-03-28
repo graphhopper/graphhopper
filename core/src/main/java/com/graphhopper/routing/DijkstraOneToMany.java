@@ -47,6 +47,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     private boolean doClear = true;
     private int endNode;
     private int currNode, fromNode, to;
+    private double weightLimit = Double.MAX_VALUE;
 
     public DijkstraOneToMany( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
@@ -197,7 +198,11 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         return currNode == to;
     }
 
-    @Override
+    public void setWeightLimit( double weightLimit )
+    {
+        this.weightLimit = weightLimit;
+    }
+
     protected boolean isWeightLimitExceeded()
     {
         return weights[currNode] > weightLimit;

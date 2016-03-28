@@ -216,4 +216,47 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         g.edge(7, 10, 10, true);
         return g;
     }
+
+    @Test
+    public void testWeightLimit_issue380()
+    {
+        GraphHopperStorage graph = createGHStorage(false);
+        initGraphWeightLimit(graph);
+
+        DijkstraOneToMany algo = (DijkstraOneToMany) createAlgo(graph);
+        algo.setWeightLimit(3);
+        Path p = algo.calcPath(0, 4);
+        assertTrue(p.isFound());
+        assertEquals(3.0, p.getWeight(), 1e-6);
+
+        algo = (DijkstraOneToMany) createAlgo(graph);
+        p = algo.calcPath(0, 3);
+        assertTrue(p.isFound());
+        assertEquals(3.0, p.getWeight(), 1e-6);
+    }
+
+    public static Graph initGraphWeightLimit( Graph g )
+    {
+        //      0----1
+        //     /     |
+        //    7--    |
+        //   /   |   |
+        //   6---5   |
+        //   |   |   |
+        //   4---3---2
+
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+
+        g.edge(3, 2, 1, true);
+        g.edge(3, 5, 1, true);
+        g.edge(5, 7, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(4, 6, 1, true);
+        g.edge(6, 7, 1, true);
+        g.edge(6, 5, 1, true);
+        g.edge(0, 7, 1, true);
+        return g;
+    }
+
 }

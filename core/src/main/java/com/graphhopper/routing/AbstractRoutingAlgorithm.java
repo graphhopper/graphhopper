@@ -41,7 +41,6 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
     protected final TraversalMode traversalMode;
-    protected double weightLimit = Double.MAX_VALUE;
     protected int maxVisitedNodes = Integer.MAX_VALUE;
     private boolean alreadyRun;
 
@@ -60,12 +59,6 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         this.nodeAccess = graph.getNodeAccess();
         outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
         inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
-    }
-
-    @Override
-    public void setWeightLimit( double weight )
-    {
-        this.weightLimit = weight;
     }
 
     @Override
@@ -120,8 +113,6 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
      * @return true if finished.
      */
     protected abstract Path extractPath();
-
-    protected abstract boolean isWeightLimitExceeded();
 
     @Override
     public List<Path> calcPaths( int from, int to )

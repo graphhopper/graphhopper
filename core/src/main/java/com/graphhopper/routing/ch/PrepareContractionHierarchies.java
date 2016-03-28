@@ -849,12 +849,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     }
 
                     @Override
-                    protected boolean isWeightLimitExceeded()
-                    {
-                        return currFrom.weight > weightLimit && currTo.weight > weightLimit;
-                    }
-
-                    @Override
                     protected Path createAndInitPath()
                     {
                         bestPath = new Path4CH(graph, graph.getBaseGraph(), flagEncoder);
@@ -895,12 +889,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
                 // changed also the final finish condition for CH
                 return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
-            }
-
-            @Override
-            protected boolean isWeightLimitExceeded()
-            {
-                return currFrom.weight > weightLimit && currTo.weight > weightLimit;
             }
 
             @Override

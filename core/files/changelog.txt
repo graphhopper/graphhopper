@@ -1,4 +1,5 @@
 0.7
+    removed setWeightLimit as too unspecific for arbitrary weights, use setMaxVisitedNodes instead
     missing renames for Path.setEdgeEntry -> setSPTEntry and AbstractAlgorithm.createEdgeEntry -> createSPTEntry
 
 0.6

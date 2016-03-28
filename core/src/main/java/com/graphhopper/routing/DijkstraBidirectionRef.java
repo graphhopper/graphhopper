@@ -184,12 +184,6 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         return currFrom.weight + currTo.weight >= bestPath.getWeight();
     }
 
-    @Override
-    protected boolean isWeightLimitExceeded()
-    {
-        return currFrom.weight + currTo.weight > weightLimit;
-    }
-
     void fillEdges( SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
                     TIntObjectMap<SPTEntry> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
     {        
