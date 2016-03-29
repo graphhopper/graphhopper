@@ -232,6 +232,8 @@ public class OSMInputFile implements Sink, Closeable
                         case 'r':
                             id = Long.parseLong(idStr);
                             return OSMRelation.create(id, parser);
+                        default:
+                            break;
                     }
                 }
             }

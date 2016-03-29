@@ -475,6 +475,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             case 3:
                 wayTypeName = tr.tr("way");
                 break;
+            default:
+                break;
         }
 
         if (pavementName.isEmpty())

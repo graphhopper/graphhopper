@@ -286,6 +286,8 @@ public class Instruction
                 case Instruction.TURN_SHARP_RIGHT:
                     dir = tr.tr("turn_sharp_right");
                     break;
+                default:
+                    break;
             }
             if (dir == null)
                 throw new IllegalStateException("Turn indication not found " + indi);
