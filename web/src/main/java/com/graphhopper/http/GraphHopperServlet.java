@@ -108,7 +108,7 @@ public class GraphHopperServlet extends GHBaseServlet
         {
             FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
             GHRequest request;
-            if (favoredHeadings.size() > 0)
+            if (!favoredHeadings.isEmpty())
             {
                 // if only one favored heading is specified take as start heading
                 if (favoredHeadings.size() == 1)

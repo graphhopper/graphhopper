@@ -138,7 +138,7 @@ public class TestAlgoCollector
 
     void printSummary()
     {
-        if (errors.size() > 0)
+        if (!errors.isEmpty())
         {
             System.out.println("\n-------------------------------\n");
             System.out.println(toString());

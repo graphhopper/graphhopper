@@ -64,7 +64,7 @@ public abstract class OSMElement
                 String key = parser.getAttributeValue(null, "k");
                 String value = parser.getAttributeValue(null, "v");
                 // ignore tags with empty values
-                if (value != null && value.length() > 0)
+                if (value != null && !value.isEmpty())
                     setTag(key, value);
             }
 
