@@ -161,7 +161,6 @@ public class NominatimGeocoder implements Geocoding, ReverseGeocoding
     HttpURLConnection openConnection( String url ) throws IOException
     {
         HttpURLConnection hConn = (HttpURLConnection) new URL(url).openConnection();
-        ;
         hConn.setRequestProperty("User-Agent", userAgent);
         hConn.setRequestProperty("content-charset", "UTF-8");
         hConn.setConnectTimeout(timeoutInMillis);
