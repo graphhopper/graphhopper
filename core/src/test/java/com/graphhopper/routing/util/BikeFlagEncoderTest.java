@@ -66,6 +66,12 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
 
         way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("bicycle", "dismount");
+        assertEquals(PUSHING_SECTION_SPEED, encoder.getSpeed(way));
+        assertPriority(REACH_DEST.getValue(), way);
+
+        way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("bicycle", "yes");
         assertEquals(6, encoder.getSpeed(way));
@@ -121,6 +127,15 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.clearTags();
         way.setTag("highway", "steps");
         assertEquals(2, encoder.getSpeed(way));
+        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
+
+        way.clearTags();
+        way.setTag("highway", "steps");
+        way.setTag("surface", "wood");
+        assertEquals(PUSHING_SECTION_SPEED/2, encoder.getSpeed(way));
+        assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
+        way.setTag("maxspeed", "20");        
+        assertEquals(PUSHING_SECTION_SPEED/2, encoder.getSpeed(way));
         assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
 
         way.clearTags();
