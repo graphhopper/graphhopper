@@ -15,6 +15,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.util.GHUtility;
+
 /**
  *
  * @author Peter Karich

@@ -24,8 +24,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
 import org.eclipse.jetty.servlets.GzipFilter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Just to check if response is really gzipped
@@ -34,8 +32,6 @@ import org.slf4j.LoggerFactory;
  */
 public class GHGZIPHook extends GzipFilter
 {
-    private Logger logger = LoggerFactory.getLogger(getClass());
-
     @Override
     public void doFilter( ServletRequest req, ServletResponse res, FilterChain chain ) throws IOException, ServletException
     {

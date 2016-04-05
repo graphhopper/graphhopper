@@ -22,8 +22,10 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
+import java.text.DateFormat;
 import org.junit.Test;
+
+import java.util.Date;
 
 import static org.junit.Assert.*;
 
@@ -48,6 +50,80 @@ public class MotorcycleFlagEncoderTest
 
         edge.setFlags(encoder.setReverseSpeed(encoder.setProperties(10, true, true), 15));
         return gs;
+    }
+
+    @Test
+    public void testAccess()
+    {
+        OSMWay way = new OSMWay(1);
+        assertFalse(encoder.acceptWay(way) > 0);
+        way.setTag("highway", "service");
+        assertTrue(encoder.acceptWay(way) > 0);
+        way.setTag("access", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "track");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "delivery");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "unclassified");
+        way.setTag("ford", "yes");
+        assertFalse(encoder.acceptWay(way) > 0);
+        way.setTag("motorcycle", "yes");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("route", "ferry");
+        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.isFerry(encoder.acceptWay(way)));
+        way.setTag("motorcycle", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("foot", "yes");
+        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.isFerry(encoder.acceptWay(way)));
+
+        way.clearTags();
+        way.setTag("access", "yes");
+        way.setTag("motor_vehicle", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "yes");
+        way.setTag("motor_vehicle", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("access", "emergency");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("motor_vehicle", "emergency");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
+
+        way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("access", "no");
+        way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
+        assertTrue(encoder.acceptWay(way) > 0);
     }
 
     @Test

@@ -77,7 +77,6 @@ public class GHBitSetImpl extends BitSet implements GHBitSet
             ((GHBitSetImpl) bs).or(this);
         } else
         {
-            int len = size();
             for (int index = super.nextSetBit(0); index >= 0;
                     index = super.nextSetBit(index + 1))
             {

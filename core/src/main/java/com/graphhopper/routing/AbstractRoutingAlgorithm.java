@@ -18,12 +18,15 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Peter Karich
@@ -38,7 +41,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
     protected final TraversalMode traversalMode;
-    protected double weightLimit = Double.MAX_VALUE;
+    protected int maxVisitedNodes = Integer.MAX_VALUE;
     private boolean alreadyRun;
 
     /**
@@ -59,9 +62,9 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     }
 
     @Override
-    public void setWeightLimit( double weight )
+    public void setMaxVisitedNodes( int numberOfNodes )
     {
-        this.weightLimit = weight;
+        this.maxVisitedNodes = numberOfNodes;
     }
 
     public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
@@ -78,7 +81,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 
-    protected void updateBestPath( EdgeIteratorState edgeState, EdgeEntry bestEdgeEntry, int traversalId )
+    protected void updateBestPath( EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalId )
     {
     }
 
@@ -90,9 +93,9 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
         alreadyRun = true;
     }
 
-    protected EdgeEntry createEdgeEntry( int node, double weight )
+    protected SPTEntry createSPTEntry( int node, double weight )
     {
-        return new EdgeEntry(EdgeIterator.NO_EDGE, node, weight);
+        return new SPTEntry(EdgeIterator.NO_EDGE, node, weight);
     }
 
     /**
@@ -111,7 +114,11 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
      */
     protected abstract Path extractPath();
 
-    protected abstract boolean isWeightLimitExceeded();
+    @Override
+    public List<Path> calcPaths( int from, int to )
+    {
+        return Collections.singletonList(calcPath(from, to));
+    }
 
     protected Path createEmptyPath()
     {
@@ -128,5 +135,10 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     public String toString()
     {
         return getName() + "|" + weighting;
+    }
+
+    protected boolean isMaxVisitedNodesExceeded()
+    {
+        return maxVisitedNodes < getVisitedNodes();
     }
 }

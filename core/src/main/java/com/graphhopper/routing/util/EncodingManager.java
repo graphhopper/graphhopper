@@ -202,7 +202,7 @@ public class EncodingManager
         // turn flag bits are independent from edge encoder bits
         usedBits = encoder.defineTurnBits(encoderCount, nextTurnBit);
         if (usedBits > bitsForTurnFlags)
-            throw new IllegalArgumentException(String.format(ERR, bitsForEdgeFlags, "turn"));
+            throw new IllegalArgumentException(String.format(ERR, bitsForTurnFlags, "turn"));
         nextTurnBit = usedBits;
 
         edgeEncoders.add(encoder);

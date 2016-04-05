@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,6 +83,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected final int speedBits;
     protected final double speedFactor;
     private boolean registered;
+
+    protected ConditionalTagsInspector conditionalTagsInspector;
 
     public AbstractFlagEncoder( PMap properties )
     {
@@ -744,52 +747,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
     }
 
-    @Deprecated
-    protected static double parseDouble( String str, String key, double defaultD )
-    {
-        String val = getStr(str, key);
-        if (val.isEmpty())
-            return defaultD;
-        return Double.parseDouble(val);
-    }
-
-    @Deprecated
-    protected static long parseLong( String str, String key, long defaultL )
-    {
-        String val = getStr(str, key);
-        if (val.isEmpty())
-            return defaultL;
-        return Long.parseLong(val);
-    }
-
-    @Deprecated
-    protected static boolean parseBoolean( String str, String key, boolean defaultB )
-    {
-        String val = getStr(str, key);
-        if (val.isEmpty())
-            return defaultB;
-        return Boolean.parseBoolean(val);
-    }
-
-    @Deprecated
-    protected static String getStr( String str, String key )
-    {
-        key = key.toLowerCase();
-        for (String s : str.split("\\|"))
-        {
-            s = s.trim().toLowerCase();
-            int index = s.indexOf("=");
-            if (index < 0)
-                continue;
-
-            String field = s.substring(0, index);
-            String valueStr = s.substring(index + 1);
-            if (key.equals(field))
-                return valueStr;
-        }
-        return "";
-    }
-
     /**
      * @param way: needed to retrieve OSM tags
      * @param speed: speed guessed e.g. from the road type or other tags
@@ -820,4 +777,5 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
         return false;
     }
+
 }

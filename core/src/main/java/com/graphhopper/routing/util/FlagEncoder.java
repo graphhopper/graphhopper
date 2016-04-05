@@ -121,7 +121,7 @@ public interface FlagEncoder extends TurnCostEncoder
     /**
      * Returns true if the feature class is supported like TurnWeighting or PriorityWeighting.
      */
-    public boolean supports( Class<?> feature );
+    boolean supports( Class<?> feature );
 
     /**
      * @return additional cost or warning information for an instruction like ferry or road charges.

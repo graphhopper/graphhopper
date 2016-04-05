@@ -30,7 +30,7 @@ public class OSMTagParserTest
 {
     @Test
     public void testParseDuration()
-    {
+    {        
         assertEquals(10 * 60, OSMTagParser.parseDuration("00:10"));
         assertEquals(35 * 60, OSMTagParser.parseDuration("35"));
         assertEquals(70 * 60, OSMTagParser.parseDuration("01:10"));
@@ -40,11 +40,8 @@ public class OSMTagParserTest
         assertEquals(20 * 60, OSMTagParser.parseDuration("0:20:00"));
         assertEquals((60 * 2 + 20) * 60 + 2, OSMTagParser.parseDuration("02:20:02"));
 
-        // two months, see #588
-        // 28+31
-        assertTrue(2 * 28 * 24 * 60 * 60 <= OSMTagParser.parseDuration("P2M"));
-        // 31+31
-        assertTrue(2 * 31 * 24 * 60 * 60 >= OSMTagParser.parseDuration("P2M"));
+        // two months
+        assertEquals(31 + 31, OSMTagParser.parseDuration("P2M") / (24 * 60 * 60));
 
         // two minutes
         assertEquals(2 * 60, OSMTagParser.parseDuration("PT2M"));

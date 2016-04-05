@@ -40,7 +40,7 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
  */
 public class GHBaseServlet extends HttpServlet
 {
-    protected static Logger logger = LoggerFactory.getLogger(GHBaseServlet.class);
+    protected static final Logger logger = LoggerFactory.getLogger(GHBaseServlet.class);
     @Inject
     @Named("jsonpAllowed")
     private boolean jsonpAllowed;

@@ -164,7 +164,8 @@ public class DistanceCalcEarth implements DistanceCalc
         return calcNormalizedDist(c_lat, c_lon / shrinkFactor, r_lat_deg, r_lon_deg);
     }
 
-    private double calcShrinkFactor(double a_lat_deg, double b_lat_deg) {
+    private double calcShrinkFactor( double a_lat_deg, double b_lat_deg )
+    {
         return cos(toRadians((a_lat_deg + b_lat_deg) / 2));
     }
 
@@ -233,6 +234,12 @@ public class DistanceCalcEarth implements DistanceCalc
         // double ab_rb_norm = Math.sqrt(rb_x * rb_x + rb_y * rb_y) * Math.sqrt(ab_x * ab_x + ab_y * ab_y);
         // return Math.acos(ab_ar / ab_ar_norm) <= Math.PI / 2 && Math.acos(ab_rb / ab_rb_norm) <= Math.PI / 2;
         return ab_ar > 0 && ab_rb > 0;
+    }
+
+    @Override
+    public boolean isCrossBoundary( double lon1, double lon2 )
+    {
+        return abs(lon1 - lon2) > 300;
     }
 
     @Override

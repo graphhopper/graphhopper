@@ -40,16 +40,16 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat) {
                 mapLayer.removeLayerFromMap(routeSegmentPopup);
 
             routeSegmentPopup = L.popup().
-                setLatLng([lngLat[1], lngLat[0]]).
-                setContent(title).
-                openOn(mapLayer.getMap());
+                    setLatLng([lngLat[1], lngLat[0]]).
+                    setContent(title).
+                    openOn(mapLayer.getMap());
         });
     }
     main.append(instructionDiv);
 }
 
-module.exports.addInstructions = function(mapLayer, path, urlForHistory, request) {
-    var instructionsElement = $("<table id='instructions'>");
+module.exports.create = function (mapLayer, path, urlForHistory, request) {
+    var instructionsElement = $("<table class='instructions'>");
 
     var partialInstr = path.instructions.length > 100;
     var len = Math.min(path.instructions.length, 100);
@@ -58,7 +58,8 @@ module.exports.addInstructions = function(mapLayer, path, urlForHistory, request
         var lngLat = path.points.coordinates[instr.interval[0]];
         addInstruction(mapLayer, instructionsElement, instr, m, lngLat);
     }
-    $("#info").append(instructionsElement);
+    var infoDiv = $("<div class='instructions_info'>");
+    infoDiv.append(instructionsElement);
 
     if (partialInstr) {
         var moreDiv = $("<button id='moreButton'>" + translate.tr("moreButton") + "..</button>");
@@ -76,11 +77,11 @@ module.exports.addInstructions = function(mapLayer, path, urlForHistory, request
     var hiddenDiv = $("<div id='routeDetails'/>");
     hiddenDiv.hide();
 
-    var toggly = $("<button id='expandDetails'>+</button>");
+    var toggly = $("<button class='expandDetails'>+</button>");
     toggly.click(function () {
         hiddenDiv.toggle();
     });
-    $("#info").append(toggly);
+    infoDiv.append(toggly);
     var infoStr = "points: " + path.points.coordinates.length;
 
     hiddenDiv.append("<span>" + infoStr + "</span>");
@@ -120,5 +121,6 @@ module.exports.addInstructions = function(mapLayer, path, urlForHistory, request
     if (metaVersionInfo)
         hiddenDiv.append(metaVersionInfo);
 
-    $("#info").append(hiddenDiv);
+    infoDiv.append(hiddenDiv);
+    return infoDiv;
 };

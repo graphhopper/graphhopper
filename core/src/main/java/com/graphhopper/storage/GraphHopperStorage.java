@@ -384,67 +384,67 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     }
 
     @Override
-    public final int getNodes()
+    public int getNodes()
     {
         return baseGraph.getNodes();
     }
 
     @Override
-    public final NodeAccess getNodeAccess()
+    public NodeAccess getNodeAccess()
     {
         return baseGraph.getNodeAccess();
     }
 
     @Override
-    public final BBox getBounds()
+    public BBox getBounds()
     {
         return baseGraph.getBounds();
     }
 
     @Override
-    public final EdgeIteratorState edge( int a, int b )
+    public EdgeIteratorState edge( int a, int b )
     {
         return baseGraph.edge(a, b);
     }
 
     @Override
-    public final EdgeIteratorState edge( int a, int b, double distance, boolean bothDirections )
+    public EdgeIteratorState edge( int a, int b, double distance, boolean bothDirections )
     {
         return baseGraph.edge(a, b, distance, bothDirections);
     }
 
     @Override
-    public final EdgeIteratorState getEdgeIteratorState( int edgeId, int adjNode )
+    public EdgeIteratorState getEdgeIteratorState( int edgeId, int adjNode )
     {
         return baseGraph.getEdgeIteratorState(edgeId, adjNode);
     }
 
     @Override
-    public final AllEdgesIterator getAllEdges()
+    public AllEdgesIterator getAllEdges()
     {
         return baseGraph.getAllEdges();
     }
 
     @Override
-    public final EdgeExplorer createEdgeExplorer( EdgeFilter filter )
+    public EdgeExplorer createEdgeExplorer( EdgeFilter filter )
     {
         return baseGraph.createEdgeExplorer(filter);
     }
 
     @Override
-    public final EdgeExplorer createEdgeExplorer()
+    public EdgeExplorer createEdgeExplorer()
     {
         return baseGraph.createEdgeExplorer();
     }
 
     @Override
-    public final Graph copyTo( Graph g )
+    public Graph copyTo( Graph g )
     {
         return baseGraph.copyTo(g);
     }
 
     @Override
-    public final GraphExtension getExtension()
+    public GraphExtension getExtension()
     {
         return baseGraph.getExtension();
     }

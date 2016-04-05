@@ -40,6 +40,7 @@ import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -279,7 +280,7 @@ public class OSMReaderTest
     {
         GraphHopper hopper = new GraphHopperTest(file2).importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
-                              
+
         assertEquals("2014-01-02T01:10:14Z", graph.getProperties().get("osmreader.data.date"));
 
         int n20 = AbstractGraphStorageTester.getIdOf(graph, 52.0);
@@ -625,7 +626,7 @@ public class OSMReaderTest
 
         lonMap.put(1, 1.0d);
         lonMap.put(2, 1.0d);
-        final AtomicInteger increased = new AtomicInteger(0);
+
         OSMReader osmreader = new OSMReader(ghStorage)
         {
             // mock data access
@@ -835,5 +836,22 @@ public class OSMReaderTest
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
 
         assertEquals("2014-01-02T00:10:14Z", graph.getProperties().get("osmreader.data.date"));
+    }
+
+    @Test
+    public void testCrossBoundary_issue667()
+    {
+        GraphHopper hopper = new GraphHopperTest("test-osm-waterway.xml").importOrLoad();
+        QueryResult qr = hopper.getLocationIndex().findClosest(0.1, 179.5, EdgeFilter.ALL_EDGES);
+        assertTrue(qr.isValid());
+        assertEquals(0.1, qr.getSnappedPoint().lat, 0.1);
+        assertEquals(179.5, qr.getSnappedPoint().lon, 0.1);
+        assertEquals(11, qr.getClosestEdge().getDistance() / 1000, 1);
+
+        qr = hopper.getLocationIndex().findClosest(0.1, -179.6, EdgeFilter.ALL_EDGES);
+        assertTrue(qr.isValid());
+        assertEquals(0.1, qr.getSnappedPoint().lat, 0.1);
+        assertEquals(-179.6, qr.getSnappedPoint().lon, 0.1);
+        assertEquals(56, qr.getClosestEdge().getDistance() / 1000, 1);
     }
 }

@@ -138,8 +138,8 @@ public class Downloader
             }
         } finally
         {
-            writer.close();
-            in.close();
+            Helper.close(writer);
+            Helper.close(in);
         }
     }
 

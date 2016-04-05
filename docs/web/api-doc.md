@@ -39,10 +39,11 @@ you should not rely on them! The JSON result contains the following structure:
 
 JSON path/attribute        | Description
 :--------------------------|:------------
-info.took                  | How many ms the request took on the server, of course without network latency taken into account.
 paths                      | An array of possible paths
-paths[0].distance          | The overall distance of the route, in meter
-paths[0].time              | The overall time of the route, in ms
+paths[0].distance          | The total distance of the route, in meter
+paths[0].time              | The total time of the route, in ms
+paths[0].ascend            | The total ascend (uphill) of the route, in meter
+paths[0].descend           | The total descend (downhill) of the route, in meter
 paths[0].points            | The polyline encoded coordinates of the path. Order is lat,lon,elelevation as it is no geoJson!
 paths[0].points_encoded    | Is true if the points are encoded, if not paths[0].points contains the geo json of the path (then order is lon,lat,elevation), which is easier to handle but consumes more bandwidth compared to encoded version
 paths[0].bbox              | The bounding box of the route, format: <br> minLon, minLat, maxLon, maxLat
@@ -59,7 +60,6 @@ paths[0].instructions[0].turn_angle           | [optional] Only available for US
 
 ```json
 {
-  "info": {"took": 4},
   "paths": [{
     "bbox": [
       13.362853824187303,

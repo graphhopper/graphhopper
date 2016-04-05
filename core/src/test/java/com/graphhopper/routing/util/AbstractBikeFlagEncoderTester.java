@@ -19,19 +19,18 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMNode;
 import com.graphhopper.reader.OSMWay;
-
-import static com.graphhopper.routing.util.PriorityCode.*;
-
 import com.graphhopper.util.Translation;
-
-import static com.graphhopper.util.TranslationMapTest.SINGLETON;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.util.Locale;
 
+import static com.graphhopper.routing.util.PriorityCode.*;
+import com.graphhopper.util.Helper;
+import static com.graphhopper.util.TranslationMapTest.SINGLETON;
+import java.text.DateFormat;
+import java.util.Date;
 import static org.junit.Assert.*;
-
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * @author Peter Karich
@@ -173,6 +172,19 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("highway", "cycleway");
         way.setTag("cycleway", "track");
         way.setTag("railway", "abandoned");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
+
+        way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("bicycle:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
+        assertFalse(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "road");
+        way.setTag("access", "no");
+        way.setTag("bicycle:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
         assertTrue(encoder.acceptWay(way) > 0);
     }
 

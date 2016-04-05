@@ -46,7 +46,7 @@ public class GHTreeMapComposed
     void remove( int key, int value )
     {
         long v = bitUtil.toLong(value, key);
-        if (map.remove(v) != NOT_EMPTY)
+        if (!map.remove(v).equals(NOT_EMPTY))
         {
             throw new IllegalStateException("cannot remove key " + key + " with value " + value
                     + " - did you insert " + key + "," + value + " before?");

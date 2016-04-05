@@ -62,7 +62,7 @@ public interface GraphExtension extends Storable<GraphExtension>
      * default implementation defines no additional fields or any logic. there's like nothing , like
      * the default behavior.
      */
-    public class NoOpExtension implements GraphExtension
+    class NoOpExtension implements GraphExtension
     {
 
         @Override

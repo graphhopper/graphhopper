@@ -23,8 +23,12 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Helper;
+import java.text.DateFormat;
 
 import org.junit.Test;
+
+import java.util.Date;
 
 import static org.junit.Assert.*;
 
@@ -154,6 +158,19 @@ public class FootFlagEncoderTest
         assertTrue(footEncoder.acceptWay(way) > 0);
         way.setTag("foot", "no");
         assertFalse(footEncoder.acceptWay(way) > 0);
+
+        DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
+
+        way.clearTags();
+        way.setTag("highway", "footway");
+        way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
+        assertFalse(footEncoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "footway");
+        way.setTag("access", "no");
+        way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
+        assertTrue(footEncoder.acceptWay(way) > 0);
     }
 
     @Test

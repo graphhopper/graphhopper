@@ -17,13 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
@@ -135,6 +131,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("road", 20);
         // forestry stuff
         defaultSpeedMap.put("track", 15);
+
+        conditionalTagsInspector = new ConditionalTagsInspector(restrictions, restrictedValues, intendedValues);
     }
 
     @Override
@@ -180,6 +178,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     @Override
     public long acceptWay( OSMWay way )
     {
+        // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
         {
@@ -212,7 +211,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (!firstValue.isEmpty())
         {
-            if (restrictedValues.contains(firstValue))
+            if (restrictedValues.contains(firstValue) && !conditionalTagsInspector.isRestrictedWayConditionallyPermitted(way))
                 return 0;
             if (intendedValues.contains(firstValue))
                 return acceptBit;
@@ -226,7 +225,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
-        return acceptBit;
+        if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))
+            return 0;
+        else
+            return acceptBit;
     }
 
     @Override

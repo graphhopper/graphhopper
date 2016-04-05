@@ -22,31 +22,41 @@ package com.graphhopper.storage;
  * <p>
  * @author Peter Karich
  */
-public class EdgeEntry implements Cloneable, Comparable<EdgeEntry>
+public class SPTEntry implements Cloneable, Comparable<SPTEntry>
 {
     public int edge;
     public int adjNode;
     public double weight;
-    public EdgeEntry parent;
+    public SPTEntry parent;
 
-    public EdgeEntry( int edgeId, int adjNode, double weight )
+    public SPTEntry( int edgeId, int adjNode, double weight )
     {
         this.edge = edgeId;
         this.adjNode = adjNode;
         this.weight = weight;
     }
 
-    @Override
-    public EdgeEntry clone()
+    /**
+     * This method returns the weight to the origin e.g. to the start for the forward SPT and to the
+     * destination for the backward SPT. Where the variable 'weight' is used to let heap select
+     * smallest *full* weight (from start to destination).
+     */
+    public double getWeightOfVisitedPath()
     {
-        return new EdgeEntry(edge, adjNode, weight);
+        return weight;
     }
 
-    public EdgeEntry cloneFull()
+    @Override
+    public SPTEntry clone()
     {
-        EdgeEntry de = clone();
-        EdgeEntry tmpPrev = parent;
-        EdgeEntry cl = de;
+        return new SPTEntry(edge, adjNode, weight);
+    }
+
+    public SPTEntry cloneFull()
+    {
+        SPTEntry de = clone();
+        SPTEntry tmpPrev = parent;
+        SPTEntry cl = de;
         while (tmpPrev != null)
         {
             cl.parent = tmpPrev.clone();
@@ -57,7 +67,7 @@ public class EdgeEntry implements Cloneable, Comparable<EdgeEntry>
     }
 
     @Override
-    public int compareTo( EdgeEntry o )
+    public int compareTo( SPTEntry o )
     {
         if (weight < o.weight)
             return -1;

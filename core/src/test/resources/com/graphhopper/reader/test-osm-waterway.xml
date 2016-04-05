@@ -1,0 +1,32 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<osm version="0.6" generator="pbf2osm" timestamp="2013-01-02T01:10:14Z">
+    
+    <node id="10" lat="0" lon="179.5" uid="24853">           
+    </node>    
+    <node id="20" lat="0" lon="179.6" uid="24854">        
+    </node>
+    <node id="30" lat="0.1" lon="-179.9" uid="24855">        
+    </node>
+
+    <node id="35" lat="0.1" lon="-179.5" uid="3212487">        
+    </node>
+    
+    <node id="11" lat="0.1" lon="179.5" uid="34853">           
+    </node>
+
+    <way id="10" uid="85761">
+        <nd ref="10"/>
+        <nd ref="20"/>
+        <nd ref="30"/>
+        <nd ref="35"/>
+        <tag k="name" v="fake waterway cross" />
+        <tag k="highway" v="motorway" />       
+    </way> 
+    
+    <way id="20" uid="85762">
+        <nd ref="10"/>
+        <nd ref="11"/>
+        <tag k="name" v="fake waterway2" />
+        <tag k="highway" v="motorway" />       
+    </way> 
+</osm>

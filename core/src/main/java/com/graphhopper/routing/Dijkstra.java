@@ -25,7 +25,7 @@ import java.util.PriorityQueue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -38,9 +38,9 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class Dijkstra extends AbstractRoutingAlgorithm
 {
-    protected TIntObjectMap<EdgeEntry> fromMap;
-    protected PriorityQueue<EdgeEntry> fromHeap;
-    protected EdgeEntry currEdge;
+    protected TIntObjectMap<SPTEntry> fromMap;
+    protected PriorityQueue<SPTEntry> fromHeap;
+    protected SPTEntry currEdge;
     private int visitedNodes;
     private int to = -1;
 
@@ -52,8 +52,8 @@ public class Dijkstra extends AbstractRoutingAlgorithm
 
     protected void initCollections( int size )
     {
-        fromHeap = new PriorityQueue<EdgeEntry>(size);
-        fromMap = new TIntObjectHashMap<EdgeEntry>(size);
+        fromHeap = new PriorityQueue<SPTEntry>(size);
+        fromMap = new TIntObjectHashMap<SPTEntry>(size);
     }
 
     @Override
@@ -61,7 +61,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     {
         checkAlreadyRun();
         this.to = to;
-        currEdge = createEdgeEntry(from, 0);
+        currEdge = createSPTEntry(from, 0);
         if (!traversalMode.isEdgeBased())
         {
             fromMap.put(from, currEdge);
@@ -76,7 +76,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         while (true)
         {
             visitedNodes++;
-            if (isWeightLimitExceeded() || finished())
+            if (isMaxVisitedNodesExceeded() || finished())
                 break;
 
             int startNode = currEdge.adjNode;
@@ -91,10 +91,10 @@ public class Dijkstra extends AbstractRoutingAlgorithm
                 if (Double.isInfinite(tmpWeight))
                     continue;
 
-                EdgeEntry nEdge = fromMap.get(traversalId);
+                SPTEntry nEdge = fromMap.get(traversalId);
                 if (nEdge == null)
                 {
-                    nEdge = new EdgeEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
+                    nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
                     nEdge.parent = currEdge;
                     fromMap.put(traversalId, nEdge);
                     fromHeap.add(nEdge);
@@ -129,22 +129,16 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     @Override
     protected Path extractPath()
     {
-        if (currEdge == null || isWeightLimitExceeded() || !finished())
+        if (currEdge == null || !finished())
             return createEmptyPath();
 
-        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setEdgeEntry(currEdge).extract();
+        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setSPTEntry(currEdge).extract();
     }
 
     @Override
     public int getVisitedNodes()
     {
         return visitedNodes;
-    }
-
-    @Override
-    protected boolean isWeightLimitExceeded()
-    {
-        return currEdge.weight > weightLimit;
     }
 
     @Override

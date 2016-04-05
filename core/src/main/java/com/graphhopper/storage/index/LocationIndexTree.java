@@ -240,7 +240,7 @@ public class LocationIndexTree implements LocationIndex
     public int findID( double lat, double lon )
     {
         QueryResult res = findClosest(lat, lon, EdgeFilter.ALL_EDGES);
-        if (res == null)
+        if (!res.isValid())
             return -1;
 
         return res.getClosestNode();
@@ -431,9 +431,13 @@ public class LocationIndexTree implements LocationIndex
                     addNode(root, nodeA, 0, keyPart, key);
                 }
             };
-            BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter,
-                    graph.getBounds().minLat, graph.getBounds().minLon,
-                    deltaLat, deltaLon);
+
+            if (!distCalc.isCrossBoundary(lon1, lon2))
+            {
+                BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter,
+                        graph.getBounds().minLat, graph.getBounds().minLon,
+                        deltaLat, deltaLon);
+            }
         }
 
         void addNode( InMemEntry entry, int nodeId, int depth, long keyPart, long key )
@@ -736,7 +740,7 @@ public class LocationIndexTree implements LocationIndex
             findNetworkEntriesSingleRegion(foundEntries, subqueryLatB, subqueryLon);
         }
 
-        if (iteration % 2 == 1)
+        if (iteration % 2 != 0)
         {
             // Check if something was found already...
             if (!foundEntries.isEmpty())
@@ -922,6 +926,13 @@ public class LocationIndexTree implements LocationIndex
                 double wayLat = pointList.getLatitude(pointIndex);
                 double wayLon = pointList.getLongitude(pointIndex);
                 QueryResult.Position pos = QueryResult.Position.EDGE;
+                if (distCalc.isCrossBoundary(tmpLon, wayLon))
+                {
+                    tmpLat = wayLat;
+                    tmpLon = wayLon;
+                    continue;
+                }
+
                 if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon))
                 {
                     tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
@@ -956,7 +967,7 @@ public class LocationIndexTree implements LocationIndex
     }
 
     // make entries static as otherwise we get an additional reference to this class (memory waste)
-    static interface InMemEntry
+    interface InMemEntry
     {
         boolean isLeaf();
     }

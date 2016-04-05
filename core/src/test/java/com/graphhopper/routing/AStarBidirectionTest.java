@@ -93,8 +93,8 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester
         updateDistancesFor(g, 0, 0.00, 0.00);
         updateDistancesFor(g, 1, 0.01, 0.01);
 
-        final AtomicReference<AStar.AStarEdge> fromRef = new AtomicReference<AStar.AStarEdge>();
-        final AtomicReference<AStar.AStarEdge> toRef = new AtomicReference<AStar.AStarEdge>();
+        final AtomicReference<AStar.AStarEntry> fromRef = new AtomicReference<AStar.AStarEntry>();
+        final AtomicReference<AStar.AStarEntry> toRef = new AtomicReference<AStar.AStarEntry>();
         AStarBidirection astar = new AStarBidirection(g, carEncoder, new ShortestWeighting(carEncoder), traversalMode)
         {
             @Override

@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
@@ -28,7 +27,7 @@ public class CurvatureWeighting extends PriorityWeighting
 {
     private final double minFactor;
 
-    public CurvatureWeighting( FlagEncoder flagEncoder, PMap pMap, GraphHopperStorage ghStorage )
+    public CurvatureWeighting( FlagEncoder flagEncoder, PMap pMap )
     {
         super(flagEncoder, pMap);
 

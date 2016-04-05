@@ -17,15 +17,7 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.shapes.BBox;
-import com.graphhopper.util.shapes.GHPlace;
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
-import com.sun.org.apache.bcel.internal.generic.AASTORE;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 
@@ -57,8 +49,10 @@ public class Helper
     public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
     public static final DistanceCalc3D DIST_3D = new DistanceCalc3D();
     public static final DistancePlaneProjection DIST_PLANE = new DistancePlaneProjection();
-    private static final Logger logger = LoggerFactory.getLogger(Helper.class);
-    public static Charset UTF_CS = Charset.forName("UTF-8");
+    public static final AngleCalc ANGLE_CALC = new AngleCalc();
+    private static final Logger LOGGER = LoggerFactory.getLogger(Helper.class);
+    public static final Charset UTF_CS = Charset.forName("UTF-8");
+    public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
 
     public static ArrayList<Integer> tIntListToArrayList( TIntList from )
@@ -126,7 +120,7 @@ public class Helper
                 int index = line.indexOf("=");
                 if (index < 0)
                 {
-                    logger.warn("Skipping configuration at line:" + line);
+                    LOGGER.warn("Skipping configuration at line:" + line);
                     continue;
                 }
 
@@ -513,8 +507,16 @@ public class Helper
      */
     public static DateFormat createFormatter()
     {
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
-        df.setTimeZone(TimeZone.getTimeZone("UTC"));
+        return createFormatter("yyyy-MM-dd'T'HH:mm:ss'Z'");
+    }
+
+    /**
+     * Creates a SimpleDateFormat with the UK locale.
+     */
+    public static DateFormat createFormatter( String str )
+    {
+        DateFormat df = new SimpleDateFormat(str, Locale.UK);
+        df.setTimeZone(UTC);
         return df;
     }
 

@@ -19,7 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.EdgeEntry;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
@@ -27,6 +27,7 @@ import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,15 +41,19 @@ import java.util.List;
  */
 public class Path
 {
-    private static final AngleCalc ac = new AngleCalc();
+    private static final AngleCalc AC = Helper.ANGLE_CALC;
+    private List<String> description;
     protected Graph graph;
     private FlagEncoder encoder;
     protected double distance;
-    // we go upwards (via EdgeEntry.parent) from the goal node to the origin node
+    // we go upwards (via SPTEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
     protected long time;
     private boolean found;
-    protected EdgeEntry edgeEntry;
+    /**
+     * Shortest path tree entry
+     */
+    protected SPTEntry sptEntry;
     final StopWatch extractSW = new StopWatch("extract");
     private int fromNode = -1;
     protected int endNode = -1;
@@ -73,12 +78,29 @@ public class Path
         this(p.graph, p.encoder);
         weight = p.weight;
         edgeIds = new TIntArrayList(p.edgeIds);
-        edgeEntry = p.edgeEntry;
+        sptEntry = p.sptEntry;
     }
 
-    public Path setEdgeEntry( EdgeEntry edgeEntry )
+    /**
+     * @return the description of this route alternative to make it meaningful for the user e.g. it
+     * displays one or two main roads of the route.
+     */
+    public List<String> getDescription()
     {
-        this.edgeEntry = edgeEntry;
+        if (description == null)
+            return Collections.emptyList();
+        return description;
+    }
+
+    public Path setDescription( List<String> description )
+    {
+        this.description = description;
+        return this;
+    }
+
+    public Path setSPTEntry( SPTEntry sptEntry )
+    {
+        this.sptEntry = sptEntry;
         return this;
     }
 
@@ -143,15 +165,6 @@ public class Path
 
     /**
      * @return time in millis
-     * @deprecated use getTime instead
-     */
-    public long getMillis()
-    {
-        return time;
-    }
-
-    /**
-     * @return time in millis
      */
     public long getTime()
     {
@@ -173,7 +186,7 @@ public class Path
     }
 
     /**
-     * Extracts the Path from the shortest-path-tree determined by edgeEntry.
+     * Extracts the Path from the shortest-path-tree determined by sptEntry.
      */
     public Path extract()
     {
@@ -181,7 +194,7 @@ public class Path
             throw new IllegalStateException("Extract can only be called once");
 
         extractSW.start();
-        EdgeEntry goalEdge = edgeEntry;
+        SPTEntry goalEdge = sptEntry;
         setEndNode(goalEdge.adjNode);
         while (EdgeIterator.Edge.isValid(goalEdge.edge))
         {
@@ -450,129 +463,122 @@ public class Path
                     prevName = name;
                     prevAnnotation = annotation;
 
-                } else
+                } else if (isRoundabout)
+                // remark: names and annotations within roundabout are ignored
                 {
-                    if (isRoundabout)
-                    // remark: names and annotations within roundabout are ignored
+                    if (!prevInRoundabout) //just entered roundabout
                     {
-                        if (!prevInRoundabout) //just entered roundabout
+                        int sign = Instruction.USE_ROUNDABOUT;
+                        RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(sign, name,
+                                annotation, new PointList(10, nodeAccess.is3D()));
+                        if (prevName != null)
                         {
-                            int sign = Instruction.USE_ROUNDABOUT;
-                            RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(sign, name,
-                                    annotation, new PointList(10, nodeAccess.is3D()));
-                            if (prevName != null)
+                            // check if there is an exit at the same node the roundabout was entered
+                            EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
+                            while (edgeIter.next())
                             {
-                                // check if there is an exit at the same node the roundabout was entered
-                                EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
-                                while (edgeIter.next())
+                                if ((edgeIter.getAdjNode() != prevNode)
+                                        && !encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT))
                                 {
-                                    if ((edgeIter.getAdjNode() != prevNode)
-                                            && !encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT))
-                                    {
-                                        roundaboutInstruction.increaseExitNumber();
-                                        break;
-                                    }
+                                    roundaboutInstruction.increaseExitNumber();
+                                    break;
                                 }
-
-                                // previous orientation is last orientation before entering roundabout
-                                prevOrientation = ac.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
-
-                                // calculate direction of entrance turn to determine direction of rotation
-                                // right turn == counterclockwise and vice versa
-                                double orientation = ac.calcOrientation(prevLat, prevLon, latitude, longitude);
-                                orientation = ac.alignOrientation(prevOrientation, orientation);
-                                double delta = (orientation - prevOrientation);
-                                roundaboutInstruction.setDirOfRotation(delta);
-
-                            } else // first instructions is roundabout instruction
-                            {
-                                prevOrientation = ac.calcOrientation(prevLat, prevLon, latitude, longitude);
-                                prevName = name;
-                                prevAnnotation = annotation;
                             }
-                            prevInstruction = roundaboutInstruction;
-                            ways.add(prevInstruction);
+
+                            // previous orientation is last orientation before entering roundabout
+                            prevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
+
+                            // calculate direction of entrance turn to determine direction of rotation
+                            // right turn == counterclockwise and vice versa
+                            double orientation = AC.calcOrientation(prevLat, prevLon, latitude, longitude);
+                            orientation = AC.alignOrientation(prevOrientation, orientation);
+                            double delta = (orientation - prevOrientation);
+                            roundaboutInstruction.setDirOfRotation(delta);
+
+                        } else // first instructions is roundabout instruction
+                        {
+                            prevOrientation = AC.calcOrientation(prevLat, prevLon, latitude, longitude);
+                            prevName = name;
+                            prevAnnotation = annotation;
                         }
-
-                        // Add passed exits to instruction. A node is counted if there is at least one outgoing edge
-                        // out of the roundabout
-                        EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(adjNode);
-                        while (edgeIter.next())
-                        {
-                            if (!encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT))
-                            {
-                                ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
-                                break;
-                            }
-                        }
-
-                    } else if (prevInRoundabout) //previously in roundabout but not anymore
-                    {
-
-                        prevInstruction.setName(name);
-
-                        // calc angle between roundabout entrance and exit
-                        double orientation = ac.calcOrientation(prevLat, prevLon, latitude, longitude);
-                        orientation = ac.alignOrientation(prevOrientation, orientation);
-                        double deltaInOut = (orientation - prevOrientation);
-
-                        // calculate direction of exit turn to determine direction of rotation
-                        // right turn == counterclockwise and vice versa
-                        double recentOrientation = ac.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
-                        orientation = ac.alignOrientation(recentOrientation, orientation);
-                        double deltaOut = (orientation - recentOrientation);
-
-                        prevInstruction = ((RoundaboutInstruction) prevInstruction)
-                                .setRadian(deltaInOut)
-                                .setDirOfRotation(deltaOut)
-                                .setExited();
-
-                        prevName = name;
-                        prevAnnotation = annotation;
-
-                    } else if ((!name.equals(prevName)) || (!annotation.equals(prevAnnotation)))
-                    {
-                        prevOrientation = ac.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
-                        double orientation = ac.calcOrientation(prevLat, prevLon, latitude, longitude);
-                        orientation = ac.alignOrientation(prevOrientation, orientation);
-                        double delta = orientation - prevOrientation;
-                        double absDelta = Math.abs(delta);
-                        int sign;
-
-                        if (absDelta < 0.2)
-                        {
-                            // 0.2 ~= 11°
-                            sign = Instruction.CONTINUE_ON_STREET;
-
-                        } else if (absDelta < 0.8)
-                        {
-                            // 0.8 ~= 40°
-                            if (delta > 0)
-                                sign = Instruction.TURN_SLIGHT_LEFT;
-                            else
-                                sign = Instruction.TURN_SLIGHT_RIGHT;
-
-                        } else if (absDelta < 1.8)
-                        {
-                            // 1.8 ~= 103°
-                            if (delta > 0)
-                                sign = Instruction.TURN_LEFT;
-                            else
-                                sign = Instruction.TURN_RIGHT;
-
-                        } else
-                        {
-                            if (delta > 0)
-                                sign = Instruction.TURN_SHARP_LEFT;
-                            else
-                                sign = Instruction.TURN_SHARP_RIGHT;
-
-                        }
-                        prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                        prevInstruction = roundaboutInstruction;
                         ways.add(prevInstruction);
-                        prevName = name;
-                        prevAnnotation = annotation;
                     }
+
+                    // Add passed exits to instruction. A node is counted if there is at least one outgoing edge
+                    // out of the roundabout
+                    EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(adjNode);
+                    while (edgeIter.next())
+                    {
+                        if (!encoder.isBool(edgeIter.getFlags(), FlagEncoder.K_ROUNDABOUT))
+                        {
+                            ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
+                            break;
+                        }
+                    }
+
+                } else if (prevInRoundabout) //previously in roundabout but not anymore
+                {
+
+                    prevInstruction.setName(name);
+
+                    // calc angle between roundabout entrance and exit
+                    double orientation = AC.calcOrientation(prevLat, prevLon, latitude, longitude);
+                    orientation = AC.alignOrientation(prevOrientation, orientation);
+                    double deltaInOut = (orientation - prevOrientation);
+
+                    // calculate direction of exit turn to determine direction of rotation
+                    // right turn == counterclockwise and vice versa
+                    double recentOrientation = AC.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
+                    orientation = AC.alignOrientation(recentOrientation, orientation);
+                    double deltaOut = (orientation - recentOrientation);
+
+                    prevInstruction = ((RoundaboutInstruction) prevInstruction)
+                            .setRadian(deltaInOut)
+                            .setDirOfRotation(deltaOut)
+                            .setExited();
+
+                    prevName = name;
+                    prevAnnotation = annotation;
+
+                } else if ((!name.equals(prevName)) || (!annotation.equals(prevAnnotation)))
+                {
+                    prevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
+                    double orientation = AC.calcOrientation(prevLat, prevLon, latitude, longitude);
+                    orientation = AC.alignOrientation(prevOrientation, orientation);
+                    double delta = orientation - prevOrientation;
+                    double absDelta = Math.abs(delta);
+                    int sign;
+
+                    if (absDelta < 0.2)
+                    {
+                        // 0.2 ~= 11°
+                        sign = Instruction.CONTINUE_ON_STREET;
+
+                    } else if (absDelta < 0.8)
+                    {
+                        // 0.8 ~= 40°
+                        if (delta > 0)
+                            sign = Instruction.TURN_SLIGHT_LEFT;
+                        else
+                            sign = Instruction.TURN_SLIGHT_RIGHT;
+
+                    } else if (absDelta < 1.8)
+                    {
+                        // 1.8 ~= 103°
+                        if (delta > 0)
+                            sign = Instruction.TURN_LEFT;
+                        else
+                            sign = Instruction.TURN_RIGHT;
+
+                    } else if (delta > 0)
+                        sign = Instruction.TURN_SHARP_LEFT;
+                    else
+                        sign = Instruction.TURN_SHARP_RIGHT;
+                    prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                    ways.add(prevInstruction);
+                    prevName = name;
+                    prevAnnotation = annotation;
                 }
 
                 updatePointsAndInstruction(edge, wayGeo);
@@ -599,8 +605,8 @@ public class Path
                     if (isRoundabout)
                     {
                         // calc angle between roundabout entrance and finish
-                        double orientation = ac.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
-                        orientation = ac.alignOrientation(prevOrientation, orientation);
+                        double orientation = AC.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
+                        orientation = AC.alignOrientation(prevOrientation, orientation);
                         double delta = (orientation - prevOrientation);
                         ((RoundaboutInstruction) prevInstruction).setRadian(delta);
 

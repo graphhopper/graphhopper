@@ -1,8 +1,18 @@
+0.7
+    removed setWeightLimit as too unspecific for arbitrary weights, use setMaxVisitedNodes instead
+    missing renames for Path.setEdgeEntry -> setSPTEntry and AbstractAlgorithm.createEdgeEntry -> createSPTEntry
+
 0.6
+    removed methods deprecated in 0.4 and 0.5
+    renamed EdgeEntry to SPTEntry and AStar.AStarEdge to AStar.AStarEntry
+    parameter force removed from AbstractFlagEncoder.applyMaxSpeed
+    GHResponse now wraps multiple PathWrapper; renamed GraphHopper.getPaths to calcPaths as 'get' sounded too cheap; a new method RoutingAlgorithm.calcPaths is added; see #596
     moving lgpl licensed file into own submodule graphhopper-tools-lgpl
     renaming of Tarjans algorithm class to TarjansSCCAlgorithm
     more strict naming for Weighting enforced and more strict matching to select Weighting (equals check), #490
     specify the preferred-language for way names during graph import (ISO 639-1 or ISO 639-2)
+    renaming of getCHWeighting to getCHWeightings due to supporting multiple CH weightings, #623
+    deprecation of setCHWeighting, please use setCHWeightings instead, #623
 
 0.5
     Several names have changed see #466, #467, #468

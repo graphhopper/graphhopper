@@ -30,8 +30,8 @@ import com.graphhopper.util.EdgeIterator;
 public class TurnCostExtension implements GraphExtension
 {
     /* pointer for no cost entry */
-    private final int NO_TURN_ENTRY = -1;
-    private final long EMPTY_FLAGS = 0L;
+    private static final int NO_TURN_ENTRY = -1;
+    private static final long EMPTY_FLAGS = 0L;
 
     /*
      * items in turn cost tables: edge from, edge to, getCosts, pointer to next

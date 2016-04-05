@@ -8,21 +8,33 @@ var menuIntermediate;
 var menuEnd;
 var elevationControl = null;
 
-
+// called if window changes or before map is created
 function adjustMapSize() {
     var mapDiv = $("#map");
-    var width = $(window).width() - 295;
+    var width = $(window).width() - 280;
     if (width < 400) {
-        width = 290;
+        width = 400;
         mapDiv.attr("style", "position: relative; float: right;");
     } else {
         mapDiv.attr("style", "position: absolute; right: 0;");
     }
     var height = $(window).height();
+    if (height < 500)
+        height = 500;
+
     mapDiv.width(width).height(height);
     $("#input").height(height);
+
+    console.log("adjustMapSize " + height + "x" + width);
+
+    // reduce info size depending on how heigh the input_header is and reserve space for footer
+    $(".instructions_info").css("max-height",
+            height - 60 -
+            $(".route_description").height() - $("#route_result_tabs li").height() -
+            $("#input_header").height() - $("#footer").height());
+
     // reduce info size depending on how high the input_header is and reserve space for footer
-    $("#info").css("max-height", height - $("#input_header").height() - 58);
+//    $("#info").css("max-height", height - $("#input_header").height() - 100);
 }
 
 function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer) {
@@ -143,8 +155,12 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         }).addTo(map);
 
     routingLayer = L.geoJson().addTo(map);
+
     routingLayer.options = {
-        style: {color: "#00cc33", "weight": 5, "opacity": 0.6}, // route color and style
+        // use style provided by the 'properties' entry of the geojson added by addDataToRoutingLayer
+        style: function (feature) {
+            return feature.properties && feature.properties.style;
+        },
         contextmenu: true,
         contextmenuItems: [{
                 text: 'Route ',
@@ -163,13 +179,6 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
             }],
         contextmenuAtiveState: 3
     };
-    /*
-     routingLayer.options = {style: {color: "#1F40C4", "weight": 5, "opacity": 0.6}, onEachFeature: function (feature, layer) {
-     layer.on('contextmenu', function (e) {
-     alert('The GeoJSON layer has been clicked');
-     });
-     }}; // route color and style
-     */
 }
 
 function focus(coord, zoom, index) {
@@ -192,6 +201,10 @@ module.exports.getRoutingLayer = function () {
 
 module.exports.addDataToRoutingLayer = function (geoJsonFeature) {
     routingLayer.addData(geoJsonFeature);
+};
+
+module.exports.eachLayer = function (callback) {
+    routingLayer.eachLayer(callback);
 };
 
 module.exports.setDisabledForMapsContextMenu = function (entry, value) {
