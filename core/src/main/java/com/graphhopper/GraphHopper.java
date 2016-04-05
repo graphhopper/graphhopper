@@ -1068,7 +1068,7 @@ public class GraphHopper implements GraphHopperAPI
         Weighting weighting;
         Graph routingGraph = ghStorage;
 
-        boolean perRequestCHFlexibleMode = request.getHints().getBool("ch.flexible_mode", false);
+        boolean perRequestCHFlexibleMode = request.getHints().getBool("ch.flexibleMode", false);
         if (perRequestCHFlexibleMode && !chFlexibleMode)
         {
             rsp.addError(new IllegalStateException("Flexible mode has to be enabled on the server-side and client-side"));
