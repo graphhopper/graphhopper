@@ -19,8 +19,6 @@ package com.graphhopper;
 
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -434,12 +432,8 @@ public class GraphHopperIT
 
         assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle().toString());
 
-        assertEquals(2, tmpHopper.getAlgorithmFactories().size());
-        for (RoutingAlgorithmFactory raf : tmpHopper.getAlgorithmFactories())
-        {
-            assertFalse(RoutingAlgorithmFactorySimple.class.isAssignableFrom(raf.getClass()));
-        }
-
+        assertEquals(2, tmpHopper.getCHFactoryDecorator().size());
+        
         GHResponse rsp = tmpHopper.route(new GHRequest(43.745084, 7.430513, 43.745247, 7.430347)
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
 
@@ -546,13 +540,49 @@ public class GraphHopperIT
         GHResponse rsp = tmpHopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setVehicle(vehicle));
 
-        PathWrapper arsp = rsp.getBest();
+        PathWrapper bestPath = rsp.getBest();
         // identify the number of counts to compare with none-CH foot route which had nearly 700 counts
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
         assertTrue("Too many nodes visited " + sum, sum < 120);
-        assertEquals(3437.6, arsp.getDistance(), .1);
-        assertEquals(89, arsp.getPoints().getSize());
+        assertEquals(3437.6, bestPath.getDistance(), .1);
+        assertEquals(89, bestPath.getPoints().getSize());
+
         tmpHopper.close();
+    }
+
+    @Test
+    public void testFlexMode_631()
+    {
+        String tmpOsmFile = "files/monaco.osm.gz";
+
+        GraphHopper tmpHopper = new GraphHopper().
+                setStoreOnFlush(true).
+                setOSMFile(tmpOsmFile).
+                setCHWeightings(Arrays.asList("fastest")).
+                setFlexibleModeAllowed(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car")).
+                importOrLoad();
+
+        GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setVehicle("car");
+
+        GHResponse rsp = tmpHopper.route(req);
+        long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        assertTrue("Too few nodes visited for flex mode " + sum, sum < 50);
+        PathWrapper bestPath = rsp.getBest();
+        assertEquals(3587, bestPath.getDistance(), 1);
+        assertEquals(92, bestPath.getPoints().getSize());
+
+        // now request flex mode
+        req.getHints().put("routing.flexibleMode.force", true);
+        rsp = tmpHopper.route(req);
+        sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        assertTrue("Too few nodes visited for flex mode " + sum, sum > 50);
+
+        bestPath = rsp.getBest();
+        assertEquals(3587, bestPath.getDistance(), 1);
+        assertEquals(92, bestPath.getPoints().getSize());
     }
 }

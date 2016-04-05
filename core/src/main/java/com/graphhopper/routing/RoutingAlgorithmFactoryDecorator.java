@@ -17,14 +17,17 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.storage.Graph;
+import com.graphhopper.routing.util.HintsMap;
 
 /**
- * This interface manages RoutingAlgorithm creation.
  *
  * @author Peter Karich
  */
-public interface RoutingAlgorithmFactory
+public interface RoutingAlgorithmFactoryDecorator
 {
-    RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts );
+    /**
+     * This method returns the specified algoFactory unchanged, decorates it or completely replaces
+     * it depending on the specified opts.
+     */
+    RoutingAlgorithmFactory decorate( RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map );
 }

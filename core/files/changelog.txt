@@ -1,4 +1,6 @@
 0.7
+    GraphHopper class is refactored regarding RoutingAlgorithmFactory in order to fix problem when integrating flexibility routing, see #631
+    WeightingMap is now named HintsMap
     removed setWeightLimit as too unspecific for arbitrary weights, use setMaxVisitedNodes instead
     missing renames for Path.setEdgeEntry -> setSPTEntry and AbstractAlgorithm.createEdgeEntry -> createSPTEntry
 

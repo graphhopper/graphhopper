@@ -23,6 +23,7 @@ import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.*;
+import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
@@ -38,14 +39,12 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.*;
-import java.util.Map.Entry;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
- * <p>
- *
+ * <p/>
  * @author Peter Karich
  * @see GraphHopperAPI
  */
@@ -70,7 +69,7 @@ public class GraphHopper implements GraphHopperAPI
     // for routing
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
-    private final Map<Weighting, RoutingAlgorithmFactory> algoFactories = new LinkedHashMap<Weighting, RoutingAlgorithmFactory>();
+    private final List<RoutingAlgorithmFactoryDecorator> algoDecorators = new ArrayList<RoutingAlgorithmFactoryDecorator>();
     private int maxVisitedNodes = Integer.MAX_VALUE;
     private boolean forcingFlexibleModeAllowed = false;
     // for index
@@ -83,6 +82,7 @@ public class GraphHopper implements GraphHopperAPI
     // for CH prepare    
     private boolean doPrepare = true;
     private boolean chEnabled = true;
+    private final CHAlgoFactoryDecorator chFactoryDecorator = new CHAlgoFactoryDecorator();
     private final List<String> chWeightingList = new ArrayList<String>(Arrays.asList("fastest"));
     private int chPrepareThreads = -1;
     private ExecutorService chPreparePool;
@@ -259,8 +259,7 @@ public class GraphHopper implements GraphHopperAPI
      * Only valid option for in-memory graph and if you e.g. want to disable store on flush for unit
      * tests. Specify storeOnFlush to true if you want that existing data will be loaded FROM disc
      * and all in-memory data will be flushed TO disc after flush is called e.g. while OSM import.
-     * <p>
-     *
+     * <p/>
      * @param storeOnFlush true by default
      */
     public GraphHopper setStoreOnFlush( boolean storeOnFlush )
@@ -294,8 +293,18 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
+     * This method specifies if although the CH preparation is enabled a 'more expensive' flexible
+     * request can be made.
+     */
+    public GraphHopper setFlexibleModeAllowed( boolean t )
+    {
+        forcingFlexibleModeAllowed = t;
+        return this;
+    }
+
+    /**
      * Wrapper method for {@link GraphHopper#setCHWeightings(List)}
-     * <p>
+     * <p/>
      * @deprecated This method is used as a deprecated wrapper to not break the JavaApi. This will
      * be removed in the future. Please use {@link GraphHopper#setCHWeightings(List)} or
      * {@link GraphHopper#setCHWeightings(String...)}
@@ -430,7 +439,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * This method specifies the preferred language for way names during import.
-     * <p>
+     * <p/>
      * Language code as defined in ISO 639-1 or ISO 639-2.
      * <ul>
      * <li>If no preferred language is specified, only the default language with no tag will be
@@ -512,8 +521,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * The underlying graph used in algorithms.
-     * <p>
-     *
+     * <p/>
      * @throws IllegalStateException if graph is not instantiated.
      */
     public GraphHopperStorage getGraphHopperStorage()
@@ -537,8 +545,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * The location index created from the graph.
-     * <p>
-     *
+     * <p/>
      * @throws IllegalStateException if index is not initialized
      */
     public LocationIndex getLocationIndex()
@@ -661,7 +668,7 @@ public class GraphHopper implements GraphHopperAPI
         if (chEnabled)
         {
             setCHWeightings(tmpCHWeightingList);
-            forcingFlexibleModeAllowed = args.getBool("routing.flexibleMode", false);
+            setFlexibleModeAllowed(args.getBool("routing.flexibleMode.allowed", false));
         }
 
         preparePeriodicUpdates = args.getInt("prepare.updates.periodic", preparePeriodicUpdates);
@@ -790,7 +797,6 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * Opens existing graph.
-     * <p>
      *
      * @param graphHopperFolder is the folder containing graphhopper files (which can be compressed
      * too)
@@ -841,12 +847,15 @@ public class GraphHopper implements GraphHopperAPI
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
         GraphExtension ext = encodingManager.needsTurnCostsSupport()
                 ? new TurnCostExtension() : new GraphExtension.NoOpExtension();
+
         if (chEnabled)
         {
-            initCHAlgoFactories();
-            ghStorage = new GraphHopperStorage(new ArrayList<Weighting>(algoFactories.keySet()), dir, encodingManager, hasElevation(), ext);
+            initCHAlgoFactoryDecorator();
+            ghStorage = new GraphHopperStorage(chFactoryDecorator.getWeightings(), dir, encodingManager, hasElevation(), ext);
         } else
+        {
             ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), ext);
+        }
 
         ghStorage.setSegmentSize(defaultSegmentSize);
 
@@ -876,47 +885,53 @@ public class GraphHopper implements GraphHopperAPI
         }
     }
 
-    public RoutingAlgorithmFactory getAlgorithmFactory( Weighting weighting )
+    public RoutingAlgorithmFactory getAlgorithmFactory( HintsMap map )
     {
-        RoutingAlgorithmFactory raf = algoFactories.get(weighting);
-        if (raf == null)
-            putAlgorithmFactory(weighting, raf = new RoutingAlgorithmFactorySimple());
+        RoutingAlgorithmFactory pickedRAFactory = new RoutingAlgorithmFactorySimple();
+        for (RoutingAlgorithmFactoryDecorator decorator : algoDecorators)
+        {
+            pickedRAFactory = decorator.decorate(pickedRAFactory, map);
+        }
 
-        return raf;
+        return pickedRAFactory;
     }
 
-    public Collection<RoutingAlgorithmFactory> getAlgorithmFactories()
+    public GraphHopper addAlgorithmFactoryDecorator( RoutingAlgorithmFactoryDecorator algoFactoryDecorator )
     {
-        return algoFactories.values();
-    }
-
-    public GraphHopper putAlgorithmFactory( Weighting weighting, RoutingAlgorithmFactory algoFactory )
-    {
-        algoFactories.put(weighting, algoFactory);
+        algoDecorators.add(algoFactoryDecorator);
         return this;
     }
 
-    private void initCHAlgoFactories()
+    public CHAlgoFactoryDecorator getCHFactoryDecorator()
     {
-        if (algoFactories.isEmpty())
+        return chFactoryDecorator;
+    }
+
+    private void initCHAlgoFactoryDecorator()
+    {
+        if (!chFactoryDecorator.hasWeightings())
             for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders())
             {
                 for (String chWeightingStr : getCHWeightings())
                 {
-                    Weighting weighting = createWeighting(new WeightingMap(chWeightingStr), encoder);
-                    algoFactories.put(weighting, null);
+                    Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder);
+                    chFactoryDecorator.addWeighting(weighting);
                 }
             }
     }
 
     protected void createCHPreparations()
     {
-        if (algoFactories.isEmpty())
-            throw new IllegalStateException("No algorithm factories found. Call load before?");
+        if (chWeightingList.isEmpty())
+            throw new IllegalStateException("No CH weightings found");
 
-        Set<Weighting> orderedSet = new LinkedHashSet<Weighting>(algoFactories.keySet());
-        algoFactories.clear();
-        for (Weighting weighting : orderedSet)
+        if (algoDecorators.isEmpty())
+            algoDecorators.add(chFactoryDecorator);
+
+        if (chFactoryDecorator.hasPreparations())
+            return;
+
+        for (Weighting weighting : chFactoryDecorator.getWeightings())
         {
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
                     new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting),
@@ -926,7 +941,7 @@ public class GraphHopper implements GraphHopperAPI
                     setNeighborUpdates(prepareNeighborUpdates).
                     setLogMessages(prepareLogMessages);
 
-            algoFactories.put(weighting, tmpPrepareCH);
+            chFactoryDecorator.add(tmpPrepareCH);
         }
     }
 
@@ -965,15 +980,14 @@ public class GraphHopper implements GraphHopperAPI
      * Based on the weightingParameters and the specified vehicle a Weighting instance can be
      * created. Note that all URL parameters are available in the weightingParameters as String if
      * you use the GraphHopper Web module.
-     * <p>
-     *
+     * <p/>
      * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
      * GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
      * @param encoder the required vehicle
      * @return the weighting to be used for route calculation
-     * @see WeightingMap
+     * @see HintsMap
      */
-    public Weighting createWeighting( WeightingMap weightingMap, FlagEncoder encoder )
+    public Weighting createWeighting( HintsMap weightingMap, FlagEncoder encoder )
     {
         String weighting = weightingMap.getWeighting().toLowerCase();
 
@@ -995,22 +1009,6 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         throw new UnsupportedOperationException("weighting " + weighting + " not supported");
-    }
-
-    public Weighting getWeightingForCH( WeightingMap weightingMap, FlagEncoder encoder )
-    {
-        // get requested weighting name
-        String weightingStr = weightingMap.getWeighting().toLowerCase();
-        if (weightingStr.isEmpty())
-            weightingStr = getCHWeightings().get(0);
-
-        for (Weighting w : algoFactories.keySet())
-        {
-            if (w.matches(weightingStr, encoder))
-                return w;
-        }
-
-        throw new IllegalStateException("No weighting found for request " + weightingMap + ", encoder:" + encoder + ", " + algoFactories);
     }
 
     /**
@@ -1039,9 +1037,16 @@ public class GraphHopper implements GraphHopperAPI
         if (ghStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
 
+        // default handling
         String vehicle = request.getVehicle();
         if (vehicle.isEmpty())
+        {
             vehicle = getDefaultVehicle().toString();
+            request.setVehicle(vehicle);
+        }
+
+        if (request.getWeighting().isEmpty())
+            request.setWeighting(getCHWeightings().isEmpty() ? "fastest" : getCHWeightings().get(0).toString());
 
         if (!encodingManager.supports(vehicle))
         {
@@ -1070,11 +1075,12 @@ public class GraphHopper implements GraphHopperAPI
         if (ghRsp.hasErrors())
             return Collections.emptyList();
 
+        RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(request.getHints());
         Weighting weighting;
         Graph routingGraph = ghStorage;
 
-        boolean forceFlexibleMode = request.getHints().getBool("routing.flexibleMode", false);
-        if (forceFlexibleMode && !forcingFlexibleModeAllowed)
+        boolean forceFlexibleMode = request.getHints().getBool("routing.flexibleMode.force", false);
+        if (!forcingFlexibleModeAllowed && forceFlexibleMode)
         {
             ghRsp.addError(new IllegalStateException("Flexible mode not enabled on the server-side"));
             return Collections.emptyList();
@@ -1085,20 +1091,20 @@ public class GraphHopper implements GraphHopperAPI
             boolean forceCHHeading = request.getHints().getBool("force_heading_ch", false);
             if (!forceCHHeading && request.hasFavoredHeading(0))
                 throw new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483");
-            weighting = getWeightingForCH(request.getHints(), encoder);
+
+            if (!(tmpAlgoFactory instanceof PrepareContractionHierarchies))
+                throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
+
+            weighting = ((PrepareContractionHierarchies) tmpAlgoFactory).getWeighting();
             routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
         } else
         {
             weighting = createWeighting(request.getHints(), encoder);
         }
 
-        RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(weighting);
         QueryGraph queryGraph = new QueryGraph(routingGraph);
         queryGraph.lookup(qResults);
         weighting = createTurnWeighting(weighting, queryGraph, encoder);
-
-        List<Path> altPaths = new ArrayList<Path>(points.size() - 1);
-        QueryResult fromQResult = qResults.get(0);
 
         int maxVisistedNodesForRequest = request.getHints().getInt("routing.maxVisitedNodes", maxVisitedNodes);
         if (maxVisistedNodesForRequest > maxVisitedNodes)
@@ -1128,7 +1134,8 @@ public class GraphHopper implements GraphHopperAPI
 
         Locale locale = request.getLocale();
         Translation tr = trMap.getWithFallBack(locale);
-
+        List<Path> altPaths = new ArrayList<Path>(points.size() - 1);
+        QueryResult fromQResult = qResults.get(0);
         // Every alternative path makes one AltResponse BUT if via points exists then reuse the altResponse object
         PathWrapper altResponse = new PathWrapper();
         ghRsp.add(altResponse);
@@ -1283,13 +1290,10 @@ public class GraphHopper implements GraphHopperAPI
             ghStorage.freeze();
 
             int counter = 0;
-            for (final Entry<Weighting, RoutingAlgorithmFactory> entry : algoFactories.entrySet())
+            for (final PrepareContractionHierarchies prepare : chFactoryDecorator.getPreparations())
             {
-                logger.info((++counter) + "/" + algoFactories.entrySet().size() + " calling prepare.doWork for " + entry.getKey() + " ... (" + Helper.getMemInfo() + ")");
-                if (!(entry.getValue() instanceof PrepareContractionHierarchies))
-                    throw new IllegalStateException("RoutingAlgorithmFactory is not suited for CH preparation " + entry.getValue());
-
-                final String name = AbstractWeighting.weightingToFileName(entry.getKey());
+                logger.info((++counter) + "/" + chFactoryDecorator.getPreparations().size() + " calling prepare.doWork for " + prepare.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
+                final String name = AbstractWeighting.weightingToFileName(prepare.getWeighting());
                 chPreparePool.execute(new Runnable()
                 {
                     @Override
@@ -1301,8 +1305,7 @@ public class GraphHopper implements GraphHopperAPI
                             ghStorage.getProperties().put(errorKey, "CH preparation incomplete");
                             // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options                        
                             Thread.currentThread().setName(name);
-                            PrepareContractionHierarchies pch = (PrepareContractionHierarchies) entry.getValue();
-                            pch.doWork();
+                            prepare.doWork();
                             ghStorage.getProperties().put(errorKey, "");
                             ghStorage.getProperties().put("prepare.date." + name, Helper.createFormatter().format(new Date()));
                         } catch (Exception ex)

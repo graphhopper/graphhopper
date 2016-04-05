@@ -17,7 +17,7 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.routing.util.WeightingMap;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -37,8 +37,7 @@ public class GHRequest
 {
     private String algo = "";
     private final List<GHPoint> points;
-    private final WeightingMap hints = new WeightingMap();
-    private String vehicle = "";
+    private final HintsMap hints = new HintsMap();
     private boolean possibleToAdd = false;
     private Locale locale = Locale.US;
 
@@ -251,14 +250,13 @@ public class GHRequest
      */
     public GHRequest setVehicle( String vehicle )
     {
-        if (vehicle != null)
-            this.vehicle = vehicle;
+        hints.setVehicle(vehicle);
         return this;
     }
 
     public String getVehicle()
     {
-        return vehicle;
+        return hints.getVehicle();
     }
 
     @Override
@@ -278,7 +276,7 @@ public class GHRequest
         return res + "(" + algo + ")";
     }
 
-    public WeightingMap getHints()
+    public HintsMap getHints()
     {
         return hints;
     }

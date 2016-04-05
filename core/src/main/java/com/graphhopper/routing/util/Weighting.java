@@ -51,5 +51,5 @@ public interface Weighting
     /**
      * Returns true if the specified weighting and encoder matches to this Weighting.
      */
-    boolean matches( String weightingAsStr, FlagEncoder encoder );
+    boolean matches( HintsMap map );
 }

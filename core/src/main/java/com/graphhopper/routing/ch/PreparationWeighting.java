@@ -20,6 +20,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.CHEdgeIteratorState;
 
@@ -62,9 +63,9 @@ public class PreparationWeighting implements Weighting
     }
 
     @Override
-    public boolean matches( String weightingAsStr, FlagEncoder encoder )
+    public boolean matches( HintsMap map )
     {
-        return userWeighting.getName().equals(weightingAsStr) && encoder == userWeighting.getFlagEncoder();
+        return getName().equals(map.getWeighting()) && userWeighting.getFlagEncoder().toString().equals(map.getVehicle());
     }
 
     @Override

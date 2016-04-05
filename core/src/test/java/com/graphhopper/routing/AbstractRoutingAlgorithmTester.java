@@ -759,7 +759,7 @@ public abstract class AbstractRoutingAlgorithmTester
             }
 
             @Override
-            public boolean matches( String weightingAsStr, FlagEncoder encoder )
+            public boolean matches( HintsMap map )
             {
                 throw new UnsupportedOperationException("Not supported");
             }
