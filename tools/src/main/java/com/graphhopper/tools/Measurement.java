@@ -23,6 +23,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.util.*;
@@ -64,13 +65,7 @@ public class Measurement
     // Every value is one y-value in a separate diagram with an identical x-value for every Measurement.start call
     void start( CmdArgs args )
     {
-        long importTook = args.getLong("graph.importTime", -1);
-        put("graph.importTime", importTook);
-
         String graphLocation = args.get("graph.location", "");
-        if (Helper.isEmpty(graphLocation))
-            throw new IllegalStateException("no graph.location specified");
-
         String propLocation = args.get("measurement.location", "");
         if (Helper.isEmpty(propLocation))
             propLocation = "measurement" + new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date()) + ".properties";
@@ -92,16 +87,24 @@ public class Measurement
                 int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().getMaxId();
                 put("prepare.shortcuts", edgesAndShortcuts - edges);
             }
+
+            @Override
+            protected DataReader importData() throws IOException
+            {
+                StopWatch sw = new StopWatch().start();
+                DataReader dr = super.importData();
+                put("graph.importTime", sw.stop().getSeconds());
+                return dr;
+            }
         };
 
-        hopper.forDesktop();
-
-        if (!hopper.load(graphLocation))
-            throw new IllegalStateException("Cannot load existing graph at " + graphLocation);
+        hopper.init(args).
+                setFlexibleModeAllowed(true).
+                importOrLoad();
 
         GraphHopperStorage g = hopper.getGraphHopperStorage();
-        if ("true".equals(g.getProperties().get("prepare.done")))
-            throw new IllegalStateException("Graph has to be unprepared but wasn't!");
+//        if ("true".equals(g.getProperties().get("prepare.done")))
+//            throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
         String vehicleStr = args.get("graph.flagEncoders", "car");
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicleStr);
@@ -283,7 +286,7 @@ public class Measurement
         print("unit_tests" + description + ".get_edge_state", miniPerf);
     }
 
-    private void printTimeOfRouteQuery( final GraphHopper hopper, boolean ch, int count, String prefix,
+    private void printTimeOfRouteQuery( final GraphHopper hopper, final boolean ch, int count, String prefix,
                                         final String vehicle, final boolean withInstructions )
     {
         final Graph g = hopper.getGraphHopperStorage();
@@ -319,6 +322,8 @@ public class Measurement
                         setWeighting("fastest").
                         setVehicle(vehicle).
                         setAlgorithm(algo);
+                if (!ch)
+                    req.getHints().put("routing.flexibleMode.force", true);
 
                 // req.getHints().put(algo + ".approximation", "BeelineSimplification");
                 // req.getHints().put(algo + ".epsilon", 2);
