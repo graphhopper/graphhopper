@@ -569,8 +569,8 @@ public class GraphHopperIT
                 setVehicle("car");
 
         GHResponse rsp = tmpHopper.route(req);
-        long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
-        assertTrue("Too many visited nodes for ch mode " + sum, sum < 45);
+        long sum = rsp.getHints().getLong("visited_nodes.sum", 0);        
+        assertTrue("Too many visited nodes for ch mode " + sum, sum < 60);
         PathWrapper bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
         assertEquals(92, bestPath.getPoints().getSize());
@@ -579,7 +579,7 @@ public class GraphHopperIT
         req.getHints().put("routing.flexibleMode.force", true);
         rsp = tmpHopper.route(req);
         sum = rsp.getHints().getLong("visited_nodes.sum", 0);
-        assertTrue("Too few visited nodes for flex mode " + sum, sum > 45);
+        assertTrue("Too few visited nodes for flex mode " + sum, sum > 60);
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
