@@ -22,6 +22,7 @@ import com.graphhopper.routing.util.WeightApproximator;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.Helper;
+import com.graphhopper.routing.util.tour.TourPointGenerator;
 
 /**
  * A simple factory creating normal algorithms (RoutingAlgorithm) without preparation.
@@ -65,13 +66,9 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
             return altRouteAlgo;
         } else if (AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoStr))
         {
-            double distanceInKm = opts.getHints().getDouble("round_trip.distance", 1);
-            return new RoundTripAlgorithm(opts.getWeighting(), distanceInKm, g, opts);
-        } else if (AlgorithmOptions.ROUND_TRIP_ALT.equalsIgnoreCase(algoStr))
-        {
-            RoundTripAltAlgorithm altRouteAlgo = new RoundTripAltAlgorithm(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
-            altRouteAlgo.setMaxWeightFactor(opts.getHints().getInt("round_trip_alt.max_weight_factor", 2));
-            return altRouteAlgo;
+            RoundTripAlgorithm algo = new RoundTripAlgorithm(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            algo.setTourPointGenerator((TourPointGenerator) opts.getControl());
+            return algo;
         } else
         {
             throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());

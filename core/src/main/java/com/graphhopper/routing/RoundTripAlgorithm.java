@@ -17,90 +17,81 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.UniquePathWeighting;
+import com.graphhopper.routing.util.AvoidPathWeighting;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
-import com.graphhopper.routing.util.tour.TourWayPointGenerator;
+import com.graphhopper.routing.util.tour.TourPointGenerator;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * This class implements the round trip calculation via randomly generated points
- * <p>
+ * <p/>
  * @author Robin Boldt
  */
 public class RoundTripAlgorithm implements RoutingAlgorithm
 {
-    private final Weighting weighting;
-    private LocationIndex locationIndex = null;
-    private EdgeFilter edgeFilter = null;
-    private GHPoint from = null;
-    private final double distanceInKm;
-    private Graph g;
-    private AlgorithmOptions opts;
+    private final Graph g;
+    private final AvoidPathWeighting avoidPathWeighting;
+    private final FlagEncoder flagEncoder;
+    private final TraversalMode traversalMode;
+    private TourPointGenerator generator;
     private int numberOfVisitedNodes = 0;
-    private double weightLimit;
+    private double weightLimit = Double.MAX_VALUE;
 
-    public RoundTripAlgorithm( Weighting weighting, double distanceInKm, Graph g, AlgorithmOptions opts )
+    public RoundTripAlgorithm( Graph g, FlagEncoder flagEncoder, Weighting weighting, TraversalMode traversalMode )
     {
-        this.distanceInKm = distanceInKm;
         this.g = g;
-        this.opts = opts;
-        if (!(weighting instanceof UniquePathWeighting))
-            weighting = new UniquePathWeighting(weighting);
-        this.weighting = weighting;
+        this.flagEncoder = flagEncoder;
+        if (!(weighting instanceof AvoidPathWeighting))
+            this.avoidPathWeighting = new AvoidPathWeighting(weighting);
+        else
+            this.avoidPathWeighting = (AvoidPathWeighting) weighting;
+
+        this.traversalMode = traversalMode;
     }
 
-    public void prepare( LocationIndex locationIndex, EdgeFilter edgeFilter, GHPoint from )
+    public void setTourPointGenerator( TourPointGenerator generator )
     {
-        this.locationIndex = locationIndex;
-        this.edgeFilter = edgeFilter;
-        this.from = from;
+        this.generator = generator;
     }
 
-    private RoutingAlgorithm getRoutingAlgorithm()
+    /**
+     * This method calculates the round trip consisting of multiple paths.
+     */
+    List<Path> calcRoundTrip()
     {
-        return new DijkstraBidirectionRef(g, opts.getFlagEncoder(), this.weighting, opts.getTraversalMode());
-    }
-
-    public List<Path> calcRoundTrips()
-    {
-        List<Integer> points = TourWayPointGenerator.generateTour(from, locationIndex, edgeFilter, this.distanceInKm);
+        List<Integer> points = generator.calculatePoints();
         List<Path> pathList = new ArrayList<Path>(points.size() - 1);
-        RoutingAlgorithm routingAlgorithm;
 
         for (int i = 1; i < points.size(); i++)
         {
-            routingAlgorithm = this.getRoutingAlgorithm();
+            RoutingAlgorithm routingAlgorithm = new DijkstraBidirectionRef(g, flagEncoder, avoidPathWeighting, traversalMode);
             routingAlgorithm.setWeightLimit(weightLimit);
             Path path = routingAlgorithm.calcPath(points.get(i - 1), points.get(i));
             pathList.add(path);
-            this.numberOfVisitedNodes += routingAlgorithm.getVisitedNodes();
-            if (weighting instanceof UniquePathWeighting)
-                ((UniquePathWeighting) weighting).addPath(path);
+            numberOfVisitedNodes += routingAlgorithm.getVisitedNodes();
+
+            // it is important to avoid previously visited nodes for future paths
+            avoidPathWeighting.addPath(path);
         }
 
         return pathList;
     }
 
     @Override
-    public Path calcPath( int notNeeded, int notNeededAsWell )
+    public Path calcPath( int from, int to )
     {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public List<Path> calcPaths( int notNeeded, int notNeededAsWell )
+    public List<Path> calcPaths( int fromUnused, int toUnused )
     {
-        if (locationIndex == null)
-        {
-            throw new IllegalStateException("You have to call prepare before calculating Paths");
-        }
-        return calcRoundTrips();
+        return calcRoundTrip();
     }
 
     @Override

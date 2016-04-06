@@ -17,15 +17,9 @@
  */
 package com.graphhopper.routing.util.tour;
 
-/**
- * @author Robin Boldt
- */
-public class TourStrategyFactory
+import java.util.List;
+
+public interface TourPointGenerator
 {
-
-    public static TourStrategy getStrategy( double distanceInKm )
-    {
-        return new SinglePointTour(distanceInKm);
-    }
-
+    List<Integer> calculatePoints();
 }

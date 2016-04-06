@@ -60,17 +60,14 @@ public class AlgorithmOptions
      */
     public static final String ALT_ROUTE = "alternativeRoute";
     /**
-     * round trip algorithm based on alternative route algorithm
+     * round trip algorithm
      */
     public static final String ROUND_TRIP = "roundTrip";
-    /**
-     * round trip algorithm based on alternative route algorithm
-     */
-    public static final String ROUND_TRIP_ALT = "roundTripAlt";
     private String algorithm = DIJKSTRA_BI;
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private FlagEncoder flagEncoder;
+    private Object control;
     private final PMap hints = new PMap(5);
 
     private AlgorithmOptions()
@@ -124,6 +121,11 @@ public class AlgorithmOptions
     public PMap getHints()
     {
         return hints;
+    }
+
+    public Object getControl()
+    {
+        return control;
     }
 
     private void assertNotNull( Object optionValue, String optionName )
@@ -201,6 +203,12 @@ public class AlgorithmOptions
         public Builder hints( PMap hints )
         {
             this.opts.hints.put(hints);
+            return this;
+        }
+
+        public Builder control( Object object )
+        {
+            this.opts.control = object;
             return this;
         }
 

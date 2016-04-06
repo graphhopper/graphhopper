@@ -25,6 +25,8 @@ import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.tour.RoundTripPointGenerator;
+import com.graphhopper.routing.util.tour.SinglePointTour;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -44,8 +46,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
- * <p>
- *
+ * <p/>
  * @author Peter Karich
  * @see GraphHopperAPI
  */
@@ -258,8 +259,7 @@ public class GraphHopper implements GraphHopperAPI
      * Only valid option for in-memory graph and if you e.g. want to disable store on flush for unit
      * tests. Specify storeOnFlush to true if you want that existing data will be loaded FROM disc
      * and all in-memory data will be flushed TO disc after flush is called e.g. while OSM import.
-     * <p>
-     *
+     * <p/>
      * @param storeOnFlush true by default
      */
     public GraphHopper setStoreOnFlush( boolean storeOnFlush )
@@ -294,7 +294,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * Wrapper method for {@link GraphHopper#setCHWeightings(List)}
-     * <p>
+     * <p/>
      * @deprecated This method is used as a deprecated wrapper to not break the JavaApi. This will
      * be removed in the future. Please use {@link GraphHopper#setCHWeightings(List)} or
      * {@link GraphHopper#setCHWeightings(String...)}
@@ -315,8 +315,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
-     * <p>
-     *
+     * <p/>
      * @param weightingList A list containing multiple weightings like: "fastest", "shortest" or
      * your own weight-calculation type.
      */
@@ -379,8 +378,7 @@ public class GraphHopper implements GraphHopperAPI
      * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
      * Disabling CH is only recommended for short routes or in combination with
      * setDefaultWeightLimit and called flexibility mode
-     * <p>
-     *
+     * <p/>
      * @see #setDefaultWeightLimit(double)
      */
     public GraphHopper setCHEnable( boolean enable )
@@ -436,7 +434,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * This method specifies the preferred language for way names during import.
-     * <p>
+     * <p/>
      * Language code as defined in ISO 639-1 or ISO 639-2.
      * <ul>
      * <li>If no preferred language is specified, only the default language with no tag will be
@@ -518,8 +516,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * The underlying graph used in algorithms.
-     * <p>
-     *
+     * <p/>
      * @throws IllegalStateException if graph is not instantiated.
      */
     public GraphHopperStorage getGraphHopperStorage()
@@ -543,8 +540,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * The location index created from the graph.
-     * <p>
-     *
+     * <p/>
      * @throws IllegalStateException if index is not initialized
      */
     public LocationIndex getLocationIndex()
@@ -792,8 +788,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * Opens existing graph.
-     * <p>
-     *
+     * <p/>
      * @param graphHopperFolder is the folder containing graphhopper files (which can be compressed
      * too)
      */
@@ -967,8 +962,7 @@ public class GraphHopper implements GraphHopperAPI
      * Based on the weightingParameters and the specified vehicle a Weighting instance can be
      * created. Note that all URL parameters are available in the weightingParameters as String if
      * you use the GraphHopper Web module.
-     * <p>
-     *
+     * <p/>
      * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
      * GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
      * @param encoder the required vehicle
@@ -1093,12 +1087,6 @@ public class GraphHopper implements GraphHopperAPI
         QueryResult fromQResult = qResults.get(0);
 
         double weightLimit = request.getHints().getDouble("defaultWeightLimit", defaultWeightLimit);
-        String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
-        AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
-                hints(request.getHints()).
-                build();
-
         boolean viaTurnPenalty = request.getHints().getBool("pass_through", false);
         long visitedNodesSum = 0;
 
@@ -1118,8 +1106,24 @@ public class GraphHopper implements GraphHopperAPI
         // Every alternative path makes one AltResponse BUT if via points exists then reuse the altResponse object
         PathWrapper altResponse = new PathWrapper();
         ghRsp.add(altResponse);
-        boolean isRandomRoundTrip = AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoOpts.getAlgorithm());
-        boolean isRoundTrip = AlgorithmOptions.ROUND_TRIP_ALT.equalsIgnoreCase(algoOpts.getAlgorithm()) || isRandomRoundTrip;
+
+        Object algoControl = null;
+        String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
+        boolean isRoundTrip = AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoStr);
+        if (isRoundTrip)
+        {
+            double distanceInMeter = request.getHints().getDouble("round_trip.distance", 1000);
+            long seed = request.getHints().getLong("round_trip.seed", 0L);
+            // TODO use the second point to calculate the initial direction
+            algoControl = new RoundTripPointGenerator(points.get(0), locationIndex, new DefaultEdgeFilter(encoder),
+                    new SinglePointTour(new Random(seed), distanceInMeter));
+        }
+
+        AlgorithmOptions algoOpts = AlgorithmOptions.start().
+                algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).control(algoControl).
+                hints(request.getHints()).
+                build();
+
         boolean isAlternativeRoute = AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoOpts.getAlgorithm());
 
         if ((isAlternativeRoute || isRoundTrip) && points.size() > 2)
@@ -1152,9 +1156,6 @@ public class GraphHopper implements GraphHopperAPI
 
             sw = new StopWatch().start();
             RoutingAlgorithm algo = tmpAlgoFactory.createAlgo(queryGraph, algoOpts);
-            if(algo instanceof RoundTripAlgorithm){
-                ((RoundTripAlgorithm) algo).prepare(locationIndex, new DefaultEdgeFilter(encoder), points.get(0));
-            }
             algo.setWeightLimit(weightLimit);
             String debug = ", algoInit:" + sw.stop().getSeconds() + "s";
 
@@ -1197,9 +1198,6 @@ public class GraphHopper implements GraphHopperAPI
             }
         } else if (isRoundTrip)
         {
-            if (points.size() != altPaths.size() && !isRandomRoundTrip)
-                throw new RuntimeException("There should be the same number of points as paths. points:" + points.size() + ", paths:" + altPaths.size());
-
             pathMerger.doWork(altResponse, altPaths, tr);
         } else
         {
@@ -1213,11 +1211,11 @@ public class GraphHopper implements GraphHopperAPI
         return altPaths;
     }
 
-    List<QueryResult> lookup( List<GHPoint> points, FlagEncoder encoder, GHResponse rsp )
+    List<QueryResult> lookup( List<GHPoint> points, FlagEncoder encoder, GHResponse ghRsp )
     {
         if (points.size() < 2)
         {
-            rsp.addError(new IllegalStateException("At least 2 points have to be specified, but was:" + points.size()));
+            ghRsp.addError(new IllegalStateException("At least 2 points have to be specified, but was:" + points.size()));
             return Collections.emptyList();
         }
 
@@ -1228,7 +1226,7 @@ public class GraphHopper implements GraphHopperAPI
             GHPoint point = points.get(placeIndex);
             QueryResult res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
             if (!res.isValid())
-                rsp.addError(new IllegalArgumentException("Cannot find point " + placeIndex + ": " + point));
+                ghRsp.addError(new IllegalArgumentException("Cannot find point " + placeIndex + ": " + point));
 
             qResults.add(res);
         }

@@ -24,21 +24,23 @@ import gnu.trove.set.hash.TIntHashSet;
 
 /**
  * Rates already used Paths worse.
- *
  * @author RobinBoldt
  */
-public class UniquePathWeighting extends AbstractAdjustedWeighting
+public class AvoidPathWeighting extends AbstractAdjustedWeighting
 {
-    // Contains the EdgeIds of the already visisted Edges
+    // contains the edge IDs of the already visited edges
     protected final TIntSet visitedEdges = new TIntHashSet();
 
     public static int ALREADY_VISISTED_EDGES_PENALTY = 5;
 
-    public UniquePathWeighting( Weighting superWeighting )
+    public AvoidPathWeighting( Weighting superWeighting )
     {
         super(superWeighting);
     }
 
+    /**
+     * This method adds the specified path to this weighting which should be penalized in the calcWeight method.
+     */
     public void addPath( Path path )
     {
         for (EdgeIteratorState edge : path.calcEdges())
@@ -60,7 +62,7 @@ public class UniquePathWeighting extends AbstractAdjustedWeighting
 
         if (visitedEdges.contains(edgeState.getEdge()))
         {
-            weight = weight * ALREADY_VISISTED_EDGES_PENALTY;
+            return weight * ALREADY_VISISTED_EDGES_PENALTY;
         }
 
         return weight;
