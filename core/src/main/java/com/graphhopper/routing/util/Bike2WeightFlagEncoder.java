@@ -25,8 +25,6 @@ import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
 import static com.graphhopper.util.Helper.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Stores two speed values into an edge to support avoiding too much incline

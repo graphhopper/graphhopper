@@ -66,7 +66,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
 
     protected void runAlgo()
     {
-        while (!finished() && !isWeightLimitExceeded())
+        while (!finished() && !isMaxVisitedNodesExceeded())
         {
             if (!finishedFrom)
                 finishedFrom = !fillEdgesFrom();

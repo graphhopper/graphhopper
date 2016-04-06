@@ -61,14 +61,6 @@ public class BresenhamLineTest
     }
 
     @Test
-    public void testLineRightDown2()
-    {
-        // example http://stackoverflow.com/a/12370474/194609
-        BresenhamLine.voxelTraversal(0.25, 0.25, 2.75, 5.25, emitter);
-        assertEquals(Helper.createPointList(0, 0, 0, 1, 1, 1, 1, 2, 1, 3, 2, 3, 2, 4, 2, 5), points);
-    }
-
-    @Test
     public void testBresenhamLineRightDown()
     {
         BresenhamLine.calcPoints(3, 1, 0, 3, emitter);

@@ -19,11 +19,6 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.util.AbstractAlgoPreparation;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.LevelEdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
@@ -621,8 +616,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
                 double existingDistSum = v_u_dist + outgoingEdges.getDistance();
                 prepareAlgo.setWeightLimit(existingDirectWeight);
-                prepareAlgo.setLimitVisitedNodes((int) meanDegree * 100)
-                        .setEdgeFilter(ignoreNodeFilter.setAvoidNode(sch.getNode()));
+                prepareAlgo.setMaxVisitedNodes((int) meanDegree * 100);
+                prepareAlgo.setEdgeFilter(ignoreNodeFilter.setAvoidNode(sch.getNode()));
 
                 dijkstraSW.start();
                 dijkstraCount++;
@@ -854,12 +849,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     }
 
                     @Override
-                    protected boolean isWeightLimitExceeded()
-                    {
-                        return currFrom.weight > weightLimit && currTo.weight > weightLimit;
-                    }
-
-                    @Override
                     protected Path createAndInitPath()
                     {
                         bestPath = new Path4CH(graph, graph.getBaseGraph(), flagEncoder);
@@ -903,12 +892,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
 
             @Override
-            protected boolean isWeightLimitExceeded()
-            {
-                return currFrom.weight > weightLimit && currTo.weight > weightLimit;
-            }
-
-            @Override
             protected Path createAndInitPath()
             {
                 bestPath = new Path4CH(graph, graph.getBaseGraph(), flagEncoder);
@@ -929,7 +912,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         };
     }
 
-    class Shortcut
+    static class Shortcut
     {
         int from;
         int to;

@@ -107,7 +107,7 @@ public class PbfBlobDecoder implements Runnable
         }
 
         OSMFileHeader fileheader = new OSMFileHeader();
-        long milliSecondDate = header.getOsmosisReplicationTimestamp();        
+        long milliSecondDate = header.getOsmosisReplicationTimestamp();
         fileheader.setTag("timestamp", Helper.createFormatter().format(new Date(milliSecondDate * 1000)));
         decodedEntities.add(fileheader);
 
@@ -392,11 +392,8 @@ public class PbfBlobDecoder implements Runnable
             {
                 processOsmPrimitives(readBlobContent());
 
-            } else
-            {
-                if (log.isDebugEnabled())
-                    log.debug("Skipping unrecognised blob type " + blobType);
-            }
+            } else if (log.isDebugEnabled())
+                log.debug("Skipping unrecognised blob type " + blobType);
         } catch (IOException e)
         {
             throw new RuntimeException("Unable to process PBF blob", e);

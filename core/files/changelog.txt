@@ -1,3 +1,7 @@
+0.7
+    removed setWeightLimit as too unspecific for arbitrary weights, use setMaxVisitedNodes instead
+    missing renames for Path.setEdgeEntry -> setSPTEntry and AbstractAlgorithm.createEdgeEntry -> createSPTEntry
+
 0.6
     removed methods deprecated in 0.4 and 0.5
     renamed EdgeEntry to SPTEntry and AStar.AStarEdge to AStar.AStarEntry

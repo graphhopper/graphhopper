@@ -16,7 +16,7 @@
         <version>0.7-SNAPSHOT</version>
     </parent>
     <properties>
-        <jetty.version>8.1.16.v20140903</jetty.version>
+        <jetty.version>8.1.18.v20150929</jetty.version>
     </properties>
     
     <dependencies>
@@ -127,7 +127,7 @@
                         <id>make-assembly</id>
                         <!-- bind to verify and not package to pass integration tests before creating assemblies -->
                         <phase>integration-test</phase> 
-                       <goals>
+                        <goals>
                             <goal>single</goal>
                         </goals>
                     </execution>

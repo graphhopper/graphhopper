@@ -69,7 +69,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     @Override
     public void initFrom( int from, double weight )
     {
-        currFrom = createEdgeEntry(from, weight);
+        currFrom = createSPTEntry(from, weight);
         openSetFrom.add(currFrom);
         if (!traversalMode.isEdgeBased())
         {
@@ -84,7 +84,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
             if (currTo != null && currTo.adjNode == from)
             {
                 // special case of identical start and end
-                bestPath.edgeEntry = currFrom;
+                bestPath.sptEntry = currFrom;
                 bestPath.edgeTo = currTo;
                 finishedFrom = true;
                 finishedTo = true;
@@ -95,7 +95,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     @Override
     public void initTo( int to, double weight )
     {
-        currTo = createEdgeEntry(to, weight);
+        currTo = createSPTEntry(to, weight);
         openSetTo.add(currTo);
         if (!traversalMode.isEdgeBased())
         {
@@ -110,7 +110,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
             if (currFrom != null && currFrom.adjNode == to)
             {
                 // special case of identical start and end
-                bestPath.edgeEntry = currFrom;
+                bestPath.sptEntry = currFrom;
                 bestPath.edgeTo = currTo;
                 finishedFrom = true;
                 finishedTo = true;
@@ -184,12 +184,6 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         return currFrom.weight + currTo.weight >= bestPath.getWeight();
     }
 
-    @Override
-    protected boolean isWeightLimitExceeded()
-    {
-        return currFrom.weight + currTo.weight > weightLimit;
-    }
-
     void fillEdges( SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
                     TIntObjectMap<SPTEntry> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
     {        
@@ -258,9 +252,9 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
         if (newWeight < bestPath.getWeight())
         {
             bestPath.setSwitchToFrom(reverse);
-            bestPath.setEdgeEntry(entryCurrent);
+            bestPath.setSPTEntry(entryCurrent);
             bestPath.setWeight(newWeight);
-            bestPath.setEdgeEntryTo(entryOther);
+            bestPath.setSPTEntryTo(entryOther);
         }
     }
 

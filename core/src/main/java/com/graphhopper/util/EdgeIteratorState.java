@@ -28,7 +28,7 @@ import com.graphhopper.routing.util.FlagEncoder;
  */
 public interface EdgeIteratorState
 {
-    final static int K_UNFAVORED_EDGE = -1;
+    int K_UNFAVORED_EDGE = -1;
 
     /**
      * @return the edge id of the current edge. Do not make any assumptions about the concrete

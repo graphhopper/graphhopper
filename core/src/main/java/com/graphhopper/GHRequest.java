@@ -191,7 +191,7 @@ public class GHRequest
     private void validateAzimuthValue( double heading )
     {
         // heading must be in (0, 360) oder NaN
-        if (!Double.isNaN(heading) && ((Double.compare(heading, 360) > 0) || (Double.compare(heading, 0) < 0)))
+        if (!Double.isNaN(heading) && (Double.compare(heading, 360) > 0 || Double.compare(heading, 0) < 0))
             throw new IllegalArgumentException("Heading " + heading + " must be in range (0,360) or NaN");
     }
 

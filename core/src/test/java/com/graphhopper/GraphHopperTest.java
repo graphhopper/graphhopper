@@ -101,7 +101,7 @@ public class GraphHopperTest
 
         try
         {
-            QueryResult qr = closableInstance.getLocationIndex().findClosest(51.2492152, 9.4317166, EdgeFilter.ALL_EDGES);
+            closableInstance.getLocationIndex().findClosest(51.2492152, 9.4317166, EdgeFilter.ALL_EDGES);
             assertTrue(false);
         } catch (Exception ex)
         {
@@ -628,7 +628,7 @@ public class GraphHopperTest
         GHRequest req = new GHRequest().addPoint(start, 180.).addPoint(end);
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
-        assertFalse(response.hasErrors());        
+        assertFalse(response.hasErrors());
         assertArrayEquals(new int[]
         {
             9, 5, 8, 3, 10
@@ -650,7 +650,7 @@ public class GraphHopperTest
         GHRequest req = new GHRequest().addPoint(start, 180.).addPoint(end, 90.);
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
-        assertFalse(response.hasErrors());        
+        assertFalse(response.hasErrors());
         assertArrayEquals(new int[]
         {
             9, 5, 8, 1, 2, 10
@@ -706,7 +706,7 @@ public class GraphHopperTest
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
-        assertEquals(1, response.getAll().size());        
+        assertEquals(1, response.getAll().size());
         assertArrayEquals(new int[]
         {
             10, 4, 3, 11

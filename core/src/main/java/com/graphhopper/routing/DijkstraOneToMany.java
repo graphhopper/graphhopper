@@ -45,9 +45,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     private IntDoubleBinHeap heap;
     private int visitedNodes;
     private boolean doClear = true;
-    private int limitVisitedNodes = Integer.MAX_VALUE;
     private int endNode;
     private int currNode, fromNode, to;
+    private double weightLimit = Double.MAX_VALUE;
 
     public DijkstraOneToMany( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
@@ -65,12 +65,6 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
 
         heap = new IntDoubleBinHeap();
         changedNodes = new TIntArrayListWithCap();
-    }
-
-    public DijkstraOneToMany setLimitVisitedNodes( int nodes )
-    {
-        this.limitVisitedNodes = nodes;
-        return this;
     }
 
     @Override
@@ -142,7 +136,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             if (parentNode != EMPTY_PARENT && weights[to] <= weights[currNode])
                 return to;
 
-            if (heap.isEmpty() || visitedNodes >= limitVisitedNodes)
+            if (heap.isEmpty() || isMaxVisitedNodesExceeded())
                 return NOT_FOUND;
 
             currNode = heap.poll_element();
@@ -186,7 +180,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                 }
             }
 
-            if (heap.isEmpty() || visitedNodes >= limitVisitedNodes || isWeightLimitExceeded())
+            if (heap.isEmpty() || isMaxVisitedNodesExceeded() || isWeightLimitExceeded())
                 return NOT_FOUND;
 
             // calling just peek and not poll is important if the next query is cached
@@ -204,7 +198,11 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         return currNode == to;
     }
 
-    @Override
+    public void setWeightLimit( double weightLimit )
+    {
+        this.weightLimit = weightLimit;
+    }
+
     protected boolean isWeightLimitExceeded()
     {
         return weights[currNode] > weightLimit;
@@ -244,6 +242,10 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
 
     private static class TIntArrayListWithCap extends TIntArrayList
     {
+        public TIntArrayListWithCap()
+        {
+        }
+
         public int getCapacity()
         {
             return _data.length;

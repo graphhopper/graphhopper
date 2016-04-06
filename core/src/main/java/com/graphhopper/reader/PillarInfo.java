@@ -30,7 +30,7 @@ import com.graphhopper.util.PointAccess;
  */
 public class PillarInfo implements PointAccess
 {
-    private final int LAT = 0 * 4, LON = 1 * 4, ELE = 2 * 4;
+    private static final int LAT = 0 * 4, LON = 1 * 4, ELE = 2 * 4;
     private final boolean enabled3D;
     private final DataAccess da;
     private final int rowSizeInBytes;

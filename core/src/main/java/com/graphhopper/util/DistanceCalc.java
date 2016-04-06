@@ -23,9 +23,9 @@ import com.graphhopper.util.shapes.GHPoint;
 /**
  * Calculates the distance of two points or one point and an edge on earth via haversine formula.
  * Allows subclasses to implement less or more precise calculations.
- * <p>
+ * <p/>
  * See http://en.wikipedia.org/wiki/Haversine_formula
- * <p>
+ * <p/>
  * @author Peter Karich
  */
 public interface DistanceCalc
@@ -63,13 +63,13 @@ public interface DistanceCalc
      *   r
      *  .
      * a-------b
-     * <p>
+     *
      * case 2:
      * r
      *  .
      *    a-------b
      * </pre>
-     * <p>
+     * <p/>
      * @return true for case 1 which is "on edge" or the special case of 90° to the edge
      */
     boolean validEdgeDistance( double r_lat_deg, double r_lon_deg,
@@ -78,7 +78,7 @@ public interface DistanceCalc
 
     /**
      * This method calculates the distance from r to edge (a, b) where the crossing point is c
-     * <p>
+     * <p/>
      * @return the distance in normalized meter
      */
     double calcNormalizedEdgeDistance( double r_lat_deg, double r_lon_deg,
@@ -95,13 +95,19 @@ public interface DistanceCalc
     /**
      * This methods projects a point given in lat and long (in degrees) into a direction, given as
      * bearing, measured clockwise from north in degrees. The distance is passed in km.
-     * <p>
+     * <p/>
      * This formula is taken from: http://www.movable-type.co.uk/scripts/latlong.html
-     * <p>
+     * <p/>
      * lat2 = asin( sin φ1 ⋅ cos δ + cos φ1 ⋅ sin δ ⋅ cos θ ) lon2 = λ1 + atan2( sin θ ⋅ sin δ ⋅ cos
      * φ1, cos δ − sin φ1 ⋅ sin φ2 )
-     * <p>
+     * <p/>
      */
     public GHPoint projectCoordinate( double lat_deg, double lon_deg,
                                       double distanceInMeter, double bearingClockwiseFromNorth );
+
+    /*
+     * Simple heuristic to detect if the specified two points are crossing the boundary +-180°. See
+     * #667
+     */
+    boolean isCrossBoundary( double lon1, double lon2 );
 }

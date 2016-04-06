@@ -32,7 +32,8 @@ public interface DataReader
     void readGraph() throws IOException;
 
     /**
-     * This method returns the date of the most recent change for the underlying data.
+     * This method returns the date of the most recent change for the underlying data or null if not
+     * found.
      */
     Date getDataDate();
 }

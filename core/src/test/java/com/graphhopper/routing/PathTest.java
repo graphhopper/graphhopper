@@ -42,12 +42,9 @@ public class PathTest
 {
     private final FlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager carManager = new EncodingManager(encoder);
-//    private final EncodingManager mixedEncoders = new EncodingManager(
-//            new CarFlagEncoder(), new FootFlagEncoder(), new BikeFlagEncoder());
     private final EncodingManager mixedEncoders = new EncodingManager(new CarFlagEncoder());
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
-    private final AngleCalc ac = new AngleCalc();
     private final RoundaboutGraph roundaboutGraph = new RoundaboutGraph();
 
     @Test
@@ -92,7 +89,7 @@ public class PathTest
         SPTEntry e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 0, 1);
-        path.setEdgeEntry(e1);
+        path.setSPTEntry(e1);
         path.extract();
         // 0-1-2
         assertPList(Helper.createPointList(0, 0.1, 8, 1, 9, 1, 1, 0.1, 10, 1, 11, 1, 2, 0.1), path.calcPoints());
@@ -118,7 +115,7 @@ public class PathTest
         e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 0, 1);
-        path.setEdgeEntry(e1);
+        path.setSPTEntry(e1);
         path.extract();
         instr = path.calcInstructions(tr);
         res = instr.createJson();
@@ -142,7 +139,7 @@ public class PathTest
         e1 = new SPTEntry(edge1.getEdge(), 0, 1);
         e1.parent = new SPTEntry(edge2.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 2, 1);
-        path.setEdgeEntry(e1);
+        path.setSPTEntry(e1);
         path.extract();
         // 2-1-0
         assertPList(Helper.createPointList(2, 0.1, 11, 1, 10, 1, 1, 0.1, 9, 1, 8, 1, 0, 0.1), path.calcPoints());
@@ -194,7 +191,7 @@ public class PathTest
         e1.parent.parent = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent.parent.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent.parent.parent = new SPTEntry(-1, 0, 1);
-        path.setEdgeEntry(e1);
+        path.setSPTEntry(e1);
         path.extract();
 
         InstructionList il = path.calcInstructions(tr);
@@ -301,9 +298,9 @@ public class PathTest
 
         private double getAngle( int n1, int n2, int n3, int n4 )
         {
-            double inOrientation = ac.calcOrientation(na.getLat(n1), na.getLon(n1), na.getLat(n2), na.getLon(n2));
-            double outOrientation = ac.calcOrientation(na.getLat(n3), na.getLon(n3), na.getLat(n4), na.getLon(n4));
-            outOrientation = ac.alignOrientation(inOrientation, outOrientation);
+            double inOrientation = Helper.ANGLE_CALC.calcOrientation(na.getLat(n1), na.getLon(n1), na.getLat(n2), na.getLon(n2));
+            double outOrientation = Helper.ANGLE_CALC.calcOrientation(na.getLat(n3), na.getLon(n3), na.getLat(n4), na.getLon(n4));
+            outOrientation = Helper.ANGLE_CALC.alignOrientation(inOrientation, outOrientation);
             double delta = (inOrientation - outOrientation);
             delta = clockwise ? (Math.PI + delta) : -1 * (Math.PI - delta);
             return delta;

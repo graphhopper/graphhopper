@@ -94,7 +94,7 @@ public class AStarBidirection extends AbstractBidirAlgo
     }
 
     @Override
-    protected SPTEntry createEdgeEntry( int node, double weight )
+    protected SPTEntry createSPTEntry( int node, double weight )
     {
         throw new IllegalStateException("use AStarEdge constructor directly");
     }
@@ -125,7 +125,7 @@ public class AStarBidirection extends AbstractBidirAlgo
             if (currTo != null && currTo.adjNode == from)
             {
                 // special case of identical start and end
-                bestPath.edgeEntry = currFrom;
+                bestPath.sptEntry = currFrom;
                 bestPath.edgeTo = currTo;
                 finishedFrom = true;
                 finishedTo = true;
@@ -159,7 +159,7 @@ public class AStarBidirection extends AbstractBidirAlgo
             if (currFrom != null && currFrom.adjNode == to)
             {
                 // special case of identical start and end
-                bestPath.edgeEntry = currFrom;
+                bestPath.sptEntry = currFrom;
                 bestPath.edgeTo = currTo;
                 finishedFrom = true;
                 finishedTo = true;
@@ -203,12 +203,6 @@ public class AStarBidirection extends AbstractBidirAlgo
 
         // using 'weight' is important and correct here e.g. approximation can get negative and smaller than 'weightOfVisitedPath'
         return currFrom.weight + currTo.weight >= bestPath.getWeight();
-    }
-
-    @Override
-    protected boolean isWeightLimitExceeded()
-    {
-        return currFrom.weight + currTo.weight > weightLimit;
     }
 
     @Override
@@ -314,7 +308,7 @@ public class AStarBidirection extends AbstractBidirAlgo
         if (newWeight < bestPath.getWeight())
         {
             bestPath.setSwitchToFrom(reverse);
-            bestPath.edgeEntry = entryCurrent;
+            bestPath.sptEntry = entryCurrent;
             bestPath.edgeTo = entryOther;
             bestPath.setWeight(newWeight);
         }

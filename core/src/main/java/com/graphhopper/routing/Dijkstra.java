@@ -61,7 +61,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     {
         checkAlreadyRun();
         this.to = to;
-        currEdge = createEdgeEntry(from, 0);
+        currEdge = createSPTEntry(from, 0);
         if (!traversalMode.isEdgeBased())
         {
             fromMap.put(from, currEdge);
@@ -76,7 +76,7 @@ public class Dijkstra extends AbstractRoutingAlgorithm
         while (true)
         {
             visitedNodes++;
-            if (isWeightLimitExceeded() || finished())
+            if (isMaxVisitedNodesExceeded() || finished())
                 break;
 
             int startNode = currEdge.adjNode;
@@ -129,22 +129,16 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     @Override
     protected Path extractPath()
     {
-        if (currEdge == null || isWeightLimitExceeded() || !finished())
+        if (currEdge == null || !finished())
             return createEmptyPath();
 
-        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setEdgeEntry(currEdge).extract();
+        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setSPTEntry(currEdge).extract();
     }
 
     @Override
     public int getVisitedNodes()
     {
         return visitedNodes;
-    }
-
-    @Override
-    protected boolean isWeightLimitExceeded()
-    {
-        return currEdge.weight > weightLimit;
     }
 
     @Override

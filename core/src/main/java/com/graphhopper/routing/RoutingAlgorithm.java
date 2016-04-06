@@ -43,10 +43,9 @@ public interface RoutingAlgorithm
     List<Path> calcPaths( int from, int to );
 
     /**
-     * Limits the search to avoid full graph exploration in the case of disconnected networks. The
-     * default value is Double.MAX_VALUE. See #104
+     * Limit the search to numberOfNodes. See #681
      */
-    void setWeightLimit( double weight );
+    void setMaxVisitedNodes( int numberOfNodes );
 
     /**
      * @return name of this algorithm

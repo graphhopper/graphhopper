@@ -47,7 +47,7 @@ public class PrinctonReader
 
     public void read()
     {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(is), 8 * (1 << 10));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(is, Helper.UTF_CS), 8 * (1 << 10));
         int lineNo = 0;
         try
         {
@@ -59,6 +59,9 @@ public class PrinctonReader
             {
                 lineNo++;
                 String line = reader.readLine();
+                if (line == null)
+                    throw new IllegalStateException("Cannot read line " + lineNo);
+                
                 String args[] = line.split(" ");
                 int from = -1;
                 int to = -1;

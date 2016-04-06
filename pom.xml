@@ -153,6 +153,47 @@
                 <artifactId>maven-war-plugin</artifactId>
                 <version>2.6</version>                
             </plugin>            
+            <!-- example https://github.com/tananaev/traccar/blob/master/checkstyle.xml
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-checkstyle-plugin</artifactId>
+                <version>2.17</version>
+                <configuration>
+                    <configLocation>checkstyle.xml</configLocation>
+                </configuration>
+            </plugin>
+            -->
+            
+            <!-- create html output for findbugs -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-site-plugin</artifactId>
+                <version>3.5</version>
+                <configuration>
+                    <reportPlugins>
+                        <plugin>
+                            <groupId>org.codehaus.mojo</groupId>
+                            <artifactId>findbugs-maven-plugin</artifactId>                            
+                        </plugin>
+                    </reportPlugins>
+                </configuration>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>findbugs-maven-plugin</artifactId>
+                <version>3.0.3</version>                
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-pmd-plugin</artifactId>
+                <version>3.6</version>
+                <!-- e.g. under core/target/site/pmd.html
+                <configuration>
+                    <format>html</format>
+                </configuration>
+                -->
+            </plugin>
         </plugins>
     </build>    
     

@@ -50,9 +50,9 @@ public interface EdgeIterator extends EdgeIteratorState
      * integer value to indicate if an edge is valid or not which then would be initialized with
      * this value
      */
-    public static final int NO_EDGE = -1;
+    int NO_EDGE = -1;
 
-    static class Edge
+    class Edge
     {
         public static boolean isValid( int edgeId )
         {

@@ -68,6 +68,7 @@ public class AlgorithmOptions
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private FlagEncoder flagEncoder;
     private Object control;
+    private int maxVisitedNodes = Integer.MAX_VALUE;
     private final PMap hints = new PMap(5);
 
     private AlgorithmOptions()
@@ -118,6 +119,11 @@ public class AlgorithmOptions
         return flagEncoder;
     }
 
+    public int getMaxVisitedNodes()
+    {
+        return maxVisitedNodes;
+    }
+
     public PMap getHints()
     {
         return hints;
@@ -163,6 +169,8 @@ public class AlgorithmOptions
             b.traversalMode(opts.getTraversalMode());
         if (opts.weighting != null)
             b.weighting(opts.getWeighting());
+        if (opts.maxVisitedNodes >= 0)
+            b.maxVisitedNodes(opts.maxVisitedNodes);
         return b;
     }
 
@@ -197,6 +205,12 @@ public class AlgorithmOptions
         public Builder flagEncoder( FlagEncoder flagEncoder )
         {
             this.opts.flagEncoder = flagEncoder;
+            return this;
+        }
+
+        public Builder maxVisitedNodes( int maxVisitedNodes )
+        {
+            this.opts.maxVisitedNodes = maxVisitedNodes;
             return this;
         }
 

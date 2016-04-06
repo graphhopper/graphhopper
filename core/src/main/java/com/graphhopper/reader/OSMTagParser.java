@@ -76,8 +76,8 @@ public class OSMTagParser
                     minStr = minStr.substring(0, index);
                 }
 
-                seconds += Integer.parseInt(hourStr) * 60 * 60;
-                seconds += Integer.parseInt(minStr) * 60;
+                seconds += Integer.parseInt(hourStr) * 60L * 60;
+                seconds += Integer.parseInt(minStr) * 60L;
                 seconds += Integer.parseInt(secondsStr);
                 return seconds;
             } else

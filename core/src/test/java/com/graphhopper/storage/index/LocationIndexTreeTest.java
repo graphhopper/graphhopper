@@ -495,4 +495,50 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         assertTrue(qr.isValid());
         assertEquals(2, qr.getClosestNode());
     }
+
+    // 0--1--2--3, the "cross boundary" edges are 1-2 and 5-6
+    // |  |  |  |
+    // 4--5--6--7
+    @Test
+    public void testCrossBoundaryNetwork_issue667()
+    {
+        Graph graph = createGHStorage(new RAMDirectory(), encodingManager, false);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0.1, 179.5);
+        na.setNode(1, 0.1, 179.9);
+        na.setNode(2, 0.1, -179.8);
+        na.setNode(3, 0.1, -179.5);
+        na.setNode(4, 0, 179.5);
+        na.setNode(5, 0, 179.9);
+        na.setNode(6, 0, -179.8);
+        na.setNode(7, 0, -179.5);
+
+        // just use 1 as distance which is incorrect but does not matter in this unit case
+        graph.edge(0, 1, 1, true);
+        graph.edge(0, 4, 1, true);
+        graph.edge(1, 5, 1, true);
+        graph.edge(4, 5, 1, true);
+
+        graph.edge(2, 3, 1, true);
+        graph.edge(2, 6, 1, true);
+        graph.edge(3, 7, 1, true);
+        graph.edge(6, 7, 1, true);
+
+        // as last edges: create cross boundary edges
+        // See #667 where the recommendation is to adjust the import and introduce two pillar nodes 
+        // where the connection is cross boundary and would be okay if ignored as real length is 0
+        graph.edge(1, 2, 1, true).setWayGeometry(Helper.createPointList(0, 180, 0, -180));
+        // but this unit test succeeds even without this adjusted import:
+        graph.edge(5, 6, 1, true);
+
+        LocationIndexTree index = createIndexNoPrepare(graph, 500);
+        index.prepareIndex();
+
+        assertTrue(graph.getNodes() > 0);
+        for (int i = 0; i < graph.getNodes(); i++)
+        {
+            QueryResult qr = index.findClosest(na.getLat(i), na.getLon(i), EdgeFilter.ALL_EDGES);
+            assertEquals(i, qr.getClosestNode());
+        }
+    }
 }

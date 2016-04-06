@@ -18,18 +18,20 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.DAType;
+import com.graphhopper.storage.DataAccess;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.SocketTimeoutException;
 import java.util.zip.ZipInputStream;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Elevation data from NASA (SRTM).
@@ -77,7 +79,8 @@ public class SRTMProvider implements ElevationProvider
     private final double invPrecision = 1 / precision;
     // possible alternatives see #451
     // http://mirror.ufs.ac.za/datasets/SRTM3/
-    private String baseUrl = "http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/";
+    //"http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/"
+    private String baseUrl = "https://srtm.kurviger.de/SRTM3/";
     private boolean calcMean = false;
 
     public SRTMProvider()
@@ -317,6 +320,7 @@ public class SRTMProvider implements ElevationProvider
             os.write(buffer, 0, len);
         }
         os.flush();
+        Helper.close(buff);
         return os.toByteArray();
     }
 

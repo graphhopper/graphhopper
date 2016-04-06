@@ -29,7 +29,7 @@ public class GHSortedCollectionTest
     @Test
     public void testPoll()
     {
-        GHSortedCollection instance = new GHSortedCollection(100);
+        GHSortedCollection instance = new GHSortedCollection();
         assertTrue(instance.isEmpty());
         instance.insert(0, 10);
         assertEquals(10, instance.peekValue());
@@ -44,7 +44,7 @@ public class GHSortedCollectionTest
     @Test
     public void testInsert()
     {
-        GHSortedCollection instance = new GHSortedCollection(100);
+        GHSortedCollection instance = new GHSortedCollection();
         assertTrue(instance.isEmpty());
         instance.insert(0, 10);
         assertEquals(1, instance.getSize());
@@ -64,7 +64,7 @@ public class GHSortedCollectionTest
     @Test
     public void testUpdate()
     {
-        GHSortedCollection instance = new GHSortedCollection(100);
+        GHSortedCollection instance = new GHSortedCollection();
         assertTrue(instance.isEmpty());
         instance.insert(0, 10);
         instance.insert(1, 11);

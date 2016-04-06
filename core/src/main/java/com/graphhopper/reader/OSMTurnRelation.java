@@ -1,9 +1,5 @@
 package com.graphhopper.reader;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.graphhopper.routing.util.TurnCostEncoder;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;

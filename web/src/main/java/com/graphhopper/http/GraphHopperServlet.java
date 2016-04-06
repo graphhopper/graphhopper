@@ -79,18 +79,19 @@ public class GraphHopperServlet extends GHBaseServlet
         String weighting = getParam(httpReq, "weighting", "fastest");
         String algoStr = getParam(httpReq, "algorithm", "");
         String localeStr = getParam(httpReq, "locale", "en");
+
+        StopWatch sw = new StopWatch().start();
+        List<Throwable> errorList = new ArrayList<Throwable>();
         List<Double> favoredHeadings = Collections.EMPTY_LIST;
         try
         {
             favoredHeadings = getDoubleParamList(httpReq, "heading");
 
-        } catch (java.lang.NumberFormatException e)
+        } catch (NumberFormatException e)
         {
-            throw new RuntimeException(e);
+            errorList.add(new IllegalArgumentException("heading list in from format: " + e.getMessage()));
         }
 
-        StopWatch sw = new StopWatch().start();
-        List<Throwable> errorList = new ArrayList<Throwable>();
         if (!hopper.getEncodingManager().supports(vehicleStr))
         {
             errorList.add(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));

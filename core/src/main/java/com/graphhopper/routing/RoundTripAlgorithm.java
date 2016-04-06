@@ -40,7 +40,7 @@ public class RoundTripAlgorithm implements RoutingAlgorithm
     private final TraversalMode traversalMode;
     private TourPointGenerator generator;
     private int numberOfVisitedNodes = 0;
-    private double weightLimit = Double.MAX_VALUE;
+    private int maxVisitedNodes = Integer.MAX_VALUE;
 
     public RoundTripAlgorithm( Graph g, FlagEncoder flagEncoder, Weighting weighting, TraversalMode traversalMode )
     {
@@ -70,7 +70,7 @@ public class RoundTripAlgorithm implements RoutingAlgorithm
         for (int i = 1; i < points.size(); i++)
         {
             RoutingAlgorithm routingAlgorithm = new DijkstraBidirectionRef(g, flagEncoder, avoidPathWeighting, traversalMode);
-            routingAlgorithm.setWeightLimit(weightLimit);
+            routingAlgorithm.setMaxVisitedNodes(maxVisitedNodes);
             Path path = routingAlgorithm.calcPath(points.get(i - 1), points.get(i));
             pathList.add(path);
             numberOfVisitedNodes += routingAlgorithm.getVisitedNodes();
@@ -95,9 +95,9 @@ public class RoundTripAlgorithm implements RoutingAlgorithm
     }
 
     @Override
-    public void setWeightLimit( double weightLimit )
+    public void setMaxVisitedNodes( int maxVisitedNodes )
     {
-        this.weightLimit = weightLimit;
+        this.maxVisitedNodes = maxVisitedNodes;
     }
 
     @Override

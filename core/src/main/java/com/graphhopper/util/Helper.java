@@ -49,8 +49,9 @@ public class Helper
     public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
     public static final DistanceCalc3D DIST_3D = new DistanceCalc3D();
     public static final DistancePlaneProjection DIST_PLANE = new DistancePlaneProjection();
-    private static final Logger logger = LoggerFactory.getLogger(Helper.class);
-    public static Charset UTF_CS = Charset.forName("UTF-8");
+    public static final AngleCalc ANGLE_CALC = new AngleCalc();
+    private static final Logger LOGGER = LoggerFactory.getLogger(Helper.class);
+    public static final Charset UTF_CS = Charset.forName("UTF-8");
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
 
@@ -119,7 +120,7 @@ public class Helper
                 int index = line.indexOf("=");
                 if (index < 0)
                 {
-                    logger.warn("Skipping configuration at line:" + line);
+                    LOGGER.warn("Skipping configuration at line:" + line);
                     continue;
                 }
 
@@ -498,7 +499,7 @@ public class Helper
     public static final double round2( double value )
     {
         return Math.round(value * 100) / 100d;
-    }    
+    }
 
     /**
      * This creates a date formatter for yyyy-MM-dd'T'HH:mm:ss'Z' which is has to be identical to

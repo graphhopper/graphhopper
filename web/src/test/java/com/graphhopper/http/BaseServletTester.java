@@ -37,7 +37,7 @@ import static org.junit.Assert.assertEquals;
 public class BaseServletTester
 {
     private static GHServer server;
-    protected static Logger logger = LoggerFactory.getLogger(BaseServletTester.class);
+    protected static final Logger logger = LoggerFactory.getLogger(BaseServletTester.class);
     protected static int port;
     protected Injector injector;
 
