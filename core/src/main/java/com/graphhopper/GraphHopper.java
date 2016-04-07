@@ -1081,8 +1081,8 @@ public class GraphHopper implements GraphHopperAPI
         List<Path> altPaths = new ArrayList<Path>(points.size() - 1);
         QueryResult fromQResult = qResults.get(0);
 
-        int maxVisistedNodesForRequest = request.getHints().getInt("routing.maxVisitedNodes", maxVisitedNodes);
-        if (maxVisistedNodesForRequest > maxVisitedNodes)
+        int maxVisitedNodesForRequest = request.getHints().getInt("routing.maxVisitedNodes", maxVisitedNodes);
+        if (maxVisitedNodesForRequest > maxVisitedNodes)
         {
             ghRsp.addError(new IllegalStateException("The routing.maxVisitedNodes parameter has to be below or equal to:" + maxVisitedNodes));
             return Collections.emptyList();
@@ -1121,7 +1121,8 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).control(algoControl).
+                algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
+                maxVisitedNodes(maxVisitedNodesForRequest).control(algoControl).
                 hints(request.getHints()).
                 build();
 
@@ -1157,7 +1158,6 @@ public class GraphHopper implements GraphHopperAPI
 
             sw = new StopWatch().start();
             RoutingAlgorithm algo = tmpAlgoFactory.createAlgo(queryGraph, algoOpts);
-            algo.setMaxVisitedNodes(maxVisistedNodesForRequest);
             String debug = ", algoInit:" + sw.stop().getSeconds() + "s";
 
             sw = new StopWatch().start();
