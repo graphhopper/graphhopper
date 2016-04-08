@@ -562,7 +562,6 @@ public class GraphHopperIT
         // provide second point for initial direction only
         GHRequest rq = new GHRequest().
                 addPoint(new GHPoint(43.741069, 7.426854)).
-                addPoint(new GHPoint(43.740871, 7.426811)).
                 setVehicle(vehicle).setWeighting("fastest").
                 setAlgorithm(AlgorithmOptions.ROUND_TRIP);
         rq.getHints().put("round_trip.distance", 1000);

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.AlgorithmControl;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
@@ -67,7 +68,7 @@ public class AlgorithmOptions
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private FlagEncoder flagEncoder;
-    private Object control;
+    private AlgorithmControl control;
     private int maxVisitedNodes = Integer.MAX_VALUE;
     private final PMap hints = new PMap(5);
 
@@ -129,7 +130,7 @@ public class AlgorithmOptions
         return hints;
     }
 
-    public Object getControl()
+    public AlgorithmControl getControl()
     {
         return control;
     }
@@ -220,7 +221,7 @@ public class AlgorithmOptions
             return this;
         }
 
-        public Builder control( Object object )
+        public Builder control( AlgorithmControl object )
         {
             this.opts.control = object;
             return this;

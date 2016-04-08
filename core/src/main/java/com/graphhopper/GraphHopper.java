@@ -1108,16 +1108,28 @@ public class GraphHopper implements GraphHopperAPI
         PathWrapper altResponse = new PathWrapper();
         ghRsp.add(altResponse);
 
-        Object algoControl = null;
+        AlgorithmControl algoControl = null;
         String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
         boolean isRoundTrip = AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoStr);
         if (isRoundTrip)
         {
             double distanceInMeter = request.getHints().getDouble("round_trip.distance", 1000);
             long seed = request.getHints().getLong("round_trip.seed", 0L);
-            // TODO use the second point to calculate the initial direction
             algoControl = new RoundTripPointGenerator(points.get(0), locationIndex, new DefaultEdgeFilter(encoder),
                     new SinglePointTour(new Random(seed), distanceInMeter));
+
+            // workaround to make querying with one point possible, see #582
+            if (points.size() == 1)
+            {
+                request.addPoint(points.get(0));
+                qResults.add(qResults.get(0));
+            }
+        }
+
+        if (points.size() < 2)
+        {
+            ghRsp.addError(new IllegalStateException("At least 2 points have to be specified, but was:" + points.size()));
+            return Collections.emptyList();
         }
 
         AlgorithmOptions algoOpts = AlgorithmOptions.start().
@@ -1214,12 +1226,6 @@ public class GraphHopper implements GraphHopperAPI
 
     List<QueryResult> lookup( List<GHPoint> points, FlagEncoder encoder, GHResponse ghRsp )
     {
-        if (points.size() < 2)
-        {
-            ghRsp.addError(new IllegalStateException("At least 2 points have to be specified, but was:" + points.size()));
-            return Collections.emptyList();
-        }
-
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         List<QueryResult> qResults = new ArrayList<QueryResult>(points.size());
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++)

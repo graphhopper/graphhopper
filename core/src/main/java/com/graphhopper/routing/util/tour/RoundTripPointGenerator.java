@@ -15,6 +15,7 @@
  */
 package com.graphhopper.routing.util.tour;
 
+import com.graphhopper.routing.util.AlgorithmControl;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -29,7 +30,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class RoundTripPointGenerator implements TourPointGenerator
+public class RoundTripPointGenerator implements TourPointGenerator, AlgorithmControl
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(RoundTripPointGenerator.class);
     private static final int INITIAL_TRIES = 40;
