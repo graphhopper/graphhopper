@@ -23,8 +23,9 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <slf4j.version>1.7.13</slf4j.version>
+        <slf4j.version>1.7.21</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
+        <json.org.version>20160212</json.org.version>
         
         <!-- netbeans formatting rules -->
         <org-netbeans-modules-editor-indent.CodeStyle.usedProfile>project</org-netbeans-modules-editor-indent.CodeStyle.usedProfile>
@@ -86,7 +87,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.3</version>
+                <version>3.5.1</version>
                 <configuration>
                     <!--
                     <compilerArgument>-Xlint:unchecked</compilerArgument>
@@ -95,8 +96,8 @@
                     <!-- suppress warning about Unsafe functionality -->
                     <compilerArgument>-XDignore.symbol.file</compilerArgument>
                     <fork>true</fork>
-                    <source>1.6</source>
-                    <target>1.6</target>
+                    <source>1.7</source>
+                    <target>1.7</target>
                 </configuration>
             </plugin>
             
@@ -197,7 +198,7 @@
         </plugins>
     </build>    
     
-    <dependencies>      
+    <dependencies>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

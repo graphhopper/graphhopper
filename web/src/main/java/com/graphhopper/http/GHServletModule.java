@@ -48,9 +48,6 @@ public class GHServletModule extends ServletModule
     @Override
     protected void configureServlets()
     {
-        filter("*").through(GHGZIPHook.class, params);
-        bind(GHGZIPHook.class).in(Singleton.class);
-
         filter("*").through(CORSFilter.class, params);
         bind(CORSFilter.class).in(Singleton.class);
 
