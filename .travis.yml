@@ -1,7 +1,5 @@
 language: java
 jdk:
-  - openjdk7
-  - oraclejdk7
   - oraclejdk8
 # script: ./map-matching.sh action=test
 notifications:
