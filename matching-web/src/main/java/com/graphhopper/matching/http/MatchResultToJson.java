@@ -38,11 +38,17 @@ public class MatchResultToJson {
         for (int emIndex = 0; emIndex < result.getEdgeMatches().size(); emIndex++) {
             JSONObject link = new JSONObject();
             JSONObject geometry = new JSONObject();
-            geometry.put("type", "LineString");
 
             EdgeMatch edgeMatch = result.getEdgeMatches().get(emIndex);
             PointList pointList = edgeMatch.getEdgeState().fetchWayGeometry(emIndex == 0 ? 3 : 2);
-            geometry.put("coordinates", pointList.toGeoJson());
+           
+            if(pointList.size() < 2) {
+                geometry.put("coordinates", pointList.toGeoJson().get(0));
+                geometry.put("type", "Point");
+            } else {
+                geometry.put("coordinates", pointList.toGeoJson());
+                geometry.put("type", "LineString");
+            }
 
             link.put("id", edgeMatch.getEdgeState().getEdge());
             link.put("geometry", geometry.toString());
