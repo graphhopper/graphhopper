@@ -20,13 +20,8 @@ package com.graphhopper.matching.http;
 import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.servlet.GuiceFilter;
-import com.graphhopper.http.DefaultModule;
 import com.graphhopper.http.GHServer;
-import com.graphhopper.http.GHServletModule;
-import com.graphhopper.matching.LocationIndexMatch;
-import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.CmdArgs;
-import javax.inject.Singleton;
 
 /**
  *
