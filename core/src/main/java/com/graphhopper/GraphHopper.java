@@ -1069,9 +1069,8 @@ public class GraphHopper implements GraphHopperAPI
                 request.addPoint(point0);
         }
 
-        List<GHPoint> points = request.getPoints();
-
         StopWatch sw = new StopWatch().start();
+        List<GHPoint> points = request.getPoints();
         List<QueryResult> qResults = lookup(points, encoder, ghRsp);
         ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
         if (ghRsp.hasErrors())
@@ -1089,13 +1088,9 @@ public class GraphHopper implements GraphHopperAPI
         } else
             weighting = createWeighting(request.getHints(), encoder);
 
-        RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(weighting);
         QueryGraph queryGraph = new QueryGraph(routingGraph);
         queryGraph.lookup(qResults);
         weighting = createTurnWeighting(weighting, queryGraph, encoder);
-
-        List<Path> altPaths = new ArrayList<Path>(points.size() - 1);
-        QueryResult fromQResult = qResults.get(0);
 
         int maxVisitedNodesForRequest = request.getHints().getInt("routing.maxVisitedNodes", maxVisitedNodes);
         if (maxVisitedNodesForRequest > maxVisitedNodes)
@@ -1103,9 +1098,6 @@ public class GraphHopper implements GraphHopperAPI
             ghRsp.addError(new IllegalStateException("The routing.maxVisitedNodes parameter has to be below or equal to:" + maxVisitedNodes));
             return Collections.emptyList();
         }
-
-        boolean viaTurnPenalty = request.getHints().getBool("pass_through", false);
-        long visitedNodesSum = 0;
 
         boolean tmpEnableInstructions = request.getHints().getBool("instructions", enableInstructions);
         boolean tmpCalcPoints = request.getHints().getBool("calcPoints", calcPoints);
@@ -1120,100 +1112,16 @@ public class GraphHopper implements GraphHopperAPI
         Locale locale = request.getLocale();
         Translation tr = trMap.getWithFallBack(locale);
 
-        // Every alternative path makes one AltResponse BUT if via points exists then reuse the altResponse object
-        PathWrapper altResponse = new PathWrapper();
-        ghRsp.add(altResponse);
-
         AlgorithmOptions algoOpts = AlgorithmOptions.start().
                 algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
                 maxVisitedNodes(maxVisitedNodesForRequest).control(algoControl).
                 hints(request.getHints()).
                 build();
 
-        boolean isAlternativeRoute = AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoOpts.getAlgorithm());
+        RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(weighting);
 
-        if ((isAlternativeRoute || isRoundTrip) && points.size() > 2)
-        {
-            ghRsp.addError(new RuntimeException("Via points are not yet supported when alternative paths or round trips are requested. The returned paths would just need an additional identification for the via point index."));
-            return Collections.emptyList();
-        }
-
-        for (int placeIndex = 1; placeIndex < points.size(); placeIndex++)
-        {
-            if (placeIndex == 1)
-            {
-                // enforce start direction
-                queryGraph.enforceHeading(fromQResult.getClosestNode(), request.getFavoredHeading(0), false);
-            } else if (viaTurnPenalty)
-            {
-                if (isAlternativeRoute)
-                    throw new IllegalStateException("Alternative paths and a viaTurnPenalty at the same time is currently not supported");
-
-                // enforce straight start after via stop
-                Path prevRoute = altPaths.get(placeIndex - 2);
-                EdgeIteratorState incomingVirtualEdge = prevRoute.getFinalEdge();
-                queryGraph.enforceHeadingByEdgeId(fromQResult.getClosestNode(), incomingVirtualEdge.getEdge(), false);
-            }
-
-            QueryResult toQResult = qResults.get(placeIndex);
-
-            // enforce end direction
-            queryGraph.enforceHeading(toQResult.getClosestNode(), request.getFavoredHeading(placeIndex), true);
-
-            sw = new StopWatch().start();
-            RoutingAlgorithm algo = tmpAlgoFactory.createAlgo(queryGraph, algoOpts);
-            String debug = ", algoInit:" + sw.stop().getSeconds() + "s";
-
-            sw = new StopWatch().start();
-            List<Path> pathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode());
-            debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s";
-            if (pathList.isEmpty())
-                throw new IllegalStateException("At least one path has to be returned for " + fromQResult + " -> " + toQResult);
-
-            for (Path path : pathList)
-            {
-                if (path.getTime() < 0)
-                    throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
-
-                altPaths.add(path);
-                debug += ", " + path.getDebugInfo();
-            }
-
-            altResponse.addDebugInfo(debug);
-
-            // reset all direction enforcements in queryGraph to avoid influencing next path
-            queryGraph.clearUnfavoredStatus();
-
-            visitedNodesSum += algo.getVisitedNodes();
-            fromQResult = toQResult;
-        }
-
-        if (isAlternativeRoute)
-        {
-            if (altPaths.isEmpty())
-                throw new RuntimeException("Empty paths for alternative route calculation not expected");
-
-            // if alternative route calculation was done then create the responses from single paths
-            pathMerger.doWork(altResponse, Collections.singletonList(altPaths.get(0)), tr);
-            for (int index = 1; index < altPaths.size(); index++)
-            {
-                altResponse = new PathWrapper();
-                ghRsp.add(altResponse);
-                pathMerger.doWork(altResponse, Collections.singletonList(altPaths.get(index)), tr);
-            }
-        } else if (isRoundTrip)
-        {
-            pathMerger.doWork(altResponse, altPaths, tr);
-        } else
-        {
-            if (points.size() - 1 != altPaths.size())
-                throw new RuntimeException("There should be exactly one more points than paths. points:" + points.size() + ", paths:" + altPaths.size());
-
-            pathMerger.doWork(altResponse, altPaths, tr);
-        }
-        ghRsp.getHints().put("visited_nodes.sum", visitedNodesSum);
-        ghRsp.getHints().put("visited_nodes.average", (float) visitedNodesSum / (points.size() - 1));
-        return altPaths;
+        PathCalculator calculator = new PathCalculator(tr, pathMerger, tmpAlgoFactory);
+        return calculator.doWork(request, ghRsp, qResults, queryGraph, algoOpts);
     }
 
     List<QueryResult> lookup( List<GHPoint> points, FlagEncoder encoder, GHResponse ghRsp )
