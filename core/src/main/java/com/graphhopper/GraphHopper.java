@@ -697,7 +697,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper importOrLoad()
     {
-        if (!load(ghLocation))
+        if (!initializeStorage(ghLocation))
         {
             printInfo();
             process(ghLocation);
@@ -793,6 +793,14 @@ public class GraphHopper implements GraphHopperAPI
      */
     @Override
     public boolean load( String graphHopperFolder )
+    {
+        if (!(new File(graphHopperFolder).exists()))
+            return false;
+
+        return initializeStorage(graphHopperFolder);
+    }
+
+    private boolean initializeStorage(String graphHopperFolder)
     {
         if (Helper.isEmpty(graphHopperFolder))
             throw new IllegalStateException("graphHopperLocation is not specified. call init before");
