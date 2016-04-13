@@ -1,5 +1,6 @@
 [Members](https://github.com/graphhopper?tab=members) and [Contributors](https://github.com/graphhopper/graphhopper/contributors)
 
+ * ammagamma, improvements like #700
  * AnahitaS, docs for Android, Android, Tomcat
  * andreaswolf, flag encoder versioning and more
  * agouge, discussion and API refactoring
