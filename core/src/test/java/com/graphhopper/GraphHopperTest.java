@@ -455,6 +455,15 @@ public class GraphHopperTest
     }
 
     @Test
+    public void testDoNotCreateEmptyFolderIfLoadingFromNonExistingPath()
+    {
+        instance = new GraphHopper().
+                setEncodingManager(new EncodingManager("CAR"));
+        assertFalse(instance.load(ghLoc));
+        assertFalse(new File(ghLoc).exists());
+    }
+
+    @Test
     public void testFailsForMissingParameters() throws IOException
     {
         // missing load of graph
