@@ -1038,7 +1038,7 @@ public class GraphHopper implements GraphHopperAPI
     protected List<Path> calcPaths( GHRequest request, GHResponse ghRsp )
     {
         if (ghStorage == null || !fullyLoaded)
-            throw new IllegalStateException("Call load or importOrLoad before routing");
+            throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
 
         if (ghStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");

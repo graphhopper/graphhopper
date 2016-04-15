@@ -451,7 +451,7 @@ public class GraphHopperTest
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
-            assertEquals("Call load or importOrLoad before routing", ex.getMessage());
+            assertEquals("Do a successful call to load or importOrLoad before routing", ex.getMessage());
         }
     }
 

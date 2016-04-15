@@ -112,7 +112,7 @@ public class GraphHopperAPITest
             assertTrue(false);
         } catch (Exception ex)
         {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Call load or importOrLoad before routing"));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"));
         }
 
         instance = new GraphHopper().setEncodingManager(encodingManager);
@@ -122,7 +122,7 @@ public class GraphHopperAPITest
             assertTrue(false);
         } catch (Exception ex)
         {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Call load or importOrLoad before routing"));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"));
         }
     }
 }
