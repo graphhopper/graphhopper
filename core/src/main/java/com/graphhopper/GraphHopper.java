@@ -795,7 +795,7 @@ public class GraphHopper implements GraphHopperAPI
     public boolean load( String graphHopperFolder )
     {
         if (!(new File(graphHopperFolder).exists()))
-            return false;
+            throw new IllegalStateException("Path \"" + graphHopperFolder + "\" does not exist");
 
         return initializeStorage(graphHopperFolder);
     }
