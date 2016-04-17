@@ -355,34 +355,35 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         if (!isAccept(allowed))
             return 0;
 
-        long encoded = 0;
+        long flags = 0;
         double wayTypeSpeed = getSpeed(way);
         if (!isFerry(allowed))
         {
             wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
-            encoded = handleSpeed(way, wayTypeSpeed, encoded);
-            encoded = handleBikeRelated(way, encoded, relationFlags > UNCHANGED.getValue());
+            flags = handleSpeed(way, wayTypeSpeed, flags);
+            flags = handleBikeRelated(way, flags, relationFlags > UNCHANGED.getValue());
 
             boolean isRoundabout = way.hasTag("junction", "roundabout");
             if (isRoundabout)
             {
-                encoded = setBool(encoded, K_ROUNDABOUT, true);
+                flags = setBool(flags, K_ROUNDABOUT, true);
             }
 
         } else
         {
-            encoded = handleFerryTags(way,
+            double ferrySpeed = getFerrySpeed(way,
                     highwaySpeeds.get("living_street"),
                     highwaySpeeds.get("track"),
                     highwaySpeeds.get("primary"));
-            encoded |= directionBitMask;
+            flags = handleSpeed(way, ferrySpeed, flags);
+            flags |= directionBitMask;
         }
         int priorityFromRelation = 0;
         if (relationFlags != 0)
             priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
-        encoded = priorityWayEncoder.setValue(encoded, handlePriority(way, wayTypeSpeed, priorityFromRelation));
-        return encoded;
+        flags = priorityWayEncoder.setValue(flags, handlePriority(way, wayTypeSpeed, priorityFromRelation));
+        return flags;
     }
 
     int getSpeed( OSMWay way )

@@ -243,7 +243,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if (!isAccept(allowed))
             return 0;
 
-        long encoded;
+        long flags = 0;
         if (!isFerry(allowed))
         {
             // get assumed speed from highway type
@@ -254,11 +254,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             if (speed > 30 && way.hasTag("surface", badSurfaceSpeedMap))
                 speed = 30;
 
-            encoded = setSpeed(0, speed);
+            flags = setSpeed(flags, speed);
 
             boolean isRoundabout = way.hasTag("junction", "roundabout");
             if (isRoundabout)
-                encoded = setBool(encoded, K_ROUNDABOUT, true);
+                flags = setBool(flags, K_ROUNDABOUT, true);
 
             boolean isOneway = way.hasTag("oneway", oneways)
                     || way.hasTag("vehicle:backward")
@@ -272,19 +272,20 @@ public class CarFlagEncoder extends AbstractFlagEncoder
                         || way.hasTag("vehicle:forward", "no")
                         || way.hasTag("motor_vehicle:forward", "no");
                 if (isBackward)
-                    encoded |= backwardBit;
+                    flags |= backwardBit;
                 else
-                    encoded |= forwardBit;
+                    flags |= forwardBit;
             } else
-                encoded |= directionBitMask;
+                flags |= directionBitMask;
 
         } else
         {
-            encoded = handleFerryTags(way, defaultSpeedMap.get("living_street"), defaultSpeedMap.get("service"), defaultSpeedMap.get("residential"));
-            encoded |= directionBitMask;
+            double ferrySpeed = getFerrySpeed(way, defaultSpeedMap.get("living_street"), defaultSpeedMap.get("service"), defaultSpeedMap.get("residential"));
+            flags = setSpeed(flags, ferrySpeed);
+            flags |= directionBitMask;
         }
 
-        return encoded;
+        return flags;
     }
 
     public String getWayInfo( OSMWay way )

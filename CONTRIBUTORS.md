@@ -1,11 +1,11 @@
 [Members](https://github.com/graphhopper?tab=members) and [Contributors](https://github.com/graphhopper/graphhopper/contributors)
 
- * ammagamma, improvements like #700
+ * ammagamma, several improvements like #700, #703
  * AnahitaS, docs for Android, Android, Tomcat
  * andreaswolf, flag encoder versioning and more
  * agouge, discussion and API refactoring
  * b3nn0, Android improvements
- * boldtrn, motorcycle and improvements like conditional tag parsing etc
+ * boldtrn, motorcycle and improvements like conditional tag parsing, round trips and a lot more
  * cgarreau, increase of routing success rate via subnetwork cleanup
  * ChristianSeitzer, motorcycle improvements
  * daisy1754, fixed usage of graphhopper.sh script
