@@ -36,8 +36,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GHRequest;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
@@ -64,6 +66,7 @@ public class OSMReaderTest
     // test-osm6.pbf was created by running "osmconvert test-osm6.xml --timestamp=2014-01-02T00:10:14Z -o=test-osm6.pbf"
     // The osmconvert tool can be found here: http://wiki.openstreetmap.org/wiki/Osmconvert
     private final String file6 = "test-osm6.pbf";
+    private final String file7 = "test-osm7.xml";
     private final String fileNegIds = "test-osm-negative-ids.xml";
     private final String fileBarriers = "test-barriers.xml";
     private final String fileTurnRestrictions = "test-restrictions.xml";
@@ -853,5 +856,94 @@ public class OSMReaderTest
         assertEquals(0.1, qr.getSnappedPoint().lat, 0.1);
         assertEquals(-179.6, qr.getSnappedPoint().lon, 0.1);
         assertEquals(56, qr.getClosestEdge().getDistance() / 1000, 1);
+    }
+
+    @Test
+    public void testRoutingRequestFails_issue665()
+    {
+        GraphHopper hopper = new GraphHopper();
+        hopper.setOSMFile("src/test/resources/com/graphhopper/reader/" + file7);
+        hopper.setEncodingManager(new EncodingManager("car,motorcycle"));
+        hopper.setCHEnable(false);
+        hopper.setGraphHopperLocation(dir);
+        hopper.importOrLoad();
+        GHRequest req = new GHRequest(48.97725592769741, 8.256896138191223, 48.978875552977684, 8.25486302375793).
+                setWeighting("curvature").
+                setVehicle("motorcycle");
+        try {
+            hopper.route(req);
+            assertTrue(false);
+        } catch (IllegalStateException ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith(
+                    "Calculating time should not require to read speed from edge in wrong direction"));
+        }
+    }
+
+    @Test
+    public void testReaderProducesInvalidGraph_issue665()
+    {
+        EncodingManager encodingManager = new EncodingManager("car, motorcycle");
+        GraphHopper hopper = new GraphHopper();
+        hopper.setOSMFile("src/test/resources/com/graphhopper/reader/" + file7);
+        hopper.setEncodingManager(encodingManager);
+        hopper.setCHEnable(false);
+        hopper.setGraphHopperLocation(dir);
+        hopper.importOrLoad();
+        Graph graph = hopper.getGraphHopperStorage();
+        FlagEncoder encoder = encodingManager.getEncoder("motorcycle");
+
+        assertTrue(isGraphInvalid_issue665(graph, encoder));
+    }
+
+    @Test
+    public void testRoutingFailsWithInvalidGraph_issue665()
+    {
+        EncodingManager encodingManager = new EncodingManager("car,motorcycle");
+        FlagEncoder encoder = encodingManager.getEncoder("motorcycle");
+
+        GraphHopperStorage graph = new GraphHopperStorage(
+                new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension());
+        graph.create(100);
+
+        OSMWay way = new OSMWay(0);
+        way.setTag("route", "ferry");
+
+        long includeWay = encodingManager.acceptWay(way);
+        long relationFlags = 0;
+        long wayFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
+
+        graph.edge(0, 1).setDistance(247).setFlags(wayFlags);
+
+        assertTrue(isGraphInvalid_issue665(graph, encoder));
+
+        Weighting weighting = new CurvatureWeighting(encoder, new WeightingMap("curvature"));
+        DijkstraBidirectionRef algo = new DijkstraBidirectionRef(graph, encoder, weighting, TraversalMode.NODE_BASED);
+        try {
+            algo.calcPath(1, 0);
+            assertTrue(false);
+        } catch(IllegalStateException ex) {
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith(
+                    "Calculating time should not require to read speed from edge in wrong direction"));
+        }
+    }
+
+    private boolean isGraphInvalid_issue665(Graph graph, FlagEncoder encoder) {
+        EdgeExplorer explorer = graph.createEdgeExplorer();
+
+        // iterator at node 0 considers the edge 0-1 to be undirected
+        EdgeIterator iter0 = explorer.setBaseNode(0);
+        iter0.next();
+        boolean iter0flag =
+                iter0.getBaseNode() == 0 && iter0.getAdjNode() == 1 &&
+                iter0.isForward(encoder) && iter0.isBackward(encoder);
+
+        // iterator at node 1 considers the edge 1-0 to be directed
+        EdgeIterator iter1 = explorer.setBaseNode(1);
+        iter1.next();
+        boolean iter1flag =
+                iter1.getBaseNode() == 1 && iter1.getAdjNode() == 0 &&
+                !iter1.isForward(encoder) && iter1.isBackward(encoder);
+
+        return iter0flag && iter1flag;
     }
 }
