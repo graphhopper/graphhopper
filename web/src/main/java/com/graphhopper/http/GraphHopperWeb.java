@@ -21,6 +21,8 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
+import com.graphhopper.matrix.GHMatrixRequest;
+import com.graphhopper.matrix.GHMatrixResponse;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
@@ -180,6 +182,11 @@ public class GraphHopperWeb implements GraphHopperAPI
         {
             throw new RuntimeException("Problem while fetching path " + request.getPoints() + ": " + ex.getMessage(), ex);
         }
+    }
+
+    @Override
+    public GHMatrixResponse matrix(GHMatrixRequest request) {
+       throw new IllegalStateException("Not implemented/supported as of now!"); // TODO Implement
     }
 
     public static PathWrapper createPathWrapper( JSONObject path,
