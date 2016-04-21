@@ -17,6 +17,9 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.matrix.DistanceMatrixService;
+import com.graphhopper.matrix.GHMatrixRequest;
+import com.graphhopper.matrix.GHMatrixResponse;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.dem.CGIARProvider;
@@ -1035,6 +1038,12 @@ public class GraphHopper implements GraphHopperAPI
         return response;
     }
 
+    @Override
+    public GHMatrixResponse matrix(GHMatrixRequest request) {
+        DistanceMatrixService matrixService = new DistanceMatrixService(this);
+        return matrixService.calculateMatrix(request);
+    }
+
     protected List<Path> calcPaths( GHRequest request, GHResponse ghRsp )
     {
         if (ghStorage == null || !fullyLoaded)
@@ -1216,7 +1225,8 @@ public class GraphHopper implements GraphHopperAPI
         return altPaths;
     }
 
-    List<QueryResult> lookup( List<GHPoint> points, FlagEncoder encoder, GHResponse rsp )
+    // TODO Has been made public - refactor look-up into own class
+    public List<QueryResult> lookup( List<GHPoint> points, FlagEncoder encoder, GHResponse rsp )
     {
         if (points.size() < 2)
         {
