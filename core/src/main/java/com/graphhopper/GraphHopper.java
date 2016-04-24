@@ -80,17 +80,7 @@ public class GraphHopper implements GraphHopperAPI
     private int minNetworkSize = 200;
     private int minOneWayNetworkSize = 0;
     // for CH prepare    
-    private boolean doPrepare = true;
-    private boolean chEnabled = true;
     private final CHAlgoFactoryDecorator chFactoryDecorator = new CHAlgoFactoryDecorator();
-    private final List<String> chWeightingList = new ArrayList<String>(Arrays.asList("fastest"));
-    private int chPrepareThreads = -1;
-    private ExecutorService chPreparePool;
-    private int preparePeriodicUpdates = -1;
-    private int prepareLazyUpdates = -1;
-    private int prepareNeighborUpdates = -1;
-    private int prepareContractedNodes = -1;
-    private double prepareLogMessages = -1;
     // for OSM import
     private String osmFile;
     private double osmReaderWayPointMaxDistance = 1;
@@ -102,7 +92,6 @@ public class GraphHopper implements GraphHopperAPI
 
     public GraphHopper()
     {
-        setCHPrepareThreads(1);
     }
 
     /**
@@ -304,19 +293,6 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * Wrapper method for {@link GraphHopper#setCHWeightings(List)}
-     * <p/>
-     * @deprecated This method is used as a deprecated wrapper to not break the JavaApi. This will
-     * be removed in the future. Please use {@link GraphHopper#setCHWeightings(List)} or
-     * {@link GraphHopper#setCHWeightings(String...)}
-     */
-    @Deprecated
-    public GraphHopper setCHWeighting( String weightingName )
-    {
-        return this.setCHWeightings(weightingName);
-    }
-
-    /**
-     * Wrapper method for {@link GraphHopper#setCHWeightings(List)}
      */
     public GraphHopper setCHWeightings( String... weightingNames )
     {
@@ -329,70 +305,68 @@ public class GraphHopper implements GraphHopperAPI
      *
      * @param weightingList A list containing multiple weightings like: "fastest", "shortest" or
      * your own weight-calculation type.
+     *
+     * @deprecated Use getCHFactoryDecorator().setWeightingsAsStrings() instead. Will be removed in
+     * 0.8.
      */
     public GraphHopper setCHWeightings( List<String> weightingList )
     {
         ensureNotLoaded();
-
-        if (weightingList.isEmpty())
-            throw new IllegalArgumentException("It is not allowed to pass an emtpy weightingList");
-
-        this.chWeightingList.clear();
-        for (String weight : weightingList)
-        {
-            weight = weight.toLowerCase();
-            weight = weight.trim();
-            this.chWeightingList.add(weight);
-        }
+        chFactoryDecorator.setWeightingsAsStrings(weightingList);
         return this;
     }
 
     /**
      * Returns all CHWeighting names
+     *
+     * @deprecated Use getCHFactoryDecorator().getWeightingsAsStrings() instead. Will be removed in
+     * 0.8.
      */
     public List<String> getCHWeightings()
     {
-        if (this.chWeightingList.isEmpty())
-            throw new IllegalStateException("Potential bug: chWeightingList is empty");
-
-        return this.chWeightingList;
+        return chFactoryDecorator.getWeightingsAsStrings();
     }
 
     /**
      * This method changes the number of threads used for preparation on import. Default is 1. Make
      * sure that you have enough memory to increase this number!
+     *
+     * @deprecated Use getCHFactoryDecorator().setCHPrepareThreads() instead. Will be removed in
+     * 0.8.
      */
     public GraphHopper setCHPrepareThreads( int prepareThreads )
     {
-        this.chPrepareThreads = prepareThreads;
-        this.chPreparePool = java.util.concurrent.Executors.newFixedThreadPool(chPrepareThreads);
+        chFactoryDecorator.setPreparationThreads(prepareThreads);
         return this;
-    }
-
-    public int getCHPrepareThreads()
-    {
-        return chPrepareThreads;
     }
 
     /**
-     * Disables the "CH-preparation" preparation only. Use only if you know what you do. To disable
-     * the full usage of CH use setCHEnable(false) instead.
+     * @deprecated Use getCHFactoryDecorator().getCHPrepareThreads() instead. Will be removed in
+     * 0.8.
      */
-    @Deprecated
-    public GraphHopper setDoPrepare( boolean doPrepare )
+    public int getCHPrepareThreads()
     {
-        this.doPrepare = doPrepare;
-        return this;
+        return chFactoryDecorator.getPreparationThreads();
     }
 
     /**
      * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
+     *
+     * @deprecated Use getCHFactoryDecorator().setEnabled() instead. Will be removed in 0.8.
      */
     public GraphHopper setCHEnable( boolean enable )
     {
         ensureNotLoaded();
-        chEnabled = enable;
+        chFactoryDecorator.setEnabled(enable);
         return this;
+    }
+
+    /**
+     * @deprecated Use getCHFactoryDecorator().isEnabled() instead. Will be removed in 0.8.
+     */
+    public boolean isCHEnabled()
+    {
+        return chFactoryDecorator.isEnabled();
     }
 
     /**
@@ -402,11 +376,6 @@ public class GraphHopper implements GraphHopperAPI
     public void setMaxVisitedNodes( int maxVisitedNodes )
     {
         this.maxVisitedNodes = maxVisitedNodes;
-    }
-
-    public boolean isCHEnabled()
-    {
-        return chEnabled;
     }
 
     /**
@@ -654,28 +623,10 @@ public class GraphHopper implements GraphHopperAPI
         minNetworkSize = args.getInt("prepare.minNetworkSize", minNetworkSize);
         minOneWayNetworkSize = args.getInt("prepare.minOneWayNetworkSize", minOneWayNetworkSize);
 
-        // prepare CH        
-        doPrepare = args.getBool("prepare.doPrepare", doPrepare);
-        setCHPrepareThreads(args.getInt("prepare.threads", chPrepareThreads));
-
-        String chWeightingsStr = args.get("prepare.chWeightings", "");
-        // remove when deprecated setCHWeighting method is removed
-        if (chWeightingsStr.isEmpty())
-            chWeightingsStr = args.get("prepare.chWeighting", "fastest");
-
-        List<String> tmpCHWeightingList = Arrays.asList(chWeightingsStr.split(","));
-        chEnabled = !"no".equals(chWeightingsStr);
-        if (chEnabled)
-        {
-            setCHWeightings(tmpCHWeightingList);
+        // prepare CH
+        chFactoryDecorator.init(args);
+        if (!chFactoryDecorator.getWeightingsAsStrings().isEmpty())
             setFlexibleModeAllowed(args.getBool("routing.flexibleMode.allowed", false));
-        }
-
-        preparePeriodicUpdates = args.getInt("prepare.updates.periodic", preparePeriodicUpdates);
-        prepareLazyUpdates = args.getInt("prepare.updates.lazy", prepareLazyUpdates);
-        prepareNeighborUpdates = args.getInt("prepare.updates.neighbor", prepareNeighborUpdates);
-        prepareContractedNodes = args.getInt("prepare.contracted-nodes", prepareContractedNodes);
-        prepareLogMessages = args.getDouble("prepare.logmessages", prepareLogMessages);
 
         // osm import
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
@@ -848,7 +799,7 @@ public class GraphHopper implements GraphHopperAPI
         GraphExtension ext = encodingManager.needsTurnCostsSupport()
                 ? new TurnCostExtension() : new GraphExtension.NoOpExtension();
 
-        if (chEnabled)
+        if (chFactoryDecorator.isEnabled())
         {
             initCHAlgoFactoryDecorator();
             ghStorage = new GraphHopperStorage(chFactoryDecorator.getWeightings(), dir, encodingManager, hasElevation(), ext);
@@ -912,7 +863,7 @@ public class GraphHopper implements GraphHopperAPI
         if (!chFactoryDecorator.hasWeightings())
             for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders())
             {
-                for (String chWeightingStr : getCHWeightings())
+                for (String chWeightingStr : chFactoryDecorator.getWeightingsAsStrings())
                 {
                     Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder);
                     chFactoryDecorator.addWeighting(weighting);
@@ -920,29 +871,17 @@ public class GraphHopper implements GraphHopperAPI
             }
     }
 
+    /**
+     * This method creates prepations.
+     *
+     * @deprecated use getCHFactoryDecorator().createPreparations() instead. Will be removed in 0.8.
+     */
     protected void createCHPreparations()
     {
-        if (chWeightingList.isEmpty())
-            throw new IllegalStateException("No CH weightings found");
-
         if (algoDecorators.isEmpty())
             algoDecorators.add(chFactoryDecorator);
 
-        if (chFactoryDecorator.hasPreparations())
-            return;
-
-        for (Weighting weighting : chFactoryDecorator.getWeightings())
-        {
-            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
-                    new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting),
-                    weighting.getFlagEncoder(), weighting, traversalMode);
-            tmpPrepareCH.setPeriodicUpdates(preparePeriodicUpdates).
-                    setLazyUpdates(prepareLazyUpdates).
-                    setNeighborUpdates(prepareNeighborUpdates).
-                    setLogMessages(prepareLogMessages);
-
-            chFactoryDecorator.add(tmpPrepareCH);
-        }
+        chFactoryDecorator.createPreparations(ghStorage, traversalMode);
     }
 
     /**
@@ -964,7 +903,7 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         initLocationIndex();
-        if (chEnabled)
+        if (chFactoryDecorator.isEnabled())
             createCHPreparations();
 
         if (!isPrepared())
@@ -1044,9 +983,9 @@ public class GraphHopper implements GraphHopperAPI
             vehicle = getDefaultVehicle().toString();
             request.setVehicle(vehicle);
         }
-
+        
         if (request.getWeighting().isEmpty())
-            request.setWeighting(getCHWeightings().isEmpty() ? "fastest" : getCHWeightings().get(0).toString());
+            request.setWeighting(chFactoryDecorator.getDefaultWeighting());
 
         if (!encodingManager.supports(vehicle))
         {
@@ -1086,7 +1025,7 @@ public class GraphHopper implements GraphHopperAPI
             return Collections.emptyList();
         }
 
-        if (chEnabled && !forceFlexibleMode)
+        if (chFactoryDecorator.isEnabled() && !forceFlexibleMode)
         {
             boolean forceCHHeading = request.getHints().getBool("force_heading_ch", false);
             if (!forceCHHeading && request.hasFavoredHeading(0))
@@ -1279,55 +1218,16 @@ public class GraphHopper implements GraphHopperAPI
 
     protected void prepare()
     {
-        boolean tmpPrepare = doPrepare && chEnabled;
+        boolean tmpPrepare = chFactoryDecorator.isEnabled();
         if (tmpPrepare)
         {
             ensureWriteAccess();
 
-            if (chPrepareThreads > 1 && dataAccessType.isMMap() && !dataAccessType.isSynched())
+            if (chFactoryDecorator.getPreparationThreads() > 1 && dataAccessType.isMMap() && !dataAccessType.isSynched())
                 throw new IllegalStateException("You cannot execute CH preparation in parallel for MMAP without synching! Specify MMAP_SYNC or use 1 thread only");
 
             ghStorage.freeze();
-
-            int counter = 0;
-            for (final PrepareContractionHierarchies prepare : chFactoryDecorator.getPreparations())
-            {
-                logger.info((++counter) + "/" + chFactoryDecorator.getPreparations().size() + " calling prepare.doWork for " + prepare.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
-                final String name = AbstractWeighting.weightingToFileName(prepare.getWeighting());
-                chPreparePool.execute(new Runnable()
-                {
-                    @Override
-                    public void run()
-                    {
-                        String errorKey = "prepare.error." + name;
-                        try
-                        {
-                            ghStorage.getProperties().put(errorKey, "CH preparation incomplete");
-                            // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options                        
-                            Thread.currentThread().setName(name);
-                            prepare.doWork();
-                            ghStorage.getProperties().put(errorKey, "");
-                            ghStorage.getProperties().put("prepare.date." + name, Helper.createFormatter().format(new Date()));
-                        } catch (Exception ex)
-                        {
-                            logger.error("Problem while CH preparation " + name, ex);
-                            ghStorage.getProperties().put(errorKey, ex.getMessage());
-                        }
-                    }
-                });
-            }
-
-            chPreparePool.shutdown();
-            try
-            {
-                if (!chPreparePool.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS))
-                    chPreparePool.shutdownNow();
-
-            } catch (InterruptedException ie)
-            {
-                chPreparePool.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
+            chFactoryDecorator.prepare(ghStorage.getProperties());
         }
         ghStorage.getProperties().put("prepare.done", tmpPrepare);
     }

@@ -19,20 +19,140 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
+import com.graphhopper.routing.util.AbstractWeighting;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.storage.*;
+import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Helper;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This class implements the CH decorator for the routing algorithm factory.
+ *
  * @author Peter Karich
  */
 public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
 {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<PrepareContractionHierarchies>();
     private final List<Weighting> weightings = new ArrayList<Weighting>();
+    private final List<String> weightingsAsStrings = new ArrayList<String>();
+
+    // for backward compatibility enable CH by default.
+    private boolean enabled = true;
+    private int preparationThreads;
+    private ExecutorService chPreparePool;
+    private int preparationPeriodicUpdates = -1;
+    private int preparationLazyUpdates = -1;
+    private int preparationNeighborUpdates = -1;
+    private int preparationContractedNodes = -1;
+    private double preparationLogMessages = -1;
+
+    public CHAlgoFactoryDecorator()
+    {
+        setPreparationThreads(1);
+        setWeightingsAsStrings(Arrays.asList(getDefaultWeighting()));
+    }
+
+    public void init( CmdArgs args )
+    {
+        setPreparationThreads(args.getInt("prepare.threads", getPreparationThreads()));
+
+        String deprecatedWeightingConfig = args.get("prepare.chWeighting", "");
+        if (!deprecatedWeightingConfig.isEmpty())
+            throw new IllegalStateException("Use prepare.chWeightings and a comma separated list instead of prepare.chWeighting");
+
+        String chWeightingsStr = args.get("prepare.chWeightings", "");
+        if (!chWeightingsStr.isEmpty() && !"no".equals(chWeightingsStr))
+        {
+            List<String> tmpCHWeightingList = Arrays.asList(chWeightingsStr.split(","));
+            setWeightingsAsStrings(tmpCHWeightingList);
+        }
+
+        setPreparationPeriodicUpdates(args.getInt("prepare.updates.periodic", getPreparationPeriodicUpdates()));
+        setPreparationLazyUpdates(args.getInt("prepare.updates.lazy", getPreparationLazyUpdates()));
+        setPreparationNeighborUpdates(args.getInt("prepare.updates.neighbor", getPreparationNeighborUpdates()));
+        setPreparationContractedNodes(args.getInt("prepare.contracted-nodes", getPreparationContractedNodes()));
+        setPreparationLogMessages(args.getDouble("prepare.logmessages", getPreparationLogMessages()));
+    }
+
+    public CHAlgoFactoryDecorator setPreparationPeriodicUpdates( int preparePeriodicUpdates )
+    {
+        this.preparationPeriodicUpdates = preparePeriodicUpdates;
+        return this;
+    }
+
+    public int getPreparationPeriodicUpdates()
+    {
+        return preparationPeriodicUpdates;
+    }
+
+    public CHAlgoFactoryDecorator setPreparationContractedNodes( int prepareContractedNodes )
+    {
+        this.preparationContractedNodes = prepareContractedNodes;
+        return this;
+    }
+
+    public int getPreparationContractedNodes()
+    {
+        return preparationContractedNodes;
+    }
+
+    public CHAlgoFactoryDecorator setPreparationLazyUpdates( int prepareLazyUpdates )
+    {
+        this.preparationLazyUpdates = prepareLazyUpdates;
+        return this;
+    }
+
+    public int getPreparationLazyUpdates()
+    {
+        return preparationLazyUpdates;
+    }
+
+    public CHAlgoFactoryDecorator setPreparationLogMessages( double prepareLogMessages )
+    {
+        this.preparationLogMessages = prepareLogMessages;
+        return this;
+    }
+
+    public double getPreparationLogMessages()
+    {
+        return preparationLogMessages;
+    }
+
+    public CHAlgoFactoryDecorator setPreparationNeighborUpdates( int prepareNeighborUpdates )
+    {
+        this.preparationNeighborUpdates = prepareNeighborUpdates;
+        return this;
+    }
+
+    public int getPreparationNeighborUpdates()
+    {
+        return preparationNeighborUpdates;
+    }
+
+    /**
+     * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
+     */
+    public void setEnabled( boolean enabled )
+    {
+        this.enabled = enabled;
+    }
+
+    public boolean isEnabled()
+    {
+        return enabled;
+    }
 
     /**
      * Decouple weightings from PrepareContractionHierarchies as we need weightings for the
@@ -44,7 +164,13 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         return this;
     }
 
-    public CHAlgoFactoryDecorator add( PrepareContractionHierarchies pch )
+    public CHAlgoFactoryDecorator addWeighting( String weighting )
+    {
+        weightingsAsStrings.add(weighting);
+        return this;
+    }
+
+    public CHAlgoFactoryDecorator addPreparation( PrepareContractionHierarchies pch )
     {
         preparations.add(pch);
         int lastIndex = preparations.size() - 1;
@@ -68,14 +194,43 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         return !preparations.isEmpty();
     }
 
-    public int size()
-    {
-        return preparations.size();
-    }
-
     public List<Weighting> getWeightings()
     {
         return weightings;
+    }
+
+    /**
+     * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
+     *
+     * @param weightingList A list containing multiple weightings like: "fastest", "shortest" or
+     * your own weight-calculation type.
+     */
+    public CHAlgoFactoryDecorator setWeightingsAsStrings( List<String> weightingList )
+    {
+        if (weightingList.isEmpty())
+            throw new IllegalArgumentException("It is not allowed to pass an emtpy weightingList");
+
+        weightingsAsStrings.clear();
+        for (String strWeighting : weightingList)
+        {
+            strWeighting = strWeighting.toLowerCase();
+            strWeighting = strWeighting.trim();
+            addWeighting(strWeighting);
+        }
+        return this;
+    }
+
+    public List<String> getWeightingsAsStrings()
+    {
+        if (this.weightingsAsStrings.isEmpty())
+            throw new IllegalStateException("Potential bug: chWeightingList is empty");
+
+        return this.weightingsAsStrings;
+    }
+
+    public String getDefaultWeighting()
+    {
+        return weightingsAsStrings.isEmpty() ? "fastest" : weightingsAsStrings.get(0);
     }
 
     public List<PrepareContractionHierarchies> getPreparations()
@@ -100,5 +255,86 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         }
 
         throw new IllegalStateException("Cannot find RoutingAlgorithFactory for weighting map " + map);
+    }
+
+    /**
+     * This method changes the number of threads used for preparation on import. Default is 1. Make
+     * sure that you have enough memory to increase this number!
+     */
+    public void setPreparationThreads( int preparationThreads )
+    {
+        this.preparationThreads = preparationThreads;
+        this.chPreparePool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
+    }
+
+    public int getPreparationThreads()
+    {
+        return preparationThreads;
+    }
+
+    public void prepare( final StorableProperties properties )
+    {
+        int counter = 0;
+        for (final PrepareContractionHierarchies prepare : getPreparations())
+        {
+            logger.info((++counter) + "/" + getPreparations().size() + " calling prepare.doWork for " + prepare.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
+            final String name = AbstractWeighting.weightingToFileName(prepare.getWeighting());
+            chPreparePool.execute(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    String errorKey = "prepare.error." + name;
+                    try
+                    {
+                        properties.put(errorKey, "CH preparation incomplete");
+                        // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options                        
+
+                        Thread.currentThread().setName(name);
+                        prepare.doWork();
+                        properties.put(errorKey, "");
+                        properties.put("prepare.date." + name, Helper.createFormatter().format(new Date()));
+                    } catch (Exception ex)
+                    {
+                        logger.error("Problem while CH preparation " + name, ex);
+                        properties.put(errorKey, ex.getMessage());
+                    }
+                }
+            });
+        }
+
+        chPreparePool.shutdown();
+        try
+        {
+            if (!chPreparePool.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS))
+                chPreparePool.shutdownNow();
+
+        } catch (InterruptedException ie)
+        {
+            chPreparePool.shutdownNow();
+            Thread.currentThread().interrupt();
+        }
+    }
+
+    public void createPreparations( GraphHopperStorage ghStorage, TraversalMode traversalMode )
+    {
+        if (hasPreparations())
+            return;
+
+        for (Weighting weighting : getWeightings())
+        {
+            PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
+                    new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting),
+                    weighting.getFlagEncoder(), weighting, traversalMode);
+            tmpPrepareCH.setPeriodicUpdates(preparationPeriodicUpdates).
+                    setLazyUpdates(preparationLazyUpdates).
+                    setNeighborUpdates(preparationNeighborUpdates).
+                    setLogMessages(preparationLogMessages);
+
+            addPreparation(tmpPrepareCH);
+        }
+
+        if (getPreparations().isEmpty())
+            throw new IllegalStateException("No CH weightings found");
     }
 }

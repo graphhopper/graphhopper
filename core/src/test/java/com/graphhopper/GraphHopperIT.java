@@ -432,7 +432,7 @@ public class GraphHopperIT
 
         assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle().toString());
 
-        assertEquals(2, tmpHopper.getCHFactoryDecorator().size());
+        assertEquals(2, tmpHopper.getCHFactoryDecorator().getPreparations().size());
         
         GHResponse rsp = tmpHopper.route(new GHRequest(43.745084, 7.430513, 43.745247, 7.430347)
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));

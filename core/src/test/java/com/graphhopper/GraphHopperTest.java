@@ -378,7 +378,7 @@ public class GraphHopperTest
                 put("osmreader.osm", testOsm3).
                 put("osmreader.dataaccess", "RAM").
                 put("graph.flagEncoders", "FOOT,CAR").
-                put("prepare.chWeighting", "no")).
+                put("prepare.chWeightings", "no")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
@@ -392,7 +392,7 @@ public class GraphHopperTest
                     put("osmreader.osm", testOsm3).
                     put("osmreader.dataaccess", "RAM").
                     put("graph.flagEncoders", "FOOT").
-                    put("prepare.chWeighting", "no")).
+                    put("prepare.chWeightings", "no")).
                     setOSMFile(testOsm3);
             tmpGH.load(ghLoc);
             assertTrue(false);
@@ -408,7 +408,7 @@ public class GraphHopperTest
                 put("osmreader.dataaccess", "RAM").
                 put("graph.flagEncoders", "FOOT,CAR").
                 put("graph.bytesForFlags", 8).
-                put("prepare.chWeighting", "no")).
+                put("prepare.chWeightings", "no")).
                 setOSMFile(testOsm3);
         try
         {
@@ -425,7 +425,7 @@ public class GraphHopperTest
             GraphHopper tmpGH = new GraphHopper().init(new CmdArgs().
                     put("osmreader.osm", testOsm3).
                     put("osmreader.dataaccess", "RAM").
-                    put("prepare.chWeighting", "no").
+                    put("prepare.chWeightings", "no").
                     put("graph.flagEncoders", "CAR,FOOT")).
                     setOSMFile(testOsm3);
             tmpGH.load(ghLoc);
@@ -542,43 +542,6 @@ public class GraphHopperTest
         assertFalse(grsp.hasErrors());
         PathWrapper rsp = grsp.getBest();
         assertEquals(Helper.createPointList(11.1, 50, 10, 51, 11.2, 52), rsp.getPoints());
-    }
-
-    @Test
-    public void testPrepareOnly()
-    {
-        instance = new GraphHopper().setStoreOnFlush(true).
-                setCHWeightings(Arrays.asList("shortest")).
-                setEncodingManager(new EncodingManager("FOOT")).
-                setDoPrepare(false).
-                setGraphHopperLocation(ghLoc).
-                setOSMFile(testOsm3);
-        instance.importOrLoad();
-        instance.close();
-
-        instance = new GraphHopper().setStoreOnFlush(true).
-                setCHWeightings(Arrays.asList("shortest")).
-                setGraphHopperLocation(ghLoc).
-                setOSMFile(testOsm3);
-
-        // wrong encoding manager
-        instance.setEncodingManager(new EncodingManager("CAR"));
-        try
-        {
-            instance.load(ghLoc);
-            assertTrue(false);
-        } catch (IllegalStateException ex)
-        {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoding does not match:"));
-        }
-
-        // use the encoding manager from the graph
-        instance = new GraphHopper().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("FOOT")).
-                setCHWeightings(Arrays.asList("shortest")).
-                setGraphHopperLocation(ghLoc).
-                setOSMFile(testOsm3);
-        instance.load(ghLoc);
     }
 
     @Test
@@ -884,7 +847,7 @@ public class GraphHopperTest
 
             tmpGH.importOrLoad();
 
-            assertEquals(5, tmpGH.getCHFactoryDecorator().size());
+            assertEquals(5, tmpGH.getCHFactoryDecorator().getPreparations().size());
             for (RoutingAlgorithmFactory raf : tmpGH.getCHFactoryDecorator().getPreparations())
             {
                 PrepareContractionHierarchies pch = (PrepareContractionHierarchies) raf;
@@ -940,8 +903,8 @@ public class GraphHopperTest
         GraphHopperStorage storage = new GraphHopperStorage(Arrays.asList(fwSimpleT, fwT), ramDir, em, false, new GraphExtension.NoOpExtension());
         decorator.addWeighting(fwSimpleT);
         decorator.addWeighting(fwT);
-        decorator.add(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleT), simpleTruck, fwSimpleT, TraversalMode.NODE_BASED));
-        decorator.add(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwT), truck, fwT, TraversalMode.NODE_BASED));
+        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleT), simpleTruck, fwSimpleT, TraversalMode.NODE_BASED));
+        decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwT), truck, fwT, TraversalMode.NODE_BASED));
 
         HintsMap wMap = new HintsMap("fastest");
         wMap.put("vehicle", "truck");
@@ -954,7 +917,7 @@ public class GraphHopperTest
         decorator.addWeighting(fwSimpleT);
         try
         {
-            decorator.add(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleT), simpleTruck, fwSimpleT, TraversalMode.NODE_BASED));
+            decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleT), simpleTruck, fwSimpleT, TraversalMode.NODE_BASED));
             assertTrue(false);
         } catch (Exception ex)
         {
