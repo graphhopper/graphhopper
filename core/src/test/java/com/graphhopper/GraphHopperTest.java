@@ -439,19 +439,36 @@ public class GraphHopperTest
     @Test
     public void testNoNPE_ifLoadNotSuccessful()
     {
-        // missing import of graph
         instance = new GraphHopper().
                 setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager("CAR"));
         try
         {
+            // loading from empty directory
+            new File(ghLoc).mkdirs();
             assertFalse(instance.load(ghLoc));
             instance.route(new GHRequest(10, 40, 12, 32));
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
-            assertEquals("Call load or importOrLoad before routing", ex.getMessage());
+            assertEquals("Do a successful call to load or importOrLoad before routing", ex.getMessage());
         }
+    }
+
+    @Test
+    public void testFailsAndDoesNotCreateEmptyFolderIfLoadingFromNonExistingPath()
+    {
+        instance = new GraphHopper().
+                setEncodingManager(new EncodingManager("CAR"));
+        try
+        {
+            instance.load(ghLoc);
+            assertTrue(false);
+        } catch (IllegalStateException ex)
+        {
+            assertEquals("Path \"" + ghLoc + "\" does not exist", ex.getMessage());
+        }
+        assertFalse(new File(ghLoc).exists());
     }
 
     @Test

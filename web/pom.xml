@@ -16,7 +16,7 @@
         <version>0.7-SNAPSHOT</version>
     </parent>
     <properties>
-        <jetty.version>8.1.18.v20150929</jetty.version>
+        <jetty.version>9.3.8.v20160314</jetty.version>
     </properties>
     
     <dependencies>
@@ -29,7 +29,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>            
-            <version>20140107</version>
+            <version>${json.org.version}</version>
         </dependency>    
         
         <dependency>
@@ -44,13 +44,7 @@
             <artifactId>guice-servlet</artifactId>
             <version>4.0</version>
         </dependency>
-                
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
-            <scope>provided</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -99,6 +93,14 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>                
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
             <!-- create a jar file too, so others can use it more easily -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

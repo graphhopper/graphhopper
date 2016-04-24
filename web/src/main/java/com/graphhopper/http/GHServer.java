@@ -24,17 +24,16 @@ import com.google.inject.Module;
 import com.google.inject.servlet.GuiceFilter;
 import com.graphhopper.util.CmdArgs;
 
-
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 
-import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.*;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
-import org.eclipse.jetty.server.nio.SelectChannelConnector;
+import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.slf4j.Logger;
@@ -86,7 +85,7 @@ public class GHServer
         FilterHolder guiceFilter = new FilterHolder(injector.getInstance(GuiceFilter.class));
         servHandler.addFilter(guiceFilter, "/*", EnumSet.allOf(DispatcherType.class));
 
-        SelectChannelConnector connector0 = new SelectChannelConnector();
+        ServerConnector connector0 = new ServerConnector(server);
         int httpPort = args.getInt("jetty.port", 8989);
         String host = args.get("jetty.host", "");
         connector0.setPort(httpPort);
@@ -100,7 +99,15 @@ public class GHServer
         {
             resHandler, servHandler
         });
-        server.setHandler(handlers);
+
+        GzipHandler gzipHandler = new GzipHandler();
+        gzipHandler.setIncludedMethods("GET", "POST");
+        // Note: gzip only affects the response body like our previous 'GHGZIPHook' behaviour: http://stackoverflow.com/a/31565805/194609
+        // If no mimeTypes are defined the content-type is not "application/gzip"
+        // gzipHandler.setIncludedMimeTypes();
+        gzipHandler.setHandler(handlers);
+
+        server.setHandler(gzipHandler);
         server.start();
         logger.info("Started server at HTTP " + host + ":" + httpPort);
     }

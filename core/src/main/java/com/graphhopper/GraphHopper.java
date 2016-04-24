@@ -659,7 +659,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper importOrLoad()
     {
-        if (!load(ghLocation))
+        if (!initializeStorage(ghLocation))
         {
             printInfo();
             process(ghLocation);
@@ -754,6 +754,14 @@ public class GraphHopper implements GraphHopperAPI
      */
     @Override
     public boolean load( String graphHopperFolder )
+    {
+        if (!(new File(graphHopperFolder).exists()))
+            throw new IllegalStateException("Path \"" + graphHopperFolder + "\" does not exist");
+
+        return initializeStorage(graphHopperFolder);
+    }
+
+    private boolean initializeStorage(String graphHopperFolder)
     {
         if (Helper.isEmpty(graphHopperFolder))
             throw new IllegalStateException("graphHopperLocation is not specified. call init before");
@@ -971,7 +979,7 @@ public class GraphHopper implements GraphHopperAPI
     protected List<Path> calcPaths( GHRequest request, GHResponse ghRsp )
     {
         if (ghStorage == null || !fullyLoaded)
-            throw new IllegalStateException("Call load or importOrLoad before routing");
+            throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
 
         if (ghStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
