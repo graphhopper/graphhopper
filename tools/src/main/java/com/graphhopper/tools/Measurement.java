@@ -98,9 +98,9 @@ public class Measurement
             }
         };
 
-        hopper.init(args).
-                setFlexibleModeAllowed(true).
-                importOrLoad();
+        hopper.init(args);
+        hopper.getCHFactoryDecorator().setForcingFlexibleModeAllowed(true);
+        hopper.importOrLoad();
 
         GraphHopperStorage g = hopper.getGraphHopperStorage();
 //        if ("true".equals(g.getProperties().get("prepare.done")))

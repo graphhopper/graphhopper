@@ -37,17 +37,30 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class implements the CH decorator for the routing algorithm factory.
+ * This class implements the CH decorator for the routing algorithm factory and provides several
+ * helper methods related to CH preparation and its vehicle profiles.
  *
  * @author Peter Karich
  */
 public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
 {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final List<PrepareContractionHierarchies> preparations = new ArrayList<PrepareContractionHierarchies>();
-    private final List<Weighting> weightings = new ArrayList<Weighting>();
-    private final List<String> weightingsAsStrings = new ArrayList<String>();
+    /**
+     * The property name in HintsMap if CH routing should be ignored.
+     */
+    public static final String FORCE_FLEXIBLE_ROUTING = "routing.flexibleMode.force";
+    /**
+     * The property name in HintsMap if heading should be used for CH regardless of the possible
+     * routing errors.
+     */
+    public static final String FORCE_HEADING = "force_heading_ch";
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
+    // we need to decouple weighting objects from the weighting list of strings 
+    // as we need the strings to create the GraphHopperStorage and the GraphHopperStorage to create the preparations from the Weighting objects currently requiring the encoders
+    private final List<Weighting> weightings = new ArrayList<>();
+    private final List<String> weightingsAsStrings = new ArrayList<>();
+    private boolean forcingFlexibleModeAllowed = false;
     // for backward compatibility enable CH by default.
     private boolean enabled = true;
     private int preparationThreads;
@@ -72,12 +85,18 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         if (!deprecatedWeightingConfig.isEmpty())
             throw new IllegalStateException("Use prepare.chWeightings and a comma separated list instead of prepare.chWeighting");
 
+        boolean enableThis = false;
         String chWeightingsStr = args.get("prepare.chWeightings", "");
         if (!chWeightingsStr.isEmpty() && !"no".equals(chWeightingsStr))
         {
             List<String> tmpCHWeightingList = Arrays.asList(chWeightingsStr.split(","));
             setWeightingsAsStrings(tmpCHWeightingList);
+            enableThis = true;
         }
+
+        setEnabled(enableThis);
+        if (enableThis)
+            setForcingFlexibleModeAllowed(args.getBool("routing.flexibleMode.allowed", isForcingFlexibleModeAllowed()));
 
         setPreparationPeriodicUpdates(args.getInt("prepare.updates.periodic", getPreparationPeriodicUpdates()));
         setPreparationLazyUpdates(args.getInt("prepare.updates.lazy", getPreparationLazyUpdates()));
@@ -144,14 +163,29 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
     /**
      * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
      */
-    public void setEnabled( boolean enabled )
+    public final void setEnabled( boolean enabled )
     {
         this.enabled = enabled;
     }
 
-    public boolean isEnabled()
+    public final boolean isEnabled()
     {
         return enabled;
+    }
+
+    /**
+     * This method specifies if although the CH preparation is enabled a 'more expensive' flexible
+     * request can be made via routing hints.
+     */
+    public final CHAlgoFactoryDecorator setForcingFlexibleModeAllowed( boolean forcingFlexibleModeAllowed )
+    {
+        this.forcingFlexibleModeAllowed = forcingFlexibleModeAllowed;
+        return this;
+    }
+
+    public final boolean isForcingFlexibleModeAllowed()
+    {
+        return forcingFlexibleModeAllowed;
     }
 
     /**
@@ -184,17 +218,12 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         return this;
     }
 
-    public boolean hasWeightings()
+    public final boolean hasWeightings()
     {
         return !weightings.isEmpty();
     }
 
-    public boolean hasPreparations()
-    {
-        return !preparations.isEmpty();
-    }
-
-    public List<Weighting> getWeightings()
+    public final List<Weighting> getWeightings()
     {
         return weightings;
     }
@@ -228,7 +257,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         return this.weightingsAsStrings;
     }
 
-    public String getDefaultWeighting()
+    private String getDefaultWeighting()
     {
         return weightingsAsStrings.isEmpty() ? "fastest" : weightingsAsStrings.get(0);
     }
@@ -239,14 +268,17 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
     }
 
     @Override
-    public RoutingAlgorithmFactory decorate( RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map )
+    public RoutingAlgorithmFactory getDecoratedAlgorithmFactory( RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map )
     {
-        boolean forceFlexMode = map.getBool("routing.flexibleMode.force", false);
+        boolean forceFlexMode = map.getBool(FORCE_FLEXIBLE_ROUTING, false);
         if (forceFlexMode)
             return defaultAlgoFactory;
 
         if (preparations.isEmpty())
             throw new IllegalStateException("No preparations added to this decorator");
+
+        if (map.getWeighting().isEmpty())
+            map.setWeighting(getDefaultWeighting());
 
         for (PrepareContractionHierarchies p : preparations)
         {
@@ -254,7 +286,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
                 return p;
         }
 
-        throw new IllegalStateException("Cannot find RoutingAlgorithFactory for weighting map " + map);
+        throw new IllegalStateException("Cannot find RoutingAlgorithmFactory for weighting map " + map);
     }
 
     /**
@@ -318,8 +350,10 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
 
     public void createPreparations( GraphHopperStorage ghStorage, TraversalMode traversalMode )
     {
-        if (hasPreparations())
+        if (!isEnabled() || !preparations.isEmpty())
             return;
+        if (weightings.isEmpty())
+            throw new IllegalStateException("No CH weightings found");
 
         for (Weighting weighting : getWeightings())
         {
@@ -333,8 +367,5 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
 
             addPreparation(tmpPrepareCH);
         }
-
-        if (getPreparations().isEmpty())
-            throw new IllegalStateException("No CH weightings found");
     }
 }

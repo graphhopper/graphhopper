@@ -27,7 +27,7 @@ public interface RoutingAlgorithmFactoryDecorator
 {
     /**
      * This method returns the specified algoFactory unchanged, decorates it or completely replaces
-     * it depending on the specified opts.
+     * it depending on the specified optionsMap.
      */
-    RoutingAlgorithmFactory decorate( RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map );
+    RoutingAlgorithmFactory getDecoratedAlgorithmFactory( RoutingAlgorithmFactory algoFactory, HintsMap optionsMap );
 }

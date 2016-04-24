@@ -112,8 +112,7 @@ public class GraphHopperTest
     @Test
     public void testLoadOSMNoCH()
     {
-        GraphHopper gh = new GraphHopper().setStoreOnFlush(true).
-                setCHEnable(false).
+        GraphHopper gh = new GraphHopper().setStoreOnFlush(true).setCHEnabled(false).
                 setEncodingManager(new EncodingManager("CAR")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
@@ -123,8 +122,7 @@ public class GraphHopperTest
         assertEquals(3, rsp.getBest().getPoints().getSize());
 
         gh.close();
-        gh = new GraphHopper().setStoreOnFlush(true).
-                setCHEnable(false).
+        gh = new GraphHopper().setStoreOnFlush(true).setCHEnabled(false).
                 setEncodingManager(new EncodingManager("CAR"));
         assertTrue(gh.load(ghLoc));
         rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
@@ -148,8 +146,7 @@ public class GraphHopperTest
         assertEquals(3, rsp.getBest().getPoints().getSize());
         gh.close();
 
-        gh = new GraphHopper().setStoreOnFlush(true).
-                setCHEnable(false).
+        gh = new GraphHopper().setStoreOnFlush(true).setCHEnabled(false).
                 setEncodingManager(new EncodingManager("CAR"));
         try
         {
@@ -163,8 +160,7 @@ public class GraphHopperTest
         Helper.removeDir(new File(ghLoc));
 
         // without CH should not be loadable with CH enabled
-        gh = new GraphHopper().setStoreOnFlush(true).
-                setCHEnable(false).
+        gh = new GraphHopper().setStoreOnFlush(true).setCHEnabled(false).
                 setEncodingManager(new EncodingManager("CAR")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
@@ -299,8 +295,7 @@ public class GraphHopperTest
     {
         instance = new GraphHopper().setStoreOnFlush(false).
                 setSortGraph(true).
-                setEncodingManager(new EncodingManager("CAR")).
-                setCHEnable(false).
+                setEncodingManager(new EncodingManager("CAR")).setCHEnabled(false).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance.importOrLoad();
@@ -328,8 +323,7 @@ public class GraphHopperTest
     {
         // now all ways are imported
         instance = new GraphHopper().setStoreOnFlush(false).
-                setEncodingManager(new EncodingManager("CAR,FOOT")).
-                setCHEnable(false).
+                setEncodingManager(new EncodingManager("CAR,FOOT")).setCHEnabled(false).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
         instance.importOrLoad();
@@ -595,7 +589,6 @@ public class GraphHopperTest
     @Test
     public void testGetPathsDirectionEnforcement1()
     {
-        ////////////////////////////////////
         // Test enforce start direction
         // Note: This Test does not pass for CH enabled    
         instance = createSquareGraphInstance(false);
@@ -787,8 +780,7 @@ public class GraphHopperTest
         g.edge(5, 8, 110, true);
         g.edge(7, 8, 110, true);
 
-        GraphHopper tmp = new GraphHopper().
-                setCHEnable(withCH).
+        GraphHopper tmp = new GraphHopper().setCHEnabled(withCH).
                 setCHWeightings(Arrays.asList("fastest")).
                 setEncodingManager(encodingManager);
         tmp.setGraphHopperStorage(g);
@@ -803,8 +795,7 @@ public class GraphHopperTest
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager em = new EncodingManager(carEncoder);
         // Weighting weighting = new FastestWeighting(carEncoder);
-        instance = new GraphHopper().setStoreOnFlush(false).
-                setCHEnable(false).
+        instance = new GraphHopper().setStoreOnFlush(false).setCHEnabled(false).
                 setEncodingManager(em).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
@@ -812,7 +803,7 @@ public class GraphHopperTest
         instance.addAlgorithmFactoryDecorator(new RoutingAlgorithmFactoryDecorator()
         {
             @Override
-            public RoutingAlgorithmFactory decorate( RoutingAlgorithmFactory algoFactory, HintsMap map )
+            public RoutingAlgorithmFactory getDecoratedAlgorithmFactory( RoutingAlgorithmFactory algoFactory, HintsMap map )
             {
                 return af;
             }
@@ -826,7 +817,7 @@ public class GraphHopperTest
         instance.addAlgorithmFactoryDecorator(new RoutingAlgorithmFactoryDecorator()
         {
             @Override
-            public RoutingAlgorithmFactory decorate( RoutingAlgorithmFactory algoFactory, HintsMap map )
+            public RoutingAlgorithmFactory getDecoratedAlgorithmFactory( RoutingAlgorithmFactory algoFactory, HintsMap map )
             {
                 return new RoutingAlgorithmFactorySimple()
                 {
@@ -925,9 +916,9 @@ public class GraphHopperTest
 
         HintsMap wMap = new HintsMap("fastest");
         wMap.put("vehicle", "truck");
-        assertEquals("fastest|truck", ((PrepareContractionHierarchies) decorator.decorate(null, wMap)).getWeighting().toString());
+        assertEquals("fastest|truck", ((PrepareContractionHierarchies) decorator.getDecoratedAlgorithmFactory(null, wMap)).getWeighting().toString());
         wMap.put("vehicle", "simple_truck");
-        assertEquals("fastest|simple_truck", ((PrepareContractionHierarchies) decorator.decorate(null, wMap)).getWeighting().toString());
+        assertEquals("fastest|simple_truck", ((PrepareContractionHierarchies) decorator.getDecoratedAlgorithmFactory(null, wMap)).getWeighting().toString());
 
         // make sure weighting cannot be mixed
         decorator.addWeighting(fwT);

@@ -39,12 +39,10 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
- * <p/>
+ * 
  * @author Peter Karich
  * @see GraphHopperAPI
  */
@@ -69,9 +67,8 @@ public class GraphHopper implements GraphHopperAPI
     // for routing
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
-    private final List<RoutingAlgorithmFactoryDecorator> algoDecorators = new ArrayList<RoutingAlgorithmFactoryDecorator>();
+    private final Set<RoutingAlgorithmFactoryDecorator> algoDecorators = new LinkedHashSet<>();
     private int maxVisitedNodes = Integer.MAX_VALUE;
-    private boolean forcingFlexibleModeAllowed = false;
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -92,6 +89,7 @@ public class GraphHopper implements GraphHopperAPI
 
     public GraphHopper()
     {
+        setCHEnabled(true);
     }
 
     /**
@@ -248,7 +246,7 @@ public class GraphHopper implements GraphHopperAPI
      * Only valid option for in-memory graph and if you e.g. want to disable store on flush for unit
      * tests. Specify storeOnFlush to true if you want that existing data will be loaded FROM disc
      * and all in-memory data will be flushed TO disc after flush is called e.g. while OSM import.
-     * <p/>
+     * 
      * @param storeOnFlush true by default
      */
     public GraphHopper setStoreOnFlush( boolean storeOnFlush )
@@ -278,16 +276,6 @@ public class GraphHopper implements GraphHopperAPI
     {
         ensureNotLoaded();
         dataAccessType = DAType.UNSAFE_STORE;
-        return this;
-    }
-
-    /**
-     * This method specifies if although the CH preparation is enabled a 'more expensive' flexible
-     * request can be made.
-     */
-    public GraphHopper setFlexibleModeAllowed( boolean t )
-    {
-        forcingFlexibleModeAllowed = t;
         return this;
     }
 
@@ -350,21 +338,30 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
      *
-     * @deprecated Use getCHFactoryDecorator().setEnabled() instead. Will be removed in 0.8.
+     * @deprecated Use setEnabled() instead. Will be removed in 0.8.
      */
     public GraphHopper setCHEnable( boolean enable )
     {
+        return setCHEnabled(enable);
+    }
+
+    /**
+     * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
+     */
+    public GraphHopper setCHEnabled( boolean enable )
+    {
         ensureNotLoaded();
+        if (enable)
+            algoDecorators.add(chFactoryDecorator);
+        else
+            algoDecorators.remove(chFactoryDecorator);
+
         chFactoryDecorator.setEnabled(enable);
         return this;
     }
 
-    /**
-     * @deprecated Use getCHFactoryDecorator().isEnabled() instead. Will be removed in 0.8.
-     */
-    public boolean isCHEnabled()
+    public final boolean isCHEnabled()
     {
         return chFactoryDecorator.isEnabled();
     }
@@ -408,7 +405,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * This method specifies the preferred language for way names during import.
-     * <p/>
+     * 
      * Language code as defined in ISO 639-1 or ISO 639-2.
      * <ul>
      * <li>If no preferred language is specified, only the default language with no tag will be
@@ -490,7 +487,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * The underlying graph used in algorithms.
-     * <p/>
+     * 
      * @throws IllegalStateException if graph is not instantiated.
      */
     public GraphHopperStorage getGraphHopperStorage()
@@ -514,7 +511,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * The location index created from the graph.
-     * <p/>
+     * 
      * @throws IllegalStateException if index is not initialized
      */
     public LocationIndex getLocationIndex()
@@ -625,8 +622,6 @@ public class GraphHopper implements GraphHopperAPI
 
         // prepare CH
         chFactoryDecorator.init(args);
-        if (!chFactoryDecorator.getWeightingsAsStrings().isEmpty())
-            setFlexibleModeAllowed(args.getBool("routing.flexibleMode.allowed", false));
 
         // osm import
         osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
@@ -761,7 +756,7 @@ public class GraphHopper implements GraphHopperAPI
         return initializeStorage(graphHopperFolder);
     }
 
-    private boolean initializeStorage(String graphHopperFolder)
+    private boolean initializeStorage( String graphHopperFolder )
     {
         if (Helper.isEmpty(graphHopperFolder))
             throw new IllegalStateException("graphHopperLocation is not specified. call init before");
@@ -846,22 +841,24 @@ public class GraphHopper implements GraphHopperAPI
 
     public RoutingAlgorithmFactory getAlgorithmFactory( HintsMap map )
     {
-        RoutingAlgorithmFactory pickedRAFactory = new RoutingAlgorithmFactorySimple();
+        RoutingAlgorithmFactory routingAlgorithmFactory = new RoutingAlgorithmFactorySimple();
         for (RoutingAlgorithmFactoryDecorator decorator : algoDecorators)
         {
-            pickedRAFactory = decorator.decorate(pickedRAFactory, map);
+            routingAlgorithmFactory = decorator.getDecoratedAlgorithmFactory(routingAlgorithmFactory, map);
         }
 
-        return pickedRAFactory;
+        return routingAlgorithmFactory;
     }
 
     public GraphHopper addAlgorithmFactoryDecorator( RoutingAlgorithmFactoryDecorator algoFactoryDecorator )
     {
-        algoDecorators.add(algoFactoryDecorator);
+        if (!algoDecorators.add(algoFactoryDecorator))
+            throw new IllegalArgumentException("Decorator was already added " + algoFactoryDecorator.getClass());
+
         return this;
     }
 
-    public CHAlgoFactoryDecorator getCHFactoryDecorator()
+    public final CHAlgoFactoryDecorator getCHFactoryDecorator()
     {
         return chFactoryDecorator;
     }
@@ -886,9 +883,6 @@ public class GraphHopper implements GraphHopperAPI
      */
     protected void createCHPreparations()
     {
-        if (algoDecorators.isEmpty())
-            algoDecorators.add(chFactoryDecorator);
-
         chFactoryDecorator.createPreparations(ghStorage, traversalMode);
     }
 
@@ -927,7 +921,7 @@ public class GraphHopper implements GraphHopperAPI
      * Based on the weightingParameters and the specified vehicle a Weighting instance can be
      * created. Note that all URL parameters are available in the weightingParameters as String if
      * you use the GraphHopper Web module.
-     * <p/>
+     * 
      * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
      * GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
      * @param encoder the required vehicle
@@ -991,9 +985,6 @@ public class GraphHopper implements GraphHopperAPI
             vehicle = getDefaultVehicle().toString();
             request.setVehicle(vehicle);
         }
-        
-        if (request.getWeighting().isEmpty())
-            request.setWeighting(chFactoryDecorator.getDefaultWeighting());
 
         if (!encodingManager.supports(vehicle))
         {
@@ -1026,8 +1017,8 @@ public class GraphHopper implements GraphHopperAPI
         Weighting weighting;
         Graph routingGraph = ghStorage;
 
-        boolean forceFlexibleMode = request.getHints().getBool("routing.flexibleMode.force", false);
-        if (!forcingFlexibleModeAllowed && forceFlexibleMode)
+        boolean forceFlexibleMode = request.getHints().getBool(CHAlgoFactoryDecorator.FORCE_FLEXIBLE_ROUTING, false);
+        if (!chFactoryDecorator.isForcingFlexibleModeAllowed() && forceFlexibleMode)
         {
             ghRsp.addError(new IllegalStateException("Flexible mode not enabled on the server-side"));
             return Collections.emptyList();
@@ -1035,7 +1026,7 @@ public class GraphHopper implements GraphHopperAPI
 
         if (chFactoryDecorator.isEnabled() && !forceFlexibleMode)
         {
-            boolean forceCHHeading = request.getHints().getBool("force_heading_ch", false);
+            boolean forceCHHeading = request.getHints().getBool(CHAlgoFactoryDecorator.FORCE_HEADING, false);
             if (!forceCHHeading && request.hasFavoredHeading(0))
                 throw new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483");
 

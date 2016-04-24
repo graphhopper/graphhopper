@@ -50,8 +50,7 @@ public class GraphHopperAPITest
 
         GraphHopper instance = new GraphHopper().
                 setStoreOnFlush(false).
-                setEncodingManager(encodingManager).
-                setCHEnable(false).
+                setEncodingManager(encodingManager).setCHEnabled(false).
                 loadGraph(graph);
         GHResponse rsp = instance.route(new GHRequest(42, 10.4, 42, 10));
         assertFalse(rsp.hasErrors());
@@ -82,8 +81,7 @@ public class GraphHopperAPITest
 
         GraphHopper instance = new GraphHopper().
                 setStoreOnFlush(false).
-                setEncodingManager(encodingManager).
-                setCHEnable(false).
+                setEncodingManager(encodingManager).setCHEnabled(false).
                 loadGraph(graph);
         GHResponse rsp = instance.route(new GHRequest(42, 10, 42, 10.4));
         assertTrue(rsp.hasErrors());
@@ -104,8 +102,7 @@ public class GraphHopperAPITest
     {
         GraphHopper instance = new GraphHopper().
                 setStoreOnFlush(false).
-                setEncodingManager(encodingManager).
-                setCHEnable(false);
+                setEncodingManager(encodingManager).setCHEnabled(false);
         try
         {
             instance.route(new GHRequest(42, 10.4, 42, 10));
