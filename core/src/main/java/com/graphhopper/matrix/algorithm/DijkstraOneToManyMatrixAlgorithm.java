@@ -44,6 +44,7 @@ public class DijkstraOneToManyMatrixAlgorithm extends AbstractMatrixAlgorithm {
 
         DijkstraOneToMany algorithm = (DijkstraOneToMany)routingFactory.createAlgo(graph, underlyingAlgo);
 
+        algorithm.clear();
 
         for (int origin : origins) {
 
@@ -51,14 +52,13 @@ public class DijkstraOneToManyMatrixAlgorithm extends AbstractMatrixAlgorithm {
             DistanceMatrix.DistanceRow row = matrix.addRow(origin);
 
             for (int destination : destinations) {
-
-                // TODO Hack since DijkstraOneToMany seems to have a bug in this graph
-                // TODO This renders the benefit of this approach obviously useless
-                // TODO If the bug is fixed, remove the following line to reuse cache.
-                algorithm = (DijkstraOneToMany)routingFactory.createAlgo(graph, underlyingAlgo);
-
-                Path path = algorithm.calcPath(origin, destination);
-                row.addDestination(destination, path.getDistance(), path.getTime());
+                if(origin != destination){
+                    Path path = algorithm.calcPath(origin, destination);
+                    row.addDestination(destination, path.getDistance(), path.getTime());
+                }else{
+                    // No need to search for a path, we are already there.
+                    row.addDestination(destination, 0, 0);
+                }
             }
         }
 

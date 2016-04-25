@@ -28,6 +28,16 @@ public final class DistanceMatrix {
     }
 
 
+    @Override
+    public String toString(){
+        String matrixStr = "";
+        for (DistanceRow row : getRows()) {
+            matrixStr += row.toString() + "\n";
+        }
+        return matrixStr;
+    }
+
+
     public static class DistanceRow {
         public final int originNode;
         public final List<DestinationInfo> destinations = new ArrayList<>();
@@ -45,6 +55,22 @@ public final class DistanceMatrix {
         public List<DestinationInfo> getDestinations() {
             return destinations;
         }
+
+
+        @Override
+        public String toString(){
+
+            String destinationStrs = "";
+
+            if(!getDestinations().isEmpty()){
+                for (DestinationInfo dest : getDestinations()) {
+                    destinationStrs += dest.toString() + ",";
+                }
+                destinationStrs = destinationStrs.substring(0,destinationStrs.length()-1);
+            }
+
+            return "("+originNode+")-->[" +  destinationStrs + "]";
+        }
     }
 
     public static class DestinationInfo {
@@ -57,6 +83,11 @@ public final class DistanceMatrix {
             this.destinationNode = node;
             this.distance = distance;
             this.time = time;
+        }
+
+        @Override
+        public String toString(){
+            return "{("+destinationNode+")#"+distance+"}";
         }
     }
 }

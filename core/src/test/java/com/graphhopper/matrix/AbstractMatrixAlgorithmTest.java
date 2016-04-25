@@ -81,7 +81,7 @@ public abstract class AbstractMatrixAlgorithmTest {
         Assert.assertEquals(0, row1.getDestinations().get(0).destinationNode);
         Assert.assertEquals(0, row1.getDestinations().get(0).distance, DELTA);
         Assert.assertEquals(1, row1.getDestinations().get(1).destinationNode);
-        Assert.assertEquals(10, row1.getDestinations().get(1).distance, DELTA);
+        Assert.assertEquals("matrix:\n" + matrix, 10, row1.getDestinations().get(1).distance, DELTA);
         Assert.assertEquals(2, row1.getDestinations().get(2).destinationNode);
         Assert.assertEquals(10+10, row1.getDestinations().get(2).distance, DELTA);
 
