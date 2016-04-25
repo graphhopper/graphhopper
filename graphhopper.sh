@@ -207,7 +207,9 @@ else
 fi
 
 if [ "$JAVA_OPTS" = "" ]; then
-  JAVA_OPTS="-Xmx1000m -Xms1000m -server"
+  JAVA_OPTS="-Xmx1000m -Xms1000m -server -XX:+HeapDumpOnOutOfMemoryError"
+else
+  JAVA_OPTS="$JAVA_OPTS -XX:+HeapDumpOnOutOfMemoryError"
 fi
 
 
