@@ -42,7 +42,7 @@ import java.util.*;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
- * 
+ *
  * @author Peter Karich
  * @see GraphHopperAPI
  */
@@ -246,7 +246,7 @@ public class GraphHopper implements GraphHopperAPI
      * Only valid option for in-memory graph and if you e.g. want to disable store on flush for unit
      * tests. Specify storeOnFlush to true if you want that existing data will be loaded FROM disc
      * and all in-memory data will be flushed TO disc after flush is called e.g. while OSM import.
-     * 
+     *
      * @param storeOnFlush true by default
      */
     public GraphHopper setStoreOnFlush( boolean storeOnFlush )
@@ -281,6 +281,9 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * Wrapper method for {@link GraphHopper#setCHWeightings(List)}
+     *
+     * @deprecated Use getCHFactoryDecorator().setWeightingsAsStrings() instead. Will be removed in
+     * 0.8.
      */
     public GraphHopper setCHWeightings( String... weightingNames )
     {
@@ -405,7 +408,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * This method specifies the preferred language for way names during import.
-     * 
+     * <p>
      * Language code as defined in ISO 639-1 or ISO 639-2.
      * <ul>
      * <li>If no preferred language is specified, only the default language with no tag will be
@@ -487,7 +490,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * The underlying graph used in algorithms.
-     * 
+     *
      * @throws IllegalStateException if graph is not instantiated.
      */
     public GraphHopperStorage getGraphHopperStorage()
@@ -511,7 +514,7 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * The location index created from the graph.
-     * 
+     *
      * @throws IllegalStateException if index is not initialized
      */
     public LocationIndex getLocationIndex()
@@ -921,7 +924,7 @@ public class GraphHopper implements GraphHopperAPI
      * Based on the weightingParameters and the specified vehicle a Weighting instance can be
      * created. Note that all URL parameters are available in the weightingParameters as String if
      * you use the GraphHopper Web module.
-     * 
+     *
      * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
      * GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
      * @param encoder the required vehicle
