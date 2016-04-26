@@ -1115,7 +1115,7 @@ public class GraphHopper implements GraphHopperAPI
                     hints(request.getHints()).
                     build();
 
-            altPaths = routingTemplate.route(queryGraph, tmpAlgoFactory, algoOpts);
+            altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
             boolean tmpEnableInstructions = request.getHints().getBool("instructions", enableInstructions);
             boolean tmpCalcPoints = request.getHints().getBool("calcPoints", calcPoints);
             double wayPointMaxDistance = request.getHints().getDouble("wayPointMaxDistance", 1d);

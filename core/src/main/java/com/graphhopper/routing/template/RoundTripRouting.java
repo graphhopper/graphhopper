@@ -99,7 +99,7 @@ public class RoundTripRouting implements RoutingTemplate
     }
 
     @Override
-    public List<Path> route( QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts )
+    public List<Path> calcPaths( QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts )
     {
         int pointCounts = ghRequest.getPoints().size();
         pathList = new ArrayList<>(queryResults.size() - 1);

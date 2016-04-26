@@ -83,7 +83,7 @@ public class ViaRouting implements RoutingTemplate
     }
 
     @Override
-    public List<Path> route( QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts )
+    public List<Path> calcPaths( QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts )
     {
         long visitedNodesSum = 0L;
         boolean viaTurnPenalty = ghRequest.getHints().getBool("pass_through", false);

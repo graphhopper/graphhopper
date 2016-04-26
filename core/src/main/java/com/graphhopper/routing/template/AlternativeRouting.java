@@ -43,14 +43,14 @@ final public class AlternativeRouting extends ViaRouting
     }
 
     @Override
-    public List<Path> route( QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts )
+    public List<Path> calcPaths( QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts )
     {
         boolean withViaTurnPenalty = ghRequest.getHints().getBool("pass_through", false);
         if (withViaTurnPenalty)
             throw new IllegalStateException("Alternative paths and a viaTurnPenalty at the same time is currently not supported");
 
         // TODO NOW where to place the AlternativeRoute algo creation - in RoutingAlgorithmFactory or here somewhere?
-        return super.route(queryGraph, algoFactory, algoOpts);
+        return super.calcPaths(queryGraph, algoFactory, algoOpts);
     }
 
     @Override

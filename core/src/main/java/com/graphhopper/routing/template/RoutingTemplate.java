@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.template;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.QueryGraph;
@@ -47,7 +45,7 @@ public interface RoutingTemplate
      * This method returns a list of Path objects which then can be merged to serve one route with
      * via points or multiple alternative paths.
      */
-    List<Path> route( QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts );
+    List<Path> calcPaths( QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts );
 
     /**
      * This method merges the returned paths appropriately e.g. all paths from the list into one
