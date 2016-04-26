@@ -249,12 +249,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Only valid option for in-memory graph and if you e.g. want to disable store on flush for unit
      * tests. Specify storeOnFlush to true if you want that existing data will be loaded FROM disc
-     * <<<<<<< HEAD and all in-memory data will be flushed TO disc after flush is called e.g. while
-     * OSM import. <<<<<<< HEAD <p>
-     * ======= <p>
-     * >
-     * >>>>>> master ======= and all in-memory data will be flushed TO disc after flush is called
-     * e.g. while OSM import. >>>>>>> master
+     * and all in-memory data will be flushed TO disc after flush is called e.g. while OSM import.
      *
      * @param storeOnFlush true by default
      */
@@ -289,27 +284,10 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * <<<<<<< HEAD Wrapper method for {@link GraphHopper#setCHWeightings(List)} <<<<<<< HEAD <p>
-     * @
+     * Wrapper method for {@link GraphHopper#setCHWeightings(List)}
      *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     *
-     * deprecated This method is used as a deprecated wrapper to not break the JavaApi. This will be
-     * removed in the future. Please use {@link GraphHopper#setCHWeightings(List)} or
+     * @deprecated This method is used as a deprecated wrapper to not break the JavaApi. This will
+     * be removed in 0.7. Please use {@link GraphHopper#setCHWeightings(List)} or
      * {@link GraphHopper#setCHWeightings(String...)}
      */
     @Deprecated
@@ -319,11 +297,10 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Wrapper method for {@link GraphHopper#setCHWeightings(List)} ======= >>>>>>> master =======
      * Wrapper method for {@link GraphHopper#setCHWeightings(List)}
      *
      * @deprecated Use getCHFactoryDecorator().setWeightingsAsStrings() instead. Will be removed in
-     * 0.8. >>>>>>> master
+     * 0.8.
      */
     public GraphHopper setCHWeightings( String... weightingNames )
     {
@@ -552,10 +529,7 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * <<<<<<< HEAD The location index created from the graph. <<<<<<< HEAD <p>
-     * ======= <p>
-     * >
-     * >>>>>> master ======= The location index created from the graph. >>>>>>> master
+     * The location index created from the graph.
      *
      * @throws IllegalStateException if index is not initialized
      */
