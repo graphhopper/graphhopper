@@ -527,10 +527,10 @@ public class GraphHopperIT
         GraphHopper tmpHopper = new GraphHopper().
                 setStoreOnFlush(true).
                 setOSMFile(tmpOsmFile).
-                setCHWeightings(Arrays.asList(weightCalcStr)).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager(tmpImportVehicles)).
-                importOrLoad();
+                setEncodingManager(new EncodingManager(tmpImportVehicles));
+        tmpHopper.getCHFactoryDecorator().setWeightingsAsStrings(weightCalcStr);
+        tmpHopper.importOrLoad();
 
         // same query as in testMonacoWithInstructions
         GHResponse rsp = tmpHopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).

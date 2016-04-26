@@ -247,11 +247,12 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Only valid option for in-memory graph and if you e.g. want to disable store on flush for unit
      * tests. Specify storeOnFlush to true if you want that existing data will be loaded FROM disc
-     * and all in-memory data will be flushed TO disc after flush is called e.g. while OSM import.      <<<<<<< HEAD
-     * <p>
-     * =======
-     * <p>
-     * >>>>>>> master
+     * <<<<<<< HEAD and all in-memory data will be flushed TO disc after flush is called e.g. while
+     * OSM import. <<<<<<< HEAD <p>
+     * ======= <p>
+     * >
+     * >>>>>> master ======= and all in-memory data will be flushed TO disc after flush is called
+     * e.g. while OSM import. >>>>>>> master
      *
      * @param storeOnFlush true by default
      */
@@ -286,10 +287,11 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Wrapper method for {@link GraphHopper#setCHWeightings(List)} <<<<<<< HEAD
-     * <p>
-     * @deprecated This method is used as a deprecated wrapper to not break the JavaApi. This will
-     * be removed in the future. Please use {@link GraphHopper#setCHWeightings(List)} or
+     * <<<<<<< HEAD Wrapper method for {@link GraphHopper#setCHWeightings(List)} <<<<<<< HEAD <p>
+     * @
+     *
+     * deprecated This method is used as a deprecated wrapper to not break the JavaApi. This will be
+     * removed in the future. Please use {@link GraphHopper#setCHWeightings(List)} or
      * {@link GraphHopper#setCHWeightings(String...)}
      */
     @Deprecated
@@ -299,7 +301,11 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Wrapper method for {@link GraphHopper#setCHWeightings(List)} ======= >>>>>>> master
+     * Wrapper method for {@link GraphHopper#setCHWeightings(List)} ======= >>>>>>> master =======
+     * Wrapper method for {@link GraphHopper#setCHWeightings(List)}
+     *
+     * @deprecated Use getCHFactoryDecorator().setWeightingsAsStrings() instead. Will be removed in
+     * 0.8. >>>>>>> master
      */
     public GraphHopper setCHWeightings( String... weightingNames )
     {
@@ -504,11 +510,7 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * The underlying graph used in algorithms.      <<<<<<< HEAD
-     * <p>
-     * =======
-     * <p>
-     * >>>>>>> master
+     * The underlying graph used in algorithms.
      *
      * @throws IllegalStateException if graph is not instantiated.
      */
@@ -532,11 +534,10 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * The location index created from the graph.      <<<<<<< HEAD
-     * <p>
-     * =======
-     * <p>
-     * >>>>>>> master
+     * <<<<<<< HEAD The location index created from the graph. <<<<<<< HEAD <p>
+     * ======= <p>
+     * >
+     * >>>>>> master ======= The location index created from the graph. >>>>>>> master
      *
      * @throws IllegalStateException if index is not initialized
      */
@@ -946,11 +947,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Based on the weightingParameters and the specified vehicle a Weighting instance can be
      * created. Note that all URL parameters are available in the weightingParameters as String if
-     * you use the GraphHopper Web module.      <<<<<<< HEAD
-     * <p>
-     * =======
-     * <p>
-     * >>>>>>> master
+     * you use the GraphHopper Web module.
      *
      * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
      * GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI

@@ -279,9 +279,9 @@ public class GraphHopperTest
         instance = new GraphHopper().
                 setStoreOnFlush(false).
                 setEncodingManager(new EncodingManager("CAR")).
-                setCHWeightings(Arrays.asList("shortest")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
+        instance.getCHFactoryDecorator().setWeightingsAsStrings("shortest");
         instance.importOrLoad();
         GHResponse rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
                 setAlgorithm(AlgorithmOptions.DIJKSTRA_BI));
@@ -780,9 +780,10 @@ public class GraphHopperTest
         g.edge(5, 8, 110, true);
         g.edge(7, 8, 110, true);
 
-        GraphHopper tmp = new GraphHopper().setCHEnabled(withCH).
-                setCHWeightings(Arrays.asList("fastest")).
+        GraphHopper tmp = new GraphHopper().
+                setCHEnabled(withCH).
                 setEncodingManager(encodingManager);
+        tmp.getCHFactoryDecorator().setWeightingsAsStrings("fastest");
         tmp.setGraphHopperStorage(g);
         tmp.postProcessing();
 
@@ -937,10 +938,11 @@ public class GraphHopperTest
     {
         EncodingManager em = new EncodingManager(Arrays.asList(new CarFlagEncoder()), 8);
 
-        GraphHopper tmpGH = new GraphHopper().setStoreOnFlush(false).
-                setEncodingManager(em).
-                setCHWeightings("fastest", "shortest");
+        GraphHopper tmpGH = new GraphHopper().
+                setStoreOnFlush(false).
+                setEncodingManager(em);
+        tmpGH.getCHFactoryDecorator().setWeightingsAsStrings("fastest", "shortest");
 
-        assertEquals(2, tmpGH.getCHWeightings().size());
+        assertEquals(2, tmpGH.getCHFactoryDecorator().getWeightingsAsStrings().size());
     }
 }

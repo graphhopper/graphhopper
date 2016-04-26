@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.AbstractWeighting;
@@ -85,7 +86,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         if (!deprecatedWeightingConfig.isEmpty())
             throw new IllegalStateException("Use prepare.chWeightings and a comma separated list instead of prepare.chWeighting");
 
-        boolean enableThis = false;
+        boolean enableThis = isEnabled();
         String chWeightingsStr = args.get("prepare.chWeightings", "");
         if (!chWeightingsStr.isEmpty() && !"no".equals(chWeightingsStr))
         {
@@ -226,6 +227,11 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
     public final List<Weighting> getWeightings()
     {
         return weightings;
+    }
+
+    public CHAlgoFactoryDecorator setWeightingsAsStrings( String... weightingNames )
+    {
+        return setWeightingsAsStrings(Arrays.asList(weightingNames));
     }
 
     /**
