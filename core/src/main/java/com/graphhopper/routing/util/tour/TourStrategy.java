@@ -38,17 +38,19 @@ public abstract class TourStrategy
     /**
      * Defines the number of points that are generated
      */
-    abstract int numberOfGeneratedPoints();
+    public abstract int getNumberOfGeneratedPoints();
 
     /**
      * Returns the distance in KM that is used for the generated point #iteration
      */
-    abstract double getDistanceForIteration( int iteration );
+    public abstract double getDistanceForIteration( int iteration );
 
     /**
-     * Returns the bearing between 0 and 360 for the current #iteration
+     * Returns the bearing between 0 and 360 for the current iteration.
+     * <p>
+     * TODO NOW make identical orientation as the heading
      */
-    abstract double getBearingForIteration( int iteration );
+    public abstract double getHeadingForIteration( int iteration );
 
     /**
      * Modifies the Distance up to +-10%

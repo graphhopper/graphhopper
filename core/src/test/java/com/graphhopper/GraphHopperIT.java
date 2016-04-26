@@ -550,7 +550,6 @@ public class GraphHopperIT
     @Test
     public void testRoundTour()
     {
-        // provide second point for initial direction only
         GHRequest rq = new GHRequest().
                 addPoint(new GHPoint(43.741069, 7.426854)).
                 setVehicle(vehicle).setWeighting("fastest").

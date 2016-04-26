@@ -68,7 +68,6 @@ public class AlgorithmOptions
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private FlagEncoder flagEncoder;
-    private AlgorithmControl control;
     private int maxVisitedNodes = Integer.MAX_VALUE;
     private final PMap hints = new PMap(5);
 
@@ -128,11 +127,6 @@ public class AlgorithmOptions
     public PMap getHints()
     {
         return hints;
-    }
-
-    public AlgorithmControl getControl()
-    {
-        return control;
     }
 
     private void assertNotNull( Object optionValue, String optionName )
@@ -218,12 +212,6 @@ public class AlgorithmOptions
         public Builder hints( PMap hints )
         {
             this.opts.hints.put(hints);
-            return this;
-        }
-
-        public Builder control( AlgorithmControl object )
-        {
-            this.opts.control = object;
             return this;
         }
 

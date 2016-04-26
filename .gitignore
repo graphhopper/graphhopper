@@ -4,6 +4,7 @@ TODO.txt
 *-gh/
 *.osm
 nbactions-*.xml
+core/nbproject/
 config.properties
 build.xml
 queries.sh

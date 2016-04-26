@@ -32,10 +32,10 @@ public class SinglePointTourTest
     public void testBasics()
     {
         SinglePointTour tour = new SinglePointTour(new Random(0), 100);
-        assertEquals(1, tour.numberOfGeneratedPoints());
+        assertEquals(1, tour.getNumberOfGeneratedPoints());
 
-        assertTrue(0 <= tour.getBearingForIteration(0));
-        assertTrue(360 >= tour.getBearingForIteration(0));
+        assertTrue(0 <= tour.getHeadingForIteration(0));
+        assertTrue(360 >= tour.getHeadingForIteration(0));
 
         assertTrue(29 <= tour.getDistanceForIteration(0));
         assertTrue(37 >= tour.getDistanceForIteration(0));

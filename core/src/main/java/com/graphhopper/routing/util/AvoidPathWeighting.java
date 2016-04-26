@@ -24,6 +24,7 @@ import gnu.trove.set.hash.TIntHashSet;
 
 /**
  * Rates already used Paths worse.
+ *
  * @author RobinBoldt
  */
 public class AvoidPathWeighting extends AbstractAdjustedWeighting
@@ -39,7 +40,8 @@ public class AvoidPathWeighting extends AbstractAdjustedWeighting
     }
 
     /**
-     * This method adds the specified path to this weighting which should be penalized in the calcWeight method.
+     * This method adds the specified path to this weighting which should be penalized in the
+     * calcWeight method.
      */
     public void addPath( Path path )
     {
@@ -59,11 +61,8 @@ public class AvoidPathWeighting extends AbstractAdjustedWeighting
     public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
     {
         double weight = superWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
-
         if (visitedEdges.contains(edgeState.getEdge()))
-        {
             return weight * ALREADY_VISISTED_EDGES_PENALTY;
-        }
 
         return weight;
     }
@@ -71,6 +70,12 @@ public class AvoidPathWeighting extends AbstractAdjustedWeighting
     @Override
     public String getName()
     {
-        return "unique_path";
+        return "avoid_path";
+    }
+
+    @Override
+    public String toString()
+    {
+        return super.toString(); //To change body of generated methods, choose Tools | Templates.
     }
 }

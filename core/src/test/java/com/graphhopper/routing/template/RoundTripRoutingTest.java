@@ -15,23 +15,28 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing;
+package com.graphhopper.routing.template;
 
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.tour.TourPointGenerator;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
-import org.junit.Test;
-
 import java.util.Arrays;
 import java.util.List;
-
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
+ *
  * @author Peter Karich
  */
-public class RoundTripAlgorithmTest
+public class RoundTripRoutingTest
 {
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = new EncodingManager(carFE);
@@ -44,33 +49,28 @@ public class RoundTripAlgorithmTest
         Weighting weighting = new FastestWeighting(carFE);
         Graph g = createTestGraph(true);
 
-        RoundTripAlgorithm rtAlgo = new RoundTripAlgorithm(g, carFE, weighting, tMode);
-        rtAlgo.setTourPointGenerator(new TourPointGenerator()
-        {
-            @Override
-            public List<Integer> calculatePoints()
-            {
-                return Arrays.asList(5, 4, 5);
-            }
-        });
+        RoundTripRouting rTripRouting = new RoundTripRouting(new GHRequest(), new GHResponse(), null);
 
-        // double maxDist = Helper.DIST_EARTH.calcDist(0, 0, 0.05, 0.25) * 2;
-        List<Path> paths = rtAlgo.calcRoundTrip();
+        LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
+        QueryResult qr4 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);
+        assertEquals(4, qr4.getClosestNode());
+        QueryResult qr5 = locationIndex.findClosest(0.00, 0.05, EdgeFilter.ALL_EDGES);
+        assertEquals(5, qr5.getClosestNode());
+        QueryResult qr6 = locationIndex.findClosest(0.00, 0.10, EdgeFilter.ALL_EDGES);
+        assertEquals(6, qr6.getClosestNode());
+
+        QueryGraph qGraph = new QueryGraph(g);
+        qGraph.lookup(qr4, qr5);
+        rTripRouting.setQueryResults(Arrays.asList(qr5, qr4, qr5));
+        List<Path> paths = rTripRouting.route(qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions("dijkstrabi", carFE, weighting, tMode));
         assertEquals(2, paths.size());
         assertEquals(Helper.createTList(5, 6, 3, 4), paths.get(0).calcNodes());
         assertEquals(Helper.createTList(4, 8, 7, 6, 5), paths.get(1).calcNodes());
 
-        rtAlgo = new RoundTripAlgorithm(g, carFE, weighting, tMode);
-        rtAlgo.setTourPointGenerator(new TourPointGenerator()
-        {
-            @Override
-            public List<Integer> calculatePoints()
-            {
-                return Arrays.asList(6, 4, 6);
-            }
-        });
-
-        paths = rtAlgo.calcRoundTrip();
+        qGraph = new QueryGraph(g);
+        qGraph.lookup(qr4, qr6);
+        rTripRouting.setQueryResults(Arrays.asList(qr6, qr4, qr6));
+        paths = rTripRouting.route(qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions("dijkstrabi", carFE, weighting, tMode));
         assertEquals(2, paths.size());
         assertEquals(Helper.createTList(6, 3, 4), paths.get(0).calcNodes());
         assertEquals(Helper.createTList(4, 8, 7, 6), paths.get(1).calcNodes());

@@ -22,7 +22,6 @@ import com.graphhopper.routing.util.WeightApproximator;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.Helper;
-import com.graphhopper.routing.util.tour.TourPointGenerator;
 
 /**
  * A simple factory creating normal algorithms (RoutingAlgorithm) without preparation.
@@ -72,9 +71,8 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
 
         } else if (AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoStr))
         {
-            RoundTripAlgorithm algo = new RoundTripAlgorithm(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
-            algo.setTourPointGenerator((TourPointGenerator) opts.getControl());
-            ra = algo;
+            // TODO NOW let round trip choose more flexible like A* bi etc
+            ra = new DijkstraBidirectionRef(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
 
         } else
         {

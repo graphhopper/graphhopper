@@ -32,7 +32,7 @@ public class SinglePointTour extends TourStrategy
     }
 
     @Override
-    public int numberOfGeneratedPoints()
+    public int getNumberOfGeneratedPoints()
     {
         return 1;
     }
@@ -44,7 +44,7 @@ public class SinglePointTour extends TourStrategy
     }
 
     @Override
-    double getBearingForIteration( int iteration )
+    public double getHeadingForIteration( int iteration )
     {
         return random.nextInt(360);
     }
