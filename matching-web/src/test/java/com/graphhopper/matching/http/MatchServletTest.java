@@ -15,8 +15,8 @@ import static org.junit.Assert.*;
  */
 public class MatchServletTest extends BaseServletTester {
 
-    private static final String pbf = "../map-data/leipzig_germany.osm.pbf";
-    private static final String dir = "../target/mapmatchingtest";
+    private static final String PBF = "../map-data/leipzig_germany.osm.pbf";
+    private static final String DIR = "../target/mapmatchingtest";
 
     @AfterClass
     public static void cleanUp() {
@@ -29,9 +29,9 @@ public class MatchServletTest extends BaseServletTester {
     public void setUp() {
         CmdArgs args = new CmdArgs().
                 put("graph.flagEncoders", "car").
-                put("prepare.chWeighting", "no").
-                put("osmreader.osm", pbf).
-                put("graph.location", dir);
+                put("prepare.chWeightings", "no").
+                put("osmreader.osm", PBF).
+                put("graph.location", DIR);
         setUpJetty(args);
     }
 
@@ -51,6 +51,6 @@ public class MatchServletTest extends BaseServletTester {
         assertEquals(9, WebHelper.decodePolyline(path.getString("points"), 10, false).size());
 
         assertEquals(132.9, path.getLong("time") / 1000f, 0.1);
-        assertEquals(1002, path.getDouble("distance"), 1);        
+        assertEquals(1002, path.getDouble("distance"), 1);
     }
 }
