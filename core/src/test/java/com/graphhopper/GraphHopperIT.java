@@ -19,8 +19,6 @@ package com.graphhopper;
 
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -67,8 +65,7 @@ public class GraphHopperIT
 
         hopper = new GraphHopper().
                 setStoreOnFlush(true).
-                setOSMFile(osmFile).
-                setCHEnable(false).
+                setOSMFile(osmFile).setCHEnabled(false).
                 setGraphHopperLocation(graphFileFoot).
                 setEncodingManager(new EncodingManager(importVehicles)).
                 importOrLoad();
@@ -153,8 +150,7 @@ public class GraphHopperIT
     public void testAlternativeRoutesBikeAndCar()
     {
         GraphHopper tmpHopper = new GraphHopper().
-                setOSMFile("files/north-bayreuth.osm.gz").
-                setCHEnable(false).
+                setOSMFile("files/north-bayreuth.osm.gz").setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("bike, car"));
         tmpHopper.importOrLoad();
@@ -321,8 +317,7 @@ public class GraphHopperIT
     {
         GraphHopper tmpHopper = new GraphHopper().
                 setStoreOnFlush(true).
-                setOSMFile(osmFile).
-                setCHEnable(false).
+                setOSMFile(osmFile).setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(importVehicles));
 
@@ -344,17 +339,17 @@ public class GraphHopperIT
         String str = arsp.getPoints().toString();
 
         assertEquals("(43.73068455771767,7.421283689825812,62.0), (43.73067957305937,7.421382123709815,66.0), "
-                        + "(43.73109792316924,7.421546222751131,45.0), (43.73129908884985,7.421589994913116,45.0), "
-                        + "(43.731327028527716,7.421414533736137,45.0), (43.73125047381037,7.421366291225693,45.0), "
-                        + "(43.73125457162979,7.421274090288746,52.0), "
-                        + "(43.73128213877862,7.421115579183003,52.0), (43.731362232521825,7.421145381506057,52.0), "
-                        + "(43.731371359483255,7.421123216028286,52.0), (43.731485725897976,7.42117332118392,52.0), "
-                        + "(43.731575132867135,7.420868778695214,52.0), (43.73160605277731,7.420824820268709,52.0), "
-                        + "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,52.0)",
+                + "(43.73109792316924,7.421546222751131,45.0), (43.73129908884985,7.421589994913116,45.0), "
+                + "(43.731327028527716,7.421414533736137,45.0), (43.73125047381037,7.421366291225693,45.0), "
+                + "(43.73125457162979,7.421274090288746,52.0), "
+                + "(43.73128213877862,7.421115579183003,52.0), (43.731362232521825,7.421145381506057,52.0), "
+                + "(43.731371359483255,7.421123216028286,52.0), (43.731485725897976,7.42117332118392,52.0), "
+                + "(43.731575132867135,7.420868778695214,52.0), (43.73160605277731,7.420824820268709,52.0), "
+                + "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,52.0)",
                 str.substring(0, 662));
 
         assertEquals("(43.727778875703635,7.418772930326453,11.0), (43.72768239068275,7.419007064826944,11.0), "
-                        + "(43.727680946587874,7.419198768422206,11.0)",
+                + "(43.727680946587874,7.419198768422206,11.0)",
                 str.substring(str.length() - 132));
 
         assertEquals(84, arsp.getAscend(), 1e-1);
@@ -381,8 +376,7 @@ public class GraphHopperIT
 
         GraphHopper tmpHopper = new GraphHopper().
                 setStoreOnFlush(true).
-                setOSMFile(tmpOsmFile).
-                setCHEnable(false).
+                setOSMFile(tmpOsmFile).setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(tmpImportVehicles)).
                 importOrLoad();
@@ -434,11 +428,7 @@ public class GraphHopperIT
 
         assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle().toString());
 
-        assertEquals(2, tmpHopper.getAlgorithmFactories().size());
-        for (RoutingAlgorithmFactory raf : tmpHopper.getAlgorithmFactories())
-        {
-            assertFalse(RoutingAlgorithmFactorySimple.class.isAssignableFrom(raf.getClass()));
-        }
+        assertEquals(2, tmpHopper.getCHFactoryDecorator().getPreparations().size());
 
         GHResponse rsp = tmpHopper.route(new GHRequest(43.745084, 7.430513, 43.745247, 7.430347)
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
@@ -546,13 +536,14 @@ public class GraphHopperIT
         GHResponse rsp = tmpHopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setVehicle(vehicle));
 
-        PathWrapper arsp = rsp.getBest();
+        PathWrapper bestPath = rsp.getBest();
         // identify the number of counts to compare with none-CH foot route which had nearly 700 counts
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
         assertTrue("Too many nodes visited " + sum, sum < 120);
-        assertEquals(3437.6, arsp.getDistance(), .1);
-        assertEquals(89, arsp.getPoints().getSize());
+        assertEquals(3437.6, bestPath.getDistance(), .1);
+        assertEquals(89, bestPath.getPoints().getSize());
+
         tmpHopper.close();
     }
 
@@ -574,4 +565,40 @@ public class GraphHopperIT
         assertEquals(83, pw.getPoints().size());
     }
 
+    public void testFlexMode_631()
+    {
+        String tmpOsmFile = "files/monaco.osm.gz";
+
+        GraphHopper tmpHopper = new GraphHopper().
+                setStoreOnFlush(true).
+                setOSMFile(tmpOsmFile).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car"));
+
+        tmpHopper.getCHFactoryDecorator().
+                setWeightingsAsStrings(Arrays.asList("fastest")).
+                setForcingFlexibleModeAllowed(true);
+
+        tmpHopper.importOrLoad();
+
+        GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
+                setVehicle("car");
+
+        GHResponse rsp = tmpHopper.route(req);
+        long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        assertTrue("Too many visited nodes for ch mode " + sum, sum < 60);
+        PathWrapper bestPath = rsp.getBest();
+        assertEquals(3587, bestPath.getDistance(), 1);
+        assertEquals(92, bestPath.getPoints().getSize());
+
+        // now request flex mode
+        req.getHints().put("routing.flexibleMode.force", true);
+        rsp = tmpHopper.route(req);
+        sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        assertTrue("Too few visited nodes for flex mode " + sum, sum > 60);
+
+        bestPath = rsp.getBest();
+        assertEquals(3587, bestPath.getDistance(), 1);
+        assertEquals(92, bestPath.getPoints().getSize());
+    }
 }

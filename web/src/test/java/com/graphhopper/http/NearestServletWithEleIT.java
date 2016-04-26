@@ -52,7 +52,7 @@ public class NearestServletWithEleIT extends BaseServletTester
         CmdArgs args = new CmdArgs().
                 put("graph.elevation.provider", "srtm").
                 put("graph.elevation.cachedir", "../core/files/").
-                put("prepare.chWeighting", "no").
+                put("prepare.chWeightings", "no").
                 put("config", "../config-example.properties").
                 put("osmreader.osm", "../core/files/monaco.osm.gz").
                 put("graph.location", dir);

@@ -22,7 +22,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.WeightingMap;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import org.json.JSONObject;
@@ -273,7 +273,7 @@ public class GraphHopperServlet extends GHBaseServlet
 
     protected void initHints( GHRequest request, Map<String, String[]> parameterMap )
     {
-        WeightingMap m = request.getHints();
+        HintsMap m = request.getHints();
         for (Entry<String, String[]> e : parameterMap.entrySet())
         {
             if (e.getValue().length == 1)

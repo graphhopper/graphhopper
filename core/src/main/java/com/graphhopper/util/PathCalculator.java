@@ -55,6 +55,7 @@ public class PathCalculator
         long visitedNodesSum = 0;
         QueryResult fromQResult = qResults.get(0);
         List<Path> altPaths = new ArrayList<>(pointCounts - 1);
+        boolean isRoundTrip = AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoOpts.getAlgorithm());
         boolean isAlternativeRoute = AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoOpts.getAlgorithm());
 
         if ((isAlternativeRoute || isRoundTrip) && pointCounts > 2)

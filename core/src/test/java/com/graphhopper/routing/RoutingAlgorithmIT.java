@@ -154,15 +154,14 @@ public class RoutingAlgorithmIT
         GraphHopper hopper = new GraphHopper().
                 // avoid that path.getDistance is too different to path.getPoint.calcDistance
                 setWayPointMaxDistance(0).
-                setOSMFile(osmFile).
-                setCHEnable(false).
+                setOSMFile(osmFile).setCHEnabled(false).
                 setGraphHopperLocation(graphFile).
                 setEncodingManager(new EncodingManager(importVehicles));
 
         hopper.importOrLoad();
 
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-        Weighting weighting = hopper.createWeighting(new WeightingMap("shortest"), encoder);
+        Weighting weighting = hopper.createWeighting(new HintsMap("shortest"), encoder);
 
         List<AlgoHelperEntry> prepares = createAlgos(hopper.getGraphHopperStorage(), hopper.getLocationIndex(),
                 encoder, true, TraversalMode.NODE_BASED, weighting, hopper.getEncodingManager());
@@ -568,8 +567,7 @@ public class RoutingAlgorithmIT
                     setStoreOnFlush(true).
                     // avoid that path.getDistance is too different to path.getPoint.calcDistance
                     setWayPointMaxDistance(0).
-                    setOSMFile(osmFile).
-                    setCHEnable(false).
+                    setOSMFile(osmFile).setCHEnabled(false).
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(new EncodingManager(importVehicles));
             if (is3D)
@@ -580,7 +578,7 @@ public class RoutingAlgorithmIT
             TraversalMode tMode = importVehicles.toLowerCase().contains("turncosts=true")
                     ? TraversalMode.EDGE_BASED_1DIR : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            Weighting weighting = hopper.createWeighting(new WeightingMap(weightStr), encoder);
+            Weighting weighting = hopper.createWeighting(new HintsMap(weightStr), encoder);
 
             Collection<AlgoHelperEntry> prepares = createAlgos(hopper.getGraphHopperStorage(),
                     hopper.getLocationIndex(), encoder, testAlsoCH, tMode, weighting, hopper.getEncodingManager());
@@ -661,8 +659,7 @@ public class RoutingAlgorithmIT
         final EncodingManager encodingManager = new EncodingManager("CAR");
         GraphHopper hopper = new GraphHopper().
                 setStoreOnFlush(true).
-                setEncodingManager(encodingManager).
-                setCHEnable(false).
+                setEncodingManager(encodingManager).setCHEnabled(false).
                 setWayPointMaxDistance(0).
                 setOSMFile("files/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).

@@ -32,7 +32,7 @@ the faster electronically method via signaturit.com, please send us an email wit
 keep in mind that this requires storing your Email there. The same applies if you want to sign a CLA for your whole company.
 
 Note, our CLA does not influence your rights on your contribution but it makes sure for others that you agree to the Apache License, Version 2.
-After this you'll appear in the <a href="CONTRIBUTORS.md">contributors list</a> and you pull request can be also technically discussed.
+After this you'll appear in the <a href="CONTRIBUTORS.md">contributors list</a> and your pull request can also be discussed technically.
 
 ## Syntax:
 
