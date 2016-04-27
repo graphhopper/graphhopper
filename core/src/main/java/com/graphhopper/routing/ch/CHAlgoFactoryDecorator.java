@@ -86,9 +86,13 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         if (!deprecatedWeightingConfig.isEmpty())
             throw new IllegalStateException("Use prepare.chWeightings and a comma separated list instead of prepare.chWeighting");
 
+        // default is enabled & fastest
         boolean enableThis = isEnabled();
         String chWeightingsStr = args.get("prepare.chWeightings", "");
-        if (!chWeightingsStr.isEmpty() && !"no".equals(chWeightingsStr))
+        if ("no".equals(chWeightingsStr))
+        {
+            enableThis = false;
+        } else if (!chWeightingsStr.isEmpty())
         {
             List<String> tmpCHWeightingList = Arrays.asList(chWeightingsStr.split(","));
             setWeightingsAsStrings(tmpCHWeightingList);
@@ -277,7 +281,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
     public RoutingAlgorithmFactory getDecoratedAlgorithmFactory( RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map )
     {
         boolean forceFlexMode = map.getBool(FORCE_FLEXIBLE_ROUTING, false);
-        if (forceFlexMode)
+        if (!isEnabled() || forceFlexMode)
             return defaultAlgoFactory;
 
         if (preparations.isEmpty())
