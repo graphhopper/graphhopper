@@ -163,8 +163,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         setHighwaySpeed("living_street", 6);
         setHighwaySpeed("steps", PUSHING_SECTION_SPEED / 2);
 
-        setHighwaySpeed("cycleway", 18);
-        setHighwaySpeed("path", 12);
+        final int CYCLEWAY_SPEED = 18;  // Make sure cycleway and path use same speed value, see #634
+        setHighwaySpeed("cycleway", CYCLEWAY_SPEED);
+        setHighwaySpeed("path", CYCLEWAY_SPEED);
         setHighwaySpeed("footway", 6);
         setHighwaySpeed("pedestrian", 6);
         setHighwaySpeed("track", 12);
@@ -426,14 +427,29 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         }
 
         // Until now we assumed that the way is no pushing section
-        // Now we check, but only in case that our speed is bigger compared to the PUSHING_SECTION_SPEED
-        if ((speed > PUSHING_SECTION_SPEED)
-                && (!way.hasTag("bicycle", intendedValues) && way.hasTag("highway", pushingSections)))
-        {
-            if (way.hasTag("highway", "steps"))
-                speed = PUSHING_SECTION_SPEED / 2;
-            else
-                speed = PUSHING_SECTION_SPEED;
+        // Now we check that, but only in case that our speed is bigger compared to the PUSHING_SECTION_SPEED
+        if (speed > PUSHING_SECTION_SPEED)
+        { 
+            if (way.hasTag("highway", pushingSections))
+            {
+                if (!way.hasTag("bicycle", intendedValues))
+                {
+                 if (way.hasTag("highway", "steps"))
+                    speed = PUSHING_SECTION_SPEED / 2;
+                 else
+                    speed = PUSHING_SECTION_SPEED;
+                }
+                else
+                {
+                   if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))
+                      speed = getHighwaySpeed("cycleway");
+                   else
+                   {
+                       // (way.hasTag("bicycle", "yes") || way.hasTag("bicycle", "permissive"))
+                       speed = PUSHING_SECTION_SPEED * 2;
+                   }
+                }
+            }
         }
 
         return speed;
@@ -546,8 +562,11 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     {
         String service = way.getTag("service");
         String highway = way.getTag("highway");
-        if (way.hasTag("bicycle", "designated"))
-            weightToPrioMap.put(100d, PREFER.getValue());
+        if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))
+            if ("path".equals(highway))
+                weightToPrioMap.put(100d, VERY_NICE.getValue());
+            else
+                weightToPrioMap.put(100d, PREFER.getValue());
         if ("cycleway".equals(highway))
             weightToPrioMap.put(100d, VERY_NICE.getValue());
 

@@ -68,7 +68,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.clearTags();
         way.setTag("highway", "footway");
         way.setTag("bicycle", "yes");
-        assertEquals(6, encoder.getSpeed(way));
+        assertEquals(PUSHING_SECTION_SPEED * 2, encoder.getSpeed(way));
         assertPriority(UNCHANGED.getValue(), way);
 
         way.clearTags();
@@ -76,14 +76,31 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("surface", "paved");
         way.setTag("bicycle", "yes");
 
-        assertEquals(6, encoder.getSpeed(way));
+        assertEquals(PUSHING_SECTION_SPEED * 2, encoder.getSpeed(way));
         assertPriority(UNCHANGED.getValue(), way);
 
         way.clearTags();
+        way.setTag("highway", "cycleway");
+        assertEquals(18, encoder.getSpeed(way));
+        assertPriority(VERY_NICE.getValue(), way);
+        int cyclewayspeed = encoder.getSpeed(way);
+
+        // Make sure that highway=cycleway" and highway=path with bicycle = designated give same result
+        way.clearTags();
         way.setTag("highway", "path");
+        way.setTag("bicycle", "designated");
+        assertEquals(cyclewayspeed, encoder.getSpeed(way));
+        assertPriority(VERY_NICE.getValue(), way);
+
         way.setTag("bicycle", "yes");
-        assertEquals(12, encoder.getSpeed(way));
+        assertEquals(PUSHING_SECTION_SPEED * 2, encoder.getSpeed(way));
         assertPriority(UNCHANGED.getValue(), way);
+
+        way.setTag("surface", "unpaved");
+        assertEquals(PUSHING_SECTION_SPEED * 2, encoder.getSpeed(way));
+
+        way.setTag("surface", "paved");
+        assertEquals(PUSHING_SECTION_SPEED * 2, encoder.getSpeed(way));
 
         // Pushing section Ok !!
         way.clearTags();
@@ -96,7 +113,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("highway", "footway");
         way.setTag("surface", "paved");
         way.setTag("bicycle", "designated");
-        assertEquals(6, encoder.getSpeed(way));
+        assertEquals(cyclewayspeed, encoder.getSpeed(way));
         assertPriority(PREFER.getValue(), way);
 
         way.clearTags();
