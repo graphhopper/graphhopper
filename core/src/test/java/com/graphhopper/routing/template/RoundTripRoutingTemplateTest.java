@@ -36,7 +36,7 @@ import static org.junit.Assert.*;
  *
  * @author Peter Karich
  */
-public class RoundTripRoutingTest
+public class RoundTripRoutingTemplateTest
 {
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = new EncodingManager(carFE);
@@ -49,7 +49,7 @@ public class RoundTripRoutingTest
         Weighting weighting = new FastestWeighting(carFE);
         Graph g = createTestGraph(true);
 
-        RoundTripRouting rTripRouting = new RoundTripRouting(new GHRequest(), new GHResponse(), null);
+        RoundTripRoutingTemplate rTripRouting = new RoundTripRoutingTemplate(new GHRequest(), new GHResponse(), null);
 
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
         QueryResult qr4 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);

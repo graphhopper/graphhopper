@@ -25,10 +25,10 @@ import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.template.AlternativeRouting;
-import com.graphhopper.routing.template.RoundTripRouting;
+import com.graphhopper.routing.template.AlternativeRoutingTemplate;
+import com.graphhopper.routing.template.RoundTripRoutingTemplate;
 import com.graphhopper.routing.template.RoutingTemplate;
-import com.graphhopper.routing.template.ViaRouting;
+import com.graphhopper.routing.template.ViaRoutingTemplate;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -1026,11 +1026,11 @@ public class GraphHopper implements GraphHopperAPI
 
         RoutingTemplate routingTemplate;
         if (AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoStr))
-            routingTemplate = new RoundTripRouting(request, ghRsp, locationIndex);
+            routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex);
         else if (AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoStr))
-            routingTemplate = new AlternativeRouting(request, ghRsp, locationIndex);
+            routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex);
         else
-            routingTemplate = new ViaRouting(request, ghRsp, locationIndex);
+            routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex);
 
         List<Path> altPaths = null;
         // TODO NOW: create configuration or better: fetch from routingTemplate

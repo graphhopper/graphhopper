@@ -45,9 +45,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author Peter Karich
  */
-public class RoundTripRouting implements RoutingTemplate
+public class RoundTripRoutingTemplate implements RoutingTemplate
 {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RoundTripRouting.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(RoundTripRoutingTemplate.class);
     // TODO NOW fill from request but with default and max values.
     private final int INITIAL_TRIES = 40;
     private final int RESET_TRIES = 2;
@@ -61,7 +61,7 @@ public class RoundTripRouting implements RoutingTemplate
     // result from route
     private List<Path> pathList;
 
-    public RoundTripRouting( GHRequest request, GHResponse ghRsp, LocationIndex locationIndex )
+    public RoundTripRoutingTemplate( GHRequest request, GHResponse ghRsp, LocationIndex locationIndex )
     {
         this.ghRequest = request;
         this.ghResponse = ghRsp;
@@ -105,7 +105,9 @@ public class RoundTripRouting implements RoutingTemplate
 
         AvoidEdgesWeighting avoidPathWeighting = new AvoidEdgesWeighting(algoOpts.getWeighting());
         avoidPathWeighting.setEdgePenaltyFactor(5);
-        algoOpts = AlgorithmOptions.start(algoOpts).weighting(avoidPathWeighting).build();
+        algoOpts = AlgorithmOptions.start(algoOpts).
+                algorithm(AlgorithmOptions.DIJKSTRA_BI).
+                weighting(avoidPathWeighting).build();
         long visitedNodesSum = 0L;
         for (int i = 1; i < queryResults.size(); i++)
         {

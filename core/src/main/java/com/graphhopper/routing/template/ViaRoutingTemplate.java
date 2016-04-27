@@ -40,7 +40,7 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class ViaRouting implements RoutingTemplate
+public class ViaRoutingTemplate implements RoutingTemplate
 {
     protected final GHRequest ghRequest;
     protected final GHResponse ghResponse;
@@ -51,7 +51,7 @@ public class ViaRouting implements RoutingTemplate
     // result from route
     protected List<Path> pathList;
 
-    public ViaRouting( GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex )
+    public ViaRoutingTemplate( GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex )
     {
         this.locationIndex = locationIndex;
         this.ghRequest = ghRequest;

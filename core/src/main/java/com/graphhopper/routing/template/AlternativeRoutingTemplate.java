@@ -35,9 +35,9 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-final public class AlternativeRouting extends ViaRouting
+final public class AlternativeRoutingTemplate extends ViaRoutingTemplate
 {
-    public AlternativeRouting( GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex )
+    public AlternativeRoutingTemplate( GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex )
     {
         super(ghRequest, ghRsp, locationIndex);
     }
@@ -48,8 +48,7 @@ final public class AlternativeRouting extends ViaRouting
         boolean withViaTurnPenalty = ghRequest.getHints().getBool("pass_through", false);
         if (withViaTurnPenalty)
             throw new IllegalStateException("Alternative paths and a viaTurnPenalty at the same time is currently not supported");
-
-        // TODO NOW where to place the AlternativeRoute algo creation - in RoutingAlgorithmFactory or here somewhere?
+        
         return super.calcPaths(queryGraph, algoFactory, algoOpts);
     }
 

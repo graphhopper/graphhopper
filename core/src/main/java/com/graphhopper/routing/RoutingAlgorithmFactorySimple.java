@@ -69,11 +69,6 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
             altRouteAlgo.setMaxExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
             ra = altRouteAlgo;
 
-        } else if (AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoStr))
-        {
-            // TODO NOW let round trip choose more flexible like A* bi etc
-            ra = new DijkstraBidirectionRef(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
-
         } else
         {
             throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());
