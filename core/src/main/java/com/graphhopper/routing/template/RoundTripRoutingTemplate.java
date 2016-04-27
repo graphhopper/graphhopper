@@ -34,6 +34,7 @@ import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.Translation;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import org.slf4j.Logger;
@@ -48,10 +49,7 @@ import org.slf4j.LoggerFactory;
 public class RoundTripRoutingTemplate implements RoutingTemplate
 {
     private static final Logger LOGGER = LoggerFactory.getLogger(RoundTripRoutingTemplate.class);
-    // TODO NOW fill from request but with default and max values.
-    private final int INITIAL_TRIES = 40;
-    private final int RESET_TRIES = 2;
-    private final int MAX_TRIES = 50;
+    private final int maxRetries;
     private final GHRequest ghRequest;
     private final GHResponse ghResponse;
     private PathWrapper altResponse;
@@ -61,11 +59,12 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
     // result from route
     private List<Path> pathList;
 
-    public RoundTripRoutingTemplate( GHRequest request, GHResponse ghRsp, LocationIndex locationIndex )
+    public RoundTripRoutingTemplate( GHRequest request, GHResponse ghRsp, LocationIndex locationIndex, int maxRetries )
     {
         this.ghRequest = request;
         this.ghResponse = ghRsp;
         this.locationIndex = locationIndex;
+        this.maxRetries = maxRetries;
     }
 
     @Override
@@ -84,7 +83,12 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
         GHPoint last = points.get(0);
         for (int i = 0; i < strategy.getNumberOfGeneratedPoints(); i++)
         {
-            QueryResult result = generateValidPoint(last, strategy.getDistanceForIteration(i), strategy.getHeadingForIteration(i), edgeFilter, INITIAL_TRIES);
+            QueryResult result = generateValidPoint(last, strategy.getDistanceForIteration(i), strategy.getHeadingForIteration(i), edgeFilter);
+            if (result == null)
+            {
+                ghResponse.addError(new IllegalStateException("Could not find a valid point after " + maxRetries + " tries, for the point:" + last));
+                return Collections.emptyList();
+            }
             last = result.getSnappedPoint();
             queryResults.add(result);
         }
@@ -131,7 +135,7 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
     }
 
     @Override
-    public boolean isFinal( PathMerger pathMerger, Translation tr )
+    public boolean isReady( PathMerger pathMerger, Translation tr )
     {
         altResponse = new PathWrapper();
         ghResponse.add(altResponse);
@@ -141,35 +145,28 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
     }
 
     private QueryResult generateValidPoint( GHPoint from, double distanceInMeters, double heading,
-                                            EdgeFilter edgeFilter, int triesAvailable )
+                                            EdgeFilter edgeFilter )
     {
-        int counter = 0;
+        int tryCount = 0;
         while (true)
         {
             GHPoint generatedPoint = Helper.DIST_EARTH.projectCoordinate(from.getLat(), from.getLon(), distanceInMeters, heading);
             QueryResult qr = locationIndex.findClosest(generatedPoint.getLat(), generatedPoint.getLon(), edgeFilter);
             if (qr.isValid())
-            {
                 return qr;
-            }
 
-            triesAvailable--;
-            counter++;
+            tryCount++;
+            distanceInMeters *= 0.95;
 
-            // The idea is that if we cannot find any valid points around a coordinate, we reduce the distance, because it could be that there are no points in the area
-            if (triesAvailable <= 0)
-            {
-                triesAvailable = RESET_TRIES;
-                distanceInMeters = distanceInMeters / 3;
-                LOGGER.debug("Cannot find anything, reducing the distance to: " + distanceInMeters);
-            }
-
-            // Last try with 1km distance
-            if (counter == MAX_TRIES)
-                distanceInMeters = 1000;
-
-            if (counter >= MAX_TRIES)
-                throw new IllegalStateException("Could not find a valid point after " + counter + " iterations, for the Point:" + from);
+            if (tryCount >= maxRetries)
+                return null;
         }
+    }
+
+    @Override
+    public int getMaxRetries()
+    {
+        // with potentially retrying, including generating new route points, for now disabled
+        return 1;
     }
 }

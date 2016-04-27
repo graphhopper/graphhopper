@@ -69,6 +69,7 @@ public class GraphHopper implements GraphHopperAPI
     private String preferredLanguage = "";
     private boolean fullyLoaded = false;
     // for routing
+    private int maxRoundTripRetries = 3;
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private final Set<RoutingAlgorithmFactoryDecorator> algoDecorators = new LinkedHashSet<>();
@@ -651,6 +652,7 @@ public class GraphHopper implements GraphHopperAPI
 
         // routing
         maxVisitedNodes = args.getInt("routing.maxVisitedNodes", Integer.MAX_VALUE);
+        maxRoundTripRetries = args.getInt("routing.roundTrip.maxRetries", maxRoundTripRetries);
 
         return this;
     }
@@ -1026,18 +1028,16 @@ public class GraphHopper implements GraphHopperAPI
 
         RoutingTemplate routingTemplate;
         if (AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoStr))
-            routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex);
+            routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, maxRoundTripRetries);
         else if (AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoStr))
             routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex);
         else
             routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex);
 
         List<Path> altPaths = null;
-        // TODO NOW: create configuration or better: fetch from routingTemplate
-        int maxRetries = 10;
+        int maxRetries = routingTemplate.getMaxRetries();
         Locale locale = request.getLocale();
         Translation tr = trMap.getWithFallBack(locale);
-
         for (int i = 0; i < maxRetries; i++)
         {
             StopWatch sw = new StopWatch().start();
@@ -1099,7 +1099,7 @@ public class GraphHopper implements GraphHopperAPI
                     setEnableInstructions(tmpEnableInstructions).
                     setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
 
-            if (routingTemplate.isFinal(pathMerger, tr))
+            if (routingTemplate.isReady(pathMerger, tr))
                 break;
         }
 

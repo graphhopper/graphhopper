@@ -145,7 +145,7 @@ public class ViaRoutingTemplate implements RoutingTemplate
     }
 
     @Override
-    public boolean isFinal( PathMerger pathMerger, Translation tr )
+    public boolean isReady( PathMerger pathMerger, Translation tr )
     {
         if (ghRequest.getPoints().size() - 1 != pathList.size())
             throw new RuntimeException("There should be exactly one more points than paths. points:" + ghRequest.getPoints().size() + ", paths:" + pathList.size());
@@ -153,5 +153,11 @@ public class ViaRoutingTemplate implements RoutingTemplate
         ghResponse.add(altResponse);
         pathMerger.doWork(altResponse, pathList, tr);
         return true;
+    }
+
+    @Override
+    public int getMaxRetries()
+    {
+        return 1;
     }
 }

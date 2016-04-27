@@ -49,7 +49,7 @@ public class RoundTripRoutingTemplateTest
         Weighting weighting = new FastestWeighting(carFE);
         Graph g = createTestGraph(true);
 
-        RoundTripRoutingTemplate rTripRouting = new RoundTripRoutingTemplate(new GHRequest(), new GHResponse(), null);
+        RoundTripRoutingTemplate rTripRouting = new RoundTripRoutingTemplate(new GHRequest(), new GHResponse(), null, 1);
 
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
         QueryResult qr4 = locationIndex.findClosest(0.05, 0.25, EdgeFilter.ALL_EDGES);

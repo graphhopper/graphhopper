@@ -48,12 +48,12 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate
         boolean withViaTurnPenalty = ghRequest.getHints().getBool("pass_through", false);
         if (withViaTurnPenalty)
             throw new IllegalStateException("Alternative paths and a viaTurnPenalty at the same time is currently not supported");
-        
+
         return super.calcPaths(queryGraph, algoFactory, algoOpts);
     }
 
     @Override
-    public boolean isFinal( PathMerger pathMerger, Translation tr )
+    public boolean isReady( PathMerger pathMerger, Translation tr )
     {
         if (pathList.isEmpty())
             throw new RuntimeException("Empty paths for alternative route calculation not expected");
