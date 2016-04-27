@@ -561,7 +561,7 @@ public class GraphHopperIT
 
         assertEquals(1, rsp.getAll().size());
         PathWrapper pw = rsp.getBest();
-        assertEquals(83, pw.getPoints().size());
+        assertEquals(71, pw.getPoints().size());
     }
 
     public void testFlexMode_631()
