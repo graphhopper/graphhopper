@@ -46,9 +46,7 @@ public abstract class TourStrategy
     public abstract double getDistanceForIteration( int iteration );
 
     /**
-     * Returns the bearing between 0 and 360 for the current iteration.
-     * <p>
-     * TODO NOW make identical orientation as the heading
+     * Returns the north based heading between 0 and 360 for the current iteration.
      */
     public abstract double getHeadingForIteration( int iteration );
 
@@ -62,22 +60,4 @@ public abstract class TourStrategy
             distanceModification = -distanceModification;
         return distance + distanceModification;
     }
-
-    /**
-     * Allows to add a value to the current bearing. If the value becomse greater than 360 start
-     * from 0.
-     */
-    protected double addToBearing( double bearing, double add )
-    {
-        // Fix initial values
-        add = add % 360;
-        bearing = bearing % 360;
-
-        bearing = bearing + add;
-        if (bearing < 0)
-            bearing = 360 + bearing; // + since the number is negative
-
-        return bearing % 360;
-    }
-
 }

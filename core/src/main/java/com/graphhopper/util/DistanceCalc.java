@@ -94,16 +94,10 @@ public interface DistanceCalc
 
     /**
      * This methods projects a point given in lat and long (in degrees) into a direction, given as
-     * bearing, measured clockwise from north in degrees. The distance is passed in km.
-     * <p>
-     * This formula is taken from: http://www.movable-type.co.uk/scripts/latlong.html
-     * <p>
-     * lat2 = asin( sin φ1 ⋅ cos δ + cos φ1 ⋅ sin δ ⋅ cos θ ) lon2 = λ1 + atan2( sin θ ⋅ sin δ ⋅ cos
-     * φ1, cos δ − sin φ1 ⋅ sin φ2 )
-     * <p>
+     * heading, measured clockwise from north in degrees. The distance is passed in km.     
      */
     public GHPoint projectCoordinate( double lat_deg, double lon_deg,
-                                      double distanceInMeter, double bearingClockwiseFromNorth );
+                                      double distanceInMeter, double headingClockwiseFromNorth );
 
     /*
      * Simple heuristic to detect if the specified two points are crossing the boundary +-180°. See
