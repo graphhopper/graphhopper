@@ -808,6 +808,12 @@ public class GraphHopperTest
             {
                 return af;
             }
+
+            @Override
+            public boolean isEnabled()
+            {
+                return true;
+            }
         });
         instance.importOrLoad();
 
@@ -830,6 +836,12 @@ public class GraphHopperTest
                         return super.createAlgo(g, opts);
                     }
                 };
+            }
+
+            @Override
+            public boolean isEnabled()
+            {
+                return true;
             }
         });
         GHRequest req = new GHRequest(51.2492152, 9.4317166, 51.2, 9.4);

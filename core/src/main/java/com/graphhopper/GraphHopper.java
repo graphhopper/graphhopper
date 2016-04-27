@@ -89,7 +89,8 @@ public class GraphHopper implements GraphHopperAPI
 
     public GraphHopper()
     {
-        setCHEnabled(true);
+        chFactoryDecorator.setEnabled(true);
+        algoDecorators.add(chFactoryDecorator);
     }
 
     /**
@@ -355,11 +356,6 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper setCHEnabled( boolean enable )
     {
         ensureNotLoaded();
-        if (enable)
-            algoDecorators.add(chFactoryDecorator);
-        else
-            algoDecorators.remove(chFactoryDecorator);
-
         chFactoryDecorator.setEnabled(enable);
         return this;
     }
@@ -847,7 +843,8 @@ public class GraphHopper implements GraphHopperAPI
         RoutingAlgorithmFactory routingAlgorithmFactory = new RoutingAlgorithmFactorySimple();
         for (RoutingAlgorithmFactoryDecorator decorator : algoDecorators)
         {
-            routingAlgorithmFactory = decorator.getDecoratedAlgorithmFactory(routingAlgorithmFactory, map);
+            if (decorator.isEnabled())
+                routingAlgorithmFactory = decorator.getDecoratedAlgorithmFactory(routingAlgorithmFactory, map);
         }
 
         return routingAlgorithmFactory;
