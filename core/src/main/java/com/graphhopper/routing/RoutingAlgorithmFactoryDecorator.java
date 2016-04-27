@@ -25,6 +25,8 @@ import com.graphhopper.routing.util.HintsMap;
  */
 public interface RoutingAlgorithmFactoryDecorator
 {
+    boolean isEnabled();
+
     /**
      * This method returns the specified algoFactory unchanged, decorates it or completely replaces
      * it depending on the specified optionsMap.

@@ -117,6 +117,9 @@ public class GraphHopperTest
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         gh.importOrLoad();
+
+        assertFalse(gh.getAlgorithmFactory(new HintsMap("fastest")) instanceof PrepareContractionHierarchies);
+
         GHResponse rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertFalse(rsp.hasErrors());
         assertEquals(3, rsp.getBest().getPoints().getSize());
@@ -129,6 +132,14 @@ public class GraphHopperTest
         assertFalse(rsp.hasErrors());
         assertEquals(3, rsp.getBest().getPoints().getSize());
 
+        gh.close();
+
+        gh = new GraphHopper().
+                setGraphHopperLocation(ghLoc).
+                setOSMFile(testOsm).
+                init(new CmdArgs().put("graph.flagEncoders", "CAR").put("prepare.chWeightings", "no"));
+
+        assertFalse(gh.getAlgorithmFactory(new HintsMap("fastest")) instanceof PrepareContractionHierarchies);
         gh.close();
     }
 
@@ -808,6 +819,12 @@ public class GraphHopperTest
             {
                 return af;
             }
+
+            @Override
+            public boolean isEnabled()
+            {
+                return true;
+            }
         });
         instance.importOrLoad();
 
@@ -830,6 +847,12 @@ public class GraphHopperTest
                         return super.createAlgo(g, opts);
                     }
                 };
+            }
+
+            @Override
+            public boolean isEnabled()
+            {
+                return true;
             }
         });
         GHRequest req = new GHRequest(51.2492152, 9.4317166, 51.2, 9.4);
