@@ -21,7 +21,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.util.AvoidPathWeighting;
+import com.graphhopper.routing.util.AvoidEdgesWeighting;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -103,7 +103,8 @@ public class RoundTripRouting implements RoutingTemplate
     {
         pathList = new ArrayList<>(queryResults.size() - 1);
 
-        AvoidPathWeighting avoidPathWeighting = new AvoidPathWeighting(algoOpts.getWeighting());
+        AvoidEdgesWeighting avoidPathWeighting = new AvoidEdgesWeighting(algoOpts.getWeighting());
+        avoidPathWeighting.setEdgePenaltyFactor(5);
         algoOpts = AlgorithmOptions.start(algoOpts).weighting(avoidPathWeighting).build();
         long visitedNodesSum = 0L;
         for (int i = 1; i < queryResults.size(); i++)
@@ -113,7 +114,7 @@ public class RoundTripRouting implements RoutingTemplate
             visitedNodesSum += algo.getVisitedNodes();
             pathList.add(path);
             // it is important to avoid previously visited nodes for future paths
-            avoidPathWeighting.addPath(path);
+            avoidPathWeighting.addEdges(path.calcEdges());
         }
 
         ghResponse.getHints().put("visited_nodes.sum", visitedNodesSum);

@@ -1023,15 +1023,17 @@ public class GraphHopper implements GraphHopperAPI
             return Collections.emptyList();
         }
 
-        FlagEncoder encoder = encodingManager.getEncoder(vehicle);
-        RoutingTemplate routingTemplate = new ViaRouting(request, ghRsp, locationIndex);
+        FlagEncoder encoder = encodingManager.getEncoder(vehicle);        
         List<GHPoint> points = request.getPoints();
         String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
 
+        RoutingTemplate routingTemplate;
         if (AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoStr))
             routingTemplate = new RoundTripRouting(request, ghRsp, locationIndex);
         else if (AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoStr))
             routingTemplate = new AlternativeRouting(request, ghRsp, locationIndex);
+        else
+            routingTemplate = new ViaRouting(request, ghRsp, locationIndex);
 
         List<Path> altPaths = null;
         // TODO NOW: create configuration or better: fetch from routingTemplate

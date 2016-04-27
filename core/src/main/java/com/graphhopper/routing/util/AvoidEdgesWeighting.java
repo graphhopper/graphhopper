@@ -17,35 +17,41 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.Path;
 import com.graphhopper.util.EdgeIteratorState;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
+import java.util.List;
 
 /**
  * Rates already used Paths worse.
  *
  * @author RobinBoldt
  */
-public class AvoidPathWeighting extends AbstractAdjustedWeighting
+public class AvoidEdgesWeighting extends AbstractAdjustedWeighting
 {
     // contains the edge IDs of the already visited edges
     protected final TIntSet visitedEdges = new TIntHashSet();
 
-    public static int ALREADY_VISISTED_EDGES_PENALTY = 5;
+    private double edgePenaltyFactor = 5.0;
 
-    public AvoidPathWeighting( Weighting superWeighting )
+    public AvoidEdgesWeighting( Weighting superWeighting )
     {
         super(superWeighting);
+    }
+
+    public AvoidEdgesWeighting setEdgePenaltyFactor( double edgePenaltyFactor )
+    {
+        this.edgePenaltyFactor = edgePenaltyFactor;
+        return this;
     }
 
     /**
      * This method adds the specified path to this weighting which should be penalized in the
      * calcWeight method.
      */
-    public void addPath( Path path )
+    public void addEdges( List<EdgeIteratorState> edges )
     {
-        for (EdgeIteratorState edge : path.calcEdges())
+        for (EdgeIteratorState edge : edges)
         {
             visitedEdges.add(edge.getEdge());
         }
@@ -62,7 +68,7 @@ public class AvoidPathWeighting extends AbstractAdjustedWeighting
     {
         double weight = superWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
         if (visitedEdges.contains(edgeState.getEdge()))
-            return weight * ALREADY_VISISTED_EDGES_PENALTY;
+            return weight * edgePenaltyFactor;
 
         return weight;
     }
@@ -70,7 +76,7 @@ public class AvoidPathWeighting extends AbstractAdjustedWeighting
     @Override
     public String getName()
     {
-        return "avoid_path";
+        return "avoid_edges";
     }
 
     @Override
