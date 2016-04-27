@@ -101,7 +101,6 @@ public class RoundTripRouting implements RoutingTemplate
     @Override
     public List<Path> calcPaths( QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts )
     {
-        int pointCounts = ghRequest.getPoints().size();
         pathList = new ArrayList<>(queryResults.size() - 1);
 
         AvoidPathWeighting avoidPathWeighting = new AvoidPathWeighting(algoOpts.getWeighting());
@@ -118,7 +117,7 @@ public class RoundTripRouting implements RoutingTemplate
         }
 
         ghResponse.getHints().put("visited_nodes.sum", visitedNodesSum);
-        ghResponse.getHints().put("visited_nodes.average", (float) visitedNodesSum / (pointCounts - 1));
+        ghResponse.getHints().put("visited_nodes.average", (float) visitedNodesSum / (queryResults.size() - 1));
 
         return pathList;
     }
