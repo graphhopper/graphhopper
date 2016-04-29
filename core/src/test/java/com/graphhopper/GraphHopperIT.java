@@ -558,10 +558,11 @@ public class GraphHopperIT
         rq.getHints().put("round_trip.seed", 0);
 
         GHResponse rsp = hopper.route(rq);
-
+ 
         assertEquals(1, rsp.getAll().size());
         PathWrapper pw = rsp.getBest();
-        assertEquals(71, pw.getPoints().size());
+        assertEquals(14, rsp.getBest().getTime() / 1000f / 60, 1);
+        assertEquals(63, pw.getPoints().size());
     }
 
     public void testFlexMode_631()

@@ -29,9 +29,7 @@ import com.graphhopper.routing.util.tour.SinglePointTour;
 import com.graphhopper.routing.util.tour.TourStrategy;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PathMerger;
-import com.graphhopper.util.Translation;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,7 +46,6 @@ import org.slf4j.LoggerFactory;
  */
 public class RoundTripRoutingTemplate implements RoutingTemplate
 {
-    private static final Logger LOGGER = LoggerFactory.getLogger(RoundTripRoutingTemplate.class);
     private final int maxRetries;
     private final GHRequest ghRequest;
     private final GHResponse ghResponse;
@@ -113,12 +110,23 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
                 algorithm(AlgorithmOptions.DIJKSTRA_BI).
                 weighting(avoidPathWeighting).build();
         long visitedNodesSum = 0L;
-        for (int i = 1; i < queryResults.size(); i++)
+        QueryResult start = queryResults.get(0);
+        for (int qrIndex = 1; qrIndex < queryResults.size(); qrIndex++)
         {
             RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOpts);
-            Path path = algo.calcPath(queryResults.get(i - 1).getClosestNode(), queryResults.get(i).getClosestNode());
+            // instead getClosestNode (which might be a virtual one and introducing unnecessary tails of the route)
+            // use next tower node -> getBaseNode or getAdjNode
+            // Later: remove potential route tail
+            QueryResult startQR = queryResults.get(qrIndex - 1);
+            int startNode = (startQR == start) ? startQR.getClosestNode() : startQR.getClosestEdge().getBaseNode();
+            QueryResult endQR = queryResults.get(qrIndex);
+            int endNode = (endQR == start) ? endQR.getClosestNode() : endQR.getClosestEdge().getBaseNode();
+
+            Path path = algo.calcPath(startNode, endNode);
             visitedNodesSum += algo.getVisitedNodes();
+
             pathList.add(path);
+
             // it is important to avoid previously visited nodes for future paths
             avoidPathWeighting.addEdges(path.calcEdges());
         }
