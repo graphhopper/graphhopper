@@ -208,7 +208,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         if (!isAccept(allowed))
             return 0;
 
-        long encoded = 0;
+        long flags = 0;
         if (!isFerry(allowed))
         {
             // get assumed speed from highway type
@@ -225,39 +225,41 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
 
             boolean isRoundabout = way.hasTag("junction", "roundabout");
             if (isRoundabout)
-                encoded = setBool(0, K_ROUNDABOUT, true);
+                flags = setBool(0, K_ROUNDABOUT, true);
 
             if (way.hasTag("oneway", oneways) || isRoundabout)
             {
                 if (way.hasTag("oneway", "-1"))
                 {
-                    encoded = setReverseSpeed(encoded, speed);
-                    encoded |= backwardBit;
+                    flags = setReverseSpeed(flags, speed);
+                    flags |= backwardBit;
                 } else
                 {
-                    encoded = setSpeed(encoded, speed);
-                    encoded |= forwardBit;
+                    flags = setSpeed(flags, speed);
+                    flags |= forwardBit;
                 }
             } else
             {
-                encoded = setSpeed(encoded, speed);
-                encoded = setReverseSpeed(encoded, speed);
-                encoded |= directionBitMask;
+                flags = setSpeed(flags, speed);
+                flags = setReverseSpeed(flags, speed);
+                flags |= directionBitMask;
             }
 
         } else
         {
-            encoded = handleFerryTags(way, defaultSpeedMap.get("living_street"), defaultSpeedMap.get("service"), defaultSpeedMap.get("residential"));
-            encoded |= directionBitMask;
+            double ferrySpeed = getFerrySpeed(way, defaultSpeedMap.get("living_street"), defaultSpeedMap.get("service"), defaultSpeedMap.get("residential"));
+            flags = setSpeed(flags, ferrySpeed);
+            flags = setReverseSpeed(flags, ferrySpeed);
+            flags |= directionBitMask;
         }
 
         // relations are not yet stored -> see BikeCommonFlagEncoder.defineRelationBits how to do this
-        encoded = priorityWayEncoder.setValue(encoded, handlePriority(way, priorityFromRelation));
+        flags = priorityWayEncoder.setValue(flags, handlePriority(way, priorityFromRelation));
 
         // Set the curvature to the Maximum
-        encoded = curvatureEncoder.setValue(encoded, 10);
+        flags = curvatureEncoder.setValue(flags, 10);
 
-        return encoded;
+        return flags;
     }
 
     @Override
