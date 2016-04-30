@@ -23,6 +23,7 @@
  * HarelM, improvements regarding elevation
  * HelgeKrueger, modularization of javascript, #590
  * henningvs, doc improvements
+ * IsNull, improvements like #708
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config
  * JohannesPelzer, improved GPX information and various other things
