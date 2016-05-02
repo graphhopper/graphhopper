@@ -22,9 +22,9 @@ import com.graphhopper.util.PMap;
 /**
  * @author Peter Karich
  */
-public class WeightingMap extends PMap
+public class HintsMap extends PMap
 {
-    public WeightingMap()
+    public HintsMap()
     {
     }
 
@@ -32,20 +32,20 @@ public class WeightingMap extends PMap
      * Convenient constructor if only one parameter is provided
      * <p>
      */
-    public WeightingMap( String weighting )
+    public HintsMap( String weighting )
     {
         super(5);
         setWeighting(weighting);
     }
 
     @Override
-    public WeightingMap put( String key, Object str )
+    public HintsMap put( String key, Object str )
     {
         super.put(key, str);
         return this;
     }
 
-    public WeightingMap setWeighting( String w )
+    public HintsMap setWeighting( String w )
     {
         if (w != null)
             super.put("weighting", w);
@@ -54,6 +54,18 @@ public class WeightingMap extends PMap
 
     public String getWeighting()
     {
-        return super.get("weighting", "");
+        return super.get("weighting", "").toLowerCase();
+    }
+
+    public HintsMap setVehicle( String v )
+    {
+        if (v != null)
+            super.put("vehicle", v);
+        return this;
+    }
+
+    public String getVehicle()
+    {
+        return super.get("vehicle", "").toLowerCase();
     }
 }

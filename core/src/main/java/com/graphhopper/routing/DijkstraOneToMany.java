@@ -82,6 +82,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         if (endNode >= 0)
             p.setWeight(weights[endNode]);
         p.setFromNode(fromNode);
+        // return 'not found' if invalid endNode or limit reached
         if (endNode < 0 || isWeightLimitExceeded())
             return p;
 
@@ -143,8 +144,15 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         }
 
         visitedNodes = 0;
+
+        // we call 'finished' before heap.peek_element but this would add unnecessary overhead for this special case so we do it outside of the loop
         if (finished())
+        {
+            // then we need a small workaround for special cases see #707
+            if (heap.isEmpty())
+                doClear = true;
             return currNode;
+        }
 
         while (true)
         {

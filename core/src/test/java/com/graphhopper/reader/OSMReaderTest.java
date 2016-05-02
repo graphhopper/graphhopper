@@ -36,8 +36,11 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
@@ -64,6 +67,7 @@ public class OSMReaderTest
     // test-osm6.pbf was created by running "osmconvert test-osm6.xml --timestamp=2014-01-02T00:10:14Z -o=test-osm6.pbf"
     // The osmconvert tool can be found here: http://wiki.openstreetmap.org/wiki/Osmconvert
     private final String file6 = "test-osm6.pbf";
+    private final String file7 = "test-osm7.xml";
     private final String fileNegIds = "test-osm-negative-ids.xml";
     private final String fileBarriers = "test-barriers.xml";
     private final String fileTurnRestrictions = "test-restrictions.xml";
@@ -105,7 +109,7 @@ public class OSMReaderTest
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
             setEncodingManager(new EncodingManager("CAR,FOOT"));
-            setCHEnable(false);
+            setCHEnabled(false);
 
             if (turnCosts)
             {
@@ -853,5 +857,21 @@ public class OSMReaderTest
         assertEquals(0.1, qr.getSnappedPoint().lat, 0.1);
         assertEquals(-179.6, qr.getSnappedPoint().lon, 0.1);
         assertEquals(56, qr.getClosestEdge().getDistance() / 1000, 1);
+    }
+
+    public void testRoutingRequestFails_issue665()
+    {
+        GraphHopper hopper = new GraphHopper();
+        hopper.setOSMFile("src/test/resources/com/graphhopper/reader/" + file7);
+        hopper.setEncodingManager(new EncodingManager("car,motorcycle"));
+        hopper.setCHEnable(false);
+        hopper.setGraphHopperLocation(dir);
+        hopper.importOrLoad();
+        GHRequest req = new GHRequest(48.97725592769741, 8.256896138191223, 48.978875552977684, 8.25486302375793).
+                setWeighting("curvature").
+                setVehicle("motorcycle");
+
+        GHResponse ghRsp = hopper.route(req);
+        assertFalse(ghRsp.getErrors().toString(), ghRsp.hasErrors());
     }
 }

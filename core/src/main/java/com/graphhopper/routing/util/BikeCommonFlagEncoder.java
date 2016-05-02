@@ -44,7 +44,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     protected static final int PUSHING_SECTION_SPEED = 4;
     private long unpavedBit = 0;
     // Pushing section heighways are parts where you need to get off your bike and push it (German: Schiebestrecke)
-    protected final HashSet<String> pushingSections = new HashSet<String>();
+    protected final HashSet<String> pushingSectionsHighways = new HashSet<String>();
     protected final HashSet<String> oppositeLanes = new HashSet<String>();
     protected final Set<String> preferHighwayTags = new HashSet<String>();
     protected final Set<String> avoidHighwayTags = new HashSet<String>();
@@ -69,7 +69,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     {
         super(speedBits, speedFactor, maxTurnCosts);
         // strict set, usually vehicle and agricultural/forestry are ignored by cyclists
-        restrictions.addAll(Arrays.asList("bicycle", "access"));
+        restrictions.addAll(Arrays.asList("bicycle", "vehicle", "access"));
         restrictedValues.add("private");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -261,7 +261,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // use the way if it is tagged for bikes
-        if (way.hasTag("bicycle", intendedValues))
+        if (way.hasTag("bicycle", intendedValues) || way.hasTag("bicycle", "dismount"))
             return acceptBit;
 
         // accept only if explicitly tagged for bike usage
@@ -355,34 +355,35 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         if (!isAccept(allowed))
             return 0;
 
-        long encoded = 0;
+        long flags = 0;
         double wayTypeSpeed = getSpeed(way);
         if (!isFerry(allowed))
         {
             wayTypeSpeed = applyMaxSpeed(way, wayTypeSpeed);
-            encoded = handleSpeed(way, wayTypeSpeed, encoded);
-            encoded = handleBikeRelated(way, encoded, relationFlags > UNCHANGED.getValue());
+            flags = handleSpeed(way, wayTypeSpeed, flags);
+            flags = handleBikeRelated(way, flags, relationFlags > UNCHANGED.getValue());
 
             boolean isRoundabout = way.hasTag("junction", "roundabout");
             if (isRoundabout)
             {
-                encoded = setBool(encoded, K_ROUNDABOUT, true);
+                flags = setBool(flags, K_ROUNDABOUT, true);
             }
 
         } else
         {
-            encoded = handleFerryTags(way,
+            double ferrySpeed = getFerrySpeed(way,
                     highwaySpeeds.get("living_street"),
                     highwaySpeeds.get("track"),
                     highwaySpeeds.get("primary"));
-            encoded |= directionBitMask;
+            flags = handleSpeed(way, ferrySpeed, flags);
+            flags |= directionBitMask;
         }
         int priorityFromRelation = 0;
         if (relationFlags != 0)
             priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
-        encoded = priorityWayEncoder.setValue(encoded, handlePriority(way, wayTypeSpeed, priorityFromRelation));
-        return encoded;
+        flags = priorityWayEncoder.setValue(flags, handlePriority(way, wayTypeSpeed, priorityFromRelation));
+        return flags;
     }
 
     int getSpeed( OSMWay way )
@@ -402,7 +403,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 if (highwaySpeed != null && surfaceSpeed > highwaySpeed)
                 {
                     // Avoid boosting if pushing section
-                    if (pushingSections.contains(highwayTag))
+                    if (pushingSectionsHighways.contains(highwayTag))
                         speed = highwaySpeed;
                     else
                         speed = surfaceSpeed;
@@ -428,12 +429,13 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         // Until now we assumed that the way is no pushing section
         // Now we check, but only in case that our speed is bigger compared to the PUSHING_SECTION_SPEED
         if ((speed > PUSHING_SECTION_SPEED)
-                && (!way.hasTag("bicycle", intendedValues) && way.hasTag("highway", pushingSections)))
+                && (!way.hasTag("bicycle", intendedValues)))
         {
-            if (way.hasTag("highway", "steps"))
-                speed = PUSHING_SECTION_SPEED / 2;
-            else
+            if (way.hasTag("highway", pushingSectionsHighways) 
+                    || way.hasTag("bicycle", "dismount"))
+            {
                 speed = PUSHING_SECTION_SPEED;
+            }
         }
 
         return speed;
@@ -568,7 +570,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 weightToPrioMap.put(50d, AVOID_AT_ALL_COSTS.getValue());
         }
 
-        if (pushingSections.contains(highway)
+        if (pushingSectionsHighways.contains(highway)
                 || way.hasTag("bicycle", "use_sidepath")
                 || "parking_aisle".equals(service))
         {
@@ -679,7 +681,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
     boolean isPushingSection( OSMWay way )
     {
-        return way.hasTag("highway", pushingSections) || way.hasTag("railway", "platform");
+        return way.hasTag("highway", pushingSectionsHighways) || way.hasTag("railway", "platform") || way.hasTag("bicycle", "dismount");
     }
 
     protected long handleSpeed( OSMWay way, double speed, long encoded )
@@ -761,7 +763,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
     void addPushingSection( String highway )
     {
-        pushingSections.add(highway);
+        pushingSectionsHighways.add(highway);
     }
 
     @Override

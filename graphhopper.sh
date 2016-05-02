@@ -263,20 +263,20 @@ elif [ "$ACTION" = "miniui" ]; then
 
 
 elif [ "$ACTION" = "measurement" ]; then
- ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chWeighting=fastest graph.flagEncoders=CAR"
- echo -e "\ncreate graph via $ARGS, $JAR"
- START=$(date +%s)
+ ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chWeighting=fastest graph.flagEncoders=CAR prepare.minNetworkSize=10000 prepare.minOnewayNetworkSize=10000"
+ # echo -e "\ncreate graph via $ARGS, $JAR"
+ # START=$(date +%s)
  # avoid islands for measurement at all costs
- "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS $ARGS prepare.doPrepare=false prepare.minNetworkSize=10000 prepare.minOnewayNetworkSize=10000
- END=$(date +%s)
- IMPORT_TIME=$(($END - $START))
+ # "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS $ARGS prepare.doPrepare=false prepare.minNetworkSize=10000 prepare.minOnewayNetworkSize=10000
+ # END=$(date +%s)
+ # IMPORT_TIME=$(($END - $START))
 
  function startMeasurement {
     COUNT=5000
     commit_info=$(git log -n 1 --pretty=oneline)
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
     "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.Measurement $ARGS measurement.count=$COUNT measurement.location="$M_FILE_NAME" \
-            graph.importTime=$IMPORT_TIME measurement.gitinfo="$commit_info"
+            measurement.gitinfo="$commit_info"
  }
  
  

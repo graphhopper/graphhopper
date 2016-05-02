@@ -475,7 +475,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * Special handling for ferry ways.
      */
-    protected long handleFerryTags( OSMWay way, double unknownSpeed, double shortTripsSpeed, double longTripsSpeed )
+    protected double getFerrySpeed( OSMWay way, double unknownSpeed, double shortTripsSpeed, double longTripsSpeed )
     {
         long duration = 0;
         try
@@ -511,8 +511,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                             if (shortTripsSpeed > getMaxSpeed())
                                 shortTripsSpeed = getMaxSpeed();
                             longTripsSpeed = shortTripsSpeed;
-                        }
-                        else
+                        } else
                         {
                             // Now we set to the lowest possible still accessible speed. 
                             shortTripsSpeed = speedEncoder.factor / 2;
@@ -531,14 +530,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (durationInHours == 0)
         {
             // unknown speed -> put penalty on ferry transport
-            return setSpeed(0, unknownSpeed);
+            return unknownSpeed;
         } else if (durationInHours > 1)
         {
             // lengthy ferries should be faster than short trip ferry
-            return setSpeed(0, longTripsSpeed);
+            return longTripsSpeed;
         } else
         {
-            return setSpeed(0, shortTripsSpeed);
+            return shortTripsSpeed;
         }
     }
 
@@ -655,11 +654,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         {
             if (costs != 0 || Double.isInfinite(costs))
                 throw new IllegalArgumentException("Restricted turn can only have infinite costs (or use 0)");
-        } else
-        {
-            if (costs >= maxTurnCosts)
-                throw new IllegalArgumentException("Cost is too high. Or specifiy restricted == true");
-        }
+        } else if (costs >= maxTurnCosts)
+            throw new IllegalArgumentException("Cost is too high. Or specifiy restricted == true");
 
         if (costs < 0)
             throw new IllegalArgumentException("Turn costs cannot be negative");
@@ -750,7 +746,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * @param way: needed to retrieve OSM tags
      * @param speed: speed guessed e.g. from the road type or other tags
-     * @return The assumed speed. 
+     * @return The assumed speed.
      */
     protected double applyMaxSpeed( OSMWay way, double speed )
     {

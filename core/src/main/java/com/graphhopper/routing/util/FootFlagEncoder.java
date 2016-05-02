@@ -73,7 +73,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     public FootFlagEncoder( int speedBits, double speedFactor )
     {
         super(speedBits, speedFactor, 0);
-        restrictions.addAll(Arrays.asList("foot", "access"));
+        restrictions.addAll(Arrays.asList("foot", "vehicle", "access"));
         restrictedValues.add("private");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -287,38 +287,39 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         if (!isAccept(allowed))
             return 0;
 
-        long encoded = 0;
+        long flags = 0;
         if (!isFerry(allowed))
         {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null)
             {
                 if ("hiking".equals(sacScale))
-                    encoded = speedEncoder.setDoubleValue(encoded, MEAN_SPEED);
+                    flags = speedEncoder.setDoubleValue(flags, MEAN_SPEED);
                 else
-                    encoded = speedEncoder.setDoubleValue(encoded, SLOW_SPEED);
+                    flags = speedEncoder.setDoubleValue(flags, SLOW_SPEED);
             } else
             {
-                encoded = speedEncoder.setDoubleValue(encoded, MEAN_SPEED);
+                flags = speedEncoder.setDoubleValue(flags, MEAN_SPEED);
             }
-            encoded |= directionBitMask;
+            flags |= directionBitMask;
 
             boolean isRoundabout = way.hasTag("junction", "roundabout");
             if (isRoundabout)
-                encoded = setBool(encoded, K_ROUNDABOUT, true);
+                flags = setBool(flags, K_ROUNDABOUT, true);
 
         } else
         {
-            encoded = encoded | handleFerryTags(way, SLOW_SPEED, MEAN_SPEED, FERRY_SPEED);
-            encoded |= directionBitMask;
+            double ferrySpeed = getFerrySpeed(way, SLOW_SPEED, MEAN_SPEED, FERRY_SPEED);
+            flags = setSpeed(flags, ferrySpeed);
+            flags |= directionBitMask;
         }
 
         int priorityFromRelation = 0;
         if (relationFlags != 0)
             priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
-        encoded = priorityWayEncoder.setValue(encoded, handlePriority(way, priorityFromRelation));
-        return encoded;
+        flags = priorityWayEncoder.setValue(flags, handlePriority(way, priorityFromRelation));
+        return flags;
     }
 
     @Override

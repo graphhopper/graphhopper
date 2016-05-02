@@ -165,8 +165,9 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
     {
         String highway = way.getTag("highway");
         String trackType = way.getTag("tracktype");
-        return way.hasTag("highway", pushingSections)
+        return way.hasTag("highway", pushingSectionsHighways)
                 || way.hasTag("railway", "platform")
+                || way.hasTag("bicycle", "dismount")
                 || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
     }
 

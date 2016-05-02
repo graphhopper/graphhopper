@@ -158,6 +158,20 @@ public abstract class AbstractBikeFlagEncoderTester
         assertTrue(encoder.acceptWay(way) > 0);
 
         way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("access", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+        way.setTag("bicycle", "dismount");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("vehicle", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+        way.setTag("bicycle", "dismount");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
         way.setTag("route", "ferry");
         assertTrue(encoder.acceptWay(way) > 0);
         way.setTag("bicycle", "no");
@@ -352,6 +366,13 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("railway", "platform");
         wayType = getWayTypeFromFlags(way);
         assertEquals("get off the bike, unpaved", wayType);
+
+        way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("bicycle", "dismount");
+        wayType = getWayTypeFromFlags(way);
+        assertEquals("get off the bike", wayType);
+
     }
 
     @Test

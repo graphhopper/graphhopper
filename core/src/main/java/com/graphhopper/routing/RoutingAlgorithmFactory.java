@@ -20,6 +20,8 @@ package com.graphhopper.routing;
 import com.graphhopper.storage.Graph;
 
 /**
+ * This interface manages RoutingAlgorithm creation.
+ *
  * @author Peter Karich
  */
 public interface RoutingAlgorithmFactory
