@@ -98,7 +98,8 @@ public class Measurement
             }
         };
 
-        hopper.init(args);
+        hopper.init(args).
+                forDesktop();        
         hopper.getCHFactoryDecorator().setForcingFlexibleModeAllowed(true);
         hopper.importOrLoad();
 
