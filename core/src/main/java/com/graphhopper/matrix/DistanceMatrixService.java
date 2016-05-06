@@ -7,6 +7,9 @@ import com.graphhopper.matrix.algorithm.MatrixAlgorithmFactory;
 import com.graphhopper.matrix.algorithm.SimpleMatrixAlgorithmFactory;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.QueryGraph;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
@@ -124,17 +127,19 @@ public class DistanceMatrixService {
 
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(request.getVehicle());
 
+        RoutingAlgorithmFactory tmpAlgoFactory = hopper.getAlgorithmFactory(request.getHints());
         Weighting weighting;
 
-        if (hopper.isCHEnabled())
+        if (hopper.getCHFactoryDecorator().isEnabled())
         {
-            //boolean forceCHHeading = request.getHints().getBool("force_heading_ch", false);
-            //if (!forceCHHeading && request.hasFavoredHeading(0))
-            //    throw new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483");
-            weighting = hopper.getWeightingForCH(request.getHints(), encoder);
+            if (tmpAlgoFactory instanceof PrepareContractionHierarchies){
+                weighting = ((PrepareContractionHierarchies) tmpAlgoFactory).getWeighting();
+
+            }else {
+                throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
+            }
         } else
             weighting = hopper.createWeighting(request.getHints(), encoder);
-
 
         int maxVisitedNodes = Integer.MAX_VALUE;
         int maxVisistedNodesForRequest = request.getHints().getInt("routing.maxVisitedNodes", maxVisitedNodes);

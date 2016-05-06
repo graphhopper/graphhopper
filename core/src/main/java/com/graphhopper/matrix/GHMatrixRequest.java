@@ -1,6 +1,6 @@
 package com.graphhopper.matrix;
 
-import com.graphhopper.routing.util.WeightingMap;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
@@ -17,7 +17,7 @@ public class GHMatrixRequest { // TODO Probably refactor & subclass a base GHReq
 
     private String algorithm;
     private String vehicle = "";
-    private final WeightingMap hints = new WeightingMap();
+    private final HintsMap hints = new HintsMap();
 
     private final List<GHPoint> origins = new ArrayList<>();
     private final List<GHPoint> destinations = new ArrayList<>();
@@ -60,7 +60,7 @@ public class GHMatrixRequest { // TODO Probably refactor & subclass a base GHReq
         this.vehicle = vehicle;
     }
 
-    public WeightingMap getHints()
+    public HintsMap getHints()
     {
         return hints;
     }
