@@ -40,7 +40,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     static final int FERRY_SPEED = 10;
     private EncodedValue priorityWayEncoder;
     private EncodedValue relationCodeEncoder;
-    protected HashSet<String> sidewalks = new HashSet<String>();
+    protected HashSet<String> sidewalks = new HashSet<String>(5);
+    protected HashSet<String> sidewalksNo = new HashSet<String>(5);
     private final Set<String> safeHighwayTags = new HashSet<String>();
     private final Set<String> allowedHighwayTags = new HashSet<String>();
     private final Set<String> avoidHighwayTags = new HashSet<String>();
@@ -84,6 +85,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         intendedValues.add("designated");
         intendedValues.add("official");
         intendedValues.add("permissive");
+
+        sidewalksNo.add("no");
+        sidewalksNo.add("none");
+        // see #712
+        sidewalksNo.add("separate");
 
         sidewalks.add("yes");
         sidewalks.add("both");
@@ -364,14 +370,14 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues))
             {
-                if (way.hasTag("sidewalk", "no"))
+                if (way.hasTag("sidewalk", sidewalksNo))
                     weightToPrioMap.put(40d, REACH_DEST.getValue());
                 else
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
         } else if (maxSpeed > 50 || avoidHighwayTags.contains(highway))
         {
-            if (way.hasTag("sidewalk", "no"))
+            if (way.hasTag("sidewalk", sidewalksNo))
                 weightToPrioMap.put(45d, WORST.getValue());
             else
                 weightToPrioMap.put(45d, REACH_DEST.getValue());

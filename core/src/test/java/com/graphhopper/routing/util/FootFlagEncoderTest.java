@@ -261,6 +261,13 @@ public class FootFlagEncoderTest
         assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, 0));
 
         way.clearTags();
+        way.setTag("highway", "trunk");
+        way.setTag("sidewalk", "no");
+        assertEquals(PriorityCode.WORST.getValue(), footEncoder.handlePriority(way, 0));
+        way.setTag("sidewalk", "none");
+        assertEquals(PriorityCode.WORST.getValue(), footEncoder.handlePriority(way, 0));
+
+        way.clearTags();
         way.setTag("highway", "residential");
         way.setTag("sidewalk", "yes");
         assertEquals(PriorityCode.PREFER.getValue(), footEncoder.handlePriority(way, 0));
