@@ -9,7 +9,7 @@ import java.util.List;
  *
  * @author Pascal Büttiker
  */
-final class DistanceMatrix {
+public final class DistanceMatrix {
 
     private final List<DistanceRow> rows = new ArrayList<>();
 
