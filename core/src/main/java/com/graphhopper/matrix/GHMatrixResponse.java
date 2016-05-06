@@ -15,12 +15,18 @@ public class GHMatrixResponse {
     private final List<GHMatrixDistanceRow> rows = new ArrayList<>();
 
 
+    /**
+     * Adds a new distance row for the given origin point.
+     */
     public GHMatrixDistanceRow addRow(GHPoint origin){
         GHMatrixDistanceRow row = new GHMatrixDistanceRow(origin);
         rows.add(row);
         return row;
     }
 
+    /**
+     * Gets all rows of the distance matrix
+     */
     public List<GHMatrixDistanceRow> getRows() {
         return rows;
     }
@@ -51,6 +57,12 @@ public class GHMatrixResponse {
         public final double distance;
         public final long time;
 
+        /**
+         * Creates a new distance info from the origin to the given destination with the given distance/time info
+         * @param destination
+         * @param distance
+         * @param time
+         */
         public GHMatrixDestinationInfo(GHPoint destination, double distance, long time){
             this.destination = destination;
             this.distance = distance;

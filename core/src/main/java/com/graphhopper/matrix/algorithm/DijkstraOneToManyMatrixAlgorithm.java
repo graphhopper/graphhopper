@@ -10,7 +10,7 @@ import com.graphhopper.storage.Graph;
 import java.util.List;
 
 /**
- * This implementation uses the DijkstraOneToMany algorithm, which can reuse datastructures as long
+ * This implementation uses the DijkstraOneToMany algorithm, which can reuse data structures as long
  * as the same start-node is in use.
  *
  * This means we reuse the algorithm/cache per row.

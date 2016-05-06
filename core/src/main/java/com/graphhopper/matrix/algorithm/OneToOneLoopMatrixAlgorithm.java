@@ -14,7 +14,8 @@ import java.util.List;
  * each origin-destination combination.
  *
  * Data structures between the route algorithms are not reused, resulting
- * in O(R^2) performance hit, where R is the complexity of the underlying route algorithm.
+ * in O(R^2) performance hit, where R is the complexity of the underlying route algorithm,
+ * assuming a quadratic matrix (origins == destinations)
  *
  * For Dijkstra this is O( (|E|+|V|log(|V|))^2 )
  *
