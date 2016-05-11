@@ -560,7 +560,7 @@ public class GraphHopperIT
 
         tmpHopper.getCHFactoryDecorator().
                 setWeightingsAsStrings(Arrays.asList("fastest")).
-                setForcingFlexibleModeAllowed(true);
+                setDisablingAllowed(true);
 
         tmpHopper.importOrLoad();
 
@@ -575,7 +575,7 @@ public class GraphHopperIT
         assertEquals(92, bestPath.getPoints().getSize());
 
         // now request flex mode
-        req.getHints().put("routing.flexibleMode.force", true);
+        req.getHints().put("routing.ch.disable", true);
         rsp = tmpHopper.route(req);
         sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertTrue("Too few visited nodes for flex mode " + sum, sum > 60);

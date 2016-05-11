@@ -100,7 +100,7 @@ public class Measurement
 
         hopper.init(args).
                 forDesktop();        
-        hopper.getCHFactoryDecorator().setForcingFlexibleModeAllowed(true);
+        hopper.getCHFactoryDecorator().setDisablingAllowed(true);
         hopper.importOrLoad();
 
         GraphHopperStorage g = hopper.getGraphHopperStorage();

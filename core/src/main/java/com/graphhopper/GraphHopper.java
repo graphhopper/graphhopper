@@ -1017,14 +1017,14 @@ public class GraphHopper implements GraphHopperAPI
         Weighting weighting;
         Graph routingGraph = ghStorage;
 
-        boolean forceFlexibleMode = request.getHints().getBool(CHAlgoFactoryDecorator.FORCE_FLEXIBLE_ROUTING, false);
-        if (!chFactoryDecorator.isForcingFlexibleModeAllowed() && forceFlexibleMode)
+        boolean chForceDisabling = request.getHints().getBool(CHAlgoFactoryDecorator.DISABLE, false);
+        if (!chFactoryDecorator.isDisablingAllowed() && chForceDisabling)
         {
-            ghRsp.addError(new IllegalStateException("Flexible mode not enabled on the server-side"));
+            ghRsp.addError(new IllegalStateException("Disabling speed mode not allowed. Enable this on the server-side first."));
             return Collections.emptyList();
         }
 
-        if (chFactoryDecorator.isEnabled() && !forceFlexibleMode)
+        if (chFactoryDecorator.isEnabled() && !chForceDisabling)
         {
             boolean forceCHHeading = request.getHints().getBool(CHAlgoFactoryDecorator.FORCE_HEADING, false);
             if (!forceCHHeading && request.hasFavoredHeading(0))
