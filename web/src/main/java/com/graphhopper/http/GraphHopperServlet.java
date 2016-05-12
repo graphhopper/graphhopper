@@ -200,7 +200,11 @@ public class GraphHopperServlet extends GHBaseServlet
         boolean withTrack = getBooleanParam(req, "gpx.track", true);
         boolean withWayPoints = getBooleanParam(req, "gpx.waypoints", false);
         res.setCharacterEncoding("UTF-8");
-        res.setContentType("application/xml");
+        if ("application/xml".equals(req.getContentType()))
+            res.setContentType("application/xml");
+        else
+            res.setContentType("application/gpx+xml");
+        
         String trackName = getParam(req, "trackname", "GraphHopper Track");
         res.setHeader("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
         long time = getLongParam(req, "millis", System.currentTimeMillis());

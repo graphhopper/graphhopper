@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.AbstractWeighting;
@@ -48,7 +47,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
     /**
      * The property name in HintsMap if CH routing should be ignored.
      */
-    public static final String FORCE_FLEXIBLE_ROUTING = "routing.flexibleMode.force";
+    public static final String DISABLE = "routing.ch.disable";
     /**
      * The property name in HintsMap if heading should be used for CH regardless of the possible
      * routing errors.
@@ -61,7 +60,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
     // as we need the strings to create the GraphHopperStorage and the GraphHopperStorage to create the preparations from the Weighting objects currently requiring the encoders
     private final List<Weighting> weightings = new ArrayList<>();
     private final List<String> weightingsAsStrings = new ArrayList<>();
-    private boolean forcingFlexibleModeAllowed = false;
+    private boolean disablingAllowed = false;
     // for backward compatibility enable CH by default.
     private boolean enabled = true;
     private int preparationThreads;
@@ -87,21 +86,21 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
             throw new IllegalStateException("Use prepare.chWeightings and a comma separated list instead of prepare.chWeighting");
 
         // default is enabled & fastest
-        boolean enableThis = isEnabled();
         String chWeightingsStr = args.get("prepare.chWeightings", "");
         if ("no".equals(chWeightingsStr))
         {
-            enableThis = false;
+            // default is fastest and we need to clear this explicitely
+            weightingsAsStrings.clear();
         } else if (!chWeightingsStr.isEmpty())
         {
             List<String> tmpCHWeightingList = Arrays.asList(chWeightingsStr.split(","));
             setWeightingsAsStrings(tmpCHWeightingList);
-            enableThis = true;
         }
 
+        boolean enableThis = !weightingsAsStrings.isEmpty();
         setEnabled(enableThis);
         if (enableThis)
-            setForcingFlexibleModeAllowed(args.getBool("routing.flexibleMode.allowed", isForcingFlexibleModeAllowed()));
+            setDisablingAllowed(args.getBool("routing.ch.disabling_allowed", isDisablingAllowed()));
 
         setPreparationPeriodicUpdates(args.getInt("prepare.updates.periodic", getPreparationPeriodicUpdates()));
         setPreparationLazyUpdates(args.getInt("prepare.updates.lazy", getPreparationLazyUpdates()));
@@ -173,24 +172,24 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         this.enabled = enabled;
     }
 
+    @Override
     public final boolean isEnabled()
     {
         return enabled;
     }
 
     /**
-     * This method specifies if although the CH preparation is enabled a 'more expensive' flexible
-     * request can be made via routing hints.
+     * This method specifies if it is allowed to disable CH routing at runtime via routing hints.
      */
-    public final CHAlgoFactoryDecorator setForcingFlexibleModeAllowed( boolean forcingFlexibleModeAllowed )
+    public final CHAlgoFactoryDecorator setDisablingAllowed( boolean disablingAllowed )
     {
-        this.forcingFlexibleModeAllowed = forcingFlexibleModeAllowed;
+        this.disablingAllowed = disablingAllowed;
         return this;
     }
 
-    public final boolean isForcingFlexibleModeAllowed()
+    public final boolean isDisablingAllowed()
     {
-        return forcingFlexibleModeAllowed;
+        return disablingAllowed || !isEnabled();
     }
 
     /**
@@ -280,7 +279,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
     @Override
     public RoutingAlgorithmFactory getDecoratedAlgorithmFactory( RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map )
     {
-        boolean forceFlexMode = map.getBool(FORCE_FLEXIBLE_ROUTING, false);
+        boolean forceFlexMode = map.getBool(DISABLE, false);
         if (!isEnabled() || forceFlexMode)
             return defaultAlgoFactory;
 
