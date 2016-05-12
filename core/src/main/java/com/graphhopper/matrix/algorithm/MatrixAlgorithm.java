@@ -11,23 +11,6 @@ import java.util.List;
  */
 public interface MatrixAlgorithm {
 
-    // Known named implementations:
-
-    /**
-     * A very simplistic implementation which invokes a
-     * standard route() algorithm for every node to node route.
-     *
-     * Results in quadratic complexity on-top of the underlying route algorithm.
-     * Not very efficient.
-     */
-    String OneToOneLoop = "one-to-one-Loop";
-
-    /**
-     * This implementation uses for each node a one-to-many Dijkstra
-     */
-    String OneToManyDijkstra = "one-to-many-Dijkstra";
-
-
     /**
      * Calculate all distances and durations from all given origins to all given destinations.
      * @param origins One or more origin nodes

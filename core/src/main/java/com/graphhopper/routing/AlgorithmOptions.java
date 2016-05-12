@@ -63,6 +63,18 @@ public class AlgorithmOptions
      * round trip algorithm based on alternative route algorithm
      */
     public static final String ROUND_TRIP_ALT = "roundTripAlt";
+
+
+    /**
+     * A very simplistic implementation which invokes a
+     * standard route() algorithm for every node to node route.
+     *
+     * Results in quadratic complexity on-top of the underlying route algorithm.
+     * Not very efficient.
+     */
+    public static final String MATRIX_ONE_TO_ONE = "MatrixOneToOne";
+
+
     private String algorithm = DIJKSTRA_BI;
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;

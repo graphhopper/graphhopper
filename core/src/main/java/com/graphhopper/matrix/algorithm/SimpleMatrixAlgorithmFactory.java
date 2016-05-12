@@ -16,19 +16,13 @@ public class SimpleMatrixAlgorithmFactory implements MatrixAlgorithmFactory {
 
         String algoStr = opts.getAlgorithm();
 
-        if(MatrixAlgorithm.OneToOneLoop.equalsIgnoreCase(algoStr)){
+        if(AlgorithmOptions.MATRIX_ONE_TO_ONE.equalsIgnoreCase(algoStr)){
 
             AlgorithmOptions underlyingAlgo = AlgorithmOptions.start(opts).
                     algorithm(AlgorithmOptions.ASTAR_BI).build();
 
             return new OneToOneLoopMatrixAlgorithm(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode(), underlyingAlgo);
 
-        }else if(MatrixAlgorithm.OneToManyDijkstra.equalsIgnoreCase(algoStr)){
-
-            AlgorithmOptions underlyingAlgo = AlgorithmOptions.start(opts).
-                    algorithm(AlgorithmOptions.DIJKSTRA_ONE_TO_MANY).build();
-
-            return new DijkstraOneToManyMatrixAlgorithm(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode(), underlyingAlgo);
         }else{
             throw new IllegalArgumentException("MatrixAlgorithm " + algoStr + " not found in " + getClass().getName());
         }

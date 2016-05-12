@@ -14,7 +14,7 @@ public class OneToOneLoopMatrixAlgorithmTest extends AbstractMatrixAlgorithmTest
     @Override
     protected AlgorithmOptions getMatrixAlgorithmOptions() {
         return AlgorithmOptions.start().
-                algorithm(MatrixAlgorithm.OneToOneLoop)
+                algorithm(AlgorithmOptions.MATRIX_ONE_TO_ONE)
                 .traversalMode(TraversalMode.NODE_BASED)
                 .flagEncoder(carEncoder)
                 .weighting(new ShortestWeighting(carEncoder))

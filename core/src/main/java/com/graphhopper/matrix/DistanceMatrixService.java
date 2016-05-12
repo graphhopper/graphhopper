@@ -74,7 +74,7 @@ public class DistanceMatrixService {
         List<Integer> destinationNodes =  mapToNodes(destinationQNodes);
 
         MatrixAlgorithm algorithm = matrixAlgorithmFactory.build(queryGraph, algoOpts);
-        DistanceMatrix matrix = algorithm.calcMatrix(originNodes, destinationNodes); // TODO
+        DistanceMatrix matrix = algorithm.calcMatrix(originNodes, destinationNodes);
 
         GHMatrixResponse response = toResponse(matrix, request);
 
@@ -112,7 +112,7 @@ public class DistanceMatrixService {
      */
     private AlgorithmOptions.Builder buildOptions(GHMatrixRequest request, GraphHopper hopper){
 
-        String algoStr = request.getAlgorithm().isEmpty() ? MatrixAlgorithm.OneToOneLoop : request.getAlgorithm();
+        String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.MATRIX_ONE_TO_ONE : request.getAlgorithm();
 
 
         TraversalMode tMode;

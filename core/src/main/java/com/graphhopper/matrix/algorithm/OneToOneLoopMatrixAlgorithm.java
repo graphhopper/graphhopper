@@ -11,7 +11,8 @@ import java.util.List;
 
 /**
  * This implementation will just run a plain route algorithm for
- * each origin-destination combination.
+ * each origin-destination combination. The used route algorithm can be
+ * specified using the routingAlgoOptions.
  *
  * Data structures between the route algorithms are not reused, resulting
  * in O(R^2) performance hit, where R is the complexity of the underlying route algorithm,
@@ -24,19 +25,20 @@ import java.util.List;
 public class OneToOneLoopMatrixAlgorithm extends AbstractMatrixAlgorithm {
 
     private final RoutingAlgorithmFactory routingFactory = new RoutingAlgorithmFactorySimple();
-    private final AlgorithmOptions underlyingAlgo;
+    private final AlgorithmOptions routingAlgoOptions;
 
 
     /**
-     * @param graph         specifies the graph where this algorithm will run on
-     * @param encoder       sets the used vehicle (bike, car, foot)
-     * @param weighting     set the used weight calculation (e.g. fastest, shortest).
-     * @param traversalMode how the graph is traversed e.g. if via nodes or edges.
+     * @param graph                 specifies the graph where this algorithm will run on
+     * @param encoder               sets the used vehicle (bike, car, foot)
+     * @param weighting             set the used weight calculation (e.g. fastest, shortest).
+     * @param traversalMode         how the graph is traversed e.g. if via nodes or edges.
+     * @param routingAlgoOptions    the route algorithm options used for each route request
      */
     public OneToOneLoopMatrixAlgorithm(Graph graph, FlagEncoder encoder, Weighting weighting,
-                                       TraversalMode traversalMode, AlgorithmOptions underlyingAlgo) {
+                                       TraversalMode traversalMode, AlgorithmOptions routingAlgoOptions) {
         super(graph, encoder, weighting, traversalMode);
-        this.underlyingAlgo = underlyingAlgo;
+        this.routingAlgoOptions = routingAlgoOptions;
     }
 
 
@@ -51,7 +53,7 @@ public class OneToOneLoopMatrixAlgorithm extends AbstractMatrixAlgorithm {
 
             for (int destination : destinations) {
 
-                RoutingAlgorithm algorithm = routingFactory.createAlgo(graph, underlyingAlgo);
+                RoutingAlgorithm algorithm = routingFactory.createAlgo(graph, routingAlgoOptions);
                 Path path = algorithm.calcPath(origin, destination);
 
                 row.addDestination(destination, path.getDistance(), path.getTime());
