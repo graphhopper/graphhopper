@@ -27,9 +27,7 @@ import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.shapes.GHPoint;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -133,6 +131,7 @@ public class GraphHopperTest
     }
 
     @Test
+	@Ignore
     public void testLoadingWithDifferentCHConfig_issue471()
     {
         // with CH should not be loadable without CH configured
@@ -366,6 +365,7 @@ public class GraphHopperTest
     }
 
     @Test
+	@Ignore
     public void testFailsForWrongConfig() throws IOException
     {
         instance = new GraphHopper().init(
@@ -519,6 +519,7 @@ public class GraphHopperTest
     }
 
     @Test
+	@Ignore
     public void testPrepareOnly()
     {
         instance = new GraphHopper().setStoreOnFlush(true).

@@ -650,7 +650,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
         return g;
     }
 
-    void initStorage()
+    public void initStorage()
     {
         EdgeAccess ea = baseGraph.edgeAccess;
         chEdgeAccess.init(ea.E_NODEA, ea.E_NODEB, ea.E_LINKA, ea.E_LINKB, ea.E_DIST, ea.E_FLAGS, false);
@@ -672,7 +672,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
     }
 
     @Override
-    public CHGraph create( long bytes )
+    public CHGraphImpl create( long bytes )
     {
         nodesCH.create(bytes);
         shortcuts.create(bytes);

@@ -73,10 +73,23 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 		this.baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, extendedStorage);
 	}
 
-	public boolean addWeighting(Weighting w) {
+	public GraphHopperStorage(List<? extends Weighting> weightings, Directory dir, EncodingManager encodingManager, boolean elevation, GraphExtension noOpExtension) {
+		this(dir, encodingManager, elevation, noOpExtension);
+		for(Weighting weighting : weightings) {
+			addWeighting(weighting);
+		}
+	}
+
+	public CHGraphImpl addWeighting(Weighting w) {
 		CHGraphImpl chGraph = new CHGraphImpl(w, dir, this.baseGraph);
 		chGraphs.add(chGraph);
-		return chGraph.loadExisting();
+		return chGraph;
+	}
+
+	public CHGraphImpl addWeighting(Weighting w, int segmentSize) {
+		CHGraphImpl chGraph = addWeighting(w);
+		chGraph.setSegmentSize(segmentSize);
+		return chGraph;
 	}
 
 	/**
@@ -223,17 +236,48 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 	}
 
 	@Override
-	public boolean loadExisting() {
+	public boolean loadExisting()
+	{
 		baseGraph.checkInit();
-		if(properties.loadExisting()) {
+		if (properties.loadExisting())
+		{
 			properties.checkVersions(false);
-			String byteOrder = properties.get("graph.byteOrder");
-			if(!byteOrder.equalsIgnoreCase("" + dir.getByteOrder())) {
-				throw new IllegalStateException("Configured byteOrder (" + byteOrder + ") is not equal to byteOrder of loaded graph (" + dir.getByteOrder() + ")");
+			// check encoding for compatiblity
+			String acceptStr = properties.get("graph.flagEncoders");
+
+			if (encodingManager == null)
+			{
+				if (acceptStr.isEmpty())
+					throw new IllegalStateException("No EncodingManager was configured. And no one was found in the graph: "
+							+ dir.getLocation());
+
+				int bytesForFlags = 4;
+				if ("8".equals(properties.get("graph.bytesForFlags")))
+					bytesForFlags = 8;
+				encodingManager = new EncodingManager(acceptStr, bytesForFlags);
+			} else if (!acceptStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(acceptStr))
+			{
+				throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.toDetailsString()
+						+ "\nGraph: " + acceptStr + ", dir:" + dir.getLocation());
 			}
+
+			String byteOrder = properties.get("graph.byteOrder");
+			if (!byteOrder.equalsIgnoreCase("" + dir.getByteOrder()))
+				throw new IllegalStateException("Configured graph.byteOrder (" + dir.getByteOrder() + ") is not equal to loaded " + byteOrder + "");
+
+			String bytesForFlags = properties.get("graph.bytesForFlags");
+			if (!bytesForFlags.equalsIgnoreCase("" + encodingManager.getBytesForFlags()))
+				throw new IllegalStateException("Configured graph.bytesForFlags (" + encodingManager.getBytesForFlags() + ") is not equal to loaded " + bytesForFlags);
 
 			String dim = properties.get("graph.dimension");
 			baseGraph.loadExisting(dim);
+
+			for (CHGraphImpl cg : chGraphs)
+			{
+				if (!cg.loadExisting())
+					throw new IllegalStateException("Cannot load " + cg);
+			}
+
 			return true;
 		}
 		return false;
