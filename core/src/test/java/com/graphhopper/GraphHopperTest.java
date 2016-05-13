@@ -875,7 +875,8 @@ public class GraphHopperTest
             GraphHopper tmpGH = new GraphHopper().setStoreOnFlush(false).
                     setEncodingManager(em).
                     setGraphHopperLocation(ghLoc).
-                    setOSMFile(testOsm).setCHPrepareThreads(threadCount);
+                    setOSMFile(testOsm);
+            tmpGH.getCHFactoryDecorator().setPreparationThreads(threadCount);
 
             tmpGH.importOrLoad();
 

@@ -29,7 +29,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.Before;
@@ -40,9 +39,9 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
@@ -210,12 +209,17 @@ public class OSMReaderTest
         assertEquals(93146.888, iter.getDistance(), 1);
 
         NodeAccess na = graph.getNodeAccess();
-        assertEquals(9.4, na.getLongitude(hopper.getLocationIndex().findID(51.2, 9.4)), 1e-3);
-        assertEquals(10, na.getLongitude(hopper.getLocationIndex().findID(49, 10)), 1e-3);
-        assertEquals(51.249, na.getLatitude(hopper.getLocationIndex().findID(51.2492152, 9.4317166)), 1e-3);
+        assertEquals(9.4, na.getLongitude(findID(hopper.getLocationIndex(), 51.2, 9.4)), 1e-3);
+        assertEquals(10, na.getLongitude(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
+        assertEquals(51.249, na.getLatitude(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
 
         // node 40 is on the way between 30 and 50 => 9.0
-        assertEquals(9, na.getLongitude(hopper.getLocationIndex().findID(51.25, 9.43)), 1e-3);
+        assertEquals(9, na.getLongitude(findID(hopper.getLocationIndex(), 51.25, 9.43)), 1e-3);
+    }
+
+    protected int findID( LocationIndex index, double lat, double lon )
+    {
+        return index.findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
     }
 
     @Test
@@ -223,8 +227,8 @@ public class OSMReaderTest
     {
         GraphHopper hopper = new GraphHopperTest(file1).setSortGraph(true).importOrLoad();
         NodeAccess na = hopper.getGraphHopperStorage().getNodeAccess();
-        assertEquals(10, na.getLongitude(hopper.getLocationIndex().findID(49, 10)), 1e-3);
-        assertEquals(51.249, na.getLatitude(hopper.getLocationIndex().findID(51.2492152, 9.4317166)), 1e-3);
+        assertEquals(10, na.getLongitude(findID(hopper.getLocationIndex(), 49, 10)), 1e-3);
+        assertEquals(51.249, na.getLatitude(findID(hopper.getLocationIndex(), 51.2492152, 9.4317166)), 1e-3);
     }
 
     @Test
@@ -459,7 +463,7 @@ public class OSMReaderTest
         assertEquals(na.getLatitude(n20), na.getLatitude(new20), 1e-5);
         assertEquals(na.getLongitude(n20), na.getLongitude(new20), 1e-5);
 
-        assertEquals(n20, hopper.getLocationIndex().findID(52, 9.4));
+        assertEquals(n20, findID(hopper.getLocationIndex(), 52, 9.4));
 
         assertEquals(GHUtility.asSet(n20, n30), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n10)));
         assertEquals(GHUtility.asSet(new20, n10, n50), GHUtility.getNeighbors(carOutExplorer.setBaseNode(n30)));
@@ -861,11 +865,11 @@ public class OSMReaderTest
 
     public void testRoutingRequestFails_issue665()
     {
-        GraphHopper hopper = new GraphHopper();
-        hopper.setOSMFile("src/test/resources/com/graphhopper/reader/" + file7);
-        hopper.setEncodingManager(new EncodingManager("car,motorcycle"));
-        hopper.setCHEnable(false);
-        hopper.setGraphHopperLocation(dir);
+        GraphHopper hopper = new GraphHopper()
+                .setOSMFile("src/test/resources/com/graphhopper/reader/" + file7)
+                .setEncodingManager(new EncodingManager("car,motorcycle"))
+                .setGraphHopperLocation(dir);
+        hopper.getCHFactoryDecorator().setEnabled(false);
         hopper.importOrLoad();
         GHRequest req = new GHRequest(48.97725592769741, 8.256896138191223, 48.978875552977684, 8.25486302375793).
                 setWeighting("curvature").

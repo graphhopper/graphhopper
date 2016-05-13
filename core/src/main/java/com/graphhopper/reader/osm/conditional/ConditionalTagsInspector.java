@@ -55,7 +55,7 @@ public class ConditionalTagsInspector
     public ConditionalTagsInspector( Calendar cal, List<String> tagsToCheck, Set<String> restrictiveValues, Set<String> permittedValues )
     {
         this.calendar = cal;
-        this.tagsToCheck = new ArrayList(tagsToCheck.size());
+        this.tagsToCheck = new ArrayList<>(tagsToCheck.size());
         for (String tagToCheck : tagsToCheck)
         {
             this.tagsToCheck.add(tagToCheck + ":conditional");

@@ -49,10 +49,10 @@ public class Location2IDFullWithEdgesIndexTest extends AbstractLocationIndexTest
     @Test
     public void testFullIndex()
     {
-        LocationIndex idx = new Location2IDFullWithEdgesIndex(createSampleGraph(new EncodingManager("CAR")));
-        assertEquals(5, idx.findID(2, 3));
-        assertEquals(10, idx.findID(4, 1));
+        LocationIndex tmpIdx = new Location2IDFullWithEdgesIndex(createSampleGraph(new EncodingManager("CAR")));
+        assertEquals(5, findID(tmpIdx, 2, 3));
+        assertEquals(10, findID(tmpIdx, 4, 1));
         // 6, 9 or 10
-        assertEquals(10, idx.findID(3.6, 1.4));
+        assertEquals(10, findID(tmpIdx, 3.6, 1.4));
     }
 }

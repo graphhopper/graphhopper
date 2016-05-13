@@ -104,7 +104,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
         tmp.setSkippedEdges(iter5.getEdge(), iter6.getEdge());
 
         LocationIndex index = createIndex(ghStorage, -1);
-        assertEquals(2, index.findID(0, 0.5));
+        assertEquals(2, findID(index, 0, 0.5));
     }
 
     @Test
@@ -174,9 +174,9 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
         expectedSet.add(2);
         assertEquals(expectedSet, set);
 
-        assertEquals(0, index.findID(0.51, 0.2));
-        assertEquals(1, index.findID(0.1, 0.1));
-        assertEquals(2, index.findID(0.51, 0.51));
-        assertEquals(3, index.findID(0.51, 1.1));
+        assertEquals(0, findID(index, 0.51, 0.2));
+        assertEquals(1, findID(index, 0.1, 0.1));
+        assertEquals(2, findID(index, 0.51, 0.51));
+        assertEquals(3, findID(index, 0.51, 1.1));
     }
 }

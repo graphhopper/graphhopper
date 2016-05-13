@@ -90,7 +90,8 @@
                 <version>3.5.1</version>
                 <configuration>
                     <!--
-                    <compilerArgument>-Xlint:unchecked</compilerArgument>
+                    <compilerArgument>-Xlint:unchecked</compilerArgument>                    
+                    <compilerArgument>-Xlint:deprecation</compilerArgument>
                     -->
                     
                     <!-- suppress warning about Unsafe functionality -->

@@ -138,7 +138,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         index.findNetworkEntries(-0.5, -0.9, foundIds, 0);
         index.findNetworkEntries(-0.5, -0.9, foundIds, 1);
         assertEquals(set, foundIds);
-        assertEquals(2, index.findID(-0.5, -0.9));
+        assertEquals(2, findID(index, -0.5, -0.9));
 
         // The optimization if(dist > normedHalf) => feed nodeA or nodeB
         // although this reduces chance of nodes outside of the tile
@@ -239,7 +239,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         graph.edge(0, 2, 1000, true);
         graph.edge(0, 3, 1000, true).setWayGeometry(Helper.createPointList(51.21, 9.43));
         LocationIndex index = createIndex(graph, -1);
-        assertEquals(2, index.findID(51.2, 9.4));
+        assertEquals(2, findID(index, 51.2, 9.4));
     }
 
     //    -1    0   1 1.5
@@ -276,10 +276,10 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     {
         Graph g = createTestGraphWithWayGeometry();
         LocationIndex index = createIndex(g, -1);
-        assertEquals(1, index.findID(0, 0));
-        assertEquals(1, index.findID(0, 0.1));
-        assertEquals(1, index.findID(0.1, 0.1));
-        assertEquals(1, index.findID(-0.5, -0.5));
+        assertEquals(1, findID(index, 0, 0));
+        assertEquals(1, findID(index, 0, 0.1));
+        assertEquals(1, findID(index, 0.1, 0.1));
+        assertEquals(1, findID(index, -0.5, -0.5));
     }
 
     @Test
@@ -296,7 +296,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         g.edge(20, 30, 1, true);
 
         LocationIndex index = createIndex(g, 2000);
-        assertEquals(20, index.findID(51.25, 9.43));
+        assertEquals(20, findID(index, 51.25, 9.43));
     }
 
     @Test
