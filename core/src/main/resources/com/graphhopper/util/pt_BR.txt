@@ -40,6 +40,7 @@ road=estrada
 off_bike=descer da bicicleta
 cycleway=ciclovia
 way=caminho
+small_way=
 paved=pavimentada
 unpaved=não pavimentada
 stopover=parada %1$s

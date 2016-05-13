@@ -40,6 +40,7 @@ road=gade
 off_bike=hop af cyklen
 cycleway=cykelvej
 way=vej
+small_way=
 paved=brolagt
 unpaved=grusvej
 stopover=delmål %1$s

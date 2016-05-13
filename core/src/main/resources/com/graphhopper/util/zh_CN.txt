@@ -40,6 +40,7 @@ road=道路
 off_bike=下自行车
 cycleway=自行车道
 way=路
+small_way=
 paved=路面铺就
 unpaved=路面未铺就
 stopover=途中休息 %1$s

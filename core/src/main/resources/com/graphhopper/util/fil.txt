@@ -40,6 +40,7 @@ road=kalsada
 off_bike=seksyon pagtulak 
 cycleway=cycleway
 way=landas
+small_way=
 paved=aspaltado 
 unpaved=hindi aspaltado
 stopover=pamahingahan %1$s

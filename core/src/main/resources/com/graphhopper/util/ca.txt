@@ -40,6 +40,7 @@ road=carretera
 off_bike=Tros a peu
 cycleway=via ciclista
 way=camí
+small_way=
 paved=pavimentat
 unpaved=sense pavimentar
 stopover=passant per %1$s

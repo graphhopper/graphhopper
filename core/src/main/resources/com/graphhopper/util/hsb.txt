@@ -40,6 +40,7 @@ road=dróha
 off_bike=ćišćeć
 cycleway=kolesowarski puć
 way=puć
+small_way=
 paved=přitwjerdźeny
 unpaved=njepřitwjerdźeny
 stopover=mjezycil %1$s

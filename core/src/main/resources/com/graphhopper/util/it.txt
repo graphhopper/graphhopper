@@ -40,6 +40,7 @@ road=strada
 off_bike=sezione a piedi
 cycleway=pista ciclabile
 way=via
+small_way=
 paved=pavimentata
 unpaved=non pavimentata
 stopover=sosta %1$s

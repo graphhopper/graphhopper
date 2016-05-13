@@ -40,6 +40,7 @@ road=gata
 off_bike=hoppa av cykeln
 cycleway=cykelväg
 way=väg
+small_way=
 paved=belagd
 unpaved=obelagd
 stopover=delmål %1$s

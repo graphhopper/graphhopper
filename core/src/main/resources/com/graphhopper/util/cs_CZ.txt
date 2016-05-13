@@ -40,6 +40,7 @@ road=silnice
 off_bike=sesedněte z kola
 cycleway=cyklotrasa
 way=cesta
+small_way=
 paved=zpevněná
 unpaved=nezpevněná
 stopover=zastávka %1$s

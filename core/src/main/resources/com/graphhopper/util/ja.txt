@@ -40,6 +40,7 @@ road=路
 off_bike=自転車を押して歩く
 cycleway=自転車用道路
 way=道
+small_way=
 paved=舗装された道
 unpaved=未舗装の道
 stopover=%1$sで降りる

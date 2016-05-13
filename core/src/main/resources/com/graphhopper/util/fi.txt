@@ -40,6 +40,7 @@ road=tie
 off_bike=taluta pyörää
 cycleway=pyörätie
 way=tie
+small_way=
 paved=päällystetty
 unpaved=päällystämätön
 stopover=%1$s. pysähdys

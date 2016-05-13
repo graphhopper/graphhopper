@@ -40,6 +40,7 @@ road=road
 off_bike=get off the bike
 cycleway=cycleway
 way=way
+small_way=small way
 paved=paved
 unpaved=unpaved
 stopover=stopover %1$s

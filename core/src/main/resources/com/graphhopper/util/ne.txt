@@ -40,6 +40,7 @@ road=सडक
 off_bike=बाईक बाट ओर्लनुहोस
 cycleway=साइकल हिड्ने बाटो
 way=बाटो
+small_way=
 paved=पक्कि
 unpaved=कच्ची
 stopover=%1$s रोकिने ठाउँ 

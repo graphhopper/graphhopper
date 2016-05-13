@@ -40,6 +40,7 @@ road=جاده
 off_bike=از دوچرخه پیاده شوید
 cycleway=مسیر دوچرخه
 way=مسیر
+small_way=
 paved=خط کشی شده
 unpaved=خط کشی نشده
 stopover=توقفگاه  %1$s
