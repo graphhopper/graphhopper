@@ -105,7 +105,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade3");
-        // Pushing section
+        // use pushing section
         assertEquals(PUSHING_SECTION_SPEED, getSpeedFromFlags(way), 1e-1);
 
         // Even if it is part of a cycle way

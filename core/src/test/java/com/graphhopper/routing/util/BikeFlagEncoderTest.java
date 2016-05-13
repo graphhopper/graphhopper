@@ -54,13 +54,13 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertEquals(18, encoder.getSpeed(way));
         assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
 
-        // Pushing section !! This is fine as we obey the law!
+        // Pushing section: this is fine as we obey the law!
         way.clearTags();
         way.setTag("highway", "footway");
         assertEquals(PUSHING_SECTION_SPEED, encoder.getSpeed(way));
         assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
 
-        // Pushing section irrespective of the pavement
+        // Use pushing section irrespective of the pavement
         way.setTag("surface", "paved");
         assertEquals(PUSHING_SECTION_SPEED, encoder.getSpeed(way));
         assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
@@ -113,7 +113,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertEquals(PUSHING_SECTION_SPEED, encoder.getSpeed(way));
         assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
 
-        // pushing section
+        // use pushing section
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "paved");
