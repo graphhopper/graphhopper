@@ -59,7 +59,7 @@ class Location2IDQuadtree implements LocationIndex
     {
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
-        index = dir.find("loc2idIndex");
+        index = dir.find("loc2id_index");
         setResolution(100 * 100);
     }
 
@@ -218,7 +218,7 @@ class Location2IDQuadtree implements LocationIndex
     private int fillEmptyIndices( GHBitSet filledIndices )
     {
         int len = latSize * lonSize;
-        DataAccess indexCopy = new RAMDirectory().find("tempIndexCopy");
+        DataAccess indexCopy = new RAMDirectory().find("temp_index_copy");
         indexCopy.setSegmentSize(index.getSegmentSize()).create(index.getCapacity());
         GHBitSet indicesCopy = new GHBitSetImpl(len);
         int initializedCounter = filledIndices.getCardinality();

@@ -46,7 +46,7 @@ public class AlgorithmOptions
     /**
      * one to many Dijkstra
      */
-    public static final String DIJKSTRA_ONE_TO_MANY = "dijkstraOneToMany";
+    public static final String DIJKSTRA_ONE_TO_MANY = "dijkstra_one_to_many";
     /**
      * Unidirectional A*
      */
@@ -58,11 +58,11 @@ public class AlgorithmOptions
     /**
      * alternative route algorithm
      */
-    public static final String ALT_ROUTE = "alternativeRoute";
+    public static final String ALT_ROUTE = "alternative_route";
     /**
      * round trip algorithm based on alternative route algorithm
      */
-    public static final String ROUND_TRIP_ALT = "roundTripAlt";
+    public static final String ROUND_TRIP_ALT = "round_trip_alt";
     private String algorithm = DIJKSTRA_BI;
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;

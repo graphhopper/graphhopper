@@ -536,4 +536,45 @@ public class Helper
     {
         return (int) x;
     }
+
+    public static final String camelCaseToUnderScore( String key )
+    {
+        if (key.isEmpty())
+            return key;
+
+        StringBuilder sb = new StringBuilder(key.length());
+        for (int i = 0; i < key.length(); i++)
+        {
+            char c = key.charAt(i);
+            if (Character.isUpperCase(c))
+                sb.append("_").append(Character.toLowerCase(c));
+            else
+                sb.append(c);
+        }
+
+        return sb.toString();
+    }
+
+    public static final String underScoreToCamelCase( String key )
+    {
+        if (key.isEmpty())
+            return key;
+
+        StringBuilder sb = new StringBuilder(key.length());
+        for (int i = 0; i < key.length(); i++)
+        {
+            char c = key.charAt(i);
+            if (c == '_')
+            {
+                i++;
+                if (i < key.length())
+                    sb.append(Character.toUpperCase(key.charAt(i)));
+                else
+                    sb.append(c);
+            } else
+                sb.append(c);
+        }
+
+        return sb.toString();
+    }
 }

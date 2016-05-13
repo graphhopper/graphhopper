@@ -228,7 +228,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     @Test
     public void testMoreReal()
     {
-        Graph graph = createGHStorage(new EncodingManager("CAR"));
+        Graph graph = createGHStorage(new EncodingManager("car"));
         NodeAccess na = graph.getNodeAccess();
         na.setNode(1, 51.2492152, 9.4317166);
         na.setNode(0, 52, 9);

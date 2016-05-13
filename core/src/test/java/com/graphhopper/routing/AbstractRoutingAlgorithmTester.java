@@ -36,7 +36,7 @@ import org.junit.Test;
  */
 public abstract class AbstractRoutingAlgorithmTester
 {
-    protected static final EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
+    protected static final EncodingManager encodingManager = new EncodingManager("car,foot");
     protected FlagEncoder carEncoder;
     protected FlagEncoder footEncoder;
     protected AlgorithmOptions defaultOpts;
@@ -44,8 +44,8 @@ public abstract class AbstractRoutingAlgorithmTester
     @Before
     public void setUp()
     {
-        carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
-        footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
+        carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
+        footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
         defaultOpts = AlgorithmOptions.start().flagEncoder(carEncoder).
                 weighting(new ShortestWeighting(carEncoder)).build();
     }

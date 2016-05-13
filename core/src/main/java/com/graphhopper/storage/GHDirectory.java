@@ -58,12 +58,12 @@ public class GHDirectory implements Directory
         {
             if (isStoring())
             {
-                put("locationIndex", DAType.RAM_INT_STORE);
+                put("location_index", DAType.RAM_INT_STORE);
                 put("edges", DAType.RAM_INT_STORE);
                 put("nodes", DAType.RAM_INT_STORE);
             } else
             {
-                put("locationIndex", DAType.RAM_INT);
+                put("location_index", DAType.RAM_INT);
                 put("edges", DAType.RAM_INT);
                 put("nodes", DAType.RAM_INT);
             }
@@ -79,6 +79,9 @@ public class GHDirectory implements Directory
 
     public Directory put( String name, DAType type )
     {
+        if (!name.equals(name.toLowerCase()))
+            throw new IllegalArgumentException("Since 0.7 DataAccess objects does no longer accept upper case names");
+
         types.put(name, type);
         return this;
     }
@@ -96,6 +99,9 @@ public class GHDirectory implements Directory
     @Override
     public DataAccess find( String name, DAType type )
     {
+        if (!name.equals(name.toLowerCase()))
+            throw new IllegalArgumentException("Since 0.7 DataAccess objects does no longer accept upper case names");
+
         DataAccess da = map.get(name);
         if (da != null)
         {
@@ -113,13 +119,10 @@ public class GHDirectory implements Directory
                     da = new RAMIntDataAccess(name, location, true, byteOrder);
                 else
                     da = new RAMIntDataAccess(name, location, false, byteOrder);
-            } else
-            {
-                if (type.isStoring())
-                    da = new RAMDataAccess(name, location, true, byteOrder);
-                else
-                    da = new RAMDataAccess(name, location, false, byteOrder);
-            }
+            } else if (type.isStoring())
+                da = new RAMDataAccess(name, location, true, byteOrder);
+            else
+                da = new RAMDataAccess(name, location, false, byteOrder);
         } else if (type.isMMap())
         {
             da = new MMapDataAccess(name, location, byteOrder, type.isAllowWrites());

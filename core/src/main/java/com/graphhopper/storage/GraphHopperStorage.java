@@ -174,10 +174,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph
         long initSize = Math.max(byteCount, 100);
         properties.create(100);
 
-        properties.put("graph.bytesForFlags", encodingManager.getBytesForFlags());
-        properties.put("graph.flagEncoders", encodingManager.toDetailsString());
+        properties.put("graph.bytes_for_flags", encodingManager.getBytesForFlags());
+        properties.put("graph.flag_encoders", encodingManager.toDetailsString());
 
-        properties.put("graph.byteOrder", dir.getByteOrder());
+        properties.put("graph.byte_order", dir.getByteOrder());
         properties.put("graph.dimension", baseGraph.nodeAccess.getDimension());
         properties.putCurrentVersions();
 
@@ -188,7 +188,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
             cg.create(byteCount);
         }
 
-        properties.put("graph.chWeightings", getCHWeightings().toString());
+        properties.put("graph.ch.weightings", getCHWeightings().toString());
         return this;
     }
 
@@ -247,7 +247,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
         {
             properties.checkVersions(false);
             // check encoding for compatiblity
-            String acceptStr = properties.get("graph.flagEncoders");
+            String acceptStr = properties.get("graph.flag_encoders");
 
             if (encodingManager == null)
             {
@@ -256,7 +256,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
                             + dir.getLocation());
 
                 int bytesForFlags = 4;
-                if ("8".equals(properties.get("graph.bytesForFlags")))
+                if ("8".equals(properties.get("graph.bytes_for_flags")))
                     bytesForFlags = 8;
                 encodingManager = new EncodingManager(acceptStr, bytesForFlags);
             } else if (!acceptStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(acceptStr))
@@ -265,21 +265,21 @@ public final class GraphHopperStorage implements GraphStorage, Graph
                         + "\nGraph: " + acceptStr + ", dir:" + dir.getLocation());
             }
 
-            String byteOrder = properties.get("graph.byteOrder");
+            String byteOrder = properties.get("graph.byte_order");
             if (!byteOrder.equalsIgnoreCase("" + dir.getByteOrder()))
-                throw new IllegalStateException("Configured graph.byteOrder (" + dir.getByteOrder() + ") is not equal to loaded " + byteOrder + "");
+                throw new IllegalStateException("Configured graph.byte_order (" + dir.getByteOrder() + ") is not equal to loaded " + byteOrder + "");
 
-            String bytesForFlags = properties.get("graph.bytesForFlags");
+            String bytesForFlags = properties.get("graph.bytes_for_flags");
             if (!bytesForFlags.equalsIgnoreCase("" + encodingManager.getBytesForFlags()))
-                throw new IllegalStateException("Configured graph.bytesForFlags (" + encodingManager.getBytesForFlags() + ") is not equal to loaded " + bytesForFlags);
+                throw new IllegalStateException("Configured graph.bytes_for_flags (" + encodingManager.getBytesForFlags() + ") is not equal to loaded " + bytesForFlags);
 
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);
 
-            String loadedCHWeightings = properties.get("graph.chWeightings");
+            String loadedCHWeightings = properties.get("graph.ch.weightings");
             String configuredCHWeightings = getCHWeightings().toString();
             if (!loadedCHWeightings.equals(configuredCHWeightings))
-                throw new IllegalStateException("Configured graph.chWeightings: " + configuredCHWeightings + " is not equal to loaded " + loadedCHWeightings);
+                throw new IllegalStateException("Configured graph.ch.weightings: " + configuredCHWeightings + " is not equal to loaded " + loadedCHWeightings);
 
             for (CHGraphImpl cg : chGraphs)
             {

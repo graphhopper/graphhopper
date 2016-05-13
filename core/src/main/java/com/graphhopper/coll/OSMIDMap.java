@@ -47,9 +47,9 @@ public class OSMIDMap implements LongIntMap
     {
         this.dir = dir;
         this.noEntryValue = noNumber;
-        keys = dir.find("osmidMapKeys");
+        keys = dir.find("osmid_map_keys");
         keys.create(2000);
-        values = dir.find("osmidMapValues");
+        values = dir.find("osmid_map_values");
         values.create(1000);
     }
 

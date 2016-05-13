@@ -39,8 +39,8 @@ public class GraphHopperIT
     private static GraphHopper hopper;
     private static final String graphFileFoot = "target/graphhopperIT-foot";
     private static final String osmFile = "files/monaco.osm.gz";
-    private static final String importVehicles = "FOOT";
-    private static final String vehicle = "FOOT";
+    private static final String importVehicles = "foot";
+    private static final String vehicle = "foot";
     private static final String weightCalcStr = "shortest";
 
     private final String tmpGraphFile = "target/graphhopperIT-tmp";
@@ -282,7 +282,7 @@ public class GraphHopperIT
                 addPoint(from).
                 addPoint(to).
                 setVehicle(vehicle).setWeighting("fastest");
-        req.getHints().put("routing.maxVisitedNodes", 5);
+        req.getHints().put("max_visited_nodes", 5);
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
@@ -370,8 +370,8 @@ public class GraphHopperIT
     public void testKremsCyclewayInstructionsWithWayTypeInfo()
     {
         String tmpOsmFile = "files/krems.osm.gz";
-        String tmpVehicle = "BIKE";
-        String tmpImportVehicles = "CAR,BIKE";
+        String tmpVehicle = "bike";
+        String tmpImportVehicles = "car,bike";
         String tmpWeightCalcStr = "fastest";
 
         GraphHopper tmpHopper = new GraphHopper().
@@ -575,7 +575,7 @@ public class GraphHopperIT
         assertEquals(92, bestPath.getPoints().getSize());
 
         // now request flex mode
-        req.getHints().put("routing.ch.disable", true);
+        req.getHints().put("ch.disable", true);
         rsp = tmpHopper.route(req);
         sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertTrue("Too few visited nodes for flex mode " + sum, sum > 60);
