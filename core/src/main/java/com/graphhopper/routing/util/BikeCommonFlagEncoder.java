@@ -93,9 +93,6 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         absoluteBarriers.add("stile");
         absoluteBarriers.add("turnstile");
 
-        // make intermodal connections possible but mark as pushing section
-        acceptedRailways.add("platform");
-
         unpavedSurfaceTags.add("unpaved");
         unpavedSurfaceTags.add("gravel");
         unpavedSurfaceTags.add("ground");
@@ -278,10 +275,6 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
         // check access restrictions
         if (way.hasTag(restrictions, restrictedValues) && !conditionalTagsInspector.isRestrictedWayConditionallyPermitted(way))
-            return 0;
-
-        // do not accept railways (sometimes incorrectly mapped!)
-        if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
         String sacScale = way.getTag("sac_scale");

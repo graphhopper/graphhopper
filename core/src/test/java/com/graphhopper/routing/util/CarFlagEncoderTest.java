@@ -348,16 +348,14 @@ public class CarFlagEncoderTest
     {
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "secondary");
-        way.setTag("railway", "rail");
-        // disallow rail
-        assertTrue(encoder.acceptWay(way) == 0);
+        way.setTag("railway", "rail");        
+        assertTrue(encoder.acceptWay(way) > 0);
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("railway", "abandoned");
         assertTrue(encoder.acceptWay(way) == 0);
 
-        // on disallowed highway, railway is allowed, sometimes incorrectly mapped
         way.setTag("highway", "track");
         assertTrue(encoder.acceptWay(way) > 0);
 

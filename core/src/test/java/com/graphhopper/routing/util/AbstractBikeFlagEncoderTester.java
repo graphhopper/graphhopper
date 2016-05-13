@@ -207,29 +207,22 @@ public abstract class AbstractBikeFlagEncoderTester
     {
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "secondary");
-        way.setTag("railway", "rail");
-        // disallow rail
-        assertEquals(0, encoder.acceptWay(way));
+        way.setTag("railway", "rail");        
+        assertTrue(encoder.acceptWay(way) > 0);
 
         way = new OSMWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "station");
-        // disallow stations
-        assertEquals(0, encoder.acceptWay(way));
+        assertTrue(encoder.acceptWay(way) > 0);
 
         way = new OSMWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "station");
-        way.setTag("bicycle", "yes");
-        // allow stations if explicitely tagged
-        assertNotEquals(0, encoder.acceptWay(way));
-
-        way = new OSMWay(1);
-        way.setTag("highway", "secondary");
-        way.setTag("railway", "station");
-        way.setTag("bicycle", "no");
-        // disallow
-        assertEquals(0, encoder.acceptWay(way));
+        way.setTag("bicycle", "yes");        
+        assertTrue(encoder.acceptWay(way) > 0);
+        
+        way.setTag("bicycle", "no");        
+        assertTrue(encoder.acceptWay(way) == 0);
 
         way = new OSMWay(1);
         way.setTag("railway", "platform");

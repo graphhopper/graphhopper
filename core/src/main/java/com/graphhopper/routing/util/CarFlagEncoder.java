@@ -221,10 +221,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return 0;
 
-        // do not drive cars over railways (sometimes incorrectly mapped!)
-        if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
-            return 0;
-
         if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))
             return 0;
         else

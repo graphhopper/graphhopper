@@ -99,8 +99,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         setBlockByDefault(false);
         potentialBarriers.add("gate");
 
-        acceptedRailways.add("platform");
-
         safeHighwayTags.add("footway");
         safeHighwayTags.add("path");
         safeHighwayTags.add("steps");
@@ -255,10 +253,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         // check access restrictions
         if (way.hasTag(restrictions, restrictedValues) && !conditionalTagsInspector.isRestrictedWayConditionallyPermitted(way))
-            return 0;
-
-        // do not accept railways (sometimes incorrectly mapped!)
-        if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
             return 0;
 
         if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))

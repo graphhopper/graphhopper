@@ -73,8 +73,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected final Set<String> intendedValues = new HashSet<String>(5);
     protected final Set<String> restrictedValues = new HashSet<String>(5);
     protected final Set<String> ferries = new HashSet<String>(5);
-    protected final Set<String> oneways = new HashSet<String>(5);
-    protected final Set<String> acceptedRailways = new HashSet<String>(5);
+    protected final Set<String> oneways = new HashSet<String>(5);    
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> absoluteBarriers = new HashSet<String>(5);
     protected final Set<String> potentialBarriers = new HashSet<String>(5);
@@ -115,17 +114,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
         ferries.add("shuttle_train");
         ferries.add("ferry");
-
-        acceptedRailways.add("tram");
-        acceptedRailways.add("abandoned");
-        acceptedRailways.add("abandoned_tram");
-        acceptedRailways.add("disused");
-
-        // http://wiki.openstreetmap.org/wiki/Demolished_Railway
-        acceptedRailways.add("dismantled");
-        acceptedRailways.add("razed");
-        acceptedRailways.add("historic");
-        acceptedRailways.add("obliterated");
     }
 
     public void setRegistered( boolean registered )
