@@ -40,6 +40,7 @@ road=route
 off_bike=Descendez du vélo
 cycleway=piste cyclable
 way=chemin
+small_way=
 paved=revêtu
 unpaved=non revêtu
 stopover=escale %1$s

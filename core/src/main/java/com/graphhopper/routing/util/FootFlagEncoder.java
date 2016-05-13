@@ -40,7 +40,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     static final int FERRY_SPEED = 10;
     private EncodedValue priorityWayEncoder;
     private EncodedValue relationCodeEncoder;
-    protected HashSet<String> sidewalks = new HashSet<String>();
+    protected HashSet<String> sidewalks = new HashSet<String>(5);
+    protected HashSet<String> sidewalksNo = new HashSet<String>(5);
     private final Set<String> safeHighwayTags = new HashSet<String>();
     private final Set<String> allowedHighwayTags = new HashSet<String>();
     private final Set<String> avoidHighwayTags = new HashSet<String>();
@@ -73,7 +74,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     public FootFlagEncoder( int speedBits, double speedFactor )
     {
         super(speedBits, speedFactor, 0);
-        restrictions.addAll(Arrays.asList("foot", "access"));
+        restrictions.addAll(Arrays.asList("foot", "vehicle", "access"));
         restrictedValues.add("private");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -85,6 +86,11 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         intendedValues.add("official");
         intendedValues.add("permissive");
 
+        sidewalksNo.add("no");
+        sidewalksNo.add("none");
+        // see #712
+        sidewalksNo.add("separate");
+
         sidewalks.add("yes");
         sidewalks.add("both");
         sidewalks.add("left");
@@ -92,8 +98,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
         setBlockByDefault(false);
         potentialBarriers.add("gate");
-
-        acceptedRailways.add("platform");
 
         safeHighwayTags.add("footway");
         safeHighwayTags.add("path");
@@ -251,10 +255,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         if (way.hasTag(restrictions, restrictedValues) && !conditionalTagsInspector.isRestrictedWayConditionallyPermitted(way))
             return 0;
 
-        // do not accept railways (sometimes incorrectly mapped!)
-        if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
-            return 0;
-
         if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))
             return 0;
         else
@@ -287,38 +287,39 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         if (!isAccept(allowed))
             return 0;
 
-        long encoded = 0;
+        long flags = 0;
         if (!isFerry(allowed))
         {
             String sacScale = way.getTag("sac_scale");
             if (sacScale != null)
             {
                 if ("hiking".equals(sacScale))
-                    encoded = speedEncoder.setDoubleValue(encoded, MEAN_SPEED);
+                    flags = speedEncoder.setDoubleValue(flags, MEAN_SPEED);
                 else
-                    encoded = speedEncoder.setDoubleValue(encoded, SLOW_SPEED);
+                    flags = speedEncoder.setDoubleValue(flags, SLOW_SPEED);
             } else
             {
-                encoded = speedEncoder.setDoubleValue(encoded, MEAN_SPEED);
+                flags = speedEncoder.setDoubleValue(flags, MEAN_SPEED);
             }
-            encoded |= directionBitMask;
+            flags |= directionBitMask;
 
             boolean isRoundabout = way.hasTag("junction", "roundabout");
             if (isRoundabout)
-                encoded = setBool(encoded, K_ROUNDABOUT, true);
+                flags = setBool(flags, K_ROUNDABOUT, true);
 
         } else
         {
-            encoded = encoded | handleFerryTags(way, SLOW_SPEED, MEAN_SPEED, FERRY_SPEED);
-            encoded |= directionBitMask;
+            double ferrySpeed = getFerrySpeed(way, SLOW_SPEED, MEAN_SPEED, FERRY_SPEED);
+            flags = setSpeed(flags, ferrySpeed);
+            flags |= directionBitMask;
         }
 
         int priorityFromRelation = 0;
         if (relationFlags != 0)
             priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
-        encoded = priorityWayEncoder.setValue(encoded, handlePriority(way, priorityFromRelation));
-        return encoded;
+        flags = priorityWayEncoder.setValue(flags, handlePriority(way, priorityFromRelation));
+        return flags;
     }
 
     @Override
@@ -363,14 +364,14 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues))
             {
-                if (way.hasTag("sidewalk", "no"))
+                if (way.hasTag("sidewalk", sidewalksNo))
                     weightToPrioMap.put(40d, REACH_DEST.getValue());
                 else
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
         } else if (maxSpeed > 50 || avoidHighwayTags.contains(highway))
         {
-            if (way.hasTag("sidewalk", "no"))
+            if (way.hasTag("sidewalk", sidewalksNo))
                 weightToPrioMap.put(45d, WORST.getValue());
             else
                 weightToPrioMap.put(45d, REACH_DEST.getValue());

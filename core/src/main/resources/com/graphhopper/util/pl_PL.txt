@@ -40,6 +40,7 @@ road=droga
 off_bike=zejdź z roweru
 cycleway=trasa rowerowa
 way=trasa
+small_way=
 paved=utwierdzona
 unpaved=nieutwardzona
 stopover=przystanek %1$s

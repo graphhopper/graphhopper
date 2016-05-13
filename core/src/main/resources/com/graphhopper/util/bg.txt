@@ -40,6 +40,7 @@ road=улица
 off_bike=в този участък трябва да слезеш от колелото!
 cycleway=велоалея
 way=път
+small_way=
 paved=асфалтиран
 unpaved=черен
 stopover=прехвърляне %1$s

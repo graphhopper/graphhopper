@@ -165,8 +165,8 @@ public class GraphHopperIT
         // via ramsenthal
         assertEquals(2864, rsp.getAll().get(0).getTime() / 1000);
         // via unterwaiz
-        assertEquals(3320, rsp.getAll().get(1).getTime() / 1000);
-        // via eselslohe -> theta; BTW: here decreasing time as priority influences time order
+        assertEquals(3318, rsp.getAll().get(1).getTime() / 1000);
+        // via eselslohe -> theta; BTW: here smaller time as 2nd alternative due to priority influences time order
         assertEquals(3094, rsp.getAll().get(2).getTime() / 1000);
 
         req = new GHRequest(50.023513, 11.548862, 49.969441, 11.537876).
@@ -577,7 +577,7 @@ public class GraphHopperIT
 
         tmpHopper.getCHFactoryDecorator().
                 setWeightingsAsStrings(Arrays.asList("fastest")).
-                setForcingFlexibleModeAllowed(true);
+                setDisablingAllowed(true);
 
         tmpHopper.importOrLoad();
 
@@ -592,7 +592,7 @@ public class GraphHopperIT
         assertEquals(92, bestPath.getPoints().getSize());
 
         // now request flex mode
-        req.getHints().put("routing.flexibleMode.force", true);
+        req.getHints().put("routing.ch.disable", true);
         rsp = tmpHopper.route(req);
         sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertTrue("Too few visited nodes for flex mode " + sum, sum > 60);

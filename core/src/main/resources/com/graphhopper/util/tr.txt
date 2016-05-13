@@ -40,6 +40,7 @@ road=yol
 off_bike=bisikletten inmek
 cycleway=bisiklet yolu
 way=yol
+small_way=
 paved=kaldırım
 unpaved=kaldırımsız yol
 stopover=mola yeri %1$s

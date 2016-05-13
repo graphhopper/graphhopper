@@ -40,6 +40,7 @@ road=weg
 off_bike=voetpad
 cycleway=fietspad
 way=weg
+small_way=
 paved=verhard
 unpaved=onverhard
 stopover=tussenstop %1$s

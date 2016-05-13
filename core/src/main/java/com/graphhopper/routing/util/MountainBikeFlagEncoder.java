@@ -125,10 +125,6 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
         setCyclingNetworkPreference("lcn", PREFER.getValue());
         setCyclingNetworkPreference("mtb", BEST.getValue());
 
-        addPushingSection("footway");
-        addPushingSection("pedestrian");
-        addPushingSection("steps");
-
         avoidHighwayTags.add("primary");
         avoidHighwayTags.add("primary_link");
         avoidHighwayTags.add("secondary");
@@ -144,7 +140,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
         preferHighwayTags.add("unclassified");
 
         potentialBarriers.add("kissing_gate");
-        setSpecificBicycleClass("mtb");
+        setSpecificClassBicycle("mtb");
     }
 
     @Override
@@ -186,7 +182,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    boolean allowedSacScale( String sacScale )
+    boolean isSacScaleAllowed( String sacScale )
     {
         // other scales are too dangerous even for MTB, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
         return "hiking".equals(sacScale) || "mountain_hiking".equals(sacScale)

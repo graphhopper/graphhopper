@@ -40,6 +40,7 @@ road=kelias
 off_bike=nulipkite nuo dviračio
 cycleway=dviračių takas
 way=kelias
+small_way=
 paved=grįstas
 unpaved=negrįstas
 stopover=sustojimas %1$s

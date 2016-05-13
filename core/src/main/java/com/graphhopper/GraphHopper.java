@@ -1023,7 +1023,7 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
-        List<GHPoint> points = request.getPoints();
+        List<GHPoint> points = request.getPoints();        
         String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
 
         RoutingTemplate routingTemplate;
@@ -1050,8 +1050,8 @@ public class GraphHopper implements GraphHopperAPI
             Weighting weighting;
             Graph routingGraph = ghStorage;
 
-            boolean forceFlexibleMode = request.getHints().getBool(CHAlgoFactoryDecorator.FORCE_FLEXIBLE_ROUTING, false);
-            if (!chFactoryDecorator.isForcingFlexibleModeAllowed() && forceFlexibleMode)
+            boolean forceFlexibleMode = request.getHints().getBool(CHAlgoFactoryDecorator.DISABLE, false);
+            if (!chFactoryDecorator.isDisablingAllowed() && forceFlexibleMode)
             {
                 ghRsp.addError(new IllegalStateException("Flexible mode not enabled on the server-side"));
                 return Collections.emptyList();

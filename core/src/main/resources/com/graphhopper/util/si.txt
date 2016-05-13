@@ -40,6 +40,7 @@ road=cesta
 off_bike=peš odsek
 cycleway=kolesarska steza
 way=smer
+small_way=
 paved=tlakovana
 unpaved=netlakovana
 stopover=postanek %1$s

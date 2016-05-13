@@ -40,6 +40,7 @@ road=Straße
 off_bike=Schiebestrecke
 cycleway=Radweg
 way=Weg
+small_way=kleiner Weg
 paved=befestigt
 unpaved=unbefestigt
 stopover=Zwischenziel %1$s

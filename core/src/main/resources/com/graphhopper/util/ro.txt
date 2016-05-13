@@ -40,6 +40,7 @@ road=stradă
 off_bike=zonă pentru împins
 cycleway=pistă pentru biciclete
 way=cale
+small_way=
 paved=pavat
 unpaved=nepavat
 stopover=escala %1$s

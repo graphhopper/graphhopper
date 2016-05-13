@@ -40,6 +40,7 @@ road=כביש
 off_bike=לרדת מהאופניים
 cycleway=דרך לאופניים
 way=דרך
+small_way=
 paved=סלולה
 unpaved=לא סלולה
 stopover=נקודת עצירה מס׳ %1$s

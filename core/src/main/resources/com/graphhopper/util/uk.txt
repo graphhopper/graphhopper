@@ -40,6 +40,7 @@ road=дорога
 off_bike=злізьте з велосипеда
 cycleway=велосипедна доріжка
 way=шлях
+small_way=
 paved=з покриттям
 unpaved=без покриття
 stopover=зупинка %1$s

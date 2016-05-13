@@ -40,6 +40,7 @@ road=طريق
 off_bike=انزل الدراجة
 cycleway=طريق دائري
 way=طريق
+small_way=
 paved=مرصوف
 unpaved=غير مرصوف
 stopover=توقف %1$s

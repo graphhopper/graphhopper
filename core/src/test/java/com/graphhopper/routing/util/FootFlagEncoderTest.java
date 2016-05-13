@@ -126,6 +126,15 @@ public class FootFlagEncoderTest
         way.setTag("highway", "service");
         way.setTag("access", "no");
         assertFalse(footEncoder.acceptWay(way) > 0);
+        way.setTag("foot", "yes");
+        assertTrue(footEncoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("vehicle", "no");
+        assertFalse(footEncoder.acceptWay(way) > 0);
+        way.setTag("foot", "yes");
+        assertTrue(footEncoder.acceptWay(way) > 0);
 
         way.clearTags();
         way.setTag("highway", "tertiary");
@@ -250,6 +259,13 @@ public class FootFlagEncoderTest
         way.setTag("bicycle", "official");
         way.setTag("sidewalk", "no");
         assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, 0));
+
+        way.clearTags();
+        way.setTag("highway", "trunk");
+        way.setTag("sidewalk", "no");
+        assertEquals(PriorityCode.WORST.getValue(), footEncoder.handlePriority(way, 0));
+        way.setTag("sidewalk", "none");
+        assertEquals(PriorityCode.WORST.getValue(), footEncoder.handlePriority(way, 0));
 
         way.clearTags();
         way.setTag("highway", "residential");
