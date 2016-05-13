@@ -113,18 +113,18 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
         way.setTag("highway", "track");
         wayType = getWayTypeFromFlags(way);
-        assertEquals("way, unpaved", wayType);
+        assertEquals("small way, unpaved", wayType);
 
         way.clearTags();
         way.setTag("highway", "path");
         wayType = getWayTypeFromFlags(way);
-        assertEquals("way, unpaved", wayType);
+        assertEquals("small way, unpaved", wayType);
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("surface", "grass");
         wayType = getWayTypeFromFlags(way);
-        assertEquals("way, unpaved", wayType);
+        assertEquals("small way, unpaved", wayType);
 
         way.clearTags();
         way.setTag("highway", "path");
@@ -146,7 +146,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("surface", "paved");
         way.setTag("tracktype", "grade2");
         wayType = getWayTypeFromFlags(way);
-        assertEquals("way, unpaved", wayType);
+        assertEquals("small way, unpaved", wayType);
 
         way.clearTags();
         way.setTag("highway", "pedestrian");
@@ -167,7 +167,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
-        assertEquals("way, unpaved", getWayTypeFromFlags(osmWay));
+        assertEquals("small way, unpaved", getWayTypeFromFlags(osmWay));
 
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
@@ -176,7 +176,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         flags = encoder.handleWayTags(osmWay, allowed, relFlags);
         assertEquals(18, encoder.getSpeed(flags), 1e-1);
         assertPriority(PriorityCode.PREFER.getValue(), osmWay);
-        assertEquals("way, unpaved", getWayTypeFromFlags(osmWay));
+        assertEquals("small way, unpaved", getWayTypeFromFlags(osmWay));
 
         // relation code is PREFER
         osmRel.setTag("network", "rcn");
@@ -208,6 +208,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
     // Issue 407 : Always block kissing_gate execpt for mountainbikes
     @Test
+    @Override
     public void testBarrierAccess()
     {
         // kissing_gate without bicycle tag

@@ -472,7 +472,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         switch (wayType)
         {
             case 0:
-                wayTypeName = tr.tr("road");
+                wayTypeName = "";
                 break;
             case 1:
                 wayTypeName = tr.tr("off_bike");
@@ -481,7 +481,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 wayTypeName = tr.tr("cycleway");
                 break;
             case 3:
-                wayTypeName = tr.tr("way");
+                wayTypeName = tr.tr("small_way");
                 break;
         }
 

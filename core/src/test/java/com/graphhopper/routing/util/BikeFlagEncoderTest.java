@@ -160,10 +160,10 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.clearTags();
         way.setTag("highway", "steps");
         way.setTag("surface", "wood");
-        assertEquals(PUSHING_SECTION_SPEED/2, encoder.getSpeed(way));
+        assertEquals(PUSHING_SECTION_SPEED / 2, encoder.getSpeed(way));
         assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
-        way.setTag("maxspeed", "20");        
-        assertEquals(PUSHING_SECTION_SPEED/2, encoder.getSpeed(way));
+        way.setTag("maxspeed", "20");
+        assertEquals(PUSHING_SECTION_SPEED / 2, encoder.getSpeed(way));
         assertPriority(AVOID_IF_POSSIBLE.getValue(), way);
 
         way.clearTags();
@@ -212,7 +212,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         String wayType;
         way.setTag("highway", "track");
         wayType = getWayTypeFromFlags(way);
-        assertEquals("way, unpaved", wayType);
+        assertEquals("small way, unpaved", wayType);
 
         way.clearTags();
         way.setTag("highway", "path");
@@ -384,7 +384,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         osmRel.setTag("network", "lcn");
         relFlags = encoder.handleRelationTags(osmRel, 0);
         wayType = getWayTypeFromFlags(osmWay, relFlags);
-        assertEquals("way, unpaved", wayType);
+        assertEquals("small way, unpaved", wayType);
 
         // steps are still shown as get off the bike
         osmWay.clearTags();
@@ -546,6 +546,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
     // Issue 407 : Always block kissing_gate execpt for mountainbikes
     @Test
+    @Override
     public void testBarrierAccess()
     {
         // kissing_gate without bicycle tag

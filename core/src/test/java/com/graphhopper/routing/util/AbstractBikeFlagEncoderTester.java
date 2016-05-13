@@ -343,7 +343,7 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("bicycle", "yes");
         way.setTag("surface", "grass");
         wayType = getWayTypeFromFlags(way);
-        assertEquals("way, unpaved", wayType);
+        assertEquals("small way, unpaved", wayType);
 
         way.setTag("bicycle", "designated");
         wayType = getWayTypeFromFlags(way);
@@ -354,7 +354,7 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("bicycle", "yes");
         way.setTag("surface", "grass");
         wayType = getWayTypeFromFlags(way);
-        assertEquals("way, unpaved", wayType);
+        assertEquals("small way, unpaved", wayType);
 
         way.clearTags();
         way.setTag("railway", "platform");
