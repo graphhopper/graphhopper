@@ -69,6 +69,12 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
     {
         double distanceInMeter = ghRequest.getHints().getDouble("round_trip.distance", 1000);
         long seed = ghRequest.getHints().getLong("round_trip.seed", 0L);
+        if (points.isEmpty())
+        {
+            ghResponse.addError(new IllegalStateException("For round trip calculation one point is required"));
+            return Collections.emptyList();
+        }
+
         GHPoint start = ghRequest.getPoints().get(0);
 
         TourStrategy strategy = new SinglePointTour(new Random(seed), distanceInMeter);
