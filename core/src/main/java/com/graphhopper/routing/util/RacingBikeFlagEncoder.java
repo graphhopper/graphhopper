@@ -53,7 +53,6 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         this(new PMap(propertiesStr));
     }
 
-
     public RacingBikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
     {
         super(speedBits, speedFactor, maxTurnCosts);
@@ -117,7 +116,6 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         setHighwaySpeed("tertiary_link", 20);
 
         addPushingSection("path");
-        addPushingSection("track");
         addPushingSection("footway");
         addPushingSection("pedestrian");
         addPushingSection("steps");
@@ -131,7 +129,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         absoluteBarriers.add("kissing_gate");
 
         setAvoidSpeedLimit(81);
-        setSpecificBicycleClass("roadcycling");
+        setSpecificClassBicycle("roadcycling");
 
     }
 
@@ -172,7 +170,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    boolean allowedSacScale( String sacScale )
+    boolean isSacScaleAllowed( String sacScale )
     {
         // for racing bike it is only allowed if empty
         return false;
