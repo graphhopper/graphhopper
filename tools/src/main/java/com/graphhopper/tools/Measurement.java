@@ -324,7 +324,7 @@ public class Measurement
                         setVehicle(vehicle).
                         setAlgorithm(algo);
                 if (!ch)
-                    req.getHints().put("routing.flexibleMode.force", true);
+                    req.getHints().put("routing.ch.disable", true);
 
                 // req.getHints().put(algo + ".approximation", "BeelineSimplification");
                 // req.getHints().put(algo + ".epsilon", 2);
