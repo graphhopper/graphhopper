@@ -23,6 +23,8 @@ package com.graphhopper.util;
  */
 public class Parameters
 {
+    static final String INIT_PREFIX = "init.";
+
     /**
      * Parameters that can be used for algorithm.
      */
@@ -86,13 +88,12 @@ public class Parameters
         {
             public static final String DISTANCE = ROUND_TRIP + ".distance";
             public static final String SEED = ROUND_TRIP + ".seed";
-            public static final String INIT_MAX_RETRIES = Routing.INIT_PREFIX + ROUND_TRIP + ".max_retries";
+            public static final String INIT_MAX_RETRIES = INIT_PREFIX + ROUND_TRIP + ".max_retries";
         }
     }
 
     public static final class Routing
     {
-        static final String INIT_PREFIX = "routing.";
         public static final String MAX_VISITED_NODES = "max_visited_nodes";
         public static final String INIT_MAX_VISITED_NODES = "routing.max_visited_nodes";
         public static final String TRAVERSAL_MODE = "traversal_mode";
@@ -120,7 +121,7 @@ public class Parameters
         /**
          * This property name configures at start if DISABLE parameter can have an effect.
          */
-        public static final String DISABLING_ALLOWED = Routing.INIT_PREFIX + "ch.disabling_allowed";
+        public static final String DISABLING_ALLOWED = INIT_PREFIX + "ch.disabling_allowed";
         /**
          * The property name in HintsMap if heading should be used for CH regardless of the possible
          * routing errors.
