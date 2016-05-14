@@ -613,9 +613,20 @@ public class GraphHopper implements GraphHopperAPI
 
         // elevation
         String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
-        boolean eleCalcMean = args.getBool("graph.elevation.calc_mean", false);
+
+        // keep fallback until 0.8
+        boolean eleCalcMean = args.has("graph.elevation.calcmean")
+                ? args.getBool("graph.elevation.calcmean", false)
+                : args.getBool("graph.elevation.calc_mean", false);
+
         String cacheDirStr = args.get("graph.elevation.cache_dir", "");
+        if (cacheDirStr.isEmpty())
+            cacheDirStr = args.get("graph.elevation.cachedir", "");
+
         String baseURL = args.get("graph.elevation.base_url", "");
+        if (baseURL.isEmpty())
+            args.get("graph.elevation.baseurl", "");
+
         DAType elevationDAType = DAType.fromString(args.get("graph.elevation.dataaccess", "MMAP"));
         ElevationProvider tmpProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("srtm"))

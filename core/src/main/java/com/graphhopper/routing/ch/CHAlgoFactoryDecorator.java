@@ -98,7 +98,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         boolean enableThis = !weightingsAsStrings.isEmpty();
         setEnabled(enableThis);
         if (enableThis)
-            setDisablingAllowed(args.getBool(CH.DISABLING_ALLOWED, isDisablingAllowed()));
+            setDisablingAllowed(args.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
         setPreparationPeriodicUpdates(args.getInt("prepare.updates.periodic", getPreparationPeriodicUpdates()));
         setPreparationLazyUpdates(args.getInt("prepare.updates.lazy", getPreparationLazyUpdates()));
