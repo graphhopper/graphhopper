@@ -24,12 +24,11 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.reader.DataReader;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
+import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.FileWriter;
@@ -307,7 +306,7 @@ public class Measurement
         final NodeAccess na = g.getNodeAccess();
 
         // if using none-bidirectional algorithm make sure you exclude CH routing
-        final String algo = AlgorithmOptions.DIJKSTRA_BI;
+        final String algo = Algorithms.DIJKSTRA_BI;
         MiniPerfTest miniPerf = new MiniPerfTest()
         {
             @Override
