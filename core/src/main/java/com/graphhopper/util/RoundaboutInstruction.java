@@ -135,15 +135,15 @@ public class RoundaboutInstruction extends Instruction
         {
             if (!exited)
             {
-                str = tr.tr("roundaboutEnter");
+                str = tr.tr("roundabout_enter");
             } else
             {
-                str = Helper.isEmpty(streetName) ? tr.tr("roundaboutExit", getExitNumber())
-                        : tr.tr("roundaboutExitOnto", getExitNumber(), streetName);
+                str = Helper.isEmpty(streetName) ? tr.tr("roundabout_exit", getExitNumber())
+                        : tr.tr("roundabout_exit_onto", getExitNumber(), streetName);
             }
         } else
         {
-            throw new IllegalStateException(indi + "no Roundabout indication");
+            throw new IllegalStateException(indi + "no roundabout indication");
         }
         return str;
     }

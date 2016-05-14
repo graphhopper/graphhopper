@@ -42,7 +42,7 @@ A call `queryGraph.lookup(allQRs)` will determine the correct node for all `Quer
 ```java
 FlagEncoder encoder = new CarFlagEncoder();
 EncodingManager em = new EncodingManager(encoder);
-GraphBuilder gb = new GraphBuilder(em).setLocation("graphhopper-folder").setStore(true);
+GraphBuilder gb = new GraphBuilder(em).setLocation("graphhopper_folder").setStore(true);
 GraphStorage graph = gb.create();
 // Make a weighted edge between two nodes.
 EdgeIteratorState edge = graph.edge(fromId, toId);
@@ -58,7 +58,7 @@ graph.flush();
 ...
 GraphStorage graph = gb.load();
 // Load index
-LocationIndex index = new LocationIndexTree(graph.getBaseGraph(), new RAMDirectory("graphhopper-folder", true));
+LocationIndex index = new LocationIndexTree(graph.getBaseGraph(), new RAMDirectory("graphhopper_folder", true));
 if (!index.loadExisting())
     throw new IllegalStateException("location index cannot be loaded!");
 ```
@@ -85,7 +85,7 @@ Path path = new Dijkstra(graph, encoder).calcPath(fromId, toId);
 ```java
 // Creating and saving the graph
 GraphBuilder gb = new GraphBuilder(em).
-    setLocation("graphhopper-folder").
+    setLocation("graphhopper_folder").
     setStore(true).
     setCHGraph(true);
 GraphHopperStorage graph = gb.create();
@@ -105,9 +105,9 @@ graph.flush();
 GraphStorage graph = gb.load();
 
  // Load index
-LocationIndex index = new LocationIndexTree(graph.getBaseGraph(), new RAMDirectory("graphhopper-folder", true));
+LocationIndex index = new LocationIndexTree(graph.getBaseGraph(), new RAMDirectory("graphhopper_folder", true));
 if (!index.loadExisting())
-    throw new IllegalStateException("location2id index cannot be loaded!");
+    throw new IllegalStateException("location index cannot be loaded!");
 
 // calculate path is identical
 QueryResult fromQR = index.findClosest(latitudeFrom, longituteFrom, EdgeFilter.ALL_EDGES);
@@ -117,7 +117,7 @@ queryGraph.lookup(fromQR, toQR);
 
 // create the algorithm using the PrepareContractionHierarchies object
 AlgorithmOptions algoOpts = AlgorithmOptions.start().
-   algorithm(AlgorithmOptions.DIJKSTRA_BI).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
+   algorithm(Parameters.Algorithms.DIJKSTRA_BI).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
    build();
 RoutingAlgorithm algorithm = pch.createAlgo(queryGraph, algoOpts);
 Path path = algorithm.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());

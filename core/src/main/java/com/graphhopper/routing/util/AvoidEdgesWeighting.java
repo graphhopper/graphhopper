@@ -20,7 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.util.EdgeIteratorState;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * Rates already used Paths worse.
@@ -49,7 +49,7 @@ public class AvoidEdgesWeighting extends AbstractAdjustedWeighting
      * This method adds the specified path to this weighting which should be penalized in the
      * calcWeight method.
      */
-    public void addEdges( List<EdgeIteratorState> edges )
+    public void addEdges( Collection<EdgeIteratorState> edges )
     {
         for (EdgeIteratorState edge : edges)
         {
@@ -77,11 +77,5 @@ public class AvoidEdgesWeighting extends AbstractAdjustedWeighting
     public String getName()
     {
         return "avoid_edges";
-    }
-
-    @Override
-    public String toString()
-    {
-        return super.toString(); //To change body of generated methods, choose Tools | Templates.
     }
 }

@@ -29,6 +29,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Algorithms;
+import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.FileWriter;
@@ -70,7 +71,7 @@ public class Measurement
             propLocation = "measurement" + new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date()) + ".properties";
 
         seed = args.getLong("measurement.seed", 123);
-        String gitCommit = args.get("measurement.git_info", "");
+        String gitCommit = args.get("measurement.gitinfo", "");
         int count = args.getInt("measurement.count", 5000);
 
         GraphHopper hopper = new GraphHopper()
@@ -136,7 +137,7 @@ public class Measurement
             put("error", ex.toString());
         } finally
         {
-            put("measurement.git_info", gitCommit);
+            put("measurement.gitinfo", gitCommit);
             put("measurement.count", count);
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getTime());
@@ -323,7 +324,7 @@ public class Measurement
                         setVehicle(vehicle).
                         setAlgorithm(algo);
                 if (!ch)
-                    req.getHints().put("ch.disable", true);
+                    req.getHints().put(CH.DISABLE, true);
 
                 // req.getHints().put(algo + ".approximation", "BeelineSimplification");
                 // req.getHints().put(algo + ".epsilon", 2);

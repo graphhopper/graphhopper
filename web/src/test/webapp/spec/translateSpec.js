@@ -3,9 +3,9 @@ var translate = requireFile('./translate.js');
 describe('translation', function () {
     it("should format time string correctly", function () {
         var defaultTranslationMap = {};
-        defaultTranslationMap["minabbr"] = 'min';
-        defaultTranslationMap["hourabbr"] = 'h';
-        defaultTranslationMap["dayabbr"] = 'd';
+        defaultTranslationMap["min_abbr"] = 'min';
+        defaultTranslationMap["hour_abbr"] = 'h';
+        defaultTranslationMap["day_abbr"] = 'd';
 
         translate.init({ default: defaultTranslationMap });
 

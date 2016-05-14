@@ -23,8 +23,6 @@ package com.graphhopper.util;
  */
 public class Parameters
 {
-    static final String INIT_PREFIX = "init.";
-
     /**
      * Parameters that can be used for algorithm.
      */
@@ -88,19 +86,24 @@ public class Parameters
         {
             public static final String DISTANCE = ROUND_TRIP + ".distance";
             public static final String SEED = ROUND_TRIP + ".seed";
-            public static final String INIT_MAX_RETRIES = INIT_PREFIX + ROUND_TRIP + ".max_retries";
+            public static final String INIT_MAX_RETRIES = ROUND_TRIP + ".max_retries";
         }
     }
 
+    /**
+     * Parameters that can be passed as hints and influence routing per request. Parameters with an
+     * 'INIT' prefix are used as defaults and/or are configured at start.
+     */
     public static final class Routing
     {
+        static final String PREFIX = "routing.";
         public static final String MAX_VISITED_NODES = "max_visited_nodes";
-        public static final String INIT_MAX_VISITED_NODES = "routing.max_visited_nodes";
+        public static final String INIT_MAX_VISITED_NODES = PREFIX + "max_visited_nodes";
         public static final String TRAVERSAL_MODE = "traversal_mode";
         public static final String INSTRUCTIONS = "instructions";
         public static final String CALC_POINTS = "calc_points";
         public static final String WAY_POINT_MAX_DISTANCE = "way_point_max_distance";
-        public static final String INIT_WAY_POINT_MAX_DISTANCE = INIT_PREFIX + "way_point_max_distance";
+        public static final String INIT_WAY_POINT_MAX_DISTANCE = PREFIX + "way_point_max_distance";
         /**
          * true or false. If routes at via points should avoid u-turns. (not for CH) See related
          * 'heading' parameter:
@@ -121,7 +124,7 @@ public class Parameters
         /**
          * This property name configures at start if DISABLE parameter can have an effect.
          */
-        public static final String DISABLING_ALLOWED = INIT_PREFIX + "ch.disabling_allowed";
+        public static final String DISABLING_ALLOWED = Routing.PREFIX + "ch.disabling_allowed";
         /**
          * The property name in HintsMap if heading should be used for CH regardless of the possible
          * routing errors.
