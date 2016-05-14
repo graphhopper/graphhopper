@@ -53,7 +53,7 @@ public class AlternativeRouteTest
         this.traversalMode = tMode;
     }
 
-    GraphHopperStorage createTestGraph( boolean fullGraph, EncodingManager tmpEM )
+    public GraphHopperStorage createTestGraph( boolean fullGraph, EncodingManager tmpEM )
     {
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false, new GraphExtension.NoOpExtension());
         graph.create(1000);
