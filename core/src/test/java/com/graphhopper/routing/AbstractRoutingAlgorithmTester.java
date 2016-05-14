@@ -23,6 +23,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
+import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import gnu.trove.list.TIntList;
 import java.util.*;
 
@@ -503,7 +504,7 @@ public abstract class AbstractRoutingAlgorithmTester
         updateDistancesFor(graph, 3, 0, 1);
         updateDistancesFor(graph, 4, 0, 2);
 
-        AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, weighting);
+        AlgorithmOptions opts = new AlgorithmOptions(DIJKSTRA_BI, carEncoder, weighting);
         RoutingAlgorithmFactory prepare = createFactory(graph, opts);
         Path p = prepare.createAlgo(getGraph(graph, opts.getWeighting()), opts).calcPath(4, 0);
         assertEquals(Helper.createTList(4, 1, 0), p.calcNodes());

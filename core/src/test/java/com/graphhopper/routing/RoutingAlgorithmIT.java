@@ -32,6 +32,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
+import static com.graphhopper.util.Parameters.Algorithms.*;
 import com.graphhopper.util.StopWatch;
 
 import java.io.File;
@@ -683,7 +684,7 @@ public class RoutingAlgorithmIT
             {
                 String[] algos = new String[]
                 {
-                    "astar", "dijkstrabi"
+                    ASTAR, DIJKSTRA_BI
                 };
                 for (final String algoStr : algos)
                 {
@@ -729,13 +730,13 @@ public class RoutingAlgorithmIT
                                               final EncodingManager manager )
     {
         List<AlgoHelperEntry> prepare = new ArrayList<AlgoHelperEntry>();
-        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(AlgorithmOptions.ASTAR, encoder, weighting, tMode), idx));
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(ASTAR, encoder, weighting, tMode), idx));
         // later: include dijkstraOneToMany        
-        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA, encoder, weighting, tMode), idx));
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(DIJKSTRA, encoder, weighting, tMode), idx));
 
-        final AlgorithmOptions astarbiOpts = new AlgorithmOptions(AlgorithmOptions.ASTAR_BI, encoder, weighting, tMode);
-        astarbiOpts.getHints().put(AlgorithmOptions.ASTAR_BI + ".approximation", "BeelineSimplification");
-        final AlgorithmOptions dijkstrabiOpts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting, tMode);
+        final AlgorithmOptions astarbiOpts = new AlgorithmOptions(ASTAR_BI, encoder, weighting, tMode);
+        astarbiOpts.getHints().put(ASTAR_BI + ".approximation", "BeelineSimplification");
+        final AlgorithmOptions dijkstrabiOpts = new AlgorithmOptions(DIJKSTRA_BI, encoder, weighting, tMode);
         prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, astarbiOpts, idx));
         prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, dijkstrabiOpts, idx));
 

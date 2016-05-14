@@ -26,6 +26,8 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
+import static com.graphhopper.util.Parameters.Algorithms.*;
+import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
 import org.junit.Before;
@@ -295,7 +297,7 @@ public class GraphHopperTest
         instance.getCHFactoryDecorator().setWeightingsAsStrings("shortest");
         instance.importOrLoad();
         GHResponse rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
-                setAlgorithm(AlgorithmOptions.DIJKSTRA_BI));
+                setAlgorithm(DIJKSTRA_BI));
         assertFalse(rsp.hasErrors());
         assertEquals(Helper.createPointList(51.249215, 9.431716, 52.0, 9.0, 51.2, 9.4), rsp.getBest().getPoints());
         assertEquals(3, rsp.getBest().getPoints().getSize());
@@ -311,7 +313,7 @@ public class GraphHopperTest
                 setOSMFile(testOsm);
         instance.importOrLoad();
         PathWrapper rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
-                setAlgorithm(AlgorithmOptions.DIJKSTRA_BI)).getBest();
+                setAlgorithm(DIJKSTRA_BI)).getBest();
         assertFalse(rsp.hasErrors());
         assertEquals(3, rsp.getPoints().getSize());
         assertEquals(new GHPoint(51.24921503475044, 9.431716451757769), rsp.getPoints().toGHPoint(0));
@@ -640,7 +642,7 @@ public class GraphHopperTest
         }, paths.get(0).calcNodes().toArray());
 
         // Test uni-directional case
-        req.setAlgorithm(AlgorithmOptions.DIJKSTRA);
+        req.setAlgorithm(DIJKSTRA);
         response = new GHResponse();
         paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
@@ -685,7 +687,7 @@ public class GraphHopperTest
         // Via Point betweeen 8-3
         GHPoint via = new GHPoint(0.0015, 0.001);
         GHRequest req = new GHRequest().addPoint(start).addPoint(via).addPoint(end);
-        req.getHints().put("pass_through", true);
+        req.getHints().put(Routing.PASS_THROUGH, true);
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
@@ -713,7 +715,7 @@ public class GraphHopperTest
         // First go south and than come from west to via-point at 7-6. Then go back over previously punished (11)-4 edge
         GHPoint via = new GHPoint(0.000, 0.0015);
         GHRequest req = new GHRequest().addPoint(start, 0.).addPoint(via, 3.14 / 2).addPoint(end);
-        req.getHints().put("pass_through", true);
+        req.getHints().put(Routing.PASS_THROUGH, true);
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());

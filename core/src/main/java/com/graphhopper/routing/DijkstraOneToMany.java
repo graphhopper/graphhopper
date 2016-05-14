@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.Arrays;
@@ -233,7 +234,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     @Override
     public String getName()
     {
-        return AlgorithmOptions.DIJKSTRA_ONE_TO_MANY;
+        return Parameters.Algorithms.DIJKSTRA_ONE_TO_MANY;
     }
 
     /**

@@ -32,6 +32,7 @@ import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.Parameters;
 
 /**
  * This class implements the A* algorithm according to
@@ -199,6 +200,6 @@ public class AStar extends AbstractRoutingAlgorithm
     @Override
     public String getName()
     {
-        return AlgorithmOptions.ASTAR;
+        return Parameters.Algorithms.ASTAR;
     }
 }

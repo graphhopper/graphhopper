@@ -25,6 +25,7 @@ import com.graphhopper.util.Helper;
 
 import static org.junit.Assert.*;
 import static com.graphhopper.util.GHUtility.*;
+import static com.graphhopper.util.Parameters.Algorithms.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,10 +58,10 @@ public class EdgeBasedRoutingAlgorithmTest
     {
         return Arrays.asList(new Object[][]
                 {
-                        {AlgorithmOptions.DIJKSTRA},
-                        {AlgorithmOptions.DIJKSTRA_BI},
-                        {AlgorithmOptions.ASTAR},
-                        {AlgorithmOptions.ASTAR_BI}
+                        {DIJKSTRA},
+                        {DIJKSTRA_BI},
+                        {ASTAR},
+                        {ASTAR_BI}
                         // TODO { AlgorithmOptions.DIJKSTRA_ONE_TO_MANY }
                 });
     }

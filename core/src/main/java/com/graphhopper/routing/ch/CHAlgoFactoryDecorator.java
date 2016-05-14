@@ -26,6 +26,9 @@ import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters.CH;
+import static com.graphhopper.util.Parameters.CH.DISABLE;
+import com.graphhopper.util.Parameters.Routing;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,16 +47,6 @@ import org.slf4j.LoggerFactory;
  */
 public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
 {
-    /**
-     * The property name in HintsMap if CH routing should be ignored.
-     */
-    public static final String DISABLE = "ch.disable";
-    /**
-     * The property name in HintsMap if heading should be used for CH regardless of the possible
-     * routing errors.
-     */
-    public static final String FORCE_HEADING = "ch.force_heading";
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
     // we need to decouple weighting objects from the weighting list of strings 
@@ -105,7 +98,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         boolean enableThis = !weightingsAsStrings.isEmpty();
         setEnabled(enableThis);
         if (enableThis)
-            setDisablingAllowed(args.getBool("routing.ch.disabling_allowed", isDisablingAllowed()));
+            setDisablingAllowed(args.getBool(CH.DISABLING_ALLOWED, isDisablingAllowed()));
 
         setPreparationPeriodicUpdates(args.getInt("prepare.updates.periodic", getPreparationPeriodicUpdates()));
         setPreparationLazyUpdates(args.getInt("prepare.updates.lazy", getPreparationLazyUpdates()));
