@@ -43,7 +43,7 @@ public class DistanceCalcEarth implements DistanceCalc
 
     /**
      * Calculates distance of (from, to) in meter.
-     * <p>
+     * <p/>
      * http://en.wikipedia.org/wiki/Haversine_formula a = sin²(Δlat/2) +
      * cos(lat1).cos(lat2).sin²(Δlong/2) c = 2.atan2(√a, √(1−a)) d = R.c
      */
@@ -54,6 +54,7 @@ public class DistanceCalcEarth implements DistanceCalc
         return R * 2 * asin(sqrt(normedDist));
     }
 
+    @Override
     public double calcDenormalizedDist( double normedDist )
     {
         return R * 2 * asin(sqrt(normedDist));
@@ -117,7 +118,7 @@ public class DistanceCalcEarth implements DistanceCalc
 
     /**
      * New edge distance calculation where no validEdgeDistance check would be necessary
-     * <p>
+     * <p/>
      * @return the normalized distance of the query point "r" to the project point "c" onto the line
      * segment a-b
      */
@@ -234,6 +235,32 @@ public class DistanceCalcEarth implements DistanceCalc
         // double ab_rb_norm = Math.sqrt(rb_x * rb_x + rb_y * rb_y) * Math.sqrt(ab_x * ab_x + ab_y * ab_y);
         // return Math.acos(ab_ar / ab_ar_norm) <= Math.PI / 2 && Math.acos(ab_rb / ab_rb_norm) <= Math.PI / 2;
         return ab_ar > 0 && ab_rb > 0;
+    }
+
+    @Override
+    public GHPoint projectCoordinate( double latInDeg, double lonInDeg, double distanceInMeter, double headingClockwiseFromNorth )
+    {
+        double angularDistance = distanceInMeter / R;
+
+        double latInRadians = Math.toRadians(latInDeg);
+        double lonInRadians = Math.toRadians(lonInDeg);
+        double headingInRadians = Math.toRadians(headingClockwiseFromNorth);
+
+        // This formula is taken from: http://williams.best.vwh.net/avform.htm#LL (http://www.movable-type.co.uk/scripts/latlong.html -> https://github.com/chrisveness/geodesy MIT)
+        // θ=heading,δ=distance,φ1=latInRadians
+        // lat2 = asin( sin φ1 ⋅ cos δ + cos φ1 ⋅ sin δ ⋅ cos θ )     
+        // lon2 = λ1 + atan2( sin θ ⋅ sin δ ⋅ cos φ1, cos δ − sin φ1 ⋅ sin φ2 )
+        double projectedLat = Math.asin(Math.sin(latInRadians) * Math.cos(angularDistance)
+                + Math.cos(latInRadians) * Math.sin(angularDistance) * Math.cos(headingInRadians));
+        double projectedLon = lonInRadians + Math.atan2(Math.sin(headingInRadians) * Math.sin(angularDistance) * Math.cos(latInRadians),
+                Math.cos(angularDistance) - Math.sin(latInRadians) * Math.sin(projectedLat));
+
+        projectedLon = (projectedLon + 3 * Math.PI) % (2 * Math.PI) - Math.PI; // normalise to -180..+180°
+
+        projectedLat = Math.toDegrees(projectedLat);
+        projectedLon = Math.toDegrees(projectedLon);
+
+        return new GHPoint(projectedLat, projectedLon);
     }
 
     @Override

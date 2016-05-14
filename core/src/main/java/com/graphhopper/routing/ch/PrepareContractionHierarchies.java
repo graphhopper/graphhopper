@@ -823,6 +823,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             throw new UnsupportedOperationException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies");
         }
 
+        algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
         algo.setEdgeFilter(levelFilter);
         return algo;
     }

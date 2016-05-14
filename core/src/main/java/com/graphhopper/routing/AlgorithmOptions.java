@@ -60,14 +60,13 @@ public class AlgorithmOptions
      */
     public static final String ALT_ROUTE = "alternative_route";
     /**
-     * round trip algorithm based on alternative route algorithm
+     * round trip algorithm
      */
-    public static final String ROUND_TRIP_ALT = "round_trip_alt";
+    public static final String ROUND_TRIP = "round_trip";
     private String algorithm = DIJKSTRA_BI;
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private FlagEncoder flagEncoder;
-
     private int maxVisitedNodes = Integer.MAX_VALUE;
     private final PMap hints = new PMap(5);
 

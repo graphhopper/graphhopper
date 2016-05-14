@@ -33,35 +33,32 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
     @Override
     public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
     {
+        RoutingAlgorithm ra;
         String algoStr = opts.getAlgorithm();
         if (AlgorithmOptions.DIJKSTRA_BI.equalsIgnoreCase(algoStr))
         {
-            RoutingAlgorithm algo = new DijkstraBidirectionRef(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
-            algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-            return algo;
+            ra = new DijkstraBidirectionRef(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
         } else if (AlgorithmOptions.DIJKSTRA.equalsIgnoreCase(algoStr))
         {
-            RoutingAlgorithm algo = new Dijkstra(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
-            algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-            return algo;
+            ra = new Dijkstra(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+
         } else if (AlgorithmOptions.ASTAR_BI.equalsIgnoreCase(algoStr))
         {
             AStarBidirection aStarBi = new AStarBidirection(g, opts.getFlagEncoder(), opts.getWeighting(),
                     opts.getTraversalMode());
             aStarBi.setApproximation(getApproximation(AlgorithmOptions.ASTAR_BI, opts, g.getNodeAccess()));
-            aStarBi.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-            return aStarBi;
+            ra = aStarBi;
+
         } else if (AlgorithmOptions.DIJKSTRA_ONE_TO_MANY.equalsIgnoreCase(algoStr))
         {
-            RoutingAlgorithm algo = new DijkstraOneToMany(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
-            algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-            return algo;
+            ra = new DijkstraOneToMany(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+
         } else if (AlgorithmOptions.ASTAR.equalsIgnoreCase(algoStr))
         {
             AStar aStar = new AStar(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
             aStar.setApproximation(getApproximation(AlgorithmOptions.ASTAR, opts, g.getNodeAccess()));
-            aStar.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-            return aStar;
+            ra = aStar;
+
         } else if (AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoStr))
         {
             AlternativeRoute altRouteAlgo = new AlternativeRoute(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
@@ -70,18 +67,15 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
             altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble("alternative_route.max_share_factor", 0.6));
             altRouteAlgo.setMinPlateauFactor(opts.getHints().getDouble("alternative_route.min_plateau_factor", 0.2));
             altRouteAlgo.setMaxExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
-            altRouteAlgo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-            return altRouteAlgo;
-        } else if (AlgorithmOptions.ROUND_TRIP_ALT.equalsIgnoreCase(algoStr))
-        {
-            RoundTripAltAlgorithm altRouteAlgo = new RoundTripAltAlgorithm(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
-            altRouteAlgo.setMaxWeightFactor(opts.getHints().getInt("round_trip_alt.max_weight_factor", 2));
-            altRouteAlgo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-            return altRouteAlgo;
+            ra = altRouteAlgo;
+
         } else
         {
             throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());
         }
+
+        ra.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+        return ra;
     }
 
     private WeightApproximator getApproximation( String prop, AlgorithmOptions opts, NodeAccess na )

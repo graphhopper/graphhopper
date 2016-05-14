@@ -15,24 +15,37 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.util.tour;
 
-import org.junit.Test;
-import static org.junit.Assert.*;
+import java.util.Random;
 
 /**
+ * Generate only a single points
  *
- * @author Peter Karich
+ * @author Robin Boldt
  */
-public class AbstractWeightingTest
+public class SinglePointTour extends TourStrategy
 {
-    @Test
-    public void testToString()
+    public SinglePointTour( Random random, double distanceInMeter )
     {
-        assertTrue(AbstractWeighting.isValidName("blup"));
-        assertTrue(AbstractWeighting.isValidName("blup_a"));
-        assertTrue(AbstractWeighting.isValidName("blup|a"));
-        assertFalse(AbstractWeighting.isValidName("Blup"));
-        assertFalse(AbstractWeighting.isValidName("Blup!"));
+        super(random, distanceInMeter);
+    }
+
+    @Override
+    public int getNumberOfGeneratedPoints()
+    {
+        return 1;
+    }
+
+    @Override
+    public double getDistanceForIteration( int iteration )
+    {
+        return slightlyModifyDistance(overallDistance / 3);
+    }
+
+    @Override
+    public double getHeadingForIteration( int iteration )
+    {
+        return random.nextInt(360);
     }
 }
