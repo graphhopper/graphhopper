@@ -11,3 +11,4 @@ nbactions.xml
 .settings/
 .classpath
 .project
+matching-core/build.xml
