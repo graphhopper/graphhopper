@@ -155,6 +155,10 @@ For larger ones use the ContractionHierarchies preparation class and MMapDataAcc
 
 Raspberry Pi usage is also possible. Have a look into this [blog post](https://karussell.wordpress.com/2014/01/09/road-routing-on-raspberry-pi-with-graphhopper/).
 
+## Contribute
+
+See this [contributing guide](https://github.com/graphhopper/graphhopper/blob/master/.github/CONTRIBUTING.md) on how to contribute.
+
 ## Technical Details
 
 Have a look in the more [technical documentation](./technical.md) or the [low level API](./low-level-api.md).
