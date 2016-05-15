@@ -31,7 +31,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class FastestWeightingTest
 {
-    private final FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
+    private final FlagEncoder encoder = new EncodingManager("car").getEncoder("car");
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight()

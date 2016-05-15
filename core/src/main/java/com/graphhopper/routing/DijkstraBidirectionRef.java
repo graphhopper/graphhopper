@@ -27,10 +27,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeExplorer;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.*;
 
 /**
  * Calculates best path in bidirectional way.
@@ -306,6 +303,6 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     @Override
     public String getName()
     {
-        return AlgorithmOptions.DIJKSTRA_BI;
+        return Parameters.Algorithms.DIJKSTRA_BI;
     }
 }

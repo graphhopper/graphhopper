@@ -28,16 +28,12 @@ public class PMapTest
     }
 
     @Test
-    public void keyCanHaveAnyCasing()
+    public void keyCannotHaveAnyCasing()
     {
         PMap subject = new PMap("foo=valueA|bar=valueB");
 
         assertEquals("valueA", subject.get("foo", ""));
-        assertEquals("valueA", subject.get("FOO", ""));
-        assertEquals("valueA", subject.get("Foo", ""));
-        
-        subject.remove("FoO");        
-        assertEquals("", subject.get("foo", ""));
+        assertEquals("", subject.get("Foo", ""));
     }
 
     @Test

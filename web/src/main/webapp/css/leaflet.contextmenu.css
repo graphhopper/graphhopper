@@ -1,14 +1,14 @@
 .leaflet-contextmenu {
     display: none;
-	box-shadow: 0 1px 7px rgba(0,0,0,0.4);
-	-webkit-border-radius: 4px;
-	border-radius: 4px;
+    box-shadow: 0 1px 7px rgba(0,0,0,0.4);
+    -webkit-border-radius: 4px;
+    border-radius: 4px;
     padding: 4px 0;
     background-color: #fff;
     cursor: default;
-	-webkit-user-select: none;
-	-moz-user-select: none;
-	user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
 }
 
 .leaflet-contextmenu a.leaflet-contextmenu-item {

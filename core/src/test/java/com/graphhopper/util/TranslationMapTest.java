@@ -67,6 +67,6 @@ public class TranslationMapTest
     public void testToRoundaboutString()
     {
         Translation ptMap = SINGLETON.get("pt");
-        assertTrue(ptMap.tr("roundaboutExitOnto", "1", "somestreet").contains("somestreet"));
+        assertTrue(ptMap.tr("roundabout_exit_onto", "1", "somestreet").contains("somestreet"));
     }
 }

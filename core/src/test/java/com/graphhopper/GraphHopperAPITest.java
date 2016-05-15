@@ -29,7 +29,7 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperAPITest
 {
-    final EncodingManager encodingManager = new EncodingManager("CAR");
+    final EncodingManager encodingManager = new EncodingManager("car");
 
     @Test
     public void testLoad()

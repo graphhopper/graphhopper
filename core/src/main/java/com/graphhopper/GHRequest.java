@@ -205,7 +205,7 @@ public class GHRequest
     public GHRequest setAlgorithm( String algo )
     {
         if (algo != null)
-            this.algo = algo;
+            this.algo = Helper.camelCaseToUnderScore(algo);
         return this;
     }
 

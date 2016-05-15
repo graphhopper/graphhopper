@@ -42,7 +42,7 @@ public class GHBaseServlet extends HttpServlet
 {
     protected static final Logger logger = LoggerFactory.getLogger(GHBaseServlet.class);
     @Inject
-    @Named("jsonpAllowed")
+    @Named("jsonp_allowed")
     private boolean jsonpAllowed;
 
     protected void writeJson( HttpServletRequest req, HttpServletResponse res, JSONObject json ) throws JSONException, IOException

@@ -40,12 +40,12 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
     public RacingBikeFlagEncoder( PMap properties )
     {
         this(
-                (int) properties.getLong("speedBits", 4),
-                properties.getDouble("speedFactor", 2),
-                properties.getBool("turnCosts", false) ? 1 : 0
+                (int) properties.getLong("speed_bits", 4),
+                properties.getDouble("speed_factor", 2),
+                properties.getBool("turn_costs", false) ? 1 : 0
         );
         this.properties = properties;
-        this.setBlockFords(properties.getBool("blockFords", true));
+        this.setBlockFords(properties.getBool("block_fords", true));
     }
 
     public RacingBikeFlagEncoder( String propertiesStr )

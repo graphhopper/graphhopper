@@ -39,8 +39,8 @@ import static org.junit.Assert.*;
  */
 public class PrinctonReaderTest
 {
-    private EncodingManager encodingManager = new EncodingManager("CAR");
-    private EdgeFilter carOutEdges = new DefaultEdgeFilter(encodingManager.getEncoder("CAR"), false, true);
+    private EncodingManager encodingManager = new EncodingManager("car");
+    private EdgeFilter carOutEdges = new DefaultEdgeFilter(encodingManager.getEncoder("car"), false, true);
 
     @Test
     public void testRead()

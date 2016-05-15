@@ -1,4 +1,6 @@
-0.7    
+0.7
+    several constants changed to under score notation see #719 with a few breaking changes
+    moving all string parameter constants into the Parameters class
     no more acceptedRailways set see #662 for more information
     web API: content type of gpx export is now application/gpx+xml if not explicitely specified
     use prepare.chWeightings instead of prepare.chWeighting e.g. for disabling CH use prepare.chWeightings=no

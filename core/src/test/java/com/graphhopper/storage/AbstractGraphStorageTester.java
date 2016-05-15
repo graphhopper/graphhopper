@@ -45,9 +45,9 @@ public abstract class AbstractGraphStorageTester
     private final String locationParent = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraphLoc = "./target/graphstorage/default";
-    protected EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
-    protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
-    protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
+    protected EncodingManager encodingManager = new EncodingManager("car,foot");
+    protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
+    protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
     EdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
     EdgeFilter carInFilter = new DefaultEdgeFilter(carEncoder, true, false);
     EdgeExplorer carOutExplorer;

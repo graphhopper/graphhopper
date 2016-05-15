@@ -24,12 +24,12 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.reader.DataReader;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
+import com.graphhopper.util.Parameters.Algorithms;
+import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.FileWriter;
@@ -93,7 +93,7 @@ public class Measurement
             {
                 StopWatch sw = new StopWatch().start();
                 DataReader dr = super.importData();
-                put("graph.importTime", sw.stop().getSeconds());
+                put("graph.import_time", sw.stop().getSeconds());
                 return dr;
             }
         };
@@ -107,7 +107,7 @@ public class Measurement
 //        if ("true".equals(g.getProperties().get("prepare.done")))
 //            throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
-        String vehicleStr = args.get("graph.flagEncoders", "car");
+        String vehicleStr = args.get("graph.flag_encoders", "car");
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicleStr);
         Weighting weighting = hopper.getCHFactoryDecorator().getWeightings().get(0);
 
@@ -169,7 +169,7 @@ public class Measurement
         // graph size (edge, node and storage size)
         put("graph.nodes", g.getNodes());
         put("graph.edges", g.getAllEdges().getMaxId());
-        put("graph.sizeInMB", g.getCapacity() / Helper.MB);
+        put("graph.size_in_MB", g.getCapacity() / Helper.MB);
         put("graph.encoder", vehicleStr);
 
         AllEdgesIterator iter = g.getAllEdges();
@@ -202,7 +202,7 @@ public class Measurement
             }
         }.setIterations(count).start();
 
-        print("location2id", miniPerf);
+        print("location_index", miniPerf);
     }
 
     private void printMiscUnitPerfTests( final Graph graph, boolean isCH, final FlagEncoder encoder,
@@ -307,7 +307,7 @@ public class Measurement
         final NodeAccess na = g.getNodeAccess();
 
         // if using none-bidirectional algorithm make sure you exclude CH routing
-        final String algo = AlgorithmOptions.DIJKSTRA_BI;
+        final String algo = Algorithms.DIJKSTRA_BI;
         MiniPerfTest miniPerf = new MiniPerfTest()
         {
             @Override
@@ -324,7 +324,7 @@ public class Measurement
                         setVehicle(vehicle).
                         setAlgorithm(algo);
                 if (!ch)
-                    req.getHints().put("routing.ch.disable", true);
+                    req.getHints().put(CH.DISABLE, true);
 
                 // req.getHints().put(algo + ".approximation", "BeelineSimplification");
                 // req.getHints().put(algo + ".epsilon", 2);
@@ -377,12 +377,12 @@ public class Measurement
         }.setIterations(count).start();
 
         count -= failedCount.get();
-        put(prefix + ".failedCount", failedCount.get());
-        put(prefix + ".distanceMin", minDistance.get());
-        put(prefix + ".distanceMean", (float) distSum.get() / count);
-        put(prefix + ".airDistanceMean", (float) airDistSum.get() / count);
-        put(prefix + ".distanceMax", maxDistance.get());
-        put(prefix + ".visitedNodesMean", (float) visitedNodesSum.get() / count);
+        put(prefix + ".failed_count", failedCount.get());
+        put(prefix + ".distance_min", minDistance.get());
+        put(prefix + ".distance_mean", (float) distSum.get() / count);
+        put(prefix + ".air_distance_mean", (float) airDistSum.get() / count);
+        put(prefix + ".distance_max", maxDistance.get());
+        put(prefix + ".visited_nodes_mean", (float) visitedNodesSum.get() / count);
 
 //        put(prefix + ".extractTime", (float) extractTimeSum.get() / count / 1000000f);
 //        put(prefix + ".calcPointsTime", (float) calcPointsTimeSum.get() / count / 1000000f);

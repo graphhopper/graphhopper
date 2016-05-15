@@ -35,6 +35,9 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
+import static com.graphhopper.util.Parameters.Algorithms.*;
+import com.graphhopper.util.Parameters.CH;
+import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -591,15 +594,15 @@ public class GraphHopper implements GraphHopperAPI
 
         // graph
         setGraphHopperLocation(graphHopperFolder);
-        defaultSegmentSize = args.getInt("graph.dataaccess.segmentSize", defaultSegmentSize);
+        defaultSegmentSize = args.getInt("graph.dataaccess.segment_size", defaultSegmentSize);
 
         String graphDATypeStr = args.get("graph.dataaccess", "RAM_STORE");
         dataAccessType = DAType.fromString(graphDATypeStr);
 
-        sortGraph = args.getBool("graph.doSort", sortGraph);
-        removeZipped = args.getBool("graph.removeZipped", removeZipped);
-        int bytesForFlags = args.getInt("graph.bytesForFlags", 4);
-        String flagEncoders = args.get("graph.flagEncoders", "");
+        sortGraph = args.getBool("graph.do_sort", sortGraph);
+        removeZipped = args.getBool("graph.remove_zipped", removeZipped);
+        int bytesForFlags = args.getInt("graph.bytes_for_flags", 4);
+        String flagEncoders = args.get("graph.flag_encoders", "");
         if (!flagEncoders.isEmpty())
             setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
 
@@ -610,9 +613,20 @@ public class GraphHopper implements GraphHopperAPI
 
         // elevation
         String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
-        boolean eleCalcMean = args.getBool("graph.elevation.calcmean", false);
-        String cacheDirStr = args.get("graph.elevation.cachedir", "");
-        String baseURL = args.get("graph.elevation.baseurl", "");
+
+        // keep fallback until 0.8
+        boolean eleCalcMean = args.has("graph.elevation.calcmean")
+                ? args.getBool("graph.elevation.calcmean", false)
+                : args.getBool("graph.elevation.calc_mean", false);
+
+        String cacheDirStr = args.get("graph.elevation.cache_dir", "");
+        if (cacheDirStr.isEmpty())
+            cacheDirStr = args.get("graph.elevation.cachedir", "");
+
+        String baseURL = args.get("graph.elevation.base_url", "");
+        if (baseURL.isEmpty())
+            args.get("graph.elevation.baseurl", "");
+
         DAType elevationDAType = DAType.fromString(args.get("graph.elevation.dataaccess", "MMAP"));
         ElevationProvider tmpProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("srtm"))
@@ -633,26 +647,26 @@ public class GraphHopper implements GraphHopperAPI
         setElevationProvider(tmpProvider);
 
         // optimizable prepare
-        minNetworkSize = args.getInt("prepare.minNetworkSize", minNetworkSize);
-        minOneWayNetworkSize = args.getInt("prepare.minOneWayNetworkSize", minOneWayNetworkSize);
+        minNetworkSize = args.getInt("prepare.min_network_size", minNetworkSize);
+        minOneWayNetworkSize = args.getInt("prepare.min_one_way_network_size", minOneWayNetworkSize);
 
         // prepare CH
         chFactoryDecorator.init(args);
 
         // osm import
-        osmReaderWayPointMaxDistance = args.getDouble("osmreader.wayPointMaxDistance", osmReaderWayPointMaxDistance);
+        osmReaderWayPointMaxDistance = args.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, osmReaderWayPointMaxDistance);
 
-        workerThreads = args.getInt("osmreader.workerThreads", workerThreads);
+        workerThreads = args.getInt("osmreader.worker_threads", workerThreads);
         enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
-        preferredLanguage = args.get("osmreader.preferred-language", preferredLanguage);
+        preferredLanguage = args.get("osmreader.preferred_language", preferredLanguage);
 
         // index
-        preciseIndexResolution = args.getInt("index.highResolution", preciseIndexResolution);
-        maxRegionSearch = args.getInt("index.maxRegionSearch", maxRegionSearch);
+        preciseIndexResolution = args.getInt("index.high_resolution", preciseIndexResolution);
+        maxRegionSearch = args.getInt("index.max_region_search", maxRegionSearch);
 
         // routing
-        maxVisitedNodes = args.getInt("routing.maxVisitedNodes", Integer.MAX_VALUE);
-        maxRoundTripRetries = args.getInt("routing.roundTrip.maxRetries", maxRoundTripRetries);
+        maxVisitedNodes = args.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
+        maxRoundTripRetries = args.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
 
         return this;
     }
@@ -1012,7 +1026,7 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         TraversalMode tMode;
-        String tModeStr = request.getHints().get("traversal_mode", traversalMode.toString());
+        String tModeStr = request.getHints().get(Routing.TRAVERSAL_MODE, traversalMode.toString());
         try
         {
             tMode = TraversalMode.fromString(tModeStr);
@@ -1023,13 +1037,13 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
-        List<GHPoint> points = request.getPoints();        
-        String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.DIJKSTRA_BI : request.getAlgorithm();
+        List<GHPoint> points = request.getPoints();
+        String algoStr = request.getAlgorithm().isEmpty() ? DIJKSTRA_BI : request.getAlgorithm();
 
         RoutingTemplate routingTemplate;
-        if (AlgorithmOptions.ROUND_TRIP.equalsIgnoreCase(algoStr))
+        if (ROUND_TRIP.equalsIgnoreCase(algoStr))
             routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, maxRoundTripRetries);
-        else if (AlgorithmOptions.ALT_ROUTE.equalsIgnoreCase(algoStr))
+        else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
             routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex);
         else
             routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex);
@@ -1050,7 +1064,7 @@ public class GraphHopper implements GraphHopperAPI
             Weighting weighting;
             Graph routingGraph = ghStorage;
 
-            boolean forceFlexibleMode = request.getHints().getBool(CHAlgoFactoryDecorator.DISABLE, false);
+            boolean forceFlexibleMode = request.getHints().getBool(CH.DISABLE, false);
             if (!chFactoryDecorator.isDisablingAllowed() && forceFlexibleMode)
             {
                 ghRsp.addError(new IllegalStateException("Flexible mode not enabled on the server-side"));
@@ -1059,7 +1073,7 @@ public class GraphHopper implements GraphHopperAPI
 
             if (chFactoryDecorator.isEnabled() && !forceFlexibleMode)
             {
-                boolean forceCHHeading = request.getHints().getBool(CHAlgoFactoryDecorator.FORCE_HEADING, false);
+                boolean forceCHHeading = request.getHints().getBool(CH.FORCE_HEADING, false);
                 if (!forceCHHeading && request.hasFavoredHeading(0))
                     throw new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483");
 
@@ -1075,10 +1089,10 @@ public class GraphHopper implements GraphHopperAPI
             queryGraph.lookup(qResults);
             weighting = createTurnWeighting(weighting, queryGraph, encoder);
 
-            int maxVisitedNodesForRequest = request.getHints().getInt("routing.maxVisitedNodes", maxVisitedNodes);
+            int maxVisitedNodesForRequest = request.getHints().getInt(Routing.MAX_VISITED_NODES, maxVisitedNodes);
             if (maxVisitedNodesForRequest > maxVisitedNodes)
             {
-                ghRsp.addError(new IllegalStateException("The routing.maxVisitedNodes parameter has to be below or equal to:" + maxVisitedNodes));
+                ghRsp.addError(new IllegalStateException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes));
                 return Collections.emptyList();
             }
 
@@ -1089,9 +1103,9 @@ public class GraphHopper implements GraphHopperAPI
                     build();
 
             altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
-            boolean tmpEnableInstructions = request.getHints().getBool("instructions", enableInstructions);
-            boolean tmpCalcPoints = request.getHints().getBool("calcPoints", calcPoints);
-            double wayPointMaxDistance = request.getHints().getDouble("wayPointMaxDistance", 1d);
+            boolean tmpEnableInstructions = request.getHints().getBool(Routing.INSTRUCTIONS, enableInstructions);
+            boolean tmpCalcPoints = request.getHints().getBool(Routing.CALC_POINTS, calcPoints);
+            double wayPointMaxDistance = request.getHints().getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
             DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
             PathMerger pathMerger = new PathMerger().
                     setCalcPoints(tmpCalcPoints).

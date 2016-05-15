@@ -29,14 +29,16 @@ import com.graphhopper.routing.util.tour.SinglePointTour;
 import com.graphhopper.routing.util.tour.TourStrategy;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
+import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
+import com.graphhopper.util.PathMerger;
+import com.graphhopper.util.Translation;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Implementation of calculating a route with one or more round trip (route with identical start and
@@ -67,8 +69,8 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
     @Override
     public List<QueryResult> lookup( List<GHPoint> points, FlagEncoder encoder )
     {
-        double distanceInMeter = ghRequest.getHints().getDouble("round_trip.distance", 1000);
-        long seed = ghRequest.getHints().getLong("round_trip.seed", 0L);
+        double distanceInMeter = ghRequest.getHints().getDouble(RoundTrip.DISTANCE, 1000);
+        long seed = ghRequest.getHints().getLong(RoundTrip.SEED, 0L);
         if (points.isEmpty())
         {
             ghResponse.addError(new IllegalStateException("For round trip calculation one point is required"));
@@ -115,7 +117,7 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
         AvoidEdgesWeighting avoidPathWeighting = new AvoidEdgesWeighting(algoOpts.getWeighting());
         avoidPathWeighting.setEdgePenaltyFactor(5);
         algoOpts = AlgorithmOptions.start(algoOpts).
-                algorithm(AlgorithmOptions.DIJKSTRA_BI).
+                algorithm(Parameters.Algorithms.DIJKSTRA_BI).
                 weighting(avoidPathWeighting).build();
         long visitedNodesSum = 0L;
         QueryResult start = queryResults.get(0);

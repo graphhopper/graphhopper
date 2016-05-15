@@ -34,8 +34,8 @@ import org.junit.Test;
  */
 public class PathBidirRefTest
 {
-    private final EncodingManager encodingManager = new EncodingManager("CAR");
-    private FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
+    private final EncodingManager encodingManager = new EncodingManager("car");
+    private FlagEncoder carEncoder = encodingManager.getEncoder("car");
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
 
     Graph createGraph()

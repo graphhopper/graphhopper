@@ -750,7 +750,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     protected String getPropertiesString()
     {
-        return "speedFactor=" + speedFactor + "|speedBits=" + speedBits + "|turnCosts=" + (maxTurnCosts > 0);
+        return "speed_factor=" + speedFactor + "|speed_bits=" + speedBits + "|turn_costs=" + (maxTurnCosts > 0);
     }
 
     @Override

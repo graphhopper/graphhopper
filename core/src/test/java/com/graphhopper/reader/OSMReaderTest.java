@@ -107,7 +107,7 @@ public class OSMReaderTest
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
-            setEncodingManager(new EncodingManager("CAR,FOOT"));
+            setEncodingManager(new EncodingManager("car,foot"));
             setCHEnabled(false);
 
             if (turnCosts)

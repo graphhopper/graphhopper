@@ -43,7 +43,7 @@ public class Location2IDFullIndexTest extends AbstractLocationIndexTester
     @Test
     public void testFullIndex()
     {
-        LocationIndex tmpIdx = new Location2IDFullIndex(createSampleGraph(new EncodingManager("CAR")));
+        LocationIndex tmpIdx = new Location2IDFullIndex(createSampleGraph(new EncodingManager("car")));
         assertEquals(5, findID(tmpIdx, 2, 3));
         assertEquals(10, findID(tmpIdx, 4, 1));
         assertEquals(10, findID(tmpIdx, 3.6, 1.4));
