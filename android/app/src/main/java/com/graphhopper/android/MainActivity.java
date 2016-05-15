@@ -28,12 +28,8 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.ProgressListener;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
+import com.graphhopper.util.Parameters.*;
 
 import org.mapsforge.core.graphics.Bitmap;
 import org.mapsforge.core.graphics.Paint;
@@ -504,9 +500,9 @@ public class MainActivity extends Activity
             {
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                        setAlgorithm(AlgorithmOptions.DIJKSTRA_BI);
+                        setAlgorithm(Algorithms.DIJKSTRA_BI);
                 req.getHints().
-                        put("instructions", "false");
+                        put(Routing.INSTRUCTIONS, "false");
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
                 return resp.getBest();
