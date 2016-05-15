@@ -184,10 +184,11 @@ public class StorableProperties implements Storable<StorableProperties>
         if (!str.equals(vers + ""))
         {
             if (silent)
-            {
                 return false;
-            }
-            throw new IllegalStateException("Version of " + key + " unsupported: " + str + ", expected:" + vers);
+
+            throw new IllegalStateException("Version of " + key + " unsupported: " + str + ", expected:" + vers + ". "
+                    + "Make sure you are using the same GraphHopper version for reading the files that was used for creating them. "
+                    + "See https://discuss.graphhopper.com/t/722");
         }
         return true;
     }
