@@ -1,8 +1,9 @@
 GraphHopper licensed under the Apache license, Version 2.0
 
-Copyright 2012-2016 Peter Karich
+Copyright 2012 - 2016 GraphHopper GmbH
 
-The core product includes the following software
+The core module includes the following software:
+
  * slf4j.org - SLF4J distributed under the MIT license. 
  * trove.starlight-systems.com - GNU Trove library (LGPL license)
  * SparseArray from the Android project (Apache license)
@@ -12,17 +13,21 @@ The core product includes the following software
  * Osmosis - public domain, see osmosis-copying.txt under core/files
  * XMLGraphics-Commons for CGIAR elevation files - (Apache License)
 
-tools
+tools:
+
  * apache-compress
 
-tools-lgpl
+tools-lgpl:
+
  * tools from OpenTripPlanner licensed under LGPL
 
-web
+web:
+
  * org.json, MIT style license
  * com.google.inject, Apache License 2.0
  * images from mapbox https://www.mapbox.com/maki/, BSD License, see core/files
 
-android
+android:
+
  * android, Apache License 2.0
  * org.mapsforge, LGPL
