@@ -81,6 +81,8 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
         queryResults = new ArrayList<>(2 + strategy.getNumberOfGeneratedPoints());
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         QueryResult startQR = locationIndex.findClosest(start.lat, start.lon, edgeFilter);
+        if (!startQR.isValid())
+            ghResponse.addError(new IllegalArgumentException("Cannot find point 0: " + start));
         queryResults.add(startQR);
 
         GHPoint last = points.get(0);
