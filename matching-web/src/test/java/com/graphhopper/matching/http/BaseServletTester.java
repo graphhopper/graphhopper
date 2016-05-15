@@ -39,7 +39,7 @@ import static org.junit.Assert.assertEquals;
 public class BaseServletTester {
 
     private static final MediaType MT_JSON = MediaType.parse("application/json; charset=utf-8");
-    private static final MediaType MT_XML = MediaType.parse("application/xml; charset=utf-8");
+    private static final MediaType MT_XML = MediaType.parse("application/gpx+xml; charset=utf-8");
     private final OkHttpClient client = new OkHttpClient();
     private static MatchServer server;
     protected static Logger logger = LoggerFactory.getLogger(BaseServletTester.class);

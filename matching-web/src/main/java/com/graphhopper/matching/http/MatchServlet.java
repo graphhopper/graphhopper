@@ -79,9 +79,9 @@ public class MatchServlet extends GraphHopperServlet {
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
         String type = httpReq.getContentType();
         GPXFile gpxFile;
-        if (type.contains("application/xml")) {
+        if (type.contains("application/xml") || type.contains("application/gpx+xml")) {
             try {
-                gpxFile = parseXML(httpReq);
+                gpxFile = parseGPX(httpReq);
             } catch (Exception ex) {
                 logger.warn("Cannot parse XML for " + httpReq.getQueryString() + ", " + infoStr);
                 httpRes.setStatus(SC_BAD_REQUEST);
@@ -115,7 +115,7 @@ public class MatchServlet extends GraphHopperServlet {
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             MapMatching matching = new MapMatching(hopper.getGraphHopperStorage(), locationIndexMatch, encoder);
             matching.setForceRepair(forceRepair);
-            matching.setMaxNodesToVisit(maxNodesToVisit);
+            matching.setMaxVisitedNodes(maxNodesToVisit);
             matching.setSeparatedSearchDistance(separatedSearchDistance);
 
             matchRsp = matching.doWork(gpxFile.getEntries());
@@ -188,7 +188,7 @@ public class MatchServlet extends GraphHopperServlet {
         throw new IllegalStateException("json input not yet supported");
     }
 
-    private GPXFile parseXML(HttpServletRequest httpReq) throws IOException {
+    private GPXFile parseGPX(HttpServletRequest httpReq) throws IOException {
         GPXFile file = new GPXFile();
         return file.doImport(httpReq.getInputStream());
     }

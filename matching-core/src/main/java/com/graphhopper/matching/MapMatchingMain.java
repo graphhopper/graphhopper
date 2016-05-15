@@ -49,33 +49,33 @@ public class MapMatchingMain {
         args.put("graph.location", "./graph-cache");
         if (action.equals("import")) {
             String vehicle = args.get("vehicle", "car").toLowerCase();
-            args.put("graph.flagEncoders", vehicle);
+            args.put("graph.flag_encoders", vehicle);
             args.put("osmreader.osm", args.get("datasource", ""));
 
             // standard should be to remove disconnected islands
-            args.put("prepare.minNetworkSize", 200);
-            args.put("prepare.minOneWayNetworkSize", 200);
+            args.put("prepare.min_network_size", 200);
+            args.put("prepare.min_one_way_network_size", 200);
             GraphHopper hopper = new GraphHopper().init(args);
-            hopper.setCHEnable(false);
+            hopper.getCHFactoryDecorator().setEnabled(false);
             hopper.importOrLoad();
 
         } else if (action.equals("match")) {
             GraphHopper hopper = new GraphHopper().init(args);
-            hopper.setCHEnable(false);
+            hopper.getCHFactoryDecorator().setEnabled(false);
             logger.info("loading graph from cache");
             hopper.load("./graph-cache");
             FlagEncoder firstEncoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
             GraphHopperStorage graph = hopper.getGraphHopperStorage();
 
-            int gpxAccuracy = args.getInt("gpxAccuracy", 15);
+            int gpxAccuracy = args.getInt("gpx_accuracy", 15);
             String instructions = args.get("instructions", "");
             logger.info("Setup lookup index. Accuracy filter is at " + gpxAccuracy + "m");
             LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
                     (LocationIndexTree) hopper.getLocationIndex(), gpxAccuracy);
             MapMatching mapMatching = new MapMatching(graph, locationIndex, firstEncoder);
-            mapMatching.setSeparatedSearchDistance(args.getInt("separatedSearchDistance", 500));
-            mapMatching.setMaxNodesToVisit(args.getInt("maxNodesToVisit", 1000));
-            mapMatching.setForceRepair(args.getBool("forceRepair", false));
+            mapMatching.setSeparatedSearchDistance(args.getInt("separated_search_distance", 500));
+            mapMatching.setMaxVisitedNodes(args.getInt("max_visited_nodes", 1000));
+            mapMatching.setForceRepair(args.getBool("force_repair", false));
 
             // do the actual matching, get the GPX entries from a file or via stream
             String gpxLocation = args.get("gpx", "");

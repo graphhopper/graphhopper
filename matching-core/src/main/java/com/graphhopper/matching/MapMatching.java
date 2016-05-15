@@ -74,7 +74,7 @@ public class MapMatching {
     // later we'll detect loops and insert the correctly detected road recursivly
     // see #1
     private double separatedSearchDistance = 300;
-    private int maxNodesToVisit = 500;
+    private int maxVisitedNodes = 500;
     private final double maxSearchWeightMultiplier = 50;
     private final int nodeCount;
     private DistanceCalc distanceCalc = new DistancePlaneProjection();
@@ -131,8 +131,8 @@ public class MapMatching {
         return this;
     }
 
-    public void setMaxNodesToVisit(int maxNodesToVisit) {
-        this.maxNodesToVisit = maxNodesToVisit;
+    public void setMaxVisitedNodes(int maxNodesToVisit) {
+        this.maxVisitedNodes = maxNodesToVisit;
     }
 
     public void setForceRepair(boolean forceRepair) {
@@ -362,7 +362,7 @@ public class MapMatching {
 
         //////// Search Phase (3) ////////
         CustomDijkstra algo = new CustomDijkstra(goalSet, queryGraph, encoder, customWeighting,
-                traversalMode, maxNodesToVisit, maxSearchWeightMultiplier, ignoreOneways);
+                traversalMode, maxVisitedNodes, maxSearchWeightMultiplier, ignoreOneways);
 
         // Set an approximative weight for start nodes.
         // The method initFrom uses minimum weight if two QueryResult edges share same node        
@@ -378,8 +378,8 @@ public class MapMatching {
         algo.runAlgo();
         if (!algo.oneNodeWasReached()) {
             throw new RuntimeException("Cannot find matching path! Wrong vehicle " + encoder
-                    + " or missing OpenStreetMap data? Try to increase maxNodesToVisit ("
-                    + maxNodesToVisit + "). Current gpx sublist:"
+                    + " or missing OpenStreetMap data? Try to increase max_visited_nodes ("
+                    + maxVisitedNodes + "). Current gpx sublist:"
                     + gpxList.size() + ", start list:" + startQRList + ", end list:" + endQRList
                     + ", bounds: " + graph.getBounds());
         }
@@ -490,7 +490,7 @@ public class MapMatching {
 
         private final TIntHashSet goalNodeSet;
         private boolean oneNodeWasReached = false;
-        private final int maxNodesToVisit;
+        private final int maxVisitedNodes;
         private final boolean ignoreOneways;
         private final double maxSearchWeightMultiplier;
 
@@ -498,7 +498,7 @@ public class MapMatching {
                 TraversalMode tMode, int maxNodesToVisit, double maxSearchWeightMultiplier, boolean allowBothDirections) {
             super(g, encoder, weighting, tMode);
             this.goalNodeSet = goalNodeSet;
-            this.maxNodesToVisit = maxNodesToVisit;
+            this.maxVisitedNodes = maxNodesToVisit;
             this.maxSearchWeightMultiplier = maxSearchWeightMultiplier;
             this.ignoreOneways = allowBothDirections;
         }
@@ -539,7 +539,7 @@ public class MapMatching {
                 }
             }
 
-            if (getVisitedNodes() > maxNodesToVisit) {
+            if (getVisitedNodes() > maxVisitedNodes) {
                 return true;
             }
 
@@ -671,8 +671,8 @@ public class MapMatching {
 
         if (!forceRepair && !errors.isEmpty()) {
             String str = " Result contains illegal edges."
-                    + " Try to decrease the separatedSearchDistance (" + separatedSearchDistance + ")"
-                    + " or use forceRepair=true. Errors:";
+                    + " Try to decrease the separated_search_distance (" + separatedSearchDistance + ")"
+                    + " or use force_repair=true. Errors:";
             throw new IllegalStateException(str + errors);
         }
 
