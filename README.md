@@ -1,11 +1,11 @@
-# GraphHopper Route Planner
+# GraphHopper Routing Engine
 
 [![Build Status](https://secure.travis-ci.org/graphhopper/graphhopper.png?branch=master)](http://travis-ci.org/graphhopper/graphhopper)
 
 GraphHopper is a fast and memory efficient Java road routing engine released under Apache License 2.0.
 Per default it uses OpenStreetMap data but can import other data sources.
 
-## GraphHopper for the Web
+## For the Web
 
 See GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps)
 
@@ -18,7 +18,7 @@ where the default is [Omniscale](http://omniscale.com/), and all is available fo
 for a nice and private route planning experience!
 
 
-## GraphHopper for Mobile
+## For Mobile Apps
 
 There are subprojects to make GraphHopper working offline
 on [Android](https://github.com/graphhopper/graphhopper/tree/master/android)
