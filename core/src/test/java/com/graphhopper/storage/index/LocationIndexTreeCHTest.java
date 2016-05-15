@@ -91,7 +91,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
 
         // create shortcuts
         ghStorage.freeze();
-        FlagEncoder car = encodingManager.getEncoder("CAR");
+        FlagEncoder car = encodingManager.getEncoder("car");
         long flags = car.setProperties(60, true, true);
         CHEdgeIteratorState iter5 = lg.shortcut(0, 2);
         iter5.setDistance(20).setFlags(flags);

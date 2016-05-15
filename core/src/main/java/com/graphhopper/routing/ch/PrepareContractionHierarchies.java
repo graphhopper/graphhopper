@@ -22,6 +22,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
+import static com.graphhopper.util.Parameters.Algorithms.*;
 
 import java.util.*;
 
@@ -812,10 +813,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     public RoutingAlgorithm createAlgo( Graph graph, AlgorithmOptions opts )
     {
         AbstractBidirAlgo algo;
-        if (AlgorithmOptions.ASTAR_BI.equals(opts.getAlgorithm()))
+        if (ASTAR_BI.equals(opts.getAlgorithm()))
         {
             algo = createAStarBidirection(graph);
-        } else if (AlgorithmOptions.DIJKSTRA_BI.equals(opts.getAlgorithm()))
+        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm()))
         {
             algo = createDijkstraBidirection(graph);
         } else

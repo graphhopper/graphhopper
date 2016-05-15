@@ -27,6 +27,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
+import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.shapes.BBox;
 import gnu.trove.list.TIntList;
 
@@ -82,7 +83,7 @@ public class MiniGraphUI
         HintsMap map = new HintsMap("fastest");
         weighting = hopper.createWeighting(map, encoder);
         algoFactory = hopper.getAlgorithmFactory(map);
-        algoOpts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting);
+        algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, encoder, weighting);
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algoOpts:" + algoOpts);
         mg = new GraphicsWrapper(graph);

@@ -37,8 +37,8 @@ import static org.junit.Assert.*;
  */
 public class FootFlagEncoderTest
 {
-    private final EncodingManager encodingManager = new EncodingManager("CAR,BIKE,FOOT");
-    private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
+    private final EncodingManager encodingManager = new EncodingManager("car,bike,foot");
+    private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
 
     @Test
     public void testGetSpeed()
@@ -61,7 +61,7 @@ public class FootFlagEncoderTest
     @Test
     public void testCombined()
     {
-        FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
+        FlagEncoder carEncoder = encodingManager.getEncoder("car");
         long fl = footEncoder.setProperties(10, true, true) | carEncoder.setProperties(100, true, false);
         assertEquals(10, footEncoder.getSpeed(fl), 1e-1);
         assertTrue(footEncoder.isForward(fl));

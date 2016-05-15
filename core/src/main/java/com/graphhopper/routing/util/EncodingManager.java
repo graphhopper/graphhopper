@@ -119,6 +119,9 @@ public class EncodingManager
         if (encoderList.contains(":"))
             throw new IllegalArgumentException("EncodingManager does no longer use reflection instantiate encoders directly.");
 
+        if (!encoderList.equals(encoderList.toLowerCase()))
+            throw new IllegalArgumentException("Since 0.7 EncodingManager does no longer accept upper case profiles: " + encoderList);
+
         String[] entries = encoderList.split(",");
         List<FlagEncoder> resultEncoders = new ArrayList<FlagEncoder>();
 
@@ -460,14 +463,14 @@ public class EncodingManager
 
         // check encoding for compatibility
         properties.checkVersions(false);
-        String acceptStr = properties.get("graph.flagEncoders");
+        String acceptStr = properties.get("graph.flag_encoders");
 
         if (acceptStr.isEmpty())
             throw new IllegalStateException("EncodingManager was not configured. And no one was found in the graph: "
                     + dir.getLocation());
 
         int bytesForFlags = 4;
-        if ("8".equals(properties.get("graph.bytesForFlags")))
+        if ("8".equals(properties.get("graph.bytes_for_flags")))
             bytesForFlags = 8;
         return new EncodingManager(acceptStr, bytesForFlags);
     }

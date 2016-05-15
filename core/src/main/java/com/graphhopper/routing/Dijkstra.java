@@ -29,6 +29,7 @@ import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.Parameters;
 
 /**
  * Implements a single source shortest path algorithm
@@ -144,6 +145,6 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     @Override
     public String getName()
     {
-        return AlgorithmOptions.DIJKSTRA;
+        return Parameters.Algorithms.DIJKSTRA;
     }
 }

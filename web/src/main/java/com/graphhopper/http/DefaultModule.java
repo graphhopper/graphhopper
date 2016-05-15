@@ -72,11 +72,11 @@ public class DefaultModule extends AbstractModule
 
             long timeout = args.getLong("web.timeout", 3000);
             bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);
-            boolean jsonpAllowed = args.getBool("web.jsonpAllowed", false);
+            boolean jsonpAllowed = args.getBool("web.jsonp_allowed", false);
             if (!jsonpAllowed)
                 logger.info("jsonp disabled");
 
-            bind(Boolean.class).annotatedWith(Names.named("jsonpAllowed")).toInstance(jsonpAllowed);
+            bind(Boolean.class).annotatedWith(Names.named("jsonp_allowed")).toInstance(jsonpAllowed);
 
             bind(RouteSerializer.class).toInstance(new SimpleRouteSerializer(graphHopper.getGraphHopperStorage().getBounds()));
         } catch (Exception ex)

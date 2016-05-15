@@ -27,6 +27,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.Translation;
@@ -86,7 +87,7 @@ public class ViaRoutingTemplate implements RoutingTemplate
     public List<Path> calcPaths( QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts )
     {
         long visitedNodesSum = 0L;
-        boolean viaTurnPenalty = ghRequest.getHints().getBool("pass_through", false);
+        boolean viaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
         int pointCounts = ghRequest.getPoints().size();
         pathList = new ArrayList<>(pointCounts - 1);
         QueryResult fromQResult = queryResults.get(0);

@@ -41,10 +41,10 @@ public class EncodingManagerTest
     @Test
     public void testCompatibility()
     {
-        EncodingManager manager = new EncodingManager("CAR,BIKE,FOOT");
-        BikeFlagEncoder bike = (BikeFlagEncoder) manager.getEncoder("BIKE");
-        CarFlagEncoder car = (CarFlagEncoder) manager.getEncoder("CAR");
-        FootFlagEncoder foot = (FootFlagEncoder) manager.getEncoder("FOOT");
+        EncodingManager manager = new EncodingManager("car,bike,foot");
+        BikeFlagEncoder bike = (BikeFlagEncoder) manager.getEncoder("bike");
+        CarFlagEncoder car = (CarFlagEncoder) manager.getEncoder("car");
+        FootFlagEncoder foot = (FootFlagEncoder) manager.getEncoder("foot");
         assertNotEquals(car, bike);
         assertNotEquals(car, foot);
         assertNotEquals(car.hashCode(), bike.hashCode());
@@ -64,16 +64,16 @@ public class EncodingManagerTest
     @Test
     public void testEncoderAcceptNoException()
     {
-        EncodingManager manager = new EncodingManager("CAR");
-        assertTrue(manager.supports("CAR"));
-        assertFalse(manager.supports("FOOT"));
+        EncodingManager manager = new EncodingManager("car");
+        assertTrue(manager.supports("car"));
+        assertFalse(manager.supports("foot"));
     }
 
     @Test
     public void testEncoderWithWrongVersionIsRejected()
     {
         thrown.expect(IllegalArgumentException.class);
-        EncodingManager manager = new EncodingManager("CAR|version=0");
+        EncodingManager manager = new EncodingManager("car|version=0");
     }
 
     @Test
@@ -113,13 +113,13 @@ public class EncodingManagerTest
             @Override
             public String toString()
             {
-                return "newEncoder";
+                return "new_encoder";
             }
 
             @Override
             protected String getPropertiesString()
             {
-                return "myProperties";
+                return "my_properties";
             }
 
             @Override
@@ -143,7 +143,7 @@ public class EncodingManagerTest
 
         EncodingManager subject = new EncodingManager(encoder);
 
-        assertEquals("newEncoder|myProperties|version=10", subject.toDetailsString());
+        assertEquals("new_encoder|my_properties|version=10", subject.toDetailsString());
     }
 
     @Test
@@ -180,7 +180,7 @@ public class EncodingManagerTest
             @Override
             public String toString()
             {
-                return "lessRelationsBits";
+                return "less_relations_bits";
             }
         };
         EncodingManager manager = new EncodingManager(defaultBike, lessRelationCodes);
@@ -225,11 +225,11 @@ public class EncodingManagerTest
     public void testFullBitMask()
     {
         BitUtil bitUtil = BitUtil.LITTLE;
-        EncodingManager manager = new EncodingManager("CAR,FOOT");
-        AbstractFlagEncoder carr = (AbstractFlagEncoder) manager.getEncoder("CAR");
+        EncodingManager manager = new EncodingManager("car,foot");
+        AbstractFlagEncoder carr = (AbstractFlagEncoder) manager.getEncoder("car");
         assertTrue(bitUtil.toBitString(carr.getNodeBitMask()).endsWith("00000000001111111"));
 
-        AbstractFlagEncoder foot = (AbstractFlagEncoder) manager.getEncoder("FOOT");
+        AbstractFlagEncoder foot = (AbstractFlagEncoder) manager.getEncoder("foot");
         assertTrue(bitUtil.toBitString(foot.getNodeBitMask()).endsWith("00011111110000000"));
     }
 
@@ -279,7 +279,7 @@ public class EncodingManagerTest
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
 
         // 2) two encoders crossing fords
-        flagEncodersStr = "car,bike|blockFords=false,foot|blockFords=false";
+        flagEncodersStr = "car,bike|block_fords=false,foot|block_fords=false";
         manager = new EncodingManager(flagEncodersStr, 8);
 
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
@@ -287,7 +287,7 @@ public class EncodingManagerTest
         assertFalse(((AbstractFlagEncoder) manager.getEncoder("foot")).isBlockFords());
 
         // 2) Try combined with another tag
-        flagEncodersStr = "car|turnCosts=true|blockFords=true,bike,foot|blockFords=false";
+        flagEncodersStr = "car|turn_costs=true|block_fords=true,bike,foot|block_fords=false";
         manager = new EncodingManager(flagEncodersStr, 8);
 
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());

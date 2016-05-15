@@ -90,17 +90,22 @@ public class StorableProperties implements Storable<StorableProperties>
      */
     public StorableProperties put( String key, Object val )
     {
+        if (!key.equals(key.toLowerCase()))
+            throw new IllegalArgumentException("Do not use upper case keys (" + key + ") for StorableProperties since 0.7");
+
         map.put(key, val.toString());
         return this;
     }
 
     public String get( String key )
     {
+        if (!key.equals(key.toLowerCase()))
+            throw new IllegalArgumentException("Do not use upper case keys (" + key + ") for StorableProperties since 0.7");
+
         String ret = map.get(key);
         if (ret == null)
-        {
             return "";
-        }
+
         return ret;
     }
 
@@ -134,8 +139,8 @@ public class StorableProperties implements Storable<StorableProperties>
         put("nodes.version", Constants.VERSION_NODE);
         put("edges.version", Constants.VERSION_EDGE);
         put("geometry.version", Constants.VERSION_GEOMETRY);
-        put("locationIndex.version", Constants.VERSION_LOCATION_IDX);
-        put("nameIndex.version", Constants.VERSION_NAME_IDX);
+        put("location_index.version", Constants.VERSION_LOCATION_IDX);
+        put("name_index.version", Constants.VERSION_NAME_IDX);
         put("shortcuts.version", Constants.VERSION_SHORTCUT);
     }
 
@@ -144,8 +149,8 @@ public class StorableProperties implements Storable<StorableProperties>
         return get("nodes.version") + ","
                 + get("edges.version") + ","
                 + get("geometry.version") + ","
-                + get("locationIndex.version") + ","
-                + get("nameIndex.version");
+                + get("location_index.version") + ","
+                + get("name_index.version");
     }
 
     public boolean checkVersions( boolean silent )
@@ -159,10 +164,10 @@ public class StorableProperties implements Storable<StorableProperties>
         if (!check("geometry", Constants.VERSION_GEOMETRY, silent))
             return false;
 
-        if (!check("locationIndex", Constants.VERSION_LOCATION_IDX, silent))
+        if (!check("location_index", Constants.VERSION_LOCATION_IDX, silent))
             return false;
 
-        if (!check("nameIndex", Constants.VERSION_NAME_IDX, silent))
+        if (!check("name_index", Constants.VERSION_NAME_IDX, silent))
             return false;
 
         if (!check("shortcuts", Constants.VERSION_SHORTCUT, silent))

@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters;
 
 /**
  * The algorithm options. Create an immutable object via:
@@ -35,35 +36,7 @@ import com.graphhopper.util.PMap;
  */
 public class AlgorithmOptions
 {
-    /**
-     * Bidirectional Dijkstra
-     */
-    public static final String DIJKSTRA_BI = "dijkstrabi";
-    /**
-     * Unidirectional Dijkstra
-     */
-    public static final String DIJKSTRA = "dijkstra";
-    /**
-     * one to many Dijkstra
-     */
-    public static final String DIJKSTRA_ONE_TO_MANY = "dijkstraOneToMany";
-    /**
-     * Unidirectional A*
-     */
-    public static final String ASTAR = "astar";
-    /**
-     * Bidirectional A*
-     */
-    public static final String ASTAR_BI = "astarbi";
-    /**
-     * alternative route algorithm
-     */
-    public static final String ALT_ROUTE = "alternativeRoute";
-    /**
-     * round trip algorithm
-     */
-    public static final String ROUND_TRIP = "roundTrip";
-    private String algorithm = DIJKSTRA_BI;
+    private String algorithm = Parameters.Algorithms.DIJKSTRA_BI;
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private FlagEncoder flagEncoder;

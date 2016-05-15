@@ -29,12 +29,12 @@ function printUsage {
  echo
  echo "  help        this message"
  echo "  import      creates the graphhopper files used for later (faster) starts"
- echo "  web         starts a local server for user access at localhost:8989 and developer access at localhost:8989/route"
+ echo "  web         starts a local server for user access at localhost:8989 and API access at localhost:8989/route"
  echo "  build       creates the graphhopper JAR (without the web module)"
  echo "  clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
  echo "  measurement does performance analysis of the current source version via artificial, random routes (Measurement class)"
  echo "  torture     can be used to test real world routes via feeding graphhopper logs into a graphhopper system (Torture class)"
- echo "  miniui      is a simple Java/Swing application used for debugging purposes only (MiniGraphUI class)"
+ echo "  miniui      is a simple Java/Swing visualization application used for debugging purposes (MiniGraphUI class)"
  echo "  extract     calls the overpass API to easily grab any area as .osm file"
 }
 
@@ -263,7 +263,7 @@ elif [ "$ACTION" = "miniui" ]; then
 
 
 elif [ "$ACTION" = "measurement" ]; then
- ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.chWeightings=fastest graph.flagEncoders=CAR prepare.minNetworkSize=10000 prepare.minOnewayNetworkSize=10000"
+ ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.ch.weightings=fastest graph.flag_encoders=CAR prepare.min_network_size=10000 prepare.min_oneway_network_size=10000"
  # echo -e "\ncreate graph via $ARGS, $JAR"
  # START=$(date +%s)
  # avoid islands for measurement at all costs

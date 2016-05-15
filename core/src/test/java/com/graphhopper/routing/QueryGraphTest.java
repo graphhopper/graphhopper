@@ -449,8 +449,8 @@ public class QueryGraphTest
     @Test
     public void testIteration_Issue163()
     {
-        EdgeFilter outEdgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder("CAR"), false, true);
-        EdgeFilter inEdgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder("CAR"), true, false);
+        EdgeFilter outEdgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder("car"), false, true);
+        EdgeFilter inEdgeFilter = new DefaultEdgeFilter(encodingManager.getEncoder("car"), true, false);
         EdgeExplorer inExplorer = g.createEdgeExplorer(inEdgeFilter);
         EdgeExplorer outExplorer = g.createEdgeExplorer(outEdgeFilter);
 

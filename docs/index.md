@@ -25,19 +25,18 @@
  * [Simple routing](./core/routing.md): Tutorial how to integrate GraphHopper in your Java application (or pick any JVM language)
  * [Create custom weighting](./core/weighting.md): Documentation about how to create a custom weighting class to influence the track calculation.
  * [Elevation](./core/elevation.md): Documentation how to enable the usage of elevation for the output of the track.
- * [Technical overview](./core/technical.md): Technical details about how GraphHopper its calculations are working.
  * [Slides](https://graphhopper.com/public/slides/): Small presentations about how GraphHopper is working.
- * [Contraction Hierarchies](./core/ch.md): Details about speeding up the track calculations by [Contraction Hierarchies](http://en.wikipedia.org/wiki/Contraction_hierarchies).
- * [Deployment Guide](./core/deploy.md): Details about deploying GraphHopper.
 
 ### Web
 
  * [Routing API](./web/api-doc.md): Documentation of the Web API to communicate with any GraphHopper server via http.
- 
+ * [Deployment Guide](./core/deploy.md): Details about deploying GraphHopper.
+
 ### Advanced Topics
 
+ * [Technical overview](./core/technical.md): Technical details about how GraphHopper its calculations are working.
+ * [Contraction Hierarchies](./core/ch.md): Details about speeding up the track calculations by [Contraction Hierarchies](http://en.wikipedia.org/wiki/Contraction_hierarchies).
  * [Low level API](./core/low-level-api.md): Instructions how to use GraphHopper as a Java library.
  * [Create new FlagEncoder](./core/create-new-flagencoder.md): Documentation to create new routing profiles to influence which ways to favor and how the track-time is calculated.
- * [LocationIndex](./core/location-index.md): Documentation about how to get the location index for getting i.e. the nearest edge.
- * [World-Wide-Road-Network](./core/world-wide.md): Details about using the whole world wide street data.
+ * [LocationIndex](./core/location-index.md): Documentation about how to get the location index for getting i.e. the nearest edge. 
  * [Changelog](https://github.com/graphhopper/graphhopper/blob/master/core/files/changelog.txt): Latest changes.

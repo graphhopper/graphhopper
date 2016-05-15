@@ -26,6 +26,9 @@ import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters.CH;
+import static com.graphhopper.util.Parameters.CH.DISABLE;
+import com.graphhopper.util.Parameters.Routing;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,16 +47,6 @@ import org.slf4j.LoggerFactory;
  */
 public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
 {
-    /**
-     * The property name in HintsMap if CH routing should be ignored.
-     */
-    public static final String DISABLE = "routing.ch.disable";
-    /**
-     * The property name in HintsMap if heading should be used for CH regardless of the possible
-     * routing errors.
-     */
-    public static final String FORCE_HEADING = "force_heading_ch";
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
     // we need to decouple weighting objects from the weighting list of strings 
@@ -83,10 +76,15 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
 
         String deprecatedWeightingConfig = args.get("prepare.chWeighting", "");
         if (!deprecatedWeightingConfig.isEmpty())
-            throw new IllegalStateException("Use prepare.chWeightings and a comma separated list instead of prepare.chWeighting");
+            throw new IllegalStateException("Use prepare.ch.weightings and a comma separated list instead of prepare.chWeighting");
 
         // default is enabled & fastest
-        String chWeightingsStr = args.get("prepare.chWeightings", "");
+        String chWeightingsStr = args.get("prepare.ch.weightings", "");
+
+        // backward compatibility
+        if (chWeightingsStr.isEmpty())
+            chWeightingsStr = args.get("prepare.chWeightings", "");
+
         if ("no".equals(chWeightingsStr))
         {
             // default is fastest and we need to clear this explicitely
@@ -100,13 +98,13 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         boolean enableThis = !weightingsAsStrings.isEmpty();
         setEnabled(enableThis);
         if (enableThis)
-            setDisablingAllowed(args.getBool("routing.ch.disabling_allowed", isDisablingAllowed()));
+            setDisablingAllowed(args.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
         setPreparationPeriodicUpdates(args.getInt("prepare.updates.periodic", getPreparationPeriodicUpdates()));
         setPreparationLazyUpdates(args.getInt("prepare.updates.lazy", getPreparationLazyUpdates()));
         setPreparationNeighborUpdates(args.getInt("prepare.updates.neighbor", getPreparationNeighborUpdates()));
-        setPreparationContractedNodes(args.getInt("prepare.contracted-nodes", getPreparationContractedNodes()));
-        setPreparationLogMessages(args.getDouble("prepare.logmessages", getPreparationLogMessages()));
+        setPreparationContractedNodes(args.getInt("prepare.contracted_nodes", getPreparationContractedNodes()));
+        setPreparationLogMessages(args.getDouble("prepare.log_messages", getPreparationLogMessages()));
     }
 
     public CHAlgoFactoryDecorator setPreparationPeriodicUpdates( int preparePeriodicUpdates )

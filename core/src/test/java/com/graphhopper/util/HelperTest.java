@@ -125,4 +125,22 @@ public class HelperTest
         assertEquals(0xFFFFffffL, (1L << 32) - 1);
         assertTrue(0xFFFFffffL > 0L);
     }
+
+    @Test
+    public void testCamelCaseToUnderscore()
+    {
+        assertEquals("test_case", Helper.camelCaseToUnderScore("testCase"));
+        assertEquals("test_case_t_b_d", Helper.camelCaseToUnderScore("testCaseTBD"));
+        assertEquals("_test_case", Helper.camelCaseToUnderScore("TestCase"));
+        
+        assertEquals("_test_case", Helper.camelCaseToUnderScore("_test_case"));
+    }
+
+    @Test
+    public void testUnderscoreToCamelCase()
+    {
+        assertEquals("testCase", Helper.underScoreToCamelCase("test_case"));
+        assertEquals("testCaseTBD", Helper.underScoreToCamelCase("test_case_t_b_d"));
+        assertEquals("TestCase_", Helper.underScoreToCamelCase("_test_case_"));
+    }
 }

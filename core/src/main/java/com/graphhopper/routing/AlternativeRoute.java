@@ -18,7 +18,6 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.AStar.AStarEntry;
-import static com.graphhopper.routing.AlgorithmOptions.ALT_ROUTE;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.Weighting;
@@ -27,6 +26,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.Parameters;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
@@ -188,7 +188,7 @@ public class AlternativeRoute implements RoutingAlgorithm
     @Override
     public String getName()
     {
-        return ALT_ROUTE;
+        return Parameters.Algorithms.ALT_ROUTE;
     }
 
     @Override
