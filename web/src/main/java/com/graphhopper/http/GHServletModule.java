@@ -39,6 +39,8 @@ public class GHServletModule extends ServletModule
                 + "text/plain,"
                 + "text/xml,"
                 + "application/xhtml+xml,"
+                + "application/gpx+xml,"
+                + "application/xml,"
                 + "text/css,"
                 + "application/json,"
                 + "application/javascript,"
