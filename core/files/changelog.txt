@@ -1,5 +1,5 @@
-0.7
-    several constants changed to under score notation see #719 with a few breaking changes
+0.7        
+    several constants changed to under score notation see #719 with a few breaking changes, e.g. use lower case names for flag encoders or jsonp_allowed instead of the jsonpAllowed annotation
     moving all string parameter constants into the Parameters class
     no more acceptedRailways set see #662 for more information
     web API: content type of gpx export is now application/gpx+xml if not explicitely specified
