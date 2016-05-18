@@ -19,7 +19,7 @@ Discussion happens [here](https://discuss.graphhopper.com/c/graphhopper/map-matc
 
 ### Installation and Usage
 
-Java and Maven are required. 
+Java 8 and Maven >=3.3 are required. For the 'core' module Java 7 is sufficient.
 
 Then you need to import the area you want to do map-matching on:
 
