@@ -79,6 +79,12 @@ public class StorableProperties implements Storable<StorableProperties>
         }
     }
 
+    public StorableProperties remove( String key )
+    {
+        map.remove(key);
+        return this;
+    }
+
     public StorableProperties put( String key, String val )
     {
         map.put(key, val);

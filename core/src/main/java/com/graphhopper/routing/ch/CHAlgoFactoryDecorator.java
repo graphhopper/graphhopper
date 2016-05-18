@@ -28,7 +28,6 @@ import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters.CH;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
-import com.graphhopper.util.Parameters.Routing;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -331,7 +330,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
 
                         Thread.currentThread().setName(name);
                         prepare.doWork();
-                        properties.put(errorKey, "");
+                        properties.remove(errorKey);
                         properties.put("prepare.date." + name, Helper.createFormatter().format(new Date()));
                     } catch (Exception ex)
                     {
