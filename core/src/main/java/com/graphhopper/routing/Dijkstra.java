@@ -45,10 +45,11 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     private int visitedNodes;
     private int to = -1;
 
-    public Dijkstra( Graph g, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
+    public Dijkstra( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
-        super(g, encoder, weighting, tMode);
-        initCollections(1000);
+        super(graph, encoder, weighting, tMode);
+        int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
+        initCollections(size);
     }
 
     protected void initCollections( int size )

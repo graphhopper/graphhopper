@@ -51,16 +51,17 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     public DijkstraBidirectionRef( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
         super(graph, encoder, weighting, tMode);
-        initCollections(1000);
+        int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
+        initCollections(size);
     }
 
-    protected void initCollections( int nodes )
+    protected void initCollections( int size )
     {
-        openSetFrom = new PriorityQueue<SPTEntry>(nodes / 10);
-        bestWeightMapFrom = new TIntObjectHashMap<SPTEntry>(nodes / 10);
+        openSetFrom = new PriorityQueue<SPTEntry>(size);
+        bestWeightMapFrom = new TIntObjectHashMap<SPTEntry>(size);
 
-        openSetTo = new PriorityQueue<SPTEntry>(nodes / 10);
-        bestWeightMapTo = new TIntObjectHashMap<SPTEntry>(nodes / 10);
+        openSetTo = new PriorityQueue<SPTEntry>(size / 10);
+        bestWeightMapTo = new TIntObjectHashMap<SPTEntry>(size);
     }
 
     @Override
@@ -127,7 +128,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
     {
         if (finished())
             return bestPath.extract();
-        
+
         return bestPath;
     }
 
@@ -183,7 +184,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo
 
     void fillEdges( SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
                     TIntObjectMap<SPTEntry> shortestWeightMap, EdgeExplorer explorer, boolean reverse )
-    {        
+    {
         EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
         while (iter.next())
         {

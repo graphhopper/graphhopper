@@ -68,8 +68,8 @@ public class AStarBidirection extends AbstractBidirAlgo
     public AStarBidirection( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
         super(graph, encoder, weighting, tMode);
-        int nodes = Math.max(20, graph.getNodes());
-        initCollections(nodes);
+        int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
+        initCollections(size);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
         defaultApprox.setDistanceCalc(new DistancePlaneProjection());
         setApproximation(defaultApprox);
@@ -77,11 +77,11 @@ public class AStarBidirection extends AbstractBidirAlgo
 
     protected void initCollections( int size )
     {
-        prioQueueOpenSetFrom = new PriorityQueue<AStarEntry>(size / 10);
-        bestWeightMapFrom = new TIntObjectHashMap<AStarEntry>(size / 10);
+        prioQueueOpenSetFrom = new PriorityQueue<AStarEntry>(size);
+        bestWeightMapFrom = new TIntObjectHashMap<AStarEntry>(size);
 
-        prioQueueOpenSetTo = new PriorityQueue<AStarEntry>(size / 10);
-        bestWeightMapTo = new TIntObjectHashMap<AStarEntry>(size / 10);
+        prioQueueOpenSetTo = new PriorityQueue<AStarEntry>(size);
+        bestWeightMapTo = new TIntObjectHashMap<AStarEntry>(size);
     }
 
     /**

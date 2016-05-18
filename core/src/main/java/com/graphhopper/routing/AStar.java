@@ -51,10 +51,11 @@ public class AStar extends AbstractRoutingAlgorithm
     private AStarEntry currEdge;
     private int to1 = -1;
 
-    public AStar( Graph g, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
+    public AStar( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
-        super(g, encoder, weighting, tMode);
-        initCollections(1000);
+        super(graph, encoder, weighting, tMode);
+        int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
+        initCollections(size);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
         defaultApprox.setDistanceCalc(new DistancePlaneProjection());
         setApproximation(defaultApprox);
