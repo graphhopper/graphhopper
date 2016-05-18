@@ -267,7 +267,7 @@ public class GraphHopperIT
                 addPoint(new GHPoint(43.741069, 7.426854), 0.).
                 addPoint(new GHPoint(43.744445, 7.429483), 190.).
                 setVehicle(vehicle).setWeighting("fastest");
-        req.getHints().put("heading_penalty", "300");
+        req.getHints().put(Routing.HEADING_PENALTY, "300");
         GHResponse rsp = hopper.route(req);
 
         PathWrapper arsp = rsp.getBest();

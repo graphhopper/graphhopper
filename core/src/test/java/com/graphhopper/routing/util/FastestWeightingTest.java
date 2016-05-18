@@ -18,10 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.VirtualEdgeIteratorState;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.*;
+import com.graphhopper.util.Parameters.Routing;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -44,7 +42,7 @@ public class FastestWeightingTest
     @Test
     public void testWeightWrongHeading()
     {
-        FastestWeighting instance = new FastestWeighting(encoder, new PMap().put("heading_penalty", "100"));
+        FastestWeighting instance = new FastestWeighting(encoder, new PMap().put(Parameters.Routing.HEADING_PENALTY, "100"));
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, 1, 1, 2, 10,
                 encoder.setProperties(10, true, true), "test", Helper.createPointList(51, 0, 51, 1));
         double time = instance.calcWeight(virtEdge, false, 0);
@@ -62,7 +60,7 @@ public class FastestWeightingTest
         // test default penalty
         virtEdge.setVirtualEdgePreference(true);
         instance = new FastestWeighting(encoder);
-        assertEquals(time + FastestWeighting.DEFAULT_HEADING_PENALTY, instance.calcWeight(virtEdge, false, 0), 1e-8);
+        assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcWeight(virtEdge, false, 0), 1e-8);
     }
 
     @Test

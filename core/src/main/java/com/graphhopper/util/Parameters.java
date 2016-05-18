@@ -111,6 +111,11 @@ public class Parameters
          * https://github.com/graphhopper/graphhopper/blob/master/docs/core/routing.md#heading
          */
         public static final String PASS_THROUGH = "pass_through";
+        /**
+         * default heading penalty in seconds
+         */
+        public final static double DEFAULT_HEADING_PENALTY = 300;
+        public static final String HEADING_PENALTY = "heading_penalty";        
     }
 
     /**
