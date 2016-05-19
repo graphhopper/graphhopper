@@ -98,9 +98,9 @@ public class Parameters
      */
     public static final class Routing
     {
+        public static final String EDGE_BASED = "edge_based";
         public static final String MAX_VISITED_NODES = "max_visited_nodes";
         public static final String INIT_MAX_VISITED_NODES = ROUTING_INIT_PREFIX + "max_visited_nodes";
-        public static final String TRAVERSAL_MODE = "traversal_mode";
         public static final String INSTRUCTIONS = "instructions";
         public static final String CALC_POINTS = "calc_points";
         public static final String WAY_POINT_MAX_DISTANCE = "way_point_max_distance";
@@ -114,8 +114,8 @@ public class Parameters
         /**
          * default heading penalty in seconds
          */
-        public final static double DEFAULT_HEADING_PENALTY = 300;
-        public static final String HEADING_PENALTY = "heading_penalty";        
+        public static final double DEFAULT_HEADING_PENALTY = 300;
+        public static final String HEADING_PENALTY = "heading_penalty";
     }
 
     /**

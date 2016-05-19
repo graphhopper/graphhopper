@@ -981,7 +981,7 @@ public class GraphHopper implements GraphHopperAPI
                 return new FastestWeighting(encoder, weightingMap);
         }
 
-        throw new UnsupportedOperationException("weighting " + weighting + " not supported");
+        throw new IllegalArgumentException("weighting " + weighting + " not supported");
     }
 
     /**
@@ -1025,8 +1025,9 @@ public class GraphHopper implements GraphHopperAPI
             return Collections.emptyList();
         }
 
+        HintsMap hints = request.getHints();
         TraversalMode tMode;
-        String tModeStr = request.getHints().get(Routing.TRAVERSAL_MODE, traversalMode.toString());
+        String tModeStr = hints.get("traversal_mode", traversalMode.toString());
         try
         {
             tMode = TraversalMode.fromString(tModeStr);
@@ -1034,6 +1035,13 @@ public class GraphHopper implements GraphHopperAPI
         {
             ghRsp.addError(ex);
             return Collections.emptyList();
+        }
+
+        if (hints.has(Routing.EDGE_BASED))
+        {
+            tMode = hints.getBool(Routing.EDGE_BASED, false)
+                    ? TraversalMode.EDGE_BASED_2DIR
+                    : TraversalMode.NODE_BASED;
         }
 
         FlagEncoder encoder = encodingManager.getEncoder(vehicle);
@@ -1060,11 +1068,11 @@ public class GraphHopper implements GraphHopperAPI
             if (ghRsp.hasErrors())
                 return Collections.emptyList();
 
-            RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(request.getHints());
-            Weighting weighting;
+            RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
+            Weighting weighting = null;
             Graph routingGraph = ghStorage;
 
-            boolean forceFlexibleMode = request.getHints().getBool(CH.DISABLE, false);
+            boolean forceFlexibleMode = hints.getBool(CH.DISABLE, false);
             if (!chFactoryDecorator.isDisablingAllowed() && forceFlexibleMode)
             {
                 ghRsp.addError(new IllegalStateException("Flexible mode not enabled on the server-side"));
@@ -1073,39 +1081,58 @@ public class GraphHopper implements GraphHopperAPI
 
             if (chFactoryDecorator.isEnabled() && !forceFlexibleMode)
             {
-                boolean forceCHHeading = request.getHints().getBool(CH.FORCE_HEADING, false);
+                boolean forceCHHeading = hints.getBool(CH.FORCE_HEADING, false);
                 if (!forceCHHeading && request.hasFavoredHeading(0))
-                    throw new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483");
+                {
+                    ghRsp.addError(new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483"));
 
-                if (!(tmpAlgoFactory instanceof PrepareContractionHierarchies))
-                    throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
-
-                weighting = ((PrepareContractionHierarchies) tmpAlgoFactory).getWeighting();
-                routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
+                } else if (!(tmpAlgoFactory instanceof PrepareContractionHierarchies))
+                {
+                    ghRsp.addError(new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory));
+                } else
+                {
+                    weighting = ((PrepareContractionHierarchies) tmpAlgoFactory).getWeighting();
+                    routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
+                }
             } else
-                weighting = createWeighting(request.getHints(), encoder);
+            {
+                try
+                {
+                    weighting = createWeighting(hints, encoder);
+                } catch (IllegalArgumentException ex)
+                {
+                    ghRsp.addError(ex);
+                }
+            }
+
+            int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, maxVisitedNodes);
+            if (maxVisitedNodesForRequest > maxVisitedNodes)
+                ghRsp.addError(new IllegalStateException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes));
+
+            if (ghRsp.hasErrors())
+                return Collections.emptyList();
 
             QueryGraph queryGraph = new QueryGraph(routingGraph);
             queryGraph.lookup(qResults);
             weighting = createTurnWeighting(weighting, queryGraph, encoder);
 
-            int maxVisitedNodesForRequest = request.getHints().getInt(Routing.MAX_VISITED_NODES, maxVisitedNodes);
-            if (maxVisitedNodesForRequest > maxVisitedNodes)
-            {
-                ghRsp.addError(new IllegalStateException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes));
-                return Collections.emptyList();
-            }
-
             AlgorithmOptions algoOpts = AlgorithmOptions.start().
                     algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
                     maxVisitedNodes(maxVisitedNodesForRequest).
-                    hints(request.getHints()).
+                    hints(hints).
                     build();
 
-            altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
-            boolean tmpEnableInstructions = request.getHints().getBool(Routing.INSTRUCTIONS, enableInstructions);
-            boolean tmpCalcPoints = request.getHints().getBool(Routing.CALC_POINTS, calcPoints);
-            double wayPointMaxDistance = request.getHints().getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
+            try
+            {
+                altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
+            } catch (IllegalArgumentException ex)
+            {
+                ghRsp.addError(ex);
+                return Collections.emptyList();
+            }
+            boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, enableInstructions);
+            boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
+            double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
             DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
             PathMerger pathMerger = new PathMerger().
                     setCalcPoints(tmpCalcPoints).

@@ -112,7 +112,7 @@ public class ViaRoutingTemplate implements RoutingTemplate
             queryGraph.enforceHeading(toQResult.getClosestNode(), ghRequest.getFavoredHeading(placeIndex), true);
 
             sw = new StopWatch().start();
-            RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOpts);
+            RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOpts);          
             String debug = ", algoInit:" + sw.stop().getSeconds() + "s";
 
             sw = new StopWatch().start();
