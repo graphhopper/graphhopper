@@ -63,10 +63,7 @@ public class ViaRoutingTemplate implements RoutingTemplate
     public List<QueryResult> lookup( List<GHPoint> points, FlagEncoder encoder )
     {
         if (points.size() < 2)
-        {
-            ghResponse.addError(new IllegalStateException("At least 2 points have to be specified, but was:" + points.size()));
-            return Collections.emptyList();
-        }
+            throw new IllegalArgumentException("At least 2 points have to be specified, but was:" + points.size());
 
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         queryResults = new ArrayList<>(points.size());
@@ -112,7 +109,7 @@ public class ViaRoutingTemplate implements RoutingTemplate
             queryGraph.enforceHeading(toQResult.getClosestNode(), ghRequest.getFavoredHeading(placeIndex), true);
 
             sw = new StopWatch().start();
-            RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOpts);          
+            RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOpts);
             String debug = ", algoInit:" + sw.stop().getSeconds() + "s";
 
             sw = new StopWatch().start();
@@ -134,6 +131,9 @@ public class ViaRoutingTemplate implements RoutingTemplate
 
             // reset all direction enforcements in queryGraph to avoid influencing next path
             queryGraph.clearUnfavoredStatus();
+
+            if (algo.getVisitedNodes() >= algoOpts.getMaxVisitedNodes())
+                throw new IllegalArgumentException("No path found due to maximum nodes exceeded " + algoOpts.getMaxVisitedNodes());
 
             visitedNodesSum += algo.getVisitedNodes();
             fromQResult = toQResult;

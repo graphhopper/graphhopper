@@ -70,12 +70,9 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
     public List<QueryResult> lookup( List<GHPoint> points, FlagEncoder encoder )
     {
         double distanceInMeter = ghRequest.getHints().getDouble(RoundTrip.DISTANCE, 10000);
-        long seed = ghRequest.getHints().getLong(RoundTrip.SEED, 0L);
-        if (points.isEmpty())
-        {
-            ghResponse.addError(new IllegalStateException("For round trip calculation one point is required"));
-            return Collections.emptyList();
-        }
+        long seed = ghRequest.getHints().getLong(RoundTrip.SEED, 0L);        
+        if (points.isEmpty())        
+            throw new IllegalStateException("For round trip calculation one point is required");            
 
         GHPoint start = ghRequest.getPoints().get(0);
 

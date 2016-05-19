@@ -361,6 +361,8 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         if (weightings.isEmpty())
             throw new IllegalStateException("No CH weightings found");
 
+        traversalMode = getNodeBase();
+
         for (Weighting weighting : getWeightings())
         {
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
@@ -373,5 +375,14 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
 
             addPreparation(tmpPrepareCH);
         }
+    }
+
+    /**
+     * For now only node based will work, later on we can easily find usage of this method to remove
+     * it.
+     */
+    public TraversalMode getNodeBase()
+    {
+        return TraversalMode.NODE_BASED;
     }
 }

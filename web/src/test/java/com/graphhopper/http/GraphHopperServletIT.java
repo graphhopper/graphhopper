@@ -149,20 +149,20 @@ public class GraphHopperServletIT extends BaseServletTester
         GraphHopperAPI hopper = new GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
 
-        // IllegalStateException (Wrong Request)
+        // IllegalArgumentException (Wrong Request)
         GHResponse rsp = hopper.route(new GHRequest());
         assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
 
         Throwable ex = rsp.getErrors().get(0);
-        assertTrue("Wrong Exception found: " + ex.getClass().getName()
-                + ", IllegalStateException expected.", ex instanceof IllegalStateException);
+        assertTrue("Wrong exception found: " + ex.getClass().getName()
+                + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
 
         // IllegalArgumentException (Wrong Points)
         rsp = hopper.route(new GHRequest(0.0, 0.0, 0.0, 0.0));
         assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
 
         ex = rsp.getErrors().get(0);
-        assertTrue("Wrong Exception found: " + ex.getClass().getName()
+        assertTrue("Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
 
         // IllegalArgumentException (Vehicle not supported)
@@ -170,12 +170,8 @@ public class GraphHopperServletIT extends BaseServletTester
         assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
 
         ex = rsp.getErrors().get(0);
-        assertTrue("Wrong Exception found: " + ex.getClass().getName()
+        assertTrue("Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
-
-        // UnsupportedOperationException
-        // RuntimeException
-        // Exception
     }
 
     @Test

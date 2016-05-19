@@ -19,7 +19,6 @@ package com.graphhopper;
 
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.util.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import com.graphhopper.util.Parameters.CH;
@@ -618,16 +617,41 @@ public class GraphHopperIT
                 setEncodingManager(new EncodingManager("car|turn_costs=true"));
         tmpHopper.importOrLoad();
 
-        // with turn costs (no parameter)
+        // with turn costs (default if none-CH and turn cost enabled)
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
         GHResponse rsp = tmpHopper.route(req);
         assertEquals(1044, rsp.getBest().getDistance(), 1);
 
-        // without
+        // without turn costs
         req.getHints().put(Routing.EDGE_BASED, "false");
         rsp = tmpHopper.route(req);
         assertEquals(400, rsp.getBest().getDistance(), 1);
-        
+
+        // with turn costs
+        req.getHints().put(Routing.EDGE_BASED, "true");
+        rsp = tmpHopper.route(req);
+        assertEquals(1044, rsp.getBest().getDistance(), 1);
+    }
+
+    @Test
+    public void testCHAndTurnCostsWithFlexmode()
+    {
+        GraphHopper tmpHopper = new GraphHopper().
+                setStoreOnFlush(true).
+                setOSMFile("files/moscow.osm.gz").
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car|turn_costs=true"));
+        tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        tmpHopper.importOrLoad();
+
+        // without turn costs (default for CH)
+        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
+        GHResponse rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(400, rsp.getBest().getDistance(), 1);
+
+        // with turn costs                
+        req.getHints().put(CH.DISABLE, "true");
         req.getHints().put(Routing.EDGE_BASED, "true");
         rsp = tmpHopper.route(req);
         assertEquals(1044, rsp.getBest().getDistance(), 1);

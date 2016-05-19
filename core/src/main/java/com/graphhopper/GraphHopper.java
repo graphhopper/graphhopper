@@ -987,9 +987,9 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Potentially wraps the specified weighting into a TurnWeighting instance.
      */
-    public Weighting createTurnWeighting( Weighting weighting, Graph graph, FlagEncoder encoder )
+    public Weighting createTurnWeighting( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
-        if (encoder.supports(TurnWeighting.class))
+        if (encoder.supports(TurnWeighting.class) && !tMode.equals(TraversalMode.NODE_BASED))
             return new TurnWeighting(weighting, encoder, (TurnCostExtension) graph.getExtension());
         return weighting;
     }
@@ -1018,133 +1018,106 @@ public class GraphHopper implements GraphHopperAPI
             request.setVehicle(vehicle);
         }
 
-        if (!encodingManager.supports(vehicle))
-        {
-            ghRsp.addError(new IllegalArgumentException("Vehicle " + vehicle + " unsupported. "
-                    + "Supported are: " + getEncodingManager()));
-            return Collections.emptyList();
-        }
-
-        HintsMap hints = request.getHints();
-        TraversalMode tMode;
-        String tModeStr = hints.get("traversal_mode", traversalMode.toString());
         try
         {
-            tMode = TraversalMode.fromString(tModeStr);
-        } catch (Exception ex)
+            if (!encodingManager.supports(vehicle))
+                throw new IllegalArgumentException("Vehicle " + vehicle + " unsupported. "
+                        + "Supported are: " + getEncodingManager());
+
+            HintsMap hints = request.getHints();
+            String tModeStr = hints.get("traversal_mode", traversalMode.toString());
+            TraversalMode tMode = TraversalMode.fromString(tModeStr);
+            if (hints.has(Routing.EDGE_BASED))
+            {
+                tMode = hints.getBool(Routing.EDGE_BASED, false)
+                        ? TraversalMode.EDGE_BASED_2DIR
+                        : TraversalMode.NODE_BASED;
+            }
+
+            FlagEncoder encoder = encodingManager.getEncoder(vehicle);
+            List<GHPoint> points = request.getPoints();
+            String algoStr = request.getAlgorithm().isEmpty() ? DIJKSTRA_BI : request.getAlgorithm();
+
+            RoutingTemplate routingTemplate;
+            if (ROUND_TRIP.equalsIgnoreCase(algoStr))
+                routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, maxRoundTripRetries);
+            else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
+                routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex);
+            else
+                routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex);
+
+            List<Path> altPaths = null;
+            int maxRetries = routingTemplate.getMaxRetries();
+            Locale locale = request.getLocale();
+            Translation tr = trMap.getWithFallBack(locale);
+            for (int i = 0; i < maxRetries; i++)
+            {
+                StopWatch sw = new StopWatch().start();
+                List<QueryResult> qResults = routingTemplate.lookup(points, encoder);
+                ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
+                if (ghRsp.hasErrors())
+                    return Collections.emptyList();
+
+                RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
+                Weighting weighting = null;
+                Graph routingGraph = ghStorage;
+
+                boolean forceFlexibleMode = hints.getBool(CH.DISABLE, false);
+                if (!chFactoryDecorator.isDisablingAllowed() && forceFlexibleMode)
+                    throw new IllegalArgumentException("Flexible mode not enabled on the server-side");
+
+                if (chFactoryDecorator.isEnabled() && !forceFlexibleMode)
+                {
+                    boolean forceCHHeading = hints.getBool(CH.FORCE_HEADING, false);
+                    if (!forceCHHeading && request.hasFavoredHeading(0))
+                        throw new IllegalArgumentException("Heading is not (fully) supported for CHGraph. See issue #483");
+                    else if (!(tmpAlgoFactory instanceof PrepareContractionHierarchies))
+                        throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
+
+                    tMode = getCHFactoryDecorator().getNodeBase();
+                    weighting = ((PrepareContractionHierarchies) tmpAlgoFactory).getWeighting();
+                    routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
+
+                } else
+                    weighting = createWeighting(hints, encoder);
+
+                int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, maxVisitedNodes);
+                if (maxVisitedNodesForRequest > maxVisitedNodes)
+                    throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes);
+
+                QueryGraph queryGraph = new QueryGraph(routingGraph);
+                queryGraph.lookup(qResults);
+                weighting = createTurnWeighting(queryGraph, encoder, weighting, tMode);
+
+                AlgorithmOptions algoOpts = AlgorithmOptions.start().
+                        algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
+                        maxVisitedNodes(maxVisitedNodesForRequest).
+                        hints(hints).
+                        build();
+
+                altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
+
+                boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, enableInstructions);
+                boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
+                double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
+                DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
+                PathMerger pathMerger = new PathMerger().
+                        setCalcPoints(tmpCalcPoints).
+                        setDouglasPeucker(peucker).
+                        setEnableInstructions(tmpEnableInstructions).
+                        setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
+
+                if (routingTemplate.isReady(pathMerger, tr))
+                    break;
+            }
+
+            return altPaths;
+
+        } catch (IllegalArgumentException ex)
         {
             ghRsp.addError(ex);
             return Collections.emptyList();
         }
-
-        if (hints.has(Routing.EDGE_BASED))
-        {
-            tMode = hints.getBool(Routing.EDGE_BASED, false)
-                    ? TraversalMode.EDGE_BASED_2DIR
-                    : TraversalMode.NODE_BASED;
-        }
-
-        FlagEncoder encoder = encodingManager.getEncoder(vehicle);
-        List<GHPoint> points = request.getPoints();
-        String algoStr = request.getAlgorithm().isEmpty() ? DIJKSTRA_BI : request.getAlgorithm();
-
-        RoutingTemplate routingTemplate;
-        if (ROUND_TRIP.equalsIgnoreCase(algoStr))
-            routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, maxRoundTripRetries);
-        else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
-            routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex);
-        else
-            routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex);
-
-        List<Path> altPaths = null;
-        int maxRetries = routingTemplate.getMaxRetries();
-        Locale locale = request.getLocale();
-        Translation tr = trMap.getWithFallBack(locale);
-        for (int i = 0; i < maxRetries; i++)
-        {
-            StopWatch sw = new StopWatch().start();
-            List<QueryResult> qResults = routingTemplate.lookup(points, encoder);
-            ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
-            if (ghRsp.hasErrors())
-                return Collections.emptyList();
-
-            RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
-            Weighting weighting = null;
-            Graph routingGraph = ghStorage;
-
-            boolean forceFlexibleMode = hints.getBool(CH.DISABLE, false);
-            if (!chFactoryDecorator.isDisablingAllowed() && forceFlexibleMode)
-            {
-                ghRsp.addError(new IllegalStateException("Flexible mode not enabled on the server-side"));
-                return Collections.emptyList();
-            }
-
-            if (chFactoryDecorator.isEnabled() && !forceFlexibleMode)
-            {
-                boolean forceCHHeading = hints.getBool(CH.FORCE_HEADING, false);
-                if (!forceCHHeading && request.hasFavoredHeading(0))
-                {
-                    ghRsp.addError(new IllegalStateException("Heading is not (fully) supported for CHGraph. See issue #483"));
-
-                } else if (!(tmpAlgoFactory instanceof PrepareContractionHierarchies))
-                {
-                    ghRsp.addError(new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory));
-                } else
-                {
-                    weighting = ((PrepareContractionHierarchies) tmpAlgoFactory).getWeighting();
-                    routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
-                }
-            } else
-            {
-                try
-                {
-                    weighting = createWeighting(hints, encoder);
-                } catch (IllegalArgumentException ex)
-                {
-                    ghRsp.addError(ex);
-                }
-            }
-
-            int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, maxVisitedNodes);
-            if (maxVisitedNodesForRequest > maxVisitedNodes)
-                ghRsp.addError(new IllegalStateException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes));
-
-            if (ghRsp.hasErrors())
-                return Collections.emptyList();
-
-            QueryGraph queryGraph = new QueryGraph(routingGraph);
-            queryGraph.lookup(qResults);
-            weighting = createTurnWeighting(weighting, queryGraph, encoder);
-
-            AlgorithmOptions algoOpts = AlgorithmOptions.start().
-                    algorithm(algoStr).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
-                    maxVisitedNodes(maxVisitedNodesForRequest).
-                    hints(hints).
-                    build();
-
-            try
-            {
-                altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
-            } catch (IllegalArgumentException ex)
-            {
-                ghRsp.addError(ex);
-                return Collections.emptyList();
-            }
-            boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, enableInstructions);
-            boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
-            double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
-            DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
-            PathMerger pathMerger = new PathMerger().
-                    setCalcPoints(tmpCalcPoints).
-                    setDouglasPeucker(peucker).
-                    setEnableInstructions(tmpEnableInstructions).
-                    setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
-
-            if (routingTemplate.isReady(pathMerger, tr))
-                break;
-        }
-
-        return altPaths;
     }
 
     protected LocationIndex createLocationIndex( Directory dir )
