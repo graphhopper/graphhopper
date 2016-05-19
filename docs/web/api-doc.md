@@ -46,9 +46,9 @@ ch.disable       | `false`    | Use this parameter in combination with one or mo
 weighting        | `fastest`  | Which kind of 'best' route calculation you need. Other option is `shortest` (e.g. for foot and bike) and `curvature` (only for motorcycle)
 edge_traversal   |`false`     | Use `true` if you want to consider turn restrictions for bike and motor vehicles. Keep in mind that the response time is roughly 2 times slower.
 algorithm        |`dijkstrabi`| The algorithm to calculate the route. Other options are `dijkstra`, `astar`, `astarbi`, `alternative_route` and `round_trip`
-heading          | NaN        | Favored heading direction for points. Specify either one heading for the start point or as many as there are points. In this case headings are associated by their order to the specific points. Headings are given as north based clockwise angle between 0 and 360 degree, NaN indicates non specific heading. Does only give valid results in the flexibility mode.
+heading          | NaN        | Favour a heading direction for a certain point. Specify either one heading for the start point or as many as there are points. In this case headings are associated by their order to the specific points. Headings are given as north based clockwise angle between 0 and 360 degree.
 heading_penalty  | 120        | Penalty for omitting a specified heading. The penalty corresponds to the accepted time delay in seconds in comparison to the route without a heading.
-pass_through     | `false`    | If `true` u-turns are avoided at via-points with regard to the heading_penalty. Does only give valid results in the flexibility mode.
+pass_through     | `false`    | If `true` u-turns are avoided at via-points with regard to the `heading_penalty`.
 round_trip.distance                 | 10000 | If `algorithm=round_trip` this parameter configures approximative length of the resulting round trip
 round_trip.seed                     | 0     | If `algorithm=round_trip` this parameter introduces randomness if e.g. the first try wasn't good
 alternative_route.max_paths         | 2     | If `algorithm=alternative_route` this parameter sets the number of maximum paths which should be calculated. Increasing can lead to worse alternatives.
