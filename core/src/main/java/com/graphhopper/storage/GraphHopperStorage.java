@@ -39,7 +39,7 @@ import java.util.List;
 public final class GraphHopperStorage implements GraphStorage, Graph
 {
     private final Directory dir;
-    private EncodingManager encodingManager;
+    private final EncodingManager encodingManager;
     private final StorableProperties properties;
     private final BaseGraph baseGraph;
     // same flush order etc
@@ -55,6 +55,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     {
         if (extendedStorage == null)
             throw new IllegalArgumentException("GraphExtension cannot be null, use NoOpExtension");
+
+        if (encodingManager == null)
+            throw new IllegalArgumentException("EncodingManager needs to be non-null since 0.7. Create one using new EncodingManager or EncodingManager.create(flagEncoderFactory, ghLocation)");
 
         this.encodingManager = encodingManager;
         this.dir = dir;
