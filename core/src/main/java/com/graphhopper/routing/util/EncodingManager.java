@@ -401,9 +401,6 @@ public class EncodingManager
      */
     public List<FlagEncoder> fetchEdgeEncoders()
     {
-        if (edgeEncoders.isEmpty())
-            throw new IllegalStateException("FlagEncoders cannot be empty");
-
         List<FlagEncoder> list = new ArrayList<FlagEncoder>();
         list.addAll(edgeEncoders);
         return list;

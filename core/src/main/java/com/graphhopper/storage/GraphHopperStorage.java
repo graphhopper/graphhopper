@@ -253,9 +253,6 @@ public final class GraphHopperStorage implements GraphStorage, Graph
             // check encoding for compatiblity
             String flagEncodersStr = properties.get("graph.flag_encoders");
 
-            if (encodingManager == null)
-                throw new IllegalStateException("Initialize EncodingManger before creating GraphHopperStorage");
-
             if (!flagEncodersStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(flagEncodersStr))
             {
                 throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.toDetailsString()
