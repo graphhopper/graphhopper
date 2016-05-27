@@ -63,6 +63,7 @@ you should not rely on them! The JSON result contains the following structure:
 JSON path/attribute        | Description
 :--------------------------|:------------
 paths                      | An array of possible paths
+snapped_waypoints          | An array of the snapped input points (order is lon,lat,elevation)
 paths[0].distance          | The total distance of the route, in meter
 paths[0].time              | The total time of the route, in ms
 paths[0].ascend            | The total ascend (uphill) of the route, in meter

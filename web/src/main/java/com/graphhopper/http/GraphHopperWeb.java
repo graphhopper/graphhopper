@@ -174,6 +174,15 @@ public class GraphHopperWeb implements GraphHopperAPI
                 PathWrapper altRsp = createPathWrapper(path, tmpCalcPoints, tmpInstructions, tmpElevation);
                 res.add(altRsp);
             }
+
+            JSONArray snappedPoints = json.getJSONArray("snapped_waypoints");
+            PointList points = new PointList(snappedPoints.length(), tmpElevation);
+            for (int index = 0; index < snappedPoints.length(); index++)
+            {
+                JSONArray point = snappedPoints.getJSONArray(index);
+                points.add(WebHelper.toGHPoint(point));
+            }
+
             return res;
 
         } catch (Exception ex)
