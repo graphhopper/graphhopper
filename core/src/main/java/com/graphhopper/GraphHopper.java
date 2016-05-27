@@ -94,6 +94,7 @@ public class GraphHopper implements GraphHopperAPI
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
+    private FlagEncoderFactory flagEncoderFactory = FlagEncoderFactory.DEFAULT;
 
     public GraphHopper()
     {
@@ -571,6 +572,12 @@ public class GraphHopper implements GraphHopperAPI
         return trMap;
     }
 
+    public GraphHopper setFlagEncoderFactory( FlagEncoderFactory factory )
+    {
+        this.flagEncoderFactory = factory;
+        return this;
+    }
+
     /**
      * Reads configuration from a CmdArgs object. Which can be manually filled, or via main(String[]
      * args) ala CmdArgs.read(args) or via configuration file ala
@@ -602,9 +609,9 @@ public class GraphHopper implements GraphHopperAPI
         sortGraph = args.getBool("graph.do_sort", sortGraph);
         removeZipped = args.getBool("graph.remove_zipped", removeZipped);
         int bytesForFlags = args.getInt("graph.bytes_for_flags", 4);
-        String flagEncoders = args.get("graph.flag_encoders", "");
-        if (!flagEncoders.isEmpty())
-            setEncodingManager(new EncodingManager(flagEncoders, bytesForFlags));
+        String flagEncodersStr = args.get("graph.flag_encoders", "");
+        if (!flagEncodersStr.isEmpty())
+            setEncodingManager(new EncodingManager(flagEncoderFactory, flagEncodersStr, bytesForFlags));
 
         if (args.get("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -824,7 +831,7 @@ public class GraphHopper implements GraphHopperAPI
         setGraphHopperLocation(graphHopperFolder);
 
         if (encodingManager == null)
-            setEncodingManager(EncodingManager.create(ghLocation));
+            setEncodingManager(EncodingManager.create(flagEncoderFactory, ghLocation));
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;

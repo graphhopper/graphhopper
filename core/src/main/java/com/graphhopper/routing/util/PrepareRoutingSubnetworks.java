@@ -48,10 +48,10 @@ public class PrepareRoutingSubnetworks
     private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
     private final List<FlagEncoder> encoders;
 
-    public PrepareRoutingSubnetworks( GraphHopperStorage ghStorage, Collection<FlagEncoder> encoders )
+    public PrepareRoutingSubnetworks( GraphHopperStorage ghStorage, List<FlagEncoder> encoders )
     {
         this.ghStorage = ghStorage;
-        this.encoders = new ArrayList<FlagEncoder>(encoders);
+        this.encoders = encoders;
     }
 
     public PrepareRoutingSubnetworks setMinNetworkSize( int minNetworkSize )

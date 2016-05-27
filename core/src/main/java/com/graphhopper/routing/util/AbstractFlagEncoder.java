@@ -163,11 +163,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public int defineWayBits( int index, int shift )
     {
-        if (isRegistered())
-            throw new IllegalStateException("You must not register a FlagEncoder (" + toString() + ") twice!");
-
-        setRegistered(true);
-
         // define the first 2 speedBits in flags for routing
         forwardBit = 1L << shift;
         backwardBit = 2L << shift;

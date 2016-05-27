@@ -39,14 +39,6 @@ import com.graphhopper.util.PMap;
  */
 public class EncodingManager
 {
-    public static final String CAR = "car";
-    public static final String BIKE = "bike";
-    public static final String BIKE2 = "bike2";
-    public static final String RACINGBIKE = "racingbike";
-    public static final String MOUNTAINBIKE = "mtb";
-    public static final String FOOT = "foot";
-    public static final String MOTORCYCLE = "motorcycle";
-
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
 
     private int nextWayBit = 0;
@@ -66,12 +58,12 @@ public class EncodingManager
      */
     public EncodingManager( String flagEncodersStr )
     {
-        this(flagEncodersStr, 4);
+        this(FlagEncoderFactory.DEFAULT, flagEncodersStr, 4);
     }
 
-    public EncodingManager( String flagEncodersStr, int bytesForFlags )
+    public EncodingManager( FlagEncoderFactory factory, String flagEncodersStr, int bytesForEdgeFlags )
     {
-        this(parseEncoderString(flagEncodersStr), bytesForFlags);
+        this(parseEncoderString(factory, flagEncodersStr), bytesForEdgeFlags);
     }
 
     /**
@@ -114,7 +106,7 @@ public class EncodingManager
         return bitsForEdgeFlags / 8;
     }
 
-    static List<FlagEncoder> parseEncoderString( String encoderList )
+    static List<FlagEncoder> parseEncoderString( FlagEncoderFactory factory, String encoderList )
     {
         if (encoderList.contains(":"))
             throw new IllegalArgumentException("EncodingManager does no longer use reflection instantiate encoders directly.");
@@ -139,30 +131,7 @@ public class EncodingManager
             }
             PMap configuration = new PMap(entryVal);
 
-            AbstractFlagEncoder fe;
-            if (entry.equals(CAR))
-                fe = new CarFlagEncoder(configuration);
-
-            else if (entry.equals(BIKE))
-                fe = new BikeFlagEncoder(configuration);
-
-            else if (entry.equals(BIKE2))
-                fe = new Bike2WeightFlagEncoder(configuration);
-
-            else if (entry.equals(RACINGBIKE))
-                fe = new RacingBikeFlagEncoder(configuration);
-
-            else if (entry.equals(MOUNTAINBIKE))
-                fe = new MountainBikeFlagEncoder(configuration);
-
-            else if (entry.equals(FOOT))
-                fe = new FootFlagEncoder(configuration);
-
-            else if (entry.equals(MOTORCYCLE))
-                fe = new MotorcycleFlagEncoder(configuration);
-
-            else
-                throw new IllegalArgumentException("entry in encoder list not supported " + entry);
+            FlagEncoder fe = factory.createFlagEncoder(entry, configuration);
 
             if (configuration.has("version"))
             {
@@ -179,10 +148,15 @@ public class EncodingManager
     }
 
     private static final String ERR = "Encoders are requesting more than %s bits of %s flags. ";
-    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via graph.bytesForFlags=8";
+    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via graph.bytes_for_flags=8";
 
     private void registerEncoder( AbstractFlagEncoder encoder )
     {
+        if (encoder.isRegistered())
+            throw new IllegalStateException("You must not register a FlagEncoder (" + encoder.toString() + ") twice!");
+
+        encoder.setRegistered(true);
+
         int encoderCount = edgeEncoders.size();
         int usedBits = encoder.defineNodeBits(encoderCount, nextNodeBit);
         if (usedBits > bitsForEdgeFlags)
@@ -427,6 +401,9 @@ public class EncodingManager
      */
     public List<FlagEncoder> fetchEdgeEncoders()
     {
+        if (edgeEncoders.isEmpty())
+            throw new IllegalStateException("FlagEncoders cannot be empty");
+
         List<FlagEncoder> list = new ArrayList<FlagEncoder>();
         list.addAll(edgeEncoders);
         return list;
@@ -453,7 +430,7 @@ public class EncodingManager
      * Create the EncodingManager from the provided GraphHopper location. Throws an
      * IllegalStateException if it fails. Used if no EncodingManager specified on load.
      */
-    public static EncodingManager create( String ghLoc )
+    public static EncodingManager create( FlagEncoderFactory factory, String ghLoc )
     {
         Directory dir = new RAMDirectory(ghLoc, true);
         StorableProperties properties = new StorableProperties(dir);
@@ -472,6 +449,6 @@ public class EncodingManager
         int bytesForFlags = 4;
         if ("8".equals(properties.get("graph.bytes_for_flags")))
             bytesForFlags = 8;
-        return new EncodingManager(acceptStr, bytesForFlags);
+        return new EncodingManager(factory, acceptStr, bytesForFlags);
     }
 }

@@ -243,7 +243,7 @@ public class EncodingManagerTest
     @Test
     public void testCompatibilityBug()
     {
-        EncodingManager manager2 = new EncodingManager("bike2", 8);
+        EncodingManager manager2 = new EncodingManager(FlagEncoderFactory.DEFAULT, "bike2", 8);
         OSMWay osmWay = new OSMWay(1);
         osmWay.setTag("highway", "footway");
         osmWay.setTag("name", "test");
@@ -254,7 +254,7 @@ public class EncodingManagerTest
         assertEquals(4, singleSpeed, 1e-3);
         assertEquals(singleSpeed, singleBikeEnc.getReverseSpeed(flags), 1e-3);
 
-        EncodingManager manager = new EncodingManager("bike2,bike,foot", 8);
+        EncodingManager manager = new EncodingManager(FlagEncoderFactory.DEFAULT, "bike2,bike,foot", 8);
         FootFlagEncoder foot = (FootFlagEncoder) manager.getEncoder("foot");
         BikeFlagEncoder bike = (BikeFlagEncoder) manager.getEncoder("bike2");
 
@@ -272,7 +272,7 @@ public class EncodingManagerTest
     {
         // 1) no encoder crossing fords
         String flagEncodersStr = "car,bike,foot";
-        EncodingManager manager = new EncodingManager(flagEncodersStr, 8);
+        EncodingManager manager = new EncodingManager(FlagEncoderFactory.DEFAULT, flagEncodersStr, 8);
 
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
@@ -280,7 +280,7 @@ public class EncodingManagerTest
 
         // 2) two encoders crossing fords
         flagEncodersStr = "car,bike|block_fords=false,foot|block_fords=false";
-        manager = new EncodingManager(flagEncodersStr, 8);
+        manager = new EncodingManager(FlagEncoderFactory.DEFAULT, flagEncodersStr, 8);
 
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
         assertFalse(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
@@ -288,7 +288,7 @@ public class EncodingManagerTest
 
         // 2) Try combined with another tag
         flagEncodersStr = "car|turn_costs=true|block_fords=true,bike,foot|block_fords=false";
-        manager = new EncodingManager(flagEncodersStr, 8);
+        manager = new EncodingManager(FlagEncoderFactory.DEFAULT, flagEncodersStr, 8);
 
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
