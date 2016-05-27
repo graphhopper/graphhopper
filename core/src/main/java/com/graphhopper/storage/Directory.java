@@ -51,7 +51,6 @@ public interface Directory
      * Renames the specified DataAccess object into one.
      */
     // DataAccess rename( DataAccess da, String newName );
-
     /**
      * Removes the specified object from the directory.
      */
@@ -71,4 +70,6 @@ public interface Directory
      * Returns all created directories.
      */
     Collection<DataAccess> getAll();
+
+    Directory create();
 }

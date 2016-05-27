@@ -463,18 +463,12 @@ public class GraphHopperTest
     }
 
     @Test
-    public void testFailsAndDoesNotCreateEmptyFolderIfLoadingFromNonExistingPath()
+    public void testDoesNotCreateEmptyFolderIfLoadingFromNonExistingPath()
     {
         instance = new GraphHopper().
                 setEncodingManager(new EncodingManager("car"));
-        try
-        {
-            instance.load(ghLoc);
-            assertTrue(false);
-        } catch (IllegalStateException ex)
-        {
-            assertEquals("Path \"" + ghLoc + "\" does not exist", ex.getMessage());
-        }
+
+        assertFalse(instance.load(ghLoc));
         assertFalse(new File(ghLoc).exists());
     }
 
@@ -500,7 +494,7 @@ public class GraphHopperTest
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
-            assertEquals("graphHopperLocation is not specified. call init before", ex.getMessage());
+            assertEquals("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before", ex.getMessage());
         }
 
         // missing OSM file to import

@@ -25,6 +25,6 @@ public class RAMDirectoryTest extends AbstractDirectoryTester
     @Override
     Directory createDir()
     {
-        return new RAMDirectory(location, true);
+        return new RAMDirectory(location, true).create();
     }
 }

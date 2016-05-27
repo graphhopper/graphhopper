@@ -174,6 +174,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
         if (encodingManager == null)
             throw new IllegalStateException("EncodingManager can only be null if you call loadExisting");
 
+        dir.create();
         long initSize = Math.max(byteCount, 100);
         properties.create(100);
 

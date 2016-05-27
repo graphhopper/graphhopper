@@ -25,6 +25,6 @@ public class MMapDirectoryTest extends AbstractDirectoryTester
     @Override
     Directory createDir()
     {
-        return new MMapDirectory(location);
+        return new MMapDirectory(location).create();
     }
 }

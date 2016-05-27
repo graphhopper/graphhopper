@@ -99,7 +99,7 @@ public class NameIndexTest
         String location = "./target/nameindex-store";
         Helper.removeDir(new File(location));
 
-        NameIndex index = new NameIndex(new RAMDirectory(location, true)).create(1000);
+        NameIndex index = new NameIndex(new RAMDirectory(location, true).create()).create(1000);
         long pointer = index.put("test");
         index.flush();
         index.close();

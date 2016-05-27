@@ -68,7 +68,6 @@ public class GHDirectory implements Directory
                 put("nodes", DAType.RAM_INT);
             }
         }
-        mkdirs();
     }
 
     @Override
@@ -194,10 +193,12 @@ public class GHDirectory implements Directory
         return defaultType.isStoring();
     }
 
-    protected void mkdirs()
+    @Override
+    public Directory create()
     {
         if (isStoring())
             new File(location).mkdirs();
+        return this;
     }
 
     @Override

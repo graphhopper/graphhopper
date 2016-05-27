@@ -36,7 +36,7 @@ public class Location2IDQuadtreeTest extends AbstractLocationIndexTester
     {
         if (resolution < 0)
             resolution = 120;
-        return new Location2IDQuadtree(g, new MMapDirectory(location + "loc2idIndex")).
+        return new Location2IDQuadtree(g, new MMapDirectory(location + "loc2idIndex").create()).
                 setResolution(resolution).prepareIndex();
     }
 

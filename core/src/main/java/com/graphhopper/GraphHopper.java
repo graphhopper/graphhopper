@@ -692,7 +692,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper importOrLoad()
     {
-        if (!initializeStorage(ghLocation))
+        if (!load(ghLocation))
         {
             printInfo();
             process(ghLocation);
@@ -782,22 +782,14 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Opens existing graph.
      *
-     * @param graphHopperFolder is the folder containing graphhopper files (which can be compressed
-     * too)
+     * @param graphHopperFolder is the folder containing graphhopper files. Can be a compressed file
+     * too ala folder-content.ghz.
      */
     @Override
     public boolean load( String graphHopperFolder )
     {
-        if (!(new File(graphHopperFolder).exists()))
-            throw new IllegalStateException("Path \"" + graphHopperFolder + "\" does not exist");
-
-        return initializeStorage(graphHopperFolder);
-    }
-
-    private boolean initializeStorage( String graphHopperFolder )
-    {
         if (Helper.isEmpty(graphHopperFolder))
-            throw new IllegalStateException("graphHopperLocation is not specified. call init before");
+            throw new IllegalStateException("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before");
 
         if (fullyLoaded)
             throw new IllegalStateException("graph is already successfully loaded");
@@ -807,7 +799,7 @@ public class GraphHopper implements GraphHopperAPI
             // do nothing  
         } else if (graphHopperFolder.endsWith(".osm") || graphHopperFolder.endsWith(".xml"))
         {
-            throw new IllegalArgumentException("To import an osm file you need to use importOrLoad");
+            throw new IllegalArgumentException("GraphHopperLocation cannot be the OSM file. Instead you need to use importOrLoad");
         } else if (!graphHopperFolder.contains("."))
         {
             if (new File(graphHopperFolder + "-gh").exists())
@@ -850,6 +842,9 @@ public class GraphHopper implements GraphHopperAPI
         }
 
         ghStorage.setSegmentSize(defaultSegmentSize);
+
+        if (!new File(graphHopperFolder).exists())
+            return false;
 
         Lock lock = null;
         try
@@ -926,7 +921,7 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * Sets EncodingManager, does the preparation and creates the locationIndex
+     * Does the preparation and creates the location index
      */
     protected void postProcessing()
     {
