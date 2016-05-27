@@ -26,7 +26,7 @@ import java.util.Calendar;
  * <p>
  * @author Robin Boldt
  */
-public class DateRange
+public class DateRange implements ValueRange<Calendar>
 {
     private final Calendar from;
     private final Calendar to;
@@ -38,7 +38,6 @@ public class DateRange
 
     boolean reverse = false;
 
-    // TODO Gets to complex? Create Factory?
     public DateRange( ParsedCalendar from, ParsedCalendar to )
     {
         Calendar fromCal = from.parsedCalendar;
@@ -75,6 +74,15 @@ public class DateRange
         this.to = to.getMax();
     }
 
+    public static final String KEY = "DateRange";
+
+    @Override
+    public String getKey()
+    {
+        return KEY;
+    }
+
+    @Override
     public boolean isInRange( Calendar date )
     {
         if (!yearless && !dayOnly)

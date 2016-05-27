@@ -18,13 +18,9 @@
 package com.graphhopper.reader.osm.conditional;
 
 import com.graphhopper.reader.OSMWay;
-import java.util.ArrayList;
+import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Calendar;
-import java.util.List;
-import java.util.Set;
 
 /**
  * Inspects the conditional tags of an OSMWay according to the given conditional tags.
@@ -33,35 +29,36 @@ import java.util.Set;
  */
 public class ConditionalTagsInspector
 {
-    private static final Logger logger = LoggerFactory.getLogger(ConditionalTagsInspector.class);
-
-    private final Calendar calendar;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final boolean enabledLogs = true;
     private final List<String> tagsToCheck;
-    private final ConditionalParser restrictiveParser;
-    private final ConditionalParser permitParser;
-    private final boolean enabledLogs = false;
+    private final Map<String, Object> valueMap;
+    private final ConditionalParser permitParser, restrictiveParser;
 
-    /**
-     * Create with todays date
-     */
-    public ConditionalTagsInspector( List<String> tagsToCheck, Set<String> restrictiveValues, Set<String> permittedValues )
+    public ConditionalTagsInspector( Object value, List<String> tagsToCheck,
+                                     Set<String> restrictiveValues, Set<String> permittedValues )
     {
-        this(DateRangeParser.createCalendar(), tagsToCheck, restrictiveValues, permittedValues);
+        this(tagsToCheck, createDefaultMapping(value), restrictiveValues, permittedValues);
     }
 
-    /**
-     * Create with given date
-     */
-    public ConditionalTagsInspector( Calendar cal, List<String> tagsToCheck, Set<String> restrictiveValues, Set<String> permittedValues )
+    public ConditionalTagsInspector( List<String> tagsToCheck, Map<String, Object> valueMap,
+                                     Set<String> restrictiveValues, Set<String> permittedValues )
     {
-        this.calendar = cal;
+        this.valueMap = valueMap;
         this.tagsToCheck = new ArrayList<>(tagsToCheck.size());
         for (String tagToCheck : tagsToCheck)
         {
             this.tagsToCheck.add(tagToCheck + ":conditional");
         }
-        this.restrictiveParser = new ConditionalParser(restrictiveValues, enabledLogs);
-        this.permitParser = new ConditionalParser(permittedValues, enabledLogs);
+        this.permitParser = new ConditionalParser(permittedValues);
+        this.restrictiveParser = new ConditionalParser(restrictiveValues);
+    }
+
+    static Map<String, Object> createDefaultMapping( Object value )
+    {
+        Map<String, Object> map = new HashMap<String, Object>(1);
+        map.put(DateRange.KEY, value);
+        return map;
     }
 
     public boolean isRestrictedWayConditionallyPermitted( OSMWay way )
@@ -80,23 +77,27 @@ public class ConditionalTagsInspector
         {
             String tagToCheck = tagsToCheck.get(index);
             String val = way.getTag(tagToCheck);
-            if (val != null && !val.isEmpty())
-            {
-                try
-                {
-                    DateRange dateRange;
-                    if (checkPermissiveValues)
-                        dateRange = permitParser.getDateRange(val);
-                    else
-                        dateRange = restrictiveParser.getDateRange(val);
+            if (val == null || val.isEmpty())
+                continue;
 
-                    if (dateRange != null && dateRange.isInRange(calendar))
-                        return true;
-                } catch (Exception e)
+            try
+            {
+                ValueRange valueRange;
+                if (checkPermissiveValues)
+                    valueRange = permitParser.getRange(val);
+                else
+                    valueRange = restrictiveParser.getRange(val);
+
+                if (valueRange != null)
                 {
-                    if (enabledLogs)
-                        logger.warn(way.getId() + " - could not parse the conditional value:" + val + " of tag:" + tagToCheck + ". Exception:" + e.getMessage());
+                    Object value = valueMap.get(valueRange.getKey());
+                    if (value != null && valueRange.isInRange(value))
+                        return true;
                 }
+            } catch (Exception e)
+            {
+                if (enabledLogs)
+                    logger.warn(way.getId() + " - could not parse the conditional value:" + val + " of tag:" + tagToCheck + ". Exception:" + e.getMessage());
             }
         }
         return false;

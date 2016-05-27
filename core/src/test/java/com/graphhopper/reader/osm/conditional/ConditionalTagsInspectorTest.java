@@ -17,7 +17,6 @@
  */
 package com.graphhopper.reader.osm.conditional;
 
-import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
 import com.graphhopper.reader.OSMWay;
 import org.junit.Test;
 

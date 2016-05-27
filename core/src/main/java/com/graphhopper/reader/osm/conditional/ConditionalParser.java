@@ -42,18 +42,18 @@ public class ConditionalParser
 
     public ConditionalParser( Set<String> restrictedTags, boolean enabledLogs )
     {
+        // use map => key & type (date vs. double)
         this.restrictedTags = restrictedTags;
         this.enabledLogs = enabledLogs;
     }
 
-    public DateRange getDateRange( String conditionalTag ) throws ParseException
+    public ValueRange getRange( String conditionalTag ) throws ParseException
     {
         if (conditionalTag == null || conditionalTag.isEmpty() || !conditionalTag.contains("@"))
             return null;
 
         if (conditionalTag.contains(";"))
         {
-            // TODO #374
             if (enabledLogs)
                 logger.warn("We do not support multiple conditions yet: " + conditionalTag);
             return null;
@@ -73,7 +73,56 @@ public class ConditionalParser
         conditional = conditional.replace(')', ' ');
         conditional = conditional.trim();
 
+        int index = conditional.indexOf(">");
+        if (index > 0 && conditional.length() > 2)
+        {
+            final String key = conditional.substring(0, index).trim();
+            // for now just ignore equals sign
+            if (conditional.charAt(index + 1) == '=')
+                index++;
+
+            final double value = Double.parseDouble(conditional.substring(index + 1));
+            return new ValueRange<Number>()
+            {
+                @Override
+                public boolean isInRange( Number obj )
+                {
+                    return obj.doubleValue() > value;
+                }
+
+                @Override
+                public String getKey()
+                {
+                    return key;
+                }
+            };
+        }
+
+        index = conditional.indexOf("<");
+        if (index > 0 && conditional.length() > 2)
+        {
+            final String key = conditional.substring(0, index).trim();
+            if (conditional.charAt(index + 1) == '=')
+                index++;
+
+            final double value = Double.parseDouble(conditional.substring(index + 1));
+            return new ValueRange<Number>()
+            {
+
+                @Override
+                public boolean isInRange( Number obj )
+                {
+                    return obj.doubleValue() < value;
+                }
+
+                @Override
+                public String getKey()
+                {
+                    return key;
+                }
+            };
+        }
+
         return DateRangeParser.parseDateRange(conditional);
     }
-
 }
