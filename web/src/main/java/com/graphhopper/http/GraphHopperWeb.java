@@ -182,6 +182,7 @@ public class GraphHopperWeb implements GraphHopperAPI
                 JSONArray point = snappedPoints.getJSONArray(index);
                 points.add(WebHelper.toGHPoint(point));
             }
+            res.setPoints(points);
 
             return res;
 
