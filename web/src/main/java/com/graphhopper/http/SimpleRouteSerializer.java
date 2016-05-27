@@ -99,6 +99,8 @@ public class SimpleRouteSerializer implements RouteSerializer
 
                 jsonPathList.add(jsonPath);
             }
+
+            json.put("snapped_waypoints", rsp.getPoints().toGeoJson());
             json.put("paths", jsonPathList);
         }
         return json;

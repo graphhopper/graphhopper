@@ -1047,13 +1047,14 @@ public class GraphHopper implements GraphHopperAPI
                 routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex);
 
             List<Path> altPaths = null;
+            List<QueryResult> qResults = null;
             int maxRetries = routingTemplate.getMaxRetries();
             Locale locale = request.getLocale();
             Translation tr = trMap.getWithFallBack(locale);
             for (int i = 0; i < maxRetries; i++)
             {
                 StopWatch sw = new StopWatch().start();
-                List<QueryResult> qResults = routingTemplate.lookup(points, encoder);
+                qResults = routingTemplate.lookup(points, encoder);
                 ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
                 if (ghRsp.hasErrors())
                     return Collections.emptyList();
@@ -1111,6 +1112,12 @@ public class GraphHopper implements GraphHopperAPI
                     break;
             }
 
+            PointList pointList = new PointList(qResults.size(), true);
+            for (QueryResult qr : qResults)
+            {
+                pointList.add(qr.getSnappedPoint());
+            }
+            ghRsp.setPoints(pointList);
             return altPaths;
 
         } catch (IllegalArgumentException ex)

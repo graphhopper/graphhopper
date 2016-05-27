@@ -220,7 +220,7 @@ public class InstructionList implements Iterable<Instruction>
         if (!isEmpty())
         {
             if (withWayPoints)
-            {
+            {                
                 createWayPointBlock(gpxOutput, instructions.get(0));   // Start 
                 for (Instruction currInstr : instructions)
                 {
