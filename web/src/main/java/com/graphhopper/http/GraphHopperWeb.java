@@ -121,11 +121,11 @@ public class GraphHopperWeb implements GraphHopperAPI
             }
 
             boolean tmpInstructions = request.getHints().getBool("instructions", instructions);
-            boolean tmpCalcPoints = request.getHints().getBool("calcPoints", calcPoints);
+            boolean tmpCalcPoints = request.getHints().getBool("calc_points", calcPoints);
 
             if (tmpInstructions && !tmpCalcPoints)
                 throw new IllegalStateException("Cannot calculate instructions without points (only points without instructions). "
-                        + "Use calcPoints=false and instructions=false to disable point and instruction calculation");
+                        + "Use calc_points=false and instructions=false to disable point and instruction calculation");
 
             boolean tmpElevation = request.getHints().getBool("elevation", elevation);
 
