@@ -5,6 +5,23 @@
 GraphHopper is a fast and memory efficient Java road routing engine released under Apache License 2.0.
 Per default it uses OpenStreetMap data but can import other data sources.
 
+# Community
+
+We have a prosper community and welcome everyone. Let us know your problems, use cases or just [say hello](https://discuss.graphhopper.com/). Please see our [community guidelines](https://graphhopper.com/agreements/cccoc.html).
+
+## Get Started
+
+To get started read through our documentation ([0.6](https://github.com/graphhopper/graphhopper/blob/0.6/docs/index.md), [unstable](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)). 
+
+## Questions
+
+All questions can go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specicially for developers, mobiles usage (iOS&Android) and our map matching component. Another place to ask questions would be on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper) but please do NOT use our issue section. Create new issues ONLY if you are sure that this is a bug and see how to contribute in the next section.
+
+## Contribute
+
+Read through [how to contribute](.github/CONTRIBUTING.md)
+like finding and fixing bugs and improving our documentation or translations!
+
 ## For the Web
 
 See GraphHopper in action on [GraphHopper Maps](https://graphhopper.com/maps)
@@ -22,23 +39,6 @@ where the default is [Omniscale](http://omniscale.com/), and all is available fo
 There are subprojects to make GraphHopper working offline
 on [Android](https://github.com/graphhopper/graphhopper/tree/master/android)
 and [iOS](http://github.com/graphhopper/graphhopper-ios)
-
-# Community
-
-We have a prosper community and welcome everyone. Let us know your problems, use cases or just [say hello](https://discuss.graphhopper.com/). Please see our [community guidelines](https://graphhopper.com/agreements/cccoc.html).
-
-## Get Started
-
-To get started read through our documentation ([0.6](https://github.com/graphhopper/graphhopper/blob/0.6/docs/index.md), [unstable](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)). 
-
-## Questions
-
-All questions can go to our [forum](https://discuss.graphhopper.com/) where we also have subsections specicially for developers, mobiles usage (iOS&Android) and our map matching component. Another place to ask questions would be on [Stackoverflow](http://stackoverflow.com/questions/tagged/graphhopper) but please do NOT use our issue section. Create new issues ONLY if you are sure that this is a bug and see how to contribute in the next section.
-
-## Contribute
-
-Read through [how to contribute](.github/CONTRIBUTING.md)
-like finding and fixing bugs and improving our documentation or translations!
 
 
 # Technical Overview
