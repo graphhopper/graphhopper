@@ -421,7 +421,7 @@ public class GHUtility
         }
 
         @Override
-        public boolean getBoolean( int key, boolean reverse, boolean _default )
+        public boolean getBool( int key, boolean _default )
         {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -498,6 +498,30 @@ public class GHUtility
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
     };
+
+    public static EdgeIteratorState createMockedEdgeIteratorState( final double distance, final long flags )
+    {
+        return new GHUtility.DisabledEdgeIterator()
+        {
+            @Override
+            public double getDistance()
+            {
+                return distance;
+            }
+
+            @Override
+            public long getFlags()
+            {
+                return flags;
+            }
+
+            @Override
+            public boolean getBool( int key, boolean _default )
+            {
+                return _default;
+            }
+        };
+    }
 
     /**
      * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if

@@ -15,38 +15,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.util;
 
-import com.graphhopper.reader.OSMWay;
 import org.junit.Test;
-
 import static org.junit.Assert.*;
 
 /**
+ *
  * @author Peter Karich
  */
-public class EncodedDoubleValueTest
+public class ConfigMapTest
 {
     @Test
-    public void testSetDoubleValue()
+    public void testPut()
     {
-        EncodedDoubleValue instance = new EncodedDoubleValue("test", 6, 10, 0.01, 5, 10);
-        assertEquals(10.12, instance.getDoubleValue(instance.setDoubleValue(0, 10.12)), 1e-4);
-    }
+        ConfigMap instance = new ConfigMap();
+        instance.put("int", 1);
+        instance.put("test_pest", true);
 
-    @Test
-    public void testMaxValue()
-    {
-        EncodedDoubleValue instance1 = new EncodedDoubleValue("test1", 0, 8, 0.5, 60, 100);
-        long flags = instance1.setDoubleValue(0, instance1.getMaxValue());
-        assertEquals(100, instance1.getDoubleValue(flags), 1e-1);
-    }
-
-    @Test
-    public void testUnsignedRightShift_issue417()
-    {
-        EncodedDoubleValue speedEncoder = new EncodedDoubleValue("Speed", 56, 8, 1, 30, 255);
-        Long flags = -72057594037927936L;
-        assertEquals(255, speedEncoder.getDoubleValue(flags), 0.01);
+        assertTrue(instance.get("test_pest", false));
+        assertFalse(instance.get("test_pest_", false));
+        assertEquals(1L, instance.getInt("int", 0));
     }
 }

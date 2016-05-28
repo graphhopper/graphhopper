@@ -77,16 +77,4 @@ public class EncodedDoubleValue extends EncodedValue
         flags >>>= shift;
         return flags * factor;
     }
-
-    /**
-     * Swap the contents controlled by this value encoder with the given value.
-     * <p>
-     * @return the new flags
-     */
-    public long swap( long flags, EncodedDoubleValue otherEncoder )
-    {
-        double otherValue = otherEncoder.getDoubleValue(flags);
-        flags = otherEncoder.setDoubleValue(flags, getDoubleValue(flags));
-        return setDoubleValue(flags, otherValue);
-    }
 }
