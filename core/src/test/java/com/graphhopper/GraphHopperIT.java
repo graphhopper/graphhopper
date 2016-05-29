@@ -93,8 +93,8 @@ public class GraphHopperIT
         assertEquals(3437.6, arsp.getDistance(), .1);
         assertEquals(89, arsp.getPoints().getSize());
         
-        assertEquals(43.7276852, rsp.getPoints().getLat(0), 1e-7);
-        assertEquals(43.7495432, rsp.getPoints().getLat(1), 1e-7);
+        assertEquals(43.7276852, arsp.getWaypoints().getLat(0), 1e-7);
+        assertEquals(43.7495432, arsp.getWaypoints().getLat(1), 1e-7);
 
         InstructionList il = arsp.getInstructions();
         assertEquals(13, il.size());

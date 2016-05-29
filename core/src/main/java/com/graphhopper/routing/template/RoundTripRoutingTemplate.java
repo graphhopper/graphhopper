@@ -46,15 +46,13 @@ import java.util.Random;
  *
  * @author Peter Karich
  */
-public class RoundTripRoutingTemplate implements RoutingTemplate
+public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements RoutingTemplate
 {
     private final int maxRetries;
     private final GHRequest ghRequest;
     private final GHResponse ghResponse;
     private PathWrapper altResponse;
-    private final LocationIndex locationIndex;
-    // result from lookup
-    private List<QueryResult> queryResults;
+    private final LocationIndex locationIndex;    
     // result from route
     private List<Path> pathList;
 
@@ -153,6 +151,7 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
     public boolean isReady( PathMerger pathMerger, Translation tr )
     {
         altResponse = new PathWrapper();
+        altResponse.setWaypoints(getWaypoints());
         ghResponse.add(altResponse);
         pathMerger.doWork(altResponse, pathList, tr);
         // with potentially retrying, including generating new route points, for now disabled

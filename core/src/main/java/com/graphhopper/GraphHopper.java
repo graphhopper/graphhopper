@@ -1109,11 +1109,12 @@ public class GraphHopper implements GraphHopperAPI
                         setDouglasPeucker(peucker).
                         setEnableInstructions(tmpEnableInstructions).
                         setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
-
+                
                 if (routingTemplate.isReady(pathMerger, tr))
                     break;
             }
 
+            // TODO remove
             PointList pointList = new PointList(qResults.size(), true);
             for (QueryResult qr : qResults)
             {

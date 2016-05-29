@@ -39,7 +39,8 @@ public class PathWrapper
     private long time;
     private String debugInfo = "";
     private InstructionList instructions;
-    private PointList list = PointList.EMPTY;
+    private PointList waypointList;
+    private PointList pointList;
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
 
     /**
@@ -78,7 +79,7 @@ public class PathWrapper
 
     public PathWrapper setPoints( PointList points )
     {
-        list = points;
+        pointList = points;
         return this;
     }
 
@@ -90,7 +91,28 @@ public class PathWrapper
     public PointList getPoints()
     {
         check("getPoints");
-        return list;
+        if (pointList == null)
+            throw new IllegalStateException("Call setPoints before calling PathWrapper.getPoints");
+        return pointList;
+    }
+
+    /**
+     * This method initializes this path with the snapped input points.
+     */
+    public void setWaypoints( PointList wpList )
+    {
+        this.waypointList = wpList;
+    }
+
+    /**
+     * This method returns the input points snapped to the road network.
+     */
+    public PointList getWaypoints()
+    {
+        check("getWaypoints");
+        if (waypointList == null)
+            throw new IllegalStateException("Call setWaypoints before calling PathWrapper.getWaypoints");
+        return waypointList;
     }
 
     public PathWrapper setDistance( double distance )
@@ -188,17 +210,17 @@ public class PathWrapper
     {
         check("calcRouteBBox");
         BBox bounds = BBox.createInverse(_fallback.hasElevation());
-        int len = list.getSize();
+        int len = pointList.getSize();
         if (len == 0)
             return _fallback;
 
         for (int i = 0; i < len; i++)
         {
-            double lat = list.getLatitude(i);
-            double lon = list.getLongitude(i);
+            double lat = pointList.getLatitude(i);
+            double lon = pointList.getLongitude(i);
             if (bounds.hasElevation())
             {
-                double ele = list.getEle(i);
+                double ele = pointList.getEle(i);
                 bounds.update(lat, lon, ele);
             } else
             {
@@ -211,7 +233,7 @@ public class PathWrapper
     @Override
     public String toString()
     {
-        String str = "nodes:" + list.getSize() + "; " + list.toString();
+        String str = "nodes:" + pointList.getSize() + "; " + pointList.toString();
         if (instructions != null && !instructions.isEmpty())
             str += ", " + instructions.toString();
 

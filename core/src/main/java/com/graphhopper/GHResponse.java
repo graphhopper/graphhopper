@@ -43,6 +43,7 @@ public class GHResponse
     /**
      * This method initializes the response with the input points.
      */
+    @Deprecated
     public void setPoints( PointList pointList )
     {
         this.pointList = pointList;
@@ -52,6 +53,7 @@ public class GHResponse
      * This method returns the input points snapped to the road network. I.e. the first points of
      * the instructions' points including the destination point.
      */
+    @Deprecated
     public PointList getPoints()
     {
         if (pointList == null)

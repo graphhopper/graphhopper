@@ -175,15 +175,6 @@ public class GraphHopperWeb implements GraphHopperAPI
                 res.add(altRsp);
             }
 
-            JSONArray snappedPoints = json.getJSONArray("snapped_waypoints");
-            PointList points = new PointList(snappedPoints.length(), tmpElevation);
-            for (int index = 0; index < snappedPoints.length(); index++)
-            {
-                JSONArray point = snappedPoints.getJSONArray(index);
-                points.add(WebHelper.toGHPoint(point));
-            }
-            res.setPoints(points);
-
             return res;
 
         } catch (Exception ex)
@@ -195,18 +186,28 @@ public class GraphHopperWeb implements GraphHopperAPI
     public static PathWrapper createPathWrapper( JSONObject path,
                                                  boolean tmpCalcPoints, boolean tmpInstructions, boolean tmpElevation )
     {
-        PathWrapper altRsp = new PathWrapper();
-        altRsp.addErrors(readErrors(path));
-        if (altRsp.hasErrors())
-            return altRsp;
+        PathWrapper pathWrapper = new PathWrapper();
+        pathWrapper.addErrors(readErrors(path));
+        if (pathWrapper.hasErrors())
+            return pathWrapper;
 
         double distance = path.getDouble("distance");
         long time = path.getLong("time");
+
+        JSONArray snappedPoints = path.getJSONArray("snapped_waypoints");
+        PointList points = new PointList(snappedPoints.length(), tmpElevation);
+        for (int index = 0; index < snappedPoints.length(); index++)
+        {
+            JSONArray point = snappedPoints.getJSONArray(index);
+            points.add(WebHelper.toGHPoint(point));
+        }
+        pathWrapper.setPoints(points);
+
         if (tmpCalcPoints)
         {
             String pointStr = path.getString("points");
             PointList pointList = WebHelper.decodePolyline(pointStr, 100, tmpElevation);
-            altRsp.setPoints(pointList);
+            pathWrapper.setPoints(pointList);
 
             if (tmpInstructions)
             {
@@ -276,11 +277,11 @@ public class GraphHopperWeb implements GraphHopperAPI
                     instr.setDistance(instDist).setTime(instTime);
                     il.add(instr);
                 }
-                altRsp.setInstructions(il);
+                pathWrapper.setInstructions(il);
             }
         }
-        altRsp.setDistance(distance).setTime(time);
-        return altRsp;
+        pathWrapper.setDistance(distance).setTime(time);
+        return pathWrapper;
     }
 
     public static List<Throwable> readErrors( JSONObject json )
