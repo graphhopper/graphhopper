@@ -1114,13 +1114,6 @@ public class GraphHopper implements GraphHopperAPI
                     break;
             }
 
-            // TODO remove
-            PointList pointList = new PointList(qResults.size(), true);
-            for (QueryResult qr : qResults)
-            {
-                pointList.add(qr.getSnappedPoint());
-            }
-            ghRsp.setPoints(pointList);
             return altPaths;
 
         } catch (IllegalArgumentException ex)
