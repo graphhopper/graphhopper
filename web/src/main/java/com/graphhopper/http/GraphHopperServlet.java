@@ -180,6 +180,10 @@ public class GraphHopperServlet extends GHBaseServlet
             Map<String, Object> map = routeSerializer.toJSON(ghRsp, calcPoints, pointsEncoded,
                     enableElevation, enableInstructions);
 
+            Object infoMap = map.get("info");
+            if (infoMap != null)
+                ((Map) infoMap).put("took", Math.round(took * 1000));
+
             if (ghRsp.hasErrors())
                 writeJsonError(httpRes, SC_BAD_REQUEST, new JSONObject(map));
             else
@@ -199,7 +203,7 @@ public class GraphHopperServlet extends GHBaseServlet
             res.setContentType("application/xml");
         else
             res.setContentType("application/gpx+xml");
-        
+
         String trackName = getParam(req, "trackname", "GraphHopper Track");
         res.setHeader("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
         long time = getLongParam(req, "millis", System.currentTimeMillis());
