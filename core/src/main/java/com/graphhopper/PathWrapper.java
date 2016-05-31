@@ -39,8 +39,8 @@ public class PathWrapper
     private long time;
     private String debugInfo = "";
     private InstructionList instructions;
-    private PointList waypointList;
-    private PointList pointList;
+    private PointList waypointList = PointList.EMPTY;
+    private PointList pointList = PointList.EMPTY;
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
 
     /**
@@ -79,6 +79,9 @@ public class PathWrapper
 
     public PathWrapper setPoints( PointList points )
     {
+        if (pointList != PointList.EMPTY)
+            throw new IllegalStateException("Cannot call setPoint twice");
+
         pointList = points;
         return this;
     }
@@ -91,8 +94,6 @@ public class PathWrapper
     public PointList getPoints()
     {
         check("getPoints");
-        if (pointList == null)
-            throw new IllegalStateException("Call setPoints before calling PathWrapper.getPoints");
         return pointList;
     }
 
@@ -101,6 +102,9 @@ public class PathWrapper
      */
     public void setWaypoints( PointList wpList )
     {
+        if (waypointList != PointList.EMPTY)
+            throw new IllegalStateException("Cannot call setWaypoints twice");
+
         this.waypointList = wpList;
     }
 
@@ -110,8 +114,6 @@ public class PathWrapper
     public PointList getWaypoints()
     {
         check("getWaypoints");
-        if (waypointList == null)
-            throw new IllegalStateException("Call setWaypoints before calling PathWrapper.getWaypoints");
         return waypointList;
     }
 
