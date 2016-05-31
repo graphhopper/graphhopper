@@ -103,7 +103,7 @@ public class GHServer
         GzipHandler gzipHandler = new GzipHandler();
         gzipHandler.setIncludedMethods("GET", "POST");
         // Note: gzip only affects the response body like our previous 'GHGZIPHook' behaviour: http://stackoverflow.com/a/31565805/194609
-        // If no mimeTypes are defined the content-type is not "application/gzip"
+        // If no mimeTypes are defined the content-type is "not 'application/gzip'", See also https://github.com/graphhopper/directions-api/issues/28 for pitfalls
         // gzipHandler.setIncludedMimeTypes();
         gzipHandler.setHandler(handlers);
 
