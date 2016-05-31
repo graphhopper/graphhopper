@@ -17,7 +17,7 @@ import org.junit.Test;
  */
 public class GenericFlagEncoderTest
 {
-    private GenericFlagEncoder encoder;
+    private final GenericFlagEncoder encoder;
     private final EncodingManager encodingManager;
     private final int motorVehicleInt;
 
@@ -63,12 +63,6 @@ public class GenericFlagEncoderTest
     @Test
     public void testHighwaySpeed()
     {
-        OSMWay osmWay = new OSMWay(0);
-        osmWay.setTag("highway", "primary");
-        osmWay.setTag("maxspeed", "10");
-        long flags = encoder.handleWayTags(osmWay, 1, 0);
-        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-
         Map<String, Double> map = new HashMap<>();
         map.put("motorway", 100d);
         map.put("motorway_link", 100d);
@@ -76,8 +70,8 @@ public class GenericFlagEncoderTest
         map.put("trunk", 90d);
         map.put("trunk_link", 90d);
 
-        double[] arr = encoder.getHighwaySpeedMap(map);
-        assertEquals("1232132", Arrays.asList(arr));
+        double[] arr = encoder.getHighwaySpeedMap(map);        
+        assertEquals("[0.0, 100.0, 100.0, 100.0, 90.0, 90.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]", Arrays.toString(arr));
     }
 
     @Test
