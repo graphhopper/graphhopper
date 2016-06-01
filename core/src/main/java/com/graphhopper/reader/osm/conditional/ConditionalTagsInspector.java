@@ -30,7 +30,8 @@ import org.slf4j.LoggerFactory;
 public class ConditionalTagsInspector
 {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final boolean enabledLogs = true;
+    // enabling by default makes noise but could improve OSM data
+    private boolean enabledLogs = true;
     private final List<String> tagsToCheck;
     private final Map<String, Object> valueMap;
     private final ConditionalParser permitParser, restrictiveParser;
@@ -54,8 +55,15 @@ public class ConditionalTagsInspector
         this.restrictiveParser = new ConditionalParser(restrictiveValues);
     }
 
+    public ConditionalTagsInspector setEnabledLogs( boolean enabledLogs )
+    {
+        this.enabledLogs = enabledLogs;
+        return this;
+    }
+
     static Map<String, Object> createDefaultMapping( Object value )
     {
+        // parse date range and value is the time
         Map<String, Object> map = new HashMap<String, Object>(1);
         map.put(DateRange.KEY, value);
         return map;
@@ -97,7 +105,11 @@ public class ConditionalTagsInspector
             } catch (Exception e)
             {
                 if (enabledLogs)
-                    logger.warn(way.getId() + " - could not parse the conditional value:" + val + " of tag:" + tagToCheck + ". Exception:" + e.getMessage());
+                {
+                    // log only if no date ala 21:00 as currently date and numbers do not support time precise restrictions
+                    if (!val.contains(":"))
+                        logger.warn(way.getId() + " - could not parse the conditional value:" + val + " of tag:" + tagToCheck + ". Exception:" + e.getMessage());
+                }
             }
         }
         return false;
