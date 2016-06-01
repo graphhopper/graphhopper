@@ -350,7 +350,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         } catch (InterruptedException ie)
         {
             chPreparePool.shutdownNow();
-            Thread.currentThread().interrupt();
+            throw new RuntimeException(ie);
         }
     }
 

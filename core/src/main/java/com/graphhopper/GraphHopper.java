@@ -1109,7 +1109,7 @@ public class GraphHopper implements GraphHopperAPI
                         setDouglasPeucker(peucker).
                         setEnableInstructions(tmpEnableInstructions).
                         setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
-                
+
                 if (routingTemplate.isReady(pathMerger, tr))
                     break;
             }
@@ -1187,6 +1187,7 @@ public class GraphHopper implements GraphHopperAPI
         logger.info("flushing graph " + ghStorage.toString() + ", details:" + ghStorage.toDetailsString() + ", "
                 + Helper.getMemInfo() + ")");
         ghStorage.flush();
+        logger.info("flushed graph " + Helper.getMemInfo() + ")");
         fullyLoaded = true;
     }
 
