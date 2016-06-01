@@ -39,7 +39,7 @@ public class ConditionalTagsInspector
     public ConditionalTagsInspector( Object value, List<String> tagsToCheck,
                                      Set<String> restrictiveValues, Set<String> permittedValues )
     {
-        this(tagsToCheck, createDefaultMapping(value), restrictiveValues, permittedValues, false);
+        this(tagsToCheck, createDefaultMapping(value), restrictiveValues, permittedValues, true);
     }
 
     public ConditionalTagsInspector( List<String> tagsToCheck, Map<String, Object> valueMap,
@@ -51,6 +51,8 @@ public class ConditionalTagsInspector
         {
             this.tagsToCheck.add(tagToCheck + ":conditional");
         }
+        
+        this.enabledLogs = enabledLogs;
         this.permitParser = new ConditionalParser(permittedValues, enabledLogs);
         this.restrictiveParser = new ConditionalParser(restrictiveValues, enabledLogs);
     }

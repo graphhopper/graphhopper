@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.util.Set;
-import sun.java2d.loops.ProcessPath;
 
 /**
  * Parses a conditional tag according to
@@ -32,7 +31,7 @@ import sun.java2d.loops.ProcessPath;
  */
 public class ConditionalParser
 {
-    private static final Logger logger = LoggerFactory.getLogger(ConditionalParser.class);
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final Set<String> restrictedTags;
     private final boolean enabledLogs;
 
