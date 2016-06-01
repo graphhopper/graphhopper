@@ -123,4 +123,5 @@ Here is a list of the more detailed features including a link to the documentati
  * several pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle
  * the core uses only a few dependencies (trove4j and slf4j)
  * scales from small indoor-sized to world-wide-sized graphs
+ * Find nearest point on street e.g. to get elevation or 'snapp to road'
  * Enables the [map matching component](https://github.com/graphhopper/map-matching) (flexibility only)
