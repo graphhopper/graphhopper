@@ -39,11 +39,11 @@ public class ConditionalTagsInspector
     public ConditionalTagsInspector( Object value, List<String> tagsToCheck,
                                      Set<String> restrictiveValues, Set<String> permittedValues )
     {
-        this(tagsToCheck, createDefaultMapping(value), restrictiveValues, permittedValues);
+        this(tagsToCheck, createDefaultMapping(value), restrictiveValues, permittedValues, false);
     }
 
     public ConditionalTagsInspector( List<String> tagsToCheck, Map<String, Object> valueMap,
-                                     Set<String> restrictiveValues, Set<String> permittedValues )
+                                     Set<String> restrictiveValues, Set<String> permittedValues, boolean enabledLogs )
     {
         this.valueMap = valueMap;
         this.tagsToCheck = new ArrayList<>(tagsToCheck.size());
@@ -51,14 +51,8 @@ public class ConditionalTagsInspector
         {
             this.tagsToCheck.add(tagToCheck + ":conditional");
         }
-        this.permitParser = new ConditionalParser(permittedValues);
-        this.restrictiveParser = new ConditionalParser(restrictiveValues);
-    }
-
-    public ConditionalTagsInspector setEnabledLogs( boolean enabledLogs )
-    {
-        this.enabledLogs = enabledLogs;
-        return this;
+        this.permitParser = new ConditionalParser(permittedValues, enabledLogs);
+        this.restrictiveParser = new ConditionalParser(restrictiveValues, enabledLogs);
     }
 
     static Map<String, Object> createDefaultMapping( Object value )

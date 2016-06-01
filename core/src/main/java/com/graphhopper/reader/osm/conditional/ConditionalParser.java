@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
 import java.util.Set;
+import sun.java2d.loops.ProcessPath;
 
 /**
  * Parses a conditional tag according to
@@ -81,7 +82,7 @@ public class ConditionalParser
             if (conditional.charAt(index + 1) == '=')
                 index++;
 
-            final double value = Double.parseDouble(conditional.substring(index + 1));
+            final double value = parseNumber(conditional.substring(index + 1));
             return new ValueRange<Number>()
             {
                 @Override
@@ -105,7 +106,7 @@ public class ConditionalParser
             if (conditional.charAt(index + 1) == '=')
                 index++;
 
-            final double value = Double.parseDouble(conditional.substring(index + 1));
+            final double value = parseNumber(conditional.substring(index + 1));
             return new ValueRange<Number>()
             {
 
@@ -124,5 +125,16 @@ public class ConditionalParser
         }
 
         return DateRangeParser.parseDateRange(conditional);
+    }
+
+    protected double parseNumber( String str )
+    {
+        int untilIndex = str.length() - 1;
+        for (; untilIndex >= 0; untilIndex--)
+        {
+            if (Character.isDigit(str.charAt(untilIndex)))
+                break;
+        }
+        return Double.parseDouble(str.substring(0, untilIndex + 1));
     }
 }
