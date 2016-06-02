@@ -51,10 +51,13 @@ public class ConditionalTagsInspector
         {
             this.tagsToCheck.add(tagToCheck + ":conditional");
         }
-        
+
         this.enabledLogs = enabledLogs;
-        this.permitParser = new ConditionalParser(permittedValues, enabledLogs);
-        this.restrictiveParser = new ConditionalParser(restrictiveValues, enabledLogs);
+
+        // enable for debugging purposes only as this is too much
+        boolean logUnsupportedFeatures = false;
+        this.permitParser = new ConditionalParser(permittedValues, logUnsupportedFeatures);
+        this.restrictiveParser = new ConditionalParser(restrictiveValues, logUnsupportedFeatures);
     }
 
     static Map<String, Object> createDefaultMapping( Object value )
