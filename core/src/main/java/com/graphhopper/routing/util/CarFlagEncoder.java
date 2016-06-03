@@ -259,20 +259,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             if (isRoundabout)
                 flags = setBool(flags, K_ROUNDABOUT, true);
 
-            boolean isOneway = way.hasTag("oneway", oneways)
-                    || way.hasTag("vehicle:backward")
-                    || way.hasTag("vehicle:forward")
-                    || way.hasTag("motor_vehicle:backward")
-                    || way.hasTag("motor_vehicle:forward");
-
-            if (isOneway || isRoundabout)
+            if (isOneway(way) || isRoundabout)
             {
-                boolean isBackward = way.hasTag("oneway", "-1")
-                        || way.hasTag("vehicle:forward", "no")
-                        || way.hasTag("motor_vehicle:forward", "no");
-                if (isBackward)
+                if (isBackwardOneway(way))
                     flags |= backwardBit;
-                else
+
+                if (isForwardOneway(way))
                     flags |= forwardBit;
             } else
                 flags |= directionBitMask;
@@ -286,7 +278,36 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
         return flags;
     }
-    
+
+    /**
+     * make sure that isOneway is called before
+     */
+    protected boolean isBackwardOneway( OSMWay way )
+    {
+        return way.hasTag("oneway", "-1")
+                || way.hasTag("vehicle:forward", "no")
+                || way.hasTag("motor_vehicle:forward", "no");
+    }
+
+    /**
+     * make sure that isOneway is called before
+     */
+    protected boolean isForwardOneway( OSMWay way )
+    {
+        return !way.hasTag("oneway", "-1")
+                && !way.hasTag("vehicle:forward", "no")
+                && !way.hasTag("motor_vehicle:forward", "no");
+    }
+
+    protected boolean isOneway( OSMWay way )
+    {
+        return way.hasTag("oneway", oneways)
+                || way.hasTag("vehicle:backward")
+                || way.hasTag("vehicle:forward")
+                || way.hasTag("motor_vehicle:backward")
+                || way.hasTag("motor_vehicle:forward");
+    }
+
     public String getWayInfo( OSMWay way )
     {
         String str = "";
