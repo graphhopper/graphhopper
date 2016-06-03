@@ -1039,7 +1039,14 @@ public abstract class AbstractGraphStorageTester
     {
         Directory dir = new RAMDirectory();
         List<FlagEncoder> list = new ArrayList<FlagEncoder>();
-        list.add(new TmpCarFlagEncoder(29, 0.001, 0));
+        list.add(new TmpCarFlagEncoder(29, 0.001, 0)
+        {
+            @Override
+            public String toString()
+            {
+                return "car2";
+            }
+        });
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
         EncodingManager manager = new EncodingManager(list, 8);
         graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);

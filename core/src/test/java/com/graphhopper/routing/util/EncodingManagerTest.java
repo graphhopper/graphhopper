@@ -59,6 +59,14 @@ public class EncodingManagerTest
         EncodingManager manager3 = new EncodingManager(foot3);
         assertEquals(foot3, foot2);
         assertEquals(foot3.hashCode(), foot2.hashCode());
+
+        try
+        {
+            new EncodingManager("car,car");
+            assertTrue("do not allow duplicate flag encoders", false);
+        } catch (Exception ex)
+        {
+        }
     }
 
     @Test

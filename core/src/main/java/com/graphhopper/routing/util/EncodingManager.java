@@ -155,6 +155,12 @@ public class EncodingManager
         if (encoder.isRegistered())
             throw new IllegalStateException("You must not register a FlagEncoder (" + encoder.toString() + ") twice!");
 
+        for (FlagEncoder fe : edgeEncoders)
+        {
+            if (fe.toString().equals(encoder.toString()))
+                throw new IllegalArgumentException("Cannot register edge encoder. Name already exists: " + fe.toString());
+        }
+
         encoder.setRegistered(true);
 
         int encoderCount = edgeEncoders.size();
