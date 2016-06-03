@@ -89,6 +89,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         absoluteBarriers.add("cycle_barrier");
         absoluteBarriers.add("motorcycle_barrier");
         absoluteBarriers.add("block");
+        absoluteBarriers.add("bus_trap");
+        absoluteBarriers.add("sump_buster");
 
         trackTypeSpeedMap.put("grade1", 20); // paved
         trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with ...
@@ -284,7 +286,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
         return flags;
     }
-
+    
     public String getWayInfo( OSMWay way )
     {
         String str = "";

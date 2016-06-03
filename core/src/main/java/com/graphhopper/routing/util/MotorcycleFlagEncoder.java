@@ -73,6 +73,9 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         //  moped, mofa
         restrictions.add("motorcycle");
 
+        absoluteBarriers.remove("bus_trap");
+        absoluteBarriers.remove("sump_buster");
+
         trackTypeSpeedMap.clear();
         defaultSpeedMap.clear();
 
