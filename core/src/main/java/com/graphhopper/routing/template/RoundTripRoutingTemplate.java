@@ -116,9 +116,9 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
         AvoidEdgesWeighting avoidPathWeighting = new AvoidEdgesWeighting(algoOpts.getWeighting());
         avoidPathWeighting.setEdgePenaltyFactor(5);
         algoOpts = AlgorithmOptions.start(algoOpts).
-                algorithm(Parameters.Algorithms.DIJKSTRA_BI).
+                algorithm(Parameters.Algorithms.ASTAR_BI).
                 weighting(avoidPathWeighting).build();
-//        algoOpts.getHints().put(Algorithms.ASTAR_BI + ".epsilon", 2);
+        algoOpts.getHints().put(Algorithms.ASTAR_BI + ".epsilon", 2);
 
         long visitedNodesSum = 0L;
         QueryResult start = queryResults.get(0);
