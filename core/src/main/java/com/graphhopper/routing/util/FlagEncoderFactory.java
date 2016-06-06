@@ -31,6 +31,7 @@ public interface FlagEncoderFactory
     final String RACINGBIKE = "racingbike";
     final String MOUNTAINBIKE = "mtb";
     final String FOOT = "foot";
+    final String HIKE = "hike";
     final String MOTORCYCLE = "motorcycle";
     final FlagEncoderFactory DEFAULT = new DefaultFlagEncoderFactory();
 

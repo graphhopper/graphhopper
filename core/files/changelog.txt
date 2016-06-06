@@ -1,5 +1,6 @@
 0.7        
     added snapped points to output JSON for every path
+    the foot routing is now much smoother and only considers safe paths, to use beautiful roads (i.e. prefer hiking routes etc) use the new 'hike' profiles, see #633
     vehicle constants have moved to FlagEncoderFactory
     several constants changed to under score notation see #719 with a few breaking changes, e.g. use lower case names for flag encoders or jsonp_allowed instead of the jsonpAllowed annotation
     moving all string parameter constants into the Parameters class

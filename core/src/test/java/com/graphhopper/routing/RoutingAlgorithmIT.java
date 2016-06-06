@@ -252,7 +252,7 @@ public class RoutingAlgorithmIT
 
         boolean testAlsoCH = false, is3D = false;
         runAlgo(testCollector, "files/map-sidewalk-no.osm.gz", "target/graph-sidewalkno",
-                list, "foot", testAlsoCH, "foot", "fastest", is3D);
+                list, "hike", testAlsoCH, "hike", "fastest", is3D);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -335,7 +335,7 @@ public class RoutingAlgorithmIT
     }
 
     @Test
-    public void testNorthBayreuthFootFastestAnd3D()
+    public void testNorthBayreuthHikeFastestAnd3D()
     {
         List<OneRun> list = new ArrayList<OneRun>();
         // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'        
@@ -343,7 +343,7 @@ public class RoutingAlgorithmIT
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
         list.add(new OneRun(49.990967, 11.545258, 50.023182, 11.555386, 5636, 97));
         runAlgo(testCollector, "files/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
-                list, "foot", true, "foot", "fastest", true);
+                list, "hike", true, "hike", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 

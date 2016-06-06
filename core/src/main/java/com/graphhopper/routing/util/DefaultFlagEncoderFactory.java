@@ -32,25 +32,27 @@ public class DefaultFlagEncoderFactory implements FlagEncoderFactory
         if (name.equals(CAR))
             return new CarFlagEncoder(configuration);
 
-        else if (name.equals(BIKE))
+        if (name.equals(BIKE))
             return new BikeFlagEncoder(configuration);
 
-        else if (name.equals(BIKE2))
+        if (name.equals(BIKE2))
             return new Bike2WeightFlagEncoder(configuration);
 
-        else if (name.equals(RACINGBIKE))
+        if (name.equals(RACINGBIKE))
             return new RacingBikeFlagEncoder(configuration);
 
-        else if (name.equals(MOUNTAINBIKE))
+        if (name.equals(MOUNTAINBIKE))
             return new MountainBikeFlagEncoder(configuration);
 
-        else if (name.equals(FOOT))
+        if (name.equals(FOOT))
             return new FootFlagEncoder(configuration);
 
-        else if (name.equals(MOTORCYCLE))
+        if (name.equals(HIKE))
+            return new HikeFlagEncoder(configuration);
+
+        if (name.equals(MOTORCYCLE))
             return new MotorcycleFlagEncoder(configuration);
 
-        else
-            throw new IllegalArgumentException("entry in encoder list not supported " + name);
+        throw new IllegalArgumentException("entry in encoder list not supported " + name);
     }
 }
