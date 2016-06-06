@@ -25,12 +25,13 @@ import com.graphhopper.routing.util.AvoidEdgesWeighting;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.tour.SinglePointTour;
+import com.graphhopper.routing.util.tour.MultiPointTour;
 import com.graphhopper.routing.util.tour.TourStrategy;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.Translation;
@@ -52,7 +53,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
     private final GHRequest ghRequest;
     private final GHResponse ghResponse;
     private PathWrapper altResponse;
-    private final LocationIndex locationIndex;    
+    private final LocationIndex locationIndex;
     // result from route
     private List<Path> pathList;
 
@@ -67,25 +68,28 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
     @Override
     public List<QueryResult> lookup( List<GHPoint> points, FlagEncoder encoder )
     {
-        double distanceInMeter = ghRequest.getHints().getDouble(RoundTrip.DISTANCE, 10000);
-        long seed = ghRequest.getHints().getLong(RoundTrip.SEED, 0L);        
-        if (points.isEmpty())        
-            throw new IllegalStateException("For round trip calculation one point is required");            
+        if (points.isEmpty())
+            throw new IllegalStateException("For round trip calculation one point is required");
+        final double distanceInMeter = ghRequest.getHints().getDouble(RoundTrip.DISTANCE, 10000);
+        final long seed = ghRequest.getHints().getLong(RoundTrip.SEED, 0L);
+        final double initialHeading = ghRequest.getHints().getDouble(RoundTrip.HEADING, Double.NaN);
+        final int roundTripPointCount = Math.min(20, ghRequest.getHints().getInt(Algorithms.ROUND_TRIP + ".points", 2 + (int) (distanceInMeter / 50000)));
+        final GHPoint start = ghRequest.getPoints().get(0);
 
-        GHPoint start = ghRequest.getPoints().get(0);
-
-        TourStrategy strategy = new SinglePointTour(new Random(seed), distanceInMeter);
+        TourStrategy strategy = new MultiPointTour(new Random(seed), distanceInMeter, roundTripPointCount, initialHeading);
         queryResults = new ArrayList<>(2 + strategy.getNumberOfGeneratedPoints());
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         QueryResult startQR = locationIndex.findClosest(start.lat, start.lon, edgeFilter);
         if (!startQR.isValid())
-            ghResponse.addError(new IllegalArgumentException("Cannot find point 0: " + start));
+            throw new IllegalArgumentException("Cannot find point 0: " + start);
+
         queryResults.add(startQR);
 
         GHPoint last = points.get(0);
         for (int i = 0; i < strategy.getNumberOfGeneratedPoints(); i++)
         {
-            QueryResult result = generateValidPoint(last, strategy.getDistanceForIteration(i), strategy.getHeadingForIteration(i), edgeFilter);
+            double heading = strategy.getHeadingForIteration(i);
+            QueryResult result = generateValidPoint(last, strategy.getDistanceForIteration(i), heading, edgeFilter);
             if (result == null)
             {
                 ghResponse.addError(new IllegalStateException("Could not find a valid point after " + maxRetries + " tries, for the point:" + last));
@@ -114,6 +118,8 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
         algoOpts = AlgorithmOptions.start(algoOpts).
                 algorithm(Parameters.Algorithms.DIJKSTRA_BI).
                 weighting(avoidPathWeighting).build();
+//        algoOpts.getHints().put(Algorithms.ASTAR_BI + ".epsilon", 2);
+
         long visitedNodesSum = 0L;
         QueryResult start = queryResults.get(0);
         for (int qrIndex = 1; qrIndex < queryResults.size(); qrIndex++)

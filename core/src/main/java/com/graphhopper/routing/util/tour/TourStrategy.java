@@ -41,12 +41,12 @@ public abstract class TourStrategy
     public abstract int getNumberOfGeneratedPoints();
 
     /**
-     * Returns the distance in KM that is used for the generated point #iteration
+     * Returns the distance in meter that is used for the generated point of a certain iteration
      */
     public abstract double getDistanceForIteration( int iteration );
 
     /**
-     * Returns the north based heading between 0 and 360 for the current iteration.
+     * Returns the north based heading between 0 and 360 for a certain iteration.
      */
     public abstract double getHeadingForIteration( int iteration );
 
