@@ -5,14 +5,14 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-tools</artifactId>
-    <version>0.8-SNAPSHOT</version>
+    <version>0.7.0-RC2</version>
     <packaging>jar</packaging>
     <name>GraphHopper Tools</name>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.8-SNAPSHOT</version>
+        <version>0.7.0-RC2</version>
     </parent>
 
     <dependencies>
