@@ -97,7 +97,7 @@ public class SimpleRouteSerializer implements RouteSerializer
                     jsonPath.put("descend", ar.getDescend());
                 }
 
-                jsonPath.put("snapped_waypoints", ar.getWaypoints().toGeoJson());
+                jsonPath.put("snapped_waypoints", createPoints(ar.getWaypoints(), pointsEncoded, includeElevation));
                 jsonPathList.add(jsonPath);
             }
 

@@ -194,14 +194,9 @@ public class GraphHopperWeb implements GraphHopperAPI
         double distance = path.getDouble("distance");
         long time = path.getLong("time");
 
-        JSONArray snappedPoints = path.getJSONArray("snapped_waypoints");
-        PointList points = new PointList(snappedPoints.length(), tmpElevation);
-        for (int index = 0; index < snappedPoints.length(); index++)
-        {
-            JSONArray point = snappedPoints.getJSONArray(index);
-            points.add(WebHelper.toGHPoint(point));
-        }
-        pathWrapper.setWaypoints(points);
+        String snappedPointStr = path.getString("points");
+        PointList snappedPoints = WebHelper.decodePolyline(snappedPointStr, 5, tmpElevation);
+        pathWrapper.setWaypoints(snappedPoints);
 
         if (tmpCalcPoints)
         {

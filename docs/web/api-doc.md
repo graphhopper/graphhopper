@@ -19,11 +19,11 @@ Parameter   | Default | Description
 point       | -       | Specify multiple points for which the route should be calculated. The order is important. Specify at least two points.
 locale      | en      | The locale of the result. E.g. `pt_PT` for Portuguese or `de` for German
 instructions| true    | If instruction should be calculated and returned
-vehicle     | car     | The vehicle for which the route should be calculated. Other vehicles are foot and bike
+vehicle     | car     | The vehicle for which the route should be calculated. Other vehicles are foot, bike, motorcycle, hike, ...
 elevation   | false   | If `true` a third dimension - the elevation - is included in the polyline or in the GeoJson. IMPORTANT: If enabled you have to use a modified version of the decoding method or set points_encoded to `false`. See the points_encoded attribute for more details. Additionally a request can fail if the vehicle does not support elevation. See the features object for every vehicle.
-points_encoded     | true    | If `false` a GeoJson array in `point` is returned. If `true` the resulting route will be encoded leading to big bandwith reduction. You'll need a special handling for the decoding of this string on the client-side. We provide Open Source code in [Java](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/java/com/graphhopper/http/WebHelper.java#L43) and [JavaScript](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/webapp/js/ghrequest.js#L139). It is especially important to use our decoding methods if you set `elevation=true`!
+points_encoded     | true    | If `false` the coordinates in `point` and `snapped_waypoints` are returned as array using the order [lon,lat,elevation] for every point. If `true` the coordinates will be encoded as string leading to less bandwith usage. You'll need a special handling for the decoding of this string on the client-side. We provide open source code in [Java](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/java/com/graphhopper/http/WebHelper.java#L43) and [JavaScript](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/webapp/js/ghrequest.js#L139). It is especially important to use no 3rd party client if you set `elevation=true`!
 debug              | false   | If true, the output will be formated.
-calc_points        | true    | If the points for the route should be calculated at all. Sometimes only the distance and time is necessary.
+calc_points        | true    | If the points for the route should be calculated at all printing out only distance and time.
 type               | json    | Specifies the resulting format of the route, for `json` the content type will be application/json. Other possible format options: <br> `jsonp` you'll need to provide the callback function via the callback parameter. The content type will be application/javascript<br> `gpx`, the content type will be application/gpx+xml, see below for more parameters.
 
 ### GPX
@@ -67,10 +67,10 @@ paths[0].distance          | The total distance of the route, in meter
 paths[0].time              | The total time of the route, in ms
 paths[0].ascend            | The total ascend (uphill) of the route, in meter
 paths[0].descend           | The total descend (downhill) of the route, in meter
-paths[0].points            | The polyline encoded coordinates of the path. Order is lat,lon,elelevation as it is no geoJson!
+paths[0].points            | This value contains the coordinates of the path. If `points_encoded=true` or no `points_encoded` specified an encoded string will be returned, otherwise an array with order [lon,lat,elevation] is returned. See the parameter `points_encoded` for more information.
 paths[0].points_encoded    | Is true if the points are encoded, if not paths[0].points contains the geo json of the path (then order is lon,lat,elevation), which is easier to handle but consumes more bandwidth compared to encoded version
 paths[0].bbox              | The bounding box of the route, format: <br> minLon, minLat, maxLon, maxLat
-paths[0].snapped_waypoints | An array of the snapped input points (order is lon,lat,elevation)
+paths[0].snapped_waypoints | This value contains the snapped input points. If `points_encoded=true` or no `points_encoded` parameter was specified then an encoded string will be returned, otherwise an array is returned. See the parameter `points_encoded` for more information.
 paths[0].instructions      | Contains information about the instructions for this route. The last instruction is always the Finish instruction and takes 0ms and 0meter. Keep in mind that instructions are currently under active development and can sometimes contain misleading information, so, make sure you always show an image of the map at the same time when navigating your users!
 paths[0].instructions[0].text                 | A description what the user has to do in order to follow the route. The language depends on the locale parameter.
 paths[0].instructions[0].distance             | The distance for this instruction, in meter
