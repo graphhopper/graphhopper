@@ -23,11 +23,11 @@ describe('translation', function () {
         var defaultTranslationMap = {};
         defaultTranslationMap["web.somekey1"] = "%s wow %s";
         translate.init({ default: defaultTranslationMap });
-        expect(translate.tr("someKey1", ["nice", "to"])).toBe("nice wow to");
+        expect(translate.tr("somekey1", ["nice", "to"])).toBe("nice wow to");
 
         defaultTranslationMap["web.somekey2"] = "%2$s wow %1$s";
         translate.init({ default: defaultTranslationMap });
-        expect(translate.tr("someKey2", ["nice", "to"])).toBe("to wow nice");
+        expect(translate.tr("somekey2", ["nice", "to"])).toBe("to wow nice");
 
         defaultTranslationMap["web.key"] = "it will take %1$s";
         translate.init({ default: defaultTranslationMap });
