@@ -63,7 +63,8 @@ public interface DistanceCalc
      *   r
      *  .
      * a-------b
-     * <p>
+     * </pre>
+     * <pre>
      * case 2:
      * r
      *  .
@@ -94,7 +95,7 @@ public interface DistanceCalc
 
     /**
      * This methods projects a point given in lat and long (in degrees) into a direction, given as
-     * heading, measured clockwise from north in degrees. The distance is passed in km.     
+     * heading, measured clockwise from north in degrees. The distance is passed in km.
      */
     public GHPoint projectCoordinate( double lat_deg, double lon_deg,
                                       double distanceInMeter, double headingClockwiseFromNorth );

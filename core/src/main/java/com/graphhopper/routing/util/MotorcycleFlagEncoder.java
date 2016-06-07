@@ -386,8 +386,9 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
 
     /**
      * A really small bendiness or a bendiness greater than 1 indicates an error in the calculation.
-     * Just ignore them. We use bendiness > 1.2 since the beelineDistance is only approximated,
-     * therefore it can happen on straight roads, that the beeline is longer than the road.
+     * Just ignore them. We use bendiness greater 1.2 since the beelineDistance is only
+     * approximated, therefore it can happen on straight roads, that the beeline is longer than the
+     * road.
      */
     protected double correctErrors( double bendiness )
     {
