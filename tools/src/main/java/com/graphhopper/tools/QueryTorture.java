@@ -336,7 +336,7 @@ public class QueryTorture
                 if (!qStr.isEmpty())
                     qStr += "&";
 
-                qStr += "point=" + pointStr;
+                qStr += "point=" + encodeURL(pointStr);
             }
             for (Entry<String, String> e : params.entrySet())
             {
