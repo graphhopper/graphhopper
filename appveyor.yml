@@ -24,9 +24,9 @@ install:
   - cmd: mvn --version
   - cmd: java -version
 build_script:
-  - mvn clean package --batch-mode -DskipTest
+  - mvn clean package -DskipTest
 test_script:
-  - mvn clean install --batch-mode
+  - mvn clean install verify
 cache:
   - C:\maven\
   - C:\Users\appveyor\.m2
