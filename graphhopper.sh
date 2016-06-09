@@ -250,7 +250,7 @@ elif [ "$ACTION" = "import" ]; then
 
 
 elif [ "$ACTION" = "torture" ]; then
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $3 $4 $5 $6 $7 $8 $9
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.QueryTorture $@
 
 
 elif [ "$ACTION" = "miniui" ]; then
