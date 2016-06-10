@@ -39,4 +39,4 @@ want to try your changes or want to speed up the integration you can do the foll
 
 ## License Agreement
 
-Please sign the <a href="http://www.clahub.com/agreements/graphhopper/graphhopper">GraphHopper License Agreement</a>.
+Please sign the <a href="https://github.com/graphhopper/graphhopper/blob/master/.github/CONTRIBUTING.md">GraphHopper License Agreement</a>.

@@ -10,16 +10,18 @@ import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.template.RoutingTemplate;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.graphhopper.util.Parameters.Algorithms.MATRIX_ONE_TO_ONE;
 
 /**
  * Provides a Distance Matrix API
@@ -59,7 +61,12 @@ public class DistanceMatrixService {
         }
 
         QueryGraph queryGraph = new QueryGraph(routingGraph);
-        Weighting weighting = hopper.createTurnWeighting(tmpOptions.getWeighting(), queryGraph, tmpOptions.getFlagEncoder());
+        Weighting weighting = hopper.createTurnWeighting(
+                queryGraph,
+                tmpOptions.getFlagEncoder(),
+                tmpOptions.getWeighting(),
+                tmpOptions.getTraversalMode());
+
         AlgorithmOptions algoOpts = algoOptsBuilder.weighting(weighting).build();
 
         List<QueryResult> originQNodes = lookupNodes(request.getOrigins(), algoOpts.getFlagEncoder());
@@ -112,7 +119,7 @@ public class DistanceMatrixService {
      */
     private AlgorithmOptions.Builder buildOptions(GHMatrixRequest request, GraphHopper hopper){
 
-        String algoStr = request.getAlgorithm().isEmpty() ? AlgorithmOptions.MATRIX_ONE_TO_ONE : request.getAlgorithm();
+        String algoStr = request.getAlgorithm().isEmpty() ? MATRIX_ONE_TO_ONE : request.getAlgorithm();
 
 
         TraversalMode tMode;
@@ -163,9 +170,14 @@ public class DistanceMatrixService {
         if(points == null) throw new IllegalArgumentException("points must not be Null");
         if(encoder == null) throw new IllegalArgumentException("encoder must not be Null");
 
+        List<QueryResult> nodes = new ArrayList<>();
 
-        GHResponse dummy = new GHResponse();    // TODO Improve / refactor lookup - API
-        List<QueryResult> nodes = hopper.lookup(points, encoder, dummy);
+        LocationIndex locationIndex = hopper.getLocationIndex();
+        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
+
+        for (GHPoint point : points ) {
+            nodes.add(locationIndex.findClosest(point.lat, point.lon, edgeFilter));
+        }
 
         if(nodes.size() != points.size()){
             throw new IllegalStateException("Could not find nodes for all points!");

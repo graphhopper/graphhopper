@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -119,12 +119,12 @@ public class TurnCostExtension implements GraphExtension
      * This method adds a new entry which is a turn restriction or cost information via the
      * turnFlags.
      */
-    public void addTurnInfo( int from, int viaNode, int to, long turnFlags )
+    public void addTurnInfo( int fromEdge, int viaNode, int toEdge, long turnFlags )
     {
         // no need to store turn information
         if (turnFlags == EMPTY_FLAGS)
             return;
-
+        
         // append
         int newEntryIndex = turnCostsCount;
         turnCostsCount++;
@@ -154,8 +154,8 @@ public class TurnCostExtension implements GraphExtension
         }
         // add entry
         long costsBase = (long) newEntryIndex * turnCostsEntryBytes;
-        turnCosts.setInt(costsBase + TC_FROM, from);
-        turnCosts.setInt(costsBase + TC_TO, to);
+        turnCosts.setInt(costsBase + TC_FROM, fromEdge);
+        turnCosts.setInt(costsBase + TC_TO, toEdge);
         turnCosts.setInt(costsBase + TC_FLAGS, (int) turnFlags);
         // next-pointer is NO_TURN_ENTRY
         turnCosts.setInt(costsBase + TC_NEXT, NO_TURN_ENTRY);
@@ -256,6 +256,6 @@ public class TurnCostExtension implements GraphExtension
     @Override
     public String toString()
     {
-        return "turnCost";
+        return "turn_cost";
     }
 }

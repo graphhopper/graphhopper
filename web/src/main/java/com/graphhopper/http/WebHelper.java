@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -18,12 +18,15 @@
 package com.graphhopper.http;
 
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPoint3D;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
+import org.json.JSONArray;
 
 /**
  * Code which handles polyline encoding and other web stuff.
@@ -166,5 +169,15 @@ public class WebHelper
         {
             in.close();
         }
+    }
+
+    public static GHPoint toGHPoint( JSONArray point )
+    {
+        if (point.length() == 3 && !Double.isNaN(point.getDouble(2)))
+        {
+            return new GHPoint3D(point.getDouble(1), point.getDouble(0), point.getDouble(2));
+        }
+
+        return new GHPoint(point.getDouble(1), point.getDouble(0));
     }
 }

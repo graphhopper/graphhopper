@@ -22,7 +22,7 @@ public abstract class AbstractMatrixAlgorithmTest {
 
     private static final double DELTA = 0.000001;
 
-    protected static final EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
+    protected static final EncodingManager encodingManager = new EncodingManager("car,foot");
     protected FlagEncoder carEncoder;
 
     private MatrixAlgorithmFactory factory;
@@ -30,7 +30,7 @@ public abstract class AbstractMatrixAlgorithmTest {
     @Before
     public void init(){
         factory = new SimpleMatrixAlgorithmFactory();
-        carEncoder = encodingManager.getEncoder("CAR");
+        carEncoder = encodingManager.getEncoder("car");
     }
 
     /**

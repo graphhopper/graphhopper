@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,10 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.VirtualEdgeIteratorState;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.*;
+import com.graphhopper.util.Parameters.Routing;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -31,7 +29,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class FastestWeightingTest
 {
-    private final FlagEncoder encoder = new EncodingManager("CAR").getEncoder("CAR");
+    private final FlagEncoder encoder = new EncodingManager("car").getEncoder("car");
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight()
@@ -44,7 +42,7 @@ public class FastestWeightingTest
     @Test
     public void testWeightWrongHeading()
     {
-        FastestWeighting instance = new FastestWeighting(encoder, new PMap().put("heading_penalty", "100"));
+        FastestWeighting instance = new FastestWeighting(encoder, new PMap().put(Parameters.Routing.HEADING_PENALTY, "100"));
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, 1, 1, 2, 10,
                 encoder.setProperties(10, true, true), "test", Helper.createPointList(51, 0, 51, 1));
         double time = instance.calcWeight(virtEdge, false, 0);
@@ -62,7 +60,7 @@ public class FastestWeightingTest
         // test default penalty
         virtEdge.setVirtualEdgePreference(true);
         instance = new FastestWeighting(encoder);
-        assertEquals(time + FastestWeighting.DEFAULT_HEADING_PENALTY, instance.calcWeight(virtEdge, false, 0), 1e-8);
+        assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcWeight(virtEdge, false, 0), 1e-8);
     }
 
     @Test

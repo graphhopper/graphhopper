@@ -3,6 +3,8 @@ package com.graphhopper.matrix.algorithm;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.storage.Graph;
 
+import static com.graphhopper.util.Parameters.Algorithms.*;
+
 /**
  * A basic MatrixAlgorithmFactory implementation supporting built-in algorithms.
  *
@@ -16,10 +18,10 @@ public class SimpleMatrixAlgorithmFactory implements MatrixAlgorithmFactory {
 
         String algoStr = opts.getAlgorithm();
 
-        if(AlgorithmOptions.MATRIX_ONE_TO_ONE.equalsIgnoreCase(algoStr)){
+        if(MATRIX_ONE_TO_ONE.equalsIgnoreCase(algoStr)){
 
             AlgorithmOptions underlyingAlgo = AlgorithmOptions.start(opts).
-                    algorithm(AlgorithmOptions.ASTAR_BI).build();
+                    algorithm(ASTAR_BI).build();
 
             return new OneToOneLoopMatrixAlgorithm(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode(), underlyingAlgo);
 

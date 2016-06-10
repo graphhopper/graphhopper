@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -59,7 +59,7 @@ class Location2IDQuadtree implements LocationIndex
     {
         this.graph = g;
         this.nodeAccess = g.getNodeAccess();
-        index = dir.find("loc2idIndex");
+        index = dir.find("loc2id_index");
         setResolution(100 * 100);
     }
 
@@ -218,7 +218,7 @@ class Location2IDQuadtree implements LocationIndex
     private int fillEmptyIndices( GHBitSet filledIndices )
     {
         int len = latSize * lonSize;
-        DataAccess indexCopy = new RAMDirectory().find("tempIndexCopy");
+        DataAccess indexCopy = new RAMDirectory().find("temp_index_copy");
         indexCopy.setSegmentSize(index.getSegmentSize()).create(index.getCapacity());
         GHBitSet indicesCopy = new GHBitSetImpl(len);
         int initializedCounter = filledIndices.getCardinality();

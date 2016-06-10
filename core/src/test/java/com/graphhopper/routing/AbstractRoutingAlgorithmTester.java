@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -23,6 +23,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
+import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import gnu.trove.list.TIntList;
 import java.util.*;
 
@@ -36,7 +37,7 @@ import org.junit.Test;
  */
 public abstract class AbstractRoutingAlgorithmTester
 {
-    protected static final EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
+    protected static final EncodingManager encodingManager = new EncodingManager("car,foot");
     protected FlagEncoder carEncoder;
     protected FlagEncoder footEncoder;
     protected AlgorithmOptions defaultOpts;
@@ -44,8 +45,8 @@ public abstract class AbstractRoutingAlgorithmTester
     @Before
     public void setUp()
     {
-        carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
-        footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
+        carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
+        footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
         defaultOpts = AlgorithmOptions.start().flagEncoder(carEncoder).
                 weighting(new ShortestWeighting(carEncoder)).build();
     }
@@ -503,7 +504,7 @@ public abstract class AbstractRoutingAlgorithmTester
         updateDistancesFor(graph, 3, 0, 1);
         updateDistancesFor(graph, 4, 0, 2);
 
-        AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, weighting);
+        AlgorithmOptions opts = new AlgorithmOptions(DIJKSTRA_BI, carEncoder, weighting);
         RoutingAlgorithmFactory prepare = createFactory(graph, opts);
         Path p = prepare.createAlgo(getGraph(graph, opts.getWeighting()), opts).calcPath(4, 0);
         assertEquals(Helper.createTList(4, 1, 0), p.calcNodes());

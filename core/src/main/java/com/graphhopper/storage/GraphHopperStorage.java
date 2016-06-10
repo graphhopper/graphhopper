@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -39,7 +39,7 @@ import java.util.List;
 public final class GraphHopperStorage implements GraphStorage, Graph
 {
     private final Directory dir;
-    private EncodingManager encodingManager;
+    private final EncodingManager encodingManager;
     private final StorableProperties properties;
     private final BaseGraph baseGraph;
     // same flush order etc
@@ -55,6 +55,9 @@ public final class GraphHopperStorage implements GraphStorage, Graph
     {
         if (extendedStorage == null)
             throw new IllegalArgumentException("GraphExtension cannot be null, use NoOpExtension");
+
+        if (encodingManager == null)
+            throw new IllegalArgumentException("EncodingManager needs to be non-null since 0.7. Create one using new EncodingManager or EncodingManager.create(flagEncoderFactory, ghLocation)");
 
         this.encodingManager = encodingManager;
         this.dir = dir;
@@ -171,13 +174,14 @@ public final class GraphHopperStorage implements GraphStorage, Graph
         if (encodingManager == null)
             throw new IllegalStateException("EncodingManager can only be null if you call loadExisting");
 
+        dir.create();
         long initSize = Math.max(byteCount, 100);
         properties.create(100);
 
-        properties.put("graph.bytesForFlags", encodingManager.getBytesForFlags());
-        properties.put("graph.flagEncoders", encodingManager.toDetailsString());
+        properties.put("graph.bytes_for_flags", encodingManager.getBytesForFlags());
+        properties.put("graph.flag_encoders", encodingManager.toDetailsString());
 
-        properties.put("graph.byteOrder", dir.getByteOrder());
+        properties.put("graph.byte_order", dir.getByteOrder());
         properties.put("graph.dimension", baseGraph.nodeAccess.getDimension());
         properties.putCurrentVersions();
 
@@ -188,7 +192,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph
             cg.create(byteCount);
         }
 
-        properties.put("graph.chWeightings", getCHWeightings().toString());
+        properties.put("graph.ch.weightings", getCHWeightings().toString());
         return this;
     }
 
@@ -247,39 +251,29 @@ public final class GraphHopperStorage implements GraphStorage, Graph
         {
             properties.checkVersions(false);
             // check encoding for compatiblity
-            String acceptStr = properties.get("graph.flagEncoders");
+            String flagEncodersStr = properties.get("graph.flag_encoders");
 
-            if (encodingManager == null)
-            {
-                if (acceptStr.isEmpty())
-                    throw new IllegalStateException("No EncodingManager was configured. And no one was found in the graph: "
-                            + dir.getLocation());
-
-                int bytesForFlags = 4;
-                if ("8".equals(properties.get("graph.bytesForFlags")))
-                    bytesForFlags = 8;
-                encodingManager = new EncodingManager(acceptStr, bytesForFlags);
-            } else if (!acceptStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(acceptStr))
+            if (!flagEncodersStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(flagEncodersStr))
             {
                 throw new IllegalStateException("Encoding does not match:\nGraphhopper config: " + encodingManager.toDetailsString()
-                        + "\nGraph: " + acceptStr + ", dir:" + dir.getLocation());
+                        + "\nGraph: " + flagEncodersStr + ", dir:" + dir.getLocation());
             }
 
-            String byteOrder = properties.get("graph.byteOrder");
+            String byteOrder = properties.get("graph.byte_order");
             if (!byteOrder.equalsIgnoreCase("" + dir.getByteOrder()))
-                throw new IllegalStateException("Configured graph.byteOrder (" + dir.getByteOrder() + ") is not equal to loaded " + byteOrder + "");
+                throw new IllegalStateException("Configured graph.byte_order (" + dir.getByteOrder() + ") is not equal to loaded " + byteOrder + "");
 
-            String bytesForFlags = properties.get("graph.bytesForFlags");
+            String bytesForFlags = properties.get("graph.bytes_for_flags");
             if (!bytesForFlags.equalsIgnoreCase("" + encodingManager.getBytesForFlags()))
-                throw new IllegalStateException("Configured graph.bytesForFlags (" + encodingManager.getBytesForFlags() + ") is not equal to loaded " + bytesForFlags);
+                throw new IllegalStateException("Configured graph.bytes_for_flags (" + encodingManager.getBytesForFlags() + ") is not equal to loaded " + bytesForFlags);
 
             String dim = properties.get("graph.dimension");
             baseGraph.loadExisting(dim);
 
-            String loadedCHWeightings = properties.get("graph.chWeightings");
+            String loadedCHWeightings = properties.get("graph.ch.weightings");
             String configuredCHWeightings = getCHWeightings().toString();
             if (!loadedCHWeightings.equals(configuredCHWeightings))
-                throw new IllegalStateException("Configured graph.chWeightings: " + configuredCHWeightings + " is not equal to loaded " + loadedCHWeightings);
+                throw new IllegalStateException("Configured graph.ch.weightings: " + configuredCHWeightings + " is not equal to loaded " + loadedCHWeightings);
 
             for (CHGraphImpl cg : chGraphs)
             {

@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -124,5 +124,23 @@ public class HelperTest
 
         assertEquals(0xFFFFffffL, (1L << 32) - 1);
         assertTrue(0xFFFFffffL > 0L);
+    }
+
+    @Test
+    public void testCamelCaseToUnderscore()
+    {
+        assertEquals("test_case", Helper.camelCaseToUnderScore("testCase"));
+        assertEquals("test_case_t_b_d", Helper.camelCaseToUnderScore("testCaseTBD"));
+        assertEquals("_test_case", Helper.camelCaseToUnderScore("TestCase"));
+        
+        assertEquals("_test_case", Helper.camelCaseToUnderScore("_test_case"));
+    }
+
+    @Test
+    public void testUnderscoreToCamelCase()
+    {
+        assertEquals("testCase", Helper.underScoreToCamelCase("test_case"));
+        assertEquals("testCaseTBD", Helper.underScoreToCamelCase("test_case_t_b_d"));
+        assertEquals("TestCase_", Helper.underScoreToCamelCase("_test_case_"));
     }
 }

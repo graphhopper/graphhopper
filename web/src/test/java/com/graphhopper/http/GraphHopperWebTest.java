@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -58,6 +58,10 @@ public class GraphHopperWebTest
         assertEquals(5, arsp.getInstructions().getSize());
         assertEquals("(0,Geradeaus auf A 100,1268.519329705091,65237)", arsp.getInstructions().get(0).toString());
         assertEquals(11, arsp.getInstructions().get(0).getPoints().size());
+        
+        assertEquals(52.47384, arsp.getWaypoints().getLat(0), 1e-4);
+        assertEquals(13.36285, arsp.getWaypoints().getLon(0), 1e-4);
+        assertEquals(52.47361, arsp.getWaypoints().getLat(1), 1e-4);
     }
 
     @Test

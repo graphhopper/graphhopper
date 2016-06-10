@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except in
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,7 +31,7 @@ import java.util.Set;
  */
 public class ConditionalParser
 {
-    private static final Logger logger = LoggerFactory.getLogger(ConditionalParser.class);
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final Set<String> restrictedTags;
     private final boolean enabledLogs;
 
@@ -42,18 +42,18 @@ public class ConditionalParser
 
     public ConditionalParser( Set<String> restrictedTags, boolean enabledLogs )
     {
+        // use map => key & type (date vs. double)
         this.restrictedTags = restrictedTags;
         this.enabledLogs = enabledLogs;
     }
 
-    public DateRange getDateRange( String conditionalTag ) throws ParseException
+    public ValueRange getRange( String conditionalTag ) throws ParseException
     {
         if (conditionalTag == null || conditionalTag.isEmpty() || !conditionalTag.contains("@"))
             return null;
 
         if (conditionalTag.contains(";"))
         {
-            // TODO #374
             if (enabledLogs)
                 logger.warn("We do not support multiple conditions yet: " + conditionalTag);
             return null;
@@ -73,7 +73,67 @@ public class ConditionalParser
         conditional = conditional.replace(')', ' ');
         conditional = conditional.trim();
 
+        int index = conditional.indexOf(">");
+        if (index > 0 && conditional.length() > 2)
+        {
+            final String key = conditional.substring(0, index).trim();
+            // for now just ignore equals sign
+            if (conditional.charAt(index + 1) == '=')
+                index++;
+
+            final double value = parseNumber(conditional.substring(index + 1));
+            return new ValueRange<Number>()
+            {
+                @Override
+                public boolean isInRange( Number obj )
+                {
+                    return obj.doubleValue() > value;
+                }
+
+                @Override
+                public String getKey()
+                {
+                    return key;
+                }
+            };
+        }
+
+        index = conditional.indexOf("<");
+        if (index > 0 && conditional.length() > 2)
+        {
+            final String key = conditional.substring(0, index).trim();
+            if (conditional.charAt(index + 1) == '=')
+                index++;
+
+            final double value = parseNumber(conditional.substring(index + 1));
+            return new ValueRange<Number>()
+            {
+
+                @Override
+                public boolean isInRange( Number obj )
+                {
+                    return obj.doubleValue() < value;
+                }
+
+                @Override
+                public String getKey()
+                {
+                    return key;
+                }
+            };
+        }
+
         return DateRangeParser.parseDateRange(conditional);
     }
 
+    protected double parseNumber( String str )
+    {
+        int untilIndex = str.length() - 1;
+        for (; untilIndex >= 0; untilIndex--)
+        {
+            if (Character.isDigit(str.charAt(untilIndex)))
+                break;
+        }
+        return Double.parseDouble(str.substring(0, untilIndex + 1));
+    }
 }

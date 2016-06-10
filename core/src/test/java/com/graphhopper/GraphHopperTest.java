@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,8 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
+import static com.graphhopper.util.Parameters.Algorithms.*;
+import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
 import org.junit.Before;
@@ -72,7 +74,7 @@ public class GraphHopperTest
     public void testLoadOSM()
     {
         GraphHopper closableInstance = new GraphHopper().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(new EncodingManager("car")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         closableInstance.importOrLoad();
@@ -113,7 +115,7 @@ public class GraphHopperTest
     public void testLoadOSMNoCH()
     {
         GraphHopper gh = new GraphHopper().setStoreOnFlush(true).setCHEnabled(false).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(new EncodingManager("car")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         gh.importOrLoad();
@@ -126,7 +128,7 @@ public class GraphHopperTest
 
         gh.close();
         gh = new GraphHopper().setStoreOnFlush(true).setCHEnabled(false).
-                setEncodingManager(new EncodingManager("CAR"));
+                setEncodingManager(new EncodingManager("car"));
         assertTrue(gh.load(ghLoc));
         rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
         assertFalse(rsp.hasErrors());
@@ -137,7 +139,7 @@ public class GraphHopperTest
         gh = new GraphHopper().
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm).
-                init(new CmdArgs().put("graph.flagEncoders", "CAR").put("prepare.chWeightings", "no"));
+                init(new CmdArgs().put("graph.flag_encoders", "car").put("prepare.ch.weightings", "no"));
 
         assertFalse(gh.getAlgorithmFactory(new HintsMap("fastest")) instanceof PrepareContractionHierarchies);
         gh.close();
@@ -148,7 +150,7 @@ public class GraphHopperTest
     {
         // with CH should not be loadable without CH configured
         GraphHopper gh = new GraphHopper().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(new EncodingManager("car")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         gh.importOrLoad();
@@ -158,21 +160,21 @@ public class GraphHopperTest
         gh.close();
 
         gh = new GraphHopper().setStoreOnFlush(true).setCHEnabled(false).
-                setEncodingManager(new EncodingManager("CAR"));
+                setEncodingManager(new EncodingManager("car"));
         try
         {
             gh.load(ghLoc);
             assertTrue(false);
         } catch (Exception ex)
         {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.chWeightings:"));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.ch.weightings:"));
         }
 
         Helper.removeDir(new File(ghLoc));
 
         // without CH should not be loadable with CH enabled
         gh = new GraphHopper().setStoreOnFlush(true).setCHEnabled(false).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(new EncodingManager("car")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         gh.importOrLoad();
@@ -182,14 +184,14 @@ public class GraphHopperTest
         gh.close();
 
         gh = new GraphHopper().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("CAR"));
+                setEncodingManager(new EncodingManager("car"));
         try
         {
             gh.load(ghLoc);
             assertTrue(false);
         } catch (Exception ex)
         {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.chWeightings:"));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.ch.weightings:"));
         }
     }
 
@@ -197,18 +199,18 @@ public class GraphHopperTest
     public void testAllowMultipleReadingInstances()
     {
         GraphHopper instance1 = new GraphHopper().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(new EncodingManager("car")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance1.importOrLoad();
 
         GraphHopper instance2 = new GraphHopper().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(new EncodingManager("car")).
                 setOSMFile(testOsm);
         instance2.load(ghLoc);
 
         GraphHopper instance3 = new GraphHopper().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(new EncodingManager("car")).
                 setOSMFile(testOsm);
         instance3.load(ghLoc);
 
@@ -237,7 +239,7 @@ public class GraphHopperTest
                 return super.importData();
             }
         }.setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(new EncodingManager("car")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         final AtomicReference<Exception> ar = new AtomicReference<Exception>();
@@ -258,7 +260,7 @@ public class GraphHopperTest
         thread.start();
 
         GraphHopper instance2 = new GraphHopper().setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(new EncodingManager("car")).
                 setOSMFile(testOsm);
         try
         {
@@ -289,13 +291,13 @@ public class GraphHopperTest
     {
         instance = new GraphHopper().
                 setStoreOnFlush(false).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(new EncodingManager("car")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance.getCHFactoryDecorator().setWeightingsAsStrings("shortest");
         instance.importOrLoad();
         GHResponse rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
-                setAlgorithm(AlgorithmOptions.DIJKSTRA_BI));
+                setAlgorithm(DIJKSTRA_BI));
         assertFalse(rsp.hasErrors());
         assertEquals(Helper.createPointList(51.249215, 9.431716, 52.0, 9.0, 51.2, 9.4), rsp.getBest().getPoints());
         assertEquals(3, rsp.getBest().getPoints().getSize());
@@ -306,12 +308,12 @@ public class GraphHopperTest
     {
         instance = new GraphHopper().setStoreOnFlush(false).
                 setSortGraph(true).
-                setEncodingManager(new EncodingManager("CAR")).setCHEnabled(false).
+                setEncodingManager(new EncodingManager("car")).setCHEnabled(false).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm);
         instance.importOrLoad();
         PathWrapper rsp = instance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4).
-                setAlgorithm(AlgorithmOptions.DIJKSTRA_BI)).getBest();
+                setAlgorithm(DIJKSTRA_BI)).getBest();
         assertFalse(rsp.hasErrors());
         assertEquals(3, rsp.getPoints().getSize());
         assertEquals(new GHPoint(51.24921503475044, 9.431716451757769), rsp.getPoints().toGHPoint(0));
@@ -334,7 +336,7 @@ public class GraphHopperTest
     {
         // now all ways are imported
         instance = new GraphHopper().setStoreOnFlush(false).
-                setEncodingManager(new EncodingManager("CAR,FOOT")).setCHEnabled(false).
+                setEncodingManager(new EncodingManager("car,foot")).setCHEnabled(false).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
         instance.importOrLoad();
@@ -343,7 +345,7 @@ public class GraphHopperTest
         assertEquals(8, instance.getGraphHopperStorage().getAllEdges().getMaxId());
 
         // A to D
-        GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle(EncodingManager.CAR));
+        GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle("car"));
         assertFalse(grsp.hasErrors());
         PathWrapper rsp = grsp.getBest();
         assertEquals(3, rsp.getPoints().getSize());
@@ -354,7 +356,7 @@ public class GraphHopperTest
         assertEquals(11.3, rsp.getPoints().getLatitude(2), 1e-3);
 
         // A to D not allowed for foot. But the location index will choose a node close to D accessible to FOOT        
-        grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle(EncodingManager.FOOT));
+        grsp = instance.route(new GHRequest(11.1, 50, 11.3, 51).setVehicle("foot"));
         assertFalse(grsp.hasErrors());
         rsp = grsp.getBest();
         assertEquals(2, rsp.getPoints().getSize());
@@ -363,13 +365,13 @@ public class GraphHopperTest
         assertEquals(50.644, rsp.getPoints().getLongitude(1), 1e-3);
 
         // A to E only for foot
-        grsp = instance.route(new GHRequest(11.1, 50, 10, 51).setVehicle(EncodingManager.FOOT));
+        grsp = instance.route(new GHRequest(11.1, 50, 10, 51).setVehicle("foot"));
         assertFalse(grsp.hasErrors());
         rsp = grsp.getBest();
         assertEquals(2, rsp.getPoints().size());
 
         // A D E for car
-        grsp = instance.route(new GHRequest(11.1, 50, 10, 51).setVehicle(EncodingManager.CAR));
+        grsp = instance.route(new GHRequest(11.1, 50, 10, 51).setVehicle("car"));
         assertFalse(grsp.hasErrors());
         rsp = grsp.getBest();
         assertEquals(3, rsp.getPoints().getSize());
@@ -382,8 +384,8 @@ public class GraphHopperTest
                 new CmdArgs().
                 put("osmreader.osm", testOsm3).
                 put("osmreader.dataaccess", "RAM").
-                put("graph.flagEncoders", "FOOT,CAR").
-                put("prepare.chWeightings", "no")).
+                put("graph.flag_encoders", "foot,car").
+                put("prepare.ch.weightings", "no")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
@@ -396,8 +398,8 @@ public class GraphHopperTest
                     new CmdArgs().
                     put("osmreader.osm", testOsm3).
                     put("osmreader.dataaccess", "RAM").
-                    put("graph.flagEncoders", "FOOT").
-                    put("prepare.chWeightings", "no")).
+                    put("graph.flag_encoders", "foot").
+                    put("prepare.ch.weightings", "no")).
                     setOSMFile(testOsm3);
             tmpGH.load(ghLoc);
             assertTrue(false);
@@ -411,9 +413,9 @@ public class GraphHopperTest
                 new CmdArgs().
                 put("osmreader.osm", testOsm3).
                 put("osmreader.dataaccess", "RAM").
-                put("graph.flagEncoders", "FOOT,CAR").
-                put("graph.bytesForFlags", 8).
-                put("prepare.chWeightings", "no")).
+                put("graph.flag_encoders", "foot,car").
+                put("graph.bytes_for_flags", 8).
+                put("prepare.ch.weightings", "no")).
                 setOSMFile(testOsm3);
         try
         {
@@ -421,7 +423,7 @@ public class GraphHopperTest
             assertTrue(false);
         } catch (Exception ex)
         {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.bytesForFlags (8) is not equal to loaded 4"));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Configured graph.bytes_for_flags (8) is not equal to loaded 4"));
         }
 
         // different order is no longer okay, see #350
@@ -430,8 +432,8 @@ public class GraphHopperTest
             GraphHopper tmpGH = new GraphHopper().init(new CmdArgs().
                     put("osmreader.osm", testOsm3).
                     put("osmreader.dataaccess", "RAM").
-                    put("prepare.chWeightings", "no").
-                    put("graph.flagEncoders", "CAR,FOOT")).
+                    put("prepare.ch.weightings", "no").
+                    put("graph.flag_encoders", "car,foot")).
                     setOSMFile(testOsm3);
             tmpGH.load(ghLoc);
             assertTrue(false);
@@ -446,7 +448,7 @@ public class GraphHopperTest
     {
         instance = new GraphHopper().
                 setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("CAR"));
+                setEncodingManager(new EncodingManager("car"));
         try
         {
             // loading from empty directory
@@ -461,18 +463,12 @@ public class GraphHopperTest
     }
 
     @Test
-    public void testFailsAndDoesNotCreateEmptyFolderIfLoadingFromNonExistingPath()
+    public void testDoesNotCreateEmptyFolderIfLoadingFromNonExistingPath()
     {
         instance = new GraphHopper().
-                setEncodingManager(new EncodingManager("CAR"));
-        try
-        {
-            instance.load(ghLoc);
-            assertTrue(false);
-        } catch (IllegalStateException ex)
-        {
-            assertEquals("Path \"" + ghLoc + "\" does not exist", ex.getMessage());
-        }
+                setEncodingManager(new EncodingManager("car"));
+
+        assertFalse(instance.load(ghLoc));
         assertFalse(new File(ghLoc).exists());
     }
 
@@ -498,13 +494,13 @@ public class GraphHopperTest
             assertTrue(false);
         } catch (IllegalStateException ex)
         {
-            assertEquals("graphHopperLocation is not specified. call init before", ex.getMessage());
+            assertEquals("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before", ex.getMessage());
         }
 
         // missing OSM file to import
         instance = new GraphHopper().
                 setStoreOnFlush(true).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(new EncodingManager("car")).
                 setGraphHopperLocation(ghLoc);
         try
         {
@@ -533,7 +529,7 @@ public class GraphHopperTest
         // Import is possible even if no storeOnFlush is specified BUT here we miss the OSM file
         instance = new GraphHopper().
                 setStoreOnFlush(false).
-                setEncodingManager(new EncodingManager("CAR")).
+                setEncodingManager(new EncodingManager("car")).
                 setGraphHopperLocation(ghLoc);
         try
         {
@@ -551,7 +547,7 @@ public class GraphHopperTest
     {
         // now only footable ways are imported => no A D C and B D E => the other both ways have pillar nodes!
         instance = new GraphHopper().setStoreOnFlush(false).
-                setEncodingManager(new EncodingManager("FOOT")).
+                setEncodingManager(new EncodingManager("foot")).
                 setGraphHopperLocation(ghLoc).
                 setOSMFile(testOsm3);
         instance.importOrLoad();
@@ -560,7 +556,7 @@ public class GraphHopperTest
         assertEquals(2, instance.getGraphHopperStorage().getAllEdges().getMaxId());
 
         // A to E only for foot
-        GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.2, 52.01).setVehicle(EncodingManager.FOOT));
+        GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.2, 52.01).setVehicle("foot"));
         assertFalse(grsp.hasErrors());
         PathWrapper rsp = grsp.getBest();
         assertEquals(Helper.createPointList(11.1, 50, 10, 51, 11.2, 52), rsp.getPoints());
@@ -572,8 +568,8 @@ public class GraphHopperTest
         instance = new GraphHopper().setStoreOnFlush(true).
                 init(new CmdArgs().
                         put("osmreader.osm", testOsm3).
-                        put("prepare.minNetworkSize", "1").
-                        put("graph.flagEncoders", "CAR")).
+                        put("prepare.min_network_size", "1").
+                        put("graph.flag_encoders", "car")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
 
@@ -640,7 +636,7 @@ public class GraphHopperTest
         }, paths.get(0).calcNodes().toArray());
 
         // Test uni-directional case
-        req.setAlgorithm(AlgorithmOptions.DIJKSTRA);
+        req.setAlgorithm(DIJKSTRA);
         response = new GHResponse();
         paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
@@ -685,7 +681,7 @@ public class GraphHopperTest
         // Via Point betweeen 8-3
         GHPoint via = new GHPoint(0.0015, 0.001);
         GHRequest req = new GHRequest().addPoint(start).addPoint(via).addPoint(end);
-        req.getHints().put("pass_through", true);
+        req.getHints().put(Routing.PASS_THROUGH, true);
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
@@ -713,7 +709,7 @@ public class GraphHopperTest
         // First go south and than come from west to via-point at 7-6. Then go back over previously punished (11)-4 edge
         GHPoint via = new GHPoint(0.000, 0.0015);
         GHRequest req = new GHRequest().addPoint(start, 0.).addPoint(via, 3.14 / 2).addPoint(end);
-        req.getHints().put("pass_through", true);
+        req.getHints().put(Routing.PASS_THROUGH, true);
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
@@ -875,7 +871,8 @@ public class GraphHopperTest
             GraphHopper tmpGH = new GraphHopper().setStoreOnFlush(false).
                     setEncodingManager(em).
                     setGraphHopperLocation(ghLoc).
-                    setOSMFile(testOsm).setCHPrepareThreads(threadCount);
+                    setOSMFile(testOsm);
+            tmpGH.getCHFactoryDecorator().setPreparationThreads(threadCount);
 
             tmpGH.importOrLoad();
 

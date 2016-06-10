@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -72,10 +72,10 @@ public class GraphHopperServletIT extends BaseServletTester
     }
 
     @Test
-    public void testQuerywithDirections() throws Exception
+    public void testQueryWithDirections() throws Exception
     {
         // Note, in general specifying directions does not work with CH, but this is an example where it works
-        JSONObject json = query("point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240&force_heading_ch=true", 200);
+        JSONObject json = query("point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240&ch.force_heading=true", 200);
         JSONObject infoJson = json.getJSONObject("info");
         assertFalse(infoJson.has("errors"));
         JSONObject path = json.getJSONArray("paths").getJSONObject(0);
@@ -85,7 +85,7 @@ public class GraphHopperServletIT extends BaseServletTester
     }
 
     @Test
-    public void testQuerywithStraightVia() throws Exception
+    public void testQueryWithStraightVia() throws Exception
     {
         // Note, in general specifying straightvia does not work with CH, but this is an example where it works
         JSONObject json = query(
@@ -149,20 +149,20 @@ public class GraphHopperServletIT extends BaseServletTester
         GraphHopperAPI hopper = new GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
 
-        // IllegalStateException (Wrong Request)
+        // IllegalArgumentException (Wrong Request)
         GHResponse rsp = hopper.route(new GHRequest());
         assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
 
         Throwable ex = rsp.getErrors().get(0);
-        assertTrue("Wrong Exception found: " + ex.getClass().getName()
-                + ", IllegalStateException expected.", ex instanceof IllegalStateException);
+        assertTrue("Wrong exception found: " + ex.getClass().getName()
+                + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
 
         // IllegalArgumentException (Wrong Points)
         rsp = hopper.route(new GHRequest(0.0, 0.0, 0.0, 0.0));
         assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
 
         ex = rsp.getErrors().get(0);
-        assertTrue("Wrong Exception found: " + ex.getClass().getName()
+        assertTrue("Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
 
         // IllegalArgumentException (Vehicle not supported)
@@ -170,12 +170,8 @@ public class GraphHopperServletIT extends BaseServletTester
         assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
 
         ex = rsp.getErrors().get(0);
-        assertTrue("Wrong Exception found: " + ex.getClass().getName()
+        assertTrue("Wrong exception found: " + ex.getClass().getName()
                 + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
-
-        // UnsupportedOperationException
-        // RuntimeException
-        // Exception
     }
 
     @Test

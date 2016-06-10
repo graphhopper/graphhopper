@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -39,7 +39,8 @@ public class PathWrapper
     private long time;
     private String debugInfo = "";
     private InstructionList instructions;
-    private PointList list = PointList.EMPTY;
+    private PointList waypointList = PointList.EMPTY;
+    private PointList pointList = PointList.EMPTY;
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
 
     /**
@@ -78,7 +79,10 @@ public class PathWrapper
 
     public PathWrapper setPoints( PointList points )
     {
-        list = points;
+        if (pointList != PointList.EMPTY)
+            throw new IllegalStateException("Cannot call setPoint twice");
+
+        pointList = points;
         return this;
     }
 
@@ -90,7 +94,27 @@ public class PathWrapper
     public PointList getPoints()
     {
         check("getPoints");
-        return list;
+        return pointList;
+    }
+
+    /**
+     * This method initializes this path with the snapped input points.
+     */
+    public void setWaypoints( PointList wpList )
+    {
+        if (waypointList != PointList.EMPTY)
+            throw new IllegalStateException("Cannot call setWaypoints twice");
+
+        this.waypointList = wpList;
+    }
+
+    /**
+     * This method returns the input points snapped to the road network.
+     */
+    public PointList getWaypoints()
+    {
+        check("getWaypoints");
+        return waypointList;
     }
 
     public PathWrapper setDistance( double distance )
@@ -188,17 +212,17 @@ public class PathWrapper
     {
         check("calcRouteBBox");
         BBox bounds = BBox.createInverse(_fallback.hasElevation());
-        int len = list.getSize();
+        int len = pointList.getSize();
         if (len == 0)
             return _fallback;
 
         for (int i = 0; i < len; i++)
         {
-            double lat = list.getLatitude(i);
-            double lon = list.getLongitude(i);
+            double lat = pointList.getLatitude(i);
+            double lon = pointList.getLongitude(i);
             if (bounds.hasElevation())
             {
-                double ele = list.getEle(i);
+                double ele = pointList.getEle(i);
                 bounds.update(lat, lon, ele);
             } else
             {
@@ -211,7 +235,7 @@ public class PathWrapper
     @Override
     public String toString()
     {
-        String str = "nodes:" + list.getSize() + "; " + list.toString();
+        String str = "nodes:" + pointList.getSize() + "; " + pointList.toString();
         if (instructions != null && !instructions.isEmpty())
             str += ", " + instructions.toString();
 

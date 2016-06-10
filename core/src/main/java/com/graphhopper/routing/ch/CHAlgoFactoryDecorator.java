@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -26,6 +26,8 @@ import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters.CH;
+import static com.graphhopper.util.Parameters.CH.DISABLE;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -44,16 +46,6 @@ import org.slf4j.LoggerFactory;
  */
 public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
 {
-    /**
-     * The property name in HintsMap if CH routing should be ignored.
-     */
-    public static final String DISABLE = "routing.ch.disable";
-    /**
-     * The property name in HintsMap if heading should be used for CH regardless of the possible
-     * routing errors.
-     */
-    public static final String FORCE_HEADING = "force_heading_ch";
-
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
     // we need to decouple weighting objects from the weighting list of strings 
@@ -83,10 +75,15 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
 
         String deprecatedWeightingConfig = args.get("prepare.chWeighting", "");
         if (!deprecatedWeightingConfig.isEmpty())
-            throw new IllegalStateException("Use prepare.chWeightings and a comma separated list instead of prepare.chWeighting");
+            throw new IllegalStateException("Use prepare.ch.weightings and a comma separated list instead of prepare.chWeighting");
 
         // default is enabled & fastest
-        String chWeightingsStr = args.get("prepare.chWeightings", "");
+        String chWeightingsStr = args.get("prepare.ch.weightings", "");
+
+        // backward compatibility
+        if (chWeightingsStr.isEmpty())
+            chWeightingsStr = args.get("prepare.chWeightings", "");
+
         if ("no".equals(chWeightingsStr))
         {
             // default is fastest and we need to clear this explicitely
@@ -100,13 +97,13 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         boolean enableThis = !weightingsAsStrings.isEmpty();
         setEnabled(enableThis);
         if (enableThis)
-            setDisablingAllowed(args.getBool("routing.ch.disabling_allowed", isDisablingAllowed()));
+            setDisablingAllowed(args.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
         setPreparationPeriodicUpdates(args.getInt("prepare.updates.periodic", getPreparationPeriodicUpdates()));
         setPreparationLazyUpdates(args.getInt("prepare.updates.lazy", getPreparationLazyUpdates()));
         setPreparationNeighborUpdates(args.getInt("prepare.updates.neighbor", getPreparationNeighborUpdates()));
-        setPreparationContractedNodes(args.getInt("prepare.contracted-nodes", getPreparationContractedNodes()));
-        setPreparationLogMessages(args.getDouble("prepare.logmessages", getPreparationLogMessages()));
+        setPreparationContractedNodes(args.getInt("prepare.contracted_nodes", getPreparationContractedNodes()));
+        setPreparationLogMessages(args.getDouble("prepare.log_messages", getPreparationLogMessages()));
     }
 
     public CHAlgoFactoryDecorator setPreparationPeriodicUpdates( int preparePeriodicUpdates )
@@ -333,7 +330,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
 
                         Thread.currentThread().setName(name);
                         prepare.doWork();
-                        properties.put(errorKey, "");
+                        properties.remove(errorKey);
                         properties.put("prepare.date." + name, Helper.createFormatter().format(new Date()));
                     } catch (Exception ex)
                     {
@@ -353,7 +350,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
         } catch (InterruptedException ie)
         {
             chPreparePool.shutdownNow();
-            Thread.currentThread().interrupt();
+            throw new RuntimeException(ie);
         }
     }
 
@@ -363,6 +360,8 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
             return;
         if (weightings.isEmpty())
             throw new IllegalStateException("No CH weightings found");
+
+        traversalMode = getNodeBase();
 
         for (Weighting weighting : getWeightings())
         {
@@ -376,5 +375,14 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
 
             addPreparation(tmpPrepareCH);
         }
+    }
+
+    /**
+     * For now only node based will work, later on we can easily find usage of this method to remove
+     * it.
+     */
+    public TraversalMode getNodeBase()
+    {
+        return TraversalMode.NODE_BASED;
     }
 }

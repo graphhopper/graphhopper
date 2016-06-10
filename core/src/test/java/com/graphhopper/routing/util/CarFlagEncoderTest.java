@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,8 +32,8 @@ import static org.junit.Assert.*;
  */
 public class CarFlagEncoderTest
 {
-    private final EncodingManager em = new EncodingManager("CAR,BIKE,FOOT");
-    private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("CAR");
+    private final EncodingManager em = new EncodingManager("car,bike,foot");
+    private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("car");
 
     @Test
     public void testAccess()
@@ -348,16 +348,14 @@ public class CarFlagEncoderTest
     {
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "secondary");
-        way.setTag("railway", "rail");
-        // disallow rail
-        assertTrue(encoder.acceptWay(way) == 0);
+        way.setTag("railway", "rail");        
+        assertTrue(encoder.acceptWay(way) > 0);
 
         way.clearTags();
         way.setTag("highway", "path");
         way.setTag("railway", "abandoned");
         assertTrue(encoder.acceptWay(way) == 0);
 
-        // on disallowed highway, railway is allowed, sometimes incorrectly mapped
         way.setTag("highway", "track");
         assertTrue(encoder.acceptWay(way) > 0);
 

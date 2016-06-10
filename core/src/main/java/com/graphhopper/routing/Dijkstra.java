@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -29,6 +29,7 @@ import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.Parameters;
 
 /**
  * Implements a single source shortest path algorithm
@@ -44,10 +45,11 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     private int visitedNodes;
     private int to = -1;
 
-    public Dijkstra( Graph g, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
+    public Dijkstra( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
-        super(g, encoder, weighting, tMode);
-        initCollections(1000);
+        super(graph, encoder, weighting, tMode);
+        int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
+        initCollections(size);
     }
 
     protected void initCollections( int size )
@@ -144,6 +146,6 @@ public class Dijkstra extends AbstractRoutingAlgorithm
     @Override
     public String getName()
     {
-        return AlgorithmOptions.DIJKSTRA;
+        return Parameters.Algorithms.DIJKSTRA;
     }
 }

@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -103,7 +103,7 @@ public class PrepareRoutingSubnetworksTest
     {
         GraphHopperStorage g = createSubnetworkTestStorage();
         PrepEdgeFilter filter = new PrepEdgeFilter(carFlagEncoder);
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singleton(carFlagEncoder));
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder));
         List<TIntArrayList> components = instance.findSubnetworks(filter);
 
         assertEquals(3, components.size());
@@ -120,7 +120,7 @@ public class PrepareRoutingSubnetworksTest
     {
         GraphHopperStorage g = createSubnetworkTestStorage();
         PrepEdgeFilter filter = new PrepEdgeFilter(carFlagEncoder);
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singleton(carFlagEncoder));
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder));
         List<TIntArrayList> components = instance.findSubnetworks(filter);
         assertEquals(3, components.size());
         int removedEdges = instance.keepLargeNetworks(filter, components);
@@ -261,7 +261,7 @@ public class PrepareRoutingSubnetworksTest
         GraphHopperStorage g = createDeadEndUnvisitedNetworkStorage(em);
         assertEquals(11, g.getNodes());
 
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singleton(carFlagEncoder)).
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder)).
                 setMinOneWayNetworkSize(3);
         int removed = instance.removeDeadEndUnvisitedNetworks(new PrepEdgeFilter(carFlagEncoder));
 
@@ -313,7 +313,7 @@ public class PrepareRoutingSubnetworksTest
         g.edge(1, 2, 1, false);
         g.edge(2, 0, 1, false);
 
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singleton(carFlagEncoder)).
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder)).
                 setMinOneWayNetworkSize(2);
         int removedEdges = instance.removeDeadEndUnvisitedNetworks(new PrepEdgeFilter(carFlagEncoder));
         assertEquals(2, removedEdges);
@@ -337,7 +337,7 @@ public class PrepareRoutingSubnetworksTest
         g.edge(6, 7, 1, false);
         g.edge(7, 4, 1, false);
 
-        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singleton(carFlagEncoder)).
+        PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder)).
                 setMinOneWayNetworkSize(2).
                 setMinNetworkSize(4);
         instance.doWork();
