@@ -1,6 +1,5 @@
 package com.graphhopper.matrix;
 
-import com.graphhopper.matrix.algorithm.MatrixAlgorithm;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.util.ShortestWeighting;
 import com.graphhopper.routing.util.TraversalMode;
