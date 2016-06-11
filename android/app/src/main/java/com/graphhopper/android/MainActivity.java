@@ -69,7 +69,7 @@ public class MainActivity extends Activity
     private volatile boolean prepareInProgress = false;
     private volatile boolean shortestPathRunning = false;
     private String currentArea = "berlin";
-    private String fileListURL = "http://download2.graphhopper.com/public/maps/0.7/";
+    private String fileListURL = "http://download2.graphhopper.com/public/maps/" + Constants.getMajorVersion() + "/";
     private String prefixURL = fileListURL;
     private String downloadURL;
     private File mapsFolder;
@@ -225,13 +225,13 @@ public class MainActivity extends Activity
 
         chooseArea(localButton, localSpinner, nameList,
                 new MySpinnerListener()
-                {
-                    @Override
-                    public void onSelect( String selectedArea, String selectedFile )
-                    {
-                        initFiles(selectedArea);
-                    }
-                });
+        {
+            @Override
+            public void onSelect( String selectedArea, String selectedFile )
+            {
+                initFiles(selectedArea);
+            }
+        });
     }
 
     private void chooseAreaFromRemote()
@@ -366,13 +366,13 @@ public class MainActivity extends Activity
                 downloader.setTimeout(30000);
                 downloader.downloadAndUnzip(downloadURL, localFolder,
                         new ProgressListener()
-                        {
-                            @Override
-                            public void update( long val )
-                            {
-                                publishProgress((int) val);
-                            }
-                        });
+                {
+                    @Override
+                    public void update( long val )
+                    {
+                        publishProgress((int) val);
+                    }
+                });
                 return null;
             }
 
@@ -407,13 +407,13 @@ public class MainActivity extends Activity
 
         tileRendererLayer = new TileRendererLayer(tileCache, mapDataStore,
                 mapView.getModel().mapViewPosition, false, true, AndroidGraphicFactory.INSTANCE)
-                {
-                    @Override
-                    public boolean onLongPress( LatLong tapLatLong, Point layerXY, Point tapXY )
-                    {
-                        return onMapTap(tapLatLong, layerXY, tapXY);
-                    }
-                };
+        {
+            @Override
+            public boolean onLongPress( LatLong tapLatLong, Point layerXY, Point tapXY )
+            {
+                return onMapTap(tapLatLong, layerXY, tapXY);
+            }
+        };
         tileRendererLayer.setTextScale(1.5f);
         tileRendererLayer.setXmlRenderTheme(InternalRenderTheme.OSMARENDER);
         mapView.getModel().mapViewPosition.setMapPosition(new MapPosition(mapDataStore.boundingBox().getCenterPoint(), (byte) 15));

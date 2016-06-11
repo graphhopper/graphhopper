@@ -118,4 +118,16 @@ public class Constants
         }
         BUILD_DATE = buildDate;
     }
+
+    public static String getMajorVersion()
+    {
+        int firstIdx = VERSION.indexOf(".");
+        if (firstIdx < 0)
+            throw new IllegalStateException("Cannot extract major version from version " + VERSION);
+        
+        int sndIdx = VERSION.indexOf(".", firstIdx + 1);
+        if (sndIdx < 0)
+            return VERSION;
+        return VERSION.substring(0, sndIdx);
+    }
 }
