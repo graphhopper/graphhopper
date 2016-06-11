@@ -74,9 +74,8 @@ public class MainActivity extends Activity
     private String downloadURL;
     private File mapsFolder;
     private TileCache tileCache;
-    private TileRendererLayer tileRendererLayer;
 
-    protected boolean onMapTap( LatLong tapLatLong, Point layerXY, Point tapXY )
+    protected boolean onMapTap(LatLong tapLatLong)
     {
         if (!isReady())
             return false;
@@ -178,6 +177,7 @@ public class MainActivity extends Activity
 
         // Cleanup Mapsforge
         this.mapView.destroyAll();
+        AndroidGraphicFactory.clearResourceMemoryCache();
     }
 
     boolean isReady()
@@ -204,7 +204,7 @@ public class MainActivity extends Activity
 
     private void chooseAreaFromLocal()
     {
-        List<String> nameList = new ArrayList<String>();
+        List<String> nameList = new ArrayList<>();
         String[] files = mapsFolder.list(new FilenameFilter()
         {
             @Override
@@ -242,7 +242,7 @@ public class MainActivity extends Activity
                     throws Exception
             {
                 String[] lines = new AndroidDownloader().downloadAsString(fileListURL, false).split("\n");
-                List<String> res = new ArrayList<String>();
+                List<String> res = new ArrayList<>();
                 for (String str : lines)
                 {
                     int index = str.indexOf("href=\"");
@@ -298,9 +298,9 @@ public class MainActivity extends Activity
     }
 
     private void chooseArea( Button button, final Spinner spinner,
-                             List<String> nameList, final MySpinnerListener mylistener )
+                             List<String> nameList, final MySpinnerListener myListener )
     {
-        final Map<String, String> nameToFullName = new TreeMap<String, String>();
+        final Map<String, String> nameToFullName = new TreeMap<>();
         for (String fullName : nameList)
         {
             String tmp = Helper.pruneFileEnd(fullName);
@@ -312,7 +312,7 @@ public class MainActivity extends Activity
         }
         nameList.clear();
         nameList.addAll(nameToFullName.keySet());
-        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<String>(
+        ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_dropdown_item, nameList);
         spinner.setAdapter(spinnerArrayAdapter);
         button.setOnClickListener(new OnClickListener()
@@ -324,10 +324,10 @@ public class MainActivity extends Activity
                 if (o != null && o.toString().length() > 0 && !nameToFullName.isEmpty())
                 {
                     String area = o.toString();
-                    mylistener.onSelect(area, nameToFullName.get(area));
+                    myListener.onSelect(area, nameToFullName.get(area));
                 } else
                 {
-                    mylistener.onSelect(null, null);
+                    myListener.onSelect(null, null);
                 }
             }
         });
@@ -387,7 +387,7 @@ public class MainActivity extends Activity
                 dialog.hide();
                 if (hasError())
                 {
-                    String str = "An error happend while retrieving maps:" + getErrorMessage();
+                    String str = "An error happened while retrieving maps:" + getErrorMessage();
                     log(str, getError());
                     logUser(str);
                 } else
@@ -405,13 +405,13 @@ public class MainActivity extends Activity
 
         mapView.getLayerManager().getLayers().clear();
 
-        tileRendererLayer = new TileRendererLayer(tileCache, mapDataStore,
-                mapView.getModel().mapViewPosition, false, true, AndroidGraphicFactory.INSTANCE)
+        TileRendererLayer tileRendererLayer = new TileRendererLayer(tileCache, mapDataStore,
+                mapView.getModel().mapViewPosition, false, true, false, AndroidGraphicFactory.INSTANCE)
         {
             @Override
-            public boolean onLongPress( LatLong tapLatLong, Point layerXY, Point tapXY )
+            public boolean onLongPress(LatLong tapLatLong, Point layerXY, Point tapXY)
             {
-                return onMapTap(tapLatLong, layerXY, tapXY);
+                return onMapTap(tapLatLong);
             }
         };
         tileRendererLayer.setTextScale(1.5f);
@@ -441,7 +441,7 @@ public class MainActivity extends Activity
             {
                 if (hasError())
                 {
-                    logUser("An error happend while creating graph:"
+                    logUser("An error happened while creating graph:"
                             + getErrorMessage());
                 } else
                 {
@@ -469,7 +469,7 @@ public class MainActivity extends Activity
         });
         paintStroke.setStrokeWidth(8);
 
-        Polyline line = new Polyline((org.mapsforge.core.graphics.Paint) paintStroke, AndroidGraphicFactory.INSTANCE);
+        Polyline line = new Polyline(paintStroke, AndroidGraphicFactory.INSTANCE);
         List<LatLong> geoPoints = line.getLatLongs();
         PointList tmp = response.getPoints();
         for (int i = 0; i < response.getPoints().getSize(); i++)
@@ -480,7 +480,8 @@ public class MainActivity extends Activity
         return line;
     }
 
-    private Marker createMarker( LatLong p, int resource )
+    @SuppressWarnings("deprecation")
+    private Marker createMarker(LatLong p, int resource )
     {
         Drawable drawable = getResources().getDrawable(resource);
         Bitmap bitmap = AndroidGraphicFactory.convertToBitmap(drawable);
