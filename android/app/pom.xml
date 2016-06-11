@@ -29,18 +29,10 @@
     <dependencies>        
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper</artifactId>
+            <artifactId>graphhopper-core</artifactId>
             <version>${project.parent.version}</version>            
             <type>jar</type>
             <exclusions>
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>                    
-                </exclusion>
-                <exclusion>
-                    <groupId>org.openstreetmap.osmosis</groupId>
-                    <artifactId>osmosis-osm-binary</artifactId>                    
-                </exclusion>
                 <exclusion>
                     <groupId>org.apache.xmlgraphics</groupId>
                     <artifactId>xmlgraphics-commons</artifactId>

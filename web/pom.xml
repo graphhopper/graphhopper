@@ -22,7 +22,7 @@
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper</artifactId>
+            <artifactId>graphhopper-reader-osm</artifactId>
             <version>${project.parent.version}</version>            
         </dependency>
         

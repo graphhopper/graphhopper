@@ -17,9 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionAnnotation;
@@ -197,9 +197,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
 
         setCyclingNetworkPreference("deprecated", AVOID_AT_ALL_COSTS.getValue());
 
-        setAvoidSpeedLimit(71);
-
-        conditionalTagsInspector = new ConditionalTagsInspector(DateRangeParser.createCalendar(), restrictions, restrictedValues, intendedValues);
+        setAvoidSpeedLimit(71);       
     }
 
     @Override
@@ -236,7 +234,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long acceptWay( OSMWay way )
+    public long acceptWay( ReaderWay way )
     {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
@@ -275,7 +273,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues) && !conditionalTagsInspector.isRestrictedWayConditionallyPermitted(way))
+        if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
             return 0;
 
         String sacScale = way.getTag("sac_scale");
@@ -288,7 +286,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
                 return 0;
         }
 
-        if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))
+        if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
             return 0;
         else
             return acceptBit;
@@ -301,7 +299,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+    public long handleRelationTags( ReaderRelation relation, long oldRelationFlags )
     {
         int code = 0;
         if (relation.hasTag("route", "bicycle"))
@@ -325,12 +323,12 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
      * we can reach the maxspeed for bicycles in case that the road type speed is higher and not
      * just only 90%.
      * <p>
-     * @param way: needed to retrieve OSM tags
+     * @param way: needed to retrieve tags
      * @param speed: speed guessed e.g. from the road type or other tags
      * @return The assumed avererage speed.
      */
     @Override
-    protected double applyMaxSpeed( OSMWay way, double speed )
+    protected double applyMaxSpeed( ReaderWay way, double speed )
     {
         double maxSpeed = getMaxSpeed(way);
         if (maxSpeed >= 0)
@@ -345,7 +343,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long handleWayTags( OSMWay way, long allowed, long relationFlags )
+    public long handleWayTags( ReaderWay way, long allowed, long relationFlags )
     {
         if (!isAccept(allowed))
             return 0;
@@ -381,7 +379,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         return flags;
     }
 
-    int getSpeed( OSMWay way )
+    int getSpeed( ReaderWay way )
     {
         int speed = PUSHING_SECTION_SPEED;
         String highwayTag = way.getTag("highway");
@@ -491,9 +489,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
      * In this method we prefer cycleways or roads with designated bike access and avoid big roads
      * or roads with trams or pedestrian.
      * <p>
-     * @return new priority based on priorityFromRelation and on the tags in OSMWay.
+     * @return new priority based on priorityFromRelation and on the tags in ReaderWay.
      */
-    protected int handlePriority( OSMWay way, double wayTypeSpeed, int priorityFromRelation )
+    protected int handlePriority( ReaderWay way, double wayTypeSpeed, int priorityFromRelation )
     {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<Double, Integer>();
         if (priorityFromRelation == 0)
@@ -544,7 +542,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
      * @param weightToPrioMap associate a weight with every priority. This sorted map allows
      * subclasses to 'insert' more important priorities as well as overwrite determined priorities.
      */
-    void collect( OSMWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap )
+    void collect( ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap )
     {
         String service = way.getTag("service");
         String highway = way.getTag("highway");
@@ -613,7 +611,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
     /**
      * Handle surface and wayType encoding
      */
-    long handleBikeRelated( OSMWay way, long encoded, boolean partOfCycleRelation )
+    long handleBikeRelated( ReaderWay way, long encoded, boolean partOfCycleRelation )
     {
         String surfaceTag = way.getTag("surface");
         String highway = way.getTag("highway");
@@ -685,12 +683,12 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder
         }
     }
 
-    boolean isPushingSection( OSMWay way )
+    boolean isPushingSection( ReaderWay way )
     {
         return way.hasTag("highway", pushingSectionsHighways) || way.hasTag("railway", "platform") || way.hasTag("bicycle", "dismount");
     }
 
-    protected long handleSpeed( OSMWay way, double speed, long encoded )
+    protected long handleSpeed( ReaderWay way, double speed, long encoded )
     {
         encoded = setSpeed(encoded, speed);
 

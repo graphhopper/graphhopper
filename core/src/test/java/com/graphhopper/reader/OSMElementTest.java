@@ -17,6 +17,8 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.ReaderElement;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -32,7 +34,7 @@ public class OSMElementTest
     @Test
     public void testHasTag()
     {
-        OSMElement instance = new OSMWay(1);
+        ReaderElement instance = new ReaderWay(1);
         instance.setTag("surface", "something");
         assertTrue(instance.hasTag("surface", "now", "something"));
         assertFalse(instance.hasTag("surface", "now", "not"));
@@ -41,7 +43,7 @@ public class OSMElementTest
     @Test
     public void testSetTags()
     {
-        OSMElement instance = new OSMWay(1);
+        ReaderElement instance = new ReaderWay(1);
         Map<String, String> map = new HashMap<String, String>();
         map.put("test", "xy");
         instance.setTags(map);

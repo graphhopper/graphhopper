@@ -25,8 +25,8 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Rule;
 import org.junit.Test;
 
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.BitUtil;
 import org.junit.rules.ExpectedException;
 
@@ -131,19 +131,19 @@ public class EncodingManagerTest
             }
 
             @Override
-            public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+            public long handleRelationTags( ReaderRelation relation, long oldRelationFlags )
             {
                 return 0;
             }
 
             @Override
-            public long acceptWay( OSMWay way )
+            public long acceptWay( ReaderWay way )
             {
                 return 0;
             }
 
             @Override
-            public long handleWayTags( OSMWay way, long allowed, long relationFlags )
+            public long handleWayTags( ReaderWay way, long allowed, long relationFlags )
             {
                 return 0;
             }
@@ -157,9 +157,9 @@ public class EncodingManagerTest
     @Test
     public void testCombineRelations()
     {
-        OSMWay osmWay = new OSMWay(1);
+        ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
-        OSMRelation osmRel = new OSMRelation(1);
+        ReaderRelation osmRel = new ReaderRelation(1);
 
         BikeFlagEncoder defaultBike = new BikeFlagEncoder();
         BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder()
@@ -172,7 +172,7 @@ public class EncodingManagerTest
             }
 
             @Override
-            public long handleRelationTags( OSMRelation relation, long oldRelFlags )
+            public long handleRelationTags( ReaderRelation relation, long oldRelFlags )
             {
                 if (relation.hasTag("route", "bicycle"))
                     return relationCodeEncoder.setValue(0, 2);
@@ -180,7 +180,7 @@ public class EncodingManagerTest
             }
 
             @Override
-            protected int handlePriority( OSMWay way, double wayTypeSpeed, int priorityFromRelation )
+            protected int handlePriority( ReaderWay way, double wayTypeSpeed, int priorityFromRelation )
             {
                 return priorityFromRelation;
             }
@@ -207,11 +207,11 @@ public class EncodingManagerTest
     @Test
     public void testMixBikeTypesAndRelationCombination()
     {
-        OSMWay osmWay = new OSMWay(1);
+        ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
         osmWay.setTag("tracktype", "grade1");
 
-        OSMRelation osmRel = new OSMRelation(1);
+        ReaderRelation osmRel = new ReaderRelation(1);
 
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
         MountainBikeFlagEncoder mtbEncoder = new MountainBikeFlagEncoder();
@@ -252,7 +252,7 @@ public class EncodingManagerTest
     public void testCompatibilityBug()
     {
         EncodingManager manager2 = new EncodingManager(FlagEncoderFactory.DEFAULT, "bike2", 8);
-        OSMWay osmWay = new OSMWay(1);
+        ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "footway");
         osmWay.setTag("name", "test");
 

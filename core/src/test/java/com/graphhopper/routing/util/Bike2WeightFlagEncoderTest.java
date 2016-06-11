@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import org.junit.Test;
@@ -57,7 +57,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest
     {
         Graph graph = initExampleGraph();
         EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         encoder.applyWayTags(way, edge);
 
         long flags = edge.getFlags();
@@ -73,7 +73,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest
         Graph graph = initExampleGraph();
         EdgeIteratorState edge = GHUtility.getEdge(graph, 0, 1);
         long oldFlags = edge.getFlags();
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "steps");
         encoder.applyWayTags(way, edge);
 
@@ -99,7 +99,7 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest
                 new RAMDirectory(), em, true, new GraphExtension.NoOpExtension());
         graph.create(100);
 
-        OSMWay way = new OSMWay(0);
+        ReaderWay way = new ReaderWay(0);
         way.setTag("route", "ferry");
 
         long includeWay = em.acceptWay(way);
