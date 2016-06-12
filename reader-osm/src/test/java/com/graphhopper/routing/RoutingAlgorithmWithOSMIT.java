@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.TestAlgoCollector;
 import com.graphhopper.GraphHopper;
+import static com.graphhopper.GraphHopperIT.DIR;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
@@ -48,8 +49,7 @@ import org.junit.Test;
  * @author Peter Karich
  */
 public class RoutingAlgorithmWithOSMIT
-{
-    private static final String DIR = "../core/files/";
+{    
     TestAlgoCollector testCollector;
 
     @Before

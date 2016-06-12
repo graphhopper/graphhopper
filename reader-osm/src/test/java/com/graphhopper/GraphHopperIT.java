@@ -39,7 +39,7 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperIT
 {
-    private static final String DIR = "../core/files";
+    public static final String DIR = "../core/files";
     private static GraphHopper hopper;
     private static final String graphFileFoot = "target/graphhopperIT-foot";
     private static final String osmFile = DIR + "/monaco.osm.gz";
@@ -331,7 +331,7 @@ public class GraphHopperIT
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(importVehicles));
 
-        tmpHopper.setElevationProvider(new SRTMProvider().setCacheDir(new File("./files/")));
+        tmpHopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
         tmpHopper.importOrLoad();
 
         GHResponse rsp = tmpHopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).

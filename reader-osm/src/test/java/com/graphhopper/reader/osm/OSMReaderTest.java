@@ -40,6 +40,7 @@ import org.junit.Test;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
+import com.graphhopper.GraphHopperIT;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
@@ -714,7 +715,7 @@ public class OSMReaderTest
         GraphHopper hopper = new GraphHopperTest("test-osm5.xml");
         // get N10E046.hgt.zip
         ElevationProvider provider = new SRTMProvider();
-        provider.setCacheDir(new File("../core/files"));
+        provider.setCacheDir(new File(GraphHopperIT.DIR));
         hopper.setElevationProvider(provider);
         hopper.importOrLoad();
 
