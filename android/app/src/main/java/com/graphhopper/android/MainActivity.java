@@ -384,7 +384,7 @@ public class MainActivity extends Activity
 
             protected void onPostExecute( Object _ignore )
             {
-                dialog.hide();
+                dialog.dismiss();
                 if (hasError())
                 {
                     String str = "An error happened while retrieving maps:" + getErrorMessage();
