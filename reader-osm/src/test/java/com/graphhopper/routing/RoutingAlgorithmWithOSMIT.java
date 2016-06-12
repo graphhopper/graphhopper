@@ -619,7 +619,7 @@ public class RoutingAlgorithmWithOSMIT
                 setStoreOnFlush(true).
                 setEncodingManager(encodingManager).setCHEnabled(false).
                 setWayPointMaxDistance(0).
-                setDataReaderFile(DIR + "monaco.osm.gz").
+                setDataReaderFile(DIR + "/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).
                 importOrLoad();
         final Graph g = hopper.getGraphHopperStorage();
