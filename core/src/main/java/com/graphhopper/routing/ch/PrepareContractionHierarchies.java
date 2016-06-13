@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -19,14 +19,10 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.util.AbstractAlgoPreparation;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.LevelEdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
+import static com.graphhopper.util.Parameters.Algorithms.*;
 
 import java.util.*;
 
@@ -621,8 +617,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
                 double existingDistSum = v_u_dist + outgoingEdges.getDistance();
                 prepareAlgo.setWeightLimit(existingDirectWeight);
-                prepareAlgo.setLimitVisitedNodes((int) meanDegree * 100)
-                        .setEdgeFilter(ignoreNodeFilter.setAvoidNode(sch.getNode()));
+                prepareAlgo.setMaxVisitedNodes((int) meanDegree * 100);
+                prepareAlgo.setEdgeFilter(ignoreNodeFilter.setAvoidNode(sch.getNode()));
 
                 dijkstraSW.start();
                 dijkstraCount++;
@@ -817,10 +813,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     public RoutingAlgorithm createAlgo( Graph graph, AlgorithmOptions opts )
     {
         AbstractBidirAlgo algo;
-        if (AlgorithmOptions.ASTAR_BI.equals(opts.getAlgorithm()))
+        if (ASTAR_BI.equals(opts.getAlgorithm()))
         {
             algo = createAStarBidirection(graph);
-        } else if (AlgorithmOptions.DIJKSTRA_BI.equals(opts.getAlgorithm()))
+        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm()))
         {
             algo = createDijkstraBidirection(graph);
         } else
@@ -828,6 +824,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             throw new UnsupportedOperationException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies");
         }
 
+        algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
         algo.setEdgeFilter(levelFilter);
         return algo;
     }
@@ -851,12 +848,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
                         // changed finish condition for CH
                         return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
-                    }
-
-                    @Override
-                    protected boolean isWeightLimitExceeded()
-                    {
-                        return currFrom.weight > weightLimit && currTo.weight > weightLimit;
                     }
 
                     @Override
@@ -903,12 +894,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
 
             @Override
-            protected boolean isWeightLimitExceeded()
-            {
-                return currFrom.weight > weightLimit && currTo.weight > weightLimit;
-            }
-
-            @Override
             protected Path createAndInitPath()
             {
                 bestPath = new Path4CH(graph, graph.getBaseGraph(), flagEncoder);
@@ -929,7 +914,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         };
     }
 
-    class Shortcut
+    static class Shortcut
     {
         int from;
         int to;

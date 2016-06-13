@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -158,6 +158,20 @@ public abstract class AbstractBikeFlagEncoderTester
         assertTrue(encoder.acceptWay(way) > 0);
 
         way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("access", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+        way.setTag("bicycle", "dismount");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("vehicle", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+        way.setTag("bicycle", "dismount");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
         way.setTag("route", "ferry");
         assertTrue(encoder.acceptWay(way) > 0);
         way.setTag("bicycle", "no");
@@ -193,29 +207,22 @@ public abstract class AbstractBikeFlagEncoderTester
     {
         OSMWay way = new OSMWay(1);
         way.setTag("highway", "secondary");
-        way.setTag("railway", "rail");
-        // disallow rail
-        assertEquals(0, encoder.acceptWay(way));
+        way.setTag("railway", "rail");        
+        assertTrue(encoder.acceptWay(way) > 0);
 
         way = new OSMWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "station");
-        // disallow stations
-        assertEquals(0, encoder.acceptWay(way));
+        assertTrue(encoder.acceptWay(way) > 0);
 
         way = new OSMWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "station");
-        way.setTag("bicycle", "yes");
-        // allow stations if explicitely tagged
-        assertNotEquals(0, encoder.acceptWay(way));
-
-        way = new OSMWay(1);
-        way.setTag("highway", "secondary");
-        way.setTag("railway", "station");
-        way.setTag("bicycle", "no");
-        // disallow
-        assertEquals(0, encoder.acceptWay(way));
+        way.setTag("bicycle", "yes");        
+        assertTrue(encoder.acceptWay(way) > 0);
+        
+        way.setTag("bicycle", "no");        
+        assertTrue(encoder.acceptWay(way) == 0);
 
         way = new OSMWay(1);
         way.setTag("railway", "platform");
@@ -329,7 +336,7 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("bicycle", "yes");
         way.setTag("surface", "grass");
         wayType = getWayTypeFromFlags(way);
-        assertEquals("way, unpaved", wayType);
+        assertEquals("small way, unpaved", wayType);
 
         way.setTag("bicycle", "designated");
         wayType = getWayTypeFromFlags(way);
@@ -340,7 +347,7 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("bicycle", "yes");
         way.setTag("surface", "grass");
         wayType = getWayTypeFromFlags(way);
-        assertEquals("way, unpaved", wayType);
+        assertEquals("small way, unpaved", wayType);
 
         way.clearTags();
         way.setTag("railway", "platform");
@@ -352,6 +359,13 @@ public abstract class AbstractBikeFlagEncoderTester
         way.setTag("railway", "platform");
         wayType = getWayTypeFromFlags(way);
         assertEquals("get off the bike, unpaved", wayType);
+
+        way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("bicycle", "dismount");
+        wayType = getWayTypeFromFlags(way);
+        assertEquals("get off the bike", wayType);
+
     }
 
     @Test

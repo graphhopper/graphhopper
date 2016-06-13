@@ -4,8 +4,16 @@ var mapLayer = require('./map.js');
 
 var dataToHtml = function (data, query) {
     var element = "";
-    if (data.name)
+    if (data.name) {
         element += "<div class='nameseg'>" + formatTools.formatValue(data.name, query) + "</div>";
+    } else if (data.street) {
+        var streetStr = data.street;
+        if (data.housenumber)
+            streetStr = formatTools.insComma(streetStr, data.housenumber);
+
+        element += "<div class='nameseg'>" + formatTools.formatValue(streetStr, query) + "</div>";
+    }
+
     var addStr = "";
     if (data.postcode)
         addStr = data.postcode;
@@ -29,8 +37,13 @@ var dataToHtml = function (data, query) {
 
 var dataToText = function (data) {
     var text = "";
-    if (data.name)
-        text += data.name;
+    if (data.name) {
+        text = data.name;
+    } else if (data.street) {
+        text = data.street;
+        if (data.housenumber)
+            text = formatTools.insComma(text, data.housenumber);
+    }
 
     if (data.postcode)
         text = formatTools.insComma(text, data.postcode);

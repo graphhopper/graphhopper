@@ -10,13 +10,13 @@ for all vehicles - making also the distances a bit more precise.
 
 The default cache directory (/tmp/srtm) will be used. For large areas it is highly recommended to 
 use a SSD disc, thus you need to specify the cache directory:
-`graph.elevation.cachedir=/myssd/ele_cache/`
+`graph.elevation.cache_dir=/myssd/ele_cache/`
 
 ## What to download and where to store it? 
 
 All should work automatically. Another setting is to specify the location where the files are 
 downloaded - e.g. if the servers are not reachable, then you set:
-`graph.elevation.baseurl`
+`graph.elevation.base_url`
 
 E.g. for CGIAR there are two URLs you can use: `http://droppr.org/srtm/v4.1/6_5x5_TIFs` and
 `http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff/`

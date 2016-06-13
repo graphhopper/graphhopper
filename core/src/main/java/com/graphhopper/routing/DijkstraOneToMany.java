@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
 import gnu.trove.list.array.TIntArrayList;
 
 import java.util.Arrays;
@@ -45,9 +46,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     private IntDoubleBinHeap heap;
     private int visitedNodes;
     private boolean doClear = true;
-    private int limitVisitedNodes = Integer.MAX_VALUE;
     private int endNode;
     private int currNode, fromNode, to;
+    private double weightLimit = Double.MAX_VALUE;
 
     public DijkstraOneToMany( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
@@ -67,12 +68,6 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         changedNodes = new TIntArrayListWithCap();
     }
 
-    public DijkstraOneToMany setLimitVisitedNodes( int nodes )
-    {
-        this.limitVisitedNodes = nodes;
-        return this;
-    }
-
     @Override
     public Path calcPath( int from, int to )
     {
@@ -88,6 +83,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         if (endNode >= 0)
             p.setWeight(weights[endNode]);
         p.setFromNode(fromNode);
+        // return 'not found' if invalid endNode or limit reached
         if (endNode < 0 || isWeightLimitExceeded())
             return p;
 
@@ -142,15 +138,22 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             if (parentNode != EMPTY_PARENT && weights[to] <= weights[currNode])
                 return to;
 
-            if (heap.isEmpty() || visitedNodes >= limitVisitedNodes)
+            if (heap.isEmpty() || isMaxVisitedNodesExceeded())
                 return NOT_FOUND;
 
             currNode = heap.poll_element();
         }
 
         visitedNodes = 0;
+
+        // we call 'finished' before heap.peek_element but this would add unnecessary overhead for this special case so we do it outside of the loop
         if (finished())
+        {
+            // then we need a small workaround for special cases see #707
+            if (heap.isEmpty())
+                doClear = true;
             return currNode;
+        }
 
         while (true)
         {
@@ -186,7 +189,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                 }
             }
 
-            if (heap.isEmpty() || visitedNodes >= limitVisitedNodes || isWeightLimitExceeded())
+            if (heap.isEmpty() || isMaxVisitedNodesExceeded() || isWeightLimitExceeded())
                 return NOT_FOUND;
 
             // calling just peek and not poll is important if the next query is cached
@@ -204,7 +207,11 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         return currNode == to;
     }
 
-    @Override
+    public void setWeightLimit( double weightLimit )
+    {
+        this.weightLimit = weightLimit;
+    }
+
     protected boolean isWeightLimitExceeded()
     {
         return weights[currNode] > weightLimit;
@@ -227,7 +234,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     @Override
     public String getName()
     {
-        return AlgorithmOptions.DIJKSTRA_ONE_TO_MANY;
+        return Parameters.Algorithms.DIJKSTRA_ONE_TO_MANY;
     }
 
     /**
@@ -244,6 +251,10 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
 
     private static class TIntArrayListWithCap extends TIntArrayList
     {
+        public TIntArrayListWithCap()
+        {
+        }
+
         public int getCapacity()
         {
             return _data.length;

@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -18,12 +18,13 @@
 package com.graphhopper;
 
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.PointList;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Wrapper to simplify output of GraphHopper.
+ * Wrapper containing path and error output of GraphHopper.
  * <p>
  * @author Peter Karich
  */
@@ -31,37 +32,43 @@ public class GHResponse
 {
     private String debugInfo = "";
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
-    private final PMap hintsMap = new PMap();
-    private final List<AltResponse> alternatives = new ArrayList<AltResponse>(5);
+    private final PMap hintsMap = new PMap();    
+    private final List<PathWrapper> pathWrappers = new ArrayList<PathWrapper>(5);
 
     public GHResponse()
     {
     }
 
-    public void addAlternative( AltResponse altResponse )
+    public void add( PathWrapper altResponse )
     {
-        alternatives.add(altResponse);
+        pathWrappers.add(altResponse);
     }
 
     /**
-     * Returns the first response.
+     * Returns the best path.
      */
-    public AltResponse getFirst()
+    public PathWrapper getBest()
     {
-        if (alternatives.isEmpty())
-            throw new RuntimeException("Cannot fetch first alternative if list is empty");
+        if (pathWrappers.isEmpty())
+            throw new RuntimeException("Cannot fetch best response if list is empty");
 
-        return alternatives.get(0);
+        return pathWrappers.get(0);
     }
 
-    public List<AltResponse> getAlternatives()
+    /**
+     * This method returns the best path as well as all alternatives.
+     */
+    public List<PathWrapper> getAll()
     {
-        return alternatives;
+        return pathWrappers;
     }
 
+    /**
+     * This method returns true if there are alternative paths available besides the best.
+     */
     public boolean hasAlternatives()
     {
-        return !alternatives.isEmpty();
+        return pathWrappers.size() > 1;
     }
 
     public void addDebugInfo( String debugInfo )
@@ -78,7 +85,7 @@ public class GHResponse
     public String getDebugInfo()
     {
         String str = debugInfo;
-        for (AltResponse ar : alternatives)
+        for (PathWrapper ar : pathWrappers)
         {
             if (!str.isEmpty())
                 str += "; ";
@@ -89,27 +96,15 @@ public class GHResponse
     }
 
     /**
-     * This method returns true only if the response itself is errornous.
-     * <p/>
-     * @see #hasErrors()
-     */
-    public boolean hasRawErrors()
-    {
-        return !errors.isEmpty();
-    }
-
-    /**
-     * This method returns true if no alternative is available, if one of these has an error or if
-     * the response itself is errornous.
-     * <p/>
-     * @see #hasRawErrors()
+     * This method returns true if one of the paths has an error or if the response itself is
+     * errornous.
      */
     public boolean hasErrors()
     {
-        if (hasRawErrors() || alternatives.isEmpty())
+        if (!errors.isEmpty())
             return true;
 
-        for (AltResponse ar : alternatives)
+        for (PathWrapper ar : pathWrappers)
         {
             if (ar.hasErrors())
                 return true;
@@ -119,19 +114,16 @@ public class GHResponse
     }
 
     /**
-     * This method returns all the explicitely added errors and the errors of all alternatives.
+     * This method returns all the explicitely added errors and the errors of all paths.
      */
     public List<Throwable> getErrors()
     {
         List<Throwable> list = new ArrayList<Throwable>();
         list.addAll(errors);
-        if (alternatives.isEmpty())
-            list.add(new IllegalStateException("No alternative existent"));
-        else
-            for (AltResponse ar : alternatives)
-            {
-                list.addAll(ar.getErrors());
-            }
+        for (PathWrapper ar : pathWrappers)
+        {
+            list.addAll(ar.getErrors());
+        }
         return list;
     }
 
@@ -151,13 +143,13 @@ public class GHResponse
     public String toString()
     {
         String str = "";
-        for (AltResponse a : alternatives)
+        for (PathWrapper a : pathWrappers)
         {
             str += "; " + a.toString();
         }
 
-        if (alternatives.isEmpty())
-            str = "no alternatives";
+        if (pathWrappers.isEmpty())
+            str = "no paths";
 
         if (!errors.isEmpty())
             str += ", main errors: " + errors.toString();

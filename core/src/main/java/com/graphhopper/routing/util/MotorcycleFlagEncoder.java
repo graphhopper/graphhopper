@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -52,12 +53,12 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     public MotorcycleFlagEncoder( PMap properties )
     {
         this(
-                (int) properties.getLong("speedBits", 5),
-                properties.getDouble("speedFactor", 5),
-                properties.getBool("turnCosts", false) ? 1 : 0
+                (int) properties.getLong("speed_bits", 5),
+                properties.getDouble("speed_factor", 5),
+                properties.getBool("turn_costs", false) ? 1 : 0
         );
         this.properties = properties;
-        this.setBlockFords(properties.getBool("blockFords", true));
+        this.setBlockFords(properties.getBool("block_fords", true));
     }
 
     public MotorcycleFlagEncoder( String propertiesStr )
@@ -71,6 +72,9 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         restrictions.remove("motorcar");
         //  moped, mofa
         restrictions.add("motorcycle");
+
+        absoluteBarriers.remove("bus_trap");
+        absoluteBarriers.remove("sump_buster");
 
         trackTypeSpeedMap.clear();
         defaultSpeedMap.clear();
@@ -118,7 +122,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         // forestry stuff
         defaultSpeedMap.put("track", 15);
 
-        conditionalTagsInspector = new ConditionalTagsInspector(restrictions, restrictedValues, intendedValues);
+        conditionalTagsInspector = new ConditionalTagsInspector(DateRangeParser.createCalendar(), restrictions, restrictedValues, intendedValues);
     }
 
     @Override
@@ -192,10 +196,6 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return 0;
 
-        // do not drive cars over railways (sometimes incorrectly mapped!)
-        if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
-            return 0;
-
         if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))
             return 0;
         else
@@ -208,7 +208,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         if (!isAccept(allowed))
             return 0;
 
-        long encoded = 0;
+        long flags = 0;
         if (!isFerry(allowed))
         {
             // get assumed speed from highway type
@@ -225,39 +225,41 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
 
             boolean isRoundabout = way.hasTag("junction", "roundabout");
             if (isRoundabout)
-                encoded = setBool(0, K_ROUNDABOUT, true);
+                flags = setBool(0, K_ROUNDABOUT, true);
 
             if (way.hasTag("oneway", oneways) || isRoundabout)
             {
                 if (way.hasTag("oneway", "-1"))
                 {
-                    encoded = setReverseSpeed(encoded, speed);
-                    encoded |= backwardBit;
+                    flags = setReverseSpeed(flags, speed);
+                    flags |= backwardBit;
                 } else
                 {
-                    encoded = setSpeed(encoded, speed);
-                    encoded |= forwardBit;
+                    flags = setSpeed(flags, speed);
+                    flags |= forwardBit;
                 }
             } else
             {
-                encoded = setSpeed(encoded, speed);
-                encoded = setReverseSpeed(encoded, speed);
-                encoded |= directionBitMask;
+                flags = setSpeed(flags, speed);
+                flags = setReverseSpeed(flags, speed);
+                flags |= directionBitMask;
             }
 
         } else
         {
-            encoded = handleFerryTags(way, defaultSpeedMap.get("living_street"), defaultSpeedMap.get("service"), defaultSpeedMap.get("residential"));
-            encoded |= directionBitMask;
+            double ferrySpeed = getFerrySpeed(way, defaultSpeedMap.get("living_street"), defaultSpeedMap.get("service"), defaultSpeedMap.get("residential"));
+            flags = setSpeed(flags, ferrySpeed);
+            flags = setReverseSpeed(flags, ferrySpeed);
+            flags |= directionBitMask;
         }
 
         // relations are not yet stored -> see BikeCommonFlagEncoder.defineRelationBits how to do this
-        encoded = priorityWayEncoder.setValue(encoded, handlePriority(way, priorityFromRelation));
+        flags = priorityWayEncoder.setValue(flags, handlePriority(way, priorityFromRelation));
 
         // Set the curvature to the Maximum
-        encoded = curvatureEncoder.setValue(encoded, 10);
+        flags = curvatureEncoder.setValue(flags, 10);
 
-        return encoded;
+        return flags;
     }
 
     @Override
@@ -384,8 +386,9 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
 
     /**
      * A really small bendiness or a bendiness greater than 1 indicates an error in the calculation.
-     * Just ignore them. We use bendiness > 1.2 since the beelineDistance is only approximated,
-     * therefore it can happen on straight roads, that the beeline is longer than the road.
+     * Just ignore them. We use bendiness greater 1.2 since the beelineDistance is only
+     * approximated, therefore it can happen on straight roads, that the beeline is longer than the
+     * road.
      */
     protected double correctErrors( double bendiness )
     {

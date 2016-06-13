@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -68,8 +68,8 @@ public class AStarBidirection extends AbstractBidirAlgo
     public AStarBidirection( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
     {
         super(graph, encoder, weighting, tMode);
-        int nodes = Math.max(20, graph.getNodes());
-        initCollections(nodes);
+        int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
+        initCollections(size);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
         defaultApprox.setDistanceCalc(new DistancePlaneProjection());
         setApproximation(defaultApprox);
@@ -77,11 +77,11 @@ public class AStarBidirection extends AbstractBidirAlgo
 
     protected void initCollections( int size )
     {
-        prioQueueOpenSetFrom = new PriorityQueue<AStarEntry>(size / 10);
-        bestWeightMapFrom = new TIntObjectHashMap<AStarEntry>(size / 10);
+        prioQueueOpenSetFrom = new PriorityQueue<AStarEntry>(size);
+        bestWeightMapFrom = new TIntObjectHashMap<AStarEntry>(size);
 
-        prioQueueOpenSetTo = new PriorityQueue<AStarEntry>(size / 10);
-        bestWeightMapTo = new TIntObjectHashMap<AStarEntry>(size / 10);
+        prioQueueOpenSetTo = new PriorityQueue<AStarEntry>(size);
+        bestWeightMapTo = new TIntObjectHashMap<AStarEntry>(size);
     }
 
     /**
@@ -94,7 +94,7 @@ public class AStarBidirection extends AbstractBidirAlgo
     }
 
     @Override
-    protected SPTEntry createEdgeEntry( int node, double weight )
+    protected SPTEntry createSPTEntry( int node, double weight )
     {
         throw new IllegalStateException("use AStarEdge constructor directly");
     }
@@ -125,7 +125,7 @@ public class AStarBidirection extends AbstractBidirAlgo
             if (currTo != null && currTo.adjNode == from)
             {
                 // special case of identical start and end
-                bestPath.edgeEntry = currFrom;
+                bestPath.sptEntry = currFrom;
                 bestPath.edgeTo = currTo;
                 finishedFrom = true;
                 finishedTo = true;
@@ -159,7 +159,7 @@ public class AStarBidirection extends AbstractBidirAlgo
             if (currFrom != null && currFrom.adjNode == to)
             {
                 // special case of identical start and end
-                bestPath.edgeEntry = currFrom;
+                bestPath.sptEntry = currFrom;
                 bestPath.edgeTo = currTo;
                 finishedFrom = true;
                 finishedTo = true;
@@ -203,12 +203,6 @@ public class AStarBidirection extends AbstractBidirAlgo
 
         // using 'weight' is important and correct here e.g. approximation can get negative and smaller than 'weightOfVisitedPath'
         return currFrom.weight + currTo.weight >= bestPath.getWeight();
-    }
-
-    @Override
-    protected boolean isWeightLimitExceeded()
-    {
-        return currFrom.weight + currTo.weight > weightLimit;
     }
 
     @Override
@@ -314,7 +308,7 @@ public class AStarBidirection extends AbstractBidirAlgo
         if (newWeight < bestPath.getWeight())
         {
             bestPath.setSwitchToFrom(reverse);
-            bestPath.edgeEntry = entryCurrent;
+            bestPath.sptEntry = entryCurrent;
             bestPath.edgeTo = entryOther;
             bestPath.setWeight(newWeight);
         }
@@ -323,6 +317,6 @@ public class AStarBidirection extends AbstractBidirAlgo
     @Override
     public String getName()
     {
-        return AlgorithmOptions.ASTAR_BI;
+        return Parameters.Algorithms.ASTAR_BI;
     }
 }

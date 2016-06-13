@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -17,12 +17,12 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.AltResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.WeightingMap;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import org.json.JSONObject;
@@ -79,18 +79,19 @@ public class GraphHopperServlet extends GHBaseServlet
         String weighting = getParam(httpReq, "weighting", "fastest");
         String algoStr = getParam(httpReq, "algorithm", "");
         String localeStr = getParam(httpReq, "locale", "en");
+
+        StopWatch sw = new StopWatch().start();
+        List<Throwable> errorList = new ArrayList<Throwable>();
         List<Double> favoredHeadings = Collections.EMPTY_LIST;
         try
         {
             favoredHeadings = getDoubleParamList(httpReq, "heading");
 
-        } catch (java.lang.NumberFormatException e)
+        } catch (NumberFormatException e)
         {
-            throw new RuntimeException(e);
+            errorList.add(new IllegalArgumentException("heading list in from format: " + e.getMessage()));
         }
 
-        StopWatch sw = new StopWatch().start();
-        List<Throwable> errorList = new ArrayList<Throwable>();
         if (!hopper.getEncodingManager().supports(vehicleStr))
         {
             errorList.add(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
@@ -145,7 +146,7 @@ public class GraphHopperServlet extends GHBaseServlet
                 + took + ", " + algoStr + ", " + weighting + ", " + vehicleStr;
         httpRes.setHeader("X-GH-Took", "" + Math.round(took * 1000));
 
-        int alternatives = ghRsp.getAlternatives().size();
+        int alternatives = ghRsp.getAll().size();
         if (writeGPX && alternatives > 1)
             ghRsp.addError(new IllegalAccessException("Alternatives are currently not supported for GPX"));
 
@@ -154,13 +155,13 @@ public class GraphHopperServlet extends GHBaseServlet
             logger.error(logStr + ", errors:" + ghRsp.getErrors());
         } else
         {
-            AltResponse altRsp0 = ghRsp.getFirst();
+            PathWrapper altRsp0 = ghRsp.getBest();
             logger.info(logStr + ", alternatives: " + alternatives
                     + ", distance0: " + altRsp0.getDistance()
                     + ", time0: " + Math.round(altRsp0.getTime() / 60000f) + "min"
                     + ", points0: " + altRsp0.getPoints().getSize()
                     + ", debugInfo: " + ghRsp.getDebugInfo());
-        }               
+        }
 
         if (writeGPX)
         {
@@ -171,14 +172,18 @@ public class GraphHopperServlet extends GHBaseServlet
             } else
             {
                 // no error => we can now safely call getFirst
-                String xml = createGPXString(httpReq, httpRes, ghRsp.getFirst());
+                String xml = createGPXString(httpReq, httpRes, ghRsp.getBest());
                 writeResponse(httpRes, xml);
             }
         } else
         {
             Map<String, Object> map = routeSerializer.toJSON(ghRsp, calcPoints, pointsEncoded,
                     enableElevation, enableInstructions);
-            
+
+            Object infoMap = map.get("info");
+            if (infoMap != null)
+                ((Map) infoMap).put("took", Math.round(took * 1000));
+
             if (ghRsp.hasErrors())
                 writeJsonError(httpRes, SC_BAD_REQUEST, new JSONObject(map));
             else
@@ -186,7 +191,7 @@ public class GraphHopperServlet extends GHBaseServlet
         }
     }
 
-    protected String createGPXString( HttpServletRequest req, HttpServletResponse res, AltResponse rsp )
+    protected String createGPXString( HttpServletRequest req, HttpServletResponse res, PathWrapper rsp )
     {
         boolean includeElevation = getBooleanParam(req, "elevation", false);
         // default to false for the route part in next API version, see #437
@@ -194,7 +199,11 @@ public class GraphHopperServlet extends GHBaseServlet
         boolean withTrack = getBooleanParam(req, "gpx.track", true);
         boolean withWayPoints = getBooleanParam(req, "gpx.waypoints", false);
         res.setCharacterEncoding("UTF-8");
-        res.setContentType("application/xml");
+        if ("application/xml".equals(req.getContentType()))
+            res.setContentType("application/xml");
+        else
+            res.setContentType("application/gpx+xml");
+
         String trackName = getParam(req, "trackname", "GraphHopper Track");
         res.setHeader("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
         long time = getLongParam(req, "millis", System.currentTimeMillis());
@@ -267,7 +276,7 @@ public class GraphHopperServlet extends GHBaseServlet
 
     protected void initHints( GHRequest request, Map<String, String[]> parameterMap )
     {
-        WeightingMap m = request.getHints();
+        HintsMap m = request.getHints();
         for (Entry<String, String[]> e : parameterMap.entrySet())
         {
             if (e.getValue().length == 1)

@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -17,18 +17,19 @@
  */
 package com.graphhopper.tools;
 
-import com.graphhopper.AltResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
+import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.*;
+import com.graphhopper.util.Parameters.Algorithms;
+import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.shapes.BBox;
 
 import java.io.FileWriter;
@@ -60,49 +61,11 @@ public class Measurement
     private long seed;
     private int maxNode;
 
-    class MeasureHopper extends GraphHopper
-    {
-        @Override
-        protected void prepare()
-        {
-            // do nothing as we need normal graph first. in second step do it explicitely
-        }
-
-        @Override
-        protected void ensureNotLoaded()
-        {
-            // skip check. we know what we are doing
-        }
-
-        public void doPostProcessing( Weighting w )
-        {
-            // re-create index to avoid bug as pickNode in locationIndex.prepare could be wrong while indexing if level is not taken into account and assumed to be 0 for pre-initialized graph
-            StopWatch sw = new StopWatch().start();
-
-            // let algo routing factory convert simple to CH preparation
-            putAlgorithmFactory(w, null);
-            createCHPreparations();
-            super.prepare();
-
-            setLocationIndex(createLocationIndex(new RAMDirectory()));
-            put("prepare.time", sw.stop().getTime());
-            int edges = getGraphHopperStorage().getAllEdges().getMaxId();
-            int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, w).getAllEdges().getMaxId();
-            put("prepare.shortcuts", edgesAndShortcuts - edges);
-        }
-    }
-
     // creates properties file in the format key=value
     // Every value is one y-value in a separate diagram with an identical x-value for every Measurement.start call
     void start( CmdArgs args )
     {
-        long importTook = args.getLong("graph.importTime", -1);
-        put("graph.importTime", importTook);
-
         String graphLocation = args.get("graph.location", "");
-        if (Helper.isEmpty(graphLocation))
-            throw new IllegalStateException("no graph.location specified");
-
         String propLocation = args.get("measurement.location", "");
         if (Helper.isEmpty(propLocation))
             propLocation = "measurement" + new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date()) + ".properties";
@@ -111,43 +74,62 @@ public class Measurement
         String gitCommit = args.get("measurement.gitinfo", "");
         int count = args.getInt("measurement.count", 5000);
 
-        MeasureHopper hopper = new MeasureHopper();
-        hopper.forDesktop();
-        if (!hopper.load(graphLocation))
-            throw new IllegalStateException("Cannot load existing graph at " + graphLocation);
+        GraphHopper hopper = new GraphHopper()
+        {
+            @Override
+            protected void prepare()
+            {
+                StopWatch sw = new StopWatch().start();
+                super.prepare();
+                put("prepare.time", sw.stop().getTime());
+                int edges = getGraphHopperStorage().getAllEdges().getMaxId();
+                Weighting weighting = getCHFactoryDecorator().getWeightings().get(0);
+                int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().getMaxId();
+                put("prepare.shortcuts", edgesAndShortcuts - edges);
+            }
+
+            @Override
+            protected DataReader importData() throws IOException
+            {
+                StopWatch sw = new StopWatch().start();
+                DataReader dr = super.importData();
+                put("graph.import_time", sw.stop().getSeconds());
+                return dr;
+            }
+        };
+
+        hopper.init(args).
+                forDesktop();        
+        hopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        hopper.importOrLoad();
 
         GraphHopperStorage g = hopper.getGraphHopperStorage();
-        if ("true".equals(g.getProperties().get("prepare.done")))
-            throw new IllegalStateException("Graph has to be unprepared but wasn't!");
+//        if ("true".equals(g.getProperties().get("prepare.done")))
+//            throw new IllegalStateException("Graph has to be unprepared but wasn't!");
 
-        String chWeighting = args.get("prepare.chWeighting", "fastest");
-        String vehicleStr = args.get("graph.flagEncoders", "car");
+        String vehicleStr = args.get("graph.flag_encoders", "car");
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicleStr);
-        Weighting weighting = hopper.getWeightingForCH(new WeightingMap(chWeighting), encoder);
+        Weighting weighting = hopper.getCHFactoryDecorator().getWeightings().get(0);
+
         StopWatch sw = new StopWatch().start();
         try
         {
             maxNode = g.getNodes();
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
-            printMiscUnitPerfTests(false, g, encoder, count * 100, allowedEdges);
+            boolean isCH = false;
+            printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
 
-            // Route via dijkstrabi. Normal routing takes a lot of time => smaller query number than CH
-            // => values are not really comparable to routingCH as e.g. the mean distance etc is different            
-            hopper.setCHEnable(false);
-            hopper.putAlgorithmFactory(weighting, new RoutingAlgorithmFactorySimple());
-            printTimeOfRouteQuery(hopper, count / 20, "routing", vehicleStr, true);
+            printTimeOfRouteQuery(hopper, isCH, count / 20, "routing", vehicleStr, true);
 
             System.gc();
 
-            // route via CH. do preparation before                        
-            hopper.setCHEnable(true);
-            hopper.doPostProcessing(weighting);
             CHGraph lg = g.getGraph(CHGraph.class, weighting);
             fillAllowedEdges(lg.getAllEdges(), allowedEdges);
-            printMiscUnitPerfTests(true, lg, encoder, count * 100, allowedEdges);
-            printTimeOfRouteQuery(hopper, count, "routingCH", vehicleStr, true);
-            printTimeOfRouteQuery(hopper, count, "routingCH_no_instr", vehicleStr, false);
+            isCH = true;
+            printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
+            printTimeOfRouteQuery(hopper, isCH, count, "routingCH", vehicleStr, true);
+            printTimeOfRouteQuery(hopper, isCH, count, "routingCH_no_instr", vehicleStr, false);
             logger.info("store into " + propLocation);
         } catch (Exception ex)
         {
@@ -187,7 +169,7 @@ public class Measurement
         // graph size (edge, node and storage size)
         put("graph.nodes", g.getNodes());
         put("graph.edges", g.getAllEdges().getMaxId());
-        put("graph.sizeInMB", g.getCapacity() / Helper.MB);
+        put("graph.size_in_MB", g.getCapacity() / Helper.MB);
         put("graph.encoder", vehicleStr);
 
         AllEdgesIterator iter = g.getAllEdges();
@@ -220,10 +202,10 @@ public class Measurement
             }
         }.setIterations(count).start();
 
-        print("location2id", miniPerf);
+        print("location_index", miniPerf);
     }
 
-    private void printMiscUnitPerfTests( boolean isCH, final Graph graph, final FlagEncoder encoder,
+    private void printMiscUnitPerfTests( final Graph graph, boolean isCH, final FlagEncoder encoder,
                                          int count, final GHBitSet allowedEdges )
     {
         final Random rand = new Random(seed);
@@ -305,7 +287,7 @@ public class Measurement
         print("unit_tests" + description + ".get_edge_state", miniPerf);
     }
 
-    private void printTimeOfRouteQuery( final GraphHopper hopper, int count, String prefix,
+    private void printTimeOfRouteQuery( final GraphHopper hopper, final boolean ch, int count, String prefix,
                                         final String vehicle, final boolean withInstructions )
     {
         final Graph g = hopper.getGraphHopperStorage();
@@ -323,9 +305,9 @@ public class Measurement
 //        final AtomicLong tmpDist = new AtomicLong(0);
         final Random rand = new Random(seed);
         final NodeAccess na = g.getNodeAccess();
-        
+
         // if using none-bidirectional algorithm make sure you exclude CH routing
-        final String algo = AlgorithmOptions.DIJKSTRA_BI;
+        final String algo = Algorithms.DIJKSTRA_BI;
         MiniPerfTest miniPerf = new MiniPerfTest()
         {
             @Override
@@ -341,7 +323,9 @@ public class Measurement
                         setWeighting("fastest").
                         setVehicle(vehicle).
                         setAlgorithm(algo);
-                
+                if (!ch)
+                    req.getHints().put(CH.DISABLE, true);
+
                 // req.getHints().put(algo + ".approximation", "BeelineSimplification");
                 // req.getHints().put(algo + ".epsilon", 2);
                 req.getHints().put("instructions", withInstructions);
@@ -367,7 +351,7 @@ public class Measurement
                     return 0;
                 }
 
-                AltResponse arsp = rsp.getFirst();
+                PathWrapper arsp = rsp.getBest();
                 if (!warmup)
                 {
                     visitedNodesSum.addAndGet(rsp.getHints().getLong("visited_nodes.sum", 0));
@@ -393,12 +377,12 @@ public class Measurement
         }.setIterations(count).start();
 
         count -= failedCount.get();
-        put(prefix + ".failedCount", failedCount.get());
-        put(prefix + ".distanceMin", minDistance.get());
-        put(prefix + ".distanceMean", (float) distSum.get() / count);
-        put(prefix + ".airDistanceMean", (float) airDistSum.get() / count);
-        put(prefix + ".distanceMax", maxDistance.get());
-        put(prefix + ".visitedNodesMean", (float) visitedNodesSum.get() / count);
+        put(prefix + ".failed_count", failedCount.get());
+        put(prefix + ".distance_min", minDistance.get());
+        put(prefix + ".distance_mean", (float) distSum.get() / count);
+        put(prefix + ".air_distance_mean", (float) airDistSum.get() / count);
+        put(prefix + ".distance_max", maxDistance.get());
+        put(prefix + ".visited_nodes_mean", (float) visitedNodesSum.get() / count);
 
 //        put(prefix + ".extractTime", (float) extractTimeSum.get() / count / 1000000f);
 //        put(prefix + ".calcPointsTime", (float) calcPointsTimeSum.get() / count / 1000000f);

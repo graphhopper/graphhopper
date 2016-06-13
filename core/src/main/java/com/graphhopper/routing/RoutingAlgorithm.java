@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -30,23 +30,22 @@ public interface RoutingAlgorithm
 {
     /**
      * Calculates the best path between the specified nodes.
-     * <p/>
+     *
      * @return the path. Call the method found() to make sure that the path is valid.
      */
     Path calcPath( int from, int to );
 
     /**
      * Calculates multiple possibilities for a path.
-     * <p/>
+     *
      * @see #calcPath(int, int)
      */
     List<Path> calcPaths( int from, int to );
 
     /**
-     * Limits the search to avoid full graph exploration in the case of disconnected networks. The
-     * default value is Double.MAX_VALUE. See #104
+     * Limit the search to numberOfNodes. See #681
      */
-    void setWeightLimit( double weight );
+    void setMaxVisitedNodes( int numberOfNodes );
 
     /**
      * @return name of this algorithm

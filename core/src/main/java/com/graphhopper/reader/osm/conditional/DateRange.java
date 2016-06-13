@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except in
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,14 +20,13 @@ package com.graphhopper.reader.osm.conditional;
 import com.graphhopper.util.Helper;
 import java.text.DateFormat;
 import java.util.Calendar;
-import java.util.Date;
 
 /**
  * This class represents a date range and is able to determine if a given date is in that range.
  * <p>
  * @author Robin Boldt
  */
-public class DateRange
+public class DateRange implements ValueRange<Calendar>
 {
     private final Calendar from;
     private final Calendar to;
@@ -39,7 +38,6 @@ public class DateRange
 
     boolean reverse = false;
 
-    // TODO Gets to complex? Create Factory?
     public DateRange( ParsedCalendar from, ParsedCalendar to )
     {
         Calendar fromCal = from.parsedCalendar;
@@ -76,6 +74,15 @@ public class DateRange
         this.to = to.getMax();
     }
 
+    public static final String KEY = "DateRange";
+
+    @Override
+    public String getKey()
+    {
+        return KEY;
+    }
+
+    @Override
     public boolean isInRange( Calendar date )
     {
         if (!yearless && !dayOnly)
@@ -86,10 +93,10 @@ public class DateRange
             int currentDayOfWeek = date.get(Calendar.DAY_OF_WEEK);
             if (reverse)
             {
-                return (from.get(Calendar.DAY_OF_WEEK) <= currentDayOfWeek || currentDayOfWeek <= to.get(Calendar.DAY_OF_WEEK));
+                return from.get(Calendar.DAY_OF_WEEK) <= currentDayOfWeek || currentDayOfWeek <= to.get(Calendar.DAY_OF_WEEK);
             } else
             {
-                return (from.get(Calendar.DAY_OF_WEEK) <= currentDayOfWeek && currentDayOfWeek <= to.get(Calendar.DAY_OF_WEEK));
+                return from.get(Calendar.DAY_OF_WEEK) <= currentDayOfWeek && currentDayOfWeek <= to.get(Calendar.DAY_OF_WEEK);
             }
         }
 

@@ -6,25 +6,17 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-web</artifactId>
     <packaging>jar</packaging>
-<<<<<<< HEAD
-    <version>0.5.0</version>
-=======
-    <version>0.6.0-RC1</version>
->>>>>>> 0.6.0-RC1
+    <version>0.7.0-RC2</version>
     <name>GraphHopper Web</name>
     <description>Example on how to use GraphHopper in a web-based application</description>
         
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-<<<<<<< HEAD
-        <version>0.5.0</version>
-=======
-        <version>0.6.0-RC1</version>
->>>>>>> 0.6.0-RC1
+        <version>0.7.0-RC2</version>
     </parent>
     <properties>
-        <jetty.version>8.1.16.v20140903</jetty.version>
+        <jetty.version>9.3.8.v20160314</jetty.version>
     </properties>
     
     <dependencies>
@@ -37,7 +29,7 @@
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>            
-            <version>20140107</version>
+            <version>${json.org.version}</version>
         </dependency>    
         
         <dependency>
@@ -52,13 +44,7 @@
             <artifactId>guice-servlet</artifactId>
             <version>4.0</version>
         </dependency>
-                
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-            <version>3.1.0</version>
-            <scope>provided</scope>
-        </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -107,6 +93,14 @@
 
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>                
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
             <!-- create a jar file too, so others can use it more easily -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -135,7 +129,7 @@
                         <id>make-assembly</id>
                         <!-- bind to verify and not package to pass integration tests before creating assemblies -->
                         <phase>integration-test</phase> 
-                       <goals>
+                        <goals>
                             <goal>single</goal>
                         </goals>
                     </execution>

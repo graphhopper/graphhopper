@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -34,8 +34,8 @@ import org.junit.Test;
  */
 public class PathBidirRefTest
 {
-    private final EncodingManager encodingManager = new EncodingManager("CAR");
-    private FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
+    private final EncodingManager encodingManager = new EncodingManager("car");
+    private FlagEncoder carEncoder = encodingManager.getEncoder("car");
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
 
     Graph createGraph()
@@ -52,8 +52,8 @@ public class PathBidirRefTest
         EdgeExplorer explorer = g.createEdgeExplorer(carOutEdges);
         EdgeIterator iter = explorer.setBaseNode(1);
         iter.next();
-        pw.edgeEntry = new SPTEntry(iter.getEdge(), 2, 0);
-        pw.edgeEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 10);
+        pw.sptEntry = new SPTEntry(iter.getEdge(), 2, 0);
+        pw.sptEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 10);
         pw.edgeTo = new SPTEntry(EdgeIterator.NO_EDGE, 2, 0);
         Path p = pw.extract();
         assertEquals(Helper.createTList(1, 2), p.calcNodes());
@@ -70,8 +70,8 @@ public class PathBidirRefTest
         EdgeIterator iter = explorer.setBaseNode(1);
         iter.next();
         PathBidirRef pw = new PathBidirRef(g, carEncoder);
-        pw.edgeEntry = new SPTEntry(iter.getEdge(), 2, 10);
-        pw.edgeEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);
+        pw.sptEntry = new SPTEntry(iter.getEdge(), 2, 10);
+        pw.sptEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);
 
         explorer = g.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, false));
         iter = explorer.setBaseNode(3);

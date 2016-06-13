@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,8 +37,8 @@ import static org.junit.Assert.*;
  */
 public class FootFlagEncoderTest
 {
-    private final EncodingManager encodingManager = new EncodingManager("CAR,BIKE,FOOT");
-    private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
+    private final EncodingManager encodingManager = new EncodingManager("car,bike,foot");
+    private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
 
     @Test
     public void testGetSpeed()
@@ -61,7 +61,7 @@ public class FootFlagEncoderTest
     @Test
     public void testCombined()
     {
-        FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
+        FlagEncoder carEncoder = encodingManager.getEncoder("car");
         long fl = footEncoder.setProperties(10, true, true) | carEncoder.setProperties(100, true, false);
         assertEquals(10, footEncoder.getSpeed(fl), 1e-1);
         assertTrue(footEncoder.isForward(fl));
@@ -126,6 +126,15 @@ public class FootFlagEncoderTest
         way.setTag("highway", "service");
         way.setTag("access", "no");
         assertFalse(footEncoder.acceptWay(way) > 0);
+        way.setTag("foot", "yes");
+        assertTrue(footEncoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "service");
+        way.setTag("vehicle", "no");
+        assertFalse(footEncoder.acceptWay(way) > 0);
+        way.setTag("foot", "yes");
+        assertTrue(footEncoder.acceptWay(way) > 0);
 
         way.clearTags();
         way.setTag("highway", "tertiary");
@@ -220,7 +229,7 @@ public class FootFlagEncoderTest
         assertEquals(PriorityCode.UNCHANGED.getValue(), footEncoder.handlePriority(way, 0));
 
         way.setTag("highway", "primary");
-        assertEquals(PriorityCode.REACH_DEST.getValue(), footEncoder.handlePriority(way, 0));
+        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, 0));
 
         way.setTag("highway", "track");
         way.setTag("bicycle", "official");
@@ -238,7 +247,7 @@ public class FootFlagEncoderTest
         way.clearTags();
         way.setTag("highway", "primary");
         way.setTag("sidewalk", "yes");
-        assertEquals(PriorityCode.REACH_DEST.getValue(), footEncoder.handlePriority(way, 0));
+        assertEquals(PriorityCode.UNCHANGED.getValue(), footEncoder.handlePriority(way, 0));
 
         way.clearTags();
         way.setTag("highway", "cycleway");
@@ -249,6 +258,13 @@ public class FootFlagEncoderTest
         way.setTag("highway", "road");
         way.setTag("bicycle", "official");
         way.setTag("sidewalk", "no");
+        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, 0));
+
+        way.clearTags();
+        way.setTag("highway", "trunk");
+        way.setTag("sidewalk", "no");
+        assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, 0));
+        way.setTag("sidewalk", "none");
         assertEquals(PriorityCode.AVOID_IF_POSSIBLE.getValue(), footEncoder.handlePriority(way, 0));
 
         way.clearTags();

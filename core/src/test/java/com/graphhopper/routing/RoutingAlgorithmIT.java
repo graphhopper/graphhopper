@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -32,6 +32,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
+import static com.graphhopper.util.Parameters.Algorithms.*;
 import com.graphhopper.util.StopWatch;
 
 import java.io.File;
@@ -84,7 +85,7 @@ public class RoutingAlgorithmIT
     public void testMonaco()
     {
         Graph g = runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
-                createMonacoCar(), "CAR", true, "CAR", "shortest", false);
+                createMonacoCar(), "car", true, "car", "shortest", false);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
@@ -154,15 +155,14 @@ public class RoutingAlgorithmIT
         GraphHopper hopper = new GraphHopper().
                 // avoid that path.getDistance is too different to path.getPoint.calcDistance
                 setWayPointMaxDistance(0).
-                setOSMFile(osmFile).
-                setCHEnable(false).
+                setOSMFile(osmFile).setCHEnabled(false).
                 setGraphHopperLocation(graphFile).
                 setEncodingManager(new EncodingManager(importVehicles));
 
         hopper.importOrLoad();
 
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-        Weighting weighting = hopper.createWeighting(new WeightingMap("shortest"), encoder);
+        Weighting weighting = hopper.createWeighting(new HintsMap("shortest"), encoder);
 
         List<AlgoHelperEntry> prepares = createAlgos(hopper.getGraphHopperStorage(), hopper.getLocationIndex(),
                 encoder, true, TraversalMode.NODE_BASED, weighting, hopper.getEncodingManager());
@@ -204,7 +204,7 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(51.376509, -0.530863, 51.376197, -0.531576, 75, 15));
 
         runAlgo(testCollector, "files/circle-bug.osm.gz", "target/circle-bug-gh",
-                list, "CAR", true, "CAR", "shortest", false);
+                list, "car", true, "car", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -223,7 +223,7 @@ public class RoutingAlgorithmIT
         // http://localhost:8989/?point=55.819066%2C37.596374&point=55.818898%2C37.59661
         list.add(new OneRun(55.819066, 37.596374, 55.818898, 37.59661, 1114, 23));
         runAlgo(testCollector, "files/moscow.osm.gz", "target/moscow-gh",
-                list, "CAR", true, "CAR", "fastest", false);
+                list, "car", true, "car", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -236,7 +236,7 @@ public class RoutingAlgorithmIT
         // TODO include CH
         boolean testAlsoCH = false, is3D = false;
         runAlgo(testCollector, "files/moscow.osm.gz", "target/graph-moscow",
-                list, "CAR|turnCosts=true", testAlsoCH, "CAR", "fastest", is3D);
+                list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -252,7 +252,7 @@ public class RoutingAlgorithmIT
 
         boolean testAlsoCH = false, is3D = false;
         runAlgo(testCollector, "files/map-sidewalk-no.osm.gz", "target/graph-sidewalkno",
-                list, "foot", testAlsoCH, "foot", "fastest", is3D);
+                list, "hike", testAlsoCH, "hike", "fastest", is3D);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -268,9 +268,10 @@ public class RoutingAlgorithmIT
         list.get(4).setDistance(1, 2149);
         list.get(4).setLocs(1, 120);
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
-                list, "CAR", true, "CAR", "fastest", false);
+                list, "car", true, "car", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
+
 
     @Test
     public void testMonacoMixed()
@@ -285,7 +286,7 @@ public class RoutingAlgorithmIT
         list.get(4).setLocs(1, 116);
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
-                list, "CAR,FOOT", false, "CAR", "shortest", false);
+                list, "car,foot", false, "car", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -303,7 +304,7 @@ public class RoutingAlgorithmIT
     public void testMonacoFoot()
     {
         Graph g = runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
-                createMonacoFoot(), "FOOT", true, "FOOT", "shortest", false);
+                createMonacoFoot(), "foot", true, "foot", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         // see testMonaco for a similar ID test
@@ -329,12 +330,12 @@ public class RoutingAlgorithmIT
         list.get(1).setLocs(1, 149);
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
-                list, "FOOT", true, "FOOT", "shortest", true);
+                list, "foot", true, "foot", "shortest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
     @Test
-    public void testNorthBayreuthFootFastestAnd3D()
+    public void testNorthBayreuthHikeFastestAnd3D()
     {
         List<OneRun> list = new ArrayList<OneRun>();
         // prefer hiking route 'Teufelsloch Unterwaiz' and 'Rotmain-Wanderweg'        
@@ -342,7 +343,7 @@ public class RoutingAlgorithmIT
         // prefer hiking route 'Markgrafenweg Bayreuth Kulmbach' but avoid tertiary highway from Pechgraben
         list.add(new OneRun(49.990967, 11.545258, 50.023182, 11.555386, 5636, 97));
         runAlgo(testCollector, "files/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
-                list, "FOOT", true, "FOOT", "fastest", true);
+                list, "hike", true, "hike", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -367,7 +368,7 @@ public class RoutingAlgorithmIT
         // 4. avoid tunnel(s)!
         list.add(new OneRun(43.739662, 7.424355, 43.733802, 7.413433, 2452, 112));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
-                list, "BIKE2", true, "BIKE2", "fastest", true);
+                list, "bike2", true, "bike2", "fastest", true);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -380,7 +381,7 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2323, 121));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1434, 89));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
-                list, "BIKE", true, "BIKE", "shortest", false);
+                list, "bike", true, "bike", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -394,11 +395,11 @@ public class RoutingAlgorithmIT
         // hard to select between secondary and primary (both are AVOID for mtb)
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1459, 88));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
-                list, "MTB", true, "MTB", "fastest", false);
+                list, "mtb", true, "mtb", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
-                list, "MTB,RACINGBIKE", false, "MTB", "fastest", false);
+                list, "mtb,racingbike", false, "mtb", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -411,11 +412,11 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(43.728677, 7.41016, 43.739213, 7.427806, 2572, 135));
         list.add(new OneRun(43.733802, 7.413433, 43.739662, 7.424355, 1490, 84));
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
-                list, "RACINGBIKE", true, "RACINGBIKE", "fastest", false);
+                list, "racingbike", true, "racingbike", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
-                list, "BIKE,RACINGBIKE", false, "RACINGBIKE", "fastest", false);
+                list, "bike,racingbike", false, "racingbike", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -425,15 +426,15 @@ public class RoutingAlgorithmIT
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(48.409523, 15.602394, 48.375466, 15.72916, 12491, 159));
         // 3109m is better as cyclepath is used
-        list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3113, 87));
+        list.add(new OneRun(48.410061, 15.63951, 48.411386, 15.604899, 3077, 79));
         list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 94));
 
         runAlgo(testCollector, "files/krems.osm.gz", "target/krems-gh",
-                list, "BIKE", true, "BIKE", "fastest", false);
+                list, "bike", true, "bike", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         runAlgo(testCollector, "files/krems.osm.gz", "target/krems-gh",
-                list, "CAR,BIKE", false, "BIKE", "fastest", false);
+                list, "car,bike", false, "bike", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -446,11 +447,11 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(48.412294, 15.62007, 48.398306, 15.609667, 3965, 95));
 
         runAlgo(testCollector, "files/krems.osm.gz", "target/krems-gh",
-                list, "MTB", true, "MTB", "fastest", false);
+                list, "mtb", true, "mtb", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         runAlgo(testCollector, "files/krems.osm.gz", "target/krems-gh",
-                list, "BIKE,MTB", false, "MTB", "fastest", false);
+                list, "bike,mtb", false, "mtb", "fastest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -466,7 +467,7 @@ public class RoutingAlgorithmIT
     public void testAndorra()
     {
         runAlgo(testCollector, "files/andorra.osm.gz", "target/andorra-gh",
-                createAndorra(), "CAR", true, "CAR", "shortest", false);
+                createAndorra(), "car", true, "car", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -474,7 +475,7 @@ public class RoutingAlgorithmIT
     public void testAndorraPbf()
     {
         runAlgo(testCollector, "files/andorra.osm.pbf", "target/andorra-gh",
-                createAndorra(), "CAR", true, "CAR", "shortest", false);
+                createAndorra(), "car", true, "car", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -488,7 +489,7 @@ public class RoutingAlgorithmIT
         list.get(1).setLocs(1, 431);
 
         runAlgo(testCollector, "files/andorra.osm.gz", "target/andorra-gh",
-                list, "FOOT", true, "FOOT", "shortest", false);
+                list, "foot", true, "foot", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -504,7 +505,7 @@ public class RoutingAlgorithmIT
         list.add(new OneRun(-20.4, -54.6, -20.6, -54.54, 25516, 271));
         list.add(new OneRun(-20.43, -54.54, -20.537, -54.674, 18009, 237));
         runAlgo(testCollector, "files/campo-grande.osm.gz", "target/campo-grande-gh", list,
-                "CAR", false, "CAR", "shortest", false);
+                "car", false, "car", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -520,7 +521,7 @@ public class RoutingAlgorithmIT
         list.add(oneRun);
 
         runAlgo(testCollector, "files/monaco.osm.gz", "target/monaco-gh",
-                list, "CAR", true, "CAR", "shortest", false);
+                list, "car", true, "car", "shortest", false);
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
@@ -567,8 +568,7 @@ public class RoutingAlgorithmIT
                     setStoreOnFlush(true).
                     // avoid that path.getDistance is too different to path.getPoint.calcDistance
                     setWayPointMaxDistance(0).
-                    setOSMFile(osmFile).
-                    setCHEnable(false).
+                    setOSMFile(osmFile).setCHEnabled(false).
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(new EncodingManager(importVehicles));
             if (is3D)
@@ -576,10 +576,10 @@ public class RoutingAlgorithmIT
 
             hopper.importOrLoad();
 
-            TraversalMode tMode = importVehicles.toLowerCase().contains("turncosts=true")
+            TraversalMode tMode = importVehicles.contains("turn_costs=true")
                     ? TraversalMode.EDGE_BASED_1DIR : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            Weighting weighting = hopper.createWeighting(new WeightingMap(weightStr), encoder);
+            Weighting weighting = hopper.createWeighting(new HintsMap(weightStr), encoder);
 
             Collection<AlgoHelperEntry> prepares = createAlgos(hopper.getGraphHopperStorage(),
                     hopper.getLocationIndex(), encoder, testAlsoCH, tMode, weighting, hopper.getEncodingManager());
@@ -617,8 +617,8 @@ public class RoutingAlgorithmIT
         int noJvmWarming = N / 4;
 
         Random rand = new Random(0);
-        EncodingManager eManager = new EncodingManager("CAR");
-        FlagEncoder encoder = eManager.getEncoder("CAR");
+        EncodingManager eManager = new EncodingManager("car");
+        FlagEncoder encoder = eManager.getEncoder("car");
         GraphHopperStorage graph = new GraphBuilder(eManager).create();
 
         String bigFile = "10000EWD.txt.gz";
@@ -657,11 +657,10 @@ public class RoutingAlgorithmIT
         System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/monaco-gh";
         Helper.removeDir(new File(graphFile));
-        final EncodingManager encodingManager = new EncodingManager("CAR");
+        final EncodingManager encodingManager = new EncodingManager("car");
         GraphHopper hopper = new GraphHopper().
                 setStoreOnFlush(true).
-                setEncodingManager(encodingManager).
-                setCHEnable(false).
+                setEncodingManager(encodingManager).setCHEnabled(false).
                 setWayPointMaxDistance(0).
                 setOSMFile("files/monaco.osm.gz").
                 setGraphHopperLocation(graphFile).
@@ -672,12 +671,12 @@ public class RoutingAlgorithmIT
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
-        final FlagEncoder carEncoder = encodingManager.getEncoder("CAR");
+        final FlagEncoder carEncoder = encodingManager.getEncoder("car");
 
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
-        final Weighting weighting = new ShortestWeighting(encodingManager.getEncoder("CAR"));
+        final Weighting weighting = new ShortestWeighting(encodingManager.getEncoder("car"));
         final EdgeFilter filter = new DefaultEdgeFilter(carEncoder);
         for (int no = 0; no < MAX; no++)
         {
@@ -685,7 +684,7 @@ public class RoutingAlgorithmIT
             {
                 String[] algos = new String[]
                 {
-                    "astar", "dijkstrabi"
+                    ASTAR, DIJKSTRA_BI
                 };
                 for (final String algoStr : algos)
                 {
@@ -731,13 +730,13 @@ public class RoutingAlgorithmIT
                                               final EncodingManager manager )
     {
         List<AlgoHelperEntry> prepare = new ArrayList<AlgoHelperEntry>();
-        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(AlgorithmOptions.ASTAR, encoder, weighting, tMode), idx));
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(ASTAR, encoder, weighting, tMode), idx));
         // later: include dijkstraOneToMany        
-        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(AlgorithmOptions.DIJKSTRA, encoder, weighting, tMode), idx));
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(DIJKSTRA, encoder, weighting, tMode), idx));
 
-        final AlgorithmOptions astarbiOpts = new AlgorithmOptions(AlgorithmOptions.ASTAR_BI, encoder, weighting, tMode);
-        astarbiOpts.getHints().put(AlgorithmOptions.ASTAR_BI + ".approximation", "BeelineSimplification");
-        final AlgorithmOptions dijkstrabiOpts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, encoder, weighting, tMode);
+        final AlgorithmOptions astarbiOpts = new AlgorithmOptions(ASTAR_BI, encoder, weighting, tMode);
+        astarbiOpts.getHints().put(ASTAR_BI + ".approximation", "BeelineSimplification");
+        final AlgorithmOptions dijkstrabiOpts = new AlgorithmOptions(DIJKSTRA_BI, encoder, weighting, tMode);
         prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, astarbiOpts, idx));
         prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, dijkstrabiOpts, idx));
 

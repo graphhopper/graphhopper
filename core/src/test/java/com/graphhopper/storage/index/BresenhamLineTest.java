@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -58,14 +58,6 @@ public class BresenhamLineTest
         BresenhamLine.calcPoints(5, 2, 0, 0, emitter);
         // 5,2, 4,2, 3,2, 3,1, 2,1, 1,1, 0,0
         assertEquals(Helper.createPointList(5, 2, 4, 2, 3, 1, 2, 1, 1, 0, 0, 0), points);
-    }
-
-    @Test
-    public void testLineRightDown2()
-    {
-        // example http://stackoverflow.com/a/12370474/194609
-        BresenhamLine.voxelTraversal(0.25, 0.25, 2.75, 5.25, emitter);
-        assertEquals(Helper.createPointList(0, 0, 0, 1, 1, 1, 1, 2, 1, 3, 2, 3, 2, 4, 2, 5), points);
     }
 
     @Test

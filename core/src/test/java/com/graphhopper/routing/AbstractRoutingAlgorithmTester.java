@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -23,6 +23,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
+import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import gnu.trove.list.TIntList;
 import java.util.*;
 
@@ -36,7 +37,7 @@ import org.junit.Test;
  */
 public abstract class AbstractRoutingAlgorithmTester
 {
-    protected static final EncodingManager encodingManager = new EncodingManager("CAR,FOOT");
+    protected static final EncodingManager encodingManager = new EncodingManager("car,foot");
     protected FlagEncoder carEncoder;
     protected FlagEncoder footEncoder;
     protected AlgorithmOptions defaultOpts;
@@ -44,8 +45,8 @@ public abstract class AbstractRoutingAlgorithmTester
     @Before
     public void setUp()
     {
-        carEncoder = (CarFlagEncoder) encodingManager.getEncoder("CAR");
-        footEncoder = (FootFlagEncoder) encodingManager.getEncoder("FOOT");
+        carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
+        footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
         defaultOpts = AlgorithmOptions.start().flagEncoder(carEncoder).
                 weighting(new ShortestWeighting(carEncoder)).build();
     }
@@ -85,36 +86,6 @@ public abstract class AbstractRoutingAlgorithmTester
         Path p = algo.calcPath(0, 7);
         assertEquals(p.toString(), Helper.createTList(0, 4, 5, 7), p.calcNodes());
         assertEquals(p.toString(), 62.1, p.getDistance(), .1);
-    }
-
-    @Test
-    public void testWeightLimit()
-    {
-        GraphHopperStorage ghStorage = createTestStorage();
-        RoutingAlgorithm algo = createAlgo(ghStorage);
-        algo.setWeightLimit(10);
-        Path p = algo.calcPath(0, 7);
-        assertTrue(algo.getVisitedNodes() < 7);
-        assertFalse(p.isFound());
-        assertEquals(p.toString(), Helper.createTList(), p.calcNodes());
-    }
-
-    @Test
-    public void testWeightLimit_issue380()
-    {
-        GraphHopperStorage graph = createGHStorage(false);
-        initGraphWeightLimit(graph);
-        RoutingAlgorithm algo = createAlgo(graph);
-        algo.setWeightLimit(3);
-        Path p = algo.calcPath(0, 4);
-        assertTrue(p.isFound());
-        assertEquals(3.0, p.getWeight(), 1e-6);
-
-        algo = createAlgo(graph);
-        algo.setWeightLimit(3);
-        p = algo.calcPath(0, 3);
-        assertTrue(p.isFound());
-        assertEquals(3.0, p.getWeight(), 1e-6);
     }
 
     // see calc-fastest-graph.svg
@@ -386,6 +357,22 @@ public abstract class AbstractRoutingAlgorithmTester
         assertEquals(p.toString(), 10007.7, p.getDistance(), .1);
     }
 
+    @Test
+    public void testMaxVisitedNodes()
+    {
+        GraphHopperStorage graph = createGHStorage(false);
+        initBiGraph(graph);
+
+        RoutingAlgorithm algo = createAlgo(graph);
+        Path p = algo.calcPath(0, 4);
+        assertTrue(p.isFound());
+
+        algo = createAlgo(graph);
+        algo.setMaxVisitedNodes(3);
+        p = algo.calcPath(0, 4);
+        assertFalse(p.isFound());
+    }
+
     // 1-2-3-4-5
     // |     / |
     // |    9  |
@@ -517,7 +504,7 @@ public abstract class AbstractRoutingAlgorithmTester
         updateDistancesFor(graph, 3, 0, 1);
         updateDistancesFor(graph, 4, 0, 2);
 
-        AlgorithmOptions opts = new AlgorithmOptions(AlgorithmOptions.DIJKSTRA_BI, carEncoder, weighting);
+        AlgorithmOptions opts = new AlgorithmOptions(DIJKSTRA_BI, carEncoder, weighting);
         RoutingAlgorithmFactory prepare = createFactory(graph, opts);
         Path p = prepare.createAlgo(getGraph(graph, opts.getWeighting()), opts).calcPath(4, 0);
         assertEquals(Helper.createTList(4, 1, 0), p.calcNodes());
@@ -773,7 +760,7 @@ public abstract class AbstractRoutingAlgorithmTester
             }
 
             @Override
-            public boolean matches( String weightingAsStr, FlagEncoder encoder )
+            public boolean matches( HintsMap map )
             {
                 throw new UnsupportedOperationException("Not supported");
             }
@@ -875,30 +862,6 @@ public abstract class AbstractRoutingAlgorithmTester
         updateDistancesFor(g, 11, 2, 2);
         updateDistancesFor(g, 7, 1, 2);
         updateDistancesFor(g, 10, 0, 2);
-        return g;
-    }
-
-    public static Graph initGraphWeightLimit( Graph g )
-    {
-        //      0----1
-        //     /     |
-        //    7--    |
-        //   /   |   |
-        //   6---5   |
-        //   |   |   |
-        //   4---3---2
-
-        g.edge(0, 1, 1, true);
-        g.edge(1, 2, 1, true);
-
-        g.edge(3, 2, 1, true);
-        g.edge(3, 5, 1, true);
-        g.edge(5, 7, 1, true);
-        g.edge(3, 4, 1, true);
-        g.edge(4, 6, 1, true);
-        g.edge(6, 7, 1, true);
-        g.edge(6, 5, 1, true);
-        g.edge(0, 7, 1, true);
         return g;
     }
 

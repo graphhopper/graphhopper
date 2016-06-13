@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -73,8 +73,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected final Set<String> intendedValues = new HashSet<String>(5);
     protected final Set<String> restrictedValues = new HashSet<String>(5);
     protected final Set<String> ferries = new HashSet<String>(5);
-    protected final Set<String> oneways = new HashSet<String>(5);
-    protected final Set<String> acceptedRailways = new HashSet<String>(5);
+    protected final Set<String> oneways = new HashSet<String>(5);    
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> absoluteBarriers = new HashSet<String>(5);
     protected final Set<String> potentialBarriers = new HashSet<String>(5);
@@ -115,17 +114,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
         ferries.add("shuttle_train");
         ferries.add("ferry");
-
-        acceptedRailways.add("tram");
-        acceptedRailways.add("abandoned");
-        acceptedRailways.add("abandoned_tram");
-        acceptedRailways.add("disused");
-
-        // http://wiki.openstreetmap.org/wiki/Demolished_Railway
-        acceptedRailways.add("dismantled");
-        acceptedRailways.add("razed");
-        acceptedRailways.add("historic");
-        acceptedRailways.add("obliterated");
     }
 
     public void setRegistered( boolean registered )
@@ -175,11 +163,6 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      */
     public int defineWayBits( int index, int shift )
     {
-        if (isRegistered())
-            throw new IllegalStateException("You must not register a FlagEncoder (" + toString() + ") twice!");
-
-        setRegistered(true);
-
         // define the first 2 speedBits in flags for routing
         forwardBit = 1L << shift;
         backwardBit = 2L << shift;
@@ -475,7 +458,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * Special handling for ferry ways.
      */
-    protected long handleFerryTags( OSMWay way, double unknownSpeed, double shortTripsSpeed, double longTripsSpeed )
+    protected double getFerrySpeed( OSMWay way, double unknownSpeed, double shortTripsSpeed, double longTripsSpeed )
     {
         long duration = 0;
         try
@@ -511,8 +494,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                             if (shortTripsSpeed > getMaxSpeed())
                                 shortTripsSpeed = getMaxSpeed();
                             longTripsSpeed = shortTripsSpeed;
-                        }
-                        else
+                        } else
                         {
                             // Now we set to the lowest possible still accessible speed. 
                             shortTripsSpeed = speedEncoder.factor / 2;
@@ -531,14 +513,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (durationInHours == 0)
         {
             // unknown speed -> put penalty on ferry transport
-            return setSpeed(0, unknownSpeed);
+            return unknownSpeed;
         } else if (durationInHours > 1)
         {
             // lengthy ferries should be faster than short trip ferry
-            return setSpeed(0, longTripsSpeed);
+            return longTripsSpeed;
         } else
         {
-            return setSpeed(0, shortTripsSpeed);
+            return shortTripsSpeed;
         }
     }
 
@@ -655,11 +637,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         {
             if (costs != 0 || Double.isInfinite(costs))
                 throw new IllegalArgumentException("Restricted turn can only have infinite costs (or use 0)");
-        } else
-        {
-            if (costs >= maxTurnCosts)
-                throw new IllegalArgumentException("Cost is too high. Or specifiy restricted == true");
-        }
+        } else if (costs >= maxTurnCosts)
+            throw new IllegalArgumentException("Cost is too high. Or specifiy restricted == true");
 
         if (costs < 0)
             throw new IllegalArgumentException("Turn costs cannot be negative");
@@ -750,7 +729,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * @param way: needed to retrieve OSM tags
      * @param speed: speed guessed e.g. from the road type or other tags
-     * @return The assumed speed. 
+     * @return The assumed speed.
      */
     protected double applyMaxSpeed( OSMWay way, double speed )
     {
@@ -766,7 +745,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     protected String getPropertiesString()
     {
-        return "speedFactor=" + speedFactor + "|speedBits=" + speedBits + "|turnCosts=" + (maxTurnCosts > 0);
+        return "speed_factor=" + speedFactor + "|speed_bits=" + speedBits + "|turn_costs=" + (maxTurnCosts > 0);
     }
 
     @Override

@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -56,7 +56,7 @@ public class PMap
             if (index < 0)
                 continue;
 
-            this.map.put(s.substring(0, index).toLowerCase(), s.substring(index + 1));
+            put(s.substring(0, index), s.substring(index + 1));
         }
     }
 
@@ -71,14 +71,22 @@ public class PMap
         if (str == null)
             throw new NullPointerException("Value cannot be null. Use remove instead.");
 
-        map.put(key.toLowerCase(), str.toString());
+        // store in under_score
+        map.put(Helper.camelCaseToUnderScore(key), str.toString());
         return this;
     }
 
     public PMap remove( String key )
     {
-        map.remove(key.toLowerCase());
+        // query accepts camelCase and under_score
+        map.remove(Helper.camelCaseToUnderScore(key));
         return this;
+    }
+
+    public boolean has( String key )
+    {
+        // query accepts camelCase and under_score
+        return map.containsKey(Helper.camelCaseToUnderScore(key));
     }
 
     public long getLong( String key, long _default )
@@ -145,23 +153,21 @@ public class PMap
     {
         String str = get(key);
         if (Helper.isEmpty(str))
-        {
             return _default;
-        }
+
         return str;
     }
 
     String get( String key )
     {
         if (Helper.isEmpty(key))
-        {
             return "";
-        }
-        String val = map.get(key.toLowerCase());
+
+        // query accepts camelCase and under_score
+        String val = map.get(Helper.camelCaseToUnderScore(key));
         if (val == null)
-        {
             return "";
-        }
+
         return val;
     }
 
@@ -188,22 +194,16 @@ public class PMap
         for (Map.Entry<String, String> e : map.entrySet())
         {
             if (Helper.isEmpty(e.getKey()))
-            {
                 continue;
-            }
-            this.getMap().put(e.getKey().toLowerCase(), e.getValue());
+
+            put(e.getKey(), e.getValue());
         }
         return this;
-    }
-
-    public boolean has( String key )
-    {
-        return this.getMap().containsKey(key);
     }
 
     @Override
     public String toString()
     {
-        return this.getMap().toString();
+        return getMap().toString();
     }
 }

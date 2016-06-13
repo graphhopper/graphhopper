@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -20,40 +20,20 @@ package com.graphhopper.routing.util;
 import com.graphhopper.util.PMap;
 
 /**
+ *
  * @author Peter Karich
  */
-public class WeightingMap extends PMap
+public interface FlagEncoderFactory
 {
-    public WeightingMap()
-    {
-    }
+    final String CAR = "car";
+    final String BIKE = "bike";
+    final String BIKE2 = "bike2";
+    final String RACINGBIKE = "racingbike";
+    final String MOUNTAINBIKE = "mtb";
+    final String FOOT = "foot";
+    final String HIKE = "hike";
+    final String MOTORCYCLE = "motorcycle";
+    final FlagEncoderFactory DEFAULT = new DefaultFlagEncoderFactory();
 
-    /**
-     * Convenient constructor if only one parameter is provided
-     * <p>
-     */
-    public WeightingMap( String weighting )
-    {
-        super(5);
-        setWeighting(weighting);
-    }
-
-    @Override
-    public WeightingMap put( String key, Object str )
-    {
-        super.put(key, str);
-        return this;
-    }
-
-    public WeightingMap setWeighting( String w )
-    {
-        if (w != null)
-            super.put("weighting", w);
-        return this;
-    }
-
-    public String getWeighting()
-    {
-        return super.get("weighting", "");
-    }
+    FlagEncoder createFlagEncoder( String name, PMap configuration );
 }

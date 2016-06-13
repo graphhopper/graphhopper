@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -25,11 +25,11 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This class holds one possibility of a route
- * <p/>
+ * This class holds the data like points and instructions of a Path.
+ * <p>
  * @author Peter Karich
  */
-public class AltResponse
+public class PathWrapper
 {
     private List<String> description;
     private double distance;
@@ -39,7 +39,8 @@ public class AltResponse
     private long time;
     private String debugInfo = "";
     private InstructionList instructions;
-    private PointList list = PointList.EMPTY;
+    private PointList waypointList = PointList.EMPTY;
+    private PointList pointList = PointList.EMPTY;
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
 
     /**
@@ -53,13 +54,13 @@ public class AltResponse
         return description;
     }
 
-    public AltResponse setDescription( List<String> names )
+    public PathWrapper setDescription( List<String> names )
     {
         this.description = names;
         return this;
     }
 
-    public AltResponse addDebugInfo( String debugInfo )
+    public PathWrapper addDebugInfo( String debugInfo )
     {
         if (debugInfo == null)
             throw new IllegalStateException("Debug information has to be none null");
@@ -76,9 +77,12 @@ public class AltResponse
         return debugInfo;
     }
 
-    public AltResponse setPoints( PointList points )
+    public PathWrapper setPoints( PointList points )
     {
-        list = points;
+        if (pointList != PointList.EMPTY)
+            throw new IllegalStateException("Cannot call setPoint twice");
+
+        pointList = points;
         return this;
     }
 
@@ -90,10 +94,30 @@ public class AltResponse
     public PointList getPoints()
     {
         check("getPoints");
-        return list;
+        return pointList;
     }
 
-    public AltResponse setDistance( double distance )
+    /**
+     * This method initializes this path with the snapped input points.
+     */
+    public void setWaypoints( PointList wpList )
+    {
+        if (waypointList != PointList.EMPTY)
+            throw new IllegalStateException("Cannot call setWaypoints twice");
+
+        this.waypointList = wpList;
+    }
+
+    /**
+     * This method returns the input points snapped to the road network.
+     */
+    public PointList getWaypoints()
+    {
+        check("getWaypoints");
+        return waypointList;
+    }
+
+    public PathWrapper setDistance( double distance )
     {
         this.distance = distance;
         return this;
@@ -111,7 +135,7 @@ public class AltResponse
         return distance;
     }
 
-    public AltResponse setAscend( double ascend )
+    public PathWrapper setAscend( double ascend )
     {
         if (ascend < 0)
             throw new IllegalArgumentException("ascend has to be strictly positive");
@@ -130,7 +154,7 @@ public class AltResponse
         return ascend;
     }
 
-    public AltResponse setDescend( double descend )
+    public PathWrapper setDescend( double descend )
     {
         if (descend < 0)
             throw new IllegalArgumentException("descend has to be strictly positive");
@@ -149,7 +173,7 @@ public class AltResponse
         return descend;
     }
 
-    public AltResponse setTime( long timeInMillis )
+    public PathWrapper setTime( long timeInMillis )
     {
         this.time = timeInMillis;
         return this;
@@ -164,7 +188,7 @@ public class AltResponse
         return time;
     }
 
-    public AltResponse setRouteWeight( double weight )
+    public PathWrapper setRouteWeight( double weight )
     {
         this.routeWeight = weight;
         return this;
@@ -188,17 +212,17 @@ public class AltResponse
     {
         check("calcRouteBBox");
         BBox bounds = BBox.createInverse(_fallback.hasElevation());
-        int len = list.getSize();
+        int len = pointList.getSize();
         if (len == 0)
             return _fallback;
 
         for (int i = 0; i < len; i++)
         {
-            double lat = list.getLatitude(i);
-            double lon = list.getLongitude(i);
+            double lat = pointList.getLatitude(i);
+            double lon = pointList.getLongitude(i);
             if (bounds.hasElevation())
             {
-                double ele = list.getEle(i);
+                double ele = pointList.getEle(i);
                 bounds.update(lat, lon, ele);
             } else
             {
@@ -211,7 +235,7 @@ public class AltResponse
     @Override
     public String toString()
     {
-        String str = "nodes:" + list.getSize() + "; " + list.toString();
+        String str = "nodes:" + pointList.getSize() + "; " + pointList.toString();
         if (instructions != null && !instructions.isEmpty())
             str += ", " + instructions.toString();
 
@@ -257,13 +281,13 @@ public class AltResponse
         return errors;
     }
 
-    public AltResponse addError( Throwable error )
+    public PathWrapper addError( Throwable error )
     {
         errors.add(error);
         return this;
     }
 
-    public AltResponse addErrors( List<Throwable> errors )
+    public PathWrapper addErrors( List<Throwable> errors )
     {
         this.errors.addAll(errors);
         return this;

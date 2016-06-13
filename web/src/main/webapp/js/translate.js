@@ -24,6 +24,9 @@ function tr2(key, args) {
 }
 
 function tr(key, args) {
+    if(key !== key.toLowerCase())
+        console.log("key " + key + " has to be lower case");
+    
     return tr2("web." + key, args);
 }
 
@@ -50,29 +53,29 @@ function stringFormat(str, args) {
 
 function initI18N() {
     if (global.$) {
-        $('#searchButton').attr("value", tr("searchButton"));
+        $('#searchButton').attr("value", tr("search_button"));
         var location_points = $("#locationpoints > div.pointDiv > input.pointInput");
         var l = location_points.size();
         $(location_points).each(function (index) {
             if (index === 0)
-                $(this).attr("placeholder", tr("fromHint"));
+                $(this).attr("placeholder", tr("from_hint"));
             else if (index === (l - 1))
-                $(this).attr("placeholder", tr("toHint"));
+                $(this).attr("placeholder", tr("to_hint"));
             else
-                $(this).attr("placeholder", tr("viaHint"));
+                $(this).attr("placeholder", tr("via_hint"));
         });
-        $('#gpxExportButton').attr("title", tr("gpxExportButton"));
+        $('#gpxExportButton').attr("title", tr("gpx_export_button"));
     }
 }
 
 module.exports.createDistanceString = function (dist) {
     if (dist < 900)
-        return mathTools.round(dist, 1) + tr2("mAbbr");
+        return mathTools.round(dist, 1) + tr2("m_abbr");
 
     dist = mathTools.round(dist / 1000, 100);
     if (dist > 100)
         dist = mathTools.round(dist, 1);
-    return dist + tr2("kmAbbr");
+    return dist + tr2("km_abbr");
 };
 
 module.exports.createEleInfoString = function (ascend, descend) {
@@ -80,10 +83,10 @@ module.exports.createEleInfoString = function (ascend, descend) {
     if (ascend > 0 || descend > 0) {
         str = "<br/> ";
         if (ascend > 0)
-            str += "&#8599;" + mathTools.round(ascend, 1) + tr2("mAbbr");
+            str += "&#8599;" + mathTools.round(ascend, 1) + tr2("m_abbr");
 
         if (descend > 0)
-            str += " &#8600;" + mathTools.round(descend, 1) + tr2("mAbbr");
+            str += " &#8600;" + mathTools.round(descend, 1) + tr2("m_abbr");
     }
 
     return str;
@@ -94,18 +97,18 @@ module.exports.createTimeString = function (time) {
     var resTimeStr;
     if (tmpTime > 60) {
         if (tmpTime / 60 > 24) {
-            resTimeStr = mathTools.floor(tmpTime / 60 / 24, 1) + tr2("dayAbbr");
+            resTimeStr = mathTools.floor(tmpTime / 60 / 24, 1) + tr2("day_abbr");
             tmpTime = mathTools.floor(((tmpTime / 60) % 24), 1);
             if (tmpTime > 0)
-                resTimeStr += " " + tmpTime + tr2("hourAbbr");
+                resTimeStr += " " + tmpTime + tr2("hour_abbr");
         } else {
-            resTimeStr = mathTools.floor(tmpTime / 60, 1) + tr2("hourAbbr");
+            resTimeStr = mathTools.floor(tmpTime / 60, 1) + tr2("hour_abbr");
             tmpTime = mathTools.floor(tmpTime % 60, 1);
             if (tmpTime > 0)
-                resTimeStr += " " + tmpTime + tr2("minAbbr");
+                resTimeStr += " " + tmpTime + tr2("min_abbr");
         }
     } else
-        resTimeStr = mathTools.round(tmpTime % 60, 1) + tr2("minAbbr");
+        resTimeStr = mathTools.round(tmpTime % 60, 1) + tr2("min_abbr");
     return resTimeStr;
 };
 

@@ -1,13 +1,12 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except 
- *  in compliance with the License. You may obtain a copy of the 
- *  License at
- *
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
  * 
  *  Unless required by applicable law or agreed to in writing, software
@@ -21,10 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Slim list to store several points (without the need for a point object).
@@ -443,7 +439,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess
         return new GHPoint3D(getLatitude(index), getLongitude(index), getElevation(index));
     }
 
-    public static PointList EMPTY = new PointList(0, true)
+    public static final PointList EMPTY = new PointList(0, true)
     {
         @Override
         public void set( int index, double lat, double lon, double ele )
@@ -587,12 +583,15 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess
             @Override
             public boolean hasNext()
             {
-                return counter < PointList.this.getSize();
+                return counter < getSize();
             }
 
             @Override
             public GHPoint3D next()
             {
+                if (counter >= getSize())
+                    throw new NoSuchElementException();
+
                 GHPoint3D point = PointList.this.toGHPoint(counter);
                 counter++;
                 return point;

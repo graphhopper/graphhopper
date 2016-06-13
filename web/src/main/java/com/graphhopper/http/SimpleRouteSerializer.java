@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -17,7 +17,7 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.AltResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.GHResponse;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
@@ -65,7 +65,7 @@ public class SimpleRouteSerializer implements RouteSerializer
             jsonInfo.put("copyrights", Arrays.asList("GraphHopper", "OpenStreetMap contributors"));
 
             List<Map<String, Object>> jsonPathList = new ArrayList<Map<String, Object>>();
-            for (AltResponse ar : rsp.getAlternatives())
+            for (PathWrapper ar : rsp.getAll())
             {
                 Map<String, Object> jsonPath = new HashMap<String, Object>();
                 jsonPath.put("distance", Helper.round(ar.getDistance(), 3));
@@ -97,8 +97,10 @@ public class SimpleRouteSerializer implements RouteSerializer
                     jsonPath.put("descend", ar.getDescend());
                 }
 
+                jsonPath.put("snapped_waypoints", createPoints(ar.getWaypoints(), pointsEncoded, includeElevation));
                 jsonPathList.add(jsonPath);
             }
+
             json.put("paths", jsonPathList);
         }
         return json;

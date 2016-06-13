@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -79,6 +79,12 @@ public class StorableProperties implements Storable<StorableProperties>
         }
     }
 
+    public StorableProperties remove( String key )
+    {
+        map.remove(key);
+        return this;
+    }
+
     public StorableProperties put( String key, String val )
     {
         map.put(key, val);
@@ -90,17 +96,22 @@ public class StorableProperties implements Storable<StorableProperties>
      */
     public StorableProperties put( String key, Object val )
     {
+        if (!key.equals(key.toLowerCase()))
+            throw new IllegalArgumentException("Do not use upper case keys (" + key + ") for StorableProperties since 0.7");
+
         map.put(key, val.toString());
         return this;
     }
 
     public String get( String key )
     {
+        if (!key.equals(key.toLowerCase()))
+            throw new IllegalArgumentException("Do not use upper case keys (" + key + ") for StorableProperties since 0.7");
+
         String ret = map.get(key);
         if (ret == null)
-        {
             return "";
-        }
+
         return ret;
     }
 
@@ -134,8 +145,8 @@ public class StorableProperties implements Storable<StorableProperties>
         put("nodes.version", Constants.VERSION_NODE);
         put("edges.version", Constants.VERSION_EDGE);
         put("geometry.version", Constants.VERSION_GEOMETRY);
-        put("locationIndex.version", Constants.VERSION_LOCATION_IDX);
-        put("nameIndex.version", Constants.VERSION_NAME_IDX);
+        put("location_index.version", Constants.VERSION_LOCATION_IDX);
+        put("name_index.version", Constants.VERSION_NAME_IDX);
         put("shortcuts.version", Constants.VERSION_SHORTCUT);
     }
 
@@ -144,8 +155,8 @@ public class StorableProperties implements Storable<StorableProperties>
         return get("nodes.version") + ","
                 + get("edges.version") + ","
                 + get("geometry.version") + ","
-                + get("locationIndex.version") + ","
-                + get("nameIndex.version");
+                + get("location_index.version") + ","
+                + get("name_index.version");
     }
 
     public boolean checkVersions( boolean silent )
@@ -159,10 +170,10 @@ public class StorableProperties implements Storable<StorableProperties>
         if (!check("geometry", Constants.VERSION_GEOMETRY, silent))
             return false;
 
-        if (!check("locationIndex", Constants.VERSION_LOCATION_IDX, silent))
+        if (!check("location_index", Constants.VERSION_LOCATION_IDX, silent))
             return false;
 
-        if (!check("nameIndex", Constants.VERSION_NAME_IDX, silent))
+        if (!check("name_index", Constants.VERSION_NAME_IDX, silent))
             return false;
 
         if (!check("shortcuts", Constants.VERSION_SHORTCUT, silent))
@@ -179,10 +190,11 @@ public class StorableProperties implements Storable<StorableProperties>
         if (!str.equals(vers + ""))
         {
             if (silent)
-            {
                 return false;
-            }
-            throw new IllegalStateException("Version of " + key + " unsupported: " + str + ", expected:" + vers);
+
+            throw new IllegalStateException("Version of " + key + " unsupported: " + str + ", expected:" + vers + ". "
+                    + "Make sure you are using the same GraphHopper version for reading the files that was used for creating them. "
+                    + "See https://discuss.graphhopper.com/t/722");
         }
         return true;
     }

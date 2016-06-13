@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -25,7 +25,7 @@ import com.graphhopper.util.shapes.GHPoint;
  * Allows subclasses to implement less or more precise calculations.
  * <p>
  * See http://en.wikipedia.org/wiki/Haversine_formula
- * <p>
+ *
  * @author Peter Karich
  */
 public interface DistanceCalc
@@ -63,13 +63,14 @@ public interface DistanceCalc
      *   r
      *  .
      * a-------b
-     *
+     * </pre>
+     * <pre>
      * case 2:
      * r
      *  .
      *    a-------b
      * </pre>
-     * <p>
+     *
      * @return true for case 1 which is "on edge" or the special case of 90° to the edge
      */
     boolean validEdgeDistance( double r_lat_deg, double r_lon_deg,
@@ -78,7 +79,7 @@ public interface DistanceCalc
 
     /**
      * This method calculates the distance from r to edge (a, b) where the crossing point is c
-     * <p>
+     *
      * @return the distance in normalized meter
      */
     double calcNormalizedEdgeDistance( double r_lat_deg, double r_lon_deg,
@@ -91,4 +92,17 @@ public interface DistanceCalc
     GHPoint calcCrossingPointToEdge( double r_lat_deg, double r_lon_deg,
                                      double a_lat_deg, double a_lon_deg,
                                      double b_lat_deg, double b_lon_deg );
+
+    /**
+     * This methods projects a point given in lat and long (in degrees) into a direction, given as
+     * heading, measured clockwise from north in degrees. The distance is passed in km.
+     */
+    public GHPoint projectCoordinate( double lat_deg, double lon_deg,
+                                      double distanceInMeter, double headingClockwiseFromNorth );
+
+    /*
+     * Simple heuristic to detect if the specified two points are crossing the boundary +-180°. See
+     * #667
+     */
+    boolean isCrossBoundary( double lon1, double lon2 );
 }

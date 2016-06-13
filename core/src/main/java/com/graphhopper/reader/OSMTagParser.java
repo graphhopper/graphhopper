@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -23,7 +23,7 @@ import javax.xml.datatype.Duration;
 
 /**
  * This class currently parses the duration tag only.
- * <p/>
+ *
  * @author ratrun
  */
 public class OSMTagParser
@@ -76,8 +76,8 @@ public class OSMTagParser
                     minStr = minStr.substring(0, index);
                 }
 
-                seconds += Integer.parseInt(hourStr) * 60 * 60;
-                seconds += Integer.parseInt(minStr) * 60;
+                seconds += Integer.parseInt(hourStr) * 60L * 60;
+                seconds += Integer.parseInt(minStr) * 60L;
                 seconds += Integer.parseInt(secondsStr);
                 return seconds;
             } else

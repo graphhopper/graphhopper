@@ -23,17 +23,13 @@ import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
-import com.graphhopper.AltResponse;
+import com.graphhopper.PathWrapper;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.ProgressListener;
-import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.*;
+import com.graphhopper.util.Parameters.*;
 
 import org.mapsforge.core.graphics.Bitmap;
 import org.mapsforge.core.graphics.Paint;
@@ -73,7 +69,7 @@ public class MainActivity extends Activity
     private volatile boolean prepareInProgress = false;
     private volatile boolean shortestPathRunning = false;
     private String currentArea = "berlin";
-    private String fileListURL = "http://download2.graphhopper.com/public/maps/0.6/";
+    private String fileListURL = "http://download2.graphhopper.com/public/maps/0.7/";
     private String prefixURL = fileListURL;
     private String downloadURL;
     private File mapsFolder;
@@ -435,7 +431,7 @@ public class MainActivity extends Activity
             protected Path saveDoInBackground( Void... v ) throws Exception
             {
                 GraphHopper tmpHopp = new GraphHopper().forMobile();
-                tmpHopp.load(new File(mapsFolder, currentArea).getAbsolutePath());
+                tmpHopp.load(new File(mapsFolder, currentArea).getAbsolutePath() + "-gh");
                 log("found graph " + tmpHopp.getGraphHopperStorage().toString() + ", nodes:" + tmpHopp.getGraphHopperStorage().getNodes());
                 hopper = tmpHopp;
                 return null;
@@ -462,7 +458,7 @@ public class MainActivity extends Activity
         prepareInProgress = false;
     }
 
-    private Polyline createPolyline( AltResponse response )
+    private Polyline createPolyline( PathWrapper response )
     {
         Paint paintStroke = AndroidGraphicFactory.INSTANCE.createPaint();
         paintStroke.setStyle(Style.STROKE);
@@ -496,23 +492,23 @@ public class MainActivity extends Activity
     {
 
         log("calculating path ...");
-        new AsyncTask<Void, Void, AltResponse>()
+        new AsyncTask<Void, Void, PathWrapper>()
         {
             float time;
 
-            protected AltResponse doInBackground( Void... v )
+            protected PathWrapper doInBackground( Void... v )
             {
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
-                        setAlgorithm(AlgorithmOptions.DIJKSTRA_BI);
+                        setAlgorithm(Algorithms.DIJKSTRA_BI);
                 req.getHints().
-                        put("instructions", "false");
+                        put(Routing.INSTRUCTIONS, "false");
                 GHResponse resp = hopper.route(req);
                 time = sw.stop().getSeconds();
-                return resp.getFirst();
+                return resp.getBest();
             }
 
-            protected void onPostExecute( AltResponse resp )
+            protected void onPostExecute( PathWrapper resp )
             {
                 if (!resp.hasErrors())
                 {

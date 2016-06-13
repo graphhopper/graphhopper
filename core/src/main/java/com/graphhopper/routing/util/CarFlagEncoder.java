@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
 import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
@@ -49,11 +50,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder
 
     public CarFlagEncoder( PMap properties )
     {
-        this((int) properties.getLong("speedBits", 5),
-                properties.getDouble("speedFactor", 5),
-                properties.getBool("turnCosts", false) ? 1 : 0);
+        this((int) properties.getLong("speed_bits", 5),
+                properties.getDouble("speed_factor", 5),
+                properties.getBool("turn_costs", false) ? 1 : 0);
         this.properties = properties;
-        this.setBlockFords(properties.getBool("blockFords", true));
+        this.setBlockFords(properties.getBool("block_fords", true));
     }
 
     public CarFlagEncoder( String propertiesStr )
@@ -88,6 +89,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         absoluteBarriers.add("cycle_barrier");
         absoluteBarriers.add("motorcycle_barrier");
         absoluteBarriers.add("block");
+        absoluteBarriers.add("bus_trap");
+        absoluteBarriers.add("sump_buster");
 
         trackTypeSpeedMap.put("grade1", 20); // paved
         trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with ...
@@ -132,7 +135,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         // forestry stuff
         defaultSpeedMap.put("track", 15);
 
-        conditionalTagsInspector = new ConditionalTagsInspector(restrictions, restrictedValues, intendedValues);
+        conditionalTagsInspector = new ConditionalTagsInspector(DateRangeParser.createCalendar(), restrictions, restrictedValues, intendedValues);
     }
 
     @Override
@@ -221,10 +224,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return 0;
 
-        // do not drive cars over railways (sometimes incorrectly mapped!)
-        if (way.hasTag("railway") && !way.hasTag("railway", acceptedRailways))
-            return 0;
-
         if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))
             return 0;
         else
@@ -243,7 +242,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if (!isAccept(allowed))
             return 0;
 
-        long encoded;
+        long flags = 0;
         if (!isFerry(allowed))
         {
             // get assumed speed from highway type
@@ -254,37 +253,59 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             if (speed > 30 && way.hasTag("surface", badSurfaceSpeedMap))
                 speed = 30;
 
-            encoded = setSpeed(0, speed);
+            flags = setSpeed(flags, speed);
 
             boolean isRoundabout = way.hasTag("junction", "roundabout");
             if (isRoundabout)
-                encoded = setBool(encoded, K_ROUNDABOUT, true);
+                flags = setBool(flags, K_ROUNDABOUT, true);
 
-            boolean isOneway = way.hasTag("oneway", oneways)
-                    || way.hasTag("vehicle:backward")
-                    || way.hasTag("vehicle:forward")
-                    || way.hasTag("motor_vehicle:backward")
-                    || way.hasTag("motor_vehicle:forward");
-
-            if (isOneway || isRoundabout)
+            if (isOneway(way) || isRoundabout)
             {
-                boolean isBackward = way.hasTag("oneway", "-1")
-                        || way.hasTag("vehicle:forward", "no")
-                        || way.hasTag("motor_vehicle:forward", "no");
-                if (isBackward)
-                    encoded |= backwardBit;
-                else
-                    encoded |= forwardBit;
+                if (isBackwardOneway(way))
+                    flags |= backwardBit;
+
+                if (isForwardOneway(way))
+                    flags |= forwardBit;
             } else
-                encoded |= directionBitMask;
+                flags |= directionBitMask;
 
         } else
         {
-            encoded = handleFerryTags(way, defaultSpeedMap.get("living_street"), defaultSpeedMap.get("service"), defaultSpeedMap.get("residential"));
-            encoded |= directionBitMask;
+            double ferrySpeed = getFerrySpeed(way, defaultSpeedMap.get("living_street"), defaultSpeedMap.get("service"), defaultSpeedMap.get("residential"));
+            flags = setSpeed(flags, ferrySpeed);
+            flags |= directionBitMask;
         }
 
-        return encoded;
+        return flags;
+    }
+
+    /**
+     * make sure that isOneway is called before
+     */
+    protected boolean isBackwardOneway( OSMWay way )
+    {
+        return way.hasTag("oneway", "-1")
+                || way.hasTag("vehicle:forward", "no")
+                || way.hasTag("motor_vehicle:forward", "no");
+    }
+
+    /**
+     * make sure that isOneway is called before
+     */
+    protected boolean isForwardOneway( OSMWay way )
+    {
+        return !way.hasTag("oneway", "-1")
+                && !way.hasTag("vehicle:forward", "no")
+                && !way.hasTag("motor_vehicle:forward", "no");
+    }
+
+    protected boolean isOneway( OSMWay way )
+    {
+        return way.hasTag("oneway", oneways)
+                || way.hasTag("vehicle:backward")
+                || way.hasTag("vehicle:forward")
+                || way.hasTag("motor_vehicle:backward")
+                || way.hasTag("motor_vehicle:forward");
     }
 
     public String getWayInfo( OSMWay way )

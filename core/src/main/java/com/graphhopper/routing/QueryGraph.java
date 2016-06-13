@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except in
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -62,7 +62,7 @@ public class QueryGraph implements Graph
      * Store lat,lon of virtual tower nodes.
      */
     private PointList virtualNodes;
-    private static final AngleCalc ac = new AngleCalc();
+    private static final AngleCalc AC = Helper.ANGLE_CALC;
     private List<VirtualEdgeIteratorState> modifiedEdges = new ArrayList<VirtualEdgeIteratorState>(5);
 
     public QueryGraph( Graph graph )
@@ -73,7 +73,7 @@ public class QueryGraph implements Graph
         mainEdges = graph.getAllEdges().getMaxId();
 
         if (mainGraph.getExtension() instanceof TurnCostExtension)
-            wrappedExtension = new QueryGraphTurnExt(this);
+            wrappedExtension = new QueryGraphTurnExt();
         else
             wrappedExtension = mainGraph.getExtension();
 
@@ -301,7 +301,7 @@ public class QueryGraph implements Graph
     {
         private final TurnCostExtension mainTurnExtension;
 
-        public QueryGraphTurnExt( QueryGraph qGraph )
+        public QueryGraphTurnExt()
         {
             this.mainTurnExtension = (TurnCostExtension) mainGraph.getExtension();
         }
@@ -380,7 +380,7 @@ public class QueryGraph implements Graph
             return false;
 
         int virtNodeIDintern = nodeId - mainNodes;
-        favoredHeading = ac.convertAzimuth2xaxisAngle(favoredHeading);
+        favoredHeading = AC.convertAzimuth2xaxisAngle(favoredHeading);
 
         // either penalize incoming or outgoing edges
         List<Integer> edgePositions = incoming ? Arrays.asList(VE_BASE, VE_ADJ_REV) : Arrays.asList(VE_BASE_REV, VE_ADJ);
@@ -394,15 +394,15 @@ public class QueryGraph implements Graph
             if (incoming)
             {
                 int numWayPoints = wayGeo.getSize();
-                edgeOrientation = ac.calcOrientation(wayGeo.getLat(numWayPoints - 2), wayGeo.getLon(numWayPoints - 2),
+                edgeOrientation = AC.calcOrientation(wayGeo.getLat(numWayPoints - 2), wayGeo.getLon(numWayPoints - 2),
                         wayGeo.getLat(numWayPoints - 1), wayGeo.getLon(numWayPoints - 1));
             } else
             {
-                edgeOrientation = ac.calcOrientation(wayGeo.getLat(0), wayGeo.getLon(0),
+                edgeOrientation = AC.calcOrientation(wayGeo.getLat(0), wayGeo.getLon(0),
                         wayGeo.getLat(1), wayGeo.getLon(1));
             }
 
-            edgeOrientation = ac.alignOrientation(favoredHeading, edgeOrientation);
+            edgeOrientation = AC.alignOrientation(favoredHeading, edgeOrientation);
             double delta = (edgeOrientation - favoredHeading);
 
             if (Math.abs(delta) > 1.74) // penalize if a turn of more than 100°

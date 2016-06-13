@@ -25,6 +25,7 @@ see Bike2WeightFlagEncoder for an example. You'll have to overwrite the followin
  * setProperties
  * reverseFlags
  * setLowSpeed
+ * always set reverse speed explicitely, see #665
 
 ## Elevation
 

@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -138,7 +138,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         index.findNetworkEntries(-0.5, -0.9, foundIds, 0);
         index.findNetworkEntries(-0.5, -0.9, foundIds, 1);
         assertEquals(set, foundIds);
-        assertEquals(2, index.findID(-0.5, -0.9));
+        assertEquals(2, findID(index, -0.5, -0.9));
 
         // The optimization if(dist > normedHalf) => feed nodeA or nodeB
         // although this reduces chance of nodes outside of the tile
@@ -228,7 +228,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     @Test
     public void testMoreReal()
     {
-        Graph graph = createGHStorage(new EncodingManager("CAR"));
+        Graph graph = createGHStorage(new EncodingManager("car"));
         NodeAccess na = graph.getNodeAccess();
         na.setNode(1, 51.2492152, 9.4317166);
         na.setNode(0, 52, 9);
@@ -239,7 +239,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         graph.edge(0, 2, 1000, true);
         graph.edge(0, 3, 1000, true).setWayGeometry(Helper.createPointList(51.21, 9.43));
         LocationIndex index = createIndex(graph, -1);
-        assertEquals(2, index.findID(51.2, 9.4));
+        assertEquals(2, findID(index, 51.2, 9.4));
     }
 
     //    -1    0   1 1.5
@@ -276,10 +276,10 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
     {
         Graph g = createTestGraphWithWayGeometry();
         LocationIndex index = createIndex(g, -1);
-        assertEquals(1, index.findID(0, 0));
-        assertEquals(1, index.findID(0, 0.1));
-        assertEquals(1, index.findID(0.1, 0.1));
-        assertEquals(1, index.findID(-0.5, -0.5));
+        assertEquals(1, findID(index, 0, 0));
+        assertEquals(1, findID(index, 0, 0.1));
+        assertEquals(1, findID(index, 0.1, 0.1));
+        assertEquals(1, findID(index, -0.5, -0.5));
     }
 
     @Test
@@ -296,7 +296,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         g.edge(20, 30, 1, true);
 
         LocationIndex index = createIndex(g, 2000);
-        assertEquals(20, index.findID(51.25, 9.43));
+        assertEquals(20, findID(index, 51.25, 9.43));
     }
 
     @Test
@@ -494,5 +494,51 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester
         qr = index.findClosest(0.03, 0.03, bikeFilter);
         assertTrue(qr.isValid());
         assertEquals(2, qr.getClosestNode());
+    }
+
+    // 0--1--2--3, the "cross boundary" edges are 1-2 and 5-6
+    // |  |  |  |
+    // 4--5--6--7
+    @Test
+    public void testCrossBoundaryNetwork_issue667()
+    {
+        Graph graph = createGHStorage(new RAMDirectory(), encodingManager, false);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0.1, 179.5);
+        na.setNode(1, 0.1, 179.9);
+        na.setNode(2, 0.1, -179.8);
+        na.setNode(3, 0.1, -179.5);
+        na.setNode(4, 0, 179.5);
+        na.setNode(5, 0, 179.9);
+        na.setNode(6, 0, -179.8);
+        na.setNode(7, 0, -179.5);
+
+        // just use 1 as distance which is incorrect but does not matter in this unit case
+        graph.edge(0, 1, 1, true);
+        graph.edge(0, 4, 1, true);
+        graph.edge(1, 5, 1, true);
+        graph.edge(4, 5, 1, true);
+
+        graph.edge(2, 3, 1, true);
+        graph.edge(2, 6, 1, true);
+        graph.edge(3, 7, 1, true);
+        graph.edge(6, 7, 1, true);
+
+        // as last edges: create cross boundary edges
+        // See #667 where the recommendation is to adjust the import and introduce two pillar nodes 
+        // where the connection is cross boundary and would be okay if ignored as real length is 0
+        graph.edge(1, 2, 1, true).setWayGeometry(Helper.createPointList(0, 180, 0, -180));
+        // but this unit test succeeds even without this adjusted import:
+        graph.edge(5, 6, 1, true);
+
+        LocationIndexTree index = createIndexNoPrepare(graph, 500);
+        index.prepareIndex();
+
+        assertTrue(graph.getNodes() > 0);
+        for (int i = 0; i < graph.getNodes(); i++)
+        {
+            QueryResult qr = index.findClosest(na.getLat(i), na.getLon(i), EdgeFilter.ALL_EDGES);
+            assertEquals(i, qr.getClosestNode());
+        }
     }
 }

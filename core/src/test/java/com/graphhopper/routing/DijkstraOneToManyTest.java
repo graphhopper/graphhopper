@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -216,4 +216,67 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester
         g.edge(7, 10, 10, true);
         return g;
     }
+
+    @Test
+    public void testWeightLimit_issue380()
+    {
+        GraphHopperStorage graph = createGHStorage(false);
+        initGraphWeightLimit(graph);
+
+        DijkstraOneToMany algo = (DijkstraOneToMany) createAlgo(graph);
+        algo.setWeightLimit(3);
+        Path p = algo.calcPath(0, 4);
+        assertTrue(p.isFound());
+        assertEquals(3.0, p.getWeight(), 1e-6);
+
+        algo = (DijkstraOneToMany) createAlgo(graph);
+        p = algo.calcPath(0, 3);
+        assertTrue(p.isFound());
+        assertEquals(3.0, p.getWeight(), 1e-6);
+    }
+
+    @Test
+    public void testUseCacheZeroPath_issue707()
+    {
+        RoutingAlgorithm algo = createAlgo(createTestStorage());
+
+        Path p = algo.calcPath(0, 0);
+        assertEquals(0, p.distance, 0.00000);
+
+        p = algo.calcPath(0, 4);
+        assertEquals(Helper.createTList(0, 4), p.calcNodes());
+
+        // expand SPT
+        p = algo.calcPath(0, 7);
+        assertEquals(Helper.createTList(0, 4, 5, 7), p.calcNodes());
+
+        // use SPT
+        p = algo.calcPath(0, 2);
+        assertEquals(Helper.createTList(0, 1, 2), p.calcNodes());
+    }
+
+    public static Graph initGraphWeightLimit( Graph g )
+    {
+        //      0----1
+        //     /     |
+        //    7--    |
+        //   /   |   |
+        //   6---5   |
+        //   |   |   |
+        //   4---3---2
+
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+
+        g.edge(3, 2, 1, true);
+        g.edge(3, 5, 1, true);
+        g.edge(5, 7, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(4, 6, 1, true);
+        g.edge(6, 7, 1, true);
+        g.edge(6, 5, 1, true);
+        g.edge(0, 7, 1, true);
+        return g;
+    }
+
 }

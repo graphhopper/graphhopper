@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -47,9 +47,9 @@ public class OSMIDMap implements LongIntMap
     {
         this.dir = dir;
         this.noEntryValue = noNumber;
-        keys = dir.find("osmidMapKeys");
+        keys = dir.find("osmid_map_keys");
         keys.create(2000);
-        values = dir.find("osmidMapValues");
+        values = dir.find("osmid_map_values");
         values.create(1000);
     }
 

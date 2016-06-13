@@ -3,11 +3,12 @@ cd $HOME/../..
 
 mvn clean test verify
 
-cd $HOME/../../web
-
-sudo chown -R $USER ~/.npm
-npm install
-npm test && npm run lint
+# npm tests disabled due to #632
+# cd $HOME/../../web
+# 
+# sudo chown -R $USER ~/.npm
+# npm install
+# npm test && npm run lint
 
 #modules="core web tools"
 #for module in $modules; do

@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters.Routing;
 
 /**
  * Calculates the fastest route with the specified vehicle (VehicleEncoder). Calculates the weight
@@ -33,15 +34,14 @@ public class FastestWeighting extends AbstractWeighting
      * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
      * costs or traffic light costs etc)
      */
-    protected final static double SPEED_CONV = 3.6;
-    final static double DEFAULT_HEADING_PENALTY = 300; //[s]
+    protected final static double SPEED_CONV = 3.6;    
     private final double headingPenalty;
     private final double maxSpeed;
 
     public FastestWeighting( FlagEncoder encoder, PMap pMap )
     {
         super(encoder);
-        headingPenalty = pMap.getDouble("heading_penalty", DEFAULT_HEADING_PENALTY);
+        headingPenalty = pMap.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
     }
 

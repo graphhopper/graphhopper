@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -17,7 +17,7 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.routing.util.WeightingMap;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -37,8 +37,7 @@ public class GHRequest
 {
     private String algo = "";
     private final List<GHPoint> points;
-    private final WeightingMap hints = new WeightingMap();
-    private String vehicle = "";
+    private final HintsMap hints = new HintsMap();
     private boolean possibleToAdd = false;
     private Locale locale = Locale.US;
 
@@ -191,7 +190,7 @@ public class GHRequest
     private void validateAzimuthValue( double heading )
     {
         // heading must be in (0, 360) oder NaN
-        if (!Double.isNaN(heading) && ((Double.compare(heading, 360) > 0) || (Double.compare(heading, 0) < 0)))
+        if (!Double.isNaN(heading) && (Double.compare(heading, 360) > 0 || Double.compare(heading, 0) < 0))
             throw new IllegalArgumentException("Heading " + heading + " must be in range (0,360) or NaN");
     }
 
@@ -206,7 +205,7 @@ public class GHRequest
     public GHRequest setAlgorithm( String algo )
     {
         if (algo != null)
-            this.algo = algo;
+            this.algo = Helper.camelCaseToUnderScore(algo);
         return this;
     }
 
@@ -251,14 +250,13 @@ public class GHRequest
      */
     public GHRequest setVehicle( String vehicle )
     {
-        if (vehicle != null)
-            this.vehicle = vehicle;
+        hints.setVehicle(vehicle);
         return this;
     }
 
     public String getVehicle()
     {
-        return vehicle;
+        return hints.getVehicle();
     }
 
     @Override
@@ -278,7 +276,7 @@ public class GHRequest
         return res + "(" + algo + ")";
     }
 
-    public WeightingMap getHints()
+    public HintsMap getHints()
     {
         return hints;
     }

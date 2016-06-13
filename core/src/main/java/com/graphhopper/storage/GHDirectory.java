@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -58,17 +58,16 @@ public class GHDirectory implements Directory
         {
             if (isStoring())
             {
-                put("locationIndex", DAType.RAM_INT_STORE);
+                put("location_index", DAType.RAM_INT_STORE);
                 put("edges", DAType.RAM_INT_STORE);
                 put("nodes", DAType.RAM_INT_STORE);
             } else
             {
-                put("locationIndex", DAType.RAM_INT);
+                put("location_index", DAType.RAM_INT);
                 put("edges", DAType.RAM_INT);
                 put("nodes", DAType.RAM_INT);
             }
         }
-        mkdirs();
     }
 
     @Override
@@ -79,6 +78,9 @@ public class GHDirectory implements Directory
 
     public Directory put( String name, DAType type )
     {
+        if (!name.equals(name.toLowerCase()))
+            throw new IllegalArgumentException("Since 0.7 DataAccess objects does no longer accept upper case names");
+
         types.put(name, type);
         return this;
     }
@@ -96,6 +98,9 @@ public class GHDirectory implements Directory
     @Override
     public DataAccess find( String name, DAType type )
     {
+        if (!name.equals(name.toLowerCase()))
+            throw new IllegalArgumentException("Since 0.7 DataAccess objects does no longer accept upper case names");
+
         DataAccess da = map.get(name);
         if (da != null)
         {
@@ -113,13 +118,10 @@ public class GHDirectory implements Directory
                     da = new RAMIntDataAccess(name, location, true, byteOrder);
                 else
                     da = new RAMIntDataAccess(name, location, false, byteOrder);
-            } else
-            {
-                if (type.isStoring())
-                    da = new RAMDataAccess(name, location, true, byteOrder);
-                else
-                    da = new RAMDataAccess(name, location, false, byteOrder);
-            }
+            } else if (type.isStoring())
+                da = new RAMDataAccess(name, location, true, byteOrder);
+            else
+                da = new RAMDataAccess(name, location, false, byteOrder);
         } else if (type.isMMap())
         {
             da = new MMapDataAccess(name, location, byteOrder, type.isAllowWrites());
@@ -191,10 +193,12 @@ public class GHDirectory implements Directory
         return defaultType.isStoring();
     }
 
-    protected void mkdirs()
+    @Override
+    public Directory create()
     {
         if (isStoring())
             new File(location).mkdirs();
+        return this;
     }
 
     @Override

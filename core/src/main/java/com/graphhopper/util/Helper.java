@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except in
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -53,8 +53,9 @@ public class Helper
     public static final DistanceCalc DIST_EARTH = new DistanceCalcEarth();
     public static final DistanceCalc3D DIST_3D = new DistanceCalc3D();
     public static final DistancePlaneProjection DIST_PLANE = new DistancePlaneProjection();
-    private static final Logger logger = LoggerFactory.getLogger(Helper.class);
-    public static Charset UTF_CS = Charset.forName("UTF-8");
+    public static final AngleCalc ANGLE_CALC = new AngleCalc();
+    private static final Logger LOGGER = LoggerFactory.getLogger(Helper.class);
+    public static final Charset UTF_CS = Charset.forName("UTF-8");
     public static final TimeZone UTC = TimeZone.getTimeZone("UTC");
     public static final long MB = 1L << 20;
 
@@ -123,7 +124,7 @@ public class Helper
                 int index = line.indexOf("=");
                 if (index < 0)
                 {
-                    logger.warn("Skipping configuration at line:" + line);
+                    LOGGER.warn("Skipping configuration at line:" + line);
                     continue;
                 }
 
@@ -504,7 +505,7 @@ public class Helper
     public static final double round2( double value )
     {
         return Math.round(value * 100) / 100d;
-    }    
+    }
 
     /**
      * This creates a date formatter for yyyy-MM-dd'T'HH:mm:ss'Z' which is has to be identical to
@@ -540,5 +541,46 @@ public class Helper
     public static final int toSignedInt( long x )
     {
         return (int) x;
+    }
+
+    public static final String camelCaseToUnderScore( String key )
+    {
+        if (key.isEmpty())
+            return key;
+
+        StringBuilder sb = new StringBuilder(key.length());
+        for (int i = 0; i < key.length(); i++)
+        {
+            char c = key.charAt(i);
+            if (Character.isUpperCase(c))
+                sb.append("_").append(Character.toLowerCase(c));
+            else
+                sb.append(c);
+        }
+
+        return sb.toString();
+    }
+
+    public static final String underScoreToCamelCase( String key )
+    {
+        if (key.isEmpty())
+            return key;
+
+        StringBuilder sb = new StringBuilder(key.length());
+        for (int i = 0; i < key.length(); i++)
+        {
+            char c = key.charAt(i);
+            if (c == '_')
+            {
+                i++;
+                if (i < key.length())
+                    sb.append(Character.toUpperCase(key.charAt(i)));
+                else
+                    sb.append(c);
+            } else
+                sb.append(c);
+        }
+
+        return sb.toString();
     }
 }

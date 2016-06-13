@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -54,6 +54,7 @@ public class DistanceCalcEarth implements DistanceCalc
         return R * 2 * asin(sqrt(normedDist));
     }
 
+    @Override
     public double calcDenormalizedDist( double normedDist )
     {
         return R * 2 * asin(sqrt(normedDist));
@@ -164,7 +165,8 @@ public class DistanceCalcEarth implements DistanceCalc
         return calcNormalizedDist(c_lat, c_lon / shrinkFactor, r_lat_deg, r_lon_deg);
     }
 
-    private double calcShrinkFactor(double a_lat_deg, double b_lat_deg) {
+    private double calcShrinkFactor( double a_lat_deg, double b_lat_deg )
+    {
         return cos(toRadians((a_lat_deg + b_lat_deg) / 2));
     }
 
@@ -233,6 +235,38 @@ public class DistanceCalcEarth implements DistanceCalc
         // double ab_rb_norm = Math.sqrt(rb_x * rb_x + rb_y * rb_y) * Math.sqrt(ab_x * ab_x + ab_y * ab_y);
         // return Math.acos(ab_ar / ab_ar_norm) <= Math.PI / 2 && Math.acos(ab_rb / ab_rb_norm) <= Math.PI / 2;
         return ab_ar > 0 && ab_rb > 0;
+    }
+
+    @Override
+    public GHPoint projectCoordinate( double latInDeg, double lonInDeg, double distanceInMeter, double headingClockwiseFromNorth )
+    {
+        double angularDistance = distanceInMeter / R;
+
+        double latInRadians = Math.toRadians(latInDeg);
+        double lonInRadians = Math.toRadians(lonInDeg);
+        double headingInRadians = Math.toRadians(headingClockwiseFromNorth);
+
+        // This formula is taken from: http://williams.best.vwh.net/avform.htm#LL (http://www.movable-type.co.uk/scripts/latlong.html -> https://github.com/chrisveness/geodesy MIT)
+        // θ=heading,δ=distance,φ1=latInRadians
+        // lat2 = asin( sin φ1 ⋅ cos δ + cos φ1 ⋅ sin δ ⋅ cos θ )     
+        // lon2 = λ1 + atan2( sin θ ⋅ sin δ ⋅ cos φ1, cos δ − sin φ1 ⋅ sin φ2 )
+        double projectedLat = Math.asin(Math.sin(latInRadians) * Math.cos(angularDistance)
+                + Math.cos(latInRadians) * Math.sin(angularDistance) * Math.cos(headingInRadians));
+        double projectedLon = lonInRadians + Math.atan2(Math.sin(headingInRadians) * Math.sin(angularDistance) * Math.cos(latInRadians),
+                Math.cos(angularDistance) - Math.sin(latInRadians) * Math.sin(projectedLat));
+
+        projectedLon = (projectedLon + 3 * Math.PI) % (2 * Math.PI) - Math.PI; // normalise to -180..+180°
+
+        projectedLat = Math.toDegrees(projectedLat);
+        projectedLon = Math.toDegrees(projectedLon);
+
+        return new GHPoint(projectedLat, projectedLon);
+    }
+
+    @Override
+    public boolean isCrossBoundary( double lon1, double lon2 )
+    {
+        return abs(lon1 - lon2) > 300;
     }
 
     @Override

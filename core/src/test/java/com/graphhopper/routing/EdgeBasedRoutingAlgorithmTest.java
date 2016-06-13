@@ -1,15 +1,14 @@
 /*
- *  Licensed to Peter Karich under one or more contributor license
- *  agreements. See the NOTICE file distributed with this work for
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  Peter Karich licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License. You may obtain a copy of the
- *  License at
- *
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
+ *  compliance with the License. You may obtain a copy of the License at
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -25,6 +24,7 @@ import com.graphhopper.util.Helper;
 
 import static org.junit.Assert.*;
 import static com.graphhopper.util.GHUtility.*;
+import static com.graphhopper.util.Parameters.Algorithms.*;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -57,10 +57,10 @@ public class EdgeBasedRoutingAlgorithmTest
     {
         return Arrays.asList(new Object[][]
                 {
-                        {AlgorithmOptions.DIJKSTRA},
-                        {AlgorithmOptions.DIJKSTRA_BI},
-                        {AlgorithmOptions.ASTAR},
-                        {AlgorithmOptions.ASTAR_BI}
+                        {DIJKSTRA},
+                        {DIJKSTRA_BI},
+                        {ASTAR},
+                        {ASTAR_BI}
                         // TODO { AlgorithmOptions.DIJKSTRA_ONE_TO_MANY }
                 });
     }

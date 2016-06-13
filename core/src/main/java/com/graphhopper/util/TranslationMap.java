@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except in
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
+ *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -32,7 +32,7 @@ public class TranslationMap
     // ISO codes (639-1), use 'en_US' as reference
     private static final List<String> LOCALES = Arrays.asList("ar", "ast", "bg", "ca",
             "cs_CZ", "da_DK", "de_DE", "el", "en_US", "es", "fa", "fil", "fi",
-            "fr_FR", "fr_CH", "gl", "he", "hsb", "hu_HU", "it", "ja", "lt_LT", "ne",
+            "fr_FR", "fr_CH", "gl", "he", "hr_HR", "hsb", "hu_HU", "it", "ja", "lt_LT", "ne",
             "nl", "pl_PL", "pt_BR", "pt_PT", "ro", "ru", "si", "sk", "sv_SE", "tr", "uk",
             "vi_VI", "zh_CN");
     private final Map<String, Translation> translations = new HashMap<String, Translation>();

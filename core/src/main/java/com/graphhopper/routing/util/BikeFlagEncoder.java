@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -40,11 +40,11 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
 
     public BikeFlagEncoder( PMap properties )
     {
-        this((int) properties.getLong("speedBits", 4),
-                properties.getLong("speedFactor", 2),
-                properties.getBool("turnCosts", false) ? 1 : 0);
+        this((int) properties.getLong("speed_bits", 4),
+                properties.getLong("speed_factor", 2),
+                properties.getBool("turn_costs", false) ? 1 : 0);
         this.properties = properties;
-        this.setBlockFords(properties.getBool("blockFords", true));
+        this.setBlockFords(properties.getBool("block_fords", true));
     }
 
     public BikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
@@ -70,7 +70,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         preferHighwayTags.add("unclassified");
 
         absoluteBarriers.add("kissing_gate");
-        setSpecificBicycleClass("touring");
+        setSpecificClassBicycle("touring");
     }
 
     @Override
@@ -84,9 +84,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
     {
         String highway = way.getTag("highway");
         String trackType = way.getTag("tracktype");
-        return way.hasTag("highway", pushingSections)
-                || way.hasTag("railway", "platform")
-                || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
+        return super.isPushingSection(way) || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
     }
 
     @Override

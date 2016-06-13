@@ -1,14 +1,14 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
- *
- *  GraphHopper licenses this file to you under the Apache License, 
+ * 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
- *
+ * 
  *       http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -91,7 +91,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
 
         // create shortcuts
         ghStorage.freeze();
-        FlagEncoder car = encodingManager.getEncoder("CAR");
+        FlagEncoder car = encodingManager.getEncoder("car");
         long flags = car.setProperties(60, true, true);
         CHEdgeIteratorState iter5 = lg.shortcut(0, 2);
         iter5.setDistance(20).setFlags(flags);
@@ -104,7 +104,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
         tmp.setSkippedEdges(iter5.getEdge(), iter6.getEdge());
 
         LocationIndex index = createIndex(ghStorage, -1);
-        assertEquals(2, index.findID(0, 0.5));
+        assertEquals(2, findID(index, 0, 0.5));
     }
 
     @Test
@@ -174,9 +174,9 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
         expectedSet.add(2);
         assertEquals(expectedSet, set);
 
-        assertEquals(0, index.findID(0.51, 0.2));
-        assertEquals(1, index.findID(0.1, 0.1));
-        assertEquals(2, index.findID(0.51, 0.51));
-        assertEquals(3, index.findID(0.51, 1.1));
+        assertEquals(0, findID(index, 0.51, 0.2));
+        assertEquals(1, findID(index, 0.1, 0.1));
+        assertEquals(2, findID(index, 0.51, 0.51));
+        assertEquals(3, findID(index, 0.51, 1.1));
     }
 }

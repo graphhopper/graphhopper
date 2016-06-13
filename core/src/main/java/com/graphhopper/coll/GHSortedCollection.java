@@ -1,9 +1,9 @@
 /*
- *  Licensed to GraphHopper and Peter Karich under one or more contributor
+ *  Licensed to GraphHopper GmbH under one or more contributor
  *  license agreements. See the NOTICE file distributed with this work for 
  *  additional information regarding copyright ownership.
  * 
- *  GraphHopper licenses this file to you under the Apache License, 
+ *  GraphHopper GmbH licenses this file to you under the Apache License, 
  *  Version 2.0 (the "License"); you may not use this file except in 
  *  compliance with the License. You may obtain a copy of the License at
  * 
@@ -32,15 +32,10 @@ import java.util.TreeMap;
 public class GHSortedCollection
 {
     private int size;
-    private int slidingMeanValue = 20;
-    private TreeMap<Integer, TIntHashSet> map;
+    private final int slidingMeanValue = 20;
+    private final TreeMap<Integer, TIntHashSet> map;
 
     public GHSortedCollection()
-    {
-        this(0);
-    }
-
-    public GHSortedCollection( int size )
     {
         // use size as indicator for maxEntries => try radix sort?
         map = new TreeMap<Integer, TIntHashSet>();
