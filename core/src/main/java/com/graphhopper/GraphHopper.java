@@ -1030,11 +1030,8 @@ public class GraphHopper implements GraphHopperAPI
             String tModeStr = hints.get("traversal_mode", traversalMode.toString());
             TraversalMode tMode = TraversalMode.fromString(tModeStr);
             if (hints.has(Routing.EDGE_BASED))
-            {
-                tMode = hints.getBool(Routing.EDGE_BASED, false)
-                        ? TraversalMode.EDGE_BASED_2DIR
-                        : TraversalMode.NODE_BASED;
-            }
+                tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;
+            ghRsp.addDebugInfo("tmode:" + tMode.toString());
 
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
             List<GHPoint> points = request.getPoints();
