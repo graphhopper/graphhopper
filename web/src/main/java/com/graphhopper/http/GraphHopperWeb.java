@@ -191,12 +191,12 @@ public class GraphHopperWeb implements GraphHopperAPI
         if (pathWrapper.hasErrors())
             return pathWrapper;
 
-        double distance = path.getDouble("distance");
-        long time = path.getLong("time");
-
-        String snappedPointStr = path.getString("points");
-        PointList snappedPoints = WebHelper.decodePolyline(snappedPointStr, 5, tmpElevation);
-        pathWrapper.setWaypoints(snappedPoints);
+        if (path.has("snapped_waypoints"))
+        {
+            String snappedPointStr = path.getString("snapped_waypoints");
+            PointList snappedPoints = WebHelper.decodePolyline(snappedPointStr, 5, tmpElevation);
+            pathWrapper.setWaypoints(snappedPoints);
+        }
 
         if (tmpCalcPoints)
         {
@@ -275,6 +275,9 @@ public class GraphHopperWeb implements GraphHopperAPI
                 pathWrapper.setInstructions(il);
             }
         }
+
+        double distance = path.getDouble("distance");
+        long time = path.getLong("time");
         pathWrapper.setDistance(distance).setTime(time);
         return pathWrapper;
     }
