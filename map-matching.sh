@@ -1,4 +1,4 @@
-
+#!/bin/bash
 
 if [ "$JAVA" = "" ]; then
  JAVA=java
