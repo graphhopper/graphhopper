@@ -32,7 +32,7 @@ public class GHResponse
 {
     private String debugInfo = "";
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
-    private final PMap hintsMap = new PMap();    
+    private final PMap hintsMap = new PMap();
     private final List<PathWrapper> pathWrappers = new ArrayList<PathWrapper>(5);
 
     public GHResponse()
@@ -77,7 +77,7 @@ public class GHResponse
             throw new IllegalStateException("Debug information has to be none null");
 
         if (!this.debugInfo.isEmpty())
-            this.debugInfo += ";";
+            this.debugInfo += "; ";
 
         this.debugInfo += debugInfo;
     }

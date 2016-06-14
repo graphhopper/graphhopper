@@ -11,7 +11,7 @@ We have a prosper community and welcome everyone. Let us know your problems, use
 
 ## Get Started
 
-To get started read through our documentation ([0.6](https://github.com/graphhopper/graphhopper/blob/0.6/docs/index.md), [unstable](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)). 
+To get started read through our documentation ([0.7](https://github.com/graphhopper/graphhopper/blob/0.7/docs/index.md), [unstable](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)). 
 
 ## Questions
 
