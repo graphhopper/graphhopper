@@ -18,5 +18,5 @@ public interface MatrixAlgorithm {
      * @return Returns a row for each origin, with duration/distance info to each destination
      * @throws IllegalArgumentException Thrown when origin.size() < 1 or desitnations.size() < 1
      */
-    DistanceMatrix calcMatrix(List<Integer> origins, List<Integer> destinations);
+    DistanceMatrix calcMatrix(int[] origins, int[] destinations);
 }

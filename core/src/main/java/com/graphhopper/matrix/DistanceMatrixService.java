@@ -77,8 +77,8 @@ public class DistanceMatrixService {
 
         queryGraph.lookup(merged);
 
-        List<Integer> originNodes =  mapToNodes(originQNodes);
-        List<Integer> destinationNodes =  mapToNodes(destinationQNodes);
+        int[] originNodes =  mapToNodes(originQNodes);
+        int[] destinationNodes =  mapToNodes(destinationQNodes);
 
         MatrixAlgorithm algorithm = matrixAlgorithmFactory.build(queryGraph, algoOpts);
         DistanceMatrix matrix = algorithm.calcMatrix(originNodes, destinationNodes);
@@ -89,21 +89,10 @@ public class DistanceMatrixService {
     }
 
     /**
-     * Maps the internal node based DistanceMatrix to more meaningful GHPoints
-     *
+     * Creates a GHMatrixResponse from the given matrix
      */
     private GHMatrixResponse toResponse(DistanceMatrix matrix, GHMatrixRequest request){
-        GHMatrixResponse response = new GHMatrixResponse();
-
-        for(int i=0; i< matrix.getRows().size(); i++){
-            DistanceMatrix.DistanceRow r = matrix.getRow(i);
-            GHMatrixResponse.GHMatrixDistanceRow ghRow = response.addRow(request.getOrigins().get(i));
-            for(int j=0; j< r.getDestinations().size(); j++){
-               DistanceMatrix.DestinationInfo d = r.getDestinations().get(j);
-                GHMatrixResponse.GHMatrixDestinationInfo destination = ghRow.getDestinations().get(j);
-                ghRow.addDestination(destination.destination, d.distance, d.time);
-            }
-        }
+        GHMatrixResponse response = new GHMatrixResponse(matrix);
         return response;
     }
 
@@ -186,10 +175,10 @@ public class DistanceMatrixService {
         return nodes;
     }
 
-    private List<Integer> mapToNodes(List<QueryResult> nodeQueryResults){
-        List<Integer> nodes = new ArrayList<>();
-        for (QueryResult r : nodeQueryResults) {
-            nodes.add(r.getClosestNode());
+    private int[] mapToNodes(List<QueryResult> nodeQueryResults){
+        int[] nodes = new int[nodeQueryResults.size()];
+        for (int i=0;i<nodes.length;i++) {
+            nodes[i] = nodeQueryResults.get(i).getClosestNode();
         }
         return nodes;
     }

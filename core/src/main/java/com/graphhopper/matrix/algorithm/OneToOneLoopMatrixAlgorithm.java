@@ -41,25 +41,24 @@ public class OneToOneLoopMatrixAlgorithm extends AbstractMatrixAlgorithm {
         this.routingAlgoOptions = routingAlgoOptions;
     }
 
-
     @Override
-    public DistanceMatrix calcMatrix(List<Integer> origins, List<Integer> destinations) {
+    public DistanceMatrix calcMatrix(int[] origins, int[] destinations) {
+        DistanceMatrix matrix = new DistanceMatrix(
+                origins.length, destinations.length,
+                true,  // Include distances
+                true,  // Include times
+                true); // Include weights
 
-        DistanceMatrix matrix = new DistanceMatrix();
+        for (int i=0;i<origins.length;i++) {
 
-        for (int origin : origins) {
-
-            DistanceMatrix.DistanceRow row = matrix.addRow(origin);
-
-            for (int destination : destinations) {
-
+            int origin = origins[i];
+            for (int j=0;j<destinations.length;j++) {
                 RoutingAlgorithm algorithm = routingFactory.createAlgo(graph, routingAlgoOptions);
-                Path path = algorithm.calcPath(origin, destination);
+                Path path = algorithm.calcPath(origin, destinations[j]);
 
-                row.addDestination(destination, path.getDistance(), path.getTime());
+                matrix.setCell(i, j, path.getDistance(), path.getTime(), path.getWeight());
             }
         }
-
         return matrix;
     }
 }

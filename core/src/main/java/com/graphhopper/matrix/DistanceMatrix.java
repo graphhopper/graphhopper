@@ -1,7 +1,7 @@
 package com.graphhopper.matrix;
 
-import java.util.ArrayList;
-import java.util.List;
+
+import java.util.Arrays;
 
 /**
  * Holds the resulting distance matrix for a given set of
@@ -11,107 +11,103 @@ import java.util.List;
  */
 public final class DistanceMatrix {
 
-    private final List<DistanceRow> rows = new ArrayList<>();
+    private final int numberOfOrigins;
+    private final int numberOfDestinations;
+
+
+    private final double[][] distances;
+    private final long[][] times;
+    private final double[][] weights;
 
     /**
-     * Adds a new row for the given origin node.
-     * @param originNode The node id of the origin
-     * @return The new distance row
-     */
-    public DistanceRow addRow(int originNode){
-        DistanceRow row = new DistanceRow(originNode);
-        rows.add(row);
-        return row;
-    }
-
-    public List<DistanceRow> getRows() {
-        return rows;
-    }
-
-    public DistanceRow getRow(int index) {
-        return rows.get(index);
-    }
-
-
-    @Override
-    public String toString(){
-        String matrixStr = "";
-        for (DistanceRow row : getRows()) {
-            matrixStr += row.toString() + "\n";
-        }
-        return matrixStr;
-    }
-
-    /**
-     * Represents a row in the distance matrix.
+     * Creates a new GHMatrixResponse with the given dimensions
      *
-     * Holds all the distance/duration information from a single starting node to
-     * a given set of destinations.
+     * @param numberOfOrigins The number of origin points (rows)
+     * @param numberOfDestinations The number of destination points (columns)
+     * @param includeDistances Include distance array
+     * @param includeTimes Include times array
+     * @param includeWeights Include weights array
      */
-    public static class DistanceRow {
-        /**
-         * The starting node
-         */
-        public final int originNode;
+    public DistanceMatrix(int numberOfOrigins, int numberOfDestinations,
+                          boolean includeDistances, boolean includeTimes, boolean includeWeights){
 
-        /**
-         * Time/duration info to the given destinations
-         */
-        public final List<DestinationInfo> destinations = new ArrayList<>();
+        this.numberOfOrigins = numberOfOrigins;
+        this.numberOfDestinations = numberOfDestinations;
 
-        public DistanceRow(int originNode){
-            this.originNode = originNode;
-        }
-
-        /**
-         * Adds a new destination node with the given distance/duration data
-         * @param node The destination node
-         * @param distance The distance to the destination node
-         * @param time The estimated time to the destination node
-         * @return
-         */
-        public DestinationInfo addDestination(int node, double distance, long time){
-            DestinationInfo dest = new DestinationInfo(node, distance, time);
-            destinations.add(dest);
-            return dest;
-        }
-
-        public List<DestinationInfo> getDestinations() {
-            return destinations;
-        }
-
-
-        @Override
-        public String toString(){
-
-            String destinationStrs = "";
-
-            if(!getDestinations().isEmpty()){
-                for (DestinationInfo dest : getDestinations()) {
-                    destinationStrs += dest.toString() + ",";
-                }
-                destinationStrs = destinationStrs.substring(0,destinationStrs.length()-1);
-            }
-
-            return "("+originNode+")-->[" +  destinationStrs + "]";
-        }
+        distances = includeDistances ? new double[numberOfOrigins][numberOfDestinations] : null;
+        times = includeTimes ? new long[numberOfOrigins][numberOfDestinations] : null;
+        weights = includeWeights ? new double[numberOfOrigins][numberOfDestinations] : null;
     }
 
-    public static class DestinationInfo {
 
-        public final int destinationNode;
+    public int getNumberOfOrigins(){
+        return numberOfOrigins;
+    }
+    public int getNumberOfDestinations(){
+        return numberOfDestinations;
+    }
+
+    /**
+     * Set the distance/time info of a single (origin --> destination) cell
+     * @param originIndex The index of the origin
+     * @param destIndex The index of the destination
+     * @param distance Distance value
+     * @param time Time value
+     * @param weight weight value
+     */
+    public void setCell(int originIndex, int destIndex, double distance, long time, double weight){
+        if(distances != null) distances[originIndex][destIndex] = distance;
+        if(times != null) times[originIndex][destIndex] = time;
+        if(weights != null) weights[originIndex][destIndex] = weight;
+    }
+
+    /**
+     * Gets the distance matrix cell for a single (origin --> destination) entry
+     * @param originIndex The origin index
+     * @param destIndex The destination index
+     * @return THe cell of the origin-destination
+     */
+    public DistanceMatrixCell getCell(int originIndex, int destIndex){
+        return new DistanceMatrixCell(
+                distances != null   ? distances[originIndex][destIndex] : 0,
+                times != null       ? times[originIndex][destIndex]     : 0,
+                weights != null     ? weights[originIndex][destIndex]   : 0
+        );
+    }
+
+    /**
+     * Represents a single distance matrix cell.
+     * This class is used soley as a "pretty" alternative
+     * to a double[] array.
+     */
+    public static class DistanceMatrixCell {
+
         public final double distance;
-        public final long time;
+        public final double time;
+        public final double weight;
 
-        public DestinationInfo(int node, double distance, long time){
-            this.destinationNode = node;
+        public DistanceMatrixCell(double distance, double time, double weight) {
             this.distance = distance;
             this.time = time;
+            this.weight = weight;
         }
+    }
 
-        @Override
-        public String toString(){
-            return "{("+destinationNode+")#"+distance+"}";
+    /**
+     * Returns the matrix as formatted string
+     */
+    @Override
+    public String toString(){
+        String allMatrices = "";
+        if(distances != null){
+            allMatrices += Arrays.deepToString(distances) + "\n";
         }
+        if(times != null){
+            allMatrices += Arrays.deepToString(times) + "\n";
+        }
+        if(weights != null){
+            allMatrices += Arrays.deepToString(weights) + "\n";
+        }
+        return allMatrices;
     }
 }
