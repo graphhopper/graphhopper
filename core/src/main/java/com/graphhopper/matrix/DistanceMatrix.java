@@ -7,6 +7,9 @@ import java.util.Arrays;
  * Holds the resulting distance matrix for a given set of
  * origin/destination nodes.
  *
+ * The matrix consists of origin points which form the rows,
+ * and destination points which form the columns.
+ *
  * @author Pascal Büttiker
  */
 public final class DistanceMatrix {
@@ -39,10 +42,18 @@ public final class DistanceMatrix {
         weights = includeWeights ? new double[numberOfOrigins][numberOfDestinations] : null;
     }
 
-
+    /**
+     * Gets the number of origins
+     * (rows)
+     */
     public int getNumberOfOrigins(){
         return numberOfOrigins;
     }
+
+    /**
+     * Gets the number of destinations
+     * (columns)
+     */
     public int getNumberOfDestinations(){
         return numberOfDestinations;
     }

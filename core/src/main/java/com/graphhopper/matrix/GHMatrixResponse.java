@@ -14,4 +14,10 @@ public class GHMatrixResponse {
         this.matrix = matrix;
     }
 
+    /**
+     * Gets the internal distance matrix
+     */
+    public DistanceMatrix getMatrix() {
+        return matrix;
+    }
 }
