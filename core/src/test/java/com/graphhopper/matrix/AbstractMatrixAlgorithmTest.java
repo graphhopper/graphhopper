@@ -52,7 +52,7 @@ public abstract class AbstractMatrixAlgorithmTest {
 
         Assert.assertEquals(1, matrix.getNumberOfOrigins());
         Assert.assertEquals(1, matrix.getNumberOfDestinations());
-        Assert.assertEquals(10, matrix.getCell(0,0).distance, DELTA);
+        Assert.assertEquals(10, matrix.getDistance(0,0), DELTA);
     }
 
 
@@ -73,19 +73,19 @@ public abstract class AbstractMatrixAlgorithmTest {
         Assert.assertEquals(3, matrix.getNumberOfDestinations());
 
         // Origin 0 to [0, 1, 2]
-        Assert.assertEquals(0, matrix.getCell(0, 0).distance, DELTA);
-        Assert.assertEquals("matrix:\n" + matrix, 10, matrix.getCell(0, 1).distance, DELTA);
-        Assert.assertEquals(10+10, matrix.getCell(0, 2).distance, DELTA);
+        Assert.assertEquals(0, matrix.getDistance(0, 0), DELTA);
+        Assert.assertEquals("matrix:\n" + matrix, 10, matrix.getDistance(0, 1), DELTA);
+        Assert.assertEquals(10+10, matrix.getDistance(0, 2), DELTA);
 
         // Origin 1 to [0, 1, 2]
-        Assert.assertEquals(10, matrix.getCell(1, 0).distance, DELTA);
-        Assert.assertEquals(0,  matrix.getCell(1, 1).distance, DELTA);
-        Assert.assertEquals(10, matrix.getCell(1, 2).distance, DELTA);
+        Assert.assertEquals(10, matrix.getDistance(1, 0), DELTA);
+        Assert.assertEquals(0,  matrix.getDistance(1, 1), DELTA);
+        Assert.assertEquals(10, matrix.getDistance(1, 2), DELTA);
 
         // Origin 2 to [0, 1, 2]
-        Assert.assertEquals(20, matrix.getCell(2, 0).distance, DELTA);
-        Assert.assertEquals(10, matrix.getCell(2, 1).distance, DELTA);
-        Assert.assertEquals(0,  matrix.getCell(2, 2).distance, DELTA);
+        Assert.assertEquals(20, matrix.getDistance(2, 0), DELTA);
+        Assert.assertEquals(10, matrix.getDistance(2, 1), DELTA);
+        Assert.assertEquals(0,  matrix.getDistance(2, 2), DELTA);
     }
 
 

@@ -72,36 +72,17 @@ public final class DistanceMatrix {
         if(weights != null) weights[originIndex][destIndex] = weight;
     }
 
-    /**
-     * Gets the distance matrix cell for a single (origin --> destination) entry
-     * @param originIndex The origin index
-     * @param destIndex The destination index
-     * @return THe cell of the origin-destination
-     */
-    public DistanceMatrixCell getCell(int originIndex, int destIndex){
-        return new DistanceMatrixCell(
-                distances != null   ? distances[originIndex][destIndex] : 0,
-                times != null       ? times[originIndex][destIndex]     : 0,
-                weights != null     ? weights[originIndex][destIndex]   : 0
-        );
+
+    public double getDistance(int originIndex, int destIndex) {
+        return distances != null ? distances[originIndex][destIndex] : 0;
     }
 
-    /**
-     * Represents a single distance matrix cell.
-     * This class is used soley as a "pretty" alternative
-     * to a double[] array.
-     */
-    public static class DistanceMatrixCell {
+    public double getWeight(int originIndex, int destIndex) {
+        return weights != null ? weights[originIndex][destIndex] : 0;
+    }
 
-        public final double distance;
-        public final double time;
-        public final double weight;
-
-        public DistanceMatrixCell(double distance, double time, double weight) {
-            this.distance = distance;
-            this.time = time;
-            this.weight = weight;
-        }
+    public long getTime(int originIndex, int destIndex) {
+        return times != null ? times[originIndex][destIndex] : 0;
     }
 
     /**
