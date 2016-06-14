@@ -20,7 +20,7 @@ import java.util.List;
  */
 public abstract class AbstractMatrixAlgorithmTest {
 
-    private static final double DELTA = 0.000001;
+    private static final double DELTA = 0.1;
 
     protected static final EncodingManager encodingManager = new EncodingManager("car,foot");
     protected FlagEncoder carEncoder;
