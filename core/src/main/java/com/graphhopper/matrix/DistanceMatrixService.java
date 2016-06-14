@@ -1,6 +1,5 @@
 package com.graphhopper.matrix;
 
-import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.matrix.algorithm.MatrixAlgorithm;
 import com.graphhopper.matrix.algorithm.MatrixAlgorithmFactory;
@@ -8,9 +7,7 @@ import com.graphhopper.matrix.algorithm.SimpleMatrixAlgorithmFactory;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.template.RoutingTemplate;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
@@ -80,7 +77,7 @@ public class DistanceMatrixService {
         int[] originNodes =  mapToNodes(originQNodes);
         int[] destinationNodes =  mapToNodes(destinationQNodes);
 
-        MatrixAlgorithm algorithm = matrixAlgorithmFactory.build(queryGraph, algoOpts);
+        MatrixAlgorithm algorithm = matrixAlgorithmFactory.createAlgo(queryGraph, algoOpts);
         DistanceMatrix matrix = algorithm.calcMatrix(originNodes, destinationNodes);
 
         GHMatrixResponse response = toResponse(matrix, request);

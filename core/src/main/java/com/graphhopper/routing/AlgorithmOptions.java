@@ -29,7 +29,7 @@ import com.graphhopper.util.Parameters;
  * AlgorithmOptions algoOpts = AlgorithmOptions.start().
  *        algorithm(AlgorithmOptions.DIJKSTRA).
  *        weighting(weighting).
- *        build();
+ *        createAlgo();
  * </pre>
  * <p>
  * @author Peter Karich

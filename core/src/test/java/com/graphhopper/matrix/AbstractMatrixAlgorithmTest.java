@@ -125,7 +125,7 @@ public abstract class AbstractMatrixAlgorithmTest {
 
     protected final MatrixAlgorithm createAlgo(GraphHopperStorage ghStorage, AlgorithmOptions opts )
     {
-        return factory.build(getGraph(ghStorage, opts.getWeighting()), opts);
+        return factory.createAlgo(getGraph(ghStorage, opts.getWeighting()), opts);
     }
 
     protected Graph getGraph( GraphHopperStorage ghStorage, Weighting weighting )

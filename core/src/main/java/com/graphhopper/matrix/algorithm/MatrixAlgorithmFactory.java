@@ -15,6 +15,6 @@ public interface MatrixAlgorithmFactory {
      * @param g The Graph to run the algorithm on
      * @param opts The options for the algorithm
      */
-    MatrixAlgorithm build(Graph g, AlgorithmOptions opts );
+    MatrixAlgorithm createAlgo(Graph g, AlgorithmOptions opts );
 
 }

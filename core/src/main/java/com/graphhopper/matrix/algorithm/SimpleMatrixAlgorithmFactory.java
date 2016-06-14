@@ -14,7 +14,7 @@ public class SimpleMatrixAlgorithmFactory implements MatrixAlgorithmFactory {
 
 
     @Override
-    public MatrixAlgorithm build(Graph g, AlgorithmOptions opts) {
+    public MatrixAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
 
         String algoStr = opts.getAlgorithm();
 
