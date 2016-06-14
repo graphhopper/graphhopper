@@ -20,8 +20,13 @@ public class SimpleMatrixAlgorithmFactory implements MatrixAlgorithmFactory {
 
         if(MATRIX_ONE_TO_ONE.equalsIgnoreCase(algoStr)){
 
-            AlgorithmOptions underlyingAlgo = AlgorithmOptions.start(opts).
-                    algorithm(ASTAR_BI).build();
+            AlgorithmOptions underlyingAlgo = AlgorithmOptions
+                    .start(opts).algorithm(ASTAR_BI)
+                    .build();
+
+            // Ensure we don't do unnecessary work
+            underlyingAlgo.getHints().put("calc_paths", false);
+            underlyingAlgo.getHints().put("instructions", false);
 
             return new OneToOneLoopMatrixAlgorithm(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode(), underlyingAlgo);
 
