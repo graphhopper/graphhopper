@@ -292,7 +292,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator
                 return p;
         }
 
-        throw new IllegalStateException("Cannot find RoutingAlgorithmFactory for weighting map " + map);
+        throw new IllegalArgumentException("Cannot find RoutingAlgorithmFactory for weighting map " + map);
     }
 
     /**
