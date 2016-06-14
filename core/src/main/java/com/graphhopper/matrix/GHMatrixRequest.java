@@ -13,7 +13,7 @@ import java.util.List;
  *
  * @author Pascal Büttiker
  */
-public class GHMatrixRequest { // TODO Probably refactor & subclass a base GHRequest
+public class GHMatrixRequest {
 
     private String algorithm;
     private String vehicle = "";
