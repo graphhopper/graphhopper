@@ -51,7 +51,7 @@ public class GraphHopperServletWithEleIT extends BaseServletTester
                 put("graph.elevation.cachedir", "../core/files/").
                 put("prepare.ch.weightings", "no").
                 put("config", "../config-example.properties").
-                put("osmreader.osm", "../core/files/monaco.osm.gz").
+                put("datareader.file", "../core/files/monaco.osm.gz").
                 put("graph.location", dir);
         setUpJetty(args);
     }

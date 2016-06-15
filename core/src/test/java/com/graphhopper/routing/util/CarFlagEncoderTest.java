@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.Helper;
 import java.text.DateFormat;
 import org.junit.Test;
@@ -38,7 +38,7 @@ public class CarFlagEncoderTest
     @Test
     public void testAccess()
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         assertFalse(encoder.acceptWay(way) > 0);
         way.setTag("highway", "service");
         assertTrue(encoder.acceptWay(way) > 0);
@@ -129,7 +129,7 @@ public class CarFlagEncoderTest
     @Test
     public void testMilitaryAccess()
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("access", "military");
         assertFalse(encoder.acceptWay(way) > 0);
@@ -138,10 +138,10 @@ public class CarFlagEncoderTest
     @Test
     public void testFordAccess()
     {
-        OSMNode node = new OSMNode(0, 0.0, 0.0);
+        ReaderNode node = new ReaderNode(0, 0.0, 0.0);
         node.setTag("ford", "yes");
 
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "unclassified");
         way.setTag("ford", "yes");
 
@@ -165,7 +165,7 @@ public class CarFlagEncoderTest
     @Test
     public void testOneway()
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertTrue(encoder.isForward(flags));
@@ -224,33 +224,33 @@ public class CarFlagEncoderTest
     @Test
     public void testMaxSpeed()
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "trunk");
         way.setTag("maxspeed", "500");
         long allowed = encoder.acceptWay(way);
         long encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(140, encoder.getSpeed(encoded), 1e-1);
 
-        way = new OSMWay(1);
+        way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxspeed:backward", "10");
         way.setTag("maxspeed:forward", "20");
         encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertEquals(10, encoder.getSpeed(encoded), 1e-1);
 
-        way = new OSMWay(1);
+        way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxspeed:forward", "20");
         encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertEquals(20, encoder.getSpeed(encoded), 1e-1);
 
-        way = new OSMWay(1);
+        way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("maxspeed:backward", "20");
         encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertEquals(20, encoder.getSpeed(encoded), 1e-1);
 
-        way = new OSMWay(1);
+        way = new ReaderWay(1);
         way.setTag("highway", "motorway");
         way.setTag("maxspeed", "none");
         encoded = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
@@ -261,7 +261,7 @@ public class CarFlagEncoderTest
     public void testSpeed()
     {
         // limit bigger than default road speed
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "trunk");
         way.setTag("maxspeed", "110");
         long allowed = encoder.acceptWay(way);
@@ -329,7 +329,7 @@ public class CarFlagEncoderTest
         assertTrue(encoder.isForward(resFlags));
         assertTrue(encoder.isBackward(resFlags));
 
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
         flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
         assertTrue(encoder.isForward(flags));
@@ -346,7 +346,7 @@ public class CarFlagEncoderTest
     @Test
     public void testRailway()
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "rail");        
         assertTrue(encoder.acceptWay(way) > 0);
@@ -367,13 +367,13 @@ public class CarFlagEncoderTest
         way.setTag("motorcar", "no");
         assertTrue(encoder.acceptWay(way) == 0);
 
-        way = new OSMWay(1);
+        way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "tram");
         // but allow tram to be on the same way
         assertTrue(encoder.acceptWay(way) > 0);
 
-        way = new OSMWay(1);
+        way = new ReaderWay(1);
         way.setTag("route", "shuttle_train");
         way.setTag("motorcar", "yes");
         way.setTag("bicycle", "no");
@@ -386,7 +386,7 @@ public class CarFlagEncoderTest
         assertEquals(61, encoder.getFerrySpeed(way, 20, 30, 40), 1e-1);
 
         //Test for very short and slow 0.5km/h still realisitic ferry
-        way = new OSMWay(1);
+        way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
         // Provide the duration of 12 minutes in seconds:
@@ -399,7 +399,7 @@ public class CarFlagEncoderTest
         assertEquals(5, encoder.getSpeed(encoder.setSpeed(0, 2.5)), 1e-1);
         
         //Test for an unrealisitic long duration
-        way = new OSMWay(1);
+        way = new ReaderWay(1);
         way.setTag("route", "ferry");
         way.setTag("motorcar", "yes");
         // Provide the duration of 2 months in seconds:
@@ -429,33 +429,33 @@ public class CarFlagEncoderTest
     @Test
     public void testBarrierAccess()
     {
-        OSMNode node = new OSMNode(1, -1, -1);
+        ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "yes");
         // no barrier!
         assertTrue(encoder.handleNodeTags(node) == 0);
 
-        node = new OSMNode(1, -1, -1);
+        node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("bicycle", "yes");
         // barrier!
         assertTrue(encoder.handleNodeTags(node) > 0);
 
-        node = new OSMNode(1, -1, -1);
+        node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "yes");
         node.setTag("bicycle", "yes");
         // should this be a barrier for motorcars too?
         // assertTrue(encoder.handleNodeTags(node) > 0);
 
-        node = new OSMNode(1, -1, -1);
+        node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "lift_gate");
         node.setTag("access", "no");
         node.setTag("motorcar", "yes");
         // no barrier!
         assertTrue(encoder.handleNodeTags(node) == 0);
 
-        node = new OSMNode(1, -1, -1);
+        node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "bollard");
         // barrier!
         assertTrue(encoder.handleNodeTags(node) > 0);
@@ -528,7 +528,7 @@ public class CarFlagEncoderTest
     {
         CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
         EncodingManager em = new EncodingManager(instance);
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "60 mph");
         long flags = instance.handleWayTags(way, 1, 0);
@@ -540,7 +540,7 @@ public class CarFlagEncoderTest
         assertEquals(86.9, instance.getSpeed(flags), 1e-1);
 
         // test that maxPossibleValue  is not exceeded
-        way = new OSMWay(2);
+        way = new ReaderWay(2);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "70 mph");
         flags = instance.handleWayTags(way, 1, 0);
@@ -564,7 +564,7 @@ public class CarFlagEncoderTest
     @Test
     public void testSetToMaxSpeed()
     {
-        OSMWay way = new OSMWay(12);
+        ReaderWay way = new ReaderWay(12);
         way.setTag("maxspeed", "90");
         assertEquals(90, encoder.getMaxSpeed(way), 1e-2);
     }
@@ -572,7 +572,7 @@ public class CarFlagEncoderTest
     @Test
     public void testCombination()
     {
-        OSMWay way = new OSMWay(123);
+        ReaderWay way = new ReaderWay(123);
         way.setTag("highway", "cycleway");
         way.setTag("sac_scale", "hiking");
 

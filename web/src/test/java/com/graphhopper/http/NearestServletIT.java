@@ -51,7 +51,7 @@ public class NearestServletIT extends BaseServletTester
     {
         CmdArgs args = new CmdArgs().
                 put("config", "../config-example.properties").
-                put("osmreader.osm", "../core/files/andorra.osm.pbf").
+                put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.location", dir);
         setUpJetty(args);
     }

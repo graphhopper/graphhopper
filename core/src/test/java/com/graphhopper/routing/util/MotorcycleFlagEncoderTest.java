@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -55,7 +55,7 @@ public class MotorcycleFlagEncoderTest
     @Test
     public void testAccess()
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         assertFalse(encoder.acceptWay(way) > 0);
         way.setTag("highway", "service");
         assertTrue(encoder.acceptWay(way) > 0);
@@ -129,7 +129,7 @@ public class MotorcycleFlagEncoderTest
     @Test
     public void testHandleWayTags()
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         long flags = encoder.acceptWay(way);
         assertTrue(flags > 0);
@@ -164,7 +164,7 @@ public class MotorcycleFlagEncoderTest
 
     private double getBendiness( EdgeIteratorState edge, double estimatedDistance )
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("estimated_distance", estimatedDistance);
         long includeWay = encoder.acceptWay(way);

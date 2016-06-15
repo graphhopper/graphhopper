@@ -17,16 +17,18 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
+import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.util.*;
 
 import java.util.*;
+import com.graphhopper.reader.ConditionalTagInspector;
+import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
+import com.graphhopper.reader.osm.conditional.DateRangeParser;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
@@ -73,7 +75,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected final Set<String> intendedValues = new HashSet<String>(5);
     protected final Set<String> restrictedValues = new HashSet<String>(5);
     protected final Set<String> ferries = new HashSet<String>(5);
-    protected final Set<String> oneways = new HashSet<String>(5);    
+    protected final Set<String> oneways = new HashSet<String>(5);
     // http://wiki.openstreetmap.org/wiki/Mapfeatures#Barrier
     protected final Set<String> absoluteBarriers = new HashSet<String>(5);
     protected final Set<String> potentialBarriers = new HashSet<String>(5);
@@ -83,7 +85,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected final double speedFactor;
     private boolean registered;
 
-    protected ConditionalTagsInspector conditionalTagsInspector;
+    private ConditionalTagInspector conditionalTagInspector;
 
     public AbstractFlagEncoder( PMap properties )
     {
@@ -116,6 +118,13 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         ferries.add("ferry");
     }
 
+    // should be called as last method in constructor, move out of the flag encoder somehow
+    protected void init()
+    {
+        // we should move 'OSM to object' logic into the DataReader like OSMReader, but this is a major task as we need to convert OSM format into kind of a standard/generic format
+        conditionalTagInspector = new ConditionalOSMTagInspector(DateRangeParser.createCalendar(), restrictions, restrictedValues, intendedValues);
+    }
+
     public void setRegistered( boolean registered )
     {
         this.registered = registered;
@@ -143,6 +152,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     public boolean isBlockFords()
     {
         return blockFords;
+    }
+
+    public ConditionalTagInspector getConditionalTagInspector()
+    {
+        return conditionalTagInspector;
     }
 
     /**
@@ -194,7 +208,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      * In the pre-parsing step this method will be called to determine the useful relation tags.
      * <p>
      */
-    public abstract long handleRelationTags( OSMRelation relation, long oldRelationFlags );
+    public abstract long handleRelationTags( ReaderRelation relation, long oldRelationFlags );
 
     /**
      * Decide whether a way is routable for a given mode of travel. This skips some ways before
@@ -202,20 +216,20 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      * <p>
      * @return the encoded value to indicate if this encoder allows travel or not.
      */
-    public abstract long acceptWay( OSMWay way );
+    public abstract long acceptWay( ReaderWay way );
 
     /**
      * Analyze properties of a way and create the routing flags. This method is called in the second
      * parsing step.
      */
-    public abstract long handleWayTags( OSMWay way, long allowed, long relationFlags );
+    public abstract long handleWayTags( ReaderWay way, long allowed, long relationFlags );
 
     /**
      * Parse tags on nodes. Node tags can add to speed (like traffic_signals) where the value is
      * strict negative or blocks access (like a barrier), then the value is strict positive.This
      * method is called in the second parsing step.
      */
-    public long handleNodeTags( OSMNode node )
+    public long handleNodeTags( ReaderNode node )
     {
         // absolute barriers always block
         if (node.hasTag("barrier", absoluteBarriers))
@@ -347,7 +361,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * @return -1 if no maxspeed found
      */
-    protected double getMaxSpeed( OSMWay way )
+    protected double getMaxSpeed( ReaderWay way )
     {
         double maxSpeed = parseSpeed(way.getTag("maxspeed"));
         double fwdSpeed = parseSpeed(way.getTag("maxspeed:forward"));
@@ -451,14 +465,14 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
      * Second parsing step. Invoked after splitting the edges. Currently used to offer a hook to
      * calculate precise speed values based on elevation data stored in the specified edge.
      */
-    public void applyWayTags( OSMWay way, EdgeIteratorState edge )
+    public void applyWayTags( ReaderWay way, EdgeIteratorState edge )
     {
     }
 
     /**
      * Special handling for ferry ways.
      */
-    protected double getFerrySpeed( OSMWay way, double unknownSpeed, double shortTripsSpeed, double longTripsSpeed )
+    protected double getFerrySpeed( ReaderWay way, double unknownSpeed, double shortTripsSpeed, double longTripsSpeed )
     {
         long duration = 0;
         try
@@ -501,7 +515,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                         }
                     } else
                     {
-                        logger.warn("Unrealistic long duration ignored in way with OSMID=" + way.getId() + " : Duration tag value="
+                        logger.warn("Unrealistic long duration ignored in way with way ID=" + way.getId() + " : Duration tag value="
                                 + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes)");
                         durationInHours = 0;
                     }
@@ -727,11 +741,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     /**
-     * @param way: needed to retrieve OSM tags
+     * @param way: needed to retrieve tags
      * @param speed: speed guessed e.g. from the road type or other tags
      * @return The assumed speed.
      */
-    protected double applyMaxSpeed( OSMWay way, double speed )
+    protected double applyMaxSpeed( ReaderWay way, double speed )
     {
         double maxSpeed = getMaxSpeed(way);
         // We obay speed limits

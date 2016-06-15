@@ -17,6 +17,7 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.reader.ReaderNode;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -29,7 +30,7 @@ public class OSMNodeTest
     @Test
     public void testSetTags()
     {
-        OSMNode instance = new OSMNode(0, 10, 10);
+        ReaderNode instance = new ReaderNode(0, 10, 10);
         assertTrue(Double.isNaN(instance.getEle()));
 
         instance.setTag("ele", "-10.1");

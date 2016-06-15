@@ -17,9 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 
 import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
 import static com.graphhopper.routing.util.PriorityCode.*;
@@ -45,7 +45,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     {
         long result = encoder.setProperties(10, true, true);
         assertEquals(10, encoder.getSpeed(result), 1e-1);
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         assertEquals(18, encoder.getSpeed(way));
         assertPriority(REACH_DEST.getValue(), way);
@@ -208,7 +208,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Test
     public void testHandleWayTags()
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         String wayType;
         way.setTag("highway", "track");
         wayType = getWayTypeFromFlags(way);
@@ -253,7 +253,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Test
     public void testOneway()
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "tertiary");
         long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertTrue(encoder.isForward(flags));
@@ -330,11 +330,11 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Test
     public void testHandleWayTagsInfluencedByRelation()
     {
-        OSMWay osmWay = new OSMWay(1);
+        ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "road");
         long allowed = encoder.acceptBit;
 
-        OSMRelation osmRel = new OSMRelation(1);
+        ReaderRelation osmRel = new ReaderRelation(1);
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         // unchanged
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
@@ -397,10 +397,10 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Test
     public void testUnchangedRelationShouldNotInfluencePriority()
     {
-        OSMWay osmWay = new OSMWay(1);
+        ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "secondary");
 
-        OSMRelation osmRel = new OSMRelation(1);
+        ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.setTag("description", "something");
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         assertPriority(REACH_DEST.getValue(), osmWay, relFlags);
@@ -410,7 +410,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Override
     public void testSacScale()
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "path");
         way.setTag("sac_scale", "hiking");
         // allow
@@ -436,8 +436,8 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     public void testCalcPriority()
     {
         long allowed = encoder.acceptBit;
-        OSMWay osmWay = new OSMWay(1);
-        OSMRelation osmRel = new OSMRelation(1);
+        ReaderWay osmWay = new ReaderWay(1);
+        ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "icn");
         long relFlags = encoder.handleRelationTags(osmRel, 0);
@@ -445,7 +445,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertEquals((double) BEST.getValue() / BEST.getValue(), encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
 
         // important: UNCHANGED should not get 0 priority!
-        osmWay = new OSMWay(1);
+        osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "somethingelse");
         flags = encoder.handleWayTags(osmWay, allowed, 0);
         assertEquals((double) UNCHANGED.getValue() / BEST.getValue(), encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
@@ -454,7 +454,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Test
     public void testMaxSpeed()
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("maxspeed", "10");
         long allowed = encoder.acceptWay(way);
@@ -462,19 +462,19 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         assertEquals(10, encoder.getSpeed(encoded), 1e-1);
         assertPriority(VERY_NICE.getValue(), way);
 
-        way = new OSMWay(1);
+        way = new ReaderWay(1);
         way.setTag("highway", "tertiary");
         way.setTag("maxspeed", "90");
         assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(way, 20))), 1e-1);
         assertPriority(UNCHANGED.getValue(), way);
 
-        way = new OSMWay(1);
+        way = new ReaderWay(1);
         way.setTag("highway", "track");
         way.setTag("maxspeed", "90");
         assertEquals(20, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(way, 20))), 1e-1);
         assertPriority(UNCHANGED.getValue(), way);
 
-        way = new OSMWay(1);
+        way = new ReaderWay(1);
         way.setTag("highway", "residential");
         way.setTag("maxspeed", "15");
         assertEquals(15, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(way, 15))), 1.0);
@@ -550,13 +550,13 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     public void testBarrierAccess()
     {
         // kissing_gate without bicycle tag
-        OSMNode node = new OSMNode(1, -1, -1);
+        ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         // barrier!
         assertFalse(encoder.handleNodeTags(node) == 0);
 
         // kissing_gate with bicycle tag
-        node = new OSMNode(1, -1, -1);
+        node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         node.setTag("bicycle", "yes");
         // barrier!
@@ -566,7 +566,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     @Test
     public void testClassBicycle()
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "tertiary");
         way.setTag("class:bicycle", "3");
         assertPriority(BEST.getValue(), way);

@@ -53,10 +53,11 @@ public interface EdgeIteratorState
     int getAdjNode();
 
     /**
-     * For OSM a way is often a curve not just a straight line. These nodes are called pillar nodes
-     * and are between tower nodes (which are used for routing), they are necessary to have a more
-     * exact geometry. Updates to the returned list are not reflected in the graph, for that you've
-     * to use setWayGeometry.
+     * For roadnetwork data like OSM a way is nearly always a curve not just a straight line. These
+     * nodes are called pillar nodes and are between tower nodes (which are used for routing), they
+     * are necessary to have a more exact geometry. See the docs for more information
+     * (docs/core/low-level-api.md#what-are-pillar-and-tower-nodes). Updates to the returned list
+     * are not reflected in the graph, for that you've to use setWayGeometry.
      * <p>
      * @param mode can be <ul> <li>0 = only pillar nodes, no tower nodes</li> <li>1 = inclusive the
      * base tower node only</li> <li>2 = inclusive the adjacent tower node only</li> <li>3 =
