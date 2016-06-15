@@ -12,7 +12,7 @@ To see how GraphHopper is configured for production usage, see the separate site
 
 ## Troubleshooting
 
- * Make sure JRE7 or 8 is installed. If not get Java [here](http://java.com).
+ * Make sure JRE8 is installed. If not get Java [here](http://java.com).
  * Regarding step 2:
     * The folder where you execute the java command should contain the following files: berlin-latest.osm.pbf, config-example.properties and `graphhopper-web-[version].jar`
     * The first time you execute this it'll take ~30 seconds (for Berlin), further starts will only load the graph and should be nearly instantaneous. You should see log statements but no exceptions and the last entry should be something like: Started server at HTTP 8989
