@@ -81,63 +81,68 @@ public class GraphHopperServlet extends GHBaseServlet
         String localeStr = getParam(httpReq, "locale", "en");
 
         StopWatch sw = new StopWatch().start();
-        List<Throwable> errorList = new ArrayList<Throwable>();
-        List<Double> favoredHeadings = Collections.EMPTY_LIST;
-        try
-        {
-            favoredHeadings = getDoubleParamList(httpReq, "heading");
 
-        } catch (NumberFormatException e)
+        if (!ghRsp.hasErrors())
         {
-            errorList.add(new IllegalArgumentException("heading list in from format: " + e.getMessage()));
-        }
-
-        if (!hopper.getEncodingManager().supports(vehicleStr))
-        {
-            errorList.add(new IllegalArgumentException("Vehicle not supported: " + vehicleStr));
-        } else if (enableElevation && !hopper.hasElevation())
-        {
-            errorList.add(new IllegalArgumentException("Elevation not supported!"));
-        } else if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size())
-        {
-            errorList.add(new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
-                    + "or equal to the number of points (" + requestPoints.size() + ")"));
-        }
-
-        ghRsp.addErrors(errorList);
-        if (errorList.isEmpty())
-        {
-            FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
-            GHRequest request;
-            if (favoredHeadings.size() > 0)
+            try
             {
-                // if only one favored heading is specified take as start heading
-                if (favoredHeadings.size() == 1)
+                List<Double> favoredHeadings = Collections.EMPTY_LIST;
+                try
                 {
-                    List<Double> paddedHeadings = new ArrayList<Double>(Collections.nCopies(requestPoints.size(),
-                            Double.NaN));
-                    paddedHeadings.set(0, favoredHeadings.get(0));
-                    request = new GHRequest(requestPoints, paddedHeadings);
+                    favoredHeadings = getDoubleParamList(httpReq, "heading");
+
+                } catch (NumberFormatException e)
+                {
+                    throw new IllegalArgumentException("heading list in from format: " + e.getMessage());
+                }
+
+                if (!hopper.getEncodingManager().supports(vehicleStr))
+                {
+                    throw new IllegalArgumentException("Vehicle not supported: " + vehicleStr);
+                } else if (enableElevation && !hopper.hasElevation())
+                {
+                    throw new IllegalArgumentException("Elevation not supported!");
+                } else if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size())
+                {
+                    throw new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
+                            + "or equal to the number of points (" + requestPoints.size() + ")");
+                }
+
+                FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
+                GHRequest request;
+                if (favoredHeadings.size() > 0)
+                {
+                    // if only one favored heading is specified take as start heading
+                    if (favoredHeadings.size() == 1)
+                    {
+                        List<Double> paddedHeadings = new ArrayList<Double>(Collections.nCopies(requestPoints.size(),
+                                Double.NaN));
+                        paddedHeadings.set(0, favoredHeadings.get(0));
+                        request = new GHRequest(requestPoints, paddedHeadings);
+                    } else
+                    {
+                        request = new GHRequest(requestPoints, favoredHeadings);
+                    }
                 } else
                 {
-                    request = new GHRequest(requestPoints, favoredHeadings);
+                    request = new GHRequest(requestPoints);
                 }
-            } else
+
+                initHints(request, httpReq.getParameterMap());
+                request.setVehicle(algoVehicle.toString()).
+                        setWeighting(weighting).
+                        setAlgorithm(algoStr).
+                        setLocale(localeStr).
+                        getHints().
+                        put("calcPoints", calcPoints).
+                        put("instructions", enableInstructions).
+                        put("wayPointMaxDistance", minPathPrecision);
+
+                ghRsp = hopper.route(request);
+            } catch (IllegalArgumentException ex)
             {
-                request = new GHRequest(requestPoints);
+                ghRsp.addError(ex);
             }
-
-            initHints(request, httpReq.getParameterMap());
-            request.setVehicle(algoVehicle.toString()).
-                    setWeighting(weighting).
-                    setAlgorithm(algoStr).
-                    setLocale(localeStr).
-                    getHints().
-                    put("calcPoints", calcPoints).
-                    put("instructions", enableInstructions).
-                    put("wayPointMaxDistance", minPathPrecision);
-
-            ghRsp = hopper.route(request);
         }
 
         float took = sw.stop().getSeconds();
@@ -148,7 +153,7 @@ public class GraphHopperServlet extends GHBaseServlet
 
         int alternatives = ghRsp.getAll().size();
         if (writeGPX && alternatives > 1)
-            ghRsp.addError(new IllegalAccessException("Alternatives are currently not supported for GPX"));
+            ghRsp.addError(new IllegalArgumentException("Alternatives are currently not yet supported for GPX"));
 
         if (ghRsp.hasErrors())
         {
