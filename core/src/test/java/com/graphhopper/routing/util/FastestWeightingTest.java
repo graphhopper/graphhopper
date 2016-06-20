@@ -34,7 +34,7 @@ public class FastestWeightingTest
     @Test
     public void testMinWeightHasSameUnitAs_getWeight()
     {
-        FastestWeighting instance = new FastestWeighting(encoder);
+        Weighting instance = new FastestWeighting(encoder);
         long flags = encoder.setProperties(encoder.getMaxSpeed(), true, true);
         assertEquals(instance.getMinWeight(10), instance.calcWeight(createEdge(10, flags), false, EdgeIterator.NO_EDGE), 1e-8);
     }
@@ -42,7 +42,7 @@ public class FastestWeightingTest
     @Test
     public void testWeightWrongHeading()
     {
-        FastestWeighting instance = new FastestWeighting(encoder, new PMap().put(Parameters.Routing.HEADING_PENALTY, "100"));
+        Weighting instance = new FastestWeighting(encoder, new PMap().put(Parameters.Routing.HEADING_PENALTY, "100"));
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, 1, 1, 2, 10,
                 encoder.setProperties(10, true, true), "test", Helper.createPointList(51, 0, 51, 1));
         double time = instance.calcWeight(virtEdge, false, 0);
@@ -66,7 +66,7 @@ public class FastestWeightingTest
     @Test
     public void testSpeed0()
     {
-        FastestWeighting instance = new FastestWeighting(encoder);
+        Weighting instance = new FastestWeighting(encoder);
 
         assertEquals(1.0 / 0, instance.calcWeight(createEdge(10, encoder.setProperties(0, true, true)), false, EdgeIterator.NO_EDGE), 1e-8);
 
