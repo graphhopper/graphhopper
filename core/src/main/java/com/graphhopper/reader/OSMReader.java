@@ -368,7 +368,7 @@ public class OSMReader implements DataReader
             if (!Double.isNaN(firstLat) && !Double.isNaN(firstLon) && !Double.isNaN(lastLat) && !Double.isNaN(lastLon))
             {
                 double estimatedDist = distCalc.calcDist(firstLat, firstLon, lastLat, lastLon);
-                // Add artificial tag for the estamated distance and center
+                // Add artificial tag for the estimated distance and center
                 way.setTag("estimated_distance", estimatedDist);
                 way.setTag("estimated_center", new GHPoint((firstLat + lastLat) / 2, (firstLon + lastLon) / 2));
             }
