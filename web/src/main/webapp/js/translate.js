@@ -24,9 +24,9 @@ function tr2(key, args) {
 }
 
 function tr(key, args) {
-    if(key !== key.toLowerCase())
+    if (key !== key.toLowerCase())
         console.log("key " + key + " has to be lower case");
-    
+
     return tr2("web." + key, args);
 }
 
@@ -64,6 +64,10 @@ function initI18N() {
             else
                 $(this).attr("placeholder", tr("via_hint"));
         });
+        $('.pointDelete').each(function () {
+            $(this).attr("title", tr("delete_from_route"));
+        });
+        $('#export-link').attr("title", tr("staticlink"));
         $('#gpxExportButton').attr("title", tr("gpx_export_button"));
     }
 }

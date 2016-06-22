@@ -164,12 +164,12 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         },
         contextmenu: true,
         contextmenuItems: [{
-                text: 'Route ',
+                text: translate.tr('route') +  ' ',
                 disabled: true,
                 index: 0,
                 state: 3
             }, {
-                text: 'Set intermediate',
+                text: translate.tr('set_intermediate'),
                 callback: setIntermediateCoord,
                 index: 1,
                 state: 3
@@ -298,18 +298,19 @@ module.exports.createMarker = function (index, coord, setToEnd, setToStart, dele
         draggable: true,
         contextmenu: true,
         contextmenuItems: [{
-                text: 'Marker ' + ((toFrom === FROM) ?
-                        'Start' : ((toFrom === TO) ? 'End' : 'Intermediate ' + index)),
+                text: translate.tr("marker") + ' ' + ((toFrom === FROM) ?
+                        translate.tr("start_label") : ((toFrom === TO) ?
+                            translate.tr("end_label") : translate.tr("intermediate_label") + ' ' + index)),
                 disabled: true,
                 index: 0,
                 state: 2
             }, {
-                text: 'Set as ' + ((toFrom !== TO) ? 'End' : 'Start'),
+                text: translate.tr((toFrom !== TO) ? "set_end" : "set_start"),
                 callback: (toFrom !== TO) ? setToEnd : setToStart,
                 index: 2,
                 state: 2
             }, {
-                text: 'Delete from Route',
+                text: translate.tr("delete_from_route"),
                 callback: deleteCoord,
                 index: 3,
                 state: 2,
@@ -321,5 +322,6 @@ module.exports.createMarker = function (index, coord, setToEnd, setToStart, dele
             }],
         contextmenuAtiveState: 2
     }).addTo(routingLayer).bindPopup(((toFrom === FROM) ?
-            'Start' : ((toFrom === TO) ? 'End' : 'Intermediate ' + index)));
+            translate.tr("start_label") : ((toFrom === TO) ?
+                translate.tr("end_label") : translate.tr("intermediate_label") + ' ' + index)));
 };
