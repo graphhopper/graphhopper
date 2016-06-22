@@ -95,7 +95,11 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
     menuIntermediate = map.contextmenu.insertItem(_intItem, _intItem.index);
     menuEnd = map.contextmenu.insertItem(_endItem, _endItem.index);
 
-    var zoomControl = new L.Control.Zoom({position: 'topleft'}).addTo(map);
+    var zoomControl = new L.Control.Zoom({
+        position: 'topleft',
+        zoomInTitle: translate.tr('zoom_in'),
+        zoomOutTitle: translate.tr('zoom_out')
+    }).addTo(map);
 
     new L.Control.loading({
         zoomControl: zoomControl

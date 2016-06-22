@@ -6,11 +6,11 @@ var mathTools = require('./tools/math.js');
 
 function tr2(key, args) {
     if (key === null) {
-        log("ERROR: key was null?");
+        console.log("ERROR: key was null?");
         return "";
     }
     if (defaultTranslationMap === null) {
-        log("ERROR: defaultTranslationMap was not initialized?");
+        console.log("ERROR: defaultTranslationMap was not initialized?");
         return key;
     }
     key = key.toLowerCase();

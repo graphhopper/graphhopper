@@ -147,7 +147,9 @@ GHRequest.prototype.createGeocodeURL = function (host, prevIndex) {
     var path = this.createPath(tmpHost + "/geocode?limit=6&type=" + this.dataType + "&key=" + this.key);
     if (prevIndex >= 0 && prevIndex < this.route.size()) {
         var point = this.route.getIndex(prevIndex);
-        path += "&point=" + point.lat + "," + point.lng;
+        if (point.isResolved()) {
+            path += "&point=" + point.lat + "," + point.lng;
+        }
     }
     return path;
 };

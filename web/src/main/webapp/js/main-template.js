@@ -93,6 +93,7 @@ $(document).ready(function (e) {
             .then(function (arg1, arg2) {
                 // init translation retrieved from first call (fetchTranslationMap)
                 var translations = arg1[0];
+                autocomplete.setLocale(translations.locale);
                 ghRequest.setLocale(translations.locale);
                 translate.init(translations);
 
@@ -158,6 +159,8 @@ $(document).ready(function (e) {
 
                 // execute query
                 initFromParams(urlParams, true);
+
+                checkInput();
             }, function (err) {
                 log(err);
                 $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps">Refresh</a>' + '<br/>Status: ' + err.statusText + '<br/>' + host);

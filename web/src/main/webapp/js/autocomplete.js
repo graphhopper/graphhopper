@@ -1,5 +1,6 @@
 var formatTools = require('./tools/format.js');
 var GHInput = require('./graphhopper/GHInput.js');
+var GHRoute = require('./graphhopper/GHRoute.js');
 var mapLayer = require('./map.js');
 
 var dataToHtml = function (data, query) {
@@ -61,6 +62,7 @@ var AutoComplete = function (host, key) {
     this.host = host;
     this.key = key;
     this.dataType = "json";
+    this.api_params = {"locale": "en"};
 };
 
 AutoComplete.prototype.createPath = function (url) {
@@ -81,7 +83,9 @@ AutoComplete.prototype.createGeocodeURL = function (ghRequest, prevIndex) {
     var path = this.createPath(this.host + "/geocode?limit=6&type=" + this.dataType + "&key=" + this.key);
     if (prevIndex >= 0 && prevIndex < ghRequest.route.size()) {
         var point = ghRequest.route.getIndex(prevIndex);
-        path += "&point=" + point.lat + "," + point.lng;
+        if (point.isResolved()) {
+            path += "&point=" + point.lat + "," + point.lng;
+        }
     }
     return path;
 };
@@ -176,5 +180,9 @@ AutoComplete.prototype.createStub = function () {
     };
 };
 
-module.exports = AutoComplete;
+AutoComplete.prototype.setLocale = function (locale) {
+    if (locale)
+        this.api_params.locale = locale;
+};
 
+module.exports = AutoComplete;
