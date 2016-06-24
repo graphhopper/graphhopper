@@ -70,9 +70,10 @@ public class GraphHopperWeb implements GraphHopperAPI
         ignoreSet.add("type");
     }
 
-    public void setDownloader( Downloader downloader )
+    public GraphHopperWeb setDownloader( Downloader downloader )
     {
         this.downloader = downloader;
+        return this;
     }
 
     @Override

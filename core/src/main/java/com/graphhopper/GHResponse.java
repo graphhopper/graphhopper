@@ -18,7 +18,6 @@
 package com.graphhopper;
 
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.PointList;
 
 import java.util.ArrayList;
 import java.util.List;
