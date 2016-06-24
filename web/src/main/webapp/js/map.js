@@ -26,7 +26,7 @@ function adjustMapSize() {
     mapDiv.width(width).height(height);
     $("#input").height(height);
 
-    console.log("adjustMapSize " + height + "x" + width);
+    // console.log("adjustMapSize " + height + "x" + width);
 
     // reduce info size depending on how heigh the input_header is and reserve space for footer
     $(".instructions_info").css("max-height",
@@ -40,7 +40,7 @@ function adjustMapSize() {
 
 function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer) {
     adjustMapSize();
-    console.log("init map at " + JSON.stringify(bounds));
+    // console.log("init map at " + JSON.stringify(bounds));
 
     var defaultLayer = tileLayers.selectLayer(selectLayer);
 

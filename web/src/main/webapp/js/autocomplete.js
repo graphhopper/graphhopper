@@ -172,12 +172,10 @@ AutoComplete.prototype.showListForIndex = function (ghRequest, routeIfAllResolve
 };
 
 AutoComplete.prototype.createStub = function () {
-    return {
-        showListForIndex: function () {
-        },
-        hide: function () {
-        }
-    };
+    complete = new AutoComplete();
+    complete.showListForIndex = function () {};
+    complete.hide = function () {};
+    return complete;
 };
 
 AutoComplete.prototype.setLocale = function (locale) {

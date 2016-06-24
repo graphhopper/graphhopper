@@ -246,7 +246,7 @@ GHRequest.prototype.doRequest = function (url, callback) {
 
 GHRequest.prototype.getInfo = function () {
     var url = this.host + "/info?type=" + this.dataType + "&key=" + this.key;
-    console.log(url);
+    // console.log(url);
     return $.ajax({
         url: url,
         timeout: 3000,
@@ -266,7 +266,7 @@ GHRequest.prototype.fetchTranslationMap = function (urlLocaleParam) {
         // let servlet figure out the locale from the Accept-Language header
         urlLocaleParam = "";
     var url = this.host + "/i18n/" + urlLocaleParam + "?type=" + this.dataType + "&key=" + this.key;
-    console.log(url);
+    // console.log(url);
     return $.ajax({
         url: url,
         timeout: 3000,
