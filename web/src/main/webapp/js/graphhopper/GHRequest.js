@@ -45,23 +45,19 @@ var GHRequest = function (host, api_key) {
     // register events
     this.route.addListener('route.add', function (evt) {
         this.to = this.route.last();
-        log("Foo just added.");
     }.bind(this));
     this.route.addListener('route.remove', function (evt) {
         this.from = this.route.first();
         this.to = this.route.last();
-        log("Foo just removed.");
     }.bind(this));
     this.route.addListener('route.move', function (evt) {
         this.from = this.route.first();
         this.to = this.route.last();
-        log("Foo just moved.");
     }.bind(this));
 
     this.route.addListener('route.reverse', function (evt) {
         this.from = this.route.first();
         this.to = this.route.last();
-        log("Foo just reversed.");
     }.bind(this));
 };
 
@@ -238,7 +234,7 @@ GHRequest.prototype.doRequest = function (url, callback) {
                     hints: [{"message": msg, "details": details}]
                 };
             }
-            log(msg + " " + JSON.stringify(err));
+            console.log(msg + " " + JSON.stringify(err));
 
             callback(json);
         },
@@ -250,7 +246,7 @@ GHRequest.prototype.doRequest = function (url, callback) {
 
 GHRequest.prototype.getInfo = function () {
     var url = this.host + "/info?type=" + this.dataType + "&key=" + this.key;
-    log(url);
+    console.log(url);
     return $.ajax({
         url: url,
         timeout: 3000,
@@ -270,7 +266,7 @@ GHRequest.prototype.fetchTranslationMap = function (urlLocaleParam) {
         // let servlet figure out the locale from the Accept-Language header
         urlLocaleParam = "";
     var url = this.host + "/i18n/" + urlLocaleParam + "?type=" + this.dataType + "&key=" + this.key;
-    log(url);
+    console.log(url);
     return $.ajax({
         url: url,
         timeout: 3000,

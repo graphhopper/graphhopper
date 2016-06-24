@@ -40,7 +40,7 @@ function adjustMapSize() {
 
 function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer) {
     adjustMapSize();
-    log("init map at " + JSON.stringify(bounds));
+    console.log("init map at " + JSON.stringify(bounds));
 
     var defaultLayer = tileLayers.selectLayer(selectLayer);
 
