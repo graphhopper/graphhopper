@@ -106,8 +106,8 @@ with this maven dependency:
 <dependency>
     <groupId>com.graphhopper</groupId>
     <artifactId>map-matching</artifactId>
-    <!-- or 0.7-SNAPSHOT for the unstable -->
-    <version>0.6.0</version>
+    <!-- or 0.8-SNAPSHOT for the unstable -->
+    <version>0.7.0</version>
 </dependency>
 ```
 
