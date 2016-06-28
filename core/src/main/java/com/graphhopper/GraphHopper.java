@@ -388,11 +388,16 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * This methods stops the algorithm from searching further if the resulting path would go over
-     * the specified node count, important if CH is disabled.
+     * the specified node count, important if none-CH routing is used.
      */
     public void setMaxVisitedNodes( int maxVisitedNodes )
     {
         this.maxVisitedNodes = maxVisitedNodes;
+    }
+
+    public int getMaxVisitedNodes()
+    {
+        return maxVisitedNodes;
     }
 
     /**
