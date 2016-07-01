@@ -118,13 +118,6 @@ with this maven dependency:
 
 Later we will add a simple web service
 
-### UI to visually compare
-
-There is a simple UI taken from [makinacorpus/Leaflet.FileLayer](https://github.com/makinacorpus/Leaflet.FileLayer)
-where you can load your input and output gpx files to compare the results. Some GPX seem to fail when trying to load them.
-
-Start e.g. via 'firefox simple-js-ui/index.html'
-
 ### Note
 
 Note that the edge and node IDs from GraphHopper will change for different PBF files,
