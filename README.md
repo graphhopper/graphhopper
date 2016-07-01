@@ -125,4 +125,4 @@ like when updating the OSM data.
 
 ### About
 
-The used algorithm is explained in [this blog post](http://karussell.wordpress.com/2014/07/28/digitalizing-gpx-points-or-how-to-track-vehicles-with-graphhopper/).
+See [this project](https://github.com/michaz/hmm-lib) which is used in combination with our routing engine and is used as the algorithmic approach now before it was [this faster but more heuristic approach](https://karussell.wordpress.com/2014/07/28/digitalizing-gpx-points-or-how-to-track-vehicles-with-graphhopper/).
