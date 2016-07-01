@@ -114,8 +114,6 @@ with this maven dependency:
 </dependency>
 ```
 
-Later we will add a simple web service
-
 ### Note
 
 Note that the edge and node IDs from GraphHopper will change for different PBF files,
