@@ -11,4 +11,5 @@ nbactions.xml
 .settings/
 .classpath
 .project
+matching-vaadin/src/main/webapp/
 matching-core/build.xml

@@ -43,6 +43,11 @@
             <version>${log4j.version}</version>
         </dependency>
         <dependency>
+            <groupId>de.bmw.hmm</groupId>
+            <artifactId>hmm</artifactId>
+            <version>0.2.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.10</version>

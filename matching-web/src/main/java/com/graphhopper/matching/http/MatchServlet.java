@@ -17,42 +17,26 @@
  */
 package com.graphhopper.matching.http;
 
-import com.graphhopper.PathWrapper;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.http.GraphHopperServlet;
 import com.graphhopper.http.RouteSerializer;
-import com.graphhopper.matching.EdgeMatch;
-import com.graphhopper.matching.GPXFile;
-import com.graphhopper.matching.LocationIndexMatch;
-import com.graphhopper.matching.MapMatching;
-import com.graphhopper.matching.MatchResult;
+import com.graphhopper.matching.*;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PathMerger;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.Translation;
-import com.graphhopper.util.TranslationMap;
-
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import com.graphhopper.util.*;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.util.*;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 /**
  *
@@ -76,7 +60,7 @@ public class MatchServlet extends GraphHopperServlet {
     public void doPost(HttpServletRequest httpReq, HttpServletResponse httpRes)
             throws ServletException, IOException {
 
-        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
+        String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale();
         String type = httpReq.getContentType();
         GPXFile gpxFile;
         if (type.contains("application/xml") || type.contains("application/gpx+xml")) {
@@ -96,16 +80,13 @@ public class MatchServlet extends GraphHopperServlet {
         boolean pointsEncoded = getBooleanParam(httpReq, "points_encoded", true);
         boolean enableInstructions = writeGPX || getBooleanParam(httpReq, "instructions", true);
         boolean enableElevation = getBooleanParam(httpReq, "elevation", false);
-        boolean forceRepair = getBooleanParam(httpReq, "force_repair", false);
 
         // TODO export OSM IDs instead, use https://github.com/karussell/graphhopper-osm-id-mapping
         boolean enableTraversalKeys = getBooleanParam(httpReq, "traversal_keys", false);
 
-        int maxNodesToVisit = (int) getLongParam(httpReq, "max_nodes_to_visit", 500);
-        int separatedSearchDistance = (int) getLongParam(httpReq, "separated_search_distance", 300);
-
         String vehicle = getParam(httpReq, "vehicle", "car");
-
+        int maxVisitedNodes = Math.min(getIntParam(httpReq, "max_visited_nodes", 800), 5000);
+        int gpsAccuracy = Math.max(getIntParam(httpReq, "gps_accuracy", 50), 10);
         Locale locale = Helper.getLocale(getParam(httpReq, "locale", "en"));
         PathWrapper matchGHRsp = new PathWrapper();
         MatchResult matchRsp = null;
@@ -114,10 +95,8 @@ public class MatchServlet extends GraphHopperServlet {
         try {
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             MapMatching matching = new MapMatching(hopper.getGraphHopperStorage(), locationIndexMatch, encoder);
-            matching.setForceRepair(forceRepair);
-            matching.setMaxVisitedNodes(maxNodesToVisit);
-            matching.setSeparatedSearchDistance(separatedSearchDistance);
-
+            matching.setMaxVisitedNodes(maxVisitedNodes);
+            matching.setMeasurementErrorSigma(gpsAccuracy);
             matchRsp = matching.doWork(gpxFile.getEntries());
 
             // fill GHResponse for identical structure            
@@ -129,8 +108,10 @@ public class MatchServlet extends GraphHopperServlet {
             matchGHRsp.addError(ex);
         }
 
-        logger.info(httpReq.getQueryString() + ", " + infoStr + ", took:" + sw.stop().getSeconds() + ", entries:" + gpxFile.getEntries().size() + ", " + matchGHRsp.getDebugInfo());
+        float took = sw.stop().getSeconds();
+        logger.info(httpReq.getQueryString() + ", " + infoStr + ", took:" + took + ", entries:" + gpxFile.getEntries().size() + ", " + matchGHRsp.getDebugInfo());
 
+        httpRes.setHeader("X-GH-Took", "" + Math.round(took * 1000));
         if (EXTENDED_JSON_FORMAT.equals(format)) {
             if (matchGHRsp.hasErrors()) {
                 httpRes.setStatus(SC_BAD_REQUEST);

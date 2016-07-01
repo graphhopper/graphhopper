@@ -48,8 +48,8 @@ public class MapMatchingMain {
         String action = args.get("action", "").toLowerCase();
         args.put("graph.location", "./graph-cache");
         if (action.equals("import")) {
-            String vehicle = args.get("vehicle", "car").toLowerCase();
-            args.put("graph.flag_encoders", vehicle);
+            String flagEncoders = args.get("vehicle", "car").toLowerCase();
+            args.put("graph.flag_encoders", flagEncoders);
             args.put("osmreader.osm", args.get("datasource", ""));
 
             // standard should be to remove disconnected islands
@@ -67,15 +67,20 @@ public class MapMatchingMain {
             FlagEncoder firstEncoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
             GraphHopperStorage graph = hopper.getGraphHopperStorage();
 
-            int gpxAccuracy = args.getInt("gpx_accuracy", 15);
+            int gpsAccuracy = args.getInt("gps_accuracy", -1);
+            if (gpsAccuracy < 0) {
+                // backward compatibility since 0.8
+                gpsAccuracy = args.getInt("gpx_accuracy", 15);
+            }
+
             String instructions = args.get("instructions", "");
-            logger.info("Setup lookup index. Accuracy filter is at " + gpxAccuracy + "m");
+            logger.info("Setup lookup index. Accuracy filter is at " + gpsAccuracy + "m");
             LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
-                    (LocationIndexTree) hopper.getLocationIndex(), gpxAccuracy);
+                    (LocationIndexTree) hopper.getLocationIndex(), gpsAccuracy);
             MapMatching mapMatching = new MapMatching(graph, locationIndex, firstEncoder);
-            mapMatching.setSeparatedSearchDistance(args.getInt("separated_search_distance", 500));
             mapMatching.setMaxVisitedNodes(args.getInt("max_visited_nodes", 1000));
-            mapMatching.setForceRepair(args.getBool("force_repair", false));
+            mapMatching.setTransitionProbabilityBeta(args.getDouble("transition_probability_beta", 0.00959442));
+            mapMatching.setMeasurementErrorSigma(gpsAccuracy);
 
             // do the actual matching, get the GPX entries from a file or via stream
             String gpxLocation = args.get("gpx", "");
@@ -117,7 +122,7 @@ public class MapMatchingMain {
                 } catch (Exception ex) {
                     importSW.stop();
                     matchSW.stop();
-                    logger.error("Problem with file " + gpxFile + " Error: " + ex.getMessage());
+                    logger.error("Problem with file " + gpxFile + " Error: " + ex.getMessage(), ex);
                 }
             }
             System.out.println("gps import took:" + importSW.getSeconds() + "s, match took: " + matchSW.getSeconds());

@@ -1,8 +1,14 @@
 #!/bin/bash
 
+if [ "$JAVA_HOME" != "" ]; then
+ JAVA=$JAVA_HOME/bin/java
+fi
+
 if [ "$JAVA" = "" ]; then
  JAVA=java
 fi
+
+echo "using $JAVA"
 
 if [ "$1" = "action=start-server" ]; then
   function set_jar_path {
@@ -16,7 +22,7 @@ if [ "$1" = "action=start-server" ]; then
     set_jar_path
   fi
   
-  ARGS="graph.location=./graph-cache"
+  ARGS="graph.location=./graph-cache jetty.resourcebase=matching-web/src/main/webapp"
   
 elif [ "$1" = "action=test" ]; then
 

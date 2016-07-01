@@ -53,8 +53,12 @@
         <url>https://github.com/graphhopper/map-matching/issues</url>
     </issueManagement>
     <modules>
+        <module>hmm-lib</module>
         <module>matching-core</module>
         <module>matching-web</module>
+        <!--
+        <module>matching-vaadin</module>
+        -->
     </modules>
         
     <build>        
