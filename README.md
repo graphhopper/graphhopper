@@ -65,8 +65,6 @@ You can post GPX files and get back snapped results as GPX or as compatible Grap
 curl -XPOST -H "Content-Type: application/gpx+xml" -d @/path/to/gpx/file.gpx "localhost:8989/match?vehicle=car&max_nodes_to_visit=1000&force_repair=true&type=json"
 ```
 
-Keep in mind that camelCase variables are converted to under_score variables like seen in the example (maxNodesToVisit=>max_nodes_to_visit).
-
 #### Development tools
 
 Determine the maximum bounds of one or more GPX file:
