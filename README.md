@@ -7,7 +7,9 @@ Read more at [Wikipedia](https://en.wikipedia.org/wiki/Map_matching). It can be 
 
 Currently this project is under heavy development but produces already good results for various use cases. Let us know if not and create an issue!
 
-![Map Matching Illustration](https://karussell.files.wordpress.com/2014/07/map-matching.png)
+See the demo in action (black is GPS track, green is matched result):
+
+![map-matching-example](https://cloud.githubusercontent.com/assets/129644/14740686/188a181e-0891-11e6-820c-3bd0a975f8a5.png)
 
 ### License
 
@@ -49,14 +51,16 @@ force_repair=false           # default=false, type=boolean, when merging two pat
 
 This will produce gpx results similar named as the input files.
 
-### Matching Service
+### UI and matching Service
 
 Start via:
 ```bash
 ./map-matching.sh action=start-server
 ```
 
-Now you can post GPX files and get back snapped results as GPX or as compatible GraphHopper JSON. An example curl request is:
+Access the simple UI via localhost:8989.
+
+You can post GPX files and get back snapped results as GPX or as compatible GraphHopper JSON. An example curl request is:
 ```bash
 curl -XPOST -H "Content-Type: application/gpx+xml" -d @/path/to/gpx/file.gpx "localhost:8989/match?vehicle=car&max_nodes_to_visit=1000&force_repair=true&type=json"
 ```
