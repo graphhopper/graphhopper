@@ -165,7 +165,8 @@ public class MapMatching {
                 return deltaTs;
             }
         };
-        final QueryGraph queryGraph = new QueryGraph(graph);
+        final QueryGraph queryGraph = new QueryGraph(graph).
+                setUseEdgeExplorerCache(true);
         queryGraph.lookup(allCandidates);
         SpatialMetrics<GPXExtension, GPXEntry> spatialMetrics = new SpatialMetrics<GPXExtension, GPXEntry>() {
             @Override
