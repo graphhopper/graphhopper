@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
@@ -65,6 +66,10 @@ public class QueryGraph implements Graph
     private static final AngleCalc AC = Helper.ANGLE_CALC;
     private List<VirtualEdgeIteratorState> modifiedEdges = new ArrayList<VirtualEdgeIteratorState>(5);
 
+    // TODO when spreading it on different threads we need multiple independent explorers
+    private final Map<Integer, EdgeExplorer> cacheMap = new HashMap<Integer, EdgeExplorer>(4);
+    private boolean useEdgeExplorerCache = false;
+
     public QueryGraph( Graph graph )
     {
         mainGraph = graph;
@@ -78,7 +83,16 @@ public class QueryGraph implements Graph
             wrappedExtension = mainGraph.getExtension();
 
         // create very lightweight QueryGraph which uses variables from this QueryGraph (same virtual edges)
-        baseGraph = new QueryGraph(graph.getBaseGraph(), this);
+        baseGraph = new QueryGraph(graph.getBaseGraph(), this)
+        {
+            // override method to avoid stackoverflow
+            @Override
+            public QueryGraph setUseEdgeExplorerCache( boolean useEECache )
+            {
+                baseGraph.useEdgeExplorerCache = useEECache;
+                return baseGraph;
+            }
+        };
     }
 
     /**
@@ -295,6 +309,21 @@ public class QueryGraph implements Graph
     public boolean isVirtualNode( int nodeId )
     {
         return nodeId >= mainNodes;
+    }
+
+    /**
+     * This method is an experimental feature to reduce memory and CPU resources if there are many
+     * locations ("hundreds") for one QueryGraph. It can make problems for custom or threaded
+     * algorithms or when using custom EdgeFilters for EdgeExplorer creation. Another limitation is
+     * that the same edge explorer is used even if a different vehicle/flagEncoder is chosen.
+     * Currently we can cache only the ALL_EDGES filter or instances of the DefaultEdgeFilter where
+     * three edge explorers will be created: forward OR backward OR both.
+     */
+    public QueryGraph setUseEdgeExplorerCache( boolean useEECache )
+    {
+        this.useEdgeExplorerCache = useEECache;
+        this.baseGraph.setUseEdgeExplorerCache(useEECache);
+        return this;
     }
 
     class QueryGraphTurnExt extends TurnCostExtension
@@ -596,6 +625,42 @@ public class QueryGraph implements Graph
         if (!isInitialized())
             throw new IllegalStateException("Call lookup before using this graph");
 
+        if (useEdgeExplorerCache)
+        {
+            int counter = -1;
+            if (edgeFilter instanceof DefaultEdgeFilter)
+            {
+                DefaultEdgeFilter dee = (DefaultEdgeFilter) edgeFilter;
+                counter = 0;
+                if (dee.acceptsBackward())
+                    counter = 1;
+                if (dee.acceptsForward())
+                    counter += 2;
+
+                if (counter == 0)
+                    throw new IllegalStateException("You tried to use an edge filter blocking every access");
+
+            } else if (edgeFilter == EdgeFilter.ALL_EDGES)
+            {
+                counter = 4;
+            }
+
+            if (counter >= 0)
+            {
+                EdgeExplorer cached = cacheMap.get(counter);
+                if (cached == null)
+                {
+                    cached = createUncachedEdgeExplorer(edgeFilter);
+                    cacheMap.put(counter, cached);
+                }
+                return cached;
+            }
+        }
+        return createUncachedEdgeExplorer(edgeFilter);
+    }
+
+    private EdgeExplorer createUncachedEdgeExplorer( EdgeFilter edgeFilter )
+    {
         // Iteration over virtual nodes needs to be thread safe if done from different explorer
         // so we need to create the mapping on EVERY call!
         // This needs to be a HashMap (and cannot be an array) as we also need to tweak edges for some mainNodes!

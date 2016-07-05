@@ -690,4 +690,21 @@ public class QueryGraphTest
         assertEquals(GHUtility.createEdgeKey(0, 1, origEdgeId, false),
                 ((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), 1)).getOriginalTraversalKey());
     }
+
+    @Test
+    public void useEECache()
+    {
+        initGraph(g);        
+        EdgeExplorer explorer = g.createEdgeExplorer();        
+        EdgeIterator iter = explorer.setBaseNode(1);
+        assertTrue(iter.next());        
+        QueryResult res = createLocationResult(2, 1.5, iter, 1, PILLAR);
+        
+        QueryGraph queryGraph = new QueryGraph(g).setUseEdgeExplorerCache(true);        
+        queryGraph.lookup(Arrays.asList(res));
+        
+        EdgeExplorer edgeExplorer = queryGraph.createEdgeExplorer();
+        // using cache means same reference
+        assertTrue(edgeExplorer == queryGraph.createEdgeExplorer());
+    }
 }
