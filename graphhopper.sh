@@ -133,6 +133,7 @@ function prepareEclipse {
 
 ## now handle actions which do not take an OSM file
 if [ "$ACTION" = "clean" ]; then
+ rm -rf ./android/app/target
  rm -rf ./*/target
  rm -rf ./target
  exit
