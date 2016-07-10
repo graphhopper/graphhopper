@@ -61,22 +61,39 @@ public class MatchServlet extends GraphHopperServlet {
             throws ServletException, IOException {
 
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale();
-        String type = httpReq.getContentType();
+        String inType = "gpx";
+        String cType = httpReq.getContentType();
+        if (cType.contains("application/xml") || cType.contains("application/gpx+xml")) {
+            inType = "gpx";
+        } else if (cType.contains("application/json")) {
+            inType = "json";
+        }
+
         GPXFile gpxFile;
-        if (type.contains("application/xml") || type.contains("application/gpx+xml")) {
+        if (inType.equals("gpx")) {
             try {
                 gpxFile = parseGPX(httpReq);
             } catch (Exception ex) {
-                logger.warn("Cannot parse XML for " + httpReq.getQueryString() + ", " + infoStr);
+                logger.warn("Cannot parse XML for " + httpReq.getQueryString() + " - " + ex.getMessage() + ", " + infoStr);
                 httpRes.setStatus(SC_BAD_REQUEST);
                 httpRes.getWriter().append(errorsToXML(Collections.<Throwable>singletonList(ex)));
                 return;
             }
+//        } else if (type.equals("json")) {
+//            try {
+//                gpxFile = parseJSON(httpReq);
+//            } catch (Exception ex) {
+//                logger.warn("Cannot parse JSON for " + httpReq.getQueryString() + " - " + ex.getMessage() + ", " + infoStr);
+//                httpRes.setStatus(SC_BAD_REQUEST);
+//                httpRes.getWriter().append(errorsToXML(Collections.<Throwable>singletonList(ex)));
+//                return;
+//            }
         } else {
-            throw new IllegalArgumentException("content type not supported " + type);
+            throw new IllegalArgumentException("Input type not supported " + inType);
         }
-        final String format = getParam(httpReq, "type", "json");
-        boolean writeGPX = GPX_FORMAT.equals(format);
+
+        final String outType = getParam(httpReq, "type", "json");
+        boolean writeGPX = GPX_FORMAT.equals(outType);
         boolean pointsEncoded = getBooleanParam(httpReq, "points_encoded", true);
         boolean enableInstructions = writeGPX || getBooleanParam(httpReq, "instructions", true);
         boolean enableElevation = getBooleanParam(httpReq, "elevation", false);
@@ -112,7 +129,7 @@ public class MatchServlet extends GraphHopperServlet {
         logger.info(httpReq.getQueryString() + ", " + infoStr + ", took:" + took + ", entries:" + gpxFile.getEntries().size() + ", " + matchGHRsp.getDebugInfo());
 
         httpRes.setHeader("X-GH-Took", "" + Math.round(took * 1000));
-        if (EXTENDED_JSON_FORMAT.equals(format)) {
+        if (EXTENDED_JSON_FORMAT.equals(outType)) {
             if (matchGHRsp.hasErrors()) {
                 httpRes.setStatus(SC_BAD_REQUEST);
                 httpRes.getWriter().append(new JSONArray(matchGHRsp.getErrors()).toString());
@@ -120,7 +137,7 @@ public class MatchServlet extends GraphHopperServlet {
                 httpRes.getWriter().write(new MatchResultToJson(matchRsp).exportTo().toString());
             }
 
-        } else if (GPX_FORMAT.equals(format)) {
+        } else if (GPX_FORMAT.equals(outType)) {
             String xml = createGPXString(httpReq, httpRes, matchGHRsp);
             if (matchGHRsp.hasErrors()) {
                 httpRes.setStatus(SC_BAD_REQUEST);
@@ -161,11 +178,13 @@ public class MatchServlet extends GraphHopperServlet {
     private GPXFile parseJSON(HttpServletRequest httpReq) throws IOException {
         JSONObject json = new JSONObject(Helper.isToString(httpReq.getInputStream()));
         // TODO think about format first:
-        // type: bike
-        // locale
-        // encoded points or not
-        // points_encoded
-        // points: lat,lon[,ele,millis] 
+        // vehicle/profile: bike
+        // locale:de/en/...
+        // points_encoded:true/false
+        // elevation:true/false
+        // time:true/false
+        // points: lat,lon[,ele,millis] -> millis is also interesting for output!
+        GPXFile file = new GPXFile();
         throw new IllegalStateException("json input not yet supported");
     }
 

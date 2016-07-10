@@ -30,7 +30,6 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.BreadthFirstSearch;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;

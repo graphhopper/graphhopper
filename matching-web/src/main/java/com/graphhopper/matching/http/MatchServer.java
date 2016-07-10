@@ -31,7 +31,7 @@ public class MatchServer extends GHServer {
 
     public static void main(String[] argsStr) throws Exception {
         CmdArgs args = CmdArgs.read(argsStr);
-        args.put("prepare.chWeightings", "no");
+        args.put("prepare.ch.weightings", "no");
         new MatchServer(args).start();
     }
     private final CmdArgs args;

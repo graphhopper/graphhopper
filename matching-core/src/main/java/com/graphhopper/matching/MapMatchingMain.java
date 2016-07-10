@@ -48,7 +48,11 @@ public class MapMatchingMain {
         String action = args.get("action", "").toLowerCase();
         args.put("graph.location", "./graph-cache");
         if (action.equals("import")) {
-            String flagEncoders = args.get("vehicle", "car").toLowerCase();
+            String flagEncoders = args.get("vehicle", "").toLowerCase();
+            if (flagEncoders.isEmpty()) {
+                flagEncoders = args.get("vehicles", "car").toLowerCase();
+            }
+
             args.put("graph.flag_encoders", flagEncoders);
             args.put("osmreader.osm", args.get("datasource", ""));
 
