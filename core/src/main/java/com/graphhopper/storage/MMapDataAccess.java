@@ -159,7 +159,7 @@ public class MMapDataAccess extends AbstractDataAccess
             // we could get an exception here if buffer is too small and area too large
             // e.g. I got an exception for the 65421th buffer (probably around 2**16 == 65536)
             throw new RuntimeException("Couldn't map buffer " + i + " of " + segmentsToMap
-                    + " at position " + bufferStart + " for " + byteCount
+                    + " for " + name + " at position " + bufferStart + " for " + byteCount
                     + " bytes with offset " + offset + ", new fileLength:" + newFileLength, ex);
         }
     }
@@ -172,7 +172,7 @@ public class MMapDataAccess extends AbstractDataAccess
         ByteBuffer buf = null;
         IOException ioex = null;
         // One retry if it fails. It could fail e.g. if previously buffer wasn't yet unmapped from the jvm
-        for (int trial = 0; trial < 1; )
+        for (int trial = 0; trial < 1;)
         {
             try
             {
