@@ -17,6 +17,9 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.matrix.DistanceMatrixService;
+import com.graphhopper.matrix.GHMatrixRequest;
+import com.graphhopper.matrix.GHMatrixResponse;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.dem.CGIARProvider;
@@ -1009,6 +1012,12 @@ public class GraphHopper implements GraphHopperAPI
         GHResponse response = new GHResponse();
         calcPaths(request, response);
         return response;
+    }
+
+    @Override
+    public GHMatrixResponse matrix(GHMatrixRequest request) {
+        DistanceMatrixService matrixService = new DistanceMatrixService(this);
+        return matrixService.calculateMatrix(request);
     }
 
     protected List<Path> calcPaths( GHRequest request, GHResponse ghRsp )

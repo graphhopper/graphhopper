@@ -17,6 +17,9 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.matrix.GHMatrixRequest;
+import com.graphhopper.matrix.GHMatrixResponse;
+
 /**
  * Wrapper of the graphhopper online or offline API. Provides read only access.
  * <p>
@@ -38,4 +41,10 @@ public interface GraphHopperAPI
      * @return the response with the route and possible errors
      */
     GHResponse route( GHRequest request );
+
+    /**
+     * Calculates the distance matrix specified by the given request
+     * @return A matrix with distance/time information for each origin-destination combination.
+     */
+    GHMatrixResponse matrix(GHMatrixRequest request);
 }

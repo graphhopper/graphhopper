@@ -20,7 +20,7 @@ mvn clean test verify
 #  fi 
 #  
 #  echo "====== TEST $module ====="
-#  # verify necessary for failsafe, otherwise it won't fail the build!?
+#  # verify necessary for failsafe, otherwise it won't fail the createAlgo!?
 #  mvn -pl $module test failsafe:integration-test verify  
 #  EXIT_VAL="$?"
 #  if [[ "x$EXIT_VAL" != "x0" ]]; then

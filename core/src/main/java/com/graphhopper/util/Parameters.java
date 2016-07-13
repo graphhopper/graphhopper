@@ -61,6 +61,12 @@ public class Parameters
         public static final String ROUND_TRIP = "round_trip";
 
         /**
+         * Matrix algorithm using a plain simple one-to-one
+         * route algorithm for all combinations.
+         */
+        public static final String MATRIX_ONE_TO_ONE = "matrix.one_to_one";
+
+        /**
          * All public properties for alternative routing.
          */
         public static final class AltRoute
