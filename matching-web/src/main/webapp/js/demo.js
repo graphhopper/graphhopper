@@ -76,7 +76,7 @@ function setup(map, mmClient) {
         reader.readAsText(file);
     }
 
-    document.getElementById('file-input').addEventListener('change', readSingleFile, false);
+    document.getElementById('matching-file-input').addEventListener('change', readSingleFile, false);
 }
 
 GraphHopperMapMatching = function (args) {
