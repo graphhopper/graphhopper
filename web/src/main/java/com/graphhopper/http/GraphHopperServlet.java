@@ -209,7 +209,7 @@ public class GraphHopperServlet extends GHBaseServlet
         else
             res.setContentType("application/gpx+xml");
 
-        String trackName = getParam(req, "trackname", "GraphHopper Track");
+        String trackName = getParam(req, "gpx.trackname", "GraphHopper Track");
         res.setHeader("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
         long time = getLongParam(req, "millis", System.currentTimeMillis());
         return rsp.getInstructions().createGPX(trackName, time, includeElevation, withRoute, withTrack, withWayPoints);
