@@ -62,10 +62,10 @@ public class MatchServlet extends GraphHopperServlet {
 
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale();
         String inType = "gpx";
-        String cType = httpReq.getContentType();
-        if (cType.contains("application/xml") || cType.contains("application/gpx+xml")) {
+        String contentType = httpReq.getContentType();
+        if (contentType.contains("application/xml") || contentType.contains("application/gpx+xml")) {
             inType = "gpx";
-        } else if (cType.contains("application/json")) {
+        } else if (contentType.contains("application/json")) {
             inType = "json";
         }
 
@@ -89,7 +89,7 @@ public class MatchServlet extends GraphHopperServlet {
 //                return;
 //            }
         } else {
-            throw new IllegalArgumentException("Input type not supported " + inType);
+            throw new IllegalArgumentException("Input type not supported " + inType + ", Content-Type:" + contentType);
         }
 
         final String outType = getParam(httpReq, "type", "json");
@@ -138,11 +138,11 @@ public class MatchServlet extends GraphHopperServlet {
             }
 
         } else if (GPX_FORMAT.equals(outType)) {
-            String xml = createGPXString(httpReq, httpRes, matchGHRsp);
-            if (matchGHRsp.hasErrors()) {
+            if (matchGHRsp.hasErrors()) {               
                 httpRes.setStatus(SC_BAD_REQUEST);
-                httpRes.getWriter().append(xml);
+                httpRes.getWriter().append(errorsToXML(matchGHRsp.getErrors()));
             } else {
+                String xml = createGPXString(httpReq, httpRes, matchGHRsp);
                 writeResponse(httpRes, xml);
             }
         } else {
