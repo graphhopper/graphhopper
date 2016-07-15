@@ -49,7 +49,7 @@ public class GPXFile {
     static final String DATE_FORMAT_Z = "yyyy-MM-dd'T'HH:mm:ss'Z'";
     static final String DATE_FORMAT_Z_MS = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
     private final List<GPXEntry> entries;
-    private final boolean includeElevation = false;
+    private boolean includeElevation = false;
     private InstructionList instructions;
 
     public GPXFile() {
@@ -68,6 +68,9 @@ public class GPXFile {
         for (int emIndex = 0; emIndex < mr.getEdgeMatches().size(); emIndex++) {
             EdgeMatch em = mr.getEdgeMatches().get(emIndex);
             PointList pl = em.getEdgeState().fetchWayGeometry(emIndex == 0 ? 3 : 2);
+            if (pl.is3D()) {
+                includeElevation = true;
+            }
             for (int i = 0; i < pl.size(); i++) {
                 if (pl.is3D()) {
                     entries.add(new GPXEntry(pl.getLatitude(i), pl.getLongitude(i), pl.getElevation(i), time));
