@@ -117,8 +117,8 @@ function packageCoreJar {
     echo "## now building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
     
-    execMvn --projects import-osm -am -DskipTests=true install
-    execMvn --projects import-osm -DskipTests=true install assembly:single
+    execMvn --projects reader-osm -am -DskipTests=true install
+    execMvn --projects reader-osm -DskipTests=true install assembly:single
   else
     echo "## existing jar found $JAR"
   fi
@@ -191,7 +191,7 @@ fi
 
 GRAPH=$NAME-gh
 VERSION=$(grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
-JAR=tools/target/graphhopper-import-osm-$VERSION-jar-with-dependencies.jar
+JAR=tools/target/graphhopper-reader-osm-$VERSION-jar-with-dependencies.jar
 
 LINK=$(echo $NAME | tr '_' '/')
 if [ "$FILE" == "-" ]; then
@@ -233,12 +233,12 @@ if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
   if [ "$GH_FOREGROUND" = "" ]; then
     exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE \
 	jetty.port=$JETTY_PORT jetty.host=$JETTY_HOST \
-    	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
+    	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" datareader.file="$OSM_FILE"
     # foreground => we never reach this here
   else
     exec "$JAVA" $JAVA_OPTS -jar "$WEB_JAR" jetty.resourcebase=$RC_BASE \
     	jetty.port=$JETTY_PORT jetty.host=$JETTY_HOST \
-    	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE" <&- &
+    	config=$CONFIG $GH_WEB_OPTS graph.location="$GRAPH" datareader.file="$OSM_FILE" <&- &
     if [ "$GH_PID_FILE" != "" ]; then
        echo $! > $GH_PID_FILE
     fi
@@ -247,7 +247,7 @@ if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
 
 elif [ "$ACTION" = "import" ]; then
  "$JAVA" $JAVA_OPTS -cp "$JAR" $GH_CLASS config=$CONFIG \
-      $GH_IMPORT_OPTS graph.location="$GRAPH" osmreader.osm="$OSM_FILE"
+      $GH_IMPORT_OPTS graph.location="$GRAPH" datareader.file="$OSM_FILE"
 
 
 elif [ "$ACTION" = "torture" ]; then
@@ -257,12 +257,12 @@ elif [ "$ACTION" = "torture" ]; then
 elif [ "$ACTION" = "miniui" ]; then
  "$MAVEN_HOME/bin/mvn" --projects tools -DskipTests clean install assembly:single
  JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
- "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI osmreader.osm="$OSM_FILE" config=$CONFIG \
+ "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI datareader.file="$OSM_FILE" config=$CONFIG \
               graph.location="$GRAPH"
 
 
 elif [ "$ACTION" = "measurement" ]; then
- ARGS="config=$CONFIG graph.location=$GRAPH osmreader.osm=$OSM_FILE prepare.ch.weightings=fastest graph.flag_encoders=car prepare.min_network_size=10000 prepare.min_oneway_network_size=10000"
+ ARGS="config=$CONFIG graph.location=$GRAPH datareader.file=$OSM_FILE prepare.ch.weightings=fastest graph.flag_encoders=car prepare.min_network_size=10000 prepare.min_oneway_network_size=10000"
  # echo -e "\ncreate graph via $ARGS, $JAR"
  # START=$(date +%s)
  # avoid islands for measurement at all costs
