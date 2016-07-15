@@ -12,7 +12,7 @@ echo "using $JAVA"
 
 if [ "$1" = "action=start-server" ]; then
   function set_jar_path {
-    JAR=$(ls matching-web/target/map-matching-web-*-dependencies.jar)
+    JAR=$(ls matching-web/target/graphhopper-map-matching-web-*-dependencies.jar)
   }
 
   set_jar_path
@@ -33,7 +33,7 @@ elif [ "$1" = "action=test" ]; then
   
 else
   function set_jar_path {
-    JAR=$(ls matching-core/target/map-matching-*-dependencies.jar)
+    JAR=$(ls matching-core/target/graphhopper-map-matching-*-dependencies.jar)
   }
 
   set_jar_path

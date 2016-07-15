@@ -19,6 +19,7 @@ package com.graphhopper.matching;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -54,17 +55,17 @@ public class MapMatchingMain {
             }
 
             args.put("graph.flag_encoders", flagEncoders);
-            args.put("osmreader.osm", args.get("datasource", ""));
+            args.put("datareader.file", args.get("datasource", ""));
 
             // standard should be to remove disconnected islands
             args.put("prepare.min_network_size", 200);
             args.put("prepare.min_one_way_network_size", 200);
-            GraphHopper hopper = new GraphHopper().init(args);
+            GraphHopper hopper = new GraphHopperOSM().init(args);
             hopper.getCHFactoryDecorator().setEnabled(false);
             hopper.importOrLoad();
 
         } else if (action.equals("match")) {
-            GraphHopper hopper = new GraphHopper().init(args);
+            GraphHopper hopper = new GraphHopperOSM().init(args);
             hopper.getCHFactoryDecorator().setEnabled(false);
             logger.info("loading graph from cache");
             hopper.load("./graph-cache");
