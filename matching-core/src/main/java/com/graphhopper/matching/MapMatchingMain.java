@@ -138,8 +138,8 @@ public class MapMatchingMain {
             BBox bbox = BBox.createInverse(false);
             for (File gpxFile : files) {
                 List<GPXEntry> inputGPXEntries = new GPXFile().doImport(gpxFile.getAbsolutePath()).getEntries();
-                for (GPXEntry entry : inputGPXEntries) {
-                    bbox.update(entry.getLat(), entry.getLon(), entry.getEle());
+                for (GPXEntry entry : inputGPXEntries) {                    
+                    bbox.update(entry.getLat(), entry.getLon());
                 }
             }
 
