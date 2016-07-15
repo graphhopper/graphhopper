@@ -125,6 +125,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         conditionalTagInspector = new ConditionalOSMTagInspector(DateRangeParser.createCalendar(), restrictions, restrictedValues, intendedValues);
     }
 
+    protected void setConditionalTagInspector( ConditionalTagInspector conditionalTagInspector )
+    {
+        this.conditionalTagInspector = conditionalTagInspector;
+    }
+
     public void setRegistered( boolean registered )
     {
         this.registered = registered;
