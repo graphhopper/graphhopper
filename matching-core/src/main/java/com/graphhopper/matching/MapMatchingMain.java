@@ -139,18 +139,7 @@ public class MapMatchingMain {
             for (File gpxFile : files) {
                 List<GPXEntry> inputGPXEntries = new GPXFile().doImport(gpxFile.getAbsolutePath()).getEntries();
                 for (GPXEntry entry : inputGPXEntries) {
-                    if (entry.getLat() < bbox.minLat) {
-                        bbox.minLat = entry.getLat();
-                    }
-                    if (entry.getLat() > bbox.maxLat) {
-                        bbox.maxLat = entry.getLat();
-                    }
-                    if (entry.getLon() < bbox.minLon) {
-                        bbox.minLon = entry.getLon();
-                    }
-                    if (entry.getLon() > bbox.maxLon) {
-                        bbox.maxLon = entry.getLon();
-                    }
+                    bbox.update(entry.getLat(), entry.getLon(), entry.getEle());
                 }
             }
 
