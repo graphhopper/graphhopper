@@ -21,6 +21,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -60,7 +61,7 @@ public class MapMatchingTest {
 
     @BeforeClass
     public static void doImport() {
-        HOPPER.setOSMFile("../map-data/leipzig_germany.osm.pbf");
+        HOPPER.setDataReaderFile("../map-data/leipzig_germany.osm.pbf");
         HOPPER.setGraphHopperLocation("../target/mapmatchingtest");
         HOPPER.setEncodingManager(new EncodingManager(ENCODER));
         HOPPER.getCHFactoryDecorator().setEnabled(false);
@@ -287,7 +288,7 @@ public class MapMatchingTest {
     }
 
     // use a workaround to get access to 
-    static class TestGraphHopper extends GraphHopper {
+    static class TestGraphHopper extends GraphHopperOSM {
 
         private List<Path> paths;
 
@@ -300,7 +301,7 @@ public class MapMatchingTest {
         }
 
         @Override
-        protected List<Path> calcPaths(GHRequest request, GHResponse rsp) {
+        public List<Path> calcPaths(GHRequest request, GHResponse rsp) {
             paths = super.calcPaths(request, rsp);
             return paths;
         }

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.graphhopper</groupId>
-    <artifactId>map-matching-parent</artifactId>
+    <artifactId>graphhopper-map-matching-parent</artifactId>
     <name>GraphHopper Map Matching Parent Project</name>
     <version>0.8-SNAPSHOT</version>
     <packaging>pom</packaging> 
@@ -171,16 +171,6 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>
-        
-        <profile>
-            <id>include-android</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <modules>
-                <module>android/app</module>
-            </modules>
         </profile>
     </profiles>
     

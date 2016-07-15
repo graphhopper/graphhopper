@@ -45,9 +45,9 @@ public class MatchServletTest extends BaseServletTester {
     @Before
     public void setUp() {
         CmdArgs args = new CmdArgs().
-                put("graph.flagEncoders", "car").
-                put("prepare.chWeightings", "no").
-                put("osmreader.osm", PBF).
+                put("graph.flag_encoders", "car").
+                put("prepare.ch.weightings", "no").
+                put("datareader.file", PBF).
                 put("graph.location", DIR);
         setUpJetty(args);
     }
