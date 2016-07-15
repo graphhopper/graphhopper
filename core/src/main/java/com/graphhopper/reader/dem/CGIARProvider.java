@@ -69,11 +69,17 @@ public class CGIARProvider implements ElevationProvider
     private final int degree = 5;
     private boolean calcMean = false;
     private boolean autoRemoveTemporary = true;
+    private long sleep = 2000;
 
     @Override
     public void setCalcMean( boolean eleCalcMean )
     {
         calcMean = eleCalcMean;
+    }
+
+    void setSleep( long sleep )
+    {
+        this.sleep = sleep;
     }
 
     /**
@@ -109,7 +115,7 @@ public class CGIARProvider implements ElevationProvider
     protected File getCacheDir()
     {
         return cacheDir;
-    }        
+    }
 
     @Override
     public ElevationProvider setBaseURL( String baseUrl )
@@ -159,7 +165,7 @@ public class CGIARProvider implements ElevationProvider
                 loadExisting = heights.loadExisting();
             } catch (Exception ex)
             {
-                logger.warn("cannot load " + name + ", error:" + ex.getMessage());
+                logger.warn("cannot load " + name + ", error: " + ex.getMessage());
             }
 
             if (!loadExisting)
@@ -173,7 +179,8 @@ public class CGIARProvider implements ElevationProvider
                 {
                     try
                     {
-                        for (int i = 0; i < 3; i++)
+                        int max = 3;
+                        for (int trial = 0; trial < max; trial++)
                         {
                             try
                             {
@@ -182,7 +189,9 @@ public class CGIARProvider implements ElevationProvider
                             } catch (SocketTimeoutException ex)
                             {
                                 // just try again after a little nap
-                                Thread.sleep(2000);
+                                Thread.sleep(sleep);
+                                if (trial >= max - 1)
+                                    throw ex;
                                 continue;
                             } catch (IOException ex)
                             {
@@ -216,7 +225,7 @@ public class CGIARProvider implements ElevationProvider
                     {
                         entry = zis.getNextEntry();
                     }
-                    
+
                     ss = SeekableStream.wrapInputStream(zis, true);
                     TIFFImageDecoder imageDecoder = new TIFFImageDecoder(ss, new TIFFDecodeParam());
                     raster = imageDecoder.decodeAsRaster();
@@ -321,9 +330,9 @@ public class CGIARProvider implements ElevationProvider
     public static void main( String[] args )
     {
         CGIARProvider provider = new CGIARProvider();
-        
+
         System.out.println(provider.getEle(46, -20));
-        
+
         // 337.0
         System.out.println(provider.getEle(49.949784, 11.57517));
         // 453.0
