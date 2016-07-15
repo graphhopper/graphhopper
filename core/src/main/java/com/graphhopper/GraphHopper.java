@@ -600,6 +600,9 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper init( CmdArgs args )
     {
         args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
+        if (args.has("osmreader.osm"))
+            throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see core/files/changelog.txt");
+
         String tmpOsmFile = args.get("datareader.file", "");
         if (!Helper.isEmpty(tmpOsmFile))
             dataReaderFile = tmpOsmFile;
