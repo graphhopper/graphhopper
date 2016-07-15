@@ -1,3 +1,8 @@
+0.8
+    all properties with prefix "osmreader." changed to "datareader." and osmreader.osm changed to datareader.file
+    maven/gradle dependency graphhopper is now splitted into graphhopper-core and graphhopper-reader-osm, i.e. if you previouls depend on 'graphhopper' artificat you should now use graphhopper-reader-osm except environments like Android where you just load the graph and do no import
+    use GraphHopperOSM as base class instead of GraphHopper
+    OSM reader separated from core
 0.7        
     added snapped points to output JSON for every path
     the foot routing is now much smoother and only considers safe paths, to use beautiful roads (i.e. prefer hiking routes etc) use the new 'hike' profiles, see #633

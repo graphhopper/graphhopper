@@ -76,6 +76,7 @@
     <modules>
         <module>tools-lgpl</module>
         <module>core</module>
+        <module>reader-osm</module>
         <module>tools</module>
         <module>web</module>
     </modules>

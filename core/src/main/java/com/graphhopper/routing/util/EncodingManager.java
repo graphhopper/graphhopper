@@ -21,9 +21,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
@@ -133,14 +133,9 @@ public class EncodingManager
 
             FlagEncoder fe = factory.createFlagEncoder(entry, configuration);
 
-            if (configuration.has("version"))
-            {
-                if (fe.getVersion() != configuration.getInt("version", -1))
-                {
-                    throw new IllegalArgumentException("Encoder " + entry + " was used in version "
-                            + configuration.getLong("version", -1) + ", but current version is " + fe.getVersion());
-                }
-            }
+            if (configuration.has("version") && fe.getVersion() != configuration.getInt("version", -1))
+                throw new IllegalArgumentException("Encoder " + entry + " was used in version "
+                        + configuration.getLong("version", -1) + ", but current version is " + fe.getVersion());
 
             resultEncoders.add(fe);
         }
@@ -217,9 +212,9 @@ public class EncodingManager
     }
 
     /**
-     * Determine whether an osm way is a routable way for one of its encoders.
+     * Determine whether a way is routable for one of the added encoders.
      */
-    public long acceptWay( OSMWay way )
+    public long acceptWay( ReaderWay way )
     {
         long includeWay = 0;
         for (AbstractFlagEncoder encoder : edgeEncoders)
@@ -230,7 +225,7 @@ public class EncodingManager
         return includeWay;
     }
 
-    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+    public long handleRelationTags( ReaderRelation relation, long oldRelationFlags )
     {
         long flags = 0;
         for (AbstractFlagEncoder encoder : edgeEncoders)
@@ -248,7 +243,7 @@ public class EncodingManager
      * @param relationFlags The preprocessed relation flags is used to influence the way properties.
      * @return the encoded flags
      */
-    public long handleWayTags( OSMWay way, long includeWay, long relationFlags )
+    public long handleWayTags( ReaderWay way, long includeWay, long relationFlags )
     {
         long flags = 0;
         for (AbstractFlagEncoder encoder : edgeEncoders)
@@ -345,7 +340,7 @@ public class EncodingManager
     /**
      * Analyze tags on osm node. Store node tags (barriers etc) for later usage while parsing way.
      */
-    public long handleNodeTags( OSMNode node )
+    public long handleNodeTags( ReaderNode node )
     {
         long flags = 0;
         for (AbstractFlagEncoder encoder : edgeEncoders)
@@ -371,7 +366,7 @@ public class EncodingManager
         return this;
     }
 
-    public void applyWayTags( OSMWay way, EdgeIteratorState edge )
+    public void applyWayTags( ReaderWay way, EdgeIteratorState edge )
     {
         // storing the road name does not yet depend on the flagEncoder so manage it directly
         if (enableInstructions)

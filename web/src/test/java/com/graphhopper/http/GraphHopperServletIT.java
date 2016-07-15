@@ -40,12 +40,12 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperServletIT extends BaseServletTester
 {
-    private static final String dir = "./target/andorra-gh/";
+    private static final String DIR = "./target/andorra-gh/";
 
     @AfterClass
     public static void cleanUp()
     {
-        Helper.removeDir(new File(dir));
+        Helper.removeDir(new File(DIR));
         shutdownJetty(true);
     }
 
@@ -54,8 +54,8 @@ public class GraphHopperServletIT extends BaseServletTester
     {
         CmdArgs args = new CmdArgs().
                 put("config", "../config-example.properties").
-                put("osmreader.osm", "../core/files/andorra.osm.pbf").
-                put("graph.location", dir);
+                put("datareader.file", "../core/files/andorra.osm.pbf").
+                put("graph.location", DIR);
         setUpJetty(args);
     }
 

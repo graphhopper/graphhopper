@@ -17,9 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -134,8 +134,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         defaultSpeedMap.put("road", 20);
         // forestry stuff
         defaultSpeedMap.put("track", 15);
-
-        conditionalTagsInspector = new ConditionalTagsInspector(DateRangeParser.createCalendar(), restrictions, restrictedValues, intendedValues);
+        
+        init();
     }
 
     @Override
@@ -157,7 +157,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         return shift + speedEncoder.getBits();
     }
 
-    protected double getSpeed( OSMWay way )
+    protected double getSpeed( ReaderWay way )
     {
         String highwayValue = way.getTag("highway");
         Integer speed = defaultSpeedMap.get(highwayValue);
@@ -179,7 +179,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long acceptWay( OSMWay way )
+    public long acceptWay( ReaderWay way )
     {
         // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
@@ -214,7 +214,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (!firstValue.isEmpty())
         {
-            if (restrictedValues.contains(firstValue) && !conditionalTagsInspector.isRestrictedWayConditionallyPermitted(way))
+            if (restrictedValues.contains(firstValue) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
                 return 0;
             if (intendedValues.contains(firstValue))
                 return acceptBit;
@@ -224,20 +224,20 @@ public class CarFlagEncoder extends AbstractFlagEncoder
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return 0;
 
-        if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))
+        if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
             return 0;
         else
             return acceptBit;
     }
 
     @Override
-    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+    public long handleRelationTags( ReaderRelation relation, long oldRelationFlags )
     {
         return oldRelationFlags;
     }
 
     @Override
-    public long handleWayTags( OSMWay way, long allowed, long relationFlags )
+    public long handleWayTags( ReaderWay way, long allowed, long relationFlags )
     {
         if (!isAccept(allowed))
             return 0;
@@ -282,7 +282,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     /**
      * make sure that isOneway is called before
      */
-    protected boolean isBackwardOneway( OSMWay way )
+    protected boolean isBackwardOneway( ReaderWay way )
     {
         return way.hasTag("oneway", "-1")
                 || way.hasTag("vehicle:forward", "no")
@@ -292,14 +292,14 @@ public class CarFlagEncoder extends AbstractFlagEncoder
     /**
      * make sure that isOneway is called before
      */
-    protected boolean isForwardOneway( OSMWay way )
+    protected boolean isForwardOneway( ReaderWay way )
     {
         return !way.hasTag("oneway", "-1")
                 && !way.hasTag("vehicle:forward", "no")
                 && !way.hasTag("motor_vehicle:forward", "no");
     }
 
-    protected boolean isOneway( OSMWay way )
+    protected boolean isOneway( ReaderWay way )
     {
         return way.hasTag("oneway", oneways)
                 || way.hasTag("vehicle:backward")
@@ -308,7 +308,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
                 || way.hasTag("motor_vehicle:forward");
     }
 
-    public String getWayInfo( OSMWay way )
+    public String getWayInfo( ReaderWay way )
     {
         String str = "";
         String highwayValue = way.getTag("highway");

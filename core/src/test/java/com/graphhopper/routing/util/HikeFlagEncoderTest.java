@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.ReaderWay;
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -32,7 +32,7 @@ public class HikeFlagEncoderTest
     @Test
     public void testPriority()
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "cycleway");
         assertEquals(PriorityCode.UNCHANGED.getValue(), hikeEncoder.handlePriority(way, 0));
 

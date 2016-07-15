@@ -20,6 +20,7 @@ package com.graphhopper.http;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
 import org.slf4j.Logger;
@@ -52,10 +53,10 @@ public class DefaultModule extends AbstractModule
      */
     protected GraphHopper createGraphHopper( CmdArgs args )
     {
-        GraphHopper tmp = new GraphHopper().forServer().init(args);
+        GraphHopper tmp = new GraphHopperOSM().forServer().init(args);
         tmp.importOrLoad();
         logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
-                + ", source:" + tmp.getOSMFile()
+                + ", source:" + tmp.getDataReaderFile()
                 + ", flagEncoders:" + tmp.getEncodingManager()
                 + ", class:" + tmp.getGraphHopperStorage().toDetailsString());
         return tmp;

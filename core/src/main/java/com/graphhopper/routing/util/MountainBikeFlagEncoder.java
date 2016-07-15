@@ -24,8 +24,8 @@ import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
 
 import java.util.TreeMap;
 
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.PMap;
 
 /**
@@ -141,6 +141,8 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
 
         potentialBarriers.add("kissing_gate");
         setSpecificClassBicycle("mtb");
+        
+        init();
     }
 
     @Override
@@ -150,7 +152,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    void collect( OSMWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap )
+    void collect( ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap )
     {
         super.collect(way, wayTypeSpeed, weightToPrioMap);
 
@@ -168,7 +170,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+    public long handleRelationTags( ReaderRelation relation, long oldRelationFlags )
     {
         oldRelationFlags = super.handleRelationTags(relation, oldRelationFlags);
         int code = 0;
