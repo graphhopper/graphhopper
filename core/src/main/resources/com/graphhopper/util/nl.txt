@@ -1,6 +1,6 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-continue=neem 
+continue=Ga rechtdoor
 continue_onto=blijf op %1$s
 turn_left=linksaf
 turn_right=rechtsaf
