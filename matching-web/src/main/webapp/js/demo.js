@@ -9,7 +9,7 @@ $(document).ready(function (e) {
     jQuery.support.cors = true;
 
     var mmMap = createMap('map-matching-map');
-    var mmClient = new GraphHopperMapMatching();
+    var mmClient = new GraphHopperMapMatching(/*{ host: "https://graphhopper.com/api/1/", key: "" }*/);
     setup(mmMap, mmClient);
 });
 
@@ -83,6 +83,9 @@ GraphHopperMapMatching = function (args) {
     this.host = "http://localhost:8989/";
     this.basePath = "match";
     this.vehicle = "car";
+    this.gps_accuracy = 50;
+
+    graphhopper.util.copyProperties(args, this);
 };
 
 GraphHopperMapMatching.prototype.doRequest = function (content, callback, reqArgs) {
@@ -91,7 +94,7 @@ GraphHopperMapMatching.prototype.doRequest = function (content, callback, reqArg
     if (reqArgs)
         args = graphhopper.util.copyProperties(reqArgs, args);
 
-    var url = args.host + args.basePath + "?vehicle=" + args.vehicle;
+    var url = args.host + args.basePath + "?vehicle=" + args.vehicle + "&gps_accuracy=" + args.gps_accuracy + "&key=" + args.key;
 
     $.ajax({
         timeout: 20000,
