@@ -31,7 +31,7 @@ Then you need to import the area you want to do map-matching on:
 
 The optional parameter `vehicle` defines the routing profile like `car`, `bike`, `motorcycle` or `foot`. 
 You can also provide a comma separated list.
-For all supported values see the variables in the EncodingManager class of GraphHopper. 
+For all supported values see the variables in the [FlagEncoderFactory](https://github.com/graphhopper/graphhopper/blob/0.7/core/src/main/java/com/graphhopper/routing/util/FlagEncoderFactory.java) of GraphHopper. 
 
 If you have already imported a datasource with a specific profile, you need to remove the folder graph-cache in your map-matching root directory.
 
