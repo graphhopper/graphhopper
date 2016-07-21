@@ -18,6 +18,7 @@ if [ "$1" = "action=start-server" ]; then
   set_jar_path
 
   if [ ! -f "$JAR" ]; then
+    mvn --projects hmm-lib -DskipTests=true install      
     mvn --projects matching-web,matching-core -DskipTests=true install assembly:single
     set_jar_path
   fi
@@ -39,6 +40,7 @@ else
   set_jar_path
 
   if [ ! -f "$JAR" ]; then
+    mvn --projects hmm-lib -DskipTests=true install
     mvn --projects matching-core -DskipTests=true install assembly:single
     set_jar_path
   fi
