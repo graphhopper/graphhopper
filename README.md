@@ -26,10 +26,10 @@ Java 8 and Maven >=3.3 are required. For the 'core' module Java 7 is sufficient.
 Then you need to import the area you want to do map-matching on:
 
 ```bash
-./map-matching.sh action=import datasource=./some-dir/osm-file.pbf [vehicle=car]
+./map-matching.sh action=import datasource=./some-dir/osm-file.pbf vehicle=car
 ```
 
-The parameter vehicle defines the routing profile like `bike`, `motorcycle` or `foot`. 
+The optional parameter `vehicle` defines the routing profile like `car`, `bike`, `motorcycle` or `foot`. 
 You can also provide a comma separated list.
 For all supported values see the variables in the EncodingManager class of GraphHopper. 
 
