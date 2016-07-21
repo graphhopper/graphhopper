@@ -37,7 +37,7 @@ If you have already imported a datasource with a specific profile, you need to r
 
 Now you can do these matches:
 ```bash
-./map-matching.sh action=match gpx=./track-data/.*gpx
+./map-matching.sh action=match gpx=./matching-core/src/test/resources/*.gpx
 ```
 
 Possible arguments are:
