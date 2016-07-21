@@ -29,16 +29,19 @@ Then you need to import the area you want to do map-matching on:
 ./map-matching.sh action=import datasource=./some-dir/osm-file.pbf vehicle=car
 ```
 
+As an example you use `datasource=./map-data/leipzig_germany.osm.pbf` as road network base or any other pbf or xml from [here](http://download.geofabrik.de/).
+
 The optional parameter `vehicle` defines the routing profile like `car`, `bike`, `motorcycle` or `foot`. 
-You can also provide a comma separated list.
-For all supported values see the variables in the [FlagEncoderFactory](https://github.com/graphhopper/graphhopper/blob/0.7/core/src/main/java/com/graphhopper/routing/util/FlagEncoderFactory.java) of GraphHopper. 
+You can also provide a comma separated list. For all supported values see the variables in the [FlagEncoderFactory](https://github.com/graphhopper/graphhopper/blob/0.7/core/src/main/java/com/graphhopper/routing/util/FlagEncoderFactory.java) of GraphHopper. 
 
 If you have already imported a datasource with a specific profile, you need to remove the folder graph-cache in your map-matching root directory.
 
 Now you can do these matches:
 ```bash
-./map-matching.sh action=match gpx=./matching-core/src/test/resources/*.gpx
+./map-matching.sh action=match gpx=./some-dir/*.gpx
 ```
+
+As example use `gpx=./matching-core/src/test/resources/*.gpx` or one specific gpx file.
 
 Possible arguments are:
 ```bash
