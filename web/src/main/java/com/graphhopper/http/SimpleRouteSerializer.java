@@ -38,6 +38,14 @@ public class SimpleRouteSerializer implements RouteSerializer
         this.maxBounds = maxBounds;
     }
 
+    private String getMessage( Throwable t )
+    {
+        if (t.getMessage() == null)
+            return t.getClass().getSimpleName();
+        else
+            return t.getMessage();
+    }
+
     @Override
     public Map<String, Object> toJSON( GHResponse rsp,
                                        boolean calcPoints, boolean pointsEncoded,
@@ -47,12 +55,12 @@ public class SimpleRouteSerializer implements RouteSerializer
 
         if (rsp.hasErrors())
         {
-            json.put("message", rsp.getErrors().get(0).getMessage());
+            json.put("message", getMessage(rsp.getErrors().get(0)));
             List<Map<String, String>> errorHintList = new ArrayList<Map<String, String>>();
             for (Throwable t : rsp.getErrors())
             {
                 Map<String, String> map = new HashMap<String, String>();
-                map.put("message", t.getMessage());
+                map.put("message", getMessage(t));
                 map.put("details", t.getClass().getName());
                 errorHintList.add(map);
             }
