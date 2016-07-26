@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.graphhopper.matching;
 
 import de.bmw.hmm.HmmProbabilities;
@@ -23,12 +22,13 @@ import de.bmw.hmm.TimeStep;
 import java.util.List;
 
 /**
- * Based on Newson, Paul, and John Krumm. "Hidden Markov map matching through noise and sparseness."
- * Proceedings of the 17th ACM SIGSPATIAL International Conference on Advances in Geographic
- * Information Systems. ACM, 2009.
+ * Based on Newson, Paul, and John Krumm. "Hidden Markov map matching through
+ * noise and sparseness." Proceedings of the 17th ACM SIGSPATIAL International
+ * Conference on Advances in Geographic Information Systems. ACM, 2009.
  *
  * @param <S> road position type, which corresponds to the HMM state.
- * @param <O> location measurement type, which corresponds to the HMM observation.
+ * @param <O> location measurement type, which corresponds to the HMM
+ * observation.
  */
 class MapMatchingHmmProbabilities<S, O> implements HmmProbabilities<S, O> {
 
@@ -38,8 +38,8 @@ class MapMatchingHmmProbabilities<S, O> implements HmmProbabilities<S, O> {
     private final double transitionProbabilityBeta;
 
     public MapMatchingHmmProbabilities(List<TimeStep<S, O>> timeSteps,
-                                       SpatialMetrics<S, O> spatialMetrics, TemporalMetrics<O> temporalMetrics,
-                                       double measurementErrorSigma, double transitionProbabilityBeta) {
+            SpatialMetrics<S, O> spatialMetrics, TemporalMetrics<O> temporalMetrics,
+            double measurementErrorSigma, double transitionProbabilityBeta) {
         if (timeSteps == null || spatialMetrics == null || temporalMetrics == null) {
             throw new NullPointerException();
         }
@@ -74,18 +74,20 @@ class MapMatchingHmmProbabilities<S, O> implements HmmProbabilities<S, O> {
     }
 
     /**
-     * Returns |linearDistance - shortestRouteLength| / time_difference² in [m/s²], where
-     * linearDistance is the linear distance between the corresponding location measurements of
-     * sourcePositon and targetPosition, shortestRouteLength is the shortest route length from
-     * sourcePosition to targetPosition on the road network and timeDifference is the time
-     * difference between the corresponding location measurements of sourcePosition and
+     * Returns |linearDistance - shortestRouteLength| / time_difference² in
+     * [m/s²], where linearDistance is the linear distance between the
+     * corresponding location measurements of sourcePositon and targetPosition,
+     * shortestRouteLength is the shortest route length from sourcePosition to
+     * targetPosition on the road network and timeDifference is the time
+     * difference between the corresponding location measurements of
+     * sourcePosition and targetPosition.
+     *
+     * Returns null if there is no route between sourcePosition and
      * targetPosition.
      *
-     * Returns null if there is no route between sourcePosition and targetPosition.
-     *
-     * In contrast to Newson & Krumm the absolute distance difference is divided by the quadratic
-     * time difference to make the beta parameter of the exponential distribution independent of the
-     * sampling interval.
+     * In contrast to Newson & Krumm the absolute distance difference is divided
+     * by the quadratic time difference to make the beta parameter of the
+     * exponential distribution independent of the sampling interval.
      */
     public Double normalizedTransitionMetric(S sourcePosition, O sourceMeasurement, S targetPosition, O targetMeasurement) {
         final double timeDiff = temporalMetrics.timeDifference(sourceMeasurement, targetMeasurement);
@@ -99,10 +101,12 @@ class MapMatchingHmmProbabilities<S, O> implements HmmProbabilities<S, O> {
         final Double routeLength = spatialMetrics.routeLength(sourcePosition, targetPosition);
         if (routeLength == null) {
             return null;
+        } else if (timeDiff == 0) {
+            // avoid Infinity if identical snapped positions
+            return 0.0;
         } else {
             return Math.abs(linearDistance - routeLength) / (timeDiff * timeDiff);
         }
     }
-
 
 }

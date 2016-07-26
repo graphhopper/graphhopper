@@ -45,23 +45,19 @@ public class LocationIndexMatch extends LocationIndexTree {
         }
     };
 
-    private final double returnAllResultsWithin;
     private final LocationIndexTree index;
 
     public LocationIndexMatch(GraphHopperStorage graph, LocationIndexTree index) {
-        this(graph, index, 15);
-    }
-
-    public LocationIndexMatch(GraphHopperStorage graph, LocationIndexTree index, int gpxAccuracyInMetern) {
         super(graph, graph.getDirectory());
         this.index = index;
-
-        // Return ALL results which are very close and e.g. within the GPS signal accuracy.
-        // Also important to get all edges if GPS point is close to a junction.
-        returnAllResultsWithin = distCalc.calcNormalizedDist(gpxAccuracyInMetern);
     }
 
-    public List<QueryResult> findNClosest(final double queryLat, final double queryLon, final EdgeFilter edgeFilter) {
+    public List<QueryResult> findNClosest(final double queryLat, final double queryLon, final EdgeFilter edgeFilter,
+            double gpxAccuracyInMetern) {
+        // Return ALL results which are very close and e.g. within the GPS signal accuracy.
+        // Also important to get all edges if GPS point is close to a junction.
+        final double returnAllResultsWithin = distCalc.calcNormalizedDist(gpxAccuracyInMetern);
+
         // implement a cheap priority queue via List, sublist and Collections.sort
         final List<QueryResult> queryResults = new ArrayList<QueryResult>();
         TIntHashSet set = new TIntHashSet();

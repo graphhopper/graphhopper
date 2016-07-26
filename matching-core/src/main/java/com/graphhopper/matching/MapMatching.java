@@ -29,6 +29,7 @@ import de.bmw.hmm.MostLikelySequence;
 import de.bmw.hmm.TimeStep;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -137,7 +138,7 @@ public class MapMatching {
                     || distanceCalc.calcDist(previous.getLat(), previous.getLon(), entry.getLat(), entry.getLon()) > 2 * measurementErrorSigma
                     // always include last point
                     || indexGPX == gpxList.size() - 1) {
-                List<QueryResult> candidates = locationIndex.findNClosest(entry.lat, entry.lon, edgeFilter);
+                List<QueryResult> candidates = locationIndex.findNClosest(entry.lat, entry.lon, edgeFilter, measurementErrorSigma);
                 allCandidates.addAll(candidates);
                 List<GPXExtension> gpxExtensions = new ArrayList<GPXExtension>();
                 for (QueryResult candidate : candidates) {
@@ -248,7 +249,8 @@ public class MapMatching {
                 lastEdgeMatch.getGpxExtensions().addAll(gpxExtensions);
             }
         } else {
-            throw new RuntimeException("Sequence is broken for GPX with " + gpxList.size() + " points resulting in " + timeSteps.size() + " time steps");
+            throw new RuntimeException("Sequence is broken for submitted track at " + seq.getBrokenTimeStep() + " of " + timeSteps.size() + " time steps (" + gpxList.size() + " points). "
+                    + "observation:" + timeSteps.get(seq.getBrokenTimeStep()).observation + ", candidates: " + getSnappedCandidates(timeSteps.get(seq.getBrokenTimeStep()).candidates));
         }
         MatchResult matchResult = new MatchResult(edgeMatches);
         matchResult.setMatchMillis(time);
@@ -334,6 +336,17 @@ public class MapMatching {
             }
         }
         throw new IllegalStateException("Cannot find adjacent edge " + edge);
+    }
+
+    private String getSnappedCandidates(Collection<GPXExtension> candidates) {
+        String str = "";
+        for (GPXExtension gpxe : candidates) {
+            if (!str.isEmpty()) {
+                str += ", ";
+            }
+            str += "distance: " + gpxe.queryResult.getQueryDistance() + " to " + gpxe.queryResult.getSnappedPoint();
+        }
+        return "[" + str + "]";
     }
 
     private static class MyPath extends Path {

@@ -81,7 +81,7 @@ public class MapMatchingMain {
             String instructions = args.get("instructions", "");
             logger.info("Setup lookup index. Accuracy filter is at " + gpsAccuracy + "m");
             LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
-                    (LocationIndexTree) hopper.getLocationIndex(), gpsAccuracy);
+                    (LocationIndexTree) hopper.getLocationIndex());
             MapMatching mapMatching = new MapMatching(graph, locationIndex, firstEncoder);
             mapMatching.setMaxVisitedNodes(args.getInt("max_visited_nodes", 1000));
             mapMatching.setTransitionProbabilityBeta(args.getDouble("transition_probability_beta", 0.00959442));
@@ -102,7 +102,7 @@ public class MapMatchingMain {
                     importSW.start();
                     List<GPXEntry> inputGPXEntries = new GPXFile().doImport(gpxFile.getAbsolutePath()).getEntries();
                     importSW.stop();
-                    matchSW.start();
+                    matchSW.start();                    
                     MatchResult mr = mapMatching.doWork(inputGPXEntries);
                     matchSW.stop();
                     System.out.println(gpxFile);

@@ -83,7 +83,7 @@ GraphHopperMapMatching = function (args) {
     this.host = "http://localhost:8989/";
     this.basePath = "match";
     this.vehicle = "car";
-    this.gps_accuracy = 50;
+    this.gps_accuracy = 20;
 
     graphhopper.util.copyProperties(args, this);
 };
@@ -94,7 +94,9 @@ GraphHopperMapMatching.prototype.doRequest = function (content, callback, reqArg
     if (reqArgs)
         args = graphhopper.util.copyProperties(reqArgs, args);
 
-    var url = args.host + args.basePath + "?vehicle=" + args.vehicle + "&gps_accuracy=" + args.gps_accuracy + "&key=" + args.key;
+    var url = args.host + args.basePath + "?vehicle=" + args.vehicle + "&gps_accuracy=" + args.gps_accuracy;
+    if (args.key)
+        url += "&key=" + args.key;
 
     $.ajax({
         timeout: 20000,

@@ -84,7 +84,7 @@ public class LocationIndexMatchTest {
         LocationIndexMatch index = new LocationIndexMatch(ghStorage, tmpIndex);
 
         // query node 4 => get at least 4-5, 4-7
-        List<QueryResult> result = index.findNClosest(0.0004, 0.0006, EdgeFilter.ALL_EDGES);
+        List<QueryResult> result = index.findNClosest(0.0004, 0.0006, EdgeFilter.ALL_EDGES, 15);
         List<Integer> ids = new ArrayList<Integer>();
         for (QueryResult qr : result) {
             ids.add(qr.getClosestEdge().getEdge());

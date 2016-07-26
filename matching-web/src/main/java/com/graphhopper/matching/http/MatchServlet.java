@@ -103,7 +103,8 @@ public class MatchServlet extends GraphHopperServlet {
 
         String vehicle = getParam(httpReq, "vehicle", "car");
         int maxVisitedNodes = Math.min(getIntParam(httpReq, "max_visited_nodes", 800), 5000);
-        int gpsAccuracy = Math.max(getIntParam(httpReq, "gps_accuracy", 50), 10);
+        double defaultAccuracy = 20;
+        double gpsAccuracy = Math.min(Math.max(getDoubleParam(httpReq, "gps_accuracy", defaultAccuracy), 5), 40);
         Locale locale = Helper.getLocale(getParam(httpReq, "locale", "en"));
         PathWrapper matchGHRsp = new PathWrapper();
         MatchResult matchRsp = null;
@@ -138,7 +139,7 @@ public class MatchServlet extends GraphHopperServlet {
             }
 
         } else if (GPX_FORMAT.equals(outType)) {
-            if (matchGHRsp.hasErrors()) {               
+            if (matchGHRsp.hasErrors()) {
                 httpRes.setStatus(SC_BAD_REQUEST);
                 httpRes.getWriter().append(errorsToXML(matchGHRsp.getErrors()));
             } else {

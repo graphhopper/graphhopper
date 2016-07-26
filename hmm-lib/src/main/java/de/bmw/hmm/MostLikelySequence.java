@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package de.bmw.hmm;
 
 import java.util.Iterator;
@@ -22,9 +21,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Contains the most likely sequence and additional results of the Viterbi algorithm.
+ * Contains the most likely sequence and additional results of the Viterbi
+ * algorithm.
  */
 public class MostLikelySequence<S, O> {
+
     public final List<S> sequence;
 
     /**
@@ -35,45 +36,59 @@ public class MostLikelySequence<S, O> {
     public final boolean isBroken;
 
     /**
-     *  Sequence of computed messages for each time step. Is null if message history
-     *  is not kept (see compute()).
+     * Sequence of computed messages for each time step. Is null if message
+     * history is not kept (see compute()).
      *
-     *  For each state s_t of the time step t, messageHistory.get(t).get(s_t) contains the log
-     *  probability of the most likely sequence ending in state s_t with given observations
-     *  o_1, ..., o_t.
-     *  Formally, this is max log p(s_1, ..., s_t, o_1, ..., o_t) w.r.t. s_1, ..., s_{t-1}.
-     *  Note that to compute the most likely state sequence, it is sufficient and more
-     *  efficient to compute in each time step the joint probability of states and observations
-     *  instead of computing the conditional probability of states given the observations.
+     * For each state s_t of the time step t, messageHistory.get(t).get(s_t)
+     * contains the log probability of the most likely sequence ending in state
+     * s_t with given observations o_1, ..., o_t. Formally, this is max log
+     * p(s_1, ..., s_t, o_1, ..., o_t) w.r.t. s_1, ..., s_{t-1}. Note that to
+     * compute the most likely state sequence, it is sufficient and more
+     * efficient to compute in each time step the joint probability of states
+     * and observations instead of computing the conditional probability of
+     * states given the observations.
      */
     public final List<Map<S, Double>> messageHistory;
 
     /**
-     * backPointerSequence.get(t).get(s) contains the previous state (at time t-1) of the most
-     * likely state sequence passing at time step t through state s.
-     * Since there are no previous states for t=1, backPointerSequence starts with t=2.
+     * backPointerSequence.get(t).get(s) contains the previous state (at time
+     * t-1) of the most likely state sequence passing at time step t through
+     * state s. Since there are no previous states for t=1, backPointerSequence
+     * starts with t=2.
      */
     public final List<Map<S, S>> backPointerSequence;
+    private int brokenTimeStep;
 
-    public MostLikelySequence(List<S> mostLikelySequence, boolean isBroken,
+    public MostLikelySequence(List<S> mostLikelySequence, boolean isBroken, int brokenTimeStep,
             List<Map<S, S>> backPointerSequence, List<Map<S, Double>> messageHistory) {
         this.sequence = mostLikelySequence;
         this.isBroken = isBroken;
+        this.brokenTimeStep = brokenTimeStep;
         this.messageHistory = messageHistory;
         this.backPointerSequence = backPointerSequence;
+    }
+
+    public int getBrokenTimeStep() {
+        if (!isBroken) {
+            throw new IllegalStateException("Cannot call getBrokenTimeStep if sequence is not broken");
+        }
+
+        return brokenTimeStep;
     }
 
     public String messageHistoryString() {
         StringBuffer sb = new StringBuffer();
         sb.append("Message history with log probabilies\n\n");
         int i = 0;
-        for (Map<S, Double> message : messageHistory) {
-            sb.append("Time step " + i + "\n");
-            i++;
-            for (S state : message.keySet()) {
-                sb.append(state + ": " + message.get(state) + "\n");
+        if (messageHistory != null) {
+            for (Map<S, Double> message : messageHistory) {
+                sb.append("Time step " + i + "\n");
+                i++;
+                for (S state : message.keySet()) {
+                    sb.append(state + ": " + message.get(state) + "\n");
+                }
+                sb.append("\n");
             }
-            sb.append("\n");
         }
         return sb.toString();
     }

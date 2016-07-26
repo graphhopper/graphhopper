@@ -37,7 +37,7 @@ public class MatchDefaultModule extends DefaultModule {
         super.configure();
 
         LocationIndexMatch locationMatch = new LocationIndexMatch(getGraphHopper().getGraphHopperStorage(),
-                (LocationIndexTree) getGraphHopper().getLocationIndex(), 15);
+                (LocationIndexTree) getGraphHopper().getLocationIndex());
         bind(LocationIndexMatch.class).toInstance(locationMatch);
     }
 }
