@@ -7,7 +7,7 @@ require('./lib/leaflet_numbered_markers.js');
 
 global.jQuery = require('jquery');
 global.$ = global.jQuery;
-require('./lib/jquery-ui-custom-1.11.4.min.js');
+require('./lib/jquery-ui-custom-1.12.0.min.js');
 require('./lib/jquery.history.js');
 require('./lib/jquery.autocomplete.js');
 

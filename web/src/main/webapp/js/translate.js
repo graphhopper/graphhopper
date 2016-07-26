@@ -55,7 +55,7 @@ function initI18N() {
     if (global.$) {
         $('#searchButton').attr("value", tr("search_button"));
         var location_points = $("#locationpoints > div.pointDiv > input.pointInput");
-        var l = location_points.size();
+        var l = location_points.size;
         $(location_points).each(function (index) {
             if (index === 0)
                 $(this).attr("placeholder", tr("from_hint"));

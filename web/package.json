@@ -22,17 +22,17 @@
     }
   },
   "dependencies": {
-    "browserify": "^12.0.1",
-    "browserify-swap": "^0.2.2",
-    "d3": "^3.5.9",
-    "jasmine": "^2.3.2",
-    "jquery": "^2.1.4",
-    "leaflet": "^0.7.7",
-    "leaflet-loading": "^0.1.15",
-    "uglifyify": "^3.0.1"
+    "browserify": "13.1.0",
+    "browserify-swap": "0.2.2",
+    "d3": "3.5.17",
+    "jquery": "3.1.0",
+    "leaflet": "0.7.7",
+    "leaflet-loading": "0.1.22",
+    "uglifyify": "3.0.2"
   },
   "devDependencies": {
-    "jshint": "^2.8.0",
-    "watchify": "^3.6.1"
+    "jasmine": "2.4.1",
+    "jshint": "2.9.2",
+    "watchify": "3.7.0"
   }
 }

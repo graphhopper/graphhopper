@@ -29,13 +29,15 @@ function adjustMapSize() {
     // console.log("adjustMapSize " + height + "x" + width);
 
     // reduce info size depending on how heigh the input_header is and reserve space for footer
-    $(".instructions_info").css("max-height",
-            height - 60 -
-            $(".route_description").height() - $("#route_result_tabs li").height() -
-            $("#input_header").height() - $("#footer").height());
+    var instructionInfoMaxHeight = height - 60
+            - $("#input_header").height() - $("#footer").height() - $(".route_description").height();
+    var tabHeight = $("#route_result_tabs li").height()
+    if (!isNaN(tabHeight))
+        instructionInfoMaxHeight -= tabHeight;
+    $(".instructions_info").css("max-height", instructionInfoMaxHeight);
 
     // reduce info size depending on how high the input_header is and reserve space for footer
-//    $("#info").css("max-height", height - $("#input_header").height() - 100);
+    // $("#info").css("height", height - $("#input_header").height() - 100);
 }
 
 function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer) {
@@ -168,7 +170,7 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         },
         contextmenu: true,
         contextmenuItems: [{
-                text: translate.tr('route') +  ' ',
+                text: translate.tr('route') + ' ',
                 disabled: true,
                 index: 0,
                 state: 3
@@ -304,7 +306,7 @@ module.exports.createMarker = function (index, coord, setToEnd, setToStart, dele
         contextmenuItems: [{
                 text: translate.tr("marker") + ' ' + ((toFrom === FROM) ?
                         translate.tr("start_label") : ((toFrom === TO) ?
-                            translate.tr("end_label") : translate.tr("intermediate_label") + ' ' + index)),
+                        translate.tr("end_label") : translate.tr("intermediate_label") + ' ' + index)),
                 disabled: true,
                 index: 0,
                 state: 2
@@ -327,5 +329,5 @@ module.exports.createMarker = function (index, coord, setToEnd, setToStart, dele
         contextmenuAtiveState: 2
     }).addTo(routingLayer).bindPopup(((toFrom === FROM) ?
             translate.tr("start_label") : ((toFrom === TO) ?
-                translate.tr("end_label") : translate.tr("intermediate_label") + ' ' + index)));
+            translate.tr("end_label") : translate.tr("intermediate_label") + ' ' + index)));
 };
