@@ -17,6 +17,7 @@
  */
 package com.graphhopper.matching.http;
 
+import com.google.inject.name.Names;
 import com.graphhopper.http.DefaultModule;
 import com.graphhopper.matching.LocationIndexMatch;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -39,5 +40,8 @@ public class MatchDefaultModule extends DefaultModule {
         LocationIndexMatch locationMatch = new LocationIndexMatch(getGraphHopper().getGraphHopperStorage(),
                 (LocationIndexTree) getGraphHopper().getLocationIndex());
         bind(LocationIndexMatch.class).toInstance(locationMatch);
+
+        Double timeout = args.getDouble("web.gpx.max_accuracy", 50);
+        bind(Double.class).annotatedWith(Names.named("gpx.max_accuracy")).toInstance(timeout);
     }
 }

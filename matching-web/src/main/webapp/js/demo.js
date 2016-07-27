@@ -9,11 +9,12 @@ $(document).ready(function (e) {
     jQuery.support.cors = true;
 
     var mmMap = createMap('map-matching-map');
-    var mmClient = new GraphHopperMapMatching(/*{ host: "https://graphhopper.com/api/1/", key: "" }*/);
+    var mmClient = new GraphHopperMapMatching(/*{host: "https://graphhopper.com/api/1/", key: ""}*/);
     setup(mmMap, mmClient);
 });
 
 function setup(map, mmClient) {
+    // TODO fetch bbox from /info
     map.setView([50.9, 13.4], 9);
 
     var routeLayer = L.geoJson().addTo(map);
@@ -36,22 +37,35 @@ function setup(map, mmClient) {
             var pathOriginal = toGeoJSON.gpx(dom);
 
             routeLayer.clearLayers();
-            pathOriginal.features[0].properties = {style: {color: "black", weight: 2, opacity: 0.9}};
-            routeLayer.addData(pathOriginal);
+            if (pathOriginal.features[0]) {
 
-            $("#map-matching-response").text("calculate route match ...");
-            $("#map-matching-error").text("");
+                pathOriginal.features[0].properties = {style: {color: "black", weight: 2, opacity: 0.9}};
+                routeLayer.addData(pathOriginal);
+                $("#map-matching-response").text("calculate route match ...");
+                $("#map-matching-error").text("");
+            } else {
+                $("#map-matching-error").text("Cannot display original gpx file. No trk/trkseg/trkpt elements found?");
+            }
 
             var vehicle = $("#vehicle-input").val();
             if (!vehicle)
                 vehicle = "car";
+
+            var gpsAccuracy = $("#accuracy-input").val();
+            if (!gpsAccuracy)
+                gpsAccuracy = 20;
+
             mmClient.vehicle = vehicle;
             mmClient.doRequest(content, function (json) {
                 if (json.message) {
                     $("#map-matching-response").text("");
                     $("#map-matching-error").text(json.message);
                 } else if (json.paths && json.paths.length > 0) {
-                    $("#map-matching-response").text("success");
+                    var mm = json.map_matching;
+                    var error = (100 * Math.abs(1 - mm.distance / mm.original_distance));
+                    error = Math.floor(error * 100) / 100.0;
+                    $("#map-matching-response").text("success, " + error + "% error, "
+                            + "distance " + Math.floor(mm.distance) + " vs. original distance " + Math.floor(mm.original_distance));
                     var matchedPath = json.paths[0];
                     var geojsonFeature = {
                         type: "Feature",
@@ -71,7 +85,7 @@ function setup(map, mmClient) {
                 } else {
                     $("#map-matching-error").text("unknown error");
                 }
-            });
+            }, {gps_accuracy: gpsAccuracy});
         };
         reader.readAsText(file);
     }
@@ -150,5 +164,6 @@ function createMap(divId) {
     var map = L.map(divId, {layers: [omniscale]});
     L.control.layers({"Omniscale": omniscale,
         "OpenStreetMap": osm, }).addTo(map);
+    L.control.scale().addTo(map);
     return map;
 }

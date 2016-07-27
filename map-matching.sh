@@ -48,4 +48,4 @@ else
   ARGS="$@"
 fi
 
-exec "$JAVA" $JAVA_OPTS -jar $JAR $ARGS
+exec "$JAVA" $JAVA_OPTS -jar $JAR $ARGS prepare.min_network_size=0 prepare.min_one_way_network_size=0

@@ -57,9 +57,11 @@ public class MapMatchingMain {
             args.put("graph.flag_encoders", flagEncoders);
             args.put("datareader.file", args.get("datasource", ""));
 
-            // standard should be to remove disconnected islands
-            args.put("prepare.min_network_size", 200);
-            args.put("prepare.min_one_way_network_size", 200);
+            // standard should be to remove disconnected islands            
+            if (!args.has("prepare.min_one_way_network_size")) {
+                args.put("prepare.min_one_way_network_size", 200);
+            }
+            logger.info("Configuration: " + args);
             GraphHopper hopper = new GraphHopperOSM().init(args);
             hopper.getCHFactoryDecorator().setEnabled(false);
             hopper.importOrLoad();
@@ -102,7 +104,7 @@ public class MapMatchingMain {
                     importSW.start();
                     List<GPXEntry> inputGPXEntries = new GPXFile().doImport(gpxFile.getAbsolutePath()).getEntries();
                     importSW.stop();
-                    matchSW.start();                    
+                    matchSW.start();
                     MatchResult mr = mapMatching.doWork(inputGPXEntries);
                     matchSW.stop();
                     System.out.println(gpxFile);
@@ -138,7 +140,7 @@ public class MapMatchingMain {
             BBox bbox = BBox.createInverse(false);
             for (File gpxFile : files) {
                 List<GPXEntry> inputGPXEntries = new GPXFile().doImport(gpxFile.getAbsolutePath()).getEntries();
-                for (GPXEntry entry : inputGPXEntries) {                    
+                for (GPXEntry entry : inputGPXEntries) {
                     bbox.update(entry.getLat(), entry.getLon());
                 }
             }

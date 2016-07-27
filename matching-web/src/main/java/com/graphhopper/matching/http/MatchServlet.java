@@ -35,6 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
+import javax.inject.Named;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 
@@ -55,6 +56,9 @@ public class MatchServlet extends GraphHopperServlet {
     private RouteSerializer routeSerializer;
     @Inject
     private TranslationMap trMap;
+    @Inject
+    @Named("gpx.max_accuracy")
+    private double gpxMaxAccuracy;
 
     @Override
     public void doPost(HttpServletRequest httpReq, HttpServletResponse httpRes)
@@ -104,7 +108,7 @@ public class MatchServlet extends GraphHopperServlet {
         String vehicle = getParam(httpReq, "vehicle", "car");
         int maxVisitedNodes = Math.min(getIntParam(httpReq, "max_visited_nodes", 800), 5000);
         double defaultAccuracy = 20;
-        double gpsAccuracy = Math.min(Math.max(getDoubleParam(httpReq, "gps_accuracy", defaultAccuracy), 5), 40);
+        double gpsAccuracy = Math.min(Math.max(getDoubleParam(httpReq, "gps_accuracy", defaultAccuracy), 5), gpxMaxAccuracy);
         Locale locale = Helper.getLocale(getParam(httpReq, "locale", "en"));
         PathWrapper matchGHRsp = new PathWrapper();
         MatchResult matchRsp = null;
@@ -155,12 +159,18 @@ public class MatchServlet extends GraphHopperServlet {
             if (rsp.hasErrors()) {
                 writeJsonError(httpRes, SC_BAD_REQUEST, new JSONObject(map));
             } else {
+                if (matchRsp == null) {
+                    throw new IllegalStateException("match response has to be none-null if no error happened");
+                }
+
+                Map<String, Object> matchResult = new HashMap<String, Object>();
+                matchResult.put("distance", matchRsp.getMatchLength());
+                matchResult.put("time", matchRsp.getMatchMillis());
+                matchResult.put("original_distance", matchRsp.getGpxEntriesLength());
+                matchResult.put("original_time", matchRsp.getGpxEntriesMillis());
+                map.put("map_matching", matchResult);
 
                 if (enableTraversalKeys) {
-                    if (matchRsp == null) {
-                        throw new IllegalStateException("match response has to be none-null if no error happened");
-                    }
-
                     // encode edges as traversal keys which includes orientation
                     // decode simply by multiplying with 0.5
                     List<Integer> traversalKeylist = new ArrayList<Integer>();
