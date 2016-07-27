@@ -1,6 +1,6 @@
 #!/bin/bash
 
-GH_CLASS=com.graphhopper.import.osm.Import
+GH_CLASS=com.graphhopper.tools.Import
 GH_HOME=$(dirname "$0")
 JAVA=$JAVA_HOME/bin/java
 if [ "$JAVA_HOME" = "" ]; then
@@ -117,8 +117,8 @@ function packageCoreJar {
     echo "## now building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
     
-    execMvn --projects reader-osm -am -DskipTests=true install
-    execMvn --projects reader-osm -DskipTests=true install assembly:single
+    execMvn --projects tools -am -DskipTests=true install
+    execMvn --projects tools -DskipTests=true install assembly:single
   else
     echo "## existing jar found $JAR"
   fi
@@ -191,7 +191,7 @@ fi
 
 GRAPH=$NAME-gh
 VERSION=$(grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
-JAR=tools/target/graphhopper-reader-osm-$VERSION-jar-with-dependencies.jar
+JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
 
 LINK=$(echo $NAME | tr '_' '/')
 if [ "$FILE" == "-" ]; then
