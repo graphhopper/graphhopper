@@ -107,7 +107,7 @@ public class MatchServlet extends GraphHopperServlet {
 
         String vehicle = getParam(httpReq, "vehicle", "car");
         int maxVisitedNodes = Math.min(getIntParam(httpReq, "max_visited_nodes", 800), 5000);
-        double defaultAccuracy = 20;
+        double defaultAccuracy = 40;
         double gpsAccuracy = Math.min(Math.max(getDoubleParam(httpReq, "gps_accuracy", defaultAccuracy), 5), gpxMaxAccuracy);
         Locale locale = Helper.getLocale(getParam(httpReq, "locale", "en"));
         PathWrapper matchGHRsp = new PathWrapper();

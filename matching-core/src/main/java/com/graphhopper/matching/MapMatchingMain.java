@@ -77,7 +77,7 @@ public class MapMatchingMain {
             int gpsAccuracy = args.getInt("gps_accuracy", -1);
             if (gpsAccuracy < 0) {
                 // backward compatibility since 0.8
-                gpsAccuracy = args.getInt("gpx_accuracy", 15);
+                gpsAccuracy = args.getInt("gpx_accuracy", 40);
             }
 
             String instructions = args.get("instructions", "");

@@ -64,7 +64,7 @@ function setup(map, mmClient) {
                     var mm = json.map_matching;
                     var error = (100 * Math.abs(1 - mm.distance / mm.original_distance));
                     error = Math.floor(error * 100) / 100.0;
-                    $("#map-matching-response").text("success, " + error + "% error, "
+                    $("#map-matching-response").text("success with " + error + "% difference, "
                             + "distance " + Math.floor(mm.distance) + " vs. original distance " + Math.floor(mm.original_distance));
                     var matchedPath = json.paths[0];
                     var geojsonFeature = {
