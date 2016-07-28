@@ -137,7 +137,7 @@ public class LocationIndexMatch extends LocationIndexTree {
                 qr.setQueryDistance(distCalc.calcDenormalizedDist(qr.getQueryDistance()));
                 qr.calcSnappedPoint(distCalc);
             } else {
-                throw new IllegalStateException("invalid query result should not happen here: " + qr);
+                throw new IllegalStateException("Invalid QueryResult should not happen here: " + qr);
             }
         }
 

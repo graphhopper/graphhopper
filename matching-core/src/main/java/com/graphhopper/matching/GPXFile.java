@@ -19,6 +19,7 @@ package com.graphhopper.matching;
 
 import com.graphhopper.routing.Path;
 import com.graphhopper.util.Constants;
+import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
@@ -87,23 +88,33 @@ public class GPXFile {
 
     public GPXFile doImport(String fileStr) {
         try {
-            return doImport(new FileInputStream(fileStr));
+            return doImport(new FileInputStream(fileStr), 20);
         } catch (FileNotFoundException ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    public GPXFile doImport(InputStream is) {
+    /**
+     * This method creates a GPXFile object filled with lat,lon values from the
+     * xml inputstream is.
+     *
+     * @param defaultSpeed if no time element is found the time value will be
+     * guessed from the distance and this provided default speed in kph.
+     */
+    public GPXFile doImport(InputStream is, double defaultSpeed) {
         SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);
         SimpleDateFormat formatterZ = new SimpleDateFormat(DATE_FORMAT_Z);
         SimpleDateFormat formatterZMS = new SimpleDateFormat(DATE_FORMAT_Z_MS);
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setValidating(false);
         factory.setIgnoringElementContentWhitespace(true);
+        DistanceCalc distCalc = Helper.DIST_PLANE;
         try {
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(is);
             NodeList nl = doc.getElementsByTagName("trkpt");
+            double prevLat = 0, prevLon = 0;
+            long prevMillis = 0;
             for (int index = 0; index < nl.getLength(); index++) {
                 Node n = nl.item(index);
                 if (!(n instanceof Element)) {
@@ -114,22 +125,25 @@ public class GPXFile {
                 double lat = Double.parseDouble(e.getAttribute("lat"));
                 double lon = Double.parseDouble(e.getAttribute("lon"));
                 NodeList timeNodes = e.getElementsByTagName("time");
+                long millis = prevMillis;
                 if (timeNodes.getLength() == 0) {
-                    throw new IllegalStateException("GPX without time is illegal");
-                }
-
-                String text = timeNodes.item(0).getTextContent();
-                long millis;
-                if (text.contains("Z")) {
-                    try {
-                        // Try whole second matching
-                        millis = formatterZ.parse(text).getTime();
-                    } catch (ParseException ex) {
-                        // Error: try looking at milliseconds
-                        millis = formatterZMS.parse(text).getTime();
+                    if (index > 0) {
+                        millis += Math.round(distCalc.calcDist(prevLat, prevLon, lat, lon) * 3600 / defaultSpeed);
                     }
+
                 } else {
-                    millis = formatter.parse(revertTZHack(text)).getTime();
+                    String text = timeNodes.item(0).getTextContent();
+                    if (text.contains("Z")) {
+                        try {
+                            // Try whole second matching
+                            millis = formatterZ.parse(text).getTime();
+                        } catch (ParseException ex) {
+                            // Error: try looking at milliseconds
+                            millis = formatterZMS.parse(text).getTime();
+                        }
+                    } else {
+                        millis = formatter.parse(revertTZHack(text)).getTime();
+                    }
                 }
 
                 NodeList eleNodes = e.getElementsByTagName("ele");
@@ -139,6 +153,9 @@ public class GPXFile {
                     double ele = Double.parseDouble(eleNodes.item(0).getTextContent());
                     entries.add(new GPXEntry(lat, lon, ele, millis));
                 }
+                prevLat = lat;
+                prevLon = lon;
+                prevMillis = millis;
             }
             return this;
         } catch (Exception e) {
@@ -220,7 +237,7 @@ public class GPXFile {
             writer.append(createString());
             return this;
         } catch (IOException ex) {
-            throw new IllegalStateException(ex);
+            throw new RuntimeException(ex);
         } finally {
             Helper.close(writer);
         }
@@ -232,7 +249,7 @@ public class GPXFile {
             writer = new BufferedWriter(new FileWriter(gpxFile));
             writer.append(path.calcInstructions(translation).createGPX());
         } catch (IOException ex) {
-            throw new IllegalStateException(ex);
+            throw new RuntimeException(ex);
         } finally {
             Helper.close(writer);
         }

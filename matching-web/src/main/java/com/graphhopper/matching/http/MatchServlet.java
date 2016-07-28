@@ -73,15 +73,15 @@ public class MatchServlet extends GraphHopperServlet {
             inType = "json";
         }
 
-        GPXFile gpxFile;
+        PathWrapper matchGHRsp = new PathWrapper();
+        final String outType = getParam(httpReq, "type", "json");
+        GPXFile gpxFile = new GPXFile();
         if (inType.equals("gpx")) {
             try {
                 gpxFile = parseGPX(httpReq);
             } catch (Exception ex) {
-                logger.warn("Cannot parse XML for " + httpReq.getQueryString() + " - " + ex.getMessage() + ", " + infoStr);
-                httpRes.setStatus(SC_BAD_REQUEST);
-                httpRes.getWriter().append(errorsToXML(Collections.<Throwable>singletonList(ex)));
-                return;
+                // logger.warn("Cannot parse XML for " + httpReq.getQueryString() + " - " + ex.getMessage() + ", " + infoStr);
+                matchGHRsp.addError(ex);
             }
 //        } else if (type.equals("json")) {
 //            try {
@@ -90,13 +90,11 @@ public class MatchServlet extends GraphHopperServlet {
 //                logger.warn("Cannot parse JSON for " + httpReq.getQueryString() + " - " + ex.getMessage() + ", " + infoStr);
 //                httpRes.setStatus(SC_BAD_REQUEST);
 //                httpRes.getWriter().append(errorsToXML(Collections.<Throwable>singletonList(ex)));
-//                return;
 //            }
         } else {
-            throw new IllegalArgumentException("Input type not supported " + inType + ", Content-Type:" + contentType);
+            matchGHRsp.addError(new IllegalArgumentException("Input type not supported " + inType + ", Content-Type:" + contentType));
         }
 
-        final String outType = getParam(httpReq, "type", "json");
         boolean writeGPX = GPX_FORMAT.equals(outType);
         boolean pointsEncoded = getBooleanParam(httpReq, "points_encoded", true);
         boolean enableInstructions = writeGPX || getBooleanParam(httpReq, "instructions", true);
@@ -110,28 +108,28 @@ public class MatchServlet extends GraphHopperServlet {
         double defaultAccuracy = 40;
         double gpsAccuracy = Math.min(Math.max(getDoubleParam(httpReq, "gps_accuracy", defaultAccuracy), 5), gpsMaxAccuracy);
         Locale locale = Helper.getLocale(getParam(httpReq, "locale", "en"));
-        PathWrapper matchGHRsp = new PathWrapper();
         MatchResult matchRsp = null;
         StopWatch sw = new StopWatch().start();
 
-        try {
-            FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            MapMatching matching = new MapMatching(hopper.getGraphHopperStorage(), locationIndexMatch, encoder);
-            matching.setMaxVisitedNodes(maxVisitedNodes);
-            matching.setMeasurementErrorSigma(gpsAccuracy);
-            matchRsp = matching.doWork(gpxFile.getEntries());
+        if (!matchGHRsp.hasErrors()) {
+            try {
+                FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
+                MapMatching matching = new MapMatching(hopper.getGraphHopperStorage(), locationIndexMatch, encoder);
+                matching.setMaxVisitedNodes(maxVisitedNodes);
+                matching.setMeasurementErrorSigma(gpsAccuracy);
+                matchRsp = matching.doWork(gpxFile.getEntries());
 
-            // fill GHResponse for identical structure            
-            Path path = matching.calcPath(matchRsp);
-            Translation tr = trMap.getWithFallBack(locale);
-            new PathMerger().doWork(matchGHRsp, Collections.singletonList(path), tr);
+                // fill GHResponse for identical structure            
+                Path path = matching.calcPath(matchRsp);
+                Translation tr = trMap.getWithFallBack(locale);
+                new PathMerger().doWork(matchGHRsp, Collections.singletonList(path), tr);
 
-        } catch (Exception ex) {
-            matchGHRsp.addError(ex);
+            } catch (Exception ex) {
+                matchGHRsp.addError(ex);
+            }
         }
 
         float took = sw.stop().getSeconds();
-        logger.info(httpReq.getQueryString() + ", " + infoStr + ", took:" + took + ", entries:" + gpxFile.getEntries().size() + ", " + matchGHRsp.getDebugInfo());
 
         httpRes.setHeader("X-GH-Took", "" + Math.round(took * 1000));
         if (EXTENDED_JSON_FORMAT.equals(outType)) {
@@ -184,6 +182,13 @@ public class MatchServlet extends GraphHopperServlet {
                 writeJson(httpReq, httpRes, new JSONObject(map));
             }
         }
+
+        String str = httpReq.getQueryString() + ", " + infoStr + ", took:" + took + ", entries:" + gpxFile.getEntries().size() + ", " + matchGHRsp.getDebugInfo();
+        if (matchGHRsp.hasErrors()) {
+            logger.error(str + ", errors:" + matchGHRsp.getErrors());
+        } else {
+            logger.info(str);
+        }
     }
 
     private GPXFile parseJSON(HttpServletRequest httpReq) throws IOException {
@@ -201,6 +206,6 @@ public class MatchServlet extends GraphHopperServlet {
 
     private GPXFile parseGPX(HttpServletRequest httpReq) throws IOException {
         GPXFile file = new GPXFile();
-        return file.doImport(httpReq.getInputStream());
+        return file.doImport(httpReq.getInputStream(), 20);
     }
 }

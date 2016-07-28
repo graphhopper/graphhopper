@@ -50,6 +50,17 @@ public class GPXFileTest {
     }
 
     @Test
+    public void testDoImportNoMillis() {
+        GPXFile instance = new GPXFile();
+        instance.doImport("./src/test/resources/test2_no_millis.gpx");
+        List<GPXEntry> res = instance.getEntries();
+        assertEquals(3, res.size());
+        assertEquals(0, res.get(0).getTime());
+        assertEquals(18000, res.get(1).getTime(), 1000);
+        assertEquals(32000, res.get(2).getTime(), 1000);
+    }
+
+    @Test
     public void testParseDate() throws ParseException {
         SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
         assertEquals(1412700604000L, df.parse("2014-10-07T16:50:04+0000").getTime());
