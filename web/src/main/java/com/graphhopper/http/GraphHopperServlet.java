@@ -215,7 +215,7 @@ public class GraphHopperServlet extends GHBaseServlet
         return rsp.getInstructions().createGPX(trackName, time, includeElevation, withRoute, withTrack, withWayPoints);
     }
 
-    protected String errorsToXML( List<Throwable> list )
+    protected String errorsToXML( Collection<Throwable> list )
     {
         if (list.isEmpty())
             throw new RuntimeException("errorsToXML should not be called with an empty list");
@@ -238,7 +238,7 @@ public class GraphHopperServlet extends GHBaseServlet
 
             Element messageElement = doc.createElement("message");
             extensionsElement.appendChild(messageElement);
-            messageElement.setTextContent(list.get(0).getMessage());
+            messageElement.setTextContent(list.iterator().next().getMessage());
 
             Element hintsElement = doc.createElement("hints");
             extensionsElement.appendChild(hintsElement);
