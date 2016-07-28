@@ -57,8 +57,8 @@ public class MatchServlet extends GraphHopperServlet {
     @Inject
     private TranslationMap trMap;
     @Inject
-    @Named("gpx.max_accuracy")
-    private double gpxMaxAccuracy;
+    @Named("gps.max_accuracy")
+    private double gpsMaxAccuracy;
 
     @Override
     public void doPost(HttpServletRequest httpReq, HttpServletResponse httpRes)
@@ -108,7 +108,7 @@ public class MatchServlet extends GraphHopperServlet {
         String vehicle = getParam(httpReq, "vehicle", "car");
         int maxVisitedNodes = Math.min(getIntParam(httpReq, "max_visited_nodes", 800), 5000);
         double defaultAccuracy = 40;
-        double gpsAccuracy = Math.min(Math.max(getDoubleParam(httpReq, "gps_accuracy", defaultAccuracy), 5), gpxMaxAccuracy);
+        double gpsAccuracy = Math.min(Math.max(getDoubleParam(httpReq, "gps_accuracy", defaultAccuracy), 5), gpsMaxAccuracy);
         Locale locale = Helper.getLocale(getParam(httpReq, "locale", "en"));
         PathWrapper matchGHRsp = new PathWrapper();
         MatchResult matchRsp = null;

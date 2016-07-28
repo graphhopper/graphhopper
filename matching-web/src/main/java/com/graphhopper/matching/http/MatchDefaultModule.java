@@ -41,7 +41,7 @@ public class MatchDefaultModule extends DefaultModule {
                 (LocationIndexTree) getGraphHopper().getLocationIndex());
         bind(LocationIndexMatch.class).toInstance(locationMatch);
 
-        Double timeout = args.getDouble("web.gpx.max_accuracy", 100);
-        bind(Double.class).annotatedWith(Names.named("gpx.max_accuracy")).toInstance(timeout);
+        Double timeout = args.getDouble("web.gps.max_accuracy", 100);
+        bind(Double.class).annotatedWith(Names.named("gps.max_accuracy")).toInstance(timeout);
     }
 }
