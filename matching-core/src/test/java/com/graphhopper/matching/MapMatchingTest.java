@@ -135,7 +135,7 @@ public class MapMatchingTest {
                 new GHPoint(51.377781, 12.338333),
                 new GHPoint(51.323317, 12.387085));
         mapMatching = new MapMatching(graph, locationIndex, ENCODER);
-
+        mapMatching.setMeasurementErrorSigma(20);
         // new GPXFile(inputGPXEntries).doExport("test-input.gpx");
         mr = mapMatching.doWork(inputGPXEntries);
         // new GPXFile(mr).doExport("test.gpx");
@@ -155,12 +155,12 @@ public class MapMatchingTest {
         LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
                 (LocationIndexTree) HOPPER.getLocationIndex());
 
-        MapMatching mapMatching = new MapMatching(graph, locationIndex, ENCODER);
-
         // import sample where two GPX entries are on one edge which is longer than 'separatedSearchDistance' aways (66m)
         // https://graphhopper.com/maps/?point=51.359723%2C12.360108&point=51.358748%2C12.358798&point=51.358001%2C12.357597&point=51.358709%2C12.356511&layer=Lyrk
         List<GPXEntry> inputGPXEntries = new GPXFile().doImport("./src/test/resources/tour3-with-long-edge.gpx").getEntries();
         // TODO match at Weinlingstraße instead of following small part of Marbachstraße
+        MapMatching mapMatching = new MapMatching(graph, locationIndex, ENCODER);
+        mapMatching.setMeasurementErrorSigma(20);
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
         assertEquals(Arrays.asList("Weinligstraße", "Weinligstraße",
                 "Weinligstraße", "Fechnerstraße", "Fechnerstraße"),
@@ -201,8 +201,8 @@ public class MapMatchingTest {
         // TODO smaller sigma like 40m leads to U-turn at Tschaikowskistraße
         mapMatching.setMeasurementErrorSigma(50);
         // https://graphhopper.com/maps/?point=51.342439%2C12.361615&point=51.343719%2C12.362784&point=51.343933%2C12.361781&point=51.342325%2C12.362607&layer=Lyrk
-        List<GPXEntry> inputGPXEntries = new GPXFile().doImport("./src/test/resources/tour-with-loop.gpx").getEntries();        
-        MatchResult mr = mapMatching.doWork(inputGPXEntries);        
+        List<GPXEntry> inputGPXEntries = new GPXFile().doImport("./src/test/resources/tour-with-loop.gpx").getEntries();
+        MatchResult mr = mapMatching.doWork(inputGPXEntries);
         assertEquals(Arrays.asList("Jahnallee, B 87, B 181", "Jahnallee, B 87, B 181",
                 "Jahnallee, B 87, B 181", "Jahnallee, B 87, B 181", "Funkenburgstraße",
                 "Gustav-Adolf-Straße", "Tschaikowskistraße", "Jahnallee, B 87, B 181",
@@ -224,7 +224,7 @@ public class MapMatchingTest {
         assertEquals(Arrays.asList("Gustav-Adolf-Straße", "Gustav-Adolf-Straße",
                 "Funkenburgstraße", "Funkenburgstraße"),
                 fetchStreets(mr.getEdgeMatches()));
-        
+
         // inclusive U-turn
         mapMatching.setMeasurementErrorSigma(10);
         mr = mapMatching.doWork(inputGPXEntries);
