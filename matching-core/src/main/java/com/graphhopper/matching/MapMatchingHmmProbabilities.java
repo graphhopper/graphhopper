@@ -95,14 +95,14 @@ class MapMatchingHmmProbabilities<S, O> implements HmmProbabilities<S, O> {
             throw new IllegalStateException(
                     "Time difference between subsequent location measurements must be >= 0.");
         }
-
+        
         final double linearDistance = spatialMetrics.linearDistance(sourceMeasurement,
                 targetMeasurement);
         final Double routeLength = spatialMetrics.routeLength(sourcePosition, targetPosition);
         if (routeLength == null) {
             return null;
         } else if (timeDiff == 0) {
-            // avoid Infinity if identical snapped positions
+            // avoid Infinity if identical snapped positions, assume 0 length difference
             return 0.0;
         } else {
             return Math.abs(linearDistance - routeLength) / (timeDiff * timeDiff);

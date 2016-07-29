@@ -24,6 +24,7 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPoint;
 import de.bmw.hmm.Hmm;
 import de.bmw.hmm.MostLikelySequence;
 import de.bmw.hmm.TimeStep;
@@ -65,10 +66,10 @@ public class MapMatching {
     private final FlagEncoder encoder;
     private final TraversalMode traversalMode;
 
-    private double measurementErrorSigma = 40.0;
+    private double measurementErrorSigma = 50.0;
 
     private double transitionProbabilityBeta = 0.00959442;
-    private int maxVisitedNodes = 800;
+    private int maxVisitedNodes = 1000;
     private final int nodeCount;
     private DistanceCalc distanceCalc = new DistancePlaneProjection();
     private Weighting weighting;
@@ -192,11 +193,12 @@ public class MapMatching {
                 paths.put(hash(sourcePosition.getQueryResult(), targetPosition.getQueryResult()), path);
 
                 if (!path.isFound()) {
-                    return Double.POSITIVE_INFINITY;
+                    return null;
                 }
                 return path.getDistance();
             }
         };
+        // printMinDistances(timeSteps);
         MapMatchingHmmProbabilities<GPXExtension, GPXEntry> probabilities
                 = new MapMatchingHmmProbabilities<GPXExtension, GPXEntry>(timeSteps, spatialMetrics, temporalMetrics, measurementErrorSigma, transitionProbabilityBeta);
         MostLikelySequence<GPXExtension, GPXEntry> seq = Hmm.computeMostLikelySequence(probabilities, timeSteps.iterator());
@@ -249,7 +251,18 @@ public class MapMatching {
                 lastEdgeMatch.getGpxExtensions().addAll(gpxExtensions);
             }
         } else {
+            String likelyReasonStr = "";
+            if (seq.getBrokenTimeStep() > 0) {
+                GPXEntry prevGPXE = timeSteps.get(seq.getBrokenTimeStep() - 1).observation;
+                GPXEntry gpxe = timeSteps.get(seq.getBrokenTimeStep()).observation;
+                double dist = distanceCalc.calcDist(prevGPXE.lat, prevGPXE.lon, gpxe.lat, gpxe.lon);
+                if (dist > 2000) {
+                    likelyReasonStr = "Too long distance to previous measurement? " + Math.round(dist) + "m, ";
+                }
+            }
+
             throw new RuntimeException("Sequence is broken for submitted track at " + seq.getBrokenTimeStep() + " of " + timeSteps.size() + " time steps (" + gpxList.size() + " points). "
+                    + likelyReasonStr
                     + "observation:" + timeSteps.get(seq.getBrokenTimeStep()).observation + ", candidates: " + getSnappedCandidates(timeSteps.get(seq.getBrokenTimeStep()).candidates));
         }
         MatchResult matchResult = new MatchResult(edgeMatches);
@@ -347,6 +360,31 @@ public class MapMatching {
             str += "distance: " + gpxe.queryResult.getQueryDistance() + " to " + gpxe.queryResult.getSnappedPoint();
         }
         return "[" + str + "]";
+    }
+
+    private void printMinDistances(List<TimeStep<GPXExtension, GPXEntry>> timeSteps) {
+        TimeStep<GPXExtension, GPXEntry> prevStep = null;
+        int index = 0;
+        for (TimeStep<GPXExtension, GPXEntry> ts : timeSteps) {
+            if (prevStep != null) {
+                double dist = distanceCalc.calcDist(prevStep.observation.lat, prevStep.observation.lon, ts.observation.lat, ts.observation.lon);
+                double minCand = Double.POSITIVE_INFINITY;
+                for (GPXExtension prevGPXE : prevStep.candidates) {
+                    for (GPXExtension gpxe : ts.candidates) {
+                        GHPoint psp = prevGPXE.queryResult.getSnappedPoint();
+                        GHPoint sp = gpxe.queryResult.getSnappedPoint();
+                        double tmpDist = distanceCalc.calcDist(psp.lat, psp.lon, sp.lat, sp.lon);
+                        if (tmpDist < minCand) {
+                            minCand = tmpDist;
+                        }
+                    }
+                }
+                System.out.println(index + ": " + Math.round(dist) + "m, minimum candidate: " + Math.round(minCand) + "m");
+                index++;
+            }
+
+            prevStep = ts;
+        }
     }
 
     private static class MyPath extends Path {

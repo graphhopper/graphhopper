@@ -104,7 +104,7 @@ public class MatchServlet extends GraphHopperServlet {
         boolean enableTraversalKeys = getBooleanParam(httpReq, "traversal_keys", false);
 
         String vehicle = getParam(httpReq, "vehicle", "car");
-        int maxVisitedNodes = Math.min(getIntParam(httpReq, "max_visited_nodes", 800), 5000);
+        int maxVisitedNodes = Math.min(getIntParam(httpReq, "max_visited_nodes", 3000), 5000);
         double defaultAccuracy = 40;
         double gpsAccuracy = Math.min(Math.max(getDoubleParam(httpReq, "gps_accuracy", defaultAccuracy), 5), gpsMaxAccuracy);
         Locale locale = Helper.getLocale(getParam(httpReq, "locale", "en"));
@@ -185,7 +185,11 @@ public class MatchServlet extends GraphHopperServlet {
 
         String str = httpReq.getQueryString() + ", " + infoStr + ", took:" + took + ", entries:" + gpxFile.getEntries().size() + ", " + matchGHRsp.getDebugInfo();
         if (matchGHRsp.hasErrors()) {
-            logger.error(str + ", errors:" + matchGHRsp.getErrors());
+            if (matchGHRsp.getErrors().get(0) instanceof IllegalArgumentException) {
+                logger.error(str + ", errors:" + matchGHRsp.getErrors());
+            } else {
+                logger.error(str + ", errors:" + matchGHRsp.getErrors(), matchGHRsp.getErrors().get(0));
+            }
         } else {
             logger.info(str);
         }

@@ -104,7 +104,7 @@ public class ViterbiAlgorithm<S, O> {
         boolean isBroken = false;
         while (timeStepIter.hasNext()) {
             final TimeStep<S, O> prevTimeStep = timeStep;
-            timeStep = timeStepIter.next();
+            timeStep = timeStepIter.next();            
             ForwardStepResult forwardStepResult = forwardStep(hmmProbabilities, prevTimeStep,
                     timeStep, message);
             if (hmmBreak(forwardStepResult.message)) {
@@ -161,7 +161,9 @@ public class ViterbiAlgorithm<S, O> {
     private ForwardStepResult forwardStep(HmmProbabilities<S, O> hmmProbabilities,
             TimeStep<S, O> prevTimeStep, TimeStep<S, O> curTimeStep, Map<S, Double> message) {
         final ForwardStepResult result = new ForwardStepResult(curTimeStep.candidates.size());
-        assert (!prevTimeStep.candidates.isEmpty());
+        if (prevTimeStep.candidates.isEmpty()) {
+            throw new IllegalStateException("Candidates should not be empty here");
+        }
 
         for (S curState : curTimeStep.candidates) {
             double maxLogProbability = Double.NEGATIVE_INFINITY;
