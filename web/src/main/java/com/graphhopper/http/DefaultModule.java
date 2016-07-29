@@ -56,9 +56,9 @@ public class DefaultModule extends AbstractModule
         GraphHopper tmp = new GraphHopperOSM().forServer().init(args);
         tmp.importOrLoad();
         logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
-                + ", source:" + tmp.getDataReaderFile()
-                + ", flagEncoders:" + tmp.getEncodingManager()
-                + ", class:" + tmp.getGraphHopperStorage().toDetailsString());
+                + ", data_reader_file:" + tmp.getDataReaderFile()
+                + ", flag_encoders:" + tmp.getEncodingManager()
+                + ", " + tmp.getGraphHopperStorage().toDetailsString());
         return tmp;
     }
 
