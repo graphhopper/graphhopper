@@ -99,6 +99,7 @@ GraphHopperMapMatching = function (args) {
     this.vehicle = "car";
     this.gps_accuracy = 20;
     this.data_type = "json";
+    this.max_visited_nodes = 3000;
 
     graphhopper.util.copyProperties(args, this);
 };
@@ -111,7 +112,9 @@ GraphHopperMapMatching.prototype.doRequest = function (content, callback, reqArg
 
     var url = args.host + args.basePath + "?vehicle=" + args.vehicle
             + "&gps_accuracy=" + args.gps_accuracy
-            + "&type=" + args.data_type;
+            + "&type=" + args.data_type
+            + "&max_visited_nodes=" + args.max_visited_nodes;
+
     if (args.key)
         url += "&key=" + args.key;
 
