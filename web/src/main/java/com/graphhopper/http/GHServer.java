@@ -89,6 +89,11 @@ public class GHServer
         int httpPort = args.getInt("jetty.port", 8989);
         String host = args.get("jetty.host", "");
         connector0.setPort(httpPort);
+
+        int requestHeaderSize = args.getInt("jetty.request_header_size", -1);
+        if (requestHeaderSize > 0)
+            connector0.getConnectionFactory(HttpConnectionFactory.class).getHttpConfiguration().setRequestHeaderSize(requestHeaderSize);
+
         if (!host.isEmpty())
             connector0.setHost(host);
 
