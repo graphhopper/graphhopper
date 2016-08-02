@@ -821,7 +821,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             algo = createDijkstraBidirection(graph);
         } else
         {
-            throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies");
+            throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");
         }
 
         algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
