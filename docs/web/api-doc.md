@@ -17,7 +17,7 @@ All official parameters are shown in the following table
 Parameter   | Default | Description
 :-----------|:--------|:-----------
 point       | -       | Specify multiple points for which the route should be calculated. The order is important. Specify at least two points.
-locale      | en      | The locale of the result. E.g. `pt_PT` for Portuguese or `de` for German
+locale      | en      | The locale of the resulting turn instructions. E.g. `pt_PT` for Portuguese or `de` for German
 instructions| true    | If instruction should be calculated and returned
 vehicle     | car     | The vehicle for which the route should be calculated. Other vehicles are foot, bike, motorcycle, hike, ...
 elevation   | false   | If `true` a third dimension - the elevation - is included in the polyline or in the GeoJson. IMPORTANT: If enabled you have to use a modified version of the decoding method or set points_encoded to `false`. See the points_encoded attribute for more details. Additionally a request can fail if the vehicle does not support elevation. See the features object for every vehicle.
