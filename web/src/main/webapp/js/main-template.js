@@ -602,7 +602,7 @@ function mySubmit() {
             allStr = [],
             inputOk = true;
     var location_points = $("#locationpoints > div.pointDiv > input.pointInput");
-    var len = location_points.size();
+    var len = location_points.size;
     $.each(location_points, function (index) {
         if (index === 0) {
             fromStr = $(this).val();
