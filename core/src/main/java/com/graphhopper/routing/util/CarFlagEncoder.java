@@ -19,8 +19,6 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
