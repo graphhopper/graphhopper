@@ -1,7 +1,7 @@
 ## Routing Web API Docs
 
 In order to communicate with your or [our](http://graphhopper.com/#enterprise) hosted GraphHopper 
-server you need to understand how to use it.
+server you need to understand how to use it. There is a separate [JavaScript](https://github.com/graphhopper/directions-api-js-client) and [Java](https://github.com/graphhopper/directions-api-java-client) client for this API or use the plain JSON response for your language.
 
 ### A simple example
 [http://localhost:8989/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959](http://localhost:8989/route?point=45.752193%2C-0.686646&point=46.229253%2C-0.32959)
