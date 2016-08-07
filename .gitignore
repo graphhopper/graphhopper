@@ -3,7 +3,7 @@ target/
 TODO.txt
 *-gh/
 *.osm
-nbactions-*.xml
+nbactions*.xml
 config.properties
 build.xml
 queries.sh
