@@ -1050,7 +1050,6 @@ public class GraphHopper implements GraphHopperAPI
             TraversalMode tMode = TraversalMode.fromString(tModeStr);
             if (hints.has(Routing.EDGE_BASED))
                 tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;
-            ghRsp.addDebugInfo("tmode:" + tMode.toString());
 
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
             List<GHPoint> points = request.getPoints();
@@ -1098,7 +1097,10 @@ public class GraphHopper implements GraphHopperAPI
                     routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
 
                 } else
+                {
                     weighting = createWeighting(hints, encoder);
+                    ghRsp.addDebugInfo("tmode:" + tMode.toString());
+                }
 
                 int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, maxVisitedNodes);
                 if (maxVisitedNodesForRequest > maxVisitedNodes)
