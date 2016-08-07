@@ -38,13 +38,13 @@ public class ConditionalOSMTagInspector implements ConditionalTagInspector
     private final ConditionalParser permitParser, restrictiveParser;
 
     public ConditionalOSMTagInspector( Object value, List<String> tagsToCheck,
-                                     Set<String> restrictiveValues, Set<String> permittedValues )
+                                       Set<String> restrictiveValues, Set<String> permittedValues )
     {
-        this(tagsToCheck, createDefaultMapping(value), restrictiveValues, permittedValues, true);
+        this(tagsToCheck, createDefaultMapping(value), restrictiveValues, permittedValues, false);
     }
 
     public ConditionalOSMTagInspector( List<String> tagsToCheck, Map<String, Object> valueMap,
-                                     Set<String> restrictiveValues, Set<String> permittedValues, boolean enabledLogs )
+                                       Set<String> restrictiveValues, Set<String> permittedValues, boolean enabledLogs )
     {
         this.valueMap = valueMap;
         this.tagsToCheck = new ArrayList<>(tagsToCheck.size());
