@@ -11,7 +11,7 @@ require('./lib/jquery-ui-custom-1.12.0.min.js');
 require('./lib/jquery.history.js');
 require('./lib/jquery.autocomplete.js');
 
-var ghenv = require("./options.js").options;
+var ghenv = require("./config/options.js").options;
 console.log(ghenv.environment);
 
 var GHInput = require('./graphhopper/GHInput.js');

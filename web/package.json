@@ -18,7 +18,7 @@
   },
   "browserify-swap": {
     "production": {
-      "options.js$": "./src/main/webapp/js/options_prod.js"
+      "config/options.js$": "./src/main/webapp/js/config/options_prod.js"
     }
   },
   "dependencies": {
