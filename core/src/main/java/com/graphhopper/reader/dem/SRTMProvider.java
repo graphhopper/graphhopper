@@ -252,8 +252,8 @@ public class SRTMProvider implements ElevationProvider
             width = DEFAULT_WIDTH;
 
         demProvider = new HeightTile(down(lat), down(lon), width, precision, 1);
-        demProvider.setCalcMean(calcMean);
         cacheData.put(intKey, demProvider);
+        demProvider.setCalcMean(calcMean);
         demProvider.setHeights(heights);
         return demProvider.getHeight(lat, lon);
     }
@@ -286,7 +286,7 @@ public class SRTMProvider implements ElevationProvider
         String zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";
         File file = new File(cacheDir, new File(zippedURL).getName());
         InputStream is;
-        // get zip file if not already in cacheDir - unzip later and in-memory only!
+        // get zip file if not already in cacheDir
         if (!file.exists())
             for (int i = 0; i < 3; i++)
             {
@@ -298,11 +298,6 @@ public class SRTMProvider implements ElevationProvider
                 {
                     // just try again after a little nap
                     Thread.sleep(2000);
-                    continue;
-                } catch (FileNotFoundException ex)
-                {
-                    // now try different URL (without point!), necessary if mirror is used
-                    zippedURL = baseUrl + "/" + fileDetails + "hgt.zip";
                     continue;
                 }
             }
