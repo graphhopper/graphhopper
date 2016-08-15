@@ -128,6 +128,10 @@ public class MapMatching {
      * of the graph specified in the constructor
      */
     public MatchResult doWork(List<GPXEntry> gpxList) {
+        if (gpxList.size() < 2) {
+            throw new IllegalArgumentException("To few coordinates in input file (" + gpxList.size() + "). Correct format?");
+        }
+
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         List<TimeStep<GPXExtension, GPXEntry>> timeSteps = new ArrayList<TimeStep<GPXExtension, GPXEntry>>();
         List<QueryResult> allCandidates = new ArrayList<QueryResult>();
