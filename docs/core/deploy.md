@@ -49,9 +49,11 @@ With CH the service is able to handle about 180 queries per second (from localho
 Measured for CAR routing, real world requests, at least 100km long, on a linux machine with 8 cores and 32GB, 
 java 1.7.0_25, jetty 8.1.10 via custom QueryTorture class (10 worker threads).
 
-### JVM
+### System and JVM tuning
 
-If GC pauses are too long try `-XX:+UseG1GC`
+Especially for large heaps you should use `-XX:+UseG1GC`. Optionally add `-XX:MetaspaceSize=100M`.
+
+Avoid swapping e.g. on linux via `vm.swappiness=0` in /etc/sysctl.conf. See some tuning discussion in the answers [here](http://stackoverflow.com/q/38905739/194609).
 
 ### Elevation Data 
 
