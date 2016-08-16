@@ -49,6 +49,7 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
     // default
     map = L.map('map', {
         layers: [defaultLayer],
+        minZoom : 2,
         contextmenu: true,
         contextmenuWidth: 150,
         contextmenuItems: [{
