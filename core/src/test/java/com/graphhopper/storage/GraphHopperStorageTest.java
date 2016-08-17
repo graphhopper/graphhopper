@@ -324,4 +324,40 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
 
         assertEquals(extStorage.getDefaultEdgeFieldValue(), iter.getAdditionalField());
     }
+    
+    
+    @Test
+    public void testDontGrowOnUpdate() throws IOException
+    {
+        graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
+        NodeAccess na = graph.getNodeAccess();
+        assertTrue(na.is3D());
+        na.setNode(0, 10, 10, 0);
+        na.setNode(1, 11, 20, 1);
+        na.setNode(2, 12, 12, 0.4);
+
+        EdgeIteratorState iter2 = graph.edge(0, 1, 100, true);
+        final BaseGraph baseGraph = (BaseGraph) graph.getBaseGraph();
+       	assertEquals(4, baseGraph.getMaxGeoRef());
+       	iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3, 3, 4, 5, 5, 6, 7, 7, 8, 9));
+       	assertEquals(4 + (1 + 12), baseGraph.getMaxGeoRef());
+       	iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3, 3, 4, 5, 5, 6, 7));
+       	assertEquals(4 + (1 + 12), baseGraph.getMaxGeoRef());
+       	iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3, 3, 4, 5));
+       	assertEquals(4 + (1 + 12), baseGraph.getMaxGeoRef());
+       	iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3));
+       	assertEquals(4 + (1 + 12), baseGraph.getMaxGeoRef());
+        iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0));
+       	assertEquals(4 + (1 + 12) + (1 + 6), baseGraph.getMaxGeoRef());
+        EdgeIteratorState iter1 = graph.edge(0, 2, 200, true);
+        iter1.setWayGeometry(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0));
+        graph.edge(9, 10, 200, true);
+        graph.edge(9, 11, 200, true);
+        graph.edge(1, 2, 120, false);
+        iter1.setName("named street1");
+        iter2.setName("named street2");
+        checkGraph(graph);
+        graph.flush();
+        graph.close();
+    }
 }
