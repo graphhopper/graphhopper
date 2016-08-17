@@ -18,13 +18,13 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
  * dos65, bug fixes in routing algo
  * drnextgis, ru translation and JS fixes
  * duongnt, fixes in storage
- * lmar, improved instructions information
  * fbonzon, UI improvements like #615
  * florent-morel, improvements regarding fords, #320
  * fredao, translations 
  * HarelM, improvements regarding elevation
  * HelgeKrueger, modularization of javascript, #590
  * henningvs, doc improvements
+ * highsource, more efficient geometry update, ui fixes
  * IsNull, improvements like #708
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config
