@@ -28,8 +28,6 @@ import com.graphhopper.search.NameIndex;
 import com.graphhopper.util.*;
 import static com.graphhopper.util.Helper.nf;
 
-import java.util.Arrays;
-
 import com.graphhopper.util.shapes.BBox;
 
 /**
@@ -839,11 +837,6 @@ class BaseGraph implements Graph
 				final int count = wayGeometry.getInt(existingGeoRefPos);
             	if (len <= count)
             	{
-            		// If old array was smaller, erase contents
-            		if (len < count)
-            		{
-            			eraseWayGeometryAtGeoRef(count, existingGeoRef);
-            		}
             		setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
                     return;
             	}
@@ -856,14 +849,6 @@ class BaseGraph implements Graph
             edges.setInt(edgePointer + E_GEO, 0);
         }
     }
-
-	private void eraseWayGeometryAtGeoRef(final int count, long geoRef) {
-        int dim = nodeAccess.getDimension();
-		byte[] eraseBytes = new byte [count*dim*4+4];
-		Arrays.fill(eraseBytes, (byte)0);
-		long geoRefPos = geoRef*4L;
-		wayGeometry.setBytes(geoRefPos, eraseBytes, eraseBytes.length);
-	}
 
 	private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
         int len = pillarNodes.getSize();
