@@ -127,7 +127,7 @@ public class OSMReaderTest
 
             footEncoder = new FootFlagEncoder();
 
-            setEncodingManager(new EncodingManager(footEncoder, carEncoder, bikeEncoder));
+            setEncodingManager(new EncodingManager(Arrays.asList(footEncoder, carEncoder, bikeEncoder), 8));
         }
 
         @Override
@@ -746,7 +746,7 @@ public class OSMReaderTest
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
         FootFlagEncoder foot = new FootFlagEncoder();
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
-        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 4);
+        EncodingManager manager = new EncodingManager(Arrays.asList(bike, foot, car), 8);
 
         GraphHopperStorage ghStorage = new GraphBuilder(manager).create();
         OSMReader reader = new OSMReader(ghStorage)

@@ -882,7 +882,7 @@ public class GraphHopperOSMTest
         for (int threadCount = 1; threadCount < 6; threadCount++)
         {
             EncodingManager em = new EncodingManager(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
-                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()),
+                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder()),
                     8);
 
             GraphHopper tmpGH = new GraphHopperOSM().setStoreOnFlush(false).
@@ -893,7 +893,7 @@ public class GraphHopperOSMTest
 
             tmpGH.importOrLoad();
 
-            assertEquals(5, tmpGH.getCHFactoryDecorator().getPreparations().size());
+            assertEquals(4, tmpGH.getCHFactoryDecorator().getPreparations().size());
             for (RoutingAlgorithmFactory raf : tmpGH.getCHFactoryDecorator().getPreparations())
             {
                 PrepareContractionHierarchies pch = (PrepareContractionHierarchies) raf;
