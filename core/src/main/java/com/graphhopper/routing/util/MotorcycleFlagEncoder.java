@@ -223,8 +223,11 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
 
             boolean isRoundabout = way.hasTag("junction", "roundabout");
             if (isRoundabout)
-                flags = setBool(0, K_ROUNDABOUT, true);
+                flags = setBool(flags, K_ROUNDABOUT, true);
 
+            flags = way.hasTag("tunnel", "yes") ? setBool(flags, K_TUNNEL, true) : flags;
+            flags = way.hasTag("bridge", "yes") ? setBool(flags, K_BRIDGE, true) : flags;
+            
             if (way.hasTag("oneway", oneways) || isRoundabout)
             {
                 if (way.hasTag("oneway", "-1"))

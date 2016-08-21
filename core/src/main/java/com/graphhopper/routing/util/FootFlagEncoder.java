@@ -306,9 +306,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             }
             flags |= directionBitMask;
 
-            boolean isRoundabout = way.hasTag("junction", "roundabout");
-            if (isRoundabout)
-                flags = setBool(flags, K_ROUNDABOUT, true);
+            flags = way.hasTag("junction", "roundabout") ? setBool(flags, K_ROUNDABOUT, true) : flags;
+            flags = way.hasTag("tunnel", "yes") ? setBool(flags, K_TUNNEL, true) : flags;
+            flags = way.hasTag("bridge", "yes") ? setBool(flags, K_BRIDGE, true) : flags;
 
         } else
         {

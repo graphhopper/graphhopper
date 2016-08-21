@@ -58,8 +58,14 @@ public class EncodingManager
      */
     public EncodingManager( String flagEncodersStr )
     {
-        this(FlagEncoderFactory.DEFAULT, flagEncodersStr, 4);
+        this(flagEncodersStr, 4);
     }
+    
+    public EncodingManager( String flagEncodersStr, int bytesForEdgeFlags )
+    {
+        this(FlagEncoderFactory.DEFAULT, flagEncodersStr, bytesForEdgeFlags);
+    }
+    
 
     public EncodingManager( FlagEncoderFactory factory, String flagEncodersStr, int bytesForEdgeFlags )
     {

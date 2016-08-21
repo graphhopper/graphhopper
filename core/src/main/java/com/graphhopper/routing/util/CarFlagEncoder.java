@@ -257,6 +257,9 @@ public class CarFlagEncoder extends AbstractFlagEncoder
             if (isRoundabout)
                 flags = setBool(flags, K_ROUNDABOUT, true);
 
+            flags = way.hasTag("tunnel", "yes") ? setBool(flags, K_TUNNEL, true) : flags;
+            flags = way.hasTag("bridge", "yes") ? setBool(flags, K_BRIDGE, true) : flags;
+
             if (isOneway(way) || isRoundabout)
             {
                 if (isBackwardOneway(way))
@@ -266,6 +269,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder
                     flags |= forwardBit;
             } else
                 flags |= directionBitMask;
+            
 
         } else
         {

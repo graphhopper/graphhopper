@@ -248,6 +248,18 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
         way.setTag("highway", "tertiary");
         long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertTrue(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+
+        way.clearTags();
+        way.setTag("tunnel", "yes");
+        way.setTag("highway", "tertiary");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_TUNNEL));
+
+        way.clearTags();
+        way.setTag("bridge", "yes");
+        way.setTag("highway", "tertiary");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_BRIDGE));
     }
 
     @Test

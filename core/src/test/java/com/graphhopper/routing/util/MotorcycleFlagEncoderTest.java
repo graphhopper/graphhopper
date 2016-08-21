@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
  */
 public class MotorcycleFlagEncoderTest
 {
-    private final EncodingManager em = new EncodingManager("motorcycle,foot");
+    private final EncodingManager em = new EncodingManager("motorcycle,foot", 8);
     private final MotorcycleFlagEncoder encoder = (MotorcycleFlagEncoder) em.getEncoder("motorcycle");
 
     private Graph initExampleGraph()
