@@ -21,6 +21,7 @@ import java.util.Map;
 
 /**
  * Generic GHException that allows to add details to the exception message
+ *
  * @author Robin Boldt
  */
 public interface GHException
