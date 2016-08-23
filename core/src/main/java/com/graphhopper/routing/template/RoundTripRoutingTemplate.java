@@ -35,6 +35,7 @@ import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.Translation;
+import com.graphhopper.util.exceptions.CannotFindPointException;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -81,7 +82,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         QueryResult startQR = locationIndex.findClosest(start.lat, start.lon, edgeFilter);
         if (!startQR.isValid())
-            throw new IllegalArgumentException("Cannot find point 0: " + start);
+            throw new CannotFindPointException("Cannot find point 0: " + start, 0);
 
         queryResults.add(startQR);
 
