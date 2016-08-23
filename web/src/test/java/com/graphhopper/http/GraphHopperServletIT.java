@@ -23,6 +23,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.exceptions.CannotFindPointException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.json.JSONObject;
 import org.junit.AfterClass;
@@ -161,9 +162,18 @@ public class GraphHopperServletIT extends BaseServletTester
         rsp = hopper.route(new GHRequest(0.0, 0.0, 0.0, 0.0));
         assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
 
-        ex = rsp.getErrors().get(0);
-        assertTrue("Wrong exception found: " + ex.getClass().getName()
-                + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
+        List<Throwable> errs = rsp.getErrors();
+        for (int i = 0; i < errs.size(); i++)
+        {
+            Throwable t = errs.get(i);
+            if (t instanceof CannotFindPointException)
+            {
+                assertEquals(((CannotFindPointException) t).getPointIndex(), i);
+            } else
+            {
+                fail("No CannotFindPointException found!");
+            }
+        }
 
         // IllegalArgumentException (Vehicle not supported)
         rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setVehicle("SPACE-SHUTTLE"));
