@@ -37,6 +37,8 @@ import com.graphhopper.util.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.exceptions.PointOutOfBoundsException;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,6 +96,8 @@ public class GraphHopper implements GraphHopperAPI
     private final TranslationMap trMap = new TranslationMap().doImport();
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = FlagEncoderFactory.DEFAULT;
+
+    private BBox bounds = new BBox(-180, 180, -90, 90);
 
     public GraphHopper()
     {
@@ -692,6 +696,15 @@ public class GraphHopper implements GraphHopperAPI
         maxVisitedNodes = args.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
         maxRoundTripRetries = args.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
 
+        // Bounds BBox
+        double left = args.getDouble(Parameters.Config.BB_LEFT, -180);
+        double right = args.getDouble(Parameters.Config.BB_RIGHT, 180);
+        double bot = args.getDouble(Parameters.Config.BB_BOT, -90);
+        double top = args.getDouble(Parameters.Config.BB_TOP, 90);
+
+        bounds = new BBox(left, right, bot, top);
+
+
         return this;
     }
 
@@ -717,7 +730,24 @@ public class GraphHopper implements GraphHopperAPI
         {
             printInfo();
         }
+        updateBounds();
         return this;
+    }
+
+    private void updateBounds(){
+        BBox graphBB = getGraphHopperStorage().getBounds();
+        if(graphBB.minLat > bounds.minLat){
+            bounds.minLat = graphBB.minLat;
+        }
+        if(graphBB.maxLat < bounds.maxLat){
+            bounds.maxLat = graphBB.maxLat;
+        }
+        if(graphBB.minLon > bounds.minLon){
+            bounds.minLon = graphBB.minLon;
+        }
+        if(graphBB.maxLon < bounds.maxLon){
+            bounds.maxLon = graphBB.maxLon;
+        }
     }
 
     /**
@@ -1015,6 +1045,10 @@ public class GraphHopper implements GraphHopperAPI
         return weighting;
     }
 
+    public BBox getBounds(){
+        return bounds;
+    }
+
     @Override
     public GHResponse route( GHRequest request )
     {
@@ -1054,6 +1088,14 @@ public class GraphHopper implements GraphHopperAPI
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
             List<GHPoint> points = request.getPoints();
             String algoStr = request.getAlgorithm().isEmpty() ? DIJKSTRA_BI : request.getAlgorithm();
+
+            // Check if Points are in Bounds
+            for (int i = 0; i < points.size(); i++) {
+                GHPoint point = points.get(i);
+                if(!bounds.contains(point.getLat(), point.getLon())){
+                    throw new PointOutOfBoundsException("Point " + i + " is ouf of bounds: " + point, i);
+                }
+            }
 
             RoutingTemplate routingTemplate;
             if (ROUND_TRIP.equalsIgnoreCase(algoStr))

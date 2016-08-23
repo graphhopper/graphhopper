@@ -29,7 +29,7 @@ import java.util.Map;
 public class CannotFindPointException extends IllegalArgumentException implements GHException
 {
 
-    private final int pointIndex;
+    protected final int pointIndex;
 
     public CannotFindPointException( String var1, int pointIndex )
     {
