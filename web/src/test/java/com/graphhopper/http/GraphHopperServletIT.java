@@ -166,9 +166,11 @@ public class GraphHopperServletIT extends BaseServletTester
         for (int i = 0; i < errs.size(); i++)
         {
             Throwable t = errs.get(i);
-            if(t instanceof CannotFindPointException){
+            if (t instanceof CannotFindPointException)
+            {
                 assertEquals(((CannotFindPointException) t).getPointIndex(), i);
-            }else{
+            } else
+            {
                 fail("No CannotFindPointException found!");
             }
         }
