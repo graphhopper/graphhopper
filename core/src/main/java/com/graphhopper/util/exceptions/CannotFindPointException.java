@@ -17,18 +17,18 @@
  */
 package com.graphhopper.util.exceptions;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Represents an instance of the "Cannot find Point" Exception,
- * whereas the Point that cannot be found is at pointIndex.
+ * Represents an instance of the "Cannot find Point" Exception, whereas the Point that cannot be
+ * found is at pointIndex.
  *
  * @author Robin Boldt
  */
 public class CannotFindPointException extends IllegalArgumentException implements GHException
 {
-
     private final int pointIndex;
 
     public CannotFindPointException( String var1, int pointIndex )
@@ -45,9 +45,6 @@ public class CannotFindPointException extends IllegalArgumentException implement
     @Override
     public Map<String, String> getDetails()
     {
-        Map<String, String> deatils = new HashMap<>(1);
-        deatils.put("not_found_point_index", String.valueOf(this.pointIndex));
-        return deatils;
+        return Collections.singletonMap("not_found_point_index", String.valueOf(pointIndex));
     }
-
 }
