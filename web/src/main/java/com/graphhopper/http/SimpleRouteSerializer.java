@@ -22,7 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.exceptions.GHIllegalArgumentException;
+import com.graphhopper.util.exceptions.GHException;
 import com.graphhopper.util.shapes.BBox;
 import java.util.*;
 
@@ -63,8 +63,9 @@ public class SimpleRouteSerializer implements RouteSerializer
                 Map<String, String> map = new HashMap<String, String>();
                 map.put("message", getMessage(t));
                 map.put("details", t.getClass().getName());
-                if(t instanceof GHIllegalArgumentException){
-                    map.putAll(((GHIllegalArgumentException) t).getIllegalArgumentDetails());
+                if(t instanceof GHException)
+                {
+                    map.putAll(((GHException) t).getIllegalArgumentDetails());
                 }
                 errorHintList.add(map);
             }
