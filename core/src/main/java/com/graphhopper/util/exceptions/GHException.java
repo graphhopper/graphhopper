@@ -20,12 +20,10 @@ package com.graphhopper.util.exceptions;
 import java.util.Map;
 
 /**
- *
- * Extends IllegalArgumentException because we explicitly catch that in the GraphHopperServlet - TODO we might use something else?
- *
+ * Generic GHException that allows to add details to the exception message
  * @author Robin Boldt
  */
 public interface GHException
 {
-    public abstract Map<String, String> getIllegalArgumentDetails();
+    public abstract Map<String, String> getDetails();
 }

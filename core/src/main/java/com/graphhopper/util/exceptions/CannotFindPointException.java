@@ -43,7 +43,7 @@ public class CannotFindPointException extends IllegalArgumentException implement
     }
 
     @Override
-    public Map<String, String> getIllegalArgumentDetails()
+    public Map<String, String> getDetails()
     {
         Map<String, String> illegalArgumentDetails = new HashMap<>(1);
         illegalArgumentDetails.put("not_found_point_index", String.valueOf(this.pointIndex));

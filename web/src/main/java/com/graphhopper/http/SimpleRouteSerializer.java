@@ -65,7 +65,7 @@ public class SimpleRouteSerializer implements RouteSerializer
                 map.put("details", t.getClass().getName());
                 if(t instanceof GHException)
                 {
-                    map.putAll(((GHException) t).getIllegalArgumentDetails());
+                    map.putAll(((GHException) t).getDetails());
                 }
                 errorHintList.add(map);
             }
