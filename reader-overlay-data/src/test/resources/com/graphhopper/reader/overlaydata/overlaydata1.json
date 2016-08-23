@@ -1,0 +1,24 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+        {
+            "type": "Feature",
+            "geometry": {
+                "type": "Point",
+                "coordinates": [0.005, 0.01]
+            },
+            "properties": {
+                "speed": 10,
+                "assert_nodes": [0, 1]
+            }
+        },
+        {
+            "type": "Feature",
+            "bbox": [-0.01, -0.01, 0.015, 0.005],
+            "properties": {
+                "access": false,
+                "assert_nodes": [3, 4]
+            }
+        }
+    ]
+}
