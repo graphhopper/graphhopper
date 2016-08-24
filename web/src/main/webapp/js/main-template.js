@@ -2,7 +2,7 @@ global.d3 = require('d3');
 var L = require('leaflet');
 require('leaflet-loading');
 require('./lib/leaflet.contextmenu.js');
-require('./lib/Leaflet.Elevation-0.0.2.min.js');
+require('./lib/leaflet.elevation-0.0.4.min.js');
 require('./lib/leaflet_numbered_markers.js');
 
 global.jQuery = require('jquery');
@@ -493,7 +493,7 @@ function routeLatLng(request, doQuery) {
         }
 
         function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation) {
-            return function () {
+            return function (event) {
 
                 var currentGeoJson = geoJsons[currentLayerIndex];
                 mapLayer.eachLayer(function (layer) {
@@ -511,7 +511,7 @@ function routeLatLng(request, doQuery) {
 
                 if (hasElevation) {
                     mapLayer.clearElevation();
-                    mapLayer.addElevation(currentGeoJson);
+                    mapLayer.addElevation(currentGeoJson, event.data.useMiles);
                 }
 
                 headerTabs.find("li").removeClass("current");
@@ -554,18 +554,40 @@ function routeLatLng(request, doQuery) {
             mapLayer.addDataToRoutingLayer(geojsonFeature);
             var oneTab = $("<div class='route_result_tab'>");
             routeResultsDiv.append(oneTab);
-            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation()));
+            tabHeader.click({useMiles: request.useMiles}, createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation()));
 
             var tmpTime = translate.createTimeString(path.time);
-            var tmpDist = translate.createDistanceString(path.distance);
+            var tmpDist = translate.createDistanceString(path.distance, request.useMiles);
             var routeInfo = $("<div class='route_description'>");
             if (path.description && path.description.length > 0) {
                 routeInfo.text(path.description);
                 routeInfo.append("<br/>");
             }
             routeInfo.append(translate.tr("route_info", [tmpDist, tmpTime]));
+
+            //create buttons to toggle between si and imperial units
+            var chooseUnitsAndReroute = function(event) {
+                ghRequest.useMiles = event.data.useMiles;
+                resolveAll();
+                routeLatLng(ghRequest);
+            };
+            var kmButton = $("<button class='plain_text_button' id='showKm'>");
+            kmButton.text(translate.tr2("km_abbr"));
+            kmButton.click({useMiles: false}, chooseUnitsAndReroute);
+
+            var miButton = $("<button class='plain_text_button' id='showMi'>");
+            miButton.text(translate.tr2("mi_abbr"));
+            miButton.click({useMiles: true}, chooseUnitsAndReroute);
+
+            var buttons = $("<span style='float: right;'>");
+            buttons.append(kmButton);
+            buttons.append('|');
+            buttons.append(miButton);
+
+            routeInfo.append(buttons);
+
             if (request.hasElevation()) {
-                routeInfo.append(translate.createEleInfoString(path.ascend, path.descend));
+                routeInfo.append(translate.createEleInfoString(path.ascend, path.descend, request.useMiles));
             }
             oneTab.append(routeInfo);
 
