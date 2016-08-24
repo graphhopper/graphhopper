@@ -71,7 +71,7 @@ GHRequest.prototype.init = function (params) {
         else if (val === "true")
             val = true;
 
-        if (key === "point" || key === "mathRandom" || key === "do_zoom" || key === "layer" || key === "useMiles")
+        if (key === "point" || key === "mathRandom" || key === "do_zoom" || key === "layer" || key === "use_miles")
             continue;
 
         this.api_params[key] = val;
@@ -80,8 +80,8 @@ GHRequest.prototype.init = function (params) {
     if ('do_zoom' in params)
         this.do_zoom = params.do_zoom;
 
-    if ('useMiles' in params)
-        this.useMiles = params.useMiles;
+    if ('use_miles' in params)
+        this.useMiles = params.use_miles;
 
     // overwrite elevation e.g. important if not supported from feature set
     this.api_params.elevation = false;
@@ -163,7 +163,7 @@ GHRequest.prototype.createGPXURL = function (withRoute, withTrack, withWayPoints
 };
 
 GHRequest.prototype.createHistoryURL = function () {
-    return this.createPath("?" + this.createPointParams(true)) + "&useMiles=" + !!this.useMiles;
+    return this.createPath("?" + this.createPointParams(true)) + "&use_miles=" + !!this.useMiles;
 };
 
 GHRequest.prototype.createPointParams = function (useRawInput) {

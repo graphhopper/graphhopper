@@ -492,8 +492,8 @@ function routeLatLng(request, doQuery) {
             return;
         }
 
-        function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation) {
-            return function (event) {
+        function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, useMiles) {
+            return function () {
 
                 var currentGeoJson = geoJsons[currentLayerIndex];
                 mapLayer.eachLayer(function (layer) {
@@ -511,7 +511,7 @@ function routeLatLng(request, doQuery) {
 
                 if (hasElevation) {
                     mapLayer.clearElevation();
-                    mapLayer.addElevation(currentGeoJson, event.data.useMiles);
+                    mapLayer.addElevation(currentGeoJson, useMiles);
                 }
 
                 headerTabs.find("li").removeClass("current");
@@ -554,7 +554,7 @@ function routeLatLng(request, doQuery) {
             mapLayer.addDataToRoutingLayer(geojsonFeature);
             var oneTab = $("<div class='route_result_tab'>");
             routeResultsDiv.append(oneTab);
-            tabHeader.click({useMiles: request.useMiles}, createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation()));
+            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), request.useMiles));
 
             var tmpTime = translate.createTimeString(path.time);
             var tmpDist = translate.createDistanceString(path.distance, request.useMiles);
@@ -566,18 +566,20 @@ function routeLatLng(request, doQuery) {
             routeInfo.append(translate.tr("route_info", [tmpDist, tmpTime]));
 
             //create buttons to toggle between si and imperial units
-            var chooseUnitsAndReroute = function(event) {
-                ghRequest.useMiles = event.data.useMiles;
-                resolveAll();
-                routeLatLng(ghRequest);
+            var createUnitsChooserButtonClickHandler = function(useMiles) {
+                return function() {
+                    ghRequest.useMiles = useMiles;
+                    resolveAll();
+                    routeLatLng(ghRequest);
+                };
             };
-            var kmButton = $("<button class='plain_text_button' id='showKm'>");
+            var kmButton = $("<button class='plain_text_button'>");
             kmButton.text(translate.tr2("km_abbr"));
-            kmButton.click({useMiles: false}, chooseUnitsAndReroute);
+            kmButton.click(createUnitsChooserButtonClickHandler(false));
 
-            var miButton = $("<button class='plain_text_button' id='showMi'>");
+            var miButton = $("<button class='plain_text_button'>");
             miButton.text(translate.tr2("mi_abbr"));
-            miButton.click({useMiles: true}, chooseUnitsAndReroute);
+            miButton.click(createUnitsChooserButtonClickHandler(true));
 
             var buttons = $("<span style='float: right;'>");
             buttons.append(kmButton);
