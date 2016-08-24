@@ -138,16 +138,4 @@ public class Parameters
          */
         public static final String FORCE_HEADING = "ch.force_heading";
     }
-
-    /**
-     * Additional Parameters that can be defined in the Config
-     */
-    public static final class Config{
-
-        public static final String BB_LEFT = "bb.left";
-        public static final String BB_RIGHT = "bb.right";
-        public static final String BB_TOP = "bb.top";
-        public static final String BB_BOT = "bb.bot";
-
-    }
 }

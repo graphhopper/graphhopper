@@ -45,7 +45,7 @@ public class InfoServlet extends GHBaseServlet
     @Override
     public void doGet( HttpServletRequest req, HttpServletResponse res ) throws ServletException, IOException
     {
-        BBox bb = hopper.getBounds();
+        BBox bb = hopper.getGraphHopperStorage().getBounds();
         List<Double> list = new ArrayList<Double>(4);
         list.add(bb.minLon);
         list.add(bb.minLat);
