@@ -72,25 +72,55 @@ function initI18N() {
     }
 }
 
-module.exports.createDistanceString = function (dist) {
-    if (dist < 900)
-        return mathTools.round(dist, 1) + tr2("m_abbr");
+function mToKm(m) {
+    return m / 1000;
+}
 
-    dist = mathTools.round(dist / 1000, 100);
-    if (dist > 100)
-        dist = mathTools.round(dist, 1);
-    return dist + tr2("km_abbr");
+function mToFt(m) {
+    return m / 0.3048;
+}
+
+function mToMi(m) {
+    return m / 1609.344;
+}
+
+module.exports.createDistanceString = function (dist, useMiles) {
+    if (!useMiles) {
+        if (dist < 900)
+            return mathTools.round(dist, 1) + tr2("m_abbr");
+
+        dist = mathTools.round(mToKm(dist), 100);
+        if (dist > 100)
+            dist = mathTools.round(dist, 1);
+        return dist + tr2("km_abbr");
+    } else {
+        if (dist < 152)
+            return mathTools.round(mToFt(dist), 1) + tr2("ft_abbr");
+
+        dist = mathTools.round(mToMi(dist), 100);
+        if (dist > 100)
+            dist = mathTools.round(dist, 1);
+        return dist + tr2("mi_abbr");
+    }
 };
 
-module.exports.createEleInfoString = function (ascend, descend) {
+module.exports.createEleInfoString = function (ascend, descend, useMiles) {
     var str = "";
     if (ascend > 0 || descend > 0) {
         str = "<br/> ";
-        if (ascend > 0)
-            str += "&#8599;" + mathTools.round(ascend, 1) + tr2("m_abbr");
+        if (ascend > 0) {
+            if (!useMiles)
+                str += "&#8599;" + mathTools.round(ascend, 1) + tr2("m_abbr");
+            else
+                str += "&#8599;" + mathTools.round(mToFt(ascend), 1) + tr2("ft_abbr");
+        }
 
-        if (descend > 0)
-            str += " &#8600;" + mathTools.round(descend, 1) + tr2("m_abbr");
+        if (descend > 0) {
+            if (!useMiles)
+                str += " &#8600;" + mathTools.round(descend, 1) + tr2("m_abbr");
+            else
+                str += " &#8600;" + mathTools.round(mToFt(descend), 1) + tr2("ft_abbr");
+        }
     }
 
     return str;
@@ -117,6 +147,7 @@ module.exports.createTimeString = function (time) {
 };
 
 module.exports.tr = tr;
+module.exports.tr2 = tr2;
 
 module.exports.nanoTemplate = function (template, data) {
     return template.replace(/\{([\w\.]*)\}/g, function (str, key) {

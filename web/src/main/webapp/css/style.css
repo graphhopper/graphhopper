@@ -407,3 +407,9 @@ td img.pic {
     cursor: pointer;
     float: left;
 }
+
+.plain_text_button {
+    border: none;
+    background: none;
+    cursor: pointer;
+}
