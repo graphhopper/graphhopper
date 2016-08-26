@@ -407,3 +407,15 @@ td img.pic {
     cursor: pointer;
     float: left;
 }
+
+.gray {
+    color: gray;
+}
+
+.plain_text_button {
+    font-size: small;
+    padding: 0px;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
