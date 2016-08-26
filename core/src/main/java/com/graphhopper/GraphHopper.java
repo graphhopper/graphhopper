@@ -37,6 +37,8 @@ import com.graphhopper.util.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.exceptions.PointOutOfBoundsException;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1055,6 +1057,10 @@ public class GraphHopper implements GraphHopperAPI
             List<GHPoint> points = request.getPoints();
             String algoStr = request.getAlgorithm().isEmpty() ? DIJKSTRA_BI : request.getAlgorithm();
 
+            // TODO Maybe we should think about a isRequestValid method that checks all that stuff that we could do to fail fast
+            // For example see #734
+            checkIfPointsAreInBounds(points);
+
             RoutingTemplate routingTemplate;
             if (ROUND_TRIP.equalsIgnoreCase(algoStr))
                 routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, maxRoundTripRetries);
@@ -1138,6 +1144,19 @@ public class GraphHopper implements GraphHopperAPI
         {
             ghRsp.addError(ex);
             return Collections.emptyList();
+        }
+    }
+
+    private void checkIfPointsAreInBounds( List<GHPoint> points )
+    {
+        BBox bounds = getGraphHopperStorage().getBounds();
+        for (int i = 0; i < points.size(); i++)
+        {
+            GHPoint point = points.get(i);
+            if (!bounds.contains(point.getLat(), point.getLon()))
+            {
+                throw new PointOutOfBoundsException("Point " + i + " is ouf of bounds: " + point, i);
+            }
         }
     }
 
