@@ -129,7 +129,9 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         }
     });
 
-    L.control.scale().addTo(map);
+    scaleControl = L.control.scale({
+        imperial: false
+    }).addTo(map);
 
     map.fitBounds(new L.LatLngBounds(new L.LatLng(bounds.minLat, bounds.minLon),
             new L.LatLng(bounds.maxLat, bounds.maxLon)));
@@ -273,6 +275,15 @@ module.exports.clearElevation = function () {
 
 module.exports.getMap = function () {
     return map;
+};
+
+module.exports.updateScale = function (useMiles) {
+    if (scaleControl === null) {
+       return;
+    }
+    scaleControl.removeFrom(map);
+    var options = useMiles ? {metric: false} : {imperial: false};
+    scaleControl = L.control.scale(options).addTo(map);
 };
 
 var FROM = 'from', TO = 'to';
