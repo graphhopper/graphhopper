@@ -14,12 +14,4 @@ public class PointOutOfBoundsException extends CannotFindPointException
     {
         super(var1, pointIndex);
     }
-
-    @Override
-    public Map<String, String> getDetails()
-    {
-        Map<String, String> deatils = new HashMap<>(1);
-        deatils.put("out_of_bounds_point_index", String.valueOf(this.pointIndex));
-        return deatils;
-    }
 }
