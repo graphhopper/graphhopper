@@ -22,8 +22,7 @@
     </node>
     <node id="50" lat="10" lon="51">
         <tag k="name" v="E" />
-    </node>  
-                      
+    </node>                      
     
     <way id="10" uid="85761">
         <nd ref="10"/>
@@ -37,7 +36,7 @@
     <way id="12" uid="85762">
         <nd ref="10"/>
         <nd ref="40"/>
-        <nd ref="30"/>
+        <nd ref="30"/>        
         <tag k="name" v="A D C" />
         <tag k="oneway" v="true" />
         <tag k="highway" v="motorway" />      

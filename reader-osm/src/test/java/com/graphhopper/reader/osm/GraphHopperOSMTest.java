@@ -573,10 +573,11 @@ public class GraphHopperOSMTest
         assertEquals(2, instance.getGraphHopperStorage().getAllEdges().getMaxId());
 
         // A to E only for foot
-        GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.2, 52.01).setVehicle("foot"));
+        GHResponse grsp = instance.route(new GHRequest(11.1, 50, 11.19, 52).setVehicle("foot"));
         assertFalse(grsp.hasErrors());
         PathWrapper rsp = grsp.getBest();
-        assertEquals(Helper.createPointList(11.1, 50, 10, 51, 11.2, 52), rsp.getPoints());
+        // the last points snaps to the edge
+        assertEquals(Helper.createPointList(11.1, 50, 10, 51, 11.194015, 51.995013), rsp.getPoints());
     }
 
     @Test
