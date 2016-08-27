@@ -568,6 +568,7 @@ function routeLatLng(request, doQuery) {
             //create buttons to toggle between si and imperial units
             var createUnitsChooserButtonClickHandler = function (useMiles) {
                 return function () {
+                    mapLayer.updateScale(useMiles);
                     ghRequest.useMiles = useMiles;
                     resolveAll();
                     routeLatLng(ghRequest);
