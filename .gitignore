@@ -40,3 +40,4 @@ local.properties
 *.zip
 .DS_Store
 /core/nbproject/
+/reader-overlay-data/nbproject/
