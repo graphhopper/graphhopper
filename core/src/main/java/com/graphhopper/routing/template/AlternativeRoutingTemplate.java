@@ -26,6 +26,7 @@ import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Parameters.Routing;
+import static com.graphhopper.util.Parameters.Routing.PASS_THROUGH;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.Translation;
@@ -49,7 +50,7 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate
     {
         boolean withViaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
         if (withViaTurnPenalty)
-            throw new IllegalStateException("Alternative paths and a viaTurnPenalty at the same time is currently not supported");
+            throw new IllegalArgumentException("Alternative paths and " + PASS_THROUGH + " at the same time is currently not supported");
 
         return super.calcPaths(queryGraph, algoFactory, algoOpts);
     }
