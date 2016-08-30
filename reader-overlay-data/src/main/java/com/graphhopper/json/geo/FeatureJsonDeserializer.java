@@ -21,10 +21,10 @@ public class FeatureJsonDeserializer implements JsonDeserializer<JsonFeature>
             JsonFeature feature = new JsonFeature();
             JsonObject obj = json.getAsJsonObject();
 
-            if (obj.has("id") && obj.isJsonPrimitive())
-            {
-                feature.id = obj.getAsString();
-            } else
+            // TODO ensure uniqueness
+            if (obj.has("id"))
+                feature.id = obj.get("id").getAsString();
+            else
                 feature.id = UUID.randomUUID().toString();
 
             if (obj.has("properties"))

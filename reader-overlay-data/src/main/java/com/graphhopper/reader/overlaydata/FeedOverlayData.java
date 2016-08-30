@@ -160,7 +160,7 @@ public class FeedOverlayData
                 boolean value = (boolean) props.get("access");
                 updates++;
                 if (enableLogging)
-                    logger.info(encoder.toString() + " - access change at " + jsonFeature.getId());
+                    logger.info(encoder.toString() + " - access change via feature " + jsonFeature.getId());
                 edge.setFlags(encoder.setAccess(edge.getFlags(), value, value));
 
             } else if (props.containsKey("speed"))
@@ -172,7 +172,7 @@ public class FeedOverlayData
                 {
                     updates++;
                     if (enableLogging)
-                        logger.info(encoder.toString() + " - speed change at " + jsonFeature.getId() + ". Old: " + oldSpeed + ", new:" + value);
+                        logger.info(encoder.toString() + " - speed change via feature " + jsonFeature.getId() + ". Old: " + oldSpeed + ", new:" + value);
                     edge.setFlags(encoder.setSpeed(edge.getFlags(), value));
                 }
             }

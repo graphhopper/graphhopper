@@ -47,6 +47,8 @@ public class JsonFeatureCollectionTest
         assertEquals(102.0, f1.getGeometry().asPoint().lon, .1);
 
         JsonFeature f2 = data.getFeatures().get(1);
+        // read as string despite the 2 (not a string) in json
+        assertEquals("2", f2.getId());
         assertEquals(4, f2.getGeometry().asPointList().size());
         assertEquals(0.0, f2.getGeometry().asPointList().getLat(0), .1);
         assertEquals(102.0, f2.getGeometry().asPointList().getLon(0), .1);
