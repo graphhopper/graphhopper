@@ -16,60 +16,68 @@ public class FeatureJsonDeserializer implements JsonDeserializer<JsonFeature>
     @Override
     public JsonFeature deserialize( JsonElement json, Type type, JsonDeserializationContext context ) throws JsonParseException
     {
-        JsonFeature feature = new JsonFeature();
-        JsonObject obj = json.getAsJsonObject();
-
-        if (obj.has("id"))        
-            feature.id = obj.getAsString();
-        else        
-            feature.id = UUID.randomUUID().toString();        
-
-        if (obj.has("properties"))
+        try
         {
-            Map<String, Object> map = context.deserialize(obj.get("properties"), Map.class);
-            feature.properties = map;
-        }
+            JsonFeature feature = new JsonFeature();
+            JsonObject obj = json.getAsJsonObject();
 
-        if (obj.has("bbox"))
-            feature.bbox = parseBBox(obj.get("bbox").getAsJsonArray());
-
-        if (obj.has("geometry"))
-        {
-            JsonObject geometry = obj.get("geometry").getAsJsonObject();
-
-            if (geometry.has("coordinates"))
+            if (obj.has("id") && obj.isJsonPrimitive())
             {
-                if (!geometry.has("type"))
-                    throw new IllegalArgumentException("No type for non-empty coordinates specified");
+                feature.id = obj.getAsString();
+            } else
+                feature.id = UUID.randomUUID().toString();
 
-                String strType = context.deserialize(geometry.get("type"), String.class);
-                feature.type = strType;
-                if ("Point".equals(strType))
-                {
-                    JsonArray arr = geometry.get("coordinates").getAsJsonArray();
-                    double lon = arr.get(0).getAsDouble();
-                    double lat = arr.get(1).getAsDouble();
-                    if (arr.size() == 3)
-                        feature.geometry = new Point(lat, lon, arr.get(2).getAsDouble());
-                    else
-                        feature.geometry = new Point(lat, lon);
+            if (obj.has("properties"))
+            {
+                Map<String, Object> map = context.deserialize(obj.get("properties"), Map.class);
+                feature.properties = map;
+            }
 
-                } else if ("MultiPoint".equals(strType))
-                {
-                    feature.geometry = parseLineString(geometry);
+            if (obj.has("bbox"))
+                feature.bbox = parseBBox(obj.get("bbox").getAsJsonArray());
 
-                } else if ("LineString".equals(strType))
-                {
-                    feature.geometry = parseLineString(geometry);
+            if (obj.has("geometry"))
+            {
+                JsonObject geometry = obj.get("geometry").getAsJsonObject();
 
-                } else
+                if (geometry.has("coordinates"))
                 {
-                    throw new IllegalArgumentException("Coordinates type " + strType + " not yet supported");
+                    if (!geometry.has("type"))
+                        throw new IllegalArgumentException("No type for non-empty coordinates specified");
+
+                    String strType = context.deserialize(geometry.get("type"), String.class);
+                    feature.type = strType;
+                    if ("Point".equals(strType))
+                    {
+                        JsonArray arr = geometry.get("coordinates").getAsJsonArray();
+                        double lon = arr.get(0).getAsDouble();
+                        double lat = arr.get(1).getAsDouble();
+                        if (arr.size() == 3)
+                            feature.geometry = new Point(lat, lon, arr.get(2).getAsDouble());
+                        else
+                            feature.geometry = new Point(lat, lon);
+
+                    } else if ("MultiPoint".equals(strType))
+                    {
+                        feature.geometry = parseLineString(geometry);
+
+                    } else if ("LineString".equals(strType))
+                    {
+                        feature.geometry = parseLineString(geometry);
+
+                    } else
+                    {
+                        throw new IllegalArgumentException("Coordinates type " + strType + " not yet supported");
+                    }
                 }
             }
-        }
 
-        return feature;
+            return feature;
+
+        } catch (Exception ex)
+        {
+            throw new JsonParseException("Problem parsing JSON feature " + json);
+        }
     }
 
     LineString parseLineString( JsonObject geometry )

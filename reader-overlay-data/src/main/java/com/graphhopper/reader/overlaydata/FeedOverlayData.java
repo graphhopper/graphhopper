@@ -38,7 +38,8 @@ import com.graphhopper.util.shapes.GHPoint;
 import gnu.trove.iterator.TIntIterator;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
-import java.io.Reader;
+import java.io.*;
+import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +54,7 @@ public class FeedOverlayData
     private final LocationIndex locationIndex;
     private final GHson ghson;
     private final EncodingManager em;
+    private boolean enableLogging = false;
 
     public FeedOverlayData( Graph graph, EncodingManager em, LocationIndex locationIndex, GHson ghson )
     {
@@ -62,64 +64,119 @@ public class FeedOverlayData
         this.locationIndex = locationIndex;
     }
 
+    public void setLogging( boolean log )
+    {
+        enableLogging = log;
+    }
+
+    public long applyChanges( String fileOrFolderStr )
+    {
+        File fileOrFolder = new File(fileOrFolderStr);
+        try
+        {
+            if (fileOrFolder.isFile())
+            {
+                return applyChanges(new FileReader(fileOrFolder));
+            }
+
+            long sum = 0;
+            File[] fList = new File(fileOrFolderStr).listFiles(new FilenameFilter()
+            {
+                @Override
+                public boolean accept( File dir, String name )
+                {
+                    return name.endsWith(".json");
+                }
+            });
+            for (File f : fList)
+            {
+                sum += applyChanges(new FileReader(f));
+            }
+            return sum;
+
+        } catch (FileNotFoundException ex)
+        {
+            throw new RuntimeException(ex);
+        }
+    }
+
     /**
      * This method applies changes to the graph, specified by the reader.
      *
      * @return number of successfully applied edge changes
      */
-    public int applyChanges( Reader reader )
+    public long applyChanges( Reader reader )
     {
         // read full file, later support one json feature or collection per line to avoid high mem consumption
         JsonFeatureCollection data = ghson.fromJson(reader, JsonFeatureCollection.class);
-        int updates = 0;
+        long updates = 0;
         for (JsonFeature jsonFeature : data.getFeatures())
         {
             if (!jsonFeature.hasProperties())
                 throw new IllegalArgumentException("One feature has no properties, please specify properties e.g. speed or access");
 
-            String encoderStr = (String) jsonFeature.getProperty("vehicle");
-            FlagEncoder encoder = Helper.isEmpty(encoderStr) ? em.fetchEdgeEncoders().get(0) : em.getEncoder(encoderStr);
-
-            EdgeFilter filter = new DefaultEdgeFilter(encoder);
-            TIntSet edges = new TIntHashSet();
-            if (jsonFeature.hasGeometry())
+            List<String> encodersAsStr = (List) jsonFeature.getProperty("vehicles");
+            if (encodersAsStr == null)
             {
-                fillEdgeIDs(edges, jsonFeature.getGeometry(), filter);
-            } else if (jsonFeature.getBBox() != null)
-            {
-                fillEdgeIDs(edges, jsonFeature.getBBox(), filter);
+                for (FlagEncoder encoder : em.fetchEdgeEncoders())
+                {
+                    updates += applyChange(jsonFeature, encoder);
+                }
             } else
-                throw new IllegalArgumentException("Feature " + jsonFeature.getId() + " has no geometry and no bbox");
-
-            TIntIterator iter = edges.iterator();
-            Map<String, Object> props = jsonFeature.getProperties();
-            while (iter.hasNext())
             {
-                int edgeId = iter.next();
-                EdgeIteratorState edge = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
-
-                if (props.containsKey("access"))
+                for (String encoderStr : encodersAsStr)
                 {
-                    boolean value = (boolean) props.get("access");
-                    updates++;
-                    logger.info("Access change at " + jsonFeature.getId());
-                    edge.setFlags(encoder.setAccess(edge.getFlags(), value, value));
-
-                } else if (props.containsKey("speed"))
-                {
-                    // TODO use different speed for the different directions (see e.g. Bike2WeightFlagEncoder)
-                    double value = ((Number) props.get("speed")).doubleValue();
-                    double oldSpeed = encoder.getSpeed(edge.getFlags());
-                    if (oldSpeed != value)
-                    {
-                        updates++;
-                        logger.info("Speed change at " + jsonFeature.getId() + ". Old: " + oldSpeed + ", new:" + value);
-                        edge.setFlags(encoder.setSpeed(edge.getFlags(), value));
-                    }
+                    updates += applyChange(jsonFeature, em.getEncoder(encoderStr));
                 }
             }
         }
 
+        return updates;
+    }
+
+    private long applyChange( JsonFeature jsonFeature, FlagEncoder encoder )
+    {
+        long updates = 0;
+        EdgeFilter filter = new DefaultEdgeFilter(encoder);
+        TIntSet edges = new TIntHashSet();
+        if (jsonFeature.hasGeometry())
+        {
+            fillEdgeIDs(edges, jsonFeature.getGeometry(), filter);
+        } else if (jsonFeature.getBBox() != null)
+        {
+            fillEdgeIDs(edges, jsonFeature.getBBox(), filter);
+        } else
+            throw new IllegalArgumentException("Feature " + jsonFeature.getId() + " has no geometry and no bbox");
+
+        TIntIterator iter = edges.iterator();
+        Map<String, Object> props = jsonFeature.getProperties();
+        while (iter.hasNext())
+        {
+            int edgeId = iter.next();
+            EdgeIteratorState edge = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
+
+            if (props.containsKey("access"))
+            {
+                boolean value = (boolean) props.get("access");
+                updates++;
+                if (enableLogging)
+                    logger.info(encoder.toString() + " - access change at " + jsonFeature.getId());
+                edge.setFlags(encoder.setAccess(edge.getFlags(), value, value));
+
+            } else if (props.containsKey("speed"))
+            {
+                // TODO use different speed for the different directions (see e.g. Bike2WeightFlagEncoder)
+                double value = ((Number) props.get("speed")).doubleValue();
+                double oldSpeed = encoder.getSpeed(edge.getFlags());
+                if (oldSpeed != value)
+                {
+                    updates++;
+                    if (enableLogging)
+                        logger.info(encoder.toString() + " - speed change at " + jsonFeature.getId() + ". Old: " + oldSpeed + ", new:" + value);
+                    edge.setFlags(encoder.setSpeed(edge.getFlags(), value));
+                }
+            }
+        }
         return updates;
     }
 

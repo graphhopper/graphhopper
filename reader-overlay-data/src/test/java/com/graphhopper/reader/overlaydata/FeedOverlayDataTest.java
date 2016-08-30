@@ -66,7 +66,7 @@ public class FeedOverlayDataTest
 
         FeedOverlayData instance = new FeedOverlayData(graph, encodingManager, locationIndex, ghson);
         Reader reader = new InputStreamReader(getClass().getResourceAsStream("overlaydata1.json"), Helper.UTF_CS);
-        int updates = instance.applyChanges(reader);
+        long updates = instance.applyChanges(reader);
         assertEquals(2, updates);
 
         // assert changed speed and access
