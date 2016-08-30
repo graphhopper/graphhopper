@@ -41,6 +41,7 @@ public class JsonFeatureCollectionTest
         assertEquals(3, data.getFeatures().size());
 
         JsonFeature f1 = data.getFeatures().get(0);
+        assertEquals("1", f1.getId());
         assertEquals("value0", f1.getProperty("prop0"));
         assertEquals(0.5, f1.getGeometry().asPoint().lat, .1);
         assertEquals(102.0, f1.getGeometry().asPoint().lon, .1);
@@ -59,7 +60,7 @@ public class JsonFeatureCollectionTest
 
     JsonFeatureCollection getJson( String name )
     {
-        Reader reader = new InputStreamReader(getClass().getResourceAsStream(name), Helper.UTF_CS);        
+        Reader reader = new InputStreamReader(getClass().getResourceAsStream(name), Helper.UTF_CS);
         return ghson.fromJson(reader, JsonFeatureCollection.class);
     }
 
