@@ -380,20 +380,12 @@ public class Path
     /**
      * @return the list of instructions for this path.
      */
-    public InstructionList calcInstructions( final Translation tr )
+    public InstructionList calcInstructions(final Translation tr)
     {
         final InstructionList ways = new InstructionList(edgeIds.size() / 4, tr);
-        if (edgeIds.isEmpty())
-        {
-            if (isFound())
-            {
-                ways.add(new FinishInstruction(nodeAccess, endNode));
-            }
-            return ways;
-        }
-
         final int tmpNode = getFromNode();
-        forEveryEdge(new EdgeVisitor()
+
+        return calcInstructions(ways, new EdgeVisitor()
         {
             /*
              * We need three points to make directions
@@ -629,6 +621,20 @@ public class Path
                 prevInstruction.setTime(calcMillis(newDist, flags, false) + prevInstruction.getTime());
             }
         });
+    }
+
+    public InstructionList calcInstructions(InstructionList ways, EdgeVisitor visitor)
+    {
+        if (edgeIds.isEmpty())
+        {
+            if (isFound())
+            {
+                ways.add(new FinishInstruction(nodeAccess, endNode));
+            }
+            return ways;
+        }
+
+        forEveryEdge(visitor);
 
         return ways;
     }
