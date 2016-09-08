@@ -57,7 +57,7 @@ public class FinishInstruction extends Instruction
     @Override
     public String getTurnDescription( Translation tr )
     {
-        if (rawName || !name.isEmpty())
+        if (rawName)
             return getName();
 
         return tr.tr("finish");
