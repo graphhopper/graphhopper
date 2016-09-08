@@ -5,7 +5,7 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-core</artifactId>
-    <name>GraphHopper</name>
+    <name>GraphHopper Core</name>
     <version>0.8-SNAPSHOT</version>
     <packaging>jar</packaging> 
     <description>
