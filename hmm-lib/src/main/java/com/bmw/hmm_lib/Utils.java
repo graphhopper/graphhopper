@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package de.bmw.hmm;
+package com.bmw.hmm_lib;
 
 public class Utils {
 

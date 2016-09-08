@@ -14,18 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.bmw.hmm;
+
+package com.bmw.hmm_lib;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Contains the most likely sequence and additional results of the Viterbi
- * algorithm.
+ * Contains the most likely sequence and additional results of the Viterbi algorithm.
  */
 public class MostLikelySequence<S, O> {
-
+    
     public final List<S> sequence;
 
     /**
@@ -57,7 +57,7 @@ public class MostLikelySequence<S, O> {
      * starts with t=2.
      */
     public final List<Map<S, S>> backPointerSequence;
-    private int brokenTimeStep;
+    private final int brokenTimeStep;
 
     public MostLikelySequence(List<S> mostLikelySequence, boolean isBroken, int brokenTimeStep,
             List<Map<S, S>> backPointerSequence, List<Map<S, Double>> messageHistory) {

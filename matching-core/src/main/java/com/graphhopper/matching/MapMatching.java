@@ -25,9 +25,9 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import de.bmw.hmm.Hmm;
-import de.bmw.hmm.MostLikelySequence;
-import de.bmw.hmm.TimeStep;
+import com.bmw.hmm_lib.Hmm;
+import com.bmw.hmm_lib.MostLikelySequence;
+import com.bmw.hmm_lib.TimeStep;
 
 import java.util.ArrayList;
 import java.util.Collection;

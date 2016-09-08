@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package de.bmw.hmm;
+package com.bmw.hmm_lib;
 
 /**
  * This interface needs to be implemented and passed to {@link Hmm} to specify observation

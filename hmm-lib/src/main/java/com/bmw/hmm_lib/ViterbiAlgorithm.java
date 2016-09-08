@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package de.bmw.hmm;
+
+package com.bmw.hmm_lib;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,12 +25,12 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 
+
 /**
- * Implementation of the Viterbi algorithm for time-inhomogeneous Markov
- * processes. Uses logarithmic probabilities to prevent arithmetic underflows
- * for small probability values. The plain Viterbi algorithm for stationary
- * Markov processes is described e.g. in Rabiner, Juang, An introduction to
- * Hidden Markov Models, IEEE ASSP Mag., pp 4-16, June 1986.
+ *  Implementation of the Viterbi algorithm for time-inhomogeneous Markov processes.
+ *  Uses logarithmic probabilities to prevent arithmetic underflows for small probability values.
+ *  The plain Viterbi algorithm for stationary Markov processes is described e.g. in
+ *  Rabiner, Juang, An introduction to Hidden Markov Models, IEEE ASSP Mag., pp 4-16, June 1986.
  *
  * @param <S> state class/interface
  * @param <O> observation class/interface
@@ -37,17 +38,14 @@ import java.util.Map;
 public class ViterbiAlgorithm<S, O> {
 
     private class ForwardStepResult {
-
         /**
-         * Log probability of each state. See
-         * {@link MostLikelySequence#messageHistory}.
+         * Log probability of each state. See {@link MostLikelySequence#messageHistory}.
          */
         final Map<S, Double> message;
 
         /**
-         * Back pointers to previous state candidates for retrieving the most
-         * likely sequence after the forward pass. See
-         * {@link MostLikelySequence#backPointerSequence}
+         * Back pointers to previous state candidates for retrieving the most likely sequence after
+         * the forward pass. See {@link MostLikelySequence#backPointerSequence}
          */
         final Map<S, S> backPointers;
 
@@ -56,6 +54,7 @@ public class ViterbiAlgorithm<S, O> {
             backPointers = new HashMap<>(Utils.initialHashMapCapacity(numberStates));
         }
     }
+
 
     /**
      * @see Hmm#computeMostLikelySequence(HmmProbabilities, Iterator)
@@ -105,7 +104,7 @@ public class ViterbiAlgorithm<S, O> {
         while (timeStepIter.hasNext()) {
             final TimeStep<S, O> prevTimeStep = timeStep;
             timeStep = timeStepIter.next();            
-            ForwardStepResult forwardStepResult = forwardStep(hmmProbabilities, prevTimeStep,
+            ViterbiAlgorithm.ForwardStepResult forwardStepResult = forwardStep(hmmProbabilities, prevTimeStep,
                     timeStep, message);
             if (hmmBreak(forwardStepResult.message)) {
                 isBroken = true;
@@ -128,8 +127,7 @@ public class ViterbiAlgorithm<S, O> {
     }
 
     /**
-     * Computes initial log probability for each start state candidate based on
-     * first observation.
+     * Computes initial log probability for each start state candidate based on first observation.
      */
     private Map<S, Double> computeInitalMessage(HmmProbabilities<S, O> hmmProbabilities,
             TimeStep<S, O> firstTimeStep) {
@@ -142,8 +140,8 @@ public class ViterbiAlgorithm<S, O> {
     }
 
     /**
-     * Returns whether the specified message is either empty or only contains
-     * state candidates with 0 probability and thus causes the HMM to break.
+     * Returns whether the specified message is either empty or only contains state candidates
+     * with 0 probability and thus causes the HMM to break.
      */
     private boolean hmmBreak(Map<S, Double> message) {
         for (double logProbability : message.values()) {
@@ -155,15 +153,13 @@ public class ViterbiAlgorithm<S, O> {
     }
 
     /**
-     * Computes the new forward message and the back pointers to the previous
-     * states (next entry of backPointerSequence).
+     * Computes the new forward message and the back pointers to the previous states (next entry of
+     * backPointerSequence).
      */
     private ForwardStepResult forwardStep(HmmProbabilities<S, O> hmmProbabilities,
             TimeStep<S, O> prevTimeStep, TimeStep<S, O> curTimeStep, Map<S, Double> message) {
         final ForwardStepResult result = new ForwardStepResult(curTimeStep.candidates.size());
-        if (prevTimeStep.candidates.isEmpty()) {
-            throw new IllegalStateException("Candidates should not be empty here");
-        }
+        assert( !prevTimeStep.candidates.isEmpty());
 
         for (S curState : curTimeStep.candidates) {
             double maxLogProbability = Double.NEGATIVE_INFINITY;
@@ -183,13 +179,14 @@ public class ViterbiAlgorithm<S, O> {
         return result;
     }
 
+
     /**
      * Retrieves a state with maximum probability.
      */
     private S mostLikelyState(Map<S, Double> message) {
         // Set first state as most likely state.
         final Iterator<Map.Entry<S, Double>> entryIter = message.entrySet().iterator();
-        assert (entryIter.hasNext()); // Checked in compute.
+        assert(entryIter.hasNext()); // Checked in compute.
         final Map.Entry<S, Double> firstEntry = entryIter.next();
         S result = firstEntry.getKey();
         double maxLogProbability = firstEntry.getValue();
@@ -206,18 +203,17 @@ public class ViterbiAlgorithm<S, O> {
     }
 
     /**
-     * Retrieves most likely sequence from specified back pointer sequence
-     * ending in the specified last state. The result is stored in the passed
-     * empty mostLikelySequence.
+     * Retrieves most likely sequence from specified back pointer sequence ending in the specified
+     * last state. The result is stored in the passed empty mostLikelySequence.
      */
     private List<S> retrieveMostLikelySequence(List<Map<S, S>> backPointerSequence, S lastState) {
         final List<S> mostLikelySequence = new ArrayList<>();
         // Retrieve most likely state sequence in reverse order
         mostLikelySequence.add(lastState);
 
-        ListIterator<Map<S, S>> backPointerSeqIter
-                = backPointerSequence.listIterator(backPointerSequence.size());
-        while (backPointerSeqIter.hasPrevious()) {
+        ListIterator<Map<S, S>> backPointerSeqIter =
+                backPointerSequence.listIterator(backPointerSequence.size());
+        while(backPointerSeqIter.hasPrevious()) {
             lastState = backPointerSeqIter.previous().get(lastState);
             mostLikelySequence.add(lastState);
         }
@@ -225,5 +221,6 @@ public class ViterbiAlgorithm<S, O> {
         Collections.reverse(mostLikelySequence);
         return mostLikelySequence;
     }
+
 
 }

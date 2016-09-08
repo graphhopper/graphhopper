@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package de.bmw.hmm;
+package com.bmw.hmm_lib;
 
 import static java.lang.Math.log;
 import static org.junit.Assert.assertEquals;
@@ -27,6 +27,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.junit.Test;
+
+import com.bmw.hmm_lib.HmmProbabilities;
+import com.bmw.hmm_lib.MostLikelySequence;
+import com.bmw.hmm_lib.TimeStep;
+import com.bmw.hmm_lib.ViterbiAlgorithm;
 
 
 class TestState {
