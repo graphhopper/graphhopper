@@ -59,6 +59,7 @@ import java.util.Map;
  *
  * @author Peter Karich
  * @author Michael Zilske
+ * @author Stefan Holder
  */
 public class MapMatching {
 
@@ -134,29 +135,11 @@ public class MapMatching {
         }
 
         final EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        final List<QueryResult> allCandidates = new ArrayList<QueryResult>();
-        int indexGPX = 0;
-        TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep = null;        
-        final List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = new ArrayList<>();
         
-        for (GPXEntry entry : gpxList) {
-            if (prevTimeStep == null
-                    || distanceCalc.calcDist(prevTimeStep.observation.getLat(), prevTimeStep.observation.getLon(),
-                    		entry.getLat(), entry.getLon()) > 2 * measurementErrorSigma
-                    // always include last point
-                    || indexGPX == gpxList.size() - 1) {
-                final List<QueryResult> candidates = locationIndex.findNClosest(entry.lat, entry.lon, edgeFilter, measurementErrorSigma);
-                allCandidates.addAll(candidates);
-                final List<GPXExtension> gpxExtensions = new ArrayList<GPXExtension>();
-                for (QueryResult candidate : candidates) {
-                    gpxExtensions.add(new GPXExtension(entry, candidate, indexGPX));
-                }
-                final TimeStep<GPXExtension, GPXEntry, Path> timeStep = new TimeStep<>(entry, gpxExtensions);
-                timeSteps.add(timeStep);
-                prevTimeStep = timeStep;
-            }
-            indexGPX++;
-        }
+        // Compute all candidates first. Would be great if this could be done on-the-fly instead.
+        final List<QueryResult> allCandidates = new ArrayList<QueryResult>();
+        List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = createTimeSteps(gpxList, edgeFilter, allCandidates);
+        // printMinDistances(timeSteps);
         
         if (allCandidates.size() < 2) {
             throw new IllegalArgumentException("Too few matching coordinates (" + allCandidates.size() + "). Wrong region imported?");
@@ -168,11 +151,54 @@ public class MapMatching {
         final QueryGraph queryGraph = new QueryGraph(graph).setUseEdgeExplorerCache(true);
         queryGraph.lookup(allCandidates);
         
-        final HmmProbabilities probabilities = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
+        List<SequenceState<GPXExtension, GPXEntry, Path>> seq = computeViterbiSequence(timeSteps, gpxList, queryGraph);
+        
+        final EdgeExplorer explorer = queryGraph.createEdgeExplorer(edgeFilter);        
+        MatchResult matchResult = computeMatchResult(seq, gpxList, allCandidates, explorer);
+        
+        return matchResult;
+    }
+
+    /**
+     * Creates TimeSteps for the GPX entries but does not create emission or transition probabilities.
+     * 
+     * @param outAllCandidates ouptut parameter for all candidates, must be an empty list.
+     */
+    private List<TimeStep<GPXExtension, GPXEntry, Path>> createTimeSteps(List<GPXEntry> gpxList, EdgeFilter edgeFilter,
+    		List<QueryResult> outAllCandidates) {
+        int indexGPX = 0;
+        TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep = null;        
+        final List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = new ArrayList<>();
+        
+        for (GPXEntry entry : gpxList) {
+            if (prevTimeStep == null
+                    || distanceCalc.calcDist(prevTimeStep.observation.getLat(), prevTimeStep.observation.getLon(),
+                    		entry.getLat(), entry.getLon()) > 2 * measurementErrorSigma
+                    // always include last point
+                    || indexGPX == gpxList.size() - 1) {
+                final List<QueryResult> candidates = locationIndex.findNClosest(entry.lat, entry.lon, edgeFilter, measurementErrorSigma);
+                outAllCandidates.addAll(candidates);
+                final List<GPXExtension> gpxExtensions = new ArrayList<GPXExtension>();
+                for (QueryResult candidate : candidates) {
+                    gpxExtensions.add(new GPXExtension(entry, candidate, indexGPX));
+                }
+                final TimeStep<GPXExtension, GPXEntry, Path> timeStep = new TimeStep<>(entry, gpxExtensions);
+                timeSteps.add(timeStep);
+                prevTimeStep = timeStep;
+            }
+            indexGPX++;
+        }  
+        return timeSteps;
+    }
+
+	private List<SequenceState<GPXExtension, GPXEntry, Path>> computeViterbiSequence(
+			List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps, List<GPXEntry> gpxList,
+			final QueryGraph queryGraph) {
+		final HmmProbabilities probabilities = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
         final ViterbiAlgorithm<GPXExtension, GPXEntry, Path> viterbi = new ViterbiAlgorithm<>();
         
         int timeStepCounter = 0;
-        prevTimeStep = null;
+        TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep = null;
         for (TimeStep<GPXExtension, GPXEntry, Path> timeStep : timeSteps) {
             	computeEmissionProbabilities(timeStep, probabilities);
 
@@ -204,20 +230,55 @@ public class MapMatching {
                 prevTimeStep = timeStep;
         }
     
-        // printMinDistances(timeSteps);
         List<SequenceState<GPXExtension, GPXEntry, Path>> seq = viterbi.computeMostLikelySequence();
+		return seq;
+	}    
+    
+	private void computeEmissionProbabilities(TimeStep<GPXExtension, GPXEntry, Path> timeStep, HmmProbabilities probabilities) {
+        for (GPXExtension candidate : timeStep.candidates) {
+        	// road distance difference in meters
+            final double distance = candidate.getQueryResult().getQueryDistance();
+            timeStep.addEmissionLogProbability(candidate, probabilities.emissionLogProbability(distance));
+        }
+    }
+
+    private void computeTransitionProbabilities(TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep,
+			TimeStep<GPXExtension, GPXEntry, Path> timeStep, HmmProbabilities probabilities, QueryGraph queryGraph) {
+        final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.lat,
+       		 prevTimeStep.observation.lon, timeStep.observation.lat, timeStep.observation.lon);
         
-        List<EdgeMatch> edgeMatches = new ArrayList<EdgeMatch>();
-        double distance = 0.0;
-        long time = 0;
-        // every virtual edge maps to its real edge where the orientation is already correct!
+        // time difference in seconds
+        final double timeDiff = (timeStep.observation.getTime() - prevTimeStep.observation.getTime()) / 1000.0;
+    	
+    	 for (GPXExtension from : prevTimeStep.candidates) {
+             for (GPXExtension to : timeStep.candidates) {
+                 // TODO allow CH, then optionally use cached one-to-many Dijkstra to improve speed
+                 final DijkstraBidirectionRef algo = new DijkstraBidirectionRef(queryGraph, encoder, weighting, traversalMode);
+                 algo.setMaxVisitedNodes(maxVisitedNodes);
+                 final Path path = algo.calcPath(from.getQueryResult().getClosestNode(), to.getQueryResult().getClosestNode());
+                 if (path.isFound()) {
+                     timeStep.addRoadPath(from, to, path);
+                     final double transitionLogProbability = probabilities.transitionLogProbability(
+                    		 path.getDistance(), linearDistance, timeDiff);
+                     timeStep.addTransitionLogProbability(from, to, transitionLogProbability);
+                 }
+             }
+         }
+    }
+    
+	private MatchResult computeMatchResult(List<SequenceState<GPXExtension, GPXEntry, Path>> seq,
+			List<GPXEntry> gpxList, List<QueryResult> allCandidates, EdgeExplorer explorer) {
+		// every virtual edge maps to its real edge where the orientation is already correct!
         // TODO use traversal key instead of string!
-        Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<String, EdgeIteratorState>();
-        final EdgeExplorer explorer = queryGraph.createEdgeExplorer(edgeFilter);
+        final Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<String, EdgeIteratorState>();
+
         for (QueryResult candidate : allCandidates) {
             fillVirtualEdges(virtualEdgesMap, explorer, candidate);
         }
 
+        List<EdgeMatch> edgeMatches = new ArrayList<EdgeMatch>();        
+        double distance = 0.0;
+        long time = 0;
         EdgeIteratorState currentEdge = null;
         List<GPXExtension> gpxExtensions = new ArrayList<GPXExtension>();
         GPXExtension queryResult = seq.get(0).state;
@@ -269,41 +330,8 @@ public class MapMatching {
         long gpxMillis = gpxList.get(gpxList.size() - 1).getTime() - gpxList.get(0).getTime();
         matchResult.setGPXEntriesMillis(gpxMillis);
         matchResult.setGPXEntriesLength(gpxLength);
-
-        return matchResult;
-    }
-
-	private void computeEmissionProbabilities(TimeStep<GPXExtension, GPXEntry, Path> timeStep, HmmProbabilities probabilities) {
-        for (GPXExtension candidate : timeStep.candidates) {
-        	// road distance difference in meters
-            final double distance = candidate.getQueryResult().getQueryDistance();
-            timeStep.addEmissionLogProbability(candidate, probabilities.emissionLogProbability(distance));
-        }
-    }
-
-    private void computeTransitionProbabilities(TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep,
-			TimeStep<GPXExtension, GPXEntry, Path> timeStep, HmmProbabilities probabilities, QueryGraph queryGraph) {
-        final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.lat,
-       		 prevTimeStep.observation.lon, timeStep.observation.lat, timeStep.observation.lon);
-        
-        // time difference in seconds
-        final double timeDiff = (timeStep.observation.getTime() - prevTimeStep.observation.getTime()) / 1000.0;
-    	
-    	 for (GPXExtension from : prevTimeStep.candidates) {
-             for (GPXExtension to : timeStep.candidates) {
-                 // TODO allow CH, then optionally use cached one-to-many Dijkstra to improve speed
-                 final DijkstraBidirectionRef algo = new DijkstraBidirectionRef(queryGraph, encoder, weighting, traversalMode);
-                 algo.setMaxVisitedNodes(maxVisitedNodes);
-                 final Path path = algo.calcPath(from.getQueryResult().getClosestNode(), to.getQueryResult().getClosestNode());
-                 if (path.isFound()) {
-                     timeStep.addRoadPath(from, to, path);
-                     final double transitionLogProbability = probabilities.transitionLogProbability(
-                    		 path.getDistance(), linearDistance, timeDiff);
-                     timeStep.addTransitionLogProbability(from, to, transitionLogProbability);
-                 }
-             }
-         }
-    }
+		return matchResult;
+	}    
     
 	private boolean equalEdges(EdgeIteratorState edge1, EdgeIteratorState edge2) {
         return edge1.getEdge() == edge2.getEdge()
