@@ -53,10 +53,11 @@ public class DataFlagEncoder extends AbstractFlagEncoder
         super(5, 5, 0);
 
         maxPossibleSpeed = 140;
+        //
+        // TODO restrictions (forestry, agricultural, emergency, destination, private, delivery, customers)
+        //        
 
-        //
-        // TODO do something about the access values (forestry, agricultural, destination, private, delivery, customers)
-        //
+        // highway and certain tags like ferry and shuttle_train which can be used here (no logical overlap)
         List<String> highwayList = Arrays.asList(
                 /* reserve index=0 for unset roads (not accessible) */
                 "_default",
@@ -64,6 +65,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder
                 "trunk", "trunk_link",
                 "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
                 "unclassified", "residential", "living_street", "service", "road", "track",
+                "cycleway", "steps", "path", "footway", "pedestrian",
                 "ferry", "shuttle_train");
         int counter = 0;
         for (String hw : highwayList)
@@ -72,9 +74,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder
         }
 
         // We need transport mode additionally to highway e.g. a secondary highway can be a tunnel.
-        // But 'roundabout' needs a separate bit as a tunnel or a bridge can be a roundabout at the same time.
-        transportModeList.addAll(Arrays.asList("_default", "bridge", "tunnel",
-                "ford", "aerialway"));
+        // Also 'roundabout' needs a separate bit as a tunnel or a bridge can be a roundabout at the same time.
+        transportModeList.addAll(Arrays.asList("_default", "bridge", "tunnel", "ford", "aerialway"));
         counter = 0;
         for (String tm : transportModeList)
         {
@@ -82,7 +83,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder
         }
 
         List<String> surfaceList = Arrays.asList("_default", "asphalt", "unpaved", "paved", "gravel",
-                "ground", "dirt", "grass", "concrete", "paving_stones", "sand", "compacted", "cobblestone");
+                "ground", "dirt", "grass", "concrete", "paving_stones", "sand", "compacted", "cobblestone", "mud", "ice");
         counter = 0;
         for (String s : surfaceList)
         {
@@ -269,7 +270,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder
         return (int) highwayEncoder.getValue(edge.getFlags());
     }
 
-    // do not call in Weighting.calcWeight
     public String getHighwayAsString( EdgeIteratorState edge )
     {
         int val = getHighway(edge);
@@ -281,7 +281,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder
         return null;
     }
 
-    // do not call in Weighting.calcWeight
     public double[] getHighwaySpeedMap( Map<String, Double> map )
     {
         double[] res = new double[highwayMap.size()];
@@ -304,7 +303,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder
         return (int) surfaceEncoder.getValue(edge.getFlags());
     }
 
-    // do not call in Weighting.calcWeight
     public String getSurfaceAsString( EdgeIteratorState edge )
     {
         int val = getSurface(edge);
@@ -316,14 +314,37 @@ public class DataFlagEncoder extends AbstractFlagEncoder
         return null;
     }
 
-    public int getTransportMode( String transportModeStr )
+    public int getTransportMode( EdgeIteratorState edge )
     {
-        return transportModeMap.get(transportModeStr);
+        return (int) transportModeEncoder.getValue(edge.getFlags());
     }
 
-    public boolean isTransportMode( EdgeIteratorState edge, int transportMode )
+    public String getTransportModeAsString( EdgeIteratorState edge )
     {
-        return transportModeEncoder.getValue(edge.getFlags()) == transportMode;
+        int val = getTransportMode(edge);
+        for (Entry<String, Integer> e : transportModeMap.entrySet())
+        {
+            if (e.getValue() == val)
+                return e.getKey();
+        }
+        return null;
+    }
+
+    public double[] getTransportModeMap( Map<String, Double> map )
+    {
+        double[] res = new double[transportModeMap.size()];
+        for (Entry<String, Double> e : map.entrySet())
+        {
+            Integer integ = transportModeMap.get(e.getKey());
+            if (integ == null)
+                throw new IllegalArgumentException("Graph not prepared for transport_mode=" + e.getKey());
+
+            if (e.getValue() < 0)
+                throw new IllegalArgumentException("Negative speed " + e.getValue() + " not allowed. transport_mode=" + e.getKey());
+
+            res[integ] = e.getValue();
+        }
+        return res;
     }
 
     public boolean isRoundabout( EdgeIteratorState edge )
@@ -497,6 +518,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder
             put("living_street", 5d);
             put("service", 20d);
             put("road", 20d);
+            put("forestry", 15d);
             put("track", 15d);
         }
     };

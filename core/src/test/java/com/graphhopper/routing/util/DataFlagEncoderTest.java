@@ -40,8 +40,7 @@ public class DataFlagEncoderTest
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
         assertEquals("primary", encoder.getHighwayAsString(edge));
         assertEquals("sand", encoder.getSurfaceAsString(edge));
-        assertTrue(encoder.isTransportMode(edge, encoder.getTransportMode("tunnel")));
-        assertFalse(encoder.isTransportMode(edge, encoder.getTransportMode("bridge")));
+        assertEquals("tunnel", encoder.getTransportModeAsString(edge));
         assertTrue(encoder.isForward(edge, motorVehicleInt));
         assertTrue(encoder.isBackward(edge, motorVehicleInt));
 
@@ -65,11 +64,11 @@ public class DataFlagEncoderTest
     {
         Map<String, Double> map = new HashMap<>();
         map.put("motorway", 100d);
-        map.put("motorway_link", 100d);        
+        map.put("motorway_link", 100d);
         map.put("trunk", 90d);
         map.put("trunk_link", 90d);
 
-        double[] arr = encoder.getHighwaySpeedMap(map);        
+        double[] arr = encoder.getHighwaySpeedMap(map);
         assertEquals("[0.0, 100.0, 100.0, 90.0, 90.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]", Arrays.toString(arr));
     }
 
