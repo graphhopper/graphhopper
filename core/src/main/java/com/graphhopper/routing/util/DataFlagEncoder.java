@@ -19,20 +19,22 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.OSMRelation;
 import com.graphhopper.reader.OSMWay;
+import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
 import java.util.*;
 import java.util.Map.Entry;
 
 /**
- * This encoder tries to store all way information into a 64bit value. Later extendable to multiple
- * ints or bytes. The assumption is that edge.getFlags is cheap and can be later replaced by e.g.
- * one or more (cheap) calls of edge.getData(index).
+ * This encoder tries to store all way information into a 32 or 64bit value. Later extendable to
+ * multiple ints or bytes. The assumption is that edge.getFlags is cheap and can be later replaced
+ * by e.g. one or more (cheap) calls of edge.getData(index).
  * <p>
  * Currently limited to motor vehicle but later could handle different modes like foot or bike too.
  *
  * @author Peter Karich
  */
-public class GenericFlagEncoder extends AbstractFlagEncoder
+public class DataFlagEncoder extends AbstractFlagEncoder
 {
     private long bit0;
     private EncodedDoubleValue carFwdMaxspeedEncoder;
@@ -45,7 +47,7 @@ public class GenericFlagEncoder extends AbstractFlagEncoder
     private final List<String> transportModeList = new ArrayList<>();
     private final Map<String, Integer> transportModeMap = new HashMap<>();
 
-    public GenericFlagEncoder()
+    public DataFlagEncoder()
     {
         // TODO include turn information
         super(5, 5, 0);
@@ -58,11 +60,11 @@ public class GenericFlagEncoder extends AbstractFlagEncoder
         List<String> highwayList = Arrays.asList(
                 /* reserve index=0 for unset roads (not accessible) */
                 "_default",
-                "motorway", "motorway_link", "motorroad",
+                "motorway", "motorway_link",
                 "trunk", "trunk_link",
                 "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
                 "unclassified", "residential", "living_street", "service", "road", "track",
-                "ferry", "shuttle");
+                "ferry", "shuttle_train");
         int counter = 0;
         for (String hw : highwayList)
         {
@@ -474,5 +476,45 @@ public class GenericFlagEncoder extends AbstractFlagEncoder
     public String toString()
     {
         return "generic";
+    }
+
+    private static final Map<String, Double> DEFAULT_SPEEDS = new LinkedHashMap<String, Double>()
+    {
+        {
+            put("motorway", 100d);
+            put("motorway_link", 70d);
+            put("motorroad", 90d);
+            put("trunk", 70d);
+            put("trunk_link", 65d);
+            put("primary", 65d);
+            put("primary_link", 60d);
+            put("secondary", 60d);
+            put("secondary_link", 50d);
+            put("tertiary", 50d);
+            put("tertiary_link", 40d);
+            put("unclassified", 30d);
+            put("residential", 30d);
+            put("living_street", 5d);
+            put("service", 20d);
+            put("road", 20d);
+            put("track", 15d);
+        }
+    };
+
+    /**
+     * This method creates a Config map out of the PMap. Later on this conversion should not be
+     * necessary when we read JSON.
+     */
+    public ConfigMap readStringMap( PMap weightingMap )
+    {
+        Map<String, Double> map = new HashMap<>();
+        for (Entry<String, Double> e : DEFAULT_SPEEDS.entrySet())
+        {
+            map.put(e.getKey(), weightingMap.getDouble("highways." + e.getKey(), e.getValue()));
+        }
+
+        ConfigMap cMap = new ConfigMap();
+        cMap.put("highways", map);
+        return cMap;
     }
 }

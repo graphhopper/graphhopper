@@ -36,18 +36,27 @@ public class GenericWeighting extends AbstractWeighting
     protected final static double SPEED_CONV = 3.6;
     private final double headingPenalty;
     private final double maxSpeed;
-    private final GenericFlagEncoder gEncoder;
+    private final DataFlagEncoder gEncoder;
     private final double[] speedArray;
     private final int accessType;
 
-    public GenericWeighting( GenericFlagEncoder encoder, ConfigMap cMap )
+    public GenericWeighting( DataFlagEncoder encoder, ConfigMap cMap )
     {
         super(encoder);
         gEncoder = encoder;
         headingPenalty = cMap.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
-        maxSpeed = cMap.getDouble("maxspeed", encoder.getMaxPossibleSpeed()) / SPEED_CONV;
 
         speedArray = gEncoder.getHighwaySpeedMap(cMap.getMap("highways", Double.class));
+        double tmpSpeed = 0;
+        for (double speed : speedArray)
+        {
+            if (speed > tmpSpeed)
+                tmpSpeed = speed;
+        }
+        if (tmpSpeed > encoder.getMaxPossibleSpeed())
+            throw new IllegalArgumentException("Speed bigger than maximum speed: " + tmpSpeed + " > " + encoder.getMaxPossibleSpeed());
+
+        maxSpeed = tmpSpeed / SPEED_CONV;
         accessType = gEncoder.getAccessType("motor_vehicle");
     }
 
@@ -98,6 +107,9 @@ public class GenericWeighting extends AbstractWeighting
 
         // TODO avoid a certain (or multiple) bounding boxes (less efficient for just a few edges) or a list of edgeIDs (not good for large areas)
         // bbox.contains(nodeAccess.getLatitude(edge.getBaseNode()), nodeAccess.getLongitude(edge.getBaseNode())) time+=avoidPenalty;
+        
+        // TODO surfaces can reduce average speed
+        // TODO prefer or avoid bike and hike routes
         return time;
     }
 

@@ -968,30 +968,8 @@ public class GraphHopper implements GraphHopperAPI
 
         if (encoder.supports(GenericWeighting.class))
         {
-            // TODO fix workaround: make it working with URL parameters
-            ConfigMap cMap = new ConfigMap();
-            Map<String, Double> map = new HashMap<>();
-            map.put("motorway", weightingMap.getDouble("highways.motorway", 100d));
-            map.put("motorway_link", weightingMap.getDouble("highways.motorway_link", 100d));
-            map.put("motorroad", weightingMap.getDouble("highways.motorroad", 100d));
-            map.put("trunk", weightingMap.getDouble("highways.trunk", 90d));
-            map.put("trunk_link", weightingMap.getDouble("highways.trunk_link", 90d));
-            map.put("primary", weightingMap.getDouble("highways.primary", 80d));
-            map.put("primary_link", weightingMap.getDouble("highways.primary_link", 80d));
-            map.put("secondary", weightingMap.getDouble("highways.secondary", 70d));
-            map.put("secondary_link", weightingMap.getDouble("highways.secondary_link", 70d));
-            map.put("tertiary", weightingMap.getDouble("highways.tertiary", 65d));
-            map.put("tertiary_link", weightingMap.getDouble("highways.tertiary_link", 65d));
-            map.put("unclassified", weightingMap.getDouble("highways.unclassified", 60d));
-            map.put("residential", weightingMap.getDouble("highways.residential", 30d));
-            map.put("living_street", weightingMap.getDouble("highways.living_street", 5d));
-            map.put("service", weightingMap.getDouble("highways.service", 10d));
-            map.put("road", weightingMap.getDouble("highways.road", 20d));
-            map.put("track", weightingMap.getDouble("highways.track", 15d));
-
-            cMap.put("highways", map);
-
-            return new GenericWeighting((GenericFlagEncoder) encoder, cMap);
+            DataFlagEncoder dataEncoder = (DataFlagEncoder) encoder;
+            return new GenericWeighting(dataEncoder, dataEncoder.readStringMap(weightingMap));
         } else if ("shortest".equalsIgnoreCase(weighting))
         {
             return new ShortestWeighting(encoder);

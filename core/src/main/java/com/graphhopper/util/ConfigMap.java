@@ -22,8 +22,9 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A properties map with convenient accessors
+ * A properties map String to Object with convenient accessors
  * <p>
+ * @see PMap
  * @author Peter Karich
  */
 public class ConfigMap

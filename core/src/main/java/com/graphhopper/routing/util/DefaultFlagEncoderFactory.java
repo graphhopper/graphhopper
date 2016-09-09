@@ -30,7 +30,7 @@ public class DefaultFlagEncoderFactory implements FlagEncoderFactory
     public FlagEncoder createFlagEncoder( String name, PMap configuration )
     {
         if (name.equals(GENERIC))
-            return new GenericFlagEncoder();
+            return new DataFlagEncoder();
         
         else if (name.equals(CAR))
             return new CarFlagEncoder(configuration);

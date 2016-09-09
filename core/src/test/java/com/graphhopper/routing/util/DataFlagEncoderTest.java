@@ -15,15 +15,15 @@ import org.junit.Test;
  *
  * @author Peter Karich
  */
-public class GenericFlagEncoderTest
+public class DataFlagEncoderTest
 {
-    private final GenericFlagEncoder encoder;
+    private final DataFlagEncoder encoder;
     private final EncodingManager encodingManager;
     private final int motorVehicleInt;
 
-    public GenericFlagEncoderTest()
+    public DataFlagEncoderTest()
     {
-        encoder = new GenericFlagEncoder();
+        encoder = new DataFlagEncoder();
         encodingManager = new EncodingManager(encoder);
 
         motorVehicleInt = encoder.getAccessType("motor_vehicle");
@@ -65,13 +65,12 @@ public class GenericFlagEncoderTest
     {
         Map<String, Double> map = new HashMap<>();
         map.put("motorway", 100d);
-        map.put("motorway_link", 100d);
-        map.put("motorroad", 100d);
+        map.put("motorway_link", 100d);        
         map.put("trunk", 90d);
         map.put("trunk_link", 90d);
 
         double[] arr = encoder.getHighwaySpeedMap(map);        
-        assertEquals("[0.0, 100.0, 100.0, 100.0, 90.0, 90.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]", Arrays.toString(arr));
+        assertEquals("[0.0, 100.0, 100.0, 90.0, 90.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]", Arrays.toString(arr));
     }
 
     @Test
