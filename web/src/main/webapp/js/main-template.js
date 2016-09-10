@@ -334,7 +334,32 @@ function setStartCoord(e) {
 }
 
 function setIntermediateCoord(e) {
-    var index = ghRequest.route.size() - 1;
+    // find the point of the route that is closest to the clicked location
+    var routeLayer = mapLayer.getSubLayer("route");
+    var routeCoords = routeLayer.getLatLngs();
+    var closestPoint = routeCoords.map(function(p, i) {
+       return {
+            index: i,
+            distance: L.latLng(p).distanceTo(e.latlng)
+       };
+    }).reduce(function(prev, curr) {
+        return curr.distance < prev.distance ? curr : prev;
+    });
+
+    // start at closestPoint and follow the route to find the index of the next waypoint
+    var wayPoints = routeLayer.feature.properties.snappedWaypoints.coordinates;
+    var index = 1; // if no waypoint is found the index will be one
+    for (var i=closestPoint.index; i<routeCoords.length; ++i) {
+        var wpIndex = wayPoints.findIndex(function(wp) {
+            return routeCoords[i].equals(L.latLng(wp[1], wp[0]), 1.e-3);
+        });
+        if (wpIndex !== -1) {
+            index = wpIndex === 0 ? 1 : wpIndex;
+            break;
+        }
+    }
+
+    // insert the new waypoint
     ghRequest.route.add(e.latlng.wrap(), index);
     resolveIndex(index);
     routeIfAllResolved();
@@ -547,7 +572,11 @@ function routeLatLng(request, doQuery) {
             var geojsonFeature = {
                 "type": "Feature",
                 "geometry": path.points,
-                "properties": {"style": style}
+                "properties": {
+                    "style": style,
+                    name: "route",
+                    snappedWaypoints: path.snapped_waypoints
+                }
             };
 
             geoJsons.push(geojsonFeature);
