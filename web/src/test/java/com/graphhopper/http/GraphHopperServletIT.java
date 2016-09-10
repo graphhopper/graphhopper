@@ -139,9 +139,9 @@ public class GraphHopperServletIT extends BaseServletTester
         assertTrue("distance wasn't correct:" + arsp.getDistance(), arsp.getDistance() < 21000);
 
         List<Map<String, Object>> instructions = arsp.getInstructions().createJson();
-        assertEquals(23, instructions.size());
+        assertEquals(49, instructions.size());
         assertEquals("Continue onto la Callisa", instructions.get(0).get("text"));
-        assertEquals("At roundabout, take exit 2", instructions.get(3).get("text"));
+        assertEquals("At roundabout, take exit 2", instructions.get(4).get("text"));
     }
 
     @Test
@@ -182,7 +182,7 @@ public class GraphHopperServletIT extends BaseServletTester
     {
         String str = queryString("point=42.554851,1.536198&point=42.510071,1.548128&type=gpx", 200);
         // For backward compatibility we currently export route and track.
-        assertTrue(str.contains("<gh:distance>115.1</gh:distance>"));
+        assertTrue(str.contains("<gh:distance>27.0</gh:distance>"));
         assertFalse(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));
         assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
     }

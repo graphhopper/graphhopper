@@ -96,12 +96,18 @@ public class PathTest
         InstructionList instr = path.calcInstructions(tr);
         List<Map<String, Object>> res = instr.createJson();
         Map<String, Object> tmp = res.get(0);
-        assertEquals(3000.0, tmp.get("distance"));
-        assertEquals(504000L, tmp.get("time"));
+        assertEquals(1000.0, tmp.get("distance"));
+        assertEquals(360000L, tmp.get("time"));
         assertEquals("Continue", tmp.get("text"));
-        assertEquals("[0, 6]", tmp.get("interval").toString());
+        assertEquals("[0, 3]", tmp.get("interval").toString());
 
         tmp = res.get(1);
+        assertEquals(2000.0, tmp.get("distance"));
+        assertEquals(144000L, tmp.get("time"));
+        assertEquals("Turn sharp right", tmp.get("text"));
+        assertEquals("[3, 6]", tmp.get("interval").toString());
+        
+        tmp = res.get(2);
         assertEquals(0.0, tmp.get("distance"));
         assertEquals(0L, tmp.get("time"));
         assertEquals("Finish!", tmp.get("text"));
