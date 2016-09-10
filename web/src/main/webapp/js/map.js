@@ -209,9 +209,9 @@ module.exports.getRoutingLayer = function () {
     return routingLayer;
 };
 
-module.exports.getSubLayer = function(name) {
+module.exports.getSubLayers = function(name) {
     var subLayers = routingLayer.getLayers();
-    return subLayers.find(function(sl) {
+    return subLayers.filter(function(sl) {
         return sl.feature && sl.feature.properties && sl.feature.properties.name === name;
     });
 };

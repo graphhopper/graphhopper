@@ -334,22 +334,34 @@ function setStartCoord(e) {
 }
 
 function setIntermediateCoord(e) {
-    // find the point of the route that is closest to the clicked location
-    var routeLayer = mapLayer.getSubLayer("route");
-    var routeCoords = routeLayer.getLatLngs();
-    var closestPoint = routeCoords.map(function(p, i) {
+    // finds the point of a routeLayer that is closest to the clicked location
+    var getClosestPoint = function(routeLayer) {
+        return routeLayer.getLatLngs().map(function(rc, i) {
+            return {
+                index: i,
+                distance: L.latLng(rc).distanceTo(e.latlng)
+            };
+        }).reduce(function(prev, curr) {
+            return curr.distance < prev.distance ? curr : prev;
+        });
+    };
+
+    // find the part of the route that contains the closest point to the clicked location
+    // there can be more than one such parts if alternative routes are used
+    var closestRouteLayer = mapLayer.getSubLayers("route").map(function(rl) {
        return {
-            index: i,
-            distance: L.latLng(p).distanceTo(e.latlng)
+           routeLayer: rl,
+           closestPoint: getClosestPoint(rl)
        };
     }).reduce(function(prev, curr) {
-        return curr.distance < prev.distance ? curr : prev;
+        return curr.closestPoint.distance < prev.closestPoint.distance ? curr : prev;
     });
 
-    // start at closestPoint and follow the route to find the index of the next waypoint
-    var wayPoints = routeLayer.feature.properties.snappedWaypoints.coordinates;
+    // start at the closest point and follow the route to find the index of the next waypoint
+    var routeCoords = closestRouteLayer.routeLayer.getLatLngs();
+    var wayPoints = closestRouteLayer.routeLayer.feature.properties.snappedWaypoints.coordinates;
     var index = 1; // if no waypoint is found the index will be one
-    for (var i=closestPoint.index; i<routeCoords.length; ++i) {
+    for (var i=closestRouteLayer.closestPoint.index; i<routeCoords.length; ++i) {
         var wpIndex = wayPoints.findIndex(function(wp) {
             return routeCoords[i].equals(L.latLng(wp[1], wp[0]), 1.e-3);
         });
