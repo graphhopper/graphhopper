@@ -18,63 +18,53 @@
 package com.graphhopper.json.geo;
 
 import com.graphhopper.util.shapes.BBox;
+
 import java.util.Map;
 
 /**
- *
  * @author Peter Karich
  */
-public class JsonFeature
-{
+public class JsonFeature {
     String id;
     String type;
     BBox bbox;
     Geometry geometry;
     Map<String, Object> properties;
 
-    public String getId()
-    {
+    public String getId() {
         return id;
     }
 
-    public String getType()
-    {
+    public String getType() {
         return type;
     }
 
-    public BBox getBBox()
-    {
+    public BBox getBBox() {
         return bbox;
     }
 
-    public boolean hasGeometry()
-    {
+    public boolean hasGeometry() {
         return geometry != null;
     }
 
-    public Geometry getGeometry()
-    {
+    public Geometry getGeometry() {
         return geometry;
     }
 
-    public boolean hasProperties()
-    {
+    public boolean hasProperties() {
         return properties != null;
     }
 
-    public Map<String, Object> getProperties()
-    {
+    public Map<String, Object> getProperties() {
         return properties;
     }
 
-    public Object getProperty( String key )
-    {
+    public Object getProperty(String key) {
         return properties.get(key);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "id:" + getId();
     }
 }

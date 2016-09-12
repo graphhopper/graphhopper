@@ -17,61 +17,51 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.AlternativeRoute.AlternativeBidirSearch;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
-
 import org.junit.Test;
-
-import java.util.List;
-
-import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
-import com.graphhopper.routing.AlternativeRoute.AlternativeBidirSearch;
-import com.graphhopper.storage.*;
-import java.util.Arrays;
-import java.util.Collection;
-import static org.junit.Assert.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+
+import static com.graphhopper.routing.AbstractRoutingAlgorithmTester.updateDistancesFor;
+import static org.junit.Assert.*;
+
 @RunWith(Parameterized.class)
-public class AlternativeRouteTest
-{
+public class AlternativeRouteTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = new EncodingManager(carFE);
     private final TraversalMode traversalMode;
+
+    public AlternativeRouteTest(TraversalMode tMode) {
+        this.traversalMode = tMode;
+    }
 
     /**
      * Runs the same test with each of the supported traversal modes
      */
     @Parameterized.Parameters(name = "{0}")
-    public static Collection<Object[]> configs()
-    {
-        return Arrays.asList(new Object[][]
-        {
-            {
-                TraversalMode.NODE_BASED
-            },
-            {
-                TraversalMode.EDGE_BASED_2DIR
-            }
+    public static Collection<Object[]> configs() {
+        return Arrays.asList(new Object[][]{
+            {TraversalMode.NODE_BASED},
+            {TraversalMode.EDGE_BASED_2DIR}
         });
     }
 
-    public AlternativeRouteTest( TraversalMode tMode )
-    {
-        this.traversalMode = tMode;
-    }
-
-    public GraphHopperStorage createTestGraph( boolean fullGraph, EncodingManager tmpEM )
-    {
+    public GraphHopperStorage createTestGraph(boolean fullGraph, EncodingManager tmpEM) {
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false, new GraphExtension.NoOpExtension());
         graph.create(1000);
 
@@ -114,8 +104,7 @@ public class AlternativeRouteTest
     }
 
     @Test
-    public void testCalcAlternatives() throws Exception
-    {
+    public void testCalcAlternatives() throws Exception {
         Weighting weighting = new FastestWeighting(carFE);
         GraphHopperStorage g = createTestGraph(true, em);
         AlternativeRoute altDijkstra = new AlternativeRoute(g, carFE, weighting, traversalMode);
@@ -144,8 +133,7 @@ public class AlternativeRouteTest
     }
 
     @Test
-    public void testCalcAlternatives2() throws Exception
-    {
+    public void testCalcAlternatives2() throws Exception {
         Weighting weighting = new FastestWeighting(carFE);
         Graph g = createTestGraph(true, em);
         AlternativeRoute altDijkstra = new AlternativeRoute(g, carFE, weighting, traversalMode);
@@ -167,12 +155,10 @@ public class AlternativeRouteTest
         assertEquals(2416.0, pathInfos.get(2).getPath().getWeight(), .1);
     }
 
-    void checkAlternatives( List<AlternativeRoute.AlternativeInfo> alternativeInfos )
-    {
+    void checkAlternatives(List<AlternativeRoute.AlternativeInfo> alternativeInfos) {
         assertFalse("alternativeInfos should contain alternatives", alternativeInfos.isEmpty());
         AlternativeRoute.AlternativeInfo bestInfo = alternativeInfos.get(0);
-        for (int i = 1; i < alternativeInfos.size(); i++)
-        {
+        for (int i = 1; i < alternativeInfos.size(); i++) {
             AlternativeRoute.AlternativeInfo a = alternativeInfos.get(i);
             if (a.getPath().getWeight() < bestInfo.getPath().getWeight())
                 assertTrue("alternative is not longer -> " + a + " vs " + bestInfo, false);
@@ -184,8 +170,7 @@ public class AlternativeRouteTest
     }
 
     @Test
-    public void testDisconnectedAreas()
-    {
+    public void testDisconnectedAreas() {
         Graph g = createTestGraph(true, em);
 
         // one single disconnected node

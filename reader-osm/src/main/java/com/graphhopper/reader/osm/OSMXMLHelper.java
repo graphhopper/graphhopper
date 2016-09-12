@@ -22,19 +22,19 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderRelation.Member;
 import com.graphhopper.reader.ReaderWay;
-import java.util.List;
+
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import java.util.List;
 
 /**
- *
  * @author Peter Karich
  */
-public class OSMXMLHelper
-{
-    public static ReaderNode createNode( long id, XMLStreamReader parser ) throws XMLStreamException
-    {
+public class OSMXMLHelper {
+    private static final String TYPE_DECODE = "nwr";
+
+    public static ReaderNode createNode(long id, XMLStreamReader parser) throws XMLStreamException {
         ReaderNode node = new ReaderNode(id,
                 Double.parseDouble(parser.getAttributeValue(null, "lat")),
                 Double.parseDouble(parser.getAttributeValue(null, "lon")));
@@ -44,8 +44,7 @@ public class OSMXMLHelper
         return node;
     }
 
-    public static ReaderWay createWay( long id, XMLStreamReader parser ) throws XMLStreamException
-    {
+    public static ReaderWay createWay(long id, XMLStreamReader parser) throws XMLStreamException {
         ReaderWay way = new ReaderWay(id);
         parser.nextTag();
         readNodes(way, parser);
@@ -53,13 +52,10 @@ public class OSMXMLHelper
         return way;
     }
 
-    private static void readNodes( ReaderWay way, XMLStreamReader parser ) throws XMLStreamException
-    {
+    private static void readNodes(ReaderWay way, XMLStreamReader parser) throws XMLStreamException {
         int event = parser.getEventType();
-        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("nd"))
-        {
-            if (event == XMLStreamConstants.START_ELEMENT)
-            {
+        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("nd")) {
+            if (event == XMLStreamConstants.START_ELEMENT) {
                 // read node reference
                 String ref = parser.getAttributeValue(null, "ref");
                 way.getNodes().add(Long.parseLong(ref));
@@ -69,13 +65,10 @@ public class OSMXMLHelper
         }
     }
 
-    private static void readTags( ReaderElement re, XMLStreamReader parser ) throws XMLStreamException
-    {
+    private static void readTags(ReaderElement re, XMLStreamReader parser) throws XMLStreamException {
         int event = parser.getEventType();
-        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("tag"))
-        {
-            if (event == XMLStreamConstants.START_ELEMENT)
-            {
+        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("tag")) {
+            if (event == XMLStreamConstants.START_ELEMENT) {
                 // read tag
                 String key = parser.getAttributeValue(null, "k");
                 String value = parser.getAttributeValue(null, "v");
@@ -88,8 +81,7 @@ public class OSMXMLHelper
         }
     }
 
-    public static ReaderRelation createRelation( long id, XMLStreamReader parser ) throws XMLStreamException
-    {
+    public static ReaderRelation createRelation(long id, XMLStreamReader parser) throws XMLStreamException {
         ReaderRelation rel = new ReaderRelation(id);
 
         parser.nextTag();
@@ -98,13 +90,10 @@ public class OSMXMLHelper
         return rel;
     }
 
-    private static void readMembers( List<Member> members, XMLStreamReader parser ) throws XMLStreamException
-    {
+    private static void readMembers(List<Member> members, XMLStreamReader parser) throws XMLStreamException {
         int event = parser.getEventType();
-        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equalsIgnoreCase("member"))
-        {
-            if (event == XMLStreamConstants.START_ELEMENT)
-            {
+        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equalsIgnoreCase("member")) {
+            if (event == XMLStreamConstants.START_ELEMENT) {
                 // read member
                 members.add(createMember(parser));
             }
@@ -114,10 +103,7 @@ public class OSMXMLHelper
 
     }
 
-    private static final String TYPE_DECODE = "nwr";
-
-    public static Member createMember( XMLStreamReader parser )
-    {
+    public static Member createMember(XMLStreamReader parser) {
         String typeName = parser.getAttributeValue(null, "type");
         int type = TYPE_DECODE.indexOf(typeName.charAt(0));
         long ref = Long.parseLong(parser.getAttributeValue(null, "ref"));

@@ -20,7 +20,6 @@ package com.graphhopper.storage.index;
 /**
  * @author Peter Karich
  */
-public interface PointEmitter
-{
-    void set( double lat, double lon );
+public interface PointEmitter {
+    void set(double lat, double lon);
 }

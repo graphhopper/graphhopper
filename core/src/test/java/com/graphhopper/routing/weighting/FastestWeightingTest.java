@@ -20,31 +20,31 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.util.*;
-import static com.graphhopper.util.GHUtility.*;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Routing;
 import org.junit.Test;
 
+import static com.graphhopper.util.GHUtility.createMockedEdgeIteratorState;
 import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class FastestWeightingTest
-{
+public class FastestWeightingTest {
     private final FlagEncoder encoder = new EncodingManager("car").getEncoder("car");
 
     @Test
-    public void testMinWeightHasSameUnitAs_getWeight()
-    {
+    public void testMinWeightHasSameUnitAs_getWeight() {
         Weighting instance = new FastestWeighting(encoder);
         long flags = encoder.setProperties(encoder.getMaxSpeed(), true, true);
         assertEquals(instance.getMinWeight(10), instance.calcWeight(createMockedEdgeIteratorState(10, flags), false, EdgeIterator.NO_EDGE), 1e-8);
     }
 
     @Test
-    public void testWeightWrongHeading()
-    {
+    public void testWeightWrongHeading() {
         Weighting instance = new FastestWeighting(encoder, new PMap().put(Parameters.Routing.HEADING_PENALTY, "100"));
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, 1, 1, 2, 10,
                 encoder.setProperties(10, true, true), "test", Helper.createPointList(51, 0, 51, 1));
@@ -67,13 +67,12 @@ public class FastestWeightingTest
     }
 
     @Test
-    public void testSpeed0()
-    {
+    public void testSpeed0() {
         Weighting instance = new FastestWeighting(encoder);
 
         assertEquals(1.0 / 0, instance.calcWeight(createMockedEdgeIteratorState(10, encoder.setProperties(0, true, true)), false, EdgeIterator.NO_EDGE), 1e-8);
 
         // 0 / 0 returns NaN but calcWeight should not return NaN!
         assertEquals(1.0 / 0, instance.calcWeight(createMockedEdgeIteratorState(0, encoder.setProperties(0, true, true)), false, EdgeIterator.NO_EDGE), 1e-8);
-    }    
+    }
 }

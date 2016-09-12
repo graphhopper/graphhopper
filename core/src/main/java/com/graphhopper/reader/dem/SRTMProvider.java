@@ -40,12 +40,35 @@ import java.util.zip.ZipInputStream;
  * to the geometric center of the lower left sample, which in the case of SRTM3 data will be about
  * 90 meters in extent.
  * <p>
+ *
  * @author Peter Karich
  */
-public class SRTMProvider implements ElevationProvider
-{
-    public static void main( String[] args ) throws IOException
-    {
+public class SRTMProvider implements ElevationProvider {
+    private static final BitUtil BIT_UTIL = BitUtil.BIG;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final int DEFAULT_WIDTH = 1201;
+    private final int WIDTH_BYTE_INDEX = 0;
+    // use a map as an array is not quite useful if we want to hold only parts of the world
+    private final TIntObjectHashMap<HeightTile> cacheData = new TIntObjectHashMap<HeightTile>();
+    private final TIntObjectHashMap<String> areas = new TIntObjectHashMap<String>();
+    private final double precision = 1e7;
+    private final double invPrecision = 1 / precision;
+    private Directory dir;
+    private DAType daType = DAType.MMAP;
+    private Downloader downloader = new Downloader("GraphHopper SRTMReader").setTimeout(10000);
+    private File cacheDir = new File("/tmp/srtm");
+    // possible alternatives see #451
+    // http://mirror.ufs.ac.za/datasets/SRTM3/
+    //"http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/"
+    private String baseUrl = "https://srtm.kurviger.de/SRTM3/";
+    private boolean calcMean = false;
+
+    public SRTMProvider() {
+        // move to explicit calls?
+        init();
+    }
+
+    public static void main(String[] args) throws IOException {
         SRTMProvider provider = new SRTMProvider();
         // 1046
         System.out.println(provider.getEle(47.468668, 14.575127));
@@ -58,39 +81,13 @@ public class SRTMProvider implements ElevationProvider
         // 845
         System.out.println(provider.getEle(48.469123, 9.576393));
 
-        // 1113 vs new: 
+        // 1113 vs new:
         provider.setCalcMean(true);
         System.out.println(provider.getEle(47.467753, 14.573911));
     }
 
-    private static final BitUtil BIT_UTIL = BitUtil.BIG;
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final int DEFAULT_WIDTH = 1201;
-    private final int WIDTH_BYTE_INDEX = 0;
-    private Directory dir;
-    private DAType daType = DAType.MMAP;
-    private Downloader downloader = new Downloader("GraphHopper SRTMReader").setTimeout(10000);
-    private File cacheDir = new File("/tmp/srtm");
-    // use a map as an array is not quite useful if we want to hold only parts of the world
-    private final TIntObjectHashMap<HeightTile> cacheData = new TIntObjectHashMap<HeightTile>();
-    private final TIntObjectHashMap<String> areas = new TIntObjectHashMap<String>();
-    private final double precision = 1e7;
-    private final double invPrecision = 1 / precision;
-    // possible alternatives see #451
-    // http://mirror.ufs.ac.za/datasets/SRTM3/
-    //"http://dds.cr.usgs.gov/srtm/version2_1/SRTM3/"
-    private String baseUrl = "https://srtm.kurviger.de/SRTM3/";
-    private boolean calcMean = false;
-
-    public SRTMProvider()
-    {
-        // move to explicit calls?
-        init();
-    }
-
     @Override
-    public void setCalcMean( boolean calcMean )
-    {
+    public void setCalcMean(boolean calcMean) {
         this.calcMean = calcMean;
     }
 
@@ -98,19 +95,12 @@ public class SRTMProvider implements ElevationProvider
      * The URLs are a bit ugly and so we need to find out which area name a certain lat,lon
      * coordinate has.
      */
-    private SRTMProvider init()
-    {
-        try
-        {
-            String strs[] =
-            {
-                "Africa", "Australia", "Eurasia", "Islands", "North_America", "South_America"
-            };
-            for (String str : strs)
-            {
+    private SRTMProvider init() {
+        try {
+            String strs[] = {"Africa", "Australia", "Eurasia", "Islands", "North_America", "South_America"};
+            for (String str : strs) {
                 InputStream is = getClass().getResourceAsStream(str + "_names.txt");
-                for (String line : Helper.readFile(new InputStreamReader(is, Helper.UTF_CS)))
-                {
+                for (String line : Helper.readFile(new InputStreamReader(is, Helper.UTF_CS))) {
                     int lat = Integer.parseInt(line.substring(1, 3));
                     if (line.substring(0, 1).charAt(0) == 'S')
                         lat = -lat;
@@ -126,43 +116,36 @@ public class SRTMProvider implements ElevationProvider
                 }
             }
             return this;
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             throw new IllegalStateException("Cannot load area names from classpath", ex);
         }
     }
 
     // use int key instead of string for lower memory usage
-    private int calcIntKey( double lat, double lon )
-    {
+    private int calcIntKey(double lat, double lon) {
         // we could use LinearKeyAlgo but this is simpler as we only need integer precision:
         return (down(lat) + 90) * 1000 + down(lon) + 180;
     }
 
-    public void setDownloader( Downloader downloader )
-    {
+    public void setDownloader(Downloader downloader) {
         this.downloader = downloader;
     }
 
     @Override
-    public ElevationProvider setCacheDir( File cacheDir )
-    {
+    public ElevationProvider setCacheDir(File cacheDir) {
         if (cacheDir.exists() && !cacheDir.isDirectory())
             throw new IllegalArgumentException("Cache path has to be a directory");
 
-        try
-        {
+        try {
             this.cacheDir = cacheDir.getCanonicalFile();
-        } catch (IOException ex)
-        {
+        } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
         return this;
     }
 
     @Override
-    public ElevationProvider setBaseURL( String baseUrl )
-    {
+    public ElevationProvider setBaseURL(String baseUrl) {
         if (baseUrl == null || baseUrl.isEmpty())
             throw new IllegalArgumentException("baseUrl cannot be empty");
 
@@ -171,22 +154,19 @@ public class SRTMProvider implements ElevationProvider
     }
 
     @Override
-    public ElevationProvider setDAType( DAType daType )
-    {
+    public ElevationProvider setDAType(DAType daType) {
         this.daType = daType;
         return this;
     }
 
-    int down( double val )
-    {
+    int down(double val) {
         int intVal = (int) val;
         if (val >= 0 || intVal - val < invPrecision)
             return intVal;
         return intVal - 1;
     }
 
-    String getFileString( double lat, double lon )
-    {
+    String getFileString(double lat, double lon) {
         int intKey = calcIntKey(lat, lon);
         String str = areas.get(intKey);
         if (str == null)
@@ -218,8 +198,7 @@ public class SRTMProvider implements ElevationProvider
     }
 
     @Override
-    public double getEle( double lat, double lon )
-    {
+    public double getEle(double lat, double lon) {
         lat = (int) (lat * precision) / precision;
         lon = (int) (lon * precision) / precision;
         int intKey = calcIntKey(lat, lon);
@@ -236,11 +215,9 @@ public class SRTMProvider implements ElevationProvider
 
         DataAccess heights = getDirectory().find("dem" + intKey);
         boolean loadExisting = false;
-        try
-        {
+        try {
             loadExisting = heights.loadExisting();
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             logger.warn("cannot load dem" + intKey + ", error:" + ex.getMessage());
         }
 
@@ -258,14 +235,11 @@ public class SRTMProvider implements ElevationProvider
         return demProvider.getHeight(lat, lon);
     }
 
-    private void updateHeightsFromZipFile( String fileDetails, DataAccess heights ) throws RuntimeException
-    {
-        try
-        {
+    private void updateHeightsFromZipFile(String fileDetails, DataAccess heights) throws RuntimeException {
+        try {
             byte[] bytes = getByteArrayFromZipFile(fileDetails);
             heights.create(bytes.length);
-            for (int bytePos = 0; bytePos < bytes.length; bytePos += 2)
-            {
+            for (int bytePos = 0; bytePos < bytes.length; bytePos += 2) {
                 short val = BIT_UTIL.toShort(bytes, bytePos);
                 if (val < -1000 || val > 12000)
                     val = Short.MIN_VALUE;
@@ -275,27 +249,22 @@ public class SRTMProvider implements ElevationProvider
             heights.setHeader(WIDTH_BYTE_INDEX, bytes.length / 2);
             heights.flush();
 
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
 
-    private byte[] getByteArrayFromZipFile( String fileDetails ) throws InterruptedException, FileNotFoundException, IOException
-    {
+    private byte[] getByteArrayFromZipFile(String fileDetails) throws InterruptedException, FileNotFoundException, IOException {
         String zippedURL = baseUrl + "/" + fileDetails + ".hgt.zip";
         File file = new File(cacheDir, new File(zippedURL).getName());
         InputStream is;
         // get zip file if not already in cacheDir
         if (!file.exists())
-            for (int i = 0; i < 3; i++)
-            {
-                try
-                {
+            for (int i = 0; i < 3; i++) {
+                try {
                     downloader.downloadFile(zippedURL, file.getAbsolutePath());
                     break;
-                } catch (SocketTimeoutException ex)
-                {
+                } catch (SocketTimeoutException ex) {
                     // just try again after a little nap
                     Thread.sleep(2000);
                     continue;
@@ -309,8 +278,7 @@ public class SRTMProvider implements ElevationProvider
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         byte[] buffer = new byte[0xFFFF];
         int len;
-        while ((len = buff.read(buffer)) > 0)
-        {
+        while ((len = buff.read(buffer)) > 0) {
             os.write(buffer, 0, len);
         }
         os.flush();
@@ -319,8 +287,7 @@ public class SRTMProvider implements ElevationProvider
     }
 
     @Override
-    public void release()
-    {
+    public void release() {
         cacheData.clear();
 
         // for memory mapped type we create temporary unpacked files which should be removed
@@ -329,13 +296,11 @@ public class SRTMProvider implements ElevationProvider
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "SRTM";
     }
 
-    private Directory getDirectory()
-    {
+    private Directory getDirectory() {
         if (dir != null)
             return dir;
 

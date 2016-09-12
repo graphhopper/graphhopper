@@ -23,30 +23,26 @@ import java.io.IOException;
 /**
  * Creates a write lock file. Influenced by Lucene code
  * <p>
+ *
  * @author Peter Karich
  */
-public class SimpleFSLockFactory implements LockFactory
-{
+public class SimpleFSLockFactory implements LockFactory {
     private File lockDir;
 
-    public SimpleFSLockFactory()
-    {
+    public SimpleFSLockFactory() {
     }
 
-    public SimpleFSLockFactory( File dir )
-    {
+    public SimpleFSLockFactory(File dir) {
         this.lockDir = dir;
     }
 
     @Override
-    public void setLockDir( File lockDir )
-    {
+    public void setLockDir(File lockDir) {
         this.lockDir = lockDir;
     }
 
     @Override
-    public synchronized Lock create( String fileName, boolean writeAccess )
-    {
+    public synchronized Lock create(String fileName, boolean writeAccess) {
         // TODO no read access-only support
         if (lockDir == null)
             throw new RuntimeException("Set lockDir before creating locks");
@@ -55,36 +51,30 @@ public class SimpleFSLockFactory implements LockFactory
     }
 
     @Override
-    public synchronized void forceRemove( String fileName, boolean writeAccess )
-    {
-        if (lockDir.exists())
-        {
+    public synchronized void forceRemove(String fileName, boolean writeAccess) {
+        if (lockDir.exists()) {
             File lockFile = new File(lockDir, fileName);
             if (lockFile.exists() && !lockFile.delete())
                 throw new RuntimeException("Cannot delete " + lockFile);
         }
     }
 
-    static class SimpleLock implements Lock
-    {
+    static class SimpleLock implements Lock {
         private final File lockDir;
         private final File lockFile;
         private final String name;
         private IOException failedReason;
 
-        public SimpleLock( File lockDir, String fileName )
-        {
+        public SimpleLock(File lockDir, String fileName) {
             this.name = fileName;
             this.lockDir = lockDir;
             this.lockFile = new File(lockDir, fileName);
         }
 
         @Override
-        public synchronized boolean tryLock()
-        {
+        public synchronized boolean tryLock() {
             // make sure directory exists, do it on-the-fly (not possible when setLockDir is called)
-            if (!lockDir.exists())
-            {
+            if (!lockDir.exists()) {
                 if (!lockDir.mkdirs())
                     throw new RuntimeException("Directory " + lockDir + " does not exist and cannot created to place lock file there: " + lockFile);
             }
@@ -93,44 +83,37 @@ public class SimpleFSLockFactory implements LockFactory
             if (!lockDir.isDirectory())
                 throw new IllegalArgumentException("lockDir has to be a directory: " + lockDir);
 
-            try
-            {
+            try {
                 return lockFile.createNewFile();
-            } catch (IOException ex)
-            {
+            } catch (IOException ex) {
                 failedReason = ex;
                 return false;
             }
         }
 
         @Override
-        public synchronized boolean isLocked()
-        {
+        public synchronized boolean isLocked() {
             return lockFile.exists();
         }
 
         @Override
-        public synchronized void release()
-        {
+        public synchronized void release() {
             if (isLocked() && lockFile.exists() && !lockFile.delete())
                 throw new RuntimeException("Cannot release lock file: " + lockFile);
         }
 
         @Override
-        public String getName()
-        {
+        public String getName() {
             return name;
         }
 
         @Override
-        public synchronized Exception getObtainFailedReason()
-        {
+        public synchronized Exception getObtainFailedReason() {
             return failedReason;
         }
 
         @Override
-        public String toString()
-        {
+        public String toString() {
             return lockFile.toString();
         }
     }

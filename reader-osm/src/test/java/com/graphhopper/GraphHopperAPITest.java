@@ -19,7 +19,9 @@ package com.graphhopper;
 
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.PointList;
 import org.junit.Test;
 
@@ -28,13 +30,11 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class GraphHopperAPITest
-{
+public class GraphHopperAPITest {
     final EncodingManager encodingManager = new EncodingManager("car");
 
     @Test
-    public void testLoad()
-    {
+    public void testLoad() {
         GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 42, 10);
@@ -57,7 +57,7 @@ public class GraphHopperAPITest
         assertFalse(rsp.hasErrors());
         PathWrapper arsp = rsp.getBest();
         assertEquals(80, arsp.getDistance(), 1e-6);
-        
+
         PointList points = arsp.getPoints();
         assertEquals(42, points.getLatitude(0), 1e-5);
         assertEquals(10.4, points.getLongitude(0), 1e-5);
@@ -68,8 +68,7 @@ public class GraphHopperAPITest
     }
 
     @Test
-    public void testDisconnected179()
-    {
+    public void testDisconnected179() {
         GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 42, 10);
@@ -87,39 +86,32 @@ public class GraphHopperAPITest
         GHResponse rsp = instance.route(new GHRequest(42, 10, 42, 10.4));
         assertTrue(rsp.hasErrors());
 
-        try
-        {
+        try {
             rsp.getBest().getPoints();
             assertTrue(false);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
         }
 
         instance.close();
     }
 
     @Test
-    public void testNoLoad()
-    {
+    public void testNoLoad() {
         GraphHopper instance = new GraphHopper().
                 setStoreOnFlush(false).
                 setEncodingManager(encodingManager).setCHEnabled(false);
-        try
-        {
+        try {
             instance.route(new GHRequest(42, 10.4, 42, 10));
             assertTrue(false);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"));
         }
 
         instance = new GraphHopper().setEncodingManager(encodingManager);
-        try
-        {
+        try {
             instance.route(new GHRequest(42, 10.4, 42, 10));
             assertTrue(false);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"));
         }
     }

@@ -26,51 +26,42 @@ import com.graphhopper.util.shapes.GHPoint3D;
  *
  * @author Peter Karich
  */
-public class Point extends GHPoint3D implements Geometry
-{
-    public Point( double lat, double lon )
-    {
+public class Point extends GHPoint3D implements Geometry {
+    public Point(double lat, double lon) {
         super(lat, lon, Double.NaN);
     }
 
-    public Point( double lat, double lon, double ele )
-    {
+    public Point(double lat, double lon, double ele) {
         super(lat, lon, ele);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return lat + ", " + lon;
     }
 
     @Override
-    public boolean isPoint()
-    {
+    public boolean isPoint() {
         return true;
     }
 
     @Override
-    public GHPoint asPoint()
-    {
+    public GHPoint asPoint() {
         return this;
     }
 
     @Override
-    public boolean isPointList()
-    {
+    public boolean isPointList() {
         return false;
     }
 
     @Override
-    public PointList asPointList()
-    {
+    public PointList asPointList() {
         throw new UnsupportedOperationException("Not supported");
     }
 
     @Override
-    public String getType()
-    {
+    public String getType() {
         return "Point";
     }
 }

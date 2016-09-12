@@ -8,7 +8,7 @@ describe('translation', function () {
         defaultTranslationMap["ft_abbr"] = 'ft';
         defaultTranslationMap["mi_abbr"] = 'mi';
 
-        translate.init({ default: defaultTranslationMap });
+        translate.init({default: defaultTranslationMap});
 
         expect(translate.createDistanceString(877.34)).toBe("877m");
         expect(translate.createDistanceString(1877.34)).toBe("1.88km");
@@ -22,12 +22,12 @@ describe('translation', function () {
         expect(translate.createDistanceString(162543.74, true)).toBe("101mi")
     });
 
-    it("should format elevation string correctly", function() {
+    it("should format elevation string correctly", function () {
         var defaultTranslationMap = {};
         defaultTranslationMap["m_abbr"] = 'm';
         defaultTranslationMap["ft_abbr"] = 'ft';
 
-        translate.init({ default: defaultTranslationMap });
+        translate.init({default: defaultTranslationMap});
 
         expect(translate.createEleInfoString(156.3, 324.6, true)).toBe("<br/> &#8599;513ft &#8600;1065ft");
         expect(translate.createEleInfoString(156.3, 324.6, false)).toBe("<br/> &#8599;156m &#8600;325m");
@@ -40,7 +40,7 @@ describe('translation', function () {
         defaultTranslationMap["hour_abbr"] = 'h';
         defaultTranslationMap["day_abbr"] = 'd';
 
-        translate.init({ default: defaultTranslationMap });
+        translate.init({default: defaultTranslationMap});
 
         expect(translate.createTimeString(10773331)).toBe("2h 59min");
 
@@ -55,19 +55,19 @@ describe('translation', function () {
         // toBe, toBeTruthy, toBeFalsy
         var defaultTranslationMap = {};
         defaultTranslationMap["web.somekey1"] = "%s wow %s";
-        translate.init({ default: defaultTranslationMap });
+        translate.init({default: defaultTranslationMap});
         expect(translate.tr("somekey1", ["nice", "to"])).toBe("nice wow to");
 
         defaultTranslationMap["web.somekey2"] = "%2$s wow %1$s";
-        translate.init({ default: defaultTranslationMap });
+        translate.init({default: defaultTranslationMap});
         expect(translate.tr("somekey2", ["nice", "to"])).toBe("to wow nice");
 
         defaultTranslationMap["web.key"] = "it will take %1$s";
-        translate.init({ default: defaultTranslationMap });
+        translate.init({default: defaultTranslationMap});
         expect(translate.tr("key", "2min")).toBe("it will take 2min");
 
         defaultTranslationMap["web.key"] = "%1$s%2$s werden %3$s brauchen";
-        translate.init({ default: defaultTranslationMap });
+        translate.init({default: defaultTranslationMap});
         expect(translate.tr("key", [200, "km", "2min"])).toBe("200km werden 2min brauchen");
     });
 });

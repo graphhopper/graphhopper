@@ -17,37 +17,82 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
-import static com.graphhopper.util.Parameters.Algorithms.*;
 import com.graphhopper.util.StopWatch;
+import org.junit.Test;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Random;
 import java.util.zip.GZIPInputStream;
 
-import static org.junit.Assert.*;
-
-import org.junit.Test;
+import static com.graphhopper.util.Parameters.Algorithms.*;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Try algorithms, indices and graph storages with real data
  * <p>
+ *
  * @author Peter Karich
  */
-public class RoutingAlgorithmIT
-{
+public class RoutingAlgorithmIT {
+    public static List<AlgoHelperEntry> createAlgos(GraphHopperStorage ghStorage,
+                                                    LocationIndex idx, final FlagEncoder encoder, boolean withCh,
+                                                    final TraversalMode tMode, final Weighting weighting,
+                                                    final EncodingManager manager) {
+        List<AlgoHelperEntry> prepare = new ArrayList<AlgoHelperEntry>();
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(ASTAR, encoder, weighting, tMode), idx));
+        // later: include dijkstraOneToMany
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(DIJKSTRA, encoder, weighting, tMode), idx));
+
+        final AlgorithmOptions astarbiOpts = new AlgorithmOptions(ASTAR_BI, encoder, weighting, tMode);
+        astarbiOpts.getHints().put(ASTAR_BI + ".approximation", "BeelineSimplification");
+        final AlgorithmOptions dijkstrabiOpts = new AlgorithmOptions(DIJKSTRA_BI, encoder, weighting, tMode);
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, astarbiOpts, idx));
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, dijkstrabiOpts, idx));
+
+        if (withCh) {
+            GraphHopperStorage storageCopy = new GraphBuilder(manager).
+                    set3D(ghStorage.getNodeAccess().is3D()).setCHGraph(weighting).
+                    create();
+            ghStorage.copyTo(storageCopy);
+            storageCopy.freeze();
+            final CHGraph graphCH = storageCopy.getGraph(CHGraph.class, weighting);
+            final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(
+                    new GHDirectory("", DAType.RAM_INT), storageCopy, graphCH, encoder, weighting, tMode);
+            prepareCH.doWork();
+            LocationIndex idxCH = new LocationIndexTree(storageCopy, new RAMDirectory()).prepareIndex();
+            prepare.add(new AlgoHelperEntry(graphCH, storageCopy, dijkstrabiOpts, idxCH) {
+                @Override
+                public RoutingAlgorithm createAlgo(Graph qGraph) {
+                    return prepareCH.createAlgo(qGraph, dijkstrabiOpts);
+                }
+            });
+
+            prepare.add(new AlgoHelperEntry(graphCH, storageCopy, astarbiOpts, idxCH) {
+                @Override
+                public RoutingAlgorithm createAlgo(Graph qGraph) {
+                    return prepareCH.createAlgo(qGraph, astarbiOpts);
+                }
+            });
+        }
+        return prepare;
+    }
+
     @Test
-    public void testPerformance() throws IOException
-    {
+    public void testPerformance() throws IOException {
         int N = 10;
         int noJvmWarming = N / 4;
 
@@ -60,11 +105,9 @@ public class RoutingAlgorithmIT
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile))).read();
         Collection<AlgoHelperEntry> prepares = createAlgos(graph, null, encoder, false, TraversalMode.NODE_BASED,
                 new ShortestWeighting(encoder), eManager);
-        for (AlgoHelperEntry entry : prepares)
-        {
+        for (AlgoHelperEntry entry : prepares) {
             StopWatch sw = new StopWatch();
-            for (int i = 0; i < N; i++)
-            {
+            for (int i = 0; i < N; i++) {
                 int node1 = Math.abs(rand.nextInt(graph.getNodes()));
                 int node2 = Math.abs(rand.nextInt(graph.getNodes()));
                 RoutingAlgorithm d = entry.createAlgo(graph);
@@ -84,54 +127,5 @@ public class RoutingAlgorithmIT
                     + ":" + sw.stop().getSeconds() + ", per run:" + perRun);
             assertTrue("speed to low!? " + perRun + " per run", perRun < 0.08);
         }
-    }
-
-    public static List<AlgoHelperEntry> createAlgos( GraphHopperStorage ghStorage,
-                                              LocationIndex idx, final FlagEncoder encoder, boolean withCh,
-                                              final TraversalMode tMode, final Weighting weighting,
-                                              final EncodingManager manager )
-    {
-        List<AlgoHelperEntry> prepare = new ArrayList<AlgoHelperEntry>();
-        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(ASTAR, encoder, weighting, tMode), idx));
-        // later: include dijkstraOneToMany        
-        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(DIJKSTRA, encoder, weighting, tMode), idx));
-
-        final AlgorithmOptions astarbiOpts = new AlgorithmOptions(ASTAR_BI, encoder, weighting, tMode);
-        astarbiOpts.getHints().put(ASTAR_BI + ".approximation", "BeelineSimplification");
-        final AlgorithmOptions dijkstrabiOpts = new AlgorithmOptions(DIJKSTRA_BI, encoder, weighting, tMode);
-        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, astarbiOpts, idx));
-        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, dijkstrabiOpts, idx));
-
-        if (withCh)
-        {
-            GraphHopperStorage storageCopy = new GraphBuilder(manager).
-                    set3D(ghStorage.getNodeAccess().is3D()).setCHGraph(weighting).
-                    create();
-            ghStorage.copyTo(storageCopy);
-            storageCopy.freeze();
-            final CHGraph graphCH = storageCopy.getGraph(CHGraph.class, weighting);
-            final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(
-                    new GHDirectory("", DAType.RAM_INT), storageCopy, graphCH, encoder, weighting, tMode);
-            prepareCH.doWork();
-            LocationIndex idxCH = new LocationIndexTree(storageCopy, new RAMDirectory()).prepareIndex();
-            prepare.add(new AlgoHelperEntry(graphCH, storageCopy, dijkstrabiOpts, idxCH)
-            {
-                @Override
-                public RoutingAlgorithm createAlgo( Graph qGraph )
-                {
-                    return prepareCH.createAlgo(qGraph, dijkstrabiOpts);
-                }
-            });
-
-            prepare.add(new AlgoHelperEntry(graphCH, storageCopy, astarbiOpts, idxCH)
-            {
-                @Override
-                public RoutingAlgorithm createAlgo( Graph qGraph )
-                {
-                    return prepareCH.createAlgo(qGraph, astarbiOpts);
-                }
-            });
-        }
-        return prepare;
     }
 }

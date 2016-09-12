@@ -24,28 +24,23 @@ import java.util.Random;
  *
  * @author Robin Boldt
  */
-public class SinglePointTour extends TourStrategy
-{
-    public SinglePointTour( Random random, double distanceInMeter )
-    {
+public class SinglePointTour extends TourStrategy {
+    public SinglePointTour(Random random, double distanceInMeter) {
         super(random, distanceInMeter);
     }
 
     @Override
-    public int getNumberOfGeneratedPoints()
-    {
+    public int getNumberOfGeneratedPoints() {
         return 1;
     }
 
     @Override
-    public double getDistanceForIteration( int iteration )
-    {
+    public double getDistanceForIteration(int iteration) {
         return slightlyModifyDistance(overallDistance / 3);
     }
 
     @Override
-    public double getHeadingForIteration( int iteration )
-    {
+    public double getHeadingForIteration(int iteration) {
         return random.nextInt(360);
     }
 }

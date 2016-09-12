@@ -17,17 +17,16 @@
  */
 package com.graphhopper.reader.osm;
 
-import java.util.Date;
 import javax.xml.datatype.DatatypeFactory;
 import javax.xml.datatype.Duration;
+import java.util.Date;
 
 /**
  * This class currently parses the duration tag only.
  *
  * @author ratrun
  */
-public class OSMTagParser
-{
+public class OSMTagParser {
     // use a day somewhere within July 1970 which then makes two identical long months ala 31 days, see #588
     private final static Date STATIC_DATE = new Date((31 * 6) * 24 * 3600 * 1000);
 
@@ -36,42 +35,36 @@ public class OSMTagParser
      * string ala 'hh:mm', format for hours and minutes 'mm', 'hh:mm' or 'hh:mm:ss', or
      * alternatively ISO_8601 duration
      * <p>
+     *
      * @return duration value in seconds
      */
-    public static long parseDuration( String str ) throws IllegalArgumentException
-    {
+    public static long parseDuration(String str) throws IllegalArgumentException {
         long seconds = 0;
         if (str == null)
             return 0;
 
         // Check for ISO_8601 format
-        if (str.startsWith("P"))
-        {
+        if (str.startsWith("P")) {
             // A common mistake is when the minutes format is intended but the month format is specified 
             // e.g. one month "P1M" is set, but on minute "PT1M" is meant.
             Duration dur;
-            try
-            {
+            try {
                 dur = DatatypeFactory.newInstance().newDuration(str);
                 seconds = dur.getTimeInMillis(STATIC_DATE) / 1000;
-            } catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 throw new IllegalArgumentException("Cannot parse duration tag value: " + str, ex);
             }
             return seconds;
         }
 
-        try
-        {
+        try {
             int index = str.indexOf(":");
-            if (index > 0)
-            {
+            if (index > 0) {
                 String hourStr = str.substring(0, index);
                 String minStr = str.substring(index + 1);
                 String secondsStr = "0";
                 index = minStr.indexOf(":");
-                if (index > 0)
-                {
+                if (index > 0) {
                     secondsStr = minStr.substring(index + 1, index + 3);
                     minStr = minStr.substring(0, index);
                 }
@@ -80,13 +73,11 @@ public class OSMTagParser
                 seconds += Integer.parseInt(minStr) * 60L;
                 seconds += Integer.parseInt(secondsStr);
                 return seconds;
-            } else
-            {
+            } else {
                 // value contains minutes
                 seconds = Integer.parseInt(str) * 60;
             }
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             throw new IllegalArgumentException("Cannot parse duration tag value: " + str, ex);
         }
         return seconds;

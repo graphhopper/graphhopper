@@ -18,16 +18,16 @@
 package com.graphhopper.util;
 
 import com.graphhopper.GraphHopper;
-import static com.graphhopper.util.Helper.readFile;
 
 import java.io.InputStreamReader;
 import java.util.List;
 
+import static com.graphhopper.util.Helper.readFile;
+
 /**
  * Defining several important constants for GraphHopper. Partially taken from Lucene.
  */
-public class Constants
-{
+public class Constants {
     /**
      * The value of <tt>System.getProperty("java.version")</tt>. *
      */
@@ -68,38 +68,26 @@ public class Constants
     public static final String BUILD_DATE;
     public static final boolean SNAPSHOT;
 
-    public static String getVersions()
-    {
-        return VERSION_NODE + "," + VERSION_EDGE + "," + VERSION_GEOMETRY + "," + VERSION_LOCATION_IDX
-                + "," + VERSION_NAME_IDX + "," + VERSION_SHORTCUT;
-    }
-
-    static
-    {
+    static {
         String version = "0.0";
-        try
-        {
-            // see com/graphhopper/version file in resources which is modified in the maven packaging process 
+        try {
+            // see com/graphhopper/version file in resources which is modified in the maven packaging process
             // to contain the current version
             List<String> v = readFile(new InputStreamReader(GraphHopper.class.getResourceAsStream("version"), Helper.UTF_CS));
             version = v.get(0);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             System.err.println("GraphHopper Initialization ERROR: cannot read version!? " + ex.getMessage());
         }
         int indexM = version.indexOf("-");
-        if ("${project.version}".equals(version))
-        {
+        if ("${project.version}".equals(version)) {
             VERSION = "0.0";
             SNAPSHOT = true;
             System.err.println("GraphHopper Initialization WARNING: maven did not preprocess the version file! Do not use the jar for a release!");
-        } else if ("0.0".equals(version))
-        {
+        } else if ("0.0".equals(version)) {
             VERSION = "0.0";
             SNAPSHOT = true;
             System.err.println("GraphHopper Initialization WARNING: cannot get version!?");
-        } else
-        {
+        } else {
             String tmp = version;
             // throw away the "-SNAPSHOT"
             if (indexM >= 0)
@@ -109,22 +97,24 @@ public class Constants
             VERSION = tmp;
         }
         String buildDate = "";
-        try
-        {
+        try {
             List<String> v = readFile(new InputStreamReader(GraphHopper.class.getResourceAsStream("builddate"), Helper.UTF_CS));
             buildDate = v.get(0);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
         }
         BUILD_DATE = buildDate;
     }
 
-    public static String getMajorVersion()
-    {
+    public static String getVersions() {
+        return VERSION_NODE + "," + VERSION_EDGE + "," + VERSION_GEOMETRY + "," + VERSION_LOCATION_IDX
+                + "," + VERSION_NAME_IDX + "," + VERSION_SHORTCUT;
+    }
+
+    public static String getMajorVersion() {
         int firstIdx = VERSION.indexOf(".");
         if (firstIdx < 0)
             throw new IllegalStateException("Cannot extract major version from version " + VERSION);
-        
+
         int sndIdx = VERSION.indexOf(".", firstIdx + 1);
         if (sndIdx < 0)
             return VERSION;

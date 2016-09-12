@@ -20,11 +20,9 @@ package com.graphhopper.storage;
 /**
  * @author Peter Karich
  */
-public class SimpleFSLockFactoryTest extends AbstractLockFactoryTester
-{
+public class SimpleFSLockFactoryTest extends AbstractLockFactoryTester {
     @Override
-    protected LockFactory createLockFactory()
-    {
+    protected LockFactory createLockFactory() {
         return new SimpleFSLockFactory(lockDir);
     }
 }

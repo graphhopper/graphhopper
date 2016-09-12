@@ -20,154 +20,130 @@ package com.graphhopper.storage;
 /**
  * A simple wrapper to synchronize every DataAccess object.
  * <p>
+ *
  * @author Peter Karich
  */
-class SynchedDAWrapper implements DataAccess
-{
+class SynchedDAWrapper implements DataAccess {
     private final DataAccess inner;
     private final DAType type;
 
-    public SynchedDAWrapper( DataAccess inner )
-    {
+    public SynchedDAWrapper(DataAccess inner) {
         this.inner = inner;
         this.type = new DAType(inner.getType(), true);
     }
 
     @Override
-    public synchronized String getName()
-    {
+    public synchronized String getName() {
         return inner.getName();
     }
 
     @Override
-    public synchronized void rename( String newName )
-    {
+    public synchronized void rename(String newName) {
         inner.rename(newName);
     }
 
     @Override
-    public synchronized void setInt( long bytePos, int value )
-    {
+    public synchronized void setInt(long bytePos, int value) {
         inner.setInt(bytePos, value);
     }
 
     @Override
-    public synchronized int getInt( long bytePos )
-    {
+    public synchronized int getInt(long bytePos) {
         return inner.getInt(bytePos);
     }
 
     @Override
-    public synchronized void setShort( long bytePos, short value )
-    {
+    public synchronized void setShort(long bytePos, short value) {
         inner.setShort(bytePos, value);
     }
 
     @Override
-    public synchronized short getShort( long bytePos )
-    {
+    public synchronized short getShort(long bytePos) {
         return inner.getShort(bytePos);
     }
 
     @Override
-    public synchronized void setBytes( long bytePos, byte[] values, int length )
-    {
+    public synchronized void setBytes(long bytePos, byte[] values, int length) {
         inner.setBytes(bytePos, values, length);
     }
 
     @Override
-    public synchronized void getBytes( long bytePos, byte[] values, int length )
-    {
+    public synchronized void getBytes(long bytePos, byte[] values, int length) {
         inner.getBytes(bytePos, values, length);
     }
 
     @Override
-    public synchronized void setHeader( int bytePos, int value )
-    {
+    public synchronized void setHeader(int bytePos, int value) {
         inner.setHeader(bytePos, value);
     }
 
     @Override
-    public synchronized int getHeader( int bytePos )
-    {
+    public synchronized int getHeader(int bytePos) {
         return inner.getHeader(bytePos);
     }
 
     @Override
-    public synchronized DataAccess create( long bytes )
-    {
+    public synchronized DataAccess create(long bytes) {
         return inner.create(bytes);
     }
 
     @Override
-    public synchronized boolean ensureCapacity( long bytes )
-    {
+    public synchronized boolean ensureCapacity(long bytes) {
         return inner.ensureCapacity(bytes);
     }
 
     @Override
-    public synchronized void trimTo( long bytes )
-    {
+    public synchronized void trimTo(long bytes) {
         inner.trimTo(bytes);
     }
 
     @Override
-    public synchronized DataAccess copyTo( DataAccess da )
-    {
+    public synchronized DataAccess copyTo(DataAccess da) {
         return inner.copyTo(da);
     }
 
     @Override
-    public synchronized DataAccess setSegmentSize( int bytes )
-    {
+    public synchronized DataAccess setSegmentSize(int bytes) {
         return inner.setSegmentSize(bytes);
     }
 
     @Override
-    public synchronized int getSegmentSize()
-    {
+    public synchronized int getSegmentSize() {
         return inner.getSegmentSize();
     }
 
     @Override
-    public synchronized int getSegments()
-    {
+    public synchronized int getSegments() {
         return inner.getSegments();
     }
 
     @Override
-    public synchronized boolean loadExisting()
-    {
+    public synchronized boolean loadExisting() {
         return inner.loadExisting();
     }
 
     @Override
-    public synchronized void flush()
-    {
+    public synchronized void flush() {
         inner.flush();
     }
 
     @Override
-    public synchronized void close()
-    {
+    public synchronized void close() {
         inner.close();
     }
 
     @Override
-    public boolean isClosed()
-    {
+    public boolean isClosed() {
         return inner.isClosed();
     }
 
     @Override
-    public synchronized long getCapacity()
-    {
+    public synchronized long getCapacity() {
         return inner.getCapacity();
     }
 
     @Override
-    public DAType getType()
-    {
+    public DAType getType() {
         return type;
     }
 }

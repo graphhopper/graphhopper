@@ -20,20 +20,18 @@ package com.graphhopper.http;
 import com.google.inject.servlet.ServletModule;
 import com.graphhopper.util.CmdArgs;
 
+import javax.inject.Singleton;
 import java.util.HashMap;
 import java.util.Map;
-import javax.inject.Singleton;
 
 /**
  * @author Peter Karich
  */
-public class GHServletModule extends ServletModule
-{
-    protected Map<String, String> params = new HashMap<String, String>();
+public class GHServletModule extends ServletModule {
     protected final CmdArgs args;
+    protected Map<String, String> params = new HashMap<String, String>();
 
-    public GHServletModule( CmdArgs args )
-    {
+    public GHServletModule(CmdArgs args) {
         this.args = args;
         params.put("mimeTypes", "text/html,"
                 + "text/plain,"
@@ -48,8 +46,7 @@ public class GHServletModule extends ServletModule
     }
 
     @Override
-    protected void configureServlets()
-    {
+    protected void configureServlets() {
         filter("*").through(CORSFilter.class, params);
         bind(CORSFilter.class).in(Singleton.class);
 

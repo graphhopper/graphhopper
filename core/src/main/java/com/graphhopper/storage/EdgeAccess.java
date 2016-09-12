@@ -25,25 +25,22 @@ import com.graphhopper.util.EdgeIteratorState;
 /**
  * @author Peter Karich
  */
-abstract class EdgeAccess
-{
+abstract class EdgeAccess {
+    static final int NO_NODE = -1;
     // distance of around +-1000 000 meter are ok
     private static final double INT_DIST_FACTOR = 1000d;
     static double MAX_DIST = (Integer.MAX_VALUE - 1) / INT_DIST_FACTOR;
-    static final int NO_NODE = -1;
-    int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS;
     final DataAccess edges;
     private final BitUtil bitUtil;
+    int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS;
     private boolean flagsSizeIsLong;
 
-    EdgeAccess( DataAccess edges, BitUtil bitUtil )
-    {
+    EdgeAccess(DataAccess edges, BitUtil bitUtil) {
         this.edges = edges;
         this.bitUtil = bitUtil;
     }
 
-    final void init( int E_NODEA, int E_NODEB, int E_LINKA, int E_LINKB, int E_DIST, int E_FLAGS, boolean flagsSizeIsLong )
-    {
+    final void init(int E_NODEA, int E_NODEB, int E_LINKA, int E_LINKB, int E_DIST, int E_FLAGS, boolean flagsSizeIsLong) {
         this.E_NODEA = E_NODEA;
         this.E_NODEB = E_NODEB;
         this.E_LINKA = E_LINKA;
@@ -53,60 +50,54 @@ abstract class EdgeAccess
         this.flagsSizeIsLong = flagsSizeIsLong;
     }
 
-    abstract BaseGraph.EdgeIterable createSingleEdge( EdgeFilter edgeFilter );
+    abstract BaseGraph.EdgeIterable createSingleEdge(EdgeFilter edgeFilter);
 
-    abstract long toPointer( int edgeOrShortcutId );
+    abstract long toPointer(int edgeOrShortcutId);
 
-    abstract boolean isInBounds( int edgeOrShortcutId );
+    abstract boolean isInBounds(int edgeOrShortcutId);
 
-    abstract long reverseFlags( long edgePointer, long flags );
+    abstract long reverseFlags(long edgePointer, long flags);
 
-    abstract int getEdgeRef( int nodeId );
+    abstract int getEdgeRef(int nodeId);
 
-    abstract void setEdgeRef( int nodeId, int edgeId );
+    abstract void setEdgeRef(int nodeId, int edgeId);
 
     abstract int getEntryBytes();
 
-    final void invalidateEdge( long edgePointer )
-    {
+    final void invalidateEdge(long edgePointer) {
         edges.setInt(edgePointer + E_NODEA, NO_NODE);
     }
 
-    final void setDist( long edgePointer, double distance )
-    {
+    final void setDist(long edgePointer, double distance) {
         edges.setInt(edgePointer + E_DIST, distToInt(distance));
     }
 
     /**
      * Translates double distance to integer in order to save it in a DataAccess object
      */
-    private int distToInt( double distance )
-    {
+    private int distToInt(double distance) {
         int integ = (int) (distance * INT_DIST_FACTOR);
         if (integ < 0)
             throw new IllegalArgumentException("Distance cannot be negative: " + distance);
         if (integ >= Integer.MAX_VALUE)
             return Integer.MAX_VALUE;
-            // throw new IllegalArgumentException("Distance too large leading to overflowed integer (#435): " + distance + " ");
+        // throw new IllegalArgumentException("Distance too large leading to overflowed integer (#435): " + distance + " ");
         return integ;
     }
 
     /**
      * returns distance (already translated from integer to double)
      */
-    final double getDist( long pointer )
-    {
+    final double getDist(long pointer) {
         int val = edges.getInt(pointer + E_DIST);
         // do never return infinity even if INT MAX, see #435
         return val / INT_DIST_FACTOR;
     }
 
-    final long getFlags_( long edgePointer, boolean reverse )
-    {
+    final long getFlags_(long edgePointer, boolean reverse) {
         int low = edges.getInt(edgePointer + E_FLAGS);
         long resFlags = low;
-        if (flagsSizeIsLong)
-        {
+        if (flagsSizeIsLong) {
             int high = edges.getInt(edgePointer + E_FLAGS + 4);
             resFlags = bitUtil.combineIntsToLong(low, high);
         }
@@ -116,8 +107,7 @@ abstract class EdgeAccess
         return resFlags;
     }
 
-    final long setFlags_( long edgePointer, boolean reverse, long flags )
-    {
+    final long setFlags_(long edgePointer, boolean reverse, long flags) {
         if (reverse)
             flags = reverseFlags(edgePointer, flags);
 
@@ -132,8 +122,7 @@ abstract class EdgeAccess
     /**
      * Write new edge between nodes fromNodeId, and toNodeId both to nodes index and edges index
      */
-    final int internalEdgeAdd( int newEdgeId, int fromNodeId, int toNodeId )
-    {
+    final int internalEdgeAdd(int newEdgeId, int fromNodeId, int toNodeId) {
         writeEdge(newEdgeId, fromNodeId, toNodeId, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
         connectNewEdge(fromNodeId, newEdgeId);
         if (fromNodeId != toNodeId)
@@ -141,8 +130,7 @@ abstract class EdgeAccess
         return newEdgeId;
     }
 
-    final int getOtherNode( int nodeThis, long edgePointer )
-    {
+    final int getOtherNode(int nodeThis, long edgePointer) {
         int nodeA = edges.getInt(edgePointer + E_NODEA);
         if (nodeA == nodeThis)
             // return b
@@ -151,21 +139,17 @@ abstract class EdgeAccess
         return nodeA;
     }
 
-    private long _getLinkPosInEdgeArea( int nodeThis, int nodeOther, long edgePointer )
-    {
+    private long _getLinkPosInEdgeArea(int nodeThis, int nodeOther, long edgePointer) {
         return nodeThis <= nodeOther ? edgePointer + E_LINKA : edgePointer + E_LINKB;
     }
 
-    final int getEdgeRef( int nodeThis, int nodeOther, long edgePointer )
-    {
+    final int getEdgeRef(int nodeThis, int nodeOther, long edgePointer) {
         return edges.getInt(_getLinkPosInEdgeArea(nodeThis, nodeOther, edgePointer));
     }
 
-    final void connectNewEdge( int fromNode, int newOrExistingEdge )
-    {
+    final void connectNewEdge(int fromNode, int newOrExistingEdge) {
         int edge = getEdgeRef(fromNode);
-        if (edge > EdgeIterator.NO_EDGE)
-        {
+        if (edge > EdgeIterator.NO_EDGE) {
             long edgePointer = toPointer(newOrExistingEdge);
             int otherNode = getOtherNode(fromNode, edgePointer);
             long lastLink = _getLinkPosInEdgeArea(fromNode, otherNode, edgePointer);
@@ -174,10 +158,8 @@ abstract class EdgeAccess
         setEdgeRef(fromNode, newOrExistingEdge);
     }
 
-    final long writeEdge( int edgeId, int nodeThis, int nodeOther, int nextEdge, int nextEdgeOther )
-    {
-        if (nodeThis > nodeOther)
-        {
+    final long writeEdge(int edgeId, int nodeThis, int nodeOther, int nextEdge, int nextEdgeOther) {
+        if (nodeThis > nodeOther) {
             int tmp = nodeThis;
             nodeThis = nodeOther;
             nodeOther = tmp;
@@ -200,20 +182,18 @@ abstract class EdgeAccess
      * This method disconnects the specified edge from the list of edges of the specified node. It
      * does not release the freed space to be reused.
      * <p>
+     *
      * @param edgeToUpdatePointer if it is negative then the nextEdgeId will be saved to refToEdges
-     * of nodes
+     *                            of nodes
      */
-    final long internalEdgeDisconnect( int edgeToRemove, long edgeToUpdatePointer, int baseNode, int adjNode )
-    {
+    final long internalEdgeDisconnect(int edgeToRemove, long edgeToUpdatePointer, int baseNode, int adjNode) {
         long edgeToRemovePointer = toPointer(edgeToRemove);
         // an edge is shared across the two nodes even if the edge is not in both directions
         // so we need to know two edge-pointers pointing to the edge before edgeToRemovePointer
         int nextEdgeId = getEdgeRef(baseNode, adjNode, edgeToRemovePointer);
-        if (edgeToUpdatePointer < 0)
-        {
+        if (edgeToUpdatePointer < 0) {
             setEdgeRef(baseNode, nextEdgeId);
-        } else
-        {
+        } else {
             // adjNode is different for the edge we want to update with the new link
             long link = edges.getInt(edgeToUpdatePointer + E_NODEA) == baseNode
                     ? edgeToUpdatePointer + E_LINKA : edgeToUpdatePointer + E_LINKB;
@@ -222,8 +202,7 @@ abstract class EdgeAccess
         return edgeToRemovePointer;
     }
 
-    final EdgeIteratorState getEdgeProps( int edgeId, int adjNode )
-    {
+    final EdgeIteratorState getEdgeProps(int edgeId, int adjNode) {
         if (edgeId <= EdgeIterator.NO_EDGE)
             throw new IllegalStateException("edgeId invalid " + edgeId + ", " + this);
 

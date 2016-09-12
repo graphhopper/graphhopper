@@ -17,12 +17,13 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
+
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -35,28 +36,48 @@ import java.util.Map.Entry;
  *
  * @author Peter Karich
  */
-public class DataFlagEncoder extends AbstractFlagEncoder
-{
+public class DataFlagEncoder extends AbstractFlagEncoder {
+    private static final Map<String, Double> DEFAULT_SPEEDS = new LinkedHashMap<String, Double>() {
+        {
+            put("motorway", 100d);
+            put("motorway_link", 70d);
+            put("motorroad", 90d);
+            put("trunk", 70d);
+            put("trunk_link", 65d);
+            put("primary", 65d);
+            put("primary_link", 60d);
+            put("secondary", 60d);
+            put("secondary_link", 50d);
+            put("tertiary", 50d);
+            put("tertiary_link", 40d);
+            put("unclassified", 30d);
+            put("residential", 30d);
+            put("living_street", 5d);
+            put("service", 20d);
+            put("road", 20d);
+            put("forestry", 15d);
+            put("track", 15d);
+        }
+    };
+    private final Map<String, Integer> surfaceMap = new HashMap<>();
+    private final Map<String, Integer> highwayMap = new HashMap<>();
+    private final List<String> transportModeList = new ArrayList<>();
+    private final Map<String, Integer> transportModeMap = new HashMap<>();
     private long bit0;
     private EncodedDoubleValue carFwdMaxspeedEncoder;
     private EncodedDoubleValue carBwdMaxspeedEncoder;
     private EncodedValue surfaceEncoder;
-    private final Map<String, Integer> surfaceMap = new HashMap<>();
     private EncodedValue highwayEncoder;
-    private final Map<String, Integer> highwayMap = new HashMap<>();
     private EncodedValue transportModeEncoder;
-    private final List<String> transportModeList = new ArrayList<>();
-    private final Map<String, Integer> transportModeMap = new HashMap<>();
 
-    public DataFlagEncoder()
-    {
+    public DataFlagEncoder() {
         // TODO include turn information
         super(5, 5, 0);
 
         maxPossibleSpeed = 140;
         //
         // TODO restrictions (forestry, agricultural, emergency, destination, private, delivery, customers)
-        //        
+        //
 
         // highway and certain tags like ferry and shuttle_train which can be used here (no logical overlap)
         List<String> highwayList = Arrays.asList(
@@ -69,8 +90,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder
                 "cycleway", "steps", "path", "footway", "pedestrian",
                 "ferry", "shuttle_train");
         int counter = 0;
-        for (String hw : highwayList)
-        {
+        for (String hw : highwayList) {
             highwayMap.put(hw, counter++);
         }
 
@@ -78,16 +98,14 @@ public class DataFlagEncoder extends AbstractFlagEncoder
         // Also 'roundabout' needs a separate bit as a tunnel or a bridge can be a roundabout at the same time.
         transportModeList.addAll(Arrays.asList("_default", "bridge", "tunnel", "ford", "aerialway"));
         counter = 0;
-        for (String tm : transportModeList)
-        {
+        for (String tm : transportModeList) {
             transportModeMap.put(tm, counter++);
         }
 
         List<String> surfaceList = Arrays.asList("_default", "asphalt", "unpaved", "paved", "gravel",
                 "ground", "dirt", "grass", "concrete", "paving_stones", "sand", "compacted", "cobblestone", "mud", "ice");
         counter = 0;
-        for (String s : surfaceList)
-        {
+        for (String s : surfaceList) {
             surfaceMap.put(s, counter++);
         }
 
@@ -96,8 +114,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int defineWayBits( int index, int shift )
-    {
+    public int defineWayBits(int index, int shift) {
         // TODO use this approach in other flag encoders too then we can do a global swap for all and bit0 can be at position 0!
         bit0 = 1L << shift;
         shift++;
@@ -124,33 +141,27 @@ public class DataFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long handleRelationTags( ReaderRelation relation, long oldRelationFlags )
-    {
+    public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
         return 0;
     }
 
     @Override
-    public long acceptWay( ReaderWay way )
-    {
+    public long acceptWay(ReaderWay way) {
         return 1;
     }
 
     @Override
-    public long handleWayTags( ReaderWay way, long allowed, long relationFlags )
-    {
-        try
-        {
+    public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
+        try {
             // HIGHWAY
             String highwayValue = way.getTag("highway");
             Integer hwValue = highwayMap.get(highwayValue);
             if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
                 hwValue = 0;
 
-            if (hwValue == null)
-            {
+            if (hwValue == null) {
                 hwValue = 0;
-                if (way.hasTag("route", ferries))
-                {
+                if (way.hasTag("route", ferries)) {
                     String motorcarTag = way.getTag("motorcar");
                     if (motorcarTag == null)
                         motorcarTag = way.getTag("motor_vehicle");
@@ -196,10 +207,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder
 
             // TRANSPORT MODE
             int tmValue = 0;
-            for (String tm : transportModeList)
-            {
-                if (way.hasTag(tm))
-                {
+            for (String tm : transportModeList) {
+                if (way.hasTag(tm)) {
                     tmValue = transportModeMap.get(tm);
                     break;
                 }
@@ -218,8 +227,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder
                     || way.hasTag("motor_vehicle:backward")
                     || way.hasTag("motor_vehicle:forward");
 
-            if (isOneway || isRoundabout)
-            {
+            if (isOneway || isRoundabout) {
                 boolean isBackward = way.hasTag("oneway", "-1")
                         || way.hasTag("vehicle:forward", "no")
                         || way.hasTag("motor_vehicle:forward", "no");
@@ -234,15 +242,13 @@ public class DataFlagEncoder extends AbstractFlagEncoder
                 throw new IllegalStateException("bit0 has to be empty on creation");
 
             return flags;
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             throw new RuntimeException("Error while parsing way " + way.toString(), ex);
         }
     }
 
     @Override
-    public long reverseFlags( long flags )
-    {
+    public long reverseFlags(long flags) {
         // see #728 for an explanation
         return flags ^ bit0;
 
@@ -261,32 +267,26 @@ public class DataFlagEncoder extends AbstractFlagEncoder
      * Interpret flags in forward direction if bit0 is empty. This method is used when accessing
      * direction dependent values and avoid reverse flags, see #728.
      */
-    private boolean isBit0Empty( long flags )
-    {
+    private boolean isBit0Empty(long flags) {
         return (flags & bit0) == 0;
     }
 
-    public int getHighway( EdgeIteratorState edge )
-    {
+    public int getHighway(EdgeIteratorState edge) {
         return (int) highwayEncoder.getValue(edge.getFlags());
     }
 
-    public String getHighwayAsString( EdgeIteratorState edge )
-    {
+    public String getHighwayAsString(EdgeIteratorState edge) {
         int val = getHighway(edge);
-        for (Entry<String, Integer> e : highwayMap.entrySet())
-        {
+        for (Entry<String, Integer> e : highwayMap.entrySet()) {
             if (e.getValue() == val)
                 return e.getKey();
         }
         return null;
     }
 
-    public double[] getHighwaySpeedMap( Map<String, Double> map )
-    {
+    public double[] getHighwaySpeedMap(Map<String, Double> map) {
         double[] res = new double[highwayMap.size()];
-        for (Entry<String, Double> e : map.entrySet())
-        {
+        for (Entry<String, Double> e : map.entrySet()) {
             Integer integ = highwayMap.get(e.getKey());
             if (integ == null)
                 throw new IllegalArgumentException("Graph not prepared for highway=" + e.getKey());
@@ -299,43 +299,35 @@ public class DataFlagEncoder extends AbstractFlagEncoder
         return res;
     }
 
-    public int getSurface( EdgeIteratorState edge )
-    {
+    public int getSurface(EdgeIteratorState edge) {
         return (int) surfaceEncoder.getValue(edge.getFlags());
     }
 
-    public String getSurfaceAsString( EdgeIteratorState edge )
-    {
+    public String getSurfaceAsString(EdgeIteratorState edge) {
         int val = getSurface(edge);
-        for (Entry<String, Integer> e : surfaceMap.entrySet())
-        {
+        for (Entry<String, Integer> e : surfaceMap.entrySet()) {
             if (e.getValue() == val)
                 return e.getKey();
         }
         return null;
     }
 
-    public int getTransportMode( EdgeIteratorState edge )
-    {
+    public int getTransportMode(EdgeIteratorState edge) {
         return (int) transportModeEncoder.getValue(edge.getFlags());
     }
 
-    public String getTransportModeAsString( EdgeIteratorState edge )
-    {
+    public String getTransportModeAsString(EdgeIteratorState edge) {
         int val = getTransportMode(edge);
-        for (Entry<String, Integer> e : transportModeMap.entrySet())
-        {
+        for (Entry<String, Integer> e : transportModeMap.entrySet()) {
             if (e.getValue() == val)
                 return e.getKey();
         }
         return null;
     }
 
-    public double[] getTransportModeMap( Map<String, Double> map )
-    {
+    public double[] getTransportModeMap(Map<String, Double> map) {
         double[] res = new double[transportModeMap.size()];
-        for (Entry<String, Double> e : map.entrySet())
-        {
+        for (Entry<String, Double> e : map.entrySet()) {
             Integer integ = transportModeMap.get(e.getKey());
             if (integ == null)
                 throw new IllegalArgumentException("Graph not prepared for transport_mode=" + e.getKey());
@@ -348,20 +340,17 @@ public class DataFlagEncoder extends AbstractFlagEncoder
         return res;
     }
 
-    public boolean isRoundabout( EdgeIteratorState edge )
-    {
+    public boolean isRoundabout(EdgeIteratorState edge) {
         // use direct call instead of isBool
         return (edge.getFlags() & roundaboutBit) != 0;
     }
 
-    public int getAccessType( String accessStr )
-    {
+    public int getAccessType(String accessStr) {
         // access, motor_vehicle, bike, foot, hgv, bus
         return 0;
     }
 
-    public final boolean isForward( EdgeIteratorState edge, int accessType )
-    {
+    public final boolean isForward(EdgeIteratorState edge, int accessType) {
         // TODO shift dependent on the accessType
         // use only one bit for foot?
         long flags = edge.getFlags();
@@ -369,27 +358,23 @@ public class DataFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public final boolean isForward( long flags )
-    {
+    public final boolean isForward(long flags) {
         // TODO remove old method
         return (flags & (isBit0Empty(flags) ? forwardBit : backwardBit)) != 0;
     }
 
-    public final boolean isBackward( EdgeIteratorState edge, int accessType )
-    {
+    public final boolean isBackward(EdgeIteratorState edge, int accessType) {
         long flags = edge.getFlags();
         return (flags & (isBit0Empty(flags) ? backwardBit : forwardBit)) != 0;
     }
 
     @Override
-    public final boolean isBackward( long flags )
-    {
+    public final boolean isBackward(long flags) {
         // TODO remove old method
         return (flags & (isBit0Empty(flags) ? backwardBit : forwardBit)) != 0;
     }
 
-    public double getMaxspeed( EdgeIteratorState edge, int accessType, boolean reverse )
-    {
+    public double getMaxspeed(EdgeIteratorState edge, int accessType, boolean reverse) {
         long flags = edge.getFlags();
         if (!isBit0Empty(flags))
             reverse = !reverse;
@@ -410,77 +395,65 @@ public class DataFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long flagsDefault( boolean forward, boolean backward )
-    {
+    public long flagsDefault(boolean forward, boolean backward) {
         // just pick car mode to set access values?
         throw new RuntimeException("do not call flagsDefault");
     }
 
     @Override
-    public long setAccess( long flags, boolean forward, boolean backward )
-    {
+    public long setAccess(long flags, boolean forward, boolean backward) {
         // TODO in subnetwork we need to remove access for certain profiles or set of roads?
         return flags;
     }
 
     @Override
-    public long setSpeed( long flags, double speed )
-    {
+    public long setSpeed(long flags, double speed) {
         throw new RuntimeException("do not call setSpeed");
     }
 
     @Override
-    protected long setLowSpeed( long flags, double speed, boolean reverse )
-    {
+    protected long setLowSpeed(long flags, double speed, boolean reverse) {
         throw new RuntimeException("do not call setLowSpeed");
     }
 
     @Override
-    public double getSpeed( long flags )
-    {
+    public double getSpeed(long flags) {
         // TODO fix Path.calcMillis(Path.java:255)
         // use pluggable weighting.calcMillis but include reverse somehow
         return 50;
     }
 
     @Override
-    public long setReverseSpeed( long flags, double speed )
-    {
+    public long setReverseSpeed(long flags, double speed) {
         throw new RuntimeException("do not call setReverseSpeed");
     }
 
     @Override
-    public double getReverseSpeed( long flags )
-    {
+    public double getReverseSpeed(long flags) {
         throw new RuntimeException("do not call getReverseSpeed");
     }
 
     @Override
-    public long setProperties( double speed, boolean forward, boolean backward )
-    {
+    public long setProperties(double speed, boolean forward, boolean backward) {
         throw new RuntimeException("do not call setProperties");
     }
 
     @Override
-    protected double getMaxSpeed( ReaderWay way )
-    {
+    protected double getMaxSpeed(ReaderWay way) {
         throw new RuntimeException("do not call getMaxSpeed(ReaderWay)");
     }
 
     @Override
-    public double getMaxSpeed()
-    {
+    public double getMaxSpeed() {
         throw new RuntimeException("do not call getMaxSpeed");
     }
 
-    public double getMaxPossibleSpeed()
-    {
+    public double getMaxPossibleSpeed() {
         return maxPossibleSpeed;
     }
 
     @Override
-    public boolean supports( Class<?> feature )
-    {
+    public boolean supports(Class<?> feature) {
         boolean ret = super.supports(feature);
         if (ret)
             return true;
@@ -489,50 +462,22 @@ public class DataFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public int getVersion()
-    {
+    public int getVersion() {
         return 1;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "generic";
     }
-
-    private static final Map<String, Double> DEFAULT_SPEEDS = new LinkedHashMap<String, Double>()
-    {
-        {
-            put("motorway", 100d);
-            put("motorway_link", 70d);
-            put("motorroad", 90d);
-            put("trunk", 70d);
-            put("trunk_link", 65d);
-            put("primary", 65d);
-            put("primary_link", 60d);
-            put("secondary", 60d);
-            put("secondary_link", 50d);
-            put("tertiary", 50d);
-            put("tertiary_link", 40d);
-            put("unclassified", 30d);
-            put("residential", 30d);
-            put("living_street", 5d);
-            put("service", 20d);
-            put("road", 20d);
-            put("forestry", 15d);
-            put("track", 15d);
-        }
-    };
 
     /**
      * This method creates a Config map out of the PMap. Later on this conversion should not be
      * necessary when we read JSON.
      */
-    public ConfigMap readStringMap( PMap weightingMap )
-    {
+    public ConfigMap readStringMap(PMap weightingMap) {
         Map<String, Double> map = new HashMap<>();
-        for (Entry<String, Double> e : DEFAULT_SPEEDS.entrySet())
-        {
+        for (Entry<String, Double> e : DEFAULT_SPEEDS.entrySet()) {
             map.put(e.getKey(), weightingMap.getDouble("highways." + e.getKey(), e.getValue()));
         }
 

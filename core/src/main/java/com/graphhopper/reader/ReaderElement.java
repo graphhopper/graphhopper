@@ -26,11 +26,11 @@ import java.util.Set;
 /**
  * Base class for all network objects
  * <p>
+ *
  * @author Nop
  * @author Peter
  */
-public abstract class ReaderElement
-{
+public abstract class ReaderElement {
     public static final int NODE = 0;
     public static final int WAY = 1;
     public static final int RELATION = 2;
@@ -39,25 +39,21 @@ public abstract class ReaderElement
     private final long id;
     private final Map<String, Object> properties = new HashMap<String, Object>(5);
 
-    protected ReaderElement( long id, int type )
-    {
+    protected ReaderElement(long id, int type) {
         this.id = id;
         this.type = type;
     }
 
-    public long getId()
-    {
+    public long getId() {
         return id;
     }
 
-    protected String tagsToString()
-    {
+    protected String tagsToString() {
         if (properties.isEmpty())
             return "<empty>";
 
         StringBuilder tagTxt = new StringBuilder();
-        for (Map.Entry<String, Object> entry : properties.entrySet())
-        {
+        for (Map.Entry<String, Object> entry : properties.entrySet()) {
             tagTxt.append(entry.getKey());
             tagTxt.append("=");
             tagTxt.append(entry.getValue());
@@ -66,50 +62,42 @@ public abstract class ReaderElement
         return tagTxt.toString();
     }
 
-    protected Map<String, Object> getTags()
-    {
+    protected Map<String, Object> getTags() {
         return properties;
     }
 
-    public void setTags( Map<String, String> newTags )
-    {
+    public void setTags(Map<String, String> newTags) {
         properties.clear();
         if (newTags != null)
-            for (Entry<String, String> e : newTags.entrySet())
-            {
+            for (Entry<String, String> e : newTags.entrySet()) {
                 setTag(e.getKey(), e.getValue());
             }
     }
 
-    public boolean hasTags()
-    {
+    public boolean hasTags() {
         return !properties.isEmpty();
     }
 
-    public String getTag( String name )
-    {
+    public String getTag(String name) {
         return (String) properties.get(name);
     }
 
     @SuppressWarnings("unchecked")
-    public <T> T getTag( String key, T defaultValue )
-    {
+    public <T> T getTag(String key, T defaultValue) {
         T val = (T) properties.get(key);
         if (val == null)
             return defaultValue;
         return val;
     }
 
-    public void setTag( String name, Object value )
-    {
+    public void setTag(String name, Object value) {
         properties.put(name, value);
     }
 
     /**
      * Check that the object has a given tag with a given value.
      */
-    public boolean hasTag( String key, Object value )
-    {
+    public boolean hasTag(String key, Object value) {
         return value.equals(getTag(key, ""));
     }
 
@@ -117,8 +105,7 @@ public abstract class ReaderElement
      * Check that a given tag has one of the specified values. If no values are given, just checks
      * for presence of the tag
      */
-    public boolean hasTag( String key, String... values )
-    {
+    public boolean hasTag(String key, String... values) {
         Object value = properties.get(key);
         if (value == null)
             return false;
@@ -127,8 +114,7 @@ public abstract class ReaderElement
         if (values.length == 0)
             return true;
 
-        for (String val : values)
-        {
+        for (String val : values) {
             if (val.equals(value))
                 return true;
         }
@@ -138,8 +124,7 @@ public abstract class ReaderElement
     /**
      * Check that a given tag has one of the specified values.
      */
-    public final boolean hasTag( String key, Set<String> values )
-    {
+    public final boolean hasTag(String key, Set<String> values) {
         return values.contains(getTag(key, ""));
     }
 
@@ -147,10 +132,8 @@ public abstract class ReaderElement
      * Check a number of tags in the given order for the any of the given values. Used to parse
      * hierarchical access restrictions
      */
-    public boolean hasTag( List<String> keyList, Set<String> values )
-    {
-        for (String key : keyList)
-        {
+    public boolean hasTag(List<String> keyList, Set<String> values) {
+        for (String key : keyList) {
             if (values.contains(getTag(key, "")))
                 return true;
         }
@@ -160,39 +143,32 @@ public abstract class ReaderElement
     /**
      * Returns the first existing tag of the specified list where the order is important.
      */
-    public String getFirstPriorityTag( List<String> restrictions )
-    {
-        for (String str : restrictions)
-        {
+    public String getFirstPriorityTag(List<String> restrictions) {
+        for (String str : restrictions) {
             if (hasTag(str))
                 return getTag(str);
         }
         return "";
     }
 
-    public void removeTag( String name )
-    {
+    public void removeTag(String name) {
         properties.remove(name);
     }
 
-    public void clearTags()
-    {
+    public void clearTags() {
         properties.clear();
     }
 
-    public int getType()
-    {
+    public int getType() {
         return type;
     }
 
-    public boolean isType( int type )
-    {
+    public boolean isType(int type) {
         return this.type == type;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return properties.toString();
     }
 }

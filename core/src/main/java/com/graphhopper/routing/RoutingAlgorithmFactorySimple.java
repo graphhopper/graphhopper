@@ -22,47 +22,41 @@ import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.Helper;
+
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static com.graphhopper.util.Parameters.Algorithms.AltRoute.*;
 
 /**
  * A simple factory creating normal algorithms (RoutingAlgorithm) without preparation.
  * <p>
+ *
  * @author Peter Karich
  */
-public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
-{
+public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
     @Override
-    public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
-    {
+    public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
         RoutingAlgorithm ra;
         String algoStr = opts.getAlgorithm();
-        if (DIJKSTRA_BI.equalsIgnoreCase(algoStr))
-        {
+        if (DIJKSTRA_BI.equalsIgnoreCase(algoStr)) {
             ra = new DijkstraBidirectionRef(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
-        } else if (DIJKSTRA.equalsIgnoreCase(algoStr))
-        {
+        } else if (DIJKSTRA.equalsIgnoreCase(algoStr)) {
             ra = new Dijkstra(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
 
-        } else if (ASTAR_BI.equalsIgnoreCase(algoStr))
-        {
+        } else if (ASTAR_BI.equalsIgnoreCase(algoStr)) {
             AStarBidirection aStarBi = new AStarBidirection(g, opts.getFlagEncoder(), opts.getWeighting(),
                     opts.getTraversalMode());
             aStarBi.setApproximation(getApproximation(ASTAR_BI, opts, g.getNodeAccess()));
             ra = aStarBi;
 
-        } else if (DIJKSTRA_ONE_TO_MANY.equalsIgnoreCase(algoStr))
-        {
+        } else if (DIJKSTRA_ONE_TO_MANY.equalsIgnoreCase(algoStr)) {
             ra = new DijkstraOneToMany(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
 
-        } else if (ASTAR.equalsIgnoreCase(algoStr))
-        {
+        } else if (ASTAR.equalsIgnoreCase(algoStr)) {
             AStar aStar = new AStar(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
             aStar.setApproximation(getApproximation(ASTAR, opts, g.getNodeAccess()));
             ra = aStar;
 
-        } else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
-        {
+        } else if (ALT_ROUTE.equalsIgnoreCase(algoStr)) {
             AlternativeRoute altRouteAlgo = new AlternativeRoute(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
             altRouteAlgo.setMaxPaths(opts.getHints().getInt(MAX_PATHS, 2));
             altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
@@ -71,8 +65,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
             altRouteAlgo.setMaxExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
             ra = altRouteAlgo;
 
-        } else
-        {
+        } else {
             throw new IllegalArgumentException("Algorithm " + algoStr + " not found in " + getClass().getName());
         }
 
@@ -80,8 +73,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory
         return ra;
     }
 
-    private WeightApproximator getApproximation( String prop, AlgorithmOptions opts, NodeAccess na )
-    {
+    private WeightApproximator getApproximation(String prop, AlgorithmOptions opts, NodeAccess na) {
         String approxAsStr = opts.getHints().get(prop + ".approximation", "BeelineSimplification");
         double epsilon = opts.getHints().getDouble(prop + ".epsilon", 1);
 

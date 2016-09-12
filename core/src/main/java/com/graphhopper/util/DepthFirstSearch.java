@@ -23,34 +23,29 @@ import gnu.trove.stack.array.TIntArrayStack;
 /**
  * Implementation of depth first search (DFS) by LIFO queue
  * <p>
+ *
  * @author Peter Karich
  * @author Jan Sölter
  */
-public class DepthFirstSearch extends XFirstSearch
-{
+public class DepthFirstSearch extends XFirstSearch {
     /**
      * beginning with startNode add all following nodes to LIFO queue. If node has been already
      * explored before, skip reexploration.
      */
     @Override
-    public void start( EdgeExplorer explorer, int startNode )
-    {
+    public void start(EdgeExplorer explorer, int startNode) {
         TIntArrayStack stack = new TIntArrayStack();
 
         GHBitSet explored = createBitSet();
         stack.push(startNode);
         int current;
-        while (stack.size() > 0)
-        {
+        while (stack.size() > 0) {
             current = stack.pop();
-            if (!explored.contains(current) && goFurther(current))
-            {
+            if (!explored.contains(current) && goFurther(current)) {
                 EdgeIterator iter = explorer.setBaseNode(current);
-                while (iter.next())
-                {
+                while (iter.next()) {
                     int connectedId = iter.getAdjNode();
-                    if (checkAdjacent(iter))
-                    {
+                    if (checkAdjacent(iter)) {
                         stack.push(connectedId);
                     }
                 }

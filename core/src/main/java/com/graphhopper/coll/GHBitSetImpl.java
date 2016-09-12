@@ -22,64 +22,51 @@ import java.util.BitSet;
 /**
  * @author Peter Karich
  */
-public class GHBitSetImpl extends BitSet implements GHBitSet
-{
-    public GHBitSetImpl()
-    {
+public class GHBitSetImpl extends BitSet implements GHBitSet {
+    public GHBitSetImpl() {
     }
 
-    public GHBitSetImpl( int nbits )
-    {
+    public GHBitSetImpl(int nbits) {
         super(nbits);
     }
 
     @Override
-    public final boolean contains( int index )
-    {
+    public final boolean contains(int index) {
         return super.get(index);
     }
 
     @Override
-    public final void add( int index )
-    {
+    public final void add(int index) {
         super.set(index);
     }
 
     @Override
-    public final int getCardinality()
-    {
+    public final int getCardinality() {
         return super.cardinality();
     }
 
     @Override
-    public final int next( int index )
-    {
+    public final int next(int index) {
         return super.nextSetBit(index);
     }
 
-    public final int nextClear( int index )
-    {
+    public final int nextClear(int index) {
         return super.nextClearBit(index);
     }
 
     @Override
-    public void remove( int index )
-    {
+    public void remove(int index) {
         super.clear(index);
     }
 
     @Override
-    public final GHBitSet copyTo( GHBitSet bs )
-    {
+    public final GHBitSet copyTo(GHBitSet bs) {
         bs.clear();
-        if (bs instanceof GHBitSetImpl)
-        {
+        if (bs instanceof GHBitSetImpl) {
             ((GHBitSetImpl) bs).or(this);
-        } else
-        {
+        } else {
             for (int index = super.nextSetBit(0); index >= 0;
-                    index = super.nextSetBit(index + 1))
-            {
+                 index = super.nextSetBit(index + 1)) {
                 bs.add(index);
             }
         }

@@ -23,24 +23,21 @@ import com.graphhopper.coll.GHBitSetImpl;
 /**
  * This abstract class defines commonalities for BFS and DFS
  * <p>
+ *
  * @author Jan Sölter
  */
-public abstract class XFirstSearch
-{
-    protected GHBitSet createBitSet()
-    {
+public abstract class XFirstSearch {
+    protected GHBitSet createBitSet() {
         return new GHBitSetImpl();
     }
 
-    public abstract void start( EdgeExplorer explorer, int startNode );
+    public abstract void start(EdgeExplorer explorer, int startNode);
 
-    protected boolean goFurther( int nodeId )
-    {
+    protected boolean goFurther(int nodeId) {
         return true;
     }
 
-    protected boolean checkAdjacent( EdgeIteratorState edge )
-    {
+    protected boolean checkAdjacent(EdgeIteratorState edge) {
         return true;
     }
 }

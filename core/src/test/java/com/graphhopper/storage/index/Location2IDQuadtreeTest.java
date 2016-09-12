@@ -21,19 +21,16 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
-
-import static org.junit.Assert.*;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class Location2IDQuadtreeTest extends AbstractLocationIndexTester
-{
+public class Location2IDQuadtreeTest extends AbstractLocationIndexTester {
     @Override
-    public LocationIndex createIndex( Graph g, int resolution )
-    {
+    public LocationIndex createIndex(Graph g, int resolution) {
         if (resolution < 0)
             resolution = 120;
         return new Location2IDQuadtree(g, new MMapDirectory(location + "loc2idIndex").create()).
@@ -41,8 +38,7 @@ public class Location2IDQuadtreeTest extends AbstractLocationIndexTester
     }
 
     @Test
-    public void testNormedDist()
-    {
+    public void testNormedDist() {
         Location2IDQuadtree index = new Location2IDQuadtree(createGHStorage(new EncodingManager("car")), new RAMDirectory());
         index.initAlgo(5, 6);
         assertEquals(1, index.getNormedDist(0, 1), 1e-6);
@@ -54,20 +50,17 @@ public class Location2IDQuadtreeTest extends AbstractLocationIndexTester
     }
 
     @Override
-    boolean testGridIgnore( int i )
-    {
+    boolean testGridIgnore(int i) {
         // conceptual limitation where we are stuck in a blind alley limited
         // to the current tile
-        if (i == 6 || i == 36 || i == 90 || i == 96)
-        {
+        if (i == 6 || i == 36 || i == 90 || i == 96) {
             return true;
         }
         return false;
     }
 
     @Override
-    public void testDifferentVehicles()
-    {
+    public void testDifferentVehicles() {
         // currently unsupported
     }
 }

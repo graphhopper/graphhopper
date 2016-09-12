@@ -19,9 +19,10 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.ShortFastestWeighting;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PMap;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -30,13 +31,11 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Peter Karich
  */
-public class ShortFastestWeightingTest
-{
+public class ShortFastestWeightingTest {
     private final FlagEncoder encoder = new EncodingManager("car").getEncoder("car");
 
     @Test
-    public void testShort()
-    {
+    public void testShort() {
         EdgeIteratorState edge = createEdge(10, encoder.setProperties(50, true, true));
         Weighting instance = new ShortFastestWeighting(encoder, 0.03);
         assertEquals(1.02, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
@@ -47,36 +46,28 @@ public class ShortFastestWeightingTest
     }
 
     @Test
-    public void testTooSmall()
-    {
-        try
-        {
+    public void testTooSmall() {
+        try {
             new ShortFastestWeighting(encoder, new PMap("short_fastest.distance_factor=0|short_fastest.time_factor=0"));
             assertTrue(false);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
         }
     }
 
-    EdgeIterator createEdge( final double distance, final long flags )
-    {
-        return new GHUtility.DisabledEdgeIterator()
-        {
+    EdgeIterator createEdge(final double distance, final long flags) {
+        return new GHUtility.DisabledEdgeIterator() {
             @Override
-            public double getDistance()
-            {
+            public double getDistance() {
                 return distance;
             }
 
             @Override
-            public long getFlags()
-            {
+            public long getFlags() {
                 return flags;
             }
 
             @Override
-            public boolean getBool( int key, boolean _default )
-            {
+            public boolean getBool(int key, boolean _default) {
                 return _default;
             }
         };

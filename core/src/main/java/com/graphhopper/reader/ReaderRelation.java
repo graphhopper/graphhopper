@@ -23,47 +23,39 @@ import java.util.List;
 /**
  * Represents a relation received from the reader.
  * <p>
+ *
  * @author Nop
  */
-public class ReaderRelation extends ReaderElement
-{
+public class ReaderRelation extends ReaderElement {
     protected final List<Member> members = new ArrayList<Member>(5);
 
-    public ReaderRelation( long id )
-    {
+    public ReaderRelation(long id) {
         super(id, RELATION);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "Relation (" + getId() + ", " + members.size() + " members)";
     }
 
-    public List<Member> getMembers()
-    {
+    public List<Member> getMembers() {
         return members;
     }
 
-    public boolean isMetaRelation()
-    {
-        for (Member member : members)
-        {
-            if (member.getType() == RELATION)
-            {
+    public boolean isMetaRelation() {
+        for (Member member : members) {
+            if (member.getType() == RELATION) {
                 return true;
             }
         }
         return false;
     }
 
-    public boolean isMixedRelation()
-    {
+    public boolean isMixedRelation() {
         boolean hasRel = false;
         boolean hasOther = false;
 
-        for (Member member : members)
-        {
+        for (Member member : members) {
             if (member.getType() == RELATION)
                 hasRel = true;
             else
@@ -75,25 +67,21 @@ public class ReaderRelation extends ReaderElement
         return false;
     }
 
-    public void removeRelations()
-    {
-        for (int i = members.size() - 1; i >= 0; i--)
-        {
+    public void removeRelations() {
+        for (int i = members.size() - 1; i >= 0; i--) {
             if (members.get(i).getType() == RELATION)
                 members.remove(i);
         }
     }
 
-    public void add( Member member )
-    {
+    public void add(Member member) {
         members.add(member);
     }
 
     /**
      * Container class for relation members
      */
-    public static class Member
-    {
+    public static class Member {
         public static final int NODE = 0;
         public static final int WAY = 1;
         public static final int RELATION = 2;
@@ -101,41 +89,35 @@ public class ReaderRelation extends ReaderElement
         private final long ref;
         private final String role;
 
-        public Member( Member input )
-        {
+        public Member(Member input) {
             type = input.type;
             ref = input.ref;
             role = input.role;
         }
 
-        public Member( int type, long ref, String role )
-        {
+        public Member(int type, long ref, String role) {
             this.type = type;
             this.ref = ref;
             this.role = role;
         }
 
         @Override
-        public String toString()
-        {
+        public String toString() {
             return "Member " + type + ":" + ref;
         }
 
-        public int getType()
-        {
+        public int getType() {
             return type;
         }
 
         /**
          * member reference which is an OSM ID
          */
-        public long getRef()
-        {
+        public long getRef() {
             return ref;
         }
 
-        public String getRole()
-        {
+        public String getRole() {
             return role;
         }
     }

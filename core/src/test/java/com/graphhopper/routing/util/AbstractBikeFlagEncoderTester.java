@@ -17,62 +17,55 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.weighting.PriorityWeighting;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.Translation;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.text.DateFormat;
+import java.util.Date;
 import java.util.Locale;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
-import com.graphhopper.util.Helper;
 import static com.graphhopper.util.TranslationMapTest.SINGLETON;
-import java.text.DateFormat;
-import java.util.Date;
 import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  * @author ratrun
  */
-public abstract class AbstractBikeFlagEncoderTester
-{
+public abstract class AbstractBikeFlagEncoderTester {
     protected BikeCommonFlagEncoder encoder;
 
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         encoder = createBikeEncoder();
     }
 
     protected abstract BikeCommonFlagEncoder createBikeEncoder();
 
-    protected void assertPriority( int expectedPrio, ReaderWay way )
-    {
+    protected void assertPriority(int expectedPrio, ReaderWay way) {
         assertPriority(expectedPrio, way, 0);
     }
 
-    protected void assertPriority( int expectedPrio, ReaderWay way, long relationFlags )
-    {
+    protected void assertPriority(int expectedPrio, ReaderWay way, long relationFlags) {
         assertEquals(expectedPrio, encoder.handlePriority(way, 18, (int) encoder.relationCodeEncoder.getValue(relationFlags)));
     }
 
-    protected double getSpeedFromFlags( ReaderWay way )
-    {
+    protected double getSpeedFromFlags(ReaderWay way) {
         long allowed = encoder.acceptBit;
         long flags = encoder.handleWayTags(way, allowed, 0);
         return encoder.getSpeed(flags);
     }
 
-    protected String getWayTypeFromFlags( ReaderWay way )
-    {
+    protected String getWayTypeFromFlags(ReaderWay way) {
         return getWayTypeFromFlags(way, 0);
     }
 
-    protected String getWayTypeFromFlags( ReaderWay way, long relationFlags )
-    {
+    protected String getWayTypeFromFlags(ReaderWay way, long relationFlags) {
         long allowed = encoder.acceptBit;
         long flags = encoder.handleWayTags(way, allowed, relationFlags);
         Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
@@ -80,8 +73,7 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testAccess()
-    {
+    public void testAccess() {
         ReaderWay way = new ReaderWay(1);
 
         way.setTag("highway", "motorway");
@@ -204,11 +196,10 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testTramStations()
-    {
+    public void testTramStations() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
-        way.setTag("railway", "rail");        
+        way.setTag("railway", "rail");
         assertTrue(encoder.acceptWay(way) > 0);
 
         way = new ReaderWay(1);
@@ -219,10 +210,10 @@ public abstract class AbstractBikeFlagEncoderTester
         way = new ReaderWay(1);
         way.setTag("highway", "secondary");
         way.setTag("railway", "station");
-        way.setTag("bicycle", "yes");        
+        way.setTag("bicycle", "yes");
         assertTrue(encoder.acceptWay(way) > 0);
-        
-        way.setTag("bicycle", "no");        
+
+        way.setTag("bicycle", "no");
         assertTrue(encoder.acceptWay(way) == 0);
 
         way = new ReaderWay(1);
@@ -245,8 +236,7 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testAvoidTunnel()
-    {
+    public void testAvoidTunnel() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "residential");
         assertPriority(PREFER.getValue(), osmWay);
@@ -263,8 +253,7 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testTram()
-    {
+    public void testTram() {
         ReaderWay way = new ReaderWay(1);
         // very dangerous
         way.setTag("highway", "secondary");
@@ -277,8 +266,7 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testHandleCommonWayTags()
-    {
+    public void testHandleCommonWayTags() {
         ReaderWay way = new ReaderWay(1);
         String wayType;
 
@@ -370,8 +358,7 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testService()
-    {
+    public void testService() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         assertEquals(14, encoder.getSpeed(way));
@@ -383,8 +370,7 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testSacScale()
-    {
+    public void testSacScale() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("sac_scale", "hiking");
@@ -396,16 +382,14 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testReduceToMaxSpeed()
-    {
+    public void testReduceToMaxSpeed() {
         ReaderWay way = new ReaderWay(12);
         way.setTag("maxspeed", "90");
         assertEquals(12, encoder.applyMaxSpeed(way, 12), 1e-2);
     }
 
     @Test
-    public void testPreferenceForSlowSpeed()
-    {
+    public void testPreferenceForSlowSpeed() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
         assertEquals(30, encoder.getSpeed(encoder.setSpeed(0, encoder.applyMaxSpeed(osmWay, 49))), 1e-1);
@@ -413,8 +397,7 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testHandleWayTagsCallsHandlePriority()
-    {
+    public void testHandleWayTagsCallsHandlePriority() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "cycleway");
         long encoded = encoder.handleWayTags(osmWay, encoder.acceptBit, 0);
@@ -422,8 +405,7 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testAvoidMotorway()
-    {
+    public void testAvoidMotorway() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "motorway");
         osmWay.setTag("bicycle", "yes");
@@ -431,8 +413,7 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testPriority()
-    {
+    public void testPriority() {
         long flags = encoder.priorityWayEncoder.setValue(0, PriorityCode.BEST.getValue());
         assertEquals(1, encoder.getDouble(flags, PriorityWeighting.KEY), 1e-3);
 
@@ -441,8 +422,7 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testBarrierAccess()
-    {
+    public void testBarrierAccess() {
         // by default allow access through the gate for bike & foot!
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "gate");
@@ -482,8 +462,7 @@ public abstract class AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testBarrierAccessFord()
-    {
+    public void testBarrierAccessFord() {
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
         // barrier!

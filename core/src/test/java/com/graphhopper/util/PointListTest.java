@@ -20,16 +20,14 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class PointListTest
-{
+public class PointListTest {
     @Test
-    public void testEquals()
-    {
+    public void testEquals() {
         assertEquals(Helper.createPointList(), PointList.EMPTY);
         PointList list1 = Helper.createPointList(38.5, -120.2, 43.252, -126.453, 40.7, -120.95,
                 50.3139, 10.612793, 50.04303, 9.497681);
@@ -39,8 +37,7 @@ public class PointListTest
     }
 
     @Test
-    public void testReverse()
-    {
+    public void testReverse() {
         PointList instance = new PointList();
         instance.add(1, 1);
         instance.reverse();
@@ -58,11 +55,9 @@ public class PointListTest
     }
 
     @Test
-    public void testAddPL()
-    {
+    public void testAddPL() {
         PointList instance = new PointList();
-        for (int i = 0; i < 7; i++)
-        {
+        for (int i = 0; i < 7; i++) {
             instance.add(0, 0);
         }
         assertEquals(7, instance.getSize());
@@ -83,22 +78,19 @@ public class PointListTest
         assertEquals(12, instance.getSize());
         assertEquals(24, instance.getCapacity());
 
-        for (int i = 0; i < toAdd.size(); i++)
-        {
+        for (int i = 0; i < toAdd.size(); i++) {
             assertEquals(toAdd.getLatitude(i), instance.getLatitude(7 + i), 1e-1);
         }
     }
 
     @Test
-    public void testIterable()
-    {
+    public void testIterable() {
         PointList toAdd = new PointList();
         toAdd.add(1, 1);
         toAdd.add(2, 2);
         toAdd.add(3, 3);
         int counter = 0;
-        for (GHPoint point : toAdd)
-        {
+        for (GHPoint point : toAdd) {
             counter++;
             assertEquals(counter, point.getLat(), 0.1);
         }

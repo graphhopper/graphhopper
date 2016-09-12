@@ -17,11 +17,11 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.util.PMap;
 
-import java.util.*;
+import java.util.TreeMap;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
 
@@ -30,55 +30,46 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  *
  * @author Peter Karich
  */
-public class HikeFlagEncoder extends FootFlagEncoder
-{
+public class HikeFlagEncoder extends FootFlagEncoder {
     /**
      * Should be only instantiated via EncodingManager
      */
-    public HikeFlagEncoder()
-    {
+    public HikeFlagEncoder() {
         this(4, 1);
     }
 
-    public HikeFlagEncoder( PMap properties )
-    {
+    public HikeFlagEncoder(PMap properties) {
         this((int) properties.getLong("speedBits", 4),
                 properties.getDouble("speedFactor", 1));
         this.properties = properties;
         this.setBlockFords(properties.getBool("blockFords", true));
     }
 
-    public HikeFlagEncoder( String propertiesStr )
-    {
+    public HikeFlagEncoder(String propertiesStr) {
         this(new PMap(propertiesStr));
     }
 
-    public HikeFlagEncoder( int speedBits, double speedFactor )
-    {
+    public HikeFlagEncoder(int speedBits, double speedFactor) {
         super(speedBits, speedFactor);
 
         hikingNetworkToCode.put("iwn", BEST.getValue());
         hikingNetworkToCode.put("nwn", BEST.getValue());
         hikingNetworkToCode.put("rwn", VERY_NICE.getValue());
         hikingNetworkToCode.put("lwn", VERY_NICE.getValue());
-        
+
         init();
     }
 
     @Override
-    public int getVersion()
-    {
+    public int getVersion() {
         return 1;
     }
 
     @Override
-    public long acceptWay( ReaderWay way )
-    {
+    public long acceptWay(ReaderWay way) {
         String highwayValue = way.getTag("highway");
-        if (highwayValue == null)
-        {
-            if (way.hasTag("route", ferries))
-            {
+        if (highwayValue == null) {
+            if (way.hasTag("route", ferries)) {
                 String footTag = way.getTag("foot");
                 if (footTag == null || "yes".equals(footTag))
                     return acceptBit | ferryBit;
@@ -121,25 +112,21 @@ public class HikeFlagEncoder extends FootFlagEncoder
     }
 
     @Override
-    void collect( ReaderWay way, TreeMap<Double, Integer> weightToPrioMap )
-    {
+    void collect(ReaderWay way, TreeMap<Double, Integer> weightToPrioMap) {
         String highway = way.getTag("highway");
         if (way.hasTag("foot", "designated"))
             weightToPrioMap.put(100d, PREFER.getValue());
 
         double maxSpeed = getMaxSpeed(way);
-        if (safeHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 20)
-        {
+        if (safeHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 20) {
             weightToPrioMap.put(40d, PREFER.getValue());
-            if (way.hasTag("tunnel", intendedValues))
-            {
+            if (way.hasTag("tunnel", intendedValues)) {
                 if (way.hasTag("sidewalk", sidewalksNoValues))
                     weightToPrioMap.put(40d, REACH_DEST.getValue());
                 else
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
-        } else if (maxSpeed > 50 || avoidHighwayTags.contains(highway))
-        {
+        } else if (maxSpeed > 50 || avoidHighwayTags.contains(highway)) {
             if (way.hasTag("sidewalk", sidewalksNoValues))
                 weightToPrioMap.put(45d, WORST.getValue());
             else
@@ -151,8 +138,7 @@ public class HikeFlagEncoder extends FootFlagEncoder
     }
 
     @Override
-    public boolean supports( Class<?> feature )
-    {
+    public boolean supports(Class<?> feature) {
         if (super.supports(feature))
             return true;
 
@@ -160,8 +146,7 @@ public class HikeFlagEncoder extends FootFlagEncoder
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "hike";
     }
 }

@@ -27,8 +27,7 @@ import com.graphhopper.util.PMap;
  *
  * @author Peter Karich
  */
-public class ShortFastestWeighting extends FastestWeighting
-{
+public class ShortFastestWeighting extends FastestWeighting {
     // For now keep parameters local within class
     private static final String NAME = "short_fastest";
     private static final String TIME_FACTOR = "short_fastest.time_factor";
@@ -36,8 +35,7 @@ public class ShortFastestWeighting extends FastestWeighting
     private final double distanceFactor;
     private final double timeFactor;
 
-    public ShortFastestWeighting( FlagEncoder encoder, PMap pMap )
-    {
+    public ShortFastestWeighting(FlagEncoder encoder, PMap pMap) {
         super(encoder);
         timeFactor = checkBounds(TIME_FACTOR, pMap.getDouble(TIME_FACTOR, 1));
 
@@ -49,34 +47,29 @@ public class ShortFastestWeighting extends FastestWeighting
             throw new IllegalArgumentException("[" + NAME + "] one of distance_factor or time_factor has to be non-zero");
     }
 
-    public ShortFastestWeighting( FlagEncoder encoder, double distanceFactor )
-    {
+    public ShortFastestWeighting(FlagEncoder encoder, double distanceFactor) {
         super(encoder);
         this.distanceFactor = checkBounds(DISTANCE_FACTOR, distanceFactor);
         this.timeFactor = 1;
     }
 
     @Override
-    public double getMinWeight( double distance )
-    {
+    public double getMinWeight(double distance) {
         return super.getMinWeight(distance * distanceFactor);
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId )
-    {
+    public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
         double time = super.calcWeight(edge, reverse, prevOrNextEdgeId);
         return time * timeFactor + edge.getDistance() * distanceFactor;
     }
 
     @Override
-    public String getName()
-    {
+    public String getName() {
         return NAME;
     }
 
-    private double checkBounds( String key, double val )
-    {
+    private double checkBounds(String key, double val) {
         if (val < 0 || val > 10)
             throw new IllegalArgumentException(key + " has invalid range should be within [0, 10]");
 

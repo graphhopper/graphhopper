@@ -28,10 +28,10 @@ import java.util.Arrays;
  * still all are without via-way support. BTW: this would not be done at runtime, this would be a
  * pre-processing step to avoid performance penalties.
  * <p>
+ *
  * @author Peter Karich
  */
-public enum TraversalMode
-{
+public enum TraversalMode {
     /**
      * The simplest traversal mode but without turn restrictions or cost support.
      */
@@ -59,8 +59,7 @@ public enum TraversalMode
     private final int noOfStates;
     private final boolean uTurnSupport;
 
-    TraversalMode( boolean edgeBased, int noOfStates, boolean uTurnSupport )
-    {
+    TraversalMode(boolean edgeBased, int noOfStates, boolean uTurnSupport) {
         this.edgeBased = edgeBased;
         this.noOfStates = noOfStates;
         this.uTurnSupport = uTurnSupport;
@@ -69,20 +68,28 @@ public enum TraversalMode
             throw new IllegalArgumentException("Currently only 1 or 2 states allowed");
     }
 
+    public static TraversalMode fromString(String name) {
+        try {
+            return valueOf(name.toUpperCase());
+        } catch (Exception ex) {
+            throw new IllegalArgumentException("TraversalMode " + name + " not supported. "
+                    + "Supported are: " + Arrays.asList(TraversalMode.values()));
+        }
+    }
+
     /**
      * Returns the identifier to access the map of the shortest path tree according to the traversal
      * mode. E.g. returning the adjacent node id in node-based behavior whilst returning the edge id
      * in edge-based behavior
      * <p>
+     *
      * @param iterState the current {@link EdgeIteratorState}
-     * @param reverse <code>true</code>, if traversal in backward direction. Will be true only for
-     * backward searches in bidirectional algorithms.
+     * @param reverse   <code>true</code>, if traversal in backward direction. Will be true only for
+     *                  backward searches in bidirectional algorithms.
      * @return the identifier to access the shortest path tree
      */
-    public final int createTraversalId( EdgeIteratorState iterState, boolean reverse )
-    {
-        if (edgeBased)
-        {
+    public final int createTraversalId(EdgeIteratorState iterState, boolean reverse) {
+        if (edgeBased) {
             if (noOfStates == 1)
                 return iterState.getEdge();
 
@@ -95,10 +102,8 @@ public enum TraversalMode
     /**
      * If you have an EdgeIteratorState the other createTraversalId is preferred!
      */
-    public final int createTraversalId( int baseNode, int adjNode, int edgeId, boolean reverse )
-    {
-        if (edgeBased)
-        {
+    public final int createTraversalId(int baseNode, int adjNode, int edgeId, boolean reverse) {
+        if (edgeBased) {
             if (noOfStates == 1)
                 return edgeId;
 
@@ -108,37 +113,21 @@ public enum TraversalMode
         return adjNode;
     }
 
-    public int reverseEdgeKey( int edgeKey )
-    {
+    public int reverseEdgeKey(int edgeKey) {
         if (edgeBased && noOfStates > 1)
             return GHUtility.reverseEdgeKey(edgeKey);
         return edgeKey;
     }
 
-    public int getNoOfStates()
-    {
+    public int getNoOfStates() {
         return noOfStates;
     }
 
-    public boolean isEdgeBased()
-    {
+    public boolean isEdgeBased() {
         return edgeBased;
     }
 
-    public final boolean hasUTurnSupport()
-    {
+    public final boolean hasUTurnSupport() {
         return uTurnSupport;
-    }
-
-    public static TraversalMode fromString( String name )
-    {
-        try
-        {
-            return valueOf(name.toUpperCase());
-        } catch (Exception ex)
-        {
-            throw new IllegalArgumentException("TraversalMode " + name + " not supported. "
-                    + "Supported are: " + Arrays.asList(TraversalMode.values()));
-        }
     }
 }

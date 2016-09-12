@@ -18,26 +18,22 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.Helper;
+import org.junit.Test;
 
 import java.io.File;
-
-import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
-public class StorablePropertiesTest
-{
-    Directory createDir( String location, boolean store )
-    {
+public class StorablePropertiesTest {
+    Directory createDir(String location, boolean store) {
         return new RAMDirectory(location, store).create();
     }
 
     @Test
-    public void testLoad()
-    {
+    public void testLoad() {
         StorableProperties instance = new StorableProperties(createDir("", false));
         // an in-memory storage does not load anything
         assertFalse(instance.loadExisting());
@@ -48,8 +44,7 @@ public class StorablePropertiesTest
     }
 
     @Test
-    public void testVersionCheck()
-    {
+    public void testVersionCheck() {
         StorableProperties instance = new StorableProperties(createDir("", false));
         instance.putCurrentVersions();
         assertTrue(instance.checkVersions(true));
@@ -57,19 +52,16 @@ public class StorablePropertiesTest
         instance.put("nodes.version", 0);
         assertFalse(instance.checkVersions(true));
 
-        try
-        {
+        try {
             instance.checkVersions(false);
             assertTrue(false);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
         }
         instance.close();
     }
 
     @Test
-    public void testStore()
-    {
+    public void testStore() {
         String dir = "./target/test";
         Helper.removeDir(new File(dir));
         StorableProperties instance = new StorableProperties(createDir(dir, true));

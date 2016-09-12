@@ -20,27 +20,24 @@ package com.graphhopper.routing.ch;
 /**
  * The flags are stored differently for shortcuts: just one weight and the direction flags.
  * <p>
+ *
  * @author Peter Karich
  */
-public class PrepareEncoder
-{
+public class PrepareEncoder {
     // shortcut goes in one or both directions is also possible if weight is identical    
     private static final long scFwdDir = 0x1;
     private static final long scBwdDir = 0x2;
     private static final long scDirMask = 0x3;
 
-    public static final long getScDirMask()
-    {
+    public static final long getScDirMask() {
         return scDirMask;
     }
 
-    public static final long getScFwdDir()
-    {
+    public static final long getScFwdDir() {
         return scFwdDir;
     }
 
-    public static final long getScBwdDir()
-    {
+    public static final long getScBwdDir() {
         return scBwdDir;
     }
 
@@ -48,6 +45,7 @@ public class PrepareEncoder
      * Returns true if flags1 can be overwritten in the edge by flags2 without restricting or
      * changing the directions of flags1.
      * <p>
+     *
      * @return true if flags2 is enabled in both directions or if both flags are pointing into the
      * same direction.
      */
@@ -56,8 +54,7 @@ public class PrepareEncoder
     // ->         t | f  | t
     // <-         f | t  | t
     // <->        f | f  | t
-    public static final boolean canBeOverwritten( long flags1, long flags2 )
-    {
+    public static final boolean canBeOverwritten(long flags1, long flags2) {
         return (flags2 & scDirMask) == scDirMask
                 || (flags1 & scDirMask) == (flags2 & scDirMask);
     }

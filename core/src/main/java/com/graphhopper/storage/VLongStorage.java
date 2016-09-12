@@ -19,53 +19,43 @@ import java.util.Arrays;
  * Taken from lucene DataOutput. VLong's are longs which have variable length depending on the size.
  * When used together with 'delta compression' it is likely that you'll use only 1 byte per value.
  */
-public class VLongStorage
-{
+public class VLongStorage {
     private byte[] bytes;
     private int pointer = 0;
 
-    public VLongStorage()
-    {
+    public VLongStorage() {
         this(10);
     }
 
-    public VLongStorage( int cap )
-    {
+    public VLongStorage(int cap) {
         this(new byte[cap]);
     }
 
-    public VLongStorage( byte[] bytes )
-    {
+    public VLongStorage(byte[] bytes) {
         this.bytes = bytes;
     }
 
-    public void seek( long pos )
-    {
+    public void seek(long pos) {
         // TODO long vs. int
         pointer = (int) pos;
     }
 
-    public long getPosition()
-    {
+    public long getPosition() {
         return pointer;
     }
 
-    public long getLength()
-    {
+    public long getLength() {
         return bytes.length;
     }
 
-    byte readByte()
-    {
+    byte readByte() {
         byte b = bytes[pointer];
         pointer++;
         return b;
     }
 
-    void writeByte( byte b )
-    {
-        if (pointer >= bytes.length)
-        {
+    void writeByte(byte b) {
+        if (pointer >= bytes.length) {
             int cap = Math.max(10, (int) (pointer * 1.5f));
             bytes = Arrays.copyOf(bytes, cap);
         }
@@ -81,11 +71,9 @@ public class VLongStorage
      * <p>
      * See DataInput readVLong of Lucene
      */
-    public final void writeVLong( long i )
-    {
+    public final void writeVLong(long i) {
         assert i >= 0L;
-        while ((i & ~0x7FL) != 0L)
-        {
+        while ((i & ~0x7FL) != 0L) {
             writeByte((byte) ((i & 0x7FL) | 0x80L));
             i >>>= 7;
         }
@@ -98,8 +86,7 @@ public class VLongStorage
      * <p>
      * The format is described further in DataOutput writeVInt(int) from Lucene.
      */
-    public long readVLong()
-    {
+    public long readVLong() {
         /* This is the original code of this method,
          * but a Hotspot bug (see LUCENE-2975) corrupts the for-loop if
          * readByte() is inlined. So the loop was unwinded!
@@ -112,74 +99,62 @@ public class VLongStorage
          return i;
          */
         byte b = readByte();
-        if (b >= 0)
-        {
+        if (b >= 0) {
             return b;
         }
         long i = b & 0x7FL;
         b = readByte();
         i |= (b & 0x7FL) << 7;
-        if (b >= 0)
-        {
+        if (b >= 0) {
             return i;
         }
         b = readByte();
         i |= (b & 0x7FL) << 14;
-        if (b >= 0)
-        {
+        if (b >= 0) {
             return i;
         }
         b = readByte();
         i |= (b & 0x7FL) << 21;
-        if (b >= 0)
-        {
+        if (b >= 0) {
             return i;
         }
         b = readByte();
         i |= (b & 0x7FL) << 28;
-        if (b >= 0)
-        {
+        if (b >= 0) {
             return i;
         }
         b = readByte();
         i |= (b & 0x7FL) << 35;
-        if (b >= 0)
-        {
+        if (b >= 0) {
             return i;
         }
         b = readByte();
         i |= (b & 0x7FL) << 42;
-        if (b >= 0)
-        {
+        if (b >= 0) {
             return i;
         }
         b = readByte();
         i |= (b & 0x7FL) << 49;
-        if (b >= 0)
-        {
+        if (b >= 0) {
             return i;
         }
         b = readByte();
         i |= (b & 0x7FL) << 56;
-        if (b >= 0)
-        {
+        if (b >= 0) {
             return i;
         }
         throw new RuntimeException("Invalid vLong detected (negative values disallowed)");
     }
 
-    public void trimToSize()
-    {
-        if (bytes.length > pointer)
-        {
+    public void trimToSize() {
+        if (bytes.length > pointer) {
             byte[] tmp = new byte[pointer];
             System.arraycopy(bytes, 0, tmp, 0, pointer);
             bytes = tmp;
         }
     }
 
-    public byte[] getBytes()
-    {
+    public byte[] getBytes() {
         return bytes;
     }
 }

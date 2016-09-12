@@ -17,30 +17,27 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.PathWrapper;
 import com.graphhopper.GHResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.exceptions.GHException;
 import com.graphhopper.util.shapes.BBox;
+
 import java.util.*;
 
 /**
- *
  * @author Peter Karich
  */
-public class SimpleRouteSerializer implements RouteSerializer
-{
+public class SimpleRouteSerializer implements RouteSerializer {
     private final BBox maxBounds;
 
-    public SimpleRouteSerializer( BBox maxBounds )
-    {
+    public SimpleRouteSerializer(BBox maxBounds) {
         this.maxBounds = maxBounds;
     }
 
-    private String getMessage( Throwable t )
-    {
+    private String getMessage(Throwable t) {
         if (t.getMessage() == null)
             return t.getClass().getSimpleName();
         else
@@ -48,30 +45,25 @@ public class SimpleRouteSerializer implements RouteSerializer
     }
 
     @Override
-    public Map<String, Object> toJSON( GHResponse rsp,
-                                       boolean calcPoints, boolean pointsEncoded,
-                                       boolean includeElevation, boolean enableInstructions )
-    {
+    public Map<String, Object> toJSON(GHResponse rsp,
+                                      boolean calcPoints, boolean pointsEncoded,
+                                      boolean includeElevation, boolean enableInstructions) {
         Map<String, Object> json = new HashMap<String, Object>();
 
-        if (rsp.hasErrors())
-        {
+        if (rsp.hasErrors()) {
             json.put("message", getMessage(rsp.getErrors().get(0)));
             List<Map<String, String>> errorHintList = new ArrayList<Map<String, String>>();
-            for (Throwable t : rsp.getErrors())
-            {
+            for (Throwable t : rsp.getErrors()) {
                 Map<String, String> map = new HashMap<String, String>();
                 map.put("message", getMessage(t));
                 map.put("details", t.getClass().getName());
-                if(t instanceof GHException)
-                {
+                if (t instanceof GHException) {
                     map.putAll(((GHException) t).getDetails());
                 }
                 errorHintList.add(map);
             }
             json.put("hints", errorHintList);
-        } else
-        {
+        } else {
             Map<String, Object> jsonInfo = new HashMap<String, Object>();
             json.put("info", jsonInfo);
             json.put("hints", rsp.getHints().toMap());
@@ -80,8 +72,7 @@ public class SimpleRouteSerializer implements RouteSerializer
             jsonInfo.put("copyrights", Arrays.asList("GraphHopper", "OpenStreetMap contributors"));
 
             List<Map<String, Object>> jsonPathList = new ArrayList<Map<String, Object>>();
-            for (PathWrapper ar : rsp.getAll())
-            {
+            for (PathWrapper ar : rsp.getAll()) {
                 Map<String, Object> jsonPath = new HashMap<String, Object>();
                 jsonPath.put("distance", Helper.round(ar.getDistance(), 3));
                 jsonPath.put("weight", Helper.round6(ar.getRouteWeight()));
@@ -89,21 +80,18 @@ public class SimpleRouteSerializer implements RouteSerializer
                 if (!ar.getDescription().isEmpty())
                     jsonPath.put("description", ar.getDescription());
 
-                if (calcPoints)
-                {
+                if (calcPoints) {
                     jsonPath.put("points_encoded", pointsEncoded);
 
                     PointList points = ar.getPoints();
-                    if (points.getSize() >= 2)
-                    {
+                    if (points.getSize() >= 2) {
                         BBox maxBounds2D = new BBox(maxBounds.minLon, maxBounds.maxLon, maxBounds.minLat, maxBounds.maxLat);
                         jsonPath.put("bbox", ar.calcRouteBBox(maxBounds2D).toGeoJson());
                     }
 
                     jsonPath.put("points", createPoints(points, pointsEncoded, includeElevation));
 
-                    if (enableInstructions)
-                    {
+                    if (enableInstructions) {
                         InstructionList instructions = ar.getInstructions();
                         jsonPath.put("instructions", instructions.createJson());
                     }
@@ -122,8 +110,7 @@ public class SimpleRouteSerializer implements RouteSerializer
     }
 
     @Override
-    public Object createPoints( PointList points, boolean pointsEncoded, boolean includeElevation )
-    {
+    public Object createPoints(PointList points, boolean pointsEncoded, boolean includeElevation) {
         if (pointsEncoded)
             return WebHelper.encodePolyline(points, includeElevation);
 

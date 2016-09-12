@@ -20,27 +20,24 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class EncodedDoubleValueTest
-{
+public class EncodedDoubleValueTest {
     @Test
-    public void testSetDoubleValue()
-    {
+    public void testSetDoubleValue() {
         EncodedDoubleValue instance = new EncodedDoubleValue("test", 6, 10, 0.01, 5, 10);
         assertEquals(10.12, instance.getDoubleValue(instance.setDoubleValue(0, 10.12)), 1e-4);
     }
 
     @Test
-    public void testMaxValue()
-    {
+    public void testMaxValue() {
         EncodedDoubleValue instance1 = new EncodedDoubleValue("test1", 0, 8, 0.5, 60, 100);
         long flags = instance1.setDoubleValue(0, instance1.getMaxValue());
         assertEquals(100, instance1.getDoubleValue(flags), 1e-1);
-        
+
         CarFlagEncoder carEncoder = new CarFlagEncoder(10, 0.5, 0);
         new EncodingManager(carEncoder);
         ReaderWay way = new ReaderWay(1);
@@ -54,8 +51,7 @@ public class EncodedDoubleValueTest
     }
 
     @Test
-    public void testUnsignedRightShift_issue417()
-    {
+    public void testUnsignedRightShift_issue417() {
         EncodedDoubleValue speedEncoder = new EncodedDoubleValue("Speed", 56, 8, 1, 30, 255);
         Long flags = -72057594037927936L;
         assertEquals(255, speedEncoder.getDoubleValue(flags), 0.01);

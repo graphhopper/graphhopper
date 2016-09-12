@@ -20,13 +20,13 @@ package com.graphhopper.http;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.json.JSONArray;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
-import org.json.JSONArray;
 
 /**
  * Code which handles polyline encoding and other web stuff.
@@ -35,33 +35,27 @@ import org.json.JSONArray;
  * http://stackoverflow.com/a/24510799/194609 with a link to official Java sources as well as to a
  * good explanation.
  * <p>
+ *
  * @author Peter Karich
  */
-public class WebHelper
-{
-    public static String encodeURL( String str )
-    {
-        try
-        {
+public class WebHelper {
+    public static String encodeURL(String str) {
+        try {
             return URLEncoder.encode(str, "UTF-8");
-        } catch (Exception _ignore)
-        {
+        } catch (Exception _ignore) {
             return str;
         }
     }
 
-    public static PointList decodePolyline( String encoded, int initCap, boolean is3D )
-    {
+    public static PointList decodePolyline(String encoded, int initCap, boolean is3D) {
         PointList poly = new PointList(initCap, is3D);
         int index = 0;
         int len = encoded.length();
         int lat = 0, lng = 0, ele = 0;
-        while (index < len)
-        {
+        while (index < len) {
             // latitude
             int b, shift = 0, result = 0;
-            do
-            {
+            do {
                 b = encoded.charAt(index++) - 63;
                 result |= (b & 0x1f) << shift;
                 shift += 5;
@@ -72,8 +66,7 @@ public class WebHelper
             // longitute
             shift = 0;
             result = 0;
-            do
-            {
+            do {
                 b = encoded.charAt(index++) - 63;
                 result |= (b & 0x1f) << shift;
                 shift += 5;
@@ -81,13 +74,11 @@ public class WebHelper
             int deltaLongitude = ((result & 1) != 0 ? ~(result >> 1) : (result >> 1));
             lng += deltaLongitude;
 
-            if (is3D)
-            {
+            if (is3D) {
                 // elevation
                 shift = 0;
                 result = 0;
-                do
-                {
+                do {
                     b = encoded.charAt(index++) - 63;
                     result |= (b & 0x1f) << shift;
                     shift += 5;
@@ -101,31 +92,27 @@ public class WebHelper
         return poly;
     }
 
-    public static String encodePolyline( PointList poly )
-    {
+    public static String encodePolyline(PointList poly) {
         if (poly.isEmpty())
             return "";
 
         return encodePolyline(poly, poly.is3D());
     }
 
-    public static String encodePolyline( PointList poly, boolean includeElevation )
-    {
+    public static String encodePolyline(PointList poly, boolean includeElevation) {
         StringBuilder sb = new StringBuilder();
         int size = poly.getSize();
         int prevLat = 0;
         int prevLon = 0;
         int prevEle = 0;
-        for (int i = 0; i < size; i++)
-        {
+        for (int i = 0; i < size; i++) {
             int num = (int) Math.floor(poly.getLatitude(i) * 1e5);
             encodeNumber(sb, num - prevLat);
             prevLat = num;
             num = (int) Math.floor(poly.getLongitude(i) * 1e5);
             encodeNumber(sb, num - prevLon);
             prevLon = num;
-            if (includeElevation)
-            {
+            if (includeElevation) {
                 num = (int) Math.floor(poly.getElevation(i) * 100);
                 encodeNumber(sb, num - prevEle);
                 prevEle = num;
@@ -134,15 +121,12 @@ public class WebHelper
         return sb.toString();
     }
 
-    private static void encodeNumber( StringBuilder sb, int num )
-    {
+    private static void encodeNumber(StringBuilder sb, int num) {
         num = num << 1;
-        if (num < 0)
-        {
+        if (num < 0) {
             num = ~num;
         }
-        while (num >= 0x20)
-        {
+        while (num >= 0x20) {
             int nextValue = (0x20 | (num & 0x1f)) + 63;
             sb.append((char) (nextValue));
             num >>= 5;
@@ -151,30 +135,24 @@ public class WebHelper
         sb.append((char) (num));
     }
 
-    public static String readString( InputStream inputStream ) throws IOException
-    {
+    public static String readString(InputStream inputStream) throws IOException {
         String encoding = "UTF-8";
         InputStream in = new BufferedInputStream(inputStream, 4096);
-        try
-        {
+        try {
             byte[] buffer = new byte[4096];
             ByteArrayOutputStream output = new ByteArrayOutputStream();
             int numRead;
-            while ((numRead = in.read(buffer)) != -1)
-            {
+            while ((numRead = in.read(buffer)) != -1) {
                 output.write(buffer, 0, numRead);
             }
             return output.toString(encoding);
-        } finally
-        {
+        } finally {
             in.close();
         }
     }
 
-    public static GHPoint toGHPoint( JSONArray point )
-    {
-        if (point.length() == 3 && !Double.isNaN(point.getDouble(2)))
-        {
+    public static GHPoint toGHPoint(JSONArray point) {
+        if (point.length() == 3 && !Double.isNaN(point.getDouble(2))) {
             return new GHPoint3D(point.getDouble(1), point.getDouble(0), point.getDouble(2));
         }
 

@@ -18,34 +18,35 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.util.NotThreadSafe;
+
 import java.util.List;
 
 /**
  * Calculates the shortest path from the specified node ids. Can be used only once.
  * <p>
+ *
  * @author Peter Karich
  */
 @NotThreadSafe
-public interface RoutingAlgorithm
-{
+public interface RoutingAlgorithm {
     /**
      * Calculates the best path between the specified nodes.
      *
      * @return the path. Call the method found() to make sure that the path is valid.
      */
-    Path calcPath( int from, int to );
+    Path calcPath(int from, int to);
 
     /**
      * Calculates multiple possibilities for a path.
      *
      * @see #calcPath(int, int)
      */
-    List<Path> calcPaths( int from, int to );
+    List<Path> calcPaths(int from, int to);
 
     /**
      * Limit the search to numberOfNodes. See #681
      */
-    void setMaxVisitedNodes( int numberOfNodes );
+    void setMaxVisitedNodes(int numberOfNodes);
 
     /**
      * @return name of this algorithm

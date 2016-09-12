@@ -20,11 +20,9 @@ package com.graphhopper.storage;
 /**
  * @author Peter Karich
  */
-public class GraphStorageViaMMapTest extends AbstractGraphStorageTester
-{
+public class GraphStorageViaMMapTest extends AbstractGraphStorageTester {
     @Override
-    public GraphHopperStorage createGHStorage( String location, boolean is3D )
-    {
+    public GraphHopperStorage createGHStorage(String location, boolean is3D) {
         GraphHopperStorage gs = new GraphBuilder(encodingManager).set3D(is3D).setLocation(location).setMmap(true).build();
         gs.setSegmentSize(defaultSize / 2);
         gs.create(defaultSize);

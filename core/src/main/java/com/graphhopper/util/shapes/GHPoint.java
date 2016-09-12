@@ -22,39 +22,46 @@ import com.graphhopper.util.NumHelper;
 /**
  * @author Peter Karich
  */
-public class GHPoint
-{
+public class GHPoint {
     public double lat = Double.NaN;
     public double lon = Double.NaN;
 
-    public GHPoint()
-    {
+    public GHPoint() {
     }
 
-    public GHPoint( double lat, double lon )
-    {
+    public GHPoint(double lat, double lon) {
         this.lat = lat;
         this.lon = lon;
     }
 
-    public double getLon()
-    {
+    public static GHPoint parse(String str) {
+        // if the point is in the format of lat,lon we don't need to call geocoding service
+        String[] fromStrs = str.split(",");
+        if (fromStrs.length == 2) {
+            try {
+                double fromLat = Double.parseDouble(fromStrs[0]);
+                double fromLon = Double.parseDouble(fromStrs[1]);
+                return new GHPoint(fromLat, fromLon);
+            } catch (Exception ex) {
+            }
+        }
+        return null;
+    }
+
+    public double getLon() {
         return lon;
     }
 
-    public double getLat()
-    {
+    public double getLat() {
         return lat;
     }
 
-    public boolean isValid()
-    {
+    public boolean isValid() {
         return !Double.isNaN(lat) && !Double.isNaN(lon);
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         int hash = 7;
         hash = 83 * hash + (int) (Double.doubleToLongBits(this.lat) ^ (Double.doubleToLongBits(this.lat) >>> 32));
         hash = 83 * hash + (int) (Double.doubleToLongBits(this.lon) ^ (Double.doubleToLongBits(this.lon) >>> 32));
@@ -62,8 +69,7 @@ public class GHPoint
     }
 
     @Override
-    public boolean equals( Object obj )
-    {
+    public boolean equals(Object obj) {
         if (obj == null)
             return false;
 
@@ -73,37 +79,14 @@ public class GHPoint
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return lat + "," + lon;
     }
 
     /**
      * Attention: geoJson is LON,LAT
      */
-    public Double[] toGeoJson()
-    {
-        return new Double[]
-                {
-                        lon, lat
-                };
-    }
-
-    public static GHPoint parse( String str )
-    {
-        // if the point is in the format of lat,lon we don't need to call geocoding service
-        String[] fromStrs = str.split(",");
-        if (fromStrs.length == 2)
-        {
-            try
-            {
-                double fromLat = Double.parseDouble(fromStrs[0]);
-                double fromLon = Double.parseDouble(fromStrs[1]);
-                return new GHPoint(fromLat, fromLon);
-            } catch (Exception ex)
-            {
-            }
-        }
-        return null;
+    public Double[] toGeoJson() {
+        return new Double[]{lon, lat};
     }
 }

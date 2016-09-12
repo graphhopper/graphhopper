@@ -17,38 +17,32 @@
  */
 package com.graphhopper.ui;
 
+import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.util.ArrayList;
-import javax.swing.JPanel;
+import java.util.Collection;
 
 /**
  * @author Peter Karich
  */
-public class LayeredPanel extends JPanel
-{
+public class LayeredPanel extends JPanel {
     private final Collection<MapLayer> layers;
 
-    public LayeredPanel()
-    {
+    public LayeredPanel() {
         this(new ArrayList<MapLayer>());
     }
 
-    public LayeredPanel( Collection<MapLayer> layer )
-    {
+    public LayeredPanel(Collection<MapLayer> layer) {
         this.layers = layer;
-        this.addComponentListener(new ComponentAdapter()
-        {
+        this.addComponentListener(new ComponentAdapter() {
             @Override
-            public void componentResized( ComponentEvent e )
-            {
+            public void componentResized(ComponentEvent e) {
                 int w = e.getComponent().getWidth();
                 int h = e.getComponent().getHeight();
                 System.out.println("mainResized:" + w + " " + h);
-                for (MapLayer ml : layers)
-                {
+                for (MapLayer ml : layers) {
                     ml.setBounds(new Rectangle(0, 0, w, h));
                 }
                 repaint();
@@ -56,22 +50,18 @@ public class LayeredPanel extends JPanel
         });
     }
 
-    public void setBuffering( boolean enable )
-    {
-        for (MapLayer ml : layers)
-        {
+    public void setBuffering(boolean enable) {
+        for (MapLayer ml : layers) {
             ml.setBuffering(enable);
         }
     }
 
-    public void addLayer( MapLayer ml )
-    {
+    public void addLayer(MapLayer ml) {
         layers.add(ml);
     }
 
     @Override
-    protected void paintComponent( Graphics g )
-    {
+    protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g;
 //        StopWatch sw = new StopWatch();
@@ -81,8 +71,7 @@ public class LayeredPanel extends JPanel
 //        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 //        g2.setRenderingHint(RenderingHints.KEY_ALPHA_INTERPOLATION, RenderingHints.VALUE_ALPHA_INTERPOLATION_SPEED);
 //        int counter = 0;
-        for (MapLayer ml : layers)
-        {
+        for (MapLayer ml : layers) {
 //            sw.start();
             ml.paint(g2);
 //            System.out.println(++counter + " | mainRepaint took " + sw.stop().getSeconds() + " sec");

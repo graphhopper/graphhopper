@@ -18,36 +18,32 @@
 package com.graphhopper.http;
 
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.Translation;
+import com.graphhopper.util.TranslationMap;
+import org.json.JSONObject;
 
-import java.io.IOException;
-import java.util.Locale;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.json.JSONObject;
+import java.io.IOException;
+import java.util.Locale;
 
 /**
  * @author Peter Karich
  */
-public class I18NServlet extends GHBaseServlet
-{
+public class I18NServlet extends GHBaseServlet {
     @Inject
     private TranslationMap map;
 
     @Override
-    public void doGet( HttpServletRequest req, HttpServletResponse res ) throws ServletException, IOException
-    {
+    public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         String locale = "";
         String path = req.getPathInfo();
         if (!Helper.isEmpty(path) && path.startsWith("/"))
             locale = path.substring(1);
 
-        if (Helper.isEmpty(locale))
-        {
+        if (Helper.isEmpty(locale)) {
             // fall back to language specified in header e.g. via browser settings
             String acceptLang = req.getHeader("Accept-Language");
             if (!Helper.isEmpty(acceptLang))

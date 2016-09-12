@@ -21,34 +21,29 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class Location2IDFullWithEdgesIndexTest extends AbstractLocationIndexTester
-{
+public class Location2IDFullWithEdgesIndexTest extends AbstractLocationIndexTester {
     @Override
-    public LocationIndex createIndex( Graph g, int resolution )
-    {
+    public LocationIndex createIndex(Graph g, int resolution) {
         return new Location2IDFullWithEdgesIndex(g);
     }
 
     @Override
-    public boolean hasEdgeSupport()
-    {
+    public boolean hasEdgeSupport() {
         return true;
     }
 
     @Override
-    public void testGrid()
-    {
+    public void testGrid() {
         // do not test against itself
     }
 
     @Test
-    public void testFullIndex()
-    {
+    public void testFullIndex() {
         LocationIndex tmpIdx = new Location2IDFullWithEdgesIndex(createSampleGraph(new EncodingManager("car")));
         assertEquals(5, findID(tmpIdx, 2, 3));
         assertEquals(10, findID(tmpIdx, 4, 1));

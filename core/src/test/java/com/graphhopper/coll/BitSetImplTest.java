@@ -20,11 +20,9 @@ package com.graphhopper.coll;
 /**
  * @author Peter Karich
  */
-public class BitSetImplTest extends AbstractMyBitSetTest
-{
+public class BitSetImplTest extends AbstractMyBitSetTest {
     @Override
-    public GHBitSet createBitSet( int no )
-    {
+    public GHBitSet createBitSet(int no) {
         return new GHBitSetImpl(no);
     }
 }

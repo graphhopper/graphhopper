@@ -28,36 +28,30 @@ import com.graphhopper.util.CmdArgs;
  * <p>
  * http://code.google.com/p/google-guice/wiki/ServletModule
  * <p>
+ *
  * @author Peter Karich
  */
-public class GuiceServletConfig extends GuiceServletContextListener
-{
+public class GuiceServletConfig extends GuiceServletContextListener {
     private final CmdArgs args;
 
-    public GuiceServletConfig()
-    {
-        try
-        {
+    public GuiceServletConfig() {
+        try {
             args = CmdArgs.readFromConfig("config.properties", "graphhopper.config");
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             throw new RuntimeException(ex);
         }
     }
 
     @Override
-    protected Injector getInjector()
-    {
+    protected Injector getInjector() {
         return Guice.createInjector(createDefaultModule(), createServletModule());
     }
 
-    protected Module createDefaultModule()
-    {
+    protected Module createDefaultModule() {
         return new DefaultModule(args);
     }
 
-    protected Module createServletModule()
-    {
+    protected Module createServletModule() {
         return new GHServletModule(args);
     }
 }

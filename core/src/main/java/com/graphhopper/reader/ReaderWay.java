@@ -23,25 +23,22 @@ import gnu.trove.list.array.TLongArrayList;
 /**
  * Represents a way received from the reader.
  * <p>
+ *
  * @author Nop
  */
-public class ReaderWay extends ReaderElement
-{
+public class ReaderWay extends ReaderElement {
     protected final TLongList nodes = new TLongArrayList(5);
 
-    public ReaderWay( long id )
-    {
+    public ReaderWay(long id) {
         super(id, WAY);
     }
 
-    public TLongList getNodes()
-    {
+    public TLongList getNodes() {
         return nodes;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "Way id:" + getId() + ", nodes:" + nodes.size() + ", tags:" + super.toString();
     }
 }

@@ -21,16 +21,14 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class WebHelperTest
-{
+public class WebHelperTest {
     @Test
-    public void testDecode() throws Exception
-    {
+    public void testDecode() throws Exception {
         PointList list = WebHelper.decodePolyline("_p~iF~ps|U", 1, false);
         assertEquals(Helper.createPointList(38.5, -120.2), list);
 
@@ -39,8 +37,7 @@ public class WebHelperTest
     }
 
     @Test
-    public void testEncode() throws Exception
-    {
+    public void testEncode() throws Exception {
         assertEquals("_p~iF~ps|U", WebHelper.encodePolyline(
                 Helper.createPointList(38.5, -120.2)));
 
@@ -49,8 +46,7 @@ public class WebHelperTest
     }
 
     @Test
-    public void testBoth() throws Exception
-    {
+    public void testBoth() throws Exception {
         PointList list = Helper.createPointList(38.5, -120.2, 43.252, -126.453,
                 40.7, -120.95, 50.3139, 10.61279, 50.04303, 9.49768);
         String str = WebHelper.encodePolyline(list);
@@ -63,8 +59,7 @@ public class WebHelperTest
     }
 
     @Test
-    public void testDecode3D() throws Exception
-    {
+    public void testDecode3D() throws Exception {
         PointList list = WebHelper.decodePolyline("_p~iF~ps|Uo}@", 1, true);
         assertEquals(Helper.createPointList3D(38.5, -120.2, 10), list);
 
@@ -73,8 +68,7 @@ public class WebHelperTest
     }
 
     @Test
-    public void testEncode3D() throws Exception
-    {
+    public void testEncode3D() throws Exception {
         assertEquals("_p~iF~ps|Uo}@", WebHelper.encodePolyline(Helper.createPointList3D(38.5, -120.2, 10)));
         assertEquals("_p~iF~ps|Uo}@_ulLnnqC_anF_mqNvxq`@?", WebHelper.encodePolyline(
                 Helper.createPointList3D(38.5, -120.2, 10, 40.7, -120.95, 1234, 43.252, -126.453, 1234)));

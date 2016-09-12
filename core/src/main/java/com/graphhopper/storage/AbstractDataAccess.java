@@ -28,25 +28,23 @@ import java.nio.ByteOrder;
 /**
  * @author Peter Karich
  */
-public abstract class AbstractDataAccess implements DataAccess
-{
+public abstract class AbstractDataAccess implements DataAccess {
     protected static final int SEGMENT_SIZE_MIN = 1 << 7;
-    private static final int SEGMENT_SIZE_DEFAULT = 1 << 20;
     // reserve some space for downstream usage (in classes using/extending this)
     protected static final int HEADER_OFFSET = 20 * 4 + 20;
     protected static final byte[] EMPTY = new byte[1024];
-    protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
+    private static final int SEGMENT_SIZE_DEFAULT = 1 << 20;
+    protected final ByteOrder byteOrder;
+    protected final BitUtil bitUtil;
     private final String location;
+    protected int header[] = new int[(HEADER_OFFSET - 20) / 4];
     protected String name;
     protected int segmentSizeInBytes = SEGMENT_SIZE_DEFAULT;
     protected transient int segmentSizePower;
     protected transient int indexDivisor;
-    protected final ByteOrder byteOrder;
-    protected final BitUtil bitUtil;
     protected transient boolean closed = false;
 
-    public AbstractDataAccess( String name, String location, ByteOrder order )
-    {
+    public AbstractDataAccess(String name, String location, ByteOrder order) {
         byteOrder = order;
         bitUtil = BitUtil.get(order);
         this.name = name;
@@ -57,38 +55,32 @@ public abstract class AbstractDataAccess implements DataAccess
     }
 
     @Override
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
-    protected String getFullName()
-    {
+    protected String getFullName() {
         return location + name;
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         closed = true;
     }
 
     @Override
-    public boolean isClosed()
-    {
+    public boolean isClosed() {
         return closed;
     }
 
     @Override
-    public void setHeader( int bytePos, int value )
-    {
+    public void setHeader(int bytePos, int value) {
         bytePos >>= 2;
         header[bytePos] = value;
     }
 
     @Override
-    public int getHeader( int bytePos )
-    {
+    public int getHeader(int bytePos) {
         bytePos >>= 2;
         return header[bytePos];
     }
@@ -96,20 +88,17 @@ public abstract class AbstractDataAccess implements DataAccess
     /**
      * Writes some internal data into the beginning of the specified file.
      */
-    protected void writeHeader( RandomAccessFile file, long length, int segmentSize ) throws IOException
-    {
+    protected void writeHeader(RandomAccessFile file, long length, int segmentSize) throws IOException {
         file.seek(0);
         file.writeUTF("GH");
         file.writeLong(length);
         file.writeInt(segmentSize);
-        for (int i = 0; i < header.length; i++)
-        {
+        for (int i = 0; i < header.length; i++) {
             file.writeInt(header[i]);
         }
     }
 
-    protected long readHeader( RandomAccessFile raFile ) throws IOException
-    {
+    protected long readHeader(RandomAccessFile raFile) throws IOException {
         raFile.seek(0);
         if (raFile.length() == 0)
             return -1;
@@ -120,24 +109,20 @@ public abstract class AbstractDataAccess implements DataAccess
 
         long bytes = raFile.readLong();
         setSegmentSize(raFile.readInt());
-        for (int i = 0; i < header.length; i++)
-        {
+        for (int i = 0; i < header.length; i++) {
             header[i] = raFile.readInt();
         }
         return bytes;
     }
 
-    protected void copyHeader( DataAccess da )
-    {
-        for (int h = 0; h < header.length * 4; h += 4)
-        {
+    protected void copyHeader(DataAccess da) {
+        for (int h = 0; h < header.length * 4; h += 4) {
             da.setHeader(h, getHeader(h));
         }
     }
 
     @Override
-    public DataAccess copyTo( DataAccess da )
-    {
+    public DataAccess copyTo(DataAccess da) {
         copyHeader(da);
         da.ensureCapacity(getCapacity());
         long cap = getCapacity();
@@ -145,29 +130,22 @@ public abstract class AbstractDataAccess implements DataAccess
         int segSize = Math.min(da.getSegmentSize(), getSegmentSize());
         byte[] bytes = new byte[segSize];
         boolean externalIntBased = ((AbstractDataAccess) da).isIntBased();
-        for (long bytePos = 0; bytePos < cap; bytePos += segSize)
-        {
+        for (long bytePos = 0; bytePos < cap; bytePos += segSize) {
             // read
-            if (isIntBased())
-            {
-                for (int offset = 0; offset < segSize; offset += 4)
-                {
+            if (isIntBased()) {
+                for (int offset = 0; offset < segSize; offset += 4) {
                     bitUtil.fromInt(bytes, getInt(bytePos + offset), offset);
                 }
-            } else
-            {
+            } else {
                 getBytes(bytePos, bytes, segSize);
             }
 
             // write
-            if (externalIntBased)
-            {
-                for (int offset = 0; offset < segSize; offset += 4)
-                {
+            if (externalIntBased) {
+                for (int offset = 0; offset < segSize; offset += 4) {
                     da.setInt(bytePos + offset, bitUtil.toInt(bytes, offset));
                 }
-            } else
-            {
+            } else {
                 da.setBytes(bytePos, bytes, segSize);
             }
         }
@@ -175,10 +153,8 @@ public abstract class AbstractDataAccess implements DataAccess
     }
 
     @Override
-    public DataAccess setSegmentSize( int bytes )
-    {
-        if (bytes > 0)
-        {
+    public DataAccess setSegmentSize(int bytes) {
+        if (bytes > 0) {
             // segment size should be a power of 2
             int tmp = (int) (Math.log(bytes) / Math.log(2));
             segmentSizeInBytes = Math.max((int) Math.pow(2, tmp), SEGMENT_SIZE_MIN);
@@ -189,44 +165,35 @@ public abstract class AbstractDataAccess implements DataAccess
     }
 
     @Override
-    public int getSegmentSize()
-    {
+    public int getSegmentSize() {
         return segmentSizeInBytes;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getFullName();
     }
 
     @Override
-    public void rename( String newName )
-    {
+    public void rename(String newName) {
         File file = new File(location + name);
-        if (file.exists())
-        {
-            try
-            {
-                if (!file.renameTo(new File(location + newName)))
-                {
+        if (file.exists()) {
+            try {
+                if (!file.renameTo(new File(location + newName))) {
                     throw new IllegalStateException("Couldn't rename this " + getType() + " object to " + newName);
                 }
                 name = newName;
-            } catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 throw new IllegalStateException("Couldn't rename this " + getType() + " object!", ex);
             }
-        } else
-        {
+        } else {
             throw new IllegalStateException("File does not exist!? " + getFullName()
                     + " Make sure that you flushed before renaming. Otherwise it could make problems"
                     + " for memory mapped DataAccess objects");
         }
     }
 
-    protected boolean checkBeforeRename( String newName )
-    {
+    protected boolean checkBeforeRename(String newName) {
         if (Helper.isEmpty(newName))
             throw new IllegalArgumentException("newName mustn't be empty!");
 
@@ -239,13 +206,11 @@ public abstract class AbstractDataAccess implements DataAccess
         return true;
     }
 
-    public boolean isStoring()
-    {
+    public boolean isStoring() {
         return true;
     }
 
-    protected boolean isIntBased()
-    {
+    protected boolean isIntBased() {
         return false;
     }
 }

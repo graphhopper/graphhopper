@@ -25,12 +25,10 @@ import com.graphhopper.routing.util.HintsMap;
  *
  * @author Robin Boldt
  */
-public abstract class AbstractAdjustedWeighting implements Weighting
-{
+public abstract class AbstractAdjustedWeighting implements Weighting {
     protected final Weighting superWeighting;
 
-    public AbstractAdjustedWeighting( Weighting superWeighting )
-    {
+    public AbstractAdjustedWeighting(Weighting superWeighting) {
         if (superWeighting == null)
             throw new IllegalArgumentException("No super weighting set");
         this.superWeighting = superWeighting;
@@ -40,21 +38,18 @@ public abstract class AbstractAdjustedWeighting implements Weighting
      * Returns the flagEncoder of the superWeighting. Usually we do not have a Flagencoder here.
      */
     @Override
-    public FlagEncoder getFlagEncoder()
-    {
+    public FlagEncoder getFlagEncoder() {
         return superWeighting.getFlagEncoder();
     }
 
     @Override
-    public boolean matches( HintsMap reqMap )
-    {
+    public boolean matches(HintsMap reqMap) {
         return getName().equals(reqMap.getWeighting())
                 && superWeighting.getFlagEncoder().toString().equals(reqMap.getVehicle());
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getName() + "|" + superWeighting.toString();
     }
 }

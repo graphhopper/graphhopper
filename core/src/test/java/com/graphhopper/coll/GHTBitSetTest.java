@@ -17,28 +17,24 @@
  */
 package com.graphhopper.coll;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class GHTBitSetTest extends AbstractMyBitSetTest
-{
+public class GHTBitSetTest extends AbstractMyBitSetTest {
     @Override
-    public GHBitSet createBitSet( int no )
-    {
+    public GHBitSet createBitSet(int no) {
         return new GHTBitSet(no);
     }
 
     @Override
-    public void testNext()
-    {
+    public void testNext() {
         // not supported (yet) -> due to sorting
     }
 
     @Override
-    public void testToString()
-    {
+    public void testToString() {
         // unsorted output!
         GHBitSet bs = createBitSet(100);
         bs.add(12);

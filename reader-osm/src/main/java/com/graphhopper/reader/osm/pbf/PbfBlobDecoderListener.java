@@ -8,19 +8,20 @@ import java.util.List;
 /**
  * Instances of this interface are used to receive results from PBFBlobDecoder.
  * <p>
+ *
  * @author Brett Henderson
  */
-public interface PbfBlobDecoderListener
-{
+public interface PbfBlobDecoderListener {
     /**
      * Provides the listener with the list of decoded entities.
      * <p>
+     *
      * @param decodedEntities The decoded entities.
      */
-    void complete( List<ReaderElement> decodedEntities );
+    void complete(List<ReaderElement> decodedEntities);
 
     /**
      * Notifies the listener that an error occurred during processing.
      */
-    void error( Exception ex );
+    void error(Exception ex);
 }

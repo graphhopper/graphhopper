@@ -20,24 +20,19 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-
-import static com.graphhopper.routing.util.PriorityCode.*;
-
 import org.junit.Test;
 
+import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.Assert.*;
 
-public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
-{
+public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     @Override
-    protected BikeCommonFlagEncoder createBikeEncoder()
-    {
+    protected BikeCommonFlagEncoder createBikeEncoder() {
         return (BikeCommonFlagEncoder) new EncodingManager("bike,mtb").getEncoder("mtb");
     }
 
     @Test
-    public void testGetSpeed()
-    {
+    public void testGetSpeed() {
         long result = encoder.setProperties(10, true, true);
         assertEquals(10, encoder.getSpeed(result), 1e-1);
         ReaderWay way = new ReaderWay(1);
@@ -87,8 +82,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
     @Test
     @Override
-    public void testSacScale()
-    {
+    public void testSacScale() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("sac_scale", "hiking");
@@ -106,8 +100,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testHandleWayTags()
-    {
+    public void testHandleWayTags() {
         ReaderWay way = new ReaderWay(1);
         String wayType;
 
@@ -155,8 +148,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testHandleWayTagsInfluencedByRelation()
-    {
+    public void testHandleWayTagsInfluencedByRelation() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
         long allowed = encoder.acceptBit;
@@ -209,8 +201,7 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     // Issue 407 : Always block kissing_gate execpt for mountainbikes
     @Test
     @Override
-    public void testBarrierAccess()
-    {
+    public void testBarrierAccess() {
         // kissing_gate without bicycle tag
         ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");

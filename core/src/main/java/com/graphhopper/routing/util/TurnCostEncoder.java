@@ -20,52 +20,48 @@ package com.graphhopper.routing.util;
 /**
  * Encodes and decodes a turn restriction and turn costs within a integer flag
  * <p>
+ *
  * @author Karl Hübner
  */
-public interface TurnCostEncoder
-{
+public interface TurnCostEncoder {
     /**
      * @return true, if the turn restriction is encoded in the specified flags
      */
-    boolean isTurnRestricted( long flags );
+    boolean isTurnRestricted(long flags);
 
     /**
      * @return the costs encoded in the specified flag, if restricted it will be
      * Double.POSITIVE_INFINITY
      */
-    double getTurnCost( long flags );
+    double getTurnCost(long flags);
 
     /**
      * @param restricted true if restricted turn, equivalent to specifying of costs
-     * Double.POSITIVE_INFINITY
-     * @param costs the turn costs, specify 0 or Double.POSITIVE_INFINITY if restricted == true.
-     * Only used if restricted == false.
+     *                   Double.POSITIVE_INFINITY
+     * @param costs      the turn costs, specify 0 or Double.POSITIVE_INFINITY if restricted == true.
+     *                   Only used if restricted == false.
      * @return the encoded flags
      */
-    long getTurnFlags( boolean restricted, double costs );
+    long getTurnFlags(boolean restricted, double costs);
 
     /**
      * whether turn costs nor turn restrictions will be encoded by this encoder, should be used for
      * pedestrians
      */
-    class NoTurnCostsEncoder implements TurnCostEncoder
-    {
+    class NoTurnCostsEncoder implements TurnCostEncoder {
 
         @Override
-        public boolean isTurnRestricted( long flags )
-        {
+        public boolean isTurnRestricted(long flags) {
             return false;
         }
 
         @Override
-        public double getTurnCost( long flags )
-        {
+        public double getTurnCost(long flags) {
             return 0;
         }
 
         @Override
-        public long getTurnFlags( boolean restriction, double costs )
-        {
+        public long getTurnFlags(boolean restriction, double costs) {
             return 0;
         }
     }

@@ -20,21 +20,17 @@ package com.graphhopper.json.geo;
 import java.util.List;
 
 /**
- *
  * @author Peter Karich
  */
-public class JsonFeatureCollection
-{
+public class JsonFeatureCollection {
     String type;
     List<JsonFeature> features;
 
-    public String getType()
-    {
+    public String getType() {
         return type;
     }
 
-    public List<JsonFeature> getFeatures()
-    {
+    public List<JsonFeature> getFeatures() {
         return features;
     }
 }

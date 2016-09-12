@@ -22,16 +22,17 @@ import com.graphhopper.util.Helper;
  * <p>
  * SparseArrays map ints to ints. Unlike a normal array of ints, there can be gaps in the indices.
  */
-public class SparseIntIntArray
-{
+public class SparseIntIntArray {
     private static final int DELETED = Integer.MIN_VALUE;
     private boolean mGarbage = false;
+    private int[] mKeys;
+    private int[] mValues;
+    private int mSize;
 
     /**
      * Creates a new SparseIntIntArray containing no mappings.
      */
-    public SparseIntIntArray()
-    {
+    public SparseIntIntArray() {
         this(10);
     }
 
@@ -39,18 +40,37 @@ public class SparseIntIntArray
      * Creates a new SparseIntIntArray containing no mappings that will not require any additional
      * memory allocation to store the specified number of mappings.
      */
-    public SparseIntIntArray( int cap )
-    {
-        try
-        {
+    public SparseIntIntArray(int cap) {
+        try {
             cap = Helper.idealIntArraySize(cap);
             mKeys = new int[cap];
             mValues = new int[cap];
             mSize = 0;
-        } catch (OutOfMemoryError err)
-        {
+        } catch (OutOfMemoryError err) {
             System.err.println("requested capacity " + cap);
             throw err;
+        }
+    }
+
+    static int binarySearch(int[] a, int start, int len, int key) {
+        int high = start + len, low = start - 1, guess;
+        while (high - low > 1) {
+            // use >>> for average or we could get an integer overflow.
+            guess = (high + low) >>> 1;
+
+            if (a[guess] < key) {
+                low = guess;
+            } else {
+                high = guess;
+            }
+        }
+
+        if (high == start + len) {
+            return ~(start + len);
+        } else if (a[high] == key) {
+            return high;
+        } else {
+            return ~high;
         }
     }
 
@@ -58,8 +78,7 @@ public class SparseIntIntArray
      * Gets the Object mapped from the specified key, or <code>null</code> if no such mapping has
      * been made.
      */
-    public int get( int key )
-    {
+    public int get(int key) {
         return get(key, -1);
     }
 
@@ -67,14 +86,11 @@ public class SparseIntIntArray
      * Gets the Object mapped from the specified key, or the specified Object if no such mapping has
      * been made.
      */
-    private int get( int key, int valueIfKeyNotFound )
-    {
+    private int get(int key, int valueIfKeyNotFound) {
         int i = binarySearch(mKeys, 0, mSize, key);
-        if (i < 0 || mValues[i] == DELETED)
-        {
+        if (i < 0 || mValues[i] == DELETED) {
             return valueIfKeyNotFound;
-        } else
-        {
+        } else {
             return mValues[i];
         }
     }
@@ -82,30 +98,24 @@ public class SparseIntIntArray
     /**
      * Removes the mapping from the specified key, if there was any.
      */
-    public void remove( int key )
-    {
+    public void remove(int key) {
         int i = binarySearch(mKeys, 0, mSize, key);
-        if (i >= 0 && mValues[i] != DELETED)
-        {
+        if (i >= 0 && mValues[i] != DELETED) {
             mValues[i] = DELETED;
             mGarbage = true;
         }
     }
 
-    private void gc()
-    {
+    private void gc() {
         int n = mSize;
         int o = 0;
         int[] keys = mKeys;
         int[] values = mValues;
 
-        for (int i = 0; i < n; i++)
-        {
+        for (int i = 0; i < n; i++) {
             int val = values[i];
-            if (val != DELETED)
-            {
-                if (i != o)
-                {
+            if (val != DELETED) {
+                if (i != o) {
                     keys[o] = keys[i];
                     values[o] = val;
                 }
@@ -122,34 +132,28 @@ public class SparseIntIntArray
      * Adds a mapping from the specified key to the specified value, replacing the previous mapping
      * from the specified key if there was one.
      */
-    public int put( int key, int value )
-    {
+    public int put(int key, int value) {
         int i = binarySearch(mKeys, 0, mSize, key);
 
-        if (i >= 0)
-        {
+        if (i >= 0) {
             mValues[i] = value;
-        } else
-        {
+        } else {
             i = ~i;
 
-            if (i < mSize && mValues[i] == DELETED)
-            {
+            if (i < mSize && mValues[i] == DELETED) {
                 mKeys[i] = key;
                 mValues[i] = value;
                 return i;
             }
 
-            if (mGarbage && mSize >= mKeys.length)
-            {
+            if (mGarbage && mSize >= mKeys.length) {
                 gc();
 
                 // Search again because indices may have changed.
                 i = ~binarySearch(mKeys, 0, mSize, key);
             }
 
-            if (mSize >= mKeys.length)
-            {
+            if (mSize >= mKeys.length) {
                 int n = Helper.idealIntArraySize(mSize + 1);
 
                 int[] nkeys = new int[n];
@@ -162,8 +166,7 @@ public class SparseIntIntArray
                 mValues = nvalues;
             }
 
-            if (mSize - i != 0)
-            {
+            if (mSize - i != 0) {
                 System.arraycopy(mKeys, i, mKeys, i + 1, mSize - i);
                 System.arraycopy(mValues, i, mValues, i + 1, mSize - i);
             }
@@ -178,10 +181,8 @@ public class SparseIntIntArray
     /**
      * Returns the number of key-value mappings that this SparseIntIntArray currently stores.
      */
-    public int getSize()
-    {
-        if (mGarbage)
-        {
+    public int getSize() {
+        if (mGarbage) {
             gc();
         }
 
@@ -192,10 +193,8 @@ public class SparseIntIntArray
      * Given an index in the range <code>0...size()-1</code>, returns the key from the
      * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
      */
-    public int keyAt( int index )
-    {
-        if (mGarbage)
-        {
+    public int keyAt(int index) {
+        if (mGarbage) {
             gc();
         }
 
@@ -206,10 +205,8 @@ public class SparseIntIntArray
      * Given an index in the range <code>0...size()-1</code>, sets a new key for the
      * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
      */
-    public void setKeyAt( int index, int key )
-    {
-        if (mGarbage)
-        {
+    public void setKeyAt(int index, int key) {
+        if (mGarbage) {
             gc();
         }
 
@@ -220,10 +217,8 @@ public class SparseIntIntArray
      * Given an index in the range <code>0...size()-1</code>, returns the value from the
      * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
      */
-    public int valueAt( int index )
-    {
-        if (mGarbage)
-        {
+    public int valueAt(int index) {
+        if (mGarbage) {
             gc();
         }
 
@@ -234,10 +229,8 @@ public class SparseIntIntArray
      * Given an index in the range <code>0...size()-1</code>, sets a new value for the
      * <code>index</code>th key-value mapping that this SparseIntIntArray stores.
      */
-    public void setValueAt( int index, int value )
-    {
-        if (mGarbage)
-        {
+    public void setValueAt(int index, int value) {
+        if (mGarbage) {
             gc();
         }
 
@@ -247,12 +240,10 @@ public class SparseIntIntArray
     /**
      * Removes all key-value mappings from this SparseIntIntArray.
      */
-    public void clear()
-    {
+    public void clear() {
         int n = mSize;
         int[] values = mValues;
-        for (int i = 0; i < n; i++)
-        {
+        for (int i = 0; i < n; i++) {
             values[i] = -1;
         }
 
@@ -264,21 +255,17 @@ public class SparseIntIntArray
      * Puts a key/value pair into the array, optimizing for the case where the key is greater than
      * all existing keys in the array.
      */
-    public int append( int key, int value )
-    {
-        if (mSize != 0 && key <= mKeys[mSize - 1])
-        {
+    public int append(int key, int value) {
+        if (mSize != 0 && key <= mKeys[mSize - 1]) {
             return put(key, value);
         }
 
-        if (mGarbage && mSize >= mKeys.length)
-        {
+        if (mGarbage && mSize >= mKeys.length) {
             gc();
         }
 
         int pos = mSize;
-        if (pos >= mKeys.length)
-        {
+        if (pos >= mKeys.length) {
             int n = Helper.idealIntArraySize(pos + 1);
 
             int[] nkeys = new int[n];
@@ -298,15 +285,12 @@ public class SparseIntIntArray
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < getSize(); i++)
-        {
+        for (int i = 0; i < getSize(); i++) {
             int k = mKeys[i];
             int v = mValues[i];
-            if (i > 0)
-            {
+            if (i > 0) {
                 sb.append(",");
             }
             sb.append(k);
@@ -319,41 +303,7 @@ public class SparseIntIntArray
     /**
      * Warning: returns ~index and not -(index+1) like trove and jdk do
      */
-    public int binarySearch( int key )
-    {
+    public int binarySearch(int key) {
         return binarySearch(mKeys, 0, mSize, key);
     }
-
-    static int binarySearch( int[] a, int start, int len, int key )
-    {
-        int high = start + len, low = start - 1, guess;
-        while (high - low > 1)
-        {
-            // use >>> for average or we could get an integer overflow. 
-            guess = (high + low) >>> 1;
-
-            if (a[guess] < key)
-            {
-                low = guess;
-            } else
-            {
-                high = guess;
-            }
-        }
-
-        if (high == start + len)
-        {
-            return ~(start + len);
-        } else if (a[high] == key)
-        {
-            return high;
-        } else
-        {
-            return ~high;
-        }
-    }
-
-    private int[] mKeys;
-    private int[] mValues;
-    private int mSize;
 }

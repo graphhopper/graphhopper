@@ -24,7 +24,6 @@ import java.util.Map;
  *
  * @author Robin Boldt
  */
-public interface GHException
-{
+public interface GHException {
     public abstract Map<String, String> getDetails();
 }

@@ -25,18 +25,22 @@ import com.graphhopper.storage.Graph;
 /**
  * Common subclass for bidirectional algorithms.
  * <p>
+ *
  * @author Peter Karich
  */
-public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
-{
-    int visitedCountFrom;
-    int visitedCountTo;
+public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     protected boolean finishedFrom;
     protected boolean finishedTo;
+    int visitedCountFrom;
+    int visitedCountTo;
 
-    abstract void initFrom( int from, double dist );
+    public AbstractBidirAlgo(Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode) {
+        super(graph, encoder, weighting, tMode);
+    }
 
-    abstract void initTo( int to, double dist );
+    abstract void initFrom(int from, double dist);
+
+    abstract void initTo(int to, double dist);
 
     protected abstract Path createAndInitPath();
 
@@ -48,14 +52,8 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
 
     abstract boolean fillEdgesTo();
 
-    public AbstractBidirAlgo( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
-    {
-        super(graph, encoder, weighting, tMode);
-    }
-
     @Override
-    public Path calcPath( int from, int to )
-    {
+    public Path calcPath(int from, int to) {
         checkAlreadyRun();
         createAndInitPath();
         initFrom(from, 0);
@@ -64,10 +62,8 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
         return extractPath();
     }
 
-    protected void runAlgo()
-    {
-        while (!finished() && !isMaxVisitedNodesExceeded())
-        {
+    protected void runAlgo() {
+        while (!finished() && !isMaxVisitedNodesExceeded()) {
             if (!finishedFrom)
                 finishedFrom = !fillEdgesFrom();
 
@@ -77,8 +73,7 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public int getVisitedNodes()
-    {
+    public int getVisitedNodes() {
         return visitedCountFrom + visitedCountTo;
     }
 }

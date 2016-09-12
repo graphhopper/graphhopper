@@ -17,35 +17,30 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.PathWrapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-
-import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
-public class GraphHopperWebTest
-{
+public class GraphHopperWebTest {
     // see also GraphHopperServletIT.testGraphHopperWeb for real routes against local jetty service    
 
     @Test
-    public void testReadEncoded() throws Exception
-    {
-        Downloader downloader = new Downloader("GraphHopper Test")
-        {
+    public void testReadEncoded() throws Exception {
+        Downloader downloader = new Downloader("GraphHopper Test") {
             @Override
-            public InputStream fetch( HttpURLConnection conn, boolean readErrorStreamNoException ) throws IOException
-            {
+            public InputStream fetch(HttpURLConnection conn, boolean readErrorStreamNoException) throws IOException {
                 return getClass().getResourceAsStream("test_encoded.json");
             }
         };
@@ -65,13 +60,10 @@ public class GraphHopperWebTest
     }
 
     @Test
-    public void testCreateURL() throws Exception
-    {
-        Downloader downloader = new Downloader("GraphHopper Test")
-        {
+    public void testCreateURL() throws Exception {
+        Downloader downloader = new Downloader("GraphHopper Test") {
             @Override
-            public String downloadAsString( String url, boolean readErrorStreamNoException ) throws IOException
-            {
+            public String downloadAsString(String url, boolean readErrorStreamNoException) throws IOException {
                 assertFalse(url.contains("xy"));
                 assertFalse(url.contains("algo1"));
                 assertTrue(url.contains("alternative_route.max_paths=4"));

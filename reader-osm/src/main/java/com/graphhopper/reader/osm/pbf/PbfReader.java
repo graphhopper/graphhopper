@@ -9,10 +9,10 @@ import java.util.concurrent.Executors;
 /**
  * An OSM data source reading from a PBF file. The entire contents of the file are read.
  * <p>
+ *
  * @author Brett Henderson
  */
-public class PbfReader implements Runnable
-{
+public class PbfReader implements Runnable {
     private InputStream inputStream;
     private Sink sink;
     private int workers;
@@ -20,22 +20,20 @@ public class PbfReader implements Runnable
     /**
      * Creates a new instance.
      * <p>
-     * @param in The file to read.
+     *
+     * @param in      The file to read.
      * @param workers The number of worker threads for decoding PBF blocks.
      */
-    public PbfReader( InputStream in, Sink sink, int workers )
-    {
+    public PbfReader(InputStream in, Sink sink, int workers) {
         this.inputStream = in;
         this.sink = sink;
         this.workers = workers;
     }
 
     @Override
-    public void run()
-    {
+    public void run() {
         ExecutorService executorService = Executors.newFixedThreadPool(workers);
-        try
-        {
+        try {
             // Create a stream splitter to break the PBF stream into blobs.
             PbfStreamSplitter streamSplitter = new PbfStreamSplitter(new DataInputStream(inputStream));
 
@@ -48,11 +46,9 @@ public class PbfReader implements Runnable
             PbfDecoder pbfDecoder = new PbfDecoder(streamSplitter, executorService, workers + 1, sink);
             pbfDecoder.run();
 
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException("Unable to read PBF file.", e);
-        } finally
-        {
+        } finally {
             sink.complete();
             executorService.shutdownNow();
         }

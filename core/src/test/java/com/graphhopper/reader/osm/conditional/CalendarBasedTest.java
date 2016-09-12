@@ -22,12 +22,11 @@ import java.util.Calendar;
 /**
  * Base Test for calendar based tasks.
  * <p>
+ *
  * @author Robin Boldt
  */
-public abstract class CalendarBasedTest
-{
-    protected Calendar getCalendar( int year, int month, int day )
-    {
+public abstract class CalendarBasedTest {
+    protected Calendar getCalendar(int year, int month, int day) {
         Calendar calendar = DateRangeParser.createCalendar();
         calendar.set(Calendar.YEAR, year);
         calendar.set(Calendar.MONTH, month);

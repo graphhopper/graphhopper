@@ -6,22 +6,22 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import java.util.*;
-import static org.junit.Assert.*;
 import org.junit.Test;
 
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.*;
+
 /**
- *
  * @author Peter Karich
  */
-public class DataFlagEncoderTest
-{
+public class DataFlagEncoderTest {
     private final DataFlagEncoder encoder;
     private final EncodingManager encodingManager;
     private final int motorVehicleInt;
 
-    public DataFlagEncoderTest()
-    {
+    public DataFlagEncoderTest() {
         encoder = new DataFlagEncoder();
         encodingManager = new EncodingManager(encoder);
 
@@ -29,8 +29,7 @@ public class DataFlagEncoderTest
     }
 
     @Test
-    public void testHighway()
-    {
+    public void testHighway() {
         ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("surface", "sand");
@@ -59,8 +58,7 @@ public class DataFlagEncoderTest
     }
 
     @Test
-    public void testHighwaySpeed()
-    {
+    public void testHighwaySpeed() {
         Map<String, Double> map = new HashMap<>();
         map.put("motorway", 100d);
         map.put("motorway_link", 100d);
@@ -72,8 +70,7 @@ public class DataFlagEncoderTest
     }
 
     @Test
-    public void testMaxspeed()
-    {
+    public void testMaxspeed() {
         ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("maxspeed", "10");
@@ -92,8 +89,7 @@ public class DataFlagEncoderTest
     }
 
     @Test
-    public void reverseEdge()
-    {
+    public void reverseEdge() {
         Graph graph = new GraphBuilder(encodingManager).create();
         EdgeIteratorState edge = graph.edge(0, 1);
         ReaderWay osmWay = new ReaderWay(0);

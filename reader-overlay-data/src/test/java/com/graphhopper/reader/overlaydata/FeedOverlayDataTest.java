@@ -13,32 +13,31 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.InputStreamReader;
 import java.io.Reader;
-import org.junit.Test;
+
 import static org.junit.Assert.*;
-import org.junit.Before;
 
 /**
  * @author Peter Karich
  */
-public class FeedOverlayDataTest
-{
+public class FeedOverlayDataTest {
     private EncodingManager encodingManager;
     private GraphHopperStorage graph;
     private GHson ghson;
 
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         encodingManager = new EncodingManager("car");
         graph = new GraphBuilder(encodingManager).create();
         ghson = new GHsonBuilder().create();
     }
 
     @Test
-    public void testApplyChanges()
-    {
+    public void testApplyChanges() {
         // 0-1-2
         // | |
         // 3-4
@@ -57,8 +56,7 @@ public class FeedOverlayDataTest
         FlagEncoder encoder = encodingManager.getEncoder("car");
         double defaultSpeed = encoder.getSpeed(GHUtility.getEdge(graph, 0, 1).getFlags());
         AllEdgesIterator iter = graph.getAllEdges();
-        while (iter.next())
-        {
+        while (iter.next()) {
             long flags = GHUtility.getEdge(graph, 0, 1).getFlags();
             assertEquals(defaultSpeed, encoder.getSpeed(flags), .1);
             assertTrue(encoder.isForward(flags));

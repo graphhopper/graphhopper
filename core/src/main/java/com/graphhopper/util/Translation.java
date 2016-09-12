@@ -23,10 +23,9 @@ import java.util.Map;
 /**
  * @author Peter Karich
  */
-public interface Translation
-{
+public interface Translation {
 
-    String tr( String key, Object... params );
+    String tr(String key, Object... params);
 
     Map<String, String> asMap();
 

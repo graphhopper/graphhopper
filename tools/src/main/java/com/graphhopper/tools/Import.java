@@ -24,10 +24,8 @@ import com.graphhopper.util.CmdArgs;
 /**
  * @author Peter Karich
  */
-public class Import
-{
-    public static void main( String[] strs ) throws Exception
-    {
+public class Import {
+    public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
         GraphHopper hopper = new GraphHopperOSM().init(args);
         hopper.importOrLoad();

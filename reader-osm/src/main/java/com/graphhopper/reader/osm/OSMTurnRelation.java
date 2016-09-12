@@ -26,75 +26,43 @@ import java.util.*;
 /**
  * Helper object which gives node cost entries for a given OSM-relation of type "restriction"
  * <p>
+ *
  * @author Karl Hübner
  */
-public class OSMTurnRelation
-{
-    enum Type
-    {
-        UNSUPPORTED, NOT, ONLY;
-
-        private static final Map<String, Type> tags = new HashMap<String, Type>();
-
-        static
-        {
-            tags.put("no_left_turn", NOT);
-            tags.put("no_right_turn", NOT);
-            tags.put("no_straight_on", NOT);
-            tags.put("no_u_turn", NOT);
-            tags.put("only_right_turn", ONLY);
-            tags.put("only_left_turn", ONLY);
-            tags.put("only_straight_on", ONLY);
-        }
-
-        public static Type getRestrictionType( String tag )
-        {
-            Type result = null;
-            if (tag != null)
-            {
-                result = tags.get(tag);
-            }
-            return (result != null) ? result : UNSUPPORTED;
-        }
-    }
-
+public class OSMTurnRelation {
     private final long fromOsmWayId;
     private final long viaOsmNodeId;
     private final long toOsmWayId;
     private final Type restriction;
 
-    OSMTurnRelation( long fromWayID, long viaNodeID, long toWayID, Type restrictionType )
-    {
+    OSMTurnRelation(long fromWayID, long viaNodeID, long toWayID, Type restrictionType) {
         this.fromOsmWayId = fromWayID;
         this.viaOsmNodeId = viaNodeID;
         this.toOsmWayId = toWayID;
         this.restriction = restrictionType;
     }
 
-    long getOsmIdFrom()
-    {
+    long getOsmIdFrom() {
         return fromOsmWayId;
     }
 
-    long getOsmIdTo()
-    {
+    long getOsmIdTo() {
         return toOsmWayId;
     }
 
     /**
      * Transforms this relation into a collection of turn cost entries
      * <p>
+     *
      * @param edgeOutExplorer an edge filter which only allows outgoing edges
-     * @param edgeInExplorer an edge filter which only allows incoming edges
+     * @param edgeInExplorer  an edge filter which only allows incoming edges
      * @return a collection of node cost entries which can be added to the graph later
      */
-    public Collection<TurnCostTableEntry> getRestrictionAsEntries( TurnCostEncoder encoder,
-                                                                   EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, OSMReader osmReader )
-    {
+    public Collection<TurnCostTableEntry> getRestrictionAsEntries(TurnCostEncoder encoder,
+                                                                  EdgeExplorer edgeOutExplorer, EdgeExplorer edgeInExplorer, OSMReader osmReader) {
         int nodeVia = osmReader.getInternalNodeIdOfOsmNode(this.viaOsmNodeId);
 
-        try
-        {
+        try {
             // street with restriction was not included (access or tag limits etc)
             if (nodeVia == OSMReader.EMPTY)
                 return Collections.emptyList();
@@ -104,10 +72,8 @@ public class OSMTurnRelation
             // get all incoming edges and receive the edge which is defined by fromOsm
             EdgeIterator iter = edgeInExplorer.setBaseNode(nodeVia);
 
-            while (iter.next())
-            {
-                if (osmReader.getOsmIdOfInternalEdge(iter.getEdge()) == this.fromOsmWayId)
-                {
+            while (iter.next()) {
+                if (osmReader.getOsmIdOfInternalEdge(iter.getEdge()) == this.fromOsmWayId) {
                     edgeIdFrom = iter.getEdge();
                     break;
                 }
@@ -117,17 +83,15 @@ public class OSMTurnRelation
                 return Collections.emptyList();
 
             final Collection<TurnCostTableEntry> entries = new ArrayList<TurnCostTableEntry>();
-            // get all outgoing edges of the via node 
+            // get all outgoing edges of the via node
             iter = edgeOutExplorer.setBaseNode(nodeVia);
             // for TYPE_ONLY_* we add ALL restrictions (from, via, * ) EXCEPT the given turn
             // for TYPE_NOT_*  we add ONE restriction  (from, via, to)
-            while (iter.next())
-            {
+            while (iter.next()) {
                 int edgeId = iter.getEdge();
                 long wayId = osmReader.getOsmIdOfInternalEdge(edgeId);
                 if (edgeId != edgeIdFrom && this.restriction == Type.ONLY && wayId != this.toOsmWayId
-                        || this.restriction == Type.NOT && wayId == this.toOsmWayId && wayId >= 0)
-                {
+                        || this.restriction == Type.NOT && wayId == this.toOsmWayId && wayId >= 0) {
                     final TurnCostTableEntry entry = new TurnCostTableEntry();
                     entry.nodeVia = nodeVia;
                     entry.edgeFrom = edgeIdFrom;
@@ -140,23 +104,44 @@ public class OSMTurnRelation
                 }
             }
             return entries;
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new IllegalStateException("Could not built turn table entry for relation of node with osmId:" + this.viaOsmNodeId, e);
         }
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "*-(" + fromOsmWayId + ")->" + viaOsmNodeId + "-(" + toOsmWayId + ")->*";
+    }
+
+    enum Type {
+        UNSUPPORTED, NOT, ONLY;
+
+        private static final Map<String, Type> tags = new HashMap<String, Type>();
+
+        static {
+            tags.put("no_left_turn", NOT);
+            tags.put("no_right_turn", NOT);
+            tags.put("no_straight_on", NOT);
+            tags.put("no_u_turn", NOT);
+            tags.put("only_right_turn", ONLY);
+            tags.put("only_left_turn", ONLY);
+            tags.put("only_straight_on", ONLY);
+        }
+
+        public static Type getRestrictionType(String tag) {
+            Type result = null;
+            if (tag != null) {
+                result = tags.get(tag);
+            }
+            return (result != null) ? result : UNSUPPORTED;
+        }
     }
 
     /**
      * Helper class to processing purposes only
      */
-    public static class TurnCostTableEntry
-    {
+    public static class TurnCostTableEntry {
         public int edgeFrom;
         public int nodeVia;
         public int edgeTo;
@@ -166,14 +151,12 @@ public class OSMTurnRelation
          * @return an unique id (edgeFrom, edgeTo) to avoid duplicate entries if multiple encoders
          * are involved.
          */
-        public long getItemId()
-        {
+        public long getItemId() {
             return ((long) edgeFrom) << 32 | ((long) edgeTo);
         }
 
         @Override
-        public String toString()
-        {
+        public String toString() {
             return "*-(" + edgeFrom + ")->" + nodeVia + "-(" + edgeTo + ")->*";
         }
     }

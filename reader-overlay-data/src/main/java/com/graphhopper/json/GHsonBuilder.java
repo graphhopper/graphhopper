@@ -23,13 +23,10 @@ import com.graphhopper.json.geo.FeatureJsonDeserializer;
 import com.graphhopper.json.geo.JsonFeature;
 
 /**
- *
  * @author Peter Karich
  */
-public class GHsonBuilder
-{
-    public GHson create()
-    {
+public class GHsonBuilder {
+    public GHson create() {
         // for now always return Gson implementation        
         Gson gson = new GsonBuilder()
                 .disableHtmlEscaping()

@@ -3,8 +3,6 @@ package com.graphhopper.reader.osm.pbf;
 
 import com.graphhopper.reader.ReaderElement;
 
-import java.util.Date;
-
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -17,10 +15,10 @@ import java.util.concurrent.locks.ReentrantLock;
  * Decodes all blocks from a PBF stream using worker threads, and passes the results to the
  * downstream sink.
  * <p>
+ *
  * @author Brett Henderson
  */
-public class PbfDecoder implements Runnable
-{
+public class PbfDecoder implements Runnable {
     private final PbfStreamSplitter streamSplitter;
     private final ExecutorService executorService;
     private final int maxPendingBlobs;
@@ -32,14 +30,14 @@ public class PbfDecoder implements Runnable
     /**
      * Creates a new instance.
      * <p>
-     * @param streamSplitter The PBF stream splitter providing the source of blobs to be decoded.
+     *
+     * @param streamSplitter  The PBF stream splitter providing the source of blobs to be decoded.
      * @param executorService The executor service managing the thread pool.
      * @param maxPendingBlobs The maximum number of blobs to have in progress at any point in time.
-     * @param sink The sink to send all decoded entities to.
+     * @param sink            The sink to send all decoded entities to.
      */
-    public PbfDecoder( PbfStreamSplitter streamSplitter, ExecutorService executorService, int maxPendingBlobs,
-                       Sink sink )
-    {
+    public PbfDecoder(PbfStreamSplitter streamSplitter, ExecutorService executorService, int maxPendingBlobs,
+                      Sink sink) {
         this.streamSplitter = streamSplitter;
         this.executorService = executorService;
         this.maxPendingBlobs = maxPendingBlobs;
@@ -57,14 +55,11 @@ public class PbfDecoder implements Runnable
      * Any thread can call this method when they wish to wait until an update has been performed by
      * another thread.
      */
-    private void waitForUpdate()
-    {
-        try
-        {
+    private void waitForUpdate() {
+        try {
             dataWaitCondition.await();
 
-        } catch (InterruptedException e)
-        {
+        } catch (InterruptedException e) {
             throw new RuntimeException("Thread was interrupted.", e);
         }
     }
@@ -73,26 +68,21 @@ public class PbfDecoder implements Runnable
      * Any thread can call this method when they wish to signal another thread that an update has
      * occurred.
      */
-    private void signalUpdate()
-    {
+    private void signalUpdate() {
         dataWaitCondition.signal();
     }
 
-    private void sendResultsToSink( int targetQueueSize )
-    {
-        while (blobResults.size() > targetQueueSize)
-        {
+    private void sendResultsToSink(int targetQueueSize) {
+        while (blobResults.size() > targetQueueSize) {
             // Get the next result from the queue and wait for it to complete.
             PbfBlobResult blobResult = blobResults.remove();
-            while (!blobResult.isComplete())
-            {
+            while (!blobResult.isComplete()) {
                 // The thread hasn't finished processing yet so wait for an
                 // update from another thread before checking again.
                 waitForUpdate();
             }
 
-            if (!blobResult.isSuccess())
-            {
+            if (!blobResult.isSuccess()) {
                 throw new RuntimeException("A PBF decoding worker thread failed, aborting.", blobResult.getException());
             }
 
@@ -100,24 +90,19 @@ public class PbfDecoder implements Runnable
             // for the duration of processing to allow worker threads to post
             // their results.
             lock.unlock();
-            try
-            {
-                for (ReaderElement entity : blobResult.getEntities())
-                {
+            try {
+                for (ReaderElement entity : blobResult.getEntities()) {
                     sink.process(entity);
                 }
-            } finally
-            {
+            } finally {
                 lock.lock();
             }
         }
     }
 
-    private void processBlobs()
-    {
+    private void processBlobs() {
         // Process until the PBF stream is exhausted.
-        while (streamSplitter.hasNext())
-        {
+        while (streamSplitter.hasNext()) {
             // Obtain the next raw blob from the PBF stream.
             PbfRawBlob rawBlob = streamSplitter.next();
 
@@ -128,35 +113,28 @@ public class PbfDecoder implements Runnable
 
             // Create the listener object that will update the blob results
             // based on an event fired by the blob decoder.
-            PbfBlobDecoderListener decoderListener = new PbfBlobDecoderListener()
-            {
+            PbfBlobDecoderListener decoderListener = new PbfBlobDecoderListener() {
                 @Override
-                public void error( Exception ex )
-                {
+                public void error(Exception ex) {
                     lock.lock();
-                    try
-                    {
+                    try {
                         // System.out.println("ERROR: " + new Date());
                         blobResult.storeFailureResult(ex);
                         signalUpdate();
 
-                    } finally
-                    {
+                    } finally {
                         lock.unlock();
                     }
                 }
 
                 @Override
-                public void complete( List<ReaderElement> decodedEntities )
-                {
+                public void complete(List<ReaderElement> decodedEntities) {
                     lock.lock();
-                    try
-                    {
+                    try {
                         blobResult.storeSuccessResult(decodedEntities);
                         signalUpdate();
 
-                    } finally
-                    {
+                    } finally {
                         lock.unlock();
                     }
                 }
@@ -177,15 +155,12 @@ public class PbfDecoder implements Runnable
     }
 
     @Override
-    public void run()
-    {
+    public void run() {
         lock.lock();
-        try
-        {
+        try {
             processBlobs();
 
-        } finally
-        {
+        } finally {
             lock.unlock();
         }
     }

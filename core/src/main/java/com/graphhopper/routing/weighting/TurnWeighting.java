@@ -20,7 +20,6 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TurnCostEncoder;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -28,11 +27,11 @@ import com.graphhopper.util.EdgeIteratorState;
 /**
  * Provides methods to retrieve turn costs for a specific turn.
  * <p>
+ *
  * @author Karl Hübner
  * @author Peter Karich
  */
-public class TurnWeighting implements Weighting
-{
+public class TurnWeighting implements Weighting {
     /**
      * Encoder, which decodes the turn flags
      */
@@ -44,8 +43,7 @@ public class TurnWeighting implements Weighting
     /**
      * @param turnCostExt the turn cost storage to be used
      */
-    public TurnWeighting( Weighting superWeighting, TurnCostEncoder encoder, TurnCostExtension turnCostExt )
-    {
+    public TurnWeighting(Weighting superWeighting, TurnCostEncoder encoder, TurnCostExtension turnCostExt) {
         this.turnCostEncoder = encoder;
         this.superWeighting = superWeighting;
         this.turnCostExt = turnCostExt;
@@ -59,21 +57,18 @@ public class TurnWeighting implements Weighting
      * Set the default cost for an u-turn in seconds. Default is 40s. Should be that high to avoid
      * 'tricking' other turn costs or restrictions.
      */
-    public TurnWeighting setDefaultUTurnCost( double costInSeconds )
-    {
+    public TurnWeighting setDefaultUTurnCost(double costInSeconds) {
         this.defaultUTurnCost = costInSeconds;
         return this;
     }
 
     @Override
-    public double getMinWeight( double distance )
-    {
+    public double getMinWeight(double distance) {
         return superWeighting.getMinWeight(distance);
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
-    {
+    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         double weight = superWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
         if (prevOrNextEdgeId == EdgeIterator.NO_EDGE)
             return weight;
@@ -91,8 +86,7 @@ public class TurnWeighting implements Weighting
         return weight + turnCosts;
     }
 
-    public double calcTurnWeight( int edgeFrom, int nodeVia, int edgeTo )
-    {
+    public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
         long turnFlags = turnCostExt.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
         if (turnCostEncoder.isTurnRestricted(turnFlags))
             return Double.POSITIVE_INFINITY;
@@ -101,21 +95,18 @@ public class TurnWeighting implements Weighting
     }
 
     @Override
-    public FlagEncoder getFlagEncoder()
-    {
+    public FlagEncoder getFlagEncoder() {
         return superWeighting.getFlagEncoder();
     }
 
     @Override
-    public boolean matches( HintsMap weightingMap )
-    {
+    public boolean matches(HintsMap weightingMap) {
         // TODO without 'turn' in comparison
         return superWeighting.matches(weightingMap);
     }
 
     @Override
-    public String getName()
-    {
+    public String getName() {
         return "turn|" + superWeighting.getName();
     }
 }

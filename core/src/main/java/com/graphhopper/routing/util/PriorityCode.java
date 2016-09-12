@@ -21,10 +21,10 @@ package com.graphhopper.routing.util;
  * Used to store a priority value in the way flags of an edge. Used in combination with
  * PriorityWeighting
  * <p>
+ *
  * @author Peter Karich
  */
-public enum PriorityCode
-{
+public enum PriorityCode {
     WORST(0),
     AVOID_AT_ALL_COSTS(1),
     REACH_DEST(2),
@@ -35,13 +35,11 @@ public enum PriorityCode
     BEST(7);
     private final int value;
 
-    private PriorityCode( int value )
-    {
+    private PriorityCode(int value) {
         this.value = value;
     }
 
-    public int getValue()
-    {
+    public int getValue() {
         return value;
     }
 

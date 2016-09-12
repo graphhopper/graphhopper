@@ -20,25 +20,23 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.PMap;
 
-import static com.graphhopper.routing.util.PriorityCode.*;
-
 import java.util.TreeMap;
+
+import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
  * Specifies the settings for race biking
  * <p>
+ *
  * @author ratrun
  * @author Peter Karich
  */
-public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
-{
-    public RacingBikeFlagEncoder()
-    {
+public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
+    public RacingBikeFlagEncoder() {
         this(4, 2, 0);
     }
 
-    public RacingBikeFlagEncoder( PMap properties )
-    {
+    public RacingBikeFlagEncoder(PMap properties) {
         this(
                 (int) properties.getLong("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
@@ -48,13 +46,11 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
         this.setBlockFords(properties.getBool("block_fords", true));
     }
 
-    public RacingBikeFlagEncoder( String propertiesStr )
-    {
+    public RacingBikeFlagEncoder(String propertiesStr) {
         this(new PMap(propertiesStr));
     }
 
-    public RacingBikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
-    {
+    public RacingBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
         preferHighwayTags.add("road");
         preferHighwayTags.add("secondary");
@@ -130,27 +126,23 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
 
         setAvoidSpeedLimit(81);
         setSpecificClassBicycle("roadcycling");
-        
+
         init();
     }
 
     @Override
-    public int getVersion()
-    {
+    public int getVersion() {
         return 1;
     }
 
     @Override
-    void collect( ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap )
-    {
+    void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
         super.collect(way, wayTypeSpeed, weightToPrioMap);
 
         String highway = way.getTag("highway");
-        if ("service".equals(highway))
-        {
+        if ("service".equals(highway)) {
             weightToPrioMap.put(40d, UNCHANGED.getValue());
-        } else if ("track".equals(highway))
-        {
+        } else if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
             if ("grade1".equals(trackType))
                 weightToPrioMap.put(110d, PREFER.getValue());
@@ -160,8 +152,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    boolean isPushingSection( ReaderWay way )
-    {
+    boolean isPushingSection(ReaderWay way) {
         String highway = way.getTag("highway");
         String trackType = way.getTag("tracktype");
         return way.hasTag("highway", pushingSectionsHighways)
@@ -171,15 +162,13 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    boolean isSacScaleAllowed( String sacScale )
-    {
+    boolean isSacScaleAllowed(String sacScale) {
         // for racing bike it is only allowed if empty
         return false;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "racingbike";
     }
 }

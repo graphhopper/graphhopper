@@ -29,19 +29,16 @@ import org.slf4j.LoggerFactory;
 /**
  * @author Peter Karich
  */
-public class DefaultModule extends AbstractModule
-{
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+public class DefaultModule extends AbstractModule {
     protected final CmdArgs args;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private GraphHopper graphHopper;
 
-    public DefaultModule( CmdArgs args )
-    {
+    public DefaultModule(CmdArgs args) {
         this.args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
     }
 
-    public GraphHopper getGraphHopper()
-    {
+    public GraphHopper getGraphHopper() {
         if (graphHopper == null)
             throw new IllegalStateException("createGraphHopper not called");
 
@@ -51,8 +48,7 @@ public class DefaultModule extends AbstractModule
     /**
      * @return an initialized GraphHopper instance
      */
-    protected GraphHopper createGraphHopper( CmdArgs args )
-    {
+    protected GraphHopper createGraphHopper(CmdArgs args) {
         GraphHopper tmp = new GraphHopperOSM().forServer().init(args);
         tmp.importOrLoad();
         logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
@@ -63,10 +59,8 @@ public class DefaultModule extends AbstractModule
     }
 
     @Override
-    protected void configure()
-    {
-        try
-        {
+    protected void configure() {
+        try {
             graphHopper = createGraphHopper(args);
             bind(GraphHopper.class).toInstance(graphHopper);
             bind(TranslationMap.class).toInstance(graphHopper.getTranslationMap());
@@ -80,8 +74,7 @@ public class DefaultModule extends AbstractModule
             bind(Boolean.class).annotatedWith(Names.named("jsonp_allowed")).toInstance(jsonpAllowed);
 
             bind(RouteSerializer.class).toInstance(new SimpleRouteSerializer(graphHopper.getGraphHopperStorage().getBounds()));
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             throw new IllegalStateException("Couldn't load graph", ex);
         }
     }

@@ -17,20 +17,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
-import android.widget.TextView;
-import android.widget.Toast;
-import com.graphhopper.PathWrapper;
-
+import android.widget.*;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.util.*;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.util.Parameters.*;
-
 import org.mapsforge.core.graphics.Bitmap;
 import org.mapsforge.core.graphics.Paint;
 import org.mapsforge.core.graphics.Style;
@@ -56,8 +48,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class MainActivity extends Activity
-{
+public class MainActivity extends Activity {
+    private static final int NEW_MENU_ID = Menu.FIRST + 1;
     private MapView mapView;
     private GraphHopper hopper;
     private LatLong start;
@@ -75,43 +67,36 @@ public class MainActivity extends Activity
     private File mapsFolder;
     private TileCache tileCache;
 
-    protected boolean onMapTap(LatLong tapLatLong)
-    {
+    protected boolean onMapTap(LatLong tapLatLong) {
         if (!isReady())
             return false;
 
-        if (shortestPathRunning)
-        {
+        if (shortestPathRunning) {
             logUser("Calculation still in progress");
             return false;
         }
         Layers layers = mapView.getLayerManager().getLayers();
 
-        if (start != null && end == null)
-        {
+        if (start != null && end == null) {
             end = tapLatLong;
             shortestPathRunning = true;
             Marker marker = createMarker(tapLatLong, R.drawable.flag_red);
-            if (marker != null)
-            {
+            if (marker != null) {
                 layers.add(marker);
             }
 
             calcPath(start.latitude, start.longitude, end.latitude,
                     end.longitude);
-        } else
-        {
+        } else {
             start = tapLatLong;
             end = null;
             // remove all layers but the first one, which is the map
-            while (layers.size() > 1)
-            {
+            while (layers.size() > 1) {
                 layers.remove(1);
             }
 
             Marker marker = createMarker(start, R.drawable.flag_green);
-            if (marker != null)
-            {
+            if (marker != null) {
                 layers.add(marker);
             }
         }
@@ -119,8 +104,7 @@ public class MainActivity extends Activity
     }
 
     @Override
-    protected void onCreate( Bundle savedInstanceState )
-    {
+    protected void onCreate(Bundle savedInstanceState) {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
@@ -136,10 +120,8 @@ public class MainActivity extends Activity
         final EditText input = new EditText(this);
         input.setText(currentArea);
         boolean greaterOrEqKitkat = Build.VERSION.SDK_INT >= 19;
-        if (greaterOrEqKitkat)
-        {
-            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED))
-            {
+        if (greaterOrEqKitkat) {
+            if (!Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
                 logUser("GraphHopper is not usable without an external storage!");
                 return;
             }
@@ -165,8 +147,7 @@ public class MainActivity extends Activity
     }
 
     @Override
-    protected void onDestroy()
-    {
+    protected void onDestroy() {
         super.onDestroy();
         if (hopper != null)
             hopper.close();
@@ -180,14 +161,12 @@ public class MainActivity extends Activity
         AndroidGraphicFactory.clearResourceMemoryCache();
     }
 
-    boolean isReady()
-    {
+    boolean isReady() {
         // only return true if already loaded
         if (hopper != null)
             return true;
 
-        if (prepareInProgress)
-        {
+        if (prepareInProgress) {
             logUser("Preparation still in progress");
             return false;
         }
@@ -195,28 +174,23 @@ public class MainActivity extends Activity
         return false;
     }
 
-    private void initFiles( String area )
-    {
+    private void initFiles(String area) {
         prepareInProgress = true;
         currentArea = area;
         downloadingFiles();
     }
 
-    private void chooseAreaFromLocal()
-    {
+    private void chooseAreaFromLocal() {
         List<String> nameList = new ArrayList<>();
-        String[] files = mapsFolder.list(new FilenameFilter()
-        {
+        String[] files = mapsFolder.list(new FilenameFilter() {
             @Override
-            public boolean accept( File dir, String filename )
-            {
+            public boolean accept(File dir, String filename) {
                 return filename != null
                         && (filename.endsWith(".ghz") || filename
                         .endsWith("-gh"));
             }
         });
-        for (String file : files)
-        {
+        for (String file : files) {
             nameList.add(file);
         }
 
@@ -224,30 +198,23 @@ public class MainActivity extends Activity
             return;
 
         chooseArea(localButton, localSpinner, nameList,
-                new MySpinnerListener()
-        {
+                new MySpinnerListener() {
             @Override
-            public void onSelect( String selectedArea, String selectedFile )
-            {
+            public void onSelect(String selectedArea, String selectedFile) {
                 initFiles(selectedArea);
             }
         });
     }
 
-    private void chooseAreaFromRemote()
-    {
-        new GHAsyncTask<Void, Void, List<String>>()
-        {
-            protected List<String> saveDoInBackground( Void... params )
-                    throws Exception
-            {
+    private void chooseAreaFromRemote() {
+        new GHAsyncTask<Void, Void, List<String>>() {
+            protected List<String> saveDoInBackground(Void... params)
+                    throws Exception {
                 String[] lines = new AndroidDownloader().downloadAsString(fileListURL, false).split("\n");
                 List<String> res = new ArrayList<>();
-                for (String str : lines)
-                {
+                for (String str : lines) {
                     int index = str.indexOf("href=\"");
-                    if (index >= 0)
-                    {
+                    if (index >= 0) {
                         index += 6;
                         int lastIndex = str.indexOf(".ghz", index);
                         if (lastIndex >= 0)
@@ -260,32 +227,25 @@ public class MainActivity extends Activity
             }
 
             @Override
-            protected void onPostExecute( List<String> nameList )
-            {
-                if (hasError())
-                {
+            protected void onPostExecute(List<String> nameList) {
+                if (hasError()) {
                     getError().printStackTrace();
                     logUser("Are you connected to the internet? Problem while fetching remote area list: "
                             + getErrorMessage());
                     return;
-                } else if (nameList == null || nameList.isEmpty())
-                {
+                } else if (nameList == null || nameList.isEmpty()) {
                     logUser("No maps created for your version!? " + fileListURL);
                     return;
                 }
 
-                MySpinnerListener spinnerListener = new MySpinnerListener()
-                {
+                MySpinnerListener spinnerListener = new MySpinnerListener() {
                     @Override
-                    public void onSelect( String selectedArea, String selectedFile )
-                    {
+                    public void onSelect(String selectedArea, String selectedFile) {
                         if (selectedFile == null
                                 || new File(mapsFolder, selectedArea + ".ghz").exists()
-                                || new File(mapsFolder, selectedArea + "-gh").exists())
-                        {
+                                || new File(mapsFolder, selectedArea + "-gh").exists()) {
                             downloadURL = null;
-                        } else
-                        {
+                        } else {
                             downloadURL = selectedFile;
                         }
                         initFiles(selectedArea);
@@ -297,12 +257,10 @@ public class MainActivity extends Activity
         }.execute();
     }
 
-    private void chooseArea( Button button, final Spinner spinner,
-                             List<String> nameList, final MySpinnerListener myListener )
-    {
+    private void chooseArea(Button button, final Spinner spinner,
+                            List<String> nameList, final MySpinnerListener myListener) {
         final Map<String, String> nameToFullName = new TreeMap<>();
-        for (String fullName : nameList)
-        {
+        for (String fullName : nameList) {
             String tmp = Helper.pruneFileEnd(fullName);
             if (tmp.endsWith("-gh"))
                 tmp = tmp.substring(0, tmp.length() - 3);
@@ -315,34 +273,23 @@ public class MainActivity extends Activity
         ArrayAdapter<String> spinnerArrayAdapter = new ArrayAdapter<>(
                 this, android.R.layout.simple_spinner_dropdown_item, nameList);
         spinner.setAdapter(spinnerArrayAdapter);
-        button.setOnClickListener(new OnClickListener()
-        {
+        button.setOnClickListener(new OnClickListener() {
             @Override
-            public void onClick( View v )
-            {
+            public void onClick(View v) {
                 Object o = spinner.getSelectedItem();
-                if (o != null && o.toString().length() > 0 && !nameToFullName.isEmpty())
-                {
+                if (o != null && o.toString().length() > 0 && !nameToFullName.isEmpty()) {
                     String area = o.toString();
                     myListener.onSelect(area, nameToFullName.get(area));
-                } else
-                {
+                } else {
                     myListener.onSelect(null, null);
                 }
             }
         });
     }
 
-    public interface MySpinnerListener
-    {
-        void onSelect( String selectedArea, String selectedFile );
-    }
-
-    void downloadingFiles()
-    {
+    void downloadingFiles() {
         final File areaFolder = new File(mapsFolder, currentArea + "-gh");
-        if (downloadURL == null || areaFolder.exists())
-        {
+        if (downloadURL == null || areaFolder.exists()) {
             loadMap(areaFolder);
             return;
         }
@@ -354,63 +301,52 @@ public class MainActivity extends Activity
         dialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
         dialog.show();
 
-        new GHAsyncTask<Void, Integer, Object>()
-        {
-            protected Object saveDoInBackground( Void... _ignore )
-                    throws Exception
-            {
+        new GHAsyncTask<Void, Integer, Object>() {
+            protected Object saveDoInBackground(Void... _ignore)
+                    throws Exception {
                 String localFolder = Helper.pruneFileEnd(AndroidHelper.getFileName(downloadURL));
                 localFolder = new File(mapsFolder, localFolder + "-gh").getAbsolutePath();
                 log("downloading & unzipping " + downloadURL + " to " + localFolder);
                 AndroidDownloader downloader = new AndroidDownloader();
                 downloader.setTimeout(30000);
                 downloader.downloadAndUnzip(downloadURL, localFolder,
-                        new ProgressListener()
-                {
+                        new ProgressListener() {
                     @Override
-                    public void update( long val )
-                    {
+                    public void update(long val) {
                         publishProgress((int) val);
                     }
                 });
                 return null;
             }
 
-            protected void onProgressUpdate( Integer... values )
-            {
+            protected void onProgressUpdate(Integer... values) {
                 super.onProgressUpdate(values);
                 dialog.setProgress(values[0]);
             }
 
-            protected void onPostExecute( Object _ignore )
-            {
+            protected void onPostExecute(Object _ignore) {
                 dialog.dismiss();
-                if (hasError())
-                {
+                if (hasError()) {
                     String str = "An error happened while retrieving maps:" + getErrorMessage();
                     log(str, getError());
                     logUser(str);
-                } else
-                {
+                } else {
                     loadMap(areaFolder);
                 }
             }
         }.execute();
     }
 
-    void loadMap( File areaFolder )
-    {
+    void loadMap(File areaFolder) {
         logUser("loading map");
         MapDataStore mapDataStore = new MapFile(new File(areaFolder, currentArea + ".map"));
 
         mapView.getLayerManager().getLayers().clear();
 
         TileRendererLayer tileRendererLayer = new TileRendererLayer(tileCache, mapDataStore,
-                mapView.getModel().mapViewPosition, false, true, false, AndroidGraphicFactory.INSTANCE)
-        {
+                mapView.getModel().mapViewPosition, false, true, false, AndroidGraphicFactory.INSTANCE) {
             @Override
-            public boolean onLongPress(LatLong tapLatLong, Point layerXY, Point tapXY)
-            {
+            public boolean onLongPress(LatLong tapLatLong, Point layerXY, Point tapXY) {
                 return onMapTap(tapLatLong);
             }
         };
@@ -423,13 +359,10 @@ public class MainActivity extends Activity
         loadGraphStorage();
     }
 
-    void loadGraphStorage()
-    {
+    void loadGraphStorage() {
         logUser("loading graph (" + Constants.VERSION + ") ... ");
-        new GHAsyncTask<Void, Void, Path>()
-        {
-            protected Path saveDoInBackground( Void... v ) throws Exception
-            {
+        new GHAsyncTask<Void, Void, Path>() {
+            protected Path saveDoInBackground(Void... v) throws Exception {
                 GraphHopper tmpHopp = new GraphHopper().forMobile();
                 tmpHopp.load(new File(mapsFolder, currentArea).getAbsolutePath() + "-gh");
                 log("found graph " + tmpHopp.getGraphHopperStorage().toString() + ", nodes:" + tmpHopp.getGraphHopperStorage().getNodes());
@@ -437,14 +370,11 @@ public class MainActivity extends Activity
                 return null;
             }
 
-            protected void onPostExecute( Path o )
-            {
-                if (hasError())
-                {
+            protected void onPostExecute(Path o) {
+                if (hasError()) {
                     logUser("An error happened while creating graph:"
                             + getErrorMessage());
-                } else
-                {
+                } else {
                     logUser("Finished loading graph. Press long to define where to start and end the route.");
                 }
 
@@ -453,27 +383,21 @@ public class MainActivity extends Activity
         }.execute();
     }
 
-    private void finishPrepare()
-    {
+    private void finishPrepare() {
         prepareInProgress = false;
     }
 
-    private Polyline createPolyline( PathWrapper response )
-    {
+    private Polyline createPolyline(PathWrapper response) {
         Paint paintStroke = AndroidGraphicFactory.INSTANCE.createPaint();
         paintStroke.setStyle(Style.STROKE);
         paintStroke.setColor(Color.argb(128, 0, 0xCC, 0x33));
-        paintStroke.setDashPathEffect(new float[]
-        {
-            25, 15
-        });
+        paintStroke.setDashPathEffect(new float[]{25, 15});
         paintStroke.setStrokeWidth(8);
 
         Polyline line = new Polyline(paintStroke, AndroidGraphicFactory.INSTANCE);
         List<LatLong> geoPoints = line.getLatLongs();
         PointList tmp = response.getPoints();
-        for (int i = 0; i < response.getPoints().getSize(); i++)
-        {
+        for (int i = 0; i < response.getPoints().getSize(); i++) {
             geoPoints.add(new LatLong(tmp.getLatitude(i), tmp.getLongitude(i)));
         }
 
@@ -481,24 +405,20 @@ public class MainActivity extends Activity
     }
 
     @SuppressWarnings("deprecation")
-    private Marker createMarker(LatLong p, int resource )
-    {
+    private Marker createMarker(LatLong p, int resource) {
         Drawable drawable = getResources().getDrawable(resource);
         Bitmap bitmap = AndroidGraphicFactory.convertToBitmap(drawable);
         return new Marker(p, bitmap, 0, -bitmap.getHeight() / 2);
     }
 
-    public void calcPath( final double fromLat, final double fromLon,
-                          final double toLat, final double toLon )
-    {
+    public void calcPath(final double fromLat, final double fromLon,
+                         final double toLat, final double toLon) {
 
         log("calculating path ...");
-        new AsyncTask<Void, Void, PathWrapper>()
-        {
+        new AsyncTask<Void, Void, PathWrapper>() {
             float time;
 
-            protected PathWrapper doInBackground( Void... v )
-            {
+            protected PathWrapper doInBackground(Void... v) {
                 StopWatch sw = new StopWatch().start();
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
                         setAlgorithm(Algorithms.DIJKSTRA_BI);
@@ -509,10 +429,8 @@ public class MainActivity extends Activity
                 return resp.getBest();
             }
 
-            protected void onPostExecute( PathWrapper resp )
-            {
-                if (!resp.hasErrors())
-                {
+            protected void onPostExecute(PathWrapper resp) {
+                if (!resp.hasErrors()) {
                     log("from:" + fromLat + "," + fromLon + " to:" + toLat + ","
                             + toLon + " found path with distance:" + resp.getDistance()
                             / 1000f + ", nodes:" + resp.getPoints().getSize() + ", time:"
@@ -522,8 +440,7 @@ public class MainActivity extends Activity
 
                     mapView.getLayerManager().getLayers().add(createPolyline(resp));
                     //mapView.redraw();
-                } else
-                {
+                } else {
                     logUser("Error:" + resp.getErrors());
                 }
                 shortestPathRunning = false;
@@ -531,40 +448,31 @@ public class MainActivity extends Activity
         }.execute();
     }
 
-    private void log( String str )
-    {
+    private void log(String str) {
         Log.i("GH", str);
     }
 
-    private void log( String str, Throwable t )
-    {
+    private void log(String str, Throwable t) {
         Log.i("GH", str, t);
     }
 
-    private void logUser( String str )
-    {
+    private void logUser(String str) {
         log(str);
         Toast.makeText(this, str, Toast.LENGTH_LONG).show();
     }
 
-    private static final int NEW_MENU_ID = Menu.FIRST + 1;
-
     @Override
-    public boolean onCreateOptionsMenu( Menu menu )
-    {
+    public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
         menu.add(0, NEW_MENU_ID, 0, "Google");
         // menu.add(0, NEW_MENU_ID + 1, 0, "Other");
         return true;
     }
 
-    public boolean onOptionsItemSelected( MenuItem item )
-    {
-        switch (item.getItemId())
-        {
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
             case NEW_MENU_ID:
-                if (start == null || end == null)
-                {
+                if (start == null || end == null) {
                     logUser("tap screen to set start and end of route");
                     break;
                 }
@@ -579,5 +487,9 @@ public class MainActivity extends Activity
                 break;
         }
         return true;
+    }
+
+    public interface MySpinnerListener {
+        void onSelect(String selectedArea, String selectedFile);
     }
 }

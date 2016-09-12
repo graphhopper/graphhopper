@@ -22,11 +22,9 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-public class InvalidRequestServlet extends GHBaseServlet
-{
+public class InvalidRequestServlet extends GHBaseServlet {
     @Override
-    protected void service( HttpServletRequest req, HttpServletResponse res ) throws ServletException, IOException
-    {
+    protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         JSONObject json = new JSONObject();
         json.put("message", "Not found");
         writeJsonError(res, HttpServletResponse.SC_NOT_FOUND, json);

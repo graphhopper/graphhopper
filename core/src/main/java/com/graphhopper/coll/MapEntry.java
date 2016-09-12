@@ -23,72 +23,61 @@ import java.util.Map;
 /**
  * Simple impl of Map.Entry. So that we can have ordered maps.
  * <p>
+ *
  * @author Peter Karich
  */
-public class MapEntry<K, V> implements Map.Entry<K, V>, Serializable
-{
+public class MapEntry<K, V> implements Map.Entry<K, V>, Serializable {
     private static final long serialVersionUID = 1L;
     private K key;
     private V value;
 
-    public MapEntry( K key, V value )
-    {
+    public MapEntry(K key, V value) {
         this.key = key;
         this.value = value;
     }
 
     @Override
-    public K getKey()
-    {
+    public K getKey() {
         return key;
     }
 
     @Override
-    public V getValue()
-    {
+    public V getValue() {
         return value;
     }
 
     @Override
-    public V setValue( V value )
-    {
+    public V setValue(V value) {
         this.value = value;
         return value;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getKey() + ", " + getValue();
     }
 
     @SuppressWarnings("unchecked")
     @Override
-    public boolean equals( Object obj )
-    {
-        if (obj == null)
-        {
+    public boolean equals(Object obj) {
+        if (obj == null) {
             return false;
         }
-        if (getClass() != obj.getClass())
-        {
+        if (getClass() != obj.getClass()) {
             return false;
         }
         final MapEntry<K, V> other = (MapEntry<K, V>) obj;
-        if (this.key != other.key && (this.key == null || !this.key.equals(other.key)))
-        {
+        if (this.key != other.key && (this.key == null || !this.key.equals(other.key))) {
             return false;
         }
-        if (this.value != other.value && (this.value == null || !this.value.equals(other.value)))
-        {
+        if (this.value != other.value && (this.value == null || !this.value.equals(other.value))) {
             return false;
         }
         return true;
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         int hash = 7;
         hash = 19 * hash + (this.key != null ? this.key.hashCode() : 0);
         hash = 19 * hash + (this.value != null ? this.value.hashCode() : 0);

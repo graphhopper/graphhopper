@@ -19,13 +19,12 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EncodingManager;
 
-public interface GraphStorage extends Storable<GraphStorage>
-{
+public interface GraphStorage extends Storable<GraphStorage> {
     Directory getDirectory();
 
     EncodingManager getEncodingManager();
 
-    void setSegmentSize( int bytes );
+    void setSegmentSize(int bytes);
 
     String toDetailsString();
 
@@ -34,12 +33,12 @@ public interface GraphStorage extends Storable<GraphStorage>
     /**
      * Schedule the deletion of the specified node until an optimize() call happens
      */
-    void markNodeRemoved( int index );
+    void markNodeRemoved(int index);
 
     /**
      * Checks if the specified node is marked as removed.
      */
-    boolean isNodeRemoved( int index );
+    boolean isNodeRemoved(int index);
 
     /**
      * Performs optimization routines like deletion or node rearrangements.

@@ -19,25 +19,26 @@ package com.graphhopper.http;
 
 import com.graphhopper.GHResponse;
 import com.graphhopper.util.PointList;
+
 import java.util.Map;
 
 /**
  * This interface speficies how the route should be transformed into JSON.
  * <p>
+ *
  * @author Peter Karich
  */
-public interface RouteSerializer
-{
+public interface RouteSerializer {
     /**
      * This method transforms the specified response into a JSON.
      */
-    Map<String, Object> toJSON( GHResponse response,
-                                boolean calcPoints, boolean pointsEncoded,
-                                boolean includeElevation, boolean enableInstructions );
+    Map<String, Object> toJSON(GHResponse response,
+                               boolean calcPoints, boolean pointsEncoded,
+                               boolean includeElevation, boolean enableInstructions);
 
     /**
      * This method returns either a Map containing the GeoJSON of the specified points OR the string
      * encoded polyline of it.
      */
-    Object createPoints( PointList points, boolean pointsEncoded, boolean includeElevation );
+    Object createPoints(PointList points, boolean pointsEncoded, boolean includeElevation);
 }

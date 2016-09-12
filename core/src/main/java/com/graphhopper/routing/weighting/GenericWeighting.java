@@ -28,8 +28,7 @@ import com.graphhopper.util.Parameters.Routing;
  *
  * @author Peter Karich
  */
-public class GenericWeighting extends AbstractWeighting
-{
+public class GenericWeighting extends AbstractWeighting {
     /**
      * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
      * costs or traffic light costs etc)
@@ -41,16 +40,14 @@ public class GenericWeighting extends AbstractWeighting
     private final double[] speedArray;
     private final int accessType;
 
-    public GenericWeighting( DataFlagEncoder encoder, ConfigMap cMap )
-    {
+    public GenericWeighting(DataFlagEncoder encoder, ConfigMap cMap) {
         super(encoder);
         gEncoder = encoder;
         headingPenalty = cMap.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
 
         speedArray = gEncoder.getHighwaySpeedMap(cMap.getMap("highways", Double.class));
         double tmpSpeed = 0;
-        for (double speed : speedArray)
-        {
+        for (double speed : speedArray) {
             if (speed > tmpSpeed)
                 tmpSpeed = speed;
         }
@@ -62,22 +59,18 @@ public class GenericWeighting extends AbstractWeighting
     }
 
     @Override
-    public double getMinWeight( double distance )
-    {
+    public double getMinWeight(double distance) {
         return distance / maxSpeed;
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId )
-    {
+    public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
         // handle oneways and removed edges via subnetwork removal (existing and allowed highway tags but 'island' edges)
-        if (reverse)
-        {
+        if (reverse) {
             if (!gEncoder.isBackward(edge, accessType))
                 return Double.POSITIVE_INFINITY;
-        } else
-            if (!gEncoder.isForward(edge, accessType))
-                return Double.POSITIVE_INFINITY;
+        } else if (!gEncoder.isForward(edge, accessType))
+            return Double.POSITIVE_INFINITY;
 
         // TODO to avoid expensive reverse flags include oneway accessibility
         // but how to include e.g. maxspeed as it depends on direction? Does highway depend on direction?
@@ -108,15 +101,13 @@ public class GenericWeighting extends AbstractWeighting
 
         // TODO avoid a certain (or multiple) bounding boxes (less efficient for just a few edges) or a list of edgeIDs (not good for large areas)
         // bbox.contains(nodeAccess.getLatitude(edge.getBaseNode()), nodeAccess.getLongitude(edge.getBaseNode())) time+=avoidPenalty;
-        
         // TODO surfaces can reduce average speed
         // TODO prefer or avoid bike and hike routes
         return time;
     }
 
     @Override
-    public String getName()
-    {
+    public String getName() {
         return "generic";
     }
 }

@@ -17,23 +17,22 @@
  */
 package com.graphhopper.util;
 
-import java.util.Locale;
-
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.util.Locale;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
  */
-public class TranslationMapTest
-{
+public class TranslationMapTest {
     // use a static singleton to parse the I18N files only once per test execution
     public final static TranslationMap SINGLETON = new TranslationMap().doImport();
 
     @Test
-    public void testToString()
-    {
+    public void testToString() {
         Translation enMap = SINGLETON.getWithFallBack(Locale.UK);
         assertEquals("continue onto blp street", enMap.tr("continue_onto", "blp street"));
 
@@ -64,8 +63,7 @@ public class TranslationMapTest
     }
 
     @Test
-    public void testToRoundaboutString()
-    {
+    public void testToRoundaboutString() {
         Translation ptMap = SINGLETON.get("pt");
         assertTrue(ptMap.tr("roundabout_exit_onto", "1", "somestreet").contains("somestreet"));
     }

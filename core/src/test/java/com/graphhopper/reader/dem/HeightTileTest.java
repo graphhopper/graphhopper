@@ -21,16 +21,14 @@ import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.RAMDirectory;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class HeightTileTest
-{
+public class HeightTileTest {
     @Test
-    public void testGetHeight()
-    {
+    public void testGetHeight() {
         // data access has same coordinate system as graphical or UI systems have (or the original DEM data has).
         // But HeightTile has lat,lon system ('mathematically')
         int width = 10;
@@ -75,8 +73,7 @@ public class HeightTileTest
     }
 
     @Test
-    public void testGetHeightForNegativeTile()
-    {
+    public void testGetHeightForNegativeTile() {
         int width = 10;
         HeightTile instance = new HeightTile(-20, -20, width, 1e-6, 10);
         DataAccess heights = new RAMDirectory().find("tmp");
@@ -98,8 +95,7 @@ public class HeightTileTest
     }
 
     @Test
-    public void testCalcMean()
-    {
+    public void testCalcMean() {
         int width = 10;
         HeightTile instance = new HeightTile(0, 0, width, 1e-6, 10).setCalcMean(true);
         DataAccess heights = new RAMDirectory().find("tmp");
@@ -125,12 +121,9 @@ public class HeightTileTest
         assertEquals((10 + 2) / 3d, instance.getHeight(-0.5, -0.5), 1e-3);
     }
 
-    private void init( DataAccess da, int width, int i )
-    {
-        for (int x = 0; x < width; x++)
-        {
-            for (int y = 0; y < width; y++)
-            {
+    private void init(DataAccess da, int width, int i) {
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < width; y++) {
                 da.setShort(2 * (y * width + x), (short) 1);
             }
         }

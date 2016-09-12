@@ -19,22 +19,19 @@ package com.graphhopper.util;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class BitUtilBigTest extends AbstractBitUtilTester
-{
+public class BitUtilBigTest extends AbstractBitUtilTester {
     @Override
-    BitUtil getBitUtil()
-    {
+    BitUtil getBitUtil() {
         return BitUtil.BIG;
     }
 
     @Test
-    public void testToBitString()
-    {
+    public void testToBitString() {
         assertEquals("0010101010101010101010101010101010101010101010101010101010101010", bitUtil.toBitString(Long.MAX_VALUE / 3));
         assertEquals("0111111111111111111111111111111111111111111111111111111111111111", bitUtil.toBitString(Long.MAX_VALUE));
 
@@ -45,8 +42,7 @@ public class BitUtilBigTest extends AbstractBitUtilTester
     }
 
     @Test
-    public void testFromBitString()
-    {
+    public void testFromBitString() {
         String str = "011011100";
         assertEquals(str + "0000000", bitUtil.toBitString(bitUtil.fromBitString(str)));
 

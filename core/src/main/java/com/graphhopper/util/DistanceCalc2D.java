@@ -17,24 +17,22 @@
  */
 package com.graphhopper.util;
 
-import static java.lang.Math.*;
+import static java.lang.Math.sqrt;
 
 /**
  * Calculates the distance of two points or one point and an edge in euclidean space.
  * <p>
+ *
  * @author Peter Karich
  */
-public class DistanceCalc2D extends DistanceCalcEarth
-{
+public class DistanceCalc2D extends DistanceCalcEarth {
     @Override
-    public double calcDist( double fromY, double fromX, double toY, double toX )
-    {
+    public double calcDist(double fromY, double fromX, double toY, double toX) {
         return sqrt(calcNormalizedDist(fromY, fromX, toY, toX));
     }
 
     @Override
-    public double calcDenormalizedDist( double normedDist )
-    {
+    public double calcDenormalizedDist(double normedDist) {
         return sqrt(normedDist);
     }
 
@@ -42,8 +40,7 @@ public class DistanceCalc2D extends DistanceCalcEarth
      * Returns the specified length in normalized meter.
      */
     @Override
-    public double calcNormalizedDist( double dist )
-    {
+    public double calcNormalizedDist(double dist) {
         return dist * dist;
     }
 
@@ -51,16 +48,14 @@ public class DistanceCalc2D extends DistanceCalcEarth
      * Calculates in normalized meter
      */
     @Override
-    public double calcNormalizedDist( double fromY, double fromX, double toY, double toX )
-    {
+    public double calcNormalizedDist(double fromY, double fromX, double toY, double toX) {
         double dX = fromX - toX;
         double dY = fromY - toY;
         return dX * dX + dY * dY;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "2D";
     }
 }

@@ -19,21 +19,18 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import org.junit.Test;
 
 import java.io.IOException;
 
 import static org.junit.Assert.*;
 
-import org.junit.Test;
-
 /**
  * @author Peter Karich
  */
-public class GraphHopperStorageTest extends AbstractGraphStorageTester
-{
+public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     @Override
-    public GraphHopperStorage createGHStorage( String location, boolean enabled3D )
-    {
+    public GraphHopperStorage createGHStorage(String location, boolean enabled3D) {
         // reduce segment size in order to test the case where multiple segments come into the game
         GraphHopperStorage gs = newGHStorage(new RAMDirectory(location), enabled3D);
         gs.setSegmentSize(defaultSize / 2);
@@ -41,34 +38,27 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         return gs;
     }
 
-    protected GraphHopperStorage newGHStorage( Directory dir, boolean enabled3D )
-    {
+    protected GraphHopperStorage newGHStorage(Directory dir, boolean enabled3D) {
         return new GraphHopperStorage(dir, encodingManager, enabled3D, new GraphExtension.NoOpExtension());
     }
 
     @Test
-    public void testNoCreateCalled() throws IOException
-    {
+    public void testNoCreateCalled() throws IOException {
         GraphHopperStorage gs = new GraphBuilder(encodingManager).build();
-        try
-        {
+        try {
             ((BaseGraph) gs.getGraph(Graph.class)).ensureNodeIndex(123);
             assertFalse("AssertionError should be raised", true);
-        } catch (AssertionError err)
-        {
+        } catch (AssertionError err) {
             assertTrue(true);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             assertFalse("AssertionError should be raised, but was " + ex.toString(), true);
-        } finally
-        {
+        } finally {
             gs.close();
         }
     }
 
     @Test
-    public void testSave_and_fileFormat() throws IOException
-    {
+    public void testSave_and_fileFormat() throws IOException {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
         NodeAccess na = graph.getNodeAccess();
         assertTrue(na.is3D());
@@ -104,8 +94,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
     }
 
     @Test
-    public void testSave_and_Freeze() throws IOException
-    {
+    public void testSave_and_Freeze() throws IOException {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true).create(defaultSize);
         graph.edge(1, 0);
         graph.freeze();
@@ -119,8 +108,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
         assertTrue(graph.isFrozen());
     }
 
-    protected void checkGraph( Graph g )
-    {
+    protected void checkGraph(Graph g) {
         NodeAccess na = g.getNodeAccess();
         assertTrue(na.is3D());
         assertTrue(g.getBounds().isValid());
@@ -160,8 +148,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
     }
 
     @Test
-    public void internalDisconnect()
-    {
+    public void internalDisconnect() {
         GraphHopperStorage storage = createGHStorage();
         BaseGraph graph = (BaseGraph) storage.getGraph(Graph.class);
         EdgeIteratorState iter0 = graph.edge(0, 1, 10, true);
@@ -190,8 +177,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
     }
 
     @Test
-    public void testEnsureSize()
-    {
+    public void testEnsureSize() {
         Directory dir = new RAMDirectory();
         graph = newGHStorage(dir, false).create(defaultSize);
         int testIndex = dir.find("edges").getSegmentSize() * 3;
@@ -202,8 +188,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
     }
 
     @Test
-    public void testBigDataEdge()
-    {
+    public void testBigDataEdge() {
         Directory dir = new RAMDirectory();
         GraphHopperStorage graph = new GraphHopperStorage(dir, encodingManager, false, new GraphExtension.NoOpExtension());
         graph.create(defaultSize);
@@ -213,107 +198,88 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester
     }
 
     @Test
-    public void testDoThrowExceptionIfDimDoesNotMatch()
-    {
+    public void testDoThrowExceptionIfDimDoesNotMatch() {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false);
         graph.create(1000);
         graph.flush();
         graph.close();
 
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), true);
-        try
-        {
+        try {
             graph.loadExisting();
             assertTrue(false);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
         }
     }
 
     @Test
-    public void testIdentical()
-    {
+    public void testIdentical() {
         GraphHopperStorage store = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension());
         assertEquals(store.getNodes(), store.getGraph(Graph.class).getNodes());
         assertEquals(store.getAllEdges().getMaxId(), store.getGraph(Graph.class).getAllEdges().getMaxId());
     }
 
-    public void testAdditionalEdgeField()
-    {
-        GraphExtension extStorage = new GraphExtension()
-        {
+    public void testAdditionalEdgeField() {
+        GraphExtension extStorage = new GraphExtension() {
             @Override
-            public boolean isRequireNodeField()
-            {
+            public boolean isRequireNodeField() {
                 return false;
             }
 
             @Override
-            public boolean isRequireEdgeField()
-            {
+            public boolean isRequireEdgeField() {
                 return true;
             }
 
             @Override
-            public int getDefaultNodeFieldValue()
-            {
+            public int getDefaultNodeFieldValue() {
                 throw new UnsupportedOperationException("Not supported.");
             }
 
             @Override
-            public int getDefaultEdgeFieldValue()
-            {
+            public int getDefaultEdgeFieldValue() {
                 return 2;
             }
 
             @Override
-            public void init( Graph graph, Directory dir )
-            {
+            public void init(Graph graph, Directory dir) {
             }
 
             @Override
-            public void setSegmentSize( int bytes )
-            {
+            public void setSegmentSize(int bytes) {
 
             }
 
             @Override
-            public GraphExtension copyTo( GraphExtension extStorage )
-            {
+            public GraphExtension copyTo(GraphExtension extStorage) {
                 return this;
             }
 
             @Override
-            public boolean loadExisting()
-            {
+            public boolean loadExisting() {
                 return true;
             }
 
             @Override
-            public GraphExtension create( long byteCount )
-            {
+            public GraphExtension create(long byteCount) {
                 return this;
             }
 
             @Override
-            public void flush()
-            {
+            public void flush() {
             }
 
             @Override
-            public void close()
-            {
+            public void close() {
             }
 
             @Override
-            public boolean isClosed()
-            {
+            public boolean isClosed() {
                 return false;
             }
 
             @Override
-            public long getCapacity()
-            {
+            public long getCapacity() {
                 return 0;
             }
         };

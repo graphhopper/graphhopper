@@ -34,10 +34,10 @@ import java.io.Closeable;
  * <li>Finally do close() which does no flush()</li>
  * </ol>
  * <p>
+ *
  * @author Peter Karich
  */
-public interface Storable<T> extends Closeable
-{
+public interface Storable<T> extends Closeable {
     /**
      * @return true if successfully loaded from persistent storage.
      */
@@ -46,7 +46,7 @@ public interface Storable<T> extends Closeable
     /**
      * Creates the underlying storage. First operation if it cannot be loaded.
      */
-    T create( long byteCount );
+    T create(long byteCount);
 
     /**
      * This method makes sure that the underlying data is written to the storage. Keep in mind that

@@ -22,37 +22,31 @@ import com.graphhopper.util.NumHelper;
 /**
  * @author Peter Karich
  */
-public class GHPoint3D extends GHPoint
-{
+public class GHPoint3D extends GHPoint {
     public double ele;
 
-    public GHPoint3D( double lat, double lon, double elevation )
-    {
+    public GHPoint3D(double lat, double lon, double elevation) {
         super(lat, lon);
         this.ele = elevation;
     }
 
-    public double getElevation()
-    {
+    public double getElevation() {
         return ele;
     }
 
-    public double getEle()
-    {
+    public double getEle() {
         return ele;
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         int hash = 59 * super.hashCode()
                 + (int) (Double.doubleToLongBits(this.ele) ^ (Double.doubleToLongBits(this.ele) >>> 32));
         return hash;
     }
 
     @Override
-    public boolean equals( Object obj )
-    {
+    public boolean equals(Object obj) {
         if (obj == null)
             return false;
 
@@ -67,17 +61,12 @@ public class GHPoint3D extends GHPoint
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return super.toString() + "," + ele;
     }
 
     @Override
-    public Double[] toGeoJson()
-    {
-        return new Double[]
-                {
-                        lon, lat, ele
-                };
+    public Double[] toGeoJson() {
+        return new Double[]{lon, lat, ele};
     }
 }

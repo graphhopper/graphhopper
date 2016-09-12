@@ -17,6 +17,10 @@
  */
 package com.graphhopper.util;
 
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
@@ -24,40 +28,31 @@ import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 
-import org.junit.After;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
-
-import org.junit.Before;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
  */
-public class HelperTest
-{
+public class HelperTest {
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         Helper.removeDir(new File("test"));
     }
 
     @After
-    public void tearDown()
-    {
+    public void tearDown() {
         Helper.removeDir(new File("test"));
     }
 
     @Test
-    public void testCountBitValue() throws Exception
-    {
+    public void testCountBitValue() throws Exception {
         assertEquals(2, Helper.countBitValue(4));
         assertEquals(5, Helper.countBitValue(20));
     }
 
     @Test
-    public void testUnzip() throws Exception
-    {
+    public void testUnzip() throws Exception {
         String to = "./target/tmp/test";
         Helper.removeDir(new File(to));
         new Unzipper().unzip("./src/test/resources/com/graphhopper/util/test.zip", to, false);
@@ -68,8 +63,7 @@ public class HelperTest
     }
 
     @Test
-    public void testGetLocale() throws Exception
-    {
+    public void testGetLocale() throws Exception {
         assertEquals(Locale.GERMAN, Helper.getLocale("de"));
         assertEquals(Locale.GERMANY, Helper.getLocale("de_DE"));
         assertEquals(Locale.GERMANY, Helper.getLocale("de-DE"));
@@ -79,24 +73,21 @@ public class HelperTest
     }
 
     @Test
-    public void testRound()
-    {
+    public void testRound() {
         assertEquals(100.94, Helper.round(100.94, 2), 1e-7);
         assertEquals(100.9, Helper.round(100.94, 1), 1e-7);
         assertEquals(101.0, Helper.round(100.95, 1), 1e-7);
     }
 
     @Test
-    public void testKeepIn()
-    {
+    public void testKeepIn() {
         assertEquals(2, Helper.keepIn(2, 1, 4), 1e-2);
         assertEquals(3, Helper.keepIn(2, 3, 4), 1e-2);
         assertEquals(3, Helper.keepIn(-2, 3, 4), 1e-2);
     }
 
     @Test
-    public void testLoadProperties() throws IOException
-    {
+    public void testLoadProperties() throws IOException {
         Map<String, String> map = new HashMap<String, String>();
         Helper.loadProperties(map, new StringReader("blup=test\n blup2 = xy"));
         assertEquals("test", map.get("blup"));
@@ -104,8 +95,7 @@ public class HelperTest
     }
 
     @Test
-    public void testUnsignedConversions()
-    {
+    public void testUnsignedConversions() {
         long l = Helper.toUnsignedLong(-1);
         assertEquals(4294967295L, l);
         assertEquals(-1, Helper.toSignedInt(l));
@@ -127,18 +117,16 @@ public class HelperTest
     }
 
     @Test
-    public void testCamelCaseToUnderscore()
-    {
+    public void testCamelCaseToUnderscore() {
         assertEquals("test_case", Helper.camelCaseToUnderScore("testCase"));
         assertEquals("test_case_t_b_d", Helper.camelCaseToUnderScore("testCaseTBD"));
         assertEquals("_test_case", Helper.camelCaseToUnderScore("TestCase"));
-        
+
         assertEquals("_test_case", Helper.camelCaseToUnderScore("_test_case"));
     }
 
     @Test
-    public void testUnderscoreToCamelCase()
-    {
+    public void testUnderscoreToCamelCase() {
         assertEquals("testCase", Helper.underScoreToCamelCase("test_case"));
         assertEquals("testCaseTBD", Helper.underScoreToCamelCase("test_case_t_b_d"));
         assertEquals("TestCase_", Helper.underScoreToCamelCase("_test_case_"));

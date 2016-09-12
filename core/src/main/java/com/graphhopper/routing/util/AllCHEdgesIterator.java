@@ -22,6 +22,5 @@ import com.graphhopper.util.CHEdgeIterator;
 /**
  * @author Peter Karich
  */
-public interface AllCHEdgesIterator extends AllEdgesIterator, CHEdgeIterator
-{
+public interface AllCHEdgesIterator extends AllEdgesIterator, CHEdgeIterator {
 }

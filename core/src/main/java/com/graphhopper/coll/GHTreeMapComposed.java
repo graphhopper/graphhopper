@@ -25,54 +25,46 @@ import java.util.TreeMap;
  * A priority queue implemented by a TreeMap. As the tree map does not allow duplicated we compose
  * the key via priority | nodeId.
  * <p>
+ *
  * @author Peter Karich
  */
-public class GHTreeMapComposed
-{
+public class GHTreeMapComposed {
     private static final Integer NOT_EMPTY = new Integer(-3);
     private final BitUtil bitUtil = BitUtil.BIG;
     private final TreeMap<Long, Integer> map;
 
-    public GHTreeMapComposed()
-    {
+    public GHTreeMapComposed() {
         map = new TreeMap<Long, Integer>();
     }
 
-    public void clear()
-    {
+    public void clear() {
         map.clear();
     }
 
-    void remove( int key, int value )
-    {
+    void remove(int key, int value) {
         long v = bitUtil.toLong(value, key);
-        if (!map.remove(v).equals(NOT_EMPTY))
-        {
+        if (!map.remove(v).equals(NOT_EMPTY)) {
             throw new IllegalStateException("cannot remove key " + key + " with value " + value
                     + " - did you insert " + key + "," + value + " before?");
         }
     }
 
-    public void update( int key, int oldValue, int value )
-    {
+    public void update(int key, int oldValue, int value) {
         remove(key, oldValue);
         insert(key, value);
     }
 
-    public void insert( int key, int value )
-    {
+    public void insert(int key, int value) {
         long v = bitUtil.toLong(value, key);
         map.put(v, NOT_EMPTY);
     }
 
-    public int peekValue()
-    {
+    public int peekValue() {
         long key = map.firstEntry().getKey();
         return (int) (key >> 32);
     }
 
-    public int peekKey()
-    {
+    public int peekKey() {
         long key = map.firstEntry().getKey();
         return (int) (key & 0xFFFFFFFFL);
     }
@@ -80,8 +72,7 @@ public class GHTreeMapComposed
     /**
      * @return removes the smallest entry (key and value) from this collection
      */
-    public int pollKey()
-    {
+    public int pollKey() {
         if (map.isEmpty())
             throw new IllegalStateException("Cannot poll collection is empty!");
 
@@ -89,19 +80,16 @@ public class GHTreeMapComposed
         return (int) (key & 0xFFFFFFFFL);
     }
 
-    public int getSize()
-    {
+    public int getSize() {
         return map.size();
     }
 
-    public boolean isEmpty()
-    {
+    public boolean isEmpty() {
         return map.isEmpty();
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return map.toString();
     }
 }

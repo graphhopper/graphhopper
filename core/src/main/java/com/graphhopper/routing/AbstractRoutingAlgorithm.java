@@ -17,11 +17,14 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -32,27 +35,25 @@ import java.util.List;
 /**
  * @author Peter Karich
  */
-public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
-{
-    private EdgeFilter additionalEdgeFilter;
+public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected final Graph graph;
-    protected NodeAccess nodeAccess;
-    protected EdgeExplorer inEdgeExplorer;
-    protected EdgeExplorer outEdgeExplorer;
     protected final Weighting weighting;
     protected final FlagEncoder flagEncoder;
     protected final TraversalMode traversalMode;
+    protected NodeAccess nodeAccess;
+    protected EdgeExplorer inEdgeExplorer;
+    protected EdgeExplorer outEdgeExplorer;
     protected int maxVisitedNodes = Integer.MAX_VALUE;
+    private EdgeFilter additionalEdgeFilter;
     private boolean alreadyRun;
 
     /**
-     * @param graph specifies the graph where this algorithm will run on
-     * @param encoder sets the used vehicle (bike, car, foot)
-     * @param weighting set the used weight calculation (e.g. fastest, shortest).
+     * @param graph         specifies the graph where this algorithm will run on
+     * @param encoder       sets the used vehicle (bike, car, foot)
+     * @param weighting     set the used weight calculation (e.g. fastest, shortest).
      * @param traversalMode how the graph is traversed e.g. if via nodes or edges.
      */
-    public AbstractRoutingAlgorithm( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode )
-    {
+    public AbstractRoutingAlgorithm(Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode) {
         this.weighting = weighting;
         this.flagEncoder = encoder;
         this.traversalMode = traversalMode;
@@ -63,39 +64,33 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
     }
 
     @Override
-    public void setMaxVisitedNodes( int numberOfNodes )
-    {
+    public void setMaxVisitedNodes(int numberOfNodes) {
         this.maxVisitedNodes = numberOfNodes;
     }
 
-    public RoutingAlgorithm setEdgeFilter( EdgeFilter additionalEdgeFilter )
-    {
+    public RoutingAlgorithm setEdgeFilter(EdgeFilter additionalEdgeFilter) {
         this.additionalEdgeFilter = additionalEdgeFilter;
         return this;
     }
 
-    protected boolean accept( EdgeIterator iter, int prevOrNextEdgeId )
-    {
+    protected boolean accept(EdgeIterator iter, int prevOrNextEdgeId) {
         if (!traversalMode.hasUTurnSupport() && iter.getEdge() == prevOrNextEdgeId)
             return false;
 
         return additionalEdgeFilter == null || additionalEdgeFilter.accept(iter);
     }
 
-    protected void updateBestPath( EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalId )
-    {
+    protected void updateBestPath(EdgeIteratorState edgeState, SPTEntry bestSPTEntry, int traversalId) {
     }
 
-    protected void checkAlreadyRun()
-    {
+    protected void checkAlreadyRun() {
         if (alreadyRun)
             throw new IllegalStateException("Create a new instance per call");
 
         alreadyRun = true;
     }
 
-    protected SPTEntry createSPTEntry( int node, double weight )
-    {
+    protected SPTEntry createSPTEntry(int node, double weight) {
         return new SPTEntry(EdgeIterator.NO_EDGE, node, weight);
     }
 
@@ -103,6 +98,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
      * To be overwritten from extending class. Should we make this available in RoutingAlgorithm
      * interface?
      * <p>
+     *
      * @return true if finished.
      */
     protected abstract boolean finished();
@@ -111,35 +107,31 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm
      * To be overwritten from extending class. Should we make this available in RoutingAlgorithm
      * interface?
      * <p>
+     *
      * @return true if finished.
      */
     protected abstract Path extractPath();
 
     @Override
-    public List<Path> calcPaths( int from, int to )
-    {
+    public List<Path> calcPaths(int from, int to) {
         return Collections.singletonList(calcPath(from, to));
     }
 
-    protected Path createEmptyPath()
-    {
+    protected Path createEmptyPath() {
         return new Path(graph, flagEncoder);
     }
 
     @Override
-    public String getName()
-    {
+    public String getName() {
         return getClass().getSimpleName();
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getName() + "|" + weighting;
     }
 
-    protected boolean isMaxVisitedNodesExceeded()
-    {
+    protected boolean isMaxVisitedNodesExceeded() {
         return maxVisitedNodes < getVisitedNodes();
     }
 }

@@ -17,20 +17,17 @@
  */
 package com.graphhopper.http;
 
-import java.io.IOException;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 /**
  * @author Peter Karich
  */
-public class CORSFilter implements Filter
-{
+public class CORSFilter implements Filter {
     @Override
-    public void doFilter( ServletRequest request, ServletResponse response, FilterChain chain ) throws IOException, ServletException
-    {
-        if (!"jsonp".equals(request.getParameter("type")))
-        {
+    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+        if (!"jsonp".equals(request.getParameter("type"))) {
             HttpServletResponse rsp = (HttpServletResponse) response;
             rsp.setHeader("Access-Control-Allow-Methods", "GET, POST, HEAD, OPTIONS");
             rsp.setHeader("Access-Control-Allow-Headers", "Origin,Accept,X-Requested-With,"
@@ -42,12 +39,10 @@ public class CORSFilter implements Filter
     }
 
     @Override
-    public void init( FilterConfig filterConfig ) throws ServletException
-    {
+    public void init(FilterConfig filterConfig) throws ServletException {
     }
 
     @Override
-    public void destroy()
-    {
+    public void destroy() {
     }
 }

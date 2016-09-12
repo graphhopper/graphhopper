@@ -49,7 +49,7 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
     // default
     map = L.map('map', {
         layers: [defaultLayer],
-        minZoom : 2,
+        minZoom: 2,
         contextmenu: true,
         contextmenuWidth: 150,
         contextmenuItems: [{
@@ -279,7 +279,7 @@ module.exports.getMap = function () {
 
 module.exports.updateScale = function (useMiles) {
     if (scaleControl === null) {
-       return;
+        return;
     }
     scaleControl.removeFrom(map);
     var options = useMiles ? {metric: false} : {imperial: false};

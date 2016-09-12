@@ -21,7 +21,6 @@ import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
-import static com.graphhopper.util.Parameters.Algorithms.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.shapes.GHPoint;
@@ -32,44 +31,30 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
-public class GraphHopperIT
-{
+public class GraphHopperIT {
     public static final String DIR = "../core/files";
-    private static GraphHopper hopper;
     private static final String graphFileFoot = "target/graphhopperIT-foot";
     private static final String osmFile = DIR + "/monaco.osm.gz";
     private static final String importVehicles = "foot";
     private static final String vehicle = "foot";
     private static final String weightCalcStr = "shortest";
-
+    private static GraphHopper hopper;
     private final String tmpGraphFile = "target/graphhopperIT-tmp";
 
-    @Before
-    public void setUp()
-    {
-        Helper.removeDir(new File(tmpGraphFile));
-    }
-
-    @After
-    public void tearDown()
-    {
-        Helper.removeDir(new File(tmpGraphFile));
-    }
-
     @BeforeClass
-    public static void beforeClass()
-    {
+    public static void beforeClass() {
         // make sure we are using fresh graphhopper files with correct vehicle
         Helper.removeDir(new File(graphFileFoot));
 
         hopper = new GraphHopperOSM().
                 setOSMFile(osmFile).
-                setStoreOnFlush(true).                
+                setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(graphFileFoot).
                 setEncodingManager(new EncodingManager(importVehicles)).
@@ -77,14 +62,22 @@ public class GraphHopperIT
     }
 
     @AfterClass
-    public static void afterClass()
-    {
+    public static void afterClass() {
         Helper.removeDir(new File(graphFileFoot));
     }
 
+    @Before
+    public void setUp() {
+        Helper.removeDir(new File(tmpGraphFile));
+    }
+
+    @After
+    public void tearDown() {
+        Helper.removeDir(new File(tmpGraphFile));
+    }
+
     @Test
-    public void testMonacoWithInstructions() throws Exception
-    {
+    public void testMonacoWithInstructions() throws Exception {
         GHResponse rsp = hopper.route(new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
@@ -131,8 +124,7 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testAlternativeRoutes()
-    {
+    public void testAlternativeRoutes() {
         GHRequest req = new GHRequest(43.729057, 7.41251, 43.740298, 7.423561).
                 setAlgorithm(ALT_ROUTE).setVehicle(vehicle).setWeighting(weightCalcStr);
 
@@ -155,8 +147,7 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testAlternativeRoutesBikeAndCar()
-    {
+    public void testAlternativeRoutesBikeAndCar() {
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
@@ -194,8 +185,7 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testMonacoVia()
-    {
+    public void testMonacoVia() {
         GHResponse rsp = hopper.route(new GHRequest().
                 addPoint(new GHPoint(43.727687, 7.418737)).
                 addPoint(new GHPoint(43.74958, 7.436566)).
@@ -268,8 +258,7 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testMonacoEnforcedDirection()
-    {
+    public void testMonacoEnforcedDirection() {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(43.741069, 7.426854), 0.).
                 addPoint(new GHPoint(43.744445, 7.429483), 190.).
@@ -283,8 +272,7 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testMonacoMaxVisitedNodes()
-    {
+    public void testMonacoMaxVisitedNodes() {
         GHPoint from = new GHPoint(43.741069, 7.426854);
         GHPoint to = new GHPoint(43.744445, 7.429483);
         GHRequest req = new GHRequest().
@@ -306,8 +294,7 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testMonacoStraightVia()
-    {
+    public void testMonacoStraightVia() {
         GHRequest rq = new GHRequest().
                 addPoint(new GHPoint(43.741069, 7.426854)).
                 addPoint(new GHPoint(43.740371, 7.426946)).
@@ -322,8 +309,7 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testSRTMWithInstructions() throws Exception
-    {
+    public void testSRTMWithInstructions() throws Exception {
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
@@ -377,8 +363,7 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testKremsCyclewayInstructionsWithWayTypeInfo()
-    {
+    public void testKremsCyclewayInstructionsWithWayTypeInfo() {
         String tmpOsmFile = DIR + "/krems.osm.gz";
         String tmpVehicle = "bike";
         String tmpImportVehicles = "car,bike";
@@ -423,8 +408,7 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testRoundaboutInstructionsWithCH()
-    {
+    public void testRoundaboutInstructionsWithCH() {
         String tmpOsmFile = DIR + "/monaco.osm.gz";
         String tmpVehicle = "car";
         String tmpImportVehicles = "car,bike";
@@ -432,7 +416,7 @@ public class GraphHopperIT
 
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(tmpOsmFile).
-                setStoreOnFlush(true).                
+                setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(tmpImportVehicles)).
                 importOrLoad();
@@ -464,12 +448,11 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testMultipleVehiclesWithCH()
-    {
+    public void testMultipleVehiclesWithCH() {
         String tmpOsmFile = DIR + "/monaco.osm.gz";
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(tmpOsmFile).
-                setStoreOnFlush(true).                
+                setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("bike,car")).
                 importOrLoad();
@@ -481,7 +464,7 @@ public class GraphHopperIT
         // new instance, try different order, resulting only in different default vehicle
         tmpHopper = new GraphHopperOSM().
                 setOSMFile(tmpOsmFile).
-                setStoreOnFlush(true).                
+                setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("car,bike")).
                 importOrLoad();
@@ -490,8 +473,7 @@ public class GraphHopperIT
         tmpHopper.close();
     }
 
-    private void checkMultiVehiclesWithCH( GraphHopper tmpHopper )
-    {
+    private void checkMultiVehiclesWithCH(GraphHopper tmpHopper) {
         String str = tmpHopper.getEncodingManager().toString();
         GHResponse rsp = tmpHopper.route(new GHRequest(43.73005, 7.415707, 43.741522, 7.42826)
                 .setVehicle("car"));
@@ -521,8 +503,7 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testIfCHIsUsed() throws Exception
-    {
+    public void testIfCHIsUsed() throws Exception {
         // route directly after import
         executeCHFootRoute();
 
@@ -530,14 +511,13 @@ public class GraphHopperIT
         executeCHFootRoute();
     }
 
-    private void executeCHFootRoute()
-    {
+    private void executeCHFootRoute() {
         String tmpOsmFile = DIR + "/monaco.osm.gz";
         String tmpImportVehicles = "foot";
 
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(tmpOsmFile).
-                setStoreOnFlush(true).                
+                setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(tmpImportVehicles));
         tmpHopper.getCHFactoryDecorator().setWeightingsAsStrings(weightCalcStr);
@@ -559,8 +539,7 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testRoundTour()
-    {
+    public void testRoundTour() {
         GHRequest rq = new GHRequest().
                 addPoint(new GHPoint(43.741069, 7.426854)).
                 setVehicle(vehicle).setWeighting("fastest").
@@ -579,13 +558,12 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testFlexMode_631()
-    {
+    public void testFlexMode_631() {
         String tmpOsmFile = DIR + "/monaco.osm.gz";
 
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(tmpOsmFile).
-                setStoreOnFlush(true).                
+                setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("car"));
 
@@ -617,12 +595,11 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testTurnCostsOnOff()
-    {
+    public void testTurnCostsOnOff() {
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(DIR + "/moscow.osm.gz").
                 setStoreOnFlush(true).
-                setCHEnabled(false).                
+                setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("car|turn_costs=true"));
         tmpHopper.importOrLoad();
@@ -644,11 +621,10 @@ public class GraphHopperIT
     }
 
     @Test
-    public void testCHAndTurnCostsWithFlexmode()
-    {
+    public void testCHAndTurnCostsWithFlexmode() {
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(DIR + "/moscow.osm.gz").
-                setStoreOnFlush(true).                
+                setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("car|turn_costs=true"));
         tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);

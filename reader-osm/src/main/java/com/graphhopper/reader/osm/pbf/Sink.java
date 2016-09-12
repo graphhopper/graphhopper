@@ -22,9 +22,8 @@ import com.graphhopper.reader.ReaderElement;
 /**
  * @author Nop
  */
-public interface Sink
-{
-    void process( ReaderElement item );
+public interface Sink {
+    void process(ReaderElement item);
 
     void complete();
 }

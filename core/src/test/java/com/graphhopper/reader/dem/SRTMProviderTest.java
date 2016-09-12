@@ -18,39 +18,33 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DAType;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
 
-import org.junit.After;
-import org.junit.Test;
-
-import static org.junit.Assert.*;
-
-import org.junit.Before;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class SRTMProviderTest
-{
+public class SRTMProviderTest {
     SRTMProvider instance;
 
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         instance = new SRTMProvider();
     }
 
     @After
-    public void tearDown()
-    {
+    public void tearDown() {
         instance.release();
     }
 
     @Test
-    public void testGetFileString()
-    {
+    public void testGetFileString() {
         assertEquals("Eurasia/N49E011", instance.getFileString(49, 11));
         assertEquals("Eurasia/N52W002", instance.getFileString(52.268157, -1.230469));
         assertEquals("Africa/S06E034", instance.getFileString(-5.965754, 34.804687));
@@ -63,8 +57,7 @@ public class SRTMProviderTest
     }
 
     @Test
-    public void testGetHeight() throws IOException
-    {
+    public void testGetHeight() throws IOException {
         instance.setCacheDir(new File("./files/"));
         // easy to verify orientation of tile:
 //        instance.getEle(43, 13);
@@ -93,8 +86,7 @@ public class SRTMProviderTest
     }
 
     @Test
-    public void testGetHeight_issue545() throws IOException
-    {
+    public void testGetHeight_issue545() throws IOException {
         instance.setCacheDir(new File("./files/"));
 
         // test different precision of the elevation file (3600)
@@ -102,8 +94,7 @@ public class SRTMProviderTest
     }
 
     @Test
-    public void testGetHeightMMap() throws IOException
-    {
+    public void testGetHeightMMap() throws IOException {
         instance.setCacheDir(new File("./files/"));
         instance.setDAType(DAType.MMAP);
         assertEquals(161, instance.getEle(55.8943144, -3), 1e-1);

@@ -20,20 +20,18 @@ package com.graphhopper.storage;
 /**
  * Manages memory mapped DataAccess objects.
  * <p>
+ *
  * @author Peter Karich
  * @see MMapDataAccess
  */
-public class MMapDirectory extends GHDirectory
-{
+public class MMapDirectory extends GHDirectory {
     // reserve the empty constructor for direct mapped memory
-    private MMapDirectory()
-    {
+    private MMapDirectory() {
         this("");
         throw new IllegalStateException("reserved for direct mapped memory");
     }
 
-    public MMapDirectory( String _location )
-    {
+    public MMapDirectory(String _location) {
         super(_location, DAType.MMAP);
     }
 }

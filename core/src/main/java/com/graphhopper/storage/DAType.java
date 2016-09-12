@@ -20,10 +20,10 @@ package com.graphhopper.storage;
 /**
  * Defines how a DataAccess object is created.
  * <p>
+ *
  * @author Peter Karich
  */
-public class DAType
-{
+public class DAType {
     /**
      * The DA object is hold entirely in-memory. Loading and flushing is a no-op. See RAMDataAccess.
      */
@@ -56,21 +56,13 @@ public class DAType
      * Experimental API. Do not use yet.
      */
     public static final DAType UNSAFE_STORE = new DAType(MemRef.UNSAFE, true, false, true, false);
-
-    public enum MemRef
-    {
-        HEAP, MMAP, UNSAFE /*, DIRECT */
-
-    }
-
     private final MemRef memRef;
     private final boolean storing;
     private final boolean integ;
     private final boolean synched;
     private final boolean allowWrites;
 
-    public DAType( DAType type, boolean synched )
-    {
+    public DAType(DAType type, boolean synched) {
         this(type.getMemRef(), type.isStoring(), type.isInteg(), type.isAllowWrites(), synched);
         if (!synched)
             throw new IllegalStateException("constructor can only be used with synched=true");
@@ -78,8 +70,7 @@ public class DAType
             throw new IllegalStateException("something went wrong as DataAccess object is already synched!?");
     }
 
-    public DAType( MemRef memRef, boolean storing, boolean integ, boolean allowWrites, boolean synched )
-    {
+    public DAType(MemRef memRef, boolean storing, boolean integ, boolean allowWrites, boolean synched) {
         this.memRef = memRef;
         this.storing = storing;
         this.integ = integ;
@@ -87,45 +78,56 @@ public class DAType
         this.synched = synched;
     }
 
+    public static DAType fromString(String dataAccess) {
+        dataAccess = dataAccess.toUpperCase();
+        DAType type;
+        if (dataAccess.contains("MMAP"))
+            type = DAType.MMAP;
+        else if (dataAccess.contains("UNSAFE"))
+            type = DAType.UNSAFE_STORE;
+        else if (dataAccess.contains("RAM_STORE"))
+            type = DAType.RAM_STORE;
+        else
+            type = DAType.RAM;
+
+        if (dataAccess.contains("SYNC"))
+            type = new DAType(type, true);
+        return type;
+    }
+
     /**
      * Memory mapped or purely in memory? default is HEAP
      */
-    MemRef getMemRef()
-    {
+    MemRef getMemRef() {
         return memRef;
     }
 
-    public boolean isAllowWrites()
-    {
+    public boolean isAllowWrites() {
         return allowWrites;
     }
 
     /**
      * @return true if data resides in the JVM heap.
      */
-    public boolean isInMemory()
-    {
+    public boolean isInMemory() {
         return memRef == MemRef.HEAP;
     }
 
-    public boolean isMMap()
-    {
+    public boolean isMMap() {
         return memRef == MemRef.MMAP;
     }
 
     /**
      * Temporary data or store (with loading and storing)? default is false
      */
-    public boolean isStoring()
-    {
+    public boolean isStoring() {
         return storing;
     }
 
     /**
      * Optimized for integer values? default is false
      */
-    public boolean isInteg()
-    {
+    public boolean isInteg() {
         return integ;
     }
 
@@ -134,14 +136,12 @@ public class DAType
      * DataAccess object is only read-thread safe where a memory mapped one is not even
      * read-threadsafe!
      */
-    public boolean isSynched()
-    {
+    public boolean isSynched() {
         return synched;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         String str;
         if (getMemRef() == MemRef.MMAP)
             str = "MMAP";
@@ -159,30 +159,8 @@ public class DAType
         return str;
     }
 
-    public static DAType fromString( String dataAccess )
-    {
-        dataAccess = dataAccess.toUpperCase();
-        DAType type;
-        if (dataAccess.contains("MMAP"))
-            type = DAType.MMAP;
-        else if (dataAccess.contains("UNSAFE"))
-            type = DAType.UNSAFE_STORE;
-        else
-        {
-            if (dataAccess.contains("RAM_STORE"))
-                type = DAType.RAM_STORE;
-            else
-                type = DAType.RAM;
-        }
-
-        if (dataAccess.contains("SYNC"))
-            type = new DAType(type, true);
-        return type;
-    }
-
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         int hash = 7;
         hash = 59 * hash + 37 * this.memRef.hashCode();
         hash = 59 * hash + (this.storing ? 1 : 0);
@@ -192,8 +170,7 @@ public class DAType
     }
 
     @Override
-    public boolean equals( Object obj )
-    {
+    public boolean equals(Object obj) {
         if (obj == null)
             return false;
         if (getClass() != obj.getClass())
@@ -208,5 +185,11 @@ public class DAType
         if (this.synched != other.synched)
             return false;
         return true;
+    }
+
+    public enum MemRef {
+        HEAP, MMAP, UNSAFE
+        /*, DIRECT */
+
     }
 }

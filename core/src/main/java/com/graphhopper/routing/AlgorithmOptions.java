@@ -32,33 +32,30 @@ import com.graphhopper.util.Parameters;
  *        build();
  * </pre>
  * <p>
+ *
  * @author Peter Karich
  */
-public class AlgorithmOptions
-{
+public class AlgorithmOptions {
+    private final PMap hints = new PMap(5);
     private String algorithm = Parameters.Algorithms.DIJKSTRA_BI;
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private FlagEncoder flagEncoder;
     private int maxVisitedNodes = Integer.MAX_VALUE;
-    private final PMap hints = new PMap(5);
 
-    private AlgorithmOptions()
-    {
+    private AlgorithmOptions() {
     }
 
     /**
      * Default traversal mode NODE_BASED is used.
      */
-    public AlgorithmOptions( String algorithm, FlagEncoder flagEncoder, Weighting weighting )
-    {
+    public AlgorithmOptions(String algorithm, FlagEncoder flagEncoder, Weighting weighting) {
         this.algorithm = algorithm;
         this.weighting = weighting;
         this.flagEncoder = flagEncoder;
     }
 
-    public AlgorithmOptions( String algorithm, FlagEncoder flagEncoder, Weighting weighting, TraversalMode tMode )
-    {
+    public AlgorithmOptions(String algorithm, FlagEncoder flagEncoder, Weighting weighting, TraversalMode tMode) {
         this.algorithm = algorithm;
         this.weighting = weighting;
         this.flagEncoder = flagEncoder;
@@ -66,58 +63,9 @@ public class AlgorithmOptions
     }
 
     /**
-     * @return the traversal mode, where node-based is the default.
-     */
-    public TraversalMode getTraversalMode()
-    {
-        return traversalMode;
-    }
-
-    public Weighting getWeighting()
-    {
-        assertNotNull(weighting, "weighting");
-        return weighting;
-    }
-
-    public String getAlgorithm()
-    {
-        assertNotNull(algorithm, "algorithm");
-        return algorithm;
-    }
-
-    public FlagEncoder getFlagEncoder()
-    {
-        assertNotNull(flagEncoder, "flagEncoder");
-        return flagEncoder;
-    }
-
-    public int getMaxVisitedNodes()
-    {
-        return maxVisitedNodes;
-    }
-
-    public PMap getHints()
-    {
-        return hints;
-    }
-
-    private void assertNotNull( Object optionValue, String optionName )
-    {
-        if (optionValue == null)
-            throw new NullPointerException("Option '" + optionName + "' must NOT be null");
-    }
-
-    @Override
-    public String toString()
-    {
-        return algorithm + ", " + weighting + ", " + flagEncoder + ", " + traversalMode;
-    }
-
-    /**
      * This method starts the building process for AlgorithmOptions.
      */
-    public static Builder start()
-    {
+    public static Builder start() {
         return new Builder();
     }
 
@@ -125,8 +73,7 @@ public class AlgorithmOptions
      * This method clones the specified AlgorithmOption object with the possibility for further
      * changes.
      */
-    public static Builder start( AlgorithmOptions opts )
-    {
+    public static Builder start(AlgorithmOptions opts) {
         Builder b = new Builder();
         if (opts.algorithm != null)
             b.algorithm(opts.getAlgorithm());
@@ -141,12 +88,50 @@ public class AlgorithmOptions
         return b;
     }
 
-    public static class Builder
-    {
+    /**
+     * @return the traversal mode, where node-based is the default.
+     */
+    public TraversalMode getTraversalMode() {
+        return traversalMode;
+    }
+
+    public Weighting getWeighting() {
+        assertNotNull(weighting, "weighting");
+        return weighting;
+    }
+
+    public String getAlgorithm() {
+        assertNotNull(algorithm, "algorithm");
+        return algorithm;
+    }
+
+    public FlagEncoder getFlagEncoder() {
+        assertNotNull(flagEncoder, "flagEncoder");
+        return flagEncoder;
+    }
+
+    public int getMaxVisitedNodes() {
+        return maxVisitedNodes;
+    }
+
+    public PMap getHints() {
+        return hints;
+    }
+
+    private void assertNotNull(Object optionValue, String optionName) {
+        if (optionValue == null)
+            throw new NullPointerException("Option '" + optionName + "' must NOT be null");
+    }
+
+    @Override
+    public String toString() {
+        return algorithm + ", " + weighting + ", " + flagEncoder + ", " + traversalMode;
+    }
+
+    public static class Builder {
         private final AlgorithmOptions opts = new AlgorithmOptions();
 
-        public Builder traversalMode( TraversalMode traversalMode )
-        {
+        public Builder traversalMode(TraversalMode traversalMode) {
             if (traversalMode == null)
                 throw new IllegalArgumentException("null as traversal mode is not allowed");
 
@@ -154,8 +139,7 @@ public class AlgorithmOptions
             return this;
         }
 
-        public Builder weighting( Weighting weighting )
-        {
+        public Builder weighting(Weighting weighting) {
             this.opts.weighting = weighting;
             return this;
         }
@@ -163,32 +147,27 @@ public class AlgorithmOptions
         /**
          * For possible values see AlgorithmOptions.*
          */
-        public Builder algorithm( String algorithm )
-        {
+        public Builder algorithm(String algorithm) {
             this.opts.algorithm = algorithm;
             return this;
         }
 
-        public Builder flagEncoder( FlagEncoder flagEncoder )
-        {
+        public Builder flagEncoder(FlagEncoder flagEncoder) {
             this.opts.flagEncoder = flagEncoder;
             return this;
         }
 
-        public Builder maxVisitedNodes( int maxVisitedNodes )
-        {
+        public Builder maxVisitedNodes(int maxVisitedNodes) {
             this.opts.maxVisitedNodes = maxVisitedNodes;
             return this;
         }
 
-        public Builder hints( PMap hints )
-        {
+        public Builder hints(PMap hints) {
             this.opts.hints.put(hints);
             return this;
         }
 
-        public AlgorithmOptions build()
-        {
+        public AlgorithmOptions build() {
             return opts;
         }
     }

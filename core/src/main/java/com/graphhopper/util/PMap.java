@@ -23,35 +23,30 @@ import java.util.Map;
 /**
  * A properties map (String to String) with convenient accessors
  * <p>
- * @see ConfigMap
+ *
  * @author Peter Karich
+ * @see ConfigMap
  */
-public class PMap
-{
+public class PMap {
     private final Map<String, String> map;
 
-    public PMap()
-    {
+    public PMap() {
         this(5);
     }
 
-    public PMap( int capacity )
-    {
+    public PMap(int capacity) {
         this(new HashMap<String, String>(capacity));
     }
 
-    public PMap( Map<String, String> map )
-    {
+    public PMap(Map<String, String> map) {
         this.map = map;
     }
 
-    public PMap( String propertiesString )
-    {
+    public PMap(String propertiesString) {
         // five chosen as arbitrary initial capacity
         this.map = new HashMap<String, String>(5);
 
-        for (String s : propertiesString.split("\\|"))
-        {
+        for (String s : propertiesString.split("\\|")) {
             s = s.trim();
             int index = s.indexOf("=");
             if (index < 0)
@@ -61,14 +56,12 @@ public class PMap
         }
     }
 
-    public PMap put( PMap map )
-    {
+    public PMap put(PMap map) {
         this.map.putAll(map.map);
         return this;
     }
 
-    public PMap put( String key, Object str )
-    {
+    public PMap put(String key, Object str) {
         if (str == null)
             throw new NullPointerException("Value cannot be null. Use remove instead.");
 
@@ -77,81 +70,62 @@ public class PMap
         return this;
     }
 
-    public PMap remove( String key )
-    {
+    public PMap remove(String key) {
         // query accepts camelCase and under_score
         map.remove(Helper.camelCaseToUnderScore(key));
         return this;
     }
 
-    public boolean has( String key )
-    {
+    public boolean has(String key) {
         // query accepts camelCase and under_score
         return map.containsKey(Helper.camelCaseToUnderScore(key));
     }
 
-    public long getLong( String key, long _default )
-    {
+    public long getLong(String key, long _default) {
         String str = get(key);
-        if (!Helper.isEmpty(str))
-        {
-            try
-            {
+        if (!Helper.isEmpty(str)) {
+            try {
                 return Long.parseLong(str);
-            } catch (Exception ex)
-            {
+            } catch (Exception ex) {
             }
         }
         return _default;
     }
 
-    public int getInt( String key, int _default )
-    {
+    public int getInt(String key, int _default) {
         String str = get(key);
-        if (!Helper.isEmpty(str))
-        {
-            try
-            {
+        if (!Helper.isEmpty(str)) {
+            try {
                 return Integer.parseInt(str);
-            } catch (Exception ex)
-            {
+            } catch (Exception ex) {
             }
         }
         return _default;
     }
 
-    public boolean getBool( String key, boolean _default )
-    {
+    public boolean getBool(String key, boolean _default) {
         String str = get(key);
-        if (!Helper.isEmpty(str))
-        {
-            try
-            {
+        if (!Helper.isEmpty(str)) {
+            try {
                 return Boolean.parseBoolean(str);
-            } catch (Exception ex)
-            {
+            } catch (Exception ex) {
             }
         }
         return _default;
     }
 
-    public double getDouble( String key, double _default )
-    {
+    public double getDouble(String key, double _default) {
         String str = get(key);
-        if (!Helper.isEmpty(str))
-        {
-            try
-            {
+        if (!Helper.isEmpty(str)) {
+            try {
                 return Double.parseDouble(str);
-            } catch (Exception ex)
-            {
+            } catch (Exception ex) {
             }
         }
         return _default;
     }
 
-    public String get( String key, String _default )
-    {
+    public String get(String key, String _default) {
         String str = get(key);
         if (Helper.isEmpty(str))
             return _default;
@@ -159,8 +133,7 @@ public class PMap
         return str;
     }
 
-    String get( String key )
-    {
+    String get(String key) {
         if (Helper.isEmpty(key))
             return "";
 
@@ -175,25 +148,20 @@ public class PMap
     /**
      * This method copies the underlying structur into a new Map object
      */
-    public Map<String, String> toMap()
-    {
+    public Map<String, String> toMap() {
         return new HashMap<String, String>(map);
     }
 
-    private Map<String, String> getMap()
-    {
+    private Map<String, String> getMap() {
         return map;
     }
 
-    public PMap merge( PMap read )
-    {
+    public PMap merge(PMap read) {
         return merge(read.getMap());
     }
 
-    PMap merge( Map<String, String> map )
-    {
-        for (Map.Entry<String, String> e : map.entrySet())
-        {
+    PMap merge(Map<String, String> map) {
+        for (Map.Entry<String, String> e : map.entrySet()) {
             if (Helper.isEmpty(e.getKey()))
                 continue;
 
@@ -203,8 +171,7 @@ public class PMap
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getMap().toString();
     }
 }

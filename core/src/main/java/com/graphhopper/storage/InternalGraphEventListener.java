@@ -20,8 +20,7 @@ package com.graphhopper.storage;
 /**
  * @author Peter Karich
  */
-public interface InternalGraphEventListener
-{
+public interface InternalGraphEventListener {
     void freeze();
 
     void initStorage();

@@ -20,23 +20,22 @@ package com.graphhopper.json.geo;
 import com.graphhopper.json.GHson;
 import com.graphhopper.json.GHsonBuilder;
 import com.graphhopper.util.Helper;
+import org.junit.Test;
+
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Map;
-import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
 
 /**
- *
  * @author Peter Karich
  */
-public class JsonFeatureCollectionTest
-{
+public class JsonFeatureCollectionTest {
     private final GHson ghson = new GHsonBuilder().create();
 
     @Test
-    public void testDeserialization()
-    {
+    public void testDeserialization() {
         JsonFeatureCollection data = getJson("geojson1.json");
         assertEquals(3, data.getFeatures().size());
 
@@ -60,8 +59,7 @@ public class JsonFeatureCollectionTest
         assertEquals("a", ((Map) f3.getProperty("prop1")).get("test"));
     }
 
-    JsonFeatureCollection getJson( String name )
-    {
+    JsonFeatureCollection getJson(String name) {
         Reader reader = new InputStreamReader(getClass().getResourceAsStream(name), Helper.UTF_CS);
         return ghson.fromJson(reader, JsonFeatureCollection.class);
     }

@@ -24,43 +24,37 @@ import java.util.Map;
 /**
  * A properties map (String to Object) with convenient accessors
  * <p>
- * @see PMap
+ *
  * @author Peter Karich
+ * @see PMap
  */
-public class ConfigMap
-{
+public class ConfigMap {
     private final Map<String, Object> map;
 
-    public ConfigMap()
-    {
+    public ConfigMap() {
         this(5);
     }
 
-    public ConfigMap( int capacity )
-    {
+    public ConfigMap(int capacity) {
         this(new HashMap<String, Object>(capacity));
     }
 
-    public ConfigMap( Map<String, Object> map )
-    {
+    public ConfigMap(Map<String, Object> map) {
         this.map = map;
     }
 
-    public ConfigMap put( ConfigMap map )
-    {
+    public ConfigMap put(ConfigMap map) {
         this.map.putAll(map.map);
         return this;
     }
 
-    String checkKey( String key )
-    {
+    String checkKey(String key) {
         if (!key.toLowerCase().equals(key))
             throw new NullPointerException("keys have to be lower case but wasn't: " + key);
         return key;
     }
 
-    public ConfigMap put( String key, Object obj )
-    {
+    public ConfigMap put(String key, Object obj) {
         if (obj == null)
             throw new NullPointerException("Value cannot be null for key " + key + ". Use remove instead.");
 
@@ -68,80 +62,68 @@ public class ConfigMap
         return this;
     }
 
-    public ConfigMap remove( String key )
-    {
+    public ConfigMap remove(String key) {
         map.remove(checkKey(key));
         return this;
     }
 
-    public boolean has( String key )
-    {
+    public boolean has(String key) {
         return map.containsKey(checkKey(key));
     }
 
-    public long getLong( String key, long _default )
-    {
+    public long getLong(String key, long _default) {
         Long t = (Long) map.get(checkKey(key));
         if (t == null)
             return _default;
         return t;
     }
 
-    public int getInt( String key, int _default )
-    {
+    public int getInt(String key, int _default) {
         Integer t = (Integer) map.get(checkKey(key));
         if (t == null)
             return _default;
         return t;
     }
 
-    public boolean getBool( String key, boolean _default )
-    {
+    public boolean getBool(String key, boolean _default) {
         Boolean t = (Boolean) map.get(checkKey(key));
         if (t == null)
             return _default;
         return t;
     }
 
-    public double getDouble( String key, double _default )
-    {
+    public double getDouble(String key, double _default) {
         Double t = (Double) map.get(checkKey(key));
         if (t == null)
             return _default;
         return t;
     }
 
-    public <T> T get( String key, T _default )
-    {
+    public <T> T get(String key, T _default) {
         T t = (T) map.get(checkKey(key));
         if (t == null)
             return _default;
         return t;
     }
 
-    public <T> Map<String, T> getMap( String key, Class<T> embed )
-    {
+    public <T> Map<String, T> getMap(String key, Class<T> embed) {
         return (Map<String, T>) map.get(checkKey(key));
     }
 
-    public Map<String, Object> getMap( String key )
-    {
+    public Map<String, Object> getMap(String key) {
         return (Map<String, Object>) map.get(checkKey(key));
     }
 
-    public List getList( String key )
-    {
+    public List getList(String key) {
         return (List) map.get(checkKey(key));
     }
 
-    public <T> List<T> getList( String key, Class<T> embed )
-    {
+    public <T> List<T> getList(String key, Class<T> embed) {
         return (List<T>) map.get(checkKey(key));
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return map.toString();
     }
 }

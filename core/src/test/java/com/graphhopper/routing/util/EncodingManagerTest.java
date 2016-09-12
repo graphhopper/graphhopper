@@ -17,31 +17,25 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.routing.weighting.PriorityWeighting;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
-
-import org.junit.Rule;
-import org.junit.Test;
-
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.util.BitUtil;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
+
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
-public class EncodingManagerTest
-{
+public class EncodingManagerTest {
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
     @Test
-    public void testCompatibility()
-    {
+    public void testCompatibility() {
         EncodingManager manager = new EncodingManager("car,bike,foot");
         BikeFlagEncoder bike = (BikeFlagEncoder) manager.getEncoder("bike");
         CarFlagEncoder car = (CarFlagEncoder) manager.getEncoder("car");
@@ -61,91 +55,74 @@ public class EncodingManagerTest
         assertEquals(foot3, foot2);
         assertEquals(foot3.hashCode(), foot2.hashCode());
 
-        try
-        {
+        try {
             new EncodingManager("car,car");
             assertTrue("do not allow duplicate flag encoders", false);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
         }
     }
 
     @Test
-    public void testEncoderAcceptNoException()
-    {
+    public void testEncoderAcceptNoException() {
         EncodingManager manager = new EncodingManager("car");
         assertTrue(manager.supports("car"));
         assertFalse(manager.supports("foot"));
     }
 
     @Test
-    public void testEncoderWithWrongVersionIsRejected()
-    {
+    public void testEncoderWithWrongVersionIsRejected() {
         thrown.expect(IllegalArgumentException.class);
         EncodingManager manager = new EncodingManager("car|version=0");
     }
 
     @Test
-    public void testWrongEncoders()
-    {
-        try
-        {
+    public void testWrongEncoders() {
+        try {
             FootFlagEncoder foot = new FootFlagEncoder();
             new EncodingManager(foot, foot);
             assertTrue(false);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             assertEquals("You must not register a FlagEncoder (foot) twice!", ex.getMessage());
         }
 
-        try
-        {
+        try {
             new EncodingManager(new FootFlagEncoder(), new CarFlagEncoder(), new BikeFlagEncoder(), new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder());
             assertTrue(false);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoders are requesting more than 32 bits of way flags. Decrease the"));
         }
     }
 
     @Test
-    public void testToDetailsStringIncludesEncoderVersionNumber()
-    {
-        FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 3)
-        {
+    public void testToDetailsStringIncludesEncoderVersionNumber() {
+        FlagEncoder encoder = new AbstractFlagEncoder(1, 2.0, 3) {
             @Override
-            public int getVersion()
-            {
+            public int getVersion() {
                 return 10;
             }
 
             @Override
-            public String toString()
-            {
+            public String toString() {
                 return "new_encoder";
             }
 
             @Override
-            protected String getPropertiesString()
-            {
+            protected String getPropertiesString() {
                 return "my_properties";
             }
 
             @Override
-            public long handleRelationTags( ReaderRelation relation, long oldRelationFlags )
-            {
+            public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
                 return 0;
             }
 
             @Override
-            public long acceptWay( ReaderWay way )
-            {
+            public long acceptWay(ReaderWay way) {
                 return 0;
             }
 
             @Override
-            public long handleWayTags( ReaderWay way, long allowed, long relationFlags )
-            {
+            public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
                 return 0;
             }
         };
@@ -156,39 +133,33 @@ public class EncodingManagerTest
     }
 
     @Test
-    public void testCombineRelations()
-    {
+    public void testCombineRelations() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
         ReaderRelation osmRel = new ReaderRelation(1);
 
         BikeFlagEncoder defaultBike = new BikeFlagEncoder();
-        BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder()
-        {
+        BikeFlagEncoder lessRelationCodes = new BikeFlagEncoder() {
             @Override
-            public int defineRelationBits( int index, int shift )
-            {
+            public int defineRelationBits(int index, int shift) {
                 relationCodeEncoder = new EncodedValue("RelationCode2", shift, 2, 1, 0, 3);
                 return shift + 2;
             }
 
             @Override
-            public long handleRelationTags( ReaderRelation relation, long oldRelFlags )
-            {
+            public long handleRelationTags(ReaderRelation relation, long oldRelFlags) {
                 if (relation.hasTag("route", "bicycle"))
                     return relationCodeEncoder.setValue(0, 2);
                 return relationCodeEncoder.setValue(0, 0);
             }
 
             @Override
-            protected int handlePriority( ReaderWay way, double wayTypeSpeed, int priorityFromRelation )
-            {
+            protected int handlePriority(ReaderWay way, double wayTypeSpeed, int priorityFromRelation) {
                 return priorityFromRelation;
             }
 
             @Override
-            public String toString()
-            {
+            public String toString() {
                 return "less_relations_bits";
             }
         };
@@ -206,8 +177,7 @@ public class EncodingManagerTest
     }
 
     @Test
-    public void testMixBikeTypesAndRelationCombination()
-    {
+    public void testMixBikeTypesAndRelationCombination() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
         osmWay.setTag("tracktype", "grade1");
@@ -231,8 +201,7 @@ public class EncodingManagerTest
                 > mtbEncoder.getDouble(flags, PriorityWeighting.KEY));
     }
 
-    public void testFullBitMask()
-    {
+    public void testFullBitMask() {
         BitUtil bitUtil = BitUtil.LITTLE;
         EncodingManager manager = new EncodingManager("car,foot");
         AbstractFlagEncoder carr = (AbstractFlagEncoder) manager.getEncoder("car");
@@ -243,15 +212,13 @@ public class EncodingManagerTest
     }
 
     @Test
-    public void testFixWayName()
-    {
+    public void testFixWayName() {
         assertEquals("B8, B12", EncodingManager.fixWayName("B8;B12"));
         assertEquals("B8, B12", EncodingManager.fixWayName("B8; B12"));
     }
 
     @Test
-    public void testCompatibilityBug()
-    {
+    public void testCompatibilityBug() {
         EncodingManager manager2 = new EncodingManager(FlagEncoderFactory.DEFAULT, "bike2", 8);
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "footway");
@@ -277,8 +244,7 @@ public class EncodingManagerTest
     }
 
     @Test
-    public void testSupportFords()
-    {
+    public void testSupportFords() {
         // 1) no encoder crossing fords
         String flagEncodersStr = "car,bike,foot";
         EncodingManager manager = new EncodingManager(FlagEncoderFactory.DEFAULT, flagEncodersStr, 8);

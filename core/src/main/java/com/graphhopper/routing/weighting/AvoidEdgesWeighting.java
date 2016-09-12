@@ -20,6 +20,7 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.util.EdgeIteratorState;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
+
 import java.util.Collection;
 
 /**
@@ -27,20 +28,17 @@ import java.util.Collection;
  *
  * @author RobinBoldt
  */
-public class AvoidEdgesWeighting extends AbstractAdjustedWeighting
-{
+public class AvoidEdgesWeighting extends AbstractAdjustedWeighting {
     // contains the edge IDs of the already visited edges
     protected final TIntSet visitedEdges = new TIntHashSet();
 
     private double edgePenaltyFactor = 5.0;
 
-    public AvoidEdgesWeighting( Weighting superWeighting )
-    {
+    public AvoidEdgesWeighting(Weighting superWeighting) {
         super(superWeighting);
     }
 
-    public AvoidEdgesWeighting setEdgePenaltyFactor( double edgePenaltyFactor )
-    {
+    public AvoidEdgesWeighting setEdgePenaltyFactor(double edgePenaltyFactor) {
         this.edgePenaltyFactor = edgePenaltyFactor;
         return this;
     }
@@ -49,23 +47,19 @@ public class AvoidEdgesWeighting extends AbstractAdjustedWeighting
      * This method adds the specified path to this weighting which should be penalized in the
      * calcWeight method.
      */
-    public void addEdges( Collection<EdgeIteratorState> edges )
-    {
-        for (EdgeIteratorState edge : edges)
-        {
+    public void addEdges(Collection<EdgeIteratorState> edges) {
+        for (EdgeIteratorState edge : edges) {
             visitedEdges.add(edge.getEdge());
         }
     }
 
     @Override
-    public double getMinWeight( double distance )
-    {
+    public double getMinWeight(double distance) {
         return superWeighting.getMinWeight(distance);
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
-    {
+    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         double weight = superWeighting.calcWeight(edgeState, reverse, prevOrNextEdgeId);
         if (visitedEdges.contains(edgeState.getEdge()))
             return weight * edgePenaltyFactor;
@@ -74,8 +68,7 @@ public class AvoidEdgesWeighting extends AbstractAdjustedWeighting
     }
 
     @Override
-    public String getName()
-    {
+    public String getName() {
         return "avoid_edges";
     }
 }

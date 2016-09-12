@@ -18,35 +18,32 @@
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Used in CH preparation and therefor assumed that all edges are of type CHEdgeIteratorState
  * <p>
+ *
  * @author Peter Karich
  * @see PrepareContractionHierarchies
  */
-public class PreparationWeighting implements Weighting
-{
+public class PreparationWeighting implements Weighting {
     private final Weighting userWeighting;
 
-    public PreparationWeighting( Weighting userWeighting )
-    {
+    public PreparationWeighting(Weighting userWeighting) {
         this.userWeighting = userWeighting;
     }
 
     @Override
-    public final double getMinWeight( double distance )
-    {
+    public final double getMinWeight(double distance) {
         return userWeighting.getMinWeight(distance);
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
-    {
+    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         CHEdgeIteratorState tmp = (CHEdgeIteratorState) edgeState;
         if (tmp.isShortcut())
             // if a shortcut is in both directions the weight is identical => no need for 'reverse'
@@ -56,26 +53,22 @@ public class PreparationWeighting implements Weighting
     }
 
     @Override
-    public FlagEncoder getFlagEncoder()
-    {
+    public FlagEncoder getFlagEncoder() {
         return userWeighting.getFlagEncoder();
     }
 
     @Override
-    public boolean matches( HintsMap map )
-    {
+    public boolean matches(HintsMap map) {
         return getName().equals(map.getWeighting()) && userWeighting.getFlagEncoder().toString().equals(map.getVehicle());
     }
 
     @Override
-    public String getName()
-    {
+    public String getName() {
         return "prepare|" + userWeighting.getName();
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return getName();
     }
 }

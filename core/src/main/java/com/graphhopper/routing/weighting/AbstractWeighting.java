@@ -21,15 +21,12 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 
 /**
- *
  * @author Peter Karich
  */
-public abstract class AbstractWeighting implements Weighting
-{
+public abstract class AbstractWeighting implements Weighting {
     protected final FlagEncoder flagEncoder;
 
-    public AbstractWeighting( FlagEncoder encoder )
-    {
+    public AbstractWeighting(FlagEncoder encoder) {
         this.flagEncoder = encoder;
         if (!flagEncoder.isRegistered())
             throw new IllegalStateException("Make sure you add the FlagEncoder " + flagEncoder + " to an EncodingManager before using it elsewhere");
@@ -37,40 +34,7 @@ public abstract class AbstractWeighting implements Weighting
             throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
     }
 
-    @Override
-    public boolean matches( HintsMap reqMap )
-    {
-        return getName().equals(reqMap.getWeighting())
-                && flagEncoder.toString().equals(reqMap.getVehicle());
-    }
-
-    @Override
-    public FlagEncoder getFlagEncoder()
-    {
-        return flagEncoder;
-    }
-
-    @Override
-    public int hashCode()
-    {
-        int hash = 7;
-        hash = 71 * hash + toString().hashCode();
-        return hash;
-    }
-
-    @Override
-    public boolean equals( Object obj )
-    {
-        if (obj == null)
-            return false;
-        if (getClass() != obj.getClass())
-            return false;
-        final Weighting other = (Weighting) obj;
-        return toString().equals(other.toString());
-    }
-
-    static final boolean isValidName( String name )
-    {
+    static final boolean isValidName(String name) {
         if (name == null || name.isEmpty())
             return false;
 
@@ -80,14 +44,40 @@ public abstract class AbstractWeighting implements Weighting
     /**
      * Replaces all characters which are not numbers, characters or underscores with underscores
      */
-    public static String weightingToFileName( Weighting w )
-    {
+    public static String weightingToFileName(Weighting w) {
         return w.toString().toLowerCase().replaceAll("\\|", "_");
     }
 
     @Override
-    public String toString()
-    {
+    public boolean matches(HintsMap reqMap) {
+        return getName().equals(reqMap.getWeighting())
+                && flagEncoder.toString().equals(reqMap.getVehicle());
+    }
+
+    @Override
+    public FlagEncoder getFlagEncoder() {
+        return flagEncoder;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 71 * hash + toString().hashCode();
+        return hash;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+        if (getClass() != obj.getClass())
+            return false;
+        final Weighting other = (Weighting) obj;
+        return toString().equals(other.toString());
+    }
+
+    @Override
+    public String toString() {
         return getName() + "|" + flagEncoder;
     }
 }

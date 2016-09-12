@@ -19,16 +19,14 @@ package com.graphhopper.storage;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class VLongStorageTest
-{
+public class VLongStorageTest {
     @Test
-    public void testWrite()
-    {
+    public void testWrite() {
         VLongStorage store = new VLongStorage();
         store.seek(0);
         store.writeVLong(1);
@@ -44,8 +42,7 @@ public class VLongStorageTest
     }
 
     @Test
-    public void testWriteWithTrim()
-    {
+    public void testWriteWithTrim() {
         VLongStorage store = new VLongStorage();
         store.seek(0);
         store.writeVLong(1);

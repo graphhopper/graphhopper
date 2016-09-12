@@ -17,21 +17,18 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.graphhopper.reader.osm.OSMTagParser;
-import static org.junit.Assert.*;
-import static org.junit.Assert.fail;
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
+
 /**
- *
  * @author Peter Karich
  * @author ratrun
  */
-public class OSMTagParserTest
-{
+public class OSMTagParserTest {
     @Test
-    public void testParseDuration()
-    {        
+    public void testParseDuration() {
         assertEquals(10 * 60, OSMTagParser.parseDuration("00:10"));
         assertEquals(35 * 60, OSMTagParser.parseDuration("35"));
         assertEquals(70 * 60, OSMTagParser.parseDuration("01:10"));
@@ -50,30 +47,23 @@ public class OSMTagParserTest
     }
 
     @Test
-    public void testWrongDurationFormats()
-    {
-        try
-        {
+    public void testWrongDurationFormats() {
+        try {
             OSMTagParser.parseDuration("PT5h12m36s");
             fail("parseDuration didn't throw when I expected it to");
-        } catch (IllegalArgumentException expectedException)
-        {
+        } catch (IllegalArgumentException expectedException) {
             assertEquals(expectedException.getMessage(), "Cannot parse duration tag value: PT5h12m36s");
         }
-        try
-        {
+        try {
             OSMTagParser.parseDuration("oh");
             fail("parseDuration didn't throw when I expected it to");
-        } catch (IllegalArgumentException expectedException)
-        {
+        } catch (IllegalArgumentException expectedException) {
             assertEquals(expectedException.getMessage(), "Cannot parse duration tag value: oh");
         }
-        try
-        {
+        try {
             OSMTagParser.parseDuration("01:10:2");
             fail("parseDuration didn't throw when I expected it to");
-        } catch (IllegalArgumentException expectedException)
-        {
+        } catch (IllegalArgumentException expectedException) {
             assertEquals(expectedException.getMessage(), "Cannot parse duration tag value: 01:10:2");
         }
 

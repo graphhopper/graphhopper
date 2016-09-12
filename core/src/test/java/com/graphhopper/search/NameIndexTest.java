@@ -19,24 +19,23 @@ package com.graphhopper.search;
 
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.Helper;
-import java.io.File;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.io.File;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
  */
-public class NameIndexTest
-{
+public class NameIndexTest {
     @Test
-    public void testNoErrorOnLargeName()
-    {
+    public void testNoErrorOnLargeName() {
         NameIndex index = new NameIndex(new RAMDirectory()).create(1000);
         // 127 => bytes.length == 254
         String str = "";
-        for (int i = 0; i < 127; i++)
-        {
+        for (int i = 0; i < 127; i++) {
             str += "ß";
         }
         long result = index.put(str);
@@ -44,8 +43,7 @@ public class NameIndexTest
     }
 
     @Test
-    public void testPut()
-    {
+    public void testPut() {
         NameIndex index = new NameIndex(new RAMDirectory()).create(1000);
         long result = index.put("Something Streetä");
         assertEquals("Something Streetä", index.get(result));
@@ -63,8 +61,7 @@ public class NameIndexTest
     }
 
     @Test
-    public void testCreate()
-    {
+    public void testCreate() {
         NameIndex index = new NameIndex(new RAMDirectory()).create(1000);
         String str1 = "nice";
         long pointer1 = index.put(str1);
@@ -78,15 +75,13 @@ public class NameIndexTest
     }
 
     @Test
-    public void testTooLongNameNoError()
-    {
+    public void testTooLongNameNoError() {
         NameIndex index = new NameIndex(new RAMDirectory()).create(1000);
         // WTH are they doing in OSM? There are exactly two names in the full planet export which violates this limitation!
         index.put("Бухарестская улица (http://ru.wikipedia.org/wiki/%D0%91%D1%83%D1%85%D0%B0%D1%80%D0%B5%D1%81%D1%82%D1%81%D0%BA%D0%B0%D1%8F_%D1%83%D0%BB%D0%B8%D1%86%D0%B0_(%D0%A1%D0%B0%D0%BD%D0%BA%D1%82-%D0%9F%D0%B5%D1%82%D0%B5%D1%80%D0%B1%D1%83%D1%80%D0%B3))");
 
         String str = "sdfsdfds";
-        for (int i = 0; i < 256 * 3; i++)
-        {
+        for (int i = 0; i < 256 * 3; i++) {
             str += "Б";
         }
         index.put(str);
@@ -94,8 +89,7 @@ public class NameIndexTest
     }
 
     @Test
-    public void testFlush()
-    {
+    public void testFlush() {
         String location = "./target/nameindex-store";
         Helper.removeDir(new File(location));
 

@@ -1,17 +1,17 @@
 // This software is released into the Public Domain.  See copying.txt for details.
 package com.graphhopper.reader.osm.pbf;
 
-import java.util.List;
-
 import com.graphhopper.reader.ReaderElement;
+
+import java.util.List;
 
 /**
  * Stores the results for a decoded Blob.
  * <p>
+ *
  * @author Brett Henderson
  */
-public class PbfBlobResult
-{
+public class PbfBlobResult {
     private List<ReaderElement> entities;
     private boolean complete;
     private boolean success;
@@ -20,8 +20,7 @@ public class PbfBlobResult
     /**
      * Creates a new instance.
      */
-    public PbfBlobResult()
-    {
+    public PbfBlobResult() {
         complete = false;
         success = false;
         ex = new RuntimeException("no success result stored");
@@ -30,10 +29,10 @@ public class PbfBlobResult
     /**
      * Stores the results of a successful blob decoding operation.
      * <p>
+     *
      * @param decodedEntities The entities from the blob.
      */
-    public void storeSuccessResult( List<ReaderElement> decodedEntities )
-    {
+    public void storeSuccessResult(List<ReaderElement> decodedEntities) {
         entities = decodedEntities;
         complete = true;
         success = true;
@@ -42,8 +41,7 @@ public class PbfBlobResult
     /**
      * Stores a failure result for a blob decoding operation.
      */
-    public void storeFailureResult( Exception ex )
-    {
+    public void storeFailureResult(Exception ex) {
         complete = true;
         success = false;
         this.ex = ex;
@@ -52,25 +50,24 @@ public class PbfBlobResult
     /**
      * Gets the complete flag.
      * <p>
+     *
      * @return True if complete.
      */
-    public boolean isComplete()
-    {
+    public boolean isComplete() {
         return complete;
     }
 
     /**
      * Gets the success flag. This is only valid after complete becomes true.
      * <p>
+     *
      * @return True if successful.
      */
-    public boolean isSuccess()
-    {
+    public boolean isSuccess() {
         return success;
     }
 
-    public Exception getException()
-    {
+    public Exception getException() {
         return ex;
     }
 
@@ -78,10 +75,10 @@ public class PbfBlobResult
      * Gets the entities decoded from the blob. This is only valid after complete becomes true, and
      * if success is true.
      * <p>
+     *
      * @return The list of decoded entities.
      */
-    public List<ReaderElement> getEntities()
-    {
+    public List<ReaderElement> getEntities() {
         return entities;
     }
 }

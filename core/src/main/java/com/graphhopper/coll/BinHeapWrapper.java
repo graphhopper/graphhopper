@@ -20,12 +20,11 @@ package com.graphhopper.coll;
 /**
  * @author Peter Karich
  */
-public interface BinHeapWrapper<K, E>
-{
+public interface BinHeapWrapper<K, E> {
 
-    void update( K key, E element );
+    void update(K key, E element);
 
-    void insert( K key, E element );
+    void insert(K key, E element);
 
     boolean isEmpty();
 
@@ -40,5 +39,5 @@ public interface BinHeapWrapper<K, E>
     // not necessary? V pollValue();
     void clear();
 
-    void ensureCapacity( int size );
+    void ensureCapacity(int size);
 }

@@ -17,40 +17,37 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.reader.ReaderWay;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.NodeAccess;
+import org.json.JSONObject;
+import org.junit.Before;
+import org.junit.Test;
+import org.xml.sax.SAXException;
 
-import java.io.*;
-import java.util.*;
 import javax.xml.XMLConstants;
 import javax.xml.transform.Source;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
-
-import org.json.JSONObject;
-import org.junit.Test;
+import java.io.StringReader;
+import java.util.*;
 
 import static org.junit.Assert.*;
-
-import org.junit.Before;
-import org.xml.sax.SAXException;
 
 /**
  * @author Peter Karich
  */
-public class InstructionListTest
-{
+public class InstructionListTest {
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation usTR = trMap.getWithFallBack(Locale.US);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
@@ -58,16 +55,14 @@ public class InstructionListTest
     private FlagEncoder carEncoder;
 
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         carEncoder = new CarFlagEncoder();
         carManager = new EncodingManager(carEncoder);
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    public void testWayList()
-    {
+    public void testWayList() {
         Graph g = new GraphBuilder(carManager).create();
         // 0-1-2
         // | | |
@@ -162,22 +157,18 @@ public class InstructionListTest
         assertEquals("Finish!", wayList.get(0).getTurnDescription(usTR));
     }
 
-    List<String> pick( String key, List<Map<String, Object>> instructionJson )
-    {
+    List<String> pick(String key, List<Map<String, Object>> instructionJson) {
         List<String> list = new ArrayList<String>();
 
-        for (Map<String, Object> json : instructionJson)
-        {
+        for (Map<String, Object> json : instructionJson) {
             list.add(json.get(key).toString());
         }
         return list;
     }
 
-    List<List<Double>> createList( PointList pl, List<Integer> integs )
-    {
+    List<List<Double>> createList(PointList pl, List<Integer> integs) {
         List<List<Double>> list = new ArrayList<List<Double>>();
-        for (int i : integs)
-        {
+        for (int i : integs) {
             List<Double> entryList = new ArrayList<Double>(2);
             entryList.add(pl.getLatitude(i));
             entryList.add(pl.getLongitude(i));
@@ -186,37 +177,30 @@ public class InstructionListTest
         return list;
     }
 
-    void compare( List<List<Double>> expected, List<List<Double>> was )
-    {
-        for (int i = 0; i < expected.size(); i++)
-        {
+    void compare(List<List<Double>> expected, List<List<Double>> was) {
+        for (int i = 0; i < expected.size(); i++) {
             List<Double> e = expected.get(i);
             List<Double> wasE = was.get(i);
-            for (int j = 0; j < e.size(); j++)
-            {
+            for (int j = 0; j < e.size(); j++) {
                 assertEquals("at " + j + " value " + e + " vs " + wasE, e.get(j), wasE.get(j), 1e-5d);
             }
         }
     }
 
-    List<Double> asL( Double... list )
-    {
+    List<Double> asL(Double... list) {
         return Arrays.asList(list);
     }
 
-    double sumDistances( InstructionList il )
-    {
+    double sumDistances(InstructionList il) {
         double val = 0;
-        for (Instruction i : il)
-        {
+        for (Instruction i : il) {
             val += i.getDistance();
         }
         return val;
     }
 
     @Test
-    public void testWayList2()
-    {
+    public void testWayList2() {
         Graph g = new GraphBuilder(carManager).create();
         //   2
         //    \.  5
@@ -254,8 +238,7 @@ public class InstructionListTest
 
     // problem: we normally don't want instructions if streetname stays but here it is suboptimal:
     @Test
-    public void testNoInstructionIfSameStreet()
-    {
+    public void testNoInstructionIfSameStreet() {
         Graph g = new GraphBuilder(carManager).create();
         //   2
         //    \.  5
@@ -284,8 +267,7 @@ public class InstructionListTest
     }
 
     @Test
-    public void testInstructionsWithTimeAndPlace()
-    {
+    public void testInstructionsWithTimeAndPlace() {
         Graph g = new GraphBuilder(carManager).create();
         //   4-5
         //   |
@@ -348,8 +330,7 @@ public class InstructionListTest
     }
 
     @Test
-    public void testRoundaboutJsonIntegrity()
-    {
+    public void testRoundaboutJsonIntegrity() {
         InstructionList il = new InstructionList(usTR);
 
         PointList pl = new PointList();
@@ -375,8 +356,7 @@ public class InstructionListTest
 
     // Roundabout with unknown dir of rotation
     @Test
-    public void testRoundaboutJsonNaN()
-    {
+    public void testRoundaboutJsonNaN() {
         InstructionList il = new InstructionList(usTR);
 
         PointList pl = new PointList();
@@ -398,16 +378,13 @@ public class InstructionListTest
     }
 
     @Test
-    public void testCreateGPXWithEle()
-    {
+    public void testCreateGPXWithEle() {
         final List<GPXEntry> fakeList = new ArrayList<GPXEntry>();
         fakeList.add(new GPXEntry(12, 13, 0));
         fakeList.add(new GPXEntry(12.5, 13, 1000));
-        InstructionList il = new InstructionList(usTR)
-        {
+        InstructionList il = new InstructionList(usTR) {
             @Override
-            public List<GPXEntry> createGPXList()
-            {
+            public List<GPXEntry> createGPXList() {
                 return fakeList;
             }
         };
@@ -426,8 +403,7 @@ public class InstructionListTest
     }
 
     @Test
-    public void testCreateGPX()
-    {
+    public void testCreateGPX() {
         InstructionAnnotation ea = InstructionAnnotation.EMPTY;
         InstructionList instructions = new InstructionList(usTR);
         PointList pl = new PointList();
@@ -456,8 +432,7 @@ public class InstructionListTest
         verifyGPX(instructions.createGPX());
     }
 
-    private long flagsForSpeed( EncodingManager encodingManager, int speedKmPerHour )
-    {
+    private long flagsForSpeed(EncodingManager encodingManager, int speedKmPerHour) {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
@@ -465,8 +440,7 @@ public class InstructionListTest
     }
 
     @Test
-    public void testEmptyList()
-    {
+    public void testEmptyList() {
         Graph g = new GraphBuilder(carManager).create();
         Path p = new Dijkstra(g, carEncoder, new ShortestWeighting(carEncoder), tMode).calcPath(0, 1);
         InstructionList il = p.calcInstructions(usTR);
@@ -474,33 +448,27 @@ public class InstructionListTest
         assertEquals(0, il.createStartPoints().size());
     }
 
-    public void verifyGPX( String gpx )
-    {
+    public void verifyGPX(String gpx) {
         SchemaFactory schemaFactory = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
         Schema schema = null;
-        try
-        {
+        try {
             Source schemaFile = new StreamSource(getClass().getResourceAsStream("gpx-schema.xsd"));
             schema = schemaFactory.newSchema(schemaFile);
 
             // using more schemas: http://stackoverflow.com/q/1094893/194609
-        } catch (SAXException e1)
-        {
+        } catch (SAXException e1) {
             throw new IllegalStateException("There was a problem with the schema supplied for validation. Message:" + e1.getMessage());
         }
         Validator validator = schema.newValidator();
-        try
-        {
+        try {
             validator.validate(new StreamSource(new StringReader(gpx)));
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
     @Test
-    public void testFind()
-    {
+    public void testFind() {
         Graph g = new GraphBuilder(carManager).create();
         //   n-4-5   (n: pillar node)
         //   |
@@ -538,8 +506,7 @@ public class InstructionListTest
     }
 
     @Test
-    public void testXMLEscape_issue572()
-    {
+    public void testXMLEscape_issue572() {
         assertEquals("_", InstructionList.simpleXMLEscape("<"));
         assertEquals("_blup_", InstructionList.simpleXMLEscape("<blup>"));
         assertEquals("a&amp;b", InstructionList.simpleXMLEscape("a&b"));

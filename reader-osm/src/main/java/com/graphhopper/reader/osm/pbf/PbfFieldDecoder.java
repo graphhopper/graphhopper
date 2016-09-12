@@ -1,18 +1,18 @@
 // This software is released into the Public Domain.  See copying.txt for details.
 package com.graphhopper.reader.osm.pbf;
 
-import java.util.Date;
-
 import org.openstreetmap.osmosis.osmbinary.Osmformat;
+
+import java.util.Date;
 
 /**
  * Manages decoding of the lower level PBF data structures.
  * <p>
+ *
  * @author Brett Henderson
- *         <p>
+ * <p>
  */
-public class PbfFieldDecoder
-{
+public class PbfFieldDecoder {
     private static final double COORDINATE_SCALING_FACTOR = 0.000000001;
     private String[] strings;
     private int coordGranularity;
@@ -23,10 +23,10 @@ public class PbfFieldDecoder
     /**
      * Creates a new instance.
      * <p>
+     *
      * @param primitiveBlock The primitive block containing the fields to be decoded.
      */
-    public PbfFieldDecoder( Osmformat.PrimitiveBlock primitiveBlock )
-    {
+    public PbfFieldDecoder(Osmformat.PrimitiveBlock primitiveBlock) {
         this.coordGranularity = primitiveBlock.getGranularity();
         this.coordLatitudeOffset = primitiveBlock.getLatOffset();
         this.coordLongitudeOffset = primitiveBlock.getLonOffset();
@@ -34,8 +34,7 @@ public class PbfFieldDecoder
 
         Osmformat.StringTable stringTable = primitiveBlock.getStringtable();
         strings = new String[stringTable.getSCount()];
-        for (int i = 0; i < strings.length; i++)
-        {
+        for (int i = 0; i < strings.length; i++) {
             strings[i] = stringTable.getS(i).toStringUtf8();
         }
     }
@@ -43,44 +42,44 @@ public class PbfFieldDecoder
     /**
      * Decodes a raw latitude value into degrees.
      * <p>
+     *
      * @param rawLatitude The PBF encoded value.
      * @return The latitude in degrees.
      */
-    public double decodeLatitude( long rawLatitude )
-    {
+    public double decodeLatitude(long rawLatitude) {
         return COORDINATE_SCALING_FACTOR * (coordLatitudeOffset + (coordGranularity * rawLatitude));
     }
 
     /**
      * Decodes a raw longitude value into degrees.
      * <p>
+     *
      * @param rawLongitude The PBF encoded value.
      * @return The longitude in degrees.
      */
-    public double decodeLongitude( long rawLongitude )
-    {
+    public double decodeLongitude(long rawLongitude) {
         return COORDINATE_SCALING_FACTOR * (coordLongitudeOffset + (coordGranularity * rawLongitude));
     }
 
     /**
      * Decodes a raw timestamp value into a Date.
      * <p>
+     *
      * @param rawTimestamp The PBF encoded timestamp.
      * @return The timestamp as a Date.
      */
-    public Date decodeTimestamp( long rawTimestamp )
-    {
+    public Date decodeTimestamp(long rawTimestamp) {
         return new Date(dateGranularity * rawTimestamp);
     }
 
     /**
      * Decodes a raw string into a String.
      * <p>
+     *
      * @param rawString The PBF encoding string.
      * @return The string as a String.
      */
-    public String decodeString( int rawString )
-    {
+    public String decodeString(int rawString) {
         return strings[rawString];
     }
 }

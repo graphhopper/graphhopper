@@ -33,14 +33,14 @@ import java.util.Arrays;
  * A simple dijkstra tuned to perform one to many queries more efficient than Dijkstra. Old data
  * structures are cached between requests and potentially reused. Useful for CH preparation.
  * <p>
+ *
  * @author Peter Karich
  */
-public class DijkstraOneToMany extends AbstractRoutingAlgorithm
-{
+public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     private static final int EMPTY_PARENT = -1;
     private static final int NOT_FOUND = -1;
-    protected double[] weights;
     private final TIntArrayListWithCap changedNodes;
+    protected double[] weights;
     private int[] parents;
     private int[] edgeIds;
     private IntDoubleBinHeap heap;
@@ -50,8 +50,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     private int currNode, fromNode, to;
     private double weightLimit = Double.MAX_VALUE;
 
-    public DijkstraOneToMany( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode )
-    {
+    public DijkstraOneToMany(Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode) {
         super(graph, encoder, weighting, tMode);
 
         parents = new int[graph.getNodes()];
@@ -69,16 +68,14 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public Path calcPath( int from, int to )
-    {
+    public Path calcPath(int from, int to) {
         fromNode = from;
         endNode = findEndNode(from, to);
         return extractPath();
     }
 
     @Override
-    public Path extractPath()
-    {
+    public Path extractPath() {
         PathNative p = new PathNative(graph, flagEncoder, parents, edgeIds);
         if (endNode >= 0)
             p.setWeight(weights[endNode]);
@@ -93,29 +90,24 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     /**
      * Call clear if you have a different start node and need to clear the cache.
      */
-    public DijkstraOneToMany clear()
-    {
+    public DijkstraOneToMany clear() {
         doClear = true;
         return this;
     }
 
-    public double getWeight( int endNode )
-    {
+    public double getWeight(int endNode) {
         return weights[endNode];
     }
 
-    public int findEndNode( int from, int to )
-    {
+    public int findEndNode(int from, int to) {
         if (weights.length < 2)
             return NOT_FOUND;
 
         this.to = to;
-        if (doClear)
-        {
+        if (doClear) {
             doClear = false;
             int vn = changedNodes.size();
-            for (int i = 0; i < vn; i++)
-            {
+            for (int i = 0; i < vn; i++) {
                 int n = changedNodes.get(i);
                 weights[n] = Double.MAX_VALUE;
                 parents[n] = EMPTY_PARENT;
@@ -126,13 +118,11 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
             changedNodes.reset();
 
             currNode = from;
-            if (!traversalMode.isEdgeBased())
-            {
+            if (!traversalMode.isEdgeBased()) {
                 weights[currNode] = 0;
                 changedNodes.add(currNode);
             }
-        } else
-        {
+        } else {
             // Cached! Re-use existing data structures
             int parentNode = parents[to];
             if (parentNode != EMPTY_PARENT && weights[to] <= weights[currNode])
@@ -147,20 +137,17 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
         visitedNodes = 0;
 
         // we call 'finished' before heap.peek_element but this would add unnecessary overhead for this special case so we do it outside of the loop
-        if (finished())
-        {
+        if (finished()) {
             // then we need a small workaround for special cases see #707
             if (heap.isEmpty())
                 doClear = true;
             return currNode;
         }
 
-        while (true)
-        {
+        while (true) {
             visitedNodes++;
             EdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
-            while (iter.next())
-            {
+            while (iter.next()) {
                 int adjNode = iter.getAdjNode();
                 int prevEdgeId = edgeIds[adjNode];
                 if (!accept(iter, prevEdgeId))
@@ -171,16 +158,14 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                     continue;
 
                 double w = weights[adjNode];
-                if (w == Double.MAX_VALUE)
-                {
+                if (w == Double.MAX_VALUE) {
                     parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;
                     heap.insert_(tmpWeight, adjNode);
                     changedNodes.add(adjNode);
                     edgeIds[adjNode] = iter.getEdge();
 
-                } else if (w > tmpWeight)
-                {
+                } else if (w > tmpWeight) {
                     parents[adjNode] = currNode;
                     weights[adjNode] = tmpWeight;
                     heap.update_(tmpWeight, adjNode);
@@ -202,23 +187,19 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public boolean finished()
-    {
+    public boolean finished() {
         return currNode == to;
     }
 
-    public void setWeightLimit( double weightLimit )
-    {
+    public void setWeightLimit(double weightLimit) {
         this.weightLimit = weightLimit;
     }
 
-    protected boolean isWeightLimitExceeded()
-    {
+    protected boolean isWeightLimitExceeded() {
         return weights[currNode] > weightLimit;
     }
 
-    public void close()
-    {
+    public void close() {
         weights = null;
         parents = null;
         edgeIds = null;
@@ -226,22 +207,19 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
     }
 
     @Override
-    public int getVisitedNodes()
-    {
+    public int getVisitedNodes() {
         return visitedNodes;
     }
 
     @Override
-    public String getName()
-    {
+    public String getName() {
         return Parameters.Algorithms.DIJKSTRA_ONE_TO_MANY;
     }
 
     /**
      * List currently used memory in MB (approximately)
      */
-    public String getMemoryUsageAsString()
-    {
+    public String getMemoryUsageAsString() {
         long len = weights.length;
         return ((8L + 4L + 4L) * len
                 + changedNodes.getCapacity() * 4L
@@ -249,14 +227,11 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm
                 + "MB";
     }
 
-    private static class TIntArrayListWithCap extends TIntArrayList
-    {
-        public TIntArrayListWithCap()
-        {
+    private static class TIntArrayListWithCap extends TIntArrayList {
+        public TIntArrayListWithCap() {
         }
 
-        public int getCapacity()
-        {
+        public int getCapacity() {
             return _data.length;
         }
     }

@@ -20,17 +20,16 @@ package com.graphhopper.storage;
 /**
  * This class is used to create the shortest-path-tree from linked entities.
  * <p>
+ *
  * @author Peter Karich
  */
-public class SPTEntry implements Cloneable, Comparable<SPTEntry>
-{
+public class SPTEntry implements Cloneable, Comparable<SPTEntry> {
     public int edge;
     public int adjNode;
     public double weight;
     public SPTEntry parent;
 
-    public SPTEntry( int edgeId, int adjNode, double weight )
-    {
+    public SPTEntry(int edgeId, int adjNode, double weight) {
         this.edge = edgeId;
         this.adjNode = adjNode;
         this.weight = weight;
@@ -41,24 +40,20 @@ public class SPTEntry implements Cloneable, Comparable<SPTEntry>
      * destination for the backward SPT. Where the variable 'weight' is used to let heap select
      * smallest *full* weight (from start to destination).
      */
-    public double getWeightOfVisitedPath()
-    {
+    public double getWeightOfVisitedPath() {
         return weight;
     }
 
     @Override
-    public SPTEntry clone()
-    {
+    public SPTEntry clone() {
         return new SPTEntry(edge, adjNode, weight);
     }
 
-    public SPTEntry cloneFull()
-    {
+    public SPTEntry cloneFull() {
         SPTEntry de = clone();
         SPTEntry tmpPrev = parent;
         SPTEntry cl = de;
-        while (tmpPrev != null)
-        {
+        while (tmpPrev != null) {
             cl.parent = tmpPrev.clone();
             cl = cl.parent;
             tmpPrev = tmpPrev.parent;
@@ -67,8 +62,7 @@ public class SPTEntry implements Cloneable, Comparable<SPTEntry>
     }
 
     @Override
-    public int compareTo( SPTEntry o )
-    {
+    public int compareTo(SPTEntry o) {
         if (weight < o.weight)
             return -1;
 
@@ -77,8 +71,7 @@ public class SPTEntry implements Cloneable, Comparable<SPTEntry>
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return adjNode + " (" + edge + ") weight: " + weight;
     }
 }

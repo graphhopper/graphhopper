@@ -17,32 +17,27 @@
  */
 package com.graphhopper.routing.util;
 
-import static com.graphhopper.routing.util.PriorityCode.BEST;
-import static com.graphhopper.routing.util.PriorityCode.PREFER;
-import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
-import static com.graphhopper.routing.util.PriorityCode.VERY_NICE;
-
-import java.util.TreeMap;
-
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.PMap;
 
+import java.util.TreeMap;
+
+import static com.graphhopper.routing.util.PriorityCode.*;
+
 /**
  * Specifies the settings for mountain biking
  * <p>
+ *
  * @author ratrun
  * @author Peter Karich
  */
-public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
-{
-    public MountainBikeFlagEncoder()
-    {
+public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
+    public MountainBikeFlagEncoder() {
         this(4, 2, 0);
     }
 
-    public MountainBikeFlagEncoder( PMap properties )
-    {
+    public MountainBikeFlagEncoder(PMap properties) {
         this(
                 (int) properties.getLong("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
@@ -52,13 +47,11 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
         this.setBlockFords(properties.getBool("block_fords", true));
     }
 
-    public MountainBikeFlagEncoder( String propertiesStr )
-    {
+    public MountainBikeFlagEncoder(String propertiesStr) {
         this(new PMap(propertiesStr));
     }
 
-    public MountainBikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
-    {
+    public MountainBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
         setTrackTypeSpeed("grade1", 18); // paved
         setTrackTypeSpeed("grade2", 16); // now unpaved ...
@@ -141,24 +134,21 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
 
         potentialBarriers.add("kissing_gate");
         setSpecificClassBicycle("mtb");
-        
+
         init();
     }
 
     @Override
-    public int getVersion()
-    {
+    public int getVersion() {
         return 1;
     }
 
     @Override
-    void collect( ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap )
-    {
+    void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
         super.collect(way, wayTypeSpeed, weightToPrioMap);
 
         String highway = way.getTag("highway");
-        if ("track".equals(highway))
-        {
+        if ("track".equals(highway)) {
             String trackType = way.getTag("tracktype");
             if ("grade1".equals(trackType))
                 weightToPrioMap.put(50d, UNCHANGED.getValue());
@@ -170,8 +160,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    public long handleRelationTags( ReaderRelation relation, long oldRelationFlags )
-    {
+    public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
         oldRelationFlags = super.handleRelationTags(relation, oldRelationFlags);
         int code = 0;
         if (relation.hasTag("route", "mtb"))
@@ -184,16 +173,14 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    boolean isSacScaleAllowed( String sacScale )
-    {
+    boolean isSacScaleAllowed(String sacScale) {
         // other scales are too dangerous even for MTB, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
         return "hiking".equals(sacScale) || "mountain_hiking".equals(sacScale)
                 || "demanding_mountain_hiking".equals(sacScale) || "alpine_hiking".equals(sacScale);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "mtb";
     }
 }

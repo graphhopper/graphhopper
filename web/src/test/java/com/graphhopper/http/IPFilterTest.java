@@ -19,16 +19,15 @@ package com.graphhopper.http;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
  */
-public class IPFilterTest
-{
+public class IPFilterTest {
     @Test
-    public void testAcceptWhite()
-    {
+    public void testAcceptWhite() {
         IPFilter instance = new IPFilter("1.2.3.4, 4.5.67.1", "");
         assertTrue(instance.accept("1.2.3.4"));
         assertTrue(instance.accept("4.5.67.1"));
@@ -45,8 +44,7 @@ public class IPFilterTest
     }
 
     @Test
-    public void testAcceptBlack()
-    {
+    public void testAcceptBlack() {
         IPFilter instance = new IPFilter("", "1.2.3.4, 4.5.67.1");
 
         assertFalse(instance.accept("1.2.3.4"));
@@ -55,17 +53,14 @@ public class IPFilterTest
     }
 
     @Test
-    public void testFilterSpecialCases()
-    {
+    public void testFilterSpecialCases() {
         IPFilter instance = new IPFilter("", "");
         assertTrue(instance.accept("1.2.3.4"));
 
-        try
-        {
+        try {
             new IPFilter("1.2.3.4, 4.5.67.1", "8.9.7.3");
             assertFalse("black and white", true);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
 
         }
     }

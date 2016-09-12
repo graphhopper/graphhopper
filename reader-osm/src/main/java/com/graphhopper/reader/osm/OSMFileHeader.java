@@ -18,6 +18,7 @@
 package com.graphhopper.reader.osm;
 
 import com.graphhopper.reader.ReaderElement;
+
 import javax.xml.stream.XMLStreamConstants;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
@@ -25,37 +26,32 @@ import javax.xml.stream.XMLStreamReader;
 /**
  * Represents an OSM file header
  * <p>
+ *
  * @author ratrun
  */
-public class OSMFileHeader extends ReaderElement
-{
+public class OSMFileHeader extends ReaderElement {
+    public OSMFileHeader() {
+        super(0, FILEHEADER);
+    }
+
     /**
      * Constructor for XML Parser
      */
-    public static OSMFileHeader create( long id, XMLStreamReader parser ) throws XMLStreamException
-    {
+    public static OSMFileHeader create(long id, XMLStreamReader parser) throws XMLStreamException {
         OSMFileHeader header = new OSMFileHeader();
         parser.nextTag();
         return header;
     }
 
-    public OSMFileHeader()
-    {
-        super(0, FILEHEADER);
-    }
-
-    protected void readFileHeader( XMLStreamReader parser ) throws XMLStreamException
-    {
+    protected void readFileHeader(XMLStreamReader parser) throws XMLStreamException {
         int event = parser.getEventType();
-        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("osm"))
-        {
+        while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("osm")) {
             event = parser.nextTag();
         }
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "OSM File header:" + super.toString();
     }
 }

@@ -22,9 +22,9 @@ import com.graphhopper.storage.CHGraph;
 /**
  * Support for CH edges
  * <p>
+ *
  * @author Peter Karich
  * @see CHGraph
  */
-public interface CHEdgeIterator extends EdgeIterator, CHEdgeIteratorState
-{
+public interface CHEdgeIterator extends EdgeIterator, CHEdgeIteratorState {
 }

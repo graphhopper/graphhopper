@@ -19,29 +19,25 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import org.junit.Test;
 
 import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
 import static com.graphhopper.routing.util.PriorityCode.*;
-
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author ratrun
  */
-public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
-{
+public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     @Override
-    protected BikeCommonFlagEncoder createBikeEncoder()
-    {
+    protected BikeCommonFlagEncoder createBikeEncoder() {
         return (BikeCommonFlagEncoder) new EncodingManager("bike,racingbike").getEncoder("racingbike");
     }
 
     @Test
     @Override
-    public void testAvoidTunnel()
-    {
+    public void testAvoidTunnel() {
         // tunnel is not that bad for racing bike
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "residential");
@@ -58,8 +54,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
     @Test
     @Override
-    public void testService()
-    {
+    public void testService() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         assertEquals(12, encoder.getSpeed(way));
@@ -72,8 +67,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
     @Test
     @Override
-    public void testSacScale()
-    {
+    public void testSacScale() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("sac_scale", "mountain_hiking");
@@ -98,8 +92,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testGetSpeed()
-    {
+    public void testGetSpeed() {
         long result = encoder.setProperties(10, true, true);
         assertEquals(10, encoder.getSpeed(result), 1e-1);
         ReaderWay way = new ReaderWay(1);
@@ -133,8 +126,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testHandleWayTagsInfluencedByRelation()
-    {
+    public void testHandleWayTagsInfluencedByRelation() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
         assertEquals(PUSHING_SECTION_SPEED / 2, getSpeedFromFlags(osmWay), 1e-1);
@@ -205,8 +197,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testAvoidanceOfHighMaxSpeed()
-    {
+    public void testAvoidanceOfHighMaxSpeed() {
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "tertiary");
         osmWay.setTag("maxspeed", "50");
@@ -266,8 +257,7 @@ public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testClassBicycle()
-    {
+    public void testClassBicycle() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "tertiary");
         way.setTag("class:bicycle:roadcycling", "3");

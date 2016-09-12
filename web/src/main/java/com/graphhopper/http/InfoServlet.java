@@ -22,29 +22,25 @@ import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.shapes.BBox;
+import org.json.JSONObject;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-
-import org.json.JSONObject;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Peter Karich
  */
-public class InfoServlet extends GHBaseServlet
-{
+public class InfoServlet extends GHBaseServlet {
     @Inject
     private GraphHopper hopper;
 
     @Override
-    public void doGet( HttpServletRequest req, HttpServletResponse res ) throws ServletException, IOException
-    {
+    public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         BBox bb = hopper.getGraphHopperStorage().getBounds();
         List<Double> list = new ArrayList<Double>(4);
         list.add(bb.minLon);
@@ -58,8 +54,7 @@ public class InfoServlet extends GHBaseServlet
         String[] vehicles = hopper.getGraphHopperStorage().getEncodingManager().toString().split(",");
         json.put("supported_vehicles", vehicles);
         JSONObject features = new JSONObject();
-        for (String v : vehicles)
-        {
+        for (String v : vehicles) {
             JSONObject perVehicleJson = new JSONObject();
             perVehicleJson.put("elevation", hopper.hasElevation());
             features.put(v, perVehicleJson);
@@ -73,7 +68,7 @@ public class InfoServlet extends GHBaseServlet
         json.put("import_date", props.get("datareader.import.date"));
 
         if (!Helper.isEmpty(props.get("datareader.data.date")))
-            json.put("data_date" , props.get("datareader.data.date"));
+            json.put("data_date", props.get("datareader.data.date"));
 
         if (!Helper.isEmpty(props.get("prepare.date")))
             json.put("prepare_date", props.get("prepare.date"));

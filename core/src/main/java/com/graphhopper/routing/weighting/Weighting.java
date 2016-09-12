@@ -24,27 +24,28 @@ import com.graphhopper.util.EdgeIteratorState;
 /**
  * Specifies how the best route is calculated. E.g. the fastest or shortest route.
  * <p>
+ *
  * @author Peter Karich
  */
-public interface Weighting
-{
+public interface Weighting {
     /**
      * Used only for the heuristic estimation in A
      * <p>
+     *
      * @return minimal weight. E.g. if you calculate the fastest way it is distance/maxVelocity
      */
-    double getMinWeight( double distance );
+    double getMinWeight(double distance);
 
     /**
-     * @param edgeState the edge for which the weight should be calculated
-     * @param reverse if the specified edge is specified in reverse direction e.g. from the reverse
-     * case of a bidirectional search.
+     * @param edgeState        the edge for which the weight should be calculated
+     * @param reverse          if the specified edge is specified in reverse direction e.g. from the reverse
+     *                         case of a bidirectional search.
      * @param prevOrNextEdgeId if reverse is false this has to be the previous edgeId, if true it
-     * has to be the next edgeId in the direction from start to end.
+     *                         has to be the next edgeId in the direction from start to end.
      * @return the calculated weight with the specified velocity has to be in the range of 0 and
      * +Infinity. Make sure your method does not return NaN which can e.g. occur for 0/0.
      */
-    double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId );
+    double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
 
     FlagEncoder getFlagEncoder();
 
@@ -53,5 +54,5 @@ public interface Weighting
     /**
      * Returns true if the specified weighting and encoder matches to this Weighting.
      */
-    boolean matches( HintsMap map );
+    boolean matches(HintsMap map);
 }

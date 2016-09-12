@@ -25,34 +25,28 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.*;
 
 /**
  * @author Peter Karich
  */
-public class DebugDijkstraSimple extends Dijkstra implements DebugAlgo
-{
+public class DebugDijkstraSimple extends Dijkstra implements DebugAlgo {
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraSimple( Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode, GraphicsWrapper mg )
-    {
+    public DebugDijkstraSimple(Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode, GraphicsWrapper mg) {
         super(graph, encoder, weighting, tMode);
         this.mg = mg;
     }
 
     @Override
-    public void setGraphics2D( Graphics2D g2 )
-    {
+    public void setGraphics2D(Graphics2D g2) {
         this.g2 = g2;
     }
 
     @Override
-    public void updateBestPath( EdgeIteratorState es, SPTEntry bestEE, int currLoc )
-    {
-        if (g2 != null)
-        {
+    public void updateBestPath(EdgeIteratorState es, SPTEntry bestEE, int currLoc) {
+        if (g2 != null) {
             mg.plotNode(g2, currLoc, Color.YELLOW);
         }
         super.updateBestPath(es, bestEE, currLoc);

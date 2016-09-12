@@ -19,6 +19,7 @@ package com.graphhopper.reader;
 
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.util.EncodingManager;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Date;
@@ -26,17 +27,16 @@ import java.util.Date;
 /**
  * @author Peter Karich
  */
-public interface DataReader
-{
-    DataReader setFile( File file );
+public interface DataReader {
+    DataReader setFile(File file);
 
-    DataReader setElevationProvider( ElevationProvider ep );
+    DataReader setElevationProvider(ElevationProvider ep);
 
-    DataReader setWorkerThreads( int workerThreads );
+    DataReader setWorkerThreads(int workerThreads);
 
-    DataReader setEncodingManager( EncodingManager em );
+    DataReader setEncodingManager(EncodingManager em);
 
-    DataReader setWayPointMaxDistance( double wayPointMaxDistance );
+    DataReader setWayPointMaxDistance(double wayPointMaxDistance);
 
     /**
      * This method triggers reading the underlying data to create a graph

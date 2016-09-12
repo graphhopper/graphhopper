@@ -22,12 +22,12 @@ import com.graphhopper.routing.util.FlagEncoder;
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
  * <p>
+ *
  * @author Peter Karich
  * @see EdgeIterator
  * @see EdgeExplorer
  */
-public interface EdgeIteratorState
-{
+public interface EdgeIteratorState {
     int K_UNFAVORED_EDGE = -1;
 
     /**
@@ -41,6 +41,7 @@ public interface EdgeIteratorState
      * graph.getEdges(baseNode)". Often only used for convenience reasons. Do not confuse this with
      * a <i>source node</i> of a directed edge.
      * <p>
+     *
      * @return the requested node itself
      * @see EdgeIterator
      */
@@ -59,29 +60,30 @@ public interface EdgeIteratorState
      * (docs/core/low-level-api.md#what-are-pillar-and-tower-nodes). Updates to the returned list
      * are not reflected in the graph, for that you've to use setWayGeometry.
      * <p>
+     *
      * @param mode can be <ul> <li>0 = only pillar nodes, no tower nodes</li> <li>1 = inclusive the
-     * base tower node only</li> <li>2 = inclusive the adjacent tower node only</li> <li>3 =
-     * inclusive the base and adjacent tower node</li> </ul>
+     *             base tower node only</li> <li>2 = inclusive the adjacent tower node only</li> <li>3 =
+     *             inclusive the base and adjacent tower node</li> </ul>
      * @return pillar nodes
      */
-    PointList fetchWayGeometry( int mode );
+    PointList fetchWayGeometry(int mode);
 
     /**
      * @param list is a sorted collection of nodes between the baseNode and the current adjacent
-     * node. Specify the list without the adjacent and base nodes.
+     *             node. Specify the list without the adjacent and base nodes.
      */
-    EdgeIteratorState setWayGeometry( PointList list );
+    EdgeIteratorState setWayGeometry(PointList list);
 
     /**
      * @return the distance of the current edge in meter
      */
     double getDistance();
 
-    EdgeIteratorState setDistance( double dist );
+    EdgeIteratorState setDistance(double dist);
 
     long getFlags();
 
-    EdgeIteratorState setFlags( long flags );
+    EdgeIteratorState setFlags(long flags);
 
     /**
      * @return the additional field value for this edge
@@ -89,45 +91,48 @@ public interface EdgeIteratorState
     int getAdditionalField();
 
     /**
+     * Updates the additional field value for this edge
+     */
+    EdgeIteratorState setAdditionalField(int value);
+
+    /**
      * @see FlagEncoder#isForward(long) and #472
      */
-    boolean isForward( FlagEncoder encoder );
+    boolean isForward(FlagEncoder encoder);
 
     /**
      * @see FlagEncoder#isBackward(long) and #472
      */
-    boolean isBackward( FlagEncoder encoder );
+    boolean isBackward(FlagEncoder encoder);
 
     /**
      * Get additional boolean information of the edge.
      * <p>
-     * @param key direction or vehicle dependent integer key
+     *
+     * @param key      direction or vehicle dependent integer key
      * @param _default default value if key is not found
      */
-    boolean getBool( int key, boolean _default );
-
-    /**
-     * Updates the additional field value for this edge
-     */
-    EdgeIteratorState setAdditionalField( int value );
+    boolean getBool(int key, boolean _default);
 
     String getName();
 
-    EdgeIteratorState setName( String name );
+    EdgeIteratorState setName(String name);
 
     /**
      * Clones this EdgeIteratorState.
      * <p>
+     *
      * @param reverse if true a detached edgeState with reversed properties is created where base
-     * and adjacent nodes, flags and wayGeometry are in reversed order. See #162 for more details
-     * about why we need the new reverse parameter.
+     *                and adjacent nodes, flags and wayGeometry are in reversed order. See #162 for more details
+     *                about why we need the new reverse parameter.
      */
-    EdgeIteratorState detach( boolean reverse );
+    EdgeIteratorState detach(boolean reverse);
 
     /**
      * Copies the properties of this edge into the specified edge. Does not change nodes!
      * <p>
+     *
      * @return the specified edge e
      */
-    EdgeIteratorState copyPropertiesTo( EdgeIteratorState e );
+    EdgeIteratorState copyPropertiesTo(EdgeIteratorState e);
 }

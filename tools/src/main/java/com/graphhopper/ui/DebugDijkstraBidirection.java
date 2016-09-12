@@ -21,38 +21,32 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
 
-import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.*;
 
 /**
  * @author Peter Karich
  */
-public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements DebugAlgo
-{
+public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements DebugAlgo {
     private GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraBidirection( Graph graph, FlagEncoder encoder, Weighting type, TraversalMode tMode, GraphicsWrapper mg )
-    {
+    public DebugDijkstraBidirection(Graph graph, FlagEncoder encoder, Weighting type, TraversalMode tMode, GraphicsWrapper mg) {
         super(graph, encoder, type, tMode);
         this.mg = mg;
     }
 
     @Override
-    public void setGraphics2D( Graphics2D g2 )
-    {
+    public void setGraphics2D(Graphics2D g2) {
         this.g2 = g2;
     }
 
     @Override
-    public void updateBestPath( EdgeIteratorState es, SPTEntry bestEE, int currLoc )
-    {
-        if (g2 != null)
-        {
+    public void updateBestPath(EdgeIteratorState es, SPTEntry bestEE, int currLoc) {
+        if (g2 != null) {
             mg.plotNode(g2, currLoc, Color.BLUE);
         }
         // System.out.println("new node:" + currLoc);

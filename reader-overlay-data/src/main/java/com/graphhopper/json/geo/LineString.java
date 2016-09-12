@@ -25,40 +25,33 @@ import com.graphhopper.util.shapes.GHPoint;
  *
  * @author Peter Karich
  */
-public class LineString extends PointList implements Geometry
-{
-    public LineString( int size, boolean is3D )
-    {
+public class LineString extends PointList implements Geometry {
+    public LineString(int size, boolean is3D) {
         super(size, is3D);
     }
 
     @Override
-    public String getType()
-    {
+    public String getType() {
         return "LineString";
     }
 
     @Override
-    public boolean isPoint()
-    {
+    public boolean isPoint() {
         return false;
     }
 
     @Override
-    public GHPoint asPoint()
-    {
+    public GHPoint asPoint() {
         throw new UnsupportedOperationException("Not supported");
     }
 
     @Override
-    public boolean isPointList()
-    {
+    public boolean isPointList() {
         return true;
     }
 
     @Override
-    public PointList asPointList()
-    {
+    public PointList asPointList() {
         return this;
     }
 }

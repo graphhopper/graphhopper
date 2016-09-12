@@ -30,13 +30,11 @@ import static org.junit.Assert.*;
 /**
  * @author Robin Boldt
  */
-public class ConditionalParserTest extends CalendarBasedTest
-{
+public class ConditionalParserTest extends CalendarBasedTest {
     ConditionalParser parser;
 
     @Before
-    public void setup()
-    {
+    public void setup() {
         HashSet<String> restrictedValues = new HashSet<String>();
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
@@ -51,23 +49,20 @@ public class ConditionalParserTest extends CalendarBasedTest
     }
 
     @Test
-    public void testParseConditional() throws ParseException
-    {
+    public void testParseConditional() throws ParseException {
         ValueRange dateRange = parser.getRange("no @ (2015 Sep 1-2015 Sep 30)");
         assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.AUGUST, 31)));
         assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.SEPTEMBER, 30)));
     }
 
     @Test
-    public void testParseAllowingCondition() throws ParseException
-    {
+    public void testParseAllowingCondition() throws ParseException {
         ValueRange dateRange = parser.getRange("yes @ (2015 Sep 1-2015 Sep 30)");
         assertNull(dateRange);
     }
 
     @Test
-    public void testParsingOfLeading0() throws ParseException
-    {
+    public void testParsingOfLeading0() throws ParseException {
         ValueRange dateRange = parser.getRange("no @ (01.11. - 31.03.)");
         assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 2)));
 
@@ -76,8 +71,7 @@ public class ConditionalParserTest extends CalendarBasedTest
     }
 
     @Test
-    public void testGetRange() throws Exception
-    {
+    public void testGetRange() throws Exception {
         Set<String> set = new HashSet<>();
         set.add("no");
         ConditionalParser instance = new ConditionalParser(set);
@@ -124,8 +118,7 @@ public class ConditionalParserTest extends CalendarBasedTest
     }
 
     @Test
-    public void parseNumber()
-    {
+    public void parseNumber() {
         // TODO currently no unit conversation is done which can be required if a different one is passed in isInRange        
         Set<String> set = new HashSet<>();
         ConditionalParser p = new ConditionalParser(set);

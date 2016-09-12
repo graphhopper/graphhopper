@@ -17,23 +17,20 @@
  */
 package com.graphhopper.reader;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.reader.ReaderElement;
+import org.junit.Test;
+
 import java.util.HashMap;
 import java.util.Map;
 
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
  */
-public class OSMElementTest
-{
+public class OSMElementTest {
     @Test
-    public void testHasTag()
-    {
+    public void testHasTag() {
         ReaderElement instance = new ReaderWay(1);
         instance.setTag("surface", "something");
         assertTrue(instance.hasTag("surface", "now", "something"));
@@ -41,8 +38,7 @@ public class OSMElementTest
     }
 
     @Test
-    public void testSetTags()
-    {
+    public void testSetTags() {
         ReaderElement instance = new ReaderWay(1);
         Map<String, String> map = new HashMap<String, String>();
         map.put("test", "xy");

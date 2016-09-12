@@ -17,9 +17,9 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.graphhopper.reader.*;
-import com.graphhopper.reader.osm.pbf.Sink;
+import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.osm.pbf.PbfReader;
+import com.graphhopper.reader.osm.pbf.Sink;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -36,34 +36,31 @@ import java.util.zip.ZipInputStream;
 /**
  * A readable OSM file.
  * <p>
+ *
  * @author Nop
  */
-public class OSMInputFile implements Sink, Closeable
-{
-    private boolean eof;
+public class OSMInputFile implements Sink, Closeable {
     private final InputStream bis;
+    private final BlockingQueue<ReaderElement> itemQueue;
+    Thread pbfReaderThread;
+    private boolean eof;
     // for xml parsing
     private XMLStreamReader parser;
     // for pbf parsing
     private boolean binary = false;
-    private final BlockingQueue<ReaderElement> itemQueue;
     private boolean hasIncomingData;
     private int workerThreads = -1;
     private OSMFileHeader fileheader;
 
-    public OSMInputFile( File file ) throws IOException
-    {
+    public OSMInputFile(File file) throws IOException {
         bis = decode(file);
         itemQueue = new LinkedBlockingQueue<ReaderElement>(50000);
     }
 
-    public OSMInputFile open() throws XMLStreamException
-    {
-        if (binary)
-        {
+    public OSMInputFile open() throws XMLStreamException {
+        if (binary) {
             openPBFReader(bis);
-        } else
-        {
+        } else {
             openXMLStream(bis);
         }
         return this;
@@ -72,23 +69,19 @@ public class OSMInputFile implements Sink, Closeable
     /**
      * Currently on for pbf format. Default is number of cores.
      */
-    public OSMInputFile setWorkerThreads( int num )
-    {
+    public OSMInputFile setWorkerThreads(int num) {
         workerThreads = num;
         return this;
     }
 
     @SuppressWarnings("unchecked")
-    private InputStream decode( File file ) throws IOException
-    {
+    private InputStream decode(File file) throws IOException {
         final String name = file.getName();
 
         InputStream ips = null;
-        try
-        {
+        try {
             ips = new BufferedInputStream(new FileInputStream(file), 50000);
-        } catch (FileNotFoundException e)
-        {
+        } catch (FileNotFoundException e) {
             throw new RuntimeException(e);
         }
         ips.mark(10);
@@ -104,56 +97,46 @@ public class OSMInputFile implements Sink, Closeable
          return new CBZip2InputStream(ips);
          }
          */
-        if (header[0] == 31 && header[1] == -117)
-        {
+        if (header[0] == 31 && header[1] == -117) {
             ips.reset();
             return new GZIPInputStream(ips, 50000);
         } else if (header[0] == 0 && header[1] == 0 && header[2] == 0
                 && header[4] == 10 && header[5] == 9
-                && (header[3] == 13 || header[3] == 14))
-        {
+                && (header[3] == 13 || header[3] == 14)) {
             ips.reset();
             binary = true;
             return ips;
-        } else if (header[0] == 'P' && header[1] == 'K')
-        {
+        } else if (header[0] == 'P' && header[1] == 'K') {
             ips.reset();
             ZipInputStream zip = new ZipInputStream(ips);
             zip.getNextEntry();
 
             return zip;
-        } else if (name.endsWith(".osm") || name.endsWith(".xml"))
-        {
+        } else if (name.endsWith(".osm") || name.endsWith(".xml")) {
             ips.reset();
             return ips;
-        } else if (name.endsWith(".bz2") || name.endsWith(".bzip2"))
-        {
+        } else if (name.endsWith(".bz2") || name.endsWith(".bzip2")) {
             String clName = "org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream";
-            try
-            {
+            try {
                 Class clazz = Class.forName(clName);
                 ips.reset();
                 Constructor<InputStream> ctor = clazz.getConstructor(InputStream.class, boolean.class);
                 return ctor.newInstance(ips, true);
-            } catch (Exception e)
-            {
+            } catch (Exception e) {
                 throw new IllegalArgumentException("Cannot instantiate " + clName, e);
             }
-        } else
-        {
+        } else {
             throw new IllegalArgumentException("Input file is not of valid type " + file.getPath());
         }
     }
 
-    private void openXMLStream( InputStream in )
-            throws XMLStreamException
-    {
+    private void openXMLStream(InputStream in)
+            throws XMLStreamException {
         XMLInputFactory factory = XMLInputFactory.newInstance();
         parser = factory.createXMLStreamReader(in, "UTF-8");
 
         int event = parser.next();
-        if (event != XMLStreamConstants.START_ELEMENT || !parser.getLocalName().equalsIgnoreCase("osm"))
-        {
+        if (event != XMLStreamConstants.START_ELEMENT || !parser.getLocalName().equalsIgnoreCase("osm")) {
             throw new IllegalArgumentException("File is not a valid OSM stream");
         }
         // See https://wiki.openstreetmap.org/wiki/PBF_Format#Definition_of_the_OSMHeader_fileblock
@@ -162,22 +145,18 @@ public class OSMInputFile implements Sink, Closeable
         if (timestamp == null)
             timestamp = parser.getAttributeValue(null, "timestamp");
 
-        if (timestamp != null)
-        {
-            try
-            {
+        if (timestamp != null) {
+            try {
                 fileheader = new OSMFileHeader();
                 fileheader.setTag("timestamp", timestamp);
-            } catch (Exception ex)
-            {
+            } catch (Exception ex) {
             }
         }
 
         eof = false;
     }
 
-    public ReaderElement getNext() throws XMLStreamException
-    {
+    public ReaderElement getNext() throws XMLStreamException {
         if (eof)
             throw new IllegalStateException("EOF reached");
 
@@ -194,39 +173,31 @@ public class OSMInputFile implements Sink, Closeable
         return null;
     }
 
-    private ReaderElement getNextXML() throws XMLStreamException
-    {
+    private ReaderElement getNextXML() throws XMLStreamException {
 
         int event = parser.next();
-        if (fileheader != null)
-        {
+        if (fileheader != null) {
             ReaderElement copyfileheader = fileheader;
             fileheader = null;
             return copyfileheader;
         }
 
-        while (event != XMLStreamConstants.END_DOCUMENT)
-        {
-            if (event == XMLStreamConstants.START_ELEMENT)
-            {
+        while (event != XMLStreamConstants.END_DOCUMENT) {
+            if (event == XMLStreamConstants.START_ELEMENT) {
                 String idStr = parser.getAttributeValue(null, "id");
-                if (idStr != null)
-                {
+                if (idStr != null) {
                     String name = parser.getLocalName();
                     long id = 0;
-                    switch (name.charAt(0))
-                    {
+                    switch (name.charAt(0)) {
                         case 'n':
                             // note vs. node
-                            if ("node".equals(name))
-                            {
+                            if ("node".equals(name)) {
                                 id = Long.parseLong(idStr);
                                 return OSMXMLHelper.createNode(id, parser);
                             }
                             break;
 
-                        case 'w':
-                        {
+                        case 'w': {
                             id = Long.parseLong(idStr);
                             return OSMXMLHelper.createWay(id, parser);
                         }
@@ -242,23 +213,18 @@ public class OSMInputFile implements Sink, Closeable
         return null;
     }
 
-    public boolean isEOF()
-    {
+    public boolean isEOF() {
         return eof;
     }
 
     @Override
-    public void close() throws IOException
-    {
-        try
-        {
+    public void close() throws IOException {
+        try {
             if (!binary)
                 parser.close();
-        } catch (XMLStreamException ex)
-        {
+        } catch (XMLStreamException ex) {
             throw new IOException(ex);
-        } finally
-        {
+        } finally {
             eof = true;
             bis.close();
             // if exception happend on OSMInputFile-thread we need to shutdown the pbf handling
@@ -267,10 +233,7 @@ public class OSMInputFile implements Sink, Closeable
         }
     }
 
-    Thread pbfReaderThread;
-
-    private void openPBFReader( InputStream stream )
-    {
+    private void openPBFReader(InputStream stream) {
         hasIncomingData = true;
         if (workerThreads <= 0)
             workerThreads = 2;
@@ -281,14 +244,11 @@ public class OSMInputFile implements Sink, Closeable
     }
 
     @Override
-    public void process( ReaderElement item )
-    {
-        try
-        {
+    public void process(ReaderElement item) {
+        try {
             // blocks if full
             itemQueue.put(item);
-        } catch (InterruptedException ex)
-        {
+        } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
 
@@ -297,29 +257,23 @@ public class OSMInputFile implements Sink, Closeable
     }
 
     @Override
-    public void complete()
-    {
+    public void complete() {
         hasIncomingData = false;
     }
 
-    private ReaderElement getNextPBF()
-    {
+    private ReaderElement getNextPBF() {
         ReaderElement next = null;
-        while (next == null)
-        {
-            if (!hasIncomingData && itemQueue.isEmpty())
-            {
+        while (next == null) {
+            if (!hasIncomingData && itemQueue.isEmpty()) {
                 // we are done, stop polling
                 eof = true;
                 break;
             }
 
-            try
-            {
+            try {
                 // we cannot use "itemQueue.take()" as it blocks and hasIncomingData can change
                 next = itemQueue.poll(10, TimeUnit.MILLISECONDS);
-            } catch (InterruptedException ex)
-            {
+            } catch (InterruptedException ex) {
                 eof = true;
                 break;
             }

@@ -18,27 +18,23 @@
 package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.GHPoint;
+import org.junit.Test;
 
 import static org.junit.Assert.*;
-
-import org.junit.Test;
 
 /**
  * @author Peter Karich
  */
-public class DistanceCalcEarthTest
-{
+public class DistanceCalcEarthTest {
     private DistanceCalc dc = new DistanceCalcEarth();
 
     @Test
-    public void testCalcCircumference()
-    {
+    public void testCalcCircumference() {
         assertEquals(DistanceCalcEarth.C, dc.calcCircumference(0), 1e-7);
     }
 
     @Test
-    public void testDistance()
-    {
+    public void testDistance() {
         float lat = 24.235f;
         float lon = 47.234f;
         DistanceCalc approxDist = new DistancePlaneProjection();
@@ -86,8 +82,7 @@ public class DistanceCalcEarthTest
     }
 
     @Test
-    public void testEdgeDistance()
-    {
+    public void testEdgeDistance() {
         double dist = dc.calcNormalizedEdgeDistance(49.94241, 11.544356,
                 49.937964, 11.541824,
                 49.942272, 11.555643);
@@ -105,8 +100,7 @@ public class DistanceCalcEarthTest
     }
 
     @Test
-    public void testValidEdgeDistance()
-    {
+    public void testValidEdgeDistance() {
         assertTrue(dc.validEdgeDistance(49.94241, 11.544356, 49.937964, 11.541824, 49.942272, 11.555643));
         assertTrue(dc.validEdgeDistance(49.936624, 11.547636, 49.937964, 11.541824, 49.942272, 11.555643));
         assertTrue(dc.validEdgeDistance(49.940712, 11.556069, 49.937964, 11.541824, 49.942272, 11.555643));
@@ -125,8 +119,7 @@ public class DistanceCalcEarthTest
     }
 
     @Test
-    public void testPrecisionBug()
-    {
+    public void testPrecisionBug() {
         DistanceCalc dist = new DistancePlaneProjection();
 //        DistanceCalc dist = new DistanceCalc();
         double queryLat = 42.56819, queryLon = 1.603231;
@@ -152,8 +145,7 @@ public class DistanceCalcEarthTest
     }
 
     @Test
-    public void testPrecisionBug2()
-    {
+    public void testPrecisionBug2() {
         DistanceCalc distCalc = new DistancePlaneProjection();
         double queryLat = 55.818994, queryLon = 37.595354;
         double tmpLat = 55.81777239183573, tmpLon = 37.59598350366913;

@@ -20,7 +20,6 @@ package com.graphhopper.util;
 /**
  * @author Peter Karich
  */
-public interface ProgressListener
-{
-    void update( long val );
+public interface ProgressListener {
+    void update(long val);
 }

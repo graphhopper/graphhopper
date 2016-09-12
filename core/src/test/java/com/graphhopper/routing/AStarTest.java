@@ -17,54 +17,45 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.*;
-
-import java.util.Arrays;
-import java.util.Collection;
-
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
+import java.util.Arrays;
+import java.util.Collection;
 
 /**
  * @author Peter Karich
  */
 @RunWith(Parameterized.class)
-public class AStarTest extends AbstractRoutingAlgorithmTester
-{
+public class AStarTest extends AbstractRoutingAlgorithmTester {
+    private final TraversalMode traversalMode;
+
+    public AStarTest(TraversalMode tMode) {
+        this.traversalMode = tMode;
+    }
+
     /**
      * Runs the same test with each of the supported traversal modes
      */
     @Parameters(name = "{0}")
-    public static Collection<Object[]> configs()
-    {
-        return Arrays.asList(new Object[][]
-                {
-                        {TraversalMode.NODE_BASED},
-                        {TraversalMode.EDGE_BASED_1DIR},
-                        {TraversalMode.EDGE_BASED_2DIR},
-                        {TraversalMode.EDGE_BASED_2DIR_UTURN}
-                });
-    }
-
-    private final TraversalMode traversalMode;
-
-    public AStarTest( TraversalMode tMode )
-    {
-        this.traversalMode = tMode;
+    public static Collection<Object[]> configs() {
+        return Arrays.asList(new Object[][]{
+            {TraversalMode.NODE_BASED},
+            {TraversalMode.EDGE_BASED_1DIR},
+            {TraversalMode.EDGE_BASED_2DIR},
+            {TraversalMode.EDGE_BASED_2DIR_UTURN}
+        });
     }
 
     @Override
-    public RoutingAlgorithmFactory createFactory( GraphHopperStorage prepareGraph, AlgorithmOptions prepareOpts )
-    {
-        return new RoutingAlgorithmFactory()
-        {
+    public RoutingAlgorithmFactory createFactory(GraphHopperStorage prepareGraph, AlgorithmOptions prepareOpts) {
+        return new RoutingAlgorithmFactory() {
             @Override
-            public RoutingAlgorithm createAlgo( Graph g, AlgorithmOptions opts )
-            {
+            public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
                 return new AStar(g, opts.getFlagEncoder(), opts.getWeighting(), traversalMode);
             }
         };

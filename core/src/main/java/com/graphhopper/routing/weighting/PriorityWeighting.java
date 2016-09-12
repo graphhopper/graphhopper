@@ -24,37 +24,33 @@ import com.graphhopper.util.PMap;
 /**
  * Special weighting for (motor)bike
  * <p>
+ *
  * @author Peter Karich
  */
-public class PriorityWeighting extends FastestWeighting
-{
+public class PriorityWeighting extends FastestWeighting {
     /**
      * For now used only in BikeCommonFlagEncoder, FootEncoder and MotorcycleFlagEncoder
      */
     public static final int KEY = 101;
     private final double minFactor;
 
-    public PriorityWeighting( FlagEncoder encoder )
-    {
+    public PriorityWeighting(FlagEncoder encoder) {
         this(encoder, new PMap(0));
     }
 
-    public PriorityWeighting( FlagEncoder encoder, PMap pMap )
-    {
+    public PriorityWeighting(FlagEncoder encoder, PMap pMap) {
         super(encoder, pMap);
         double maxPriority = 1; // BEST / BEST
         minFactor = 1 / (0.5 + maxPriority);
     }
 
     @Override
-    public double getMinWeight( double distance )
-    {
+    public double getMinWeight(double distance) {
         return minFactor * super.getMinWeight(distance);
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId )
-    {
+    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         double weight = super.calcWeight(edgeState, reverse, prevOrNextEdgeId);
         if (Double.isInfinite(weight))
             return Double.POSITIVE_INFINITY;

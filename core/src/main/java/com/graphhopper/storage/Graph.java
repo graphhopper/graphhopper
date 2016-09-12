@@ -17,8 +17,8 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
@@ -27,10 +27,10 @@ import com.graphhopper.util.shapes.BBox;
  * An interface to represent a (geo) graph - suited for efficient storage as it can be requested via
  * indices called node IDs. To get the lat,lon point you need to set up a LocationIndex instance.
  * <p>
+ *
  * @author Peter Karich
  */
-public interface Graph
-{
+public interface Graph {
     /**
      * @return a graph which behaves like an unprepared graph and e.g. the normal unidirectional
      * Dijkstra or any graph traversal algorithm can be executed.
@@ -56,27 +56,29 @@ public interface Graph
      * Creates an edge between the nodes a and b. To set distance or access use the returned edge
      * and e.g. edgeState.setDistance
      * <p>
+     *
      * @param a the index of the starting (tower) node of the edge
      * @param b the index of the ending (tower) node of the edge
      * @return the newly created edge
      */
-    EdgeIteratorState edge( int a, int b );
+    EdgeIteratorState edge(int a, int b);
 
     /**
      * Use edge(a,b).setDistance().setFlags instead
      */
-    EdgeIteratorState edge( int a, int b, double distance, boolean bothDirections );
+    EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections);
 
     /**
      * Returns a wrapper over the specified edgeId.
      * <p>
+     *
      * @param adjNode is the node that will be returned via adjNode(). If adjNode is
-     * Integer.MIN_VALUE then the edge with uncertain values for adjNode and baseNode (two
-     * possibilities) will be returned.
+     *                Integer.MIN_VALUE then the edge with uncertain values for adjNode and baseNode (two
+     *                possibilities) will be returned.
      * @return an edge iterator state or potentially null if adjNode does not match
      * @throws IllegalStateException if edgeId is not valid
      */
-    EdgeIteratorState getEdgeIteratorState( int edgeId, int adjNode );
+    EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode);
 
     /**
      * @return all edges in this graph, where baseNode will be the smaller node.
@@ -88,10 +90,11 @@ public interface Graph
      * node. Reduce calling this method as much as possible, e.g. create an explorer before a for
      * loop!
      * <p>
+     *
      * @see EdgeExplorer
      * @see Graph#createEdgeExplorer()
      */
-    EdgeExplorer createEdgeExplorer( EdgeFilter filter );
+    EdgeExplorer createEdgeExplorer(EdgeFilter filter);
 
     /**
      * @see Graph#createEdgeExplorer(com.graphhopper.routing.util.EdgeFilter)
@@ -101,9 +104,10 @@ public interface Graph
     /**
      * Copy this Graph into the specified Graph g.
      * <p>
+     *
      * @return the specified Graph g
      */
-    Graph copyTo( Graph g );
+    Graph copyTo(Graph g);
 
     /**
      * @return the graph extension like a TurnCostExtension

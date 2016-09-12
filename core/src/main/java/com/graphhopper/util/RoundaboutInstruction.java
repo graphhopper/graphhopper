@@ -23,65 +23,53 @@ import java.util.Map;
 /**
  * @author jansoe
  */
-public class RoundaboutInstruction extends Instruction
-{
+public class RoundaboutInstruction extends Instruction {
     private int exitNumber = 0;
     // 0 undetermined, 1 clockwise, -1 counterclockwise, 2 inconsistent
     private int clockwise = 0;
     private boolean exited = false;
     private double radian = Double.NaN;
 
-    public RoundaboutInstruction( int sign, String name, InstructionAnnotation ia, PointList pl )
-    {
+    public RoundaboutInstruction(int sign, String name, InstructionAnnotation ia, PointList pl) {
         super(sign, name, ia, pl);
     }
 
-    public RoundaboutInstruction increaseExitNumber()
-    {
+    public RoundaboutInstruction increaseExitNumber() {
         this.exitNumber += 1;
         return this;
     }
 
-    public RoundaboutInstruction setExitNumber( int exitNumber )
-    {
-        this.exitNumber = exitNumber;
-        return this;
-    }
-
-    public RoundaboutInstruction setDirOfRotation( double deltaIn )
-    {
-        if (clockwise == 0)
-        {
+    public RoundaboutInstruction setDirOfRotation(double deltaIn) {
+        if (clockwise == 0) {
             clockwise = deltaIn > 0 ? 1 : -1;
-        } else
-        {
+        } else {
             int clockwise2 = deltaIn > 0 ? 1 : -1;
-            if (clockwise != clockwise2)
-            {
+            if (clockwise != clockwise2) {
                 clockwise = 2;
             }
         }
         return this;
     }
 
-    public RoundaboutInstruction setExited()
-    {
+    public RoundaboutInstruction setExited() {
         exited = true;
         return this;
     }
 
-    public boolean isExited()
-    {
+    public boolean isExited() {
         return exited;
     }
 
-    public int getExitNumber()
-    {
-        if (exited && exitNumber == 0)
-        {
+    public int getExitNumber() {
+        if (exited && exitNumber == 0) {
             throw new IllegalStateException("RoundaboutInstruction must contain exitNumber>0");
         }
         return exitNumber;
+    }
+
+    public RoundaboutInstruction setExitNumber(int exitNumber) {
+        this.exitNumber = exitNumber;
+        return this;
     }
 
     /**
@@ -92,8 +80,7 @@ public class RoundaboutInstruction extends Instruction
      * <li>NaN if direction of rotation is unclear</li>
      * </ul>
      */
-    public double getTurnAngle()
-    {
+    public double getTurnAngle() {
         if (Math.abs(clockwise) != 1)
             return Double.NaN;
         else
@@ -103,15 +90,13 @@ public class RoundaboutInstruction extends Instruction
     /**
      * The radian value between entrance (in) and exit (out) of this roundabout.
      */
-    public RoundaboutInstruction setRadian( double radian )
-    {
+    public RoundaboutInstruction setRadian(double radian) {
         this.radian = radian;
         return this;
     }
 
     @Override
-    public Map<String, Object> getExtraInfoJSON()
-    {
+    public Map<String, Object> getExtraInfoJSON() {
         Map<String, Object> tmpMap = new HashMap<String, Object>(2);
         tmpMap.put("exit_number", getExitNumber());
         double tmpAngle = getTurnAngle();
@@ -123,26 +108,21 @@ public class RoundaboutInstruction extends Instruction
     }
 
     @Override
-    public String getTurnDescription( Translation tr )
-    {
+    public String getTurnDescription(Translation tr) {
         if (rawName)
             return getName();
 
         String str;
         String streetName = getName();
         int indi = getSign();
-        if (indi == Instruction.USE_ROUNDABOUT)
-        {
-            if (!exited)
-            {
+        if (indi == Instruction.USE_ROUNDABOUT) {
+            if (!exited) {
                 str = tr.tr("roundabout_enter");
-            } else
-            {
+            } else {
                 str = Helper.isEmpty(streetName) ? tr.tr("roundabout_exit", getExitNumber())
                         : tr.tr("roundabout_exit_onto", getExitNumber(), streetName);
             }
-        } else
-        {
+        } else {
             throw new IllegalStateException(indi + "no roundabout indication");
         }
         return str;

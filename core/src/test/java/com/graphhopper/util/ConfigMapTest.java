@@ -18,17 +18,15 @@
 package com.graphhopper.util;
 
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**
- *
  * @author Peter Karich
  */
-public class ConfigMapTest
-{
+public class ConfigMapTest {
     @Test
-    public void testPut()
-    {
+    public void testPut() {
         ConfigMap instance = new ConfigMap();
         instance.put("int_val", 1);
         instance.put("test_pest", true);

@@ -17,45 +17,118 @@
  */
 package com.graphhopper.routing.ch;
 
-import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.BikeFlagEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import gnu.trove.list.TIntList;
-import java.util.Arrays;
+import org.junit.Before;
+import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.*;
-
-import org.junit.Before;
-import org.junit.Test;
 
 /**
  * @author Peter Karich
  */
-public class PrepareContractionHierarchiesTest
-{
+public class PrepareContractionHierarchiesTest {
     private final CarFlagEncoder carEncoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = new EncodingManager(carEncoder);
     private final Weighting weighting = new ShortestWeighting(carEncoder);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private Directory dir;
 
-    GraphHopperStorage createGHStorage()
-    {
+    // 0-1-.....-9-10
+    // |         ^   \
+    // |         |    |
+    // 17-16-...-11<-/
+    public static void initDirected2(Graph g) {
+        g.edge(0, 1, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 3, 1, true);
+        g.edge(3, 4, 1, true);
+        g.edge(4, 5, 1, true);
+        g.edge(5, 6, 1, true);
+        g.edge(6, 7, 1, true);
+        g.edge(7, 8, 1, true);
+        g.edge(8, 9, 1, true);
+        g.edge(9, 10, 1, true);
+        g.edge(10, 11, 1, false);
+        g.edge(11, 12, 1, true);
+        g.edge(11, 9, 3, false);
+        g.edge(12, 13, 1, true);
+        g.edge(13, 14, 1, true);
+        g.edge(14, 15, 1, true);
+        g.edge(15, 16, 1, true);
+        g.edge(16, 17, 1, true);
+        g.edge(17, 0, 1, true);
+    }
+
+    //       8
+    //       |
+    //    6->0->1->3->7
+    //    |        |
+    //    |        v
+    //10<-2---4<---5
+    //    9
+    public static void initDirected1(Graph g) {
+        g.edge(0, 8, 1, true);
+        g.edge(0, 1, 1, false);
+        g.edge(1, 3, 1, false);
+        g.edge(3, 7, 1, false);
+        g.edge(3, 5, 1, false);
+        g.edge(5, 4, 1, false);
+        g.edge(4, 2, 1, true);
+        g.edge(2, 9, 1, false);
+        g.edge(2, 10, 1, false);
+        g.edge(2, 6, 1, true);
+        g.edge(6, 0, 1, false);
+    }
+
+    // prepare-routing.svg
+    public static Graph initShortcutsGraph(Graph g) {
+        g.edge(0, 1, 1, true);
+        g.edge(0, 2, 1, true);
+        g.edge(1, 2, 1, true);
+        g.edge(2, 3, 1.5, true);
+        g.edge(1, 4, 1, true);
+        g.edge(2, 9, 1, true);
+        g.edge(9, 3, 1, true);
+        g.edge(10, 3, 1, true);
+        g.edge(4, 5, 1, true);
+        g.edge(5, 6, 1, true);
+        g.edge(6, 7, 1, true);
+        g.edge(7, 8, 1, true);
+        g.edge(8, 9, 1, true);
+        g.edge(4, 11, 1, true);
+        g.edge(9, 14, 1, true);
+        g.edge(10, 14, 1, true);
+        g.edge(11, 12, 1, true);
+        g.edge(12, 15, 1, true);
+        g.edge(12, 13, 1, true);
+        g.edge(13, 16, 1, true);
+        g.edge(15, 16, 2, true);
+        g.edge(14, 16, 1, true);
+        return g;
+    }
+
+    GraphHopperStorage createGHStorage() {
         return new GraphBuilder(encodingManager).setCHGraph(weighting).create();
     }
 
-    GraphHopperStorage createExampleGraph()
-    {
+    GraphHopperStorage createExampleGraph() {
         GraphHopperStorage g = createGHStorage();
 
         //5-1-----2
@@ -75,14 +148,12 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         dir = new GHDirectory("", DAType.RAM_INT);
     }
 
     @Test
-    public void testShortestPathSkipNode()
-    {
+    public void testShortestPathSkipNode() {
         GraphHopperStorage g = createExampleGraph();
         double normalDist = new Dijkstra(g, carEncoder, weighting, tMode).calcPath(4, 2).getDistance();
         DijkstraOneToMany algo = new DijkstraOneToMany(g, carEncoder, weighting, tMode);
@@ -102,8 +173,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testShortestPathSkipNode2()
-    {
+    public void testShortestPathSkipNode2() {
         GraphHopperStorage g = createExampleGraph();
         CHGraph lg = g.getGraph(CHGraph.class);
         double normalDist = new Dijkstra(g, carEncoder, weighting, tMode).calcPath(4, 2).getDistance();
@@ -121,8 +191,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testShortestPathLimit()
-    {
+    public void testShortestPathLimit() {
         GraphHopperStorage g = createExampleGraph();
         CHGraph lg = g.getGraph(CHGraph.class);
 
@@ -137,8 +206,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testAddShortcuts()
-    {
+    public void testAddShortcuts() {
         GraphHopperStorage g = createExampleGraph();
         CHGraph lg = g.getGraph(CHGraph.class);
         int old = lg.getAllEdges().getMaxId();
@@ -148,8 +216,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testMoreComplexGraph()
-    {
+    public void testMoreComplexGraph() {
         GraphHopperStorage g = createGHStorage();
         CHGraph lg = g.getGraph(CHGraph.class);
         initShortcutsGraph(lg);
@@ -161,8 +228,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testDirectedGraph()
-    {
+    public void testDirectedGraph() {
         GraphHopperStorage g = createGHStorage();
         CHGraph lg = g.getGraph(CHGraph.class);
         g.edge(5, 4, 3, false);
@@ -185,8 +251,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testDirectedGraph2()
-    {
+    public void testDirectedGraph2() {
         GraphHopperStorage g = createGHStorage();
         CHGraph lg = g.getGraph(CHGraph.class);
         initDirected2(g);
@@ -208,8 +273,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testDirectedGraph3()
-    {
+    public void testDirectedGraph3() {
         GraphHopperStorage g = createGHStorage();
         CHGraphImpl lg = (CHGraphImpl) g.getGraph(CHGraph.class);
         //5 6 7
@@ -221,7 +285,7 @@ public class PrepareContractionHierarchiesTest
         g.edge(0, 2, 2, true);
         g.edge(10, 2, 2, true);
         g.edge(11, 2, 2, true);
-        // create a longer one directional edge => no longish one-dir shortcut should be created        
+        // create a longer one directional edge => no longish one-dir shortcut should be created
         g.edge(2, 1, 2, true);
         g.edge(2, 1, 10, false);
 
@@ -241,8 +305,7 @@ public class PrepareContractionHierarchiesTest
         Iterator<Shortcut> iter = scs.iterator();
         Shortcut sc1 = iter.next();
         Shortcut sc2 = iter.next();
-        if (sc1.weight > sc2.weight)
-        {
+        if (sc1.weight > sc2.weight) {
             Shortcut tmp = sc1;
             sc1 = sc2;
             sc2 = tmp;
@@ -260,8 +323,7 @@ public class PrepareContractionHierarchiesTest
         assertEquals(sc2.toString(), 12, sc2.weight, 1e-4);
     }
 
-    void initRoundaboutGraph( Graph g )
-    {
+    void initRoundaboutGraph(Graph g) {
         //              roundabout:
         //16-0-9-10--11   12<-13
         //    \       \  /      \
@@ -313,8 +375,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testRoundaboutUnpacking()
-    {
+    public void testRoundaboutUnpacking() {
         GraphHopperStorage g = createGHStorage();
         CHGraph lg = g.getGraph(CHGraph.class);
         initRoundaboutGraph(g);
@@ -329,8 +390,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testFindShortcuts_Roundabout()
-    {
+    public void testFindShortcuts_Roundabout() {
         GraphHopperStorage ghStorage = createGHStorage();
         CHGraph lg = ghStorage.getGraph(CHGraph.class);
         EdgeIteratorState iter1_3 = ghStorage.edge(1, 3, 1, true);
@@ -371,8 +431,7 @@ public class PrepareContractionHierarchiesTest
         Iterator<Shortcut> iter = sc.iterator();
         Shortcut sc1 = iter.next();
         Shortcut sc2 = iter.next();
-        if (sc1.from > sc2.from)
-        {
+        if (sc1.from > sc2.from) {
             Shortcut tmpSc = sc1;
             sc1 = sc2;
             sc2 = tmpSc;
@@ -382,8 +441,7 @@ public class PrepareContractionHierarchiesTest
         assertEquals("6->1, weight:5.0 (9,7)", sc2.toString());
     }
 
-    void initUnpackingGraph( GraphHopperStorage ghStorage, CHGraph g, Weighting w )
-    {
+    void initUnpackingGraph(GraphHopperStorage ghStorage, CHGraph g, Weighting w) {
         final long flags = carEncoder.setProperties(30, true, false);
         double dist = 1;
         g.edge(10, 0).setDistance(dist).setFlags(flags);
@@ -429,8 +487,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testUnpackingOrder()
-    {
+    public void testUnpackingOrder() {
         GraphHopperStorage ghStorage = createGHStorage();
         CHGraph lg = ghStorage.getGraph(CHGraph.class);
         initUnpackingGraph(ghStorage, lg, weighting);
@@ -442,8 +499,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testUnpackingOrder_Fastest()
-    {
+    public void testUnpackingOrder_Fastest() {
         GraphHopperStorage ghStorage = createGHStorage();
         CHGraph lg = ghStorage.getGraph(CHGraph.class);
         Weighting w = new FastestWeighting(carEncoder);
@@ -457,8 +513,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testCircleBug()
-    {
+    public void testCircleBug() {
         GraphHopperStorage g = createGHStorage();
         CHGraph lg = g.getGraph(CHGraph.class);
         //  /--1
@@ -474,8 +529,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testBug178()
-    {
+    public void testBug178() {
         // 5--------6__
         // |        |  \
         // 0-1->-2--3--4
@@ -503,8 +557,7 @@ public class PrepareContractionHierarchiesTest
     // |    8  |
     // \   /   /
     //  7-6-5-/
-    void initBiGraph( Graph graph )
-    {
+    void initBiGraph(Graph graph) {
         graph.edge(0, 1, 100, true);
         graph.edge(1, 2, 1, true);
         graph.edge(2, 3, 1, true);
@@ -515,83 +568,6 @@ public class PrepareContractionHierarchiesTest
         graph.edge(7, 0, 5, true);
         graph.edge(3, 8, 20, true);
         graph.edge(8, 6, 20, true);
-    }
-
-    // 0-1-.....-9-10
-    // |         ^   \
-    // |         |    |
-    // 17-16-...-11<-/
-    public static void initDirected2( Graph g )
-    {
-        g.edge(0, 1, 1, true);
-        g.edge(1, 2, 1, true);
-        g.edge(2, 3, 1, true);
-        g.edge(3, 4, 1, true);
-        g.edge(4, 5, 1, true);
-        g.edge(5, 6, 1, true);
-        g.edge(6, 7, 1, true);
-        g.edge(7, 8, 1, true);
-        g.edge(8, 9, 1, true);
-        g.edge(9, 10, 1, true);
-        g.edge(10, 11, 1, false);
-        g.edge(11, 12, 1, true);
-        g.edge(11, 9, 3, false);
-        g.edge(12, 13, 1, true);
-        g.edge(13, 14, 1, true);
-        g.edge(14, 15, 1, true);
-        g.edge(15, 16, 1, true);
-        g.edge(16, 17, 1, true);
-        g.edge(17, 0, 1, true);
-    }
-
-    //       8
-    //       |
-    //    6->0->1->3->7
-    //    |        |
-    //    |        v
-    //10<-2---4<---5
-    //    9
-    public static void initDirected1( Graph g )
-    {
-        g.edge(0, 8, 1, true);
-        g.edge(0, 1, 1, false);
-        g.edge(1, 3, 1, false);
-        g.edge(3, 7, 1, false);
-        g.edge(3, 5, 1, false);
-        g.edge(5, 4, 1, false);
-        g.edge(4, 2, 1, true);
-        g.edge(2, 9, 1, false);
-        g.edge(2, 10, 1, false);
-        g.edge(2, 6, 1, true);
-        g.edge(6, 0, 1, false);
-    }
-
-    // prepare-routing.svg
-    public static Graph initShortcutsGraph( Graph g )
-    {
-        g.edge(0, 1, 1, true);
-        g.edge(0, 2, 1, true);
-        g.edge(1, 2, 1, true);
-        g.edge(2, 3, 1.5, true);
-        g.edge(1, 4, 1, true);
-        g.edge(2, 9, 1, true);
-        g.edge(9, 3, 1, true);
-        g.edge(10, 3, 1, true);
-        g.edge(4, 5, 1, true);
-        g.edge(5, 6, 1, true);
-        g.edge(6, 7, 1, true);
-        g.edge(7, 8, 1, true);
-        g.edge(8, 9, 1, true);
-        g.edge(4, 11, 1, true);
-        g.edge(9, 14, 1, true);
-        g.edge(10, 14, 1, true);
-        g.edge(11, 12, 1, true);
-        g.edge(12, 15, 1, true);
-        g.edge(12, 13, 1, true);
-        g.edge(13, 16, 1, true);
-        g.edge(15, 16, 2, true);
-        g.edge(14, 16, 1, true);
-        return g;
     }
 
     //    public static void printEdges(CHGraph g) {
@@ -607,8 +583,7 @@ public class PrepareContractionHierarchiesTest
 //        System.out.println("---");
 //    }
     @Test
-    public void testBits()
-    {
+    public void testBits() {
         int fromNode = Integer.MAX_VALUE / 3 * 2;
         int endNode = Integer.MAX_VALUE / 37 * 17;
 
@@ -618,8 +593,7 @@ public class PrepareContractionHierarchiesTest
     }
 
     @Test
-    public void testMultiplePreparationsIdenticalView()
-    {
+    public void testMultiplePreparationsIdenticalView() {
         CarFlagEncoder tmpCarEncoder = new CarFlagEncoder();
         BikeFlagEncoder tmpBikeEncoder = new BikeFlagEncoder();
         EncodingManager tmpEncodingManager = new EncodingManager(tmpCarEncoder, tmpBikeEncoder);
@@ -634,15 +608,13 @@ public class PrepareContractionHierarchiesTest
 
         ghStorage.freeze();
 
-        for (Weighting w : chWeightings)
-        {
+        for (Weighting w : chWeightings) {
             checkPath(ghStorage, w, 7, 5, Helper.createTList(3, 9, 14, 16, 13, 12));
         }
     }
 
     @Test
-    public void testMultiplePreparationsDifferentView()
-    {
+    public void testMultiplePreparationsDifferentView() {
         CarFlagEncoder tmpCarEncoder = new CarFlagEncoder();
         BikeFlagEncoder tmpBikeEncoder = new BikeFlagEncoder();
         EncodingManager tmpEncodingManager = new EncodingManager(tmpCarEncoder, tmpBikeEncoder);
@@ -663,8 +635,7 @@ public class PrepareContractionHierarchiesTest
         checkPath(ghStorage, bikeWeighting, 9, 5, Helper.createTList(3, 10, 14, 16, 13, 12));
     }
 
-    void checkPath( GraphHopperStorage ghStorage, Weighting w, int expShortcuts, double expDistance, TIntList expNodes )
-    {
+    void checkPath(GraphHopperStorage ghStorage, Weighting w, int expShortcuts, double expDistance, TIntList expNodes) {
         CHGraph lg = ghStorage.getGraph(CHGraph.class, w);
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, ghStorage, lg, w.getFlagEncoder(), w, tMode);
         prepare.doWork();

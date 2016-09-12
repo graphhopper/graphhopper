@@ -29,8 +29,7 @@ import com.graphhopper.util.Parameters.Routing;
  *
  * @author Peter Karich
  */
-public class FastestWeighting extends AbstractWeighting
-{
+public class FastestWeighting extends AbstractWeighting {
     /**
      * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
      * costs or traffic light costs etc)
@@ -39,27 +38,23 @@ public class FastestWeighting extends AbstractWeighting
     private final double headingPenalty;
     private final double maxSpeed;
 
-    public FastestWeighting( FlagEncoder encoder, PMap pMap )
-    {
+    public FastestWeighting(FlagEncoder encoder, PMap pMap) {
         super(encoder);
         headingPenalty = pMap.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
     }
 
-    public FastestWeighting( FlagEncoder encoder )
-    {
+    public FastestWeighting(FlagEncoder encoder) {
         this(encoder, new PMap(0));
     }
 
     @Override
-    public double getMinWeight( double distance )
-    {
+    public double getMinWeight(double distance) {
         return distance / maxSpeed;
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId )
-    {
+    public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
         double speed = reverse ? flagEncoder.getReverseSpeed(edge.getFlags()) : flagEncoder.getSpeed(edge.getFlags());
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
@@ -75,8 +70,7 @@ public class FastestWeighting extends AbstractWeighting
     }
 
     @Override
-    public String getName()
-    {
+    public String getName() {
         return "fastest";
     }
 }

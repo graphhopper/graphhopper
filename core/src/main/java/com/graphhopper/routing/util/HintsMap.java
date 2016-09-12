@@ -22,50 +22,42 @@ import com.graphhopper.util.PMap;
 /**
  * @author Peter Karich
  */
-public class HintsMap extends PMap
-{
-    public HintsMap()
-    {
+public class HintsMap extends PMap {
+    public HintsMap() {
     }
 
     /**
      * Convenient constructor if only one parameter is provided
      * <p>
      */
-    public HintsMap( String weighting )
-    {
+    public HintsMap(String weighting) {
         super(5);
         setWeighting(weighting);
     }
 
     @Override
-    public HintsMap put( String key, Object str )
-    {
+    public HintsMap put(String key, Object str) {
         super.put(key, str);
         return this;
     }
 
-    public HintsMap setWeighting( String w )
-    {
+    public String getWeighting() {
+        return super.get("weighting", "").toLowerCase();
+    }
+
+    public HintsMap setWeighting(String w) {
         if (w != null)
             super.put("weighting", w);
         return this;
     }
 
-    public String getWeighting()
-    {
-        return super.get("weighting", "").toLowerCase();
+    public String getVehicle() {
+        return super.get("vehicle", "").toLowerCase();
     }
 
-    public HintsMap setVehicle( String v )
-    {
+    public HintsMap setVehicle(String v) {
         if (v != null)
             super.put("vehicle", v);
         return this;
-    }
-
-    public String getVehicle()
-    {
-        return super.get("vehicle", "").toLowerCase();
     }
 }

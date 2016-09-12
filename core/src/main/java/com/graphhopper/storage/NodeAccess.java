@@ -24,22 +24,23 @@ import com.graphhopper.util.PointAccess;
  * EdgeExplorer as it needs multiple instances for different threads or loops but without the need
  * for an additional iterator.
  * <p>
+ *
  * @author Peter Karich
  */
-public interface NodeAccess extends PointAccess
-{
+public interface NodeAccess extends PointAccess {
     /**
      * @return the additional value at the specified node index
      * @throws AssertionError if, and only if, the extendedStorage does not require an additional
-     * node field
+     *                        node field
      */
-    int getAdditionalNodeField( int nodeId );
+    int getAdditionalNodeField(int nodeId);
 
     /**
      * Sets the additional value at the specified node index
      * <p>
+     *
      * @throws AssertionError if, and only if, the extendedStorage does not require an additional
-     * node field
+     *                        node field
      */
-    void setAdditionalNodeField( int nodeId, int additionalValue );
+    void setAdditionalNodeField(int nodeId, int additionalValue);
 }

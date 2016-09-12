@@ -23,23 +23,20 @@ import com.graphhopper.util.PMap;
 /**
  * Specifies the settings for cycletouring/trekking
  * <p>
+ *
  * @author ratrun
  * @author Peter Karich
  */
-public class BikeFlagEncoder extends BikeCommonFlagEncoder
-{
-    public BikeFlagEncoder()
-    {
+public class BikeFlagEncoder extends BikeCommonFlagEncoder {
+    public BikeFlagEncoder() {
         this(4, 2, 0);
     }
 
-    public BikeFlagEncoder( String propertiesString )
-    {
+    public BikeFlagEncoder(String propertiesString) {
         this(new PMap(propertiesString));
     }
 
-    public BikeFlagEncoder( PMap properties )
-    {
+    public BikeFlagEncoder(PMap properties) {
         this((int) properties.getLong("speed_bits", 4),
                 properties.getLong("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
@@ -47,8 +44,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
         this.setBlockFords(properties.getBool("block_fords", true));
     }
 
-    public BikeFlagEncoder( int speedBits, double speedFactor, int maxTurnCosts )
-    {
+    public BikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
         addPushingSection("path");
         addPushingSection("footway");
@@ -71,27 +67,24 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
 
         absoluteBarriers.add("kissing_gate");
         setSpecificClassBicycle("touring");
-        
+
         init();
     }
 
     @Override
-    public int getVersion()
-    {
+    public int getVersion() {
         return 1;
     }
 
     @Override
-    boolean isPushingSection( ReaderWay way )
-    {
+    boolean isPushingSection(ReaderWay way) {
         String highway = way.getTag("highway");
         String trackType = way.getTag("tracktype");
         return super.isPushingSection(way) || "track".equals(highway) && trackType != null && !"grade1".equals(trackType);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "bike";
     }
 }

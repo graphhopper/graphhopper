@@ -25,11 +25,10 @@ import java.io.Reader;
  *
  * @author Peter Karich
  */
-public interface GHson
-{
+public interface GHson {
     /**
      * This method reads JSON data from the provided source and creates an instance of the provided
      * class.
      */
-    <T> T fromJson( Reader source, Class<T> aClass );
+    <T> T fromJson(Reader source, Class<T> aClass);
 }

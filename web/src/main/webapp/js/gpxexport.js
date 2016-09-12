@@ -10,8 +10,7 @@ var ensureOneCheckboxSelected = function () {
                 if (!$("#gpx_waypoints").is(':checked'))
                     $("#gpx_track").prop("disabled", true);
             }
-        }
-        else
+        } else
         {
             $("#gpx_track").prop("disabled", false);
             $("#gpx_waypoints").prop("disabled", false);
@@ -26,8 +25,7 @@ var ensureOneCheckboxSelected = function () {
                 if (!$("#gpx_waypoints").is(':checked'))
                     $("#gpx_route").prop("disabled", true);
             }
-        }
-        else
+        } else
         {
             $("#gpx_route").prop("disabled", false);
             $("#gpx_waypoints").prop("disabled", false);
@@ -42,8 +40,7 @@ var ensureOneCheckboxSelected = function () {
                 if (!$("#gpx_track").is(':checked'))
                     $("#gpx_route").prop("disabled", true);
             }
-        }
-        else
+        } else
         {
             $("#gpx_route").prop("disabled", false);
             $("#gpx_track").prop("disabled", false);

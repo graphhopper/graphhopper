@@ -27,36 +27,36 @@ import com.graphhopper.util.CHEdgeIteratorState;
  * levels for a node and creating shortcuts, which are additional 'artificial' edges to speedup
  * traversal in certain cases.
  * <p>
+ *
  * @author Peter Karich
  */
-public interface CHGraph extends Graph
-{
+public interface CHGraph extends Graph {
     /**
      * This methods sets the level of the specified node.
      */
-    void setLevel( int nodeId, int level );
+    void setLevel(int nodeId, int level);
 
     /**
      * @return the level of the specified node.
      */
-    int getLevel( int nodeId );
+    int getLevel(int nodeId);
 
-    boolean isShortcut( int edgeId );
+    boolean isShortcut(int edgeId);
 
     /**
      * This method creates a shortcut between a to b which is nearly identical to creating an edge
      * except that it can be excluded or included for certain traversals or algorithms.
      */
-    CHEdgeIteratorState shortcut( int a, int b );
+    CHEdgeIteratorState shortcut(int a, int b);
 
     @Override
-    CHEdgeIteratorState getEdgeIteratorState( int edgeId, int endNode );
+    CHEdgeIteratorState getEdgeIteratorState(int edgeId, int endNode);
 
     @Override
     CHEdgeExplorer createEdgeExplorer();
 
     @Override
-    CHEdgeExplorer createEdgeExplorer( EdgeFilter filter );
+    CHEdgeExplorer createEdgeExplorer(EdgeFilter filter);
 
     @Override
     AllCHEdgesIterator getAllEdges();

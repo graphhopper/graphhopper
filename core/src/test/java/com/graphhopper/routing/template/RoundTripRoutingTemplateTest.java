@@ -17,38 +17,37 @@
  */
 package com.graphhopper.routing.template;
 
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import org.junit.Test;
+
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static org.junit.Assert.assertEquals;
 
 /**
- *
  * @author Peter Karich
  */
-public class RoundTripRoutingTemplateTest
-{
+public class RoundTripRoutingTemplateTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = new EncodingManager(carFE);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED_2DIR;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
 
     @Test
-    public void testCalcRoundTrip() throws Exception
-    {
+    public void testCalcRoundTrip() throws Exception {
         Weighting weighting = new FastestWeighting(carFE);
         Graph g = createTestGraph(true);
 
@@ -79,8 +78,7 @@ public class RoundTripRoutingTemplateTest
         assertEquals(Helper.createTList(4, 8, 7, 6), paths.get(1).calcNodes());
     }
 
-    private Graph createTestGraph( boolean fullGraph )
-    {
+    private Graph createTestGraph(boolean fullGraph) {
         return new AlternativeRouteTest(tMode).createTestGraph(fullGraph, em);
     }
 }

@@ -20,6 +20,6 @@
         Any value defined here will override the pom.xml file value but is only applicable to the current project.
         -->
         <org-netbeans-modules-whitelist.whitelist-oracle>false</org-netbeans-modules-whitelist.whitelist-oracle>
-        <netbeans.compile.on.save>all</netbeans.compile.on.save>
+        <netbeans.compile.on.save>all</netbeans.compile.on.save>        
     </properties>
 </project-shared-configuration>

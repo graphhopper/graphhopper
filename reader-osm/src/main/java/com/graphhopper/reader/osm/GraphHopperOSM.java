@@ -26,26 +26,22 @@ import com.graphhopper.storage.GraphHopperStorage;
  *
  * @author Peter Karich
  */
-public class GraphHopperOSM extends GraphHopper
-{
+public class GraphHopperOSM extends GraphHopper {
     @Override
-    protected DataReader createReader( GraphHopperStorage ghStorage )
-    {
+    protected DataReader createReader(GraphHopperStorage ghStorage) {
         return initDataReader(new OSMReader(ghStorage));
+    }
+
+    public String getOSMFile() {
+        return getDataReaderFile();
     }
 
     /**
      * This file can be an osm xml (.osm), a compressed xml (.osm.zip or .osm.gz) or a protobuf file
      * (.pbf).
      */
-    public GraphHopperOSM setOSMFile( String osmFileStr )
-    {
+    public GraphHopperOSM setOSMFile(String osmFileStr) {
         super.setDataReaderFile(osmFileStr);
         return this;
-    }
-
-    public String getOSMFile()
-    {
-        return getDataReaderFile();
     }
 }

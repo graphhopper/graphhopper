@@ -25,12 +25,10 @@ import com.graphhopper.util.PMap;
 /**
  * This Class uses bendiness parameter to prefer curvy routes.
  */
-public class CurvatureWeighting extends PriorityWeighting
-{
+public class CurvatureWeighting extends PriorityWeighting {
     private final double minFactor;
 
-    public CurvatureWeighting( FlagEncoder flagEncoder, PMap pMap )
-    {
+    public CurvatureWeighting(FlagEncoder flagEncoder, PMap pMap) {
         super(flagEncoder, pMap);
 
         double minBendiness = 1; // see correctErrors
@@ -39,14 +37,12 @@ public class CurvatureWeighting extends PriorityWeighting
     }
 
     @Override
-    public double getMinWeight( double distance )
-    {
+    public double getMinWeight(double distance) {
         return minFactor * distance;
     }
 
     @Override
-    public double calcWeight( EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId )
-    {
+    public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
         double priority = flagEncoder.getDouble(edge.getFlags(), KEY);
         double bendiness = flagEncoder.getDouble(edge.getFlags(), MotorcycleFlagEncoder.CURVATURE_KEY);
         double speed = getRoadSpeed(edge, reverse);
@@ -58,14 +54,12 @@ public class CurvatureWeighting extends PriorityWeighting
         return (bendiness * regularWeight) / (0.5 + priority);
     }
 
-    protected double getRoadSpeed( EdgeIteratorState edge, boolean reverse )
-    {
+    protected double getRoadSpeed(EdgeIteratorState edge, boolean reverse) {
         return reverse ? flagEncoder.getReverseSpeed(edge.getFlags()) : flagEncoder.getSpeed(edge.getFlags());
     }
 
     @Override
-    public String getName()
-    {
+    public String getName() {
         return "curvature";
     }
 }

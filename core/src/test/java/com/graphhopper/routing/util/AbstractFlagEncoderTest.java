@@ -19,16 +19,14 @@ package com.graphhopper.routing.util;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class AbstractFlagEncoderTest
-{
+public class AbstractFlagEncoderTest {
     @Test
-    public void testAcceptsCar()
-    {
+    public void testAcceptsCar() {
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 0);
         assertEquals(40, encoder.parseSpeed("40 km/h"), 1e-3);
         assertEquals(40, encoder.parseSpeed("40km/h"), 1e-3);

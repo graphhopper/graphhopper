@@ -28,32 +28,28 @@ import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author jansoe
  */
-public class DepthFirstSearchTest
-{
+public class DepthFirstSearchTest {
 
     int counter;
     TIntHashSet set = new TIntHashSet();
     TIntList list = new TIntArrayList();
 
     @Before
-    public void setup()
-    {
+    public void setup() {
         counter = 0;
     }
 
     @Test
-    public void testDFS1()
-    {
-        DepthFirstSearch dfs = new DepthFirstSearch()
-        {
+    public void testDFS1() {
+        DepthFirstSearch dfs = new DepthFirstSearch() {
             @Override
-            public boolean goFurther( int v )
-            {
+            public boolean goFurther(int v) {
                 counter++;
                 assertTrue("v " + v + " is already contained in set. iteration:" + counter, !set.contains(v));
                 set.add(v);
@@ -80,13 +76,10 @@ public class DepthFirstSearchTest
     }
 
     @Test
-    public void testDFS2()
-    {
-        DepthFirstSearch dfs = new DepthFirstSearch()
-        {
+    public void testDFS2() {
+        DepthFirstSearch dfs = new DepthFirstSearch() {
             @Override
-            public boolean goFurther( int v )
-            {
+            public boolean goFurther(int v) {
                 counter++;
                 assertTrue("v " + v + " is already contained in set. iteration:" + counter, !set.contains(v));
                 set.add(v);
