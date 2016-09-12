@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.weighting.CurvatureWeighting;
+import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;

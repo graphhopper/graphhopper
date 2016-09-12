@@ -19,7 +19,7 @@ package com.graphhopper.storage.index;
 
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FastestWeighting;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;

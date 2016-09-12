@@ -15,8 +15,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.ShortFastestWeighting;
 import com.graphhopper.util.*;
 import org.junit.Test;
 

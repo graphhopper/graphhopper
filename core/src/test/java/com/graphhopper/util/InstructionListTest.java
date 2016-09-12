@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.reader.ReaderWay;
 import java.util.ArrayList;
 import java.util.Arrays;

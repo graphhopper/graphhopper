@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;

@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.BeelineWeightApproximator;
-import com.graphhopper.routing.util.WeightApproximator;
+import com.graphhopper.routing.weighting.BeelineWeightApproximator;
+import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.Helper;

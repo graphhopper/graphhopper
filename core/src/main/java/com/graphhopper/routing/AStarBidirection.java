@@ -17,6 +17,10 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.weighting.BeelineWeightApproximator;
+import com.graphhopper.routing.weighting.WeightApproximator;
+import com.graphhopper.routing.weighting.ConsistentWeightApproximator;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.util.*;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;

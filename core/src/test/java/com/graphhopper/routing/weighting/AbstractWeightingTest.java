@@ -15,25 +15,25 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.weighting;
+
+import com.graphhopper.routing.weighting.AbstractWeighting;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
- * Specifies a weight approximation between an node and the goalNode according to the specified weighting.
- * <p>
- * @author jansoe
+ *
+ * @author Peter Karich
  */
-public interface WeightApproximator
+public class AbstractWeightingTest
 {
-
-    /**
-     * @return minimal weight fromNode to the goalNode
-     */
-    double approximate( int fromNode );
-
-    void setGoalNode( int to );
-
-    /**
-     * makes a deep copy of itself
-     */
-    WeightApproximator duplicate();
+    @Test
+    public void testToString()
+    {
+        assertTrue(AbstractWeighting.isValidName("blup"));
+        assertTrue(AbstractWeighting.isValidName("blup_a"));
+        assertTrue(AbstractWeighting.isValidName("blup|a"));
+        assertFalse(AbstractWeighting.isValidName("Blup"));
+        assertFalse(AbstractWeighting.isValidName("Blup!"));
+    }
 }

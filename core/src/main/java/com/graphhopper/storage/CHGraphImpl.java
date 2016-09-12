@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.BaseGraph.AllEdgeIterator;

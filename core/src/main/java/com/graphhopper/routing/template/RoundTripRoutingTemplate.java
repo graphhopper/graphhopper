@@ -21,7 +21,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.util.AvoidEdgesWeighting;
+import com.graphhopper.routing.weighting.AvoidEdgesWeighting;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;

@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.*;

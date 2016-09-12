@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;

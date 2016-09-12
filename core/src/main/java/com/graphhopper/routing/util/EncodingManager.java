@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.weighting.TurnWeighting;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;

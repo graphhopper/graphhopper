@@ -15,8 +15,12 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.util.TurnCostEncoder;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;

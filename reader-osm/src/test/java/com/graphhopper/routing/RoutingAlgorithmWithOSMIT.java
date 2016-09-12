@@ -26,6 +26,8 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
+import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;

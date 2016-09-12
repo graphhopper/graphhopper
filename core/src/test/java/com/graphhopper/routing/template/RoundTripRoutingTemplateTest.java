@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.template;
 
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.*;

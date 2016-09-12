@@ -17,6 +17,7 @@
  */
 package com.graphhopper.ui;
 
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;

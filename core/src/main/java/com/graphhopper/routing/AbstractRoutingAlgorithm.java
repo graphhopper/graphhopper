@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;

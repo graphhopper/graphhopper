@@ -15,8 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;

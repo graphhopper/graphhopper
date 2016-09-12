@@ -25,9 +25,9 @@ import java.util.PriorityQueue;
 
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.util.Weighting;
-import com.graphhopper.routing.util.WeightApproximator;
-import com.graphhopper.routing.util.BeelineWeightApproximator;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.WeightApproximator;
+import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeExplorer;

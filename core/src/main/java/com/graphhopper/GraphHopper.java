@@ -17,6 +17,13 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.weighting.ShortFastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.CurvatureWeighting;
+import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.CGIARProvider;

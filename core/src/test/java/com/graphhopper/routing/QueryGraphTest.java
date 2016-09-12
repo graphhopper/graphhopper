@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.weighting.TurnWeighting;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.CHGraph;

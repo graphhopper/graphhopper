@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.AStar.AStarEntry;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;

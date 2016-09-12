@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.ShortestWeighting;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 
 import java.util.Arrays;
 import java.util.Collection;

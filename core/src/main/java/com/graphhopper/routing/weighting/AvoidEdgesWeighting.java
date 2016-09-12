@@ -15,7 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.weighting;
 
 import com.graphhopper.util.EdgeIteratorState;
 import gnu.trove.set.TIntSet;

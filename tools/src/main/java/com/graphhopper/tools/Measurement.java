@@ -17,6 +17,7 @@
  */
 package com.graphhopper.tools;
 
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
