@@ -22,7 +22,7 @@
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-map-matching</artifactId>
+            <artifactId>graphhopper-map-matching-core</artifactId>
             <version>${project.parent.version}</version>            
         </dependency>
         <dependency>
