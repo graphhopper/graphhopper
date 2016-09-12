@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;

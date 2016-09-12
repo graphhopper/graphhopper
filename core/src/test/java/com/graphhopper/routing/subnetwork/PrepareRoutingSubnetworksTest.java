@@ -15,10 +15,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.routing.subnetwork;
 
+import com.graphhopper.routing.subnetwork.TarjansSCCAlgorithm;
+import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.routing.util.PrepareRoutingSubnetworks.PrepEdgeFilter;
+import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepEdgeFilter;
+import com.graphhopper.routing.util.BikeFlagEncoder;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeExplorer;
