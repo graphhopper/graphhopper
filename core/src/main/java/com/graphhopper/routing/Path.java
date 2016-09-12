@@ -541,12 +541,12 @@ public class Path
                     prevName = name;
                     prevAnnotation = annotation;
 
-                } else if ((!name.equals(prevName)) || (!annotation.equals(prevAnnotation)))
+                } else
                 {
-                    prevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
+                    double tmpPrevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
                     double orientation = AC.calcOrientation(prevLat, prevLon, latitude, longitude);
-                    orientation = AC.alignOrientation(prevOrientation, orientation);
-                    double delta = orientation - prevOrientation;
+                    orientation = AC.alignOrientation(tmpPrevOrientation, orientation);
+                    double delta = orientation - tmpPrevOrientation;
                     double absDelta = Math.abs(delta);
                     int sign;
 
@@ -575,10 +575,15 @@ public class Path
                         sign = Instruction.TURN_SHARP_LEFT;
                     else
                         sign = Instruction.TURN_SHARP_RIGHT;
-                    prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
-                    ways.add(prevInstruction);
-                    prevName = name;
-                    prevAnnotation = annotation;
+                    
+                    if (!name.equals(prevName) || !annotation.equals(prevAnnotation) || sign != Instruction.CONTINUE_ON_STREET)
+                    {
+                        prevOrientation = tmpPrevOrientation;
+                        prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                        ways.add(prevInstruction);
+                        prevName = name;
+                        prevAnnotation = annotation;
+                    }
                 }
 
                 updatePointsAndInstruction(edge, wayGeo);
