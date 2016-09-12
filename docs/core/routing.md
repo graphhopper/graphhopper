@@ -4,7 +4,7 @@ To do routing in your Java code you'll need just a few lines of code:
 
 ```java
 // create one GraphHopper instance
-GraphHopper hopper = new GraphHopper().forServer();
+GraphHopper hopper = new GraphHopperOSM().forServer();
 hopper.setOSMFile(osmFile);
 // where to store graphhopper files?
 hopper.setGraphHopperLocation(graphFolder);
@@ -59,8 +59,8 @@ You can also completely disable the speed-up mode to make all vehicles using the
 Then pick one vehicle and optionally the algorithm like 'bidirectional astar' as algorithm:
 
 ```java
-GraphHopper hopper = new GraphHopper().forServer();
-hopper.setCHEnable(false);
+GraphHopper hopper = new GraphHopperOSM().forServer();
+hopper.setCHEnabled(false);
 hopper.setOSMFile(osmFile);
 hopper.setGraphHopperLocation(graphFolder);
 hopper.setEncodingManager(new EncodingManager("car,bike"));

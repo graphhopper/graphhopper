@@ -82,7 +82,7 @@ At this step you need to include specific VM arguments corresponds to _map_ and 
 * In “(x)= Arguments”  tab,  and in “VM arguments” part, add the necessary arguments and their corresponding paths that are not included. You only need to add the below arguments and paths:
  * **1.-Dgraphhopper.config="_Path to config.properties file_"**: config.properties is a file that contains GraphHopper's configurations.
  * **2.-Dgraphhopper.graph.location="_Path to graph folder_"**: In _graph_ folder ( with any optional name) a graph would be created. Upon running GraphHopper a folder ( with the name defined in VM arguments) will be created to keep the graph. So do not worry about manually creating it in the configuration folder.
- * **3.-Dgraphhopper.osmreader.osm="_Path to map.osm file_"**:  *.osm file contains the map data. The name of the .osm file is defined in the config.properties and by default it is map.osm. 
+ * **3.-Dgraphhopper.datareader.file="_Path to map.osm or map.pbf file_"**:  *.osm file contains the map data. The name of the .osm file is defined in the config.properties and by default it is map.osm. 
 
 ![](./images/8.jpg)
 
