@@ -75,7 +75,7 @@ public class ShortFastestWeightingTest
             }
 
             @Override
-            public boolean getBoolean( int key, boolean reverse, boolean _default )
+            public boolean getBool( int key, boolean _default )
             {
                 return _default;
             }

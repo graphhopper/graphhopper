@@ -99,12 +99,12 @@ public interface EdgeIteratorState
     boolean isBackward( FlagEncoder encoder );
 
     /**
-     * get additional boolean edge information
+     * Get additional boolean information of the edge.
      * <p>
-     * @param reverse if property of reverse edge direction should be returned
+     * @param key direction or vehicle dependent integer key
      * @param _default default value if key is not found
      */
-    boolean getBoolean( int key, boolean reverse, boolean _default );
+    boolean getBool( int key, boolean _default );
 
     /**
      * Updates the additional field value for this edge

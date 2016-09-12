@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.ShortFastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -993,7 +994,11 @@ public class GraphHopper implements GraphHopperAPI
     {
         String weighting = weightingMap.getWeighting().toLowerCase();
 
-        if ("shortest".equalsIgnoreCase(weighting))
+        if (encoder.supports(GenericWeighting.class))
+        {
+            DataFlagEncoder dataEncoder = (DataFlagEncoder) encoder;
+            return new GenericWeighting(dataEncoder, dataEncoder.readStringMap(weightingMap));
+        } else if ("shortest".equalsIgnoreCase(weighting))
         {
             return new ShortestWeighting(encoder);
         } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty())

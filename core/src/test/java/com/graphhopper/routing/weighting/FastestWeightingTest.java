@@ -21,6 +21,7 @@ import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.*;
+import static com.graphhopper.util.GHUtility.*;
 import com.graphhopper.util.Parameters.Routing;
 import org.junit.Test;
 
@@ -38,7 +39,7 @@ public class FastestWeightingTest
     {
         Weighting instance = new FastestWeighting(encoder);
         long flags = encoder.setProperties(encoder.getMaxSpeed(), true, true);
-        assertEquals(instance.getMinWeight(10), instance.calcWeight(createEdge(10, flags), false, EdgeIterator.NO_EDGE), 1e-8);
+        assertEquals(instance.getMinWeight(10), instance.calcWeight(createMockedEdgeIteratorState(10, flags), false, EdgeIterator.NO_EDGE), 1e-8);
     }
 
     @Test
@@ -49,18 +50,18 @@ public class FastestWeightingTest
                 encoder.setProperties(10, true, true), "test", Helper.createPointList(51, 0, 51, 1));
         double time = instance.calcWeight(virtEdge, false, 0);
 
-        virtEdge.setVirtualEdgePreference(true);
+        virtEdge.setUnfavored(true);
         // heading penalty on edge
         assertEquals(time + 100, instance.calcWeight(virtEdge, false, 0), 1e-8);
         // only after setting it
-        virtEdge.setVirtualEdgePreference(true);
+        virtEdge.setUnfavored(true);
         assertEquals(time + 100, instance.calcWeight(virtEdge, true, 0), 1e-8);
         // but not after releasing it
-        virtEdge.setVirtualEdgePreference(false);
+        virtEdge.setUnfavored(false);
         assertEquals(time, instance.calcWeight(virtEdge, true, 0), 1e-8);
-        
+
         // test default penalty
-        virtEdge.setVirtualEdgePreference(true);
+        virtEdge.setUnfavored(true);
         instance = new FastestWeighting(encoder);
         assertEquals(time + Routing.DEFAULT_HEADING_PENALTY, instance.calcWeight(virtEdge, false, 0), 1e-8);
     }
@@ -70,33 +71,9 @@ public class FastestWeightingTest
     {
         Weighting instance = new FastestWeighting(encoder);
 
-        assertEquals(1.0 / 0, instance.calcWeight(createEdge(10, encoder.setProperties(0, true, true)), false, EdgeIterator.NO_EDGE), 1e-8);
+        assertEquals(1.0 / 0, instance.calcWeight(createMockedEdgeIteratorState(10, encoder.setProperties(0, true, true)), false, EdgeIterator.NO_EDGE), 1e-8);
 
         // 0 / 0 returns NaN but calcWeight should not return NaN!
-        assertEquals(1.0 / 0, instance.calcWeight(createEdge(0, encoder.setProperties(0, true, true)), false, EdgeIterator.NO_EDGE), 1e-8);
-    }
-
-    EdgeIterator createEdge( final double distance, final long flags )
-    {
-        return new GHUtility.DisabledEdgeIterator()
-        {
-            @Override
-            public double getDistance()
-            {
-                return distance;
-            }
-
-            @Override
-            public long getFlags()
-            {
-                return flags;
-            }
-
-            @Override
-            public boolean getBoolean( int key, boolean reverse, boolean _default )
-            {
-                return _default;
-            }
-        };
-    }
+        assertEquals(1.0 / 0, instance.calcWeight(createMockedEdgeIteratorState(0, encoder.setProperties(0, true, true)), false, EdgeIterator.NO_EDGE), 1e-8);
+    }    
 }

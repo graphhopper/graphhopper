@@ -113,7 +113,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph>
                 if (!isShortcut)
                     return baseGraph.edgeAccess.reverseFlags(edgePointer, flags);
 
-                // we need a special swapping for level graph if it is a shortcut as we only store the weight and access flags then
+                // we need a special swapping for CHGraph if it is a shortcut as we only store the weight and access flags then
                 long dir = flags & scDirMask;
                 if (dir == scDirMask || dir == 0)
                     return flags;

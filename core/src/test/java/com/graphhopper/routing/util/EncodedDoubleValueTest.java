@@ -40,18 +40,7 @@ public class EncodedDoubleValueTest
         EncodedDoubleValue instance1 = new EncodedDoubleValue("test1", 0, 8, 0.5, 60, 100);
         long flags = instance1.setDoubleValue(0, instance1.getMaxValue());
         assertEquals(100, instance1.getDoubleValue(flags), 1e-1);
-    }
-
-    @Test
-    public void testMaxValueAndSwap()
-    {
-        EncodedDoubleValue instance1 = new EncodedDoubleValue("test1", 0, 8, 0.5, 60, 100);
-        EncodedDoubleValue instance2 = new EncodedDoubleValue("test2", 8, 8, 0.5, 60, 100);
-        long flags = instance2.setDoubleValue(instance1.setDoubleValue(0, 100), 90);
-        long expectedFlags = instance2.setDoubleValue(instance1.setDoubleValue(0, 90), 100);
-        long swappedFlags = instance1.swap(flags, instance2);
-        assertEquals(expectedFlags, swappedFlags);
-
+        
         CarFlagEncoder carEncoder = new CarFlagEncoder(10, 0.5, 0);
         new EncodingManager(carEncoder);
         ReaderWay way = new ReaderWay(1);

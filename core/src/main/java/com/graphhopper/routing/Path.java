@@ -237,6 +237,7 @@ public class Path
         EdgeIteratorState iter = graph.getEdgeIteratorState(edgeId, adjNode);
         double dist = iter.getDistance();
         distance += dist;
+        // TODO calculate time based on weighting -> weighting.calcMillis
         time += calcMillis(dist, iter.getFlags(), false);
         addEdge(edgeId);
     }

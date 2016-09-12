@@ -147,7 +147,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public boolean getBoolean( int key, boolean reverse, boolean _default )
+    public boolean getBool( int key, boolean _default )
     {
         if (key == EdgeIteratorState.K_UNFAVORED_EDGE)
             return unfavored;
@@ -159,7 +159,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     /**
      * This method sets edge to unfavored status for routing from or to the start/stop points.
      */
-    public void setVirtualEdgePreference( boolean unfavored )
+    public void setUnfavored( boolean unfavored )
     {
         this.unfavored = unfavored;
     }

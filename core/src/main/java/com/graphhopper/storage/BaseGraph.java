@@ -1319,7 +1319,7 @@ class BaseGraph implements Graph
         }
 
         @Override
-        public final boolean getBoolean( int key, boolean reverse, boolean _default )
+        public final boolean getBool( int key, boolean _default )
         {
             // for non-existent keys return default
             return _default;

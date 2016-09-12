@@ -35,7 +35,7 @@ public class FastestWeighting extends AbstractWeighting
      * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
      * costs or traffic light costs etc)
      */
-    protected final static double SPEED_CONV = 3.6;    
+    protected final static double SPEED_CONV = 3.6;
     private final double headingPenalty;
     private final double maxSpeed;
 
@@ -67,8 +67,8 @@ public class FastestWeighting extends AbstractWeighting
         double time = edge.getDistance() / speed * SPEED_CONV;
 
         // add direction penalties at start/stop/via points
-        boolean penalizeEdge = edge.getBoolean(EdgeIteratorState.K_UNFAVORED_EDGE, reverse, false);
-        if (penalizeEdge)
+        boolean unfavoredEdge = edge.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, false);
+        if (unfavoredEdge)
             time += headingPenalty;
 
         return time;
