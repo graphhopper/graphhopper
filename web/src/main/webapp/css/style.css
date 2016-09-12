@@ -340,7 +340,8 @@ td img.pic {
 }
 
 .ui-dialog > .ui-widget-header{
-    padding:1em
+    padding:1em;    
+    border: 1px solid black;
 }
 
 .ui-dialog .ui-dialog-content {
@@ -405,4 +406,16 @@ td img.pic {
     margin-top: 5px;
     cursor: pointer;
     float: left;
+}
+
+.gray {
+    color: gray;
+}
+
+.plain_text_button {
+    font-size: small;
+    padding: 0px;
+    border: none;
+    background: none;
+    cursor: pointer;
 }

@@ -27,7 +27,7 @@ import com.graphhopper.util.Parameters;
  * The algorithm options. Create an immutable object via:
  * <pre>
  * AlgorithmOptions algoOpts = AlgorithmOptions.start().
- *        algorithm(AlgorithmOptions.DIJKSTRA).
+ *        algorithm(Parameters.Algorithms.DIJKSTRA).
  *        weighting(weighting).
  *        build();
  * </pre>

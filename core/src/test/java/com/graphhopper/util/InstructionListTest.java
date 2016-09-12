@@ -17,12 +17,12 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.reader.ReaderWay;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-import com.graphhopper.reader.OSMWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.*;
@@ -457,7 +457,7 @@ public class InstructionListTest
 
     private long flagsForSpeed( EncodingManager encodingManager, int speedKmPerHour )
     {
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
         return encodingManager.handleWayTags(way, 1, 0);

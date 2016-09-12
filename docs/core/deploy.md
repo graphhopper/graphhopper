@@ -8,7 +8,7 @@ For simplicity you could just start jetty from maven and schedule it as backgrou
 `export GH_FOREGROUND=false && export JETTY_PORT=11111 && ./graphhopper.sh web europe_germany_berlin.pbf`. 
 Then the service will be accessible on port 11111.
 
-For production usage you can install the latest jetty (8 or 9) as a service but we prefer to have it bundled as a 
+For production usage you can install the latest jetty (at least 9) as a service but we prefer to have it bundled as a 
 simple jar. Tomcat should work too. To create a war file do `mvn clean install war:war` and copy it from the target/ 
 folder to your jetty installation. Then copy web/config.properties also there and change this properties 
 file to point to the required graphhopper folder. Increase the Xmx/Xms values of your jetty server e.g. 
@@ -40,7 +40,7 @@ GraphHopper uses the [GraphHopper Directions API](https://graphhopper.com/api/1/
 
 GraphHopper is able to handle coverage for the whole [Openstreetmap road network](http://planet.osm.org/). 
 It needs approximately 22GB RAM for the import (CAR only) and ~1 hour (plus ~5h for contraction). 
-If you can accept slower import times this can be reduced to 14GB RAM - you'll need to set osmreader.dataaccess=MMAP
+If you can accept slower import times this can be reduced to 14GB RAM - you'll need to set datareader.dataaccess=MMAP
 
 Then, to run the web service with this world wide graph 'only' 15GB are necessary. Without contraction hierarchy 
 this would be about 9GB.
@@ -49,9 +49,11 @@ With CH the service is able to handle about 180 queries per second (from localho
 Measured for CAR routing, real world requests, at least 100km long, on a linux machine with 8 cores and 32GB, 
 java 1.7.0_25, jetty 8.1.10 via custom QueryTorture class (10 worker threads).
 
-### JVM
+### System and JVM tuning
 
-If GC pauses are too long try `-XX:+UseG1GC`
+Especially for large heaps you should use `-XX:+UseG1GC`. Optionally add `-XX:MetaspaceSize=100M`.
+
+Avoid swapping e.g. on linux via `vm.swappiness=0` in /etc/sysctl.conf. See some tuning discussion in the answers [here](http://stackoverflow.com/q/38905739/194609).
 
 ### Elevation Data 
 

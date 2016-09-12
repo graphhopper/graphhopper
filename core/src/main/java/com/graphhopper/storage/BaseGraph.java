@@ -27,6 +27,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.search.NameIndex;
 import com.graphhopper.util.*;
 import static com.graphhopper.util.Helper.nf;
+
 import com.graphhopper.util.shapes.BBox;
 
 /**
@@ -433,6 +434,11 @@ class BaseGraph implements Graph
                 + wayGeometry.getCapacity() + extStorage.getCapacity();
     }
 
+    long getMaxGeoRef()
+    {
+        return maxGeoRef;
+    }
+
     void loadExisting( String dim )
     {
         if (!nodes.loadExisting())
@@ -822,39 +828,67 @@ class BaseGraph implements Graph
                 throw new IllegalArgumentException("Cannot use pointlist which is " + pillarNodes.getDimension()
                         + "D for graph which is " + nodeAccess.getDimension() + "D");
 
+            long existingGeoRef = Helper.toUnsignedLong(edges.getInt(edgePointer + E_GEO));
+
             int len = pillarNodes.getSize();
             int dim = nodeAccess.getDimension();
-            long tmpRef = nextGeoRef(len * dim);
-            edges.setInt(edgePointer + E_GEO, Helper.toSignedInt(tmpRef));
-            long geoRef = (long) tmpRef * 4;
-            byte[] bytes = new byte[len * dim * 4 + 4];
-            ensureGeometry(geoRef, bytes.length);
-            bitUtil.fromInt(bytes, len, 0);
-            if (reverse)
-                pillarNodes.reverse();
-
-            int tmpOffset = 4;
-            boolean is3D = nodeAccess.is3D();
-            for (int i = 0; i < len; i++)
+            if (existingGeoRef > 0)
             {
-                double lat = pillarNodes.getLatitude(i);
-                bitUtil.fromInt(bytes, Helper.degreeToInt(lat), tmpOffset);
-                tmpOffset += 4;
-                bitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLongitude(i)), tmpOffset);
-                tmpOffset += 4;
-
-                if (is3D)
+                final int count = wayGeometry.getInt(existingGeoRef * 4L);
+                if (len <= count)
                 {
-                    bitUtil.fromInt(bytes, Helper.eleToInt(pillarNodes.getElevation(i)), tmpOffset);
-                    tmpOffset += 4;
+                    setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, existingGeoRef);
+                    return;
                 }
             }
 
-            wayGeometry.setBytes(geoRef, bytes, bytes.length);
+            long nextGeoRef = nextGeoRef(len * dim);
+            setWayGeometryAtGeoRef(pillarNodes, edgePointer, reverse, nextGeoRef);
         } else
         {
             edges.setInt(edgePointer + E_GEO, 0);
         }
+    }
+
+    private void setWayGeometryAtGeoRef( PointList pillarNodes, long edgePointer, boolean reverse, long geoRef )
+    {
+        int len = pillarNodes.getSize();
+        int dim = nodeAccess.getDimension();
+        long geoRefPosition = (long) geoRef * 4;
+        int totalLen = len * dim * 4 + 4;
+        ensureGeometry(geoRefPosition, totalLen);
+        byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
+        wayGeometry.setBytes(geoRefPosition, wayGeometryBytes, wayGeometryBytes.length);
+        edges.setInt(edgePointer + E_GEO, Helper.toSignedInt(geoRef));
+    }
+
+    private byte[] createWayGeometryBytes( PointList pillarNodes, boolean reverse )
+    {
+        int len = pillarNodes.getSize();
+        int dim = nodeAccess.getDimension();
+        int totalLen = len * dim * 4 + 4;
+        byte[] bytes = new byte[totalLen];
+        bitUtil.fromInt(bytes, len, 0);
+        if (reverse)
+            pillarNodes.reverse();
+
+        int tmpOffset = 4;
+        boolean is3D = nodeAccess.is3D();
+        for (int i = 0; i < len; i++)
+        {
+            double lat = pillarNodes.getLatitude(i);
+            bitUtil.fromInt(bytes, Helper.degreeToInt(lat), tmpOffset);
+            tmpOffset += 4;
+            bitUtil.fromInt(bytes, Helper.degreeToInt(pillarNodes.getLongitude(i)), tmpOffset);
+            tmpOffset += 4;
+
+            if (is3D)
+            {
+                bitUtil.fromInt(bytes, Helper.eleToInt(pillarNodes.getElevation(i)), tmpOffset);
+                tmpOffset += 4;
+            }
+        }
+        return bytes;
     }
 
     private PointList fetchWayGeometry_( long edgePointer, boolean reverse, int mode, int baseNode, int adjNode )
@@ -905,6 +939,7 @@ class BaseGraph implements Graph
         {
             if ((mode & 1) != 0)
                 pillarNodes.add(nodeAccess, baseNode);
+            
             pillarNodes.reverse();
         } else
         {

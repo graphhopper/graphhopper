@@ -31,7 +31,7 @@ import java.util.Set;
  */
 public class ConditionalParser
 {
-    private static final Logger logger = LoggerFactory.getLogger(ConditionalParser.class);
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final Set<String> restrictedTags;
     private final boolean enabledLogs;
 
@@ -81,7 +81,7 @@ public class ConditionalParser
             if (conditional.charAt(index + 1) == '=')
                 index++;
 
-            final double value = Double.parseDouble(conditional.substring(index + 1));
+            final double value = parseNumber(conditional.substring(index + 1));
             return new ValueRange<Number>()
             {
                 @Override
@@ -105,7 +105,7 @@ public class ConditionalParser
             if (conditional.charAt(index + 1) == '=')
                 index++;
 
-            final double value = Double.parseDouble(conditional.substring(index + 1));
+            final double value = parseNumber(conditional.substring(index + 1));
             return new ValueRange<Number>()
             {
 
@@ -124,5 +124,16 @@ public class ConditionalParser
         }
 
         return DateRangeParser.parseDateRange(conditional);
+    }
+
+    protected double parseNumber( String str )
+    {
+        int untilIndex = str.length() - 1;
+        for (; untilIndex >= 0; untilIndex--)
+        {
+            if (Character.isDigit(str.charAt(untilIndex)))
+                break;
+        }
+        return Double.parseDouble(str.substring(0, untilIndex + 1));
     }
 }

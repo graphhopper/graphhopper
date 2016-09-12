@@ -89,6 +89,11 @@ public class GHServer
         int httpPort = args.getInt("jetty.port", 8989);
         String host = args.get("jetty.host", "");
         connector0.setPort(httpPort);
+
+        int requestHeaderSize = args.getInt("jetty.request_header_size", -1);
+        if (requestHeaderSize > 0)
+            connector0.getConnectionFactory(HttpConnectionFactory.class).getHttpConfiguration().setRequestHeaderSize(requestHeaderSize);
+
         if (!host.isEmpty())
             connector0.setHost(host);
 
@@ -103,7 +108,7 @@ public class GHServer
         GzipHandler gzipHandler = new GzipHandler();
         gzipHandler.setIncludedMethods("GET", "POST");
         // Note: gzip only affects the response body like our previous 'GHGZIPHook' behaviour: http://stackoverflow.com/a/31565805/194609
-        // If no mimeTypes are defined the content-type is not "application/gzip"
+        // If no mimeTypes are defined the content-type is "not 'application/gzip'", See also https://github.com/graphhopper/directions-api/issues/28 for pitfalls
         // gzipHandler.setIncludedMimeTypes();
         gzipHandler.setHandler(handlers);
 

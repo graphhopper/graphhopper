@@ -26,7 +26,9 @@ import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Parameters.Routing;
+import static com.graphhopper.util.Parameters.Routing.PASS_THROUGH;
 import com.graphhopper.util.PathMerger;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.Translation;
 import java.util.Collections;
 import java.util.List;
@@ -48,7 +50,7 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate
     {
         boolean withViaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
         if (withViaTurnPenalty)
-            throw new IllegalStateException("Alternative paths and a viaTurnPenalty at the same time is currently not supported");
+            throw new IllegalArgumentException("Alternative paths and " + PASS_THROUGH + " at the same time is currently not supported");
 
         return super.calcPaths(queryGraph, algoFactory, algoOpts);
     }
@@ -59,12 +61,15 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate
         if (pathList.isEmpty())
             throw new RuntimeException("Empty paths for alternative route calculation not expected");
 
-        // if alternative route calculation was done then create the responses from single paths
+        // if alternative route calculation was done then create the responses from single paths        
+        PointList wpList = getWaypoints();
+        altResponse.setWaypoints(wpList);
         ghResponse.add(altResponse);
         pathMerger.doWork(altResponse, Collections.singletonList(pathList.get(0)), tr);
         for (int index = 1; index < pathList.size(); index++)
         {
             PathWrapper tmpAltRsp = new PathWrapper();
+            tmpAltRsp.setWaypoints(wpList);
             ghResponse.add(tmpAltRsp);
             pathMerger.doWork(tmpAltRsp, Collections.singletonList(pathList.get(index)), tr);
         }

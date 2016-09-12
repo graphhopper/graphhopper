@@ -4,9 +4,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.graphhopper</groupId>
-    <artifactId>graphhopper</artifactId>
-    <name>GraphHopper</name>
-    <version>0.7-SNAPSHOT</version>
+    <artifactId>graphhopper-core</artifactId>
+    <name>GraphHopper Core</name>
+    <version>0.8-SNAPSHOT</version>
     <packaging>jar</packaging> 
     <description>
         GraphHopper is a fast and memory efficient Java road routing engine 
@@ -15,7 +15,7 @@
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.7-SNAPSHOT</version>
+        <version>0.8-SNAPSHOT</version>
     </parent>
         
     <properties>
@@ -80,18 +80,7 @@
             <groupId>org.apache.xmlgraphics</groupId>
             <artifactId>xmlgraphics-commons</artifactId>
             <version>2.1</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>com.google.protobuf</groupId>
-            <artifactId>protobuf-java</artifactId>
-            <version>2.6.1</version>
         </dependency>        
-        <dependency>
-            <groupId>org.openstreetmap.osmosis</groupId>
-            <artifactId>osmosis-osm-binary</artifactId>
-            <version>0.44.1</version>
-        </dependency>
 
         <dependency>
             <groupId>org.json</groupId>
@@ -116,7 +105,7 @@
                     </configuration>
                 </plugin>                
                 
-                <!-- create jar with test classes to be reused in other projects -->                
+                <!-- create jar with test classes to be reused in other projects like external or our reader-osm -->                
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>

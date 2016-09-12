@@ -22,6 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.exceptions.GHException;
 import com.graphhopper.util.shapes.BBox;
 import java.util.*;
 
@@ -38,6 +39,14 @@ public class SimpleRouteSerializer implements RouteSerializer
         this.maxBounds = maxBounds;
     }
 
+    private String getMessage( Throwable t )
+    {
+        if (t.getMessage() == null)
+            return t.getClass().getSimpleName();
+        else
+            return t.getMessage();
+    }
+
     @Override
     public Map<String, Object> toJSON( GHResponse rsp,
                                        boolean calcPoints, boolean pointsEncoded,
@@ -47,13 +56,17 @@ public class SimpleRouteSerializer implements RouteSerializer
 
         if (rsp.hasErrors())
         {
-            json.put("message", rsp.getErrors().get(0).getMessage());
+            json.put("message", getMessage(rsp.getErrors().get(0)));
             List<Map<String, String>> errorHintList = new ArrayList<Map<String, String>>();
             for (Throwable t : rsp.getErrors())
             {
                 Map<String, String> map = new HashMap<String, String>();
-                map.put("message", t.getMessage());
+                map.put("message", getMessage(t));
                 map.put("details", t.getClass().getName());
+                if(t instanceof GHException)
+                {
+                    map.putAll(((GHException) t).getDetails());
+                }
                 errorHintList.add(map);
             }
             json.put("hints", errorHintList);
@@ -62,6 +75,8 @@ public class SimpleRouteSerializer implements RouteSerializer
             Map<String, Object> jsonInfo = new HashMap<String, Object>();
             json.put("info", jsonInfo);
             json.put("hints", rsp.getHints().toMap());
+            // If you replace GraphHopper with your own brand name, this is fine. 
+            // Still it would be highly appreciated if you mention us in your about page!
             jsonInfo.put("copyrights", Arrays.asList("GraphHopper", "OpenStreetMap contributors"));
 
             List<Map<String, Object>> jsonPathList = new ArrayList<Map<String, Object>>();
@@ -97,10 +112,10 @@ public class SimpleRouteSerializer implements RouteSerializer
                     jsonPath.put("descend", ar.getDescend());
                 }
 
+                jsonPath.put("snapped_waypoints", createPoints(ar.getWaypoints(), pointsEncoded, includeElevation));
                 jsonPathList.add(jsonPath);
             }
 
-            json.put("snapped_waypoints", rsp.getPoints().toGeoJson());
             json.put("paths", jsonPathList);
         }
         return json;

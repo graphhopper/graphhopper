@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -92,7 +92,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
     }
 
     @Override
-    public long handleSpeed( OSMWay way, double speed, long flags )
+    public long handleSpeed( ReaderWay way, double speed, long flags )
     {
         // handle oneways
         flags = super.handleSpeed(way, speed, flags);
@@ -147,7 +147,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
     }
 
     @Override
-    public void applyWayTags( OSMWay way, EdgeIteratorState edge )
+    public void applyWayTags( ReaderWay way, EdgeIteratorState edge )
     {
         PointList pl = edge.fetchWayGeometry(3);
         if (!pl.is3D())
@@ -171,7 +171,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder
             double fullDist2D = edge.getDistance();
 
             if (Double.isInfinite(fullDist2D))
-                throw new IllegalStateException("Infinite distance should not happen due to #435. OSMID=" + way.getId());
+                throw new IllegalStateException("Infinite distance should not happen due to #435. way ID=" + way.getId());
 
             // for short edges an incline makes no sense and for 0 distances could lead to NaN values for speed, see #432
             if (fullDist2D < 1)

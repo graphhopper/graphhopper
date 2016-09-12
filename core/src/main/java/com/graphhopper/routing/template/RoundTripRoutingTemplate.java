@@ -25,15 +25,17 @@ import com.graphhopper.routing.util.AvoidEdgesWeighting;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.tour.SinglePointTour;
+import com.graphhopper.routing.util.tour.MultiPointTour;
 import com.graphhopper.routing.util.tour.TourStrategy;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
+import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.Translation;
+import com.graphhopper.util.exceptions.CannotFindPointException;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,15 +48,13 @@ import java.util.Random;
  *
  * @author Peter Karich
  */
-public class RoundTripRoutingTemplate implements RoutingTemplate
+public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements RoutingTemplate
 {
     private final int maxRetries;
     private final GHRequest ghRequest;
     private final GHResponse ghResponse;
     private PathWrapper altResponse;
     private final LocationIndex locationIndex;
-    // result from lookup
-    private List<QueryResult> queryResults;
     // result from route
     private List<Path> pathList;
 
@@ -69,25 +69,28 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
     @Override
     public List<QueryResult> lookup( List<GHPoint> points, FlagEncoder encoder )
     {
-        double distanceInMeter = ghRequest.getHints().getDouble(RoundTrip.DISTANCE, 10000);
-        long seed = ghRequest.getHints().getLong(RoundTrip.SEED, 0L);        
-        if (points.isEmpty())        
-            throw new IllegalStateException("For round trip calculation one point is required");            
+        if (points.isEmpty())
+            throw new IllegalStateException("For round trip calculation one point is required");
+        final double distanceInMeter = ghRequest.getHints().getDouble(RoundTrip.DISTANCE, 10000);
+        final long seed = ghRequest.getHints().getLong(RoundTrip.SEED, 0L);
+        final double initialHeading = ghRequest.getHints().getDouble(RoundTrip.HEADING, Double.NaN);
+        final int roundTripPointCount = Math.min(20, ghRequest.getHints().getInt(Algorithms.ROUND_TRIP + ".points", 2 + (int) (distanceInMeter / 50000)));
+        final GHPoint start = ghRequest.getPoints().get(0);
 
-        GHPoint start = ghRequest.getPoints().get(0);
-
-        TourStrategy strategy = new SinglePointTour(new Random(seed), distanceInMeter);
+        TourStrategy strategy = new MultiPointTour(new Random(seed), distanceInMeter, roundTripPointCount, initialHeading);
         queryResults = new ArrayList<>(2 + strategy.getNumberOfGeneratedPoints());
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         QueryResult startQR = locationIndex.findClosest(start.lat, start.lon, edgeFilter);
         if (!startQR.isValid())
-            ghResponse.addError(new IllegalArgumentException("Cannot find point 0: " + start));
+            throw new CannotFindPointException("Cannot find point 0: " + start, 0);
+
         queryResults.add(startQR);
 
         GHPoint last = points.get(0);
         for (int i = 0; i < strategy.getNumberOfGeneratedPoints(); i++)
         {
-            QueryResult result = generateValidPoint(last, strategy.getDistanceForIteration(i), strategy.getHeadingForIteration(i), edgeFilter);
+            double heading = strategy.getHeadingForIteration(i);
+            QueryResult result = generateValidPoint(last, strategy.getDistanceForIteration(i), heading, edgeFilter);
             if (result == null)
             {
                 ghResponse.addError(new IllegalStateException("Could not find a valid point after " + maxRetries + " tries, for the point:" + last));
@@ -114,8 +117,10 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
         AvoidEdgesWeighting avoidPathWeighting = new AvoidEdgesWeighting(algoOpts.getWeighting());
         avoidPathWeighting.setEdgePenaltyFactor(5);
         algoOpts = AlgorithmOptions.start(algoOpts).
-                algorithm(Parameters.Algorithms.DIJKSTRA_BI).
+                algorithm(Parameters.Algorithms.ASTAR_BI).
                 weighting(avoidPathWeighting).build();
+        algoOpts.getHints().put(Algorithms.ASTAR_BI + ".epsilon", 2);
+
         long visitedNodesSum = 0L;
         QueryResult start = queryResults.get(0);
         for (int qrIndex = 1; qrIndex < queryResults.size(); qrIndex++)
@@ -153,6 +158,7 @@ public class RoundTripRoutingTemplate implements RoutingTemplate
     public boolean isReady( PathMerger pathMerger, Translation tr )
     {
         altResponse = new PathWrapper();
+        altResponse.setWaypoints(getWaypoints());
         ghResponse.add(altResponse);
         pathMerger.doWork(altResponse, pathList, tr);
         // with potentially retrying, including generating new route points, for now disabled

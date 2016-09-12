@@ -43,7 +43,7 @@ public class DistanceCalcEarth implements DistanceCalc
 
     /**
      * Calculates distance of (from, to) in meter.
-     * <p/>
+     * <p>
      * http://en.wikipedia.org/wiki/Haversine_formula a = sin²(Δlat/2) +
      * cos(lat1).cos(lat2).sin²(Δlong/2) c = 2.atan2(√a, √(1−a)) d = R.c
      */
@@ -118,7 +118,7 @@ public class DistanceCalcEarth implements DistanceCalc
 
     /**
      * New edge distance calculation where no validEdgeDistance check would be necessary
-     * <p/>
+     * <p>
      * @return the normalized distance of the query point "r" to the project point "c" onto the line
      * segment a-b
      */

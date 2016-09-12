@@ -18,7 +18,6 @@
 package com.graphhopper;
 
 import com.graphhopper.reader.DataReader;
-import com.graphhopper.reader.OSMReader;
 import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
@@ -38,6 +37,8 @@ import com.graphhopper.util.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.exceptions.PointOutOfBoundsException;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,10 +87,10 @@ public class GraphHopper implements GraphHopperAPI
     private int minOneWayNetworkSize = 0;
     // for CH prepare    
     private final CHAlgoFactoryDecorator chFactoryDecorator = new CHAlgoFactoryDecorator();
-    // for OSM import
-    private String osmFile;
-    private double osmReaderWayPointMaxDistance = 1;
-    private int workerThreads = -1;
+    // for data reader
+    private String dataReaderFile;
+    private double dataReaderWayPointMaxDistance = 1;
+    private int dataReaderWorkerThreads = -1;
     private boolean calcPoints = true;
     // utils
     private final TranslationMap trMap = new TranslationMap().doImport();
@@ -153,12 +154,17 @@ public class GraphHopper implements GraphHopperAPI
         return this;
     }
 
+    public ElevationProvider getElevationProvider()
+    {
+        return eleProvider;
+    }
+
     /**
      * Threads for data reading.
      */
     protected int getWorkerThreads()
     {
-        return workerThreads;
+        return dataReaderWorkerThreads;
     }
 
     /**
@@ -166,7 +172,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     protected double getWayPointMaxDistance()
     {
-        return osmReaderWayPointMaxDistance;
+        return dataReaderWayPointMaxDistance;
     }
 
     /**
@@ -175,7 +181,7 @@ public class GraphHopper implements GraphHopperAPI
      */
     public GraphHopper setWayPointMaxDistance( double wayPointMaxDistance )
     {
-        this.osmReaderWayPointMaxDistance = wayPointMaxDistance;
+        this.dataReaderWayPointMaxDistance = wayPointMaxDistance;
         return this;
     }
 
@@ -388,11 +394,16 @@ public class GraphHopper implements GraphHopperAPI
 
     /**
      * This methods stops the algorithm from searching further if the resulting path would go over
-     * the specified node count, important if CH is disabled.
+     * the specified node count, important if none-CH routing is used.
      */
     public void setMaxVisitedNodes( int maxVisitedNodes )
     {
         this.maxVisitedNodes = maxVisitedNodes;
+    }
+
+    public int getMaxVisitedNodes()
+    {
+        return maxVisitedNodes;
     }
 
     /**
@@ -421,6 +432,11 @@ public class GraphHopper implements GraphHopperAPI
         ensureNotLoaded();
         enableInstructions = b;
         return this;
+    }
+
+    public boolean isEnableInstructions()
+    {
+        return enableInstructions;
     }
 
     /**
@@ -487,22 +503,22 @@ public class GraphHopper implements GraphHopperAPI
     }
 
     /**
-     * This file can be an osm xml (.osm), a compressed xml (.osm.zip or .osm.gz) or a protobuf file
-     * (.pbf).
+     * This file can be any file type supported by the DataReader. E.g. for the OSMReader it is the
+     * OSM xml (.osm), a compressed xml (.osm.zip or .osm.gz) or a protobuf file (.pbf)
      */
-    public GraphHopper setOSMFile( String osmFileStr )
+    public GraphHopper setDataReaderFile( String dataReaderFileStr )
     {
         ensureNotLoaded();
-        if (Helper.isEmpty(osmFileStr))
-            throw new IllegalArgumentException("OSM file cannot be empty.");
+        if (Helper.isEmpty(dataReaderFileStr))
+            throw new IllegalArgumentException("Data reader file cannot be empty.");
 
-        osmFile = osmFileStr;
+        dataReaderFile = dataReaderFileStr;
         return this;
     }
 
-    public String getOSMFile()
+    public String getDataReaderFile()
     {
-        return osmFile;
+        return dataReaderFile;
     }
 
     /**
@@ -586,17 +602,20 @@ public class GraphHopper implements GraphHopperAPI
     public GraphHopper init( CmdArgs args )
     {
         args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
-        String tmpOsmFile = args.get("osmreader.osm", "");
+        if (args.has("osmreader.osm"))
+            throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see core/files/changelog.txt");
+
+        String tmpOsmFile = args.get("datareader.file", "");
         if (!Helper.isEmpty(tmpOsmFile))
-            osmFile = tmpOsmFile;
+            dataReaderFile = tmpOsmFile;
 
         String graphHopperFolder = args.get("graph.location", "");
         if (Helper.isEmpty(graphHopperFolder) && Helper.isEmpty(ghLocation))
         {
-            if (Helper.isEmpty(osmFile))
+            if (Helper.isEmpty(dataReaderFile))
                 throw new IllegalArgumentException("You need to specify an OSM file.");
 
-            graphHopperFolder = Helper.pruneFileEnd(osmFile) + "-gh";
+            graphHopperFolder = Helper.pruneFileEnd(dataReaderFile) + "-gh";
         }
 
         // graph
@@ -661,11 +680,11 @@ public class GraphHopper implements GraphHopperAPI
         chFactoryDecorator.init(args);
 
         // osm import
-        osmReaderWayPointMaxDistance = args.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, osmReaderWayPointMaxDistance);
+        dataReaderWayPointMaxDistance = args.getDouble(Routing.INIT_WAY_POINT_MAX_DISTANCE, dataReaderWayPointMaxDistance);
 
-        workerThreads = args.getInt("osmreader.worker_threads", workerThreads);
-        enableInstructions = args.getBool("osmreader.instructions", enableInstructions);
-        preferredLanguage = args.get("osmreader.preferred_language", preferredLanguage);
+        dataReaderWorkerThreads = args.getInt("datareader.worker_threads", dataReaderWorkerThreads);
+        enableInstructions = args.getBool("datareader.instructions", enableInstructions);
+        preferredLanguage = args.get("datareader.preferred_language", preferredLanguage);
 
         // index
         preciseIndexResolution = args.getInt("index.high_resolution", preciseIndexResolution);
@@ -724,12 +743,12 @@ public class GraphHopper implements GraphHopperAPI
             {
                 DataReader reader = importData();
                 DateFormat f = Helper.createFormatter();
-                ghStorage.getProperties().put("osmreader.import.date", f.format(new Date()));
+                ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
                 if (reader.getDataDate() != null)
-                    ghStorage.getProperties().put("osmreader.data.date", f.format(reader.getDataDate()));
+                    ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
             } catch (IOException ex)
             {
-                throw new RuntimeException("Cannot parse OSM file " + getOSMFile(), ex);
+                throw new RuntimeException("Cannot read file " + getDataReaderFile(), ex);
             }
             cleanUp();
             postProcessing();
@@ -748,9 +767,9 @@ public class GraphHopper implements GraphHopperAPI
         if (ghStorage == null)
             throw new IllegalStateException("Load graph before importing OSM data");
 
-        if (osmFile == null)
+        if (dataReaderFile == null)
             throw new IllegalStateException("Couldn't load from existing folder: " + ghLocation
-                    + " but also cannot import from OSM file as it wasn't specified!");
+                    + " but also cannot use file for DataReader as it wasn't specified!");
 
         encodingManager.setEnableInstructions(enableInstructions);
         encodingManager.setPreferredLanguage(preferredLanguage);
@@ -762,21 +781,21 @@ public class GraphHopper implements GraphHopperAPI
 
     protected DataReader createReader( GraphHopperStorage ghStorage )
     {
-        return initOSMReader(new OSMReader(ghStorage));
+        throw new UnsupportedOperationException("Cannot create DataReader. Solutions: avoid import via calling load directly, "
+                + "provide a DataReader or use e.g. GraphHopperOSM or a different subclass");
     }
 
-    protected OSMReader initOSMReader( OSMReader reader )
+    protected DataReader initDataReader( DataReader reader )
     {
-        if (osmFile == null)
-            throw new IllegalArgumentException("No OSM file specified");
+        if (dataReaderFile == null)
+            throw new IllegalArgumentException("No file for DataReader specified");
 
-        logger.info("start creating graph from " + osmFile);
-        File osmTmpFile = new File(osmFile);
-        return reader.setOSMFile(osmTmpFile).
+        logger.info("start creating graph from " + dataReaderFile);
+        return reader.setFile(new File(dataReaderFile)).
                 setElevationProvider(eleProvider).
-                setWorkerThreads(workerThreads).
+                setWorkerThreads(dataReaderWorkerThreads).
                 setEncodingManager(encodingManager).
-                setWayPointMaxDistance(osmReaderWayPointMaxDistance);
+                setWayPointMaxDistance(dataReaderWayPointMaxDistance);
     }
 
     /**
@@ -923,7 +942,7 @@ public class GraphHopper implements GraphHopperAPI
     /**
      * Does the preparation and creates the location index
      */
-    protected void postProcessing()
+    public void postProcessing()
     {
         // Later: move this into the GraphStorage.optimize method
         // Or: Doing it after preparation to optimize shortcuts too. But not possible yet #12
@@ -983,8 +1002,10 @@ public class GraphHopper implements GraphHopperAPI
         {
             if (encoder.supports(CurvatureWeighting.class))
                 return new CurvatureWeighting(encoder, weightingMap);
-            else
-                return new FastestWeighting(encoder, weightingMap);
+
+        } else if ("short_fastest".equalsIgnoreCase(weighting))
+        {
+            return new ShortFastestWeighting(encoder, weightingMap);
         }
 
         throw new IllegalArgumentException("weighting " + weighting + " not supported");
@@ -1008,7 +1029,7 @@ public class GraphHopper implements GraphHopperAPI
         return response;
     }
 
-    protected List<Path> calcPaths( GHRequest request, GHResponse ghRsp )
+    public List<Path> calcPaths( GHRequest request, GHResponse ghRsp )
     {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
@@ -1034,15 +1055,15 @@ public class GraphHopper implements GraphHopperAPI
             String tModeStr = hints.get("traversal_mode", traversalMode.toString());
             TraversalMode tMode = TraversalMode.fromString(tModeStr);
             if (hints.has(Routing.EDGE_BASED))
-            {
-                tMode = hints.getBool(Routing.EDGE_BASED, false)
-                        ? TraversalMode.EDGE_BASED_2DIR
-                        : TraversalMode.NODE_BASED;
-            }
+                tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;
 
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
             List<GHPoint> points = request.getPoints();
             String algoStr = request.getAlgorithm().isEmpty() ? DIJKSTRA_BI : request.getAlgorithm();
+
+            // TODO Maybe we should think about a isRequestValid method that checks all that stuff that we could do to fail fast
+            // For example see #734
+            checkIfPointsAreInBounds(points);
 
             RoutingTemplate routingTemplate;
             if (ROUND_TRIP.equalsIgnoreCase(algoStr))
@@ -1086,7 +1107,10 @@ public class GraphHopper implements GraphHopperAPI
                     routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
 
                 } else
+                {
                     weighting = createWeighting(hints, encoder);
+                    ghRsp.addDebugInfo("tmode:" + tMode.toString());
+                }
 
                 int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, maxVisitedNodes);
                 if (maxVisitedNodesForRequest > maxVisitedNodes)
@@ -1118,18 +1142,25 @@ public class GraphHopper implements GraphHopperAPI
                     break;
             }
 
-            PointList pointList = new PointList(qResults.size(), true);
-            for (QueryResult qr : qResults)
-            {
-                pointList.add(qr.getSnappedPoint());
-            }
-            ghRsp.setPoints(pointList);
             return altPaths;
 
         } catch (IllegalArgumentException ex)
         {
             ghRsp.addError(ex);
             return Collections.emptyList();
+        }
+    }
+
+    private void checkIfPointsAreInBounds( List<GHPoint> points )
+    {
+        BBox bounds = getGraphHopperStorage().getBounds();
+        for (int i = 0; i < points.size(); i++)
+        {
+            GHPoint point = points.get(i);
+            if (!bounds.contains(point.getLat(), point.getLon()))
+            {
+                throw new PointOutOfBoundsException("Point " + i + " is ouf of bounds: " + point, i);
+            }
         }
     }
 
@@ -1197,6 +1228,7 @@ public class GraphHopper implements GraphHopperAPI
         logger.info("flushing graph " + ghStorage.toString() + ", details:" + ghStorage.toDetailsString() + ", "
                 + Helper.getMemInfo() + ")");
         ghStorage.flush();
+        logger.info("flushed graph " + Helper.getMemInfo() + ")");
         fullyLoaded = true;
     }
 

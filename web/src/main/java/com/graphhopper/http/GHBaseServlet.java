@@ -148,6 +148,17 @@ public class GHBaseServlet extends HttpServlet
             return _default;
         }
     }
+    
+    protected int getIntParam( HttpServletRequest req, String key, int _default )
+    {
+        try
+        {
+            return Integer.parseInt(getParam(req, key, "" + _default));
+        } catch (Exception ex)
+        {
+            return _default;
+        }
+    }
 
     protected boolean getBooleanParam( HttpServletRequest req, String key, boolean _default )
     {

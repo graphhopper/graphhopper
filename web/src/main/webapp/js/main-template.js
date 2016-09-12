@@ -2,16 +2,16 @@ global.d3 = require('d3');
 var L = require('leaflet');
 require('leaflet-loading');
 require('./lib/leaflet.contextmenu.js');
-require('./lib/Leaflet.Elevation-0.0.2.min.js');
+require('./lib/leaflet.elevation-0.0.4.min.js');
 require('./lib/leaflet_numbered_markers.js');
 
 global.jQuery = require('jquery');
 global.$ = global.jQuery;
-require('./lib/jquery-ui-custom-1.11.4.min.js');
+require('./lib/jquery-ui-custom-1.12.0.min.js');
 require('./lib/jquery.history.js');
 require('./lib/jquery.autocomplete.js');
 
-var ghenv = require("./options.js").options;
+var ghenv = require("./config/options.js").options;
 console.log(ghenv.environment);
 
 var GHInput = require('./graphhopper/GHInput.js');
@@ -77,7 +77,7 @@ $(document).ready(function (e) {
             // https://github.com/defunkt/jquery-pjax/issues/143#issuecomment-6194330
 
             var state = History.getState();
-            log(state);
+            console.log(state);
             initFromParams(state.data, true);
         });
     }
@@ -93,6 +93,7 @@ $(document).ready(function (e) {
             .then(function (arg1, arg2) {
                 // init translation retrieved from first call (fetchTranslationMap)
                 var translations = arg1[0];
+                autocomplete.setLocale(translations.locale);
                 ghRequest.setLocale(translations.locale);
                 translate.init(translations);
 
@@ -158,8 +159,10 @@ $(document).ready(function (e) {
 
                 // execute query
                 initFromParams(urlParams, true);
+
+                checkInput();
             }, function (err) {
-                log(err);
+                console.log(err);
                 $('#error').html('GraphHopper API offline? <a href="http://graphhopper.com/maps">Refresh</a>' + '<br/>Status: ' + err.statusText + '<br/>' + host);
 
                 bounds = {
@@ -450,7 +453,7 @@ function routeLatLng(request, doQuery) {
     if (!doQuery && History.enabled) {
         // 2. important workaround for encoding problems in history.js
         var params = urlTools.parseUrl(urlForHistory);
-        log(params);
+        console.log(params);
         params.do_zoom = doZoom;
         // force a new request even if we have the same parameters
         params.mathRandom = Math.random();
@@ -478,7 +481,7 @@ function routeLatLng(request, doQuery) {
         routeResultsDiv.html("");
         if (json.message) {
             var tmpErrors = json.message;
-            log(tmpErrors);
+            console.log(tmpErrors);
             if (json.hints) {
                 for (var m = 0; m < json.hints.length; m++) {
                     routeResultsDiv.append("<div class='error'>" + json.hints[m].message + "</div>");
@@ -489,7 +492,7 @@ function routeLatLng(request, doQuery) {
             return;
         }
 
-        function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation) {
+        function createClickHandler(geoJsons, currentLayerIndex, tabHeader, oneTab, hasElevation, useMiles) {
             return function () {
 
                 var currentGeoJson = geoJsons[currentLayerIndex];
@@ -508,7 +511,7 @@ function routeLatLng(request, doQuery) {
 
                 if (hasElevation) {
                     mapLayer.clearElevation();
-                    mapLayer.addElevation(currentGeoJson);
+                    mapLayer.addElevation(currentGeoJson, useMiles);
                 }
 
                 headerTabs.find("li").removeClass("current");
@@ -551,18 +554,43 @@ function routeLatLng(request, doQuery) {
             mapLayer.addDataToRoutingLayer(geojsonFeature);
             var oneTab = $("<div class='route_result_tab'>");
             routeResultsDiv.append(oneTab);
-            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation()));
+            tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), request.useMiles));
 
             var tmpTime = translate.createTimeString(path.time);
-            var tmpDist = translate.createDistanceString(path.distance);
+            var tmpDist = translate.createDistanceString(path.distance, request.useMiles);
             var routeInfo = $("<div class='route_description'>");
             if (path.description && path.description.length > 0) {
                 routeInfo.text(path.description);
                 routeInfo.append("<br/>");
             }
             routeInfo.append(translate.tr("route_info", [tmpDist, tmpTime]));
+
+            //create buttons to toggle between si and imperial units
+            var createUnitsChooserButtonClickHandler = function (useMiles) {
+                return function () {
+                    mapLayer.updateScale(useMiles);
+                    ghRequest.useMiles = useMiles;
+                    resolveAll();
+                    routeLatLng(ghRequest);
+                };
+            };
+            var kmButton = $("<button class='plain_text_button " + (request.useMiles ? "gray" : "") + "'>");
+            kmButton.text(translate.tr2("km_abbr"));
+            kmButton.click(createUnitsChooserButtonClickHandler(false));
+
+            var miButton = $("<button class='plain_text_button " + (request.useMiles ? "" : "gray") + "'>");
+            miButton.text(translate.tr2("mi_abbr"));
+            miButton.click(createUnitsChooserButtonClickHandler(true));
+
+            var buttons = $("<span style='float: right;'>");
+            buttons.append(kmButton);
+            buttons.append('|');
+            buttons.append(miButton);
+
+            routeInfo.append(buttons);
+
             if (request.hasElevation()) {
-                routeInfo.append(translate.createEleInfoString(path.ascend, path.descend));
+                routeInfo.append(translate.createEleInfoString(path.ascend, path.descend, request.useMiles));
             }
             oneTab.append(routeInfo);
 
@@ -599,7 +627,7 @@ function mySubmit() {
             allStr = [],
             inputOk = true;
     var location_points = $("#locationpoints > div.pointDiv > input.pointInput");
-    var len = location_points.size();
+    var len = location_points.size;
     $.each(location_points, function (index) {
         if (index === 0) {
             fromStr = $(this).val();

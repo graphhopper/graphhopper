@@ -26,6 +26,7 @@ import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URLEncoder;
 import java.util.*;
 import java.util.Map.Entry;
@@ -37,7 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Reads log files and queries the live service
+ * Reads log files and queries any GraphHopper service
  * <p>
  * @author Peter Karich
  */
@@ -63,28 +64,33 @@ public class QueryTorture
     private int maxQueries;
     private int timeout;
     private int statusUpdateCnt;
+    private boolean logRequest = false;
 
     public QueryTorture()
     {
     }
 
-    public void start( CmdArgs read )
+    public void start( CmdArgs cmdArgs )
     {
-        String logfile = read.get("logfile", "");
-        int workers = read.getInt("workers", 1);
-        baseUrl = read.get("baseurl", "");
-        maxQueries = read.getInt("maxqueries", 1000);
-        timeout = read.getInt("timeout", 3000);
+        String logfile = cmdArgs.get("logfile", "");
+        int workers = cmdArgs.getInt("workers", 1);
+        baseUrl = cmdArgs.get("baseurl", "");
+        maxQueries = cmdArgs.getInt("maxqueries", 1000);
+        timeout = cmdArgs.getInt("timeout", 3000);
+        logRequest = cmdArgs.getBool("log_request", false);
         statusUpdateCnt = maxQueries / 10;
         if (Helper.isEmpty(baseUrl))
             throw new IllegalArgumentException("baseUrl cannot be empty!?");
 
-        if (!baseUrl.endsWith("/"))
-            baseUrl += "/";
-        if (!baseUrl.endsWith("route/"))
-            baseUrl += "route/";
-        if (!baseUrl.endsWith("?"))
-            baseUrl += "?";
+        if (!baseUrl.contains("?"))
+        {
+            if (!baseUrl.endsWith("/"))
+                baseUrl += "/";
+            if (!baseUrl.endsWith("route/"))
+                baseUrl += "route/";
+            if (!baseUrl.endsWith("?"))
+                baseUrl += "?";
+        }
 
         // there should be enough feed available for the workers in the queue
         queryQueue = new LinkedBlockingQueue<Query>(workers * 100);
@@ -179,6 +185,8 @@ public class QueryTorture
         try
         {
             String url = baseUrl + query.createQueryString();
+            if (logRequest)
+                logger.info(url);
             String res = new Downloader("QueryTorture!").setTimeout(timeout).downloadAsString(url, false);
             if (res.contains("errors"))
                 routingErrorCounter.incrementAndGet();
@@ -189,9 +197,13 @@ public class QueryTorture
             {
                 logger.info("progress: " + (int) (successfullQueries.get() * 100 / maxQueries) + "%");
             }
+        } catch (MalformedURLException ex)
+        {
+            logger.error("Error while querying", ex);
         } catch (IOException ex)
         {
-            // logger.error("Error while querying " + query.queryString, ex);
+//            if (httpErrorCounter.get() % maxQueries == 0)
+//                logger.error("http error", ex);
             httpErrorCounter.incrementAndGet();
         }
     }
@@ -238,6 +250,9 @@ public class QueryTorture
                     {
                         reader.close();
                     }
+
+                    logger.info("Reader finished");
+
                     // wait until all worker threads have started
                     workerStartedBarrier.await();
                     // now tell workers that we are ready with log reading
@@ -264,7 +279,7 @@ public class QueryTorture
 
         static Query parse( String logLine )
         {
-            String START = "GraphHopperServlet - ";
+            String START = "GHBaseServlet - ";
             int index = logLine.indexOf(START);
             if (index < 0)
                 return null;
@@ -321,7 +336,7 @@ public class QueryTorture
                 if (!qStr.isEmpty())
                     qStr += "&";
 
-                qStr += "point=" + pointStr;
+                qStr += "point=" + encodeURL(pointStr);
             }
             for (Entry<String, String> e : params.entrySet())
             {

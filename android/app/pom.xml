@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-android</artifactId>
-    <version>0.7-SNAPSHOT</version>
+    <version>0.8-SNAPSHOT</version>
     <name>GraphHopper Android</name>
     <packaging>apk</packaging>    
     <organization>
@@ -16,10 +16,10 @@
         <relativePath>../..</relativePath>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>    	
-        <version>0.7-SNAPSHOT</version>
+        <version>0.8-SNAPSHOT</version>
     </parent>
     <properties>
-        <mapsforge.version>0.6.0</mapsforge.version>
+        <mapsforge.version>0.6.1</mapsforge.version>
         <!-- do not put the properties here as it differs from dev to dev <android.sdk.path>/home/peterk/Programme/android-sdk-linux_x86</android.sdk.path>
         instead use your IDE to set it up or specify android sdk via command line
         using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
@@ -29,18 +29,10 @@
     <dependencies>        
         <dependency>
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper</artifactId>
+            <artifactId>graphhopper-core</artifactId>
             <version>${project.parent.version}</version>            
             <type>jar</type>
             <exclusions>
-                <exclusion>
-                    <groupId>com.google.protobuf</groupId>
-                    <artifactId>protobuf-java</artifactId>                    
-                </exclusion>
-                <exclusion>
-                    <groupId>org.openstreetmap.osmosis</groupId>
-                    <artifactId>osmosis-osm-binary</artifactId>                    
-                </exclusion>
                 <exclusion>
                     <groupId>org.apache.xmlgraphics</groupId>
                     <artifactId>xmlgraphics-commons</artifactId>

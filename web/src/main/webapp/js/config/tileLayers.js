@@ -1,3 +1,8 @@
+var ghenv = require("./options.js").options;
+var tfAddition = '';
+if (ghenv.thunderforest.api_key)
+    tfAddition = '?apikey=' + ghenv.thunderforest.api_key;
+
 var osmAttr = '&copy; <a href="http://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors';
 
 // Automatically enable high-DPI tiles if provider and browser support it.
@@ -10,16 +15,6 @@ var lyrk = L.tileLayer('https://tiles.lyrk.org/' + (retinaTiles ? 'lr' : 'ls') +
 var omniscale = L.tileLayer.wms('https://maps.omniscale.net/v1/mapsgraph-bf48cc0b/tile', {
     layers: 'osm',
     attribution: osmAttr + ', &copy; <a href="http://maps.omniscale.com/">Omniscale</a>'
-});
-
-var mapquest = L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/osm/{z}/{x}/{y}.png', {
-    attribution: osmAttr + ', <a href="http://open.mapquest.co.uk" target="_blank">MapQuest</a>',
-    subdomains: '1234'
-});
-
-var mapquestAerial = L.tileLayer('http://otile{s}.mqcdn.com/tiles/1.0.0/sat/{z}/{x}/{y}.png', {
-    attribution: osmAttr + ', <a href="http://open.mapquest.co.uk" target="_blank">MapQuest</a>',
-    subdomains: '1234'
 });
 
 var openMapSurfer = L.tileLayer('http://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}', {
@@ -35,15 +30,15 @@ var sorbianLang = L.tileLayer('http://map.dgpsonline.eu/osmsb/{z}/{x}/{y}.png', 
     attribution: osmAttr + ', <a href="http://www.alberding.eu/">&copy; Alberding GmbH, CC-BY-SA</a>'
 });
 
-var thunderTransport = L.tileLayer('https://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png', {
+var thunderTransport = L.tileLayer('https://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png' + tfAddition, {
     attribution: osmAttr + ', <a href="http://www.thunderforest.com/transport/" target="_blank">Thunderforest Transport</a>'
 });
 
-var thunderCycle = L.tileLayer('https://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png', {
+var thunderCycle = L.tileLayer('https://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png' + tfAddition, {
     attribution: osmAttr + ', <a href="http://www.thunderforest.com/opencyclemap/" target="_blank">Thunderforest Cycle</a>'
 });
 
-var thunderOutdoors = L.tileLayer('https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png', {
+var thunderOutdoors = L.tileLayer('https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png' + tfAddition, {
     attribution: osmAttr + ', <a href="http://www.thunderforest.com/outdoors/" target="_blank">Thunderforest Outdoors</a>'
 });
 
@@ -68,19 +63,17 @@ var esriAerial = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/servic
 });
 
 var availableTileLayers = {
-    "Lyrk": lyrk,
     "Omniscale": omniscale,
-    "MapQuest": mapquest,
-    "MapQuest Aerial": mapquestAerial,
+    "OpenStreetMap": osm,
     "Esri Aerial": esriAerial,
-    "OpenMapSurfer": openMapSurfer,
     "TF Transport": thunderTransport,
     "TF Cycle": thunderCycle,
     "TF Outdoors": thunderOutdoors,
+    "Lyrk": lyrk,
     "WanderReitKarte": wrk,
-    "OpenStreetMap": osm,
-    "OpenStreetMap.de": osmde,
-    "Sorbian Language": sorbianLang
+    "OpenMapSurfer": openMapSurfer,
+    "Sorbian Language": sorbianLang,
+    "OpenStreetMap.de": osmde
 };
 
 module.exports.activeLayerName = "Omniscale";

@@ -178,7 +178,7 @@ public class BBox implements Shape, Cloneable
     @Override
     public boolean contains( double lat, double lon )
     {
-        return lat < maxLat && lat >= minLat && lon < maxLon && lon >= minLon;
+        return lat <= maxLat && lat >= minLat && lon <= maxLon && lon >= minLon;
     }
 
     public boolean contains( BBox b )

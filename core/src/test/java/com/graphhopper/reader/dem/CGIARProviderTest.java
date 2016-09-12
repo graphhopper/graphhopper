@@ -17,20 +17,32 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.graphhopper.util.Downloader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.SocketTimeoutException;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
+import org.junit.Before;
 
 /**
  * @author Peter Karich
  */
 public class CGIARProviderTest
 {
+    CGIARProvider instance;
+
+    @Before
+    public void setUp()
+    {
+        instance = new CGIARProvider();
+    }
+
     @Test
     public void testDown()
     {
-        CGIARProvider instance = new CGIARProvider();
         assertEquals(50, instance.down(52.5));
         assertEquals(0, instance.down(0.1));
         assertEquals(0, instance.down(0.01));
@@ -44,7 +56,6 @@ public class CGIARProviderTest
     @Test
     public void testFileName()
     {
-        CGIARProvider instance = new CGIARProvider();
         assertEquals("srtm_36_02", instance.getFileName(52, -0.1));
         assertEquals("srtm_35_02", instance.getFileName(50, -10));
 
@@ -61,17 +72,43 @@ public class CGIARProviderTest
     @Test
     public void testFileNotFound()
     {
-        CGIARProvider instance = new CGIARProvider();
         File file = new File(instance.getCacheDir(), instance.getFileName(46, -20) + ".gh");
         File zipFile = new File(instance.getCacheDir(), instance.getFileName(46, -20) + ".zip");
         file.delete();
         zipFile.delete();
-        
+
+        instance.setDownloader(new Downloader("test GH")
+        {
+            @Override
+            public void downloadFile( String url, String toFile ) throws IOException
+            {
+                throw new FileNotFoundException("xyz");
+            }
+        });
         assertEquals(0, instance.getEle(46, -20), 1);
 
         // file not found => small!
         assertTrue(file.exists());
-        assertEquals(228, file.length());        
+        assertEquals(228, file.length());
+
+        instance.setDownloader(new Downloader("test GH")
+        {
+            @Override
+            public void downloadFile( String url, String toFile ) throws IOException
+            {
+                throw new SocketTimeoutException("xyz");
+            }
+        });
+
+        try
+        {
+            instance.setSleep(30);
+            instance.getEle(16, -20);
+            assertTrue(false);
+        } catch (Exception ex)
+        {
+        }
+
         file.delete();
         zipFile.delete();
     }

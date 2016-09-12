@@ -44,7 +44,7 @@ function createAmbiguityList(locCoord) {
                     return [locCoord];
                 },
                 function (err) {
-                    log("[nominatim_reverse] Error while looking up coordinate lat=" + locCoord.lat + "&lon=" + locCoord.lng);
+                    console.log("[nominatim_reverse] Error while looking up coordinate lat=" + locCoord.lat + "&lon=" + locCoord.lng);
                     locCoord.error = "Problem while looking up location.";
                     return [locCoord];
                 }
@@ -120,7 +120,7 @@ function doGeoCoding(input, limit, timeout) {
 
 function createCallback(errorFallback) {
     return function (err) {
-        log(errorFallback + " " + JSON.stringify(err));
+        console.log(errorFallback + " " + JSON.stringify(err));
     };
 }
 

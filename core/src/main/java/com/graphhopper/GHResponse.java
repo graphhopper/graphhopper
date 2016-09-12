@@ -18,7 +18,6 @@
 package com.graphhopper;
 
 import com.graphhopper.util.PMap;
-import com.graphhopper.util.PointList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,30 +32,10 @@ public class GHResponse
     private String debugInfo = "";
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
     private final PMap hintsMap = new PMap();
-    private PointList pointList;
     private final List<PathWrapper> pathWrappers = new ArrayList<PathWrapper>(5);
 
     public GHResponse()
     {
-    }
-
-    /**
-     * This method initializes the response with the input points.
-     */
-    public void setPoints( PointList pointList )
-    {
-        this.pointList = pointList;
-    }
-
-    /**
-     * This method returns the input points snapped to the road network. I.e. the first points of
-     * the instructions' points including the destination point.
-     */
-    public PointList getPoints()
-    {
-        if (pointList == null)
-            throw new IllegalStateException("Call setPoints before calling GHResponse.getPoints");
-        return pointList;
     }
 
     public void add( PathWrapper altResponse )
@@ -97,7 +76,7 @@ public class GHResponse
             throw new IllegalStateException("Debug information has to be none null");
 
         if (!this.debugInfo.isEmpty())
-            this.debugInfo += ";";
+            this.debugInfo += "; ";
 
         this.debugInfo += debugInfo;
     }

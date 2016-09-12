@@ -30,9 +30,9 @@ public class QueryTortureTest
     @Test
     public void testGetQuery()
     {
-        Query result = Query.parse("2013-08-07 18:06:50,905 [qtp1329318374-81] INFO  graphhopper.http.GraphHopperServlet - point=51.076329,13.738409&point=52.517037,13.38886&type=jsonp 46.4.67.134 en_US Wget/1.13.4 (linux-gnu) 51.076329, 13.738409->52.517037, 13.38886, distance: 189.4806800000001, time:123min, points:907, took:0.007393159, debug - idLookup:0.002483692s, algoInit:1.20837E-4s, dijkstraCH-routing:0.003138361s, extract time:1.66755E-4, simplify (1219->907):0.001040086s, instructions:2.26986E-4s, dijkstrabi, fastest, CAR");
-        assertEquals("point=51.076329,13.738409&point=52.517037,13.38886&type=jsonp", result.createQueryString());
-        assertEquals(51.076329, result.start.lat, 1e-5);
-        assertEquals(13.38886, result.end.lon, 1e-5);
+        Query result = Query.parse("2016-05-04 16:37:37,647 [qtp1604002113-823] INFO  com.graphhopper.http.GHBaseServlet - point=46.444481%2C11.306992&point=46.07847%2C11.178589&locale=en_US&vehicle=car&weighting=fastest&elevation=true 127.0.0.1 en_US Directions API 195.232.147.121 [46.456721,11.258966, 46.15583,11.153478, 46.067933,11.223352, 46.456721,11.258966], took:0.008627106, , fastest, car, alternatives: 1, distance0: 146967.68084669442, time0: 112min, points0: 1507, debugInfo: idLookup:0.004824006s; , algoInit:2.6879E-5s, dijkstrabiCH-routing:5.69366E-4s, extract time:9.987E-5;, algoInit:1.6976E-5s, dijkstrabiCH-routing:3.22521E-4s, extract time:5.9076E-5;, algoInit:1.6084E-5s, dijkstrabiCH-routing:6.75566E-4s, extract time:8.2527E-5;, algoInit:2.6879E-5s, dijkstrabiCH-routing:5.69366E-4s, extract time:9.987E-5;, algoInit:1.6976E-5s, dijkstrabiCH-routing:3.22521E-4s, extract time:5.9076E-5;, algoInit:1.6084E-5s, dijkstrabiCH-routing:6.75566E-4s, extract time:8.2527E-5, simplify (1903->1507)");
+        assertEquals("point=46.444481%2C11.306992&point=46.07847%2C11.178589&elevation=true&locale=en_US&weighting=fastest&vehicle=car", result.createQueryString());
+        assertEquals(46.444481, result.start.lat, 1e-5);
+        assertEquals(11.178589, result.end.lon, 1e-5);
     }
 }

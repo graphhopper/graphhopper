@@ -23,6 +23,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.json.JSONObject;
 import org.junit.AfterClass;
@@ -40,12 +41,12 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperServletIT extends BaseServletTester
 {
-    private static final String dir = "./target/andorra-gh/";
+    private static final String DIR = "./target/andorra-gh/";
 
     @AfterClass
     public static void cleanUp()
     {
-        Helper.removeDir(new File(dir));
+        Helper.removeDir(new File(DIR));
         shutdownJetty(true);
     }
 
@@ -54,8 +55,8 @@ public class GraphHopperServletIT extends BaseServletTester
     {
         CmdArgs args = new CmdArgs().
                 put("config", "../config-example.properties").
-                put("osmreader.osm", "../core/files/andorra.osm.pbf").
-                put("graph.location", dir);
+                put("datareader.file", "../core/files/andorra.osm.pbf").
+                put("graph.location", DIR);
         setUpJetty(args);
     }
 
@@ -161,9 +162,11 @@ public class GraphHopperServletIT extends BaseServletTester
         rsp = hopper.route(new GHRequest(0.0, 0.0, 0.0, 0.0));
         assertFalse("Errors expected but not found.", rsp.getErrors().isEmpty());
 
-        ex = rsp.getErrors().get(0);
-        assertTrue("Wrong exception found: " + ex.getClass().getName()
-                + ", IllegalArgumentException expected.", ex instanceof IllegalArgumentException);
+        List<Throwable> errs = rsp.getErrors();
+        for (int i = 0; i < errs.size(); i++)
+        {
+            assertEquals(((PointOutOfBoundsException) errs.get(i)).getPointIndex(), i);
+        }
 
         // IllegalArgumentException (Vehicle not supported)
         rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128).setVehicle("SPACE-SHUTTLE"));

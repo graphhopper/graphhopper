@@ -24,6 +24,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -74,7 +75,7 @@ public class Measurement
         String gitCommit = args.get("measurement.gitinfo", "");
         int count = args.getInt("measurement.count", 5000);
 
-        GraphHopper hopper = new GraphHopper()
+        GraphHopper hopper = new GraphHopperOSM()
         {
             @Override
             protected void prepare()
@@ -99,7 +100,7 @@ public class Measurement
         };
 
         hopper.init(args).
-                forDesktop();        
+                forDesktop();
         hopper.getCHFactoryDecorator().setDisablingAllowed(true);
         hopper.importOrLoad();
 

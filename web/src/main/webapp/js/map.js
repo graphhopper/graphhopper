@@ -26,27 +26,30 @@ function adjustMapSize() {
     mapDiv.width(width).height(height);
     $("#input").height(height);
 
-    console.log("adjustMapSize " + height + "x" + width);
+    // console.log("adjustMapSize " + height + "x" + width);
 
     // reduce info size depending on how heigh the input_header is and reserve space for footer
-    $(".instructions_info").css("max-height",
-            height - 60 -
-            $(".route_description").height() - $("#route_result_tabs li").height() -
-            $("#input_header").height() - $("#footer").height());
+    var instructionInfoMaxHeight = height - 60
+            - $("#input_header").height() - $("#footer").height() - $(".route_description").height();
+    var tabHeight = $("#route_result_tabs li").height()
+    if (!isNaN(tabHeight))
+        instructionInfoMaxHeight -= tabHeight;
+    $(".instructions_info").css("max-height", instructionInfoMaxHeight);
 
     // reduce info size depending on how high the input_header is and reserve space for footer
-//    $("#info").css("max-height", height - $("#input_header").height() - 100);
+    // $("#info").css("height", height - $("#input_header").height() - 100);
 }
 
 function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer) {
     adjustMapSize();
-    log("init map at " + JSON.stringify(bounds));
+    // console.log("init map at " + JSON.stringify(bounds));
 
     var defaultLayer = tileLayers.selectLayer(selectLayer);
 
     // default
     map = L.map('map', {
         layers: [defaultLayer],
+        minZoom : 2,
         contextmenu: true,
         contextmenuWidth: 150,
         contextmenuItems: [{
@@ -95,7 +98,11 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
     menuIntermediate = map.contextmenu.insertItem(_intItem, _intItem.index);
     menuEnd = map.contextmenu.insertItem(_endItem, _endItem.index);
 
-    var zoomControl = new L.Control.Zoom({position: 'topleft'}).addTo(map);
+    var zoomControl = new L.Control.Zoom({
+        position: 'topleft',
+        zoomInTitle: translate.tr('zoom_in'),
+        zoomOutTitle: translate.tr('zoom_out')
+    }).addTo(map);
 
     new L.Control.loading({
         zoomControl: zoomControl
@@ -122,7 +129,9 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         }
     });
 
-    L.control.scale().addTo(map);
+    scaleControl = L.control.scale({
+        imperial: false
+    }).addTo(map);
 
     map.fitBounds(new L.LatLngBounds(new L.LatLng(bounds.minLat, bounds.minLon),
             new L.LatLng(bounds.maxLat, bounds.maxLon)));
@@ -164,12 +173,12 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         },
         contextmenu: true,
         contextmenuItems: [{
-                text: 'Route ',
+                text: translate.tr('route') + ' ',
                 disabled: true,
                 index: 0,
                 state: 3
             }, {
-                text: 'Set intermediate',
+                text: translate.tr('set_intermediate'),
                 callback: setIntermediateCoord,
                 index: 1,
                 state: 3
@@ -229,7 +238,7 @@ module.exports.focus = focus;
 module.exports.initMap = initMap;
 module.exports.adjustMapSize = adjustMapSize;
 
-module.exports.addElevation = function (geoJsonFeature) {
+module.exports.addElevation = function (geoJsonFeature, useMiles) {
     if (elevationControl === null) {
         elevationControl = L.control.elevation({
             position: "bottomright",
@@ -240,13 +249,13 @@ module.exports.addElevation = function (geoJsonFeature) {
                 top: 10,
                 right: 20,
                 bottom: 30,
-                left: 50
+                left: 60
             },
             useHeightIndicator: true, //if false a marker is drawn at map position
             interpolation: "linear", //see https://github.com/mbostock/d3/wiki/SVG-Shapes#wiki-area_interpolate
             hoverNumber: {
-                decimalsX: 2, //decimals on distance (always in km)
-                decimalsY: 0, //decimals on height (always in m)
+                decimalsX: 2, //decimals on distance (in km or mi)
+                decimalsY: 0, //decimals on height (in m or ft)
                 formatter: undefined //custom formatter function may be injected
             },
             xTicks: undefined, //number of ticks in x axis, calculated by default according to width
@@ -255,7 +264,7 @@ module.exports.addElevation = function (geoJsonFeature) {
         });
         elevationControl.addTo(map);
     }
-
+    elevationControl.options.imperial = useMiles;
     elevationControl.addData(geoJsonFeature);
 };
 
@@ -266,6 +275,15 @@ module.exports.clearElevation = function () {
 
 module.exports.getMap = function () {
     return map;
+};
+
+module.exports.updateScale = function (useMiles) {
+    if (scaleControl === null) {
+       return;
+    }
+    scaleControl.removeFrom(map);
+    var options = useMiles ? {metric: false} : {imperial: false};
+    scaleControl = L.control.scale(options).addTo(map);
 };
 
 var FROM = 'from', TO = 'to';
@@ -298,18 +316,19 @@ module.exports.createMarker = function (index, coord, setToEnd, setToStart, dele
         draggable: true,
         contextmenu: true,
         contextmenuItems: [{
-                text: 'Marker ' + ((toFrom === FROM) ?
-                        'Start' : ((toFrom === TO) ? 'End' : 'Intermediate ' + index)),
+                text: translate.tr("marker") + ' ' + ((toFrom === FROM) ?
+                        translate.tr("start_label") : ((toFrom === TO) ?
+                        translate.tr("end_label") : translate.tr("intermediate_label") + ' ' + index)),
                 disabled: true,
                 index: 0,
                 state: 2
             }, {
-                text: 'Set as ' + ((toFrom !== TO) ? 'End' : 'Start'),
+                text: translate.tr((toFrom !== TO) ? "set_end" : "set_start"),
                 callback: (toFrom !== TO) ? setToEnd : setToStart,
                 index: 2,
                 state: 2
             }, {
-                text: 'Delete from Route',
+                text: translate.tr("delete_from_route"),
                 callback: deleteCoord,
                 index: 3,
                 state: 2,
@@ -321,5 +340,6 @@ module.exports.createMarker = function (index, coord, setToEnd, setToStart, dele
             }],
         contextmenuAtiveState: 2
     }).addTo(routingLayer).bindPopup(((toFrom === FROM) ?
-            'Start' : ((toFrom === TO) ? 'End' : 'Intermediate ' + index)));
+            translate.tr("start_label") : ((toFrom === TO) ?
+            translate.tr("end_label") : translate.tr("intermediate_label") + ' ' + index)));
 };

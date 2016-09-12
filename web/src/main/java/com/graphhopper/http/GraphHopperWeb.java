@@ -22,6 +22,8 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.util.*;
+import com.graphhopper.util.exceptions.CannotFindPointException;
+import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -70,9 +72,10 @@ public class GraphHopperWeb implements GraphHopperAPI
         ignoreSet.add("type");
     }
 
-    public void setDownloader( Downloader downloader )
+    public GraphHopperWeb setDownloader( Downloader downloader )
     {
         this.downloader = downloader;
+        return this;
     }
 
     @Override
@@ -175,15 +178,6 @@ public class GraphHopperWeb implements GraphHopperAPI
                 res.add(altRsp);
             }
 
-            JSONArray snappedPoints = json.getJSONArray("snapped_waypoints");
-            PointList points = new PointList(snappedPoints.length(), tmpElevation);
-            for (int index = 0; index < snappedPoints.length(); index++)
-            {
-                JSONArray point = snappedPoints.getJSONArray(index);
-                points.add(WebHelper.toGHPoint(point));
-            }
-            res.setPoints(points);
-
             return res;
 
         } catch (Exception ex)
@@ -195,18 +189,23 @@ public class GraphHopperWeb implements GraphHopperAPI
     public static PathWrapper createPathWrapper( JSONObject path,
                                                  boolean tmpCalcPoints, boolean tmpInstructions, boolean tmpElevation )
     {
-        PathWrapper altRsp = new PathWrapper();
-        altRsp.addErrors(readErrors(path));
-        if (altRsp.hasErrors())
-            return altRsp;
+        PathWrapper pathWrapper = new PathWrapper();
+        pathWrapper.addErrors(readErrors(path));
+        if (pathWrapper.hasErrors())
+            return pathWrapper;
 
-        double distance = path.getDouble("distance");
-        long time = path.getLong("time");
+        if (path.has("snapped_waypoints"))
+        {
+            String snappedPointStr = path.getString("snapped_waypoints");
+            PointList snappedPoints = WebHelper.decodePolyline(snappedPointStr, 5, tmpElevation);
+            pathWrapper.setWaypoints(snappedPoints);
+        }
+
         if (tmpCalcPoints)
         {
             String pointStr = path.getString("points");
             PointList pointList = WebHelper.decodePolyline(pointStr, 100, tmpElevation);
-            altRsp.setPoints(pointList);
+            pathWrapper.setPoints(pointList);
 
             if (tmpInstructions)
             {
@@ -276,11 +275,14 @@ public class GraphHopperWeb implements GraphHopperAPI
                     instr.setDistance(instDist).setTime(instTime);
                     il.add(instr);
                 }
-                altRsp.setInstructions(il);
+                pathWrapper.setInstructions(il);
             }
         }
-        altRsp.setDistance(distance).setTime(time);
-        return altRsp;
+
+        double distance = path.getDouble("distance");
+        long time = path.getLong("time");
+        pathWrapper.setDistance(distance).setTime(time);
+        return pathWrapper;
     }
 
     public static List<Throwable> readErrors( JSONObject json )
@@ -319,6 +321,16 @@ public class GraphHopperWeb implements GraphHopperAPI
                 errors.add(new RuntimeException(exMessage));
             else if (exClass.equals(IllegalArgumentException.class.getName()))
                 errors.add(new IllegalArgumentException(exMessage));
+            else if (exClass.equals(CannotFindPointException.class.getName()))
+            {
+                int pointIndex = error.getInt("point_index");
+                errors.add(new CannotFindPointException(exMessage, pointIndex));
+            }
+            else if (exClass.equals(PointOutOfBoundsException.class.getName()))
+            {
+                int pointIndex = error.getInt("point_index");
+                errors.add(new PointOutOfBoundsException(exMessage, pointIndex));
+            }
             else if (exClass.isEmpty())
                 errors.add(new RuntimeException(exMessage));
             else

@@ -89,6 +89,7 @@ public class Parameters
         {
             public static final String DISTANCE = ROUND_TRIP + ".distance";
             public static final String SEED = ROUND_TRIP + ".seed";
+            public static final String HEADING = "heading";
             public static final String INIT_MAX_RETRIES = ROUTING_INIT_PREFIX + ROUND_TRIP + ".max_retries";
         }
     }

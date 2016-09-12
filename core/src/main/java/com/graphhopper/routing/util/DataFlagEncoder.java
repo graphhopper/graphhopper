@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -123,19 +123,19 @@ public class DataFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+    public long handleRelationTags( ReaderRelation relation, long oldRelationFlags )
     {
         return 0;
     }
 
     @Override
-    public long acceptWay( OSMWay way )
+    public long acceptWay( ReaderWay way )
     {
         return 1;
     }
 
     @Override
-    public long handleWayTags( OSMWay way, long allowed, long relationFlags )
+    public long handleWayTags( ReaderWay way, long allowed, long relationFlags )
     {
         try
         {
@@ -461,9 +461,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    protected double getMaxSpeed( OSMWay way )
+    protected double getMaxSpeed( ReaderWay way )
     {
-        throw new RuntimeException("do not call getMaxSpeed(OSMWay)");
+        throw new RuntimeException("do not call getMaxSpeed(ReaderWay)");
     }
 
     @Override

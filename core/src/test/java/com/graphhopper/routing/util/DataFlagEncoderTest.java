@@ -1,13 +1,12 @@
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
+import com.graphhopper.util.Helper;
+import java.util.*;
 import static org.junit.Assert.*;
 import org.junit.Test;
 
@@ -32,7 +31,7 @@ public class DataFlagEncoderTest
     @Test
     public void testHighway()
     {
-        OSMWay osmWay = new OSMWay(0);
+        ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("surface", "sand");
         osmWay.setTag("tunnel", "yes");
@@ -44,7 +43,7 @@ public class DataFlagEncoderTest
         assertTrue(encoder.isForward(edge, motorVehicleInt));
         assertTrue(encoder.isBackward(edge, motorVehicleInt));
 
-        osmWay = new OSMWay(0);
+        osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("oneway", "yes");
         flags = encoder.handleWayTags(osmWay, 1, 0);
@@ -52,7 +51,7 @@ public class DataFlagEncoderTest
         assertTrue(encoder.isForward(edge, motorVehicleInt));
         assertFalse(encoder.isBackward(edge, motorVehicleInt));
 
-        osmWay = new OSMWay(0);
+        osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "unknownX");
         flags = encoder.handleWayTags(osmWay, 1, 0);
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
@@ -69,13 +68,13 @@ public class DataFlagEncoderTest
         map.put("trunk_link", 90d);
 
         double[] arr = encoder.getHighwaySpeedMap(map);
-        assertEquals("[0.0, 100.0, 100.0, 90.0, 90.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]", Arrays.toString(arr));
+        assertEquals("[0.0, 100.0, 100.0, 90.0, 90.0, 0.0]", Helper.createDoubleList(arr).subList(0, 6).toString());
     }
 
     @Test
     public void testMaxspeed()
     {
-        OSMWay osmWay = new OSMWay(0);
+        ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("maxspeed", "10");
         long flags = encoder.handleWayTags(osmWay, 1, 0);
@@ -83,7 +82,7 @@ public class DataFlagEncoderTest
         assertEquals(10, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
         assertEquals(10, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
 
-        osmWay = new OSMWay(0);
+        osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("maxspeed:forward", "10");
         flags = encoder.handleWayTags(osmWay, 1, 0);
@@ -97,7 +96,7 @@ public class DataFlagEncoderTest
     {
         Graph graph = new GraphBuilder(encodingManager).create();
         EdgeIteratorState edge = graph.edge(0, 1);
-        OSMWay osmWay = new OSMWay(0);
+        ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("maxspeed:forward", "10");
         long flags = encoder.handleWayTags(osmWay, 1, 0);

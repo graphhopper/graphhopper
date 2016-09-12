@@ -38,30 +38,27 @@ var GHRequest = function (host, api_key) {
     this.features = {};
 
     this.do_zoom = true;
+    this.useMiles = false;
     // use jsonp here if host allows CORS
     this.dataType = "json";
-    this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "elevation": false};        
+    this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "elevation": false};
 
     // register events
     this.route.addListener('route.add', function (evt) {
         this.to = this.route.last();
-        log("Foo just added.");
     }.bind(this));
     this.route.addListener('route.remove', function (evt) {
         this.from = this.route.first();
         this.to = this.route.last();
-        log("Foo just removed.");
     }.bind(this));
     this.route.addListener('route.move', function (evt) {
         this.from = this.route.first();
         this.to = this.route.last();
-        log("Foo just moved.");
     }.bind(this));
 
     this.route.addListener('route.reverse', function (evt) {
         this.from = this.route.first();
         this.to = this.route.last();
-        log("Foo just reversed.");
     }.bind(this));
 };
 
@@ -74,7 +71,7 @@ GHRequest.prototype.init = function (params) {
         else if (val === "true")
             val = true;
 
-        if (key === "point" || key === "mathRandom" || key === "do_zoom" || key === "layer")
+        if (key === "point" || key === "mathRandom" || key === "do_zoom" || key === "layer" || key === "use_miles")
             continue;
 
         this.api_params[key] = val;
@@ -82,6 +79,9 @@ GHRequest.prototype.init = function (params) {
 
     if ('do_zoom' in params)
         this.do_zoom = params.do_zoom;
+
+    if ('use_miles' in params)
+        this.useMiles = params.use_miles;
 
     // overwrite elevation e.g. important if not supported from feature set
     this.api_params.elevation = false;
@@ -147,7 +147,9 @@ GHRequest.prototype.createGeocodeURL = function (host, prevIndex) {
     var path = this.createPath(tmpHost + "/geocode?limit=6&type=" + this.dataType + "&key=" + this.key);
     if (prevIndex >= 0 && prevIndex < this.route.size()) {
         var point = this.route.getIndex(prevIndex);
-        path += "&point=" + point.lat + "," + point.lng;
+        if (point.isResolved()) {
+            path += "&point=" + point.lat + "," + point.lng;
+        }
     }
     return path;
 };
@@ -161,7 +163,7 @@ GHRequest.prototype.createGPXURL = function (withRoute, withTrack, withWayPoints
 };
 
 GHRequest.prototype.createHistoryURL = function () {
-    return this.createPath("?" + this.createPointParams(true));
+    return this.createPath("?" + this.createPointParams(true)) + "&use_miles=" + !!this.useMiles;
 };
 
 GHRequest.prototype.createPointParams = function (useRawInput) {
@@ -209,6 +211,12 @@ GHRequest.prototype.doRequest = function (url, callback) {
                             "type": "LineString",
                             "coordinates": tmpArray
                         };
+
+                        var tmpSnappedArray = graphhopperTools.decodePath(path.snapped_waypoints, that.hasElevation());
+                        path.snapped_waypoints = {
+                            "type": "MultiPoint",
+                            "coordinates": tmpSnappedArray
+                        };
                     }
                 }
             }
@@ -230,7 +238,7 @@ GHRequest.prototype.doRequest = function (url, callback) {
                     hints: [{"message": msg, "details": details}]
                 };
             }
-            log(msg + " " + JSON.stringify(err));
+            console.log(msg + " " + JSON.stringify(err));
 
             callback(json);
         },
@@ -242,7 +250,7 @@ GHRequest.prototype.doRequest = function (url, callback) {
 
 GHRequest.prototype.getInfo = function () {
     var url = this.host + "/info?type=" + this.dataType + "&key=" + this.key;
-    log(url);
+    // console.log(url);
     return $.ajax({
         url: url,
         timeout: 3000,
@@ -262,7 +270,7 @@ GHRequest.prototype.fetchTranslationMap = function (urlLocaleParam) {
         // let servlet figure out the locale from the Accept-Language header
         urlLocaleParam = "";
     var url = this.host + "/i18n/" + urlLocaleParam + "?type=" + this.dataType + "&key=" + this.key;
-    log(url);
+    // console.log(url);
     return $.ajax({
         url: url,
         timeout: 3000,

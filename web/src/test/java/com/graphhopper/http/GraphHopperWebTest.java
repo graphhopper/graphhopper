@@ -58,6 +58,10 @@ public class GraphHopperWebTest
         assertEquals(5, arsp.getInstructions().getSize());
         assertEquals("(0,Geradeaus auf A 100,1268.519329705091,65237)", arsp.getInstructions().get(0).toString());
         assertEquals(11, arsp.getInstructions().get(0).getPoints().size());
+
+        assertEquals(43.73595, arsp.getWaypoints().getLat(0), 1e-4);
+        assertEquals(7.42015, arsp.getWaypoints().getLon(0), 1e-4);
+        assertEquals(43.73761, arsp.getWaypoints().getLat(1), 1e-4);
     }
 
     @Test

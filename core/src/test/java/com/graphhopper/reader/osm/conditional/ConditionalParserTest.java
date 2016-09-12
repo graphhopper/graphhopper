@@ -114,5 +114,23 @@ public class ConditionalParserTest extends CalendarBasedTest
         assertFalse(result.isInRange(1));
         assertFalse(result.isInRange(2));
         assertTrue(result.isInRange(3));
+
+        // unit is allowed according to wiki :/
+        result = instance.getRange("no @ height > 2t");
+        assertEquals("height", result.getKey());
+        assertFalse(result.isInRange(1));
+        assertFalse(result.isInRange(2));
+        assertTrue(result.isInRange(3));
+    }
+
+    @Test
+    public void parseNumber()
+    {
+        // TODO currently no unit conversation is done which can be required if a different one is passed in isInRange        
+        Set<String> set = new HashSet<>();
+        ConditionalParser p = new ConditionalParser(set);
+        assertEquals(3, p.parseNumber("3t"), .1);
+        assertEquals(3.1, p.parseNumber("3.1 t"), .1);
+        assertEquals(3, p.parseNumber("3 meters"), .1);
     }
 }

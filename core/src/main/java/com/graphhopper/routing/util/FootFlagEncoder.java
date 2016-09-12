@@ -17,9 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.reader.osm.conditional.ConditionalOSMTagInspector;
 import com.graphhopper.reader.osm.conditional.DateRangeParser;
 import com.graphhopper.util.PMap;
 
@@ -28,7 +28,9 @@ import java.util.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
- * Defines bit layout for pedestrians (speed, access, surface, ...).
+ * Defines bit layout for pedestrians (speed, access, surface, ...). Here we put a penalty on unsafe
+ * roads only. If you wish to also prefer routes due to beauty like hiking routes use the
+ * HikeFlagEncoder instead.
  * <p>
  * @author Peter Karich
  * @author Nop
@@ -41,13 +43,13 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     static final int FERRY_SPEED = 10;
     private EncodedValue priorityWayEncoder;
     private EncodedValue relationCodeEncoder;
-    protected HashSet<String> sidewalks = new HashSet<String>(5);
-    protected HashSet<String> sidewalksNo = new HashSet<String>(5);
-    private final Set<String> safeHighwayTags = new HashSet<String>();
-    private final Set<String> allowedHighwayTags = new HashSet<String>();
-    private final Set<String> avoidHighwayTags = new HashSet<String>();
+    protected HashSet<String> sidewalkValues = new HashSet<String>(5);
+    protected HashSet<String> sidewalksNoValues = new HashSet<String>(5);
+    final Set<String> safeHighwayTags = new HashSet<String>();
+    final Set<String> allowedHighwayTags = new HashSet<String>();
+    final Set<String> avoidHighwayTags = new HashSet<String>();
     // convert network tag of hiking routes into a way route code
-    private final Map<String, Integer> hikingNetworkToCode = new HashMap<String, Integer>();
+    final Map<String, Integer> hikingNetworkToCode = new HashMap<String, Integer>();
 
     /**
      * Should be only instantiated via EncodingManager
@@ -59,10 +61,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
 
     public FootFlagEncoder( PMap properties )
     {
-        this(
-                (int) properties.getLong("speedBits", 4),
-                properties.getDouble("speedFactor", 1)
-        );
+        this((int) properties.getLong("speedBits", 4),
+                properties.getDouble("speedFactor", 1));
         this.properties = properties;
         this.setBlockFords(properties.getBool("blockFords", true));
     }
@@ -75,7 +75,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     public FootFlagEncoder( int speedBits, double speedFactor )
     {
         super(speedBits, speedFactor, 0);
-        restrictions.addAll(Arrays.asList("foot", "vehicle", "access"));
+        restrictions.addAll(Arrays.asList("foot", "access"));
         restrictedValues.add("private");
         restrictedValues.add("no");
         restrictedValues.add("restricted");
@@ -87,15 +87,15 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         intendedValues.add("official");
         intendedValues.add("permissive");
 
-        sidewalksNo.add("no");
-        sidewalksNo.add("none");
+        sidewalksNoValues.add("no");
+        sidewalksNoValues.add("none");
         // see #712
-        sidewalksNo.add("separate");
+        sidewalksNoValues.add("separate");
 
-        sidewalks.add("yes");
-        sidewalks.add("both");
-        sidewalks.add("left");
-        sidewalks.add("right");
+        sidewalkValues.add("yes");
+        sidewalkValues.add("both");
+        sidewalkValues.add("left");
+        sidewalkValues.add("right");
 
         setBlockByDefault(false);
         potentialBarriers.add("gate");
@@ -128,20 +128,20 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         // disallowed in some countries
         //allowedHighwayTags.add("bridleway");
 
-        hikingNetworkToCode.put("iwn", BEST.getValue());
-        hikingNetworkToCode.put("nwn", BEST.getValue());
-        hikingNetworkToCode.put("rwn", VERY_NICE.getValue());
-        hikingNetworkToCode.put("lwn", VERY_NICE.getValue());
+        hikingNetworkToCode.put("iwn", UNCHANGED.getValue());
+        hikingNetworkToCode.put("nwn", UNCHANGED.getValue());
+        hikingNetworkToCode.put("rwn", UNCHANGED.getValue());
+        hikingNetworkToCode.put("lwn", UNCHANGED.getValue());
 
         maxPossibleSpeed = FERRY_SPEED;
 
-        conditionalTagsInspector = new ConditionalTagsInspector(DateRangeParser.createCalendar(), restrictions, restrictedValues, intendedValues);
+        init();
     }
 
     @Override
     public int getVersion()
     {
-        return 1;
+        return 2;
     }
 
     @Override
@@ -207,7 +207,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
      * <p>
      */
     @Override
-    public long acceptWay( OSMWay way )
+    public long acceptWay( ReaderWay way )
     {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
@@ -235,7 +235,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
                 return 0;
         }
 
-        if (way.hasTag("sidewalk", sidewalks))
+        if (way.hasTag("sidewalk", sidewalkValues))
             return acceptBit;
 
         // no need to evaluate ferries or fords - already included here
@@ -253,17 +253,17 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             return 0;
 
         // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues) && !conditionalTagsInspector.isRestrictedWayConditionallyPermitted(way))
+        if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
             return 0;
 
-        if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))
+        if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
             return 0;
         else
             return acceptBit;
     }
 
     @Override
-    public long handleRelationTags( OSMRelation relation, long oldRelationFlags )
+    public long handleRelationTags( ReaderRelation relation, long oldRelationFlags )
     {
         int code = 0;
         if (relation.hasTag("route", "hiking") || relation.hasTag("route", "foot"))
@@ -271,6 +271,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             Integer val = hikingNetworkToCode.get(relation.getTag("network"));
             if (val != null)
                 code = val;
+            else
+                code = hikingNetworkToCode.get("lwn");
         } else if (relation.hasTag("route", "ferry"))
         {
             code = PriorityCode.AVOID_IF_POSSIBLE.getValue();
@@ -283,7 +285,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
     }
 
     @Override
-    public long handleWayTags( OSMWay way, long allowed, long relationFlags )
+    public long handleWayTags( ReaderWay way, long allowed, long relationFlags )
     {
         if (!isAccept(allowed))
             return 0;
@@ -335,7 +337,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
         }
     }
 
-    protected int handlePriority( OSMWay way, int priorityFromRelation )
+    protected int handlePriority( ReaderWay way, int priorityFromRelation )
     {
         TreeMap<Double, Integer> weightToPrioMap = new TreeMap<Double, Integer>();
         if (priorityFromRelation == 0)
@@ -353,7 +355,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder
      * @param weightToPrioMap associate a weight with every priority. This sorted map allows
      * subclasses to 'insert' more important priorities as well as overwrite determined priorities.
      */
-    void collect( OSMWay way, TreeMap<Double, Integer> weightToPrioMap )
+    void collect( ReaderWay way, TreeMap<Double, Integer> weightToPrioMap )
     {
         String highway = way.getTag("highway");
         if (way.hasTag("foot", "designated"))
@@ -365,17 +367,15 @@ public class FootFlagEncoder extends AbstractFlagEncoder
             weightToPrioMap.put(40d, PREFER.getValue());
             if (way.hasTag("tunnel", intendedValues))
             {
-                if (way.hasTag("sidewalk", sidewalksNo))
-                    weightToPrioMap.put(40d, REACH_DEST.getValue());
+                if (way.hasTag("sidewalk", sidewalksNoValues))
+                    weightToPrioMap.put(40d, AVOID_IF_POSSIBLE.getValue());
                 else
                     weightToPrioMap.put(40d, UNCHANGED.getValue());
             }
         } else if (maxSpeed > 50 || avoidHighwayTags.contains(highway))
         {
-            if (way.hasTag("sidewalk", sidewalksNo))
-                weightToPrioMap.put(45d, WORST.getValue());
-            else
-                weightToPrioMap.put(45d, REACH_DEST.getValue());
+            if (!way.hasTag("sidewalk", sidewalkValues))
+                weightToPrioMap.put(45d, AVOID_IF_POSSIBLE.getValue());
         }
 
         if (way.hasTag("bicycle", "official") || way.hasTag("bicycle", "designated"))

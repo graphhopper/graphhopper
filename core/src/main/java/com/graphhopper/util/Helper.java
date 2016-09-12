@@ -319,6 +319,16 @@ public class Helper
         return file.substring(0, index);
     }
 
+    public static List<Double> createDoubleList( double[] values )
+    {
+        List<Double> list = new ArrayList<>();
+        for (double v : values)
+        {
+            list.add(v);
+        }
+        return list;
+    }
+
     public static TIntList createTList( int... list )
     {
         TIntList res = new TIntArrayList(list.length);

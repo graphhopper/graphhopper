@@ -17,9 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
-import com.graphhopper.reader.osm.conditional.ConditionalTagsInspector;
-import com.graphhopper.reader.osm.conditional.DateRangeParser;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -73,6 +71,9 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         //  moped, mofa
         restrictions.add("motorcycle");
 
+        absoluteBarriers.remove("bus_trap");
+        absoluteBarriers.remove("sump_buster");
+
         trackTypeSpeedMap.clear();
         defaultSpeedMap.clear();
 
@@ -118,8 +119,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         defaultSpeedMap.put("road", 20);
         // forestry stuff
         defaultSpeedMap.put("track", 15);
-
-        conditionalTagsInspector = new ConditionalTagsInspector(DateRangeParser.createCalendar(), restrictions, restrictedValues, intendedValues);
+        
+        init();
     }
 
     @Override
@@ -150,7 +151,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     }
 
     @Override
-    public long acceptWay( OSMWay way )
+    public long acceptWay( ReaderWay way )
     {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null)
@@ -183,7 +184,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         String firstValue = way.getFirstPriorityTag(restrictions);
         if (!firstValue.isEmpty())
         {
-            if (restrictedValues.contains(firstValue) && !conditionalTagsInspector.isRestrictedWayConditionallyPermitted(way))
+            if (restrictedValues.contains(firstValue) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
                 return 0;
             if (intendedValues.contains(firstValue))
                 return acceptBit;
@@ -193,14 +194,14 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         if (isBlockFords() && ("ford".equals(highwayValue) || way.hasTag("ford")))
             return 0;
 
-        if (conditionalTagsInspector.isPermittedWayConditionallyRestricted(way))
+        if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
             return 0;
         else
             return acceptBit;
     }
 
     @Override
-    public long handleWayTags( OSMWay way, long allowed, long priorityFromRelation )
+    public long handleWayTags( ReaderWay way, long allowed, long priorityFromRelation )
     {
         if (!isAccept(allowed))
             return 0;
@@ -335,7 +336,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         }
     }
 
-    private int handlePriority( OSMWay way, long relationFlags )
+    private int handlePriority( ReaderWay way, long relationFlags )
     {
         String highway = way.getTag("highway", "");
         if (avoidSet.contains(highway))
@@ -350,7 +351,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
     }
 
     @Override
-    public void applyWayTags( OSMWay way, EdgeIteratorState edge )
+    public void applyWayTags( ReaderWay way, EdgeIteratorState edge )
     {
         double speed = this.getSpeed(edge.getFlags());
         double roadDistance = edge.getDistance();
@@ -364,7 +365,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
         edge.setFlags(this.curvatureEncoder.setValue(edge.getFlags(), convertToInt(bendiness)));
     }
 
-    private double getBeelineDistance( OSMWay way )
+    private double getBeelineDistance( ReaderWay way )
     {
         return way.getTag("estimated_distance", Double.POSITIVE_INFINITY);
     }
@@ -383,8 +384,9 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder
 
     /**
      * A really small bendiness or a bendiness greater than 1 indicates an error in the calculation.
-     * Just ignore them. We use bendiness > 1.2 since the beelineDistance is only approximated,
-     * therefore it can happen on straight roads, that the beeline is longer than the road.
+     * Just ignore them. We use bendiness greater 1.2 since the beelineDistance is only
+     * approximated, therefore it can happen on straight roads, that the beeline is longer than the
+     * road.
      */
     protected double correctErrors( double bendiness )
     {

@@ -3,7 +3,7 @@ var messages = require('./messages.js');
 
 var routeSegmentPopup = null;
 
-function addInstruction(mapLayer, main, instr, instrIndex, lngLat) {
+function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles) {
     var sign = instr.sign;
     if (instrIndex === 0)
         sign = "marker-icon-green";
@@ -17,10 +17,13 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat) {
             title = title + ", " + instr.annotation_text;
     }
 
+    var pathname = window.location.pathname;
+    var dirname = pathname.substring(0, pathname.lastIndexOf('/'));
+
     var instructionDiv = $("<tr class='instruction'/>");
     if (sign !== "continue") {
         var indiPic = "<img class='pic' style='vertical-align: middle' src='" +
-                window.location.pathname + "img/" + sign + ".png'/>";
+                dirname + "/img/" + sign + ".png'/>";
         instructionDiv.append("<td class='instr_pic'>" + indiPic + "</td>");
     } else
         instructionDiv.append("<td class='instr_pic'/>");
@@ -31,7 +34,7 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat) {
     instructionDiv.append(tdVar);
     var distance = instr.distance;
     if (distance > 0) {
-        instructionDiv.append("<td class='instr_distance'><span>" + translate.createDistanceString(distance) + "<br/>" + translate.createTimeString(instr.time) + "</span></td>");
+        instructionDiv.append("<td class='instr_distance'><span>" + translate.createDistanceString(distance, useMiles) + "<br/>" + translate.createTimeString(instr.time) + "</span></td>");
     }
 
     if (lngLat) {
@@ -56,19 +59,19 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
     for (var m = 0; m < len; m++) {
         var instr = path.instructions[m];
         var lngLat = path.points.coordinates[instr.interval[0]];
-        addInstruction(mapLayer, instructionsElement, instr, m, lngLat);
+        addInstruction(mapLayer, instructionsElement, instr, m, lngLat, request.useMiles);
     }
     var infoDiv = $("<div class='instructions_info'>");
     infoDiv.append(instructionsElement);
 
     if (partialInstr) {
-        var moreDiv = $("<button id='moreButton'>" + translate.tr("more_button") + "..</button>");
+        var moreDiv = $("<button id='moreButton'>" + translate.tr("more_button") + "…</button>");
         moreDiv.click(function () {
             moreDiv.remove();
             for (var m = len; m < path.instructions.length; m++) {
                 var instr = path.instructions[m];
                 var lngLat = path.points.coordinates[instr.interval[0]];
-                addInstruction(mapLayer, instructionsElement, instr, m, lngLat);
+                addInstruction(mapLayer, instructionsElement, instr, m, lngLat, request.useMiles);
             }
         });
         instructionsElement.append(moreDiv);

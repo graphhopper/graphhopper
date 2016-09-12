@@ -24,8 +24,8 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class DefaultEdgeFilter implements EdgeFilter
 {
-    private final boolean in;
-    private final boolean out;
+    private final boolean bwd;
+    private final boolean fwd;
     private FlagEncoder encoder;
 
     /**
@@ -36,22 +36,32 @@ public class DefaultEdgeFilter implements EdgeFilter
         this(encoder, true, true);
     }
 
-    public DefaultEdgeFilter( FlagEncoder encoder, boolean in, boolean out )
+    public DefaultEdgeFilter( FlagEncoder encoder, boolean bwd, boolean fwd )
     {
         this.encoder = encoder;
-        this.in = in;
-        this.out = out;
+        this.bwd = bwd;
+        this.fwd = fwd;
     }
 
     @Override
     public final boolean accept( EdgeIteratorState iter )
     {
-        return out && iter.isForward(encoder) || in && iter.isBackward(encoder);
+        return fwd && iter.isForward(encoder) || bwd && iter.isBackward(encoder);
+    }
+
+    public boolean acceptsBackward()
+    {
+        return bwd;
+    }
+
+    public boolean acceptsForward()
+    {
+        return fwd;
     }
 
     @Override
     public String toString()
     {
-        return encoder.toString() + ", in:" + in + ", out:" + out;
+        return encoder.toString() + ", bwd:" + bwd + ", fwd:" + fwd;
     }
 }

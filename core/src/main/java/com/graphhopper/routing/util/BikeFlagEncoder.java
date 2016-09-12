@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.PMap;
 
 /**
@@ -71,6 +71,8 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
 
         absoluteBarriers.add("kissing_gate");
         setSpecificClassBicycle("touring");
+        
+        init();
     }
 
     @Override
@@ -80,7 +82,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder
     }
 
     @Override
-    boolean isPushingSection( OSMWay way )
+    boolean isPushingSection( ReaderWay way )
     {
         String highway = way.getTag("highway");
         String trackType = way.getTag("tracktype");
