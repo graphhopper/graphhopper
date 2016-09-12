@@ -47,23 +47,7 @@ be embedded](./routing.md) into your application and like a [custom weighting](.
 can be implemented.
 
 Look [here](http://graphhopper.com/#community) for the maven snippet to use GraphHopper in your
-application. To use an unreleased snapshot version of GraphHopper you need the following snippet in your pom.xml
-as those versions are not in maven central:
-
-```xml
-    <repositories>
-        <repository>
-            <id>sonatype-oss-public</id>
-            <url>https://oss.sonatype.org/content/groups/public/</url>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-        </repository>
-    </repositories>
-```
+application.
 
 ### Java, Routing Server Usage
 
