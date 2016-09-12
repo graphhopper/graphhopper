@@ -30,11 +30,11 @@ public class ConfigMapTest
     public void testPut()
     {
         ConfigMap instance = new ConfigMap();
-        instance.put("int", 1);
+        instance.put("int_val", 1);
         instance.put("test_pest", true);
 
         assertTrue(instance.get("test_pest", false));
         assertFalse(instance.get("test_pest_", false));
-        assertEquals(1L, instance.getInt("int", 0));
+        assertEquals(1L, instance.getInt("int_val", 0));
     }
 }

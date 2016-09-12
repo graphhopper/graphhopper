@@ -21,7 +21,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A properties map String to String with convenient accessors
+ * A properties map (String to String) with convenient accessors
  * <p>
  * @see ConfigMap
  * @author Peter Karich
