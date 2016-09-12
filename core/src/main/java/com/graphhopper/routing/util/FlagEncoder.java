@@ -94,6 +94,14 @@ public interface FlagEncoder extends TurnCostEncoder
      * Reports whether this edge is part of a roundabout.
      */
     static final int K_ROUNDABOUT = 2;
+    /**
+     * Reports whether this edge is part of a tunnel.
+     */
+    static final int K_TUNNEL = 3;
+    /**
+     * Reports whether this edge is part of a bridge.
+     */
+    static final int K_BRIDGE = 4;
 
     /**
      * Returns arbitrary boolean value identified by the specified key.

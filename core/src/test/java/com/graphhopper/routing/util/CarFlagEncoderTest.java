@@ -32,7 +32,7 @@ import static org.junit.Assert.*;
  */
 public class CarFlagEncoderTest
 {
-    private final EncodingManager em = new EncodingManager("car,bike,foot");
+    private final EncodingManager em = new EncodingManager("car,bike,foot", 8);
     private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("car");
 
     @Test
@@ -342,6 +342,47 @@ public class CarFlagEncoderTest
         assertFalse(encoder.isBackward(flags));
         assertTrue(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
     }
+    
+    @Test
+    public void testTunnel()
+    {
+        long flags = encoder.setAccess(0, true, true);
+        long resFlags = encoder.setBool(flags, FlagEncoder.K_TUNNEL, true);
+        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_TUNNEL));
+
+        resFlags = encoder.setBool(flags, FlagEncoder.K_TUNNEL, false);
+        assertFalse(encoder.isBool(resFlags, FlagEncoder.K_TUNNEL));
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "motorway");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertFalse(encoder.isBool(flags, FlagEncoder.K_TUNNEL));
+
+        way.setTag("tunnel", "yes");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_TUNNEL));
+    }
+    
+    @Test
+    public void testBridge()
+    {
+        long flags = encoder.setAccess(0, true, true);
+        long resFlags = encoder.setBool(flags, FlagEncoder.K_BRIDGE, true);
+        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_BRIDGE));
+
+        resFlags = encoder.setBool(flags, FlagEncoder.K_BRIDGE, false);
+        assertFalse(encoder.isBool(resFlags, FlagEncoder.K_BRIDGE));
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "motorway");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertFalse(encoder.isBool(flags, FlagEncoder.K_BRIDGE));
+
+        way.setTag("bridge", "yes");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_BRIDGE));
+    }    
+    
 
     @Test
     public void testRailway()
