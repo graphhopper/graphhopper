@@ -985,7 +985,11 @@ public class GraphHopper implements GraphHopperAPI
     {
         String weighting = weightingMap.getWeighting().toLowerCase();
 
-        if ("shortest".equalsIgnoreCase(weighting))
+        if (encoder.supports(GenericWeighting.class))
+        {
+            DataFlagEncoder dataEncoder = (DataFlagEncoder) encoder;
+            return new GenericWeighting(dataEncoder, dataEncoder.readStringMap(weightingMap));
+        } else if ("shortest".equalsIgnoreCase(weighting))
         {
             return new ShortestWeighting(encoder);
         } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty())

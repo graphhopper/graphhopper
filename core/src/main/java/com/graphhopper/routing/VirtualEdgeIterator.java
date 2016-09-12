@@ -135,9 +135,9 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState
     }
 
     @Override
-    public boolean getBoolean( int key, boolean reverse, boolean _default )
+    public boolean getBool( int key, boolean _default )
     {
-        return edges.get(current).getBoolean(key, reverse, _default);
+        return edges.get(current).getBool(key, _default);
     }
 
     @Override

@@ -15,26 +15,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util;
+package com.graphhopper.util;
 
-import com.graphhopper.util.PMap;
+import org.junit.Test;
+import static org.junit.Assert.*;
 
 /**
  *
  * @author Peter Karich
  */
-public interface FlagEncoderFactory
+public class ConfigMapTest
 {
-    final String CAR = "car";
-    final String BIKE = "bike";
-    final String BIKE2 = "bike2";
-    final String RACINGBIKE = "racingbike";
-    final String MOUNTAINBIKE = "mtb";
-    final String FOOT = "foot";
-    final String HIKE = "hike";
-    final String MOTORCYCLE = "motorcycle";
-    final String GENERIC = "generic";
-    final FlagEncoderFactory DEFAULT = new DefaultFlagEncoderFactory();
+    @Test
+    public void testPut()
+    {
+        ConfigMap instance = new ConfigMap();
+        instance.put("int_val", 1);
+        instance.put("test_pest", true);
 
-    FlagEncoder createFlagEncoder( String name, PMap configuration );
+        assertTrue(instance.get("test_pest", false));
+        assertFalse(instance.get("test_pest_", false));
+        assertEquals(1L, instance.getInt("int_val", 0));
+    }
 }
