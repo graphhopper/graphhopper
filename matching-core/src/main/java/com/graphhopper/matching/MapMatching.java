@@ -17,6 +17,8 @@
  */
 package com.graphhopper.matching;
 
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.QueryGraph;
