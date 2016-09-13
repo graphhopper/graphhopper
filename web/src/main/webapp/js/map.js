@@ -209,6 +209,13 @@ module.exports.getRoutingLayer = function () {
     return routingLayer;
 };
 
+module.exports.getSubLayers = function(name) {
+    var subLayers = routingLayer.getLayers();
+    return subLayers.filter(function(sl) {
+        return sl.feature && sl.feature.properties && sl.feature.properties.name === name;
+    });
+};
+
 module.exports.addDataToRoutingLayer = function (geoJsonFeature) {
     routingLayer.addData(geoJsonFeature);
 };

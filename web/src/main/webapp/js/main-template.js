@@ -33,6 +33,7 @@ else
 
 var mapLayer = require('./map.js');
 var nominatim = require('./nominatim.js');
+var routeManipulation = require('./routeManipulation.js');
 var gpxExport = require('./gpxexport.js');
 var messages = require('./messages.js');
 var translate = require('./translate.js');
@@ -334,7 +335,16 @@ function setStartCoord(e) {
 }
 
 function setIntermediateCoord(e) {
-    var index = ghRequest.route.size() - 1;
+    var routeLayers = mapLayer.getSubLayers("route");
+    var routeSegments = routeLayers.map(function(rl) {
+        return {
+            coordinates: rl.getLatLngs(),
+            wayPoints: rl.feature.properties.snapped_waypoints.coordinates.map(function(wp) {
+                return L.latLng(wp[1], wp[0]);
+            })
+        };
+    });
+    var index = routeManipulation.getIntermediatePointIndex(routeSegments, e.latlng);
     ghRequest.route.add(e.latlng.wrap(), index);
     resolveIndex(index);
     routeIfAllResolved();
@@ -547,7 +557,11 @@ function routeLatLng(request, doQuery) {
             var geojsonFeature = {
                 "type": "Feature",
                 "geometry": path.points,
-                "properties": {"style": style}
+                "properties": {
+                    "style": style,
+                    name: "route",
+                    snapped_waypoints: path.snapped_waypoints
+                }
             };
 
             geoJsons.push(geojsonFeature);
