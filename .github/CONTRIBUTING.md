@@ -34,9 +34,16 @@ keep in mind that this requires storing your Email there. The same applies if yo
 Note, our CLA does not influence your rights on your contribution but it makes sure for others that you agree to the Apache License, Version 2.
 After this you'll appear in the <a href="CONTRIBUTORS.md">contributors list</a> and your pull request can also be discussed technically.
 
-## Syntax:
+## Code formatting
 
-* Tell this your IDE or just use NetBeans which picks the format from pom.xml. E.g. no tabs - use 4 spaces instead!
-* Follow the conventions you see used in the source already.
+We use IntelliJ defaults and a very similar configuration for NetBeans defined in the root pom.xml. Also for other IDEs 
+it should be simple to match:
+
+ * Java indent is 4 spaces
+ * Line width is 100 characters
+ * The rest is left to Java coding standards but disable "auto-format on save" to prevent unnecessary format changes. 
+ * Currently we do not care about import section that much, avoid changing it
+ * Unix line endings (should be handled via git)
+ * See discussion in [#770](https://github.com/graphhopper/graphhopper/issues/770)
 
 And in case we didn't emphasize it enough: we love tests!
