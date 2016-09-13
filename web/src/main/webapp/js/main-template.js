@@ -33,6 +33,7 @@ else
 
 var mapLayer = require('./map.js');
 var nominatim = require('./nominatim.js');
+var routeManipulation = require('./routeManipulation.js');
 var gpxExport = require('./gpxexport.js');
 var messages = require('./messages.js');
 var translate = require('./translate.js');
@@ -334,44 +335,16 @@ function setStartCoord(e) {
 }
 
 function setIntermediateCoord(e) {
-    // finds the point of a routeLayer that is closest to the clicked location
-    var getClosestPoint = function(routeLayer) {
-        return routeLayer.getLatLngs().map(function(rc, i) {
-            return {
-                index: i,
-                distance: L.latLng(rc).distanceTo(e.latlng)
-            };
-        }).reduce(function(prev, curr) {
-            return curr.distance < prev.distance ? curr : prev;
-        });
-    };
-
-    // find the part of the route that contains the closest point to the clicked location
-    // there can be more than one such parts if alternative routes are used
-    var closestRouteLayer = mapLayer.getSubLayers("route").map(function(rl) {
-       return {
-           routeLayer: rl,
-           closestPoint: getClosestPoint(rl)
-       };
-    }).reduce(function(prev, curr) {
-        return curr.closestPoint.distance < prev.closestPoint.distance ? curr : prev;
+    var routeLayers = mapLayer.getSubLayers("route");
+    var routeSegments = routeLayers.map(function(rl) {
+        return {
+            coordinates: rl.getLatLngs(),
+            wayPoints: rl.feature.properties.snapped_waypoints.coordinates.map(function(wp) {
+                return L.latLng(wp[1], wp[0]);
+            })
+        };
     });
-
-    // start at the closest point and follow the route to find the index of the next waypoint
-    var routeCoords = closestRouteLayer.routeLayer.getLatLngs();
-    var wayPoints = closestRouteLayer.routeLayer.feature.properties.snapped_waypoints.coordinates;
-    var index = 1; // if no waypoint is found the index will be one
-    for (var i=closestRouteLayer.closestPoint.index; i<routeCoords.length; ++i) {
-        var wpIndex = wayPoints.findIndex(function(wp) {
-            return routeCoords[i].equals(L.latLng(wp[1], wp[0]), 1.e-3);
-        });
-        if (wpIndex !== -1) {
-            index = wpIndex === 0 ? 1 : wpIndex;
-            break;
-        }
-    }
-
-    // insert the new waypoint
+    var index = routeManipulation.getIntermediatePointIndex(routeSegments, e.latlng);
     ghRequest.route.add(e.latlng.wrap(), index);
     resolveIndex(index);
     routeIfAllResolved();
