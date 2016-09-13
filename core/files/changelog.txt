@@ -5,6 +5,7 @@
     OSM reader separated from core, use new graphhopper-core package
     moved subnetwork code into own package com.graphhopper.routing.subnetwork
     moved weighting code into own package com.graphhopper.routing.weighting
+    code format has changed, so it is important to change your PRs too before you merge master, see discussion #770
 0.7        
     added snapped points to output JSON for every path
     the foot routing is now much smoother and only considers safe paths, to use beautiful roads (i.e. prefer hiking routes etc) use the new 'hike' profiles, see #633
