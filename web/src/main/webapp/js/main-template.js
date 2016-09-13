@@ -359,7 +359,7 @@ function setIntermediateCoord(e) {
 
     // start at the closest point and follow the route to find the index of the next waypoint
     var routeCoords = closestRouteLayer.routeLayer.getLatLngs();
-    var wayPoints = closestRouteLayer.routeLayer.feature.properties.snappedWaypoints.coordinates;
+    var wayPoints = closestRouteLayer.routeLayer.feature.properties.snapped_waypoints.coordinates;
     var index = 1; // if no waypoint is found the index will be one
     for (var i=closestRouteLayer.closestPoint.index; i<routeCoords.length; ++i) {
         var wpIndex = wayPoints.findIndex(function(wp) {
@@ -587,7 +587,7 @@ function routeLatLng(request, doQuery) {
                 "properties": {
                     "style": style,
                     name: "route",
-                    snappedWaypoints: path.snapped_waypoints
+                    snapped_waypoints: path.snapped_waypoints
                 }
             };
 
