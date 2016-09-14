@@ -306,6 +306,16 @@ public class GraphHopperIT {
         PathWrapper arsp = rsp.getBest();
         assertEquals(297, arsp.getDistance(), 5.);
         assertEquals(27, arsp.getPoints().getSize());
+
+        // test if start and first point are identical leading to an empty path, #788
+        rq = new GHRequest().
+                addPoint(new GHPoint(43.741069, 7.426854)).
+                addPoint(new GHPoint(43.741069, 7.426854)).
+                addPoint(new GHPoint(43.740371, 7.426946)).
+                setVehicle(vehicle).setWeighting("fastest");
+        rq.getHints().put(Routing.PASS_THROUGH, true);
+        rsp = hopper.route(rq);
+        assertEquals(91, rsp.getBest().getDistance(), 5.);
     }
 
     @Test

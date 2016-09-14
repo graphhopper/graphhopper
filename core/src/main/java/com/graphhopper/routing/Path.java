@@ -126,6 +126,10 @@ public class Path {
         return this;
     }
 
+    public int getEdgeCount() {
+        return edgeIds.size();
+    }
+
     public boolean isFound() {
         return found;
     }

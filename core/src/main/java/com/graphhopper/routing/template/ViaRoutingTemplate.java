@@ -90,8 +90,10 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             } else if (viaTurnPenalty) {
                 // enforce straight start after via stop
                 Path prevRoute = pathList.get(placeIndex - 2);
-                EdgeIteratorState incomingVirtualEdge = prevRoute.getFinalEdge();
-                queryGraph.enforceHeadingByEdgeId(fromQResult.getClosestNode(), incomingVirtualEdge.getEdge(), false);
+                if (prevRoute.getEdgeCount() > 0) {
+                    EdgeIteratorState incomingVirtualEdge = prevRoute.getFinalEdge();
+                    queryGraph.enforceHeadingByEdgeId(fromQResult.getClosestNode(), incomingVirtualEdge.getEdge(), false);
+                }
             }
 
             QueryResult toQResult = queryResults.get(placeIndex);
