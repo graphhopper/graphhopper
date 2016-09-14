@@ -72,6 +72,7 @@
         <module>tools-lgpl</module>
         <module>core</module>
         <module>reader-osm</module>
+        <module>reader-gtfs</module>
         <module>reader-overlay-data</module>
         <module>tools</module>
         <module>web</module>
