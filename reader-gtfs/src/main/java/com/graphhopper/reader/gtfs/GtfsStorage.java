@@ -6,7 +6,7 @@ import gnu.trove.map.hash.TIntObjectHashMap;
 
 class GtfsStorage {
 	private GTFSFeed feed;
-	private final TIntObjectMap<PatternHopEdge> edges = new TIntObjectHashMap<>();
+	private final TIntObjectMap<AbstractPtEdge> edges = new TIntObjectHashMap<>();
 	private int realEdgesSize;
 
 	void setFeed(GTFSFeed feed) {
@@ -17,7 +17,7 @@ class GtfsStorage {
 		return feed;
 	}
 
-	public TIntObjectMap<PatternHopEdge> getEdges() {
+	public TIntObjectMap<AbstractPtEdge> getEdges() {
 		return edges;
 	}
 

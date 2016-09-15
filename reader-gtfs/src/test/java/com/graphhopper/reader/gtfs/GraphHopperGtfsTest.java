@@ -36,7 +36,6 @@ public class GraphHopperGtfsTest {
 				FROM_LAT, FROM_LON,
 				TO_LAT, TO_LON
 		);
-		ghRequest.setAlgorithm("ptdijkstra");
 
 
 		GHResponse route = graphHopper.route(ghRequest);
@@ -73,7 +72,6 @@ public class GraphHopperGtfsTest {
 				FROM_LAT, FROM_LON,
 				TO_LAT, TO_LON
 		);
-		ghRequest.setAlgorithm("dijkstra");
 
 
 		GHResponse route = graphHopper.route(ghRequest);

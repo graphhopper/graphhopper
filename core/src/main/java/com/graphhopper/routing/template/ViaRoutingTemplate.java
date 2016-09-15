@@ -46,7 +46,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     protected final GHRequest ghRequest;
     protected final GHResponse ghResponse;
     protected final PathWrapper altResponse = new PathWrapper();
-    private final LocationIndex locationIndex;
+    protected final LocationIndex locationIndex;
     // result from route
     protected List<Path> pathList;
 

@@ -70,16 +70,19 @@ class GtfsReader implements DataReader {
 		GTFSFeed feed = GTFSFeed.fromFile(file.getPath());
 		NodeAccess nodeAccess = ghStorage.getNodeAccess();
 		int i=0;
+		int j=0;
 		Map<String,Integer> stops = new HashMap<>();
  		for (Stop stop : feed.stops.values()) {
  			stops.put(stop.stop_id, i);
 			LOGGER.info("Node "+i+": "+stop.stop_id);
 			nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
+			ghStorage.edge(i, i);
+			gtfsStorage.getEdges().put(j, new StopLoopEdge());
+			j++;
 		}
 		LOGGER.info("Created " + i + " nodes from GTFS stops.");
 		feed.findPatterns();
 		gtfsStorage.setFeed(feed);
-		int j=0;
 		for (Pattern pattern : feed.patterns.values()) {
 			try {
 				Iterable<StopTime> stopTimes = feed.getInterpolatedStopTimesForTrip(pattern.associatedTrips.get(0));

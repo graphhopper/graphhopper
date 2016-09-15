@@ -23,8 +23,12 @@ class PtTravelTimeWeighting extends AbstractWeighting {
 		if (edgeState.getEdge() > gtfsStorage.getRealEdgesSize()-1) {
 			return 0.0;
 		}
-		PatternHopEdge edge = gtfsStorage.getEdges().get(edgeState.getEdge());
-		int scheduledTravelTime = edge.getTo().arrival_time - edge.getFrom().departure_time;
+		AbstractPtEdge edge = gtfsStorage.getEdges().get(edgeState.getEdge());
+		if (edge instanceof StopLoopEdge) {
+			return 0.0;
+		}
+		PatternHopEdge patternHopEdge = (PatternHopEdge) edge;
+		int scheduledTravelTime = patternHopEdge.getTo().arrival_time - patternHopEdge.getFrom().departure_time;
 		System.out.println(scheduledTravelTime);
 		return scheduledTravelTime;
 	}

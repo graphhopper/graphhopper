@@ -53,7 +53,7 @@ public class GraphHopperGtfs extends GraphHopper {
 
 	@Override
 	protected RoutingTemplate createRoutingTemplate(String algoStr, GHRequest request, GHResponse ghRsp) {
-		return new PtRoutingTemplate(request, ghRsp, getLocationIndex());
+		return new PtRoutingTemplate(request, ghRsp, getLocationIndex(), gtfsStorage);
 	}
 
 }
