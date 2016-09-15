@@ -27,13 +27,12 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
- * Writes an in-memory HashMap into a file on flush.
- * <p>
+ * Writes an in-memory HashMap into a file on flush. Thread safe, see #743.
  *
  * @author Peter Karich
  */
 public class StorableProperties implements Storable<StorableProperties> {
-    private final Map<String, String> map = new LinkedHashMap<String, String>();
+    private final Map<String, String> map = new LinkedHashMap<>();
     private final DataAccess da;
 
     public StorableProperties(Directory dir) {
@@ -43,7 +42,7 @@ public class StorableProperties implements Storable<StorableProperties> {
     }
 
     @Override
-    public boolean loadExisting() {
+    public synchronized boolean loadExisting() {
         if (!da.loadExisting())
             return false;
 
@@ -59,7 +58,7 @@ public class StorableProperties implements Storable<StorableProperties> {
     }
 
     @Override
-    public void flush() {
+    public synchronized void flush() {
         try {
             StringWriter sw = new StringWriter();
             Helper.saveProperties(map, sw);
@@ -72,12 +71,17 @@ public class StorableProperties implements Storable<StorableProperties> {
         }
     }
 
-    public StorableProperties remove(String key) {
+    public synchronized StorableProperties remove(String key) {
         map.remove(key);
         return this;
     }
 
-    public StorableProperties put(String key, String val) {
+    public synchronized StorableProperties putAll(Map<String, String> externMap) {
+        map.putAll(externMap);
+        return this;
+    }
+
+    public synchronized StorableProperties put(String key, String val) {
         map.put(key, val);
         return this;
     }
@@ -85,7 +89,7 @@ public class StorableProperties implements Storable<StorableProperties> {
     /**
      * Before it saves this value it creates a string out of it.
      */
-    public StorableProperties put(String key, Object val) {
+    public synchronized StorableProperties put(String key, Object val) {
         if (!key.equals(key.toLowerCase()))
             throw new IllegalArgumentException("Do not use upper case keys (" + key + ") for StorableProperties since 0.7");
 
@@ -93,7 +97,7 @@ public class StorableProperties implements Storable<StorableProperties> {
         return this;
     }
 
-    public String get(String key) {
+    public synchronized String get(String key) {
         if (!key.equals(key.toLowerCase()))
             throw new IllegalArgumentException("Do not use upper case keys (" + key + ") for StorableProperties since 0.7");
 
@@ -105,27 +109,27 @@ public class StorableProperties implements Storable<StorableProperties> {
     }
 
     @Override
-    public void close() {
+    public synchronized void close() {
         da.close();
     }
 
     @Override
-    public boolean isClosed() {
+    public synchronized boolean isClosed() {
         return da.isClosed();
     }
 
     @Override
-    public StorableProperties create(long size) {
+    public synchronized StorableProperties create(long size) {
         da.create(size);
         return this;
     }
 
     @Override
-    public long getCapacity() {
+    public synchronized long getCapacity() {
         return da.getCapacity();
     }
 
-    public void putCurrentVersions() {
+    public synchronized void putCurrentVersions() {
         put("nodes.version", Constants.VERSION_NODE);
         put("edges.version", Constants.VERSION_EDGE);
         put("geometry.version", Constants.VERSION_GEOMETRY);
@@ -134,7 +138,7 @@ public class StorableProperties implements Storable<StorableProperties> {
         put("shortcuts.version", Constants.VERSION_SHORTCUT);
     }
 
-    public String versionsToString() {
+    public synchronized String versionsToString() {
         return get("nodes.version") + ","
                 + get("edges.version") + ","
                 + get("geometry.version") + ","
@@ -142,7 +146,7 @@ public class StorableProperties implements Storable<StorableProperties> {
                 + get("name_index.version");
     }
 
-    public boolean checkVersions(boolean silent) {
+    public synchronized boolean checkVersions(boolean silent) {
         if (!check("nodes", Constants.VERSION_NODE, silent))
             return false;
 
@@ -179,14 +183,8 @@ public class StorableProperties implements Storable<StorableProperties> {
         return true;
     }
 
-    public void copyTo(StorableProperties properties) {
-        properties.map.clear();
-        properties.map.putAll(map);
-        da.copyTo(properties.da);
-    }
-
     @Override
-    public String toString() {
+    public synchronized String toString() {
         return da.toString();
     }
 }
