@@ -30,7 +30,6 @@ class GtfsReader implements DataReader {
 	private File file;
 
 	private final DistanceCalc distCalc = Helper.DIST_EARTH;
-	private EncodingManager em;
 
 	GtfsReader(GraphHopperStorage ghStorage, GtfsStorage gtfsStorage) {
 		this.ghStorage = ghStorage;
@@ -56,7 +55,6 @@ class GtfsReader implements DataReader {
 
 	@Override
 	public DataReader setEncodingManager(EncodingManager em) {
-		this.em = em;
 		return this;
 	}
 
@@ -104,11 +102,6 @@ class GtfsReader implements DataReader {
 						double travelTime = (orderedStop.arrival_time - prev.departure_time);
 						LOGGER.info("Distance: "+distance+" -- travel time: "+travelTime);
 
-						long flags = 0;
-						double speed = 3.6 * distance / travelTime;
-						flags = em.getEncoder("pt").setSpeed(flags, speed);
-						edge.setFlags(flags);
-						LOGGER.info("Speed: "+speed+" Stored Speed: "+em.getEncoder("pt").getSpeed(flags));
 						gtfsStorage.getEdges().put(edge.getEdge(), new PatternHopEdge(prev, orderedStop));
 						j++;
 					}

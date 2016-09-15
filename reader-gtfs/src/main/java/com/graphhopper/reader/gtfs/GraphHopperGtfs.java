@@ -1,6 +1,5 @@
 package com.graphhopper.reader.gtfs;
 
-import com.conveyal.gtfs.GTFSFeed;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -16,13 +15,15 @@ import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.Helper;
 
-import java.io.File;
+public final class GraphHopperGtfs extends GraphHopper {
 
-public class GraphHopperGtfs extends GraphHopper {
+	private GtfsStorage gtfsStorage = new GtfsStorage();
 
-	GtfsStorage gtfsStorage = new GtfsStorage();
+	public GraphHopperGtfs() {
+		super();
+		super.setEncodingManager(new EncodingManager(new PatternHopFlagEncoder()));
+	}
 
 	@Override
 	protected DataReader createReader(GraphHopperStorage ghStorage) {
@@ -56,4 +57,8 @@ public class GraphHopperGtfs extends GraphHopper {
 		return new PtRoutingTemplate(request, ghRsp, getLocationIndex(), gtfsStorage);
 	}
 
+	@Override
+	public GraphHopper setEncodingManager(EncodingManager em) {
+		throw new UnsupportedOperationException();
+	}
 }

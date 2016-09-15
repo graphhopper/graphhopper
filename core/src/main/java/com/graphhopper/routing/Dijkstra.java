@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.TimeDependentWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
@@ -81,7 +82,12 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
                     continue;
 
                 int traversalId = traversalMode.createTraversalId(iter, false);
-                double tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
+                double tmpWeight;
+                if (weighting instanceof TimeDependentWeighting) {
+                    tmpWeight = ((TimeDependentWeighting) weighting).calcWeight(iter, false, currEdge.edge, currEdge.weight) + currEdge.weight;
+                } else {
+                    tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
+                }
                 if (Double.isInfinite(tmpWeight))
                     continue;
 
