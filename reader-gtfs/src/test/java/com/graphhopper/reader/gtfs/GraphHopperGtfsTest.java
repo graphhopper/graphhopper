@@ -23,6 +23,7 @@ public class GraphHopperGtfsTest {
 		Helper.removeDir(new File(graphFileFoot));
 
 		GraphHopperGtfs graphHopper = new GraphHopperGtfs();
+		graphHopper.setCHEnabled(false);
 		graphHopper.setGtfsFile("files/sample-feed.zip");
 		graphHopper.setGraphHopperLocation(graphFileFoot);
 		graphHopper.setEncodingManager(new EncodingManager(new PatternHopFlagEncoder()));
@@ -35,12 +36,16 @@ public class GraphHopperGtfsTest {
 				FROM_LAT, FROM_LON,
 				TO_LAT, TO_LON
 		);
+		ghRequest.setAlgorithm("dijkstra");
+
 
 		GHResponse route = graphHopper.route(ghRequest);
 		PathWrapper best = route.getBest();
 
 		double distanceMeters = best.getDistance();
 		double travelTimeSeconds = best.getTime() / 1000.0;
+
+		System.out.println(best.getDebugInfo());
 
 		assertEquals("Travel distance between stops", distCalc.calcDist(FROM_LAT, FROM_LON, TO_LAT, TO_LON), distanceMeters, 0.1);
 
