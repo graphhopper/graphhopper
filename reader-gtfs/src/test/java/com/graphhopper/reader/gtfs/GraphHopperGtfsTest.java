@@ -36,10 +36,11 @@ public class GraphHopperGtfsTest {
 				FROM_LAT, FROM_LON,
 				TO_LAT, TO_LON
 		);
-		ghRequest.setAlgorithm("dijkstra");
+		ghRequest.setAlgorithm("ptdijkstra");
 
 
 		GHResponse route = graphHopper.route(ghRequest);
+		System.out.println(route);
 		PathWrapper best = route.getBest();
 
 		double distanceMeters = best.getDistance();

@@ -960,13 +960,7 @@ public class GraphHopper implements GraphHopperAPI {
             // For example see #734
             checkIfPointsAreInBounds(points);
 
-            RoutingTemplate routingTemplate;
-            if (ROUND_TRIP.equalsIgnoreCase(algoStr))
-                routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, maxRoundTripRetries);
-            else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
-                routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex);
-            else
-                routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex);
+            RoutingTemplate routingTemplate = createRoutingTemplate(algoStr, request, ghRsp);
 
             List<Path> altPaths = null;
             List<QueryResult> qResults = null;
@@ -1040,6 +1034,17 @@ public class GraphHopper implements GraphHopperAPI {
             ghRsp.addError(ex);
             return Collections.emptyList();
         }
+    }
+
+    protected RoutingTemplate createRoutingTemplate(String algoStr, GHRequest request, GHResponse ghRsp) {
+        RoutingTemplate routingTemplate;
+        if (ROUND_TRIP.equalsIgnoreCase(algoStr))
+			routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, maxRoundTripRetries);
+		else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
+			routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex);
+		else
+			routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex);
+        return routingTemplate;
     }
 
     private void checkIfPointsAreInBounds(List<GHPoint> points) {
