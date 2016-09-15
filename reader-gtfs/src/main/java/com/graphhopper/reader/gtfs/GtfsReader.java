@@ -26,14 +26,16 @@ class GtfsReader implements DataReader {
 	private static final Logger LOGGER = LoggerFactory.getLogger(GtfsReader.class);
 
 	private final GraphHopperStorage ghStorage;
+	private final GtfsStorage gtfsStorage;
 	private File file;
 
 	private final DistanceCalc distCalc = Helper.DIST_EARTH;
 	private EncodingManager em;
 
-	GtfsReader(GraphHopperStorage ghStorage) {
+	GtfsReader(GraphHopperStorage ghStorage, GtfsStorage gtfsStorage) {
 		this.ghStorage = ghStorage;
 		this.ghStorage.create(1000);
+		this.gtfsStorage = gtfsStorage;
 	}
 
 	@Override
@@ -76,6 +78,7 @@ class GtfsReader implements DataReader {
 		}
 		LOGGER.info("Created " + i + " nodes from GTFS stops.");
 		feed.findPatterns();
+		gtfsStorage.setFeed(feed);
 		int j=0;
 		for (Pattern pattern : feed.patterns.values()) {
 			try {
@@ -103,7 +106,7 @@ class GtfsReader implements DataReader {
 						flags = em.getEncoder("pt").setSpeed(flags, speed);
 						edge.setFlags(flags);
 						LOGGER.info("Speed: "+speed+" Stored Speed: "+em.getEncoder("pt").getSpeed(flags));
-
+						gtfsStorage.getEdges().put(edge.getEdge(), new PatternHopEdge(prev, orderedStop));
 						j++;
 					}
 					prev = orderedStop;
@@ -112,8 +115,8 @@ class GtfsReader implements DataReader {
 			} catch (GTFSFeed.FirstAndLastStopsDoNotHaveTimes e) {
 				throw new RuntimeException(e);
 			}
-
 		}
+		gtfsStorage.setRealEdgesSize(j);
 		LOGGER.info("Created " + j + " edges from GTFS pattern hops.");
 	}
 
