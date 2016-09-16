@@ -56,6 +56,52 @@ public class DataFlagEncoderTest {
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
         assertEquals("_default", encoder.getHighwayAsString(edge));
     }
+    
+    @Test
+    public void testTunnel() {
+        ReaderWay osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "primary");
+        osmWay.setTag("tunnel", "yes");
+        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertEquals("primary", encoder.getHighwayAsString(edge));
+        assertEquals("tunnel", encoder.getTransportModeAsString(edge));
+        assertTrue(encoder.isTransportModeTunnel(edge));
+        assertFalse(encoder.isTransportModeBridge(edge));
+
+        osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "primary");
+        osmWay.setTag("tunnel", "yes");
+        osmWay.setTag("bridge", "yes");
+        flags = encoder.handleWayTags(osmWay, 1, 0);
+        edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertEquals("bridge", encoder.getTransportModeAsString(edge));
+        assertFalse(encoder.isTransportModeTunnel(edge));
+        assertTrue(encoder.isTransportModeBridge(edge));
+    }
+    
+    @Test
+    public void testBridge() {
+        ReaderWay osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "primary");
+        osmWay.setTag("bridge", "yes");
+        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertEquals("primary", encoder.getHighwayAsString(edge));
+        assertEquals("bridge", encoder.getTransportModeAsString(edge));
+        assertFalse(encoder.isTransportModeTunnel(edge));
+        assertTrue(encoder.isTransportModeBridge(edge));
+
+        osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "primary");
+        osmWay.setTag("bridge", "yes");
+        osmWay.setTag("tunnel", "yes");
+        flags = encoder.handleWayTags(osmWay, 1, 0);
+        edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertEquals("bridge", encoder.getTransportModeAsString(edge));
+        assertFalse(encoder.isTransportModeTunnel(edge));
+        assertTrue(encoder.isTransportModeBridge(edge));
+    }    
 
     @Test
     public void testHighwaySpeed() {

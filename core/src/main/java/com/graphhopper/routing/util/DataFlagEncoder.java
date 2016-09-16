@@ -63,6 +63,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private final Map<String, Integer> highwayMap = new HashMap<>();
     private final List<String> transportModeList = new ArrayList<>();
     private final Map<String, Integer> transportModeMap = new HashMap<>();
+    private final int transportModeTunnelValue;
+    private final int transportModeBridgeValue;
     private long bit0;
     private EncodedDoubleValue carFwdMaxspeedEncoder;
     private EncodedDoubleValue carBwdMaxspeedEncoder;
@@ -101,6 +103,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         for (String tm : transportModeList) {
             transportModeMap.put(tm, counter++);
         }
+        transportModeTunnelValue = transportModeMap.get("tunnel");
+        transportModeBridgeValue = transportModeMap.get("bridge");
 
         List<String> surfaceList = Arrays.asList("_default", "asphalt", "unpaved", "paved", "gravel",
                 "ground", "dirt", "grass", "concrete", "paving_stones", "sand", "compacted", "cobblestone", "mud", "ice");
@@ -314,6 +318,14 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     public int getTransportMode(EdgeIteratorState edge) {
         return (int) transportModeEncoder.getValue(edge.getFlags());
+    }
+    
+    public boolean isTransportModeTunnel(EdgeIteratorState edge) {
+    	return transportModeEncoder.getValue(edge.getFlags()) == this.transportModeTunnelValue;
+    }
+
+    public boolean isTransportModeBridge(EdgeIteratorState edge) {
+    	return transportModeEncoder.getValue(edge.getFlags()) == this.transportModeBridgeValue;
     }
 
     public String getTransportModeAsString(EdgeIteratorState edge) {
