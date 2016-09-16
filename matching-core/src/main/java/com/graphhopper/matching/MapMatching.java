@@ -19,6 +19,8 @@ package com.graphhopper.matching;
 
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.bmw.hmm.SequenceState;
+import com.bmw.hmm.ViterbiAlgorithm;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.QueryGraph;
@@ -27,9 +29,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import com.bmw.hmm_lib.Hmm;
-import com.bmw.hmm_lib.MostLikelySequence;
-import com.bmw.hmm_lib.TimeStep;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -124,152 +123,135 @@ public class MapMatching {
     }
 
     /**
-     * This method does the actual map matchting.
+     * This method does the actual map matching.
      * <p>
      * @param gpxList the input list with GPX points which should match to edges
      * of the graph specified in the constructor
      */
     public MatchResult doWork(List<GPXEntry> gpxList) {
         if (gpxList.size() < 2) {
-            throw new IllegalArgumentException("To few coordinates in input file (" + gpxList.size() + "). Correct format?");
+            throw new IllegalArgumentException("Too few coordinates in input file (" + gpxList.size() + "). Correct format?");
         }
 
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        List<TimeStep<GPXExtension, GPXEntry>> timeSteps = new ArrayList<TimeStep<GPXExtension, GPXEntry>>();
-        List<QueryResult> allCandidates = new ArrayList<QueryResult>();
-        final Map<String, Path> paths = new HashMap<String, Path>();
-        GPXEntry previous = null;
+        final EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
+        final List<QueryResult> allCandidates = new ArrayList<QueryResult>();
         int indexGPX = 0;
+        TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep = null;        
+        final List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = new ArrayList<>();
+        
         for (GPXEntry entry : gpxList) {
-            if (previous == null
-                    || distanceCalc.calcDist(previous.getLat(), previous.getLon(), entry.getLat(), entry.getLon()) > 2 * measurementErrorSigma
+            if (prevTimeStep == null
+                    || distanceCalc.calcDist(prevTimeStep.observation.getLat(), prevTimeStep.observation.getLon(),
+                    		entry.getLat(), entry.getLon()) > 2 * measurementErrorSigma
                     // always include last point
                     || indexGPX == gpxList.size() - 1) {
-                List<QueryResult> candidates = locationIndex.findNClosest(entry.lat, entry.lon, edgeFilter, measurementErrorSigma);
+                final List<QueryResult> candidates = locationIndex.findNClosest(entry.lat, entry.lon, edgeFilter, measurementErrorSigma);
                 allCandidates.addAll(candidates);
-                List<GPXExtension> gpxExtensions = new ArrayList<GPXExtension>();
+                final List<GPXExtension> gpxExtensions = new ArrayList<GPXExtension>();
                 for (QueryResult candidate : candidates) {
                     gpxExtensions.add(new GPXExtension(entry, candidate, indexGPX));
                 }
-
-                TimeStep<GPXExtension, GPXEntry> timeStep = new TimeStep<GPXExtension, GPXEntry>(entry, gpxExtensions);
+                final TimeStep<GPXExtension, GPXEntry, Path> timeStep = new TimeStep<>(entry, gpxExtensions);
                 timeSteps.add(timeStep);
-                previous = entry;
+                prevTimeStep = timeStep;
             }
             indexGPX++;
         }
+        
         if (allCandidates.size() < 2) {
-            throw new IllegalArgumentException("To few matching coordinates (" + allCandidates.size() + "). Wrong region imported?");
+            throw new IllegalArgumentException("Too few matching coordinates (" + allCandidates.size() + "). Wrong region imported?");
         }
         if (timeSteps.size() < 2) {
             throw new IllegalStateException("Coordinates produced too few time steps " + timeSteps.size() + ", gpxList:" + gpxList.size());
         }
-
-        TemporalMetrics<GPXEntry> temporalMetrics = new TemporalMetrics<GPXEntry>() {
-            @Override
-            public double timeDifference(GPXEntry m1, GPXEntry m2) {
-                // time difference in seconds
-                double deltaTs = (m2.getTime() - m1.getTime()) / 1000.0;
-                return deltaTs;
-            }
-        };
-        final QueryGraph queryGraph = new QueryGraph(graph).
-                setUseEdgeExplorerCache(true);
+        
+        final QueryGraph queryGraph = new QueryGraph(graph).setUseEdgeExplorerCache(true);
         queryGraph.lookup(allCandidates);
-        SpatialMetrics<GPXExtension, GPXEntry> spatialMetrics = new SpatialMetrics<GPXExtension, GPXEntry>() {
-            @Override
-            public double measurementDistance(GPXExtension roadPosition, GPXEntry measurement) {
-                // road distance difference in meters
-                return roadPosition.getQueryResult().getQueryDistance();
-            }
+        
+        final HmmProbabilities probabilities = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
+        final ViterbiAlgorithm<GPXExtension, GPXEntry, Path> viterbi = new ViterbiAlgorithm<>();
+        
+        int timeStepCounter = 0;
+        prevTimeStep = null;
+        for (TimeStep<GPXExtension, GPXEntry, Path> timeStep : timeSteps) {
+            	computeEmissionProbabilities(timeStep, probabilities);
 
-            @Override
-            public double linearDistance(GPXEntry formerMeasurement, GPXEntry laterMeasurement) {
-                // beeline distance difference in meters
-                return distanceCalc.calcDist(formerMeasurement.lat, formerMeasurement.lon, laterMeasurement.lat, laterMeasurement.lon);
-            }
-
-            @Override
-            public Double routeLength(GPXExtension sourcePosition, GPXExtension targetPosition) {
-                // TODO allow CH, then optionally use cached one-to-many Dijkstra to improve speed
-                DijkstraBidirectionRef algo = new DijkstraBidirectionRef(queryGraph, encoder, weighting, traversalMode);
-                algo.setMaxVisitedNodes(maxVisitedNodes);
-                Path path = algo.calcPath(sourcePosition.getQueryResult().getClosestNode(), targetPosition.getQueryResult().getClosestNode());
-
-                paths.put(hash(sourcePosition.getQueryResult(), targetPosition.getQueryResult()), path);
-
-                if (!path.isFound()) {
-                    return null;
+                if (prevTimeStep == null) {
+                	viterbi.startWithInitialObservation(timeStep.observation, timeStep.candidates, timeStep.emissionLogProbabilities);
+                } else {
+                	computeTransitionProbabilities(prevTimeStep, timeStep, probabilities, queryGraph);
+                	viterbi.nextStep(timeStep.observation, timeStep.candidates, timeStep.emissionLogProbabilities,
+                			timeStep.transitionLogProbabilities, timeStep.roadPaths);
                 }
-                return path.getDistance();
-            }
-        };
-        // printMinDistances(timeSteps);
-        MapMatchingHmmProbabilities<GPXExtension, GPXEntry> probabilities
-                = new MapMatchingHmmProbabilities<GPXExtension, GPXEntry>(timeSteps, spatialMetrics, temporalMetrics, measurementErrorSigma, transitionProbabilityBeta);
-        MostLikelySequence<GPXExtension, GPXEntry> seq = Hmm.computeMostLikelySequence(probabilities, timeSteps.iterator());
+                if (viterbi.isBroken()) {
+                    String likelyReasonStr = "";
+                    if (prevTimeStep != null) {
+                    	 GPXEntry prevGPXE = prevTimeStep.observation;
+                         GPXEntry gpxe = timeStep.observation;
+                         double dist = distanceCalc.calcDist(prevGPXE.lat, prevGPXE.lon, gpxe.lat, gpxe.lon);
+                         if (dist > 2000) {
+                             likelyReasonStr = "Too long distance to previous measurement? " + Math.round(dist) + "m, ";
+                         }
+                    }
 
+                    throw new RuntimeException("Sequence is broken for submitted track at time step " + timeStepCounter 
+                    		+ " (" + gpxList.size() + " points). "
+                            + likelyReasonStr
+                            + "observation:" + timeStep.observation + ", candidates: " + getSnappedCandidates(timeStep.candidates));
+                }
+                
+                timeStepCounter++;
+                prevTimeStep = timeStep;
+        }
+    
+        // printMinDistances(timeSteps);
+        List<SequenceState<GPXExtension, GPXEntry, Path>> seq = viterbi.computeMostLikelySequence();
+        
         List<EdgeMatch> edgeMatches = new ArrayList<EdgeMatch>();
         double distance = 0.0;
         long time = 0;
-        if (!seq.isBroken) {
-            // every virtual edge maps to its real edge where the orientation is already correct!
-            // TODO use traversal key instead of string!
-            Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<String, EdgeIteratorState>();
-            final EdgeExplorer explorer = queryGraph.createEdgeExplorer(edgeFilter);
-            for (QueryResult candidate : allCandidates) {
-                fillVirtualEdges(virtualEdgesMap, explorer, candidate);
-            }
+        // every virtual edge maps to its real edge where the orientation is already correct!
+        // TODO use traversal key instead of string!
+        Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<String, EdgeIteratorState>();
+        final EdgeExplorer explorer = queryGraph.createEdgeExplorer(edgeFilter);
+        for (QueryResult candidate : allCandidates) {
+            fillVirtualEdges(virtualEdgesMap, explorer, candidate);
+        }
 
-            EdgeIteratorState currentEdge = null;
-            List<GPXExtension> gpxExtensions = new ArrayList<GPXExtension>();
-            GPXExtension queryResult = seq.sequence.get(0);
-            gpxExtensions.add(queryResult);
-            for (int j = 1; j < seq.sequence.size(); j++) {
-                GPXExtension nextQueryResult = seq.sequence.get(j);
-                Path path = paths.get(hash(queryResult.getQueryResult(), nextQueryResult.getQueryResult()));
-                distance += path.getDistance();
-                time += path.getTime();
-                for (EdgeIteratorState edgeIteratorState : path.calcEdges()) {
-                    EdgeIteratorState directedRealEdge = resolveToRealEdge(virtualEdgesMap, edgeIteratorState);
-                    if (directedRealEdge == null) {
-                        throw new RuntimeException("Did not find real edge for " + edgeIteratorState.getEdge());
-                    }
-                    if (currentEdge == null || !equalEdges(directedRealEdge, currentEdge)) {
-                        if (currentEdge != null) {
-                            EdgeMatch edgeMatch = new EdgeMatch(currentEdge, gpxExtensions);
-                            edgeMatches.add(edgeMatch);
-                            gpxExtensions = new ArrayList<GPXExtension>();
-                        }
-                        currentEdge = directedRealEdge;
-                    }
+        EdgeIteratorState currentEdge = null;
+        List<GPXExtension> gpxExtensions = new ArrayList<GPXExtension>();
+        GPXExtension queryResult = seq.get(0).state;
+        gpxExtensions.add(queryResult);
+        for (int j = 1; j < seq.size(); j++) {
+            GPXExtension nextQueryResult = seq.get(j).state;
+            Path path = seq.get(j).transitionDescriptor;
+            distance += path.getDistance();
+            time += path.getTime();
+            for (EdgeIteratorState edgeIteratorState : path.calcEdges()) {
+                EdgeIteratorState directedRealEdge = resolveToRealEdge(virtualEdgesMap, edgeIteratorState);
+                if (directedRealEdge == null) {
+                    throw new RuntimeException("Did not find real edge for " + edgeIteratorState.getEdge());
                 }
-                gpxExtensions.add(nextQueryResult);
-                queryResult = nextQueryResult;
+                if (currentEdge == null || !equalEdges(directedRealEdge, currentEdge)) {
+                    if (currentEdge != null) {
+                        EdgeMatch edgeMatch = new EdgeMatch(currentEdge, gpxExtensions);
+                        edgeMatches.add(edgeMatch);
+                        gpxExtensions = new ArrayList<GPXExtension>();
+                    }
+                    currentEdge = directedRealEdge;
+                }
             }
-            if (edgeMatches.isEmpty()) {
-                throw new IllegalStateException("No edge matches found for path. Too short? Sequence size " + seq.sequence.size());
-            }
-            EdgeMatch lastEdgeMatch = edgeMatches.get(edgeMatches.size() - 1);
-            if (!gpxExtensions.isEmpty() && !equalEdges(currentEdge, lastEdgeMatch.getEdgeState())) {
-                edgeMatches.add(new EdgeMatch(currentEdge, gpxExtensions));
-            } else {
-                lastEdgeMatch.getGpxExtensions().addAll(gpxExtensions);
-            }
+            gpxExtensions.add(nextQueryResult);
+            queryResult = nextQueryResult;
+        }
+        if (edgeMatches.isEmpty()) {
+            throw new IllegalStateException("No edge matches found for path. Too short? Sequence size " + seq.size());
+        }
+        EdgeMatch lastEdgeMatch = edgeMatches.get(edgeMatches.size() - 1);
+        if (!gpxExtensions.isEmpty() && !equalEdges(currentEdge, lastEdgeMatch.getEdgeState())) {
+            edgeMatches.add(new EdgeMatch(currentEdge, gpxExtensions));
         } else {
-            String likelyReasonStr = "";
-            if (seq.getBrokenTimeStep() > 0) {
-                GPXEntry prevGPXE = timeSteps.get(seq.getBrokenTimeStep() - 1).observation;
-                GPXEntry gpxe = timeSteps.get(seq.getBrokenTimeStep()).observation;
-                double dist = distanceCalc.calcDist(prevGPXE.lat, prevGPXE.lon, gpxe.lat, gpxe.lon);
-                if (dist > 2000) {
-                    likelyReasonStr = "Too long distance to previous measurement? " + Math.round(dist) + "m, ";
-                }
-            }
-
-            throw new RuntimeException("Sequence is broken for submitted track at " + seq.getBrokenTimeStep() + " of " + timeSteps.size() + " time steps (" + gpxList.size() + " points). "
-                    + likelyReasonStr
-                    + "observation:" + timeSteps.get(seq.getBrokenTimeStep()).observation + ", candidates: " + getSnappedCandidates(timeSteps.get(seq.getBrokenTimeStep()).candidates));
+            lastEdgeMatch.getGpxExtensions().addAll(gpxExtensions);
         }
         MatchResult matchResult = new MatchResult(edgeMatches);
         matchResult.setMatchMillis(time);
@@ -291,7 +273,39 @@ public class MapMatching {
         return matchResult;
     }
 
-    private boolean equalEdges(EdgeIteratorState edge1, EdgeIteratorState edge2) {
+	private void computeEmissionProbabilities(TimeStep<GPXExtension, GPXEntry, Path> timeStep, HmmProbabilities probabilities) {
+        for (GPXExtension candidate : timeStep.candidates) {
+        	// road distance difference in meters
+            final double distance = candidate.getQueryResult().getQueryDistance();
+            timeStep.addEmissionLogProbability(candidate, probabilities.emissionLogProbability(distance));
+        }
+    }
+
+    private void computeTransitionProbabilities(TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep,
+			TimeStep<GPXExtension, GPXEntry, Path> timeStep, HmmProbabilities probabilities, QueryGraph queryGraph) {
+        final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.lat,
+       		 prevTimeStep.observation.lon, timeStep.observation.lat, timeStep.observation.lon);
+        
+        // time difference in seconds
+        final double timeDiff = (timeStep.observation.getTime() - prevTimeStep.observation.getTime()) / 1000.0;
+    	
+    	 for (GPXExtension from : prevTimeStep.candidates) {
+             for (GPXExtension to : timeStep.candidates) {
+                 // TODO allow CH, then optionally use cached one-to-many Dijkstra to improve speed
+                 final DijkstraBidirectionRef algo = new DijkstraBidirectionRef(queryGraph, encoder, weighting, traversalMode);
+                 algo.setMaxVisitedNodes(maxVisitedNodes);
+                 final Path path = algo.calcPath(from.getQueryResult().getClosestNode(), to.getQueryResult().getClosestNode());
+                 if (path.isFound()) {
+                     timeStep.addRoadPath(from, to, path);
+                     final double transitionLogProbability = probabilities.transitionLogProbability(
+                    		 path.getDistance(), linearDistance, timeDiff);
+                     timeStep.addTransitionLogProbability(from, to, transitionLogProbability);
+                 }
+             }
+         }
+    }
+    
+	private boolean equalEdges(EdgeIteratorState edge1, EdgeIteratorState edge2) {
         return edge1.getEdge() == edge2.getEdge()
                 && edge1.getBaseNode() == edge2.getBaseNode()
                 && edge1.getAdjNode() == edge2.getAdjNode();
@@ -303,10 +317,6 @@ public class MapMatching {
         } else {
             return edgeIteratorState;
         }
-    }
-
-    private String hash(QueryResult sourcePosition, QueryResult targetPosition) {
-        return sourcePosition.hashCode() + "_" + targetPosition.hashCode();
     }
 
     private boolean isVirtualNode(int node) {
@@ -368,10 +378,10 @@ public class MapMatching {
         return "[" + str + "]";
     }
 
-    private void printMinDistances(List<TimeStep<GPXExtension, GPXEntry>> timeSteps) {
-        TimeStep<GPXExtension, GPXEntry> prevStep = null;
+    private void printMinDistances(List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps) {
+        TimeStep<GPXExtension, GPXEntry, Path> prevStep = null;
         int index = 0;
-        for (TimeStep<GPXExtension, GPXEntry> ts : timeSteps) {
+        for (TimeStep<GPXExtension, GPXEntry, Path> ts : timeSteps) {
             if (prevStep != null) {
                 double dist = distanceCalc.calcDist(prevStep.observation.lat, prevStep.observation.lon, ts.observation.lat, ts.observation.lon);
                 double minCand = Double.POSITIVE_INFINITY;
