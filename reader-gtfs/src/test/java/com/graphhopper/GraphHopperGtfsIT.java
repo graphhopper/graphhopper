@@ -1,8 +1,9 @@
 package com.graphhopper;
 
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
-import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
+import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -12,141 +13,87 @@ import static org.junit.Assert.assertEquals;
 public class GraphHopperGtfsIT {
 
 	private static final String graphFileFoot = "target/graphhopperIT-foot";
-	private final DistanceCalc distCalc = Helper.DIST_EARTH;
+	private GraphHopperGtfs graphHopper;
 
-
-	@Test
-	public void testLoadGtfs() {
+	@Before
+	public void init() {
 		Helper.removeDir(new File(graphFileFoot));
 
-		GraphHopperGtfs graphHopper = new GraphHopperGtfs();
+		graphHopper = new GraphHopperGtfs();
 		graphHopper.setCHEnabled(false);
 		graphHopper.setGtfsFile("files/sample-feed.zip");
 		graphHopper.setGraphHopperLocation(graphFileFoot);
 		graphHopper.importOrLoad();
+	}
 
+	@Test
+	public void testRoute1() {
 		final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
 		final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
+		assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, TO_LAT, TO_LON, (6 * 60 * 60) + (49 * 60));
+	}
 
+	@Test
+	public void testRoute2() {
+		final double FROM_LAT = 36.914894, FROM_LON = -116.76821; // NADAV stop
+		final double TO_LAT = 36.909489, TO_LON = -116.768242; // DADAN stop
+		assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, TO_LAT, TO_LON, (6 * 60 * 60) + (19 * 60));
+	}
+
+	@Test
+	public void testRoute3() {
+		final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
+		final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
+		assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, TO_LAT, TO_LON, (6 * 60 * 60) + (5 * 60));
+	}
+
+	@Test
+	public void testRoute4() {
+		final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
+		final double TO_LAT = 36.914894, TO_LON = -116.76821; // NADAV stop
+		assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, TO_LAT, TO_LON, (6 * 60 * 60) + (12 * 60));
+	}
+
+	@Test
+	public void testRoute5() {
+		final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
+		final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
+		assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, TO_LAT, TO_LON, (8 * 60 * 60) + (10 * 60));
+	}
+
+	@Test
+	public void testRoute6() {
+		final double FROM_LAT = 36.88108, FROM_LON = -116.81797; // BULLFROG stop
+		final double TO_LAT = 36.914894, TO_LON = -116.76821; // NADAV stop
+		assertNoRoute(graphHopper, FROM_LAT, FROM_LON, TO_LAT, TO_LON);
+	}
+
+	private void assertRouteWeightIs(GraphHopperGtfs graphHopper, double FROM_LAT, double FROM_LON, double TO_LAT, double TO_LON, int expectedWeight) {
 		GHRequest ghRequest = new GHRequest(
 				FROM_LAT, FROM_LON,
 				TO_LAT, TO_LON
 		);
-
 
 		GHResponse route = graphHopper.route(ghRequest);
 		System.out.println(route);
-		PathWrapper best = route.getBest();
+		System.out.println(route.getBest());
+		System.out.println(route.getBest().getDebugInfo());
 
-		double distanceMeters = best.getDistance();
-		double travelTimeSeconds = best.getTime() / 1000.0;
-
-		System.out.println(best);
-		System.out.println(best.getDebugInfo());
-		assertEquals("Expected weight == scheduled arrival time", (6 * 60 * 60) + (49 * 60), best.getRouteWeight(), 0.1);
-
-		assertEquals("Travel distance between stops", distCalc.calcDist(FROM_LAT, FROM_LON, TO_LAT, TO_LON), distanceMeters, 0.1);
-
+		assertEquals("Expected weight == scheduled arrival time", expectedWeight, route.getBest().getRouteWeight(), 0.1);
 	}
 
-	@Test
-	public void testLoadGtfs2() {
-		Helper.removeDir(new File(graphFileFoot));
-
-		GraphHopperGtfs graphHopper = new GraphHopperGtfs();
-		graphHopper.setCHEnabled(false);
-		graphHopper.setGtfsFile("files/sample-feed.zip");
-		graphHopper.setGraphHopperLocation(graphFileFoot);
-		graphHopper.importOrLoad();
-
-		final double FROM_LAT = 36.914894, FROM_LON = -116.76821; // NADAV stop
-		final double TO_LAT = 36.909489, TO_LON = -116.768242; // DADAN stop
-
+	private void assertNoRoute(GraphHopperGtfs graphHopper, double from_lat, double from_lon, double to_lat, double to_lon) {
 		GHRequest ghRequest = new GHRequest(
-				FROM_LAT, FROM_LON,
-				TO_LAT, TO_LON
+				from_lat, from_lon,
+				to_lat, to_lon
 		);
 
-
 		GHResponse route = graphHopper.route(ghRequest);
-		PathWrapper best = route.getBest();
+		System.out.println(route);
+		System.out.println(route.getBest());
+		System.out.println(route.getBest().getDebugInfo());
 
-		double distanceMeters = best.getDistance();
-		double travelTimeSeconds = best.getTime() / 1000.0;
-
-		System.out.println(best);
-		System.out.println(best.getDebugInfo());
-		assertEquals("Expected weight == scheduled travel time", (6 * 60 * 60) + (19 * 60), best.getRouteWeight(), 0.1);
-
-		assertEquals("Travel distance between stops", distCalc.calcDist(FROM_LAT, FROM_LON, TO_LAT, TO_LON), distanceMeters, 1.0);
-
+		Assert.assertTrue(route.hasErrors());
 	}
-
-	@Test
-	public void testLoadGtfs3() {
-		Helper.removeDir(new File(graphFileFoot));
-
-		GraphHopperGtfs graphHopper = new GraphHopperGtfs();
-		graphHopper.setCHEnabled(false);
-		graphHopper.setGtfsFile("files/sample-feed.zip");
-		graphHopper.setGraphHopperLocation(graphFileFoot);
-		graphHopper.importOrLoad();
-
-		final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
-		final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-
-		GHRequest ghRequest = new GHRequest(
-				FROM_LAT, FROM_LON,
-				TO_LAT, TO_LON
-		);
-
-
-		GHResponse route = graphHopper.route(ghRequest);
-		PathWrapper best = route.getBest();
-
-		double distanceMeters = best.getDistance();
-		double travelTimeSeconds = best.getTime() / 1000.0;
-
-		System.out.println(best);
-		System.out.println(best.getDebugInfo());
-		assertEquals("Expected weight == scheduled travel time", (6 * 60 * 60) + (5 * 60), best.getRouteWeight(), 0.1);
-
-		assertEquals("Travel distance between stops", distCalc.calcDist(FROM_LAT, FROM_LON, TO_LAT, TO_LON), distanceMeters, 1.0);
-
-	}
-
-	@Test
-	public void testLoadGtfs4() {
-		Helper.removeDir(new File(graphFileFoot));
-
-		GraphHopperGtfs graphHopper = new GraphHopperGtfs();
-		graphHopper.setCHEnabled(false);
-		graphHopper.setGtfsFile("files/sample-feed.zip");
-		graphHopper.setGraphHopperLocation(graphFileFoot);
-		graphHopper.importOrLoad();
-
-		final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
-		final double TO_LAT = 36.914894, TO_LON = -116.76821; // NADAV stop
-
-		GHRequest ghRequest = new GHRequest(
-				FROM_LAT, FROM_LON,
-				TO_LAT, TO_LON
-		);
-
-
-		GHResponse route = graphHopper.route(ghRequest);
-		PathWrapper best = route.getBest();
-
-		double distanceMeters = best.getDistance();
-		double travelTimeSeconds = best.getTime() / 1000.0;
-
-		System.out.println(best);
-		System.out.println(best.getDebugInfo());
-		assertEquals("Expected weight == scheduled travel time", (6 * 60 * 60) + (12 * 60), best.getRouteWeight(), 0.1);
-
-		assertEquals("Travel distance between stops", distCalc.calcDist(FROM_LAT, FROM_LON, TO_LAT, TO_LON), distanceMeters, 10.0);
-
-	}
-
 
 }
