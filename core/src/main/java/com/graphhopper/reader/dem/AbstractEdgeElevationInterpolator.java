@@ -19,6 +19,7 @@ public abstract class AbstractEdgeElevationInterpolator {
 	private final GraphHopperStorage storage;
 	protected final DataFlagEncoder dataFlagEncoder;
 	private final NodeElevationInterpolator nodeElevationInterpolator;
+	private final ElevationInterpolator elevationInterpolator = new ElevationInterpolator();
 
 	public AbstractEdgeElevationInterpolator(GraphHopperStorage storage, DataFlagEncoder dataFlagEncoder) {
 		this.storage = storage;
@@ -98,8 +99,8 @@ public abstract class AbstractEdgeElevationInterpolator {
 				for (int index = 0; index < count; index++) {
 					double lat = pointList.getLat(index);
 					double lon = pointList.getLon(index);
-					double ele = nodeElevationInterpolator.calculateElevation(lat, lon, lat0, lon0, ele0, lat1, lon1,
-							ele1);
+					double ele = elevationInterpolator.calculateElevation(lon1, ele1, lat, lon, lat0, lon0, ele0,
+							lat1);
 					pointList.set(index, lat, lon, ele);
 				}
 				edge.setWayGeometry(pointList);
