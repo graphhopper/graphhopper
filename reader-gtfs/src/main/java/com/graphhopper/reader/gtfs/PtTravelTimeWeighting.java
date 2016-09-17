@@ -36,7 +36,7 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
 		if (edge instanceof StopLoopEdge) {
 			return 0.0;
 		}
-		PatternHopEdge patternHopEdge = (PatternHopEdge) edge;
+		TripHopEdge patternHopEdge = (TripHopEdge) edge;
 		if (patternHopEdge.getFrom().departure_time < earliestStartTime) {
 			// missed that one
 			return Double.POSITIVE_INFINITY;

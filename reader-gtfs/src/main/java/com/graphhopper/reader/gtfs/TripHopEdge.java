@@ -2,12 +2,12 @@ package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.model.StopTime;
 
-class PatternHopEdge extends AbstractPtEdge {
+class TripHopEdge extends AbstractPtEdge {
 
 	private StopTime from;
 	private StopTime to;
 
-	public PatternHopEdge(StopTime from, StopTime to) {
+	public TripHopEdge(StopTime from, StopTime to) {
 		this.from = from;
 		this.to = to;
 	}

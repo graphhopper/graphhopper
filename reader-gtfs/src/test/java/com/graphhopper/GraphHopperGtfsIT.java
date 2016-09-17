@@ -73,7 +73,8 @@ public class GraphHopperGtfsIT {
 	public void testRoute7() {
 		final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
 		final double TO_LAT = 36.914894, TO_LON = -116.76821; // NADAV stop
-		assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, (8 * 60 * 60) + (4 * 60), TO_LAT, TO_LON, (8 * 60 * 60) + (18 * 60));
+		// Missed the bus at 10 by one minute, will have to use the 10:30 one.
+		assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, (10 * 60 * 60) + (1 * 60), TO_LAT, TO_LON, (10 * 60 * 60) + (42 * 60));
 	}
 
 	private void assertRouteWeightIs(GraphHopperGtfs graphHopper, double from_lat, double from_lon, int earliestDepartureTime, double to_lat, double to_lon, int expectedWeight) {

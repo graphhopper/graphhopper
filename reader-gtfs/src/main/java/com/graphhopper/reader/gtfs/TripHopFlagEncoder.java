@@ -2,9 +2,9 @@ package com.graphhopper.reader.gtfs;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
 
-class PatternHopFlagEncoder extends CarFlagEncoder {
+class TripHopFlagEncoder extends CarFlagEncoder {
 
-	PatternHopFlagEncoder() {
+	TripHopFlagEncoder() {
 		super(6, 5, 0);
 		maxPossibleSpeed = 300;
 	}
