@@ -19,7 +19,9 @@ public class NodeElevationInterpolator {
 			interpolateElevationsOfInnerNodesForOneOuterNode(outerNodeIds[0], innerNodeIds);
 		} else if (outerNodeIds.length == 2) {
 			interpolateElevationsOfInnerNodesForTwoOuterNodes(outerNodeIds[0], outerNodeIds[1], innerNodeIds);
-		} else if (outerNodeIds.length > 2) {
+		} else if (outerNodeIds.length == 3) {
+			interpolateElevationsOfInnerNodesForThreeOuterNodes(outerNodeIds[0], outerNodeIds[1], outerNodeIds[2], innerNodeIds);
+		} else if (outerNodeIds.length > 3) {
 			interpolateElevationsOfInnerNodesForNOuterNodes(outerNodeIds, innerNodeIds);
 		}
 	}
@@ -50,6 +52,29 @@ public class NodeElevationInterpolator {
 			storage.getNodeAccess().setNode(innerNodeId, lat, lon, ele);
 		}
 	}
+	
+	private void interpolateElevationsOfInnerNodesForThreeOuterNodes(int firstOuterNodeId, int secondOuterNodeId,int thirdOuterNodeId,
+			int[] innerNodeIds) {
+		double lat0 = storage.getNodeAccess().getLat(firstOuterNodeId);
+		double lon0 = storage.getNodeAccess().getLon(firstOuterNodeId);
+		double ele0 = storage.getNodeAccess().getEle(firstOuterNodeId);
+
+		double lat1 = storage.getNodeAccess().getLat(secondOuterNodeId);
+		double lon1 = storage.getNodeAccess().getLon(secondOuterNodeId);
+		double ele1 = storage.getNodeAccess().getEle(secondOuterNodeId);
+
+		double lat2 = storage.getNodeAccess().getLat(thirdOuterNodeId);
+		double lon2 = storage.getNodeAccess().getLon(thirdOuterNodeId);
+		double ele2 = storage.getNodeAccess().getEle(thirdOuterNodeId);
+
+		for (int innerNodeId : innerNodeIds) {
+			double lat = storage.getNodeAccess().getLat(innerNodeId);
+			double lon = storage.getNodeAccess().getLon(innerNodeId);
+			double ele = elevationInterpolator.calculateElevation(lat, lon, lat0, lon0, ele0, lat1, lon1, ele1, lat2, lon2, ele2);
+			storage.getNodeAccess().setNode(innerNodeId, lat, lon, ele);
+		}
+	}
+	
 
 	private void interpolateElevationsOfInnerNodesForNOuterNodes(int[] outerNodeIds, int[] innerNodeIds) {
 		PointList pointList = new PointList(outerNodeIds.length, true);

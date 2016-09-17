@@ -16,17 +16,67 @@ public class ElevationInterpolator {
 		double l0 = Math.sqrt(dlon0 * dlon0 + dlat0 * dlat0);
 		double l1 = Math.sqrt(dlon1 * dlon1 + dlat1 * dlat1);
 		double l = l0 + l1;
-		double ele = l < EPSILON ? (l0 <= l1 ? ele0 : ele1) : (ele0 + (ele1 - ele0) * l0 / l);
-		return ele;
+		if (l < EPSILON) {
+			// If points are too close to each other, return elevation of the
+			// point which is closer;
+			return l0 <= l1 ? ele0 : ele1;
+		} else {
+			// Otherwise do linear interpolation
+			return ele0 + (ele1 - ele0) * l0 / l;
+		}
 	}
+	
+	public double calculateElevation(double lat, double lon,
+			double lat0, double lon0, double ele0,
+			double lat1, double lon1, double ele1,
+			double lat2, double lon2, double ele2) {
+		
+		double dlat10 = lat1 - lat0;
+		double dlon10 = lon1 - lon0;
+		double dele10 = ele1 - ele0;
+		double dlat20 = lat2 - lat0;
+		double dlon20 = lon2 - lon0;
+		double dele20 = ele2 - ele0;
+		
+		double a = dlon10 * dele20 - dele10 * dlon20;
+		double b = dele10 * dlat20 - dlat10 * dele20;
+		double c = dlat10 * dlon20 - dlon10 * dlat20;
+
+		if (Math.abs(c) < EPSILON)
+		{
+			double dlat21 = lat2 - lat1;
+			double dlon21 = lon2 - lon1;
+			double dele21 = ele2 - ele1;
+
+			double l10 = dlat10* dlat10 + dlon10* dlon10 + dele10*dele10; 
+			double l20 = dlat20* dlat20 + dlon20* dlon20 + dele20*dele20;
+			double l21 = dlat21* dlat21 + dlon21* dlon21 + dele21*dele21;
+			
+			if (l21 > l10 && l21 > l20) {
+				return calculateElevation(lat, lon, lat1, lon1, ele1, lat2, lon2, ele2);
+			} else if (l20 > l10 && l20 > l21) {
+				return calculateElevation(lat, lon, lat0, lon0, ele0, lat2, lon2, ele2);
+			} else {
+				return calculateElevation(lat, lon, lat0, lon0, ele0, lat1, lon1, ele1);
+			}
+			
+		}
+		else{
+			double d = a * lat0 + b* lon0 + c* ele0;
+			double ele = (d - a * lat - b* lon) / c;
+			return ele;
+		}
+	}
+	
 
 	public double calculateElevation(double lat, double lon, PointList pointList) {
-		double[] vs = new double[pointList.size()];
-		double[] eles = new double[pointList.size()];
+		final int size = pointList.size();
+		double[] vs = new double[size];
+		double[] eles = new double[size];
 		double v = 0;
-		for (int index = 0; index < pointList.size(); index++) {
+		for (int index = 0; index < size; index++) {
 			double lati = pointList.getLat(index);
-			double loni = pointList.getLat(index);
+			double loni = pointList.getLon(index);
 			double dlati = lati - lat;
 			double dloni = loni - lon;
 			double l2 = (dlati * dlati + dloni * dloni);
@@ -39,8 +89,7 @@ public class ElevationInterpolator {
 		}
 
 		double ele = 0;
-
-		for (int index = 0; index < pointList.size(); index++) {
+		for (int index = 0; index < size; index++) {
 			ele += eles[index] * vs[index] / v;
 		}
 		return ele;
