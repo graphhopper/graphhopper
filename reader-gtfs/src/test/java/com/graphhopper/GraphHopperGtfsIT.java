@@ -9,6 +9,7 @@ import org.junit.Test;
 import java.io.File;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class GraphHopperGtfsIT {
 
@@ -68,18 +69,31 @@ public class GraphHopperGtfsIT {
 		assertNoRoute(graphHopper, FROM_LAT, FROM_LON, TO_LAT, TO_LON);
 	}
 
-	private void assertRouteWeightIs(GraphHopperGtfs graphHopper, double FROM_LAT, double FROM_LON, double TO_LAT, double TO_LON, int expectedWeight) {
-		GHRequest ghRequest = new GHRequest(
-				FROM_LAT, FROM_LON,
-				TO_LAT, TO_LON
-		);
+	@Test
+	public void testRoute7() {
+		final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
+		final double TO_LAT = 36.914894, TO_LON = -116.76821; // NADAV stop
+		assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, (8 * 60 * 60) + (4 * 60), TO_LAT, TO_LON, (8 * 60 * 60) + (18 * 60));
+	}
 
+	private void assertRouteWeightIs(GraphHopperGtfs graphHopper, double from_lat, double from_lon, int earliestDepartureTime, double to_lat, double to_lon, int expectedWeight) {
+		GHRequest ghRequest = new GHRequest(
+				from_lat, from_lon,
+				to_lat, to_lon
+		);
+		ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, earliestDepartureTime);
 		GHResponse route = graphHopper.route(ghRequest);
 		System.out.println(route);
 		System.out.println(route.getBest());
 		System.out.println(route.getBest().getDebugInfo());
 
+		assertFalse(route.hasErrors());
 		assertEquals("Expected weight == scheduled arrival time", expectedWeight, route.getBest().getRouteWeight(), 0.1);
+	}
+
+
+	private void assertRouteWeightIs(GraphHopperGtfs graphHopper, double FROM_LAT, double FROM_LON, double TO_LAT, double TO_LON, int expectedWeight) {
+		assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, 0, TO_LAT, TO_LON, expectedWeight);
 	}
 
 	private void assertNoRoute(GraphHopperGtfs graphHopper, double from_lat, double from_lon, double to_lat, double to_lon) {

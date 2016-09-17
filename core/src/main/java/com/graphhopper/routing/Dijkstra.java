@@ -29,6 +29,7 @@ import com.graphhopper.util.Parameters;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
+import java.util.List;
 import java.util.PriorityQueue;
 
 /**
@@ -38,7 +39,7 @@ import java.util.PriorityQueue;
  *
  * @author Peter Karich
  */
-public class Dijkstra extends AbstractRoutingAlgorithm {
+public class Dijkstra extends AbstractTimeDependentRoutingAlgorithm {
     protected TIntObjectMap<SPTEntry> fromMap;
     protected PriorityQueue<SPTEntry> fromHeap;
     protected SPTEntry currEdge;
@@ -57,15 +58,20 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
     }
 
     @Override
-    public Path calcPath(int from, int to) {
+    public Path calcPath(int from, int to, int earliestDepartureTime) {
         checkAlreadyRun();
         this.to = to;
-        currEdge = createSPTEntry(from, 0);
+        currEdge = createSPTEntry(from, earliestDepartureTime);
         if (!traversalMode.isEdgeBased()) {
             fromMap.put(from, currEdge);
         }
         runAlgo();
         return extractPath();
+    }
+
+    @Override
+    public Path calcPath(int from, int to) {
+        return calcPath(from, to, 0);
     }
 
     protected void runAlgo() {
