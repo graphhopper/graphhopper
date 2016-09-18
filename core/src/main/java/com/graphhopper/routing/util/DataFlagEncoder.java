@@ -408,8 +408,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public long flagsDefault(boolean forward, boolean backward) {
-        // just pick car mode to set access values?
-        throw new RuntimeException("do not call flagsDefault");
+//         just pick car mode to set access values?
+//        throw new RuntimeException("do not call flagsDefault");
+    	return setAccess(0, forward, backward);
     }
 
     @Override

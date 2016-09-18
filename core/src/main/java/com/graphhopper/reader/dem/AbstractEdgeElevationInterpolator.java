@@ -28,6 +28,10 @@ public abstract class AbstractEdgeElevationInterpolator {
 	}
 
 	protected abstract boolean isStructureEdge(EdgeIteratorState edge);
+	
+	public GraphHopperStorage getStorage() {
+		return storage;
+	}
 
 	public void execute() {
 		interpolateElevationsOfTowerNodes();
@@ -59,7 +63,7 @@ public abstract class AbstractEdgeElevationInterpolator {
 		nodeElevationInterpolator.interpolateElevationsOfInnerNodes(outerNodeIds.toArray(), innerNodeIds.toArray());
 	}
 
-	private void gatherOuterAndInnerNodeIdsOfStructure(final EdgeExplorer edgeExplorer,
+	public void gatherOuterAndInnerNodeIdsOfStructure(final EdgeExplorer edgeExplorer,
 			final EdgeIteratorState structureEdge, final GHBitSet visitedEdgesIds, final TIntSet outerNodeIds,
 			final TIntSet innerNodeIds) {
 		final BreadthFirstSearch gatherOuterAndInnerNodeIdsOfStructureSearch = new BreadthFirstSearch() {
@@ -94,13 +98,13 @@ public abstract class AbstractEdgeElevationInterpolator {
 				double lon1 = storage.getNodeAccess().getLon(secondNodeId);
 				double ele1 = storage.getNodeAccess().getEle(secondNodeId);
 
-				PointList pointList = edge.fetchWayGeometry(0);
-				int count = pointList.size();
+				final PointList pointList = edge.fetchWayGeometry(0);
+				final int count = pointList.size();
 				for (int index = 0; index < count; index++) {
 					double lat = pointList.getLat(index);
 					double lon = pointList.getLon(index);
-					double ele = elevationInterpolator.calculateElevation(lon1, ele1, lat, lon, lat0, lon0, ele0,
-							lat1);
+					double ele = elevationInterpolator.calculateElevation(lat, lon, lat0, lon0, ele0,
+							lat1, lon1, ele1);
 					pointList.set(index, lat, lon, ele);
 				}
 				edge.setWayGeometry(pointList);

@@ -60,9 +60,13 @@ public class EncodingManager {
      * @param flagEncodersStr comma delimited list of encoders. The order does not matter.
      */
     public EncodingManager(String flagEncodersStr) {
-        this(FlagEncoderFactory.DEFAULT, flagEncodersStr, 4);
+        this(flagEncodersStr, 4);
     }
 
+    public EncodingManager(String flagEncodersStr, int bytesForEdgeFlags) {
+        this(FlagEncoderFactory.DEFAULT, flagEncodersStr, bytesForEdgeFlags);
+    }
+    
     public EncodingManager(FlagEncoderFactory factory, String flagEncodersStr, int bytesForEdgeFlags) {
         this(parseEncoderString(factory, flagEncodersStr), bytesForEdgeFlags);
     }

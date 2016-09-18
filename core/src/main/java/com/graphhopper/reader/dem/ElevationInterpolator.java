@@ -70,6 +70,7 @@ public class ElevationInterpolator {
 	
 
 	public double calculateElevation(double lat, double lon, PointList pointList) {
+		// See http://math.stackexchange.com/a/1930758/140512 for the explanation
 		final int size = pointList.size();
 		double[] vs = new double[size];
 		double[] eles = new double[size];
