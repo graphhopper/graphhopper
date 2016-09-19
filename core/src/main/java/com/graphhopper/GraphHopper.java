@@ -932,11 +932,14 @@ public class GraphHopper implements GraphHopperAPI {
 
 	private void interpolateBridgesAndOrTunnels() {
 		if (!ghStorage.getEncodingManager().supports("generic")) {
-			// TODO hint that generic encoder is required
+			logger.warn("Elevation interpolation of bridges or tunnels is turned on, but generic flag encoder is not enabled. "
+					+ "Either enable generic flag encoder using graph.flag_encoders=generic,... "
+					+ "or turn off bridge and tunnel interpolation using graph.elevation.interpolate.bridges=false and graph.elevation.interpolate.tunnels=false.");
+			
 		} else {
 			final FlagEncoder genericFlagEncoder = ghStorage.getEncodingManager().getEncoder("generic");
 			if (!(genericFlagEncoder instanceof DataFlagEncoder)) {
-				// TODO wrong type
+				throw new IllegalStateException("Generic flag encoder equired for elevation interpolation of bridges and tunnels is enabled but does not habe the expected type " + DataFlagEncoder.class.getName() + ".");
 			} else {
 				final DataFlagEncoder dataFlagEncoder = (DataFlagEncoder) genericFlagEncoder;
 				if (interpolateTunnels) {

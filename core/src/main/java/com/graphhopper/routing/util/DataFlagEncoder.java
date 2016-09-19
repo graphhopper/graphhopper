@@ -410,6 +410,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     public long flagsDefault(boolean forward, boolean backward) {
 //         just pick car mode to set access values?
 //        throw new RuntimeException("do not call flagsDefault");
+    	// TODO This is called on each of the encoders so I had to replace the runtime exception with something,
+    	// but I'm not sure this is correct.
     	return setAccess(0, forward, backward);
     }
 

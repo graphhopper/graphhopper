@@ -373,6 +373,66 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void testSRTMWithoutTunnelInterpolation() throws Exception {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(osmFile).
+                setStoreOnFlush(true).
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager(importVehicles, 8));
+
+        tmpHopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
+        tmpHopper.importOrLoad();
+
+        GHResponse rsp = tmpHopper.route(new GHRequest(43.74056471749763, 7.4299266210693755, 43.73790260334179, 7.427984089259056).
+                setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
+        PathWrapper arsp = rsp.getBest();
+        assertEquals(356.79372559007476, arsp.getDistance(), .1);
+        assertEquals(6, arsp.getPoints().getSize());
+        assertTrue(arsp.getPoints().is3D());
+        
+        assertEquals(Helper.createPointList3D(
+        		43.7405648173518, 7.429926635993867, 17.0,
+        		43.74016602501644, 7.42986703134776, 23.0,
+        		43.73963796510483, 7.429757507810537, 23.0,
+        		43.739005969591574, 7.429468797805953, 41.0,
+        		43.73845425408604, 7.428933846107137, 19.0,
+        		43.73790260334179, 7.427984089259055, 26.5
+        		),
+        		arsp.getPoints());
+    }
+    
+    @Test
+    public void testSRTMWithTunnelInterpolation() throws Exception {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(osmFile).
+                setStoreOnFlush(true).
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("generic," + importVehicles, 8));
+
+        tmpHopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
+        tmpHopper.importOrLoad();
+
+        GHResponse rsp = tmpHopper.route(new GHRequest(43.74056471749763, 7.4299266210693755, 43.73790260334179, 7.427984089259056).
+                setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
+        PathWrapper arsp = rsp.getBest();
+        assertEquals(351.38545671859913, arsp.getDistance(), .1); // Without interpolation: 356.79372559007476  
+        assertEquals(6, arsp.getPoints().getSize());
+        assertTrue(arsp.getPoints().is3D());
+        
+        assertEquals(Helper.createPointList3D(
+                43.7405648173518, 7.429926635993867, 17.0,
+                43.74016602501644, 7.42986703134776, 19.042999267578125, // Without interpolation: 23.0
+                43.73963796510483, 7.429757507810537, 21.667999267578125, // Without interpolation: 23.0
+                43.739005969591574, 7.429468797805953, 25.024999618530273, // Without interpolation: 41.0
+                43.73845425408604, 7.428933846107137, 28.64699935913086, // Without interpolation: 19.0
+                43.73790260334179, 7.427984089259055, 31.32349967956543 // Without interpolation: 26.5
+        		),
+        		arsp.getPoints());
+    }
+
+    @Test
     public void testKremsCyclewayInstructionsWithWayTypeInfo() {
         String tmpOsmFile = DIR + "/krems.osm.gz";
         String tmpVehicle = "bike";
