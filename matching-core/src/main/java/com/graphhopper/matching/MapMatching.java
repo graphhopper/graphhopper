@@ -37,25 +37,17 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class matches real world GPX entries to the digital road network stored
- * in GraphHopper. The algorithm is a simple 4 phase process:
- * <p>
- * <ol>
- * <li>Lookup Phase: Find some closest edges for every GPX entry</li>
- * <li>Custom Weighting Phase: Create a weighting object where those edges will
- * be preferred</li>
- * <li>Search Phase: Calculate the path and its list of edges from the best
- * start to the best end edge</li>
- * <li>Match Phase: Associate all GPX entries for every edge</li>
- * </ol>
- * <p>
+ * This class matches real world GPX entries to the digital road network stored in GraphHopper.
+ * The Viterbi algorithm is used to compute the most likely sequence of map matching candidates.
+ * The Viterbi algorithm takes into account the distance between GPX entries
+ * and map matching candidates as well as the routing distances between consecutive map matching
+ * candidates.
  *
- * Note: currently tested with very close GPX points only. Will fail if best
- * match for start or end node is incorrect. Performance improvements possible
- * if not the full but only partial routes are calculated this will also improve
- * accuracy as currently all loops in a GPX trail are automatically removed.
  * <p>
- * See http://en.wikipedia.org/wiki/Map_matching
+ * See http://en.wikipedia.org/wiki/Map_matching and
+ * Newson, Paul, and John Krumm. "Hidden Markov map matching through noise and sparseness."
+ * Proceedings of the 17th ACM SIGSPATIAL International Conference on Advances in Geographic
+ * Information Systems. ACM, 2009.
  *
  * @author Peter Karich
  * @author Michael Zilske
@@ -81,11 +73,11 @@ public class MapMatching {
         this.nodeCount = graph.getNodes();
         this.locationIndex = locationIndex;
 
-        // TODO initialization of start values for the algorithm is currently done explicitely via
+        // TODO initialization of start values for the algorithm is currently done explicitly via
         // node IDs!
         // To fix this use instead: traversalMode.createTraversalId(iter, false);
 //        this.traversalMode = graph.getExtension() instanceof TurnCostExtension
-//                ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;                
+//                ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;
         this.traversalMode = TraversalMode.NODE_BASED;
         this.encoder = encoder;
         this.weighting = new FastestWeighting(encoder);
@@ -104,9 +96,7 @@ public class MapMatching {
 
     /**
      * Beta parameter of the exponential distribution for modeling transition
-     * probabilities. Empirically computed from the Microsoft ground truth data
-     * for shortest route lengths and 60 s sampling interval but also works for
-     * other sampling intervals.
+     * probabilities.
      */
     public void setTransitionProbabilityBeta(double transitionProbabilityBeta) {
         this.transitionProbabilityBeta = transitionProbabilityBeta;
@@ -114,7 +104,7 @@ public class MapMatching {
 
     /**
      * Standard deviation of the normal distribution [m] used for modeling the
-     * GPS error taken from Newson and Krumm.
+     * GPS error.
      */
     public void setMeasurementErrorSigma(double measurementErrorSigma) {
         this.measurementErrorSigma = measurementErrorSigma;
@@ -138,8 +128,10 @@ public class MapMatching {
 
         final EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         
-        // Compute all candidates first. Would be great if this could be done on-the-fly instead.
-        final List<QueryResult> allCandidates = new ArrayList<QueryResult>();
+        // Compute all candidates first.
+        // TODO: Generate candidates on-the-fly within computeViterbiSequence() if this does not
+        // degrade performance.
+        final List<QueryResult> allCandidates = new ArrayList<>();
         List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = createTimeSteps(gpxList,
                 edgeFilter, allCandidates);
         // printMinDistances(timeSteps);
@@ -169,7 +161,7 @@ public class MapMatching {
      * Creates TimeSteps for the GPX entries but does not create emission or transition
      * probabilities.
      * 
-     * @param outAllCandidates ouptut parameter for all candidates, must be an empty list.
+     * @param outAllCandidates output parameter for all candidates, must be an empty list.
      */
     private List<TimeStep<GPXExtension, GPXEntry, Path>> createTimeSteps(List<GPXEntry> gpxList,
             EdgeFilter edgeFilter, List<QueryResult> outAllCandidates) {
@@ -177,22 +169,23 @@ public class MapMatching {
         TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep = null;        
         final List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = new ArrayList<>();
         
-        for (GPXEntry entry : gpxList) {
+        for (GPXEntry gpxEntry : gpxList) {
             if (prevTimeStep == null
                     || distanceCalc.calcDist(
                     prevTimeStep.observation.getLat(), prevTimeStep.observation.getLon(),
-                    entry.getLat(), entry.getLon()) > 2 * measurementErrorSigma
+                    gpxEntry.getLat(), gpxEntry.getLon()) > 2 * measurementErrorSigma
                     // always include last point
                     || indexGPX == gpxList.size() - 1) {
-                final List<QueryResult> candidates = locationIndex.findNClosest(
-                        entry.lat, entry.lon, edgeFilter, measurementErrorSigma);
-                outAllCandidates.addAll(candidates);
-                final List<GPXExtension> gpxExtensions = new ArrayList<GPXExtension>();
-                for (QueryResult candidate : candidates) {
-                    gpxExtensions.add(new GPXExtension(entry, candidate, indexGPX));
+                final List<QueryResult> queryResults = locationIndex.findNClosest(
+                        gpxEntry.lat, gpxEntry.lon,
+                        edgeFilter, measurementErrorSigma);
+                outAllCandidates.addAll(queryResults);
+                final List<GPXExtension> candidates = new ArrayList<>();
+                for (QueryResult candidate : queryResults) {
+                    candidates.add(new GPXExtension(gpxEntry, candidate, indexGPX));
                 }
                 final TimeStep<GPXExtension, GPXEntry, Path> timeStep =
-                        new TimeStep<>(entry, gpxExtensions);
+                        new TimeStep<>(gpxEntry, candidates);
                 timeSteps.add(timeStep);
                 prevTimeStep = timeStep;
             }
@@ -245,8 +238,7 @@ public class MapMatching {
             prevTimeStep = timeStep;
         }
     
-        List<SequenceState<GPXExtension, GPXEntry, Path>> seq = viterbi.computeMostLikelySequence();
-        return seq;
+        return viterbi.computeMostLikelySequence();
     }
     
     private void computeEmissionProbabilities(TimeStep<GPXExtension, GPXEntry, Path> timeStep,
@@ -294,21 +286,28 @@ public class MapMatching {
                                            EdgeExplorer explorer) {
         // every virtual edge maps to its real edge where the orientation is already correct!
         // TODO use traversal key instead of string!
-        final Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<String, EdgeIteratorState>();
-
+        final Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<>();
         for (QueryResult candidate : allCandidates) {
             fillVirtualEdges(virtualEdgesMap, explorer, candidate);
         }
 
-        List<EdgeMatch> edgeMatches = new ArrayList<EdgeMatch>();        
+        MatchResult matchResult = computeMatchedEdges(seq, virtualEdgesMap);
+        computeGpxStats(gpxList, matchResult);
+
+        return matchResult;
+    }
+
+    private MatchResult computeMatchedEdges(List<SequenceState<GPXExtension, GPXEntry, Path>> seq,
+                                            Map<String, EdgeIteratorState> virtualEdgesMap) {
+        List<EdgeMatch> edgeMatches = new ArrayList<>();
         double distance = 0.0;
         long time = 0;
         EdgeIteratorState currentEdge = null;
-        List<GPXExtension> gpxExtensions = new ArrayList<GPXExtension>();
+        List<GPXExtension> gpxExtensions = new ArrayList<>();
         GPXExtension queryResult = seq.get(0).state;
         gpxExtensions.add(queryResult);
         for (int j = 1; j < seq.size(); j++) {
-            GPXExtension nextQueryResult = seq.get(j).state;
+            queryResult = seq.get(j).state;
             Path path = seq.get(j).transitionDescriptor;
             distance += path.getDistance();
             time += path.getTime();
@@ -323,13 +322,12 @@ public class MapMatching {
                     if (currentEdge != null) {
                         EdgeMatch edgeMatch = new EdgeMatch(currentEdge, gpxExtensions);
                         edgeMatches.add(edgeMatch);
-                        gpxExtensions = new ArrayList<GPXExtension>();
+                        gpxExtensions = new ArrayList<>();
                     }
                     currentEdge = directedRealEdge;
                 }
             }
-            gpxExtensions.add(nextQueryResult);
-            queryResult = nextQueryResult;
+            gpxExtensions.add(queryResult);
         }
         if (edgeMatches.isEmpty()) {
             throw new IllegalStateException(
@@ -344,8 +342,13 @@ public class MapMatching {
         MatchResult matchResult = new MatchResult(edgeMatches);
         matchResult.setMatchMillis(time);
         matchResult.setMatchLength(distance);
+        return matchResult;
+    }
 
-        //////// Calculate stats to determine quality of matching //////// 
+    /**
+     * Calculate GPX stats to determine quality of matching.
+     */
+    private void computeGpxStats(List<GPXEntry> gpxList, MatchResult matchResult) {
         double gpxLength = 0;
         GPXEntry prevEntry = gpxList.get(0);
         for (int i = 1; i < gpxList.size(); i++) {
@@ -357,9 +360,8 @@ public class MapMatching {
         long gpxMillis = gpxList.get(gpxList.size() - 1).getTime() - gpxList.get(0).getTime();
         matchResult.setGPXEntriesMillis(gpxMillis);
         matchResult.setGPXEntriesLength(gpxLength);
-        return matchResult;
     }
-    
+
     private boolean equalEdges(EdgeIteratorState edge1, EdgeIteratorState edge2) {
         return edge1.getEdge() == edge2.getEdge()
                 && edge1.getBaseNode() == edge2.getBaseNode()
@@ -467,6 +469,7 @@ public class MapMatching {
         }
     }
 
+    // TODO: Make setFromNode and processEdge public in Path and then remove this.
     private static class MyPath extends Path {
 
         public MyPath(Graph graph, FlagEncoder encoder) {
@@ -482,7 +485,7 @@ public class MapMatching {
         public void processEdge(int edgeId, int adjNode) {
             super.processEdge(edgeId, adjNode);
         }
-    };
+    }
 
     public Path calcPath(MatchResult mr) {
         MyPath p = new MyPath(graph, encoder);
