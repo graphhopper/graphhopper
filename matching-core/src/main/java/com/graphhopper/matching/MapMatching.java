@@ -17,6 +17,8 @@
  */
 package com.graphhopper.matching;
 
+import com.graphhopper.matching.util.HmmProbabilities;
+import com.graphhopper.matching.util.TimeStep;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.bmw.hmm.SequenceState;

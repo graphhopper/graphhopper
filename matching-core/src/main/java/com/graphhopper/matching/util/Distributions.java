@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.graphhopper.matching;
+package com.graphhopper.matching.util;
 
 import static java.lang.Math.PI;
 import static java.lang.Math.exp;
