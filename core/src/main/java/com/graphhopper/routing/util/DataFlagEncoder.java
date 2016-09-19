@@ -85,10 +85,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         List<String> highwayList = Arrays.asList(
                 /* reserve index=0 for unset roads (not accessible) */
                 "_default",
-                "motorway", "motorway_link",
+                "motorway", "motorway_link", "motorroad",
                 "trunk", "trunk_link",
                 "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
-                "unclassified", "residential", "living_street", "service", "road", "track",
+                "unclassified", "residential", "living_street", "service", "road", "forestry", "track",
                 "cycleway", "steps", "path", "footway", "pedestrian",
                 "ferry", "shuttle_train");
         int counter = 0;
