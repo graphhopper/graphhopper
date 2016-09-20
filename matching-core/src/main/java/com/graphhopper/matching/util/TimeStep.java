@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package com.graphhopper.matching;
+package com.graphhopper.matching.util;
 
 import java.util.Collection;
 import java.util.HashMap;
