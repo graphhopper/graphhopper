@@ -33,16 +33,6 @@ public class ElevationInterpolatorTest {
     private ElevationInterpolator elevationInterpolator = new ElevationInterpolator();
     
     @Test
-    public void roundsToPrecision() {
-        assertEquals(1.12, elevationInterpolator.roundToPrecision(1.124), PRECISION);
-        assertEquals(1.13, elevationInterpolator.roundToPrecision(1.125), PRECISION);
-        assertEquals(1.13, elevationInterpolator.roundToPrecision(1.126), PRECISION);
-        assertEquals(-1.12, elevationInterpolator.roundToPrecision(-1.124), PRECISION);
-        assertEquals(-1.12, elevationInterpolator.roundToPrecision(-1.125), PRECISION);
-        assertEquals(-1.13, elevationInterpolator.roundToPrecision(-1.126), PRECISION);
-    }
-
-    @Test
     public void calculatesElevationOnTwoPoints() {
         assertEquals(15, elevationInterpolator.calculateElevationBasedOnTwoPoints(0, 0, -10, -10,
                         10, 10, 10, 20), PRECISION);
