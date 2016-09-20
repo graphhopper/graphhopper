@@ -82,7 +82,7 @@ public class DataFlagEncoderTest {
         assertFalse(encoder.isTransportModeTunnel(edge));
         assertTrue(encoder.isTransportModeBridge(edge));
     }
-    
+
     @Test
     public void testBridge() {
         ReaderWay osmWay = new ReaderWay(0);
@@ -104,7 +104,7 @@ public class DataFlagEncoderTest {
         assertEquals("bridge", encoder.getTransportModeAsString(edge));
         assertFalse(encoder.isTransportModeTunnel(edge));
         assertTrue(encoder.isTransportModeBridge(edge));
-    }    
+    }
 
     @Test
     public void testHighwaySpeed() {

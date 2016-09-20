@@ -319,7 +319,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     public int getTransportMode(EdgeIteratorState edge) {
         return (int) transportModeEncoder.getValue(edge.getFlags());
     }
-    
+
     public boolean isTransportModeTunnel(EdgeIteratorState edge) {
         return transportModeEncoder.getValue(edge.getFlags()) == this.transportModeTunnelValue;
     }
