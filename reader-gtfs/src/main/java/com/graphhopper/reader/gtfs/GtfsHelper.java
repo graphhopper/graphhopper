@@ -38,7 +38,7 @@ public class GtfsHelper {
         return hours * SECONDS_IN_HOUR + minutes * SECONDS_IN_MINUTE + seconds;
     }
 
-    public static int seconds(int hours, int minutes) {
+    public static int time(int hours, int minutes) {
         return time(hours, minutes, 0);
     }
 }
