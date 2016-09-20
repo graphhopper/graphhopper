@@ -294,6 +294,8 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             Integer val = bikeNetworkToCode.get(relation.getTag("network"));
             if (val != null)
                 code = val;
+            else
+                code = PriorityCode.PREFER.getValue();  // Assume priority of network "lcn" as bicycle route default
         } else if (relation.hasTag("route", "ferry")) {
             code = AVOID_IF_POSSIBLE.getValue();
         }
@@ -364,6 +366,15 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         String highwayTag = way.getTag("highway");
         Integer highwaySpeed = highwaySpeeds.get(highwayTag);
 
+        // Override the highwaySpeed for ways which would be so far wrongly indentified as pushing sections
+        // in case that the OSM tagging results in something providing similar speed conditions compared to "highway=cycleway":
+        if (way.hasTag("highway", pushingSectionsHighways)) {
+            if ( (way.hasTag("foot", "yes") && way.hasTag("segregated", "yes")) ||
+                 way.hasTag("bicycle", "designated") ||
+                 way.hasTag("bicycle", "official"))
+               highwaySpeed = getHighwaySpeed("cycleway");
+        }
+
         String s = way.getTag("surface");
         if (!Helper.isEmpty(s)) {
             Integer surfaceSpeed = surfaceSpeeds.get(s);
@@ -397,13 +408,21 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         if (speed > PUSHING_SECTION_SPEED
                 && (way.hasTag("highway", pushingSectionsHighways) || way.hasTag("bicycle", "dismount"))) {
             if (!way.hasTag("bicycle", intendedValues)) {
+                // Here we set the speed for pushing sections and set speed for steps as even lower:
                 if (way.hasTag("highway", "steps"))
                     speed = PUSHING_SECTION_SPEED / 2;
                 else
                     speed = PUSHING_SECTION_SPEED;
-            } else if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))
-                speed = getHighwaySpeed("cycleway");
-            else
+            } else {
+                if (way.hasTag("bicycle", "designated") || 
+                    way.hasTag("bicycle", "official"))  // Here we handle the cases where the OSM tagging results in something similar to "highway=cycleway"
+                    speed = highwaySpeeds.get("cycleway");
+                else
+                    speed = PUSHING_SECTION_SPEED;
+            }
+            // Increase speed in case of segregated
+            if ((speed <= PUSHING_SECTION_SPEED) && 
+                way.hasTag("segregated", "yes"))
                 speed = PUSHING_SECTION_SPEED * 2;
         }
 
@@ -508,15 +527,21 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     void collect(ReaderWay way, double wayTypeSpeed, TreeMap<Double, Integer> weightToPrioMap) {
         String service = way.getTag("service");
         String highway = way.getTag("highway");
-        if (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official")) {
-            if ("path".equals(highway))
-                weightToPrioMap.put(100d, VERY_NICE.getValue());
-            else
-                weightToPrioMap.put(100d, PREFER.getValue());
+        if ((highway!=null) && 
+            !highway.isEmpty() && 
+            (way.hasTag("bicycle", "designated") || way.hasTag("bicycle", "official"))) {
+             if ("path".equals(highway))
+                 weightToPrioMap.put(100d, VERY_NICE.getValue());
+             else
+                 weightToPrioMap.put(100d, PREFER.getValue());
         }
 
-        if ("cycleway".equals(highway))
-            weightToPrioMap.put(100d, VERY_NICE.getValue());
+        if ("cycleway".equals(highway)) {
+            if (way.hasTag("foot", intendedValues) && !way.hasTag("segregated", "yes"))
+               weightToPrioMap.put(100d, PREFER.getValue());
+            else
+               weightToPrioMap.put(100d, VERY_NICE.getValue());
+        }
 
         double maxSpeed = getMaxSpeed(way);
         if (preferHighwayTags.contains(highway) || maxSpeed > 0 && maxSpeed <= 30) {
@@ -535,10 +560,19 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         if (pushingSectionsHighways.contains(highway)
                 || way.hasTag("bicycle", "use_sidepath")
                 || "parking_aisle".equals(service)) {
-            if (way.hasTag("bicycle", "yes"))
-                weightToPrioMap.put(100d, UNCHANGED.getValue());
-            else
-                weightToPrioMap.put(50d, AVOID_IF_POSSIBLE.getValue());
+            int pushingSectionPrio = AVOID_IF_POSSIBLE.getValue();
+            if (way.hasTag("bicycle", "yes") || 
+               (way.hasTag("bicycle", "permissive")))
+                pushingSectionPrio = PREFER.getValue();
+            if (way.hasTag("bicycle", "designated") || 
+               (way.hasTag("bicycle", "official")))
+                pushingSectionPrio = VERY_NICE.getValue();
+            if (way.hasTag("foot", "yes")) {
+                pushingSectionPrio = pushingSectionPrio - 1; //Downgrade one level
+                if (way.hasTag("segregated", "yes"))
+                    pushingSectionPrio = pushingSectionPrio + 1; //Upgrade one level
+            }
+            weightToPrioMap.put(100d, pushingSectionPrio);
         }
 
         if (way.hasTag("railway", "tram"))
