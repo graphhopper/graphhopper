@@ -45,18 +45,35 @@ public class GraphHopperRnvGtfsIT {
     }
     
     @Test
-    public void testRoute4() {
-        // 556311,Heddesheim Bahnhof,49.504812,8.594176,,0
-        final double FROM_LAT = 49.504812, FROM_LON = 8.594176;
-//      187901,Leimen Friedhof,49.34345,8.69311,,0
-        final double TO_LAT = 49.34345, TO_LON = 8.69311;
-        // TODO should be 09:17
-        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(7, 50),
-                        TO_LAT, TO_LON, time(9, 29));
+    public void testTrip209701_2() {
+        // 113311,Burgstr.,49.434352,8.682286,,0
+        final double FROM_LAT = 49.434352, FROM_LON = 8.682286;
+        // 113211,Biethsstr.,49.42987,8.68252,,0
+        final double TO_LAT = 49.42987, TO_LON = 8.68252;
+        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(7, 51),
+                        TO_LAT, TO_LON, time(7, 52));
     }
     
+    @Test
+    public void testTrip209701_10() {
+        // 113311,Burgstr.,49.434352,8.682286,,0
+        final double FROM_LAT = 49.434352, FROM_LON = 8.682286;
+        // 119302,Stadtbücherei,49.4061,8.68601,,0
+        final double TO_LAT = 49.4061, TO_LON = 8.68601;
+        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(7, 51),
+                        TO_LAT, TO_LON, time(8, 6));
+    }
     
-
+    @Test
+    public void testTrip209701_28() {
+        // 113311,Burgstr.,49.434352,8.682286,,0
+        final double FROM_LAT = 49.434352, FROM_LON = 8.682286;
+        // 187901,Leimen Friedhof,49.34345,8.69311,,0
+        final double TO_LAT = 49.34345, TO_LON = 8.69311;
+        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(7, 51),
+                        TO_LAT, TO_LON, time(8, 29));
+    }
+    
     private void assertRouteWeightIs(GraphHopperGtfs graphHopper, double from_lat, double from_lon, int earliestDepartureTime, double to_lat, double to_lon, int expectedWeight) {
         GHRequest ghRequest = new GHRequest(
                 from_lat, from_lon,
