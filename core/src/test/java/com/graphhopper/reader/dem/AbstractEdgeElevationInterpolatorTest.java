@@ -31,6 +31,7 @@ import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 
 import gnu.trove.set.hash.TIntHashSet;
 
@@ -49,7 +50,7 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
 
     @SuppressWarnings("resource")
     @Before
-    public void init() {
+    public void setUp() {
         dataFlagEncoder = new DataFlagEncoder();
         graph = new GraphHopperStorage(new RAMDirectory(),
                         new EncodingManager(Arrays.asList(dataFlagEncoder, new FootFlagEncoder()),
@@ -64,8 +65,8 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
     }
     
     @After
-    public void tini() {
-        graph.close();
+    public void tearDown() {
+        Helper.close(graph);
     }
 
     protected abstract ReaderWay createInterpolatableWay();

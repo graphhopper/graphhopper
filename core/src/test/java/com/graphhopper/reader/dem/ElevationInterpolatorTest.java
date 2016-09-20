@@ -31,6 +31,16 @@ public class ElevationInterpolatorTest {
     private static final double PRECISION = ElevationInterpolator.EPSILON2;
 
     private ElevationInterpolator elevationInterpolator = new ElevationInterpolator();
+    
+    @Test
+    public void roundsToPrecision() {
+        assertEquals(1.12, elevationInterpolator.roundToPrecision(1.124), PRECISION);
+        assertEquals(1.13, elevationInterpolator.roundToPrecision(1.125), PRECISION);
+        assertEquals(1.13, elevationInterpolator.roundToPrecision(1.126), PRECISION);
+        assertEquals(-1.12, elevationInterpolator.roundToPrecision(-1.124), PRECISION);
+        assertEquals(-1.12, elevationInterpolator.roundToPrecision(-1.125), PRECISION);
+        assertEquals(-1.13, elevationInterpolator.roundToPrecision(-1.126), PRECISION);
+    }
 
     @Test
     public void calculatesElevationOnTwoPoints() {
@@ -54,9 +64,9 @@ public class ElevationInterpolatorTest {
 
     @Test
     public void calculatesElevationOnThreePoints() {
-        assertEquals(-15d / 17d, elevationInterpolator.calculateElevationBasedOnThreePoints(0, 0, 1,
+        assertEquals(-0.88, elevationInterpolator.calculateElevationBasedOnThreePoints(0, 0, 1,
                         2, 3, 4, 6, 9, 12, 11, 9), PRECISION);
-        assertEquals(15d, elevationInterpolator.calculateElevationBasedOnThreePoints(10, 0, 0, 0, 0,
+        assertEquals(15, elevationInterpolator.calculateElevationBasedOnThreePoints(10, 0, 0, 0, 0,
                         10, 10, 10, 10, -10, 20), PRECISION);
         assertEquals(5, elevationInterpolator.calculateElevationBasedOnThreePoints(5, 5, 0, 0, 0,
                         10, 10, 10, 20, 20, 20), PRECISION);
@@ -73,10 +83,10 @@ public class ElevationInterpolatorTest {
         assertEquals(5, elevationInterpolator.calculateElevationBasedOnPointList(5, 5,
                         Helper.createPointList3D(0, 0, 0, 10, 0, 10, 10, 10, 0, 0, 10, 10)),
                         PRECISION);
-        assertEquals(2.6470588235, elevationInterpolator.calculateElevationBasedOnPointList(2.5,
+        assertEquals(2.65, elevationInterpolator.calculateElevationBasedOnPointList(2.5,
                         2.5, Helper.createPointList3D(0, 0, 0, 10, 0, 10, 10, 10, 0, 0, 10, 10)),
                         PRECISION);
-        assertEquals(0.0040787192, elevationInterpolator.calculateElevationBasedOnPointList(0.1,
+        assertEquals(0, elevationInterpolator.calculateElevationBasedOnPointList(0.1,
                         0.1, Helper.createPointList3D(0, 0, 0, 10, 0, 10, 10, 10, 0, 0, 10, 10)),
                         PRECISION);
         assertEquals(0, elevationInterpolator.calculateElevationBasedOnPointList(

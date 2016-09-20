@@ -38,7 +38,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class GraphHopperIT {
-    private static final double PRECISION = 0.1;
+    private static final double PRECISION = 0.01;
     public static final String DIR = "../core/files";
     private static final String graphFileFoot = "target/graphhopperIT-foot";
     private static final String osmFile = DIR + "/monaco.osm.gz";
@@ -87,7 +87,7 @@ public class GraphHopperIT {
         assertEquals(698, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         PathWrapper arsp = rsp.getBest();
-        assertEquals(3437.6, arsp.getDistance(), PRECISION);
+        assertEquals(3437.58, arsp.getDistance(), PRECISION);
         assertEquals(89, arsp.getPoints().getSize());
 
         assertEquals(43.7276852, arsp.getWaypoints().getLat(0), 1e-7);
@@ -195,7 +195,7 @@ public class GraphHopperIT {
                 setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         PathWrapper arsp = rsp.getBest();
-        assertEquals(6875.1, arsp.getDistance(), PRECISION);
+        assertEquals(6875.17, arsp.getDistance(), PRECISION);
         assertEquals(179, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
@@ -336,7 +336,7 @@ public class GraphHopperIT {
                 setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         PathWrapper arsp = rsp.getBest();
-        assertEquals(1626.8, arsp.getDistance(), PRECISION);
+        assertEquals(1626.81, arsp.getDistance(), PRECISION);
         assertEquals(60, arsp.getPoints().getSize());
         assertTrue(arsp.getPoints().is3D());
 
@@ -413,18 +413,19 @@ public class GraphHopperIT {
                         43.73790260334179, 7.427984089259056).setAlgorithm(ASTAR)
                                         .setVehicle(vehicle).setWeighting(weightCalcStr));
         PathWrapper arsp = rsp.getBest();
-        assertEquals(351.39, arsp.getDistance(), PRECISION); // Without
-                                                                         // interpolation:
-                                                                         // 356.79372559007476
+        // Without
+        // interpolation:
+        // 356.79372559007476
+        assertEquals(351.39, arsp.getDistance(), PRECISION);
         PointList pointList = arsp.getPoints();
         assertEquals(6, pointList.getSize());
         assertTrue(pointList.is3D());
 
         assertEquals(17, pointList.getEle(0), PRECISION);
         assertEquals(19.04, pointList.getEle(1), PRECISION);
-        assertEquals(21.66, pointList.getEle(2), PRECISION);
-        assertEquals(25.02, pointList.getEle(3), PRECISION);
-        assertEquals(28.64, pointList.getEle(4), PRECISION);
+        assertEquals(21.67, pointList.getEle(2), PRECISION);
+        assertEquals(25.03, pointList.getEle(3), PRECISION);
+        assertEquals(28.65, pointList.getEle(4), PRECISION);
         assertEquals(31.32, pointList.getEle(5), PRECISION);
     }
 
@@ -598,7 +599,7 @@ public class GraphHopperIT {
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
         assertTrue("Too many nodes visited " + sum, sum < 120);
-        assertEquals(3437.6, bestPath.getDistance(), PRECISION);
+        assertEquals(3437.59, bestPath.getDistance(), PRECISION);
         assertEquals(89, bestPath.getPoints().getSize());
 
         tmpHopper.close();
@@ -618,7 +619,7 @@ public class GraphHopperIT {
 
         assertEquals(1, rsp.getAll().size());
         PathWrapper pw = rsp.getBest();
-        assertEquals(1.5, rsp.getBest().getDistance() / 1000f, PRECISION);
+        assertEquals(1.45, rsp.getBest().getDistance() / 1000f, PRECISION);
         assertEquals(17, rsp.getBest().getTime() / 1000f / 60, 1);
         assertEquals(65, pw.getPoints().size());
     }

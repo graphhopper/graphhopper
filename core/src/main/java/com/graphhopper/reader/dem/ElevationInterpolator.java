@@ -44,6 +44,7 @@ public class ElevationInterpolator {
 
     public static final double EPSILON = 0.00001;
     public static final double EPSILON2 = EPSILON * EPSILON;
+    public static final double PRECISION = 0.01;
 
     public double calculateElevationBasedOnTwoPoints(double lat, double lon, double lat0,
                     double lon0, double ele0, double lat1, double lon1, double ele1) {
@@ -60,7 +61,7 @@ public class ElevationInterpolator {
             return l0 <= l1 ? ele0 : ele1;
         } else {
             // Otherwise do linear interpolation
-            return ele0 + (ele1 - ele0) * l0 / l;
+            return roundToPrecision(ele0 + (ele1 - ele0) * l0 / l);
         }
     }
 
@@ -102,7 +103,7 @@ public class ElevationInterpolator {
         } else {
             double d = a * lat0 + b * lon0 + c * ele0;
             double ele = (d - a * lat - b * lon) / c;
-            return ele;
+            return roundToPrecision(ele);
         }
     }
 
@@ -145,7 +146,11 @@ public class ElevationInterpolator {
             for (int index = 0; index < size; index++) {
                 ele += eles[index] * vs[index] / v;
             }
-            return ele;
+            return roundToPrecision(ele);
         }
+    }
+
+    public double roundToPrecision(double value) {
+        return Math.round(value / PRECISION) * PRECISION;
     }
 }
