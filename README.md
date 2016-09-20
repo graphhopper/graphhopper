@@ -128,5 +128,4 @@ Here is a list of the more detailed features including a link to the documentati
 
 # Attribution
 
-* GraphHopper uses [GTFS Feed](https://opendata.rnv-online.de/datensaetze/gtfs-general-transit-feed-specification/resource/rnv-gtfs) of [Rhein-Neckar-Verkehr GmbH (rnv)](http://www.rnv-online.de), licensed under [dl-de/by-2-0](https://www.govdata.de/dl-de/by-2-0) as test dataset.
-
+* GraphHopper uses [GTFS Feed](https://opendata.rnv-online.de/datensaetze/gtfs-general-transit-feed-specification/resource/rnv-gtfs) of [Rhein-Neckar-Verkehr GmbH (rnv)](http://www.rnv-online.de), licensed under [dl-de/by-2-0](https://www.govdata.de/dl-de/by-2-0). This GTFS feed is used as a test dataset.
