@@ -2,7 +2,7 @@ target/
 *~
 TODO.txt
 *-gh/
-*.osm
+*.osm*
 nbactions*.xml
 config.properties
 build.xml
