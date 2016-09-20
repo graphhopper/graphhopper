@@ -59,7 +59,7 @@ public class DataFlagEncoderTest {
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
         assertEquals("_default", encoder.getHighwayAsString(edge));
     }
-    
+
     @Test
     public void testTunnel() {
         ReaderWay osmWay = new ReaderWay(0);
