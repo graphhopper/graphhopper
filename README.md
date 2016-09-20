@@ -125,3 +125,8 @@ Here is a list of the more detailed features including a link to the documentati
  * scales from small indoor-sized to world-wide-sized graphs
  * Find nearest point on street e.g. to get elevation or 'snapp to road'
  * Enables the [map matching component](https://github.com/graphhopper/map-matching) (flexibility only)
+
+# Attribution
+
+* GraphHopper uses [GTFS Feed](https://opendata.rnv-online.de/datensaetze/gtfs-general-transit-feed-specification/resource/rnv-gtfs) of [Rhein-Neckar-Verkehr GmbH (rnv)](http://www.rnv-online.de), licensed under [dl-de/by-2-0](https://www.govdata.de/dl-de/by-2-0) as test dataset.
+
