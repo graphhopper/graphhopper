@@ -17,36 +17,13 @@
  */
 package com.graphhopper;
 
-import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
-import static com.graphhopper.util.Parameters.Algorithms.ROUND_TRIP;
-
-import java.io.File;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.BridgeElevationInterpolator;
 import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.TunnelElevationInterpolator;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.QueryGraph;
-import com.graphhopper.routing.RoutingAlgorithmFactory;
-import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
-import com.graphhopper.routing.RoutingAlgorithmFactorySimple;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
@@ -54,51 +31,27 @@ import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
 import com.graphhopper.routing.template.RoutingTemplate;
 import com.graphhopper.routing.template.ViaRoutingTemplate;
-import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.FlagEncoderFactory;
-import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.CurvatureWeighting;
-import com.graphhopper.routing.weighting.FastestWeighting;
-import com.graphhopper.routing.weighting.GenericWeighting;
-import com.graphhopper.routing.weighting.PriorityWeighting;
-import com.graphhopper.routing.weighting.ShortFastestWeighting;
-import com.graphhopper.routing.weighting.ShortestWeighting;
-import com.graphhopper.routing.weighting.TurnWeighting;
-import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.DAType;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GHDirectory;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.Lock;
-import com.graphhopper.storage.LockFactory;
-import com.graphhopper.storage.NativeFSLockFactory;
-import com.graphhopper.storage.SimpleFSLockFactory;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.*;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.DouglasPeucker;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
+import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.PathMerger;
-import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.Translation;
-import com.graphhopper.util.TranslationMap;
-import com.graphhopper.util.Unzipper;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.util.*;
+
+import static com.graphhopper.util.Parameters.Algorithms.*;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -124,8 +77,6 @@ public class GraphHopper implements GraphHopperAPI {
     private DAType dataAccessType = DAType.RAM_STORE;
     private boolean sortGraph = false;
     private boolean elevation = false;
-    private boolean interpolateBridges = true;
-    private boolean interpolateTunnels = true;
     private LockFactory lockFactory = new NativeFSLockFactory();
     private boolean allowWrites = true;
     private String preferredLanguage = "";
@@ -666,9 +617,6 @@ public class GraphHopper implements GraphHopperAPI {
         tmpProvider.setDAType(elevationDAType);
         setElevationProvider(tmpProvider);
         
-        interpolateBridges = args.getBool("graph.elevation.interpolate.bridges", interpolateBridges);
-        interpolateTunnels = args.getBool("graph.elevation.interpolate.tunnels", interpolateTunnels);
-
         // optimizable prepare
         minNetworkSize = args.getInt("prepare.min_network_size", minNetworkSize);
         minOneWayNetworkSize = args.getInt("prepare.min_one_way_network_size", minOneWayNetworkSize);
@@ -918,9 +866,9 @@ public class GraphHopper implements GraphHopperAPI {
             ghStorage = newGraph;
         }
         
-		if (hasElevation() && (interpolateBridges || interpolateTunnels)) {
-			interpolateBridgesAndOrTunnels();
-		}
+        if (hasElevation()) {
+            interpolateBridgesAndOrTunnels();
+        }
 
         initLocationIndex();
         if (chFactoryDecorator.isEnabled())
@@ -930,40 +878,37 @@ public class GraphHopper implements GraphHopperAPI {
             prepare();
     }
 
-	private void interpolateBridgesAndOrTunnels() {
-		if (!ghStorage.getEncodingManager().supports("generic")) {
-			logger.warn("Elevation interpolation of bridges or tunnels is turned on, but generic flag encoder is not enabled. "
-					+ "Either enable generic flag encoder using graph.flag_encoders=generic,... "
-					+ "or turn off bridge and tunnel interpolation using graph.elevation.interpolate.bridges=false and graph.elevation.interpolate.tunnels=false.");
-			
-		} else {
-			final FlagEncoder genericFlagEncoder = ghStorage.getEncodingManager().getEncoder("generic");
-			if (!(genericFlagEncoder instanceof DataFlagEncoder)) {
-				throw new IllegalStateException("Generic flag encoder equired for elevation interpolation of bridges and tunnels is enabled but does not habe the expected type " + DataFlagEncoder.class.getName() + ".");
-			} else {
-				final DataFlagEncoder dataFlagEncoder = (DataFlagEncoder) genericFlagEncoder;
-				if (interpolateTunnels) {
-					interpolateTunnels(dataFlagEncoder);
-				}
-				if (interpolateBridges) {
-					interpolateBridges(dataFlagEncoder);
-				}
-			}
-		}
-	}
+    private void interpolateBridgesAndOrTunnels() {
+        if (!ghStorage.getEncodingManager().supports("generic")) {
+            logger.warn("Elevation interpolation of bridges or tunnels is turned on, but generic flag encoder is not enabled. "
+                            + "Please enable generic flag encoder using graph.flag_encoders=generic,... .");
 
-	private void interpolateBridges(final DataFlagEncoder dataFlagEncoder) {
-		final BridgeElevationInterpolator bridgeElevationInterpolator = new BridgeElevationInterpolator(
-				ghStorage, dataFlagEncoder);
-		
-		bridgeElevationInterpolator.execute();
-	}
+        } else {
+            final FlagEncoder genericFlagEncoder = ghStorage.getEncodingManager()
+                            .getEncoder("generic");
+            if (!(genericFlagEncoder instanceof DataFlagEncoder)) {
+                throw new IllegalStateException(
+                                "Generic flag encoder equired for elevation interpolation of bridges and tunnels is enabled but does not habe the expected type "
+                                                + DataFlagEncoder.class.getName() + ".");
+            }
+            final DataFlagEncoder dataFlagEncoder = (DataFlagEncoder) genericFlagEncoder;
+            interpolateTunnels(dataFlagEncoder);
+            interpolateBridges(dataFlagEncoder);
+        }
+    }
 
-	private void interpolateTunnels(final DataFlagEncoder dataFlagEncoder) {
-		final TunnelElevationInterpolator tunnelElevationInterpolator = new TunnelElevationInterpolator(
-				ghStorage, dataFlagEncoder);
-		tunnelElevationInterpolator.execute();
-	}
+    private void interpolateBridges(final DataFlagEncoder dataFlagEncoder) {
+        final BridgeElevationInterpolator bridgeElevationInterpolator = new BridgeElevationInterpolator(
+                        ghStorage, dataFlagEncoder);
+
+        bridgeElevationInterpolator.execute();
+    }
+
+    private void interpolateTunnels(final DataFlagEncoder dataFlagEncoder) {
+        final TunnelElevationInterpolator tunnelElevationInterpolator = new TunnelElevationInterpolator(
+                        ghStorage, dataFlagEncoder);
+        tunnelElevationInterpolator.execute();
+    }
 
     private boolean isPrepared() {
         return "true".equals(ghStorage.getProperties().get("prepare.done"));
