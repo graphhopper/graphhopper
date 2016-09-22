@@ -21,10 +21,16 @@
   <artifactId>hmm-lib</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>
-
+  
   <name>hmm-lib</name>
   <description>Hidden Markov Model (HMM) library for time-inhomogeneous Markov processes</description>
   <url>https://github.com/bmwcarit/hmm-lib</url>
+
+  <parent>
+        <groupId>com.graphhopper</groupId>
+        <artifactId>graphhopper-map-matching-parent</artifactId>    	
+        <version>0.8-SNAPSHOT</version>
+  </parent>
 
   <developers>
     <developer>
@@ -46,18 +52,6 @@
     <developerConnection>scm:git:git@github.com:bmwcarit/hmm-lib.git</developerConnection>
     <url>git@github.com:bmwcarit/hmm-lib</url>
   </scm>
-
-  <distributionManagement>
-    <repository>
-      <id>hmm-lib-releases</id>
-      <url>https://raw.github.com/bmwcarit/hmm-lib/mvn-releases/</url>
-    </repository>
-
-    <snapshotRepository>
-      <id>hmm-lib-snapshots</id>
-      <url>https://raw.github.com/bmwcarit/hmm-lib/mvn-snapshots/</url>
-    </snapshotRepository>
-  </distributionManagement>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
