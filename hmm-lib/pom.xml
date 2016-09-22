@@ -17,7 +17,7 @@
  ~ limitations under the License.
   -->
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.bmw.hmm</groupId>
+  <groupId>com.graphhopper.external</groupId>
   <artifactId>hmm-lib</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>

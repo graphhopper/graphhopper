@@ -40,7 +40,7 @@
             <version>${log4j.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.bmw.hmm</groupId>
+            <groupId>com.graphhopper.external</groupId>
             <artifactId>hmm-lib</artifactId>
             <version>1.0.0</version>
         </dependency>
