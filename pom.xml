@@ -58,9 +58,6 @@
         <module>hmm-lib</module>
         <module>matching-core</module>
         <module>matching-web</module>
-        <!--
-        <module>matching-vaadin</module>
-        -->
     </modules>
         
     <build>        
