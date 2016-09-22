@@ -26,8 +26,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-import static javax.servlet.http.HttpServletResponse.SC_INTERNAL_SERVER_ERROR;
-
 /**
  * @author Peter Karich
  */
@@ -38,19 +36,25 @@ public class GHErrorHandler extends ErrorHandler {
     @Override
     public void handle(String str, Request req, HttpServletRequest httpReq, HttpServletResponse httpRes) throws IOException {
         Throwable throwable = (Throwable) httpReq.getAttribute("javax.servlet.error.exception");
+        String url = httpReq.getRequestURI();
+        if (httpReq.getQueryString() != null)
+            url += "?" + httpReq.getQueryString();
+
         if (throwable != null) {
             String message = throwable.getMessage();
-            logger.error(message + ", via:" + httpReq.getRequestURL(), throwable);
+            logger.error(message + "! Via:" + url, throwable);
         } else {
             String message = (String) httpReq.getAttribute("javax.servlet.error.message");
-            if (message != null) {
-                logger.error("Internal error " + message + "! Via:" + httpReq.getRequestURL());
+            if (httpRes.getStatus() / 100 == 4) {
+                logger.warn(message + ", via:" + url);
+            } else if (message != null) {
+                logger.error("Internal error " + message + "! Via:" + url);
             } else {
-                logger.error("Internal error " + str + ", throwable not known! Via:" + httpReq.getRequestURL());
+                logger.error("Internal error " + str + ", throwable unknown! Via:" + url);
             }
         }
 
         // you can't call sendError( 500, "Server Error" ) without triggering Jetty's DefaultErrorHandler
-        httpRes.setStatus(SC_INTERNAL_SERVER_ERROR);
+        httpRes.setStatus(httpRes.getStatus());
     }
 }

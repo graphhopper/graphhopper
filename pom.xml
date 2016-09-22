@@ -78,9 +78,7 @@
     </modules>
         
     <build>        
-        <plugins>
-        
-            <!-- to avoid problems with jvm 1.5 and @Override -->
+        <plugins>       
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
