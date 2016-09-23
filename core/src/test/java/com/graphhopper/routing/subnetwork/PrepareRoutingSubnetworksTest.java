@@ -180,7 +180,8 @@ public class PrepareRoutingSubnetworksTest {
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
         EncodingManager em2 = new EncodingManager(carEncoder, bikeEncoder);
         GraphHopperStorage g = createSubnetworkTestStorage2(em2);
-        GHUtility.getEdge(g, 3, 4).setFlags(carEncoder.setProperties(10, false, false) | bikeEncoder.setProperties(5, true, true));
+        GHUtility.getEdge(g, 3, 4).setFlags(carEncoder.setProperties(10, false, false)
+                | bikeEncoder.setProperties(5, true, true));
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em2.fetchEdgeEncoders());
         instance.setMinNetworkSize(5);
         instance.doWork();

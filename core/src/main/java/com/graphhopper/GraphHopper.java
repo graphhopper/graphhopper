@@ -18,9 +18,11 @@
 package com.graphhopper;
 
 import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.dem.BridgeElevationInterpolator;
 import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.reader.dem.TunnelElevationInterpolator;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -864,6 +866,10 @@ public class GraphHopper implements GraphHopperAPI {
             ghStorage = newGraph;
         }
 
+        if (hasElevation()) {
+            interpolateBridgesAndOrTunnels();
+        }
+
         initLocationIndex();
         if (chFactoryDecorator.isEnabled())
             createCHPreparations();
@@ -872,40 +878,60 @@ public class GraphHopper implements GraphHopperAPI {
             prepare();
     }
 
+    private void interpolateBridgesAndOrTunnels() {
+        if (ghStorage.getEncodingManager().supports("generic")) {
+            final FlagEncoder genericFlagEncoder = ghStorage.getEncodingManager()
+                    .getEncoder("generic");
+            if (!(genericFlagEncoder instanceof DataFlagEncoder)) {
+                throw new IllegalStateException("'generic' flag encoder for elevation interpolation of "
+                        + "bridges and tunnels is enabled but does not have the expected type "
+                        + DataFlagEncoder.class.getName() + ".");
+            }
+            final DataFlagEncoder dataFlagEncoder = (DataFlagEncoder) genericFlagEncoder;
+            StopWatch sw = new StopWatch().start();
+            new TunnelElevationInterpolator(ghStorage, dataFlagEncoder).execute();
+            float tunnel = sw.stop().getSeconds();
+            sw = new StopWatch().start();
+            new BridgeElevationInterpolator(ghStorage, dataFlagEncoder).execute();
+            logger.info("Bridge interpolation " + (int) sw.stop().getSeconds() + "s, "
+                    + "tunnel interpolation " + (int) tunnel + "s");
+        }
+    }
+
     private boolean isPrepared() {
         return "true".equals(ghStorage.getProperties().get("prepare.done"));
     }
 
     /**
-     * Based on the weightingParameters and the specified vehicle a Weighting instance can be
-     * created. Note that all URL parameters are available in the weightingParameters as String if
-     * you use the GraphHopper Web module.
+     * Based on the hintsMap and the specified encoder a Weighting instance can be
+     * created. Note that all URL parameters are available in the hintsMap as String if
+     * you use the web module.
      *
-     * @param weightingMap all parameters influencing the weighting. E.g. parameters coming via
-     *                     GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
-     * @param encoder      the required vehicle
+     * @param hintsMap all parameters influencing the weighting. E.g. parameters coming via
+     *                 GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
+     * @param encoder  the required vehicle
      * @return the weighting to be used for route calculation
      * @see HintsMap
      */
-    public Weighting createWeighting(HintsMap weightingMap, FlagEncoder encoder) {
-        String weighting = weightingMap.getWeighting().toLowerCase();
+    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder) {
+        String weighting = hintsMap.getWeighting().toLowerCase();
 
         if (encoder.supports(GenericWeighting.class)) {
             DataFlagEncoder dataEncoder = (DataFlagEncoder) encoder;
-            return new GenericWeighting(dataEncoder, dataEncoder.readStringMap(weightingMap));
+            return new GenericWeighting(dataEncoder, dataEncoder.readStringMap(hintsMap));
         } else if ("shortest".equalsIgnoreCase(weighting)) {
             return new ShortestWeighting(encoder);
         } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty()) {
             if (encoder.supports(PriorityWeighting.class))
-                return new PriorityWeighting(encoder, weightingMap);
+                return new PriorityWeighting(encoder, hintsMap);
             else
-                return new FastestWeighting(encoder, weightingMap);
+                return new FastestWeighting(encoder, hintsMap);
         } else if ("curvature".equalsIgnoreCase(weighting)) {
             if (encoder.supports(CurvatureWeighting.class))
-                return new CurvatureWeighting(encoder, weightingMap);
+                return new CurvatureWeighting(encoder, hintsMap);
 
         } else if ("short_fastest".equalsIgnoreCase(weighting)) {
-            return new ShortFastestWeighting(encoder, weightingMap);
+            return new ShortFastestWeighting(encoder, hintsMap);
         }
 
         throw new IllegalArgumentException("weighting " + weighting + " not supported");

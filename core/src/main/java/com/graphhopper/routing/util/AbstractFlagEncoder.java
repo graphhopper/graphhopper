@@ -284,7 +284,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     @Override
-    public long setAccess(long flags, boolean forward, boolean backward) {
+    public long setAccess(long flags, boolean forward, boolean backward) {       
         return setBool(setBool(flags, K_BACKWARD, backward), K_FORWARD, forward);
     }
 
