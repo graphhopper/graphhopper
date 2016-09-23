@@ -18,9 +18,11 @@
 package com.graphhopper;
 
 import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.dem.BridgeElevationInterpolator;
 import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.reader.dem.TunnelElevationInterpolator;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -614,7 +616,7 @@ public class GraphHopper implements GraphHopperAPI {
             tmpProvider.setBaseURL(baseURL);
         tmpProvider.setDAType(elevationDAType);
         setElevationProvider(tmpProvider);
-
+        
         // optimizable prepare
         minNetworkSize = args.getInt("prepare.min_network_size", minNetworkSize);
         minOneWayNetworkSize = args.getInt("prepare.min_one_way_network_size", minOneWayNetworkSize);
@@ -863,6 +865,10 @@ public class GraphHopper implements GraphHopperAPI {
             logger.info("graph sorted (" + Helper.getMemInfo() + ")");
             ghStorage = newGraph;
         }
+        
+        if (hasElevation()) {
+            interpolateBridgesAndOrTunnels();
+        }
 
         initLocationIndex();
         if (chFactoryDecorator.isEnabled())
@@ -870,6 +876,38 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (!isPrepared())
             prepare();
+    }
+
+    private void interpolateBridgesAndOrTunnels() {
+        if (!ghStorage.getEncodingManager().supports("generic")) {
+            logger.warn("Elevation interpolation of bridges or tunnels is turned on, but generic flag encoder is not enabled. "
+                            + "Please enable generic flag encoder using graph.flag_encoders=generic,... .");
+
+        } else {
+            final FlagEncoder genericFlagEncoder = ghStorage.getEncodingManager()
+                            .getEncoder("generic");
+            if (!(genericFlagEncoder instanceof DataFlagEncoder)) {
+                throw new IllegalStateException(
+                                "Generic flag encoder equired for elevation interpolation of bridges and tunnels is enabled but does not habe the expected type "
+                                                + DataFlagEncoder.class.getName() + ".");
+            }
+            final DataFlagEncoder dataFlagEncoder = (DataFlagEncoder) genericFlagEncoder;
+            interpolateTunnels(dataFlagEncoder);
+            interpolateBridges(dataFlagEncoder);
+        }
+    }
+
+    private void interpolateBridges(final DataFlagEncoder dataFlagEncoder) {
+        final BridgeElevationInterpolator bridgeElevationInterpolator = new BridgeElevationInterpolator(
+                        ghStorage, dataFlagEncoder);
+
+        bridgeElevationInterpolator.execute();
+    }
+
+    private void interpolateTunnels(final DataFlagEncoder dataFlagEncoder) {
+        final TunnelElevationInterpolator tunnelElevationInterpolator = new TunnelElevationInterpolator(
+                        ghStorage, dataFlagEncoder);
+        tunnelElevationInterpolator.execute();
     }
 
     private boolean isPrepared() {

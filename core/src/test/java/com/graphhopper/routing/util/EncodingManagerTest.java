@@ -89,7 +89,7 @@ public class EncodingManagerTest {
             new EncodingManager(new FootFlagEncoder(), new CarFlagEncoder(), new BikeFlagEncoder(), new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder());
             assertTrue(false);
         } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoders are requesting more than 32 bits of way flags. Decrease the"));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Encoders are requesting 44 bits, more than 32 bits of way flags. Decrease the"));
         }
     }
 

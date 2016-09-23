@@ -1,17 +1,20 @@
 package com.graphhopper.routing.util;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+import org.junit.Test;
+
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import org.junit.Test;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -56,7 +59,7 @@ public class DataFlagEncoderTest {
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
         assertEquals("_default", encoder.getHighwayAsString(edge));
     }
-    
+
     @Test
     public void testTunnel() {
         ReaderWay osmWay = new ReaderWay(0);
@@ -79,7 +82,7 @@ public class DataFlagEncoderTest {
         assertFalse(encoder.isTransportModeTunnel(edge));
         assertTrue(encoder.isTransportModeBridge(edge));
     }
-    
+
     @Test
     public void testBridge() {
         ReaderWay osmWay = new ReaderWay(0);
@@ -101,18 +104,19 @@ public class DataFlagEncoderTest {
         assertEquals("bridge", encoder.getTransportModeAsString(edge));
         assertFalse(encoder.isTransportModeTunnel(edge));
         assertTrue(encoder.isTransportModeBridge(edge));
-    }    
+    }
 
     @Test
     public void testHighwaySpeed() {
-        Map<String, Double> map = new HashMap<>();
+        Map<String, Double> map = new LinkedHashMap<>();
         map.put("motorway", 100d);
         map.put("motorway_link", 100d);
+        map.put("motorroad", 90d);
         map.put("trunk", 90d);
         map.put("trunk_link", 90d);
 
         double[] arr = encoder.getHighwaySpeedMap(map);
-        assertEquals("[0.0, 100.0, 100.0, 90.0, 90.0, 0.0]", Helper.createDoubleList(arr).subList(0, 6).toString());
+        assertEquals("[0.0, 100.0, 100.0, 90.0, 90.0, 90.0]", Helper.createDoubleList(arr).subList(0, 6).toString());
     }
 
     @Test

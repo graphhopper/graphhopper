@@ -85,7 +85,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         List<String> highwayList = Arrays.asList(
                 /* reserve index=0 for unset roads (not accessible) */
                 "_default",
-                "motorway", "motorway_link",
+                "motorway", "motorway_link", "motorroad",
                 "trunk", "trunk_link",
                 "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
                 "unclassified", "residential", "living_street", "service", "road", "track",
@@ -319,13 +319,13 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     public int getTransportMode(EdgeIteratorState edge) {
         return (int) transportModeEncoder.getValue(edge.getFlags());
     }
-    
+
     public boolean isTransportModeTunnel(EdgeIteratorState edge) {
-    	return transportModeEncoder.getValue(edge.getFlags()) == this.transportModeTunnelValue;
+        return transportModeEncoder.getValue(edge.getFlags()) == this.transportModeTunnelValue;
     }
 
     public boolean isTransportModeBridge(EdgeIteratorState edge) {
-    	return transportModeEncoder.getValue(edge.getFlags()) == this.transportModeBridgeValue;
+        return transportModeEncoder.getValue(edge.getFlags()) == this.transportModeBridgeValue;
     }
 
     public String getTransportModeAsString(EdgeIteratorState edge) {
@@ -408,8 +408,12 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public long flagsDefault(boolean forward, boolean backward) {
-        // just pick car mode to set access values?
-        throw new RuntimeException("do not call flagsDefault");
+        //// just pick car mode to set access values?
+        // throw new RuntimeException("do not call flagsDefault");
+        // TODO This is called on each of the encoders so I had to replace the
+        //// runtime exception with something,
+        // but I'm not sure this is correct.
+        return setAccess(0, forward, backward);
     }
 
     @Override
