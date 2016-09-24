@@ -7,25 +7,25 @@
     <artifactId>graphhopper-core</artifactId>
     <name>GraphHopper Core</name>
     <version>0.8-SNAPSHOT</version>
-    <packaging>jar</packaging> 
+    <packaging>jar</packaging>
     <description>
-        GraphHopper is a fast and memory efficient Java road routing engine 
+        GraphHopper is a fast and memory efficient Java road routing engine
         working seamlessly with OpenStreetMap data.
     </description>
     <parent>
         <groupId>com.graphhopper</groupId>
-        <artifactId>graphhopper-parent</artifactId>    	
+        <artifactId>graphhopper-parent</artifactId>
         <version>0.8-SNAPSHOT</version>
     </parent>
-        
+
     <properties>
-        <netbeans.hint.license>apache20</netbeans.hint.license>        
+        <netbeans.hint.license>apache20</netbeans.hint.license>
         <!-- Make sure that we use the same format as for Helper.createFormatter.
              We cannot force the UTC TimeZone so it will just throw away the local offset or is this
              fixed due to https://issues.apache.org/jira/browse/MNG-5647 ?
         -->
-        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>        
-        <builddate>${maven.build.timestamp}</builddate>        
+        <maven.build.timestamp.format>yyyy-MM-dd'T'HH:mm:ss'Z'</maven.build.timestamp.format>
+        <builddate>${maven.build.timestamp}</builddate>
     </properties>
     <licenses>
         <license>
@@ -34,20 +34,20 @@
             <distribution>repo</distribution>
             <comments>A business-friendly OSS license</comments>
         </license>
-    </licenses> 
+    </licenses>
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-tools-lgpl</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        
-        <!-- Trove is LGPL and slightly big (~3MB) -->        
+
+        <!-- Trove is LGPL and slightly big (~3MB) -->
         <dependency>
             <groupId>net.sf.trove4j</groupId>
             <artifactId>trove4j</artifactId>
             <version>3.0.3</version>
-        </dependency>        
+        </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -61,7 +61,7 @@
             <scope>test</scope>
         </dependency>
         -->
-        
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
@@ -74,13 +74,13 @@
             <version>${log4j.version}</version>
             <scope>test</scope>
         </dependency>
-        
+
         <!-- for using CGIAR: elevation data importing via tif files-->
         <dependency>
             <groupId>org.apache.xmlgraphics</groupId>
             <artifactId>xmlgraphics-commons</artifactId>
             <version>2.1</version>
-        </dependency>        
+        </dependency>
 
         <dependency>
             <groupId>org.json</groupId>
@@ -88,27 +88,29 @@
             <version>${json.org.version}</version>
             <scope>test</scope>
         </dependency>
-        
+
     </dependencies>
-        
+
     <build>
         <pluginManagement>
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-assembly-plugin</artifactId>
-                    <configuration>                     
+                    <version>2.6</version>
+                    <configuration>
                         <!-- for usage on android -->
                         <descriptors>
                             <descriptor>src/main/assembly/android.xml</descriptor>
                         </descriptors>
                     </configuration>
-                </plugin>                
-                
-                <!-- create jar with test classes to be reused in other projects like external or our reader-osm -->                
+                </plugin>
+
+                <!-- create jar with test classes to be reused in other projects like external or our reader-osm -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.0.2</version>
                     <executions>
                         <execution>
                             <goals>
@@ -117,10 +119,10 @@
                         </execution>
                     </executions>
                 </plugin>
-                
+
             </plugins>
         </pluginManagement>
-        
+
         <!-- make version available at runtime via version file -->
         <resources>
             <resource>

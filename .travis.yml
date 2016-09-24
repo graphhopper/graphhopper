@@ -45,12 +45,10 @@ before_install:
          sudo rm /etc/mavenrc;
      fi
 
-install:
-  # install without any testing to get all dependencies in place
-  # - mvn install -Dmaven.test.skip=true -B -V -fae -T2.2C
+install: true
 
 script:
-  - mvn clean test verify
+  - mvn clean test verify -B
   #- ./core/files/travis-build.sh
 
 after_success:
