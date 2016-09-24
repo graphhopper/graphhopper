@@ -225,6 +225,7 @@ public class GraphHopperOSMTest {
                     latch2.countDown();
                     latch1.await(3, TimeUnit.SECONDS);
                 } catch (InterruptedException ex) {
+                    throw new RuntimeException(ex);
                 }
                 return super.importData();
             }

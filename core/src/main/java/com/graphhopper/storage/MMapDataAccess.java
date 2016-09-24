@@ -169,6 +169,7 @@ public class MMapDataAccess extends AbstractDataAccess {
                     // mini sleep to let JVM do unmapping
                     Thread.sleep(5);
                 } catch (InterruptedException iex) {
+                    throw new IOException(iex);
                 }
             }
         }

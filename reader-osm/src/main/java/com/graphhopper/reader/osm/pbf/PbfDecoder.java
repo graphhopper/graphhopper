@@ -58,7 +58,6 @@ public class PbfDecoder implements Runnable {
     private void waitForUpdate() {
         try {
             dataWaitCondition.await();
-
         } catch (InterruptedException e) {
             throw new RuntimeException("Thread was interrupted.", e);
         }

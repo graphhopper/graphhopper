@@ -146,7 +146,7 @@ public class QueryTorture {
                     logger.info(getName() + " FINISHED");
                 } catch (RejectedExecutionException ex) {
                     logger.info(getName() + " cannot create threads", ex);
-                } catch (InterruptedException ex) {
+                } catch (InterruptedException ex) {                    
                     // logger.info(getName() + " was interrupted", ex);
                 }
             }
