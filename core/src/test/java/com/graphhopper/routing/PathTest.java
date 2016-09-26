@@ -55,8 +55,10 @@ public class PathTest {
         GraphHopperStorage g = new GraphBuilder(new EncodingManager(tmpEnc)).create();
         Path p = new Path(g, tmpEnc);
         long flags = tmpEnc.setSpeed(tmpEnc.setReverseSpeed(tmpEnc.setAccess(0, true, true), 10), 15);
-        assertEquals(375 * 60 * 1000, p.calcMillis(100000, flags, false));
-        assertEquals(600 * 60 * 1000, p.calcMillis(100000, flags, true));
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(100000, flags);
+                
+        assertEquals(375 * 60 * 1000, p.calcMillis(edge, false));
+        assertEquals(600 * 60 * 1000, p.calcMillis(edge, true));
 
         g.close();
     }

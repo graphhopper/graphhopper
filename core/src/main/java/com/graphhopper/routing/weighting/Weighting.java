@@ -46,7 +46,9 @@ public interface Weighting {
      * +Infinity. Make sure your method does not return NaN which can e.g. occur for 0/0.
      */
     double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
-
+    
+//    double calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
+    
     FlagEncoder getFlagEncoder();
 
     String getName();

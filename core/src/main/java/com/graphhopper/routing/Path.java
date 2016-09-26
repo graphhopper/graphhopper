@@ -220,7 +220,7 @@ public class Path {
         double dist = iter.getDistance();
         distance += dist;
         // TODO calculate time based on weighting -> weighting.calcMillis
-        time += calcMillis(dist, iter.getFlags(), false);
+        time += calcMillis(iter, false);
         addEdge(edgeId);
     }
 
@@ -228,7 +228,8 @@ public class Path {
      * Calculates the time in millis for the specified distance in meter and speed (in km/h) via
      * flags.
      */
-    protected long calcMillis(double distance, long flags, boolean revert) {
+    protected long calcMillis(EdgeIteratorState edge, boolean revert) {
+        long flags = edge.getFlags();
         if (revert && !encoder.isBackward(flags)
                 || !revert && !encoder.isForward(flags))
             throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
@@ -241,6 +242,7 @@ public class Path {
         if (speed == 0)
             throw new IllegalStateException("Speed cannot be 0 for unblocked edge, use access properties to mark edge blocked! Should only occur for shortest path calculation. See #242.");
 
+        double distance = edge.getDistance();
         return (long) (distance * 3600 / speed);
     }
 
@@ -562,8 +564,7 @@ public class Path {
                 }
                 double newDist = edge.getDistance();
                 prevInstruction.setDistance(newDist + prevInstruction.getDistance());
-                long flags = edge.getFlags();
-                prevInstruction.setTime(calcMillis(newDist, flags, false) + prevInstruction.getTime());
+                prevInstruction.setTime(calcMillis(edge, false) + prevInstruction.getTime());
             }
         });
 
