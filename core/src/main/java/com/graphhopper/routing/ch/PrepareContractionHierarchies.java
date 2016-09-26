@@ -678,7 +678,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             @Override
             protected Path createAndInitPath() {
-                bestPath = new Path4CH(graph, graph.getBaseGraph(), flagEncoder);
+                bestPath = new Path4CH(graph, graph.getBaseGraph(), flagEncoder, weighting);
                 return bestPath;
             }
 
@@ -715,7 +715,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             @Override
             protected Path createAndInitPath() {
-                bestPath = new Path4CH(graph, graph.getBaseGraph(), flagEncoder);
+                bestPath = new Path4CH(graph, graph.getBaseGraph(), flagEncoder, weighting);
                 return bestPath;
             }
 

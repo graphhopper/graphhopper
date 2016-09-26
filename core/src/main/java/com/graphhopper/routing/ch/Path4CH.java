@@ -19,6 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.CHEdgeIteratorState;
 
@@ -32,13 +33,13 @@ import com.graphhopper.util.CHEdgeIteratorState;
 public class Path4CH extends PathBidirRef {
     private final Graph routingGraph;
 
-    public Path4CH(Graph routingGraph, Graph baseGraph, FlagEncoder encoder) {
-        super(baseGraph, encoder);
+    public Path4CH(Graph routingGraph, Graph baseGraph, FlagEncoder encoder, Weighting weighting) {
+        super(baseGraph, encoder, weighting);
         this.routingGraph = routingGraph;
     }
 
     @Override
-    protected final void processEdge(int tmpEdge, int endNode) {
+    protected final void processEdge(int tmpEdge, int endNode, int prevEdgeId) {
         // Shortcuts do only contain valid weight so first expand before adding
         // to distance and time
         expandEdge((CHEdgeIteratorState) routingGraph.getEdgeIteratorState(tmpEdge, endNode), false);

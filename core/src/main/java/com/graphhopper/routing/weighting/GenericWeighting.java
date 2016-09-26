@@ -35,6 +35,7 @@ public class GenericWeighting extends AbstractWeighting {
      */
     protected final static double SPEED_CONV = 3.6;
     private final double headingPenalty;
+    private final long headingPenaltyMillis;
     private final double maxSpeed;
     private final DataFlagEncoder gEncoder;
     private final double[] speedArray;
@@ -44,6 +45,7 @@ public class GenericWeighting extends AbstractWeighting {
         super(encoder);
         gEncoder = encoder;
         headingPenalty = cMap.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
+        headingPenaltyMillis = Math.round(headingPenalty * 1000);
 
         speedArray = gEncoder.getHighwaySpeedMap(cMap.getMap("highways", Double.class));
         double tmpSpeed = 0;
@@ -64,46 +66,57 @@ public class GenericWeighting extends AbstractWeighting {
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
+    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         // handle oneways and removed edges via subnetwork removal (existing and allowed highway tags but 'island' edges)
         if (reverse) {
-            if (!gEncoder.isBackward(edge, accessType))
+            if (!gEncoder.isBackward(edgeState, accessType))
                 return Double.POSITIVE_INFINITY;
-        } else if (!gEncoder.isForward(edge, accessType))
+        } else if (!gEncoder.isForward(edgeState, accessType))
             return Double.POSITIVE_INFINITY;
 
+        long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
+        if (time == Long.MAX_VALUE)
+            return Double.POSITIVE_INFINITY;
+        return time;
+    }
+
+    @Override
+    public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         // TODO to avoid expensive reverse flags include oneway accessibility
         // but how to include e.g. maxspeed as it depends on direction? Does highway depend on direction?
         // reverse = edge.isReverse()? !reverse : reverse;
-        int highwayVal = gEncoder.getHighway(edge);
+        int highwayVal = gEncoder.getHighway(edgeState);
         double speed = speedArray[highwayVal];
         if (speed < 0)
-            throw new IllegalStateException("speed was negative? " + edge.getEdge() + ", highway:" + highwayVal + ", reverse:" + reverse);
+            throw new IllegalStateException("speed was negative? " + edgeState.getEdge()
+                    + ", highway:" + highwayVal + ", reverse:" + reverse);
         if (speed == 0)
-            return Double.POSITIVE_INFINITY;
+            return Long.MAX_VALUE;
 
         // TODO inner city guessing -> lit, maxspeed <= 50, residential etc => create new encoder.isInnerCity(edge)
         // See #472 use edge.getDouble((encoder), K_MAXSPEED_MOTORVEHICLE_FORWARD, _default) or edge.getMaxSpeed(...) instead?
         // encoder could be made optional via passing to EdgeExplorer
-        double maxspeed = gEncoder.getMaxspeed(edge, accessType, reverse);
+        double maxspeed = gEncoder.getMaxspeed(edgeState, accessType, reverse);
         if (maxspeed > 0 && speed > maxspeed)
             speed = maxspeed;
 
-        double time = edge.getDistance() / speed * SPEED_CONV;
+        // TODO test performance difference for rounding
+        long timeInMillis = (long) (edgeState.getDistance() / speed * SPEED_CONV);
 
         // add direction penalties at start/stop/via points
-        boolean unfavoredEdge = edge.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, false);
+        boolean unfavoredEdge = edgeState.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, false);
         if (unfavoredEdge)
-            time += headingPenalty;
-
-        if (time < 0)
-            throw new IllegalStateException("Some problem with weight calculation: time:" + time + ", speed:" + speed);
+            timeInMillis += headingPenaltyMillis;
 
         // TODO avoid a certain (or multiple) bounding boxes (less efficient for just a few edges) or a list of edgeIDs (not good for large areas)
         // bbox.contains(nodeAccess.getLatitude(edge.getBaseNode()), nodeAccess.getLongitude(edge.getBaseNode())) time+=avoidPenalty;
         // TODO surfaces can reduce average speed
         // TODO prefer or avoid bike and hike routes
-        return time;
+        if (timeInMillis < 0)
+            throw new IllegalStateException("Some problem with weight calculation: time:"
+                    + timeInMillis + ", speed:" + speed);
+
+        return timeInMillis;
     }
 
     @Override

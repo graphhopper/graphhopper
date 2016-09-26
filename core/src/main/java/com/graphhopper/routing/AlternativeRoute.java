@@ -423,7 +423,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
 
                         // plateaus.add(new PlateauInfo(altName, plateauEdges));
                         if (sortBy < worstSortBy || alternatives.size() < maxPaths) {
-                            Path path = new PathBidirRef(graph, flagEncoder).
+                            Path path = new PathBidirRef(graph, flagEncoder, weighting).
                                     setSPTEntryTo(toSPTEntry).setSPTEntry(fromSPTEntry).
                                     setWeight(weight);
                             path.extract();

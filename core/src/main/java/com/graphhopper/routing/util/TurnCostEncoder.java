@@ -45,8 +45,7 @@ public interface TurnCostEncoder {
     long getTurnFlags(boolean restricted, double costs);
 
     /**
-     * whether turn costs nor turn restrictions will be encoded by this encoder, should be used for
-     * pedestrians
+     * No turn costs will be enabled by this encoder, should be used for pedestrians
      */
     class NoTurnCostsEncoder implements TurnCostEncoder {
 
