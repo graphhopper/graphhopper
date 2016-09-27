@@ -100,6 +100,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         badSurfaceSpeedMap.add("dirt");
         badSurfaceSpeedMap.add("ground");
         badSurfaceSpeedMap.add("grass");
+        badSurfaceSpeedMap.add("unpaved");
+        badSurfaceSpeedMap.add("compacted");
 
         maxPossibleSpeed = 140;
 
