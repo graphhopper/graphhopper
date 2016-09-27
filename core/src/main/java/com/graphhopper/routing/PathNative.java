@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 
@@ -31,8 +32,8 @@ public class PathNative extends Path {
     private final int[] parentNodes;
     private final int[] parentEdges;
 
-    public PathNative(Graph g, FlagEncoder encoder, int[] parentNodes, int[] parentEdges) {
-        super(g, encoder);
+    public PathNative(Graph g, FlagEncoder encoder, Weighting weighting, int[] parentNodes, int[] parentEdges) {
+        super(g, weighting);
         this.parentNodes = parentNodes;
         this.parentEdges = parentEdges;
     }
@@ -44,13 +45,15 @@ public class PathNative extends Path {
     public Path extract() {
         if (endNode < 0)
             return this;
-
+        
+        int prevEdge = EdgeIterator.NO_EDGE;        
         while (true) {
             int edgeId = parentEdges[endNode];
             if (!EdgeIterator.Edge.isValid(edgeId))
                 break;
 
-            processEdge(edgeId, endNode);
+            processEdge(edgeId, endNode, prevEdge);
+            prevEdge = edgeId;
             endNode = parentNodes[endNode];
         }
         reverseOrder();

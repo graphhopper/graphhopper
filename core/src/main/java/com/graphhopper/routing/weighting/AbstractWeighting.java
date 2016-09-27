@@ -19,6 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * @author Peter Karich
@@ -34,18 +35,21 @@ public abstract class AbstractWeighting implements Weighting {
             throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
     }
 
-    static final boolean isValidName(String name) {
-        if (name == null || name.isEmpty())
-            return false;
+    @Override
+    public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        long flags = edgeState.getFlags();
+        if (reverse && !flagEncoder.isBackward(flags)
+                || !reverse && !flagEncoder.isForward(flags))
+            throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
+                    + "Reverse:" + reverse + ", fwd:" + flagEncoder.isForward(flags) + ", bwd:" + flagEncoder.isBackward(flags));
 
-        return name.matches("[\\|_a-z]+");
-    }
+        double speed = reverse ? flagEncoder.getReverseSpeed(flags) : flagEncoder.getSpeed(flags);
+        if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
+            throw new IllegalStateException("Invalid speed stored in edge! " + speed);
+        if (speed == 0)
+            throw new IllegalStateException("Speed cannot be 0 for unblocked edge, use access properties to mark edge blocked! Should only occur for shortest path calculation. See #242.");        
 
-    /**
-     * Replaces all characters which are not numbers, characters or underscores with underscores
-     */
-    public static String weightingToFileName(Weighting w) {
-        return w.toString().toLowerCase().replaceAll("\\|", "_");
+        return (long) (edgeState.getDistance() * 3600 / speed);
     }
 
     @Override
@@ -74,6 +78,20 @@ public abstract class AbstractWeighting implements Weighting {
             return false;
         final Weighting other = (Weighting) obj;
         return toString().equals(other.toString());
+    }
+
+    static final boolean isValidName(String name) {
+        if (name == null || name.isEmpty())
+            return false;
+
+        return name.matches("[\\|_a-z]+");
+    }
+
+    /**
+     * Replaces all characters which are not numbers, characters or underscores with underscores
+     */
+    public static String weightingToFileName(Weighting w) {
+        return w.toString().toLowerCase().replaceAll("\\|", "_");
     }
 
     @Override

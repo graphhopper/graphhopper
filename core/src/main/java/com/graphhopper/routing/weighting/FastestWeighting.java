@@ -36,11 +36,13 @@ public class FastestWeighting extends AbstractWeighting {
      */
     protected final static double SPEED_CONV = 3.6;
     private final double headingPenalty;
+    private final long headingPenaltyMillis;
     private final double maxSpeed;
 
     public FastestWeighting(FlagEncoder encoder, PMap pMap) {
         super(encoder);
         headingPenalty = pMap.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
+        headingPenaltyMillis = Math.round(headingPenalty * 1000);
         maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
     }
 
@@ -67,6 +69,17 @@ public class FastestWeighting extends AbstractWeighting {
             time += headingPenalty;
 
         return time;
+    }
+
+    @Override
+    public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        // TODO move this to AbstractWeighting?
+        long time = 0;
+        boolean unfavoredEdge = edgeState.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, false);
+        if (unfavoredEdge)
+            time += headingPenaltyMillis;
+
+        return time + super.calcMillis(edgeState, reverse, prevOrNextEdgeId);
     }
 
     @Override

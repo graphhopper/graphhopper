@@ -53,6 +53,11 @@ public class PreparationWeighting implements Weighting {
     }
 
     @Override
+    public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        return userWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+    }
+
+    @Override
     public FlagEncoder getFlagEncoder() {
         return userWeighting.getFlagEncoder();
     }

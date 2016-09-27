@@ -153,7 +153,7 @@ public class AStarBidirection extends AbstractBidirAlgo {
 
     @Override
     protected Path createAndInitPath() {
-        bestPath = new PathBidirRef(graph, flagEncoder);
+        bestPath = new PathBidirRef(graph, flagEncoder, weighting);
         return bestPath;
     }
 
