@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
@@ -54,6 +55,7 @@ public class Path {
     protected SPTEntry sptEntry;
     protected int endNode = -1;
     private List<String> description;
+    protected Weighting weighting;
     private FlagEncoder encoder;
     private boolean found;
     private int fromNode = -1;
@@ -61,11 +63,12 @@ public class Path {
     private double weight;
     private NodeAccess nodeAccess;
 
-    public Path(Graph graph, FlagEncoder encoder) {
+    public Path(Graph graph, Weighting weighting) {
         this.weight = Double.MAX_VALUE;
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
-        this.encoder = encoder;
+        this.weighting = weighting;
+        this.encoder = weighting.getFlagEncoder();
         this.edgeIds = new TIntArrayList();
     }
 
@@ -73,7 +76,7 @@ public class Path {
      * Populates an unextracted path instances from the specified path p.
      */
     Path(Path p) {
-        this(p.graph, p.encoder);
+        this(p.graph, p.weighting);
         weight = p.weight;
         edgeIds = new TIntArrayList(p.edgeIds);
         sptEntry = p.sptEntry;
@@ -182,9 +185,11 @@ public class Path {
 
         extractSW.start();
         SPTEntry goalEdge = sptEntry;
+        int prevEdge = EdgeIterator.NO_EDGE;
         setEndNode(goalEdge.adjNode);
         while (EdgeIterator.Edge.isValid(goalEdge.edge)) {
-            processEdge(goalEdge.edge, goalEdge.adjNode);
+            processEdge(goalEdge.edge, goalEdge.adjNode, prevEdge);
+            prevEdge = goalEdge.edge;
             goalEdge = goalEdge.parent;
         }
 
@@ -215,35 +220,21 @@ public class Path {
     /**
      * Calls getDistance and adds the edgeId.
      */
-    protected void processEdge(int edgeId, int adjNode) {
+    protected void processEdge(int edgeId, int adjNode, int prevEdgeId) {
         EdgeIteratorState iter = graph.getEdgeIteratorState(edgeId, adjNode);
-        double dist = iter.getDistance();
-        distance += dist;
-        // TODO calculate time based on weighting -> weighting.calcMillis
-        time += calcMillis(iter, false);
+        distance += iter.getDistance();
+        time += weighting.calcMillis(iter, false, prevEdgeId);
         addEdge(edgeId);
     }
 
     /**
      * Calculates the time in millis for the specified distance in meter and speed (in km/h) via
      * flags.
+     *
+     * @deprecated use Weighting
      */
-    protected long calcMillis(EdgeIteratorState edge, boolean revert) {
-        long flags = edge.getFlags();
-        if (revert && !encoder.isBackward(flags)
-                || !revert && !encoder.isForward(flags))
-            throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
-                    + "Reverse:" + revert + ", fwd:" + encoder.isForward(flags) + ", bwd:" + encoder.isBackward(flags));
-
-        double speed = revert ? encoder.getReverseSpeed(flags) : encoder.getSpeed(flags);
-        if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
-            throw new IllegalStateException("Invalid speed stored in edge! " + speed);
-
-        if (speed == 0)
-            throw new IllegalStateException("Speed cannot be 0 for unblocked edge, use access properties to mark edge blocked! Should only occur for shortest path calculation. See #242.");
-
-        double distance = edge.getDistance();
-        return (long) (distance * 3600 / speed);
+    protected long calcMillis(EdgeIteratorState edge, boolean reverse) {
+        return weighting.calcMillis(edge, reverse, EdgeIterator.NO_EDGE);
     }
 
     /**
@@ -564,7 +555,8 @@ public class Path {
                 }
                 double newDist = edge.getDistance();
                 prevInstruction.setDistance(newDist + prevInstruction.getDistance());
-                prevInstruction.setTime(calcMillis(edge, false) + prevInstruction.getTime());
+                prevInstruction.setTime(weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE)
+                        + prevInstruction.getTime());
             }
         });
 
