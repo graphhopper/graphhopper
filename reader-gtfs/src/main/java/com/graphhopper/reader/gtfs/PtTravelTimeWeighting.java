@@ -16,7 +16,7 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
 
 	@Override
 	public double getMinWeight(double distance) {
-		return Double.NEGATIVE_INFINITY;
+		return 0.0;
 	}
 
 	@Override
@@ -35,6 +35,9 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
 		AbstractPtEdge edge = gtfsStorage.getEdges().get(edgeState.getEdge());
 		if (edge instanceof StopLoopEdge) {
 			return 0.0;
+		}
+		if (edge instanceof GtfsTransferEdge) {
+			return ((GtfsTransferEdge) edge).getTransfer().min_transfer_time;
 		}
 		TripHopEdge patternHopEdge = (TripHopEdge) edge;
 		if (patternHopEdge.getFrom().departure_time < earliestStartTime) {

@@ -23,6 +23,7 @@ public final class GraphHopperGtfs extends GraphHopper {
 
 	public GraphHopperGtfs() {
 		super();
+		super.setCHEnabled(false);
 		super.setEncodingManager(new EncodingManager(new TripHopFlagEncoder()));
 	}
 
@@ -62,4 +63,10 @@ public final class GraphHopperGtfs extends GraphHopper {
 	public GraphHopper setEncodingManager(EncodingManager em) {
 		throw new UnsupportedOperationException();
 	}
+
+	@Override
+	public GraphHopper setCHEnabled(boolean enable) {
+		throw new UnsupportedOperationException();
+	}
+
 }

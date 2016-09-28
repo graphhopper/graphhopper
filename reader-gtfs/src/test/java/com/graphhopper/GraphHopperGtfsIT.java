@@ -21,7 +21,6 @@ public class GraphHopperGtfsIT {
 		Helper.removeDir(new File(graphFileFoot));
 
 		graphHopper = new GraphHopperGtfs();
-		graphHopper.setCHEnabled(false);
 		graphHopper.setGtfsFile("files/sample-feed.zip");
 		graphHopper.setGraphHopperLocation(graphFileFoot);
 		graphHopper.importOrLoad();

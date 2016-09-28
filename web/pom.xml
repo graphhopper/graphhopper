@@ -25,7 +25,13 @@
             <artifactId>graphhopper-reader-osm</artifactId>
             <version>${project.parent.version}</version>            
         </dependency>
-        
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-reader-gtfs</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>            

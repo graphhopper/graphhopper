@@ -1,10 +1,7 @@
 package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.model.Frequency;
-import com.conveyal.gtfs.model.Pattern;
-import com.conveyal.gtfs.model.Stop;
-import com.conveyal.gtfs.model.StopTime;
+import com.conveyal.gtfs.model.*;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.util.EncodingManager;
@@ -101,8 +98,27 @@ class GtfsReader implements DataReader {
 				throw new RuntimeException(e);
 			}
 		}
+		for (Transfer transfer : feed.transfers.values()) {
+			if (transfer.transfer_type == 2 && !transfer.from_stop_id.equals(transfer.to_stop_id)) {
+				Stop fromStop = feed.stops.get(transfer.from_stop_id);
+				Stop toStop = feed.stops.get(transfer.to_stop_id);
+				double distance = distCalc.calcDist(
+						fromStop.stop_lat,
+						fromStop.stop_lon,
+						toStop.stop_lat,
+						toStop.stop_lon);
+				EdgeIteratorState edge = ghStorage.edge(
+						stops.get(transfer.from_stop_id),
+						stops.get(transfer.to_stop_id),
+						distance,
+						false);
+				edge.setName("Transfer: "+fromStop.stop_name + " -> " + toStop.stop_name);
+				gtfsStorage.getEdges().put(edge.getEdge(), new GtfsTransferEdge(transfer));
+				j++;
+			}
+		}
 		gtfsStorage.setRealEdgesSize(j);
-		LOGGER.info("Created " + j + " edges from GTFS pattern hops.");
+		LOGGER.info("Created " + j + " edges from GTFS trip hops and transfers.");
 	}
 
 	private int insert(GTFSFeed feed, int j, Map<String, Integer> stops, Pattern pattern, String tripId, int time) throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes {
@@ -121,10 +137,10 @@ class GtfsReader implements DataReader {
 						stops.get(orderedStop.stop_id),
 						distance,
 						false);
-				edge.setName(prev.stop_id + "-" + orderedStop.stop_id + "(" + pattern.name + ")");
+				edge.setName(prev.stop_id + "-" + orderedStop.stop_id + "(" + feed.routes.get(feed.trips.get(tripId).route_id).route_long_name + ")(" +feed.trips.get(tripId).trip_headsign+")");
 
 				double travelTime = (orderedStop.arrival_time - prev.departure_time);
-				LOGGER.info("Distance: "+distance+" -- travel time: "+travelTime);
+//				LOGGER.info("Distance: "+distance+" -- travel time: "+travelTime);
 				if (time == 0) {
 					gtfsStorage.getEdges().put(edge.getEdge(), new TripHopEdge(prev, orderedStop));
 				} else {
@@ -134,7 +150,7 @@ class GtfsReader implements DataReader {
 					StopTime to = orderedStop.clone();
 					to.departure_time += time;
 					to.arrival_time += time;
-					LOGGER.info(from.stop_id + "-" + to.stop_id + " "+"Arr: "+from.arrival_time+" -- Dep: "+from.departure_time);
+//					LOGGER.info(from.stop_id + "-" + to.stop_id + " "+"Arr: "+from.arrival_time+" -- Dep: "+from.departure_time);
 					gtfsStorage.getEdges().put(edge.getEdge(), new TripHopEdge(from, to));
 				}
 				j++;
