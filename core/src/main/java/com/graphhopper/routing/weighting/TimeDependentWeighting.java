@@ -6,4 +6,5 @@ public interface TimeDependentWeighting {
 
 	double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId, double earliestStartTime);
 
+	double calcTravelTimeSeconds(EdgeIteratorState edgeState, double earliestStartTime);
 }

@@ -89,6 +89,7 @@ public class GraphHopperGtfsIT {
 
 		assertFalse(route.hasErrors());
 		assertEquals("Expected weight == scheduled arrival time", expectedWeight, route.getBest().getRouteWeight(), 0.1);
+		assertEquals("Expected travel time == scheduled arrival time", expectedWeight * 1000, route.getBest().getTime(), 0.1);
 	}
 
 

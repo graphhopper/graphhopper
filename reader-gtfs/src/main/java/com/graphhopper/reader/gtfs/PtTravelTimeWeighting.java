@@ -29,6 +29,11 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
 		if (reverse) {
 			throw new UnsupportedOperationException();
 		}
+		return calcTravelTimeSeconds(edgeState, earliestStartTime);
+	}
+
+	@Override
+	public double calcTravelTimeSeconds(EdgeIteratorState edgeState, double earliestStartTime) {
 		if (edgeState.getEdge() > gtfsStorage.getRealEdgesSize()-1) {
 			return 0.0;
 		}

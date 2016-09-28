@@ -19,6 +19,8 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.TimeDependentWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
@@ -60,6 +62,7 @@ public class Path {
     private TIntList edgeIds;
     private double weight;
     private NodeAccess nodeAccess;
+    private Weighting weighting;
 
     public Path(Graph graph, FlagEncoder encoder) {
         this.weight = Double.MAX_VALUE;
@@ -173,6 +176,11 @@ public class Path {
         return this;
     }
 
+    public Path setWeighting(Weighting weighting) {
+        this.weighting = weighting;
+        return this;
+    }
+
     /**
      * Extracts the Path from the shortest-path-tree determined by sptEntry.
      */
@@ -190,6 +198,26 @@ public class Path {
 
         setFromNode(goalEdge.adjNode);
         reverseOrder();
+
+        if (weighting instanceof TimeDependentWeighting) {
+            // We have to calculate times again because the previously (backwardly) calculated travel times are wrong.
+            // See processEdge.
+            time = 0;
+            distance = 0;
+            forEveryEdge(new EdgeVisitor() {
+                @Override
+                public void next(EdgeIteratorState edgeBase, int index) {
+                    double dist = edgeBase.getDistance();
+                    distance += dist;
+                    if (weighting != null && weighting instanceof TimeDependentWeighting) {
+                        // TODO This should already be in the SPT, we shouldn't need to calculate it again here.
+                        time += ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edgeBase, time / 1000.0) * 1000.0;
+                    } else {
+                        time += calcMillis(dist, edgeBase.getFlags(), false);
+                    }
+                }
+            });
+        }
         extractSW.stop();
         return setFound(true);
     }
@@ -216,11 +244,14 @@ public class Path {
      * Calls getDistance and adds the edgeId.
      */
     protected void processEdge(int edgeId, int adjNode) {
-        EdgeIteratorState iter = graph.getEdgeIteratorState(edgeId, adjNode);
-        double dist = iter.getDistance();
-        distance += dist;
-        // TODO calculate time based on weighting -> weighting.calcMillis
-        time += calcMillis(dist, iter.getFlags(), false);
+        if (weighting instanceof TimeDependentWeighting) {
+            // Don't do anything here since we have to calculate travel times in the forward pass (see extract).
+        } else {
+            EdgeIteratorState iter = graph.getEdgeIteratorState(edgeId, adjNode);
+            double dist = iter.getDistance();
+            distance += dist;
+            time += calcMillis(dist, iter.getFlags(), false);
+        }
         addEdge(edgeId);
     }
 
@@ -381,6 +412,7 @@ public class Path {
             private String name, prevName = null;
             private InstructionAnnotation annotation, prevAnnotation;
             private EdgeExplorer outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+            private long time = 0;
 
             @Override
             public void next(EdgeIteratorState edge, int index) {
@@ -563,7 +595,16 @@ public class Path {
                 double newDist = edge.getDistance();
                 prevInstruction.setDistance(newDist + prevInstruction.getDistance());
                 long flags = edge.getFlags();
-                prevInstruction.setTime(calcMillis(newDist, flags, false) + prevInstruction.getTime());
+                if (weighting != null && weighting instanceof TimeDependentWeighting) {
+                    // TODO This should already be in the SPT, we shouldn't need to calculate it again here.
+                    double v = ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edge, time / 1000.0) * 1000.0;
+                    time += v;
+                    prevInstruction.setTime((long) v + prevInstruction.getTime());
+                } else {
+                    long l = calcMillis(newDist, flags, false);
+                    prevInstruction.setTime(l + prevInstruction.getTime());
+                    time += l;
+                }
             }
         });
 

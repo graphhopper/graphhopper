@@ -134,7 +134,7 @@ public class Dijkstra extends AbstractTimeDependentRoutingAlgorithm {
         if (currEdge == null || !finished())
             return createEmptyPath();
 
-        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setSPTEntry(currEdge).extract();
+        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setWeighting(weighting).setSPTEntry(currEdge).extract();
     }
 
     @Override
