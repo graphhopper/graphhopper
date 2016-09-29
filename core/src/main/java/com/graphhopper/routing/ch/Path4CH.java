@@ -34,8 +34,8 @@ import com.graphhopper.util.EdgeIterator;
 public class Path4CH extends PathBidirRef {
     private final Graph routingGraph;
 
-    public Path4CH(Graph routingGraph, Graph baseGraph, FlagEncoder encoder, Weighting weighting) {
-        super(baseGraph, encoder, weighting);
+    public Path4CH(Graph routingGraph, Graph baseGraph, Weighting weighting) {
+        super(baseGraph, weighting);
         this.routingGraph = routingGraph;
     }
 

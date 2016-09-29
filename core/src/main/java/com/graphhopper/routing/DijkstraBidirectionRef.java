@@ -101,7 +101,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
 
     @Override
     protected Path createAndInitPath() {
-        bestPath = new PathBidirRef(graph, flagEncoder, weighting);
+        bestPath = new PathBidirRef(graph, weighting);
         return bestPath;
     }
 

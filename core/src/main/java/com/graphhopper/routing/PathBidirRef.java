@@ -33,7 +33,7 @@ public class PathBidirRef extends Path {
     protected SPTEntry edgeTo;
     private boolean switchWrapper = false;
 
-    public PathBidirRef(Graph g, FlagEncoder encoder, Weighting weighting) {
+    public PathBidirRef(Graph g, Weighting weighting) {
         super(g, weighting);
     }
 

@@ -48,7 +48,7 @@ public class PathBidirRefTest {
     public void testExtract() {
         Graph g = createGraph();
         g.edge(1, 2, 10, true);
-        PathBidirRef pw = new PathBidirRef(g, carEncoder, new FastestWeighting(carEncoder));
+        PathBidirRef pw = new PathBidirRef(g, new FastestWeighting(carEncoder));
         EdgeExplorer explorer = g.createEdgeExplorer(carOutEdges);
         EdgeIterator iter = explorer.setBaseNode(1);
         iter.next();
@@ -68,7 +68,7 @@ public class PathBidirRefTest {
         EdgeExplorer explorer = g.createEdgeExplorer(carOutEdges);
         EdgeIterator iter = explorer.setBaseNode(1);
         iter.next();
-        PathBidirRef pw = new PathBidirRef(g, carEncoder, new FastestWeighting(carEncoder));
+        PathBidirRef pw = new PathBidirRef(g, new FastestWeighting(carEncoder));
         pw.sptEntry = new SPTEntry(iter.getEdge(), 2, 10);
         pw.sptEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);
 
