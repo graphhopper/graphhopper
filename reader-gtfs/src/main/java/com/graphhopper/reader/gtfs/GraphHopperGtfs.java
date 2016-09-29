@@ -14,12 +14,12 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 
 public final class GraphHopperGtfs extends GraphHopper {
 
 	public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliestDepartureTime";
-	private GtfsStorage gtfsStorage = new GtfsStorage();
 
 	public GraphHopperGtfs() {
 		super();
@@ -29,7 +29,7 @@ public final class GraphHopperGtfs extends GraphHopper {
 
 	@Override
 	protected DataReader createReader(GraphHopperStorage ghStorage) {
-		return initDataReader(new GtfsReader(ghStorage, gtfsStorage));
+		return initDataReader(new GtfsReader(ghStorage));
 	}
 
 	public GraphHopperGtfs setGtfsFile(String gtfs) {
@@ -39,7 +39,7 @@ public final class GraphHopperGtfs extends GraphHopper {
 
 	@Override
 	public Weighting createWeighting(HintsMap weightingMap, FlagEncoder encoder) {
-		return new PtTravelTimeWeighting(encoder, gtfsStorage);
+		return new PtTravelTimeWeighting(encoder, (GtfsStorage) getGraphHopperStorage().getExtension());
 	}
 
 	@Override
@@ -56,7 +56,7 @@ public final class GraphHopperGtfs extends GraphHopper {
 
 	@Override
 	protected RoutingTemplate createRoutingTemplate(String algoStr, GHRequest request, GHResponse ghRsp) {
-		return new PtRoutingTemplate(request, ghRsp, getLocationIndex(), gtfsStorage);
+		return new PtRoutingTemplate(request, ghRsp, getLocationIndex(), (GtfsStorage) getGraphHopperStorage().getExtension());
 	}
 
 	@Override
@@ -69,4 +69,8 @@ public final class GraphHopperGtfs extends GraphHopper {
 		throw new UnsupportedOperationException();
 	}
 
+	@Override
+	protected GraphExtension createGraphExtension() {
+		return new GtfsStorage();
+	}
 }

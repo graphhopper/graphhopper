@@ -1,4 +1,6 @@
 package com.graphhopper.reader.gtfs;
 
-abstract class AbstractPtEdge {
+import java.io.Serializable;
+
+abstract class AbstractPtEdge implements Serializable {
 }

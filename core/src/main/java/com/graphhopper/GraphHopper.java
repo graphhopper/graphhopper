@@ -770,8 +770,7 @@ public class GraphHopper implements GraphHopperAPI {
             dataAccessType = DAType.MMAP_RO;
 
         GHDirectory dir = new GHDirectory(ghLocation, dataAccessType);
-        GraphExtension ext = encodingManager.needsTurnCostsSupport()
-                ? new TurnCostExtension() : new GraphExtension.NoOpExtension();
+        GraphExtension ext = createGraphExtension();
 
         if (chFactoryDecorator.isEnabled()) {
             initCHAlgoFactoryDecorator();
@@ -806,6 +805,11 @@ public class GraphHopper implements GraphHopperAPI {
             if (lock != null)
                 lock.release();
         }
+    }
+
+    protected GraphExtension createGraphExtension() {
+        return encodingManager.needsTurnCostsSupport()
+                ? new TurnCostExtension() : new GraphExtension.NoOpExtension();
     }
 
     public RoutingAlgorithmFactory getAlgorithmFactory(HintsMap map) {
