@@ -474,8 +474,8 @@ public class MapMatching {
     // TODO: Make setFromNode and processEdge public in Path and then remove this.
     private static class MyPath extends Path {
 
-        public MyPath(Graph graph, FlagEncoder encoder) {
-            super(graph, encoder);
+        public MyPath(Graph graph, Weighting weighting) {
+            super(graph, weighting);
         }
 
         @Override
@@ -484,17 +484,19 @@ public class MapMatching {
         }
 
         @Override
-        public void processEdge(int edgeId, int adjNode) {
-            super.processEdge(edgeId, adjNode);
+        public void processEdge(int edgeId, int adjNode, int prevEdgeId) {
+            super.processEdge(edgeId, adjNode, prevEdgeId);
         }
     }
 
     public Path calcPath(MatchResult mr) {
-        MyPath p = new MyPath(graph, encoder);
+        MyPath p = new MyPath(graph, weighting);
         if (!mr.getEdgeMatches().isEmpty()) {
+            int prevEdge = EdgeIterator.NO_EDGE;
             p.setFromNode(mr.getEdgeMatches().get(0).getEdgeState().getBaseNode());
             for (EdgeMatch em : mr.getEdgeMatches()) {
-                p.processEdge(em.getEdgeState().getEdge(), em.getEdgeState().getAdjNode());
+                p.processEdge(em.getEdgeState().getEdge(), em.getEdgeState().getAdjNode(), prevEdge);
+                prevEdge = em.getEdgeState().getEdge();
             }
 
             // TODO p.setWeight(weight);
