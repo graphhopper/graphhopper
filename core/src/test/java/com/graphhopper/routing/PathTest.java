@@ -18,6 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
@@ -42,7 +43,7 @@ public class PathTest {
     @Test
     public void testFound() {
         GraphHopperStorage g = new GraphBuilder(carManager).create();
-        Path p = new Path(g, encoder);
+        Path p = new Path(g, new FastestWeighting(encoder));
         assertFalse(p.isFound());
         assertEquals(0, p.getDistance(), 1e-7);
         assertEquals(0, p.calcNodes().size());
@@ -53,10 +54,12 @@ public class PathTest {
     public void testTime() {
         FlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
         GraphHopperStorage g = new GraphBuilder(new EncodingManager(tmpEnc)).create();
-        Path p = new Path(g, tmpEnc);
+        Path p = new Path(g, new FastestWeighting(tmpEnc));
         long flags = tmpEnc.setSpeed(tmpEnc.setReverseSpeed(tmpEnc.setAccess(0, true, true), 10), 15);
-        assertEquals(375 * 60 * 1000, p.calcMillis(100000, flags, false));
-        assertEquals(600 * 60 * 1000, p.calcMillis(100000, flags, true));
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(100000, flags);
+                
+        assertEquals(375 * 60 * 1000, p.calcMillis(edge, false));
+        assertEquals(600 * 60 * 1000, p.calcMillis(edge, true));
 
         g.close();
     }
@@ -74,7 +77,7 @@ public class PathTest {
         EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).setFlags(encoder.setProperties(50, true, true));
         edge2.setWayGeometry(Helper.createPointList(11, 1, 10, 1));
 
-        Path path = new Path(g, encoder);
+        Path path = new Path(g, new FastestWeighting(encoder));
         SPTEntry e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 0, 1);
@@ -100,7 +103,7 @@ public class PathTest {
 
         // force minor change for instructions
         edge2.setName("2");
-        path = new Path(g, encoder);
+        path = new Path(g, new FastestWeighting(encoder));
         e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 0, 1);
@@ -124,7 +127,7 @@ public class PathTest {
         assertEquals(path.calcPoints().size() - 1, lastIndex);
 
         // now reverse order
-        path = new Path(g, encoder);
+        path = new Path(g, new FastestWeighting(encoder));
         e1 = new SPTEntry(edge1.getEdge(), 0, 1);
         e1.parent = new SPTEntry(edge2.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 2, 1);
@@ -173,7 +176,7 @@ public class PathTest {
         edge4.setWayGeometry(Helper.createPointList());
         edge4.setName("Street 4");
 
-        Path path = new Path(g, encoder);
+        Path path = new Path(g, new FastestWeighting(encoder));
         SPTEntry e1 = new SPTEntry(edge4.getEdge(), 4, 1);
         e1.parent = new SPTEntry(edge3.getEdge(), 3, 1);
         e1.parent.parent = new SPTEntry(edge2.getEdge(), 2, 1);

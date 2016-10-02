@@ -37,6 +37,11 @@ public interface Weighting {
     double getMinWeight(double distance);
 
     /**
+     * This method calculates the weighting a certain edgeState should be associated. E.g. a high
+     * value indicates that the edge should be avoided. Make sure that this method is very fast and
+     * optimized as this is called potentially millions of times for one route or a lot more for
+     * nearly any preprocessing phase.
+     *
      * @param edgeState        the edge for which the weight should be calculated
      * @param reverse          if the specified edge is specified in reverse direction e.g. from the reverse
      *                         case of a bidirectional search.
@@ -46,6 +51,13 @@ public interface Weighting {
      * +Infinity. Make sure your method does not return NaN which can e.g. occur for 0/0.
      */
     double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
+
+    /**
+     * This method calculates the time taken (in milli seconds) for the specified edgeState and
+     * optionally include the turn costs (in seconds) of the previous (or next) edgeId via
+     * prevOrNextEdgeId. Typically used for post-processing and on only a few thausend edges.
+     */
+    long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
 
     FlagEncoder getFlagEncoder();
 

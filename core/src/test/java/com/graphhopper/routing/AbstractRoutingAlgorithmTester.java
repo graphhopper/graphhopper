@@ -764,6 +764,13 @@ public abstract class AbstractRoutingAlgorithmTester {
                 return edgeState.getDistance() * 0.8;
             }
 
+            private final Weighting tmpW = new FastestWeighting(carEncoder);
+
+            @Override
+            public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+                return tmpW.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+            }
+
             @Override
             public boolean matches(HintsMap map) {
                 throw new UnsupportedOperationException("Not supported");

@@ -448,9 +448,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public double getSpeed(long flags) {
-        // TODO fix Path.calcMillis(Path.java:255)
-        // use pluggable weighting.calcMillis but include reverse somehow
-        return 50;
+        throw new UnsupportedOperationException("Calculate speed via more customizable Weighting.calcMillis method");
     }
 
     @Override

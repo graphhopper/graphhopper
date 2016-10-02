@@ -76,7 +76,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
     @Override
     public Path extractPath() {
-        PathNative p = new PathNative(graph, flagEncoder, parents, edgeIds);
+        PathNative p = new PathNative(graph, flagEncoder, weighting, parents, edgeIds);
         if (endNode >= 0)
             p.setWeight(weights[endNode]);
         p.setFromNode(fromNode);
