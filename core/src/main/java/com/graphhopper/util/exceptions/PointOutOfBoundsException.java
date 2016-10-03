@@ -5,7 +5,7 @@ package com.graphhopper.util.exceptions;
  *
  * @author Robin Boldt
  */
-public class PointOutOfBoundsException extends CannotFindPointException {
+public class PointOutOfBoundsException extends PointNotFoundException {
     public PointOutOfBoundsException(String var1, int pointIndex) {
         super(var1, pointIndex);
     }

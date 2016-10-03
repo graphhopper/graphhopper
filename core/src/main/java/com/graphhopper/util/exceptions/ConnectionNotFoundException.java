@@ -17,30 +17,15 @@
  */
 package com.graphhopper.util.exceptions;
 
-import java.util.Collections;
 import java.util.Map;
 
 /**
- * Represents an instance of the "Cannot find Point" Exception, whereas the Point that cannot be
- * found is at pointIndex.
+ * If a route cannot be found due to disconnected graphs.
  *
- * @author Robin Boldt
+ * @author Peter Karich
  */
-public class CannotFindPointException extends IllegalArgumentException implements GHException {
-
-    protected final int pointIndex;
-
-    public CannotFindPointException(String var1, int pointIndex) {
-        super(var1);
-        this.pointIndex = pointIndex;
-    }
-
-    public int getPointIndex() {
-        return this.pointIndex;
-    }
-
-    @Override
-    public Map<String, String> getDetails() {
-        return Collections.singletonMap("point_index", String.valueOf(pointIndex));
+public class ConnectionNotFoundException extends DetailedIllegalArgumentException {
+    public ConnectionNotFoundException(String var1, Map<String, Object> details) {
+        super(var1, details);
     }
 }
