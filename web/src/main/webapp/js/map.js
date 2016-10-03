@@ -50,6 +50,7 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
     map = L.map('map', {
         layers: [defaultLayer],
         minZoom: 2,
+        zoomSnap: 0,  // allow fractional zoom levels
         contextmenu: true,
         contextmenuWidth: 150,
         contextmenuItems: [{
@@ -236,7 +237,9 @@ module.exports.setDisabledForMapsContextMenu = function (entry, value) {
 };
 
 module.exports.fitMapToBounds = function (bounds) {
-    map.fitBounds(bounds);
+    map.fitBounds(bounds, {
+        padding: [42, 42]
+    });
 };
 
 module.exports.removeLayerFromMap = function (layer) {
@@ -290,7 +293,7 @@ module.exports.updateScale = function (useMiles) {
     if (scaleControl === null) {
         return;
     }
-    scaleControl.removeFrom(map);
+    scaleControl.remove();
     var options = useMiles ? {metric: false} : {imperial: false};
     scaleControl = L.control.scale(options).addTo(map);
 };
