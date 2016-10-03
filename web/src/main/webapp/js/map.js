@@ -236,7 +236,9 @@ module.exports.setDisabledForMapsContextMenu = function (entry, value) {
 };
 
 module.exports.fitMapToBounds = function (bounds) {
-    map.fitBounds(bounds);
+    map.fitBounds(bounds, {
+        padding: [12, 12]
+    });
 };
 
 module.exports.removeLayerFromMap = function (layer) {
@@ -290,7 +292,7 @@ module.exports.updateScale = function (useMiles) {
     if (scaleControl === null) {
         return;
     }
-    scaleControl.removeFrom(map);
+    scaleControl.remove();
     var options = useMiles ? {metric: false} : {imperial: false};
     scaleControl = L.control.scale(options).addTo(map);
 };
