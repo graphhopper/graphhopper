@@ -54,6 +54,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 properties.getBool("turn_costs", false) ? 1 : 0);
         this.properties = properties;
         this.setBlockFords(properties.getBool("block_fords", true));
+        this.setBlockByDefault(properties.getBool("block_barriers", true));        
     }
 
     public CarFlagEncoder(String propertiesStr) {
