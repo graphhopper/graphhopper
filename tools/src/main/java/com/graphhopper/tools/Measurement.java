@@ -102,9 +102,7 @@ public class Measurement {
         hopper.importOrLoad();
 
         GraphHopperStorage g = hopper.getGraphHopperStorage();
-//        if ("true".equals(g.getProperties().get("prepare.done")))
-//            throw new IllegalStateException("Graph has to be unprepared but wasn't!");
-
+        
         String vehicleStr = args.get("graph.flag_encoders", "car");
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicleStr);
         Weighting weighting = hopper.getCHFactoryDecorator().getWeightings().get(0);
