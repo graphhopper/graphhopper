@@ -268,7 +268,7 @@ public class MapMatching {
             for (GPXExtension to : timeStep.candidates) {
                 // TODO allow CH, then optionally use cached one-to-many Dijkstra to improve speed
                 final DijkstraBidirectionRef algo =
-                        new DijkstraBidirectionRef(queryGraph, encoder, weighting, traversalMode);
+                        new DijkstraBidirectionRef(queryGraph, weighting, traversalMode);
                 algo.setMaxVisitedNodes(maxVisitedNodes);
                 final Path path = algo.calcPath(from.getQueryResult().getClosestNode(),
                         to.getQueryResult().getClosestNode());
