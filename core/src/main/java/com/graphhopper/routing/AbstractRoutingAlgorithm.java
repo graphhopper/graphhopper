@@ -49,13 +49,12 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
 
     /**
      * @param graph         specifies the graph where this algorithm will run on
-     * @param encoder       sets the used vehicle (bike, car, foot)
      * @param weighting     set the used weight calculation (e.g. fastest, shortest).
      * @param traversalMode how the graph is traversed e.g. if via nodes or edges.
      */
-    public AbstractRoutingAlgorithm(Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode) {
+    public AbstractRoutingAlgorithm(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         this.weighting = weighting;
-        this.flagEncoder = encoder;
+        this.flagEncoder = weighting.getFlagEncoder();
         this.traversalMode = traversalMode;
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();

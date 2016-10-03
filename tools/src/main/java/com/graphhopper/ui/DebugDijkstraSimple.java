@@ -18,7 +18,6 @@
 package com.graphhopper.ui;
 
 import com.graphhopper.routing.Dijkstra;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -31,11 +30,11 @@ import java.awt.*;
  * @author Peter Karich
  */
 public class DebugDijkstraSimple extends Dijkstra implements DebugAlgo {
-    private GraphicsWrapper mg;
+    private final GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraSimple(Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode, GraphicsWrapper mg) {
-        super(graph, encoder, weighting, tMode);
+    public DebugDijkstraSimple(Graph graph, Weighting weighting, TraversalMode tMode, GraphicsWrapper mg) {
+        super(graph, weighting, tMode);
         this.mg = mg;
     }
 

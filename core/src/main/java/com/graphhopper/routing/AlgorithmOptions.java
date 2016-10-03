@@ -40,7 +40,6 @@ public class AlgorithmOptions {
     private String algorithm = Parameters.Algorithms.DIJKSTRA_BI;
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
-    private FlagEncoder flagEncoder;
     private int maxVisitedNodes = Integer.MAX_VALUE;
 
     private AlgorithmOptions() {
@@ -49,16 +48,14 @@ public class AlgorithmOptions {
     /**
      * Default traversal mode NODE_BASED is used.
      */
-    public AlgorithmOptions(String algorithm, FlagEncoder flagEncoder, Weighting weighting) {
+    public AlgorithmOptions(String algorithm, Weighting weighting) {
         this.algorithm = algorithm;
         this.weighting = weighting;
-        this.flagEncoder = flagEncoder;
     }
 
-    public AlgorithmOptions(String algorithm, FlagEncoder flagEncoder, Weighting weighting, TraversalMode tMode) {
+    public AlgorithmOptions(String algorithm, Weighting weighting, TraversalMode tMode) {
         this.algorithm = algorithm;
         this.weighting = weighting;
-        this.flagEncoder = flagEncoder;
         this.traversalMode = tMode;
     }
 
@@ -77,8 +74,6 @@ public class AlgorithmOptions {
         Builder b = new Builder();
         if (opts.algorithm != null)
             b.algorithm(opts.getAlgorithm());
-        if (opts.flagEncoder != null)
-            b.flagEncoder(opts.getFlagEncoder());
         if (opts.traversalMode != null)
             b.traversalMode(opts.getTraversalMode());
         if (opts.weighting != null)
@@ -105,11 +100,6 @@ public class AlgorithmOptions {
         return algorithm;
     }
 
-    public FlagEncoder getFlagEncoder() {
-        assertNotNull(flagEncoder, "flagEncoder");
-        return flagEncoder;
-    }
-
     public int getMaxVisitedNodes() {
         return maxVisitedNodes;
     }
@@ -125,7 +115,7 @@ public class AlgorithmOptions {
 
     @Override
     public String toString() {
-        return algorithm + ", " + weighting + ", " + flagEncoder + ", " + traversalMode;
+        return algorithm + ", " + weighting + ", " + traversalMode;
     }
 
     public static class Builder {
@@ -150,12 +140,7 @@ public class AlgorithmOptions {
         public Builder algorithm(String algorithm) {
             this.opts.algorithm = algorithm;
             return this;
-        }
-
-        public Builder flagEncoder(FlagEncoder flagEncoder) {
-            this.opts.flagEncoder = flagEncoder;
-            return this;
-        }
+        }        
 
         public Builder maxVisitedNodes(int maxVisitedNodes) {
             this.opts.maxVisitedNodes = maxVisitedNodes;

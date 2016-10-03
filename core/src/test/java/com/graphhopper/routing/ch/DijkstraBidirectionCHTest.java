@@ -59,7 +59,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     public RoutingAlgorithmFactory createFactory(GraphHopperStorage ghStorage, AlgorithmOptions opts) {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
                 ghStorage, getGraph(ghStorage, opts.getWeighting()),
-                opts.getFlagEncoder(), opts.getWeighting(), TraversalMode.NODE_BASED);
+                opts.getWeighting(), TraversalMode.NODE_BASED);
         ch.doWork();
         return ch;
     }
@@ -104,9 +104,9 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         g2.setLevel(7, 6);
         g2.setLevel(0, 7);
 
-        AlgorithmOptions opts = new AlgorithmOptions(Parameters.Algorithms.DIJKSTRA_BI, encoder, weighting);
+        AlgorithmOptions opts = new AlgorithmOptions(Parameters.Algorithms.DIJKSTRA_BI, weighting);
         Path p = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
-                ghStorage, g2, encoder, weighting, TraversalMode.NODE_BASED).
+                ghStorage, g2, weighting, TraversalMode.NODE_BASED).
                 createAlgo(g2, opts).calcPath(0, 7);
 
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
@@ -118,7 +118,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     public void testBaseGraph() {
         CarFlagEncoder carFE = new CarFlagEncoder();
         EncodingManager em = new EncodingManager(carFE);
-        AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carFE).
+        AlgorithmOptions opts = AlgorithmOptions.start().
                 weighting(new ShortestWeighting(carFE)).build();
         GraphHopperStorage ghStorage = createGHStorage(em,
                 Arrays.asList(opts.getWeighting()), false);
@@ -137,9 +137,9 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
 
     @Test
     public void testBaseGraphMultipleVehicles() {
-        AlgorithmOptions footOptions = AlgorithmOptions.start().flagEncoder(footEncoder).
+        AlgorithmOptions footOptions = AlgorithmOptions.start().
                 weighting(new FastestWeighting(footEncoder)).build();
-        AlgorithmOptions carOptions = AlgorithmOptions.start().flagEncoder(carEncoder).
+        AlgorithmOptions carOptions = AlgorithmOptions.start().
                 weighting(new FastestWeighting(carEncoder)).build();
 
         GraphHopperStorage g = createGHStorage(encodingManager,
