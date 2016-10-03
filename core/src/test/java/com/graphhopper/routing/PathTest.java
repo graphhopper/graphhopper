@@ -212,7 +212,7 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundabout() {
         for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders()) {
-            Path p = new Dijkstra(roundaboutGraph.g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+            Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                     .calcPath(1, 8);
             assertTrue(p.isFound());
             InstructionList wayList = p.calcInstructions(tr);
@@ -228,7 +228,7 @@ public class PathTest {
             assertEquals(delta, instr.getTurnAngle(), 0.01);
 
             // case of continuing a street through a roundabout
-            p = new Dijkstra(roundaboutGraph.g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).
+            p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).
                     calcPath(1, 7);
             wayList = p.calcInstructions(tr);
             tmpList = pick("text", wayList.createJson());
@@ -248,7 +248,7 @@ public class PathTest {
      */
     @Test
     public void testCalcInstructionsRoundaboutBegin() {
-        Path p = new Dijkstra(roundaboutGraph.g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                 .calcPath(2, 8);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);
@@ -264,7 +264,7 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundaboutDirectExit() {
         roundaboutGraph.inverse3to9();
-        Path p = new Dijkstra(roundaboutGraph.g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                 .calcPath(6, 8);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);
@@ -282,7 +282,7 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundabout2() {
         roundaboutGraph.inverse3to6();
-        Path p = new Dijkstra(roundaboutGraph.g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                 .calcPath(1, 8);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);
@@ -352,7 +352,7 @@ public class PathTest {
         g.edge(5, 8, 5, true).setName("5-8");
         g.edge(3, 6, 5, true).setName("3-6");
 
-        Path p = new Dijkstra(g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                 .calcPath(6, 11);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);
@@ -368,7 +368,7 @@ public class PathTest {
     @Test
     public void testCalcInstructionsRoundaboutClockwise() {
         roundaboutGraph.setRoundabout(true);
-        Path p = new Dijkstra(roundaboutGraph.g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                 .calcPath(1, 8);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);

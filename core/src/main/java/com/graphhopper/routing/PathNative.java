@@ -32,7 +32,7 @@ public class PathNative extends Path {
     private final int[] parentNodes;
     private final int[] parentEdges;
 
-    public PathNative(Graph g, FlagEncoder encoder, Weighting weighting, int[] parentNodes, int[] parentEdges) {
+    public PathNative(Graph g, Weighting weighting, int[] parentNodes, int[] parentEdges) {
         super(g, weighting);
         this.parentNodes = parentNodes;
         this.parentEdges = parentEdges;

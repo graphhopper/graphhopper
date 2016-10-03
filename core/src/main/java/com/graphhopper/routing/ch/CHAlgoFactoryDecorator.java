@@ -324,7 +324,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         for (Weighting weighting : getWeightings()) {
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
                     new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting),
-                    weighting.getFlagEncoder(), weighting, traversalMode);
+                    weighting, traversalMode);
             tmpPrepareCH.setPeriodicUpdates(preparationPeriodicUpdates).
                     setLazyUpdates(preparationLazyUpdates).
                     setNeighborUpdates(preparationNeighborUpdates).

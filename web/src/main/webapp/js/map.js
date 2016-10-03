@@ -40,7 +40,7 @@ function adjustMapSize() {
     // $("#info").css("height", height - $("#input_header").height() - 100);
 }
 
-function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer) {
+function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer, useMiles) {
     adjustMapSize();
     // console.log("init map at " + JSON.stringify(bounds));
 
@@ -50,6 +50,7 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
     map = L.map('map', {
         layers: [defaultLayer],
         minZoom: 2,
+        zoomSnap: 0,  // allow fractional zoom levels
         contextmenu: true,
         contextmenuWidth: 150,
         contextmenuItems: [{
@@ -129,7 +130,9 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         }
     });
 
-    scaleControl = L.control.scale({
+    scaleControl = L.control.scale(useMiles ? {
+        metric: false
+    } : {
         imperial: false
     }).addTo(map);
 
@@ -234,7 +237,9 @@ module.exports.setDisabledForMapsContextMenu = function (entry, value) {
 };
 
 module.exports.fitMapToBounds = function (bounds) {
-    map.fitBounds(bounds);
+    map.fitBounds(bounds, {
+        padding: [42, 42]
+    });
 };
 
 module.exports.removeLayerFromMap = function (layer) {
@@ -288,7 +293,7 @@ module.exports.updateScale = function (useMiles) {
     if (scaleControl === null) {
         return;
     }
-    scaleControl.removeFrom(map);
+    scaleControl.remove();
     var options = useMiles ? {metric: false} : {imperial: false};
     scaleControl = L.control.scale(options).addTo(map);
 };

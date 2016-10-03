@@ -51,7 +51,6 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final PreparationWeighting prepareWeighting;
-    private final FlagEncoder prepareFlagEncoder;
     private final TraversalMode traversalMode;
     private final LevelEdgeFilter levelFilter;
     private final GraphHopperStorage ghStorage;
@@ -91,11 +90,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int maxEdgesCount;
 
     public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
-                                         FlagEncoder encoder, Weighting weighting, TraversalMode traversalMode) {
+                                         Weighting weighting, TraversalMode traversalMode) {
         this.ghStorage = ghStorage;
         this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
-        this.prepareFlagEncoder = encoder;
         levelFilter = new LevelEdgeFilter(prepareGraph);
 
         prepareWeighting = new PreparationWeighting(weighting);
@@ -186,9 +184,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     @Override
     public void doWork() {
-        if (prepareFlagEncoder == null)
-            throw new IllegalStateException("No vehicle encoder set.");
-
         if (prepareWeighting == null)
             throw new IllegalStateException("No weight calculation set.");
 
@@ -348,7 +343,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         logger.info("took:" + (int) allSW.stop().getSeconds()
                 + ", new shortcuts: " + Helper.nf(newShortcuts)
                 + ", " + prepareWeighting
-                + ", " + prepareFlagEncoder
                 + ", dijkstras:" + dijkstraCount
                 + ", " + getTimesAsString()
                 + ", meanDegree:" + (long) meanDegree
@@ -581,6 +575,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     PrepareContractionHierarchies initFromGraph() {
         ghStorage.freeze();
         maxEdgesCount = ghStorage.getAllEdges().getMaxId();
+        FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
         vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
         vehicleOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
         final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
@@ -609,7 +604,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new int[prepareGraph.getNodes()];
-        prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareFlagEncoder, prepareWeighting, traversalMode);
+        prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareWeighting, traversalMode);
         return this;
     }
 
@@ -659,7 +654,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private AStarBidirection createAStarBidirection(final Graph graph) {
-        return new AStarBidirection(graph, prepareFlagEncoder, prepareWeighting, traversalMode) {
+        return new AStarBidirection(graph, prepareWeighting, traversalMode) {
             @Override
             protected void initCollections(int nodes) {
                 // algorithm with CH does not need that much memory pre allocated
@@ -696,7 +691,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private AbstractBidirAlgo createDijkstraBidirection(final Graph graph) {
-        return new DijkstraBidirectionRef(graph, prepareFlagEncoder, prepareWeighting, traversalMode) {
+        return new DijkstraBidirectionRef(graph, prepareWeighting, traversalMode) {
             @Override
             protected void initCollections(int nodes) {
                 // algorithm with CH does not need that much memory pre allocated

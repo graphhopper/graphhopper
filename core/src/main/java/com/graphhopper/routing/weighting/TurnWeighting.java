@@ -43,12 +43,11 @@ public class TurnWeighting implements Weighting {
     /**
      * @param turnCostExt the turn cost storage to be used
      */
-    public TurnWeighting(Weighting superWeighting, TurnCostEncoder encoder, TurnCostExtension turnCostExt) {
-        this.turnCostEncoder = encoder;
+    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
+        this.turnCostEncoder = (TurnCostEncoder) superWeighting.getFlagEncoder();
         this.superWeighting = superWeighting;
         this.turnCostExt = turnCostExt;
-        if (encoder == null)
-            throw new IllegalArgumentException("No encoder set to calculate turn weight");
+        
         if (turnCostExt == null)
             throw new RuntimeException("No storage set to calculate turn weight");
     }

@@ -502,7 +502,7 @@ public class QueryGraphTest {
 
         QueryGraph qGraph = new QueryGraph(graphWithTurnCosts);
         FastestWeighting weighting = new FastestWeighting(encoder);
-        TurnWeighting turnWeighting = new TurnWeighting(weighting, encoder, (TurnCostExtension) qGraph.getExtension());
+        TurnWeighting turnWeighting = new TurnWeighting(weighting, (TurnCostExtension) qGraph.getExtension());
 
         assertEquals(0, turnWeighting.calcTurnWeight(edge0.getEdge(), 1, edge1.getEdge()), .1);
 

@@ -81,9 +81,9 @@ public class AlternativeRoute implements RoutingAlgorithm {
     private double minPlateauFactor = 0.2;
     private int maxPaths = 2;
 
-    public AlternativeRoute(Graph graph, FlagEncoder flagEncoder, Weighting weighting, TraversalMode traversalMode) {
+    public AlternativeRoute(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         this.graph = graph;
-        this.flagEncoder = flagEncoder;
+        this.flagEncoder = weighting.getFlagEncoder();
         this.weighting = weighting;
         this.traversalMode = traversalMode;
     }
@@ -164,7 +164,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
      */
     public List<AlternativeInfo> calcAlternatives(int from, int to) {
         AlternativeBidirSearch altBidirDijktra = new AlternativeBidirSearch(
-                graph, flagEncoder, weighting, traversalMode, maxExplorationFactor * 2);
+                graph, weighting, traversalMode, maxExplorationFactor * 2);
         altBidirDijktra.setMaxVisitedNodes(maxVisitedNodes);
         altBidirDijktra.searchBest(from, to);
         visitedNodes = altBidirDijktra.getVisitedNodes();
@@ -250,9 +250,9 @@ public class AlternativeRoute implements RoutingAlgorithm {
     public static class AlternativeBidirSearch extends AStarBidirection {
         private final double explorationFactor;
 
-        public AlternativeBidirSearch(Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode,
+        public AlternativeBidirSearch(Graph graph, Weighting weighting, TraversalMode tMode,
                                       double explorationFactor) {
-            super(graph, encoder, weighting, tMode);
+            super(graph, weighting, tMode);
             this.explorationFactor = explorationFactor;
         }
 

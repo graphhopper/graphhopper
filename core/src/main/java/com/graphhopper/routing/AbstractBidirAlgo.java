@@ -34,8 +34,8 @@ public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     int visitedCountFrom;
     int visitedCountTo;
 
-    public AbstractBidirAlgo(Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode) {
-        super(graph, encoder, weighting, tMode);
+    public AbstractBidirAlgo(Graph graph, Weighting weighting, TraversalMode tMode) {
+        super(graph, weighting, tMode);
     }
 
     abstract void initFrom(int from, double dist);
