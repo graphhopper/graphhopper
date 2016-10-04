@@ -90,6 +90,10 @@ public class AlgorithmOptions {
         return traversalMode;
     }
 
+    public boolean hasWeighting() {
+        return weighting != null;
+    }
+
     public Weighting getWeighting() {
         assertNotNull(weighting, "weighting");
         return weighting;
@@ -140,7 +144,7 @@ public class AlgorithmOptions {
         public Builder algorithm(String algorithm) {
             this.opts.algorithm = algorithm;
             return this;
-        }        
+        }
 
         public Builder maxVisitedNodes(int maxVisitedNodes) {
             this.opts.maxVisitedNodes = maxVisitedNodes;
