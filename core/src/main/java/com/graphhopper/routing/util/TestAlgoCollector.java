@@ -51,9 +51,9 @@ public class TestAlgoCollector {
         QueryGraph queryGraph = new QueryGraph(algoEntry.getQueryGraph());
         queryGraph.lookup(queryList);
         AlgorithmOptions opts = algoEntry.opts;
-        FlagEncoder encoder = opts.getFlagEncoder();
+        FlagEncoder encoder = opts.getWeighting().getFlagEncoder();
         if (encoder.supports(TurnWeighting.class))
-            algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(new TurnWeighting(opts.getWeighting(), opts.getFlagEncoder(), (TurnCostExtension) queryGraph.getExtension())).build());
+            algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(new TurnWeighting(opts.getWeighting(), (TurnCostExtension) queryGraph.getExtension())).build());
 
         for (int i = 0; i < queryList.size() - 1; i++) {
             RoutingAlgorithm algo = algoEntry.createAlgo(queryGraph);

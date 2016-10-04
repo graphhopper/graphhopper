@@ -69,8 +69,8 @@ public class AStarBidirection extends AbstractBidirAlgo {
     private PriorityQueue<AStarEntry> prioQueueOpenSetTo;
     private TIntObjectMap<AStarEntry> bestWeightMapOther;
 
-    public AStarBidirection(Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode) {
-        super(graph, encoder, weighting, tMode);
+    public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
+        super(graph, weighting, tMode);
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
         initCollections(size);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);

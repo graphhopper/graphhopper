@@ -31,7 +31,7 @@ import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.Translation;
-import com.graphhopper.util.exceptions.CannotFindPointException;
+import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
@@ -67,7 +67,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             GHPoint point = points.get(placeIndex);
             QueryResult res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
             if (!res.isValid())
-                ghResponse.addError(new CannotFindPointException("Cannot find point " + placeIndex + ": " + point, placeIndex));
+                ghResponse.addError(new PointNotFoundException("Cannot find point " + placeIndex + ": " + point, placeIndex));
 
             queryResults.add(res);
         }

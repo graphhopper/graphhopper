@@ -49,17 +49,17 @@ import static org.junit.Assert.assertTrue;
  */
 public class RoutingAlgorithmIT {
     public static List<AlgoHelperEntry> createAlgos(GraphHopperStorage ghStorage,
-                                                    LocationIndex idx, final FlagEncoder encoder, boolean withCh,
+                                                    LocationIndex idx, boolean withCh,
                                                     final TraversalMode tMode, final Weighting weighting,
                                                     final EncodingManager manager) {
         List<AlgoHelperEntry> prepare = new ArrayList<AlgoHelperEntry>();
-        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(ASTAR, encoder, weighting, tMode), idx));
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(ASTAR, weighting, tMode), idx));
         // later: include dijkstraOneToMany
-        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(DIJKSTRA, encoder, weighting, tMode), idx));
+        prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(DIJKSTRA, weighting, tMode), idx));
 
-        final AlgorithmOptions astarbiOpts = new AlgorithmOptions(ASTAR_BI, encoder, weighting, tMode);
+        final AlgorithmOptions astarbiOpts = new AlgorithmOptions(ASTAR_BI, weighting, tMode);
         astarbiOpts.getHints().put(ASTAR_BI + ".approximation", "BeelineSimplification");
-        final AlgorithmOptions dijkstrabiOpts = new AlgorithmOptions(DIJKSTRA_BI, encoder, weighting, tMode);
+        final AlgorithmOptions dijkstrabiOpts = new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode);
         prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, astarbiOpts, idx));
         prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, dijkstrabiOpts, idx));
 
@@ -71,7 +71,7 @@ public class RoutingAlgorithmIT {
             storageCopy.freeze();
             final CHGraph graphCH = storageCopy.getGraph(CHGraph.class, weighting);
             final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(
-                    new GHDirectory("", DAType.RAM_INT), storageCopy, graphCH, encoder, weighting, tMode);
+                    new GHDirectory("", DAType.RAM_INT), storageCopy, graphCH, weighting, tMode);
             prepareCH.doWork();
             LocationIndex idxCH = new LocationIndexTree(storageCopy, new RAMDirectory()).prepareIndex();
             prepare.add(new AlgoHelperEntry(graphCH, storageCopy, dijkstrabiOpts, idxCH) {
@@ -103,7 +103,7 @@ public class RoutingAlgorithmIT {
 
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile))).read();
-        Collection<AlgoHelperEntry> prepares = createAlgos(graph, null, encoder, false, TraversalMode.NODE_BASED,
+        Collection<AlgoHelperEntry> prepares = createAlgos(graph, null, false, TraversalMode.NODE_BASED,
                 new ShortestWeighting(encoder), eManager);
         for (AlgoHelperEntry entry : prepares) {
             StopWatch sw = new StopWatch();

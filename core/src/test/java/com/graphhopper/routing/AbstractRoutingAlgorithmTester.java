@@ -147,7 +147,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     public void setUp() {
         carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
         footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
-        defaultOpts = AlgorithmOptions.start().flagEncoder(carEncoder).
+        defaultOpts = AlgorithmOptions.start().
                 weighting(new ShortestWeighting(carEncoder)).build();
     }
 
@@ -193,7 +193,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p1.toString(), 402.3, p1.getDistance(), .1);
         assertEquals(p1.toString(), 144823, p1.getTime());
 
-        AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).
+        AlgorithmOptions opts = AlgorithmOptions.start().
                 weighting(new FastestWeighting(carEncoder)).build();
         GraphHopperStorage graphFastest = createGHStorage(encodingManager, Arrays.asList(opts.getWeighting()), false);
         initDirectedAndDiffSpeed(graphFastest, carEncoder);
@@ -246,7 +246,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     @Test
     public void testCalcFootPath() {
-        AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(footEncoder).
+        AlgorithmOptions opts = AlgorithmOptions.start().
                 weighting(new ShortestWeighting(footEncoder)).build();
         GraphHopperStorage ghStorage = createGHStorage(encodingManager, Arrays.asList(opts.getWeighting()), false);
         initFootVsCar(ghStorage);
@@ -529,7 +529,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         updateDistancesFor(graph, 3, 0, 1);
         updateDistancesFor(graph, 4, 0, 2);
 
-        AlgorithmOptions opts = new AlgorithmOptions(DIJKSTRA_BI, carEncoder, weighting);
+        AlgorithmOptions opts = new AlgorithmOptions(DIJKSTRA_BI, weighting);
         RoutingAlgorithmFactory prepare = createFactory(graph, opts);
         Path p = prepare.createAlgo(getGraph(graph, opts.getWeighting()), opts).calcPath(4, 0);
         assertEquals(Helper.createTList(4, 1, 0), p.calcNodes());
@@ -651,7 +651,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         QueryResult to = index.findClosest(toLat, toLon, EdgeFilter.ALL_EDGES);
 
         // correct order for CH: in factory do prepare and afterwards wrap in query graph
-        AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(weighting).build();
+        AlgorithmOptions opts = AlgorithmOptions.start().weighting(weighting).build();
         RoutingAlgorithmFactory factory = createFactory(ghStorage, opts);
         QueryGraph qGraph = new QueryGraph(getGraph(ghStorage, weighting)).lookup(from, to);
         return factory.createAlgo(qGraph, opts).
@@ -695,8 +695,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     public void testTwoWeightsPerEdge() {
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
         EncodingManager em = new EncodingManager(encoder);
-        AlgorithmOptions opts = AlgorithmOptions.start().
-                flagEncoder(encoder).
+        AlgorithmOptions opts = AlgorithmOptions.start().                
                 weighting(new FastestWeighting(encoder)).build();
         GraphHopperStorage graph = createGHStorage(em, Arrays.asList(opts.getWeighting()), true);
         initEleGraph(graph);
@@ -782,14 +781,14 @@ public abstract class AbstractRoutingAlgorithmTester {
             }
         };
 
-        AlgorithmOptions opts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(defaultOpts.getWeighting()).build();
+        AlgorithmOptions opts = AlgorithmOptions.start().weighting(defaultOpts.getWeighting()).build();
         GraphHopperStorage graph = createGHStorage(encodingManager, Arrays.asList(opts.getWeighting()), true);
         initEleGraph(graph);
         Path p = createAlgo(graph, opts).calcPath(0, 10);
         // GHUtility.printEdgeInfo(graph, carEncoder);
         assertEquals(Helper.createTList(0, 4, 6, 10), p.calcNodes());
 
-        AlgorithmOptions fakeOpts = AlgorithmOptions.start().flagEncoder(carEncoder).weighting(fakeWeighting).build();
+        AlgorithmOptions fakeOpts = AlgorithmOptions.start().weighting(fakeWeighting).build();
         graph = createGHStorage(encodingManager, Arrays.asList(fakeOpts.getWeighting()), true);
         initEleGraph(graph);
         QueryResult from = newQR(graph, 3, 0);
@@ -807,11 +806,11 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void testMultipleVehicles_issue548() {
         FastestWeighting footWeighting = new FastestWeighting(footEncoder);
-        AlgorithmOptions footOptions = AlgorithmOptions.start().flagEncoder(footEncoder).
+        AlgorithmOptions footOptions = AlgorithmOptions.start().
                 weighting(footWeighting).build();
 
         FastestWeighting carWeighting = new FastestWeighting(carEncoder);
-        AlgorithmOptions carOptions = AlgorithmOptions.start().flagEncoder(carEncoder).
+        AlgorithmOptions carOptions = AlgorithmOptions.start().
                 weighting(carWeighting).build();
 
         GraphHopperStorage ghStorage = createGHStorage(encodingManager,

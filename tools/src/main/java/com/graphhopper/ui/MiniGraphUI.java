@@ -84,7 +84,7 @@ public class MiniGraphUI {
         HintsMap map = new HintsMap("fastest");
         weighting = hopper.createWeighting(map, encoder);
         algoFactory = hopper.getAlgorithmFactory(map);
-        algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, encoder, weighting);
+        algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, weighting);
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algoOpts:" + algoOpts);
         mg = new GraphicsWrapper(graph);

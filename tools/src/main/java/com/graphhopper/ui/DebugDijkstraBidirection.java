@@ -18,7 +18,6 @@
 package com.graphhopper.ui;
 
 import com.graphhopper.routing.DijkstraBidirectionRef;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -31,11 +30,11 @@ import java.awt.*;
  * @author Peter Karich
  */
 public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements DebugAlgo {
-    private GraphicsWrapper mg;
+    private final GraphicsWrapper mg;
     private Graphics2D g2;
 
-    public DebugDijkstraBidirection(Graph graph, FlagEncoder encoder, Weighting type, TraversalMode tMode, GraphicsWrapper mg) {
-        super(graph, encoder, type, tMode);
+    public DebugDijkstraBidirection(Graph graph, Weighting type, TraversalMode tMode, GraphicsWrapper mg) {
+        super(graph, type, tMode);
         this.mg = mg;
     }
 

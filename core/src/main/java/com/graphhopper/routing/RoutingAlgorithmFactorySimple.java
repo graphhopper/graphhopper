@@ -38,26 +38,26 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
         RoutingAlgorithm ra;
         String algoStr = opts.getAlgorithm();
         if (DIJKSTRA_BI.equalsIgnoreCase(algoStr)) {
-            ra = new DijkstraBidirectionRef(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            ra = new DijkstraBidirectionRef(g, opts.getWeighting(), opts.getTraversalMode());
         } else if (DIJKSTRA.equalsIgnoreCase(algoStr)) {
-            ra = new Dijkstra(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            ra = new Dijkstra(g, opts.getWeighting(), opts.getTraversalMode());
 
         } else if (ASTAR_BI.equalsIgnoreCase(algoStr)) {
-            AStarBidirection aStarBi = new AStarBidirection(g, opts.getFlagEncoder(), opts.getWeighting(),
+            AStarBidirection aStarBi = new AStarBidirection(g, opts.getWeighting(),
                     opts.getTraversalMode());
             aStarBi.setApproximation(getApproximation(ASTAR_BI, opts, g.getNodeAccess()));
             ra = aStarBi;
 
         } else if (DIJKSTRA_ONE_TO_MANY.equalsIgnoreCase(algoStr)) {
-            ra = new DijkstraOneToMany(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            ra = new DijkstraOneToMany(g, opts.getWeighting(), opts.getTraversalMode());
 
         } else if (ASTAR.equalsIgnoreCase(algoStr)) {
-            AStar aStar = new AStar(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            AStar aStar = new AStar(g, opts.getWeighting(), opts.getTraversalMode());
             aStar.setApproximation(getApproximation(ASTAR, opts, g.getNodeAccess()));
             ra = aStar;
 
         } else if (ALT_ROUTE.equalsIgnoreCase(algoStr)) {
-            AlternativeRoute altRouteAlgo = new AlternativeRoute(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+            AlternativeRoute altRouteAlgo = new AlternativeRoute(g, opts.getWeighting(), opts.getTraversalMode());
             altRouteAlgo.setMaxPaths(opts.getHints().getInt(MAX_PATHS, 2));
             altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
             altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));

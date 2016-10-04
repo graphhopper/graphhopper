@@ -170,6 +170,10 @@ public class PMap {
         return this;
     }
 
+    public boolean isEmpty() {
+        return map.isEmpty();
+    }
+
     @Override
     public String toString() {
         return getMap().toString();

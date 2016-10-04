@@ -1,4 +1,6 @@
 0.8
+    refactoring to Weighting class, see #807
+    removed FlagEncoder from parameters as weighting.getFlagEncoder can and is used
     all properties with prefix "osmreader." changed to "datareader." and osmreader.osm changed to datareader.file
     maven/gradle dependency graphhopper is now splitted into graphhopper-core and graphhopper-reader-osm, i.e. if you previouls depend on 'graphhopper' artificat you should now use graphhopper-reader-osm except environments like Android where you just load the graph and do no import
     use GraphHopperOSM as base class instead of GraphHopper
