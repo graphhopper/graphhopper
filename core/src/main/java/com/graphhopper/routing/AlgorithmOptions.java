@@ -80,6 +80,9 @@ public class AlgorithmOptions {
             b.weighting(opts.getWeighting());
         if (opts.maxVisitedNodes >= 0)
             b.maxVisitedNodes(opts.maxVisitedNodes);
+        if (!opts.hints.isEmpty())
+            b.hints(opts.hints);
+
         return b;
     }
 
