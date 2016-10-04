@@ -1,4 +1,6 @@
 #!/bin/bash
+(set -o igncr) 2>/dev/null && set -o igncr; # this comment is required for handling Windows cr/lf 
+# See StackOverflow answer http://stackoverflow.com/a/14607651
 
 GH_CLASS=com.graphhopper.tools.Import
 GH_HOME=$(dirname "$0")
