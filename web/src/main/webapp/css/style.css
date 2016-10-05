@@ -18,7 +18,7 @@ body {
     /*padding-right: 15px; */
 }
 
-#info {    
+#info {
     margin-top: 10px;
     display: none;
     padding: 5px;
@@ -28,7 +28,7 @@ body {
     padding-right: 5px;
 }
 
-.route_results {    
+.route_results {
     max-height: 40%;
 }
 
@@ -221,7 +221,7 @@ tr.instruction {
     border-bottom: #dadada dashed thin;
 }
 
-.instructions {    
+.instructions {
     table-layout:fixed;
     border-collapse: collapse;
     padding-top: 10px;
@@ -321,7 +321,7 @@ td img.pic {
 .pointDelete:hover, .pointAdd:hover { cursor: pointer; }
 .pointDelete:disabled {
     background: red;
-} 
+}
 
 .expandDetails {
     color: gray;
@@ -339,13 +339,18 @@ td img.pic {
     background-image: linear-gradient(to bottom, white, #e7e7e7);
 }
 
-.ui-dialog > .ui-widget-header{
-    padding:1em;    
+.ui-dialog {
+  /* Must be > 700, the z-index of .leaflet-popup-pane */
+  z-index: 1000;
+}
+
+.ui-dialog > .ui-widget-header {
+    padding: 1em;
     border: 1px solid black;
 }
 
 .ui-dialog .ui-dialog-content {
-    padding:1em
+    padding: 1em;
 }
 
 .ui-dialog .ui-widget-content {
@@ -367,8 +372,8 @@ td img.pic {
 }
 
 #route_result_tabs {
-    list-style: none; 
-    padding: 0; 
+    list-style: none;
+    padding: 0;
     margin: 0;
 }
 
@@ -392,7 +397,7 @@ td img.pic {
 }
 
 .route_result_tab.current {
-    display: block;    
+    display: block;
 }
 
 #donate_form {
