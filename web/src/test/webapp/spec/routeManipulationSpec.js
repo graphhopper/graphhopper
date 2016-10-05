@@ -1,5 +1,8 @@
-// because leaflet-src.js requires window, document etc. we need to provide these variables...
-global.window = {};
+// Because leaflet-src.js requires window, document, and navigator we need to
+// provide these variables.
+global.window = {
+    screen: {}
+};
 global.document = {
     documentElement: {
         style: {}
@@ -8,6 +11,7 @@ global.document = {
     createElement: function() { return {}; }
 };
 global.navigator = {
+    platform: 'nodejs',
     userAgent: 'nodejs'
 };
 
@@ -46,7 +50,7 @@ describe('getIntermediatePointIndex', function () {
             coordinates: [a, x1, x2, x3, b, x4, x5, c, x6, x7, d],
             wayPoints: [a, b, c, d]
         }];
-        
+
         for(var i=0; i < clickLocations.length; ++i) {
             expect(routeManipulation.getIntermediatePointIndex(routeSegments, clickLocations[i].latlng))
                     .toEqual(clickLocations[i].expectedIndex);
@@ -97,7 +101,7 @@ describe('getIntermediatePointIndex', function () {
             coordinates: [c, x6, x7, d],
             wayPoints: wayPoints
         }];
-    
+
         for(var i=0; i < clickLocations.length; ++i) {
             expect(routeManipulation.getIntermediatePointIndex(routeSegments, clickLocations[i].latlng))
                     .toEqual(clickLocations[i].expectedIndex);
