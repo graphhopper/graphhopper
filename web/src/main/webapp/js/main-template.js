@@ -315,14 +315,14 @@ function checkInput() {
 }
 
 function setToStart(e) {
-    var latlng = e.target.getLatLng(),
+    var latlng = e.relatedTarget.getLatLng(),
             index = ghRequest.route.getIndexByCoord(latlng);
     ghRequest.route.move(index, 0);
     routeIfAllResolved();
 }
 
 function setToEnd(e) {
-    var latlng = e.target.getLatLng(),
+    var latlng = e.relatedTarget.getLatLng(),
             index = ghRequest.route.getIndexByCoord(latlng);
     ghRequest.route.move(index, -1);
     routeIfAllResolved();
@@ -351,7 +351,7 @@ function setIntermediateCoord(e) {
 }
 
 function deleteCoord(e) {
-    var latlng = e.target.getLatLng();
+    var latlng = e.relatedTarget.getLatLng();
     ghRequest.route.removeSingle(latlng);
     mapLayer.clearLayers();
     routeLatLng(ghRequest, false);
@@ -393,11 +393,10 @@ function setFlag(coord, index) {
         var _tempItem = {
             text: translate.tr('set_start'),
             callback: setToStart,
-            index: 1,
-            state: 2
+            index: 1
         };
         if (toFrom === -1)
-            marker.options.contextmenuItems.push(_tempItem);// because the Mixin.ContextMenu isn't initialized
+            marker.options.contextmenuItems.push(_tempItem); // because the Mixin.ContextMenu isn't initialized
         marker.on('dragend', function (e) {
             mapLayer.clearLayers();
             // inconsistent leaflet API: event.target.getLatLng vs. mouseEvent.latlng?
