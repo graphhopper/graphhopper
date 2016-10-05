@@ -1,12 +1,70 @@
 language: java
+sudo: false
+matrix:
+  fast_finish: true
+  include:
+      # Java 9 needs to be manually installed/upgraded
+      # see: https://github.com/travis-ci/travis-ci/issues/2968#issuecomment-149164058
+    - jdk: oraclejdk9
+      env: JVM=latest
+      sudo: required
+      dist: trusty
+      group: edge
+  allow_failures:
+    - jdk: oraclejdk9
+
+env:
+  global:
+    - BASEURL=https://www-eu.apache.org/dist/maven/maven-3/VERSION/binaries/apache-maven-VERSION-bin.zip
+    - FILE=apache-maven-VERSION-bin.zip
+    - DIR=apache-maven-VERSION
+    - VERSION=3.3.9
+    - secure: "CI_DEPLOY_USERNAME=central_username"
+    - secure: "CI_DEPLOY_PASSWORD=central_password"
+
 jdk:
   - oraclejdk8
-# do not install anything instead return true via unix command true
+
+before_install:
+   # update maven
+   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then
+         wget --no-check-certificate $(echo -n $BASEURL | sed -e 's#VERSION#'$VERSION'#g');
+         unzip -qq $(echo -n $FILE | sed -e 's#VERSION#'$VERSION'#');
+         export M2_HOME=$PWD/$(echo -n $DIR | sed -e 's#VERSION#'$VERSION'#');
+         export PATH=$M2_HOME/bin:$PATH;
+     fi
+   # update java 9
+   - if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$JVM" == "latest" ]; then
+         sudo apt-get update -qq;
+         sudo /bin/echo -e oracle-java9-installer shared/accepted-oracle-license-v1-1 select true | sudo debconf-set-selections;
+         sudo apt-get install -y oracle-java9-installer;
+         sudo apt-get install -y oracle-java9-unlimited-jce-policy;
+         sudo update-java-alternatives -s java-9-oracle;
+     fi
+   - if [ "$TRAVIS_JDK_VERSION" == oraclejdk9 ]; then
+         sudo rm /etc/mavenrc;
+     fi
+
 install: true
-script: ./core/files/travis-build.sh
+
+script:
+  - mvn clean test verify -B
+  #- ./core/files/travis-build.sh
+
+after_success:
+  # deploy snapshot artifacts to maven central
+  - if [ "$TRAVIS_JDK_VERSION" == "oraclejdk8" ] &&
+       [ "$TRAVIS_BRANCH" == "master" ] && [ "$TRAVIS_PULL_REQUEST" == "false" ]; then
+         travis_wait mvn deploy --settings core/files/settings.xml -DskipTests=true -B;
+    else
+        echo "Not deploying snapshot artifact for $TRAVIS_BRANCH";
+    fi
+
 notifications:
   email:
     - github@graphhopper.com
 
-# enable container-based stack
-sudo: false
+cache:
+  directories:
+  - $HOME/.m2
+

@@ -1,11 +1,9 @@
 HOME=$(dirname $0)
 cd $HOME/../..
 
-mvn clean test verify
-
 # npm tests disabled due to #632
 # cd $HOME/../../web
-# 
+#
 # sudo chown -R $USER ~/.npm
 # npm install
 # npm test && npm run lint
@@ -14,14 +12,14 @@ mvn clean test verify
 #for module in $modules; do
 #  echo "====== INSTALL $module ====="
 #  mvn -pl $module clean install -DskipTests=true
-#  EXIT_VAL="$?"    
+#  EXIT_VAL="$?"
 #  if [[ "x$EXIT_VAL" != "x0" ]]; then
 #    exit $EXIT_VAL
-#  fi 
-#  
+#  fi
+#
 #  echo "====== TEST $module ====="
 #  # verify necessary for failsafe, otherwise it won't fail the build!?
-#  mvn -pl $module test failsafe:integration-test verify  
+#  mvn -pl $module test failsafe:integration-test verify
 #  EXIT_VAL="$?"
 #  if [[ "x$EXIT_VAL" != "x0" ]]; then
 #    exit $EXIT_VAL

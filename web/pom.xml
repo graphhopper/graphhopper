@@ -9,35 +9,35 @@
     <version>0.8-SNAPSHOT</version>
     <name>GraphHopper Web</name>
     <description>Example on how to use GraphHopper in a web-based application</description>
-        
+
     <parent>
         <groupId>com.graphhopper</groupId>
-        <artifactId>graphhopper-parent</artifactId>    	
+        <artifactId>graphhopper-parent</artifactId>
         <version>0.8-SNAPSHOT</version>
     </parent>
     <properties>
         <jetty.version>9.3.8.v20160314</jetty.version>
     </properties>
-    
+
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-reader-osm</artifactId>
-            <version>${project.parent.version}</version>            
+            <version>${project.parent.version}</version>
         </dependency>
-        
+
         <dependency>
             <groupId>org.json</groupId>
-            <artifactId>json</artifactId>            
+            <artifactId>json</artifactId>
             <version>${json.org.version}</version>
-        </dependency>    
-        
+        </dependency>
+
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
             <version>4.0</version>
         </dependency>
-        
+
         <!-- necessary to use guice ('@Inject') in servlets -->
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
@@ -56,7 +56,7 @@
             <version>${slf4j.version}</version>
             <scope>runtime</scope>
         </dependency>
-        
+
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
@@ -69,7 +69,7 @@
             <artifactId>jetty-servlets</artifactId>
             <version>${jetty.version}</version>
         </dependency>
-        
+
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
             <artifactId>jetty-server</artifactId>
@@ -80,7 +80,7 @@
             <artifactId>jetty-servlet</artifactId>
             <version>${jetty.version}</version>
         </dependency>
-        
+
         <!-- for integration tests of service -->
         <dependency>
             <groupId>org.eclipse.jetty</groupId>
@@ -88,14 +88,15 @@
             <version>${jetty.version}</version>
             <scope>test</scope>
         </dependency>
-      
+
     </dependencies>
 
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>                
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.5.1</version>
                 <configuration>
                     <source>1.8</source>
                     <target>1.8</target>
@@ -104,14 +105,25 @@
             <!-- create a jar file too, so others can use it more easily -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>                
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.0.0</version>
                 <configuration>
                     <attachClasses>true</attachClasses>
                 </configuration>
-            </plugin>            
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
+                <!-- this is an old version but 2.6 fails with java 9
+                see: https://stackoverflow.com/questions/36583118/is-maven-ready-for-jdk9-->
+                <version>2.4.1</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-archiver</artifactId>
+                        <version>2.4.4</version>
+                    </dependency>
+                </dependencies>
                 <configuration>
                     <archive>
                         <manifest>
@@ -128,14 +140,14 @@
                     <execution>
                         <id>make-assembly</id>
                         <!-- bind to verify and not package to pass integration tests before creating assemblies -->
-                        <phase>integration-test</phase> 
+                        <phase>integration-test</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>
                     </execution>
                 </executions>
             </plugin>
- 
+
         </plugins>
     </build>
 
