@@ -544,6 +544,16 @@ function routeLatLng(request, doQuery) {
         var geoJsons = [];
         var firstHeader;
 
+        // Create buttons to toggle between SI and imperial units.
+        var createUnitsChooserButtonClickHandler = function (useMiles) {
+            return function () {
+                mapLayer.updateScale(useMiles);
+                ghRequest.useMiles = useMiles;
+                resolveAll();
+                routeLatLng(ghRequest);
+            };
+        };
+
         for (var pathIndex = 0; pathIndex < json.paths.length; pathIndex++) {
             var tabHeader = $("<li>").append((pathIndex + 1) + "<img class='alt_route_img' src='img/alt_route.png'/>");
             if (pathIndex === 0)
@@ -578,15 +588,6 @@ function routeLatLng(request, doQuery) {
             }
             routeInfo.append(translate.tr("route_info", [tmpDist, tmpTime]));
 
-            //create buttons to toggle between si and imperial units
-            var createUnitsChooserButtonClickHandler = function (useMiles) {
-                return function () {
-                    mapLayer.updateScale(useMiles);
-                    ghRequest.useMiles = useMiles;
-                    resolveAll();
-                    routeLatLng(ghRequest);
-                };
-            };
             var kmButton = $("<button class='plain_text_button " + (request.useMiles ? "gray" : "") + "'>");
             kmButton.text(translate.tr2("km_abbr"));
             kmButton.click(createUnitsChooserButtonClickHandler(false));
