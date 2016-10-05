@@ -32,9 +32,9 @@ function adjustMapSize() {
     // console.log("adjustMapSize " + height + "x" + width);
 
     // reduce info size depending on how heigh the input_header is and reserve space for footer
-    var instructionInfoMaxHeight = height - 60
-            - $("#input_header").height() - $("#footer").height() - $(".route_description").height();
-    var tabHeight = $("#route_result_tabs li").height()
+    var instructionInfoMaxHeight = height - 60 -
+            $("#input_header").height() - $("#footer").height() - $(".route_description").height();
+    var tabHeight = $("#route_result_tabs li").height();
     if (!isNaN(tabHeight))
         instructionInfoMaxHeight -= tabHeight;
     $(".instructions_info").css("max-height", instructionInfoMaxHeight);
