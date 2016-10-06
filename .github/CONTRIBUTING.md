@@ -36,7 +36,7 @@ After this you'll appear in the <a href="CONTRIBUTORS.md">contributors list</a> 
 
 ## Code formatting
 
-We use IntelliJ defaults and a very similar configuration for NetBeans defined in the root pom.xml. Also for other IDEs 
+We use IntelliJ defaults and a very similar configuration for NetBeans defined in the root pom.xml. For eclipse there is this [configuration](https://github.com/graphhopper/graphhopper/files/481920/GraphHopper.Formatter.zip). Also for other IDEs 
 it should be simple to match:
 
  * Java indent is 4 spaces
