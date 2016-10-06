@@ -22,7 +22,6 @@ public class GraphHopperRnvGtfsIT {
         Helper.removeDir(new File(graphFileFoot));
 
         graphHopper = new GraphHopperGtfs();
-        graphHopper.setCHEnabled(false);
         graphHopper.setGtfsFile("files/rnv.zip");
         graphHopper.setGraphHopperLocation(graphFileFoot);
         graphHopper.importOrLoad();
@@ -87,10 +86,6 @@ public class GraphHopperRnvGtfsIT {
 
         assertFalse(route.hasErrors());
         assertEquals("Expected weight == scheduled arrival time", expectedWeight, route.getBest().getRouteWeight(), 0.1);
-    }
-
-    private void assertRouteWeightIs(GraphHopperGtfs graphHopper, double FROM_LAT, double FROM_LON, double TO_LAT, double TO_LON, int expectedWeight) {
-        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, 0, TO_LAT, TO_LON, expectedWeight);
     }
 
 

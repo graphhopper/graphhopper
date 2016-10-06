@@ -29,7 +29,6 @@ import com.graphhopper.util.Parameters;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 
-import java.util.List;
 import java.util.PriorityQueue;
 
 /**
@@ -66,7 +65,7 @@ public class Dijkstra extends AbstractTimeDependentRoutingAlgorithm {
             fromMap.put(from, currEdge);
         }
         runAlgo();
-        return extractPath();
+        return extractPath(earliestDepartureTime);
     }
 
     @Override
@@ -135,6 +134,14 @@ public class Dijkstra extends AbstractTimeDependentRoutingAlgorithm {
             return createEmptyPath();
 
         return new Path(graph, flagEncoder).setWeight(currEdge.weight).setWeighting(weighting).setSPTEntry(currEdge).extract();
+    }
+
+    @Override
+    protected Path extractPath(int earliestDepartureTime) {
+        if (currEdge == null || !finished())
+            return createEmptyPath();
+
+        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setWeighting(weighting).setSPTEntry(currEdge).setEarliestDepartureTime(earliestDepartureTime).extract();
     }
 
     @Override

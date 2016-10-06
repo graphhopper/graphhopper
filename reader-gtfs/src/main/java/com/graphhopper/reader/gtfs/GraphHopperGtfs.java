@@ -24,7 +24,7 @@ public final class GraphHopperGtfs extends GraphHopper {
 	public GraphHopperGtfs() {
 		super();
 		super.setCHEnabled(false);
-		super.setEncodingManager(new EncodingManager(new TripHopFlagEncoder()));
+		super.setEncodingManager(new EncodingManager(new PtFlagEncoder()));
 	}
 
 	@Override

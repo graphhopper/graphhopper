@@ -18,4 +18,7 @@ public abstract class AbstractTimeDependentRoutingAlgorithm extends AbstractRout
 		return Collections.singletonList(calcPath(from, to, earliestDepartureTime));
 	}
 
+	protected abstract Path extractPath(int earliestDepartureTime);
+
+
 }
