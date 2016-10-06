@@ -13,10 +13,11 @@ import java.util.*;
 class GtfsStorage implements GraphExtension{
 	private int realEdgesSize;
 	private Directory dir;
-	private final TIntObjectMap<AbstractPtEdge> edges1 = new TIntObjectHashMap<>();
+	private final TIntObjectMap<AbstractPtEdge> edges = new TIntObjectHashMap<>();
+	private boolean flushed = false;
 
 	public TIntObjectMap<AbstractPtEdge> getEdges() {
-		return edges1;
+		return edges;
 	}
 
 	public void setRealEdgesSize(int realEdgesSize) {
@@ -71,9 +72,11 @@ class GtfsStorage implements GraphExtension{
 		this.data = DBMaker.newFileDB(new File(dir.getLocation() + "/transit_schedule")).readOnly().make();
 		BTreeMap<Integer, AbstractPtEdge> edges = data.getTreeMap("edges");
 		for (Map.Entry<Integer, AbstractPtEdge> entry : edges.entrySet()) {
-			edges1.put(entry.getKey(), entry.getValue());
+			this.edges.put(entry.getKey(), entry.getValue());
 		}
 		this.realEdgesSize = data.getAtomicInteger("realEdgesSize").get();
+		data.close();
+		flushed = true;
 		return true;
 	}
 
@@ -85,29 +88,32 @@ class GtfsStorage implements GraphExtension{
 
 	@Override
 	public void flush() {
-		TreeSet<Integer> wurst = new TreeSet<>();
-		for (int i : edges1.keys()) {
-			wurst.add(i);
-		}
-		data.createTreeMap("edges").pumpSource(wurst.descendingSet().iterator(), new Fun.Function1<Object, Integer>() {
-			@Override
-			public Object run(Integer i) {
-				return edges1.get(i);
+		if (!flushed) {
+			TreeSet<Integer> wurst = new TreeSet<>();
+			for (int i : edges.keys()) {
+				wurst.add(i);
 			}
-		}).make();
-		data.getAtomicInteger("realEdgesSize").set(realEdgesSize);
-		data.close();
-		data = DBMaker.newFileDB(new File(dir.getLocation() + "/transit_schedule")).readOnly().make();
+			data.createTreeMap("edges").pumpSource(wurst.descendingSet().iterator(), new Fun.Function1<Object, Integer>() {
+				@Override
+				public Object run(Integer i) {
+					return edges.get(i);
+				}
+			}).make();
+			data.getAtomicInteger("realEdgesSize").set(realEdgesSize);
+			data.close();
+			flushed = true;
+		}
 	}
 
 	@Override
 	public void close() {
-		data.close();
 	}
 
 	@Override
-	public boolean isClosed() {            
-		return data.isClosed();
+	public boolean isClosed() {
+		// Flushing and closing is the same for us.
+		// We use the data store only for dumping to file, not as a live data structure.
+		return flushed;
 	}
 
 	@Override
@@ -117,7 +123,7 @@ class GtfsStorage implements GraphExtension{
 
 	public void setEdges(final TreeMap<Integer, AbstractPtEdge> edges) {
 		for (Integer integer : edges.descendingKeySet()) {
-			edges1.put(integer, edges.get(integer));
+			this.edges.put(integer, edges.get(integer));
 		}
 	}
 }

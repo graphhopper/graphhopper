@@ -30,9 +30,8 @@ public class GraphHopperRnvGtfsIT {
 
     @AfterClass
     public static void tearDown() {
-        // TODO fix NPE in Extension->MapDB
-//        if (graphHopper != null)
-//            graphHopper.close();
+        if (graphHopper != null)
+            graphHopper.close();
     }
 
     @Test
