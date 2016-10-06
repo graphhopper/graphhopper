@@ -1,7 +1,5 @@
 package com.graphhopper.reader.gtfs;
 
-import com.conveyal.gtfs.GTFSFeed;
-import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
@@ -15,8 +13,7 @@ import java.util.*;
 class GtfsStorage implements GraphExtension{
 	private int realEdgesSize;
 	private Directory dir;
-	private TIntObjectMap<AbstractPtEdge> edges1 = new TIntObjectHashMap<>();
-	;
+	private final TIntObjectMap<AbstractPtEdge> edges1 = new TIntObjectHashMap<>();
 
 	public TIntObjectMap<AbstractPtEdge> getEdges() {
 		return edges1;
@@ -66,7 +63,7 @@ class GtfsStorage implements GraphExtension{
 
 	@Override
 	public GraphExtension copyTo(GraphExtension extStorage) {
-		return null;
+		throw new UnsupportedOperationException("copyTo not yet supported");
 	}
 
 	@Override
@@ -109,8 +106,8 @@ class GtfsStorage implements GraphExtension{
 	}
 
 	@Override
-	public boolean isClosed() {
-		return false;
+	public boolean isClosed() {            
+		return data.isClosed();
 	}
 
 	@Override
