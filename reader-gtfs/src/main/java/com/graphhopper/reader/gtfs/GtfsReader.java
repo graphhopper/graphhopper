@@ -71,7 +71,7 @@ class GtfsReader implements DataReader {
 		Map<String,Integer> stops = new HashMap<>();
  		for (Stop stop : feed.stops.values()) {
  			stops.put(stop.stop_id, i);
-			LOGGER.info("Node "+i+": "+stop.stop_id);
+			// LOGGER.info("Node "+i+": "+stop.stop_id);
 			nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
 			ghStorage.edge(i, i);
 			edges.put(j, new StopLoopEdge());
@@ -149,7 +149,7 @@ class GtfsReader implements DataReader {
 	}
 
 	private void insert(GTFSFeed feed, String tripId, int time, List<SortedSet<Fun.Tuple2<Integer, Integer>>> departureTimeXTravelTime) throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes {
-		LOGGER.info(tripId);
+		// LOGGER.info(tripId);
 		Iterable<StopTime> stopTimes = feed.getInterpolatedStopTimesForTrip(tripId);
 		StopTime prev = null;
 		int i=0;
