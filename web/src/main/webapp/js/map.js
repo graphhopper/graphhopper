@@ -70,7 +70,7 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
     map = L.map('map', {
         layers: [defaultLayer],
         minZoom: 2,
-        zoomSnap: 0,  // allow fractional zoom levels
+        // zoomSnap: 0,  // allow fractional zoom levels
         contextmenu: true,
         contextmenuWidth: 150,
         contextmenuItems: defaultContextmenuItems,
