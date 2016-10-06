@@ -15,11 +15,11 @@ import com.graphhopper.util.TranslationMap;
 
 public class RunGraphHopperGtfs {
 
-	private static final String graphFileFoot = "target/vbb";
+	private static final String graphFileFoot = "target/rnv";
 
 	public static void main(String[] args) throws Exception {
 		GraphHopperGtfs graphHopper = new GraphHopperGtfs();
-		graphHopper.setGtfsFile("/Users/michaelzilske/wurst/vbb/380248.zip");
+		graphHopper.setGtfsFile("../reader-gtfs/files/rnv.zip");
 		graphHopper.setGraphHopperLocation(graphFileFoot);
 		graphHopper.importOrLoad();
 		CmdArgs cmdArgs = new CmdArgs();
