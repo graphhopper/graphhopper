@@ -6,6 +6,7 @@ import com.graphhopper.routing.weighting.TimeDependentWeighting;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Map;
+import java.util.Set;
 
 class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWeighting {
 
@@ -47,16 +48,17 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
 			return ((GtfsTransferEdge) edge).getTransfer().min_transfer_time;
 		}
 		PatternHopEdge patternHopEdge = (PatternHopEdge) edge;
-		for (Map.Entry<Integer, Integer> tuple2s : patternHopEdge.getDepartureTimeXTravelTime().entrySet()) {
+		Set<Map.Entry<Integer, Integer>> connectionsAfterEarliestStartTime = patternHopEdge.getDepartureTimeXTravelTime().tailMap((int) earliestStartTime).entrySet();
+		if (connectionsAfterEarliestStartTime.isEmpty()) {
+			// missed all connections
+			return Double.POSITIVE_INFINITY;
+		} else {
+			Map.Entry<Integer, Integer> tuple2s = connectionsAfterEarliestStartTime.iterator().next();
 			int departure_time = tuple2s.getKey();
 			int scheduledTravelTime = tuple2s.getValue();
-			if (departure_time >= earliestStartTime) {
-				double waitTime = departure_time - earliestStartTime;
-				return waitTime + scheduledTravelTime;
-			}
+			double waitTime = departure_time - earliestStartTime;
+			return waitTime + scheduledTravelTime;
 		}
-		// missed all connections
-		return Double.POSITIVE_INFINITY;
 	}
 
 	@Override
