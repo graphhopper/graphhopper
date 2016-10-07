@@ -59,6 +59,15 @@ public class GraphHopperRnvGtfsIT {
     }
 
     @Test
+    public void testRouteInSecondNight() {
+        final double FROM_LAT = 49.4048, FROM_LON = 8.6765; // 116006, HD Hauptbahnhof
+        final double TO_LAT = 49.42799, TO_LON = 8.6833; // 113612, Hans-Thoma-Platz
+        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(48, 0),
+                TO_LAT, TO_LON, time(48, 45));
+    }
+
+
+    @Test
     public void testTrip209701_2() {
         // 113311,Burgstr.,49.434352,8.682286,,0
         final double FROM_LAT = 49.434352, FROM_LON = 8.682286;
