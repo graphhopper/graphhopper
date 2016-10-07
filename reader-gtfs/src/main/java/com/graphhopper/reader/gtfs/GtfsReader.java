@@ -25,6 +25,7 @@ class GtfsReader implements DataReader {
 	private final GraphHopperStorage ghStorage;
 	private final GtfsStorage gtfsStorage;
 	private File file;
+    private long nElementaryConnections;
 
 	private final DistanceCalc distCalc = Helper.DIST_EARTH;
 
@@ -77,7 +78,9 @@ class GtfsReader implements DataReader {
 		}
 		LOGGER.info("Created " + i + " nodes from GTFS stops.");
 		feed.findPatterns();
-		for (Pattern pattern : feed.patterns.values()) {
+        LocalDate startDate = feed.calculateStats().getStartDate();
+        LocalDate endDate = feed.calculateStats().getEndDate();
+        for (Pattern pattern : feed.patterns.values()) {
 			try {
 				List<SortedMap<Integer, Integer>> departureTimeXTravelTime = new ArrayList<>();
 				String prev = null;
@@ -102,18 +105,19 @@ class GtfsReader implements DataReader {
 					prev=orderedStop;
 				}
 				for (String tripId : pattern.associatedTrips) {
-					Trip trip = feed.trips.get(tripId);
+                    Trip trip = feed.trips.get(tripId);
 					Service service = feed.services.get(trip.service_id);
+                    Collection<Frequency> frequencies = feed.getFrequencies(tripId);
+                    Iterable<StopTime> interpolatedStopTimesForTrip = feed.getInterpolatedStopTimesForTrip(tripId);
                     int offset = 0;
-                    for(LocalDate date = feed.calculateStats().getStartDate(); !date.isAfter(feed.calculateStats().getEndDate()); date = date.plusDays(1)) {
+                    for(LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
                         if (service.activeOn(date)) {
-                            Collection<Frequency> frequencies = feed.getFrequencies(tripId);
                             if (frequencies.isEmpty()) {
-                                insert(feed, tripId, offset, departureTimeXTravelTime);
+                                insert(offset, departureTimeXTravelTime, interpolatedStopTimesForTrip);
                             } else {
                                 for (Frequency frequency : frequencies) {
                                     for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
-                                        insert(feed, tripId, time - frequency.start_time + offset, departureTimeXTravelTime);
+                                        insert(time - frequency.start_time + offset, departureTimeXTravelTime, interpolatedStopTimesForTrip);
                                     }
                                 }
                             }
@@ -147,23 +151,32 @@ class GtfsReader implements DataReader {
 		gtfsStorage.setEdges(edges);
 		gtfsStorage.setRealEdgesSize(j);
 		LOGGER.info("Created " + j + " edges from GTFS trip hops and transfers.");
-	}
+        LOGGER.info("Created " + nElementaryConnections + " elementary connections.");
+    }
 
-	private void insert(GTFSFeed feed, String tripId, int time, List<SortedMap<Integer, Integer>> departureTimeXTravelTime) throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes {
-		Iterable<StopTime> stopTimes = feed.getInterpolatedStopTimesForTrip(tripId);
-		StopTime prev = null;
+	private void insert(int time, List<SortedMap<Integer, Integer>> departureTimeXTravelTime, Iterable<StopTime> stopTimes) throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes {
+        StopTime prev = null;
 		int i=0;
 		for (StopTime orderedStop : stopTimes) {
 			if (prev != null) {
                 int travelTime = (orderedStop.arrival_time - prev.departure_time);
-                departureTimeXTravelTime.get(i-1).put(prev.departure_time + time, travelTime);
-			}
+                int departureTimeFromStartOfSchedule = prev.departure_time + time;
+                addElementaryConnection(departureTimeXTravelTime, i, travelTime, departureTimeFromStartOfSchedule);
+            }
 			prev = orderedStop;
 			i++;
 		}
 	}
 
-	@Override
+    private void addElementaryConnection(List<SortedMap<Integer, Integer>> departureTimeXTravelTime, int i, int travelTime, int departureTimeFromStartOfSchedule) {
+        nElementaryConnections++;
+        if (nElementaryConnections % 1000000 == 0) {
+            LOGGER.info("elementary connection " + nElementaryConnections / 1000000 + "m");
+        }
+        departureTimeXTravelTime.get(i-1).put(departureTimeFromStartOfSchedule, travelTime);
+    }
+
+    @Override
 	public Date getDataDate() {
 		return null;
 	}
