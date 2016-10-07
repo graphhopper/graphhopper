@@ -36,11 +36,6 @@ import static com.graphhopper.routing.util.PriorityCode.BEST;
  * @author zstadler
  */
 public class Car4WDFlagEncoder extends CarFlagEncoder {
-    private final HashSet<String> avoidSet = new HashSet<String>();
-    private final HashSet<String> preferSet = new HashSet<String>();
-    private EncodedDoubleValue reverseSpeedEncoder;
-    private EncodedValue priorityWayEncoder;
-    private EncodedValue curvatureEncoder;
 
     public Car4WDFlagEncoder() {
         this(5, 5, 0);
@@ -57,33 +52,12 @@ public class Car4WDFlagEncoder extends CarFlagEncoder {
     public Car4WDFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
 
-        avoidSet.add("motorway");
-        avoidSet.add("trunk");
-        avoidSet.add("motorroad");
-        avoidSet.add("residential");
-
-        preferSet.add("track");
-        preferSet.add("unclassified");
-
         init();
     }
 
     @Override
     public int getVersion() {
         return 1;
-    }
-
-    /**
-     * Define the place of the speedBits in the edge flags for car.
-     */
-    @Override
-    public int defineWayBits(int index, int shift) {
-        // first two bits are reserved for route handling in superclass
-        shift = super.defineWayBits(index, shift);
-        priorityWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 3, 7);
-        shift += priorityWayEncoder.getBits();
-
-        return shift;
     }
 
     @Override
@@ -127,98 +101,6 @@ public class Car4WDFlagEncoder extends CarFlagEncoder {
             return acceptBit;
     }
 
-    @Override
-    public long handleWayTags(ReaderWay way, long allowed, long priorityFromRelation) {
-        if (!isAccept(allowed))
-            return 0;
-
-        long flags = super.handleWayTags(way, allowed, priorityFromRelation);
-        // relations are not yet stored -> see BikeCommonFlagEncoder.defineRelationBits how to do this
-        flags = priorityWayEncoder.setValue(flags, handlePriority(way, priorityFromRelation));
-
-        return flags;
-    }
-
-    @Override
-    public double getDouble(long flags, int key) {
-        switch (key) {
-            case PriorityWeighting.KEY:
-                return (double) priorityWayEncoder.getValue(flags) / BEST.getValue();
-            default:
-                return super.getDouble(flags, key);
-        }
-    }
-
-    private int handlePriority(ReaderWay way, long relationFlags) {
-        String highway = way.getTag("highway", "");
-        if (avoidSet.contains(highway)) {
-            return PriorityCode.WORST.getValue();
-        } else if (preferSet.contains(highway)) {
-            return PriorityCode.BEST.getValue();
-        }
-
-        return PriorityCode.UNCHANGED.getValue();
-    }
-
-    @Override
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        double speed = this.getSpeed(edge.getFlags());
-        double roadDistance = edge.getDistance();
-        double beelineDistance = getBeelineDistance(way);
-        double bendiness = beelineDistance / roadDistance;
-
-        bendiness = discriminateSlowStreets(bendiness, speed);
-        bendiness = increaseBendinessImpact(bendiness);
-        bendiness = correctErrors(bendiness);
-    }
-
-    private double getBeelineDistance(ReaderWay way) {
-        return way.getTag("estimated_distance", Double.POSITIVE_INFINITY);
-    }
-
-    /**
-     * Streets that slow are not fun and probably in a town.
-     */
-    protected double discriminateSlowStreets(double bendiness, double speed) {
-        if (speed < 51) {
-            return 1;
-        }
-        return bendiness;
-    }
-
-    /**
-     * A really small bendiness or a bendiness greater than 1 indicates an error in the calculation.
-     * Just ignore them. We use bendiness greater 1.2 since the beelineDistance is only
-     * approximated, therefore it can happen on straight roads, that the beeline is longer than the
-     * road.
-     */
-    protected double correctErrors(double bendiness) {
-        if (bendiness < 0.01 || bendiness > 1) {
-            return 1;
-        }
-        return bendiness;
-    }
-
-    /**
-     * A good bendiness should become a greater impact. A bendiness close to 1 should not be
-     * changed.
-     */
-    protected double increaseBendinessImpact(double bendiness) {
-        return (Math.pow(bendiness, 2));
-    }
-
-    @Override
-    public boolean supports(Class<?> feature) {
-        if (super.supports(feature))
-            return true;
-
-        return PriorityWeighting.class.isAssignableFrom(feature);
-    }
-
-    protected int convertToInt(double bendiness) {
-        bendiness = bendiness * 10;
-        return (int) bendiness;
-    }
 
     @Override
     public String toString() {
