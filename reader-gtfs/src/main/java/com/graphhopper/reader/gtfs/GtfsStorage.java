@@ -75,7 +75,6 @@ class GtfsStorage implements GraphExtension{
 			this.edges.put(entry.getKey(), entry.getValue());
 		}
 		this.realEdgesSize = data.getAtomicInteger("realEdgesSize").get();
-		data.close();
 		flushed = true;
 		return true;
 	}
