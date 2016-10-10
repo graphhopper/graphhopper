@@ -14,14 +14,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.graphhopper.matching.util;
 
-
 /**
- * Based on Newson, Paul, and John Krumm. "Hidden Markov map matching through noise and sparseness."
- * Proceedings of the 17th ACM SIGSPATIAL International Conference on Advances in Geographic
- * Information Systems. ACM, 2009.
+ * Based on Newson, Paul, and John Krumm. "Hidden Markov map matching through
+ * noise and sparseness." Proceedings of the 17th ACM SIGSPATIAL International
+ * Conference on Advances in Geographic Information Systems. ACM, 2009.
  */
 public class HmmProbabilities {
 
@@ -41,10 +39,10 @@ public class HmmProbabilities {
     }
 
     /**
-     * @param sigma standard deviation of the normal distribution [m] used for modeling the
-     * GPS error
-     * @param beta beta parameter of the exponential distribution for 1 s sampling interval, used
-     * for modeling transition probabilities
+     * @param sigma standard deviation of the normal distribution [m] used for
+     * modeling the GPS error
+     * @param beta beta parameter of the exponential distribution for 1 s
+     * sampling interval, used for modeling transition probabilities
      */
     public HmmProbabilities(double sigma, double beta) {
         this.sigma = sigma;
@@ -54,34 +52,40 @@ public class HmmProbabilities {
     /**
      * Returns the logarithmic emission probability density.
      *
-     * @param distance Absolute distance [m] between GPS measurement and map matching candidate.
+     * @param distance Absolute distance [m] between GPS measurement and map
+     * matching candidate.
      */
     public double emissionLogProbability(double distance) {
         return Distributions.logNormalDistribution(sigma, distance);
     }
 
     /**
-     * Returns the logarithmic transition probability density for the given transition
-     * parameters.
+     * Returns the logarithmic transition probability density for the given
+     * transition parameters.
      *
-     * @param routeLength Length of the shortest route [m] between two consecutive map matching
-     * candidates.
-     * @param linearDistance Linear distance [m] between two consecutive GPS measurements.
-     * @param timeDiff time difference [s] between two consecutive GPS measurements.
+     * @param routeLength Length of the shortest route [m] between two
+     * consecutive map matching candidates.
+     * @param linearDistance Linear distance [m] between two consecutive GPS
+     * measurements.
+     * @param timeDiff time difference [s] between two consecutive GPS
+     * measurements.
      */
     public double transitionLogProbability(double routeLength, double linearDistance,
             double timeDiff) {
+        if (timeDiff == 0) {
+            return 0;
+        }
         Double transitionMetric = normalizedTransitionMetric(routeLength, linearDistance, timeDiff);
         return Distributions.logExponentialDistribution(beta, transitionMetric);
     }
 
     /**
-     * Returns a transition metric for the transition between two consecutive map matching
-     * candidates.
+     * Returns a transition metric for the transition between two consecutive
+     * map matching candidates.
      *
-     * In contrast to Newson & Krumm the absolute distance difference is divided by the quadratic
-     * time difference to make the beta parameter of the exponential distribution independent of the
-     * sampling interval.
+     * In contrast to Newson & Krumm the absolute distance difference is divided
+     * by the quadratic time difference to make the beta parameter of the
+     * exponential distribution independent of the sampling interval.
      */
     private double normalizedTransitionMetric(double routeLength, double linearDistance,
             double timeDiff) {
