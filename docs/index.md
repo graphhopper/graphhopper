@@ -6,19 +6,19 @@ Try out our live demo called [GraphHopper Maps](https://graphhopper.com/maps)
 
  [![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](https://graphhopper.com/maps)
 
-[The Readme](../Readme.md#features) lists all features or [this list of slides](https://graphhopper.com/public/slides/).
+[The Readme](../README.md#features) lists all features or [this list of slides](https://graphhopper.com/public/slides/).
 
-See [more users of GraphHopper](https://graphhopper.com/#usecases) or [Android apps](../android/index.md#apps) and let us know your application!
+See [more users of GraphHopper](https://graphhopper.com/#usecases) or [Android apps](./android/index.md#apps) and let us know your application!
 
 ## Contact
 
-For all questions regarding the GraphHopper routing engine please use [our forum](../android/index.md). 
+For all questions regarding the GraphHopper routing engine please use [our forum](https://discuss.graphhopper.com). 
 
 For bugs see our contribute section below.
 
 ## User
 
-[The use guide](./web/quickstart.md) is the HowTo for users. Other links:
+[The user guide](./web/quickstart.md) is the HowTo for users. Other links:
 
  * [Add GraphHopper Maps to your Browser](./web/open-search.md): Instructions how to setup GraphHopper as the standard search enginge in your browser.
  * [Embed GraphHopper on your website](https://github.com/karussell/graphhopper-embed-form): A small code snippet on how to integrate GraphHopper Maps in your web site like a contact form
@@ -42,7 +42,7 @@ The elevation configuration is separately documented [here](./core/elevation.md)
 
 [The quickstart](./core/quickstart-from-source.md) is an introduction for developers. Explains git checkout, IDE setup and commands for setting up a GraphHopper server.
 
-Find all changes in previous and current versions in the [../core/files/changelogs.txt](changelogs).
+Find all changes in previous and current versions in the [changelogs](../core/files/changelogs.txt).
 
 ### Contribute
 
@@ -67,13 +67,13 @@ Various topics are explained in more detail separately:
 
 ### iOS
 
-[iOS](https://github.com/graphhopper/graphhopper-ios/): Instructions on how to setup the GraphHopper-iOS clone for iOS development.
+Instructions on how to setup the GraphHopper-iOS clone for iOS development are [here](https://github.com/graphhopper/graphhopper-ios/)
+including a sample application.
 
 ### Windows
 
-[Windows Setup](./core/windows-setup.md): Documentation about how to get an GraphHopper instance running on windows via cygwin.
+Documentation about how to get an GraphHopper instance running on windows via cygwin is available [here](./core/windows-setup.md).
 
 ### Eclipse
 
-[Set up GraphHopper in Eclipse](./core/eclipse-setup.md): Detailed instructions how to setup GraphHopper in eclipse with maven and 
-[tomcat](./core/eclipse-tomcat-setup.md).
+[Set up GraphHopper in Eclipse](./core/eclipse-setup.md) with maven and [tomcat](./core/eclipse-tomcat-setup.md).
