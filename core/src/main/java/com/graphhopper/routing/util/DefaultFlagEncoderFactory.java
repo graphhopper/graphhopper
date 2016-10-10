@@ -33,6 +33,9 @@ public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
         else if (name.equals(CAR))
             return new CarFlagEncoder(configuration);
 
+        else if (name.equals(CAR4WD))
+            return new Car4WDFlagEncoder(configuration);
+
         if (name.equals(BIKE))
             return new BikeFlagEncoder(configuration);
 
