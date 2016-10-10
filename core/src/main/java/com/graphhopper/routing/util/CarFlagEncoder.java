@@ -92,9 +92,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
         trackTypeSpeedMap.put("grade1", 20); // paved
         trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with ...
-        trackTypeSpeedMap.put("grade3", 10); // ... hard and soft materials
-        trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
-        trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
+        trackTypeSpeedMap.put("grade3", 10); // ... hard and soft materials        
 
         badSurfaceSpeedMap.add("cobblestone");
         badSurfaceSpeedMap.add("grass_paver");

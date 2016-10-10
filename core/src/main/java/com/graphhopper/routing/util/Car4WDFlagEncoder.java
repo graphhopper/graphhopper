@@ -18,21 +18,11 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.weighting.PriorityWeighting;
-import com.graphhopper.util.BitUtil;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
-
-import java.util.HashSet;
-
-import static com.graphhopper.routing.util.PriorityCode.BEST;
 
 /**
  * Defines bit layout for cars with four wheel drive
- * <p>
  *
- * @author Peter Karich
- * @author boldtrn
  * @author zstadler
  */
 public class Car4WDFlagEncoder extends CarFlagEncoder {
@@ -42,7 +32,7 @@ public class Car4WDFlagEncoder extends CarFlagEncoder {
     }
 
     public Car4WDFlagEncoder(PMap properties) {
-	super(properties);
+        super(properties);
     }
 
     public Car4WDFlagEncoder(String propertiesStr) {
@@ -53,6 +43,9 @@ public class Car4WDFlagEncoder extends CarFlagEncoder {
         super(speedBits, speedFactor, maxTurnCosts);
 
         init();
+
+        trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
+        trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
     }
 
     @Override
@@ -100,7 +93,6 @@ public class Car4WDFlagEncoder extends CarFlagEncoder {
         else
             return acceptBit;
     }
-
 
     @Override
     public String toString() {
