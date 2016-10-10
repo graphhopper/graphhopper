@@ -1,11 +1,11 @@
 # Get Demo
 
-[Download GraphHopper Demo APK](http://graphhopper.com/#download)
+[Download GraphHopper Demo APK](http://graphhopper.com/#community)
 
 # Set-up Development
 
 As starting point you can use [the demo project](https://github.com/graphhopper/graphhopper/tree/master/android) 
-which can be used from Android Studio, NetBeans, gradle or maven.
+which can be used directly from Android Studio and NetBeans via gradle or maven.
 
 Before the installation fetch the source, the OpenStreetMap data and the dependencies:
 
@@ -38,9 +38,9 @@ $ gradle installDebug
 
 ## Maps
 
-Now that you have a running android app you need to copy somehow the routing and maps data. 
+Now that you have a running Android app you need to copy the routing and maps data to the device. 
 
- 1. [Download the raw openstreetmap file](http://download.geofabrik.de/openstreetmap/) - you'll need that only for the next step to create the routing data
+ 1. [Download the raw openstreetmap file](http://download.geofabrik.de/openstreetmap/) - you'll need that for the next step to create the routing data
  2. Execute `./graphhopper.sh import <your-osm-file>`. This creates the routing data
  3. [Download a map](http://download.mapsforge.org/maps/) e.g. berlin.map
  4. Copy berlin.map into the created berlin-gh folder

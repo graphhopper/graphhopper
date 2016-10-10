@@ -51,13 +51,16 @@ Furthermore it allows you to use
 **speed mode** and in contrast to the speed mode we call everything without CH the
 **flexibility mode**. BTW: This does not mean that the flexibility mode is *slow*.
 
-The speed mode comes with much faster and lightweight (less RAM) responses and that although it does not use heuristics in its default settings. The downsides are that the speed mode allows only pre-defined vehicle profiles (multiple possible in GraphHopper) and requires a time consuming and resource intense preparation. And implementing certain features are not possible or very complex compared to the flexibility mode. 
+The speed mode comes with much faster and lightweight (less RAM) responses and that although it does not use heuristics in its default settings. 
+The downsides are that the speed mode allows only pre-defined vehicle profiles (multiple possible in GraphHopper) 
+and requires a time consuming and resource intense preparation. And implementing certain features are not possible 
+or very complex compared to the flexibility mode. 
 
 You can use both modes at the same time.
 
 ## License
 
-We chose the Apache License to make it easy for you to embed GraphHopper in your products.
+We chose the Apache License to make it easy for you to embed GraphHopper in your products, even closed source.
 We suggest to contribute back your changes, as GraphHopper evolves fast,
 but of course this is not necessary.
 
@@ -71,12 +74,13 @@ Other map data will need a custom import procedure, see e.g. <a href="https://gi
 ## Written in Java
 
 GraphHopper is written in Java and runs on Linux, Mac OS X,
-Windows, BSD, Solaris, Raspberry Pi,  Android, Blackberry and even iOS. Other 
+Windows, BSD, Solaris, Raspberry Pi, Android, Blackberry and even iOS. Other 
 environments which supports at least Java 7 will work too.
 
 ## Customizable
 
-We've build the GraphHopper class which makes simple things easy and complex things like multi-modal routing possible. Still you can use the low level API of GraphHopper and you'll see that
+We've build the GraphHopper class which makes simple things easy and complex things like multi-modal routing possible. 
+Still you can use the low level API of GraphHopper and you'll see that
 it was created to allow fast and memory efficient use of the underlying datastructures and algorithms.
 
 ### Android / Blackberry
@@ -115,13 +119,13 @@ Here is a list of the more detailed features including a link to the documentati
  * Offers turn instructions in more than 35 languages, contribute or improve [here](./docs/core/translations.md)
  * Displays and takes into account [elevation data](./docs/core/elevation.md) (per default disabled)
  * Can apply [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexibility only)
- * Customized routing profiles per request (flexibility only)
+ * Customize vehicle profiles per request (flexibility only)
  * Possibility to specify a '[heading parameter](./docs/core/routing.md)' for start, end and via points for navigation applications via `pass_through` or `heading` parameters (flexibility only)
- * [alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424) (flexibility only)
- * [turn costs and restrictions](https://github.com/graphhopper/graphhopper/pull/55#issuecomment-31089096) (flexibility only)
- * multiple profiles and weightings (flexibility and speed mode since 0.5)
- * several pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle
- * the core uses only a few dependencies (trove4j and slf4j)
- * scales from small indoor-sized to world-wide-sized graphs
+ * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424) (flexibility only)
+ * [Turn costs and restrictions](https://github.com/graphhopper/graphhopper/pull/55#issuecomment-31089096) (flexibility only)
+ * Multiple profiles and weightings (flexibility and speed mode)
+ * Several pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle, ...
+ * The core uses only a few dependencies (trove4j and slf4j)
+ * Scales from small indoor-sized to world-wide-sized graphs
  * Find nearest point on street e.g. to get elevation or 'snapp to road'
- * Enables the [map matching component](https://github.com/graphhopper/map-matching) (flexibility only)
+ * Do [map matching](https://github.com/graphhopper/map-matching) with GraphHopper (flexibility only)

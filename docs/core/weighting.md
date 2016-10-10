@@ -34,7 +34,7 @@ class MyGraphHopper extends GraphHopper {
 }
 ```
 
-For forbiddenEdges you need to determine the edges from some GPS coordinates. 
+For `forbiddenEdges` you need to determine the edges from some GPS coordinates. 
 Have a look into the [location index docs](./location-index.md). 
 
 If your blocking edges change per-request you need to disable the speed mode e.g. via `prepare.ch.weightings=no`
