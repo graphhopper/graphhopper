@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.topografix.com/GPX/1/0" version="1.0" xsi:schemaLocation="http://www.topografix.com/GPX/1/0 http://www.topografix.com/GPX/1/0/gpx.xsd" creator="gpx.py -- https://github.com/tkrajina/gpxpy">
+<trk>
+<name/>
+<type/>
+<desc/>
+<trkseg>
+<trkpt lat="41.0119089" lon="29.08910865">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0118916" lon="29.0892053">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0118725" lon="29.08929845">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.01185135" lon="29.08939115">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0118263" lon="29.0894814">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0117989" lon="29.08956945">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0117678" lon="29.08965675">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0117371" lon="29.089747">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0117079" lon="29.08983775">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.01167605" lon="29.08992865">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.01164325" lon="29.09002255">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.011612" lon="29.0901183">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0115803" lon="29.0902159">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.01154605" lon="29.09031725">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.01151005" lon="29.09042">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.01147355" lon="29.09052405">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.01143775" lon="29.0906194">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0114005" lon="29.09071235">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0113635" lon="29.0908039">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.01132835" lon="29.0908926">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0112937" lon="29.09098185">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0112593" lon="29.09107005">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0112247" lon="29.0911578">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0111918" lon="29.09124565">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0111619" lon="29.0913338">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.011134" lon="29.0914224">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0111091" lon="29.09151445">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.0110886" lon="29.09160745">
+<time>2015-01-01T11:35:02Z</time></trkpt>
+<trkpt lat="41.01107275" lon="29.09170405">
+<time>2015-01-01T11:35:02Z</time></trkpt></trkseg></trk></gpx>

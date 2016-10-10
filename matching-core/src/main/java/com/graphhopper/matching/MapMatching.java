@@ -232,8 +232,9 @@ public class MapMatching {
 
                 throw new RuntimeException("Sequence is broken for submitted track at time step "
                         + timeStepCounter + " (" + gpxList.size() + " points). " + likelyReasonStr
-                        + "observation:" + timeStep.observation + ", candidates: "
-                        + getSnappedCandidates(timeStep.candidates));
+                        + "observation:" + timeStep.observation + ", "
+                        + timeStep.candidates.size() + " candidates: " + getSnappedCandidates(timeStep.candidates)
+                        + ". If a match is expected consider increasing max_visited_nodes.");
             }
 
             timeStepCounter++;
