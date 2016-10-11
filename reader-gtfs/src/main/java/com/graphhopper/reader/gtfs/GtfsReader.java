@@ -83,11 +83,35 @@ class GtfsReader implements DataReader {
         for (Pattern pattern : feed.patterns.values()) {
 			try {
 				List<SortedMap<Integer, Integer>> departureTimeXTravelTime = new ArrayList<>();
+				for(int y=0; y<pattern.orderedStops.size()-1; y++) {
+					SortedMap<Integer, Integer> e = new TreeMap<>();
+					departureTimeXTravelTime.add(e);
+				}
 				String prev = null;
+				for (String tripId : pattern.associatedTrips) {
+					Trip trip = feed.trips.get(tripId);
+					Service service = feed.services.get(trip.service_id);
+					Collection<Frequency> frequencies = feed.getFrequencies(tripId);
+					Iterable<StopTime> interpolatedStopTimesForTrip = feed.getInterpolatedStopTimesForTrip(tripId);
+					int offset = 0;
+					for(LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+						if (service.activeOn(date)) {
+							if (frequencies.isEmpty()) {
+								insert(offset, departureTimeXTravelTime, interpolatedStopTimesForTrip);
+							} else {
+								for (Frequency frequency : frequencies) {
+									for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
+										insert(time - frequency.start_time + offset, departureTimeXTravelTime, interpolatedStopTimesForTrip);
+									}
+								}
+							}
+						}
+						offset += GtfsHelper.time(24, 0, 0);
+					}
+				}
+				int y=0;
 				for (String orderedStop : pattern.orderedStops) {
 					if (prev != null) {
-						SortedMap<Integer, Integer> e = new TreeMap<>();
-						departureTimeXTravelTime.add(e);
 						double distance = distCalc.calcDist(
 								feed.stops.get(prev).stop_lat,
 								feed.stops.get(prev).stop_lon,
@@ -99,31 +123,11 @@ class GtfsReader implements DataReader {
 								distance,
 								false);
 						edge.setName(pattern.name);
-						edges.put(edge.getEdge(), new PatternHopEdge(e));
+						edges.put(edge.getEdge(), AbstractPatternHopEdge.createHopEdge(departureTimeXTravelTime.get(y-1)));
 						j++;
 					}
 					prev=orderedStop;
-				}
-				for (String tripId : pattern.associatedTrips) {
-                    Trip trip = feed.trips.get(tripId);
-					Service service = feed.services.get(trip.service_id);
-                    Collection<Frequency> frequencies = feed.getFrequencies(tripId);
-                    Iterable<StopTime> interpolatedStopTimesForTrip = feed.getInterpolatedStopTimesForTrip(tripId);
-                    int offset = 0;
-                    for(LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-                        if (service.activeOn(date)) {
-                            if (frequencies.isEmpty()) {
-                                insert(offset, departureTimeXTravelTime, interpolatedStopTimesForTrip);
-                            } else {
-                                for (Frequency frequency : frequencies) {
-                                    for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
-                                        insert(time - frequency.start_time + offset, departureTimeXTravelTime, interpolatedStopTimesForTrip);
-                                    }
-                                }
-                            }
-                        }
-                        offset += GtfsHelper.time(24, 0, 0);
-                    }
+					y++;
 				}
 			} catch (GTFSFeed.FirstAndLastStopsDoNotHaveTimes e) {
 				throw new RuntimeException(e);
