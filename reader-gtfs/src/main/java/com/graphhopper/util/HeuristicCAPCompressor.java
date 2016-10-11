@@ -66,8 +66,18 @@ public class HeuristicCAPCompressor {
     }
 
     public static class ArithmeticProgression implements Serializable {
-        public int a, b;
-        public int p;
+        int a, b;
+        int p;
         int coverSize;
+
+        public double distanceToNextValue(double earliestStartTime) {
+            if (earliestStartTime < a) {
+                return (a - earliestStartTime);
+            } else if (earliestStartTime <= b) {
+                return (a + Math.ceil( (earliestStartTime - a) / p) * p - earliestStartTime);
+            } else {
+                return Double.POSITIVE_INFINITY;
+            }
+        }
     }
 }
