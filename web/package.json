@@ -27,6 +27,7 @@
     "d3": "3.5.17",
     "jquery": "3.1.1",
     "leaflet": "1.0.1",
+    "leaflet-contextmenu": "1.1.1",
     "leaflet-loading": "0.1.23",
     "uglifyify": "3.0.3"
   },
