@@ -19,9 +19,9 @@ public class HeuristicCAPCompressor {
             bestAP.b = s.get(i);
             bestAP.p = 1;
             bestAP.coverSize = 1;
-            for (int j=i+1; j < s.size() && s.size() - j + 1 > bestAP.coverSize && (s.get(s.size()-1) - s.get(i)) / (s.get(j) - s.get(i)) + 1 > bestAP.coverSize ; j++) {
+            for (int j=i+1; done.previousClearBit(s.size()-1) - j + 1 > bestAP.coverSize && (s.get(done.previousClearBit(s.size()-1)) - s.get(i)) / (s.get(j) - s.get(i)) + 1 > bestAP.coverSize ; j++) {
                 int p = s.get(j) - s.get(i);
-                ArithmeticProgression ap = getCoverSize(s, i, j, p);
+                ArithmeticProgression ap = getCoverSize(s, i, j, p, done);
                 if (ap.coverSize > bestAP.coverSize) {
                     bestAP = ap;
                 }
@@ -46,17 +46,21 @@ public class HeuristicCAPCompressor {
         return new ArrayList<>(result);
     }
 
-    private static ArithmeticProgression getCoverSize(List<Integer> s, int i, int j, int p) {
+    private static ArithmeticProgression getCoverSize(List<Integer> s, int i, int j, int p, BitSet done) {
         ArithmeticProgression ap = new ArithmeticProgression();
         ap.a = s.get(i);
         ap.b = s.get(i);
         ap.p = p;
+        int f = 1;
         ap.coverSize = 1;
         for (int k = j; k < s.size(); k++) {
             if ( (s.get(k) - s.get(i)) % p == 0) {
-                if ( (s.get(k) - s.get(i)) / p == ap.coverSize) {
-                    ap.coverSize++;
-                    ap.b = s.get(i) + p * (ap.coverSize - 1);
+                if ( (s.get(k) - s.get(i)) / p == f) {
+                    f++;
+                    if (!done.get(k)) {
+                        ap.coverSize++;
+                    }
+                    ap.b = s.get(i) + p * (f - 1);
                 } else {
                     return ap;
                 }
