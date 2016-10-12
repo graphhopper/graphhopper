@@ -19,7 +19,6 @@ package com.graphhopper.matching;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.Path;
@@ -233,7 +232,7 @@ public class MapMatchingTest {
                 fetchStreets(mr.getEdgeMatches()));
     }
 
-    List<String> fetchStreets(List<EdgeMatch> emList) {
+    static List<String> fetchStreets(List<EdgeMatch> emList) {
         List<String> list = new ArrayList<String>();
         int prevNode = -1;
         List<String> errors = new ArrayList<String>();
