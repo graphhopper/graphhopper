@@ -13,3 +13,4 @@ nbactions.xml
 .project
 matching-vaadin/src/main/webapp/
 matching-core/build.xml
+/matching-core/nbproject/
