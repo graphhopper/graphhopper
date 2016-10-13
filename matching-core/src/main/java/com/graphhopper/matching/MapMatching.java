@@ -153,7 +153,7 @@ public class MapMatching {
      * This method does the actual map matching.
      * <p>
      * @param gpxList the input list with GPX points which should match to edges
-     * of the graph specified in the constructor
+     *                of the graph specified in the constructor
      */
     public MatchResult doWork(List<GPXEntry> gpxList) {
         if (gpxList.size() < 2) {
@@ -196,10 +196,10 @@ public class MapMatching {
      * transition probabilities.
      *
      * @param outAllCandidates output parameter for all candidates, must be an
-     * empty list.
+     *                         empty list.
      */
     private List<TimeStep<GPXExtension, GPXEntry, Path>> createTimeSteps(List<GPXEntry> gpxList,
-            EdgeFilter edgeFilter, List<QueryResult> outAllCandidates) {
+                                                                         EdgeFilter edgeFilter, List<QueryResult> outAllCandidates) {
         int indexGPX = 0;
         TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep = null;
         final List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = new ArrayList<>();
@@ -278,7 +278,7 @@ public class MapMatching {
     }
 
     private void computeEmissionProbabilities(TimeStep<GPXExtension, GPXEntry, Path> timeStep,
-            HmmProbabilities probabilities) {
+                                              HmmProbabilities probabilities) {
         for (GPXExtension candidate : timeStep.candidates) {
             // road distance difference in meters
             final double distance = candidate.getQueryResult().getQueryDistance();
@@ -288,9 +288,9 @@ public class MapMatching {
     }
 
     private void computeTransitionProbabilities(TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep,
-            TimeStep<GPXExtension, GPXEntry, Path> timeStep,
-            HmmProbabilities probabilities,
-            QueryGraph queryGraph) {
+                                                TimeStep<GPXExtension, GPXEntry, Path> timeStep,
+                                                HmmProbabilities probabilities,
+                                                QueryGraph queryGraph) {
         final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.lat,
                 prevTimeStep.observation.lon, timeStep.observation.lat, timeStep.observation.lon);
 
@@ -315,8 +315,8 @@ public class MapMatching {
     }
 
     private MatchResult computeMatchResult(List<SequenceState<GPXExtension, GPXEntry, Path>> seq,
-            List<GPXEntry> gpxList, List<QueryResult> allCandidates,
-            EdgeExplorer explorer) {
+                                           List<GPXEntry> gpxList, List<QueryResult> allCandidates,
+                                           EdgeExplorer explorer) {
         // every virtual edge maps to its real edge where the orientation is already correct!
         // TODO use traversal key instead of string!
         final Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<>();
@@ -331,7 +331,7 @@ public class MapMatching {
     }
 
     private MatchResult computeMatchedEdges(List<SequenceState<GPXExtension, GPXEntry, Path>> seq,
-            Map<String, EdgeIteratorState> virtualEdgesMap) {
+                                            Map<String, EdgeIteratorState> virtualEdgesMap) {
         List<EdgeMatch> edgeMatches = new ArrayList<>();
         double distance = 0.0;
         long time = 0;
@@ -402,7 +402,7 @@ public class MapMatching {
     }
 
     private EdgeIteratorState resolveToRealEdge(Map<String, EdgeIteratorState> virtualEdgesMap,
-            EdgeIteratorState edgeIteratorState) {
+                                                EdgeIteratorState edgeIteratorState) {
         if (isVirtualNode(edgeIteratorState.getBaseNode())
                 || isVirtualNode(edgeIteratorState.getAdjNode())) {
             return virtualEdgesMap.get(virtualEdgesMapKey(edgeIteratorState));
@@ -419,7 +419,7 @@ public class MapMatching {
      * Fills the minFactorMap with weights for the virtual edges.
      */
     private void fillVirtualEdges(Map<String, EdgeIteratorState> virtualEdgesMap,
-            EdgeExplorer explorer, QueryResult qr) {
+                                  EdgeExplorer explorer, QueryResult qr) {
         if (isVirtualNode(qr.getClosestNode())) {
             EdgeIterator iter = explorer.setBaseNode(qr.getClosestNode());
             while (iter.next()) {

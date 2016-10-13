@@ -14,7 +14,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.graphhopper.matching.util;
 
 import java.util.Collection;
@@ -22,7 +21,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.bmw.hmm.Transition;
-
 
 /**
  * Contains everything the hmm-lib needs to process a new time step including emisson and
@@ -52,7 +50,6 @@ public class TimeStep<S, O, D> {
      */
     public final Map<Transition<S>, D> roadPaths = new HashMap<>();
 
-
     public TimeStep(O observation, Collection<S> candidates) {
         if (observation == null || candidates == null) {
             throw new NullPointerException("observation and candidates must not be null.");
@@ -72,7 +69,7 @@ public class TimeStep<S, O, D> {
      * Does not need to be called for non-existent transitions.
      */
     public void addTransitionLogProbability(S fromPosition, S toPosition,
-            double transitionLogProbability) {
+                                            double transitionLogProbability) {
         final Transition<S> transition = new Transition<>(fromPosition, toPosition);
         if (transitionLogProbabilities.containsKey(transition)) {
             throw new IllegalArgumentException("Transition has already been added.");

@@ -58,8 +58,8 @@ public class MatchResultToJson {
 
             EdgeMatch edgeMatch = result.getEdgeMatches().get(emIndex);
             PointList pointList = edgeMatch.getEdgeState().fetchWayGeometry(emIndex == 0 ? 3 : 2);
-           
-            if(pointList.size() < 2) {
+
+            if (pointList.size() < 2) {
                 geometry.put("coordinates", pointList.toGeoJson().get(0));
                 geometry.put("type", "Point");
             } else {

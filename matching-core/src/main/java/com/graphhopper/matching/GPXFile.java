@@ -99,7 +99,7 @@ public class GPXFile {
      * xml inputstream is.
      *
      * @param defaultSpeed if no time element is found the time value will be
-     * guessed from the distance and this provided default speed in kph.
+     *                     guessed from the distance and this provided default speed in kph.
      */
     public GPXFile doImport(InputStream is, double defaultSpeed) {
         SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT);

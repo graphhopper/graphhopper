@@ -40,9 +40,9 @@ public class HmmProbabilities {
 
     /**
      * @param sigma standard deviation of the normal distribution [m] used for
-     * modeling the GPS error
-     * @param beta beta parameter of the exponential distribution for 1 s
-     * sampling interval, used for modeling transition probabilities
+     *              modeling the GPS error
+     * @param beta  beta parameter of the exponential distribution for 1 s
+     *              sampling interval, used for modeling transition probabilities
      */
     public HmmProbabilities(double sigma, double beta) {
         this.sigma = sigma;
@@ -53,7 +53,7 @@ public class HmmProbabilities {
      * Returns the logarithmic emission probability density.
      *
      * @param distance Absolute distance [m] between GPS measurement and map
-     * matching candidate.
+     *                 matching candidate.
      */
     public double emissionLogProbability(double distance) {
         return Distributions.logNormalDistribution(sigma, distance);
@@ -63,15 +63,15 @@ public class HmmProbabilities {
      * Returns the logarithmic transition probability density for the given
      * transition parameters.
      *
-     * @param routeLength Length of the shortest route [m] between two
-     * consecutive map matching candidates.
+     * @param routeLength    Length of the shortest route [m] between two
+     *                       consecutive map matching candidates.
      * @param linearDistance Linear distance [m] between two consecutive GPS
-     * measurements.
-     * @param timeDiff time difference [s] between two consecutive GPS
-     * measurements.
+     *                       measurements.
+     * @param timeDiff       time difference [s] between two consecutive GPS
+     *                       measurements.
      */
     public double transitionLogProbability(double routeLength, double linearDistance,
-            double timeDiff) {
+                                           double timeDiff) {
         if (timeDiff == 0) {
             return 0;
         }
@@ -88,7 +88,7 @@ public class HmmProbabilities {
      * exponential distribution independent of the sampling interval.
      */
     private double normalizedTransitionMetric(double routeLength, double linearDistance,
-            double timeDiff) {
+                                              double timeDiff) {
         if (timeDiff < 0.0) {
             throw new IllegalStateException(
                     "Time difference between subsequent location measurements must be >= 0.");

@@ -305,7 +305,7 @@ public class MapMatchingTest {
     }
 
     private void printOverview(GraphHopperStorage graph, LocationIndex locationIndex,
-            final double lat, final double lon, final double length) {
+                               final double lat, final double lon, final double length) {
         final NodeAccess na = graph.getNodeAccess();
         int node = locationIndex.findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
         final EdgeExplorer explorer = graph.createEdgeExplorer();

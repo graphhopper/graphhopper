@@ -53,7 +53,7 @@ public class LocationIndexMatch extends LocationIndexTree {
     }
 
     public List<QueryResult> findNClosest(final double queryLat, final double queryLon, final EdgeFilter edgeFilter,
-            double gpxAccuracyInMetern) {
+                                          double gpxAccuracyInMetern) {
         // Return ALL results which are very close and e.g. within the GPS signal accuracy.
         // Also important to get all edges if GPS point is close to a junction.
         final double returnAllResultsWithin = distCalc.calcNormalizedDist(gpxAccuracyInMetern);
