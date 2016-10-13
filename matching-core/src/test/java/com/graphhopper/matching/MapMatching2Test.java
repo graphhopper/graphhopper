@@ -17,20 +17,12 @@
  */
 package com.graphhopper.matching;
 
-import com.graphhopper.PathWrapper;
-import static com.graphhopper.matching.MapMatchingTest.SINGLETON;
 import com.graphhopper.matching.MapMatchingTest.TestGraphHopper;
 import static com.graphhopper.matching.MapMatchingTest.fetchStreets;
 import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.GPXEntry;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.PathMerger;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -39,23 +31,20 @@ import org.junit.Test;
 /**
  * @author Peter Karich
  */
-public class MapMatching2Test {    
+public class MapMatching2Test {
 
     @Test
-    public void testIssue13() {        
+    public void testIssue13() {
         CarFlagEncoder encoder = new CarFlagEncoder();
         TestGraphHopper hopper = new TestGraphHopper();
         hopper.setDataReaderFile("../map-data/map-issue13.osm.gz");
         hopper.setGraphHopperLocation("../target/mapmatchingtest-13");
         hopper.setEncodingManager(new EncodingManager(encoder));
-        hopper.importOrLoad();       
+        hopper.importOrLoad();
 
-        GraphHopperStorage graph = hopper.getGraphHopperStorage();
-        LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
-                (LocationIndexTree) hopper.getLocationIndex());
+        AlgorithmOptions opts = AlgorithmOptions.start().build();
+        MapMatching mapMatching = new MapMatching(hopper, opts);
 
-        MapMatching mapMatching = new MapMatching(graph, locationIndex, encoder);
-       
         List<GPXEntry> inputGPXEntries = new GPXFile().
                 doImport("./src/test/resources/issue-13.gpx").getEntries();
         MatchResult mr = mapMatching.doWork(inputGPXEntries);

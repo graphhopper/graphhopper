@@ -20,10 +20,11 @@ package com.graphhopper.matching;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import java.io.File;
@@ -72,7 +73,6 @@ public class MapMatchingMain {
             logger.info("loading graph from cache");
             hopper.load("./graph-cache");
             FlagEncoder firstEncoder = hopper.getEncodingManager().fetchEdgeEncoders().get(0);
-            GraphHopperStorage graph = hopper.getGraphHopperStorage();
 
             int gpsAccuracy = args.getInt("gps_accuracy", -1);
             if (gpsAccuracy < 0) {
@@ -82,10 +82,13 @@ public class MapMatchingMain {
 
             String instructions = args.get("instructions", "");
             logger.info("Setup lookup index. Accuracy filter is at " + gpsAccuracy + "m");
-            LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
-                    (LocationIndexTree) hopper.getLocationIndex());
-            MapMatching mapMatching = new MapMatching(graph, locationIndex, firstEncoder);
-            mapMatching.setMaxVisitedNodes(args.getInt("max_visited_nodes", 1000));
+            AlgorithmOptions opts = AlgorithmOptions.start().
+                    algorithm(Parameters.Algorithms.DIJKSTRA_BI).traversalMode(hopper.getTraversalMode()).
+                    weighting(new FastestWeighting(firstEncoder)).
+                    maxVisitedNodes(args.getInt("max_visited_nodes", 1000)).
+                    hints(new HintsMap().put("weighting", "fastest").put("vehicle", firstEncoder.toString())).
+                    build();
+            MapMatching mapMatching = new MapMatching(hopper, opts);
             mapMatching.setTransitionProbabilityBeta(args.getDouble("transition_probability_beta", 0.00959442));
             mapMatching.setMeasurementErrorSigma(gpsAccuracy);
 

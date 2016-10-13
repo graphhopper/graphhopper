@@ -23,8 +23,10 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.http.GraphHopperServlet;
 import com.graphhopper.http.RouteSerializer;
 import com.graphhopper.matching.*;
+import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -50,8 +52,6 @@ public class MatchServlet extends GraphHopperServlet {
 
     @Inject
     private GraphHopper hopper;
-    @Inject
-    private LocationIndexMatch locationIndexMatch;
     @Inject
     private RouteSerializer routeSerializer;
     @Inject
@@ -113,9 +113,12 @@ public class MatchServlet extends GraphHopperServlet {
 
         if (!matchGHRsp.hasErrors()) {
             try {
-                FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-                MapMatching matching = new MapMatching(hopper.getGraphHopperStorage(), locationIndexMatch, encoder);
-                matching.setMaxVisitedNodes(maxVisitedNodes);
+                AlgorithmOptions opts = AlgorithmOptions.start()
+                        .traversalMode(hopper.getTraversalMode())
+                        .maxVisitedNodes(maxVisitedNodes)
+                        .hints(new HintsMap().put("vehicle", vehicle))
+                        .build();
+                MapMatching matching = new MapMatching(hopper, opts);
                 matching.setMeasurementErrorSigma(gpsAccuracy);
                 matchRsp = matching.doWork(gpxFile.getEntries());
 

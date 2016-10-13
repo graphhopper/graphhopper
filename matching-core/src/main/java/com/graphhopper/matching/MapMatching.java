@@ -17,79 +17,116 @@
  */
 package com.graphhopper.matching;
 
+import com.graphhopper.GraphHopper;
 import com.graphhopper.matching.util.HmmProbabilities;
 import com.graphhopper.matching.util.TimeStep;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.bmw.hmm.SequenceState;
 import com.bmw.hmm.ViterbiAlgorithm;
-import com.graphhopper.routing.DijkstraBidirectionRef;
+import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.QueryGraph;
+import com.graphhopper.routing.RoutingAlgorithm;
+import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 /**
- * This class matches real world GPX entries to the digital road network stored in GraphHopper.
- * The Viterbi algorithm is used to compute the most likely sequence of map matching candidates.
- * The Viterbi algorithm takes into account the distance between GPX entries
- * and map matching candidates as well as the routing distances between consecutive map matching
- * candidates.
+ * This class matches real world GPX entries to the digital road network stored
+ * in GraphHopper. The Viterbi algorithm is used to compute the most likely
+ * sequence of map matching candidates. The Viterbi algorithm takes into account
+ * the distance between GPX entries and map matching candidates as well as the
+ * routing distances between consecutive map matching candidates.
  *
  * <p>
- * See http://en.wikipedia.org/wiki/Map_matching and
- * Newson, Paul, and John Krumm. "Hidden Markov map matching through noise and sparseness."
- * Proceedings of the 17th ACM SIGSPATIAL International Conference on Advances in Geographic
+ * See http://en.wikipedia.org/wiki/Map_matching and Newson, Paul, and John
+ * Krumm. "Hidden Markov map matching through noise and sparseness." Proceedings
+ * of the 17th ACM SIGSPATIAL International Conference on Advances in Geographic
  * Information Systems. ACM, 2009.
  *
  * @author Peter Karich
  * @author Michael Zilske
  * @author Stefan Holder
+ * @author kodonnell
  */
 public class MapMatching {
 
-    private final Graph graph;
+    private final Graph routingGraph;
     private final LocationIndexMatch locationIndex;
-    private final FlagEncoder encoder;
-    private final TraversalMode traversalMode;
-
     private double measurementErrorSigma = 50.0;
-
     private double transitionProbabilityBeta = 0.00959442;
-    private int maxVisitedNodes = 1000;
     private final int nodeCount;
     private DistanceCalc distanceCalc = new DistancePlaneProjection();
-    private Weighting weighting;
+    private final RoutingAlgorithmFactory algoFactory;
+    private final AlgorithmOptions algoOptions;
 
-    public MapMatching(Graph graph, LocationIndexMatch locationIndex, FlagEncoder encoder) {
-        this.graph = graph;
-        this.nodeCount = graph.getNodes();
-        this.locationIndex = locationIndex;
+    public MapMatching(GraphHopper hopper, AlgorithmOptions algoOptions) {
+        this.locationIndex = new LocationIndexMatch(hopper.getGraphHopperStorage(),
+                (LocationIndexTree) hopper.getLocationIndex());
 
-        // TODO initialization of start values for the algorithm is currently done explicitly via
-        // node IDs!
-        // To fix this use instead: traversalMode.createTraversalId(iter, false);
-//        this.traversalMode = graph.getExtension() instanceof TurnCostExtension
-//                ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;
-        this.traversalMode = TraversalMode.NODE_BASED;
-        this.encoder = encoder;
-        this.weighting = new FastestWeighting(encoder);
-    }
+        // create hints from algoOptions, so we can create the algorithm factory        
+        HintsMap hints = new HintsMap();
+        for (Entry<String, String> entry : algoOptions.getHints().toMap().entrySet()) {
+            hints.put(entry.getKey(), entry.getValue());
+        }
 
-    /**
-     * This method overwrites the default fastest weighting.
-     */
-    public void setWeighting(Weighting weighting) {
-        this.weighting = weighting;
+        // default is non-CH
+        if (!hints.has(Parameters.CH.DISABLE)) {
+            hints.put(Parameters.CH.DISABLE, true);
+        }
+
+        // TODO ugly workaround, duplicate data: hints can have 'vehicle' but algoOptions.weighting too!?
+        // Similar problem in GraphHopper class
+        String vehicle = hints.getVehicle();
+        if (vehicle.isEmpty()) {
+            if (algoOptions.hasWeighting()) {
+                vehicle = algoOptions.getWeighting().getFlagEncoder().toString();
+            } else {
+                vehicle = hopper.getEncodingManager().fetchEdgeEncoders().get(0).toString();
+            }
+            hints.setVehicle(vehicle);
+        }
+
+        if (!hopper.getEncodingManager().supports(vehicle)) {
+            throw new IllegalArgumentException("Vehicle " + vehicle + " unsupported. "
+                    + "Supported are: " + hopper.getEncodingManager());
+        }
+
+        algoFactory = hopper.getAlgorithmFactory(hints);
+
+        Weighting weighting = null;
+        CHAlgoFactoryDecorator chFactoryDecorator = hopper.getCHFactoryDecorator();
+        boolean forceFlexibleMode = hints.getBool(Parameters.CH.DISABLE, false);
+        if (chFactoryDecorator.isEnabled() && !forceFlexibleMode) {
+            if (!(algoFactory instanceof PrepareContractionHierarchies)) {
+                throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + algoFactory);
+            }
+
+            weighting = ((PrepareContractionHierarchies) algoFactory).getWeighting();
+            this.routingGraph = hopper.getGraphHopperStorage().getGraph(CHGraph.class, weighting);
+        } else {
+            weighting = algoOptions.hasWeighting()
+                    ? algoOptions.getWeighting()
+                    : new FastestWeighting(hopper.getEncodingManager().getEncoder(vehicle), algoOptions.getHints());
+            this.routingGraph = hopper.getGraphHopperStorage();
+        }
+
+        this.algoOptions = AlgorithmOptions.start(algoOptions).weighting(weighting).build();
+        this.nodeCount = routingGraph.getNodes();
     }
 
     public void setDistanceCalc(DistanceCalc distanceCalc) {
@@ -112,10 +149,6 @@ public class MapMatching {
         this.measurementErrorSigma = measurementErrorSigma;
     }
 
-    public void setMaxVisitedNodes(int maxNodesToVisit) {
-        this.maxVisitedNodes = maxNodesToVisit;
-    }
-
     /**
      * This method does the actual map matching.
      * <p>
@@ -128,16 +161,15 @@ public class MapMatching {
                     + gpxList.size() + "). Correct format?");
         }
 
-        final EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
-        
+        final EdgeFilter edgeFilter = new DefaultEdgeFilter(algoOptions.getWeighting().getFlagEncoder());
+
         // Compute all candidates first.
         // TODO: Generate candidates on-the-fly within computeViterbiSequence() if this does not
         // degrade performance.
         final List<QueryResult> allCandidates = new ArrayList<>();
         List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = createTimeSteps(gpxList,
                 edgeFilter, allCandidates);
-        // printMinDistances(timeSteps);
-        
+
         if (allCandidates.size() < 2) {
             throw new IllegalArgumentException("Too few matching coordinates ("
                     + allCandidates.size() + "). Wrong region imported?");
@@ -146,36 +178,37 @@ public class MapMatching {
             throw new IllegalStateException("Coordinates produced too few time steps "
                     + timeSteps.size() + ", gpxList:" + gpxList.size());
         }
-        
-        final QueryGraph queryGraph = new QueryGraph(graph).setUseEdgeExplorerCache(true);
+
+        final QueryGraph queryGraph = new QueryGraph(routingGraph).setUseEdgeExplorerCache(true);
         queryGraph.lookup(allCandidates);
-        
+
         List<SequenceState<GPXExtension, GPXEntry, Path>> seq = computeViterbiSequence(timeSteps,
                 gpxList, queryGraph);
-        
-        final EdgeExplorer explorer = queryGraph.createEdgeExplorer(edgeFilter);        
+
+        final EdgeExplorer explorer = queryGraph.createEdgeExplorer(edgeFilter);
         MatchResult matchResult = computeMatchResult(seq, gpxList, allCandidates, explorer);
-        
+
         return matchResult;
     }
 
     /**
-     * Creates TimeSteps for the GPX entries but does not create emission or transition
-     * probabilities.
-     * 
-     * @param outAllCandidates output parameter for all candidates, must be an empty list.
+     * Creates TimeSteps for the GPX entries but does not create emission or
+     * transition probabilities.
+     *
+     * @param outAllCandidates output parameter for all candidates, must be an
+     * empty list.
      */
     private List<TimeStep<GPXExtension, GPXEntry, Path>> createTimeSteps(List<GPXEntry> gpxList,
             EdgeFilter edgeFilter, List<QueryResult> outAllCandidates) {
         int indexGPX = 0;
-        TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep = null;        
+        TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep = null;
         final List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = new ArrayList<>();
-        
+
         for (GPXEntry gpxEntry : gpxList) {
             if (prevTimeStep == null
                     || distanceCalc.calcDist(
-                    prevTimeStep.observation.getLat(), prevTimeStep.observation.getLon(),
-                    gpxEntry.getLat(), gpxEntry.getLon()) > 2 * measurementErrorSigma
+                            prevTimeStep.observation.getLat(), prevTimeStep.observation.getLon(),
+                            gpxEntry.getLat(), gpxEntry.getLon()) > 2 * measurementErrorSigma
                     // always include last point
                     || indexGPX == gpxList.size() - 1) {
                 final List<QueryResult> queryResults = locationIndex.findNClosest(
@@ -186,23 +219,23 @@ public class MapMatching {
                 for (QueryResult candidate : queryResults) {
                     candidates.add(new GPXExtension(gpxEntry, candidate, indexGPX));
                 }
-                final TimeStep<GPXExtension, GPXEntry, Path> timeStep =
-                        new TimeStep<>(gpxEntry, candidates);
+                final TimeStep<GPXExtension, GPXEntry, Path> timeStep
+                        = new TimeStep<>(gpxEntry, candidates);
                 timeSteps.add(timeStep);
                 prevTimeStep = timeStep;
             }
             indexGPX++;
-        }  
+        }
         return timeSteps;
     }
 
     private List<SequenceState<GPXExtension, GPXEntry, Path>> computeViterbiSequence(
             List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps, List<GPXEntry> gpxList,
             final QueryGraph queryGraph) {
-        final HmmProbabilities probabilities =
-                new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
+        final HmmProbabilities probabilities
+                = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
         final ViterbiAlgorithm<GPXExtension, GPXEntry, Path> viterbi = new ViterbiAlgorithm<>();
-        
+
         int timeStepCounter = 0;
         TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep = null;
         for (TimeStep<GPXExtension, GPXEntry, Path> timeStep : timeSteps) {
@@ -220,14 +253,14 @@ public class MapMatching {
             if (viterbi.isBroken()) {
                 String likelyReasonStr = "";
                 if (prevTimeStep != null) {
-                     GPXEntry prevGPXE = prevTimeStep.observation;
-                     GPXEntry gpxe = timeStep.observation;
-                     double dist = distanceCalc.calcDist(prevGPXE.lat, prevGPXE.lon,
-                             gpxe.lat, gpxe.lon);
-                     if (dist > 2000) {
-                         likelyReasonStr = "Too long distance to previous measurement? "
-                                 + Math.round(dist) + "m, ";
-                     }
+                    GPXEntry prevGPXE = prevTimeStep.observation;
+                    GPXEntry gpxe = timeStep.observation;
+                    double dist = distanceCalc.calcDist(prevGPXE.lat, prevGPXE.lon,
+                            gpxe.lat, gpxe.lon);
+                    if (dist > 2000) {
+                        likelyReasonStr = "Too long distance to previous measurement? "
+                                + Math.round(dist) + "m, ";
+                    }
                 }
 
                 throw new RuntimeException("Sequence is broken for submitted track at time step "
@@ -240,12 +273,12 @@ public class MapMatching {
             timeStepCounter++;
             prevTimeStep = timeStep;
         }
-    
+
         return viterbi.computeMostLikelySequence();
     }
-    
+
     private void computeEmissionProbabilities(TimeStep<GPXExtension, GPXEntry, Path> timeStep,
-                                              HmmProbabilities probabilities) {
+            HmmProbabilities probabilities) {
         for (GPXExtension candidate : timeStep.candidates) {
             // road distance difference in meters
             final double distance = candidate.getQueryResult().getQueryDistance();
@@ -255,38 +288,35 @@ public class MapMatching {
     }
 
     private void computeTransitionProbabilities(TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep,
-                                                TimeStep<GPXExtension, GPXEntry, Path> timeStep,
-                                                HmmProbabilities probabilities,
-                                                QueryGraph queryGraph) {
+            TimeStep<GPXExtension, GPXEntry, Path> timeStep,
+            HmmProbabilities probabilities,
+            QueryGraph queryGraph) {
         final double linearDistance = distanceCalc.calcDist(prevTimeStep.observation.lat,
                 prevTimeStep.observation.lon, timeStep.observation.lat, timeStep.observation.lon);
-        
+
         // time difference in seconds
-        final double timeDiff =
-                (timeStep.observation.getTime() - prevTimeStep.observation.getTime()) / 1000.0;
+        final double timeDiff
+                = (timeStep.observation.getTime() - prevTimeStep.observation.getTime()) / 1000.0;
 
         for (GPXExtension from : prevTimeStep.candidates) {
             for (GPXExtension to : timeStep.candidates) {
-                // TODO allow CH, then optionally use cached one-to-many Dijkstra to improve speed
-                final DijkstraBidirectionRef algo =
-                        new DijkstraBidirectionRef(queryGraph, weighting, traversalMode);
-                algo.setMaxVisitedNodes(maxVisitedNodes);
+                RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOptions);
+                // System.out.println("algo " + algo.getName());
                 final Path path = algo.calcPath(from.getQueryResult().getClosestNode(),
                         to.getQueryResult().getClosestNode());
                 if (path.isFound()) {
                     timeStep.addRoadPath(from, to, path);
-                    final double transitionLogProbability =
-                            probabilities.transitionLogProbability(path.getDistance(),
-                            linearDistance, timeDiff);
+                    final double transitionLogProbability = probabilities
+                            .transitionLogProbability(path.getDistance(), linearDistance, timeDiff);
                     timeStep.addTransitionLogProbability(from, to, transitionLogProbability);
                 }
             }
         }
     }
-    
+
     private MatchResult computeMatchResult(List<SequenceState<GPXExtension, GPXEntry, Path>> seq,
-                                           List<GPXEntry> gpxList, List<QueryResult> allCandidates,
-                                           EdgeExplorer explorer) {
+            List<GPXEntry> gpxList, List<QueryResult> allCandidates,
+            EdgeExplorer explorer) {
         // every virtual edge maps to its real edge where the orientation is already correct!
         // TODO use traversal key instead of string!
         final Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<>();
@@ -301,7 +331,7 @@ public class MapMatching {
     }
 
     private MatchResult computeMatchedEdges(List<SequenceState<GPXExtension, GPXEntry, Path>> seq,
-                                            Map<String, EdgeIteratorState> virtualEdgesMap) {
+            Map<String, EdgeIteratorState> virtualEdgesMap) {
         List<EdgeMatch> edgeMatches = new ArrayList<>();
         double distance = 0.0;
         long time = 0;
@@ -372,7 +402,7 @@ public class MapMatching {
     }
 
     private EdgeIteratorState resolveToRealEdge(Map<String, EdgeIteratorState> virtualEdgesMap,
-                                                EdgeIteratorState edgeIteratorState) {
+            EdgeIteratorState edgeIteratorState) {
         if (isVirtualNode(edgeIteratorState.getBaseNode())
                 || isVirtualNode(edgeIteratorState.getAdjNode())) {
             return virtualEdgesMap.get(virtualEdgesMapKey(edgeIteratorState));
@@ -491,7 +521,7 @@ public class MapMatching {
     }
 
     public Path calcPath(MatchResult mr) {
-        MyPath p = new MyPath(graph, weighting);
+        MyPath p = new MyPath(routingGraph, algoOptions.getWeighting());
         if (!mr.getEdgeMatches().isEmpty()) {
             int prevEdge = EdgeIterator.NO_EDGE;
             p.setFromNode(mr.getEdgeMatches().get(0).getEdgeState().getBaseNode());
