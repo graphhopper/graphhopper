@@ -66,3 +66,4 @@ web.refresh_button=Оновити сторінку
 web.server_status=Стан
 web.zoom_in=Наблизити
 web.zoom_out=Віддалити
+web.drag_to_reorder=

@@ -66,3 +66,4 @@ web.refresh_button=
 web.server_status=
 web.zoom_in=
 web.zoom_out=
+web.drag_to_reorder=

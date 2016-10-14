@@ -66,3 +66,4 @@ web.refresh_button=Actualizar página
 web.server_status=Estado
 web.zoom_in=Acercar
 web.zoom_out=Alejar
+web.drag_to_reorder=Arrastra para cambiar el orden

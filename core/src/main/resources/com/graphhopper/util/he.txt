@@ -66,3 +66,4 @@ web.refresh_button=רענון הדף
 web.server_status=מצב
 web.zoom_in=התקרבות
 web.zoom_out=התרחקות
+web.drag_to_reorder=

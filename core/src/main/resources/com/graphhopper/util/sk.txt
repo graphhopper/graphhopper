@@ -66,3 +66,4 @@ web.refresh_button=Obnoviť stránku
 web.server_status=Stav
 web.zoom_in=Priblížiť
 web.zoom_out=Oddialiť
+web.drag_to_reorder=
