@@ -66,3 +66,4 @@ web.refresh_button=Ανανέωση σελίδας
 web.server_status=Κατάσταση
 web.zoom_in=Μεγέθυνση
 web.zoom_out=Σμίκρυνση
+web.drag_to_reorder=
