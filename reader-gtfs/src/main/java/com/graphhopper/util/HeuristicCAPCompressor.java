@@ -1,6 +1,7 @@
 package com.graphhopper.util;
 
 import com.google.common.base.Functions;
+import org.mapdb.Fun;
 
 import java.io.Serializable;
 import java.util.*;
@@ -30,7 +31,21 @@ public class HeuristicCAPCompressor {
             });
             allAps.addAll(aps);
         }
-        return allAps;
+        Map<Fun.Tuple3, List<ArithmeticProgression>> identicalAPs = allAps.stream().collect(groupingBy(ap -> new Fun.Tuple3(ap.a, ap.b, ap.p)));
+
+        List<ArithmeticProgression> result = new ArrayList<>();
+        for (Map.Entry<Fun.Tuple3, List<ArithmeticProgression>> e : identicalAPs.entrySet()) {
+            ArithmeticProgression ap = new ArithmeticProgression();
+            ap.a = (Integer) e.getKey().a;
+            ap.b = (Integer) e.getKey().b;
+            ap.p = (Integer) e.getKey().c;
+            ap.validOnDay = new BitSet(maxOperatingDay);
+            for (ArithmeticProgression arithmeticProgression : e.getValue()) {
+                arithmeticProgression.validOnDay.stream().forEach(day -> ap.validOnDay.set(day));
+            }
+            result.add(ap);
+        }
+        return result;
     }
 
     private static List<ArithmeticProgression> compressSingleDay(List<Integer> s) {
