@@ -22,6 +22,7 @@ class CompressedPatternHopEdge extends AbstractPatternHopEdge {
 				frequencies.add(frequencyEntry);
 			}
 		});
+		Collections.shuffle(frequencies);
 	}
 
 	@Override
