@@ -21,6 +21,10 @@
             <name>Conveyal Maven Repository</name>
             <url>http://maven.conveyal.com/</url>
         </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -35,7 +39,12 @@
             <artifactId>gtfs-lib</artifactId>
             <version>1.2.0</version>
         </dependency>
-        
+        <dependency>
+            <groupId>com.github.schildbach</groupId>
+            <artifactId>public-transport-enabler</artifactId>
+            <version>master-SNAPSHOT</version>
+        </dependency>
+
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
