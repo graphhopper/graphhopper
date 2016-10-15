@@ -1,5 +1,7 @@
 package com.graphhopper.util;
 
+import com.google.common.base.Functions;
+
 import java.io.Serializable;
 import java.util.*;
 
@@ -17,9 +19,18 @@ public class HeuristicCAPCompressor {
     public static List<ArithmeticProgression> compress(List<Integer> s) {
 
         Map<Integer, List<Integer>> operatingDays = s.stream().collect(groupingBy(t -> t / (24 * 60 * 60),
-                mapping(t -> t, toList())));
-
-        return operatingDays.values().stream().flatMap(times -> compressSingleDay(times).stream()).collect(toList());
+                mapping(t -> t % (24 * 60 * 60), toList())));
+        int maxOperatingDay = operatingDays.keySet().stream().mapToInt(i -> i).max().getAsInt();
+        List<ArithmeticProgression> allAps = new ArrayList<>();
+        for (Map.Entry<Integer, List<Integer>> e : operatingDays.entrySet()) {
+            List<ArithmeticProgression> aps = compressSingleDay(e.getValue());
+            aps.forEach(ap -> {
+                ap.validOnDay = new BitSet(maxOperatingDay);
+                ap.validOnDay.set(e.getKey());
+            });
+            allAps.addAll(aps);
+        }
+        return allAps;
     }
 
     private static List<ArithmeticProgression> compressSingleDay(List<Integer> s) {
@@ -85,8 +96,18 @@ public class HeuristicCAPCompressor {
         int a, b;
         int p;
         int coverSize;
+        BitSet validOnDay;
 
         public double distanceToNextValue(double earliestStartTime) {
+            int day = ((int) earliestStartTime) / (24 * 60 * 60);
+            if (validOnDay.get(day)) {
+                return evaluateAP(earliestStartTime % (24 * 60 * 60));
+            } else {
+                return Double.POSITIVE_INFINITY;
+            }
+        }
+
+        private double evaluateAP(double earliestStartTime) {
             if (earliestStartTime < a) {
                 return (a - earliestStartTime);
             } else if (earliestStartTime <= b) {
