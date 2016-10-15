@@ -3,6 +3,10 @@ package com.graphhopper.util;
 import java.io.Serializable;
 import java.util.*;
 
+import static java.util.stream.Collectors.groupingBy;
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toList;
+
 /**
  * Hannah Bast and Sabine Storandt: Frequency-Based Search for Public Transit
  *
@@ -11,6 +15,14 @@ import java.util.*;
 public class HeuristicCAPCompressor {
 
     public static List<ArithmeticProgression> compress(List<Integer> s) {
+
+        Map<Integer, List<Integer>> operatingDays = s.stream().collect(groupingBy(t -> t / (24 * 60 * 60),
+                mapping(t -> t, toList())));
+
+        return operatingDays.values().stream().flatMap(times -> compressSingleDay(times).stream()).collect(toList());
+    }
+
+    private static List<ArithmeticProgression> compressSingleDay(List<Integer> s) {
         List<ArithmeticProgression> result = new ArrayList<>();
         BitSet done = new BitSet(s.size());
         for (int i=0; i < s.size(); i=done.nextClearBit(i+1)) {
