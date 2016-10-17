@@ -19,8 +19,8 @@ env:
     - FILE=apache-maven-VERSION-bin.zip
     - DIR=apache-maven-VERSION
     - VERSION=3.3.9
-    - secure: "CI_DEPLOY_USERNAME=central_username"
-    - secure: "CI_DEPLOY_PASSWORD=central_password"
+    - secure: "kcd3BD+gagth90u8662Q91FHmtx/FEJEjtMnm2bxf1rX/cOYEUXtHvvh+rKmw5UAHjqMI00V8p8nBWL8blaCxJ+ItaxAHFRIMAcy3Qc65aTqnCt4wxDEXVxG1h3rylyKTXzxaHUT5XrsZbjLQX6L1BweTZlMGgkVn/yQcVFmkms="
+    - secure: "D1IOwe3ZTyw2CorYljXnHB3IuOJbH0B4YBfglNFoFsdCtn+SP+dqH/lClf5Hbeanhx/qPpgPKf331UCCpdSiLIZIHRWcsIXHSzJnqvH73eNyB4Awgm/IA0bS5D8iHJOhER1UtyTx5kT/KwKA9SD9ZBP3glrBzPDsyEbSZFsrACk="
 
 jdk:
   - oraclejdk8
