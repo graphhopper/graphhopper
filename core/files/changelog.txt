@@ -1,3 +1,5 @@
+0.9
+    
 0.8
     refactoring to Weighting class, see #807
     removed FlagEncoder from parameters as weighting.getFlagEncoder can and is used
