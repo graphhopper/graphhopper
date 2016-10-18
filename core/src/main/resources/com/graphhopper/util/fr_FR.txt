@@ -66,3 +66,4 @@ web.refresh_button=Rafraîchir
 web.server_status=Statut
 web.zoom_in=Zoom avant
 web.zoom_out=Zoom arrière
+web.drag_to_reorder=Faire glisser pour réorganiser

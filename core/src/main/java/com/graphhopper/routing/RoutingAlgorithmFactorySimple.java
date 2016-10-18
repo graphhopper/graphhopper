@@ -73,7 +73,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
         return ra;
     }
 
-    private WeightApproximator getApproximation(String prop, AlgorithmOptions opts, NodeAccess na) {
+    public static WeightApproximator getApproximation(String prop, AlgorithmOptions opts, NodeAccess na) {
         String approxAsStr = opts.getHints().get(prop + ".approximation", "BeelineSimplification");
         double epsilon = opts.getHints().getDouble(prop + ".epsilon", 1);
 
@@ -84,7 +84,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
         else if ("BeelineAccurate".equals(approxAsStr))
             approx.setDistanceCalc(Helper.DIST_EARTH);
         else
-            throw new IllegalArgumentException("Approximation " + approxAsStr + " not found in " + getClass().getName());
+            throw new IllegalArgumentException("Approximation " + approxAsStr + " not found in " + RoutingAlgorithmFactorySimple.class.getName());
 
         return approx;
     }

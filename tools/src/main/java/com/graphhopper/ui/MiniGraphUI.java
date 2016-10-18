@@ -82,6 +82,12 @@ public class MiniGraphUI {
         this.na = graph.getNodeAccess();
         encoder = hopper.getEncodingManager().getEncoder("car");
         HintsMap map = new HintsMap("fastest");
+        map.put(Parameters.CH.DISABLE, true);
+        // for CH we need:
+        // map.setVehicle("car");
+        // weighting = hopper.getCHFactoryDecorator().getWeightings().get(0);
+        // routingGraph = hopper.getGraphHopperStorage().getGraph(CHGraph.class, weighting);
+
         weighting = hopper.createWeighting(map, encoder);
         algoFactory = hopper.getAlgorithmFactory(map);
         algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, weighting);
@@ -213,7 +219,7 @@ public class MiniGraphUI {
 
         mainPanel.addLayer(pathLayer = new DefaultMapLayer() {
             @Override
-            public void paintComponent(Graphics2D g2) {
+            public void paintComponent(final Graphics2D g2) {
                 if (fromRes == null || toRes == null)
                     return;
 
@@ -251,7 +257,7 @@ public class MiniGraphUI {
                 }
 
                 logger.info("found path in " + sw.getSeconds() + "s with nodes:"
-                        + path.calcNodes().size() + ", millis: " + path.getTime() + ", " + path);
+                        + path.calcNodes().size() + ", millis: " + path.getTime());// + ", " + path);
                 g2.setColor(Color.BLUE.brighter().brighter());
                 plotPath(path, g2, 1);
             }

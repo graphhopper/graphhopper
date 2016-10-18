@@ -66,3 +66,4 @@ web.refresh_button=Refrescar la páxina
 web.server_status=Estáu
 web.zoom_in=Averar
 web.zoom_out=Alloñar
+web.drag_to_reorder=

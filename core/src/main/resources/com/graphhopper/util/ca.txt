@@ -66,3 +66,4 @@ web.refresh_button=Refrescar la plana
 web.server_status=Estat
 web.zoom_in=Apropar
 web.zoom_out=Allunyar
+web.drag_to_reorder=

@@ -66,3 +66,4 @@ web.refresh_button=更新
 web.server_status=ステータス
 web.zoom_in=拡大
 web.zoom_out=縮小
+web.drag_to_reorder=

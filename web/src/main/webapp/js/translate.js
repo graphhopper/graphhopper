@@ -64,6 +64,9 @@ function initI18N() {
             else
                 $(this).attr("placeholder", tr("via_hint"));
         });
+        $('.pointFlag').each(function () {
+            $(this).attr('title', tr('drag_to_reorder'));
+        });
         $('.pointDelete').each(function () {
             $(this).attr("title", tr("delete_from_route"));
         });

@@ -1,8 +1,7 @@
 body {
-    color: #000;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     line-height: 1.4;
-    color: #111111;
+    color: #111;
     background-color: white;
     margin: 0;
     min-width: 700px;
@@ -186,7 +185,7 @@ body {
 }
 #hosting {
     display: none;
-    /*    float: left;*/
+    /* float: left;*/
     padding-top: 4px;
     padding-bottom: 10px;
     /* color: #666666; */
@@ -302,7 +301,7 @@ td img.pic {
 .wikilink { float: right; }
 .wikilink img { max-width: 16px; }
 
-.nameseg { /*border-top: #dadada dashed thin;*/ }
+/* .nameseg { border-top: #dadada dashed thin; } */
 .cityseg { float: left; font-size: 10px; }
 .moreseg { float: right; font-size: 9px; }
 
@@ -310,7 +309,7 @@ td img.pic {
     width: 16px;
     height: 16px;
 }
-.pointFlag:hover { cursor: n-resize; }
+.pointFlag:hover { cursor: ns-resize; }
 .pointAdd {
     padding-left: 3px;
 }
@@ -331,8 +330,8 @@ td img.pic {
     width: 20px;
     height: 20px;
     height: 20px;
-    margin: 0px 10px;
-    padding: 0px;
+    margin: 0 10px;
+    padding: 0;
     background-image: linear-gradient(to bottom, white, #e7e7e7);
 }
 #moreButton {
@@ -407,7 +406,7 @@ td img.pic {
 #donate_form_button {
     background: none;
     border: none;
-    padding-left: 0px;
+    padding-left: 0;
     margin-top: 5px;
     cursor: pointer;
     float: left;
@@ -419,7 +418,7 @@ td img.pic {
 
 .plain_text_button {
     font-size: small;
-    padding: 0px;
+    padding: 0;
     border: none;
     background: none;
     cursor: pointer;
