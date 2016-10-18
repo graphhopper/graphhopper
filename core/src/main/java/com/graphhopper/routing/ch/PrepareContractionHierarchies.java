@@ -21,9 +21,12 @@ import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AbstractWeighting;
+import com.graphhopper.routing.weighting.BeelineWeightApproximator;
+import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
+import static com.graphhopper.util.Parameters.Algorithms.ASTAR;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,7 +83,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int periodicUpdatesPercentage = 20;
     private int lastNodesLazyUpdatePercentage = 10;
     private int neighborUpdatePercentage = 20;
-    private int initialCollectionSize = 5000;
     private double nodesContractedPercentage = 100;
     private double logMessagesPercentage = 20;
     private double dijkstraTime;
@@ -171,15 +173,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         this.nodesContractedPercentage = nodesContracted;
         return this;
-    }
-
-    /**
-     * While creating an algorithm out of this preparation class 10 000 nodes are assumed which can
-     * be too high for your mobile application. E.g. A 500km query only traverses roughly 2000
-     * nodes.
-     */
-    public void setInitialCollectionSize(int initialCollectionSize) {
-        this.initialCollectionSize = initialCollectionSize;
     }
 
     @Override
@@ -641,7 +634,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
         AbstractBidirAlgo algo;
         if (ASTAR_BI.equals(opts.getAlgorithm())) {
-            algo = createAStarBidirection(graph);
+            AStarBidirection tmpAlgo = createAStarBidirection(graph);
+            tmpAlgo.setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
+            algo = tmpAlgo;
+
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
             algo = createDijkstraBidirection(graph);
         } else {
@@ -655,11 +651,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private AStarBidirection createAStarBidirection(final Graph graph) {
         return new AStarBidirection(graph, prepareWeighting, traversalMode) {
-            @Override
-            protected void initCollections(int nodes) {
-                // algorithm with CH does not need that much memory pre allocated
-                super.initCollections(Math.min(initialCollectionSize, nodes));
-            }
 
             @Override
             protected boolean finished() {
@@ -692,11 +683,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private AbstractBidirAlgo createDijkstraBidirection(final Graph graph) {
         return new DijkstraBidirectionRef(graph, prepareWeighting, traversalMode) {
-            @Override
-            protected void initCollections(int nodes) {
-                // algorithm with CH does not need that much memory pre allocated
-                super.initCollections(Math.min(initialCollectionSize, nodes));
-            }
 
             @Override
             public boolean finished() {
