@@ -64,14 +64,14 @@ public class GHBaseServlet extends HttpServlet {
             if (debug)
                 writeResponse(res, callbackName + "(" + json.toString(2) + ")");
             else
-                writeResponse(res, callbackName + "(" + json.toString() + ")");
+                writeResponse(res, callbackName + "(" + json.toString(0) + ")");
 
         } else {
             res.setContentType("application/json");
             if (debug)
                 writeResponse(res, json.toString(2));
             else
-                writeResponse(res, json.toString());
+                writeResponse(res, json.toString(0));
         }
     }
 
@@ -90,7 +90,7 @@ public class GHBaseServlet extends HttpServlet {
             res.setStatus(code);
             res.getWriter().append(json.toString(2));
         } catch (IOException ex) {
-            logger.error("Cannot write error " + ex.getMessage());
+            throw new RuntimeException("Cannot write JSON Error " + code, ex);
         }
     }
 
