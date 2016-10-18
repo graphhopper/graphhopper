@@ -27,12 +27,13 @@ FILE=$2
 function printUsage {
  echo
  echo "./graphhopper.sh import|web <your-osm-file>"
- echo "./graphhopper.sh clean|build|help"
+ echo "./graphhopper.sh clean|build|buildweb|help"
  echo
  echo "  help        this message"
  echo "  import      creates the graphhopper files used for later (faster) starts"
  echo "  web         starts a local server for user access at localhost:8989 and API access at localhost:8989/route"
  echo "  build       creates the graphhopper JAR (without the web module)"
+ echo "  buildweb    creates the graphhopper JAR (with the web module)"
  echo "  clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
  echo "  measurement does performance analysis of the current source version via artificial, random routes (Measurement class)"
  echo "  torture     can be used to test real world routes via feeding graphhopper logs into a graphhopper system (Torture class)"
@@ -148,6 +149,11 @@ elif [ "$ACTION" = "build" ]; then
  prepareEclipse
  exit  
  
+elif [ "$ACTION" = "buildweb" ]; then
+ prepareEclipse
+ execMvn --projects web -DskipTests=true install assembly:single
+ exit
+
 elif [ "$ACTION" = "extract" ]; then
  echo use "./graphhopper.sh extract \"left,bottom,right,top\""
  URL="http://overpass-api.de/api/map?bbox=$2"
