@@ -171,8 +171,9 @@ public class GraphHopperServlet extends GHBaseServlet {
 
             if (ghRsp.hasErrors())
                 writeJsonError(httpRes, SC_BAD_REQUEST, new JSONObject(map));
-            else
+            else {
                 writeJson(httpReq, httpRes, new JSONObject(map));
+            }
         }
     }
 
