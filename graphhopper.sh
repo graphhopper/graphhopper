@@ -127,12 +127,7 @@ function packageCoreJar {
   fi
 }
 
-function prepareEclipse {
- ensureMaven   
- packageCoreJar
- # cp core/target/graphhopper-*-android.jar android/libs/   
-}
-
+ensureMaven
 
 ## now handle actions which do not take an OSM file
 if [ "$ACTION" = "clean" ]; then
@@ -142,15 +137,15 @@ if [ "$ACTION" = "clean" ]; then
  exit
 
 elif [ "$ACTION" = "eclipse" ]; then
- prepareEclipse
+ packageCoreJar
  exit
 
 elif [ "$ACTION" = "build" ]; then
- prepareEclipse
+ packageCoreJar
  exit  
  
 elif [ "$ACTION" = "buildweb" ]; then
- prepareEclipse
+ packageCoreJar
  execMvn --projects web -DskipTests=true install assembly:single
  exit
 
@@ -162,8 +157,8 @@ elif [ "$ACTION" = "extract" ]; then
  exit
  
 elif [ "$ACTION" = "android" ]; then
- prepareEclipse
- "$MAVEN_HOME/bin/mvn" -P include-android --projects android/app install android:deploy android:run
+ packageCoreJar
+ execMvn -P include-android --projects android/app install android:deploy android:run
  exit
 fi
 
@@ -219,9 +214,7 @@ if [ "$JAVA_OPTS" = "" ]; then
   JAVA_OPTS="-Xmx1000m -Xms1000m -server"
 fi
 
-
 ensureOsmXml
-ensureMaven
 packageCoreJar
 
 echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
@@ -232,7 +225,7 @@ if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
     JETTY_PORT=8989
   fi
   WEB_JAR="$GH_HOME/web/target/graphhopper-web-$VERSION-with-dep.jar"
-  if [ ! -s "$WEB_JAR" ]; then         
+  if [ ! -s "$WEB_JAR" ]; then
     execMvn --projects web -DskipTests=true install assembly:single
   fi
 
@@ -263,7 +256,7 @@ elif [ "$ACTION" = "torture" ]; then
 
 
 elif [ "$ACTION" = "miniui" ]; then
- "$MAVEN_HOME/bin/mvn" --projects tools -DskipTests clean install assembly:single
+ execMvn --projects tools -DskipTests clean install assembly:single
  JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI datareader.file="$OSM_FILE" config=$CONFIG \
               graph.location="$GRAPH"
@@ -292,7 +285,7 @@ elif [ "$ACTION" = "measurement" ]; then
   
  if [ "$last_commits" = "" ]; then
    # use current version
-   "$MAVEN_HOME/bin/mvn" --projects tools -DskipTests clean install assembly:single
+   execMvn --projects tools -DskipTests clean install assembly:single
    startMeasurement
    exit
  fi
@@ -305,7 +298,7 @@ elif [ "$ACTION" = "measurement" ]; then
    M_FILE_NAME="measurement$M_FILE_NAME.properties"
    echo -e "\nusing commit $commit and $M_FILE_NAME"
    
-   "$MAVEN_HOME/bin/mvn" --projects tools -DskipTests clean install assembly:single
+   execMvn --projects tools -DskipTests clean install assembly:single
    startMeasurement
    echo -e "\nmeasurement.commit=$commit\n" >> "$M_FILE_NAME"
  done
