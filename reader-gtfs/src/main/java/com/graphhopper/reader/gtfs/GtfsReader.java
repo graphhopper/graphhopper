@@ -122,7 +122,7 @@ class GtfsReader implements DataReader {
 								stops.get(orderedStop),
 								distance,
 								false);
-						edge.setName(pattern.name);
+						edge.setName(getRouteName(feed, pattern));
 						edges.put(edge.getEdge(), AbstractPatternHopEdge.createHopEdge(departureTimeXTravelTime.get(y-1)));
 						j++;
 					}
@@ -157,6 +157,11 @@ class GtfsReader implements DataReader {
 		LOGGER.info("Created " + j + " edges from GTFS trip hops and transfers.");
         LOGGER.info("Created " + nElementaryConnections + " elementary connections.");
     }
+
+	private String getRouteName(GTFSFeed feed, Pattern pattern) {
+		Route route = feed.routes.get(pattern.route_id);
+		return route.route_long_name != null ? route.route_long_name : route.route_short_name;
+	}
 
 	private void insert(int time, List<SortedMap<Integer, Integer>> departureTimeXTravelTime, Iterable<StopTime> stopTimes) throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes {
         StopTime prev = null;
