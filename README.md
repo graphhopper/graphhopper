@@ -26,6 +26,7 @@ Java 8 and Maven >=3.3 are required. For the 'core' module Java 7 is sufficient.
 Then you need to import the area you want to do map-matching on:
 
 ```bash
+git checkout [stable-branch] # optional
 ./map-matching.sh action=import datasource=./some-dir/osm-file.pbf vehicle=car
 ```
 
