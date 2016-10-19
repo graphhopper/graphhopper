@@ -111,7 +111,7 @@ with this maven dependency:
     <groupId>com.graphhopper</groupId>
     <artifactId>map-matching</artifactId>
     <!-- or 0.9-SNAPSHOT for the unstable -->
-    <version>0.8.0</version>
+    <version>0.8.2</version>
 </dependency>
 ```
 
