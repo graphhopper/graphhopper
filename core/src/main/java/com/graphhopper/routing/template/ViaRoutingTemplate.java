@@ -65,7 +65,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         queryResults = new ArrayList<>(points.size());
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);
-            QueryResult res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
+            QueryResult res = locationIndex.findBestMatch(point.lat, point.lon, edgeFilter, "Laufamholzstraße, 90482, Nürnberg, Deutschland");
+            //QueryResult res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
             if (!res.isValid())
                 ghResponse.addError(new PointNotFoundException("Cannot find point " + placeIndex + ": " + point, placeIndex));
 

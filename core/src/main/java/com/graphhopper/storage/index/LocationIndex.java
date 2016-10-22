@@ -65,6 +65,13 @@ public interface LocationIndex extends Storable<LocationIndex> {
     QueryResult findClosest(double lat, double lon, EdgeFilter edgeFilter);
 
     /**
+     * Modified version of {@link LocationIndex#findClosest(double, double, EdgeFilter)}, that adds
+     * a pointHint to the method that influences the results using LevensteinDistance of the EdgeName
+     * to the pointHint.
+     */
+    QueryResult findBestMatch(double lat, double lon, EdgeFilter edgeFilter, String pointHint);
+
+    /**
      * @param approxDist false if initialization and querying should be faster but less precise.
      */
     LocationIndex setApproximation(boolean approxDist);

@@ -187,6 +187,30 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void testPointHint() {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/Laufamholzstraße.osm.xml").
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car"));
+        tmpHopper.importOrLoad();
+
+        GHRequest req = new GHRequest(49.46553,11.154669, 49.465244,11.152577).
+                setVehicle("car").setWeighting("fastest");
+        GHResponse rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+
+        assertEquals(1, rsp.getAll().size());
+
+        GHPoint snappedPoint = rsp.getBest().getWaypoints().toGHPoint(0);
+        // Without BestMatch
+        // 49.46550242318655,11.154497569843985
+        // With BestMatch
+        // 49.46568563655998,11.15460455050162
+        System.out.println(snappedPoint);
+    }
+
+    @Test
     public void testMonacoVia() {
         GHResponse rsp = hopper.route(new GHRequest().
                 addPoint(new GHPoint(43.727687, 7.418737)).

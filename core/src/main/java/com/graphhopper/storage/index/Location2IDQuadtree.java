@@ -345,6 +345,11 @@ class Location2IDQuadtree implements LocationIndex {
         return res;
     }
 
+    @Override
+    public QueryResult findBestMatch(double lat, double lon, EdgeFilter edgeFilter, String pointHint) {
+        throw new UnsupportedOperationException("Not implemented for"+this.getClass().getSimpleName());
+    }
+
     public void goFurtherHook(int n) {
     }
 

@@ -29,6 +29,7 @@ import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -567,6 +568,95 @@ public class LocationIndexTree implements LocationIndex {
         }
 
         return closestMatch;
+    }
+
+    @Override
+    public QueryResult findBestMatch(final double queryLat, final double queryLon, final EdgeFilter edgeFilter, final String pointHint) {
+        // TODO this is currently more or less a duplicate of the findClosest method
+        if (isClosed())
+            throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
+
+        TIntHashSet allCollectedEntryIds = new TIntHashSet();
+        final QueryResult closestMatch = new QueryResult(queryLat, queryLon);
+        final boolean[] closestMatchIsGoodMatch = {false};
+        for (int iteration = 0; iteration < maxRegionSearch; iteration++) {
+            TIntHashSet storedNetworkEntryIds = new TIntHashSet();
+            boolean earlyFinish = findNetworkEntries(queryLat, queryLon, storedNetworkEntryIds, iteration);
+            storedNetworkEntryIds.removeAll(allCollectedEntryIds);
+            allCollectedEntryIds.addAll(storedNetworkEntryIds);
+
+            // clone storedIds to avoid interference with forEach
+            final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
+            // find nodes from the network entries which are close to 'point'
+            final EdgeExplorer explorer = graph.createEdgeExplorer();
+            storedNetworkEntryIds.forEach(new TIntProcedure() {
+                @Override
+                public boolean execute(int networkEntryNodeId) {
+                    new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter) {
+                        @Override
+                        protected double getQueryDistance() {
+                            return closestMatch.getQueryDistance();
+                        }
+
+                        @Override
+                        protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos) {
+                            boolean isGoodMatch = isGoodMatch(pointHint, edge.getName());
+
+                            if (normedDist < closestMatch.getQueryDistance() && ((isGoodMatch && closestMatchIsGoodMatch[0])||(!isGoodMatch && !closestMatchIsGoodMatch[0]))) {
+                                closestMatchIsGoodMatch[0] = isGoodMatch;
+
+                                closestMatch.setQueryDistance(normedDist);
+                                closestMatch.setClosestNode(node);
+                                closestMatch.setClosestEdge(edge.detach(false));
+                                closestMatch.setWayIndex(wayIndex);
+                                closestMatch.setSnappedPosition(pos);
+                                return true;
+                            } else if(isGoodMatch && !closestMatchIsGoodMatch[0]){
+                                closestMatchIsGoodMatch[0] = true;
+
+                                closestMatch.setQueryDistance(normedDist);
+                                closestMatch.setClosestNode(node);
+                                closestMatch.setClosestEdge(edge.detach(false));
+                                closestMatch.setWayIndex(wayIndex);
+                                closestMatch.setSnappedPosition(pos);
+                                return true;
+                            }
+
+                            return false;
+                        }
+                    }.start(explorer, networkEntryNodeId);
+                    return true;
+                }
+            });
+
+            // do early finish only if something was found (#318)
+            if (earlyFinish && closestMatch.isValid())
+                break;
+        }
+
+        // denormalize distance and calculate snapping point only if closed match was found
+        if (closestMatch.isValid()) {
+            closestMatch.setQueryDistance(distCalc.calcDenormalizedDist(closestMatch.getQueryDistance()));
+            closestMatch.calcSnappedPoint(distCalc);
+        }
+
+        return closestMatch;
+    }
+
+    // TODO Probably the Best would be to put this method to the edge itself
+    String removeRelation(String edgeName){
+        if(edgeName != null && edgeName.contains(", ")){
+            edgeName = edgeName.substring(0, edgeName.lastIndexOf(','));
+        }
+        return edgeName;
+    }
+
+    boolean isGoodMatch(String pointHint, String edgeName){
+        String streetName = removeRelation(edgeName);
+        int perfectDistance = Math.abs(pointHint.length()-streetName.length());
+        int levDistance = StringUtils.getLevenshteinDistance(pointHint, streetName);
+        // TODO: Maybe we should match 5% diff as good or something like that?
+        return levDistance <= perfectDistance;
     }
 
     // make entries static as otherwise we get an additional reference to this class (memory waste)
