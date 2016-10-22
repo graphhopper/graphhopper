@@ -208,6 +208,8 @@ public class GraphHopperIT {
         // With BestMatch
         // 49.46568563655998,11.15460455050162
         System.out.println(snappedPoint);
+        assertEquals(49.46568, snappedPoint.getLat(), .00001);
+        assertEquals(11.15460, snappedPoint.getLon(), .00001);
     }
 
     @Test
