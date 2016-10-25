@@ -20,6 +20,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 public final class GraphHopperGtfs extends GraphHopper {
 
     public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliestDepartureTime";
+    public static final String DEFAULT_MINIMUM_TRANSFER_TIME_HINT = "defaultMinimumTransferTime";
 
     public GraphHopperGtfs() {
         super();

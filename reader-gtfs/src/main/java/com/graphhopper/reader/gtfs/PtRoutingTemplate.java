@@ -34,18 +34,22 @@ class PtRoutingTemplate implements RoutingTemplate {
 
 	@Override
 	public List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder) {
-		if (points.size() < 2)
-			throw new IllegalArgumentException("At least 2 points have to be specified, but was:" + points.size());
+		if (points.size() != 2)
+			throw new IllegalArgumentException("Exactly 2 points have to be specified, but was:" + points.size());
 
-		EdgeFilter edgeFilter = new PtPositionLookupEdgeFilter(gtfsStorage);
-		for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
-			GHPoint point = points.get(placeIndex);
-			QueryResult res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
-			if (!res.isValid())
-				ghResponse.addError(new CannotFindPointException("Cannot find point " + placeIndex + ": " + point, placeIndex));
+		EdgeFilter enterFilter = new PtEnterPositionLookupEdgeFilter(gtfsStorage);
+		EdgeFilter exitFilter = new PtExitPositionLookupEdgeFilter(gtfsStorage);
 
-			snappedWaypoints.add(res);
-		}
+		GHPoint enter = points.get(0);
+		QueryResult res = locationIndex.findClosest(enter.lat, enter.lon, enterFilter);
+		if (!res.isValid())
+			ghResponse.addError(new CannotFindPointException("Cannot find entry point: " + enter, 0));
+		snappedWaypoints.add(res);
+		GHPoint exit = points.get(1);
+		res = locationIndex.findClosest(exit.lat, exit.lon, exitFilter);
+		if (!res.isValid())
+			ghResponse.addError(new CannotFindPointException("Cannot find exit point: " + exit, 0));
+		snappedWaypoints.add(res);
 		return snappedWaypoints;
 	}
 
