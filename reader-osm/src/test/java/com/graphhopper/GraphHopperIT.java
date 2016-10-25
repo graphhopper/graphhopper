@@ -27,6 +27,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.junit.*;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -197,19 +198,19 @@ public class GraphHopperIT {
 
         GHRequest req = new GHRequest(49.46553,11.154669, 49.465244,11.152577).
                 setVehicle("car").setWeighting("fastest");
+        req.setPointHints(new ArrayList<>(Arrays.asList("Laufamholzstraße, 90482, Nürnberg, Deutschland", "")));
         GHResponse rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-
-        assertEquals(1, rsp.getAll().size());
-
         GHPoint snappedPoint = rsp.getBest().getWaypoints().toGHPoint(0);
-        // Without BestMatch
-        // 49.46550242318655,11.154497569843985
-        // With BestMatch
-        // 49.46568563655998,11.15460455050162
-        System.out.println(snappedPoint);
         assertEquals(49.46568, snappedPoint.getLat(), .00001);
         assertEquals(11.15460, snappedPoint.getLon(), .00001);
+
+        req.setPointHints(new ArrayList<>(Arrays.asList("", "")));
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        snappedPoint = rsp.getBest().getWaypoints().toGHPoint(0);
+        assertNotEquals(49.46568, snappedPoint.getLat(), .00001);
+        assertNotEquals(11.15460, snappedPoint.getLon(), .00001);
     }
 
     @Test

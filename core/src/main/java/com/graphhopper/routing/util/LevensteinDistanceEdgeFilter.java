@@ -37,6 +37,11 @@ public class LevensteinDistanceEdgeFilter extends NameSimilarityEdgeFilter{
             return false;
         }
 
+        // Don't check if PointHint is empty anyway
+        if(soughtName.isEmpty()){
+            return true;
+        }
+
         String name = iter.getName();
         name = removeRelation(name);
         name = prepareName(name);
