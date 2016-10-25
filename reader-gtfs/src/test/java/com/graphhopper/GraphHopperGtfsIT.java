@@ -111,11 +111,7 @@ public class GraphHopperGtfsIT {
         );
 
         GHResponse route = graphHopper.route(ghRequest);
-        System.out.println(route);
-        System.out.println(route.getBest());
-        System.out.println(route.getBest().getDebugInfo());
-
-        Assert.assertTrue(route.hasErrors());
+        Assert.assertTrue(route.getAll().isEmpty());
     }
 
 }

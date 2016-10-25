@@ -97,25 +97,27 @@ class PtRoutingTemplate implements RoutingTemplate {
 	@Override
 	public boolean isReady(PathMerger pathMerger, Translation tr) {
 		for (Path path : paths) {
-			PathWrapper wrappedPath = new PathWrapper();
-			PointList waypoints = new PointList(snappedWaypoints.size(), true);
-			for (QueryResult qr : snappedWaypoints) {
-				waypoints.add(qr.getSnappedPoint());
+			if (path.isFound()) {
+				PathWrapper wrappedPath = new PathWrapper();
+				PointList waypoints = new PointList(snappedWaypoints.size(), true);
+				for (QueryResult qr : snappedWaypoints) {
+					waypoints.add(qr.getSnappedPoint());
+				}
+				wrappedPath.setWaypoints(waypoints);
+				InstructionList instructions = new InstructionList(tr);
+				fillInstructions(path, instructions);
+				wrappedPath.setInstructions(instructions);
+				wrappedPath.setDescription(path.getDescription());
+				PointList points = new PointList();
+				for (Instruction instruction : instructions) {
+					points.add(instruction.getPoints());
+				}
+				wrappedPath.setPoints(points);
+				wrappedPath.setRouteWeight(path.getWeight());
+				wrappedPath.setDistance(path.getDistance());
+				wrappedPath.setTime(path.getTime());
+				ghResponse.add(wrappedPath);
 			}
-			wrappedPath.setWaypoints(waypoints);
-			InstructionList instructions = new InstructionList(tr);
-			fillInstructions(path, instructions);
-			wrappedPath.setInstructions(instructions);
-			wrappedPath.setDescription(path.getDescription());
-			PointList points = new PointList();
-			for (Instruction instruction : instructions) {
-				points.add(instruction.getPoints());
-			}
-			wrappedPath.setPoints(points);
-			wrappedPath.setRouteWeight(path.getWeight());
-			wrappedPath.setDistance(path.getDistance());
-			wrappedPath.setTime(path.getTime());
-			ghResponse.add(wrappedPath);
 		}
 		return true;
 	}
@@ -126,9 +128,11 @@ class PtRoutingTemplate implements RoutingTemplate {
 		for (EdgeIteratorState edge : edges) {
 			outInstructions.add(new Instruction(0, "Kante", new InstructionAnnotation(0, edge.getName()), edge.fetchWayGeometry(1)));
 		}
-		PointList end = new PointList();
-		end.add(points, points.size()-1);
-		outInstructions.add(new Instruction(0, "Angekommen", new InstructionAnnotation(0, "Vermutlich am Ziel"), end));
+		if (!points.isEmpty()) {
+			PointList end = new PointList();
+			end.add(points, points.size()-1);
+			outInstructions.add(new Instruction(0, "Angekommen", new InstructionAnnotation(0, "Vermutlich am Ziel"), end));
+		}
 	}
 
 	@Override
