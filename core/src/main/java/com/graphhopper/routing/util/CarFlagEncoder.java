@@ -34,6 +34,9 @@ import java.util.*;
 public class CarFlagEncoder extends AbstractFlagEncoder {
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<String, Integer>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<String>();
+
+    // This value determines the maximal possible on roads with bad surfaces
+    protected int badSurfaceSpeed;
     /**
      * A map which associates string to speed. Get some impression:
      * http://www.itoworld.com/map/124#fullscreen
@@ -51,6 +54,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 properties.getBool("turn_costs", false) ? 1 : 0);
         this.properties = properties;
         this.setBlockFords(properties.getBool("block_fords", true));
+        this.setBlockByDefault(properties.getBool("block_barriers", true));        
     }
 
     public CarFlagEncoder(String propertiesStr) {
@@ -88,9 +92,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
         trackTypeSpeedMap.put("grade1", 20); // paved
         trackTypeSpeedMap.put("grade2", 15); // now unpaved - gravel mixed with ...
-        trackTypeSpeedMap.put("grade3", 10); // ... hard and soft materials
-        trackTypeSpeedMap.put("grade4", 5); // ... some hard or compressed materials
-        trackTypeSpeedMap.put("grade5", 5); // ... no hard materials. soil/sand/grass
+        trackTypeSpeedMap.put("grade3", 10); // ... hard and soft materials        
 
         badSurfaceSpeedMap.add("cobblestone");
         badSurfaceSpeedMap.add("grass_paver");
@@ -100,6 +102,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         badSurfaceSpeedMap.add("dirt");
         badSurfaceSpeedMap.add("ground");
         badSurfaceSpeedMap.add("grass");
+        badSurfaceSpeedMap.add("unpaved");
+        badSurfaceSpeedMap.add("compacted");
+
+        // limit speed on bad surfaces to 30 km/h
+        badSurfaceSpeed = 30;
 
         maxPossibleSpeed = 140;
 
@@ -230,9 +237,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             double speed = getSpeed(way);
             speed = applyMaxSpeed(way, speed);
 
-            // limit speed to max 30 km/h if bad surface
-            if (speed > 30 && way.hasTag("surface", badSurfaceSpeedMap))
-                speed = 30;
+            speed = applyBadSurfaceSpeed(way, speed);
 
             flags = setSpeed(flags, speed);
 
@@ -311,6 +316,17 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             return "destinations: " + str;
         else
             return "destination: " + str;
+    }
+    /**
+     * @param way:   needed to retrieve tags
+     * @param speed: speed guessed e.g. from the road type or other tags
+     * @return The assumed speed
+     */
+    protected double applyBadSurfaceSpeed(ReaderWay way, double speed) {
+        // limit speed if bad surface
+        if (badSurfaceSpeed > 0 && speed > badSurfaceSpeed && way.hasTag("surface", badSurfaceSpeedMap))
+            speed = badSurfaceSpeed;
+        return speed;
     }
 
     @Override

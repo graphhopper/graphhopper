@@ -66,3 +66,4 @@ web.refresh_button=새로고침
 web.server_status=상태
 web.zoom_in=확대
 web.zoom_out=축소
+web.drag_to_reorder=

@@ -47,7 +47,12 @@ public class HelperTest {
 
     @Test
     public void testCountBitValue() throws Exception {
-        assertEquals(2, Helper.countBitValue(4));
+        assertEquals(1, Helper.countBitValue(1));
+        assertEquals(2, Helper.countBitValue(2));
+        assertEquals(2, Helper.countBitValue(3));
+        assertEquals(3, Helper.countBitValue(4));
+        assertEquals(3, Helper.countBitValue(7));
+        assertEquals(4, Helper.countBitValue(8));
         assertEquals(5, Helper.countBitValue(20));
     }
 

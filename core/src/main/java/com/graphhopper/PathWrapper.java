@@ -138,8 +138,8 @@ public class PathWrapper {
     }
 
     public PathWrapper setAscend(double ascend) {
-        if (ascend < 0)
-            throw new IllegalArgumentException("ascend has to be strictly positive");
+        if (ascend < 0 || Double.isNaN(ascend))
+            throw new IllegalStateException("ascend has to be positive but was " + ascend);
 
         this.ascend = ascend;
         return this;
@@ -156,8 +156,8 @@ public class PathWrapper {
     }
 
     public PathWrapper setDescend(double descend) {
-        if (descend < 0)
-            throw new IllegalArgumentException("descend has to be strictly positive");
+        if (descend < 0 || Double.isNaN(descend))
+            throw new IllegalStateException("descend has to be positive but was " + descend);
 
         this.descend = descend;
         return this;

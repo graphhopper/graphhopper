@@ -52,9 +52,9 @@ public class SimpleRouteSerializer implements RouteSerializer {
 
         if (rsp.hasErrors()) {
             json.put("message", getMessage(rsp.getErrors().get(0)));
-            List<Map<String, String>> errorHintList = new ArrayList<Map<String, String>>();
+            List<Map<String, Object>> errorHintList = new ArrayList<>();
             for (Throwable t : rsp.getErrors()) {
-                Map<String, String> map = new HashMap<String, String>();
+                Map<String, Object> map = new HashMap<>();
                 map.put("message", getMessage(t));
                 map.put("details", t.getClass().getName());
                 if (t instanceof GHException) {

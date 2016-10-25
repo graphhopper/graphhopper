@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TimeDependentWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -45,8 +44,8 @@ public class Dijkstra extends AbstractTimeDependentRoutingAlgorithm {
     private int visitedNodes;
     private int to = -1;
 
-    public Dijkstra(Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode) {
-        super(graph, encoder, weighting, tMode);
+    public Dijkstra(Graph graph, Weighting weighting, TraversalMode tMode) {
+        super(graph, weighting, tMode);
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
         initCollections(size);
     }
@@ -133,7 +132,7 @@ public class Dijkstra extends AbstractTimeDependentRoutingAlgorithm {
         if (currEdge == null || !finished())
             return createEmptyPath();
 
-        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setWeighting(weighting).setSPTEntry(currEdge).extract();
+        return new Path(graph, weighting).setWeight(currEdge.weight).setSPTEntry(currEdge).extract();
     }
 
     @Override
@@ -141,7 +140,7 @@ public class Dijkstra extends AbstractTimeDependentRoutingAlgorithm {
         if (currEdge == null || !finished())
             return createEmptyPath();
 
-        return new Path(graph, flagEncoder).setWeight(currEdge.weight).setWeighting(weighting).setSPTEntry(currEdge).setEarliestDepartureTime(earliestDepartureTime).extract();
+        return new Path(graph, weighting).setWeight(currEdge.weight).setSPTEntry(currEdge).setEarliestDepartureTime(earliestDepartureTime).extract();
     }
 
     @Override

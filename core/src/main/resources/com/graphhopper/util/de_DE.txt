@@ -66,3 +66,4 @@ web.refresh_button=Lade Seite neu
 web.server_status=Status
 web.zoom_in=Vergrössern
 web.zoom_out=Verkleinern
+web.drag_to_reorder=Zum Ändern der Reihenfolge ziehen

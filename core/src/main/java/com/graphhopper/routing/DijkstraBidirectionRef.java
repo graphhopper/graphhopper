@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -47,8 +46,8 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
     private PriorityQueue<SPTEntry> openSetTo;
     private boolean updateBestPath = true;
 
-    public DijkstraBidirectionRef(Graph graph, FlagEncoder encoder, Weighting weighting, TraversalMode tMode) {
-        super(graph, encoder, weighting, tMode);
+    public DijkstraBidirectionRef(Graph graph, Weighting weighting, TraversalMode tMode) {
+        super(graph, weighting, tMode);
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
         initCollections(size);
     }
@@ -101,7 +100,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
 
     @Override
     protected Path createAndInitPath() {
-        bestPath = new PathBidirRef(graph, flagEncoder);
+        bestPath = new PathBidirRef(graph, weighting);
         return bestPath;
     }
 

@@ -29,6 +29,8 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import static com.graphhopper.util.Helper.nf;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory
@@ -587,7 +589,12 @@ class BaseGraph implements Graph {
         GHBitSet toRemoveSet = new GHBitSetImpl(removeNodeCount);
         removedNodes.copyTo(toRemoveSet);
 
-        EdgeExplorer delExplorer = createEdgeExplorer(EdgeFilter.ALL_EDGES);
+        Logger logger = LoggerFactory.getLogger(getClass());
+        if (removeNodeCount > getNodes() / 2.0)
+            logger.warn("More than a half of the network should be removed!? "
+                    + "Nodes:" + getNodes() + ", remove:" + removeNodeCount);
+
+        EdgeExplorer delExplorer = createEdgeExplorer();
         // create map of old node ids pointing to new ids
         for (int removeNode = removedNodes.next(0);
              removeNode >= 0;
@@ -699,9 +706,9 @@ class BaseGraph implements Graph {
         // we do not remove the invalid edges => edgeCount stays the same!
         nodeCount -= removeNodeCount;
 
-        EdgeExplorer explorer = createEdgeExplorer();
         // health check
         if (isTestingEnabled()) {
+            EdgeExplorer explorer = createEdgeExplorer();
             iter = getAllEdges();
             while (iter.next()) {
                 int base = iter.getBaseNode();

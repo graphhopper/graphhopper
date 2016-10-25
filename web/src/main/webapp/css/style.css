@@ -1,8 +1,7 @@
 body {
-    color: #000;
     font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
     line-height: 1.4;
-    color: #111111;
+    color: #111;
     background-color: white;
     margin: 0;
     min-width: 700px;
@@ -18,7 +17,7 @@ body {
     /*padding-right: 15px; */
 }
 
-#info {    
+#info {
     margin-top: 10px;
     display: none;
     padding: 5px;
@@ -28,7 +27,7 @@ body {
     padding-right: 5px;
 }
 
-.route_results {    
+.route_results {
     max-height: 40%;
 }
 
@@ -186,7 +185,7 @@ body {
 }
 #hosting {
     display: none;
-    /*    float: left;*/
+    /* float: left;*/
     padding-top: 4px;
     padding-bottom: 10px;
     /* color: #666666; */
@@ -221,7 +220,7 @@ tr.instruction {
     border-bottom: #dadada dashed thin;
 }
 
-.instructions {    
+.instructions {
     table-layout:fixed;
     border-collapse: collapse;
     padding-top: 10px;
@@ -302,7 +301,7 @@ td img.pic {
 .wikilink { float: right; }
 .wikilink img { max-width: 16px; }
 
-.nameseg { /*border-top: #dadada dashed thin;*/ }
+/* .nameseg { border-top: #dadada dashed thin; } */
 .cityseg { float: left; font-size: 10px; }
 .moreseg { float: right; font-size: 9px; }
 
@@ -310,7 +309,7 @@ td img.pic {
     width: 16px;
     height: 16px;
 }
-.pointFlag:hover { cursor: n-resize; }
+.pointFlag:hover { cursor: ns-resize; }
 .pointAdd {
     padding-left: 3px;
 }
@@ -321,7 +320,7 @@ td img.pic {
 .pointDelete:hover, .pointAdd:hover { cursor: pointer; }
 .pointDelete:disabled {
     background: red;
-} 
+}
 
 .expandDetails {
     color: gray;
@@ -331,21 +330,26 @@ td img.pic {
     width: 20px;
     height: 20px;
     height: 20px;
-    margin: 0px 10px;
-    padding: 0px;
+    margin: 0 10px;
+    padding: 0;
     background-image: linear-gradient(to bottom, white, #e7e7e7);
 }
 #moreButton {
     background-image: linear-gradient(to bottom, white, #e7e7e7);
 }
 
-.ui-dialog > .ui-widget-header{
-    padding:1em;    
+.ui-dialog {
+  /* Must be > 700, the z-index of .leaflet-popup-pane */
+  z-index: 1000;
+}
+
+.ui-dialog > .ui-widget-header {
+    padding: 1em;
     border: 1px solid black;
 }
 
 .ui-dialog .ui-dialog-content {
-    padding:1em
+    padding: 1em;
 }
 
 .ui-dialog .ui-widget-content {
@@ -367,8 +371,8 @@ td img.pic {
 }
 
 #route_result_tabs {
-    list-style: none; 
-    padding: 0; 
+    list-style: none;
+    padding: 0;
     margin: 0;
 }
 
@@ -392,7 +396,7 @@ td img.pic {
 }
 
 .route_result_tab.current {
-    display: block;    
+    display: block;
 }
 
 #donate_form {
@@ -402,7 +406,7 @@ td img.pic {
 #donate_form_button {
     background: none;
     border: none;
-    padding-left: 0px;
+    padding-left: 0;
     margin-top: 5px;
     cursor: pointer;
     float: left;
@@ -414,7 +418,7 @@ td img.pic {
 
 .plain_text_button {
     font-size: small;
-    padding: 0px;
+    padding: 0;
     border: none;
     background: none;
     cursor: pointer;

@@ -24,7 +24,9 @@ import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.PointList;
@@ -34,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.util.Parameters.Routing.PASS_THROUGH;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * Implementation of a route with no via points but multiple path lists ('alternatives').
@@ -43,6 +46,14 @@ import static com.graphhopper.util.Parameters.Routing.PASS_THROUGH;
 final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
     public AlternativeRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex) {
         super(ghRequest, ghRsp, locationIndex);
+    }
+
+    @Override
+    public List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder) {
+        if (points.size() > 2)
+            throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + points.size() + " points");
+        
+        return super.lookup(points, encoder);
     }
 
     @Override

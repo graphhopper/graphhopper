@@ -66,3 +66,4 @@ web.refresh_button=Обновить страницу
 web.server_status=Статус сервера
 web.zoom_in=Приблизить 
 web.zoom_out=Отдалить
+web.drag_to_reorder=Перетащите путевую точку

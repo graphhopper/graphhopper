@@ -1,42 +1,79 @@
 # GraphHopper Documentation
 
-## Users
+## Getting Started
 
- * [Quickstart](./web/quickstart.md): HowTo for users.
- * [Read Overview](https://graphhopper.com/#overview): Summary of the product GraphHopper. 
+Try out our live demo called [GraphHopper Maps](https://graphhopper.com/maps)
+
+ [![GraphHopper Maps](https://karussell.files.wordpress.com/2014/12/graphhopper-maps-0-4-preview.png)](https://graphhopper.com/maps)
+
+[The Readme](../README.md#features) lists all features or [this list of slides](https://graphhopper.com/public/slides/).
+
+See [more users of GraphHopper](https://graphhopper.com/#usecases) or [Android apps](./android/index.md#apps) and let us know your application!
+
+## Contact
+
+For all questions regarding the GraphHopper routing engine please use [our forum](https://discuss.graphhopper.com). 
+
+For bugs see our contribute section below.
+
+## User
+
+[The user guide](./web/quickstart.md) is the HowTo for users. Other links:
+
  * [Add GraphHopper Maps to your Browser](./web/open-search.md): Instructions how to setup GraphHopper as the standard search enginge in your browser.
  * [Embed GraphHopper on your website](https://github.com/karussell/graphhopper-embed-form): A small code snippet on how to integrate GraphHopper Maps in your web site like a contact form
 
-## Translators
+## Web
 
-* [Translations](./core/translations.md): Tutorial how to help with the GraphHopper translations or how to setup a new language.
-
-
-## Developers
-
- * [Quickstart](./core/quickstart-from-source.md): Introduction for developers. Explains git checkout, IDE setup and commands for setting up a GraphHopper server.
- * [Android](./android/index.md): Instructions how to setup the demo project for GraphHopper on Android as base for further development (i.e. with Android Studio).
- * [Windows](./core/windows-setup.md): Documentation about how to get an GraphHopper instance running on windows (cygwin).
- * [Set up and run GraphHopper in Eclipse](./core/eclipse-setup.md): Detailed instructions how to setup GraphHopper in eclipse with maven.
- * [iOS](https://github.com/graphhopper/graphhopper-ios/): Link to the GraphHopper-iOS github repository.
-
-### Core
-
- * [Simple routing](./core/routing.md): Tutorial how to integrate GraphHopper in your Java application (or pick any JVM language)
- * [Create custom weighting](./core/weighting.md): Documentation about how to create a custom weighting class to influence the track calculation.
- * [Elevation](./core/elevation.md): Documentation how to enable the usage of elevation for the output of the track.
- * [Slides](https://graphhopper.com/public/slides/): Small presentations about how GraphHopper is working.
-
-### Web
+The web module provides a web API for other programming languages as well as starts a simple user interface called GraphHopper Maps
 
  * [Routing API](./web/api-doc.md): Documentation of the Web API to communicate with any GraphHopper server via http.
- * [Deployment Guide](./core/deploy.md): Details about deploying GraphHopper.
+ * [Deployment Guide](./core/deploy.md): Details about deploying GraphHopper
+ * [Postgis query script](../core/files/postgis)
+ * There are official API clients in [Java](https://github.com/graphhopper/directions-api-java-client/) and [JavaScript](https://github.com/graphhopper/directions-api-js-client).
 
-### Advanced Topics
+### Configuration
+
+You can configure several aspects either programmatically or just via the [config.properties](../config-example.properties).
+
+The elevation configuration is separately documented [here](./core/elevation.md).
+
+## Developer
+
+[The quickstart](./core/quickstart-from-source.md) is an introduction for developers. Explains git checkout, IDE setup and commands for setting up a GraphHopper server.
+
+Find all changes in previous and current versions in the [changelogs](../core/files/changelogs.txt).
+
+### Contribute
+
+Read [here](../.github/CONTRIBUTING.md) on how to contribute as a developer and translator.
+
+### Technical
+
+Various topics are explained in more detail separately:
 
  * [Technical overview](./core/technical.md): Technical details about how GraphHopper its calculations are working.
- * [Contraction Hierarchies](./core/ch.md): Details about speeding up the track calculations by [Contraction Hierarchies](http://en.wikipedia.org/wiki/Contraction_hierarchies).
- * [Low level API](./core/low-level-api.md): Instructions how to use GraphHopper as a Java library.
- * [Create new FlagEncoder](./core/create-new-flagencoder.md): Documentation to create new routing profiles to influence which ways to favor and how the track-time is calculated.
+ * [Simple routing](./core/routing.md): Tutorial how to integrate GraphHopper in your Java application (or pick any JVM language)
+ * [Create custom weighting](./core/weighting.md): Documentation about how to create a custom weighting class to influence the track calculation.
  * [LocationIndex](./core/location-index.md): Documentation about how to get the location index for getting i.e. the nearest edge. 
- * [Changelog](https://github.com/graphhopper/graphhopper/blob/master/core/files/changelog.txt): Latest changes.
+ * [Low level API](./core/low-level-api.md): Instructions how to use GraphHopper as a Java library.
+ * [Contraction Hierarchies](./core/ch.md): Details about speeding up the track calculations by [Contraction Hierarchies](http://en.wikipedia.org/wiki/Contraction_hierarchies).
+ * [Create new FlagEncoder](./core/create-new-flagencoder.md): Documentation to create new routing profiles to influence which ways to favor and how the track-time is calculated.
+
+### Android
+
+ * [Android](./android/index.md): Instructions how to setup the demo project for GraphHopper on Android
+ * [Android Studio Setup](./android/android-studio-setup.md)
+
+### iOS
+
+Instructions on how to setup the GraphHopper-iOS clone for iOS development are [here](https://github.com/graphhopper/graphhopper-ios/)
+including a sample application.
+
+### Windows
+
+Documentation about how to get an GraphHopper instance running on windows via cygwin is available [here](./core/windows-setup.md).
+
+### Eclipse
+
+[Set up GraphHopper in Eclipse](./core/eclipse-setup.md) with maven and [tomcat](./core/eclipse-tomcat-setup.md).

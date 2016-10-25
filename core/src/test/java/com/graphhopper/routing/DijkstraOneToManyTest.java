@@ -89,7 +89,7 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
         return new RoutingAlgorithmFactory() {
             @Override
             public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-                return new DijkstraOneToMany(g, opts.getFlagEncoder(), opts.getWeighting(), traversalMode);
+                return new DijkstraOneToMany(g, opts.getWeighting(), traversalMode);
             }
         };
     }

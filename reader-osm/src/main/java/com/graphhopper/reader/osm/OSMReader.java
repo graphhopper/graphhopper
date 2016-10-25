@@ -150,8 +150,9 @@ public class OSMReader implements DataReader {
         writeOsm2Graph(osmFile);
         sw2.stop();
 
-        LOGGER.info("time(pass1): " + (int) sw1.getSeconds() + " pass2: " + (int) sw2.getSeconds() + " total:"
-                + ((int) (sw1.getSeconds() + sw2.getSeconds())));
+        LOGGER.info("time pass1:" + (int) sw1.getSeconds() + "s, "
+                + "pass2:" + (int) sw2.getSeconds() + "s, "
+                + "total:" + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
     }
 
     /**

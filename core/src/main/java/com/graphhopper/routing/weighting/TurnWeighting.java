@@ -43,12 +43,11 @@ public class TurnWeighting implements Weighting {
     /**
      * @param turnCostExt the turn cost storage to be used
      */
-    public TurnWeighting(Weighting superWeighting, TurnCostEncoder encoder, TurnCostExtension turnCostExt) {
-        this.turnCostEncoder = encoder;
+    public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
+        this.turnCostEncoder = (TurnCostEncoder) superWeighting.getFlagEncoder();
         this.superWeighting = superWeighting;
         this.turnCostExt = turnCostExt;
-        if (encoder == null)
-            throw new IllegalArgumentException("No encoder set to calculate turn weight");
+        
         if (turnCostExt == null)
             throw new RuntimeException("No storage set to calculate turn weight");
     }
@@ -86,6 +85,26 @@ public class TurnWeighting implements Weighting {
         return weight + turnCosts;
     }
 
+    @Override
+    public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        long millis = superWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+        if (prevOrNextEdgeId == EdgeIterator.NO_EDGE)
+            return millis;
+
+        // TODO for now assume turn costs are returned in milliseconds?
+        // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
+        long turnCostsInMillis;
+        if (reverse)
+            turnCostsInMillis = (long) calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId);
+        else
+            turnCostsInMillis = (long) calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getEdge());
+
+        return millis + turnCostsInMillis;
+    }
+
+    /**
+     * This method calculates the turn weight separately.
+     */
     public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
         long turnFlags = turnCostExt.getTurnCostFlags(edgeFrom, nodeVia, edgeTo);
         if (turnCostEncoder.isTurnRestricted(turnFlags))

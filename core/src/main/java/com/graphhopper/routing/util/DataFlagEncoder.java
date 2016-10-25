@@ -63,6 +63,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private final Map<String, Integer> highwayMap = new HashMap<>();
     private final List<String> transportModeList = new ArrayList<>();
     private final Map<String, Integer> transportModeMap = new HashMap<>();
+    private final int transportModeTunnelValue;
+    private final int transportModeBridgeValue;
     private long bit0;
     private EncodedDoubleValue carFwdMaxspeedEncoder;
     private EncodedDoubleValue carBwdMaxspeedEncoder;
@@ -76,18 +78,18 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         maxPossibleSpeed = 140;
         //
-        // TODO restrictions (forestry, agricultural, emergency, destination, private, delivery, customers)
+        // TODO restrictions (agricultural, emergency, destination, private, delivery, customers)
         //
 
         // highway and certain tags like ferry and shuttle_train which can be used here (no logical overlap)
         List<String> highwayList = Arrays.asList(
                 /* reserve index=0 for unset roads (not accessible) */
                 "_default",
-                "motorway", "motorway_link",
+                "motorway", "motorway_link", "motorroad",
                 "trunk", "trunk_link",
                 "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
                 "unclassified", "residential", "living_street", "service", "road", "track",
-                "cycleway", "steps", "path", "footway", "pedestrian",
+                "forestry", "cycleway", "steps", "path", "footway", "pedestrian",
                 "ferry", "shuttle_train");
         int counter = 0;
         for (String hw : highwayList) {
@@ -101,6 +103,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         for (String tm : transportModeList) {
             transportModeMap.put(tm, counter++);
         }
+        transportModeTunnelValue = transportModeMap.get("tunnel");
+        transportModeBridgeValue = transportModeMap.get("bridge");
 
         List<String> surfaceList = Arrays.asList("_default", "asphalt", "unpaved", "paved", "gravel",
                 "ground", "dirt", "grass", "concrete", "paving_stones", "sand", "compacted", "cobblestone", "mud", "ice");
@@ -147,36 +151,53 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public long acceptWay(ReaderWay way) {
-        return 1;
+        // important to skip unsupported highways, otherwise too many have to be removed after graph creation
+        // and node removal is not yet designed for that
+        if (getHighwayValue(way) == 0)
+            return 0;
+
+        return acceptBit;
+    }
+
+    int getHighwayValue(ReaderWay way) {
+        String highwayValue = way.getTag("highway");
+        Integer hwValue = highwayMap.get(highwayValue);
+        if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
+            hwValue = 0;
+
+        if (hwValue == null) {
+            hwValue = 0;
+            if (way.hasTag("route", ferries)) {
+                String motorcarTag = way.getTag("motorcar");
+                if (motorcarTag == null)
+                    motorcarTag = way.getTag("motor_vehicle");
+
+                if (motorcarTag == null && !way.hasTag("foot") && !way.hasTag("bicycle")
+                        || "yes".equals(motorcarTag))
+                    hwValue = highwayMap.get("ferry");
+            }
+        }
+        return hwValue;
     }
 
     @Override
     public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
+        if (!isAccept(allowed))
+            return 0;
+
         try {
             // HIGHWAY
-            String highwayValue = way.getTag("highway");
-            Integer hwValue = highwayMap.get(highwayValue);
-            if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
-                hwValue = 0;
-
-            if (hwValue == null) {
-                hwValue = 0;
-                if (way.hasTag("route", ferries)) {
-                    String motorcarTag = way.getTag("motorcar");
-                    if (motorcarTag == null)
-                        motorcarTag = way.getTag("motor_vehicle");
-
-                    if (motorcarTag == null && !way.hasTag("foot") && !way.hasTag("bicycle")
-                            || "yes".equals(motorcarTag))
-                        hwValue = highwayMap.get("ferry");
-                }
-            }
-
+            int hwValue = getHighwayValue(way);
             // exclude any routing like if you have car and need to exclude all rails or ships
             if (hwValue == 0)
                 return 0;
 
             long flags = 0;
+            if (isFerry(allowed)) {
+                hwValue = highwayMap.get("ferry");
+            }
+
+            flags = highwayEncoder.setValue(0, hwValue);
 
             // MAXSPEED
             double maxSpeed = parseSpeed(way.getTag("maxspeed"));
@@ -188,15 +209,13 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             if (bwdSpeed < 0 || maxSpeed > 0 && maxSpeed < bwdSpeed)
                 bwdSpeed = maxSpeed;
 
-            // 0 is reserved for default i.e. no maxspeed sign
-            // TODO currently 140 is used for "none" speed limit
+            // 0 is reserved for default i.e. no maxspeed sign (does not imply no speed limit)
+            // TODO and 140 should be used for "none" speed limit on German Autobahn
             if (fwdSpeed > 0)
                 flags = carFwdMaxspeedEncoder.setDoubleValue(flags, fwdSpeed);
 
             if (bwdSpeed > 0)
                 flags = carBwdMaxspeedEncoder.setDoubleValue(flags, bwdSpeed);
-
-            flags = highwayEncoder.setValue(flags, hwValue);
 
             // SURFACE
             String surfaceValue = way.getTag("surface");
@@ -251,16 +270,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     public long reverseFlags(long flags) {
         // see #728 for an explanation
         return flags ^ bit0;
-
-        // old version which does not required isBit0Empty checks when reading:
-        //
-//        flags = super.reverseFlags(flags);
-//
-//        // lower level swapping of speeds
-//        double bwd = carBwdMaxspeedEncoder.getDoubleValue(flags);
-//        flags = carBwdMaxspeedEncoder.setDoubleValue(flags, carFwdMaxspeedEncoder.getDoubleValue(flags));
-//        flags = carFwdMaxspeedEncoder.setDoubleValue(flags, bwd);
-//        return flags;
     }
 
     /**
@@ -314,6 +323,14 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     public int getTransportMode(EdgeIteratorState edge) {
         return (int) transportModeEncoder.getValue(edge.getFlags());
+    }
+
+    public boolean isTransportModeTunnel(EdgeIteratorState edge) {
+        return transportModeEncoder.getValue(edge.getFlags()) == this.transportModeTunnelValue;
+    }
+
+    public boolean isTransportModeBridge(EdgeIteratorState edge) {
+        return transportModeEncoder.getValue(edge.getFlags()) == this.transportModeBridgeValue;
     }
 
     public String getTransportModeAsString(EdgeIteratorState edge) {
@@ -397,12 +414,25 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     @Override
     public long flagsDefault(boolean forward, boolean backward) {
         // just pick car mode to set access values?
-        throw new RuntimeException("do not call flagsDefault");
+        // throw new RuntimeException("do not call flagsDefault");
+        // TODO This is called on each of the encoders so I had to replace the runtime 
+        // exception with something, but I'm not sure this is correct.        
+        return setAccess(0, forward, backward);
     }
 
     @Override
     public long setAccess(long flags, boolean forward, boolean backward) {
-        // TODO in subnetwork we need to remove access for certain profiles or set of roads?
+        // TODO we should interpret access for *any* vehicle
+        // TODO in subnetwork we need to remove access for certain weighting profiles (or set of roads?)
+        boolean isForward = isBit0Empty(flags);
+        if (!isForward) {
+            boolean tmp = forward;
+            forward = backward;
+            backward = tmp;
+        }
+
+        flags = forward ? flags | forwardBit : flags & ~forwardBit;
+        flags = backward ? flags | backwardBit : flags & ~backwardBit;
         return flags;
     }
 
@@ -418,9 +448,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public double getSpeed(long flags) {
-        // TODO fix Path.calcMillis(Path.java:255)
-        // use pluggable weighting.calcMillis but include reverse somehow
-        return 50;
+        throw new UnsupportedOperationException("Calculate speed via more customizable Weighting.calcMillis method");
     }
 
     @Override

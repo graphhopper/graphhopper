@@ -22,7 +22,7 @@ package com.graphhopper.util;
  */
 public class FinishInstruction extends Instruction {
     public FinishInstruction(String name, final double lat, final double lon, final double ele) {
-        super(FINISH, name, InstructionAnnotation.EMPTY, new PointList(2, true) {
+        super(FINISH, name, InstructionAnnotation.EMPTY, new PointList(2, !Double.isNaN(ele)) {
             {
                 add(lat, lon, ele);
             }
@@ -30,7 +30,7 @@ public class FinishInstruction extends Instruction {
     }
 
     public FinishInstruction(final double lat, final double lon, final double ele) {
-        super(FINISH, "", InstructionAnnotation.EMPTY, new PointList(2, true) {
+        super(FINISH, "", InstructionAnnotation.EMPTY, new PointList(2, !Double.isNaN(ele)) {
             {
                 add(lat, lon, ele);
             }
@@ -39,12 +39,12 @@ public class FinishInstruction extends Instruction {
 
     public FinishInstruction(String name, PointAccess pointAccess, int node) {
         this(name, pointAccess.getLatitude(node), pointAccess.getLongitude(node),
-                pointAccess.is3D() ? pointAccess.getElevation(node) : 0);
+                pointAccess.is3D() ? pointAccess.getElevation(node) : Double.NaN);
     }
 
     public FinishInstruction(PointAccess pointAccess, int node) {
         this(pointAccess.getLatitude(node), pointAccess.getLongitude(node),
-                pointAccess.is3D() ? pointAccess.getElevation(node) : 0);
+                pointAccess.is3D() ? pointAccess.getElevation(node) : Double.NaN);
     }
 
     @Override

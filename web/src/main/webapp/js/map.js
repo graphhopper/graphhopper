@@ -9,6 +9,9 @@ var menuIntermediate;
 var menuEnd;
 var elevationControl = null;
 
+// Items added in every contextmenu.
+var defaultContextmenuItems;
+
 // called if window changes or before map is created
 function adjustMapSize() {
     var mapDiv = $("#map");
@@ -29,9 +32,9 @@ function adjustMapSize() {
     // console.log("adjustMapSize " + height + "x" + width);
 
     // reduce info size depending on how heigh the input_header is and reserve space for footer
-    var instructionInfoMaxHeight = height - 60
-            - $("#input_header").height() - $("#footer").height() - $(".route_description").height();
-    var tabHeight = $("#route_result_tabs li").height()
+    var instructionInfoMaxHeight = height - 60 -
+            $("#input_header").height() - $("#footer").height() - $(".route_description").height();
+    var tabHeight = $("#route_result_tabs li").height();
     if (!isNaN(tabHeight))
         instructionInfoMaxHeight -= tabHeight;
     $(".instructions_info").css("max-height", instructionInfoMaxHeight);
@@ -40,46 +43,44 @@ function adjustMapSize() {
     // $("#info").css("height", height - $("#input_header").height() - 100);
 }
 
-function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer) {
+function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selectLayer, useMiles) {
     adjustMapSize();
     // console.log("init map at " + JSON.stringify(bounds));
 
     var defaultLayer = tileLayers.selectLayer(selectLayer);
 
+    defaultContextmenuItems = [{
+        separator: true,
+        index: 10
+    }, {
+        text: translate.tr('show_coords'),
+        callback: function (e) {
+            alert(e.latlng.lat + "," + e.latlng.lng);
+        },
+        index: 11
+    }, {
+        text: translate.tr('center_map'),
+        callback: function (e) {
+            map.panTo(e.latlng);
+        },
+        index: 12
+    }];
+
     // default
     map = L.map('map', {
         layers: [defaultLayer],
         minZoom: 2,
+        // zoomSnap: 0,  // allow fractional zoom levels
         contextmenu: true,
         contextmenuWidth: 150,
-        contextmenuItems: [{
-                separator: true,
-                index: 3,
-                state: ['set_default']
-            }, {
-                text: translate.tr('show_coords'),
-                callback: function (e) {
-                    alert(e.latlng.lat + "," + e.latlng.lng);
-                },
-                index: 4,
-                state: [1, 2, 3]
-            }, {
-                text: translate.tr('center_map'),
-                callback: function (e) {
-                    map.panTo(e.latlng);
-                },
-                index: 5,
-                state: [1, 2, 3]
-            }],
+        contextmenuItems: defaultContextmenuItems,
         zoomControl: false,
         loadingControl: false
     });
 
-
     var _startItem = {
         text: translate.tr('set_start'),
         callback: setStartCoord,
-        disabled: false,
         index: 0
     };
     var _intItem = {
@@ -91,7 +92,6 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
     var _endItem = {
         text: translate.tr('set_end'),
         callback: setEndCoord,
-        disabled: false,
         index: 2
     };
     menuStart = map.contextmenu.insertItem(_startItem, _startItem.index);
@@ -108,16 +108,6 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         zoomControl: zoomControl
     }).addTo(map);
 
-    map.contextmenu.addSet({
-        name: 'markers',
-        state: 2
-    });
-
-    map.contextmenu.addSet({
-        name: 'path',
-        state: 3
-    });
-
     L.control.layers(tileLayers.getAvailableTileLayers()/*, overlays*/).addTo(map);
 
     map.on('baselayerchange', function (a) {
@@ -129,7 +119,9 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         }
     });
 
-    scaleControl = L.control.scale({
+    scaleControl = L.control.scale(useMiles ? {
+        metric: false
+    } : {
         imperial: false
     }).addTo(map);
 
@@ -139,29 +131,30 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
     //if (isProduction())
     //    map.setView(new L.LatLng(0, 0), 2);
 
-    map.attributionControl.setPrefix('');
+    map.attributionControl.setPrefix(false);
 
     var myStyle = {
-        "color": 'black',
-        "weight": 2,
-        "opacity": 0.3
+        color: 'black',
+        weight: 2,
+        opacity: 0.3
     };
     var geoJson = {
-        "type": "Feature",
-        "geometry": {
-            "type": "LineString",
-            "coordinates": [
+        type: "Feature",
+        geometry: {
+            type: "LineString",
+            coordinates: [
                 [bounds.minLon, bounds.minLat],
                 [bounds.maxLon, bounds.minLat],
                 [bounds.maxLon, bounds.maxLat],
                 [bounds.minLon, bounds.maxLat],
-                [bounds.minLon, bounds.minLat]]
+                [bounds.minLon, bounds.minLat]
+            ]
         }
     };
 
     if (bounds.initialized)
         L.geoJson(geoJson, {
-            "style": myStyle
+            style: myStyle
         }).addTo(map);
 
     routingLayer = L.geoJson().addTo(map);
@@ -172,22 +165,16 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
             return feature.properties && feature.properties.style;
         },
         contextmenu: true,
-        contextmenuItems: [{
-                text: translate.tr('route') + ' ',
+        contextmenuItems: defaultContextmenuItems.concat([{
+                text: translate.tr('route'),
                 disabled: true,
-                index: 0,
-                state: 3
+                index: 0
             }, {
                 text: translate.tr('set_intermediate'),
                 callback: setIntermediateCoord,
-                index: 1,
-                state: 3
-            }, {
-                separator: true,
-                index: 2,
-                state: 3
-            }],
-        contextmenuAtiveState: 3
+                index: 1
+            }]),
+        contextmenuInheritItems: false
     };
 }
 
@@ -234,7 +221,9 @@ module.exports.setDisabledForMapsContextMenu = function (entry, value) {
 };
 
 module.exports.fitMapToBounds = function (bounds) {
-    map.fitBounds(bounds);
+    map.fitBounds(bounds, {
+        padding: [42, 42]
+    });
 };
 
 module.exports.removeLayerFromMap = function (layer) {
@@ -288,7 +277,7 @@ module.exports.updateScale = function (useMiles) {
     if (scaleControl === null) {
         return;
     }
-    scaleControl.removeFrom(map);
+    scaleControl.remove();
     var options = useMiles ? {metric: false} : {imperial: false};
     scaleControl = L.control.scale(options).addTo(map);
 };
@@ -322,30 +311,23 @@ module.exports.createMarker = function (index, coord, setToEnd, setToStart, dele
         icon: ((toFrom === FROM) ? iconFrom : ((toFrom === TO) ? iconTo : new L.NumberedDivIcon({number: index}))),
         draggable: true,
         contextmenu: true,
-        contextmenuItems: [{
+        contextmenuItems: defaultContextmenuItems.concat([{
                 text: translate.tr("marker") + ' ' + ((toFrom === FROM) ?
                         translate.tr("start_label") : ((toFrom === TO) ?
                         translate.tr("end_label") : translate.tr("intermediate_label") + ' ' + index)),
                 disabled: true,
-                index: 0,
-                state: 2
+                index: 0
             }, {
                 text: translate.tr((toFrom !== TO) ? "set_end" : "set_start"),
                 callback: (toFrom !== TO) ? setToEnd : setToStart,
-                index: 2,
-                state: 2
+                index: 2
             }, {
                 text: translate.tr("delete_from_route"),
                 callback: deleteCoord,
-                index: 3,
-                state: 2,
-                disabled: (toFrom !== -1 && ghRequest.route.size() === 2) ? true : false // prevent to and from
-            }, {
-                separator: true,
-                index: 4,
-                state: 2
-            }],
-        contextmenuAtiveState: 2
+                disabled: (toFrom !== -1 && ghRequest.route.size() === 2) ? true : false, // prevent to and from
+                index: 3
+            }]),
+        contextmenuInheritItems: false
     }).addTo(routingLayer).bindPopup(((toFrom === FROM) ?
             translate.tr("start_label") : ((toFrom === TO) ?
             translate.tr("end_label") : translate.tr("intermediate_label") + ' ' + index)));

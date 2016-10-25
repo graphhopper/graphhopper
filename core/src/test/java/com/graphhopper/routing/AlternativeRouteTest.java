@@ -107,14 +107,14 @@ public class AlternativeRouteTest {
     public void testCalcAlternatives() throws Exception {
         Weighting weighting = new FastestWeighting(carFE);
         GraphHopperStorage g = createTestGraph(true, em);
-        AlternativeRoute altDijkstra = new AlternativeRoute(g, carFE, weighting, traversalMode);
+        AlternativeRoute altDijkstra = new AlternativeRoute(g, weighting, traversalMode);
         altDijkstra.setMaxShareFactor(0.5);
         altDijkstra.setMaxWeightFactor(2);
         List<AlternativeRoute.AlternativeInfo> pathInfos = altDijkstra.calcAlternatives(5, 4);
         checkAlternatives(pathInfos);
         assertEquals(2, pathInfos.size());
 
-        DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g, carFE, weighting, traversalMode);
+        DijkstraBidirectionRef dijkstra = new DijkstraBidirectionRef(g, weighting, traversalMode);
         Path bestPath = dijkstra.calcPath(5, 4);
 
         Path bestAlt = pathInfos.get(0).getPath();
@@ -136,7 +136,7 @@ public class AlternativeRouteTest {
     public void testCalcAlternatives2() throws Exception {
         Weighting weighting = new FastestWeighting(carFE);
         Graph g = createTestGraph(true, em);
-        AlternativeRoute altDijkstra = new AlternativeRoute(g, carFE, weighting, traversalMode);
+        AlternativeRoute altDijkstra = new AlternativeRoute(g, weighting, traversalMode);
         altDijkstra.setMaxPaths(3);
         altDijkstra.setMaxShareFactor(0.7);
         altDijkstra.setMinPlateauFactor(0.15);
@@ -177,7 +177,7 @@ public class AlternativeRouteTest {
         updateDistancesFor(g, 20, 0.00, -0.01);
 
         Weighting weighting = new FastestWeighting(carFE);
-        AlternativeBidirSearch altDijkstra = new AlternativeBidirSearch(g, carFE, weighting, traversalMode, 1);
+        AlternativeBidirSearch altDijkstra = new AlternativeBidirSearch(g, weighting, traversalMode, 1);
         Path path = altDijkstra.calcPath(1, 20);
         assertFalse(path.isFound());
 

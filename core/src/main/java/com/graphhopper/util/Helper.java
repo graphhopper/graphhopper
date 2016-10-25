@@ -88,11 +88,15 @@ public class Helper {
     }
 
     public static int countBitValue(int maxTurnCosts) {
-        double val = Math.log(maxTurnCosts) / Math.log(2);
-        int intVal = (int) val;
-        if (val == intVal)
-            return intVal;
-        return intVal + 1;
+        if (maxTurnCosts < 0)
+            throw new IllegalArgumentException("maxTurnCosts cannot be negative " + maxTurnCosts);
+
+        int counter = 0;
+        while (maxTurnCosts > 0) {
+            maxTurnCosts >>= 1;
+            counter++;
+        }
+        return counter++;
     }
 
     public static void loadProperties(Map<String, String> map, Reader tmpReader) throws IOException {

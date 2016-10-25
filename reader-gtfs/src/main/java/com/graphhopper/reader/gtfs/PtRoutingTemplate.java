@@ -10,7 +10,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
-import com.graphhopper.util.exceptions.CannotFindPointException;
+import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
@@ -43,12 +43,12 @@ class PtRoutingTemplate implements RoutingTemplate {
 		GHPoint enter = points.get(0);
 		QueryResult res = locationIndex.findClosest(enter.lat, enter.lon, enterFilter);
 		if (!res.isValid())
-			ghResponse.addError(new CannotFindPointException("Cannot find entry point: " + enter, 0));
+			ghResponse.addError(new PointNotFoundException("Cannot find entry point: " + enter, 0));
 		snappedWaypoints.add(res);
 		GHPoint exit = points.get(1);
 		res = locationIndex.findClosest(exit.lat, exit.lon, exitFilter);
 		if (!res.isValid())
-			ghResponse.addError(new CannotFindPointException("Cannot find exit point: " + exit, 0));
+			ghResponse.addError(new PointNotFoundException("Cannot find exit point: " + exit, 0));
 		snappedWaypoints.add(res);
 		return snappedWaypoints;
 	}

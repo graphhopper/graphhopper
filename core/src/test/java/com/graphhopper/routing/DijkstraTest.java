@@ -56,7 +56,7 @@ public class DijkstraTest extends AbstractRoutingAlgorithmTester {
         return new RoutingAlgorithmFactory() {
             @Override
             public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-                return new Dijkstra(g, opts.getFlagEncoder(), opts.getWeighting(), traversalMode);
+                return new Dijkstra(g, opts.getWeighting(), traversalMode);
             }
         };
     }

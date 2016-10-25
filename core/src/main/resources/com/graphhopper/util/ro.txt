@@ -66,3 +66,4 @@ web.refresh_button=Reîmprospătează pagina
 web.server_status=Disponibilitate
 web.zoom_in=Mărește
 web.zoom_out=Micșorează
+web.drag_to_reorder=

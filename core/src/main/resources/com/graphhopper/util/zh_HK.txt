@@ -66,3 +66,4 @@ web.refresh_button=刷新網頁
 web.server_status=狀況
 web.zoom_in=放大
 web.zoom_out=縮小
+web.drag_to_reorder=
