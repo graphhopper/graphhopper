@@ -103,11 +103,6 @@ public class Location2IDFullIndex implements LocationIndex {
     }
 
     @Override
-    public QueryResult findBestMatch(double lat, double lon, EdgeFilter edgeFilter, String pointHint) {
-        throw new UnsupportedOperationException("Not implemented for"+this.getClass().getSimpleName());
-    }
-
-    @Override
     public int findID(double lat, double lon) {
         return findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
     }

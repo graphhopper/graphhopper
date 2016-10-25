@@ -24,6 +24,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.LevensteinDistanceEdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
@@ -65,8 +66,8 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
         queryResults = new ArrayList<>(points.size());
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);
-            QueryResult res = locationIndex.findBestMatch(point.lat, point.lon, edgeFilter, "Laufamholzstraße, 90482, Nürnberg, Deutschland");
-            //QueryResult res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
+            EdgeFilter similarityFilter = new LevensteinDistanceEdgeFilter(encoder, "Laufamholzstraße, 90482, Nürnberg, Deutschland");
+            QueryResult res = locationIndex.findClosest(point.lat, point.lon, similarityFilter);
             if (!res.isValid())
                 ghResponse.addError(new PointNotFoundException("Cannot find point " + placeIndex + ": " + point, placeIndex));
 

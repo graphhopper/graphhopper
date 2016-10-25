@@ -132,11 +132,6 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex {
 
 
     @Override
-    public QueryResult findBestMatch(double lat, double lon, EdgeFilter edgeFilter, String pointHint) {
-        throw new UnsupportedOperationException("Not implemented for"+this.getClass().getSimpleName());
-    }
-
-    @Override
     public LocationIndex create(long size) {
         return this;
     }
