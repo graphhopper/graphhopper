@@ -130,7 +130,6 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex {
         return res;
     }
 
-
     @Override
     public LocationIndex create(long size) {
         return this;
