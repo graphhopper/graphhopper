@@ -71,8 +71,6 @@ class PtRoutingTemplate implements RoutingTemplate {
 		sw = new StopWatch().start();
 		List<Path> tmpPathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode(), ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0));
 		debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s";
-		if (tmpPathList.isEmpty())
-			throw new IllegalStateException("At least one path has to be returned for " + fromQResult + " -> " + toQResult);
 
 		for (Path path : tmpPathList) {
 			if (path.getTime() < 0)

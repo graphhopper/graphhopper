@@ -27,7 +27,15 @@ public class SPTEntry implements Cloneable, Comparable<SPTEntry> {
     public int edge;
     public int adjNode;
     public double weight;
+    public int nTransfers;
     public SPTEntry parent;
+
+    public SPTEntry(int edgeId, int adjNode, double weight, int nTransfers) {
+        this.edge = edgeId;
+        this.adjNode = adjNode;
+        this.weight = weight;
+        this.nTransfers = nTransfers;
+    }
 
     public SPTEntry(int edgeId, int adjNode, double weight) {
         this.edge = edgeId;
@@ -46,7 +54,7 @@ public class SPTEntry implements Cloneable, Comparable<SPTEntry> {
 
     @Override
     public SPTEntry clone() {
-        return new SPTEntry(edge, adjNode, weight);
+        return new SPTEntry(edge, adjNode, weight, nTransfers);
     }
 
     public SPTEntry cloneFull() {

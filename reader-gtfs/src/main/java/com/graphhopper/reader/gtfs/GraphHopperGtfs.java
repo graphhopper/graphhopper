@@ -48,9 +48,13 @@ public final class GraphHopperGtfs extends GraphHopper {
         return new RoutingAlgorithmFactory() {
             @Override
             public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-                Dijkstra ra = new Dijkstra(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
-                ra.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-                return ra;
+                if (map.getBool("considerNTransfers", false)) {
+                    return new MultiCriteriaLabelSetting(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getMaxVisitedNodes());
+                } else {
+                    Dijkstra ra = new Dijkstra(g, opts.getFlagEncoder(), opts.getWeighting(), opts.getTraversalMode());
+                    ra.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+                    return ra;
+                }
             }
         };
     }
