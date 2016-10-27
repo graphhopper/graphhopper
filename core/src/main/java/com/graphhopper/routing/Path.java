@@ -399,8 +399,8 @@ public class Path {
                 } else {
                     latitude = wayGeo.getLatitude(1);
                     longitude = wayGeo.getLongitude(1);
-                    assert java.lang.Double.compare(prevLat, nodeAccess.getLatitude(baseNode)) == 0;
-                    assert java.lang.Double.compare(prevLon, nodeAccess.getLongitude(baseNode)) == 0;
+                    assert Double.compare(prevLat, nodeAccess.getLatitude(baseNode)) == 0;
+                    assert Double.compare(prevLon, nodeAccess.getLongitude(baseNode)) == 0;
                 }
 
                 name = edge.getName();
