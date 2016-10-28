@@ -2,7 +2,7 @@
 
 [Download GraphHopper Demo APK](http://graphhopper.com/#community)
 
-![simple routing](http://graphhopper.com/blog/wp-content/uploads/2016/10/android-demo-screenshot-2016-10-28-169x300.png)
+![simple routing](https://graphhopper.com/blog/wp-content/uploads/2016/10/android-demo-screenshot-2.png)
 
 # Set-up Development
 
