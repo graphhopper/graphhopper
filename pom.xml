@@ -305,6 +305,32 @@
                             <systemPropertyVariables />
                         </configuration>
                     </plugin>
+                    <!--
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <version>2.4.1</version>                    
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.codehaus.plexus</groupId>
+                                <artifactId>plexus-archiver</artifactId>
+                                <version>2.4.4</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-jar-plugin</artifactId>
+                        <version>2.6</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.codehaus.plexus</groupId>
+                                <artifactId>plexus-archiver</artifactId>
+                                <version>2.4.4</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                    -->
                     <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
                         
@@ -312,17 +338,31 @@
                             <!-- this uses a method described here: 
                             https://issues.apache.org/jira/browse/SUREFIRE-131 to exclude a singe 
                             test method, ofcourse any config can ce used here -->
-                            <test>!GraphHopperStorageTest#testSave_and_fileFormat</test>                            
-                            <test>!GraphHopperStorageTest#testSave_and_Freeze</test>
-                            <test>!GraphHopperStorageWithTurnCostsTest#testSave_and_fileFormat</test>
-                            <test>!GraphHopperStorageWithTurnCostsTest#testSave_and_Freeze</test>
-                            <test>!GraphHopperStorageWithTurnCostsTest#testEnsureCapacity</test>
-                            <test>!GraphStorageViaMMapTest</test>
-                            <test>!MMapDataAccessTest</test>
-                            <test>!Location2IDQuadtreeTest#testNoErrorOnEdgeCase_lastIndex</test>
-                            <test>!Location2IDFullWithEdgesIndexTest#testNoErrorOnEdgeCase_lastIndex</test>
-                            <test>!LocationIndexTreeTest#testNoErrorOnEdgeCase_lastIndex</test>
-                            <test>!LocationIndexTreeCHTest#testNoErrorOnEdgeCase_lastIndex</test>
+                            
+                            <test>
+                                !*GraphHopperStorageTest#testSave_and_fileFormat, 
+                                !*GraphHopperStorageTest#testSave_and_Freeze,
+                                !*GraphHopperStorageTest#testEnsureCapacity,
+                                !*GraphHopperStorageWithTurnCostsTest#testSave_and_fileFormat,
+                                !*GraphHopperStorageWithTurnCostsTest#testSave_and_Freeze,
+                                !*GraphHopperStorageWithTurnCostsTest#testEnsureCapacity,
+                                !*GraphHopperStorageWithTurnCostsTest#testEnsureSize,
+                                !*GraphHopperStorageCHTest#testSave_and_fileFormat,
+                                !*GraphHopperStorageCHTest#testSave_and_Freeze,
+                                !*GraphHopperStorageCHTest#testEnsureCapacity,
+                                !*GraphStorageViaMMapTest,
+                                !*MMapDataAccessTest,
+                                !*MMapDirectoryTest,
+                                !*Location2IDQuadtreeTest,
+                                !*Location2IDFullWithEdgesIndexTest#testNoErrorOnEdgeCase_lastIndex,
+                                !*Location2IDFullIndexTest#testNoErrorOnEdgeCase_lastIndex,
+                                !*LocationIndexTreeTest#testNoErrorOnEdgeCase_lastIndex,
+                                !*LocationIndexTreeCHTest#testNoErrorOnEdgeCase_lastIndex,
+                                !*SRTMProviderTest#testGetHeightMMap,
+                                !*SRTMProviderTest#testGetHeight,
+                                !*SRTMProviderTest#testGetHeightMMap,
+                                !*SRTMProviderTest#testGetHeight_issue545
+                            </test>
                         </configuration>
                     </plugin>
                 </plugins>
