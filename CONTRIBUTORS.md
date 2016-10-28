@@ -14,6 +14,7 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
  * dardin88, instructions improved
  * dewos, web API bug fixes
  * devemux86, improvements regarding Android, GPX and more
+ * edy, improvements regarding docker #849
  * elibar, fix for alternative route calculation
  * dos65, bug fixes in routing algo
  * drnextgis, ru translation and JS fixes
@@ -32,6 +33,8 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
  * karussell, one of the core developers
  * khuebner, initial turn costs support
  * lmar, improved instructions
+ * michaz, public transport
+ * mprins, improvements for travis CI and regarding JDK9 #806
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
  * ocampana, initial implementation for instructions
  * ratrun, route relations, GPX information, bike handling etc
