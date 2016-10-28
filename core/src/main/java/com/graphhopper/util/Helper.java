@@ -365,16 +365,39 @@ public class Helper {
     }
 
     public static void cleanMappedByteBuffer(final ByteBuffer buffer) {
+
         try {
             AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
                 @Override
                 public Object run() throws Exception {
                     try {
-                        final Method getCleanerMethod = buffer.getClass().getMethod("cleaner");
-                        getCleanerMethod.setAccessible(true);
-                        final Object cleaner = getCleanerMethod.invoke(buffer);
-                        if (cleaner != null)
-                            cleaner.getClass().getMethod("clean").invoke(cleaner);
+                        // <=JDK8 class DirectByteBuffer {         sun.misc.Cleaner cleaner(Buffer buf) }
+                        // >=JDK9 class DirectByteBuffer { jdk.internal.ref.Cleaner cleaner(Buffer buf) }
+                        final Class<?> directByteBufferClass = Class.forName("java.nio.DirectByteBuffer");
+                        if (Constants.ANDROID) {
+                            final Method dbbFreeMethod = directByteBufferClass.getMethod("free");
+                            dbbFreeMethod.setAccessible(true);
+                            // call DirectByteBuffer.free(buffer)
+                            dbbFreeMethod.invoke(buffer);
+                            return null;
+                        }
+
+                        final Method dbbCleanerMethod = directByteBufferClass.getMethod("cleaner");
+                        dbbCleanerMethod.setAccessible(true);
+                        // call DirectByteBuffer.cleaner(buffer)
+                        final Object cleaner = dbbCleanerMethod.invoke(buffer);
+                        if (cleaner != null) {
+                            final Class<?> cleanerMethodReturnType = dbbCleanerMethod.getReturnType();
+                            final Method cleanMethod;
+                            if (Runnable.class.isAssignableFrom(cleanerMethodReturnType)) {
+                                // >=JDK9 
+                                cleanMethod = cleanerMethodReturnType.getDeclaredMethod("run");
+                            } else {
+                                cleanMethod = cleanerMethodReturnType.getDeclaredMethod("clean");
+                            }
+                            cleanMethod.setAccessible(true);
+                            cleanMethod.invoke(cleaner);
+                        }
                     } catch (NoSuchMethodException ex) {
                         // ignore if method cleaner or clean is not available, like on Android
                     }

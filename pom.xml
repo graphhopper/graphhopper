@@ -91,7 +91,7 @@
                     <compilerArgument>-Xlint:deprecation</compilerArgument>
                     -->
 
-                    <!-- suppress warning about Unsafe functionality -->
+                    <!-- suppress warning about Unsafe functionality -->                    
                     <compilerArgument>-XDignore.symbol.file</compilerArgument>
                     <fork>true</fork>
                     <source>1.7</source>
@@ -270,6 +270,57 @@
             <modules>
                 <module>android/app</module>
             </modules>
+        </profile>
+        
+        <profile>
+            <id>jdk8</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <properties />
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                    </plugin>
+                    <plugin>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        
+        <profile>
+            <id>jdk9</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>                                
+                <jdk>9</jdk>
+            </activation>
+            <properties />
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-failsafe-plugin</artifactId>
+                        <configuration>
+                            <systemPropertyVariables />
+                            <argLine>--add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>2.19.1</version>
+                        <configuration>
+                            <!-- Without the add-exports/addExports options we get
+                                 java.lang.reflect.InaccessibleObjectException: Unable to make member of class 
+                                 jdk.internal.ref.Cleaner accessible: module java.base does not export jdk.internal.ref to unnamed module @bd8be5
+                                 See #852                                 
+                            -->                            
+                            <argLine>-Xmx100m -Xms100m --add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
     </profiles>
 
