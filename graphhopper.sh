@@ -146,6 +146,7 @@ elif [ "$ACTION" = "build" ]; then
  
 elif [ "$ACTION" = "buildweb" ]; then
  packageCoreJar
+ execMvn --projects web -am -DskipTests=true install
  execMvn --projects web -DskipTests=true install assembly:single
  exit
 
