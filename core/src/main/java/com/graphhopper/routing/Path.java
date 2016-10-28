@@ -210,14 +210,14 @@ public class Path {
             distance = 0;
             forEveryEdge(new EdgeVisitor() {
                 @Override
-                public void next(EdgeIteratorState edgeBase, int index) {
-                    double dist = edgeBase.getDistance();
+                public void next(EdgeIteratorState edge, int index, int prevEdgeId) {
+                    double dist = edge.getDistance();
                     distance += dist;
                     if (weighting != null && weighting instanceof TimeDependentWeighting) {
                         // TODO This should already be in the SPT, we shouldn't need to calculate it again here.
-                        time += ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edgeBase, time / 1000.0) * 1000.0;
+                        time += ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edge, time / 1000.0) * 1000.0;
                     } else {
-                        time += weighting.calcMillis(edgeBase, false, EdgeIterator.NO_EDGE);
+                        time += weighting.calcMillis(edge, false, prevEdgeId);
                     }
                 }
             });
@@ -260,16 +260,6 @@ public class Path {
     }
 
     /**
-     * Calculates the time in millis for the specified distance in meter and speed (in km/h) via
-     * flags.
-     *
-     * @deprecated use Weighting
-     */
-    protected long calcMillis(EdgeIteratorState edge, boolean reverse) {
-        return weighting.calcMillis(edge, reverse, EdgeIterator.NO_EDGE);
-    }
-
-    /**
      * Iterates over all edges in this path sorted from start to end and calls the visitor callback
      * for every edge.
      * <p>
@@ -280,6 +270,7 @@ public class Path {
     private void forEveryEdge(EdgeVisitor visitor) {
         int tmpNode = getFromNode();
         int len = edgeIds.size();
+        int prevEdgeId = EdgeIterator.NO_EDGE;
         for (int i = 0; i < len; i++) {
             EdgeIteratorState edgeBase = graph.getEdgeIteratorState(edgeIds.get(i), tmpNode);
             if (edgeBase == null)
@@ -289,7 +280,9 @@ public class Path {
             tmpNode = edgeBase.getBaseNode();
             // more efficient swap, currently not implemented for virtual edges: visitor.next(edgeBase.detach(true), i);
             edgeBase = graph.getEdgeIteratorState(edgeBase.getEdge(), tmpNode);
-            visitor.next(edgeBase, i);
+            visitor.next(edgeBase, i, prevEdgeId);
+            
+            prevEdgeId = edgeBase.getEdge();
         }
     }
 
@@ -303,7 +296,7 @@ public class Path {
 
         forEveryEdge(new EdgeVisitor() {
             @Override
-            public void next(EdgeIteratorState eb, int i) {
+            public void next(EdgeIteratorState eb, int index, int prevEdgeId) {
                 edges.add(eb);
             }
         });
@@ -326,7 +319,7 @@ public class Path {
         nodes.add(tmpNode);
         forEveryEdge(new EdgeVisitor() {
             @Override
-            public void next(EdgeIteratorState eb, int i) {
+            public void next(EdgeIteratorState eb, int index, int prevEdgeId) {
                 nodes.add(eb.getAdjNode());
             }
         });
@@ -352,7 +345,7 @@ public class Path {
         points.add(nodeAccess, tmpNode);
         forEveryEdge(new EdgeVisitor() {
             @Override
-            public void next(EdgeIteratorState eb, int index) {
+            public void next(EdgeIteratorState eb, int index, int prevEdgeId) {
                 PointList pl = eb.fetchWayGeometry(2);
                 for (int j = 0; j < pl.getSize(); j++) {
                     points.add(pl, j);
@@ -409,7 +402,7 @@ public class Path {
             private long time = 0;
 
             @Override
-            public void next(EdgeIteratorState edge, int index) {
+            public void next(EdgeIteratorState edge, int index, int prevEdgeId) {
                 // baseNode is the current node and adjNode is the next
                 int adjNode = edge.getAdjNode();
                 int baseNode = edge.getBaseNode();
@@ -550,7 +543,7 @@ public class Path {
                     prevAnnotation = annotation;
                 }
 
-                updatePointsAndInstruction(edge, wayGeo);
+                updatePointsAndInstruction(edge, wayGeo, prevEdgeId);
 
                 if (wayGeo.getSize() <= 2) {
                     doublePrevLat = prevLat;
@@ -580,7 +573,7 @@ public class Path {
                 }
             }
 
-            private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl) {
+            private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl, int prevEdgeId) {
                 // skip adjNode
                 int len = pl.size() - 1;
                 for (int i = 0; i < len; i++) {
@@ -594,7 +587,7 @@ public class Path {
                     time += edgeTime;
                     prevInstruction.setTime((long) edgeTime + prevInstruction.getTime());
                 } else {
-                    long edgeTime = weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE);
+                    long edgeTime = weighting.calcMillis(edge, false, prevEdgeId);
                     prevInstruction.setTime(edgeTime + prevInstruction.getTime());
                     time += edgeTime;
                 }
@@ -633,6 +626,6 @@ public class Path {
      * The callback used in forEveryEdge.
      */
     private static interface EdgeVisitor {
-        void next(EdgeIteratorState edgeBase, int index);
+        void next(EdgeIteratorState edge, int index, int prevEdgeId);
     }
 }
