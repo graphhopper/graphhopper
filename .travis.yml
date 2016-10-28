@@ -41,13 +41,14 @@ before_install:
          sudo update-java-alternatives -s java-9-oracle;
      fi
    - if [ "$TRAVIS_JDK_VERSION" == oraclejdk9 ]; then
+         export PROFILE="-P jdk9"
          sudo rm /etc/mavenrc;
      fi
 
 install: true
 
 script:
-  - mvn clean test verify -B
+  - mvn $PROFILE clean test verify -B
   #- ./core/files/travis-build.sh
 
 after_success:

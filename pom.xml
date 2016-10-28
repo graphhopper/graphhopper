@@ -312,7 +312,6 @@
                             <!-- this uses a method described here: 
                             https://issues.apache.org/jira/browse/SUREFIRE-131 to exclude a singe 
                             test method, ofcourse any config can ce used here -->
-                            <!--
                             <test>!GraphHopperStorageTest#testSave_and_fileFormat</test>                            
                             <test>!GraphHopperStorageTest#testSave_and_Freeze</test>
                             <test>!GraphHopperStorageWithTurnCostsTest#testSave_and_fileFormat</test>
@@ -324,7 +323,6 @@
                             <test>!Location2IDFullWithEdgesIndexTest#testNoErrorOnEdgeCase_lastIndex</test>
                             <test>!LocationIndexTreeTest#testNoErrorOnEdgeCase_lastIndex</test>
                             <test>!LocationIndexTreeCHTest#testNoErrorOnEdgeCase_lastIndex</test>
-                            -->
                         </configuration>
                     </plugin>
                 </plugins>
