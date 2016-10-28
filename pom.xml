@@ -91,7 +91,7 @@
                     <compilerArgument>-Xlint:deprecation</compilerArgument>
                     -->
 
-                    <!-- suppress warning about Unsafe functionality -->
+                    <!-- suppress warning about Unsafe functionality -->                    
                     <compilerArgument>-XDignore.symbol.file</compilerArgument>
                     <fork>true</fork>
                     <source>1.7</source>
@@ -275,8 +275,7 @@
         <profile>
             <id>jdk8</id>
             <activation>
-                <activeByDefault>false</activeByDefault>
-                <jdk>1.8</jdk>
+                <activeByDefault>true</activeByDefault>
             </activation>
             <properties />
             <build>
@@ -290,11 +289,12 @@
                 </plugins>
             </build>
         </profile>
+        
         <profile>
             <id>jdk9</id>
             <activation>
-                <activeByDefault>false</activeByDefault>
-                <jdk>1.9</jdk>
+                <activeByDefault>false</activeByDefault>                                
+                <jdk>9</jdk>
             </activation>
             <properties />
             <build>
@@ -305,64 +305,16 @@
                             <systemPropertyVariables />
                         </configuration>
                     </plugin>
-                    <!--
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-assembly-plugin</artifactId>
-                        <version>2.4.1</version>                    
-                        <dependencies>
-                            <dependency>
-                                <groupId>org.codehaus.plexus</groupId>
-                                <artifactId>plexus-archiver</artifactId>
-                                <version>2.4.4</version>
-                            </dependency>
-                        </dependencies>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>2.6</version>
-                        <dependencies>
-                            <dependency>
-                                <groupId>org.codehaus.plexus</groupId>
-                                <artifactId>plexus-archiver</artifactId>
-                                <version>2.4.4</version>
-                            </dependency>
-                        </dependencies>
-                    </plugin>
-                    -->
-                    <plugin>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        
+                        <version>2.19.1</version>
                         <configuration>
-                            <!-- this uses a method described here: 
-                            https://issues.apache.org/jira/browse/SUREFIRE-131 to exclude a singe 
-                            test method, ofcourse any config can ce used here -->
-                            
-                            <test>
-                                !*GraphHopperStorageTest#testSave_and_fileFormat, 
-                                !*GraphHopperStorageTest#testSave_and_Freeze,
-                                !*GraphHopperStorageTest#testEnsureCapacity,
-                                !*GraphHopperStorageWithTurnCostsTest#testSave_and_fileFormat,
-                                !*GraphHopperStorageWithTurnCostsTest#testSave_and_Freeze,
-                                !*GraphHopperStorageWithTurnCostsTest#testEnsureCapacity,
-                                !*GraphHopperStorageWithTurnCostsTest#testEnsureSize,
-                                !*GraphHopperStorageCHTest#testSave_and_fileFormat,
-                                !*GraphHopperStorageCHTest#testSave_and_Freeze,
-                                !*GraphHopperStorageCHTest#testEnsureCapacity,
-                                !*GraphStorageViaMMapTest,
-                                !*MMapDataAccessTest,
-                                !*MMapDirectoryTest,
-                                !*Location2IDQuadtreeTest,
-                                !*Location2IDFullWithEdgesIndexTest#testNoErrorOnEdgeCase_lastIndex,
-                                !*Location2IDFullIndexTest#testNoErrorOnEdgeCase_lastIndex,
-                                !*LocationIndexTreeTest#testNoErrorOnEdgeCase_lastIndex,
-                                !*LocationIndexTreeCHTest#testNoErrorOnEdgeCase_lastIndex,
-                                !*SRTMProviderTest#testGetHeightMMap,
-                                !*SRTMProviderTest#testGetHeight,
-                                !*SRTMProviderTest#testGetHeightMMap,
-                                !*SRTMProviderTest#testGetHeight_issue545
-                            </test>
+                            <!-- java.lang.reflect.InaccessibleObjectException: 
+                                 Unable to make member of class jdk.internal.ref.Cleaner accessible: 
+                                 module java.base does not export jdk.internal.ref to unnamed module @bd8be5 
+                            -->                            
+                            <argLine>-Xmx100m -Xms100m -XaddExports:java.base/jdk.internal.ref=ALL-UNNAMED</argLine>
                         </configuration>
                     </plugin>
                 </plugins>
