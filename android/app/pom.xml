@@ -19,7 +19,7 @@
         <version>0.9-SNAPSHOT</version>
     </parent>
     <properties>
-        <mapsforge.version>0.6.0</mapsforge.version>
+        <vtm.version>0.6.0</vtm.version>
         <!-- do not put the properties here as it differs from dev to dev <android.sdk.path>/home/peterk/Programme/android-sdk-linux_x86</android.sdk.path>
         instead use your IDE to set it up or specify android sdk via command line
         using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
@@ -47,42 +47,42 @@
         <dependency>
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm</artifactId>
-            <version>${mapsforge.version}</version>
+            <version>${vtm.version}</version>
         </dependency>    
         <dependency>
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm-android</artifactId>
-            <version>${mapsforge.version}</version>
+            <version>${vtm.version}</version>
         </dependency>
         
         <dependency>
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm-android</artifactId>
-            <version>${mapsforge.version}</version>
+            <version>${vtm.version}</version>
             <classifier>natives-armeabi</classifier>
         </dependency>  
          <dependency>
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm-android</artifactId>
-            <version>${mapsforge.version}</version>
+            <version>${vtm.version}</version>
             <classifier>natives-armeabi-v7a</classifier>
         </dependency>  
          <dependency>
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm-android</artifactId>
-            <version>${mapsforge.version}</version>
+            <version>${vtm.version}</version>
             <classifier>natives-x86</classifier>
         </dependency>        
         
         <dependency>
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm-jts</artifactId>
-            <version>${mapsforge.version}</version>
+            <version>${vtm.version}</version>
         </dependency>
         <dependency>
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm-themes</artifactId>
-            <version>${mapsforge.version}</version>
+            <version>${vtm.version}</version>
         </dependency> 
         <dependency>
             <groupId>com.caverock</groupId>            
