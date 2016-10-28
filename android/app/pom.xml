@@ -19,7 +19,7 @@
         <version>0.9-SNAPSHOT</version>
     </parent>
     <properties>
-        <mapsforge.version>0.6.1</mapsforge.version>
+        <mapsforge.version>0.6.0</mapsforge.version>
         <!-- do not put the properties here as it differs from dev to dev <android.sdk.path>/home/peterk/Programme/android-sdk-linux_x86</android.sdk.path>
         instead use your IDE to set it up or specify android sdk via command line
         using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
@@ -46,24 +46,54 @@
         -->          
         <dependency>
             <groupId>org.mapsforge</groupId>            
-            <artifactId>mapsforge-core</artifactId>
+            <artifactId>vtm</artifactId>
             <version>${mapsforge.version}</version>
         </dependency>    
         <dependency>
             <groupId>org.mapsforge</groupId>            
-            <artifactId>mapsforge-map</artifactId>
+            <artifactId>vtm-android</artifactId>
             <version>${mapsforge.version}</version>
         </dependency>
+        
         <dependency>
             <groupId>org.mapsforge</groupId>            
-            <artifactId>mapsforge-map-android</artifactId>
+            <artifactId>vtm-android</artifactId>
             <version>${mapsforge.version}</version>
+            <classifier>natives-armeabi</classifier>
+        </dependency>  
+         <dependency>
+            <groupId>org.mapsforge</groupId>            
+            <artifactId>vtm-android</artifactId>
+            <version>${mapsforge.version}</version>
+            <classifier>natives-armeabi-v7a</classifier>
+        </dependency>  
+         <dependency>
+            <groupId>org.mapsforge</groupId>            
+            <artifactId>vtm-android</artifactId>
+            <version>${mapsforge.version}</version>
+            <classifier>natives-x86</classifier>
         </dependency>        
+        
         <dependency>
             <groupId>org.mapsforge</groupId>            
-            <artifactId>mapsforge-map-reader</artifactId>
+            <artifactId>vtm-jts</artifactId>
             <version>${mapsforge.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.mapsforge</groupId>            
+            <artifactId>vtm-themes</artifactId>
+            <version>${mapsforge.version}</version>
+        </dependency> 
+        <dependency>
+            <groupId>com.caverock</groupId>            
+            <artifactId>androidsvg</artifactId>
+            <version>1.2.2-beta-1</version>
+        </dependency> 
+        <dependency>
+            <groupId>com.vividsolutions</groupId>            
+            <artifactId>jts</artifactId>
+            <version>1.13</version>            
+        </dependency> 
         
         <dependency>
             <groupId>org.slf4j</groupId>

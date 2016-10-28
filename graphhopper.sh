@@ -39,6 +39,7 @@ function printUsage {
  echo "  torture     can be used to test real world routes via feeding graphhopper logs into a graphhopper system (Torture class)"
  echo "  miniui      is a simple Java/Swing visualization application used for debugging purposes (MiniGraphUI class)"
  echo "  extract     calls the overpass API to easily grab any area as .osm file"
+ echo "  android     builds, deploys and starts the Android demo to your connected device"
 }
 
 if [ "$ACTION" = "" ]; then

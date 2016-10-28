@@ -2,6 +2,8 @@
 
 [Download GraphHopper Demo APK](http://graphhopper.com/#community)
 
+![simple routing](http://graphhopper.com/blog/wp-content/uploads/2016/10/android-demo-screenshot-2016-10-28-169x300.png)
+
 # Set-up Development
 
 As starting point you can use [the demo project](https://github.com/graphhopper/graphhopper/tree/master/android) 
