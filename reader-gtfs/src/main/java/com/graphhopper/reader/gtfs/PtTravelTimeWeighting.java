@@ -57,6 +57,16 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
 	}
 
 	@Override
+	public int calcNTransfers(EdgeIteratorState edgeState) {
+		AbstractPtEdge edge = gtfsStorage.getEdges().get(edgeState.getEdge());
+		if (edge instanceof AccessEdge || edge instanceof EnterEdge) {
+			return 1;
+		} else {
+			return 0;
+		}
+	}
+
+	@Override
 	public String getName() {
 		return "pttraveltime";
 	}
