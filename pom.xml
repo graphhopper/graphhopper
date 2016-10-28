@@ -310,11 +310,12 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>2.19.1</version>
                         <configuration>
-                            <!-- java.lang.reflect.InaccessibleObjectException: 
-                                 Unable to make member of class jdk.internal.ref.Cleaner accessible: 
-                                 module java.base does not export jdk.internal.ref to unnamed module @bd8be5 
+                            <!-- Without the add-exports/addExports options we get
+                                 java.lang.reflect.InaccessibleObjectException: Unable to make member of class 
+                                 jdk.internal.ref.Cleaner accessible: module java.base does not export jdk.internal.ref to unnamed module @bd8be5
+                                 See #852                                 
                             -->                            
-                            <argLine>-Xmx100m -Xms100m --add-exports:java.base/jdk.internal.ref=ALL-UNNAMED</argLine>
+                            <argLine>-Xmx100m -Xms100m --add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine>
                         </configuration>
                     </plugin>
                 </plugins>
