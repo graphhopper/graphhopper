@@ -41,11 +41,16 @@ dependencies {
        exclude group: 'org.apache.xmlgraphics', module: 'xmlgraphics-commons'
     }
 
-    compile group: 'org.mapsforge', name: 'mapsforge-core', version: '0.6.1'
-    compile group: 'org.mapsforge', name: 'mapsforge-map', version: '0.6.1'
-    compile group: 'org.mapsforge', name: 'mapsforge-map-android', version: '0.6.1'
-    compile group: 'org.mapsforge', name: 'mapsforge-map-reader', version: '0.6.1'
+    compile 'org.mapsforge:vtm:0.6.0'
+    compile 'org.mapsforge:vtm-android:0.6.0'
+    compile 'org.mapsforge:vtm-android:0.6.0:natives-armeabi'
+    compile 'org.mapsforge:vtm-android:0.6.0:natives-armeabi-v7a'
+    compile 'org.mapsforge:vtm-android:0.6.0:natives-x86'
+    compile 'org.mapsforge:vtm-jts:0.6.0'
+    compile 'org.mapsforge:vtm-themes:0.6.0'
+    compile 'com.caverock:androidsvg:1.2.2-beta-1'
+    compile 'com.vividsolutions:jts:1.13'
 
-    compile group: 'org.slf4j', name: 'slf4j-android', version: '1.7.12'
-    compile group: 'org.slf4j', name: 'slf4j-api', version: '1.7.12'
+    compile 'org.slf4j:slf4j-api:1.7.21'
+    compile 'org.slf4j:slf4j-android:1.7.21'
 }
