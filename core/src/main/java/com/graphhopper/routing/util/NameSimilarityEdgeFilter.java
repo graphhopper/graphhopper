@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.util.EdgeIteratorState;
-import org.apache.commons.lang3.StringUtils;
+import com.graphhopper.util.StringUtils;
 
 import java.util.regex.Pattern;
 
