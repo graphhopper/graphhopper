@@ -78,8 +78,16 @@ public class NameSimilarityEdgeFilterTest {
         edge = new TestEdgeIterator("Hauptstraße");
         assertTrue(edgeFilter.accept(edge));
 
-        // Single Typoe
+        // Single Typos
         edge = new TestEdgeIterator("Hauptstrase");
+        assertTrue(edgeFilter.accept(edge));
+
+        //TODO Maybe we should not allow matching too short strings here?
+        // Distance - PerfectDistance = 1
+        edge = new TestEdgeIterator("z");
+        assertTrue(edgeFilter.accept(edge));
+        // Distance - PerfectDistance = 1
+        edge = new TestEdgeIterator("az");
         assertTrue(edgeFilter.accept(edge));
     }
 

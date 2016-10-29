@@ -98,6 +98,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     private boolean isLevenshteinSimilar(String name){
         int perfectDistance = Math.abs(soughtName.length()-name.length());
         int levDistance = StringUtils.getLevenshteinDistance(soughtName, name);
+        // With LEVENSHTEIN_ACCEPT_FACTOR = .95 this equals to 1 typo every 20 characters
         return Math.floor(levDistance* LEVENSHTEIN_ACCEPT_FACTOR) <= perfectDistance;
     }
 }
