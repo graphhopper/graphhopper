@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.util.EdgeIteratorState;
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.regex.Pattern;
 
@@ -26,20 +27,27 @@ import java.util.regex.Pattern;
  *
  * @author Robin Boldt
  */
-public abstract class NameSimilarityEdgeFilter implements EdgeFilter {
-    private final DefaultEdgeFilter edgeFilter;
-    protected final String soughtName;
-    protected static final Pattern nonWordCharacter = Pattern.compile("[\\W\\d]");
+public class NameSimilarityEdgeFilter implements EdgeFilter {
 
-    public NameSimilarityEdgeFilter(FlagEncoder encoder, String soughtName) {
-        edgeFilter = new DefaultEdgeFilter(encoder);
+    public static final int EXACT = 0;
+    public static final int LEVENSHTEIN = 1;
+    public static final int STRING_MATCHING_ALGO = LEVENSHTEIN;
+
+    private static final double LEVENSHTEIN_ACCEPT_FACTOR = .95;
+
+    private final EdgeFilter edgeFilter;
+    private final String soughtName;
+    private static final Pattern nonWordCharacter = Pattern.compile("[^\\p{L}]+");
+
+    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String soughtName) {
+        this.edgeFilter = edgeFilter;
         this.soughtName = prepareName(soughtName);
     }
 
     /**
      * Removes any characters in the String that we don't care about in the matching procedure
      */
-    protected String prepareName(String name){
+    private String prepareName(String name){
         if(name == null){
             name = "";
         }
@@ -50,7 +58,7 @@ public abstract class NameSimilarityEdgeFilter implements EdgeFilter {
         return name;
     }
 
-    protected String removeRelation(String edgeName){
+    private String removeRelation(String edgeName){
         if(edgeName != null && edgeName.contains(", ")){
             edgeName = edgeName.substring(0, edgeName.lastIndexOf(','));
         }
@@ -58,7 +66,38 @@ public abstract class NameSimilarityEdgeFilter implements EdgeFilter {
     }
 
     @Override
-    public boolean accept(EdgeIteratorState iter) {
-        return edgeFilter.accept(iter);
+    public final boolean accept(EdgeIteratorState iter) {
+        if(!edgeFilter.accept(iter)){
+            return false;
+        }
+
+        // Don't check if PointHint is empty anyway
+        if(soughtName.isEmpty()){
+            return true;
+        }
+
+        String name = iter.getName();
+
+        if(name == null || name.isEmpty()){
+            return false;
+        }
+
+        name = removeRelation(name);
+        name = prepareName(name);
+
+        switch (STRING_MATCHING_ALGO){
+            case LEVENSHTEIN:
+                return isLevenshteinSimilar(name);
+            case EXACT:
+            default:
+                return name.equals(soughtName);
+        }
+
+    }
+
+    private boolean isLevenshteinSimilar(String name){
+        int perfectDistance = Math.abs(soughtName.length()-name.length());
+        int levDistance = StringUtils.getLevenshteinDistance(soughtName, name);
+        return Math.floor(levDistance* LEVENSHTEIN_ACCEPT_FACTOR) <= perfectDistance;
     }
 }
