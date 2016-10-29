@@ -31,3 +31,4 @@ android:
 
  * android, Apache License 2.0
  * org.mapsforge, LGPL
+ * VTM, LGPL
