@@ -25,6 +25,7 @@ points_encoded     | true    | If `false` the coordinates in `point` and `snappe
 debug              | false   | If true, the output will be formated.
 calc_points        | true    | If the points for the route should be calculated at all printing out only distance and time.
 type               | json    | Specifies the resulting format of the route, for `json` the content type will be application/json. Other possible format options: <br> `jsonp` you'll need to provide the callback function via the callback parameter. The content type will be application/javascript<br> `gpx`, the content type will be application/gpx+xml, see below for more parameters.
+point_hint         | -       | Optional parameter. Specifies a hint for each point. The hint will be compared to the name of the edge, only similar edges will be matched.
 
 ### GPX
 
