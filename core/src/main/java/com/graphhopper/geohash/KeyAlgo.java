@@ -23,19 +23,19 @@ import com.graphhopper.util.shapes.GHPoint;
  * Defines the mapping between a one dimensional 'number' and a point (lat, lon) which is limited to
  * a defined bounds.
  * <p>
+ *
  * @author Peter Karich
  */
-public interface KeyAlgo
-{
+public interface KeyAlgo {
 
     /**
      * Sets the bounds of the underlying key algorithm.
      */
-    KeyAlgo setBounds( double minLonInit, double maxLonInit, double minLatInit, double maxLatInit );
+    KeyAlgo setBounds(double minLonInit, double maxLonInit, double minLatInit, double maxLatInit);
 
-    long encode( GHPoint coord );
+    long encode(GHPoint coord);
 
-    long encode( double lat, double lon );
+    long encode(double lat, double lon);
 
-    void decode( long spatialKey, GHPoint latLon );
+    void decode(long spatialKey, GHPoint latLon);
 }

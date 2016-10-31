@@ -19,18 +19,16 @@ package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.DistanceCalcEarth;
-import org.junit.*;
+import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
-public class BBoxTest
-{
+public class BBoxTest {
     @Test
-    public void testCreate()
-    {
+    public void testCreate() {
         DistanceCalc c = new DistanceCalcEarth();
         BBox b = c.createBBox(52, 10, 100000);
 
@@ -48,8 +46,7 @@ public class BBoxTest
     }
 
     @Test
-    public void testContains()
-    {
+    public void testContains() {
         assertTrue(new BBox(1, 2, 0, 1).contains(new BBox(1, 2, 0, 1)));
         assertTrue(new BBox(1, 2, 0, 1).contains(new BBox(1.5, 2, 0.5, 1)));
         assertFalse(new BBox(1, 2, 0, 0.5).contains(new BBox(1.5, 2, 0.5, 1)));
@@ -60,8 +57,7 @@ public class BBoxTest
     }
 
     @Test
-    public void testIntersect()
-    {
+    public void testIntersect() {
         //    ---
         //    | |
         // ---------
@@ -86,49 +82,40 @@ public class BBoxTest
     }
 
     @Test
-    public void testBasicJavaOverload()
-    {
-        new BBox(2, 4, 0, 1)
-        {
+    public void testBasicJavaOverload() {
+        new BBox(2, 4, 0, 1) {
             @Override
-            public boolean intersect( Circle c )
-            {
+            public boolean intersect(Circle c) {
                 assertTrue(true);
                 return super.intersect(c);
             }
 
             @Override
-            public boolean intersect( Shape c )
-            {
+            public boolean intersect(Shape c) {
                 assertTrue(false);
                 return true;
             }
 
             @Override
-            public boolean intersect( BBox c )
-            {
+            public boolean intersect(BBox c) {
                 assertTrue(false);
                 return true;
             }
-        }.intersect(new Circle(1, 2, 3)
-        {
+        }.intersect(new Circle(1, 2, 3) {
             @Override
-            public boolean intersect( Circle c )
-            {
-                assertTrue(false);
-                return true;
-            }
-
-            @Override
-            public boolean intersect( Shape b )
-            {
+            public boolean intersect(Circle c) {
                 assertTrue(false);
                 return true;
             }
 
             @Override
-            public boolean intersect( BBox b )
-            {
+            public boolean intersect(Shape b) {
+                assertTrue(false);
+                return true;
+            }
+
+            @Override
+            public boolean intersect(BBox b) {
                 assertTrue(true);
                 return true;
             }

@@ -17,38 +17,38 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.SPTEntry;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
-
-import static org.junit.Assert.*;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class PathBidirRefTest
-{
+public class PathBidirRefTest {
     private final EncodingManager encodingManager = new EncodingManager("car");
     private FlagEncoder carEncoder = encodingManager.getEncoder("car");
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
 
-    Graph createGraph()
-    {
+    Graph createGraph() {
         return new GraphBuilder(encodingManager).create();
     }
 
     @Test
-    public void testExtract()
-    {
+    public void testExtract() {
         Graph g = createGraph();
         g.edge(1, 2, 10, true);
-        PathBidirRef pw = new PathBidirRef(g, carEncoder);
+        PathBidirRef pw = new PathBidirRef(g, new FastestWeighting(carEncoder));
         EdgeExplorer explorer = g.createEdgeExplorer(carOutEdges);
         EdgeIterator iter = explorer.setBaseNode(1);
         iter.next();
@@ -61,15 +61,14 @@ public class PathBidirRefTest
     }
 
     @Test
-    public void testExtract2()
-    {
+    public void testExtract2() {
         Graph g = createGraph();
         g.edge(1, 2, 10, false);
         g.edge(2, 3, 20, false);
         EdgeExplorer explorer = g.createEdgeExplorer(carOutEdges);
         EdgeIterator iter = explorer.setBaseNode(1);
         iter.next();
-        PathBidirRef pw = new PathBidirRef(g, carEncoder);
+        PathBidirRef pw = new PathBidirRef(g, new FastestWeighting(carEncoder));
         pw.sptEntry = new SPTEntry(iter.getEdge(), 2, 10);
         pw.sptEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);
 

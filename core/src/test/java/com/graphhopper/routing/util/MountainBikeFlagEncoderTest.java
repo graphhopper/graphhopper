@@ -17,30 +17,25 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMNode;
-import com.graphhopper.reader.OSMRelation;
-import com.graphhopper.reader.OSMWay;
-
-import static com.graphhopper.routing.util.PriorityCode.*;
-
+import com.graphhopper.reader.ReaderNode;
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
 import org.junit.Test;
 
+import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.Assert.*;
 
-public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
-{
+public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     @Override
-    protected BikeCommonFlagEncoder createBikeEncoder()
-    {
+    protected BikeCommonFlagEncoder createBikeEncoder() {
         return (BikeCommonFlagEncoder) new EncodingManager("bike,mtb").getEncoder("mtb");
     }
 
     @Test
-    public void testGetSpeed()
-    {
+    public void testGetSpeed() {
         long result = encoder.setProperties(10, true, true);
         assertEquals(10, encoder.getSpeed(result), 1e-1);
-        OSMWay way = new OSMWay(1);
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         assertEquals(18, encoder.getSpeed(way));
         assertPriority(REACH_DEST.getValue(), way);
@@ -87,9 +82,8 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
 
     @Test
     @Override
-    public void testSacScale()
-    {
-        OSMWay way = new OSMWay(1);
+    public void testSacScale() {
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
         way.setTag("sac_scale", "hiking");
         assertTrue(encoder.acceptWay(way) > 0);
@@ -106,9 +100,8 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testHandleWayTags()
-    {
-        OSMWay way = new OSMWay(1);
+    public void testHandleWayTags() {
+        ReaderWay way = new ReaderWay(1);
         String wayType;
 
         way.setTag("highway", "track");
@@ -155,13 +148,12 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     }
 
     @Test
-    public void testHandleWayTagsInfluencedByRelation()
-    {
-        OSMWay osmWay = new OSMWay(1);
+    public void testHandleWayTagsInfluencedByRelation() {
+        ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "track");
         long allowed = encoder.acceptBit;
 
-        OSMRelation osmRel = new OSMRelation(1);
+        ReaderRelation osmRel = new ReaderRelation(1);
         long relFlags = encoder.handleRelationTags(osmRel, 0);
         // unchanged
         long flags = encoder.handleWayTags(osmWay, allowed, relFlags);
@@ -209,23 +201,22 @@ public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester
     // Issue 407 : Always block kissing_gate execpt for mountainbikes
     @Test
     @Override
-    public void testBarrierAccess()
-    {
+    public void testBarrierAccess() {
         // kissing_gate without bicycle tag
-        OSMNode node = new OSMNode(1, -1, -1);
+        ReaderNode node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         // No barrier!
         assertTrue(encoder.handleNodeTags(node) == 0);
 
         // kissing_gate with bicycle tag = no
-        node = new OSMNode(1, -1, -1);
+        node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         node.setTag("bicycle", "no");
         // barrier!
         assertFalse(encoder.handleNodeTags(node) == 0);
 
         // kissing_gate with bicycle tag
-        node = new OSMNode(1, -1, -1);
+        node = new ReaderNode(1, -1, -1);
         node.setTag("barrier", "kissing_gate");
         node.setTag("bicycle", "yes");
         // No barrier!

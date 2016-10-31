@@ -17,23 +17,24 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.routing.util.CarFlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-
-import static org.junit.Assert.*;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class CHEdgeIteratorTest
-{
+public class CHEdgeIteratorTest {
     @Test
-    public void testUpdateFlags()
-    {
+    public void testUpdateFlags() {
         CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = new EncodingManager(carFlagEncoder);
         FastestWeighting weighting = new FastestWeighting(carFlagEncoder);

@@ -24,39 +24,49 @@ import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.Translation;
+
 import java.util.Collections;
 import java.util.List;
+
+import static com.graphhopper.util.Parameters.Routing.PASS_THROUGH;
+import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * Implementation of a route with no via points but multiple path lists ('alternatives').
  *
  * @author Peter Karich
  */
-final public class AlternativeRoutingTemplate extends ViaRoutingTemplate
-{
-    public AlternativeRoutingTemplate( GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex )
-    {
+final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
+    public AlternativeRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex) {
         super(ghRequest, ghRsp, locationIndex);
     }
 
     @Override
-    public List<Path> calcPaths( QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts )
-    {
+    public List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder) {
+        if (points.size() > 2)
+            throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + points.size() + " points");
+        
+        return super.lookup(points, encoder);
+    }
+
+    @Override
+    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
         boolean withViaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
         if (withViaTurnPenalty)
-            throw new IllegalStateException("Alternative paths and a viaTurnPenalty at the same time is currently not supported");
+            throw new IllegalArgumentException("Alternative paths and " + PASS_THROUGH + " at the same time is currently not supported");
 
         return super.calcPaths(queryGraph, algoFactory, algoOpts);
     }
 
     @Override
-    public boolean isReady( PathMerger pathMerger, Translation tr )
-    {
+    public boolean isReady(PathMerger pathMerger, Translation tr) {
         if (pathList.isEmpty())
             throw new RuntimeException("Empty paths for alternative route calculation not expected");
 
@@ -65,8 +75,7 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate
         altResponse.setWaypoints(wpList);
         ghResponse.add(altResponse);
         pathMerger.doWork(altResponse, Collections.singletonList(pathList.get(0)), tr);
-        for (int index = 1; index < pathList.size(); index++)
-        {
+        for (int index = 1; index < pathList.size(); index++) {
             PathWrapper tmpAltRsp = new PathWrapper();
             tmpAltRsp.setWaypoints(wpList);
             ghResponse.add(tmpAltRsp);

@@ -27,33 +27,29 @@ import java.util.Set;
  * Parses a conditional tag according to
  * http://wiki.openstreetmap.org/wiki/Conditional_restrictions.
  * <p>
+ *
  * @author Robin Boldt
  */
-public class ConditionalParser
-{
+public class ConditionalParser {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final Set<String> restrictedTags;
     private final boolean enabledLogs;
 
-    public ConditionalParser( Set<String> restrictedTags )
-    {
+    public ConditionalParser(Set<String> restrictedTags) {
         this(restrictedTags, false);
     }
 
-    public ConditionalParser( Set<String> restrictedTags, boolean enabledLogs )
-    {
+    public ConditionalParser(Set<String> restrictedTags, boolean enabledLogs) {
         // use map => key & type (date vs. double)
         this.restrictedTags = restrictedTags;
         this.enabledLogs = enabledLogs;
     }
 
-    public ValueRange getRange( String conditionalTag ) throws ParseException
-    {
+    public ValueRange getRange(String conditionalTag) throws ParseException {
         if (conditionalTag == null || conditionalTag.isEmpty() || !conditionalTag.contains("@"))
             return null;
 
-        if (conditionalTag.contains(";"))
-        {
+        if (conditionalTag.contains(";")) {
             if (enabledLogs)
                 logger.warn("We do not support multiple conditions yet: " + conditionalTag);
             return null;
@@ -74,50 +70,42 @@ public class ConditionalParser
         conditional = conditional.trim();
 
         int index = conditional.indexOf(">");
-        if (index > 0 && conditional.length() > 2)
-        {
+        if (index > 0 && conditional.length() > 2) {
             final String key = conditional.substring(0, index).trim();
             // for now just ignore equals sign
             if (conditional.charAt(index + 1) == '=')
                 index++;
 
             final double value = parseNumber(conditional.substring(index + 1));
-            return new ValueRange<Number>()
-            {
+            return new ValueRange<Number>() {
                 @Override
-                public boolean isInRange( Number obj )
-                {
+                public boolean isInRange(Number obj) {
                     return obj.doubleValue() > value;
                 }
 
                 @Override
-                public String getKey()
-                {
+                public String getKey() {
                     return key;
                 }
             };
         }
 
         index = conditional.indexOf("<");
-        if (index > 0 && conditional.length() > 2)
-        {
+        if (index > 0 && conditional.length() > 2) {
             final String key = conditional.substring(0, index).trim();
             if (conditional.charAt(index + 1) == '=')
                 index++;
 
             final double value = parseNumber(conditional.substring(index + 1));
-            return new ValueRange<Number>()
-            {
+            return new ValueRange<Number>() {
 
                 @Override
-                public boolean isInRange( Number obj )
-                {
+                public boolean isInRange(Number obj) {
                     return obj.doubleValue() < value;
                 }
 
                 @Override
-                public String getKey()
-                {
+                public String getKey() {
                     return key;
                 }
             };
@@ -126,11 +114,9 @@ public class ConditionalParser
         return DateRangeParser.parseDateRange(conditional);
     }
 
-    protected double parseNumber( String str )
-    {
+    protected double parseNumber(String str) {
         int untilIndex = str.length() - 1;
-        for (; untilIndex >= 0; untilIndex--)
-        {
+        for (; untilIndex >= 0; untilIndex--) {
             if (Character.isDigit(str.charAt(untilIndex)))
                 break;
         }

@@ -17,16 +17,15 @@
  */
 package com.graphhopper.util;
 
-import java.text.DecimalFormat;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.text.DecimalFormat;
 
 /**
  * @author Peter Karich
  */
-public abstract class MiniPerfTest
-{
+public abstract class MiniPerfTest {
     protected Logger logger = LoggerFactory.getLogger(getClass());
     private int counts = 100;
     private double fullTime = 0;
@@ -34,16 +33,13 @@ public abstract class MiniPerfTest
     private double min = Double.MAX_VALUE;
     private int dummySum;
 
-    public MiniPerfTest start()
-    {
+    public MiniPerfTest start() {
         int warmupCount = Math.max(1, counts / 3);
-        for (int i = 0; i < warmupCount; i++)
-        {
+        for (int i = 0; i < warmupCount; i++) {
             dummySum += doCalc(true, i);
         }
         long startFull = System.nanoTime();
-        for (int i = 0; i < counts; i++)
-        {
+        for (int i = 0; i < counts; i++) {
             long start = System.nanoTime();
             dummySum += doCalc(false, i);
             long time = System.nanoTime() - start;
@@ -58,8 +54,7 @@ public abstract class MiniPerfTest
         return this;
     }
 
-    public MiniPerfTest setIterations( int counts )
-    {
+    public MiniPerfTest setIterations(int counts) {
         this.counts = counts;
         return this;
     }
@@ -67,42 +62,36 @@ public abstract class MiniPerfTest
     /**
      * @return minimum time of every call, in ms
      */
-    public double getMin()
-    {
+    public double getMin() {
         return min / 1e6;
     }
 
     /**
      * @return maximum time of every calls, in ms
      */
-    public double getMax()
-    {
+    public double getMax() {
         return max / 1e6;
     }
 
     /**
      * @return time for all calls accumulated, in ms
      */
-    public double getSum()
-    {
+    public double getSum() {
         return fullTime / 1e6;
     }
 
     /**
      * @return mean time per call, in ms
      */
-    public double getMean()
-    {
+    public double getMean() {
         return getSum() / counts;
     }
 
-    public String getReport()
-    {
+    public String getReport() {
         return "sum:" + nf(getSum() / 1000f) + "s, time/call:" + nf(getMean() / 1000f) + "s";
     }
 
-    public String nf( Number num )
-    {
+    public String nf(Number num) {
         return new DecimalFormat("#.#").format(num);
     }
 
@@ -110,5 +99,5 @@ public abstract class MiniPerfTest
      * @return return some integer as result from your processing to make sure that the JVM cannot
      * optimize (away) the call or within the call something.
      */
-    public abstract int doCalc( boolean warmup, int run );
+    public abstract int doCalc(boolean warmup, int run);
 }

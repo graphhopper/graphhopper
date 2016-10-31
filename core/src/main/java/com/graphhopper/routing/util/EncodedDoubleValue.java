@@ -20,41 +20,35 @@ package com.graphhopper.routing.util;
 /**
  * Encapsulates a bit-encoded value.
  * <p>
+ *
  * @author Nop
  */
-public class EncodedDoubleValue extends EncodedValue
-{
+public class EncodedDoubleValue extends EncodedValue {
 
-    public EncodedDoubleValue( String name, int shift, int bits, double factor, long defaultValue, int maxValue )
-    {
+    public EncodedDoubleValue(String name, int shift, int bits, double factor, long defaultValue, int maxValue) {
         this(name, shift, bits, factor, defaultValue, maxValue, true);
     }
 
-    public EncodedDoubleValue( String name, int shift, int bits, double factor, long defaultValue, int maxValue, boolean allowZero )
-    {
+    public EncodedDoubleValue(String name, int shift, int bits, double factor, long defaultValue, int maxValue, boolean allowZero) {
         super(name, shift, bits, factor, defaultValue, maxValue, allowZero);
     }
 
     @Override
-    public long setValue( long flags, long value )
-    {
+    public long setValue(long flags, long value) {
         throw new IllegalStateException("Use setDoubleValue instead");
     }
 
     @Override
-    public long getValue( long flags )
-    {
+    public long getValue(long flags) {
         throw new IllegalStateException("Use setDoubleValue instead");
     }
 
     @Override
-    public long setDefaultValue( long flags )
-    {
+    public long setDefaultValue(long flags) {
         return setDoubleValue(flags, defaultValue);
     }
 
-    public long setDoubleValue( long flags, double value )
-    {
+    public long setDoubleValue(long flags, double value) {
         if (Double.isNaN(value))
             throw new IllegalStateException("Value cannot be NaN");
 
@@ -70,23 +64,10 @@ public class EncodedDoubleValue extends EncodedValue
         return flags | tmpValue;
     }
 
-    public double getDoubleValue( long flags )
-    {
+    public double getDoubleValue(long flags) {
         // find value
         flags &= mask;
         flags >>>= shift;
         return flags * factor;
-    }
-
-    /**
-     * Swap the contents controlled by this value encoder with the given value.
-     * <p>
-     * @return the new flags
-     */
-    public long swap( long flags, EncodedDoubleValue otherEncoder )
-    {
-        double otherValue = otherEncoder.getDoubleValue(flags);
-        flags = otherEncoder.setDoubleValue(flags, getDoubleValue(flags));
-        return setDoubleValue(flags, otherValue);
     }
 }

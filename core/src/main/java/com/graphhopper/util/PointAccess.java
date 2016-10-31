@@ -20,8 +20,7 @@ package com.graphhopper.util;
 /**
  * @author Peter Karich
  */
-public interface PointAccess
-{
+public interface PointAccess {
     /**
      * @return true if elevation data is stored and can be retrieved
      */
@@ -36,7 +35,7 @@ public interface PointAccess
      * This method ensures that the node with the specified index exists i.e. allocates space for
      * it.
      */
-    void ensureNode( int nodeId );
+    void ensureNode(int nodeId);
 
     /**
      * This method ensures that the node with the specified index exists and prepares access to it.
@@ -44,7 +43,7 @@ public interface PointAccess
      * <p>
      * This methods sets the latitude, longitude and elevation to the specified value.
      */
-    void setNode( int nodeId, double lat, double lon );
+    void setNode(int nodeId, double lat, double lon);
 
     /**
      * This method ensures that the node with the specified index exists and prepares access to it.
@@ -52,26 +51,26 @@ public interface PointAccess
      * <p>
      * This methods sets the latitude, longitude and elevation to the specified value.
      */
-    void setNode( int nodeId, double lat, double lon, double ele );
+    void setNode(int nodeId, double lat, double lon, double ele);
 
     /**
      * @return the latitude at the specified node index
      */
-    double getLatitude( int nodeId );
+    double getLatitude(int nodeId);
 
-    double getLat( int nodeId );
+    double getLat(int nodeId);
 
     /**
      * @return the longitude at the specified node index
      */
-    double getLongitude( int nodeId );
+    double getLongitude(int nodeId);
 
-    double getLon( int nodeId );
+    double getLon(int nodeId);
 
     /**
      * Returns the elevation of the specified nodeId.
      */
-    double getElevation( int nodeId );
+    double getElevation(int nodeId);
 
-    double getEle( int nodeId );
+    double getEle(int nodeId);
 }

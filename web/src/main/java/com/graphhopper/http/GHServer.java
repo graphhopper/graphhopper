@@ -23,53 +23,47 @@ import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.servlet.GuiceFilter;
 import com.graphhopper.util.CmdArgs;
-
+import org.eclipse.jetty.server.Handler;
+import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletHolder;
-
-import java.util.EnumSet;
-import javax.servlet.DispatcherType;
-
-import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import javax.servlet.DispatcherType;
+import java.util.EnumSet;
 
 /**
  * Simple server similar to integration tests setup.
  */
-public class GHServer
-{
-    public static void main( String[] args ) throws Exception
-    {
-        new GHServer(CmdArgs.read(args)).start();
-    }
-
+public class GHServer {
     private final CmdArgs args;
-    private Server server;
     private final Logger logger = LoggerFactory.getLogger(getClass());
+    private Server server;
 
-    public GHServer( CmdArgs args )
-    {
+    public GHServer(CmdArgs args) {
         this.args = args;
     }
 
-    public void start() throws Exception
-    {
+    public static void main(String[] args) throws Exception {
+        new GHServer(CmdArgs.read(args)).start();
+    }
+
+    public void start() throws Exception {
         Injector injector = Guice.createInjector(createModule());
         start(injector);
     }
 
-    public void start( Injector injector ) throws Exception
-    {
+    public void start(Injector injector) throws Exception {
         ResourceHandler resHandler = new ResourceHandler();
         resHandler.setDirectoriesListed(false);
-        resHandler.setWelcomeFiles(new String[]
-        {
+        resHandler.setWelcomeFiles(new String[]{
             "index.html"
         });
         resHandler.setResourceBase(args.get("jetty.resourcebase", "./src/main/webapp"));
@@ -89,14 +83,18 @@ public class GHServer
         int httpPort = args.getInt("jetty.port", 8989);
         String host = args.get("jetty.host", "");
         connector0.setPort(httpPort);
+
+        int requestHeaderSize = args.getInt("jetty.request_header_size", -1);
+        if (requestHeaderSize > 0)
+            connector0.getConnectionFactory(HttpConnectionFactory.class).getHttpConfiguration().setRequestHeaderSize(requestHeaderSize);
+
         if (!host.isEmpty())
             connector0.setHost(host);
 
         server.addConnector(connector0);
 
         HandlerList handlers = new HandlerList();
-        handlers.setHandlers(new Handler[]
-        {
+        handlers.setHandlers(new Handler[]{
             resHandler, servHandler
         });
 
@@ -112,13 +110,10 @@ public class GHServer
         logger.info("Started server at HTTP " + host + ":" + httpPort);
     }
 
-    protected Module createModule()
-    {
-        return new AbstractModule()
-        {
+    protected Module createModule() {
+        return new AbstractModule() {
             @Override
-            protected void configure()
-            {
+            protected void configure() {
                 binder().requireExplicitBindings();
 
                 install(new DefaultModule(args));
@@ -129,16 +124,13 @@ public class GHServer
         };
     }
 
-    public void stop()
-    {
+    public void stop() {
         if (server == null)
             return;
 
-        try
-        {
+        try {
             server.stop();
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             logger.error("Cannot stop jetty", ex);
         }
     }

@@ -17,26 +17,23 @@
  */
 package com.graphhopper.storage;
 
-import java.nio.channels.OverlappingFileLockException;
-
 import org.junit.Test;
+
+import java.nio.channels.OverlappingFileLockException;
 
 import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
-public class NativeFSLockFactoryTest extends AbstractLockFactoryTester
-{
+public class NativeFSLockFactoryTest extends AbstractLockFactoryTester {
     @Override
-    protected LockFactory createLockFactory()
-    {
+    protected LockFactory createLockFactory() {
         return new NativeFSLockFactory(lockDir);
     }
 
     @Test
-    public void testMultiReadObtain()
-    {
+    public void testMultiReadObtain() {
         LockFactory instance = createLockFactory();
         instance.setLockDir(lockDir);
         Lock writeLock1 = instance.create("test", true);

@@ -17,22 +17,21 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.OSMWay;
+import com.graphhopper.reader.ReaderWay;
 import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class HikeFlagEncoderTest
-{
+public class HikeFlagEncoderTest {
     private final EncodingManager encodingManager = new EncodingManager("car,hike");
     private final HikeFlagEncoder hikeEncoder = (HikeFlagEncoder) encodingManager.getEncoder("hike");
 
     @Test
-    public void testPriority()
-    {
-        OSMWay way = new OSMWay(1);
+    public void testPriority() {
+        ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "cycleway");
         assertEquals(PriorityCode.UNCHANGED.getValue(), hikeEncoder.handlePriority(way, 0));
 

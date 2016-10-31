@@ -26,9 +26,14 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.PathMerger;
+import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.Translation;
+import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,64 +42,58 @@ import java.util.List;
  *
  * @author Peter Karich
  */
-public class ViaRoutingTemplate extends AbstractRoutingTemplate implements RoutingTemplate
-{
+public class ViaRoutingTemplate extends AbstractRoutingTemplate implements RoutingTemplate {
     protected final GHRequest ghRequest;
     protected final GHResponse ghResponse;
     protected final PathWrapper altResponse = new PathWrapper();
-    private final LocationIndex locationIndex;    
+    private final LocationIndex locationIndex;
     // result from route
     protected List<Path> pathList;
 
-    public ViaRoutingTemplate( GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex )
-    {
+    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex) {
         this.locationIndex = locationIndex;
         this.ghRequest = ghRequest;
         this.ghResponse = ghRsp;
     }
 
     @Override
-    public List<QueryResult> lookup( List<GHPoint> points, FlagEncoder encoder )
-    {
+    public List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder) {
         if (points.size() < 2)
             throw new IllegalArgumentException("At least 2 points have to be specified, but was:" + points.size());
 
         EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         queryResults = new ArrayList<>(points.size());
-        for (int placeIndex = 0; placeIndex < points.size(); placeIndex++)
-        {
+        for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);
             QueryResult res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
             if (!res.isValid())
-                ghResponse.addError(new IllegalArgumentException("Cannot find point " + placeIndex + ": " + point));
+                ghResponse.addError(new PointNotFoundException("Cannot find point " + placeIndex + ": " + point, placeIndex));
 
             queryResults.add(res);
         }
-       
+
         return queryResults;
     }
 
     @Override
-    public List<Path> calcPaths( QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts )
-    {
+    public List<Path> calcPaths(QueryGraph queryGraph, RoutingAlgorithmFactory algoFactory, AlgorithmOptions algoOpts) {
         long visitedNodesSum = 0L;
         boolean viaTurnPenalty = ghRequest.getHints().getBool(Routing.PASS_THROUGH, false);
         int pointCounts = ghRequest.getPoints().size();
         pathList = new ArrayList<>(pointCounts - 1);
         QueryResult fromQResult = queryResults.get(0);
         StopWatch sw;
-        for (int placeIndex = 1; placeIndex < pointCounts; placeIndex++)
-        {
-            if (placeIndex == 1)
-            {
+        for (int placeIndex = 1; placeIndex < pointCounts; placeIndex++) {
+            if (placeIndex == 1) {
                 // enforce start direction
                 queryGraph.enforceHeading(fromQResult.getClosestNode(), ghRequest.getFavoredHeading(0), false);
-            } else if (viaTurnPenalty)
-            {
+            } else if (viaTurnPenalty) {
                 // enforce straight start after via stop
                 Path prevRoute = pathList.get(placeIndex - 2);
-                EdgeIteratorState incomingVirtualEdge = prevRoute.getFinalEdge();
-                queryGraph.enforceHeadingByEdgeId(fromQResult.getClosestNode(), incomingVirtualEdge.getEdge(), false);
+                if (prevRoute.getEdgeCount() > 0) {
+                    EdgeIteratorState incomingVirtualEdge = prevRoute.getFinalEdge();
+                    queryGraph.enforceHeadingByEdgeId(fromQResult.getClosestNode(), incomingVirtualEdge.getEdge(), false);
+                }
             }
 
             QueryResult toQResult = queryResults.get(placeIndex);
@@ -112,8 +111,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             if (tmpPathList.isEmpty())
                 throw new IllegalStateException("At least one path has to be returned for " + fromQResult + " -> " + toQResult);
 
-            for (Path path : tmpPathList)
-            {
+            for (Path path : tmpPathList) {
                 if (path.getTime() < 0)
                     throw new RuntimeException("Time was negative. Please report as bug and include:" + ghRequest);
 
@@ -140,8 +138,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     }
 
     @Override
-    public boolean isReady( PathMerger pathMerger, Translation tr )
-    {
+    public boolean isReady(PathMerger pathMerger, Translation tr) {
         if (ghRequest.getPoints().size() - 1 != pathList.size())
             throw new RuntimeException("There should be exactly one more points than paths. points:" + ghRequest.getPoints().size() + ", paths:" + pathList.size());
 
@@ -152,8 +149,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     }
 
     @Override
-    public int getMaxRetries()
-    {
+    public int getMaxRetries() {
         return 1;
     }
 }

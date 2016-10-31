@@ -18,28 +18,21 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.Helper;
-
-import static com.graphhopper.storage.AbstractGraphStorageTester.*;
-
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
+import org.junit.Test;
 
 import java.util.*;
 
-import org.junit.Test;
-
+import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
 import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
-public class PathTest
-{
+public class PathTest {
     private final FlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager carManager = new EncodingManager(encoder);
     private final EncodingManager mixedEncoders = new EncodingManager(new CarFlagEncoder());
@@ -48,10 +41,9 @@ public class PathTest
     private final RoundaboutGraph roundaboutGraph = new RoundaboutGraph();
 
     @Test
-    public void testFound()
-    {
+    public void testFound() {
         GraphHopperStorage g = new GraphBuilder(carManager).create();
-        Path p = new Path(g, encoder);
+        Path p = new Path(g, new FastestWeighting(encoder));
         assertFalse(p.isFound());
         assertEquals(0, p.getDistance(), 1e-7);
         assertEquals(0, p.calcNodes().size());
@@ -59,21 +51,21 @@ public class PathTest
     }
 
     @Test
-    public void testTime()
-    {
+    public void testTime() {
         FlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
         GraphHopperStorage g = new GraphBuilder(new EncodingManager(tmpEnc)).create();
-        Path p = new Path(g, tmpEnc);
+        Path p = new Path(g, new FastestWeighting(tmpEnc));
         long flags = tmpEnc.setSpeed(tmpEnc.setReverseSpeed(tmpEnc.setAccess(0, true, true), 10), 15);
-        assertEquals(375 * 60 * 1000, p.calcMillis(100000, flags, false));
-        assertEquals(600 * 60 * 1000, p.calcMillis(100000, flags, true));
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(100000, flags);
+                
+        assertEquals(375 * 60 * 1000, p.calcMillis(edge, false));
+        assertEquals(600 * 60 * 1000, p.calcMillis(edge, true));
 
         g.close();
     }
 
     @Test
-    public void testWayList()
-    {
+    public void testWayList() {
         GraphHopperStorage g = new GraphBuilder(carManager).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0.0, 0.1);
@@ -85,7 +77,7 @@ public class PathTest
         EdgeIteratorState edge2 = g.edge(2, 1).setDistance(2000).setFlags(encoder.setProperties(50, true, true));
         edge2.setWayGeometry(Helper.createPointList(11, 1, 10, 1));
 
-        Path path = new Path(g, encoder);
+        Path path = new Path(g, new FastestWeighting(encoder));
         SPTEntry e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 0, 1);
@@ -111,7 +103,7 @@ public class PathTest
 
         // force minor change for instructions
         edge2.setName("2");
-        path = new Path(g, encoder);
+        path = new Path(g, new FastestWeighting(encoder));
         e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 0, 1);
@@ -135,7 +127,7 @@ public class PathTest
         assertEquals(path.calcPoints().size() - 1, lastIndex);
 
         // now reverse order
-        path = new Path(g, encoder);
+        path = new Path(g, new FastestWeighting(encoder));
         e1 = new SPTEntry(edge1.getEdge(), 0, 1);
         e1.parent = new SPTEntry(edge2.getEdge(), 1, 1);
         e1.parent.parent = new SPTEntry(-1, 2, 1);
@@ -162,8 +154,7 @@ public class PathTest
     }
 
     @Test
-    public void testFindInstruction()
-    {
+    public void testFindInstruction() {
         Graph g = new GraphBuilder(carManager).create();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0.0, 0.0);
@@ -185,7 +176,7 @@ public class PathTest
         edge4.setWayGeometry(Helper.createPointList());
         edge4.setName("Street 4");
 
-        Path path = new Path(g, encoder);
+        Path path = new Path(g, new FastestWeighting(encoder));
         SPTEntry e1 = new SPTEntry(edge4.getEdge(), 4, 1);
         e1.parent = new SPTEntry(edge3.getEdge(), 3, 1);
         e1.parent.parent = new SPTEntry(edge2.getEdge(), 2, 1);
@@ -215,107 +206,13 @@ public class PathTest
         assertNull(il.find(50.8, 50.25, 1000));
     }
 
-    private class RoundaboutGraph
-    {
-        private final EdgeIteratorState edge3to6, edge3to9;
-        boolean clockwise = false;
-        final public Graph g = new GraphBuilder(mixedEncoders).create();
-        final public NodeAccess na = g.getNodeAccess();
-        List<EdgeIteratorState> roundaboutEdges = new LinkedList<EdgeIteratorState>();
-
-        private RoundaboutGraph()
-        {
-            //                          
-            //      8
-            //       \
-            //         5
-            //       /  \
-            //  1 - 2    4 - 7
-            //       \  /
-            //        3
-            //        | \
-            //        6 [ 9 ] edge 9 is turned off in default mode 
-
-            na.setNode(1, 52.514, 13.348);
-            na.setNode(2, 52.514, 13.349);
-            na.setNode(3, 52.5135, 13.35);
-            na.setNode(4, 52.514, 13.351);
-            na.setNode(5, 52.5145, 13.351);
-            na.setNode(6, 52.513, 13.35);
-            na.setNode(7, 52.514, 13.352);
-            na.setNode(8, 52.515, 13.351);
-            na.setNode(9, 52.513, 13.351);
-
-            g.edge(1, 2, 5, true).setName("MainStreet 1 2");
-
-            // roundabout            
-            roundaboutEdges.add(g.edge(3, 2, 5, false).setName("2-3"));
-            roundaboutEdges.add(g.edge(4, 3, 5, false).setName("3-4"));
-            roundaboutEdges.add(g.edge(5, 4, 5, false).setName("4-5"));
-            roundaboutEdges.add(g.edge(2, 5, 5, false).setName("5-2"));
-
-            g.edge(4, 7, 5, true).setName("MainStreet 4 7");
-            g.edge(5, 8, 5, true).setName("5-8");
-
-            edge3to6 = g.edge(3, 6, 5, true).setName("3-6");
-            edge3to9 = g.edge(3, 9, 5, false).setName("3-9");
-
-            setRoundabout(clockwise);
-            inverse3to9();
-
-        }
-
-        public void setRoundabout( boolean clockwise )
-        {
-            for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders())
-            {
-                for (EdgeIteratorState edge : roundaboutEdges)
-                {
-                    edge.setFlags(encoder.setAccess(edge.getFlags(), clockwise, !clockwise));
-                    edge.setFlags(encoder.setBool(edge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
-                }
-            }
-            this.clockwise = clockwise;
-        }
-
-        public void inverse3to9()
-        {
-            for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders())
-            {
-                long flags = edge3to9.getFlags();
-                edge3to9.setFlags(encoder.setAccess(flags, !edge3to9.isForward(encoder), false));
-            }
-        }
-
-        public void inverse3to6()
-        {
-            for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders())
-            {
-                long flags = edge3to6.getFlags();
-                edge3to6.setFlags(encoder.setAccess(flags, !edge3to6.isForward(encoder), true));
-            }
-        }
-
-        private double getAngle( int n1, int n2, int n3, int n4 )
-        {
-            double inOrientation = Helper.ANGLE_CALC.calcOrientation(na.getLat(n1), na.getLon(n1), na.getLat(n2), na.getLon(n2));
-            double outOrientation = Helper.ANGLE_CALC.calcOrientation(na.getLat(n3), na.getLon(n3), na.getLat(n4), na.getLon(n4));
-            outOrientation = Helper.ANGLE_CALC.alignOrientation(inOrientation, outOrientation);
-            double delta = (inOrientation - outOrientation);
-            delta = clockwise ? (Math.PI + delta) : -1 * (Math.PI - delta);
-            return delta;
-        }
-    }
-
     /**
      * Test roundabout instructions for different profiles
      */
     @Test
-    public void testCalcInstructionsRoundabout()
-    {
-        for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders())
-        {
-            Path p = new Dijkstra(roundaboutGraph.g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+    public void testCalcInstructionsRoundabout() {
+        for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders()) {
+            Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                     .calcPath(1, 8);
             assertTrue(p.isFound());
             InstructionList wayList = p.calcInstructions(tr);
@@ -331,7 +228,7 @@ public class PathTest
             assertEquals(delta, instr.getTurnAngle(), 0.01);
 
             // case of continuing a street through a roundabout
-            p = new Dijkstra(roundaboutGraph.g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).
+            p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).
                     calcPath(1, 7);
             wayList = p.calcInstructions(tr);
             tmpList = pick("text", wayList.createJson());
@@ -350,9 +247,8 @@ public class PathTest
      * case starting in Roundabout
      */
     @Test
-    public void testCalcInstructionsRoundaboutBegin()
-    {
-        Path p = new Dijkstra(roundaboutGraph.g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+    public void testCalcInstructionsRoundaboutBegin() {
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                 .calcPath(2, 8);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);
@@ -366,10 +262,9 @@ public class PathTest
      * case with one node being containig already exit
      */
     @Test
-    public void testCalcInstructionsRoundaboutDirectExit()
-    {
+    public void testCalcInstructionsRoundaboutDirectExit() {
         roundaboutGraph.inverse3to9();
-        Path p = new Dijkstra(roundaboutGraph.g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                 .calcPath(6, 8);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);
@@ -385,10 +280,9 @@ public class PathTest
      * case with one edge being not an exit
      */
     @Test
-    public void testCalcInstructionsRoundabout2()
-    {
+    public void testCalcInstructionsRoundabout2() {
         roundaboutGraph.inverse3to6();
-        Path p = new Dijkstra(roundaboutGraph.g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                 .calcPath(1, 8);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);
@@ -405,8 +299,7 @@ public class PathTest
     }
 
     @Test
-    public void testCalcInstructionsRoundaboutIssue353()
-    {
+    public void testCalcInstructionsRoundaboutIssue353() {
         final Graph g = new GraphBuilder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
 
@@ -428,14 +321,14 @@ public class PathTest
         na.setNode(6, 52.513, 13.35);
         na.setNode(7, 52.514, 13.352);
         na.setNode(8, 52.515, 13.351);
-        
+
         na.setNode(9, 52.5135, 13.349);
         na.setNode(10, 52.5135, 13.348);
         na.setNode(11, 52.514, 13.347);
-        
+
         g.edge(2, 1, 5, false).setName("MainStreet 2 1");
         g.edge(1, 11, 5, false).setName("MainStreet 1 11");
-        
+
         // roundabout
         EdgeIteratorState tmpEdge;
         tmpEdge = g.edge(3, 9, 2, false).setName("3-9");
@@ -459,7 +352,7 @@ public class PathTest
         g.edge(5, 8, 5, true).setName("5-8");
         g.edge(3, 6, 5, true).setName("3-6");
 
-        Path p = new Dijkstra(g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                 .calcPath(6, 11);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);
@@ -473,10 +366,9 @@ public class PathTest
      * clockwise roundabout
      */
     @Test
-    public void testCalcInstructionsRoundaboutClockwise()
-    {
+    public void testCalcInstructionsRoundaboutClockwise() {
         roundaboutGraph.setRoundabout(true);
-        Path p = new Dijkstra(roundaboutGraph.g, encoder, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                 .calcPath(1, 8);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);
@@ -491,15 +383,95 @@ public class PathTest
         assertEquals(delta, instr.getTurnAngle(), 0.01);
     }
 
-    List<String> pick( String key, List<Map<String, Object>> instructionJson )
-    {
+    List<String> pick(String key, List<Map<String, Object>> instructionJson) {
         List<String> list = new ArrayList<String>();
 
-        for (Map<String, Object> json : instructionJson)
-        {
+        for (Map<String, Object> json : instructionJson) {
             list.add(json.get(key).toString());
         }
         return list;
+    }
+
+    private class RoundaboutGraph {
+        final public Graph g = new GraphBuilder(mixedEncoders).create();
+        final public NodeAccess na = g.getNodeAccess();
+        private final EdgeIteratorState edge3to6, edge3to9;
+        boolean clockwise = false;
+        List<EdgeIteratorState> roundaboutEdges = new LinkedList<EdgeIteratorState>();
+
+        private RoundaboutGraph() {
+            //
+            //      8
+            //       \
+            //         5
+            //       /  \
+            //  1 - 2    4 - 7
+            //       \  /
+            //        3
+            //        | \
+            //        6 [ 9 ] edge 9 is turned off in default mode
+
+            na.setNode(1, 52.514, 13.348);
+            na.setNode(2, 52.514, 13.349);
+            na.setNode(3, 52.5135, 13.35);
+            na.setNode(4, 52.514, 13.351);
+            na.setNode(5, 52.5145, 13.351);
+            na.setNode(6, 52.513, 13.35);
+            na.setNode(7, 52.514, 13.352);
+            na.setNode(8, 52.515, 13.351);
+            na.setNode(9, 52.513, 13.351);
+
+            g.edge(1, 2, 5, true).setName("MainStreet 1 2");
+
+            // roundabout
+            roundaboutEdges.add(g.edge(3, 2, 5, false).setName("2-3"));
+            roundaboutEdges.add(g.edge(4, 3, 5, false).setName("3-4"));
+            roundaboutEdges.add(g.edge(5, 4, 5, false).setName("4-5"));
+            roundaboutEdges.add(g.edge(2, 5, 5, false).setName("5-2"));
+
+            g.edge(4, 7, 5, true).setName("MainStreet 4 7");
+            g.edge(5, 8, 5, true).setName("5-8");
+
+            edge3to6 = g.edge(3, 6, 5, true).setName("3-6");
+            edge3to9 = g.edge(3, 9, 5, false).setName("3-9");
+
+            setRoundabout(clockwise);
+            inverse3to9();
+
+        }
+
+        public void setRoundabout(boolean clockwise) {
+            for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders()) {
+                for (EdgeIteratorState edge : roundaboutEdges) {
+                    edge.setFlags(encoder.setAccess(edge.getFlags(), clockwise, !clockwise));
+                    edge.setFlags(encoder.setBool(edge.getFlags(), FlagEncoder.K_ROUNDABOUT, true));
+                }
+            }
+            this.clockwise = clockwise;
+        }
+
+        public void inverse3to9() {
+            for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders()) {
+                long flags = edge3to9.getFlags();
+                edge3to9.setFlags(encoder.setAccess(flags, !edge3to9.isForward(encoder), false));
+            }
+        }
+
+        public void inverse3to6() {
+            for (FlagEncoder encoder : mixedEncoders.fetchEdgeEncoders()) {
+                long flags = edge3to6.getFlags();
+                edge3to6.setFlags(encoder.setAccess(flags, !edge3to6.isForward(encoder), true));
+            }
+        }
+
+        private double getAngle(int n1, int n2, int n3, int n4) {
+            double inOrientation = Helper.ANGLE_CALC.calcOrientation(na.getLat(n1), na.getLon(n1), na.getLat(n2), na.getLon(n2));
+            double outOrientation = Helper.ANGLE_CALC.calcOrientation(na.getLat(n3), na.getLon(n3), na.getLat(n4), na.getLon(n4));
+            outOrientation = Helper.ANGLE_CALC.alignOrientation(inOrientation, outOrientation);
+            double delta = (inOrientation - outOrientation);
+            delta = clockwise ? (Math.PI + delta) : -1 * (Math.PI - delta);
+            return delta;
+        }
     }
 
 }

@@ -19,17 +19,16 @@ package com.graphhopper.reader;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
  */
-public class OSMNodeTest
-{
+public class OSMNodeTest {
     @Test
-    public void testSetTags()
-    {
-        OSMNode instance = new OSMNode(0, 10, 10);
+    public void testSetTags() {
+        ReaderNode instance = new ReaderNode(0, 10, 10);
         assertTrue(Double.isNaN(instance.getEle()));
 
         instance.setTag("ele", "-10.1");

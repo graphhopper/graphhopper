@@ -20,15 +20,15 @@ package com.graphhopper.routing.util;
 /**
  * Encapsulates a bit-encoded value.
  * <p>
+ *
  * @author Nop
  */
-public class EncodedValue
-{
-    private final String name;
+public class EncodedValue {
     protected final long shift;
     protected final long mask;
     protected final double factor;
     protected final long defaultValue;
+    private final String name;
     private final long maxValue;
     private final boolean allowZero;
     private final int bits;
@@ -36,20 +36,19 @@ public class EncodedValue
     /**
      * Define a bit-encoded value
      * <p>
-     * @param name Description for debugging
-     * @param shift bit index of this value
-     * @param bits number of bits reserved
-     * @param factor scaling factor for stored values
+     *
+     * @param name         Description for debugging
+     * @param shift        bit index of this value
+     * @param bits         number of bits reserved
+     * @param factor       scaling factor for stored values
      * @param defaultValue default value
-     * @param maxValue default maximum value
+     * @param maxValue     default maximum value
      */
-    public EncodedValue( String name, int shift, int bits, double factor, long defaultValue, int maxValue )
-    {
+    public EncodedValue(String name, int shift, int bits, double factor, long defaultValue, int maxValue) {
         this(name, shift, bits, factor, defaultValue, maxValue, true);
     }
 
-    public EncodedValue( String name, int shift, int bits, double factor, long defaultValue, int maxValue, boolean allowZero )
-    {
+    public EncodedValue(String name, int shift, int bits, double factor, long defaultValue, int maxValue, boolean allowZero) {
         this.name = name;
         this.shift = shift;
         this.factor = factor;
@@ -64,8 +63,7 @@ public class EncodedValue
         this.allowZero = allowZero;
     }
 
-    protected void checkValue( long value )
-    {
+    protected void checkValue(long value) {
         if (value > maxValue)
             throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
         if (value < 0)
@@ -74,8 +72,7 @@ public class EncodedValue
             throw new IllegalArgumentException("zero " + name + " value not allowed! " + value);
     }
 
-    public long setValue( long flags, long value )
-    {
+    public long setValue(long flags, long value) {
         checkValue(value);
         // scale value
         value /= factor;
@@ -88,36 +85,32 @@ public class EncodedValue
         return flags | value;
     }
 
-    public long getValue( long flags )
-    {
+    public long getValue(long flags) {
         // find value
         flags &= mask;
         flags >>>= shift;
         return Math.round(flags * factor);
     }
 
-    public int getBits()
-    {
+    public int getBits() {
         return bits;
     }
 
-    public long setDefaultValue( long flags )
-    {
+    public long setDefaultValue(long flags) {
         return setValue(flags, defaultValue);
     }
 
-    public long getMaxValue()
-    {
+    public long getMaxValue() {
         return maxValue;
     }
 
     /**
      * Swap the contents controlled by this value encoder with the given value.
      * <p>
+     *
      * @return the new flags
      */
-    public long swap( long flags, EncodedValue otherEncoder )
-    {
+    public long swap(long flags, EncodedValue otherEncoder) {
         long otherValue = otherEncoder.getValue(flags);
         flags = otherEncoder.setValue(flags, getValue(flags));
         return setValue(flags, otherValue);

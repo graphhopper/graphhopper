@@ -18,7 +18,10 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PointList;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,197 +29,165 @@ import java.util.List;
 /**
  * @author Peter Karich
  */
-class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState
-{
+class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     private final List<EdgeIteratorState> edges;
     private int current;
 
-    public VirtualEdgeIterator( int edgeCount )
-    {
+    public VirtualEdgeIterator(int edgeCount) {
         edges = new ArrayList<EdgeIteratorState>(edgeCount);
         reset();
     }
 
-    void add( EdgeIteratorState edge )
-    {
+    void add(EdgeIteratorState edge) {
         edges.add(edge);
     }
 
-    EdgeIterator reset()
-    {
+    EdgeIterator reset() {
         current = -1;
         return this;
     }
 
-    int count()
-    {
+    int count() {
         return edges.size();
     }
 
     @Override
-    public boolean next()
-    {
+    public boolean next() {
         current++;
         return current < edges.size();
     }
 
     @Override
-    public EdgeIteratorState detach( boolean reverse )
-    {
+    public EdgeIteratorState detach(boolean reverse) {
         if (reverse)
             throw new IllegalStateException("Not yet supported");
         return edges.get(current);
     }
 
     @Override
-    public int getEdge()
-    {
+    public int getEdge() {
         return edges.get(current).getEdge();
     }
 
     @Override
-    public int getBaseNode()
-    {
+    public int getBaseNode() {
         return edges.get(current).getBaseNode();
     }
 
     @Override
-    public int getAdjNode()
-    {
+    public int getAdjNode() {
         return edges.get(current).getAdjNode();
     }
 
     @Override
-    public PointList fetchWayGeometry( int mode )
-    {
+    public PointList fetchWayGeometry(int mode) {
         return edges.get(current).fetchWayGeometry(mode);
     }
 
     @Override
-    public EdgeIteratorState setWayGeometry( PointList list )
-    {
+    public EdgeIteratorState setWayGeometry(PointList list) {
         return edges.get(current).setWayGeometry(list);
     }
 
     @Override
-    public double getDistance()
-    {
+    public double getDistance() {
         return edges.get(current).getDistance();
     }
 
     @Override
-    public EdgeIteratorState setDistance( double dist )
-    {
+    public EdgeIteratorState setDistance(double dist) {
         return edges.get(current).setDistance(dist);
     }
 
     @Override
-    public long getFlags()
-    {
+    public long getFlags() {
         return edges.get(current).getFlags();
     }
 
     @Override
-    public EdgeIteratorState setFlags( long flags )
-    {
+    public EdgeIteratorState setFlags(long flags) {
         return edges.get(current).setFlags(flags);
     }
 
     @Override
-    public String getName()
-    {
+    public String getName() {
         return edges.get(current).getName();
     }
 
     @Override
-    public EdgeIteratorState setName( String name )
-    {
+    public EdgeIteratorState setName(String name) {
         return edges.get(current).setName(name);
     }
 
     @Override
-    public boolean getBoolean( int key, boolean reverse, boolean _default )
-    {
-        return edges.get(current).getBoolean(key, reverse, _default);
+    public boolean getBool(int key, boolean _default) {
+        return edges.get(current).getBool(key, _default);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return edges.toString();
     }
 
     @Override
-    public int getAdditionalField()
-    {
+    public int getAdditionalField() {
         return edges.get(current).getAdditionalField();
     }
 
     @Override
-    public EdgeIteratorState setAdditionalField( int value )
-    {
+    public EdgeIteratorState setAdditionalField(int value) {
         return edges.get(current).setAdditionalField(value);
     }
 
     @Override
-    public EdgeIteratorState copyPropertiesTo( EdgeIteratorState edge )
-    {
+    public EdgeIteratorState copyPropertiesTo(EdgeIteratorState edge) {
         return edges.get(current).copyPropertiesTo(edge);
     }
 
     @Override
-    public boolean isBackward( FlagEncoder encoder )
-    {
+    public boolean isBackward(FlagEncoder encoder) {
         return edges.get(current).isBackward(encoder);
     }
 
     @Override
-    public boolean isForward( FlagEncoder encoder )
-    {
+    public boolean isForward(FlagEncoder encoder) {
         return edges.get(current).isForward(encoder);
     }
 
     @Override
-    public boolean isShortcut()
-    {
+    public boolean isShortcut() {
         EdgeIteratorState edge = edges.get(current);
         return edge instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edge).isShortcut();
     }
 
     @Override
-    public double getWeight()
-    {
+    public double getWeight() {
         // will be called only from PreparationWeighting and if isShortcut is true
         return ((CHEdgeIteratorState) edges.get(current)).getWeight();
     }
 
     @Override
-    public CHEdgeIteratorState setWeight( double weight )
-    {
+    public CHEdgeIteratorState setWeight(double weight) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public int getSkippedEdge1()
-    {
+    public int getSkippedEdge1() {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public int getSkippedEdge2()
-    {
+    public int getSkippedEdge2() {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public void setSkippedEdges( int edge1, int edge2 )
-    {
+    public void setSkippedEdges(int edge1, int edge2) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public boolean canBeOverwritten( long flags )
-    {
+    public boolean canBeOverwritten(long flags) {
         throw new UnsupportedOperationException("Not supported.");
     }
 }

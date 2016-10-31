@@ -17,20 +17,19 @@
  */
 package com.graphhopper;
 
-import static org.junit.Assert.*;
 import org.junit.Test;
 
-public class GHResponseTest
-{
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+
+public class GHResponseTest {
     @Test
-    public void testToString() throws Exception
-    {
+    public void testToString() throws Exception {
         assertEquals("no paths", new GHResponse().toString());
     }
 
     @Test
-    public void testHasNoErrorIfEmpty() throws Exception
-    {
+    public void testHasNoErrorIfEmpty() throws Exception {
         assertFalse(new GHResponse().hasErrors());
         GHResponse rsp = new GHResponse();
         rsp.add(new PathWrapper());

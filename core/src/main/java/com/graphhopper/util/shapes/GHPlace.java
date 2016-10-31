@@ -22,50 +22,42 @@ import com.graphhopper.util.Helper;
 /**
  * Specifies a place by its coordinates or name
  * <p>
+ *
  * @author Peter Karich
  */
-public class GHPlace extends GHPoint
-{
+public class GHPlace extends GHPoint {
     private String name = "";
 
-    public GHPlace()
-    {
+    public GHPlace() {
     }
 
-    public GHPlace( String name )
-    {
+    public GHPlace(String name) {
         setName(name);
     }
 
-    public GHPlace( double lat, double lon )
-    {
+    public GHPlace(double lat, double lon) {
         super(lat, lon);
     }
 
-    public void setValue( String t )
-    {
+    public void setValue(String t) {
         setName(t);
     }
 
-    public GHPlace setName( String name )
-    {
+    public String getName() {
+        return name;
+    }
+
+    public GHPlace setName(String name) {
         this.name = name;
         return this;
     }
 
-    public String getName()
-    {
-        return name;
-    }
-
-    public boolean isValidName()
-    {
+    public boolean isValidName() {
         return !Helper.isEmpty(name);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         String str = "";
         if (isValidName())
             str += name;

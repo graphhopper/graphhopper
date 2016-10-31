@@ -18,28 +18,26 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.storage.CHGraph;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Only certain nodes are accepted and therefor the others are ignored.
  * <p>
+ *
  * @author Peter Karich
  */
-public class LevelEdgeFilter implements EdgeFilter
-{
+public class LevelEdgeFilter implements EdgeFilter {
     private final CHGraph graph;
     private final int maxNodes;
 
-    public LevelEdgeFilter( CHGraph g )
-    {
+    public LevelEdgeFilter(CHGraph g) {
         graph = g;
         maxNodes = g.getNodes();
     }
 
     @Override
-    public boolean accept( EdgeIteratorState edgeIterState )
-    {
+    public boolean accept(EdgeIteratorState edgeIterState) {
         int base = edgeIterState.getBaseNode();
         int adj = edgeIterState.getAdjNode();
         // always accept virtual edges, see #288

@@ -20,37 +20,32 @@ package com.graphhopper.util;
 /**
  * Conversion between "the memory" (integer/long/float/double/string) to bytes via little endianess.
  * <p>
+ *
  * @author Peter Karich
  */
-public class BitUtilLittle extends BitUtil
-{
-    BitUtilLittle()
-    {
+public class BitUtilLittle extends BitUtil {
+    BitUtilLittle() {
     }
 
     @Override
-    public final short toShort( byte[] b, int offset )
-    {
+    public final short toShort(byte[] b, int offset) {
         return (short) ((b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF));
     }
 
     @Override
-    public final int toInt( byte[] b, int offset )
-    {
+    public final int toInt(byte[] b, int offset) {
         return (b[offset + 3] & 0xFF) << 24 | (b[offset + 2] & 0xFF) << 16
                 | (b[offset + 1] & 0xFF) << 8 | (b[offset] & 0xFF);
     }
 
     @Override
-    public void fromShort( byte[] bytes, short value, int offset )
-    {
+    public void fromShort(byte[] bytes, short value, int offset) {
         bytes[offset + 1] = (byte) (value >>> 8);
         bytes[offset] = (byte) (value);
     }
 
     @Override
-    public final void fromInt( byte[] bytes, int value, int offset )
-    {
+    public final void fromInt(byte[] bytes, int value, int offset) {
         bytes[offset + 3] = (byte) (value >>> 24);
         bytes[offset + 2] = (byte) (value >>> 16);
         bytes[offset + 1] = (byte) (value >>> 8);
@@ -58,20 +53,17 @@ public class BitUtilLittle extends BitUtil
     }
 
     @Override
-    public final long toLong( int int0, int int1 )
-    {
+    public final long toLong(int int0, int int1) {
         return ((long) int1 << 32) | (int0 & 0xFFFFFFFFL);
     }
 
     @Override
-    public final long toLong( byte[] b, int offset )
-    {
+    public final long toLong(byte[] b, int offset) {
         return ((long) toInt(b, offset + 4) << 32) | (toInt(b, offset) & 0xFFFFFFFFL);
     }
 
     @Override
-    public final void fromLong( byte[] bytes, long value, int offset )
-    {
+    public final void fromLong(byte[] bytes, long value, int offset) {
         bytes[offset + 7] = (byte) (value >> 56);
         bytes[offset + 6] = (byte) (value >> 48);
         bytes[offset + 5] = (byte) (value >> 40);
@@ -83,8 +75,7 @@ public class BitUtilLittle extends BitUtil
     }
 
     @Override
-    public byte[] fromBitString( String str )
-    {
+    public byte[] fromBitString(String str) {
         // no need for performance or memory tuning ...        
         int strLen = str.length();
         int bLen = str.length() / 8;
@@ -93,11 +84,9 @@ public class BitUtilLittle extends BitUtil
 
         byte[] bytes = new byte[bLen];
         int charI = 0;
-        for (int b = bLen - 1; b >= 0; b--)
-        {
+        for (int b = bLen - 1; b >= 0; b--) {
             byte res = 0;
-            for (int i = 0; i < 8; i++)
-            {
+            for (int i = 0; i < 8; i++) {
                 res <<= 1;
                 if (charI < strLen && str.charAt(charI) != '0')
                     res |= 1;
@@ -110,15 +99,12 @@ public class BitUtilLittle extends BitUtil
     }
 
     @Override
-    public String toBitString( byte[] bytes )
-    {
+    public String toBitString(byte[] bytes) {
         StringBuilder sb = new StringBuilder(bytes.length * 8);
         byte lastBit = (byte) (1 << 7);
-        for (int bIndex = bytes.length - 1; bIndex >= 0; bIndex--)
-        {
+        for (int bIndex = bytes.length - 1; bIndex >= 0; bIndex--) {
             byte b = bytes[bIndex];
-            for (int i = 0; i < 8; i++)
-            {
+            for (int i = 0; i < 8; i++) {
                 if ((b & lastBit) == 0)
                     sb.append('0');
                 else
@@ -131,8 +117,7 @@ public class BitUtilLittle extends BitUtil
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "little";
     }
 }

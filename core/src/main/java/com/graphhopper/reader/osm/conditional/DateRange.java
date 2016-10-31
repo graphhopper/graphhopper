@@ -18,54 +18,46 @@
 package com.graphhopper.reader.osm.conditional;
 
 import com.graphhopper.util.Helper;
+
 import java.text.DateFormat;
 import java.util.Calendar;
 
 /**
  * This class represents a date range and is able to determine if a given date is in that range.
  * <p>
+ *
  * @author Robin Boldt
  */
-public class DateRange implements ValueRange<Calendar>
-{
+public class DateRange implements ValueRange<Calendar> {
+    public static final String KEY = "DateRange";
     private final Calendar from;
     private final Calendar to;
-
     // Do not compare years
     boolean yearless = false;
-
     boolean dayOnly = false;
-
     boolean reverse = false;
 
-    public DateRange( ParsedCalendar from, ParsedCalendar to )
-    {
+    public DateRange(ParsedCalendar from, ParsedCalendar to) {
         Calendar fromCal = from.parsedCalendar;
         Calendar toCal = to.parsedCalendar;
 
         // This should never happen
-        if (fromCal.get(Calendar.ERA) != toCal.get(Calendar.ERA))
-        {
+        if (fromCal.get(Calendar.ERA) != toCal.get(Calendar.ERA)) {
             throw new IllegalArgumentException("Different ERAs are not allowed. From:" + from + " To:" + to);
         }
 
-        if (from.isYearless() && to.isYearless())
-        {
+        if (from.isYearless() && to.isYearless()) {
             yearless = true;
         }
 
-        if (from.isDayOnly() && to.isDayOnly())
-        {
+        if (from.isDayOnly() && to.isDayOnly()) {
             dayOnly = true;
         }
 
-        if (fromCal.getTimeInMillis() > toCal.getTimeInMillis())
-        {
-            if (!yearless && !dayOnly)
-            {
+        if (fromCal.getTimeInMillis() > toCal.getTimeInMillis()) {
+            if (!yearless && !dayOnly) {
                 throw new IllegalArgumentException("From after to makes no sense, except for isYearless and isDayOnly DateRanges. From:" + from + " To:" + to);
-            } else
-            {
+            } else {
                 reverse = true;
             }
         }
@@ -74,28 +66,21 @@ public class DateRange implements ValueRange<Calendar>
         this.to = to.getMax();
     }
 
-    public static final String KEY = "DateRange";
-
     @Override
-    public String getKey()
-    {
+    public String getKey() {
         return KEY;
     }
 
     @Override
-    public boolean isInRange( Calendar date )
-    {
+    public boolean isInRange(Calendar date) {
         if (!yearless && !dayOnly)
             return date.after(from) && date.before(to);
 
-        if (dayOnly)
-        {
+        if (dayOnly) {
             int currentDayOfWeek = date.get(Calendar.DAY_OF_WEEK);
-            if (reverse)
-            {
+            if (reverse) {
                 return from.get(Calendar.DAY_OF_WEEK) <= currentDayOfWeek || currentDayOfWeek <= to.get(Calendar.DAY_OF_WEEK);
-            } else
-            {
+            } else {
                 return from.get(Calendar.DAY_OF_WEEK) <= currentDayOfWeek && currentDayOfWeek <= to.get(Calendar.DAY_OF_WEEK);
             }
         }
@@ -106,26 +91,22 @@ public class DateRange implements ValueRange<Calendar>
             return isInRangeYearless(date);
     }
 
-    private boolean isInRangeYearless( Calendar date )
-    {
+    private boolean isInRangeYearless(Calendar date) {
         if (from.get(Calendar.MONTH) < date.get(Calendar.MONTH) && date.get(Calendar.MONTH) < to.get(Calendar.MONTH))
             return true;
-        if (from.get(Calendar.MONTH) == date.get(Calendar.MONTH) && to.get(Calendar.MONTH) == date.get(Calendar.MONTH))
-        {
+        if (from.get(Calendar.MONTH) == date.get(Calendar.MONTH) && to.get(Calendar.MONTH) == date.get(Calendar.MONTH)) {
             if (from.get(Calendar.DAY_OF_MONTH) <= date.get(Calendar.DAY_OF_MONTH) && date.get(Calendar.DAY_OF_MONTH) <= to.get(Calendar.DAY_OF_MONTH))
                 return true;
             else
                 return false;
         }
-        if (from.get(Calendar.MONTH) == date.get(Calendar.MONTH))
-        {
+        if (from.get(Calendar.MONTH) == date.get(Calendar.MONTH)) {
             if (from.get(Calendar.DAY_OF_MONTH) <= date.get(Calendar.DAY_OF_MONTH))
                 return true;
             else
                 return false;
         }
-        if (to.get(Calendar.MONTH) == date.get(Calendar.MONTH))
-        {
+        if (to.get(Calendar.MONTH) == date.get(Calendar.MONTH)) {
             if (date.get(Calendar.DAY_OF_MONTH) <= to.get(Calendar.DAY_OF_MONTH))
                 return true;
             else
@@ -134,28 +115,24 @@ public class DateRange implements ValueRange<Calendar>
         return false;
     }
 
-    private boolean isInRangeYearlessReverse( Calendar date )
-    {
+    private boolean isInRangeYearlessReverse(Calendar date) {
         int currMonth = date.get(Calendar.MONTH);
         if (from.get(Calendar.MONTH) < currMonth || currMonth < to.get(Calendar.MONTH))
             return true;
-        if (from.get(Calendar.MONTH) == currMonth && to.get(Calendar.MONTH) == currMonth)
-        {
+        if (from.get(Calendar.MONTH) == currMonth && to.get(Calendar.MONTH) == currMonth) {
             if (from.get(Calendar.DAY_OF_MONTH) < date.get(Calendar.DAY_OF_MONTH)
                     || date.get(Calendar.DAY_OF_MONTH) < to.get(Calendar.DAY_OF_MONTH))
                 return true;
             else
                 return false;
         }
-        if (from.get(Calendar.MONTH) == currMonth)
-        {
+        if (from.get(Calendar.MONTH) == currMonth) {
             if (from.get(Calendar.DAY_OF_MONTH) <= date.get(Calendar.DAY_OF_MONTH))
                 return true;
             else
                 return false;
         }
-        if (to.get(Calendar.MONTH) == currMonth)
-        {
+        if (to.get(Calendar.MONTH) == currMonth) {
             if (date.get(Calendar.DAY_OF_MONTH) <= to.get(Calendar.DAY_OF_MONTH))
                 return true;
             else
@@ -165,8 +142,7 @@ public class DateRange implements ValueRange<Calendar>
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         DateFormat f = Helper.createFormatter();
         return "yearless:" + yearless + ", dayOnly:" + dayOnly + ", reverse:" + reverse
                 + ", from:" + f.format(from.getTime()) + ", to:" + f.format(to.getTime());

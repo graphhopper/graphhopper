@@ -19,24 +19,21 @@ package com.graphhopper.util;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FastestWeighting;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
+import org.junit.Test;
 
 import static org.junit.Assert.*;
-
-import org.junit.Test;
 
 /**
  * @author Peter Karich
  */
-public class GHUtilityTest
-{
+public class GHUtilityTest {
     private final FlagEncoder carEncoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = new EncodingManager(carEncoder);
 
-    Graph createGraph()
-    {
+    Graph createGraph() {
         return new GraphBuilder(encodingManager).create();
     }
 
@@ -47,8 +44,7 @@ public class GHUtilityTest
     //   6     \1
     //   ______/
     // 0/
-    Graph initUnsorted( Graph g )
-    {
+    Graph initUnsorted(Graph g) {
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 1);
         na.setNode(1, 2.5, 4.5);
@@ -69,8 +65,7 @@ public class GHUtilityTest
     }
 
     @Test
-    public void testSort()
-    {
+    public void testSort() {
         Graph g = initUnsorted(createGraph());
         Graph newG = GHUtility.sortDFS(g, createGraph());
         assertEquals(g.getNodes(), newG.getNodes());
@@ -85,8 +80,7 @@ public class GHUtilityTest
     }
 
     @Test
-    public void testSort2()
-    {
+    public void testSort2() {
         Graph g = initUnsorted(createGraph());
         Graph newG = GHUtility.sortDFS(g, createGraph());
         assertEquals(g.getNodes(), newG.getNodes());
@@ -98,8 +92,7 @@ public class GHUtilityTest
     }
 
     @Test
-    public void testSortDirected()
-    {
+    public void testSortDirected() {
         Graph g = createGraph();
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 1);
@@ -111,8 +104,7 @@ public class GHUtilityTest
     }
 
     @Test
-    public void testCopyWithSelfRef()
-    {
+    public void testCopyWithSelfRef() {
         Graph g = initUnsorted(createGraph());
         EdgeIteratorState eb = g.edge(0, 0, 11, true);
 
@@ -123,8 +115,7 @@ public class GHUtilityTest
     }
 
     @Test
-    public void testCopy()
-    {
+    public void testCopy() {
         Graph g = initUnsorted(createGraph());
         EdgeIteratorState edgeState = g.edge(6, 5, 11, true);
         edgeState.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
@@ -167,8 +158,7 @@ public class GHUtilityTest
     }
 
     @Test
-    public void testEdgeStuff()
-    {
+    public void testEdgeStuff() {
         assertEquals(6, GHUtility.createEdgeKey(1, 2, 3, false));
         assertEquals(7, GHUtility.createEdgeKey(2, 1, 3, false));
         assertEquals(7, GHUtility.createEdgeKey(1, 2, 3, true));

@@ -20,14 +20,11 @@ package com.graphhopper.coll;
 /**
  * @author Peter Karich
  */
-public class IntDoubleBinHeap extends OTPIntDoubleBinHeap implements BinHeapWrapper<Number, Integer>
-{
-    public IntDoubleBinHeap()
-    {
+public class IntDoubleBinHeap extends OTPIntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
+    public IntDoubleBinHeap() {
     }
 
-    public IntDoubleBinHeap( int capacity )
-    {
+    public IntDoubleBinHeap(int capacity) {
         super(capacity);
     }
 }

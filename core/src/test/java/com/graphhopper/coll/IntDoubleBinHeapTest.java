@@ -20,11 +20,9 @@ package com.graphhopper.coll;
 /**
  * @author Peter Karich
  */
-public class IntDoubleBinHeapTest extends AbstractBinHeapTest
-{
+public class IntDoubleBinHeapTest extends AbstractBinHeapTest {
     @Override
-    public BinHeapWrapper<Number, Integer> createHeap( int capacity )
-    {
+    public BinHeapWrapper<Number, Integer> createHeap(int capacity) {
         return new IntDoubleBinHeap(capacity);
     }
 }

@@ -37,30 +37,25 @@ import java.io.IOException;
 /**
  * @author svantulden
  */
-public class NearestServlet extends GHBaseServlet
-{
+public class NearestServlet extends GHBaseServlet {
+    private final DistanceCalc calc = Helper.DIST_EARTH;
     @Inject
     private GraphHopper hopper;
-    private final DistanceCalc calc = Helper.DIST_EARTH;
 
     @Override
-    public void doGet( HttpServletRequest httpReq, HttpServletResponse httpRes ) throws ServletException, IOException
-    {
+    public void doGet(HttpServletRequest httpReq, HttpServletResponse httpRes) throws ServletException, IOException {
         String pointStr = getParam(httpReq, "point", null);
         boolean enabledElevation = getBooleanParam(httpReq, "elevation", false);
 
         JSONObject result = new JSONObject();
-        if (pointStr != null && !pointStr.equalsIgnoreCase(""))
-        {
+        if (pointStr != null && !pointStr.equalsIgnoreCase("")) {
             GHPoint place = GHPoint.parse(pointStr);
             LocationIndex index = hopper.getLocationIndex();
             QueryResult qr = index.findClosest(place.lat, place.lon, EdgeFilter.ALL_EDGES);
 
-            if (!qr.isValid())
-            {
+            if (!qr.isValid()) {
                 result.put("error", "Nearest point cannot be found!");
-            } else
-            {
+            } else {
                 GHPoint3D snappedPoint = qr.getSnappedPoint();
                 result.put("type", "Point");
 
@@ -76,8 +71,7 @@ public class NearestServlet extends GHBaseServlet
                 // Distance from input to snapped point in meters
                 result.put("distance", calc.calcDist(place.lat, place.lon, snappedPoint.lat, snappedPoint.lon));
             }
-        } else
-        {
+        } else {
             result.put("error", "No lat/lon specified!");
         }
 

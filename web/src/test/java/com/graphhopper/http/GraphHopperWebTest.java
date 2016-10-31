@@ -17,35 +17,30 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.PathWrapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
-
-import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
-public class GraphHopperWebTest
-{
+public class GraphHopperWebTest {
     // see also GraphHopperServletIT.testGraphHopperWeb for real routes against local jetty service    
 
     @Test
-    public void testReadEncoded() throws Exception
-    {
-        Downloader downloader = new Downloader("GraphHopper Test")
-        {
+    public void testReadEncoded() throws Exception {
+        Downloader downloader = new Downloader("GraphHopper Test") {
             @Override
-            public InputStream fetch( HttpURLConnection conn, boolean readErrorStreamNoException ) throws IOException
-            {
+            public InputStream fetch(HttpURLConnection conn, boolean readErrorStreamNoException) throws IOException {
                 return getClass().getResourceAsStream("test_encoded.json");
             }
         };
@@ -58,20 +53,17 @@ public class GraphHopperWebTest
         assertEquals(5, arsp.getInstructions().getSize());
         assertEquals("(0,Geradeaus auf A 100,1268.519329705091,65237)", arsp.getInstructions().get(0).toString());
         assertEquals(11, arsp.getInstructions().get(0).getPoints().size());
-        
-        assertEquals(52.47384, arsp.getWaypoints().getLat(0), 1e-4);
-        assertEquals(13.36285, arsp.getWaypoints().getLon(0), 1e-4);
-        assertEquals(52.47361, arsp.getWaypoints().getLat(1), 1e-4);
+
+        assertEquals(43.73595, arsp.getWaypoints().getLat(0), 1e-4);
+        assertEquals(7.42015, arsp.getWaypoints().getLon(0), 1e-4);
+        assertEquals(43.73761, arsp.getWaypoints().getLat(1), 1e-4);
     }
 
     @Test
-    public void testCreateURL() throws Exception
-    {
-        Downloader downloader = new Downloader("GraphHopper Test")
-        {
+    public void testCreateURL() throws Exception {
+        Downloader downloader = new Downloader("GraphHopper Test") {
             @Override
-            public String downloadAsString( String url, boolean readErrorStreamNoException ) throws IOException
-            {
+            public String downloadAsString(String url, boolean readErrorStreamNoException) throws IOException {
                 assertFalse(url.contains("xy"));
                 assertFalse(url.contains("algo1"));
                 assertTrue(url.contains("alternative_route.max_paths=4"));

@@ -18,16 +18,17 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.Weighting;
+import com.graphhopper.routing.weighting.Weighting;
+
 import java.util.Arrays;
 
 /**
  * For now this is just a helper class to quickly create a GraphStorage.
  * <p>
+ *
  * @author Peter Karich
  */
-public class GraphBuilder
-{
+public class GraphBuilder {
     private final EncodingManager encodingManager;
     private String location;
     private boolean mmap;
@@ -36,60 +37,51 @@ public class GraphBuilder
     private long byteCapacity = 100;
     private Weighting singleCHWeighting;
 
-    public GraphBuilder( EncodingManager encodingManager )
-    {
+    public GraphBuilder(EncodingManager encodingManager) {
         this.encodingManager = encodingManager;
     }
 
     /**
      * This method enables creating a CHGraph with the specified weighting.
      */
-    public GraphBuilder setCHGraph( Weighting singleCHWeighting )
-    {
+    public GraphBuilder setCHGraph(Weighting singleCHWeighting) {
         this.singleCHWeighting = singleCHWeighting;
         return this;
     }
 
-    public GraphBuilder setLocation( String location )
-    {
+    public GraphBuilder setLocation(String location) {
         this.location = location;
         return this;
     }
 
-    public GraphBuilder setStore( boolean store )
-    {
+    public GraphBuilder setStore(boolean store) {
         this.store = store;
         return this;
     }
 
-    public GraphBuilder setMmap( boolean mmap )
-    {
+    public GraphBuilder setMmap(boolean mmap) {
         this.mmap = mmap;
         return this;
     }
 
-    public GraphBuilder setExpectedSize( byte cap )
-    {
+    public GraphBuilder setExpectedSize(byte cap) {
         this.byteCapacity = cap;
         return this;
     }
 
-    public GraphBuilder set3D( boolean withElevation )
-    {
+    public GraphBuilder set3D(boolean withElevation) {
         this.elevation = withElevation;
         return this;
     }
 
-    public boolean hasElevation()
-    {
+    public boolean hasElevation() {
         return elevation;
     }
 
     /**
      * Creates a CHGraph
      */
-    public CHGraph chGraphCreate( Weighting singleCHWeighting )
-    {
+    public CHGraph chGraphCreate(Weighting singleCHWeighting) {
         return setCHGraph(singleCHWeighting).create().getGraph(CHGraph.class, singleCHWeighting);
     }
 
@@ -98,8 +90,7 @@ public class GraphBuilder
      * Afterwards you'll need to call GraphStorage. Create to have a usable object. Better use
      * create.
      */
-    public GraphHopperStorage build()
-    {
+    public GraphHopperStorage build() {
         Directory dir;
         if (mmap)
             dir = new MMapDirectory(location);
@@ -118,19 +109,16 @@ public class GraphBuilder
     /**
      * Default graph is a GraphStorage with an in memory directory and disabled storing on flush.
      */
-    public GraphHopperStorage create()
-    {
+    public GraphHopperStorage create() {
         return build().create(byteCapacity);
     }
 
     /**
      * @throws IllegalStateException if not loadable.
      */
-    public GraphHopperStorage load()
-    {
+    public GraphHopperStorage load() {
         GraphHopperStorage gs = build();
-        if (!gs.loadExisting())
-        {
+        if (!gs.loadExisting()) {
             throw new IllegalStateException("Cannot load graph " + location);
         }
         return gs;

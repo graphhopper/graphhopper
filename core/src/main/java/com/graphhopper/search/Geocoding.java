@@ -24,12 +24,12 @@ import java.util.List;
 /**
  * Interface to convert from place names to points.
  * <p>
+ *
  * @author Peter Karich
  */
-public interface Geocoding
-{
+public interface Geocoding {
     /**
      * Returns a list of matching points for the specified place query string.
      */
-    List<GHPlace> names2places( GHPlace... place );
+    List<GHPlace> names2places(GHPlace... place);
 }

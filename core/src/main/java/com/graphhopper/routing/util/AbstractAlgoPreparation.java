@@ -20,20 +20,17 @@ package com.graphhopper.routing.util;
 /**
  * @author Peter Karich
  */
-public abstract class AbstractAlgoPreparation
-{
+public abstract class AbstractAlgoPreparation {
     private boolean prepared = false;
 
-    public void doWork()
-    {
+    public void doWork() {
         if (prepared)
             throw new IllegalStateException("Call doWork only once!");
 
         prepared = true;
     }
 
-    public boolean isPrepared()
-    {
+    public boolean isPrepared() {
         return prepared;
     }
 }

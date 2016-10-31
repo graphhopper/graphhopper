@@ -21,11 +21,7 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -33,11 +29,13 @@ import gnu.trove.iterator.TIntIterator;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.procedure.TIntProcedure;
 import gnu.trove.set.hash.TIntHashSet;
-
-import java.util.*;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * This implementation implements an n-tree to get the closest node or edge from GPS coordinates.
@@ -46,30 +44,30 @@ import org.slf4j.LoggerFactory;
  * line for different resolutions, especially if a leaf node could be split into a tree-node and
  * resolution changes.
  * <p>
+ *
  * @author Peter Karich
  */
-public class LocationIndexTree implements LocationIndex
-{
+public class LocationIndexTree implements LocationIndex {
+    // do not start with 0 as a positive value means leaf and a negative means "entry with subentries"
+    static final int START_POINTER = 1;
+    protected final Graph graph;
+    final DataAccess dataAccess;
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int MAGIC_INT;
-    protected DistanceCalc distCalc = Helper.DIST_PLANE;
-    private DistanceCalc preciseDistCalc = Helper.DIST_EARTH;
-    protected final Graph graph;
     private final NodeAccess nodeAccess;
-    final DataAccess dataAccess;
+    protected DistanceCalc distCalc = Helper.DIST_PLANE;
+    protected SpatialKeyAlgo keyAlgo;
+    int maxRegionSearch = 4;
+    private DistanceCalc preciseDistCalc = Helper.DIST_EARTH;
     private int[] entries;
     private byte[] shifts;
     // convert spatial key to index for subentry of current depth
     private long[] bitmasks;
-    protected SpatialKeyAlgo keyAlgo;
     private int minResolutionInMeter = 300;
     private double deltaLat;
     private double deltaLon;
     private int initSizeLeafEntries = 4;
     private boolean initialized = false;
-    // do not start with 0 as a positive value means leaf and a negative means "entry with subentries"
-    static final int START_POINTER = 1;
-    int maxRegionSearch = 4;
     /**
      * If normed distance is smaller than this value the node or edge is 'identical' and the
      * algorithm can stop search.
@@ -79,8 +77,7 @@ public class LocationIndexTree implements LocationIndex
     /**
      * @param g the graph for which this index should do the lookup based on latitude,longitude.
      */
-    public LocationIndexTree( Graph g, Directory dir )
-    {
+    public LocationIndexTree(Graph g, Directory dir) {
         if (g instanceof CHGraph)
             throw new IllegalArgumentException("Use base graph for LocationIndexTree instead of CHGraph");
 
@@ -90,8 +87,7 @@ public class LocationIndexTree implements LocationIndex
         dataAccess = dir.find("location_index");
     }
 
-    public int getMinResolutionInMeter()
-    {
+    public int getMinResolutionInMeter() {
         return minResolutionInMeter;
     }
 
@@ -99,8 +95,7 @@ public class LocationIndexTree implements LocationIndex
      * Minimum width in meter of one tile. Decrease this if you need faster queries, but keep in
      * mind that then queries with different coordinates are more likely to fail.
      */
-    public LocationIndexTree setMinResolutionInMeter( int minResolutionInMeter )
-    {
+    public LocationIndexTree setMinResolutionInMeter(int minResolutionInMeter) {
         this.minResolutionInMeter = minResolutionInMeter;
         return this;
     }
@@ -110,8 +105,7 @@ public class LocationIndexTree implements LocationIndex
      * (minResolutionInMeter*regionAround). Set to 1 for to force avoiding a fall back, good if you
      * have strict performance and lookup-quality requirements. Default is 4.
      */
-    public LocationIndexTree setMaxRegionSearch( int numTiles )
-    {
+    public LocationIndexTree setMaxRegionSearch(int numTiles) {
         if (numTiles < 1)
             throw new IllegalArgumentException("Region of location index must be at least 1 but was " + numTiles);
 
@@ -123,8 +117,7 @@ public class LocationIndexTree implements LocationIndex
         return this;
     }
 
-    void prepareAlgo()
-    {
+    void prepareAlgo() {
         // 0.1 meter should count as 'equal'
         equalNormedDelta = distCalc.calcNormalizedDist(0.1);
 
@@ -147,20 +140,15 @@ public class LocationIndexTree implements LocationIndex
         TIntArrayList tmpEntries = new TIntArrayList();
         // the last one is always 4 to reduce costs if only a single entry
         tmp /= 4;
-        while (tmp > 1)
-        {
+        while (tmp > 1) {
             int tmpNo;
-            if (tmp >= 64)
-            {
+            if (tmp >= 64) {
                 tmpNo = 64;
-            } else if (tmp >= 16)
-            {
+            } else if (tmp >= 16) {
                 tmpNo = 16;
-            } else if (tmp >= 4)
-            {
+            } else if (tmp >= 4) {
                 tmpNo = 4;
-            } else
-            {
+            } else {
                 break;
             }
             tmpEntries.add(tmpNo);
@@ -170,8 +158,7 @@ public class LocationIndexTree implements LocationIndex
         initEntries(tmpEntries.toArray());
         int shiftSum = 0;
         long parts = 1;
-        for (int i = 0; i < shifts.length; i++)
-        {
+        for (int i = 0; i < shifts.length; i++) {
             shiftSum += shifts[i];
             parts *= entries[i];
         }
@@ -184,11 +171,9 @@ public class LocationIndexTree implements LocationIndex
         deltaLon = (bounds.maxLon - bounds.minLon) / parts;
     }
 
-    private LocationIndexTree initEntries( int[] entries )
-    {
-        if (entries.length < 1)
-        // at least one depth should have been specified
-        {
+    private LocationIndexTree initEntries(int[] entries) {
+        if (entries.length < 1) {
+            // at least one depth should have been specified
             throw new IllegalStateException("depth needs to be at least 1");
         }
         this.entries = entries;
@@ -196,10 +181,8 @@ public class LocationIndexTree implements LocationIndex
         shifts = new byte[depth];
         bitmasks = new long[depth];
         int lastEntry = entries[0];
-        for (int i = 0; i < depth; i++)
-        {
-            if (lastEntry < entries[i])
-            {
+        for (int i = 0; i < depth; i++) {
+            if (lastEntry < entries[i]) {
                 throw new IllegalStateException("entries should decrease or stay but was:"
                         + Arrays.toString(entries));
             }
@@ -210,8 +193,7 @@ public class LocationIndexTree implements LocationIndex
         return this;
     }
 
-    private byte getShift( int entries )
-    {
+    private byte getShift(int entries) {
         byte b = (byte) Math.round(Math.log(entries) / Math.log(2));
         if (b <= 0)
             throw new IllegalStateException("invalid shift:" + b);
@@ -219,26 +201,22 @@ public class LocationIndexTree implements LocationIndex
         return b;
     }
 
-    private long getBitmask( int shift )
-    {
+    private long getBitmask(int shift) {
         long bm = (1L << shift) - 1;
-        if (bm <= 0)
-        {
+        if (bm <= 0) {
             throw new IllegalStateException("invalid bitmask:" + bm);
         }
         return bm;
     }
 
-    InMemConstructionIndex getPrepareInMemIndex()
-    {
+    InMemConstructionIndex getPrepareInMemIndex() {
         InMemConstructionIndex memIndex = new InMemConstructionIndex(entries[0]);
         memIndex.prepare();
         return memIndex;
     }
 
     @Override
-    public int findID( double lat, double lon )
-    {
+    public int findID(double lat, double lon) {
         QueryResult res = findClosest(lat, lon, EdgeFilter.ALL_EDGES);
         if (!res.isValid())
             return -1;
@@ -247,8 +225,7 @@ public class LocationIndexTree implements LocationIndex
     }
 
     @Override
-    public LocationIndex setResolution( int minResolutionInMeter )
-    {
+    public LocationIndex setResolution(int minResolutionInMeter) {
         if (minResolutionInMeter <= 0)
             throw new IllegalStateException("Negative precision is not allowed!");
 
@@ -257,8 +234,7 @@ public class LocationIndexTree implements LocationIndex
     }
 
     @Override
-    public LocationIndex setApproximation( boolean approx )
-    {
+    public LocationIndex setApproximation(boolean approx) {
         if (approx)
             distCalc = Helper.DIST_PLANE;
         else
@@ -267,14 +243,12 @@ public class LocationIndexTree implements LocationIndex
     }
 
     @Override
-    public LocationIndexTree create( long size )
-    {
+    public LocationIndexTree create(long size) {
         throw new UnsupportedOperationException("Not supported. Use prepareIndex instead.");
     }
 
     @Override
-    public boolean loadExisting()
-    {
+    public boolean loadExisting() {
         if (initialized)
             throw new IllegalStateException("Call loadExisting only once");
 
@@ -295,8 +269,7 @@ public class LocationIndexTree implements LocationIndex
     }
 
     @Override
-    public void flush()
-    {
+    public void flush() {
         dataAccess.setHeader(0, MAGIC_INT);
         dataAccess.setHeader(1 * 4, calcChecksum());
         dataAccess.setHeader(2 * 4, minResolutionInMeter);
@@ -306,8 +279,7 @@ public class LocationIndexTree implements LocationIndex
     }
 
     @Override
-    public LocationIndex prepareIndex()
-    {
+    public LocationIndex prepareIndex() {
         if (initialized)
             throw new IllegalStateException("Call prepareIndex only once");
 
@@ -318,12 +290,10 @@ public class LocationIndexTree implements LocationIndex
 
         // compact & store to dataAccess
         dataAccess.create(64 * 1024);
-        try
-        {
+        try {
             inMem.store(inMem.root, START_POINTER);
             flush();
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
             throw new IllegalStateException("Problem while storing location index. " + Helper.getMemInfo(), ex);
         }
         float entriesPerLeaf = (float) inMem.size / inMem.leafs;
@@ -340,271 +310,48 @@ public class LocationIndexTree implements LocationIndex
         return this;
     }
 
-    int calcChecksum()
-    {
+    int calcChecksum() {
         // do not include the edges as we could get problem with CHGraph due to shortcuts
         // ^ graph.getAllEdges().count();
         return graph.getNodes();
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         dataAccess.close();
     }
 
     @Override
-    public boolean isClosed()
-    {
+    public boolean isClosed() {
         return dataAccess.isClosed();
     }
 
     @Override
-    public long getCapacity()
-    {
+    public long getCapacity() {
         return dataAccess.getCapacity();
     }
 
     @Override
-    public void setSegmentSize( int bytes )
-    {
+    public void setSegmentSize(int bytes) {
         dataAccess.setSegmentSize(bytes);
     }
 
-    class InMemConstructionIndex
-    {
-        int size;
-        int leafs;
-        InMemTreeEntry root;
-
-        public InMemConstructionIndex( int noOfSubEntries )
-        {
-            root = new InMemTreeEntry(noOfSubEntries);
-        }
-
-        void prepare()
-        {
-            final EdgeIterator allIter = graph.getAllEdges();
-            try
-            {
-                while (allIter.next())
-                {
-                    int nodeA = allIter.getBaseNode();
-                    int nodeB = allIter.getAdjNode();
-                    double lat1 = nodeAccess.getLatitude(nodeA);
-                    double lon1 = nodeAccess.getLongitude(nodeA);
-                    double lat2;
-                    double lon2;
-                    PointList points = allIter.fetchWayGeometry(0);
-                    int len = points.getSize();
-                    for (int i = 0; i < len; i++)
-                    {
-                        lat2 = points.getLatitude(i);
-                        lon2 = points.getLongitude(i);
-                        addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
-                        lat1 = lat2;
-                        lon1 = lon2;
-                    }
-                    lat2 = nodeAccess.getLatitude(nodeB);
-                    lon2 = nodeAccess.getLongitude(nodeB);
-                    addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
-                }
-            } catch (Exception ex)
-            {
-                logger.error("Problem! base:" + allIter.getBaseNode() + ", adj:" + allIter.getAdjNode()
-                        + ", edge:" + allIter.getEdge(), ex);
-            }
-        }
-
-        void addNode( final int nodeA, final int nodeB,
-                      final double lat1, final double lon1,
-                      final double lat2, final double lon2 )
-        {
-            PointEmitter pointEmitter = new PointEmitter()
-            {
-                @Override
-                public void set( double lat, double lon )
-                {
-                    long key = keyAlgo.encode(lat, lon);
-                    long keyPart = createReverseKey(key);
-                    // no need to feed both nodes as we search neighbors in fillIDs
-                    addNode(root, nodeA, 0, keyPart, key);
-                }
-            };
-
-            if (!distCalc.isCrossBoundary(lon1, lon2))
-            {
-                BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter,
-                        graph.getBounds().minLat, graph.getBounds().minLon,
-                        deltaLat, deltaLon);
-            }
-        }
-
-        void addNode( InMemEntry entry, int nodeId, int depth, long keyPart, long key )
-        {
-            if (entry.isLeaf())
-            {
-                InMemLeafEntry leafEntry = (InMemLeafEntry) entry;
-                leafEntry.addNode(nodeId);
-            } else
-            {
-                int index = (int) (bitmasks[depth] & keyPart);
-                keyPart = keyPart >>> shifts[depth];
-                InMemTreeEntry treeEntry = ((InMemTreeEntry) entry);
-                InMemEntry subentry = treeEntry.getSubEntry(index);
-                depth++;
-                if (subentry == null)
-                {
-                    if (depth == entries.length)
-                    {
-                        subentry = new InMemLeafEntry(initSizeLeafEntries, key);
-                    } else
-                    {
-                        subentry = new InMemTreeEntry(entries[depth]);
-                    }
-                    treeEntry.setSubEntry(index, subentry);
-                }
-
-                addNode(subentry, nodeId, depth, keyPart, key);
-            }
-        }
-
-        Collection<InMemEntry> getEntriesOf( int selectDepth )
-        {
-            List<InMemEntry> list = new ArrayList<InMemEntry>();
-            fillLayer(list, selectDepth, 0, ((InMemTreeEntry) root).getSubEntriesForDebug());
-            return list;
-        }
-
-        void fillLayer( Collection<InMemEntry> list, int selectDepth, int depth, Collection<InMemEntry> entries )
-        {
-            for (InMemEntry entry : entries)
-            {
-                if (selectDepth == depth)
-                {
-                    list.add(entry);
-                } else if (entry instanceof InMemTreeEntry)
-                {
-                    fillLayer(list, selectDepth, depth + 1, ((InMemTreeEntry) entry).getSubEntriesForDebug());
-                }
-            }
-        }
-
-        String print()
-        {
-            StringBuilder sb = new StringBuilder();
-            print(root, sb, 0, 0);
-            return sb.toString();
-        }
-
-        void print( InMemEntry e, StringBuilder sb, long key, int depth )
-        {
-            if (e.isLeaf())
-            {
-                InMemLeafEntry leaf = (InMemLeafEntry) e;
-                int bits = keyAlgo.getBits();
-                // print reverse keys
-                sb.append(BitUtil.BIG.toBitString(BitUtil.BIG.reverse(key, bits), bits)).append("  ");
-                TIntArrayList entries = leaf.getResults();
-                for (int i = 0; i < entries.size(); i++)
-                {
-                    sb.append(leaf.get(i)).append(',');
-                }
-                sb.append('\n');
-            } else
-            {
-                InMemTreeEntry tree = (InMemTreeEntry) e;
-                key = key << shifts[depth];
-                for (int counter = 0; counter < tree.subEntries.length; counter++)
-                {
-                    InMemEntry sube = tree.subEntries[counter];
-                    if (sube != null)
-                    {
-                        print(sube, sb, key | counter, depth + 1);
-                    }
-                }
-            }
-        }
-
-        // store and freezes tree
-        int store( InMemEntry entry, int intIndex )
-        {
-            long refPointer = (long) intIndex * 4;
-            if (entry.isLeaf())
-            {
-                InMemLeafEntry leaf = ((InMemLeafEntry) entry);
-                TIntArrayList entries = leaf.getResults();
-                int len = entries.size();
-                if (len == 0)
-                {
-                    return intIndex;
-                }
-                size += len;
-                intIndex++;
-                leafs++;
-                dataAccess.ensureCapacity((long) (intIndex + len + 1) * 4);
-                if (len == 1)
-                {
-                    // less disc space for single entries
-                    dataAccess.setInt(refPointer, -entries.get(0) - 1);
-                } else
-                {
-                    for (int index = 0; index < len; index++, intIndex++)
-                    {
-                        dataAccess.setInt((long) intIndex * 4, entries.get(index));
-                    }
-                    dataAccess.setInt(refPointer, intIndex);
-                }
-            } else
-            {
-                InMemTreeEntry treeEntry = ((InMemTreeEntry) entry);
-                int len = treeEntry.subEntries.length;
-                intIndex += len;
-                for (int subCounter = 0; subCounter < len; subCounter++, refPointer += 4)
-                {
-                    InMemEntry subEntry = treeEntry.subEntries[subCounter];
-                    if (subEntry == null)
-                    {
-                        continue;
-                    }
-                    dataAccess.ensureCapacity((long) (intIndex + 1) * 4);
-                    int beforeIntIndex = intIndex;
-                    intIndex = store(subEntry, beforeIntIndex);
-                    if (intIndex == beforeIntIndex)
-                    {
-                        dataAccess.setInt(refPointer, 0);
-                    } else
-                    {
-                        dataAccess.setInt(refPointer, beforeIntIndex);
-                    }
-                }
-            }
-            return intIndex;
-        }
-    }
-
-    TIntArrayList getEntries()
-    {
+    TIntArrayList getEntries() {
         return new TIntArrayList(entries);
     }
 
     // fillIDs according to how they are stored
-    final void fillIDs( long keyPart, int intIndex, TIntHashSet set, int depth )
-    {
+    final void fillIDs(long keyPart, int intIndex, TIntHashSet set, int depth) {
         long pointer = (long) intIndex << 2;
-        if (depth == entries.length)
-        {
+        if (depth == entries.length) {
             int value = dataAccess.getInt(pointer);
-            if (value < 0)
-            // single data entries (less disc space)            
-            {
+            if (value < 0) {
+                // single data entries (less disc space)
                 set.add(-(value + 1));
-            } else
-            {
+            } else {
                 long max = (long) value * 4;
                 // leaf entry => value is maxPointer
-                for (long leafIndex = pointer + 4; leafIndex < max; leafIndex += 4)
-                {
+                for (long leafIndex = pointer + 4; leafIndex < max; leafIndex += 4) {
                     set.add(dataAccess.getInt(leafIndex));
                 }
             }
@@ -612,21 +359,18 @@ public class LocationIndexTree implements LocationIndex
         }
         int offset = (int) (bitmasks[depth] & keyPart) << 2;
         int value = dataAccess.getInt(pointer + offset);
-        if (value > 0)
-        {
+        if (value > 0) {
             // tree entry => negative value points to subentries
             fillIDs(keyPart >>> shifts[depth], value, set, depth + 1);
         }
     }
 
     // this method returns the spatial key in reverse order for easier right-shifting
-    final long createReverseKey( double lat, double lon )
-    {
+    final long createReverseKey(double lat, double lon) {
         return BitUtil.BIG.reverse(keyAlgo.encode(lat, lon), keyAlgo.getBits());
     }
 
-    final long createReverseKey( long key )
-    {
+    final long createReverseKey(long key) {
         return BitUtil.BIG.reverse(key, keyAlgo.getBits());
     }
 
@@ -635,8 +379,7 @@ public class LocationIndexTree implements LocationIndex
      * context of a spatial key tile.
      * <p>
      */
-    final double calculateRMin( double lat, double lon )
-    {
+    final double calculateRMin(double lat, double lon) {
         return calculateRMin(lat, lon, 0);
     }
 
@@ -645,8 +388,7 @@ public class LocationIndexTree implements LocationIndex
      * region with dimension 2*paddingTiles + 1 and where the center tile contains the given lat/lon
      * coordinate
      */
-    final double calculateRMin( double lat, double lon, int paddingTiles )
-    {
+    final double calculateRMin(double lat, double lon, int paddingTiles) {
         GHPoint query = new GHPoint(lat, lon);
         long key = keyAlgo.encode(query);
         GHPoint center = new GHPoint();
@@ -665,19 +407,15 @@ public class LocationIndexTree implements LocationIndex
 
         // convert degree deltas into a radius in meter
         double dMinLat, dMinLon;
-        if (dSouthernLat < dNorthernLat)
-        {
+        if (dSouthernLat < dNorthernLat) {
             dMinLat = distCalc.calcDist(query.lat, query.lon, minLat, query.lon);
-        } else
-        {
+        } else {
             dMinLat = distCalc.calcDist(query.lat, query.lon, maxLat, query.lon);
         }
 
-        if (dWesternLon < dEasternLon)
-        {
+        if (dWesternLon < dEasternLon) {
             dMinLon = distCalc.calcDist(query.lat, query.lon, query.lat, minLon);
-        } else
-        {
+        } else {
             dMinLon = distCalc.calcDist(query.lat, query.lon, query.lat, maxLon);
         }
 
@@ -688,18 +426,15 @@ public class LocationIndexTree implements LocationIndex
     /**
      * Provide info about tilesize for testing / visualization
      */
-    double getDeltaLat()
-    {
+    double getDeltaLat() {
         return deltaLat;
     }
 
-    double getDeltaLon()
-    {
+    double getDeltaLon() {
         return deltaLon;
     }
 
-    GHPoint getCenter( double lat, double lon )
-    {
+    GHPoint getCenter(double lat, double lon) {
         GHPoint query = new GHPoint(lat, lon);
         long key = keyAlgo.encode(query);
         GHPoint center = new GHPoint();
@@ -712,15 +447,14 @@ public class LocationIndexTree implements LocationIndex
      * which makes sure not too many nodes are collected as well as no nodes will be missing. See
      * discussion at issue #221.
      * <p>
+     *
      * @return true if no further call of this method is required. False otherwise, ie. a next
      * iteration is necessary and no early finish possible.
      */
-    public final boolean findNetworkEntries( double queryLat, double queryLon,
-                                             TIntHashSet foundEntries, int iteration )
-    {
+    public final boolean findNetworkEntries(double queryLat, double queryLon,
+                                            TIntHashSet foundEntries, int iteration) {
         // find entries in border of searchbox
-        for (int yreg = -iteration; yreg <= iteration; yreg++)
-        {
+        for (int yreg = -iteration; yreg <= iteration; yreg++) {
             double subqueryLat = queryLat + yreg * deltaLat;
             double subqueryLonA = queryLon - iteration * deltaLon;
             double subqueryLonB = queryLon + iteration * deltaLon;
@@ -731,8 +465,7 @@ public class LocationIndexTree implements LocationIndex
                 findNetworkEntriesSingleRegion(foundEntries, subqueryLat, subqueryLonB);
         }
 
-        for (int xreg = -iteration + 1; xreg <= iteration - 1; xreg++)
-        {
+        for (int xreg = -iteration + 1; xreg <= iteration - 1; xreg++) {
             double subqueryLon = queryLon + xreg * deltaLon;
             double subqueryLatA = queryLat - iteration * deltaLat;
             double subqueryLatB = queryLat + iteration * deltaLat;
@@ -740,11 +473,9 @@ public class LocationIndexTree implements LocationIndex
             findNetworkEntriesSingleRegion(foundEntries, subqueryLatB, subqueryLon);
         }
 
-        if (iteration % 2 != 0)
-        {
+        if (iteration % 2 != 0) {
             // Check if something was found already...
-            if (!foundEntries.isEmpty())
-            {
+            if (!foundEntries.isEmpty()) {
                 double rMin = calculateRMin(queryLat, queryLon, iteration);
                 double minDistance = calcMinDistance(queryLat, queryLon, foundEntries);
 
@@ -761,40 +492,34 @@ public class LocationIndexTree implements LocationIndex
         return false;
     }
 
-    final double calcMinDistance( double queryLat, double queryLon, TIntHashSet pointset )
-    {
+    final double calcMinDistance(double queryLat, double queryLon, TIntHashSet pointset) {
         double min = Double.MAX_VALUE;
         TIntIterator itr = pointset.iterator();
-        while (itr.hasNext())
-        {
+        while (itr.hasNext()) {
             int node = itr.next();
             double lat = nodeAccess.getLat(node);
             double lon = nodeAccess.getLon(node);
             double dist = distCalc.calcDist(queryLat, queryLon, lat, lon);
-            if (dist < min)
-            {
+            if (dist < min) {
                 min = dist;
             }
         }
         return min;
     }
 
-    final void findNetworkEntriesSingleRegion( TIntHashSet storedNetworkEntryIds, double queryLat, double queryLon )
-    {
+    final void findNetworkEntriesSingleRegion(TIntHashSet storedNetworkEntryIds, double queryLat, double queryLon) {
         long keyPart = createReverseKey(queryLat, queryLon);
         fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
     }
 
     @Override
-    public QueryResult findClosest( final double queryLat, final double queryLon, final EdgeFilter edgeFilter )
-    {
+    public QueryResult findClosest(final double queryLat, final double queryLon, final EdgeFilter edgeFilter) {
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
         TIntHashSet allCollectedEntryIds = new TIntHashSet();
         final QueryResult closestMatch = new QueryResult(queryLat, queryLon);
-        for (int iteration = 0; iteration < maxRegionSearch; iteration++)
-        {
+        for (int iteration = 0; iteration < maxRegionSearch; iteration++) {
             TIntHashSet storedNetworkEntryIds = new TIntHashSet();
             boolean earlyFinish = findNetworkEntries(queryLat, queryLon, storedNetworkEntryIds, iteration);
             storedNetworkEntryIds.removeAll(allCollectedEntryIds);
@@ -804,24 +529,18 @@ public class LocationIndexTree implements LocationIndex
             final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
             // find nodes from the network entries which are close to 'point'
             final EdgeExplorer explorer = graph.createEdgeExplorer();
-            storedNetworkEntryIds.forEach(new TIntProcedure()
-            {
+            storedNetworkEntryIds.forEach(new TIntProcedure() {
                 @Override
-                public boolean execute( int networkEntryNodeId )
-                {
-                    new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter)
-                    {
+                public boolean execute(int networkEntryNodeId) {
+                    new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter) {
                         @Override
-                        protected double getQueryDistance()
-                        {
+                        protected double getQueryDistance() {
                             return closestMatch.getQueryDistance();
                         }
 
                         @Override
-                        protected boolean check( int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos )
-                        {
-                            if (normedDist < closestMatch.getQueryDistance())
-                            {
+                        protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos) {
+                            if (normedDist < closestMatch.getQueryDistance()) {
                                 closestMatch.setQueryDistance(normedDist);
                                 closestMatch.setClosestNode(node);
                                 closestMatch.setClosestEdge(edge.detach(false));
@@ -842,8 +561,7 @@ public class LocationIndexTree implements LocationIndex
         }
 
         // denormalize distance and calculate snapping point only if closed match was found
-        if (closestMatch.isValid())
-        {
+        if (closestMatch.isValid()) {
             closestMatch.setQueryDistance(distCalc.calcDenormalizedDist(closestMatch.getQueryDistance()));
             closestMatch.calcSnappedPoint(distCalc);
         }
@@ -851,23 +569,284 @@ public class LocationIndexTree implements LocationIndex
         return closestMatch;
     }
 
+    // make entries static as otherwise we get an additional reference to this class (memory waste)
+    interface InMemEntry {
+        boolean isLeaf();
+    }
+
+    static class InMemLeafEntry extends SortedIntSet implements InMemEntry {
+        // private long key;
+
+        public InMemLeafEntry(int count, long key) {
+            super(count);
+            // this.key = key;
+        }
+
+        public boolean addNode(int nodeId) {
+            return addOnce(nodeId);
+        }
+
+        @Override
+        public final boolean isLeaf() {
+            return true;
+        }
+
+        @Override
+        public String toString() {
+            return "LEAF " + /*key +*/ " " + super.toString();
+        }
+
+        TIntArrayList getResults() {
+            return this;
+        }
+    }
+
+    // Space efficient sorted integer set. Suited for only a few entries.
+    static class SortedIntSet extends TIntArrayList {
+        public SortedIntSet() {
+        }
+
+        public SortedIntSet(int capacity) {
+            super(capacity);
+        }
+
+        /**
+         * Allow adding a value only once
+         */
+        public boolean addOnce(int value) {
+            int foundIndex = binarySearch(value);
+            if (foundIndex >= 0) {
+                return false;
+            }
+            foundIndex = -foundIndex - 1;
+            insert(foundIndex, value);
+            return true;
+        }
+    }
+
+    static class InMemTreeEntry implements InMemEntry {
+        InMemEntry[] subEntries;
+
+        public InMemTreeEntry(int subEntryNo) {
+            subEntries = new InMemEntry[subEntryNo];
+        }
+
+        public InMemEntry getSubEntry(int index) {
+            return subEntries[index];
+        }
+
+        public void setSubEntry(int index, InMemEntry subEntry) {
+            this.subEntries[index] = subEntry;
+        }
+
+        public Collection<InMemEntry> getSubEntriesForDebug() {
+            List<InMemEntry> list = new ArrayList<InMemEntry>();
+            for (InMemEntry e : subEntries) {
+                if (e != null) {
+                    list.add(e);
+                }
+            }
+            return list;
+        }
+
+        @Override
+        public final boolean isLeaf() {
+            return false;
+        }
+
+        @Override
+        public String toString() {
+            return "TREE";
+        }
+    }
+
+    class InMemConstructionIndex {
+        int size;
+        int leafs;
+        InMemTreeEntry root;
+
+        public InMemConstructionIndex(int noOfSubEntries) {
+            root = new InMemTreeEntry(noOfSubEntries);
+        }
+
+        void prepare() {
+            final EdgeIterator allIter = graph.getAllEdges();
+            try {
+                while (allIter.next()) {
+                    int nodeA = allIter.getBaseNode();
+                    int nodeB = allIter.getAdjNode();
+                    double lat1 = nodeAccess.getLatitude(nodeA);
+                    double lon1 = nodeAccess.getLongitude(nodeA);
+                    double lat2;
+                    double lon2;
+                    PointList points = allIter.fetchWayGeometry(0);
+                    int len = points.getSize();
+                    for (int i = 0; i < len; i++) {
+                        lat2 = points.getLatitude(i);
+                        lon2 = points.getLongitude(i);
+                        addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
+                        lat1 = lat2;
+                        lon1 = lon2;
+                    }
+                    lat2 = nodeAccess.getLatitude(nodeB);
+                    lon2 = nodeAccess.getLongitude(nodeB);
+                    addNode(nodeA, nodeB, lat1, lon1, lat2, lon2);
+                }
+            } catch (Exception ex) {
+                logger.error("Problem! base:" + allIter.getBaseNode() + ", adj:" + allIter.getAdjNode()
+                        + ", edge:" + allIter.getEdge(), ex);
+            }
+        }
+
+        void addNode(final int nodeA, final int nodeB,
+                     final double lat1, final double lon1,
+                     final double lat2, final double lon2) {
+            PointEmitter pointEmitter = new PointEmitter() {
+                @Override
+                public void set(double lat, double lon) {
+                    long key = keyAlgo.encode(lat, lon);
+                    long keyPart = createReverseKey(key);
+                    // no need to feed both nodes as we search neighbors in fillIDs
+                    addNode(root, nodeA, 0, keyPart, key);
+                }
+            };
+
+            if (!distCalc.isCrossBoundary(lon1, lon2)) {
+                BresenhamLine.calcPoints(lat1, lon1, lat2, lon2, pointEmitter,
+                        graph.getBounds().minLat, graph.getBounds().minLon,
+                        deltaLat, deltaLon);
+            }
+        }
+
+        void addNode(InMemEntry entry, int nodeId, int depth, long keyPart, long key) {
+            if (entry.isLeaf()) {
+                InMemLeafEntry leafEntry = (InMemLeafEntry) entry;
+                leafEntry.addNode(nodeId);
+            } else {
+                int index = (int) (bitmasks[depth] & keyPart);
+                keyPart = keyPart >>> shifts[depth];
+                InMemTreeEntry treeEntry = ((InMemTreeEntry) entry);
+                InMemEntry subentry = treeEntry.getSubEntry(index);
+                depth++;
+                if (subentry == null) {
+                    if (depth == entries.length) {
+                        subentry = new InMemLeafEntry(initSizeLeafEntries, key);
+                    } else {
+                        subentry = new InMemTreeEntry(entries[depth]);
+                    }
+                    treeEntry.setSubEntry(index, subentry);
+                }
+
+                addNode(subentry, nodeId, depth, keyPart, key);
+            }
+        }
+
+        Collection<InMemEntry> getEntriesOf(int selectDepth) {
+            List<InMemEntry> list = new ArrayList<InMemEntry>();
+            fillLayer(list, selectDepth, 0, ((InMemTreeEntry) root).getSubEntriesForDebug());
+            return list;
+        }
+
+        void fillLayer(Collection<InMemEntry> list, int selectDepth, int depth, Collection<InMemEntry> entries) {
+            for (InMemEntry entry : entries) {
+                if (selectDepth == depth) {
+                    list.add(entry);
+                } else if (entry instanceof InMemTreeEntry) {
+                    fillLayer(list, selectDepth, depth + 1, ((InMemTreeEntry) entry).getSubEntriesForDebug());
+                }
+            }
+        }
+
+        String print() {
+            StringBuilder sb = new StringBuilder();
+            print(root, sb, 0, 0);
+            return sb.toString();
+        }
+
+        void print(InMemEntry e, StringBuilder sb, long key, int depth) {
+            if (e.isLeaf()) {
+                InMemLeafEntry leaf = (InMemLeafEntry) e;
+                int bits = keyAlgo.getBits();
+                // print reverse keys
+                sb.append(BitUtil.BIG.toBitString(BitUtil.BIG.reverse(key, bits), bits)).append("  ");
+                TIntArrayList entries = leaf.getResults();
+                for (int i = 0; i < entries.size(); i++) {
+                    sb.append(leaf.get(i)).append(',');
+                }
+                sb.append('\n');
+            } else {
+                InMemTreeEntry tree = (InMemTreeEntry) e;
+                key = key << shifts[depth];
+                for (int counter = 0; counter < tree.subEntries.length; counter++) {
+                    InMemEntry sube = tree.subEntries[counter];
+                    if (sube != null) {
+                        print(sube, sb, key | counter, depth + 1);
+                    }
+                }
+            }
+        }
+
+        // store and freezes tree
+        int store(InMemEntry entry, int intIndex) {
+            long refPointer = (long) intIndex * 4;
+            if (entry.isLeaf()) {
+                InMemLeafEntry leaf = ((InMemLeafEntry) entry);
+                TIntArrayList entries = leaf.getResults();
+                int len = entries.size();
+                if (len == 0) {
+                    return intIndex;
+                }
+                size += len;
+                intIndex++;
+                leafs++;
+                dataAccess.ensureCapacity((long) (intIndex + len + 1) * 4);
+                if (len == 1) {
+                    // less disc space for single entries
+                    dataAccess.setInt(refPointer, -entries.get(0) - 1);
+                } else {
+                    for (int index = 0; index < len; index++, intIndex++) {
+                        dataAccess.setInt((long) intIndex * 4, entries.get(index));
+                    }
+                    dataAccess.setInt(refPointer, intIndex);
+                }
+            } else {
+                InMemTreeEntry treeEntry = ((InMemTreeEntry) entry);
+                int len = treeEntry.subEntries.length;
+                intIndex += len;
+                for (int subCounter = 0; subCounter < len; subCounter++, refPointer += 4) {
+                    InMemEntry subEntry = treeEntry.subEntries[subCounter];
+                    if (subEntry == null) {
+                        continue;
+                    }
+                    dataAccess.ensureCapacity((long) (intIndex + 1) * 4);
+                    int beforeIntIndex = intIndex;
+                    intIndex = store(subEntry, beforeIntIndex);
+                    if (intIndex == beforeIntIndex) {
+                        dataAccess.setInt(refPointer, 0);
+                    } else {
+                        dataAccess.setInt(refPointer, beforeIntIndex);
+                    }
+                }
+            }
+            return intIndex;
+        }
+    }
+
     /**
      * Make it possible to collect nearby location also for other purposes.
      */
-    protected abstract class XFirstSearchCheck extends BreadthFirstSearch
-    {
+    protected abstract class XFirstSearchCheck extends BreadthFirstSearch {
+        final double queryLat;
+        final double queryLon;
+        final GHBitSet checkBitset;
+        final EdgeFilter edgeFilter;
         boolean goFurther = true;
         double currNormedDist;
         double currLat;
         double currLon;
         int currNode;
-        final double queryLat;
-        final double queryLon;
-        final GHBitSet checkBitset;
-        final EdgeFilter edgeFilter;
 
-        public XFirstSearchCheck( double queryLat, double queryLon, GHBitSet checkBitset, EdgeFilter edgeFilter )
-        {
+        public XFirstSearchCheck(double queryLat, double queryLon, GHBitSet checkBitset, EdgeFilter edgeFilter) {
             this.queryLat = queryLat;
             this.queryLon = queryLon;
             this.checkBitset = checkBitset;
@@ -875,14 +854,12 @@ public class LocationIndexTree implements LocationIndex
         }
 
         @Override
-        protected GHBitSet createBitSet()
-        {
+        protected GHBitSet createBitSet() {
             return checkBitset;
         }
 
         @Override
-        protected boolean goFurther( int baseNode )
-        {
+        protected boolean goFurther(int baseNode) {
             currNode = baseNode;
             currLat = nodeAccess.getLatitude(baseNode);
             currLon = nodeAccess.getLongitude(baseNode);
@@ -891,19 +868,16 @@ public class LocationIndexTree implements LocationIndex
         }
 
         @Override
-        protected boolean checkAdjacent( EdgeIteratorState currEdge )
-        {
+        protected boolean checkAdjacent(EdgeIteratorState currEdge) {
             goFurther = false;
-            if (!edgeFilter.accept(currEdge))
-            {
+            if (!edgeFilter.accept(currEdge)) {
                 // only limit the adjNode to a certain radius as currNode could be the wrong side of a valid edge
                 // goFurther = currDist < minResolution2InMeterNormed;
                 return true;
             }
 
             int tmpClosestNode = currNode;
-            if (check(tmpClosestNode, currNormedDist, 0, currEdge, QueryResult.Position.TOWER))
-            {
+            if (check(tmpClosestNode, currNormedDist, 0, currEdge, QueryResult.Position.TOWER)) {
                 if (currNormedDist <= equalNormedDelta)
                     return false;
             }
@@ -921,31 +895,25 @@ public class LocationIndexTree implements LocationIndex
             double tmpNormedDist;
             PointList pointList = currEdge.fetchWayGeometry(2);
             int len = pointList.getSize();
-            for (int pointIndex = 0; pointIndex < len; pointIndex++)
-            {
+            for (int pointIndex = 0; pointIndex < len; pointIndex++) {
                 double wayLat = pointList.getLatitude(pointIndex);
                 double wayLon = pointList.getLongitude(pointIndex);
                 QueryResult.Position pos = QueryResult.Position.EDGE;
-                if (distCalc.isCrossBoundary(tmpLon, wayLon))
-                {
+                if (distCalc.isCrossBoundary(tmpLon, wayLon)) {
                     tmpLat = wayLat;
                     tmpLon = wayLon;
                     continue;
                 }
 
-                if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon))
-                {
+                if (distCalc.validEdgeDistance(queryLat, queryLon, tmpLat, tmpLon, wayLat, wayLon)) {
                     tmpNormedDist = distCalc.calcNormalizedEdgeDistance(queryLat, queryLon,
                             tmpLat, tmpLon, wayLat, wayLon);
                     check(tmpClosestNode, tmpNormedDist, pointIndex, currEdge, pos);
-                } else
-                {
-                    if (pointIndex + 1 == len)
-                    {
+                } else {
+                    if (pointIndex + 1 == len) {
                         tmpNormedDist = adjDist;
                         pos = QueryResult.Position.TOWER;
-                    } else
-                    {
+                    } else {
                         tmpNormedDist = distCalc.calcNormalizedDist(queryLat, queryLon, wayLat, wayLon);
                         pos = QueryResult.Position.PILLAR;
                     }
@@ -963,118 +931,6 @@ public class LocationIndexTree implements LocationIndex
 
         protected abstract double getQueryDistance();
 
-        protected abstract boolean check( int node, double normedDist, int wayIndex, EdgeIteratorState iter, QueryResult.Position pos );
-    }
-
-    // make entries static as otherwise we get an additional reference to this class (memory waste)
-    interface InMemEntry
-    {
-        boolean isLeaf();
-    }
-
-    static class InMemLeafEntry extends SortedIntSet implements InMemEntry
-    {
-        // private long key;
-
-        public InMemLeafEntry( int count, long key )
-        {
-            super(count);
-            // this.key = key;
-        }
-
-        public boolean addNode( int nodeId )
-        {
-            return addOnce(nodeId);
-        }
-
-        @Override
-        public final boolean isLeaf()
-        {
-            return true;
-        }
-
-        @Override
-        public String toString()
-        {
-            return "LEAF " + /*key +*/ " " + super.toString();
-        }
-
-        TIntArrayList getResults()
-        {
-            return this;
-        }
-    }
-
-    // Space efficient sorted integer set. Suited for only a few entries.
-    static class SortedIntSet extends TIntArrayList
-    {
-        public SortedIntSet()
-        {
-        }
-
-        public SortedIntSet( int capacity )
-        {
-            super(capacity);
-        }
-
-        /**
-         * Allow adding a value only once
-         */
-        public boolean addOnce( int value )
-        {
-            int foundIndex = binarySearch(value);
-            if (foundIndex >= 0)
-            {
-                return false;
-            }
-            foundIndex = -foundIndex - 1;
-            insert(foundIndex, value);
-            return true;
-        }
-    }
-
-    static class InMemTreeEntry implements InMemEntry
-    {
-        InMemEntry[] subEntries;
-
-        public InMemTreeEntry( int subEntryNo )
-        {
-            subEntries = new InMemEntry[subEntryNo];
-        }
-
-        public InMemEntry getSubEntry( int index )
-        {
-            return subEntries[index];
-        }
-
-        public void setSubEntry( int index, InMemEntry subEntry )
-        {
-            this.subEntries[index] = subEntry;
-        }
-
-        public Collection<InMemEntry> getSubEntriesForDebug()
-        {
-            List<InMemEntry> list = new ArrayList<InMemEntry>();
-            for (InMemEntry e : subEntries)
-            {
-                if (e != null)
-                {
-                    list.add(e);
-                }
-            }
-            return list;
-        }
-
-        @Override
-        public final boolean isLeaf()
-        {
-            return false;
-        }
-
-        @Override
-        public String toString()
-        {
-            return "TREE";
-        }
+        protected abstract boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState iter, QueryResult.Position pos);
     }
 }

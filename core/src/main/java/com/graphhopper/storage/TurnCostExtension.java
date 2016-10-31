@@ -24,11 +24,11 @@ import com.graphhopper.util.EdgeIterator;
  * towards the first entry within a node cost table to identify turn restrictions, or later, turn
  * getCosts.
  * <p>
+ *
  * @author Karl Hübner
  * @author Peter Karich
  */
-public class TurnCostExtension implements GraphExtension
-{
+public class TurnCostExtension implements GraphExtension {
     /* pointer for no cost entry */
     private static final int NO_TURN_ENTRY = -1;
     private static final long EMPTY_FLAGS = 0L;
@@ -45,8 +45,7 @@ public class TurnCostExtension implements GraphExtension
     private int turnCostsCount;
     private NodeAccess nodeAccess;
 
-    public TurnCostExtension()
-    {
+    public TurnCostExtension() {
         TC_FROM = nextTurnCostEntryIndex();
         TC_TO = nextTurnCostEntryIndex();
         TC_FLAGS = nextTurnCostEntryIndex();
@@ -56,8 +55,7 @@ public class TurnCostExtension implements GraphExtension
     }
 
     @Override
-    public void init( Graph graph, Directory dir )
-    {
+    public void init(Graph graph, Directory dir) {
         if (turnCostsCount > 0)
             throw new AssertionError("The turn cost storage must be initialized only once.");
 
@@ -65,48 +63,41 @@ public class TurnCostExtension implements GraphExtension
         this.turnCosts = dir.find("turn_costs");
     }
 
-    private int nextTurnCostEntryIndex()
-    {
+    private int nextTurnCostEntryIndex() {
         turnCostsEntryIndex += 4;
         return turnCostsEntryIndex;
     }
 
     @Override
-    public void setSegmentSize( int bytes )
-    {
+    public void setSegmentSize(int bytes) {
         turnCosts.setSegmentSize(bytes);
     }
 
     @Override
-    public TurnCostExtension create( long initBytes )
-    {
+    public TurnCostExtension create(long initBytes) {
         turnCosts.create((long) initBytes * turnCostsEntryBytes);
         return this;
     }
 
     @Override
-    public void flush()
-    {
+    public void flush() {
         turnCosts.setHeader(0, turnCostsEntryBytes);
         turnCosts.setHeader(1 * 4, turnCostsCount);
         turnCosts.flush();
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         turnCosts.close();
     }
 
     @Override
-    public long getCapacity()
-    {
+    public long getCapacity() {
         return turnCosts.getCapacity();
     }
 
     @Override
-    public boolean loadExisting()
-    {
+    public boolean loadExisting() {
         if (!turnCosts.loadExisting())
             return false;
 
@@ -119,12 +110,11 @@ public class TurnCostExtension implements GraphExtension
      * This method adds a new entry which is a turn restriction or cost information via the
      * turnFlags.
      */
-    public void addTurnInfo( int fromEdge, int viaNode, int toEdge, long turnFlags )
-    {
+    public void addTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags) {
         // no need to store turn information
         if (turnFlags == EMPTY_FLAGS)
             return;
-        
+
         // append
         int newEntryIndex = turnCostsCount;
         turnCostsCount++;
@@ -132,20 +122,16 @@ public class TurnCostExtension implements GraphExtension
 
         // determine if we already have an cost entry for this node
         int previousEntryIndex = nodeAccess.getAdditionalNodeField(viaNode);
-        if (previousEntryIndex == NO_TURN_ENTRY)
-        {
+        if (previousEntryIndex == NO_TURN_ENTRY) {
             // set cost-pointer to this new cost entry
             nodeAccess.setAdditionalNodeField(viaNode, newEntryIndex);
-        } else
-        {
+        } else {
             int i = 0;
             int tmp = previousEntryIndex;
-            while ((tmp = turnCosts.getInt((long) tmp * turnCostsEntryBytes + TC_NEXT)) != NO_TURN_ENTRY)
-            {
+            while ((tmp = turnCosts.getInt((long) tmp * turnCostsEntryBytes + TC_NEXT)) != NO_TURN_ENTRY) {
                 previousEntryIndex = tmp;
                 // search for the last added cost entry
-                if (i++ > 1000)
-                {
+                if (i++ > 1000) {
                     throw new IllegalStateException("Something unexpected happened. A node probably will not have 1000+ relations.");
                 }
             }
@@ -164,8 +150,7 @@ public class TurnCostExtension implements GraphExtension
     /**
      * @return turn flags of the specified node and edge properties.
      */
-    public long getTurnCostFlags( int edgeFrom, int nodeVia, int edgeTo )
-    {
+    public long getTurnCostFlags(int edgeFrom, int nodeVia, int edgeTo) {
         if (edgeFrom == EdgeIterator.NO_EDGE || edgeTo == EdgeIterator.NO_EDGE)
             throw new IllegalArgumentException("from and to edge cannot be NO_EDGE");
         if (nodeVia < 0)
@@ -174,17 +159,14 @@ public class TurnCostExtension implements GraphExtension
         return nextCostFlags(edgeFrom, nodeVia, edgeTo);
     }
 
-    private long nextCostFlags( int edgeFrom, int nodeVia, int edgeTo )
-    {
+    private long nextCostFlags(int edgeFrom, int nodeVia, int edgeTo) {
         int turnCostIndex = nodeAccess.getAdditionalNodeField(nodeVia);
         int i = 0;
-        for (; i < 1000; i++)
-        {
+        for (; i < 1000; i++) {
             if (turnCostIndex == NO_TURN_ENTRY)
                 break;
             long turnCostPtr = (long) turnCostIndex * turnCostsEntryBytes;
-            if (edgeFrom == turnCosts.getInt(turnCostPtr + TC_FROM))
-            {
+            if (edgeFrom == turnCosts.getInt(turnCostPtr + TC_FROM)) {
                 if (edgeTo == turnCosts.getInt(turnCostPtr + TC_TO))
                     return turnCosts.getInt(turnCostPtr + TC_FLAGS);
             }
@@ -201,41 +183,34 @@ public class TurnCostExtension implements GraphExtension
         return EMPTY_FLAGS;
     }
 
-    private void ensureTurnCostIndex( int nodeIndex )
-    {
+    private void ensureTurnCostIndex(int nodeIndex) {
         turnCosts.ensureCapacity(((long) nodeIndex + 4) * turnCostsEntryBytes);
     }
 
     @Override
-    public boolean isRequireNodeField()
-    {
+    public boolean isRequireNodeField() {
         //we require the additional field in the graph to point to the first entry in the node table
         return true;
     }
 
     @Override
-    public boolean isRequireEdgeField()
-    {
+    public boolean isRequireEdgeField() {
         return false;
     }
 
     @Override
-    public int getDefaultNodeFieldValue()
-    {
+    public int getDefaultNodeFieldValue() {
         return NO_TURN_ENTRY;
     }
 
     @Override
-    public int getDefaultEdgeFieldValue()
-    {
+    public int getDefaultEdgeFieldValue() {
         throw new UnsupportedOperationException("Not supported by this storage");
     }
 
     @Override
-    public GraphExtension copyTo( GraphExtension clonedStorage )
-    {
-        if (!(clonedStorage instanceof TurnCostExtension))
-        {
+    public GraphExtension copyTo(GraphExtension clonedStorage) {
+        if (!(clonedStorage instanceof TurnCostExtension)) {
             throw new IllegalStateException("the extended storage to clone must be the same");
         }
 
@@ -248,14 +223,12 @@ public class TurnCostExtension implements GraphExtension
     }
 
     @Override
-    public boolean isClosed()
-    {
+    public boolean isClosed() {
         return turnCosts.isClosed();
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "turn_cost";
     }
 }

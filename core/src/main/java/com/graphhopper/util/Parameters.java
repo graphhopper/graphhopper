@@ -18,19 +18,16 @@
 package com.graphhopper.util;
 
 /**
- *
  * @author Peter Karich
  */
-public class Parameters
-{
+public class Parameters {
     /* Parameters with an 'INIT' prefix are used as defaults and/or are configured at start.*/
     static final String ROUTING_INIT_PREFIX = "routing.";
 
     /**
      * Parameters that can be used for algorithm.
      */
-    public static final class Algorithms
-    {
+    public static final class Algorithms {
         /**
          * Bidirectional Dijkstra
          */
@@ -63,8 +60,7 @@ public class Parameters
         /**
          * All public properties for alternative routing.
          */
-        public static final class AltRoute
-        {
+        public static final class AltRoute {
             public static final String MAX_PATHS = ALT_ROUTE + ".max_paths";
 
             public static final String MAX_WEIGHT = ALT_ROUTE + ".max_weight_factor";
@@ -72,21 +68,18 @@ public class Parameters
             public static final String MAX_SHARE = ALT_ROUTE + ".max_share_factor";
         }
 
-        public static final class AStar
-        {
+        public static final class AStar {
             public static final String EPSILON = ASTAR + ".epsilon";
         }
 
-        public static final class AStarBi
-        {
+        public static final class AStarBi {
             public static final String EPSILON = ASTAR_BI + ".epsilon";
         }
 
         /**
          * All public properties for round trip calculation.
          */
-        public static final class RoundTrip
-        {
+        public static final class RoundTrip {
             public static final String DISTANCE = ROUND_TRIP + ".distance";
             public static final String SEED = ROUND_TRIP + ".seed";
             public static final String HEADING = "heading";
@@ -97,8 +90,7 @@ public class Parameters
     /**
      * Parameters that can be passed as hints and influence routing per request.
      */
-    public static final class Routing
-    {
+    public static final class Routing {
         public static final String EDGE_BASED = "edge_based";
         public static final String MAX_VISITED_NODES = "max_visited_nodes";
         public static final String INIT_MAX_VISITED_NODES = ROUTING_INIT_PREFIX + "max_visited_nodes";
@@ -122,8 +114,7 @@ public class Parameters
     /**
      * Properties for CH routing
      */
-    public static final class CH
-    {
+    public static final class CH {
         /**
          * This property name in HintsMap configures at runtime if CH routing should be ignored.
          */

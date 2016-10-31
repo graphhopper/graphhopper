@@ -22,20 +22,19 @@ import java.io.File;
 /**
  * @author Peter Karich
  */
-public interface LockFactory
-{
-    void setLockDir( File lockDir );
+public interface LockFactory {
+    void setLockDir(File lockDir);
 
     /**
      * This creates a file for write or read locks depending on the specified writeAccess property.
      * Important note: even for read locks we need write access to the underlying filesystem in
      * order to avoid writes from other processes.
      */
-    Lock create( String fileName, boolean writeAccess );
+    Lock create(String fileName, boolean writeAccess);
 
     /**
      * Removes the specified lock. Note: on windows we cannot forcefully remove an unreleased native
      * lock
      */
-    void forceRemove( String fileName, boolean writeAccess );
+    void forceRemove(String fileName, boolean writeAccess);
 }

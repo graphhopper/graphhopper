@@ -30,13 +30,12 @@ import static java.lang.Math.*;
  * http://en.wikipedia.org/wiki/Mercator_projection#Mathematics_of_the_Mercator_projection
  * http://gis.stackexchange.com/questions/4906/why-is-law-of-cosines-more-preferable-than-haversine-when-calculating-distance-b
  * <p>
+ *
  * @author Peter Karich
  */
-public class DistancePlaneProjection extends DistanceCalcEarth
-{
+public class DistancePlaneProjection extends DistanceCalcEarth {
     @Override
-    public double calcDist( double fromLat, double fromLon, double toLat, double toLon )
-    {
+    public double calcDist(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = toRadians(toLat - fromLat);
         double dLon = toRadians(toLon - fromLon);
         // use mean latitude as reference point for delta_lon
@@ -46,21 +45,18 @@ public class DistancePlaneProjection extends DistanceCalcEarth
     }
 
     @Override
-    public double calcDenormalizedDist( double normedDist )
-    {
+    public double calcDenormalizedDist(double normedDist) {
         return R * sqrt(normedDist);
     }
 
     @Override
-    public double calcNormalizedDist( double dist )
-    {
+    public double calcNormalizedDist(double dist) {
         double tmp = dist / R;
         return tmp * tmp;
     }
 
     @Override
-    public double calcNormalizedDist( double fromLat, double fromLon, double toLat, double toLon )
-    {
+    public double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon) {
         double dLat = toRadians(toLat - fromLat);
         double dLon = toRadians(toLon - fromLon);
         double left = cos(toRadians((fromLat + toLat) / 2)) * dLon;
@@ -68,8 +64,7 @@ public class DistancePlaneProjection extends DistanceCalcEarth
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "PLANE_PROJ";
     }
 }

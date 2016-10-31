@@ -19,16 +19,14 @@ package com.graphhopper.routing.util;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class EncodedValueTest
-{
+public class EncodedValueTest {
     @Test
-    public void testSetValue()
-    {
+    public void testSetValue() {
         EncodedValue instance = new EncodedValue("test", 6, 4, 1, 5, 10);
         assertEquals(10, instance.getValue(instance.setValue(0, 10)));
 
@@ -40,8 +38,7 @@ public class EncodedValueTest
     }
 
     @Test
-    public void testSwap()
-    {
+    public void testSwap() {
         EncodedValue instance1 = new EncodedValue("test1", 0, 10, 1, 5, 1000);
         EncodedValue instance2 = new EncodedValue("test2", 10, 10, 1, 5, 1000);
         long flags = instance2.setValue(instance1.setValue(0, 13), 874);

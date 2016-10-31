@@ -20,17 +20,14 @@ package com.graphhopper.storage;
 /**
  * @author Peter Karich
  */
-public class RAMIntDataAccessTest extends DataAccessTest
-{
+public class RAMIntDataAccessTest extends DataAccessTest {
     @Override
-    public DataAccess createDataAccess( String name )
-    {
+    public DataAccess createDataAccess(String name) {
         return new RAMIntDataAccess(name, directory, true, defaultOrder).setSegmentSize(128);
     }
 
     @Override
-    public void testSet_GetBytes()
-    {
+    public void testSet_GetBytes() {
         // should we implement this?
     }
 }

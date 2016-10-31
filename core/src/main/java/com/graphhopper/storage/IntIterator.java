@@ -20,21 +20,17 @@ package com.graphhopper.storage;
 /**
  * @author Peter Karich
  */
-public interface IntIterator
-{
+public interface IntIterator {
     boolean next();
 
     int getValue();
 
     void remove();
 
-    class Helper
-    {
-        public static int count( IntIterator iter )
-        {
+    class Helper {
+        public static int count(IntIterator iter) {
             int counter = 0;
-            while (iter.next())
-            {
+            while (iter.next()) {
                 ++counter;
             }
             return counter;

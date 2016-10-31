@@ -18,21 +18,22 @@
   },
   "browserify-swap": {
     "production": {
-      "options.js$": "./src/main/webapp/js/options_prod.js"
+      "config/options.js$": "./src/main/webapp/js/config/options_prod.js"
     }
   },
   "dependencies": {
-    "browserify": "^12.0.1",
-    "browserify-swap": "^0.2.2",
-    "d3": "^3.5.9",
-    "jasmine": "^2.3.2",
-    "jquery": "^2.1.4",
-    "leaflet": "^0.7.7",
-    "leaflet-loading": "^0.1.15",
-    "uglifyify": "^3.0.1"
+    "browserify": "13.1.0",
+    "browserify-swap": "0.2.2",
+    "d3": "3.5.17",
+    "jquery": "3.1.1",
+    "leaflet": "1.0.1",
+    "leaflet-contextmenu": "1.1.1",
+    "leaflet-loading": "0.1.23",
+    "uglifyify": "3.0.3"
   },
   "devDependencies": {
-    "jshint": "^2.8.0",
-    "watchify": "^3.6.1"
+    "jasmine": "2.5.2",
+    "jshint": "2.9.3",
+    "watchify": "3.7.0"
   }
 }

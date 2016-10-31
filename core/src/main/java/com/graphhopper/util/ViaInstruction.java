@@ -20,38 +20,32 @@ package com.graphhopper.util;
 /**
  * @author Peter Karich
  */
-public class ViaInstruction extends Instruction
-{
+public class ViaInstruction extends Instruction {
     private int viaPosition = -1;
 
-    public ViaInstruction( String name, InstructionAnnotation ia, PointList pl )
-    {
+    public ViaInstruction(String name, InstructionAnnotation ia, PointList pl) {
         super(REACHED_VIA, name, ia, pl);
     }
 
-    public ViaInstruction( Instruction instr )
-    {
+    public ViaInstruction(Instruction instr) {
         this(instr.getName(), instr.getAnnotation(), instr.getPoints());
         setDistance(instr.getDistance());
         setTime(instr.getTime());
     }
 
-    public void setViaCount( int count )
-    {
-        this.viaPosition = count;
-    }
-
-    public int getViaCount()
-    {
+    public int getViaCount() {
         if (viaPosition < 0)
             throw new IllegalStateException("Uninitialized via count in instruction " + getName());
 
         return viaPosition;
     }
 
+    public void setViaCount(int count) {
+        this.viaPosition = count;
+    }
+
     @Override
-    public String getTurnDescription( Translation tr )
-    {
+    public String getTurnDescription(Translation tr) {
         if (rawName)
             return getName();
 

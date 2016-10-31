@@ -20,16 +20,14 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.util.HintsMap;
 
 /**
- *
  * @author Peter Karich
  */
-public interface RoutingAlgorithmFactoryDecorator
-{
+public interface RoutingAlgorithmFactoryDecorator {
     boolean isEnabled();
 
     /**
      * This method returns the specified algoFactory unchanged, decorates it or completely replaces
      * it depending on the specified optionsMap.
      */
-    RoutingAlgorithmFactory getDecoratedAlgorithmFactory( RoutingAlgorithmFactory algoFactory, HintsMap optionsMap );
+    RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory algoFactory, HintsMap optionsMap);
 }

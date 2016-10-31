@@ -33,25 +33,21 @@ import java.util.Locale;
  * @author Peter Karich
  * @author ratrun
  */
-public class GHRequest
-{
-    private String algo = "";
+public class GHRequest {
     private final List<GHPoint> points;
     private final HintsMap hints = new HintsMap();
-    private boolean possibleToAdd = false;
-    private Locale locale = Locale.US;
-
     // List of favored start (1st element) and arrival heading (all other).
     // Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
     private final List<Double> favoredHeadings;
+    private String algo = "";
+    private boolean possibleToAdd = false;
+    private Locale locale = Locale.US;
 
-    public GHRequest()
-    {
+    public GHRequest() {
         this(5);
     }
 
-    public GHRequest( int size )
-    {
+    public GHRequest(int size) {
         points = new ArrayList<GHPoint>(size);
         favoredHeadings = new ArrayList<Double>(size);
         possibleToAdd = true;
@@ -62,17 +58,15 @@ public class GHRequest
      * with a preferred start and end heading. Headings are north based azimuth (clockwise) in (0,
      * 360) or NaN for equal preference.
      */
-    public GHRequest( double fromLat, double fromLon, double toLat, double toLon,
-                      double startHeading, double endHeading )
-    {
+    public GHRequest(double fromLat, double fromLon, double toLat, double toLon,
+                     double startHeading, double endHeading) {
         this(new GHPoint(fromLat, fromLon), new GHPoint(toLat, toLon), startHeading, endHeading);
     }
 
     /**
      * Set routing request from specified startPlace (fromLat, fromLon) to endPlace (toLat, toLon)
      */
-    public GHRequest( double fromLat, double fromLon, double toLat, double toLon )
-    {
+    public GHRequest(double fromLat, double fromLon, double toLat, double toLon) {
         this(new GHPoint(fromLat, fromLon), new GHPoint(toLat, toLon));
     }
 
@@ -80,8 +74,7 @@ public class GHRequest
      * Set routing request from specified startPlace to endPlace with a preferred start and end
      * heading. Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
      */
-    public GHRequest( GHPoint startPlace, GHPoint endPlace, double startHeading, double endHeading )
-    {
+    public GHRequest(GHPoint startPlace, GHPoint endPlace, double startHeading, double endHeading) {
         if (startPlace == null)
             throw new IllegalStateException("'from' cannot be null");
 
@@ -99,27 +92,25 @@ public class GHRequest
         favoredHeadings.add(endHeading);
     }
 
-    public GHRequest( GHPoint startPlace, GHPoint endPlace )
-    {
+    public GHRequest(GHPoint startPlace, GHPoint endPlace) {
         this(startPlace, endPlace, Double.NaN, Double.NaN);
     }
 
     /**
      * Set routing request
      * <p>
-     * @param points List of stopover points in order: start, 1st stop, 2nd stop, ..., end
+     *
+     * @param points          List of stopover points in order: start, 1st stop, 2nd stop, ..., end
      * @param favoredHeadings List of favored headings for starting (start point) and arrival (via
-     * and end points) Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal
-     * preference
+     *                        and end points) Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal
+     *                        preference
      */
-    public GHRequest( List<GHPoint> points, List<Double> favoredHeadings )
-    {
+    public GHRequest(List<GHPoint> points, List<Double> favoredHeadings) {
         if (points.size() != favoredHeadings.size())
             throw new IllegalArgumentException("Size of headings (" + favoredHeadings.size()
                     + ") must match size of points (" + points.size() + ")");
 
-        for (Double heading : favoredHeadings)
-        {
+        for (Double heading : favoredHeadings) {
             validateAzimuthValue(heading);
         }
         this.points = points;
@@ -129,21 +120,21 @@ public class GHRequest
     /**
      * Set routing request
      * <p>
+     *
      * @param points List of stopover points in order: start, 1st stop, 2nd stop, ..., end
      */
-    public GHRequest( List<GHPoint> points )
-    {
+    public GHRequest(List<GHPoint> points) {
         this(points, Collections.nCopies(points.size(), Double.NaN));
     }
 
     /**
      * Add stopover point to routing request.
      * <p>
-     * @param point geographical position (see GHPoint)
+     *
+     * @param point          geographical position (see GHPoint)
      * @param favoredHeading north based azimuth (clockwise) in (0, 360) or NaN for equal preference
      */
-    public GHRequest addPoint( GHPoint point, double favoredHeading )
-    {
+    public GHRequest addPoint(GHPoint point, double favoredHeading) {
         if (point == null)
             throw new IllegalArgumentException("point cannot be null");
 
@@ -160,10 +151,10 @@ public class GHRequest
     /**
      * Add stopover point to routing request.
      * <p>
+     *
      * @param point geographical position (see GHPoint)
      */
-    public GHRequest addPoint( GHPoint point )
-    {
+    public GHRequest addPoint(GHPoint point) {
         addPoint(point, Double.NaN);
         return this;
     }
@@ -171,113 +162,95 @@ public class GHRequest
     /**
      * @return north based azimuth (clockwise) in (0, 360) or NaN for equal preference
      */
-    public double getFavoredHeading( int i )
-    {
+    public double getFavoredHeading(int i) {
         return favoredHeadings.get(i);
     }
 
     /**
      * @return if there exist a preferred heading for start/via/end point i
      */
-    public boolean hasFavoredHeading( int i )
-    {
+    public boolean hasFavoredHeading(int i) {
         if (i >= favoredHeadings.size())
             return false;
 
         return !Double.isNaN(favoredHeadings.get(i));
     }
 
-    private void validateAzimuthValue( double heading )
-    {
+    private void validateAzimuthValue(double heading) {
         // heading must be in (0, 360) oder NaN
         if (!Double.isNaN(heading) && (Double.compare(heading, 360) > 0 || Double.compare(heading, 0) < 0))
             throw new IllegalArgumentException("Heading " + heading + " must be in range (0,360) or NaN");
     }
 
-    public List<GHPoint> getPoints()
-    {
+    public List<GHPoint> getPoints() {
         return points;
+    }
+
+    public String getAlgorithm() {
+        return algo;
     }
 
     /**
      * For possible values see AlgorithmOptions.*
      */
-    public GHRequest setAlgorithm( String algo )
-    {
+    public GHRequest setAlgorithm(String algo) {
         if (algo != null)
             this.algo = Helper.camelCaseToUnderScore(algo);
         return this;
     }
 
-    public String getAlgorithm()
-    {
-        return algo;
-    }
-
-    public Locale getLocale()
-    {
+    public Locale getLocale() {
         return locale;
     }
 
-    public GHRequest setLocale( Locale locale )
-    {
+    public GHRequest setLocale(Locale locale) {
         if (locale != null)
             this.locale = locale;
         return this;
     }
 
-    public GHRequest setLocale( String localeStr )
-    {
+    public GHRequest setLocale(String localeStr) {
         return setLocale(Helper.getLocale(localeStr));
+    }
+
+    public String getWeighting() {
+        return hints.getWeighting();
     }
 
     /**
      * By default it supports fastest and shortest. Or specify empty to use default.
      */
-    public GHRequest setWeighting( String w )
-    {
+    public GHRequest setWeighting(String w) {
         hints.setWeighting(w);
         return this;
     }
 
-    public String getWeighting()
-    {
-        return hints.getWeighting();
+    public String getVehicle() {
+        return hints.getVehicle();
     }
 
     /**
      * Specifiy car, bike or foot. Or specify empty to use default.
      */
-    public GHRequest setVehicle( String vehicle )
-    {
+    public GHRequest setVehicle(String vehicle) {
         hints.setVehicle(vehicle);
         return this;
     }
 
-    public String getVehicle()
-    {
-        return hints.getVehicle();
-    }
-
     @Override
-    public String toString()
-    {
+    public String toString() {
         String res = "";
-        for (GHPoint point : points)
-        {
-            if (res.isEmpty())
-            {
+        for (GHPoint point : points) {
+            if (res.isEmpty()) {
                 res = point.toString();
-            } else
-            {
+            } else {
                 res += "; " + point.toString();
             }
         }
         return res + "(" + algo + ")";
     }
 
-    public HintsMap getHints()
-    {
+    public HintsMap getHints() {
         return hints;
     }
 }

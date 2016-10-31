@@ -18,17 +18,16 @@
 package com.graphhopper.tools;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.util.CmdArgs;
 
 /**
  * @author Peter Karich
  */
-public class Import
-{
-    public static void main( String[] strs ) throws Exception
-    {
+public class Import {
+    public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
-        GraphHopper hopper = new GraphHopper().init(args);
+        GraphHopper hopper = new GraphHopperOSM().init(args);
         hopper.importOrLoad();
         hopper.close();
     }

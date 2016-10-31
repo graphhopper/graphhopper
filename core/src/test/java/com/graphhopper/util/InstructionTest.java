@@ -19,16 +19,15 @@ package com.graphhopper.util;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Johannes Pelzer
  */
-public class InstructionTest
-{
+public class InstructionTest {
     @Test
-    public void testCalcAzimuthAndGetDirection()
-    {
+    public void testCalcAzimuthAndGetDirection() {
         InstructionAnnotation ea = InstructionAnnotation.EMPTY;
         PointList pl = new PointList();
         pl.add(49.942, 11.584);

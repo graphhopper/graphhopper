@@ -21,9 +21,12 @@ edges the same applies for edge IDs too.
 
 ### What are virtual edges and nodes?
 
-For a route you do not only need *junction-precision*, i.e. from tower node to tower node, but we want *GPS-precise* routes, otherwise [you'll get lots of trouble](https://github.com/graphhopper/graphhopper/issues/27) for oneways and similar.
+For a route you do not only need *junction-precision*, i.e. from tower node to tower node, but we want 
+*GPS-precise* routes, otherwise [you'll get lots of trouble](https://github.com/graphhopper/graphhopper/issues/27) 
+for oneways and similar.
 
-To make GPS precise routes possible, although we route from tower node to tower node, we introduce one new virtual node x and virtual edges A-x, x-B for every query point located on an edge A-B:
+To make GPS precise routes possible, although we route from tower node to tower node, we introduce one new 
+virtual node x and virtual edges A-x, x-B for every query point located on an edge A-B:
 
 ```bash
 \                /
@@ -31,11 +34,13 @@ To make GPS precise routes possible, although we route from tower node to tower 
 /                \
 ```
 
-But we need to decouple requests from each other and therefor we create a very lightweight graph called `QueryGraph` for every request which handles also stuff like two query points on the same edge.
+But we need to decouple requests from each other and therefor we create a very lightweight graph called 
+`QueryGraph` for every request which handles also stuff like two query points on the same edge.
 
 The virtual nodes and edges have a higher `int` ID than `graph.getNodes()` or `allEdges.getMaxId()`
 
-A call `queryGraph.lookup(allQRs)` will determine the correct node for all `QueryResult`s: and either create new virtual nodes or if close enough use the existing junction node.
+A call `queryGraph.lookup(allQRs)` will determine the correct node for all `QueryResult`s: and either 
+create new virtual nodes or if close enough use the existing junction node.
 
 ### Create and save the graph
 
@@ -48,7 +53,7 @@ GraphStorage graph = gb.create();
 EdgeIteratorState edge = graph.edge(fromId, toId);
 edge.setDistance(distance);
 edge.setFlags(encoder.setProperties(speed, true, true));
-// Store to disc
+// Flush to disc
 graph.flush();
 ```
 
@@ -117,7 +122,7 @@ queryGraph.lookup(fromQR, toQR);
 
 // create the algorithm using the PrepareContractionHierarchies object
 AlgorithmOptions algoOpts = AlgorithmOptions.start().
-   algorithm(Parameters.Algorithms.DIJKSTRA_BI).traversalMode(tMode).flagEncoder(encoder).weighting(weighting).
+   algorithm(Parameters.Algorithms.DIJKSTRA_BI).traversalMode(tMode).weighting(weighting).
    build();
 RoutingAlgorithm algorithm = pch.createAlgo(queryGraph, algoOpts);
 Path path = algorithm.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());

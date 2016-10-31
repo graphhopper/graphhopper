@@ -19,16 +19,15 @@ package com.graphhopper.coll;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
  */
-public class GHSortedCollectionTest
-{
+public class GHSortedCollectionTest {
     @Test
-    public void testPoll()
-    {
+    public void testPoll() {
         GHSortedCollection instance = new GHSortedCollection();
         assertTrue(instance.isEmpty());
         instance.insert(0, 10);
@@ -42,8 +41,7 @@ public class GHSortedCollectionTest
     }
 
     @Test
-    public void testInsert()
-    {
+    public void testInsert() {
         GHSortedCollection instance = new GHSortedCollection();
         assertTrue(instance.isEmpty());
         instance.insert(0, 10);
@@ -62,8 +60,7 @@ public class GHSortedCollectionTest
     }
 
     @Test
-    public void testUpdate()
-    {
+    public void testUpdate() {
         GHSortedCollection instance = new GHSortedCollection();
         assertTrue(instance.isEmpty());
         instance.insert(0, 10);

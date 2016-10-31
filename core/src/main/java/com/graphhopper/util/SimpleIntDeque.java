@@ -22,29 +22,25 @@ import java.util.Arrays;
 /**
  * push to end, pop from beginning
  * <p>
+ *
  * @author Peter Karich
  */
-public class SimpleIntDeque
-{
+public class SimpleIntDeque {
     private int[] arr;
     private float growFactor;
     private int frontIndex;
     private int endIndexPlusOne;
 
-    public SimpleIntDeque()
-    {
+    public SimpleIntDeque() {
         this(100, 2);
     }
 
-    public SimpleIntDeque( int initSize )
-    {
+    public SimpleIntDeque(int initSize) {
         this(initSize, 2);
     }
 
-    public SimpleIntDeque( int initSize, float growFactor )
-    {
-        if ((int) (initSize * growFactor) <= initSize)
-        {
+    public SimpleIntDeque(int initSize, float growFactor) {
+        if ((int) (initSize * growFactor) <= initSize) {
             throw new RuntimeException("initial size or increasing grow-factor too low!");
         }
 
@@ -52,30 +48,25 @@ public class SimpleIntDeque
         this.arr = new int[initSize];
     }
 
-    int getCapacity()
-    {
+    int getCapacity() {
         return arr.length;
     }
 
-    public void setGrowFactor( float factor )
-    {
+    public void setGrowFactor(float factor) {
         this.growFactor = factor;
     }
 
-    public boolean isEmpty()
-    {
+    public boolean isEmpty() {
         return frontIndex >= endIndexPlusOne;
     }
 
-    public int pop()
-    {
+    public int pop() {
         int tmp = arr[frontIndex];
         frontIndex++;
 
         // removing the empty space of the front if too much is unused        
         int smallerSize = (int) (arr.length / growFactor);
-        if (frontIndex > smallerSize)
-        {
+        if (frontIndex > smallerSize) {
             endIndexPlusOne = getSize();
             // ensure that there are at least 10 entries
             int[] newArr = new int[endIndexPlusOne + 10];
@@ -87,15 +78,12 @@ public class SimpleIntDeque
         return tmp;
     }
 
-    public int getSize()
-    {
+    public int getSize() {
         return endIndexPlusOne - frontIndex;
     }
 
-    public void push( int v )
-    {
-        if (endIndexPlusOne >= arr.length)
-        {
+    public void push(int v) {
+        if (endIndexPlusOne >= arr.length) {
             arr = Arrays.copyOf(arr, (int) (arr.length * growFactor));
         }
 
@@ -104,13 +92,10 @@ public class SimpleIntDeque
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (int i = frontIndex; i < endIndexPlusOne; i++)
-        {
-            if (i > frontIndex)
-            {
+        for (int i = frontIndex; i < endIndexPlusOne; i++) {
+            if (i > frontIndex) {
                 sb.append(", ");
             }
             sb.append(arr[i]);

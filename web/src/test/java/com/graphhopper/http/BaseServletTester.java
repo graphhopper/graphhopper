@@ -34,31 +34,39 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Peter Karich
  */
-public class BaseServletTester
-{
-    private static GHServer server;
+public class BaseServletTester {
     protected static final Logger logger = LoggerFactory.getLogger(BaseServletTester.class);
     protected static int port;
+    private static GHServer server;
     protected Injector injector;
 
-    public void setUpGuice( Module... modules )
-    {
+    public static void shutdownJetty(boolean force) {
+        // this is too slow so allow force == false. Then on setUpJetty a new server is created on a different port
+        if (force && server != null)
+            try {
+                server.stop();
+            } catch (Exception ex) {
+                logger.error("Cannot stop jetty", ex);
+            }
+
+        server = null;
+    }
+
+    public void setUpGuice(Module... modules) {
         injector = Guice.createInjector(/*Stage.DEVELOPMENT,*/modules);
     }
 
     /**
      * This method will start jetty with andorra area loaded as OSM.
      */
-    public void setUpJetty( CmdArgs args )
-    {
+    public void setUpJetty(CmdArgs args) {
         if (injector != null)
             throw new UnsupportedOperationException("do not call guice before");
 
         bootJetty(args, 3);
     }
 
-    private void bootJetty( CmdArgs args, int retryCount )
-    {
+    private void bootJetty(CmdArgs args, int retryCount) {
         if (server != null)
             return;
 
@@ -67,56 +75,34 @@ public class BaseServletTester
         if (injector == null)
             setUpGuice(new DefaultModule(args), new GHServletModule(args));
 
-        for (int i = 0; i < retryCount; i++)
-        {
+        for (int i = 0; i < retryCount; i++) {
             port = 18080 + i;
             args.put("jetty.port", "" + port);
-            try
-            {
+            try {
                 logger.info("Trying to start jetty at port " + port);
                 server.start(injector);
 //                server.join();
                 break;
-            } catch (Exception ex)
-            {
+            } catch (Exception ex) {
                 server = null;
                 logger.error("Cannot start jetty at port " + port + " " + ex.getMessage());
             }
         }
     }
 
-    public static void shutdownJetty( boolean force )
-    {
-        // this is too slow so allow force == false. Then on setUpJetty a new server is created on a different port
-        if (force && server != null)
-            try
-            {
-                server.stop();
-            } catch (Exception ex)
-            {
-                logger.error("Cannot stop jetty", ex);
-            }
-
-        server = null;
-    }
-
-    protected String getTestRouteAPIUrl()
-    {
+    protected String getTestRouteAPIUrl() {
         String host = "localhost";
         return "http://" + host + ":" + port + "/route";
     }
 
-    protected String getTestNearestAPIUrl()
-    {
+    protected String getTestNearestAPIUrl() {
         String host = "localhost";
         return "http://" + host + ":" + port + "/nearest";
     }
 
-    protected String queryString( String query, int code ) throws Exception
-    {
+    protected String queryString(String query, int code) throws Exception {
         String resQuery = "";
-        for (String q : query.split("\\&"))
-        {
+        for (String q : query.split("\\&")) {
             int index = q.indexOf("=");
             if (index > 0)
                 resQuery += q.substring(0, index + 1) + WebHelper.encodeURL(q.substring(index + 1));
@@ -133,16 +119,13 @@ public class BaseServletTester
         return Helper.isToString(downloader.fetch(conn, true));
     }
 
-    protected JSONObject query( String query, int code ) throws Exception
-    {
+    protected JSONObject query(String query, int code) throws Exception {
         return new JSONObject(queryString(query, code));
     }
 
-    protected JSONObject nearestQuery( String query ) throws Exception
-    {
+    protected JSONObject nearestQuery(String query) throws Exception {
         String resQuery = "";
-        for (String q : query.split("\\&"))
-        {
+        for (String q : query.split("\\&")) {
             int index = q.indexOf("=");
             if (index > 0)
                 resQuery += q.substring(0, index + 1) + WebHelper.encodeURL(q.substring(index + 1));

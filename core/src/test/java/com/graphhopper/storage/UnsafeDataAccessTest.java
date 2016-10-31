@@ -18,39 +18,33 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.util.BitUtil;
+import org.junit.Test;
 
 import java.nio.ByteOrder;
 
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class UnsafeDataAccessTest extends DataAccessTest
-{
+public class UnsafeDataAccessTest extends DataAccessTest {
     @Override
-    public DataAccess createDataAccess( String name )
-    {
+    public DataAccess createDataAccess(String name) {
         return new UnsafeDataAccess(name, directory, defaultOrder).setSegmentSize(128);
     }
 
     @Override
-    public void testExceptionIfNoEnsureCapacityWasCalled()
-    {
+    public void testExceptionIfNoEnsureCapacityWasCalled() {
         // SKIP as unsafe failes with SIGSEGV and not with an exception!
     }
 
     @Override
-    public void testBoundsCheck()
-    {
+    public void testBoundsCheck() {
         // SKIP as unsafe has no bounds checks
     }
 
     @Test
-    public void testNativeOrder()
-    {
+    public void testNativeOrder() {
         BitUtil bitUtil = BitUtil.get(ByteOrder.nativeOrder());
         long address = UnsafeDataAccess.UNSAFE.allocateMemory(8);
         long val = 123123123123L * 123L;
@@ -58,17 +52,13 @@ public class UnsafeDataAccessTest extends DataAccessTest
         byte[] bytes = new byte[8];
         bitUtil.fromLong(bytes, val);
 
-        if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN))
-        {
-            for (int i = 7; i >= 0; i--)
-            {
+        if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
+            for (int i = 7; i >= 0; i--) {
                 UnsafeDataAccess.UNSAFE.putByte(address + i, bytes[i]);
             }
-        } else
-        {
+        } else {
             // not tested:
-            for (int i = 0; i < 8; i++)
-            {
+            for (int i = 0; i < 8; i++) {
                 UnsafeDataAccess.UNSAFE.putByte(address + i, bytes[i]);
             }
         }

@@ -18,39 +18,35 @@
 package com.graphhopper.util;
 
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
 import gnu.trove.list.TIntList;
 import gnu.trove.list.array.TIntArrayList;
 import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
  */
-public class BreadthFirstSearchTest
-{
+public class BreadthFirstSearchTest {
     int counter;
     TIntHashSet set = new TIntHashSet();
     TIntList list = new TIntArrayList();
 
     @Before
-    public void setup()
-    {
+    public void setup() {
         counter = 0;
     }
 
     @Test
-    public void testBFS()
-    {
-        BreadthFirstSearch bfs = new BreadthFirstSearch()
-        {
+    public void testBFS() {
+        BreadthFirstSearch bfs = new BreadthFirstSearch() {
             @Override
-            public boolean goFurther( int v )
-            {
+            public boolean goFurther(int v) {
                 counter++;
                 assertTrue("v " + v + " is already contained in set. iteration:" + counter, !set.contains(v));
                 set.add(v);
@@ -81,13 +77,10 @@ public class BreadthFirstSearchTest
     }
 
     @Test
-    public void testBFS2()
-    {
-        BreadthFirstSearch bfs = new BreadthFirstSearch()
-        {
+    public void testBFS2() {
+        BreadthFirstSearch bfs = new BreadthFirstSearch() {
             @Override
-            public boolean goFurther( int v )
-            {
+            public boolean goFurther(int v) {
                 counter++;
                 assertTrue("v " + v + " is already contained in set. iteration:" + counter, !set.contains(v));
                 set.add(v);
@@ -109,6 +102,5 @@ public class BreadthFirstSearchTest
         assertTrue(counter > 0);
         assertEquals("{1, 5, 2, 6, 3, 4}", list.toString());
     }
-
 
 }

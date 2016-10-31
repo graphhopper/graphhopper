@@ -3,7 +3,7 @@ target/
 TODO.txt
 *-gh/
 *.osm
-nbactions-*.xml
+nbactions*.xml
 config.properties
 build.xml
 queries.sh
@@ -17,9 +17,9 @@ android/libs/graphhopper-*-android.jar
 .idea/
 *iml
 debug.sh
+/web/src/main/webapp/js/config/options_prod.js
 *.pbf
-web/src/main/webapp/js/options_prod.js
-!/core/src/test/resources/com/graphhopper/reader/*.pbf
+!/reader-osm/src/test/resources/com/graphhopper/reader/osm/*.pbf
 *.dem
 *.log
 core/TODO*.txt
@@ -40,3 +40,4 @@ local.properties
 *.zip
 .DS_Store
 /core/nbproject/
+/reader-overlay-data/nbproject/

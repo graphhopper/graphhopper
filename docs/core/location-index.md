@@ -1,3 +1,5 @@
+# Location Index
+
 You get the location index from the GraphHopper instance, after you imported or loaded the data:
 
 ```java

@@ -23,54 +23,45 @@ import com.graphhopper.util.shapes.GHPoint3D;
 /**
  * @author Peter Karich
  */
-public class GPXEntry extends GHPoint3D
-{
+public class GPXEntry extends GHPoint3D {
     private long time;
 
-    public GPXEntry( GHPoint p, long millis )
-    {
+    public GPXEntry(GHPoint p, long millis) {
         this(p.lat, p.lon, millis);
     }
 
-    public GPXEntry( double lat, double lon, long millis )
-    {
+    public GPXEntry(double lat, double lon, long millis) {
         super(lat, lon, Double.NaN);
         this.time = millis;
     }
 
-    public GPXEntry( double lat, double lon, double ele, long millis )
-    {
+    public GPXEntry(double lat, double lon, double ele, long millis) {
         super(lat, lon, ele);
         this.time = millis;
     }
 
-    boolean is3D()
-    {
+    boolean is3D() {
         return !Double.isNaN(ele);
     }
 
     /**
      * The time relative to the start time in milli seconds.
      */
-    public long getTime()
-    {
+    public long getTime() {
         return time;
     }
 
-    public void setTime( long time )
-    {
+    public void setTime(long time) {
         this.time = time;
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         return 59 * super.hashCode() + (int) (time ^ (time >>> 32));
     }
 
     @Override
-    public boolean equals( Object obj )
-    {
+    public boolean equals(Object obj) {
         if (obj == null)
             return false;
 
@@ -79,8 +70,7 @@ public class GPXEntry extends GHPoint3D
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return super.toString() + ", " + time;
     }
 }

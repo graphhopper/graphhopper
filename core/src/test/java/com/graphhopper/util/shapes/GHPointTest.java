@@ -19,16 +19,15 @@ package com.graphhopper.util.shapes;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
  */
-public class GHPointTest
-{
+public class GHPointTest {
     @Test
-    public void testIsValid()
-    {
+    public void testIsValid() {
         GHPoint instance = new GHPoint();
         assertFalse(instance.isValid());
         instance.lat = 1;

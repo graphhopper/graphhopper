@@ -17,35 +17,30 @@
  */
 package com.graphhopper.coll;
 
+import org.junit.Test;
+
 import java.util.LinkedHashSet;
 import java.util.Random;
 import java.util.Set;
-
-import org.junit.Test;
 
 import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
-public class GHLongIntBTreeTest
-{
+public class GHLongIntBTreeTest {
     @Test
-    public void testThrowException_IfPutting_NoNumber()
-    {
+    public void testThrowException_IfPutting_NoNumber() {
         GHLongIntBTree instance = new GHLongIntBTree(2);
-        try
-        {
+        try {
             instance.put(-1, 1);
             assertTrue(false);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
         }
     }
 
     @Test
-    public void testTwoSplits()
-    {
+    public void testTwoSplits() {
         GHLongIntBTree instance = new GHLongIntBTree(3);
         instance.put(1, 2);
         instance.put(2, 4);
@@ -73,8 +68,7 @@ public class GHLongIntBTreeTest
     }
 
     @Test
-    public void testSplitAndOverwrite()
-    {
+    public void testSplitAndOverwrite() {
         GHLongIntBTree instance = new GHLongIntBTree(3);
         instance.put(1, 2);
         instance.put(2, 4);
@@ -88,17 +82,14 @@ public class GHLongIntBTreeTest
         assertEquals(6, instance.get(3));
     }
 
-    void check( GHLongIntBTree instance, int from )
-    {
-        for (int i = from; i < instance.getSize(); i++)
-        {
+    void check(GHLongIntBTree instance, int from) {
+        for (int i = from; i < instance.getSize(); i++) {
             assertEquals(i * 2, instance.get(i));
         }
     }
 
     @Test
-    public void testPut()
-    {
+    public void testPut() {
         GHLongIntBTree instance = new GHLongIntBTree(3);
         instance.put(2, 4);
         instance.put(7, 14);
@@ -125,8 +116,7 @@ public class GHLongIntBTreeTest
     }
 
     @Test
-    public void testUpdate()
-    {
+    public void testUpdate() {
         GHLongIntBTree instance = new GHLongIntBTree(2);
         int result = instance.put(100, 10);
         assertEquals(instance.getNoNumberValue(), result);
@@ -142,26 +132,21 @@ public class GHLongIntBTreeTest
     }
 
     @Test
-    public void testRandom()
-    {
-        for (int j = 3; j < 12; j += 4)
-        {
+    public void testRandom() {
+        for (int j = 3; j < 12; j += 4) {
             GHLongIntBTree instance = new GHLongIntBTree(j);
             int size = 500;
             Random rand = new Random(123);
             Set<Integer> addedValues = new LinkedHashSet<Integer>(size);
-            for (int i = 0; i < size; i++)
-            {
+            for (int i = 0; i < size; i++) {
                 int val = rand.nextInt(size);
                 addedValues.add(val);
-                try
-                {
+                try {
                     instance.put(val, val);
 //                    System.out.println(i + "--------------" + val);
 //                    instance.print();
 //                    System.out.println("\n\n");
-                } catch (Exception ex)
-                {
+                } catch (Exception ex) {
                     ex.printStackTrace();
                     assertFalse(j + "| Problem with " + i + " " + ex, true);
                 }
@@ -169,15 +154,13 @@ public class GHLongIntBTreeTest
                 assertEquals(j + "| Size not equal to set! In " + i + " added " + val, addedValues.size(), instance.getSize());
             }
             int i = 0;
-            for (int val : addedValues)
-            {
+            for (int val : addedValues) {
                 assertEquals(j + "| Problem with " + i, val, instance.get(val));
                 i++;
             }
             instance.optimize();
             i = 0;
-            for (int val : addedValues)
-            {
+            for (int val : addedValues) {
                 assertEquals(j + "| Problem with " + i, val, instance.get(val));
                 i++;
             }

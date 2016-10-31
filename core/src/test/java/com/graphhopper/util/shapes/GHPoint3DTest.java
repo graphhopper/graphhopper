@@ -19,16 +19,15 @@ package com.graphhopper.util.shapes;
 
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 
 /**
  * @author Peter Karich
  */
-public class GHPoint3DTest
-{
+public class GHPoint3DTest {
     @Test
-    public void testEquals()
-    {
+    public void testEquals() {
         GHPoint3D point1 = new GHPoint3D(1, 2, Double.NaN);
         GHPoint3D point2 = new GHPoint3D(1, 2, Double.NaN);
         assertEquals(point1, point2);

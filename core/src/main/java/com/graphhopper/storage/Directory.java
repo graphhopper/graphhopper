@@ -25,10 +25,10 @@ import java.util.Collection;
  * Directory as we need one to maintain one DataAccess object for nodes, edges and location2id
  * index.
  * <p>
+ *
  * @author Peter Karich
  */
-public interface Directory
-{
+public interface Directory {
     /**
      * @return an id or location in the local filesystem.
      */
@@ -43,9 +43,9 @@ public interface Directory
      * Tries to find the object with that name if not existent it creates one and associates the
      * location with it. A name is unique in one Directory.
      */
-    DataAccess find( String name );
+    DataAccess find(String name);
 
-    DataAccess find( String name, DAType type );
+    DataAccess find(String name, DAType type);
 
     /**
      * Renames the specified DataAccess object into one.
@@ -54,7 +54,7 @@ public interface Directory
     /**
      * Removes the specified object from the directory.
      */
-    void remove( DataAccess da );
+    void remove(DataAccess da);
 
     /**
      * @return the default type of a newly created DataAccess object

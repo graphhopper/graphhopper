@@ -20,62 +20,51 @@ package com.graphhopper.util;
 /**
  * @author Peter Karich
  */
-public class InstructionAnnotation
-{
+public class InstructionAnnotation {
     public final static InstructionAnnotation EMPTY = new InstructionAnnotation();
     private boolean empty;
     private int importance;
     private String message;
 
-    private InstructionAnnotation()
-    {
+    private InstructionAnnotation() {
         setEmpty();
     }
 
-    public InstructionAnnotation( int importance, String message )
-    {
-        if (message.isEmpty() && importance == 0)
-        {
+    public InstructionAnnotation(int importance, String message) {
+        if (message.isEmpty() && importance == 0) {
             setEmpty();
-        } else
-        {
+        } else {
             this.empty = false;
             this.importance = importance;
             this.message = message;
         }
     }
 
-    private void setEmpty()
-    {
+    private void setEmpty() {
         this.empty = true;
         this.importance = 0;
         this.message = "";
     }
 
-    public boolean isEmpty()
-    {
+    public boolean isEmpty() {
         return empty;
     }
 
-    public int getImportance()
-    {
+    public int getImportance() {
         return importance;
     }
 
-    public String getMessage()
-    {
+    public String getMessage() {
         return message;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return importance + ": " + getMessage();
     }
 
     @Override
-    public int hashCode()
-    {
+    public int hashCode() {
         int hash = 3;
         hash = 83 * hash + this.importance;
         hash = 83 * hash + (this.message != null ? this.message.hashCode() : 0);
@@ -83,8 +72,7 @@ public class InstructionAnnotation
     }
 
     @Override
-    public boolean equals( Object obj )
-    {
+    public boolean equals(Object obj) {
         if (obj == null)
             return false;
         if (getClass() != obj.getClass())

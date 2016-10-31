@@ -24,18 +24,15 @@ import java.util.Random;
  *
  * @author Robin Boldt
  */
-public class MultiPointTour extends TourStrategy
-{
+public class MultiPointTour extends TourStrategy {
     private final int allPoints;
     private final double initialHeading;
 
-    public MultiPointTour( Random random, double distanceInMeter, int allPoints )
-    {
+    public MultiPointTour(Random random, double distanceInMeter, int allPoints) {
         this(random, distanceInMeter, allPoints, Double.NaN);
     }
 
-    public MultiPointTour( Random random, double distanceInMeter, int allPoints, double initialHeading )
-    {
+    public MultiPointTour(Random random, double distanceInMeter, int allPoints, double initialHeading) {
         super(random, distanceInMeter);
         this.allPoints = allPoints;
         if (Double.isNaN(initialHeading))
@@ -45,20 +42,17 @@ public class MultiPointTour extends TourStrategy
     }
 
     @Override
-    public int getNumberOfGeneratedPoints()
-    {
+    public int getNumberOfGeneratedPoints() {
         return allPoints - 1;
     }
 
     @Override
-    public double getDistanceForIteration( int iteration )
-    {
+    public double getDistanceForIteration(int iteration) {
         return slightlyModifyDistance(overallDistance / (allPoints + 1));
     }
 
     @Override
-    public double getHeadingForIteration( int iteration )
-    {
+    public double getHeadingForIteration(int iteration) {
         if (iteration == 0)
             return initialHeading;
 

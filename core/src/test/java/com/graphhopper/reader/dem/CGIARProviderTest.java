@@ -17,20 +17,31 @@
  */
 package com.graphhopper.reader.dem;
 
-import java.io.File;
+import com.graphhopper.util.Downloader;
+import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.net.SocketTimeoutException;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
  */
-public class CGIARProviderTest
-{
+public class CGIARProviderTest {
+    CGIARProvider instance;
+
+    @Before
+    public void setUp() {
+        instance = new CGIARProvider();
+    }
+
     @Test
-    public void testDown()
-    {
-        CGIARProvider instance = new CGIARProvider();
+    public void testDown() {
         assertEquals(50, instance.down(52.5));
         assertEquals(0, instance.down(0.1));
         assertEquals(0, instance.down(0.01));
@@ -42,9 +53,7 @@ public class CGIARProviderTest
     }
 
     @Test
-    public void testFileName()
-    {
-        CGIARProvider instance = new CGIARProvider();
+    public void testFileName() {
         assertEquals("srtm_36_02", instance.getFileName(52, -0.1));
         assertEquals("srtm_35_02", instance.getFileName(50, -10));
 
@@ -59,19 +68,38 @@ public class CGIARProviderTest
     }
 
     @Test
-    public void testFileNotFound()
-    {
-        CGIARProvider instance = new CGIARProvider();
+    public void testFileNotFound() {
         File file = new File(instance.getCacheDir(), instance.getFileName(46, -20) + ".gh");
         File zipFile = new File(instance.getCacheDir(), instance.getFileName(46, -20) + ".zip");
         file.delete();
         zipFile.delete();
-        
+
+        instance.setDownloader(new Downloader("test GH") {
+            @Override
+            public void downloadFile(String url, String toFile) throws IOException {
+                throw new FileNotFoundException("xyz");
+            }
+        });
         assertEquals(0, instance.getEle(46, -20), 1);
 
         // file not found => small!
         assertTrue(file.exists());
-        assertEquals(228, file.length());        
+        assertEquals(228, file.length());
+
+        instance.setDownloader(new Downloader("test GH") {
+            @Override
+            public void downloadFile(String url, String toFile) throws IOException {
+                throw new SocketTimeoutException("xyz");
+            }
+        });
+
+        try {
+            instance.setSleep(30);
+            instance.getEle(16, -20);
+            assertTrue(false);
+        } catch (Exception ex) {
+        }
+
         file.delete();
         zipFile.delete();
     }

@@ -18,15 +18,13 @@
 package com.graphhopper.reader.osm.conditional;
 
 /**
- *
  * @author Peter Karich
  */
-public interface ValueRange<T>
-{
+public interface ValueRange<T> {
     /**
      * Checks if the value is in range of this ValueRange check method.
      */
-    boolean isInRange( T value );
+    boolean isInRange(T value);
 
     String getKey();
 }

@@ -21,32 +21,33 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import org.junit.Test;
+
 import java.util.Arrays;
 import java.util.List;
-import org.junit.Test;
-import static org.junit.Assert.*;
+
+import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static org.junit.Assert.assertEquals;
 
 /**
- *
  * @author Peter Karich
  */
-public class RoundTripRoutingTemplateTest
-{
+public class RoundTripRoutingTemplateTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = new EncodingManager(carFE);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED_2DIR;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
 
     @Test
-    public void testCalcRoundTrip() throws Exception
-    {
+    public void testCalcRoundTrip() throws Exception {
         Weighting weighting = new FastestWeighting(carFE);
         Graph g = createTestGraph(true);
 
@@ -63,7 +64,7 @@ public class RoundTripRoutingTemplateTest
         QueryGraph qGraph = new QueryGraph(g);
         qGraph.lookup(qr4, qr5);
         rTripRouting.setQueryResults(Arrays.asList(qr5, qr4, qr5));
-        List<Path> paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, carFE, weighting, tMode));
+        List<Path> paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         assertEquals(2, paths.size());
         assertEquals(Helper.createTList(5, 6, 3, 4), paths.get(0).calcNodes());
         assertEquals(Helper.createTList(4, 8, 7, 6, 5), paths.get(1).calcNodes());
@@ -71,14 +72,13 @@ public class RoundTripRoutingTemplateTest
         qGraph = new QueryGraph(g);
         qGraph.lookup(qr4, qr6);
         rTripRouting.setQueryResults(Arrays.asList(qr6, qr4, qr6));
-        paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, carFE, weighting, tMode));
+        paths = rTripRouting.calcPaths(qGraph, new RoutingAlgorithmFactorySimple(), new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         assertEquals(2, paths.size());
         assertEquals(Helper.createTList(6, 3, 4), paths.get(0).calcNodes());
         assertEquals(Helper.createTList(4, 8, 7, 6), paths.get(1).calcNodes());
     }
 
-    private Graph createTestGraph( boolean fullGraph )
-    {
+    private Graph createTestGraph(boolean fullGraph) {
         return new AlternativeRouteTest(tMode).createTestGraph(fullGraph, em);
     }
 }

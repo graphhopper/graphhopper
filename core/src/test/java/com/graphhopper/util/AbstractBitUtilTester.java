@@ -17,22 +17,20 @@
  */
 package com.graphhopper.util;
 
-import static org.junit.Assert.assertEquals;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public abstract class AbstractBitUtilTester
-{
+public abstract class AbstractBitUtilTester {
     protected BitUtil bitUtil = getBitUtil();
 
     abstract BitUtil getBitUtil();
 
     @Test
-    public void testToFloat()
-    {
+    public void testToFloat() {
         byte[] bytes = bitUtil.fromFloat(Float.MAX_VALUE);
         assertEquals(Float.MAX_VALUE, bitUtil.toFloat(bytes), 1e-9);
 
@@ -41,8 +39,7 @@ public abstract class AbstractBitUtilTester
     }
 
     @Test
-    public void testToDouble()
-    {
+    public void testToDouble() {
         byte[] bytes = bitUtil.fromDouble(Double.MAX_VALUE);
         assertEquals(Double.MAX_VALUE, bitUtil.toDouble(bytes), 1e-9);
 
@@ -51,8 +48,7 @@ public abstract class AbstractBitUtilTester
     }
 
     @Test
-    public void testToInt()
-    {
+    public void testToInt() {
         byte[] bytes = bitUtil.fromInt(Integer.MAX_VALUE);
         assertEquals(Integer.MAX_VALUE, bitUtil.toInt(bytes));
 
@@ -61,8 +57,7 @@ public abstract class AbstractBitUtilTester
     }
 
     @Test
-    public void testToShort()
-    {
+    public void testToShort() {
         byte[] bytes = bitUtil.fromShort(Short.MAX_VALUE);
         assertEquals(Short.MAX_VALUE, bitUtil.toShort(bytes));
 
@@ -77,8 +72,7 @@ public abstract class AbstractBitUtilTester
     }
 
     @Test
-    public void testToLong()
-    {
+    public void testToLong() {
         byte[] bytes = bitUtil.fromLong(Long.MAX_VALUE);
         assertEquals(Long.MAX_VALUE, bitUtil.toLong(bytes));
 
@@ -87,8 +81,7 @@ public abstract class AbstractBitUtilTester
     }
 
     @Test
-    public void testToLastBitString()
-    {
+    public void testToLastBitString() {
         assertEquals("1", bitUtil.toLastBitString(1L, 1));
         assertEquals("01", bitUtil.toLastBitString(1L, 2));
         assertEquals("001", bitUtil.toLastBitString(1L, 3));
@@ -97,16 +90,14 @@ public abstract class AbstractBitUtilTester
     }
 
     @Test
-    public void testBitString2Long()
-    {
+    public void testBitString2Long() {
         String str = "01000000000110000011100000011110";
         assertEquals(str + "00000000000000000000000000000000", bitUtil.toBitString(bitUtil.fromBitString2Long(str)));
         assertEquals("1000000000000000000000000000000000000000000000000000000000000000", bitUtil.toBitString(1L << 63));
     }
 
     @Test
-    public void testReverse()
-    {
+    public void testReverse() {
         String str48 = "000000000000000000000000000000000000000000000000";
         long ret = bitUtil.reverse(bitUtil.fromBitString2Long(str48 + "0111000000000101"), 16);
         assertEquals(str48 + "1010000000001110", bitUtil.toBitString(ret, 64));

@@ -17,24 +17,21 @@
  */
 package com.graphhopper.storage;
 
-import static org.junit.Assert.*;
-
 import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
-public class MMapDataAccessTest extends DataAccessTest
-{
+public class MMapDataAccessTest extends DataAccessTest {
     @Override
-    public DataAccess createDataAccess( String name )
-    {
+    public DataAccess createDataAccess(String name) {
         return new MMapDataAccess(name, directory, defaultOrder, true).setSegmentSize(128);
     }
 
     @Test
-    public void textMixRAM2MMAP()
-    {
+    public void textMixRAM2MMAP() {
         DataAccess da = new RAMDataAccess(name, directory, true, defaultOrder);
         assertFalse(da.loadExisting());
         da.create(100);
@@ -48,8 +45,7 @@ public class MMapDataAccessTest extends DataAccessTest
     }
 
     @Test
-    public void textMixMMAP2RAM()
-    {
+    public void textMixMMAP2RAM() {
         DataAccess da = createDataAccess(name);
         assertFalse(da.loadExisting());
         da.create(100);

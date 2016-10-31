@@ -19,41 +19,35 @@ package com.graphhopper.storage;
 
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 import java.io.File;
-
-import org.junit.After;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Before;
-import org.junit.Test;
-
 /**
  * @author Peter Karich
  */
-public abstract class AbstractLockFactoryTester
-{
+public abstract class AbstractLockFactoryTester {
     protected final File lockDir = new File("./target/lockingtest/");
 
     protected abstract LockFactory createLockFactory();
 
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         lockDir.mkdirs();
     }
 
     @After
-    public void tearDown()
-    {
+    public void tearDown() {
         Helper.removeDir(lockDir);
     }
 
     @Test
-    public void testObtain()
-    {
+    public void testObtain() {
         LockFactory instance = createLockFactory();
         instance.setLockDir(lockDir);
         Lock lock = instance.create("test", true);
@@ -70,14 +64,12 @@ public abstract class AbstractLockFactoryTester
         // although it is locked do not allow release:
         // lock2.release();
         // assertTrue(lock.isLocked());
-
         lock.release();
         assertFalse(lock.isLocked());
     }
 
     @Test
-    public void testForceDelete()
-    {
+    public void testForceDelete() {
         LockFactory instance = createLockFactory();
         instance.setLockDir(lockDir);
         Lock lock = instance.create("testlock", true);

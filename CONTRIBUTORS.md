@@ -1,6 +1,8 @@
-[Members](https://github.com/graphhopper?tab=members) and [Contributors](https://github.com/graphhopper/graphhopper/contributors)
+# Contributors
 
- * ammagamma, several improvements like #700, #703
+Most of the contributors are mentioned at Github as [Members](https://github.com/graphhopper?tab=members) or [Contributors](https://github.com/graphhopper/graphhopper/contributors). Here is a manual overview
+
+ * ammagamma, improvements like #700, #703
  * AnahitaS, docs for Android, Android, Tomcat
  * andreaswolf, flag encoder versioning and more
  * agouge, discussion and API refactoring
@@ -16,19 +18,19 @@
  * dos65, bug fixes in routing algo
  * drnextgis, ru translation and JS fixes
  * duongnt, fixes in storage
- * lmar, improved instructions information
  * fbonzon, UI improvements like #615
  * florent-morel, improvements regarding fords, #320
  * fredao, translations 
  * HarelM, improvements regarding elevation
  * HelgeKrueger, modularization of javascript, #590
  * henningvs, doc improvements
+ * highsource, more efficient geometry update, ui fixes
  * IsNull, improvements like #708
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config
  * JohannesPelzer, improved GPX information and various other things
  * karussell, one of the core developers
- * khuebner, pushed turn instructions forward
+ * khuebner, initial turn costs support
  * lmar, improved instructions
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
  * ocampana, initial implementation for instructions
@@ -36,12 +38,12 @@
  * rajanski, script to do routing via PostGIS
  * rodneyodonnell, improved dead end removal and fords
  * rodo, more descriptions
- * seeebiii motorcycle improvements 
+ * seeebiii, motorcycle improvements 
  * Svantulden, improved documentation and nearest API
  * thehereward, code cleanups like #620
  * vvikas, ideas for many to many improvements
 
-# Translations
+## Translations
 
 A lot people helped to create translations - thanks!
 See [this spreadsheet](https://docs.google.com/spreadsheet/ccc?key=0AmukcXek0JP6dGM4R1VTV2d3TkRSUFVQakhVeVBQRHc#gid=0)

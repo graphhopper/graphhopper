@@ -28,31 +28,30 @@ import com.graphhopper.util.shapes.GHPoint;
  *
  * @author Peter Karich
  */
-public interface DistanceCalc
-{
-    BBox createBBox( double lat, double lon, double radiusInMeter );
+public interface DistanceCalc {
+    BBox createBBox(double lat, double lon, double radiusInMeter);
 
-    double calcCircumference( double lat );
+    double calcCircumference(double lat);
 
     /**
      * Calculates distance of (from, to) in meter.
      */
-    double calcDist( double fromLat, double fromLon, double toLat, double toLon );
+    double calcDist(double fromLat, double fromLon, double toLat, double toLon);
 
     /**
      * Returns the specified length in normalized meter.
      */
-    double calcNormalizedDist( double dist );
+    double calcNormalizedDist(double dist);
 
     /**
      * Inverse to calcNormalizedDist. Returned the length in meter.
      */
-    double calcDenormalizedDist( double normedDist );
+    double calcDenormalizedDist(double normedDist);
 
     /**
      * Calculates in normalized meter
      */
-    double calcNormalizedDist( double fromLat, double fromLon, double toLat, double toLon );
+    double calcNormalizedDist(double fromLat, double fromLon, double toLat, double toLon);
 
     /**
      * This method decides for case 1: if we should use distance(r to edge) where r=(lat,lon) or
@@ -73,36 +72,36 @@ public interface DistanceCalc
      *
      * @return true for case 1 which is "on edge" or the special case of 90° to the edge
      */
-    boolean validEdgeDistance( double r_lat_deg, double r_lon_deg,
-                               double a_lat_deg, double a_lon_deg,
-                               double b_lat_deg, double b_lon_deg );
+    boolean validEdgeDistance(double r_lat_deg, double r_lon_deg,
+                              double a_lat_deg, double a_lon_deg,
+                              double b_lat_deg, double b_lon_deg);
 
     /**
      * This method calculates the distance from r to edge (a, b) where the crossing point is c
      *
      * @return the distance in normalized meter
      */
-    double calcNormalizedEdgeDistance( double r_lat_deg, double r_lon_deg,
-                                       double a_lat_deg, double a_lon_deg,
-                                       double b_lat_deg, double b_lon_deg );
+    double calcNormalizedEdgeDistance(double r_lat_deg, double r_lon_deg,
+                                      double a_lat_deg, double a_lon_deg,
+                                      double b_lat_deg, double b_lon_deg);
 
     /**
      * @return the crossing point c of the vertical line from r to line (a, b)
      */
-    GHPoint calcCrossingPointToEdge( double r_lat_deg, double r_lon_deg,
-                                     double a_lat_deg, double a_lon_deg,
-                                     double b_lat_deg, double b_lon_deg );
+    GHPoint calcCrossingPointToEdge(double r_lat_deg, double r_lon_deg,
+                                    double a_lat_deg, double a_lon_deg,
+                                    double b_lat_deg, double b_lon_deg);
 
     /**
      * This methods projects a point given in lat and long (in degrees) into a direction, given as
      * heading, measured clockwise from north in degrees. The distance is passed in km.
      */
-    public GHPoint projectCoordinate( double lat_deg, double lon_deg,
-                                      double distanceInMeter, double headingClockwiseFromNorth );
+    public GHPoint projectCoordinate(double lat_deg, double lon_deg,
+                                     double distanceInMeter, double headingClockwiseFromNorth);
 
     /*
      * Simple heuristic to detect if the specified two points are crossing the boundary +-180°. See
      * #667
      */
-    boolean isCrossBoundary( double lon1, double lon2 );
+    boolean isCrossBoundary(double lon1, double lon2);
 }

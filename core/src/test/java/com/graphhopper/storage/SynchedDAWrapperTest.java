@@ -20,11 +20,9 @@ package com.graphhopper.storage;
 /**
  * @author Peter Karich
  */
-public class SynchedDAWrapperTest extends DataAccessTest
-{
+public class SynchedDAWrapperTest extends DataAccessTest {
     @Override
-    public DataAccess createDataAccess( String name )
-    {
+    public DataAccess createDataAccess(String name) {
         return new SynchedDAWrapper(new RAMDataAccess(name, directory, true, defaultOrder)).setSegmentSize(128);
     }
 }

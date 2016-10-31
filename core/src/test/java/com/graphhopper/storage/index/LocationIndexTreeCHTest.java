@@ -17,43 +17,38 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FastestWeighting;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import gnu.trove.list.TIntList;
 import gnu.trove.set.TIntSet;
 import gnu.trove.set.hash.TIntHashSet;
+import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Peter Karich
  */
-public class LocationIndexTreeCHTest extends LocationIndexTreeTest
-{
+public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
     @Override
-    public LocationIndexTree createIndex( Graph g, int resolution )
-    {
+    public LocationIndexTree createIndex(Graph g, int resolution) {
         if (resolution < 0)
             resolution = 500000;
         return (LocationIndexTree) createIndexNoPrepare(g, resolution).prepareIndex();
     }
 
     @Override
-    public LocationIndexTree createIndexNoPrepare( Graph g, int resolution )
-    {
+    public LocationIndexTree createIndexNoPrepare(Graph g, int resolution) {
         Directory dir = new RAMDirectory(location);
         LocationIndexTree tmpIdx = new LocationIndexTree(g, dir);
         tmpIdx.setResolution(resolution);
@@ -61,15 +56,13 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
     }
 
     @Override
-    GraphHopperStorage createGHStorage( Directory dir, EncodingManager encodingManager, boolean is3D )
-    {
+    GraphHopperStorage createGHStorage(Directory dir, EncodingManager encodingManager, boolean is3D) {
         return new GraphHopperStorage(Arrays.asList(new FastestWeighting(encodingManager.getEncoder("car"))), dir, encodingManager, is3D, new GraphExtension.NoOpExtension()).
                 create(100);
     }
 
     @Test
-    public void testCHGraph()
-    {
+    public void testCHGraph() {
         GraphHopperStorage ghStorage = createGHStorage(new RAMDirectory(), encodingManager, false);
         CHGraph lg = ghStorage.getGraph(CHGraph.class);
         // 0
@@ -108,8 +101,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
     }
 
     @Test
-    public void testSortHighLevelFirst()
-    {
+    public void testSortHighLevelFirst() {
         GraphHopperStorage g = createGHStorage(new RAMDirectory(), encodingManager, false);
         final CHGraph lg = g.getGraph(CHGraph.class);
         lg.getNodeAccess().ensureNode(4);
@@ -120,11 +112,9 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
 
         // nodes with high level should come first to be covered by lower level nodes
         ArrayList<Integer> list = Helper.tIntListToArrayList(tlist);
-        Collections.sort(list, new Comparator<Integer>()
-        {
+        Collections.sort(list, new Comparator<Integer>() {
             @Override
-            public int compare( Integer o1, Integer o2 )
-            {
+            public int compare(Integer o1, Integer o2) {
                 return lg.getLevel(o2) - lg.getLevel(o1);
             }
         });
@@ -134,8 +124,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest
     }
 
     @Test
-    public void testCHGraphBug()
-    {
+    public void testCHGraphBug() {
         // 0
         // |
         // | X  2--3

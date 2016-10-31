@@ -20,49 +20,44 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import org.junit.Test;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
 
-import org.junit.Test;
-
 /**
  * @author Peter Karich
  */
-public class GraphHopperStorageCHTest extends GraphHopperStorageTest
-{
-    protected CHGraph getGraph( GraphHopperStorage ghStorage )
-    {
+public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
+    protected CHGraph getGraph(GraphHopperStorage ghStorage) {
         return ghStorage.getGraph(CHGraph.class);
     }
 
     @Override
-    public GraphHopperStorage newGHStorage( Directory dir, boolean is3D )
-    {
+    public GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
         return new GraphHopperStorage(Arrays.asList(new FastestWeighting(carEncoder)), dir, encodingManager, is3D, new GraphExtension.NoOpExtension());
     }
 
     @Test
-    public void testCannotBeLoadedWithNormalGraphHopperStorageClass()
-    {
+    public void testCannotBeLoadedWithNormalGraphHopperStorageClass() {
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false).create(defaultSize);
         graph.flush();
         graph.close();
 
         graph = new GraphBuilder(encodingManager).setLocation(defaultGraphLoc).setMmap(false).setStore(true).create();
-        try
-        {
+        try {
             graph.loadExisting();
             assertTrue(false);
-        } catch (Exception ex)
-        {
+        } catch (Exception ex) {
         }
 
         graph = newGHStorage(new RAMDirectory(defaultGraphLoc, true), false);
@@ -72,8 +67,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     }
 
     @Test
-    public void testPrios()
-    {
+    public void testPrios() {
         graph = createGHStorage();
         CHGraph g = getGraph(graph);
         g.getNodeAccess().ensureNode(30);
@@ -89,8 +83,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     }
 
     @Test
-    public void testEdgeFilter()
-    {
+    public void testEdgeFilter() {
         graph = createGHStorage();
         CHGraph g = getGraph(graph);
         g.edge(0, 1, 10, true);
@@ -120,8 +113,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     }
 
     @Test
-    public void testDisconnectEdge()
-    {
+    public void testDisconnectEdge() {
         graph = createGHStorage();
         CHGraphImpl lg = (CHGraphImpl) getGraph(graph);
 
@@ -172,8 +164,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     }
 
     @Test
-    public void testGetWeight()
-    {
+    public void testGetWeight() {
         graph = createGHStorage();
         CHGraphImpl g = (CHGraphImpl) getGraph(graph);
         assertFalse(g.edge(0, 1).isShortcut());
@@ -207,8 +198,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     }
 
     @Test
-    public void testGetWeightIfAdvancedEncoder()
-    {
+    public void testGetWeightIfAdvancedEncoder() {
         FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
         EncodingManager em = new EncodingManager(customEncoder);
         FastestWeighting weighting = new FastestWeighting(customEncoder);
@@ -235,8 +225,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     }
 
     @Test
-    public void testQueryGraph()
-    {
+    public void testQueryGraph() {
         graph = createGHStorage();
         CHGraph chGraph = getGraph(graph);
         NodeAccess na = chGraph.getNodeAccess();
@@ -269,8 +258,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         assertEquals(GHUtility.asSet(1, fromRes.getClosestNode()), GHUtility.getNeighbors(explorer.setBaseNode(toRes.getClosestNode())));
     }
 
-    QueryResult createQR( double lat, double lon, int wayIndex, EdgeIteratorState edge )
-    {
+    QueryResult createQR(double lat, double lon, int wayIndex, EdgeIteratorState edge) {
         QueryResult res = new QueryResult(lat, lon);
         res.setClosestEdge(edge);
         res.setWayIndex(wayIndex);
@@ -281,8 +269,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
 
     @Test
     @Override
-    public void testSave_and_Freeze() throws IOException
-    {
+    public void testSave_and_Freeze() throws IOException {
         // belongs to each other
         super.testSave_and_Freeze();
         graph.close();
@@ -337,8 +324,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     }
 
     @Test
-    public void testSimpleShortcutCreationAndTraversal()
-    {
+    public void testSimpleShortcutCreationAndTraversal() {
         graph = createGHStorage();
         graph.edge(1, 3, 10, true);
         graph.edge(3, 4, 10, true);
@@ -354,8 +340,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
     }
 
     @Test
-    public void testShortcutCreationAndAccessForManyVehicles()
-    {
+    public void testShortcutCreationAndAccessForManyVehicles() {
         FlagEncoder tmpCar = new CarFlagEncoder();
         FlagEncoder tmpBike = new Bike2WeightFlagEncoder();
         EncodingManager em = new EncodingManager(tmpCar, tmpBike);
@@ -382,12 +367,10 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isBackward(tmpCar));
 
         // throw exception for wrong encoder
-        try
-        {
+        try {
             assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isForward(tmpBike));
             assertTrue(false);
-        } catch (AssertionError ex)
-        {
+        } catch (AssertionError ex) {
         }
 
         // assert bike CH graph
@@ -395,12 +378,10 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest
         assertTrue(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isBackward(tmpBike));
 
         // throw exception for wrong encoder
-        try
-        {
+        try {
             assertFalse(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isBackward(tmpCar));
             assertTrue(false);
-        } catch (AssertionError ex)
-        {
+        } catch (AssertionError ex) {
         }
     }
 }

@@ -24,75 +24,67 @@ import java.io.File;
 /**
  * @author Peter Karich
  */
-public interface ElevationProvider
-{
+public interface ElevationProvider {
+    ElevationProvider NOOP = new ElevationProvider() {
+        @Override
+        public double getEle(double lat, double lon) {
+            return Double.NaN;
+        }
+
+        @Override
+        public ElevationProvider setCacheDir(File cacheDir) {
+            return this;
+        }
+
+        @Override
+        public ElevationProvider setBaseURL(String baseURL) {
+            return this;
+        }
+
+        @Override
+        public ElevationProvider setDAType(DAType daType) {
+            return this;
+        }
+
+        @Override
+        public void release() {
+        }
+
+        @Override
+        public void setCalcMean(boolean eleCalcMean) {
+        }
+    };
+
     /**
      * @return returns the hight in meter or Double.NaN if invalid
      */
-    double getEle( double lat, double lon );
+    double getEle(double lat, double lon);
 
     /**
      * Specifies the service URL where to download the elevation data. An empty string should set it
      * to the default URL. Default is a provider-dependent URL which should work out of the box.
      */
-    ElevationProvider setBaseURL( String baseURL );
+    ElevationProvider setBaseURL(String baseURL);
 
     /**
      * Specifies the directory where to temporarily store the elevation data after fetched from base
      * URL. Default is a custom provider-dependent subdirectory in '/tmp'
      */
-    ElevationProvider setCacheDir( File cacheDir );
+    ElevationProvider setCacheDir(File cacheDir);
 
     /**
      * Set to true if you have a small area and need high speed access. Default is DAType.MMAP
      */
-    ElevationProvider setDAType( DAType daType );
+    ElevationProvider setDAType(DAType daType);
 
     /**
      * Configuration option to include surrounding elevation points when fetching the elevation. Has
      * only an effect if called before the first getEle call. Turned off by default.
      */
-    void setCalcMean( boolean calcMean );
+    void setCalcMean(boolean calcMean);
 
     /**
      * Release resources.
      */
     void release();
-
-    ElevationProvider NOOP = new ElevationProvider()
-    {
-        @Override
-        public double getEle( double lat, double lon )
-        {
-            return Double.NaN;
-        }
-
-        @Override
-        public ElevationProvider setCacheDir( File cacheDir )
-        {
-            return this;
-        }
-
-        @Override
-        public ElevationProvider setBaseURL( String baseURL )
-        {
-            return this;
-        }
-
-        @Override
-        public ElevationProvider setDAType( DAType daType )
-        {
-            return this;
-        }
-
-        @Override
-        public void release()
-        {
-        }
-
-        @Override
-        public void setCalcMean( boolean eleCalcMean )
-        {
-        }
-    };
 }

@@ -24,34 +24,30 @@ import javax.xml.stream.XMLStreamReader;
  * Put the usage of proprietary "sun" classes and after jdk6 classes into this class. To use Helper
  * class under Android as well.
  * <p>
+ *
  * @author Peter Karich
  */
-public class Helper7
-{
+public class Helper7 {
 
     /**
      * <code>true</code>, if this platform supports unmapping mmapped files.
      */
     public static final boolean UNMAP_SUPPORTED;
 
-    static
-    {
+    static {
         boolean v;
-        try
-        {
+        try {
             Class.forName("sun.misc.Cleaner");
             Class.forName("java.nio.DirectByteBuffer")
                     .getMethod("cleaner");
             v = true;
-        } catch (Exception e)
-        {
+        } catch (Exception e) {
             v = false;
         }
         UNMAP_SUPPORTED = v;
     }
 
-    public static String getBeanMemInfo()
-    {
+    public static String getBeanMemInfo() {
         java.lang.management.OperatingSystemMXBean mxbean = java.lang.management.ManagementFactory.getOperatingSystemMXBean();
         com.sun.management.OperatingSystemMXBean sunmxbean = (com.sun.management.OperatingSystemMXBean) mxbean;
         long freeMemory = sunmxbean.getFreePhysicalMemorySize();
@@ -60,16 +56,12 @@ public class Helper7
                 + ", rfree:" + Runtime.getRuntime().freeMemory() / Helper.MB;
     }
 
-    public static void close( XMLStreamReader r )
-    {
-        try
-        {
-            if (r != null)
-            {
+    public static void close(XMLStreamReader r) {
+        try {
+            if (r != null) {
                 r.close();
             }
-        } catch (XMLStreamException ex)
-        {
+        } catch (XMLStreamException ex) {
             throw new RuntimeException("Couldn't close xml reader", ex);
         }
     }

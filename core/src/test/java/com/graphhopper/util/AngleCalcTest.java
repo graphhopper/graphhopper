@@ -17,21 +17,19 @@
  */
 package com.graphhopper.util;
 
-import static org.junit.Assert.*;
-
 import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Johannes Pelzer
  * @author Peter Karich
  */
-public class AngleCalcTest
-{
+public class AngleCalcTest {
     private final AngleCalc AC = Helper.ANGLE_CALC;
 
     @Test
-    public void testOrientation()
-    {
+    public void testOrientation() {
         assertEquals(90.0, Math.toDegrees(AC.calcOrientation(0, 0, 1, 0)), 0.01);
         assertEquals(45.0, Math.toDegrees(AC.calcOrientation(0, 0, 1, 1)), 0.01);
         assertEquals(0.0, Math.toDegrees(AC.calcOrientation(0, 0, 0, 1)), 0.01);
@@ -44,8 +42,7 @@ public class AngleCalcTest
     }
 
     @Test
-    public void testAlignOrientation()
-    {
+    public void testAlignOrientation() {
         assertEquals(90.0, Math.toDegrees(AC.alignOrientation(Math.toRadians(90), Math.toRadians(90))), 0.001);
         assertEquals(225.0, Math.toDegrees(AC.alignOrientation(Math.toRadians(90), Math.toRadians(-135))), 0.001);
         assertEquals(-45.0, Math.toDegrees(AC.alignOrientation(Math.toRadians(-135), Math.toRadians(-45))), 0.001);
@@ -53,8 +50,7 @@ public class AngleCalcTest
     }
 
     @Test
-    public void testCombined()
-    {
+    public void testCombined() {
         double orientation = AC.calcOrientation(52.414918, 13.244221, 52.415333, 13.243595);
         assertEquals(132.7, Math.toDegrees(AC.alignOrientation(0, orientation)), 1);
 
@@ -63,8 +59,7 @@ public class AngleCalcTest
     }
 
     @Test
-    public void testCalcAzimuth()
-    {
+    public void testCalcAzimuth() {
         assertEquals(45.0, AC.calcAzimuth(0, 0, 1, 1), 0.001);
         assertEquals(90.0, AC.calcAzimuth(0, 0, 0, 1), 0.001);
         assertEquals(180.0, AC.calcAzimuth(0, 0, -1, 0), 0.001);
@@ -73,14 +68,12 @@ public class AngleCalcTest
     }
 
     @Test
-    public void testAzimuthCompassPoint()
-    {
+    public void testAzimuthCompassPoint() {
         assertEquals("S", AC.azimuth2compassPoint(199));
     }
 
     @Test
-    public void testAtan2()
-    {
+    public void testAtan2() {
         // assertEquals(0, AngleCalc.atan2(0, 0), 1e-4);
         // assertEquals(0, AngleCalc.atan2(-0.002, 0), 1e-4);
         assertEquals(45, AngleCalc.atan2(5, 5) * 180 / Math.PI, 1e-2);
@@ -92,28 +85,26 @@ public class AngleCalcTest
         assertEquals(90, Math.atan2(1, 0) * 180 / Math.PI, 1e-2);
         assertEquals(90, AngleCalc.atan2(1, 0) * 180 / Math.PI, 1e-2);
     }
-    
+
     @Test
-    public void testConvertAzimuth2xaxisAngle()
-    {
-        assertEquals(Math.PI/2, AC.convertAzimuth2xaxisAngle(0), 1E-6);
-        assertEquals(Math.PI/2, Math.abs(AC.convertAzimuth2xaxisAngle(360)), 1E-6);
+    public void testConvertAzimuth2xaxisAngle() {
+        assertEquals(Math.PI / 2, AC.convertAzimuth2xaxisAngle(0), 1E-6);
+        assertEquals(Math.PI / 2, Math.abs(AC.convertAzimuth2xaxisAngle(360)), 1E-6);
         assertEquals(0, AC.convertAzimuth2xaxisAngle(90), 1E-6);
-        assertEquals(-Math.PI/2, AC.convertAzimuth2xaxisAngle(180), 1E-6);
+        assertEquals(-Math.PI / 2, AC.convertAzimuth2xaxisAngle(180), 1E-6);
         assertEquals(Math.PI, Math.abs(AC.convertAzimuth2xaxisAngle(270)), 1E-6);
-        assertEquals(-3*Math.PI/4, AC.convertAzimuth2xaxisAngle(225), 1E-6);
-        assertEquals(3*Math.PI/4, AC.convertAzimuth2xaxisAngle(315), 1E-6);
+        assertEquals(-3 * Math.PI / 4, AC.convertAzimuth2xaxisAngle(225), 1E-6);
+        assertEquals(3 * Math.PI / 4, AC.convertAzimuth2xaxisAngle(315), 1E-6);
     }
-    
+
     @Test
-    public void checkAzimuthConsitency()
-    {
-        double azimuthDegree =  AC.calcAzimuth(0, 0, 1, 1);
+    public void checkAzimuthConsitency() {
+        double azimuthDegree = AC.calcAzimuth(0, 0, 1, 1);
         double radianXY = AC.calcOrientation(0, 0, 1, 1);
         double radian2 = AC.convertAzimuth2xaxisAngle(azimuthDegree);
         assertEquals(radianXY, radian2, 1E-3);
 
-        azimuthDegree =  AC.calcAzimuth(0, 4, 1, 3);
+        azimuthDegree = AC.calcAzimuth(0, 4, 1, 3);
         radianXY = AC.calcOrientation(0, 4, 1, 3);
         radian2 = AC.convertAzimuth2xaxisAngle(azimuthDegree);
         assertEquals(radianXY, radian2, 1E-3);

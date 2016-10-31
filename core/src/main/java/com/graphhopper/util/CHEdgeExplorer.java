@@ -22,11 +22,11 @@ import com.graphhopper.storage.CHGraph;
 /**
  * The edge explorer for CHGraph
  * <p>
+ *
  * @author Peter Karich
  * @see CHGraph
  */
-public interface CHEdgeExplorer extends EdgeExplorer
-{
+public interface CHEdgeExplorer extends EdgeExplorer {
     @Override
-    CHEdgeIterator setBaseNode( int baseNode );
+    CHEdgeIterator setBaseNode(int baseNode);
 }

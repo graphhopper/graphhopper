@@ -17,22 +17,20 @@
  */
 package com.graphhopper.ui;
 
-import java.awt.Graphics2D;
-import java.awt.Rectangle;
+import java.awt.*;
 import java.io.Serializable;
 
 /**
  * @author Peter Karich
  */
-public interface MapLayer extends Serializable
-{
-    void setBounds( Rectangle r );
-
+public interface MapLayer extends Serializable {
     Rectangle getBounds();
 
-    void setBuffering( boolean enable );
+    void setBounds(Rectangle r);
+
+    void setBuffering(boolean enable);
 
     void repaint();
 
-    void paint( Graphics2D g );
+    void paint(Graphics2D g);
 }

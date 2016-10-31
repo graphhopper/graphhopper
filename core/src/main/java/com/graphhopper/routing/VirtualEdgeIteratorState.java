@@ -18,7 +18,10 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
+import com.graphhopper.util.PointList;
 
 /**
  * Creates an edge state decoupled from a graph where nodes, pointList, etc are kept in memory.
@@ -26,21 +29,19 @@ import com.graphhopper.util.*;
  * Note, this class is not suited for public use and can change with minor releases unexpectedly or
  * even gets removed.
  */
-public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIteratorState
-{
+public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIteratorState {
     private final PointList pointList;
     private final int edgeId;
-    private double distance;
-    private long flags;
-    private String name;
     private final int baseNode;
     private final int adjNode;
     private final int originalTraversalKey;
+    private double distance;
+    private long flags;
+    private String name;
     // indication if edges are dispreferred as start/stop edge 
     private boolean unfavored;
 
-    public VirtualEdgeIteratorState( int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList )
-    {
+    public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList) {
         this.originalTraversalKey = originalTraversalKey;
         this.edgeId = edgeId;
         this.baseNode = baseNode;
@@ -55,34 +56,30 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
      * This method returns the original edge via its traversal key. I.e. also the direction is
      * already correctly encoded.
      * <p>
+     *
      * @see GHUtility#createEdgeKey(int, int, int, boolean)
      */
-    public int getOriginalTraversalKey()
-    {
+    public int getOriginalTraversalKey() {
         return originalTraversalKey;
     }
 
     @Override
-    public int getEdge()
-    {
+    public int getEdge() {
         return edgeId;
     }
 
     @Override
-    public int getBaseNode()
-    {
+    public int getBaseNode() {
         return baseNode;
     }
 
     @Override
-    public int getAdjNode()
-    {
+    public int getAdjNode() {
         return adjNode;
     }
 
     @Override
-    public PointList fetchWayGeometry( int mode )
-    {
+    public PointList fetchWayGeometry(int mode) {
         if (pointList.getSize() == 0)
             return PointList.EMPTY;
         // due to API we need to create a new instance per call!
@@ -92,8 +89,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
             return pointList.copy(0, pointList.getSize() - 1);
         else if (mode == 2)
             return pointList.copy(1, pointList.getSize());
-        else if (mode == 0)
-        {
+        else if (mode == 0) {
             if (pointList.getSize() == 1)
                 return PointList.EMPTY;
             return pointList.copy(1, pointList.getSize() - 1);
@@ -102,53 +98,45 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public EdgeIteratorState setWayGeometry( PointList list )
-    {
+    public EdgeIteratorState setWayGeometry(PointList list) {
         throw new UnsupportedOperationException("Not supported for virtual edge. Set when creating it.");
     }
 
     @Override
-    public double getDistance()
-    {
+    public double getDistance() {
         return distance;
     }
 
     @Override
-    public EdgeIteratorState setDistance( double dist )
-    {
+    public EdgeIteratorState setDistance(double dist) {
         this.distance = dist;
         return this;
     }
 
     @Override
-    public long getFlags()
-    {
+    public long getFlags() {
         return flags;
     }
 
     @Override
-    public EdgeIteratorState setFlags( long flags )
-    {
+    public EdgeIteratorState setFlags(long flags) {
         this.flags = flags;
         return this;
     }
 
     @Override
-    public String getName()
-    {
+    public String getName() {
         return name;
     }
 
     @Override
-    public EdgeIteratorState setName( String name )
-    {
+    public EdgeIteratorState setName(String name) {
         this.name = name;
         return this;
     }
 
     @Override
-    public boolean getBoolean( int key, boolean reverse, boolean _default )
-    {
+    public boolean getBool(int key, boolean _default) {
         if (key == EdgeIteratorState.K_UNFAVORED_EDGE)
             return unfavored;
 
@@ -159,92 +147,77 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     /**
      * This method sets edge to unfavored status for routing from or to the start/stop points.
      */
-    public void setVirtualEdgePreference( boolean unfavored )
-    {
+    public void setUnfavored(boolean unfavored) {
         this.unfavored = unfavored;
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return baseNode + "->" + adjNode;
     }
 
     @Override
-    public boolean isShortcut()
-    {
+    public boolean isShortcut() {
         return false;
     }
 
     @Override
-    public boolean isForward( FlagEncoder encoder )
-    {
+    public boolean isForward(FlagEncoder encoder) {
         return encoder.isForward(getFlags());
     }
 
     @Override
-    public boolean isBackward( FlagEncoder encoder )
-    {
+    public boolean isBackward(FlagEncoder encoder) {
         return encoder.isBackward(getFlags());
     }
 
     @Override
-    public int getAdditionalField()
-    {
+    public int getAdditionalField() {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public boolean canBeOverwritten( long flags )
-    {
+    public boolean canBeOverwritten(long flags) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public int getSkippedEdge1()
-    {
+    public int getSkippedEdge1() {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public int getSkippedEdge2()
-    {
+    public int getSkippedEdge2() {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public void setSkippedEdges( int edge1, int edge2 )
-    {
+    public void setSkippedEdges(int edge1, int edge2) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public EdgeIteratorState detach( boolean reverse )
-    {
+    public EdgeIteratorState detach(boolean reverse) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public EdgeIteratorState setAdditionalField( int value )
-    {
+    public EdgeIteratorState setAdditionalField(int value) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public EdgeIteratorState copyPropertiesTo( EdgeIteratorState edge )
-    {
+    public EdgeIteratorState copyPropertiesTo(EdgeIteratorState edge) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public CHEdgeIteratorState setWeight( double weight )
-    {
+    public CHEdgeIteratorState setWeight(double weight) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public double getWeight()
-    {
+    public double getWeight() {
         throw new UnsupportedOperationException("Not supported.");
     }
 

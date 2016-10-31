@@ -26,15 +26,15 @@ import com.graphhopper.storage.Storable;
  * <p>
  * The implementations of findID needs to be thread safe!
  * <p>
+ *
  * @author Peter Karich
  */
-public interface LocationIndex extends Storable<LocationIndex>
-{
+public interface LocationIndex extends Storable<LocationIndex> {
     /**
      * Integer value to specify the resolution of this location index. The higher the better the
      * resolution.
      */
-    LocationIndex setResolution( int resolution );
+    LocationIndex setResolution(int resolution);
 
     /**
      * Creates this index - to be called once before findID.
@@ -42,31 +42,32 @@ public interface LocationIndex extends Storable<LocationIndex>
     LocationIndex prepareIndex();
 
     /**
-     * @deprecated will be removed with 0.8 use 'QueryResult findClosest' instead
      * @return the closest node id for the specified geo location (latitude,longitude)
+     * @deprecated will be removed with 0.8 use 'QueryResult findClosest' instead
      */
-    int findID( double lat, double lon );
+    int findID(double lat, double lon);
 
     /**
      * This method returns the closest QueryResult for the specified location (lat, lon) and only if
      * the filter accepts the edge as valid candidate (e.g. filtering away car-only results for bike
      * search)
      * <p>
+     *
      * @param edgeFilter if a graph supports multiple vehicles we have to make sure that the entry
-     * node into the graph is accessible from a selected vehicle. E.g. if you have a FOOT-query do:      <pre>
-     *   new DefaultEdgeFilter(footFlagEncoder);
-     * </pre>
-     * <p>
+     *                   node into the graph is accessible from a selected vehicle. E.g. if you have a FOOT-query do:      <pre>
+     *                     new DefaultEdgeFilter(footFlagEncoder);
+     *                   </pre>
+     *
      * @return An object containing the closest node and edge for the specified location. The node id
      * has at least one edge which is accepted from the specified edgeFilter. If nothing is found
      * the method QueryResult.isValid will return false.
      */
-    QueryResult findClosest( double lat, double lon, EdgeFilter edgeFilter );
+    QueryResult findClosest(double lat, double lon, EdgeFilter edgeFilter);
 
     /**
      * @param approxDist false if initialization and querying should be faster but less precise.
      */
-    LocationIndex setApproximation( boolean approxDist );
+    LocationIndex setApproximation(boolean approxDist);
 
-    void setSegmentSize( int bytes );
+    void setSegmentSize(int bytes);
 }

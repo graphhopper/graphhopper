@@ -4,7 +4,7 @@ To do routing in your Java code you'll need just a few lines of code:
 
 ```java
 // create one GraphHopper instance
-GraphHopper hopper = new GraphHopper().forServer();
+GraphHopper hopper = new GraphHopperOSM().forServer();
 hopper.setOSMFile(osmFile);
 // where to store graphhopper files?
 hopper.setGraphHopperLocation(graphFolder);
@@ -54,13 +54,14 @@ List<GPXEntry> list = il.createGPXList();
 
 The default is to use the speed-up mode. If you need multiple profiles you specify a list of profiles (e.g. car,bike). 
 
-You can also completely disable the speed-up mode to make all vehicles using the flexibility mode via setting `prepare.chWeighting=no` also see issue #631 for a "per request" configuration.
+You can also completely disable the speed-up mode before import (see config.properties `prepare.ch.weightings=no`)
+or for a per request setting (`ch.disable=true`). 
 
-Then pick one vehicle and optionally the algorithm like 'bidirectional astar' as algorithm:
+Then pick one vehicle and optionally an algorithm like 'bidirectional astar':
 
 ```java
-GraphHopper hopper = new GraphHopper().forServer();
-hopper.setCHEnable(false);
+GraphHopper hopper = new GraphHopperOSM().forServer();
+hopper.setCHEnabled(false);
 hopper.setOSMFile(osmFile);
 hopper.setGraphHopperLocation(graphFolder);
 hopper.setEncodingManager(new EncodingManager("car,bike"));

@@ -18,21 +18,19 @@
 package com.graphhopper.coll;
 
 import com.graphhopper.util.shapes.GHPoint;
+import org.junit.Test;
 
 import java.util.Random;
 
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author Peter Karich
  */
-public class CompressedArrayTest
-{
+public class CompressedArrayTest {
     @Test
-    public void testCompress() throws Exception
-    {
+    public void testCompress() throws Exception {
         CompressedArray arr = new CompressedArray();
         arr.write(10, 1);
         arr.write(11, 2);
@@ -56,12 +54,10 @@ public class CompressedArrayTest
     }
 
     @Test
-    public void testCompress2() throws Exception
-    {
+    public void testCompress2() throws Exception {
         CompressedArray arr = new CompressedArray();
         Random rand = new Random(0);
-        for (int i = 0; i < 10000; i++)
-        {
+        for (int i = 0; i < 10000; i++) {
             arr.write(i / 1000.0, rand.nextDouble() * 90);
         }
 

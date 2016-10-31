@@ -3,8 +3,9 @@
 
 # Explicitly declare text files we want to always be normalized and converted 
 # to native line endings on checkout.
-*.sh text
-*.java text
-*.xml text
-*.js text
 *.css text
+*.html text
+*.java text
+*.js text
+*.sh text
+*.xml text
