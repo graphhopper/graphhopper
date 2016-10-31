@@ -5,8 +5,10 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.template.RoutingTemplate;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
@@ -14,6 +16,7 @@ import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 class PtRoutingTemplate implements RoutingTemplate {
@@ -22,18 +25,25 @@ class PtRoutingTemplate implements RoutingTemplate {
 	private final GHRequest ghRequest;
 	private final GHResponse ghResponse;
 	private final LocationIndex locationIndex;
-	private List<QueryResult> snappedWaypoints = new ArrayList<>(2);;
+	private final GraphHopperStorage graphHopperStorage;
+	private List<QueryResult> snappedWaypoints = new ArrayList<>(2);
 	private List<Path> paths;
+    private List<Integer> toNodes;
+    private int startNode = -1;
+    private int initialTime;
+    private FlagEncoder flagEncoder;
 
-	PtRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+    PtRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex, GtfsStorage gtfsStorage, GraphHopperStorage graphHopperStorage) {
 		this.gtfsStorage = gtfsStorage;
 		this.ghRequest = ghRequest;
 		this.ghResponse = ghRsp;
 		this.locationIndex = locationIndex;
+		this.graphHopperStorage = graphHopperStorage;
 	}
 
 	@Override
 	public List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder) {
+        this.flagEncoder = encoder;
 		if (points.size() != 2)
 			throw new IllegalArgumentException("Exactly 2 points have to be specified, but was:" + points.size());
 
@@ -41,15 +51,35 @@ class PtRoutingTemplate implements RoutingTemplate {
 		EdgeFilter exitFilter = new PtExitPositionLookupEdgeFilter(gtfsStorage);
 
 		GHPoint enter = points.get(0);
-		QueryResult res = locationIndex.findClosest(enter.lat, enter.lon, enterFilter);
-		if (!res.isValid())
+		QueryResult source = locationIndex.findClosest(enter.lat, enter.lon, enterFilter);
+		if (!source.isValid()) {
 			ghResponse.addError(new PointNotFoundException("Cannot find entry point: " + enter, 0));
-		snappedWaypoints.add(res);
+		} else {
+            ForwardInTime forwardInTime = new ForwardInTime(source);
+            startNode = forwardInTime.find(ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0));
+            initialTime = forwardInTime.getTime();
+        }
+		snappedWaypoints.add(source);
 		GHPoint exit = points.get(1);
-		res = locationIndex.findClosest(exit.lat, exit.lon, exitFilter);
-		if (!res.isValid())
+        QueryResult dest = locationIndex.findClosest(exit.lat, exit.lon, exitFilter);
+		toNodes = new ArrayList<>();
+		if (!dest.isValid()) {
 			ghResponse.addError(new PointNotFoundException("Cannot find exit point: " + exit, 0));
-		snappedWaypoints.add(res);
+		} else {
+			new DepthFirstSearch() {
+				@Override
+				protected boolean goFurther(int nodeId) {
+					toNodes.add(nodeId);
+					return true;
+				}
+			}.start(graphHopperStorage.createEdgeExplorer(new EdgeFilter() {
+				@Override
+				public boolean accept(EdgeIteratorState edgeState) {
+					return gtfsStorage.getEdges().get(edgeState.getEdge()) instanceof ExitFindingDummyEdge;
+				}
+			}), dest.getClosestNode());
+		}
+		snappedWaypoints.add(dest);
 		return snappedWaypoints;
 	}
 
@@ -60,16 +90,15 @@ class PtRoutingTemplate implements RoutingTemplate {
 			throw new UnsupportedOperationException();
 		}
 		paths = new ArrayList<>();
-		QueryResult fromQResult = snappedWaypoints.get(0);
-		QueryResult toQResult = snappedWaypoints.get(1);
-		PathWrapper altResponse = new PathWrapper();
+        PathWrapper altResponse = new PathWrapper();
 
 		StopWatch sw = new StopWatch().start();
 		TimeDependentRoutingAlgorithm algo = (TimeDependentRoutingAlgorithm) algoFactory.createAlgo(queryGraph, algoOpts);
 		String debug = ", algoInit:" + sw.stop().getSeconds() + "s";
 
 		sw = new StopWatch().start();
-		List<Path> tmpPathList = algo.calcPaths(fromQResult.getClosestNode(), toQResult.getClosestNode(), ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0));
+
+		List<Path> tmpPathList = ((MultiCriteriaLabelSetting) algo).calcPaths(startNode, new HashSet(toNodes));
 		debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s";
 
 		for (Path path : tmpPathList) {
@@ -115,9 +144,9 @@ class PtRoutingTemplate implements RoutingTemplate {
 					points.add(instruction.getPoints());
 				}
 				wrappedPath.setPoints(points);
-				wrappedPath.setRouteWeight(path.getWeight());
+				wrappedPath.setRouteWeight(path.getWeight() + initialTime);
 				wrappedPath.setDistance(path.getDistance());
-				wrappedPath.setTime(path.getTime());
+				wrappedPath.setTime(path.getTime() + initialTime * 1000);
 				ghResponse.add(wrappedPath);
 			}
 		}
@@ -141,4 +170,48 @@ class PtRoutingTemplate implements RoutingTemplate {
 	public int getMaxRetries() {
 		return 1;
 	}
+
+    private class ForwardInTime extends DepthFirstSearch {
+        private final QueryResult source;
+        int time;
+        int lastNode;
+        private int requestedTime;
+
+        ForwardInTime(QueryResult source) {
+            this.source = source;
+            time = 0;
+            lastNode = source.getClosestNode();
+        }
+
+        int find(int requestedTime) {
+            this.requestedTime = requestedTime;
+            start(graphHopperStorage.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true)), source.getClosestNode());
+            if (time >= requestedTime) {
+                return lastNode;
+            } else {
+                return -1;
+            }
+        }
+
+        public int getTime() {
+            return time;
+        }
+
+        @Override
+        protected boolean goFurther(int nodeId) {
+lastNode = nodeId;
+            return time < requestedTime;
+        }
+
+        @Override
+        protected boolean checkAdjacent(EdgeIteratorState edgeState) {
+            AbstractPtEdge abstractPtEdge = gtfsStorage.getEdges().get(edgeState.getEdge());
+            if (abstractPtEdge instanceof WaitInStationEdge) {
+                int deltaTime = ((WaitInStationEdge) abstractPtEdge).deltaTime;
+                time += deltaTime;
+                return true;
+            }
+            return false;
+        }
+    }
 }

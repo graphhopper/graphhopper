@@ -107,7 +107,7 @@
                 <version>2.19.1</version>
                 <!-- Currently we need a bit more memory than for other tests -->
                 <configuration>
-                    <argLine>-Xmx200m -Xms200m</argLine>
+                    <argLine>-Xmx2000m -Xms2000m</argLine>
                 </configuration>
             </plugin>
         </plugins>

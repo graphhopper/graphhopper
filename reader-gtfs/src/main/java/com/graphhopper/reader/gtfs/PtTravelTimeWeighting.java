@@ -40,19 +40,16 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
 		AbstractPtEdge edge = gtfsStorage.getEdges().get(edgeState.getEdge());
 		if (edge instanceof EnterLoopEdge) {
 			return 0.0;
-		} else if (edge instanceof GtfsTransferEdge) {
-			return ((GtfsTransferEdge) edge).getTransfer().min_transfer_time;
-		} else if (edge instanceof AccessEdge) {
-			return ((AccessEdge) edge).getMinimumTransferTimeSeconds();
-		} else if (edge instanceof EgressEdge) {
-			return 0.0;
-		} else if (edge instanceof EnterEdge) {
-			return 0.0;
-		} else if (edge instanceof ExitEdge) {
-			return 0.0;
-		} else {
-			AbstractPatternHopEdge hopEdge = (AbstractPatternHopEdge) edge;
-			return hopEdge.nextTravelTimeIncludingWaitTime(earliestStartTime);
+		} else if (edge instanceof HopEdge) {
+            return ((TimePassesPtEdge) edge).deltaTime;
+        } else if (edge instanceof DwellEdge) {
+            return ((TimePassesPtEdge) edge).deltaTime;
+        } else if (edge instanceof TimePassesPtEdge) {
+			return ((TimePassesPtEdge) edge).deltaTime;
+		} else if (edge instanceof ExitFindingDummyEdge) {
+            return Double.POSITIVE_INFINITY;
+        } else {
+			throw new IllegalStateException();
 		}
 	}
 

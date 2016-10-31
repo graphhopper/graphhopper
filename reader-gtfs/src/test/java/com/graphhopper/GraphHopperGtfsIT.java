@@ -35,6 +35,13 @@ public class GraphHopperGtfsIT {
     }
 
     @Test
+    public void testFromMeToMyself() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.914893, TO_LON = -116.76821; // NADAV stop
+        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, TO_LAT, TO_LON, time(0, 0));
+    }
+
+    @Test
     public void testRoute1() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop

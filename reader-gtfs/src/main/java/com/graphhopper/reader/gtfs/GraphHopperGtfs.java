@@ -48,20 +48,18 @@ public final class GraphHopperGtfs extends GraphHopper {
         return new RoutingAlgorithmFactory() {
             @Override
             public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-                if (map.getBool("considerNTransfers", false)) {
-                    return new MultiCriteriaLabelSetting(g, opts.getWeighting(), opts.getMaxVisitedNodes());
-                } else {
-                    Dijkstra ra = new Dijkstra(g, opts.getWeighting(), opts.getTraversalMode());
-                    ra.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-                    return ra;
-                }
+                return new MultiCriteriaLabelSetting(g, opts.getWeighting(), opts.getMaxVisitedNodes());
             }
         };
     }
 
     @Override
     protected RoutingTemplate createRoutingTemplate(String algoStr, GHRequest request, GHResponse ghRsp) {
-        return new PtRoutingTemplate(request, ghRsp, getLocationIndex(), (GtfsStorage) getGraphHopperStorage().getExtension());
+        return new PtRoutingTemplate(request, ghRsp, getLocationIndex(), (GtfsStorage) getGraphHopperStorage().getExtension(), getGraphHopperStorage());
+    }
+
+    @Override
+    protected void cleanUp() {
     }
 
     @Override

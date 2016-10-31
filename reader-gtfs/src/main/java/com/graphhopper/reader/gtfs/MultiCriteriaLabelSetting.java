@@ -64,10 +64,13 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
         throw new UnsupportedOperationException();
     }
 
-    @Override
-    public List<Path> calcPaths(int from, int to, int earliestDepartureTime) {
-        SPTEntry currEdge = new SPTEntry(EdgeIterator.NO_EDGE, from, earliestDepartureTime);
+    public List<Path> calcPaths(int from, Set<Integer> to) {
+        Set<SPTEntry> targetLabels = new HashSet<>();
+        SPTEntry currEdge = new SPTEntry(EdgeIterator.NO_EDGE, from, 0.0, 0);
         fromMap.put(from, currEdge);
+        if (to.contains(from)) {
+            targetLabels.add(currEdge);
+        }
         EdgeExplorer explorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
         while (true) {
             visitedNodes++;
@@ -92,11 +95,14 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
                     continue;
 
                 Set<SPTEntry> sptEntries = fromMap.get(iter.getAdjNode());
-                if (isNotDominatedBy(tmpWeight, tmpNTransfers, sptEntries) && isNotDominatedBy(tmpWeight, tmpNTransfers, fromMap.get(to))) {
+                if (isNotDominatedBy(tmpWeight, tmpNTransfers, sptEntries) && isNotDominatedBy(tmpWeight, tmpNTransfers, targetLabels)) {
                     SPTEntry nEdge;
                     nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight, tmpNTransfers);
                     nEdge.parent = currEdge;
                     fromMap.put(iter.getAdjNode(), nEdge);
+                    if (to.contains(iter.getAdjNode())) {
+                        targetLabels.add(nEdge);
+                    }
                     fromHeap.add(nEdge);
                     Set<SPTEntry> iDominate = new HashSet<>();
                     for (SPTEntry sptEntry : sptEntries) {
@@ -107,6 +113,9 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
                     for (SPTEntry sptEntry : iDominate) {
                         fromHeap.remove(sptEntry);
                         fromMap.remove(iter.getAdjNode(), sptEntry);
+                        if (to.contains(iter.getAdjNode())) {
+                            targetLabels.remove(sptEntry);
+                        }
                     }
                 }
             }
@@ -119,14 +128,18 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
                 throw new AssertionError("Empty edge cannot happen");
         }
         List<Path> result = new ArrayList<>();
-        for (SPTEntry solution : fromMap.get(to)) {
+        for (SPTEntry solution : targetLabels) {
             result.add(new Path(graph, weighting)
                     .setWeight(solution.weight)
                     .setSPTEntry(solution)
-                    .setEarliestDepartureTime(earliestDepartureTime)
                     .extract());
         }
         return result;
+    }
+
+    @Override
+    public List<Path> calcPaths(int from, int to, int earliestDepartureTime) {
+        throw new UnsupportedOperationException();
     }
 
     private boolean isNotDominatedBy(double tmpWeight, int tmpNTransfers, Set<SPTEntry> sptEntries) {

@@ -1,4 +1,4 @@
 package com.graphhopper.reader.gtfs;
 
-public class EnterEdge extends AbstractPtEdge {
+class EnterEdge extends AbstractPtEdge {
 }
