@@ -86,6 +86,27 @@ class GtfsReader implements DataReader {
         feed = GTFSFeed.fromFile(file.getPath());
         nodeAccess = ghStorage.getNodeAccess();
         edges = new TreeMap<>();
+        for (Transfer transfer : feed.transfers.values()) {
+            if (transfer.transfer_type == 2 && !transfer.from_stop_id.equals(transfer.to_stop_id)) {
+//                Stop fromStop = feed.stops.get(transfer.from_stop_id);
+//                Stop toStop = feed.stops.get(transfer.to_stop_id);
+//                double distance = distCalc.calcDist(
+//                        fromStop.stop_lat,
+//                        fromStop.stop_lon,
+//                        toStop.stop_lat,
+//                        toStop.stop_lon);
+//                EdgeIteratorState edge = ghStorage.edge(
+//                        stops.get(transfer.from_stop_id),
+//                        stops.get(transfer.to_stop_id),
+//                        distance,
+//                        false);
+//                edge.setName("Transfer: " + fromStop.stop_name + " -> " + toStop.stop_name);
+//                edges.put(edge.getEdge(), new GtfsTransferEdge(transfer));
+//                j++;
+            } else if (transfer.transfer_type == 2 && transfer.from_stop_id.equals(transfer.to_stop_id)) {
+                explicitWithinStationMinimumTransfers.put(transfer.from_stop_id, transfer);
+            }
+        }
         i = 0;
         j = 0;
         LocalDate startDate = feed.calculateStats().getStartDate();
@@ -146,9 +167,11 @@ class GtfsReader implements DataReader {
             edge.setName("WaitRollover-"+time+"-"+stop.stop_name);
             edges.put(j, new WaitInStationEdge(rolloverTime));
             j++;
+            Transfer withinStationTransfer = explicitWithinStationMinimumTransfers.get(stop.stop_id);
+            int minimumTransferTime = withinStationTransfer != null ? withinStationTransfer.min_transfer_time : 0;
             for (Integer arrivalNodeId : arrivals.get(stop.stop_id)) {
                 int arrivalTime = times.get(arrivalNodeId);
-                SortedSet<Fun.Tuple2<Integer, Integer>> tailSet = timeNode.tailSet(new Fun.Tuple2<>(arrivalTime, -1));
+                SortedSet<Fun.Tuple2<Integer, Integer>> tailSet = timeNode.tailSet(new Fun.Tuple2<>(arrivalTime + minimumTransferTime, -1));
                 if (!tailSet.isEmpty()) {
                     Fun.Tuple2<Integer, Integer> e = tailSet.first();
                     ghStorage.edge(arrivalNodeId, e.b, 0.0, false);
@@ -160,27 +183,6 @@ class GtfsReader implements DataReader {
                 j++;
             }
         }
-//        for (Transfer transfer : feed.transfers.values()) {
-//            if (transfer.transfer_type == 2 && !transfer.from_stop_id.equals(transfer.to_stop_id)) {
-//                Stop fromStop = feed.stops.get(transfer.from_stop_id);
-//                Stop toStop = feed.stops.get(transfer.to_stop_id);
-//                double distance = distCalc.calcDist(
-//                        fromStop.stop_lat,
-//                        fromStop.stop_lon,
-//                        toStop.stop_lat,
-//                        toStop.stop_lon);
-//                EdgeIteratorState edge = ghStorage.edge(
-//                        stops.get(transfer.from_stop_id),
-//                        stops.get(transfer.to_stop_id),
-//                        distance,
-//                        false);
-//                edge.setName("Transfer: " + fromStop.stop_name + " -> " + toStop.stop_name);
-//                edges.put(edge.getEdge(), new GtfsTransferEdge(transfer));
-//                j++;
-//            } else if (transfer.transfer_type == 2 && transfer.from_stop_id.equals(transfer.to_stop_id)) {
-//                explicitWithinStationMinimumTransfers.put(transfer.from_stop_id, transfer);
-//            }
-//        }
 
         gtfsStorage.setEdges(edges);
         gtfsStorage.setRealEdgesSize(j);
