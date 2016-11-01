@@ -44,7 +44,7 @@ class GtfsReader implements DataReader {
     private int j;
     private SetMultimap<String, Integer> stops;
     private SetMultimap<String, Integer> arrivals;
-
+    private SetMultimap<String, Transfer> betweenStationTransfers;
 
     GtfsReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
@@ -82,29 +82,16 @@ class GtfsReader implements DataReader {
     public void readGraph() throws IOException {
         stops = HashMultimap.create();
         arrivals = HashMultimap.create();
+        betweenStationTransfers = HashMultimap.create();
         times = new TIntIntHashMap();
         feed = GTFSFeed.fromFile(file.getPath());
         nodeAccess = ghStorage.getNodeAccess();
         edges = new TreeMap<>();
         for (Transfer transfer : feed.transfers.values()) {
             if (transfer.transfer_type == 2 && !transfer.from_stop_id.equals(transfer.to_stop_id)) {
-//                Stop fromStop = feed.stops.get(transfer.from_stop_id);
-//                Stop toStop = feed.stops.get(transfer.to_stop_id);
-//                double distance = distCalc.calcDist(
-//                        fromStop.stop_lat,
-//                        fromStop.stop_lon,
-//                        toStop.stop_lat,
-//                        toStop.stop_lon);
-//                EdgeIteratorState edge = ghStorage.edge(
-//                        stops.get(transfer.from_stop_id),
-//                        stops.get(transfer.to_stop_id),
-//                        distance,
-//                        false);
-//                edge.setName("Transfer: " + fromStop.stop_name + " -> " + toStop.stop_name);
-//                edges.put(edge.getEdge(), new GtfsTransferEdge(transfer));
-//                j++;
+                betweenStationTransfers.put(transfer.to_stop_id, transfer);
             } else if (transfer.transfer_type == 2 && transfer.from_stop_id.equals(transfer.to_stop_id)) {
-                explicitWithinStationMinimumTransfers.put(transfer.from_stop_id, transfer);
+                explicitWithinStationMinimumTransfers.put(transfer.to_stop_id, transfer);
             }
         }
         i = 0;
@@ -168,16 +155,11 @@ class GtfsReader implements DataReader {
             edges.put(j, new WaitInStationEdge(rolloverTime));
             j++;
             Transfer withinStationTransfer = explicitWithinStationMinimumTransfers.get(stop.stop_id);
-            int minimumTransferTime = withinStationTransfer != null ? withinStationTransfer.min_transfer_time : 0;
+            insertInboundTransfers(stop.stop_id, withinStationTransfer != null ? withinStationTransfer.min_transfer_time : 0, timeNode);
+            for (Transfer transfer : betweenStationTransfers.get(stop.stop_id)) {
+                insertInboundTransfers(transfer.from_stop_id, transfer.min_transfer_time, timeNode);
+            }
             for (Integer arrivalNodeId : arrivals.get(stop.stop_id)) {
-                int arrivalTime = times.get(arrivalNodeId);
-                SortedSet<Fun.Tuple2<Integer, Integer>> tailSet = timeNode.tailSet(new Fun.Tuple2<>(arrivalTime + minimumTransferTime, -1));
-                if (!tailSet.isEmpty()) {
-                    Fun.Tuple2<Integer, Integer> e = tailSet.first();
-                    ghStorage.edge(arrivalNodeId, e.b, 0.0, false);
-                    edges.put(j, new TimePassesPtEdge(e.a-arrivalTime));
-                    j++;
-                }
                 ghStorage.edge(i-1, arrivalNodeId);
                 edges.put(j, new ExitFindingDummyEdge());
                 j++;
@@ -189,12 +171,16 @@ class GtfsReader implements DataReader {
         LOGGER.info("Created " + j + " edges from GTFS trip hops and transfers.");
     }
 
-    private double getMinimumTransferTimeSeconds(Stop stop) {
-        Transfer transfer = explicitWithinStationMinimumTransfers.get(stop.stop_id);
-        if (transfer == null) {
-            return 0.0;
-        } else {
-            return transfer.min_transfer_time;
+    private void insertInboundTransfers(String stop_id, int minimumTransferTime, SortedSet<Fun.Tuple2<Integer, Integer>> timeNode) {
+        for (Integer arrivalNodeId : arrivals.get(stop_id)) {
+            int arrivalTime = times.get(arrivalNodeId);
+            SortedSet<Fun.Tuple2<Integer, Integer>> tailSet = timeNode.tailSet(new Fun.Tuple2<>(arrivalTime + minimumTransferTime, -1));
+            if (!tailSet.isEmpty()) {
+                Fun.Tuple2<Integer, Integer> e = tailSet.first();
+                ghStorage.edge(arrivalNodeId, e.b, 0.0, false);
+                edges.put(j, new TimePassesPtEdge(e.a-arrivalTime));
+                j++;
+            }
         }
     }
 
