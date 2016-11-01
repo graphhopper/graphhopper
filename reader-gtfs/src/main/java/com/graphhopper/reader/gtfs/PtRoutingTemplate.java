@@ -16,6 +16,7 @@ import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -152,6 +153,7 @@ class PtRoutingTemplate implements RoutingTemplate {
 				ghResponse.add(wrappedPath);
 			}
 		}
+		Collections.sort(ghResponse.getAll(), (p1, p2) -> Double.compare(p1.getRouteWeight(), p2.getRouteWeight()));
 		return true;
 	}
 
@@ -159,7 +161,7 @@ class PtRoutingTemplate implements RoutingTemplate {
 		PointList points = path.calcPoints();
 		List<EdgeIteratorState> edges = path.calcEdges();
 		for (EdgeIteratorState edge : edges) {
-			outInstructions.add(new Instruction(0, "Kante", new InstructionAnnotation(0, edge.getName()), edge.fetchWayGeometry(1)));
+			outInstructions.add(new Instruction(0, edge.getName(), new InstructionAnnotation(0, edge.getName()), edge.fetchWayGeometry(1)));
 		}
 		if (!points.isEmpty()) {
 			PointList end = new PointList();
