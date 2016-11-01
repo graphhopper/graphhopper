@@ -84,35 +84,31 @@ class GtfsReader implements DataReader {
         edges = new TreeMap<>();
         i = 0;
         j = 0;
-        feed.findPatterns();
         LocalDate startDate = feed.calculateStats().getStartDate();
         LocalDate endDate = feed.calculateStats().getStartDate().plusDays(1); // TODO
-        for (Pattern pattern : feed.patterns.values()) {
-            try {
-                for (String tripId : pattern.associatedTrips) {
-                    Trip trip = feed.trips.get(tripId);
-                    Service service = feed.services.get(trip.service_id);
-                    Collection<Frequency> frequencies = feed.getFrequencies(tripId);
-                    Iterable<StopTime> interpolatedStopTimesForTrip = feed.getInterpolatedStopTimesForTrip(tripId);
-                    int offset = 0;
-                    for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-                        if (service.activeOn(date)) {
-                            if (frequencies.isEmpty()) {
-                                insert(offset, interpolatedStopTimesForTrip, pattern);
-                            } else {
-                                for (Frequency frequency : frequencies) {
-                                    for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
-                                        insert(time - frequency.start_time + offset, interpolatedStopTimesForTrip, pattern);
-                                    }
+        try {
+            for (Trip trip : feed.trips.values()) {
+                Service service = feed.services.get(trip.service_id);
+                Collection<Frequency> frequencies = feed.getFrequencies(trip.trip_id);
+                Iterable<StopTime> interpolatedStopTimesForTrip = feed.getInterpolatedStopTimesForTrip(trip.trip_id);
+                int offset = 0;
+                for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+                    if (service.activeOn(date)) {
+                        if (frequencies.isEmpty()) {
+                            insert(offset, interpolatedStopTimesForTrip, trip);
+                        } else {
+                            for (Frequency frequency : frequencies) {
+                                for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
+                                    insert(time - frequency.start_time + offset, interpolatedStopTimesForTrip, trip);
                                 }
                             }
                         }
-                        offset += GtfsHelper.time(24, 0, 0);
                     }
+                    offset += GtfsHelper.time(24, 0, 0);
                 }
-            } catch (GTFSFeed.FirstAndLastStopsDoNotHaveTimes e) {
-                throw new RuntimeException(e);
             }
+        } catch (GTFSFeed.FirstAndLastStopsDoNotHaveTimes e) {
+            throw new RuntimeException(e);
         }
 
         for (Stop stop : feed.stops.values()) {
@@ -187,12 +183,12 @@ class GtfsReader implements DataReader {
         }
     }
 
-    private String getRouteName(GTFSFeed feed, Pattern pattern) {
-        Route route = feed.routes.get(pattern.route_id);
+    private String getRouteName(GTFSFeed feed, Trip trip) {
+        Route route = feed.routes.get(trip.route_id);
         return route.route_long_name != null ? route.route_long_name : route.route_short_name;
     }
 
-    private void insert(int time, Iterable<StopTime> stopTimes, Pattern pattern) throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes {
+    private void insert(int time, Iterable<StopTime> stopTimes, Trip trip) throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes {
         StopTime prev = null;
         for (StopTime orderedStop : stopTimes) {
             Stop stop = feed.stops.get(orderedStop.stop_id);
@@ -211,7 +207,7 @@ class GtfsReader implements DataReader {
                         i-1,
                         distance,
                         false);
-                edge.setName(getRouteName(feed, pattern));
+                edge.setName(getRouteName(feed, trip));
                 edges.put(edge.getEdge(), new HopEdge(orderedStop.arrival_time - prev.departure_time));
                 j++;
             }
@@ -225,7 +221,7 @@ class GtfsReader implements DataReader {
                     i-1,
                     0.0,
                     false);
-            edge.setName(getRouteName(feed, pattern));
+            edge.setName(getRouteName(feed, trip));
             edges.put(edge.getEdge(), new TimePassesPtEdge(0));
             j++;
             edge = ghStorage.edge(
@@ -233,7 +229,7 @@ class GtfsReader implements DataReader {
                     i-1,
                     0.0,
                     false);
-            edge.setName(getRouteName(feed, pattern));
+            edge.setName(getRouteName(feed, trip));
             edges.put(edge.getEdge(), new DwellEdge(orderedStop.departure_time - orderedStop.arrival_time));
             j++;
             prev = orderedStop;
