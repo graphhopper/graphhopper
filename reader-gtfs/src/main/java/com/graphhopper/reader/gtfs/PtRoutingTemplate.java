@@ -56,8 +56,10 @@ class PtRoutingTemplate implements RoutingTemplate {
 			ghResponse.addError(new PointNotFoundException("Cannot find entry point: " + enter, 0));
 		} else {
             ForwardInTime forwardInTime = new ForwardInTime(source);
-            startNode = forwardInTime.find(ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0));
-            initialTime = forwardInTime.getTime();
+            int requestedTimeOfDay = ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) % (24 * 60 * 60);
+            int requestedDay = ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) / (24 * 60 * 60);
+            startNode = forwardInTime.find(requestedTimeOfDay);
+            initialTime = forwardInTime.getTime() + requestedDay * (24 * 60 * 60);
         }
 		snappedWaypoints.add(source);
 		GHPoint exit = points.get(1);

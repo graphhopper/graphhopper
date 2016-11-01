@@ -13,6 +13,7 @@ import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import gnu.trove.map.hash.TIntIntHashMap;
+import org.joda.time.Days;
 import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +21,10 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+
+import static java.time.temporal.ChronoUnit.DAYS;
 
 class GtfsReader implements DataReader {
 
@@ -85,27 +89,30 @@ class GtfsReader implements DataReader {
         i = 0;
         j = 0;
         LocalDate startDate = feed.calculateStats().getStartDate();
-        LocalDate endDate = feed.calculateStats().getStartDate().plusDays(1); // TODO
+        LocalDate endDate = feed.calculateStats().getEndDate();
         try {
             for (Trip trip : feed.trips.values()) {
                 Service service = feed.services.get(trip.service_id);
                 Collection<Frequency> frequencies = feed.getFrequencies(trip.trip_id);
                 Iterable<StopTime> interpolatedStopTimesForTrip = feed.getInterpolatedStopTimesForTrip(trip.trip_id);
                 int offset = 0;
+                BitSet validOnDay = new BitSet((int) DAYS.between(startDate, endDate));
+
                 for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
                     if (service.activeOn(date)) {
-                        if (frequencies.isEmpty()) {
-                            insert(offset, interpolatedStopTimesForTrip, trip);
-                        } else {
-                            for (Frequency frequency : frequencies) {
-                                for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
-                                    insert(time - frequency.start_time + offset, interpolatedStopTimesForTrip, trip);
-                                }
-                            }
+                        validOnDay.set((int) DAYS.between(startDate, date));
+                    }
+                }
+                if (frequencies.isEmpty()) {
+                    insert(offset, interpolatedStopTimesForTrip, trip, validOnDay);
+                } else {
+                    for (Frequency frequency : frequencies) {
+                        for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
+                            insert(time - frequency.start_time + offset, interpolatedStopTimesForTrip, trip, validOnDay);
                         }
                     }
-                    offset += GtfsHelper.time(24, 0, 0);
                 }
+
             }
         } catch (GTFSFeed.FirstAndLastStopsDoNotHaveTimes e) {
             throw new RuntimeException(e);
@@ -123,7 +130,7 @@ class GtfsReader implements DataReader {
             int prev = i-1;
             SortedSet<Fun.Tuple2<Integer, Integer>> timeNode = new TreeSet<>();
             for (Integer nodeId : stops.get(stop.stop_id)) {
-                timeNode.add(new Fun.Tuple2<>(times.get(nodeId), nodeId));
+                timeNode.add(new Fun.Tuple2<>(times.get(nodeId) % (24*60*60), nodeId));
             }
             for (Fun.Tuple2<Integer, Integer> e : timeNode) {
                 EdgeIteratorState edge = ghStorage.edge(prev, e.b, 0.0, false);
@@ -133,6 +140,12 @@ class GtfsReader implements DataReader {
                 time = e.a;
                 prev = e.b;
             }
+            EdgeIteratorState edge = ghStorage.edge(prev, i-1, 0.0, false);
+            assert time <= 24*60*60;
+            int rolloverTime = 24 * 60 * 60 - time;
+            edge.setName("WaitRollover-"+time+"-"+stop.stop_name);
+            edges.put(j, new WaitInStationEdge(rolloverTime));
+            j++;
             for (Integer arrivalNodeId : arrivals.get(stop.stop_id)) {
                 int arrivalTime = times.get(arrivalNodeId);
                 SortedSet<Fun.Tuple2<Integer, Integer>> tailSet = timeNode.tailSet(new Fun.Tuple2<>(arrivalTime, -1));
@@ -188,7 +201,7 @@ class GtfsReader implements DataReader {
         return route.route_long_name != null ? route.route_long_name : route.route_short_name;
     }
 
-    private void insert(int time, Iterable<StopTime> stopTimes, Trip trip) throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes {
+    private void insert(int time, Iterable<StopTime> stopTimes, Trip trip, BitSet validOnDay) throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes {
         StopTime prev = null;
         for (StopTime orderedStop : stopTimes) {
             Stop stop = feed.stops.get(orderedStop.stop_id);
@@ -222,7 +235,7 @@ class GtfsReader implements DataReader {
                     0.0,
                     false);
             edge.setName(getRouteName(feed, trip));
-            edges.put(edge.getEdge(), new TimePassesPtEdge(0));
+            edges.put(edge.getEdge(), new BoardEdge(0, validOnDay));
             j++;
             edge = ghStorage.edge(
                     i-3,
