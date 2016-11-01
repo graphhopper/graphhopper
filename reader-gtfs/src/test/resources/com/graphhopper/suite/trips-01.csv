@@ -1,0 +1,2 @@
+query_id,query_date_time,query_from_id,query_from_name,query_from_lon,query_from_lat,query_to_id,query_to_name,query_to_lon,query_to_lat,query_optimization,"trip_first_departure_date_time","trip_last_arrival_date_time",trip_legs_count
+"20161101-0006-213907---113612",2016-11-01T00:06:00,213907,"Mundenheim Nord",8.432313,49.46623,113612,Hans-Thoma-Platz,8.6833,49.42799,LEAST_DURATION,2016-11-01T05:19:00,2016-11-01T06:45:00,4
