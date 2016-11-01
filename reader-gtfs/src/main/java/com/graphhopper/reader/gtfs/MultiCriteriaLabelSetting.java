@@ -96,6 +96,10 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
 
                 Set<SPTEntry> sptEntries = fromMap.get(iter.getAdjNode());
                 if (isNotDominatedBy(tmpWeight, tmpNTransfers, sptEntries) && isNotDominatedBy(tmpWeight, tmpNTransfers, targetLabels)) {
+                    removeDominated(tmpWeight, tmpNTransfers, sptEntries);
+                    if (to.contains(iter.getAdjNode())) {
+                        removeDominated(tmpWeight, tmpNTransfers, targetLabels);
+                    }
                     SPTEntry nEdge;
                     nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight, tmpNTransfers);
                     nEdge.parent = currEdge;
@@ -104,19 +108,6 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
                         targetLabels.add(nEdge);
                     }
                     fromHeap.add(nEdge);
-                    Set<SPTEntry> iDominate = new HashSet<>();
-                    for (SPTEntry sptEntry : sptEntries) {
-                        if (tmpWeight < sptEntry.weight && tmpNTransfers < sptEntry.nTransfers) {
-                            iDominate.add(sptEntry);
-                        }
-                    }
-                    for (SPTEntry sptEntry : iDominate) {
-                        fromHeap.remove(sptEntry);
-                        fromMap.remove(iter.getAdjNode(), sptEntry);
-                        if (to.contains(iter.getAdjNode())) {
-                            targetLabels.remove(sptEntry);
-                        }
-                    }
                 }
             }
 
@@ -135,6 +126,19 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
                     .extract());
         }
         return result;
+    }
+
+    private void removeDominated(double tmpWeight, int tmpNTransfers, Set<SPTEntry> sptEntries) {
+        Set<SPTEntry> iDominate = new HashSet<>();
+        for (SPTEntry sptEntry : sptEntries) {
+            if (tmpWeight <= sptEntry.weight && tmpNTransfers <= sptEntry.nTransfers) {
+                iDominate.add(sptEntry);
+            }
+        }
+        for (SPTEntry sptEntry : iDominate) {
+            fromHeap.remove(sptEntry);
+            sptEntries.remove(sptEntry);
+        }
     }
 
     @Override
