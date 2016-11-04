@@ -25,14 +25,23 @@
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
+            <!-- 3.1.0 not possible otherwise VerifyError. 
+                 osmosis requires older version, current master uses 3.0.0 
+            -->
             <version>2.6.1</version>
         </dependency>        
         <dependency>
             <groupId>org.openstreetmap.osmosis</groupId>
             <artifactId>osmosis-osm-binary</artifactId>
-            <version>0.44.1</version>
+            <version>0.45</version>
         </dependency>
-        
+        <!-- 
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>${commons-compress.version}</version>
+        </dependency>
+        -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
@@ -49,11 +58,6 @@
             <artifactId>log4j</artifactId>
             <version>${log4j.version}</version>
             <scope>runtime</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-compress</artifactId>
-            <version>1.10</version>
         </dependency>
         
         <dependency>
