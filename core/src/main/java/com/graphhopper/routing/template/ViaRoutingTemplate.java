@@ -66,6 +66,9 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             QueryResult res;
             if(ghRequest.hasPointHints()){
                 res = locationIndex.findClosest(point.lat, point.lon, new NameSimilarityEdgeFilter(edgeFilter, ghRequest.getPointHint(placeIndex)));
+                if(!res.isValid()){
+                    res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
+                }
             }else{
                 res = locationIndex.findClosest(point.lat, point.lon, edgeFilter);
             }

@@ -198,19 +198,28 @@ public class GraphHopperIT {
 
         GHRequest req = new GHRequest(49.46553,11.154669, 49.465244,11.152577).
                 setVehicle("car").setWeighting("fastest");
+
         req.setPointHints(new ArrayList<>(Arrays.asList("Laufamholzstraße, 90482, Nürnberg, Deutschland", "")));
         GHResponse rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         GHPoint snappedPoint = rsp.getBest().getWaypoints().toGHPoint(0);
-        assertEquals(49.46568, snappedPoint.getLat(), .00001);
-        assertEquals(11.15460, snappedPoint.getLon(), .00001);
+        assertEquals(49.465686, snappedPoint.getLat(), .000001);
+        assertEquals(11.154605, snappedPoint.getLon(), .000001);
 
         req.setPointHints(new ArrayList<>(Arrays.asList("", "")));
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         snappedPoint = rsp.getBest().getWaypoints().toGHPoint(0);
-        assertNotEquals(49.46568, snappedPoint.getLat(), .00001);
-        assertNotEquals(11.15460, snappedPoint.getLon(), .00001);
+        assertEquals(49.465502, snappedPoint.getLat(), .000001);
+        assertEquals(11.154498, snappedPoint.getLon(), .000001);
+
+        // Match to closest edge, since hint was not found
+        req.setPointHints(new ArrayList<>(Arrays.asList("xy", "")));
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        snappedPoint = rsp.getBest().getWaypoints().toGHPoint(0);
+        assertEquals(49.465502, snappedPoint.getLat(), .000001);
+        assertEquals(11.154498, snappedPoint.getLon(), .000001);
     }
 
     @Test

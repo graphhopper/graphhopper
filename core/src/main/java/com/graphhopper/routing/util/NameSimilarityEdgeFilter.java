@@ -33,7 +33,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     public static final int LEVENSHTEIN = 1;
     public static final int STRING_MATCHING_ALGO = LEVENSHTEIN;
 
-    private static final double LEVENSHTEIN_ACCEPT_FACTOR = .95;
+    private static final double LEVENSHTEIN_ACCEPT_FACTOR = .05;
 
     private final EdgeFilter edgeFilter;
     private final String soughtName;
@@ -96,9 +96,8 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     }
 
     private boolean isLevenshteinSimilar(String name){
-        int perfectDistance = Math.abs(soughtName.length()-name.length());
+        int perfectDistance = (int) (Math.abs(soughtName.length()-name.length()) + Math.ceil(soughtName.length()*LEVENSHTEIN_ACCEPT_FACTOR));
         int levDistance = StringUtils.getLevenshteinDistance(soughtName, name);
-        // With LEVENSHTEIN_ACCEPT_FACTOR = .95 this equals to 1 typo every 20 characters
-        return Math.floor(levDistance* LEVENSHTEIN_ACCEPT_FACTOR) <= perfectDistance;
+        return levDistance <= perfectDistance;
     }
 }

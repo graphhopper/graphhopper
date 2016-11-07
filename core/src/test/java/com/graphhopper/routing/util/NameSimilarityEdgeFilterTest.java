@@ -36,14 +36,6 @@ public class NameSimilarityEdgeFilterTest {
         EdgeIteratorState edge = new TestEdgeIterator("Laufamholzstraße, ST1333");
         assertTrue(edgeFilter.accept(edge));
 
-        // Single Typo
-        edge = new TestEdgeIterator("Kaufamholzstraße, ST1333");
-        assertTrue(edgeFilter.accept(edge));
-
-        // Two Typos
-        edge = new TestEdgeIterator("Kaufamholystraße, ST1333");
-        assertFalse(edgeFilter.accept(edge));
-
         edge = new TestEdgeIterator("Hauptstraße");
         assertFalse(edgeFilter.accept(edge));
 
@@ -77,18 +69,49 @@ public class NameSimilarityEdgeFilterTest {
 
         edge = new TestEdgeIterator("Hauptstraße");
         assertTrue(edgeFilter.accept(edge));
+    }
 
-        // Single Typos
-        edge = new TestEdgeIterator("Hauptstrase");
+    @Test
+    public void testAcceptWithTypos() {
+        EdgeFilter edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Laufamholzstraße 154 Nürnberg");
+        EdgeIteratorState edge = new TestEdgeIterator("Laufamholzstraße, ST1333");
         assertTrue(edgeFilter.accept(edge));
+
+        // Single Typo
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Kaufamholzstraße 154 Nürnberg");
+        assertTrue(edgeFilter.accept(edge));
+
+        // Two Typos
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Kaufamholystraße 154 Nürnberg");
+        assertTrue(edgeFilter.accept(edge));
+
+        // Three Typos
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Kaufmholystraße 154 Nürnberg");
+        assertFalse(edgeFilter.accept(edge));
+
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Hauptstraße");
+        edge = new TestEdgeIterator("Hauptstraße");
+        assertTrue(edgeFilter.accept(edge));
+
+        // Single Typo
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Hauptstrase");
+        assertTrue(edgeFilter.accept(edge));
+
+        // Two Typos
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Hauptstrasi");
+        assertFalse(edgeFilter.accept(edge));
 
         //TODO Maybe we should not allow matching too short strings here?
         // Distance - PerfectDistance = 1
-        edge = new TestEdgeIterator("z");
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "z");
         assertTrue(edgeFilter.accept(edge));
         // Distance - PerfectDistance = 1
-        edge = new TestEdgeIterator("az");
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "az");
         assertTrue(edgeFilter.accept(edge));
+
+        // Distance - PerfectDistance = 2
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "xy");
+        assertFalse(edgeFilter.accept(edge));
     }
 
     static class TestEdgeIterator implements EdgeIteratorState {
