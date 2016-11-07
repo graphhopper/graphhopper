@@ -27,6 +27,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.junit.*;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -184,6 +185,41 @@ public class GraphHopperIT {
         assertEquals(913, rsp.getAll().get(1).getTime() / 1000);
         // via neudrossenfeld
         assertEquals(958, rsp.getAll().get(2).getTime() / 1000);
+    }
+
+    @Test
+    public void testPointHint() {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/Laufamholzstraße.osm.xml").
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car"));
+        tmpHopper.importOrLoad();
+
+        GHRequest req = new GHRequest(49.46553,11.154669, 49.465244,11.152577).
+                setVehicle("car").setWeighting("fastest");
+
+        req.setPointHints(new ArrayList<>(Arrays.asList("Laufamholzstraße, 90482, Nürnberg, Deutschland", "")));
+        GHResponse rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        GHPoint snappedPoint = rsp.getBest().getWaypoints().toGHPoint(0);
+        assertEquals(49.465686, snappedPoint.getLat(), .000001);
+        assertEquals(11.154605, snappedPoint.getLon(), .000001);
+
+        req.setPointHints(new ArrayList<>(Arrays.asList("", "")));
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        snappedPoint = rsp.getBest().getWaypoints().toGHPoint(0);
+        assertEquals(49.465502, snappedPoint.getLat(), .000001);
+        assertEquals(11.154498, snappedPoint.getLon(), .000001);
+
+        // Match to closest edge, since hint was not found
+        req.setPointHints(new ArrayList<>(Arrays.asList("xy", "")));
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        snappedPoint = rsp.getBest().getWaypoints().toGHPoint(0);
+        assertEquals(49.465502, snappedPoint.getLat(), .000001);
+        assertEquals(11.154498, snappedPoint.getLon(), .000001);
     }
 
     @Test

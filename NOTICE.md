@@ -12,6 +12,7 @@ The core module includes the following software:
  * OSM-binary - LGPL license
  * Osmosis - public domain, see osmosis-copying.txt under core/files
  * XMLGraphics-Commons for CGIAR elevation files - (Apache License)
+ * Apache Commons Lang - we copied the implementation of the Levenshtein Distance (Apache License)
 
 tools:
 

@@ -90,6 +90,12 @@ public class GraphHopperServlet extends GHBaseServlet {
                     throw new IllegalArgumentException("heading list in from format: " + e.getMessage());
                 }
 
+                List<String> pointHints = Collections.EMPTY_LIST;
+                pointHints = new ArrayList<String>(Arrays.asList(getParams(httpReq, "point_hint")));
+                if (pointHints.size() > 0 && pointHints.size() != requestPoints.size()) {
+                    throw new IllegalArgumentException("If you pass point_hint, you need to pass a hint for every point, empty hints will be ignored");
+                }
+
                 if (!hopper.getEncodingManager().supports(vehicleStr)) {
                     throw new IllegalArgumentException("Vehicle not supported: " + vehicleStr);
                 } else if (enableElevation && !hopper.hasElevation()) {
@@ -120,6 +126,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                         setWeighting(weighting).
                         setAlgorithm(algoStr).
                         setLocale(localeStr).
+                        setPointHints(pointHints).
                         getHints().
                         put("calcPoints", calcPoints).
                         put("instructions", enableInstructions).
