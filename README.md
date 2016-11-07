@@ -118,6 +118,10 @@ E.g. you could use the rough user interface called MiniGraphUI provided in the t
 visualizations done with it [here](https://graphhopper.com/blog/2016/01/19/alternative-roads-to-rome/).
 A fast and production ready map visualization for the Desktop can be easily implemented via mapsforge.
 
+### Docker
+
+Install GraphHopper via [Docker](https://github.com/graphhopper/graphhopper/pull/849).
+
 # Features
 
 Here is a list of the more detailed features including a link to the documentation:
