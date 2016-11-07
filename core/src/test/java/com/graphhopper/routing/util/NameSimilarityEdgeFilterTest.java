@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.GHUtility;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertFalse;
@@ -33,48 +33,48 @@ public class NameSimilarityEdgeFilterTest {
     public void testAccept() {
 
         EdgeFilter edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Laufamholzstraße 154 Nürnberg");
-        EdgeIteratorState edge = new TestEdgeIterator("Laufamholzstraße, ST1333");
+        EdgeIteratorState edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
         assertTrue(edgeFilter.accept(edge));
 
-        edge = new TestEdgeIterator("Hauptstraße");
+        edge = createTestEdgeIterator("Hauptstraße");
         assertFalse(edgeFilter.accept(edge));
 
-        edge = new TestEdgeIterator("Lorem Ipsum");
+        edge = createTestEdgeIterator("Lorem Ipsum");
         assertFalse(edgeFilter.accept(edge));
 
-        edge = new TestEdgeIterator("");
+        edge = createTestEdgeIterator("");
         assertFalse(edgeFilter.accept(edge));
 
-        edge = new TestEdgeIterator(null);
+        edge = createTestEdgeIterator(null);
         assertFalse(edgeFilter.accept(edge));
 
         edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), null);
-        edge = new TestEdgeIterator("Laufamholzstraße, ST1333");
+        edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
         assertTrue(edgeFilter.accept(edge));
 
         edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "");
-        edge = new TestEdgeIterator("Laufamholzstraße, ST1333");
+        edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
         assertTrue(edgeFilter.accept(edge));
 
         edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Johannesstraße, 99636, Rastenberg, Deutschland");
-        edge = new TestEdgeIterator("Laufamholzstraße, ST1333");
+        edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
         assertFalse(edgeFilter.accept(edge));
 
-        edge = new TestEdgeIterator("Johannesstraße");
+        edge = createTestEdgeIterator("Johannesstraße");
         assertTrue(edgeFilter.accept(edge));
 
         edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Hauptstraße, 39025, Naturns, Italien");
-        edge = new TestEdgeIterator("Teststraße");
+        edge = createTestEdgeIterator("Teststraße");
         assertFalse(edgeFilter.accept(edge));
 
-        edge = new TestEdgeIterator("Hauptstraße");
+        edge = createTestEdgeIterator("Hauptstraße");
         assertTrue(edgeFilter.accept(edge));
     }
 
     @Test
     public void testAcceptWithTypos() {
         EdgeFilter edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Laufamholzstraße 154 Nürnberg");
-        EdgeIteratorState edge = new TestEdgeIterator("Laufamholzstraße, ST1333");
+        EdgeIteratorState edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
         assertTrue(edgeFilter.accept(edge));
 
         // Single Typo
@@ -90,7 +90,7 @@ public class NameSimilarityEdgeFilterTest {
         assertFalse(edgeFilter.accept(edge));
 
         edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Hauptstraße");
-        edge = new TestEdgeIterator("Hauptstraße");
+        edge = createTestEdgeIterator("Hauptstraße");
         assertTrue(edgeFilter.accept(edge));
 
         // Single Typo
@@ -114,114 +114,23 @@ public class NameSimilarityEdgeFilterTest {
         assertFalse(edgeFilter.accept(edge));
     }
 
-    static class TestEdgeIterator implements EdgeIteratorState {
+    private EdgeIteratorState createTestEdgeIterator(final String name){
+        return new GHUtility.DisabledEdgeIterator() {
 
-        String name;
+            @Override
+            public String getName() {
+                return name;
+            }
 
-        public TestEdgeIterator(String name) {
-            this.name = name;
-        }
+            @Override
+            public boolean isForward(FlagEncoder encoder) {
+                return true;
+            }
 
-        @Override
-        public final int getBaseNode() {
-            return 0;
-        }
-
-        @Override
-        public final int getAdjNode() {
-            return 0;
-        }
-
-        @Override
-        public final double getDistance() {
-            return 1;
-        }
-
-        @Override
-        public final EdgeIteratorState setDistance(double dist) {
-            return this;
-        }
-
-        @Override
-        public long getFlags() {
-            return 1l;
-        }
-
-        @Override
-        public final EdgeIteratorState setFlags(long fl) {
-            return this;
-        }
-
-        @Override
-        public final int getAdditionalField() {
-            return 0;
-        }
-
-        @Override
-        public final EdgeIteratorState setAdditionalField(int value) {
-            return this;
-        }
-
-        @Override
-        public final EdgeIteratorState copyPropertiesTo(EdgeIteratorState edge) {
-            return this;
-        }
-
-        /**
-         * Reports whether the edge is available in forward direction for the specified encoder.
-         */
-        @Override
-        public boolean isForward(FlagEncoder encoder) {
-            return true;
-        }
-
-        /**
-         * Reports whether the edge is available in backward direction for the specified encoder.
-         */
-        @Override
-        public boolean isBackward(FlagEncoder encoder) {
-            return true;
-        }
-
-        @Override
-        public EdgeIteratorState setWayGeometry(PointList pillarNodes) {
-            return this;
-        }
-
-        @Override
-        public PointList fetchWayGeometry(int mode) {
-            return new PointList();
-        }
-
-        @Override
-        public int getEdge() {
-            return 0;
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public EdgeIteratorState setName(String name) {
-            this.name = name;
-            return this;
-        }
-
-        @Override
-        public EdgeIteratorState detach(boolean reverse) {
-            return null;
-        }
-
-        @Override
-        public final boolean getBool(int key, boolean _default) {
-            return true;
-        }
-
-        @Override
-        public final String toString() {
-            return getEdge() + " " + getBaseNode() + "-" + getAdjNode();
-        }
+            @Override
+            public boolean isBackward(FlagEncoder encoder) {
+                return true;
+            }
+        };
     }
 }
