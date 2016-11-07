@@ -74,8 +74,20 @@ Other map data will need a custom import procedure, see e.g. <a href="https://gi
 ## Written in Java
 
 GraphHopper is written in Java and runs on Linux, Mac OS X,
-Windows, BSD, Solaris, Raspberry Pi, Android, Blackberry and even iOS. Other 
-environments which supports at least Java 7 will work too.
+Windows, BSD, Solaris, Raspberry Pi, Android, Blackberry and even iOS.
+
+### Maven
+
+Embed the core of GraphHopper into your Java application via the following
+snippet
+
+```xml
+<dependency>
+    <groupId>com.graphhopper</groupId>
+    <artifactId>graphhopper-core</artifactId>
+    <version>0.8.2</version>
+</dependency>
+```
 
 ## Customizable
 
