@@ -95,14 +95,13 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
                     continue;
 
                 Set<SPTEntry> sptEntries = fromMap.get(iter.getAdjNode());
-                if (isNotDominatedBy(tmpWeight, tmpNTransfers, sptEntries) && isNotDominatedBy(tmpWeight, tmpNTransfers, targetLabels)) {
-                    removeDominated(tmpWeight, tmpNTransfers, sptEntries);
+                SPTEntry nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight, tmpNTransfers);
+                nEdge.parent = currEdge;
+                if (improves(nEdge, sptEntries) && isNotDominatedBy(nEdge, targetLabels)) {
+                    removeDominated(nEdge, sptEntries);
                     if (to.contains(iter.getAdjNode())) {
-                        removeDominated(tmpWeight, tmpNTransfers, targetLabels);
+                        removeDominated(nEdge, targetLabels);
                     }
-                    SPTEntry nEdge;
-                    nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight, tmpNTransfers);
-                    nEdge.parent = currEdge;
                     fromMap.put(iter.getAdjNode(), nEdge);
                     if (to.contains(iter.getAdjNode())) {
                         targetLabels.add(nEdge);
@@ -128,16 +127,22 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
         return result;
     }
 
-    private void removeDominated(double tmpWeight, int tmpNTransfers, Set<SPTEntry> sptEntries) {
-        Set<SPTEntry> iDominate = new HashSet<>();
-        for (SPTEntry sptEntry : sptEntries) {
-            if (tmpWeight <= sptEntry.weight && tmpNTransfers <= sptEntry.nTransfers) {
-                iDominate.add(sptEntry);
+    private boolean improves(SPTEntry me, Set<SPTEntry> sptEntries) {
+        for (SPTEntry they : sptEntries) {
+            if (they.nTransfers <= me.nTransfers && they.weight <= me.weight) {
+                return false;
             }
         }
-        for (SPTEntry sptEntry : iDominate) {
-            fromHeap.remove(sptEntry);
-            sptEntries.remove(sptEntry);
+        return true;
+    }
+
+    private void removeDominated(SPTEntry me, Set<SPTEntry> sptEntries) {
+        for (Iterator<SPTEntry> iterator = sptEntries.iterator(); iterator.hasNext();) {
+            SPTEntry sptEntry = iterator.next();
+            if (dominates(me, sptEntry)) {
+                fromHeap.remove(sptEntry);
+                iterator.remove();
+            }
         }
     }
 
@@ -146,14 +151,29 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
         throw new UnsupportedOperationException();
     }
 
-    private boolean isNotDominatedBy(double tmpWeight, int tmpNTransfers, Set<SPTEntry> sptEntries) {
-        Set<SPTEntry> dominatesMe = new HashSet<>();
-        for (SPTEntry sptEntry : sptEntries) {
-            if (tmpWeight >= sptEntry.weight && tmpNTransfers >= sptEntry.nTransfers) {
-                dominatesMe.add(sptEntry);
+    private boolean isNotDominatedBy(SPTEntry me, Set<SPTEntry> sptEntries) {
+        for (SPTEntry they : sptEntries) {
+            if (dominates(they, me)) {
+                return false;
             }
         }
-        return dominatesMe.isEmpty();
+        return true;
+    }
+
+    private boolean dominates(SPTEntry me, SPTEntry they) {
+        if (me.weight > they.weight) {
+            return false;
+        }
+        if (me.nTransfers > they.nTransfers) {
+            return false;
+        }
+        if (me.weight < they.weight) {
+            return true;
+        }
+        if (me.nTransfers < they.nTransfers) {
+            return true;
+        }
+        return false;
     }
 
     @Override
