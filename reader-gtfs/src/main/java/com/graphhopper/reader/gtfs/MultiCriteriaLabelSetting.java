@@ -47,13 +47,15 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
     private final SetMultimap<Integer, SPTEntry> fromMap;
     private final PriorityQueue<SPTEntry> fromHeap;
     private final int maxVisitedNodes;
+    private GtfsStorage gtfsStorage;
     private int visitedNodes;
 
-    MultiCriteriaLabelSetting(Graph graph, Weighting weighting, int maxVisitedNodes) {
+    MultiCriteriaLabelSetting(Graph graph, Weighting weighting, int maxVisitedNodes, GtfsStorage gtfsStorage) {
         this.graph = graph;
         this.weighting = weighting;
         this.flagEncoder = weighting.getFlagEncoder();
         this.maxVisitedNodes = maxVisitedNodes;
+        this.gtfsStorage = gtfsStorage;
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
         fromHeap = new PriorityQueue<>(size);
         fromMap = HashMultimap.create();
@@ -64,7 +66,7 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
         throw new UnsupportedOperationException();
     }
 
-    public List<Path> calcPaths(int from, Set<Integer> to) {
+    List<Path> calcPaths(int from, Set<Integer> to, int startTime) {
         Set<SPTEntry> targetLabels = new HashSet<>();
         SPTEntry currEdge = new SPTEntry(EdgeIterator.NO_EDGE, from, 0.0, 0);
         fromMap.put(from, currEdge);
@@ -82,6 +84,14 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
             while (iter.next()) {
                 if (iter.getEdge() == currEdge.edge)
                     continue;
+                AbstractPtEdge edge = gtfsStorage.getEdges().get(iter.getEdge());
+
+                if (edge instanceof BoardEdge) {
+                    int trafficDay = (int) (currEdge.weight + startTime) / (24 * 60 * 60);
+                    if (!((BoardEdge) edge).validOn.get(trafficDay)) {
+                        continue;
+                    }
+                }
 
                 double tmpWeight;
                 int tmpNTransfers = currEdge.nTransfers;

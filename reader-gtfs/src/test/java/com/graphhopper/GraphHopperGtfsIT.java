@@ -91,6 +91,23 @@ public class GraphHopperGtfsIT {
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(10, 1), TO_LAT, TO_LON, time(10, 42));
     }
 
+    @Test
+    public void testWeekendRouteWorksOnlyOnWeekend() {
+        final double FROM_LAT = 36.868446, FROM_LON = -116.784582; // BEATTY_AIRPORT stop
+        final double TO_LAT = 36.641496, TO_LON = -116.40094; // AMV stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, time(0, 0)); // Monday morning
+
+        GHResponse route = graphHopper.route(ghRequest);
+        Assert.assertTrue(route.getAll().isEmpty()); // No service on monday morning, and we cannot spend the night at stations yet
+
+        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(5 * 24, 0), TO_LAT, TO_LON, time(5 * 24 + 9, 0)); // Saturday morning
+
+    }
+
     private void assertRouteWeightIs(GraphHopperGtfs graphHopper, double from_lat, double from_lon, int earliestDepartureTime, double to_lat, double to_lon, int expectedWeight) {
         GHRequest ghRequest = new GHRequest(
                 from_lat, from_lon,
@@ -98,11 +115,9 @@ public class GraphHopperGtfsIT {
         );
         ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, earliestDepartureTime);
         GHResponse route = graphHopper.route(ghRequest);
-        System.out.println(route);
-        System.out.println(route.getBest());
-        System.out.println(route.getBest().getDebugInfo());
 
         assertFalse(route.hasErrors());
+        assertFalse(route.getAll().isEmpty());
         assertEquals("Expected weight == scheduled arrival time", expectedWeight, route.getBest().getRouteWeight(), 0.1);
         assertEquals("Expected travel time == scheduled arrival time", expectedWeight * 1000, route.getBest().getTime(), 0.1);
     }

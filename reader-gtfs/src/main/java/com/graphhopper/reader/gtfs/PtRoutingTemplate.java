@@ -101,7 +101,7 @@ class PtRoutingTemplate implements RoutingTemplate {
 
 		sw = new StopWatch().start();
 
-		List<Path> tmpPathList = ((MultiCriteriaLabelSetting) algo).calcPaths(startNode, new HashSet(toNodes));
+		List<Path> tmpPathList = ((MultiCriteriaLabelSetting) algo).calcPaths(startNode, new HashSet(toNodes), initialTime);
 		debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s";
 
 		for (Path path : tmpPathList) {
