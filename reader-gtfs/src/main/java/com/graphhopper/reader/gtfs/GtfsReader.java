@@ -177,7 +177,8 @@ class GtfsReader implements DataReader {
             SortedSet<Fun.Tuple2<Integer, Integer>> tailSet = timeNode.tailSet(new Fun.Tuple2<>(arrivalTime + minimumTransferTime, -1));
             if (!tailSet.isEmpty()) {
                 Fun.Tuple2<Integer, Integer> e = tailSet.first();
-                ghStorage.edge(arrivalNodeId, e.b, 0.0, false);
+                EdgeIteratorState edge = ghStorage.edge(arrivalNodeId, e.b, 0.0, false);
+                edge.setName("Transfer " + stop_id + " " + minimumTransferTime);
                 edges.put(j, new TimePassesPtEdge(e.a-arrivalTime));
                 j++;
             }
@@ -208,7 +209,7 @@ class GtfsReader implements DataReader {
                         i-1,
                         distance,
                         false);
-                edge.setName(getRouteName(feed, trip));
+                edge.setName(getRouteName(feed, trip) + " " + trip.trip_headsign + " " + trip.trip_id);
                 edges.put(edge.getEdge(), new HopEdge(orderedStop.arrival_time - prev.departure_time));
                 j++;
             }
