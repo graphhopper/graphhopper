@@ -179,7 +179,7 @@ class GtfsReader implements DataReader {
                 Fun.Tuple2<Integer, Integer> e = tailSet.first();
                 EdgeIteratorState edge = ghStorage.edge(arrivalNodeId, e.b, 0.0, false);
                 edge.setName("Transfer " + stop_id + " " + minimumTransferTime);
-                edges.put(j, new TimePassesPtEdge(e.a-arrivalTime));
+                edges.put(j, new TransferEdge(e.a-arrivalTime));
                 j++;
             }
         }

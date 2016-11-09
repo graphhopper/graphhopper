@@ -161,7 +161,12 @@ class PtRoutingTemplate implements RoutingTemplate {
 		PointList points = path.calcPoints();
 		List<EdgeIteratorState> edges = path.calcEdges();
 		for (EdgeIteratorState edge : edges) {
-			outInstructions.add(new Instruction(0, edge.getName(), new InstructionAnnotation(0, edge.getName()), edge.fetchWayGeometry(1)));
+			int sign = 0;
+			AbstractPtEdge ptEdge = gtfsStorage.getEdges().get(edge.getEdge());
+			if (ptEdge instanceof TransferEdge) {
+				sign = Instruction.PT_LINE_CHANGE;
+			}
+			outInstructions.add(new Instruction(sign, edge.getName(), new InstructionAnnotation(0, edge.getName()), edge.fetchWayGeometry(1)));
 		}
 		if (!points.isEmpty()) {
 			PointList end = new PointList();
