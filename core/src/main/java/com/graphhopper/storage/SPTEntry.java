@@ -71,11 +71,16 @@ public class SPTEntry implements Cloneable, Comparable<SPTEntry> {
 
     @Override
     public int compareTo(SPTEntry o) {
+        // assumption no NaN and no -0
         if (weight < o.weight)
             return -1;
-
-        // assumption no NaN and no -0        
-        return weight > o.weight ? 1 : 0;
+        else if (weight > o.weight)
+            return 1;
+        else if (nTransfers < o.nTransfers)
+            return -1;
+        else if (nTransfers > o.nTransfers)
+            return 1;
+        return 0;
     }
 
     @Override
