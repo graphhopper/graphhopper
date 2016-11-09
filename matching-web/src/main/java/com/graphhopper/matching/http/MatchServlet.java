@@ -25,7 +25,6 @@ import com.graphhopper.http.RouteSerializer;
 import com.graphhopper.matching.*;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
 import org.json.JSONArray;
