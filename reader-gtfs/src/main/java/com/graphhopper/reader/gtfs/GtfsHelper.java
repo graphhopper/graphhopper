@@ -17,6 +17,8 @@
  */
 package com.graphhopper.reader.gtfs;
 
+import java.time.LocalDateTime;
+
 /**
  * Generic helper for GTFS routines.
  * 
@@ -41,4 +43,9 @@ public class GtfsHelper {
     public static int time(int hours, int minutes) {
         return time(hours, minutes, 0);
     }
+    
+    public static int time(LocalDateTime localDateTime) {
+        return time(localDateTime.getHour(), localDateTime.getMinute(), 0);
+    }
+    
 }
