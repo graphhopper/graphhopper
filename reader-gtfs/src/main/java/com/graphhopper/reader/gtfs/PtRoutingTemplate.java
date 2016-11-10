@@ -31,7 +31,7 @@ class PtRoutingTemplate implements RoutingTemplate {
 	private List<Path> paths;
     private List<Integer> toNodes;
     private int startNode = -1;
-    private int initialTime;
+    private long initialTime;
     private FlagEncoder flagEncoder;
 
     PtRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex, GtfsStorage gtfsStorage, GraphHopperStorage graphHopperStorage) {
@@ -101,7 +101,7 @@ class PtRoutingTemplate implements RoutingTemplate {
 
 		sw = new StopWatch().start();
 
-		List<Path> tmpPathList = ((MultiCriteriaLabelSetting) algo).calcPaths(startNode, new HashSet(toNodes), initialTime);
+		List<Path> tmpPathList = ((MultiCriteriaLabelSetting) algo).calcPaths(startNode, new HashSet(toNodes), (int) initialTime);
 		debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s";
 
 		for (Path path : tmpPathList) {
