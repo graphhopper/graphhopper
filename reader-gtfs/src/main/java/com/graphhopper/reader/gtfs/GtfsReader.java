@@ -97,6 +97,7 @@ class GtfsReader implements DataReader {
         i = 0;
         j = 0;
         LocalDate startDate = feed.calculateStats().getStartDate();
+        gtfsStorage.setStartDate(startDate);
         LocalDate endDate = feed.calculateStats().getEndDate();
         try {
             for (Trip trip : feed.trips.values()) {
