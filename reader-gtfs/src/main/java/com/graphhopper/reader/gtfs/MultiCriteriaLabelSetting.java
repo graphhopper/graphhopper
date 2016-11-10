@@ -107,7 +107,7 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
                 Set<SPTEntry> sptEntries = fromMap.get(iter.getAdjNode());
                 SPTEntry nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight, tmpNTransfers);
                 nEdge.parent = currEdge;
-                if (improves(nEdge, sptEntries) && isNotDominatedBy(nEdge, targetLabels)) {
+                if (improves(nEdge, sptEntries) && improves(nEdge, targetLabels)) {
                     removeDominated(nEdge, sptEntries);
                     if (to.contains(iter.getAdjNode())) {
                         removeDominated(nEdge, targetLabels);
