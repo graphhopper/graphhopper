@@ -139,6 +139,25 @@ public class DataFlagEncoderTest {
     }
 
     @Test
+    public void testLargeMaxspeed() {
+        ReaderWay osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "primary");
+        osmWay.setTag("maxspeed", "145");
+        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertEquals(140, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
+        assertEquals(140, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
+
+        osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "primary");
+        osmWay.setTag("maxspeed", "1000");
+        flags = encoder.handleWayTags(osmWay, 1, 0);
+        edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertEquals(140, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
+        assertEquals(140, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
+    }
+
+    @Test
     public void reverseEdge() {
         Graph graph = new GraphBuilder(encodingManager).create();
         EdgeIteratorState edge = graph.edge(0, 1);
