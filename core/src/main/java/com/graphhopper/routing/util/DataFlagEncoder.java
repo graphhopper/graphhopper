@@ -204,15 +204,15 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             double fwdSpeed = parseSpeed(way.getTag("maxspeed:forward"));
             if (fwdSpeed < 0 || maxSpeed > 0 && maxSpeed < fwdSpeed)
                 fwdSpeed = maxSpeed;
-            //if (fwdSpeed > getMaxPossibleSpeed())
-            //    fwdSpeed = getMaxPossibleSpeed();
+            if (fwdSpeed > getMaxPossibleSpeed())
+                fwdSpeed = getMaxPossibleSpeed();
 
 
             double bwdSpeed = parseSpeed(way.getTag("maxspeed:backward"));
             if (bwdSpeed < 0 || maxSpeed > 0 && maxSpeed < bwdSpeed)
                 bwdSpeed = maxSpeed;
-            //if (bwdSpeed > getMaxPossibleSpeed())
-            //    bwdSpeed = getMaxPossibleSpeed();
+            if (bwdSpeed > getMaxPossibleSpeed())
+                bwdSpeed = getMaxPossibleSpeed();
 
 
             // 0 is reserved for default i.e. no maxspeed sign (does not imply no speed limit)
