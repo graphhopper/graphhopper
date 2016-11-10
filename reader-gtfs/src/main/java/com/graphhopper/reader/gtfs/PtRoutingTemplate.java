@@ -150,6 +150,14 @@ class PtRoutingTemplate implements RoutingTemplate {
 				wrappedPath.setRouteWeight(path.getWeight() + initialTime);
 				wrappedPath.setDistance(path.getDistance());
 				wrappedPath.setTime(path.getTime() + initialTime * 1000);
+				int numChanges = 0;
+				for (EdgeIteratorState edge : path.calcEdges()) {
+					AbstractPtEdge ptEdge = gtfsStorage.getEdges().get(edge.getEdge());
+					if (ptEdge instanceof TransferEdge) {
+						numChanges++;
+					}
+				}
+				wrappedPath.setNumChanges(numChanges);
 				ghResponse.add(wrappedPath);
 			}
 		}
@@ -161,12 +169,7 @@ class PtRoutingTemplate implements RoutingTemplate {
 		PointList points = path.calcPoints();
 		List<EdgeIteratorState> edges = path.calcEdges();
 		for (EdgeIteratorState edge : edges) {
-			int sign = 0;
-			AbstractPtEdge ptEdge = gtfsStorage.getEdges().get(edge.getEdge());
-			if (ptEdge instanceof TransferEdge) {
-				sign = Instruction.PT_LINE_CHANGE;
-			}
-			outInstructions.add(new Instruction(sign, edge.getName(), new InstructionAnnotation(0, edge.getName()), edge.fetchWayGeometry(1)));
+			outInstructions.add(new Instruction(0, edge.getName(), new InstructionAnnotation(0, edge.getName()), edge.fetchWayGeometry(1)));
 		}
 		if (!points.isEmpty()) {
 			PointList end = new PointList();

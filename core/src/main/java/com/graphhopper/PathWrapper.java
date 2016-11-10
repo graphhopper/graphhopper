@@ -43,6 +43,7 @@ public class PathWrapper {
     private InstructionList instructions;
     private PointList waypointList = PointList.EMPTY;
     private PointList pointList = PointList.EMPTY;
+    private int numChanges;
 
     /**
      * @return the description of this route alternative to make it meaningful for the user e.g. it
@@ -264,5 +265,13 @@ public class PathWrapper {
     public PathWrapper addErrors(List<Throwable> errors) {
         this.errors.addAll(errors);
         return this;
+    }
+
+    public void setNumChanges(int numChanges) {
+        this.numChanges = numChanges;
+    }
+
+    public int getNumChanges() {
+        return numChanges;
     }
 }

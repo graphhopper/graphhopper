@@ -33,9 +33,6 @@ public class Instruction {
     public static final int FINISH = 4;
     public static final int REACHED_VIA = 5;
     public static final int USE_ROUNDABOUT = 6;
-
-    public static final int PT_LINE_CHANGE = 7000;
-
     private static final AngleCalc AC = Helper.ANGLE_CALC;
     protected final PointList points;
     protected final InstructionAnnotation annotation;
