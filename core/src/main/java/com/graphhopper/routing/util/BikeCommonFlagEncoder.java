@@ -248,8 +248,19 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         if (!highwaySpeeds.containsKey(highwayValue))
             return 0;
 
+        String sacScale = way.getTag("sac_scale");
+        if (sacScale != null) {
+            if ((way.hasTag("highway", "cycleway"))
+                    && (way.hasTag("sac_scale", "hiking")))
+                return acceptBit;
+            if (!isSacScaleAllowed(sacScale))
+                return 0;
+        }
+
         // use the way if it is tagged for bikes
-        if (way.hasTag("bicycle", intendedValues) || way.hasTag("bicycle", "dismount"))
+        if (way.hasTag("bicycle", intendedValues) || 
+            way.hasTag("bicycle", "dismount") || 
+            way.hasTag("highway", "cycleway"))
             return acceptBit;
 
         // accept only if explicitly tagged for bike usage
@@ -266,15 +277,6 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         // check access restrictions
         if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
             return 0;
-
-        String sacScale = way.getTag("sac_scale");
-        if (sacScale != null) {
-            if ((way.hasTag("highway", "cycleway"))
-                    && (way.hasTag("sac_scale", "hiking")))
-                return acceptBit;
-            if (!isSacScaleAllowed(sacScale))
-                return 0;
-        }
 
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
             return 0;
