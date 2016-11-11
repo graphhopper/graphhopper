@@ -27,6 +27,7 @@ import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
+import com.graphhopper.util.Parameters.Routing;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -103,7 +104,8 @@ public class MatchServlet extends GraphHopperServlet {
         boolean enableTraversalKeys = getBooleanParam(httpReq, "traversal_keys", false);
 
         String vehicle = getParam(httpReq, "vehicle", "car");
-        int maxVisitedNodes = Math.min(getIntParam(httpReq, "max_visited_nodes", 3000), 5000);
+        int maxVisitedNodes = Math.min(getIntParam(httpReq, Routing.MAX_VISITED_NODES, 3000), 5000);
+        double wayPointMaxDistance = getDoubleParam(httpReq, Routing.WAY_POINT_MAX_DISTANCE, 1d);
         double defaultAccuracy = 40;
         double gpsAccuracy = Math.min(Math.max(getDoubleParam(httpReq, "gps_accuracy", defaultAccuracy), 5), gpsMaxAccuracy);
         Locale locale = Helper.getLocale(getParam(httpReq, "locale", "en"));
@@ -124,7 +126,11 @@ public class MatchServlet extends GraphHopperServlet {
                 // fill GHResponse for identical structure            
                 Path path = matching.calcPath(matchRsp);
                 Translation tr = trMap.getWithFallBack(locale);
-                new PathMerger().doWork(matchGHRsp, Collections.singletonList(path), tr);
+                DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
+                PathMerger pathMerger = new PathMerger().
+                        setDouglasPeucker(peucker).
+                        setSimplifyResponse(wayPointMaxDistance > 0);
+                pathMerger.doWork(matchGHRsp, Collections.singletonList(path), tr);
 
             } catch (Exception ex) {
                 matchGHRsp.addError(ex);
