@@ -392,6 +392,7 @@ function setFlag(coord, index) {
         };
         var _tempItem = {
             text: translate.tr('set_start'),
+            icon: './img/marker-small-green.png',
             callback: setToStart,
             index: 1
         };
