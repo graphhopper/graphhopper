@@ -40,6 +40,8 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.exceptions.DetailedIllegalArgumentException;
+import com.graphhopper.util.exceptions.MaxPointDistanceExceededException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -86,6 +88,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
+    private int maxNonChPointDistance = Integer.MAX_VALUE;
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -638,6 +641,7 @@ public class GraphHopper implements GraphHopperAPI {
         // routing
         maxVisitedNodes = args.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
         maxRoundTripRetries = args.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
+        maxNonChPointDistance = args.getInt(Routing.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
 
         return this;
     }
@@ -1027,6 +1031,7 @@ public class GraphHopper implements GraphHopperAPI {
                     routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
 
                 } else {
+                    checkIfPointsAreInBounds(points);
                     weighting = createWeighting(hints, encoder);
                     ghRsp.addDebugInfo("tmode:" + tMode.toString());
                 }
@@ -1076,6 +1081,27 @@ public class GraphHopper implements GraphHopperAPI {
             if (!bounds.contains(point.getLat(), point.getLon())) {
                 throw new PointOutOfBoundsException("Point " + i + " is ouf of bounds: " + point, i);
             }
+        }
+    }
+
+    private void checkPointBeelineDistance(List<GHPoint> points) {
+        if(maxNonChPointDistance == Integer.MAX_VALUE){
+            return;
+        }
+        GHPoint lastPoint = points.get(0);
+        GHPoint point;
+        double dist;
+        DistanceCalc calc = Helper.DIST_3D;
+        for (int i = 1; i < points.size(); i++) {
+            point = points.get(i);
+            dist = calc.calcNormalizedDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
+            if (dist > maxNonChPointDistance) {
+                Map<String, Object> detailMap = new HashMap<>(2);
+                detailMap.put("Point1", i-1);
+                detailMap.put("Point2", i);
+                throw new MaxPointDistanceExceededException("Point " + i + " is too far from Point "+(i-1)+": " + point, detailMap);
+            }
+            lastPoint = point;
         }
     }
 
