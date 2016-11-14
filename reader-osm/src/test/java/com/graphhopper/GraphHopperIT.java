@@ -332,6 +332,29 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void testMonacoMaxPointDistance() {
+        GHPoint from = new GHPoint(43.741069, 7.426854);
+        GHPoint to = new GHPoint(43.727697, 7.419199);
+
+        GHRequest req = new GHRequest().
+                addPoint(from).
+                addPoint(to).
+                setVehicle(vehicle).setWeighting("fastest");
+
+        // Fail since points are too far
+        hopper.setMaxNonChPointDistance(1000);
+        GHResponse rsp = hopper.route(req);
+
+        assertTrue(rsp.hasErrors());
+
+        // Suceed since points are not far anymore
+        hopper.setMaxNonChPointDistance(Integer.MAX_VALUE);
+        rsp = hopper.route(req);
+
+        assertFalse(rsp.hasErrors());
+    }
+
+    @Test
     public void testMonacoStraightVia() {
         GHRequest rq = new GHRequest().
                 addPoint(new GHPoint(43.741069, 7.426854)).

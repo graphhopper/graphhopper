@@ -88,6 +88,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
+
     private int maxNonChPointDistance = Integer.MAX_VALUE;
     // for index
     private LocationIndex locationIndex;
@@ -1031,7 +1032,7 @@ public class GraphHopper implements GraphHopperAPI {
                     routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
 
                 } else {
-                    checkIfPointsAreInBounds(points);
+                    checkPointBeelineDistance(points);
                     weighting = createWeighting(hints, encoder);
                     ghRsp.addDebugInfo("tmode:" + tMode.toString());
                 }
@@ -1094,7 +1095,7 @@ public class GraphHopper implements GraphHopperAPI {
         DistanceCalc calc = Helper.DIST_3D;
         for (int i = 1; i < points.size(); i++) {
             point = points.get(i);
-            dist = calc.calcNormalizedDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
+            dist = calc.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
             if (dist > maxNonChPointDistance) {
                 Map<String, Object> detailMap = new HashMap<>(2);
                 detailMap.put("Point1", i-1);
@@ -1205,4 +1206,9 @@ public class GraphHopper implements GraphHopperAPI {
         if (!allowWrites)
             throw new IllegalStateException("Writes are not allowed!");
     }
+
+    public void setMaxNonChPointDistance(int maxNonChPointDistance) {
+        this.maxNonChPointDistance = maxNonChPointDistance;
+    }
+
 }
