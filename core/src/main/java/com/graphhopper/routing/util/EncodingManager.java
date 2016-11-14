@@ -42,7 +42,7 @@ import java.util.List;
 public class EncodingManager {
     private static final String ERR = "Encoders are requesting %s bits, more than %s bits of %s flags. ";
     private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via graph.bytes_for_flags=8";
-    private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
+    private final List<FlagEncoderManagerProtocol> edgeEncoders = new ArrayList<FlagEncoderManagerProtocol>();
     private final int bitsForEdgeFlags;
     private final int bitsForTurnFlags = 8 * 4;
     private int nextWayBit = 0;
@@ -97,7 +97,7 @@ public class EncodingManager {
 
         this.bitsForEdgeFlags = bytesForEdgeFlags * 8;
         for (FlagEncoder flagEncoder : flagEncoders) {
-            registerEncoder((AbstractFlagEncoder) flagEncoder);
+            registerEncoder(flagEncoder);
         }
 
         if (edgeEncoders.isEmpty())
@@ -172,11 +172,12 @@ public class EncodingManager {
         return bitsForEdgeFlags / 8;
     }
 
-    private void registerEncoder(AbstractFlagEncoder encoder) {
+    private void registerEncoder(FlagEncoder _encoder) {
+        FlagEncoderManagerProtocol encoder = (FlagEncoderManagerProtocol) _encoder;
         if (encoder.isRegistered())
             throw new IllegalStateException("You must not register a FlagEncoder (" + encoder.toString() + ") twice!");
 
-        for (FlagEncoder fe : edgeEncoders) {
+        for (FlagEncoderManagerProtocol fe : edgeEncoders) {
             if (fe.toString().equals(encoder.toString()))
                 throw new IllegalArgumentException("Cannot register edge encoder. Name already exists: " + fe.toString());
         }
@@ -223,7 +224,7 @@ public class EncodingManager {
     }
 
     private FlagEncoder getEncoder(String name, boolean throwExc) {
-        for (FlagEncoder encoder : edgeEncoders) {
+        for (FlagEncoderManagerProtocol encoder : edgeEncoders) {
             if (name.equalsIgnoreCase(encoder.toString()))
                 return encoder;
         }
@@ -237,7 +238,7 @@ public class EncodingManager {
      */
     public long acceptWay(ReaderWay way) {
         long includeWay = 0;
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
+        for (FlagEncoderManagerProtocol encoder : edgeEncoders) {
             includeWay |= encoder.acceptWay(way);
         }
 
@@ -246,7 +247,7 @@ public class EncodingManager {
 
     public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
         long flags = 0;
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
+        for (FlagEncoderManagerProtocol encoder : edgeEncoders) {
             flags |= encoder.handleRelationTags(relation, oldRelationFlags);
         }
 
@@ -263,7 +264,7 @@ public class EncodingManager {
      */
     public long handleWayTags(ReaderWay way, long includeWay, long relationFlags) {
         long flags = 0;
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
+        for (FlagEncoderManagerProtocol encoder : edgeEncoders) {
             flags |= encoder.handleWayTags(way, includeWay, relationFlags & encoder.getRelBitMask());
         }
 
@@ -285,7 +286,7 @@ public class EncodingManager {
 
     public String toDetailsString() {
         StringBuilder str = new StringBuilder();
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
+        for (FlagEncoderManagerProtocol encoder : edgeEncoders) {
             if (str.length() > 0)
                 str.append(",");
 
@@ -301,7 +302,7 @@ public class EncodingManager {
 
     public long flagsDefault(boolean forward, boolean backward) {
         long flags = 0;
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
+        for (FlagEncoderManagerProtocol encoder : edgeEncoders) {
             flags |= encoder.flagsDefault(forward, backward);
         }
         return flags;
@@ -347,7 +348,7 @@ public class EncodingManager {
      */
     public long handleNodeTags(ReaderNode node) {
         long flags = 0;
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
+        for (FlagEncoderManagerProtocol encoder : edgeEncoders) {
             flags |= encoder.handleNodeTags(node);
         }
 
@@ -389,7 +390,7 @@ public class EncodingManager {
             edge.setName(name);
         }
 
-        for (AbstractFlagEncoder encoder : edgeEncoders) {
+        for (FlagEncoderManagerProtocol encoder : edgeEncoders) {
             encoder.applyWayTags(way, edge);
         }
     }

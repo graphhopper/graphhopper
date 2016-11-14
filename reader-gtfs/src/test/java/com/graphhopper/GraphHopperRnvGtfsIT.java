@@ -24,6 +24,7 @@ public class GraphHopperRnvGtfsIT {
 
         graphHopper = new GraphHopperGtfs();
         graphHopper.setGtfsFile("files/rnv.zip");
+        graphHopper.setCreateWalkNetwork(true);
         graphHopper.setGraphHopperLocation(GRAPH_LOC);
         graphHopper.importOrLoad();
     }
@@ -95,6 +96,16 @@ public class GraphHopperRnvGtfsIT {
         final double TO_LAT = 49.34345, TO_LON = 8.69311;
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(7, 51),
                 TO_LAT, TO_LON, time(8, 29));
+    }
+
+    @Test
+    public void testTripWithWalk() {
+        final double FROM_LAT = 49.49436, FROM_LON = 8.43372; // BASF
+        final double TO_LAT = 49.47531, TO_LON = 8.48131; // Krappmuehlstr.
+        // Transfer at e.g. Universitaet, where we have to walk to the next stop pole.
+        // If we couldn't walk, we would arrive at least one connection later.
+        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(19, 40),
+                TO_LAT, TO_LON, time(20, 8));
     }
 
     private void assertRouteWeightIs(GraphHopperGtfs graphHopper, double from_lat, double from_lon, int earliestDepartureTime, double to_lat, double to_lon, int expectedWeight) {

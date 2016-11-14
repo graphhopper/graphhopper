@@ -22,6 +22,8 @@ public final class GraphHopperGtfs extends GraphHopper {
     public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliestDepartureTime";
     public static final String DEFAULT_MINIMUM_TRANSFER_TIME_HINT = "defaultMinimumTransferTime";
 
+    private boolean createWalkNetwork = false;
+
     public GraphHopperGtfs() {
         super();
         super.setCHEnabled(false);
@@ -30,7 +32,7 @@ public final class GraphHopperGtfs extends GraphHopper {
 
     @Override
     protected DataReader createReader(GraphHopperStorage ghStorage) {
-        return initDataReader(new GtfsReader(ghStorage));
+        return initDataReader(new GtfsReader(ghStorage, createWalkNetwork));
     }
 
     public GraphHopperGtfs setGtfsFile(String gtfs) {
@@ -70,6 +72,10 @@ public final class GraphHopperGtfs extends GraphHopper {
     @Override
     public GraphHopper setCHEnabled(boolean enable) {
         throw new UnsupportedOperationException();
+    }
+
+    public void setCreateWalkNetwork(boolean createWalkNetwork) {
+        this.createWalkNetwork = createWalkNetwork;
     }
 
     @Override

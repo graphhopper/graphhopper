@@ -63,7 +63,6 @@ public class Path {
     private TIntList edgeIds;
     private double weight;
     private NodeAccess nodeAccess;    
-    private int earliestDepartureTime;    
 
     public Path(Graph graph, Weighting weighting) {
         this.weight = Double.MAX_VALUE;
@@ -201,12 +200,12 @@ public class Path {
         }
 
         setFromNode(goalEdge.adjNode);
+        time = (long) goalEdge.weight * 1000;
         reverseOrder();
 
         if (weighting instanceof TimeDependentWeighting) {
             // We have to calculate times again because the previously (backwardly) calculated travel times are wrong.
             // See processEdge.
-            time = earliestDepartureTime * 1000;
             distance = 0;
             forEveryEdge(new EdgeVisitor() {
                 @Override
@@ -611,15 +610,6 @@ public class Path {
             str += edgeIds.get(i);
         }
         return toString() + ", found:" + isFound() + ", " + str;
-    }
-
-    public Path setEarliestDepartureTime(int earliestDepartureTime) {
-        this.earliestDepartureTime = earliestDepartureTime;
-        return this;
-    }
-
-    public int getEarliestDepartureTime() {
-        return earliestDepartureTime;
     }
 
     /**

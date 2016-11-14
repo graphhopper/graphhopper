@@ -12,7 +12,6 @@ import java.time.LocalDate;
 import java.util.*;
 
 class GtfsStorage implements GraphExtension{
-	private int realEdgesSize;
 	private Directory dir;
 	private final TIntObjectMap<AbstractPtEdge> edges = new TIntObjectHashMap<>();
 	private boolean flushed = false;
@@ -20,14 +19,6 @@ class GtfsStorage implements GraphExtension{
 
 	public TIntObjectMap<AbstractPtEdge> getEdges() {
 		return edges;
-	}
-
-	public void setRealEdgesSize(int realEdgesSize) {
-		this.realEdgesSize = realEdgesSize;
-	}
-
-	public int getRealEdgesSize() {
-		return realEdgesSize;
 	}
 
 
@@ -76,7 +67,6 @@ class GtfsStorage implements GraphExtension{
 		for (Map.Entry<Integer, AbstractPtEdge> entry : edges.entrySet()) {
 			this.edges.put(entry.getKey(), entry.getValue());
 		}
-		this.realEdgesSize = data.getAtomicInteger("realEdgesSize").get();
 		this.startDate = (LocalDate) data.getAtomicVar("startDate").get();
 		flushed = true;
 		return true;
@@ -101,7 +91,6 @@ class GtfsStorage implements GraphExtension{
 					return edges.get(i);
 				}
 			}).make();
-			data.getAtomicInteger("realEdgesSize").set(realEdgesSize);
 			data.getAtomicVar("startDate").set(startDate);
 			data.close();
 			flushed = true;

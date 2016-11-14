@@ -34,21 +34,28 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
 
 	@Override
 	public double calcTravelTimeSeconds(EdgeIteratorState edgeState, double earliestStartTime) {
-		if (edgeState.getEdge() > gtfsStorage.getRealEdgesSize()-1) {
-			return 0.0;
-		}
 		AbstractPtEdge edge = gtfsStorage.getEdges().get(edgeState.getEdge());
-		if (edge instanceof EnterLoopEdge) {
-			return 0.0;
-		} else if (edge instanceof HopEdge) {
+		if (edge == null) {
+			long l = calcMillis(edgeState, false, -1);
+			return l / 1000;
+		}
+		if (edge instanceof EnterTimeExpandedNetworkEdge) {
+			return ((EnterTimeExpandedNetworkEdge) edge).traveltime((long) earliestStartTime);
+		} else if (edge instanceof StopNodeMarkerEdge) {
+			return Double.POSITIVE_INFINITY;
+		} else if (edge instanceof StopExitNodeMarkerEdge) {
+            return Double.POSITIVE_INFINITY;
+        } else if (edge instanceof HopEdge) {
             return ((TimePassesPtEdge) edge).deltaTime;
         } else if (edge instanceof DwellEdge) {
             return ((TimePassesPtEdge) edge).deltaTime;
         } else if (edge instanceof TimePassesPtEdge) {
 			return ((TimePassesPtEdge) edge).deltaTime;
-		} else if (edge instanceof ExitFindingDummyEdge) {
+		} else if (edge instanceof ArrivalNodeMarkerEdge) {
             return Double.POSITIVE_INFINITY;
-        } else {
+        } else if (edge instanceof LeaveTimeExpandedNetworkEdge) {
+			return 0.0;
+		} else {
 			throw new IllegalStateException();
 		}
 	}

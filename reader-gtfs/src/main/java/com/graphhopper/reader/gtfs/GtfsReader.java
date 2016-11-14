@@ -6,14 +6,24 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.triangulate.ConformingDelaunayTriangulator;
+import com.vividsolutions.jts.triangulate.ConstraintVertex;
+import com.vividsolutions.jts.triangulate.quadedge.QuadEdge;
+import com.vividsolutions.jts.triangulate.quadedge.QuadEdgeSubdivision;
+import com.vividsolutions.jts.triangulate.quadedge.Vertex;
 import gnu.trove.map.hash.TIntIntHashMap;
-import org.joda.time.Days;
 import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,7 +31,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static java.time.temporal.ChronoUnit.DAYS;
@@ -30,26 +39,29 @@ class GtfsReader implements DataReader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GtfsReader.class);
 
-    private final GraphHopperStorage ghStorage;
+    private final GraphHopperStorage graph;
     private final GtfsStorage gtfsStorage;
+    private final boolean createWalkNetwork;
     private File file;
 
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
     private final Map<String, Transfer> explicitWithinStationMinimumTransfers = new HashMap<>();
-    private NodeAccess nodeAccess;
+    private final NodeAccess nodeAccess;
     private int i;
     private GTFSFeed feed;
     private TIntIntHashMap times;
     private TreeMap<Integer, AbstractPtEdge> edges;
-    private int j;
     private SetMultimap<String, Integer> stops;
+    private Map<String, Integer> stopNodes = new HashMap<>();
     private SetMultimap<String, Integer> arrivals;
     private SetMultimap<String, Transfer> betweenStationTransfers;
 
-    GtfsReader(GraphHopperStorage ghStorage) {
-        this.ghStorage = ghStorage;
-        this.ghStorage.create(1000);
+    GtfsReader(GraphHopperStorage ghStorage, boolean createWalkNetwork) {
+        this.graph = ghStorage;
+        this.graph.create(1000);
         this.gtfsStorage = (GtfsStorage) ghStorage.getExtension();
+        this.nodeAccess = ghStorage.getNodeAccess();
+        this.createWalkNetwork = createWalkNetwork;
     }
 
     @Override
@@ -80,12 +92,58 @@ class GtfsReader implements DataReader {
 
     @Override
     public void readGraph() throws IOException {
+        feed = GTFSFeed.fromFile(file.getPath());
+        i = 0;
+        if (createWalkNetwork) {
+            buildWalkNetwork();
+        }
+        buildPtNetwork();
+        if (createWalkNetwork) {
+            LocationIndex locationIndex = new LocationIndexTree(graph, new RAMDirectory()).prepareIndex();
+            EdgeFilter filter = new EverythingButPt(gtfsStorage);
+            for (Map.Entry<String, Integer> entry : stopNodes.entrySet()) {
+                int enterNode = entry.getValue();
+                QueryResult source = locationIndex.findClosest(nodeAccess.getLat(enterNode), nodeAccess.getLon(enterNode), filter);
+                if (!source.isValid()) {
+                    throw new IllegalStateException();
+                } else {
+                    graph.edge(source.getClosestNode(), enterNode, 0.0, false);
+                    graph.edge(enterNode+1, source.getClosestNode(), 0.0, false);
+                }
+            }
+        }
+    }
+
+    private void buildWalkNetwork() {
+        Collection<ConstraintVertex> sites = new ArrayList<>();
+        Map<Vertex, Integer> vertex2nodeId = new HashMap<>();
+        for (Stop stop : feed.stops.values()) {
+            nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
+            ConstraintVertex site = new ConstraintVertex(new Coordinate(stop.stop_lon,stop.stop_lat));
+            sites.add(site);
+            vertex2nodeId.put(site, i-1);
+        }
+        ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
+        conformingDelaunayTriangulator.setConstraints(new ArrayList(), new ArrayList());
+        conformingDelaunayTriangulator.formInitialDelaunay();
+        QuadEdgeSubdivision tin = conformingDelaunayTriangulator.getSubdivision();
+        List<QuadEdge> edges = tin.getPrimaryEdges(false);
+        for (QuadEdge edge : edges) {
+            EdgeIteratorState ghEdge = graph.edge(vertex2nodeId.get(edge.orig()), vertex2nodeId.get(edge.dest()));
+            double distance = distCalc.calcDist(
+                    edge.orig().getY(),
+                    edge.orig().getX(),
+                    edge.dest().getY(),
+                    edge.dest().getX());
+            ghEdge.setDistance(distance);
+        }
+    }
+
+    private void buildPtNetwork() {
         stops = HashMultimap.create();
         arrivals = HashMultimap.create();
         betweenStationTransfers = HashMultimap.create();
         times = new TIntIntHashMap();
-        feed = GTFSFeed.fromFile(file.getPath());
-        nodeAccess = ghStorage.getNodeAccess();
         edges = new TreeMap<>();
         for (Transfer transfer : feed.transfers.values()) {
             if (transfer.transfer_type == 2 && !transfer.from_stop_id.equals(transfer.to_stop_id)) {
@@ -94,8 +152,6 @@ class GtfsReader implements DataReader {
                 explicitWithinStationMinimumTransfers.put(transfer.to_stop_id, transfer);
             }
         }
-        i = 0;
-        j = 0;
         LocalDate startDate = feed.calculateStats().getStartDate();
         gtfsStorage.setStartDate(startDate);
         LocalDate endDate = feed.calculateStats().getEndDate();
@@ -129,47 +185,47 @@ class GtfsReader implements DataReader {
 
         for (Stop stop : feed.stops.values()) {
             nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
-            ghStorage.edge(i-1, i-1);
-            edges.put(j, new EnterLoopEdge());
-            j++;
-            ghStorage.edge(i-1, i-1);
-            edges.put(j, new ExitLoopEdge());
-            j++;
+            int stopEnterNode = i-1;
+            stopNodes.put(stop.stop_id, stopEnterNode);
+            edges.put(graph.edge(stopEnterNode, stopEnterNode).getEdge(), new StopNodeMarkerEdge());
+            nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
+            int stopExitNode = i-1;
+            edges.put(graph.edge(stopExitNode, stopExitNode).getEdge(), new StopExitNodeMarkerEdge());
             int time = 0;
-            int prev = i-1;
-            SortedSet<Fun.Tuple2<Integer, Integer>> timeNode = new TreeSet<>();
+            int prev = -1;
+            NavigableSet<Fun.Tuple2<Integer, Integer>> timeNode = new TreeSet<>();
             for (Integer nodeId : stops.get(stop.stop_id)) {
                 timeNode.add(new Fun.Tuple2<>(times.get(nodeId) % (24*60*60), nodeId));
             }
-            for (Fun.Tuple2<Integer, Integer> e : timeNode) {
-                EdgeIteratorState edge = ghStorage.edge(prev, e.b, 0.0, false);
-                edge.setName("Wait-"+time+"-"+e.a+"-"+stop.stop_name);
-                edges.put(j, new WaitInStationEdge(e.a-time));
-                j++;
+            for (Fun.Tuple2<Integer, Integer> e : timeNode.descendingSet()) {
+                EdgeIteratorState enterTimeExpandedNetworkEdge = graph.edge(stopEnterNode, e.b, 0.0, false);
+                enterTimeExpandedNetworkEdge.setName("EnterTimeExpandedNetwork-"+e.a+"-"+stop.stop_name);
+                edges.put(enterTimeExpandedNetworkEdge.getEdge(), new EnterTimeExpandedNetworkEdge(e.a));
+                if (prev != -1) {
+                    EdgeIteratorState edge = graph.edge(e.b, prev, 0.0, false);
+                    edge.setName("Wait-"+e.a+"-"+time+"-"+stop.stop_name);
+                    edges.put(edge.getEdge(), new WaitInStationEdge(time-e.a));
+                }
                 time = e.a;
                 prev = e.b;
             }
-            EdgeIteratorState edge = ghStorage.edge(prev, i-1, 0.0, false);
-            assert time <= 24*60*60;
-            int rolloverTime = 24 * 60 * 60 - time;
-            edge.setName("WaitRollover-"+time+"-"+stop.stop_name);
-            edges.put(j, new WaitInStationEdge(rolloverTime));
-            j++;
+            if (!timeNode.isEmpty()) {
+                EdgeIteratorState edge = graph.edge(timeNode.last().b, timeNode.first().b, 0.0, false);
+                int rolloverTime = 24 * 60 * 60 - timeNode.last().a + timeNode.first().a;
+                edge.setName("WaitRollover-"+stop.stop_name);
+                edges.put(edge.getEdge(), new OvernightEdge(rolloverTime));
+            }
             Transfer withinStationTransfer = explicitWithinStationMinimumTransfers.get(stop.stop_id);
             insertInboundTransfers(stop.stop_id, withinStationTransfer != null ? withinStationTransfer.min_transfer_time : 0, timeNode);
             for (Transfer transfer : betweenStationTransfers.get(stop.stop_id)) {
                 insertInboundTransfers(transfer.from_stop_id, transfer.min_transfer_time, timeNode);
             }
             for (Integer arrivalNodeId : arrivals.get(stop.stop_id)) {
-                ghStorage.edge(i-1, arrivalNodeId);
-                edges.put(j, new ExitFindingDummyEdge());
-                j++;
+                edges.put(graph.edge(arrivalNodeId, stopExitNode, 0.0, false).getEdge(), new LeaveTimeExpandedNetworkEdge());
             }
         }
 
         gtfsStorage.setEdges(edges);
-        gtfsStorage.setRealEdgesSize(j);
-        LOGGER.info("Created " + j + " edges from GTFS trip hops and transfers.");
     }
 
     private void insertInboundTransfers(String stop_id, int minimumTransferTime, SortedSet<Fun.Tuple2<Integer, Integer>> timeNode) {
@@ -178,10 +234,9 @@ class GtfsReader implements DataReader {
             SortedSet<Fun.Tuple2<Integer, Integer>> tailSet = timeNode.tailSet(new Fun.Tuple2<>(arrivalTime + minimumTransferTime, -1));
             if (!tailSet.isEmpty()) {
                 Fun.Tuple2<Integer, Integer> e = tailSet.first();
-                EdgeIteratorState edge = ghStorage.edge(arrivalNodeId, e.b, 0.0, false);
+                EdgeIteratorState edge = graph.edge(arrivalNodeId, e.b, 0.0, false);
                 edge.setName("Transfer " + stop_id + " " + minimumTransferTime);
-                edges.put(j, new TransferEdge(e.a-arrivalTime));
-                j++;
+                edges.put(edge.getEdge(), new TransferEdge(e.a-arrivalTime));
             }
         }
     }
@@ -205,36 +260,33 @@ class GtfsReader implements DataReader {
                         fromStop.stop_lon,
                         stop.stop_lat,
                         stop.stop_lon);
-                EdgeIteratorState edge = ghStorage.edge(
+                EdgeIteratorState edge = graph.edge(
                         i-2,
                         i-1,
                         distance,
                         false);
                 edge.setName(getRouteName(feed, trip) + " " + trip.trip_headsign + " " + trip.trip_id);
                 edges.put(edge.getEdge(), new HopEdge(orderedStop.arrival_time - prev.departure_time));
-                j++;
             }
             nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
             times.put(i-1, orderedStop.departure_time + time);
             stops.put(orderedStop.stop_id, i-1);
             nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
             times.put(i-1, orderedStop.departure_time + time);
-            EdgeIteratorState edge = ghStorage.edge(
+            EdgeIteratorState edge = graph.edge(
                     i-2,
                     i-1,
                     0.0,
                     false);
             edge.setName(getRouteName(feed, trip));
             edges.put(edge.getEdge(), new BoardEdge(0, validOnDay));
-            j++;
-            edge = ghStorage.edge(
+            edge = graph.edge(
                     i-3,
                     i-1,
                     0.0,
                     false);
             edge.setName(getRouteName(feed, trip));
             edges.put(edge.getEdge(), new DwellEdge(orderedStop.departure_time - orderedStop.arrival_time));
-            j++;
             prev = orderedStop;
         }
     }

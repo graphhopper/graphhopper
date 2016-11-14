@@ -57,6 +57,11 @@
             <version>${log4j.version}</version>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>com.vividsolutions</groupId>
+            <artifactId>jts</artifactId>
+            <version>1.13</version>
+        </dependency>
 
         <dependency>
             <groupId>com.graphhopper</groupId>

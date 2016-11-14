@@ -50,17 +50,22 @@ class PtRoutingTemplate implements RoutingTemplate {
 
 		EdgeFilter enterFilter = new PtEnterPositionLookupEdgeFilter(gtfsStorage);
 		EdgeFilter exitFilter = new PtExitPositionLookupEdgeFilter(gtfsStorage);
+//		EdgeFilter enterFilter = new EverythingButPt(gtfsStorage);
+//		EdgeFilter exitFilter = new EverythingButPt(gtfsStorage);
 
 		GHPoint enter = points.get(0);
 		QueryResult source = locationIndex.findClosest(enter.lat, enter.lon, enterFilter);
 		if (!source.isValid()) {
 			ghResponse.addError(new PointNotFoundException("Cannot find entry point: " + enter, 0));
 		} else {
-            ForwardInTime forwardInTime = new ForwardInTime(source);
+//            ForwardInTime forwardInTime = new ForwardInTime(source);
             int requestedTimeOfDay = ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) % (24 * 60 * 60);
             int requestedDay = ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) / (24 * 60 * 60);
-            startNode = forwardInTime.find(requestedTimeOfDay);
-            initialTime = forwardInTime.getTime() + requestedDay * (24 * 60 * 60);
+//            startNode = forwardInTime.find(requestedTimeOfDay);
+//            initialTime = forwardInTime.getTime() + requestedDay * (24 * 60 * 60);
+
+			startNode = source.getClosestNode();
+			initialTime = requestedTimeOfDay + requestedDay * (24 * 60 * 60);
         }
 		snappedWaypoints.add(source);
 		GHPoint exit = points.get(1);
@@ -69,18 +74,19 @@ class PtRoutingTemplate implements RoutingTemplate {
 		if (!dest.isValid()) {
 			ghResponse.addError(new PointNotFoundException("Cannot find exit point: " + exit, 0));
 		} else {
-			new DepthFirstSearch() {
-				@Override
-				protected boolean goFurther(int nodeId) {
-					toNodes.add(nodeId);
-					return true;
-				}
-			}.start(graphHopperStorage.createEdgeExplorer(new EdgeFilter() {
-				@Override
-				public boolean accept(EdgeIteratorState edgeState) {
-					return gtfsStorage.getEdges().get(edgeState.getEdge()) instanceof ExitFindingDummyEdge;
-				}
-			}), dest.getClosestNode());
+			toNodes.add(dest.getClosestNode());
+//			new DepthFirstSearch() {
+//				@Override
+//				protected boolean goFurther(int nodeId) {
+//					toNodes.add(nodeId);
+//					return true;
+//				}
+//			}.start(graphHopperStorage.createEdgeExplorer(new EdgeFilter() {
+//				@Override
+//				public boolean accept(EdgeIteratorState edgeState) {
+//					return gtfsStorage.getEdges().get(edgeState.getEdge()) instanceof ArrivalNodeMarkerEdge;
+//				}
+//			}), dest.getClosestNode());
 		}
 		snappedWaypoints.add(dest);
 		return snappedWaypoints;
@@ -147,17 +153,17 @@ class PtRoutingTemplate implements RoutingTemplate {
 					points.add(instruction.getPoints());
 				}
 				wrappedPath.setPoints(points);
-				wrappedPath.setRouteWeight(path.getWeight() + initialTime);
+				wrappedPath.setRouteWeight(path.getWeight());
 				wrappedPath.setDistance(path.getDistance());
-				wrappedPath.setTime(path.getTime() + initialTime * 1000);
-				int numChanges = 0;
+				wrappedPath.setTime(path.getTime());
+				int numBoardings = 0;
 				for (EdgeIteratorState edge : path.calcEdges()) {
 					AbstractPtEdge ptEdge = gtfsStorage.getEdges().get(edge.getEdge());
-					if (ptEdge instanceof TransferEdge) {
-						numChanges++;
+					if (ptEdge instanceof BoardEdge) {
+						numBoardings++;
 					}
 				}
-				wrappedPath.setNumChanges(numChanges);
+				wrappedPath.setNumChanges(Math.max(numBoardings-1, 0));
 				ghResponse.add(wrappedPath);
 			}
 		}
@@ -201,7 +207,7 @@ class PtRoutingTemplate implements RoutingTemplate {
             if (time >= requestedTime) {
                 return lastNode;
             } else {
-                return -1;
+                throw new IllegalStateException();
             }
         }
 
@@ -226,4 +232,5 @@ lastNode = nodeId;
             return false;
         }
     }
+
 }

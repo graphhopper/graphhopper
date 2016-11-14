@@ -13,6 +13,6 @@ class PtExitPositionLookupEdgeFilter implements EdgeFilter {
 	@Override
 	public boolean accept(EdgeIteratorState edgeState) {
 		AbstractPtEdge ptEdge = gtfsStorage.getEdges().get(edgeState.getEdge());
-		return ptEdge instanceof ExitLoopEdge;
+		return ptEdge instanceof StopExitNodeMarkerEdge;
 	}
 }
