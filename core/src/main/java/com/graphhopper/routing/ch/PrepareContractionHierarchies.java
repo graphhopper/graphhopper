@@ -21,12 +21,9 @@ import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.BeelineWeightApproximator;
-import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

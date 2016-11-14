@@ -17,8 +17,8 @@ env:
     - FILE=apache-maven-VERSION-bin.zip
     - DIR=apache-maven-VERSION
     - VERSION=3.3.9
-    - secure: "kcd3BD+gagth90u8662Q91FHmtx/FEJEjtMnm2bxf1rX/cOYEUXtHvvh+rKmw5UAHjqMI00V8p8nBWL8blaCxJ+ItaxAHFRIMAcy3Qc65aTqnCt4wxDEXVxG1h3rylyKTXzxaHUT5XrsZbjLQX6L1BweTZlMGgkVn/yQcVFmkms="
-    - secure: "D1IOwe3ZTyw2CorYljXnHB3IuOJbH0B4YBfglNFoFsdCtn+SP+dqH/lClf5Hbeanhx/qPpgPKf331UCCpdSiLIZIHRWcsIXHSzJnqvH73eNyB4Awgm/IA0bS5D8iHJOhER1UtyTx5kT/KwKA9SD9ZBP3glrBzPDsyEbSZFsrACk="
+    - secure: "j6a61/qnfFcSjx5XxmxO2hqBOwtVx5HWrD1+4Atl7WG/pRKz9+jSga1Y7oDAFb2SIl8S65kDmPQB/vC8aHxUDj/Wizjxnxn1FhPqoe9yO6Ztft+984FKFyvj7s6tsBJKcehGec+chTOwZQpH4oI4rU6IlepDHnGLHiOd0Iviryg="
+    - secure: "GiFr+v2lTQk/sTQB7CYjju1/mupS8LSJupmizLqY454utiZkabDMBOZQnF9ukpy7WhveB9hKQyEKf9iP2w7HSYEjgvogT26vZ5f2MeLnR4SWvqEtf/WBvvh+W+k/rb2f6YgitkB4Jlxn2izemBEDuKplGJphzGW41lf8XZ2IxVI="
 
 jdk:
   - oraclejdk8
