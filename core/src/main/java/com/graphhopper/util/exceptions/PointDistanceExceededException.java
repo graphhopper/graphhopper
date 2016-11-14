@@ -24,8 +24,8 @@ import java.util.Map;
  *
  * @author Peter Karich
  */
-public class MaxPointDistanceExceededException extends DetailedIllegalArgumentException {
-    public MaxPointDistanceExceededException(String var1, Map<String, Object> details) {
+public class PointDistanceExceededException extends DetailedIllegalArgumentException {
+    public PointDistanceExceededException(String var1, Map<String, Object> details) {
         super(var1, details);
     }
 }

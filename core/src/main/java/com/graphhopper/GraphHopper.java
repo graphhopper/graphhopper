@@ -40,8 +40,7 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.exceptions.DetailedIllegalArgumentException;
-import com.graphhopper.util.exceptions.MaxPointDistanceExceededException;
+import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -1098,9 +1097,9 @@ public class GraphHopper implements GraphHopperAPI {
             dist = calc.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
             if (dist > maxNonChPointDistance) {
                 Map<String, Object> detailMap = new HashMap<>(2);
-                detailMap.put("Point1", i-1);
-                detailMap.put("Point2", i);
-                throw new MaxPointDistanceExceededException("Point " + i + " is too far from Point "+(i-1)+": " + point, detailMap);
+                detailMap.put("from", i-1);
+                detailMap.put("to", i);
+                throw new PointDistanceExceededException("Point " + i + " is too far from Point "+(i-1)+": " + point, detailMap);
             }
             lastPoint = point;
         }

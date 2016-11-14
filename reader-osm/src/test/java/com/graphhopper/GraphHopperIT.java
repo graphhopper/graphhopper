@@ -23,6 +23,7 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.*;
 
@@ -346,6 +347,33 @@ public class GraphHopperIT {
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
+
+        // Suceed since points are not far anymore
+        hopper.setMaxNonChPointDistance(Integer.MAX_VALUE);
+        rsp = hopper.route(req);
+
+        assertFalse(rsp.hasErrors());
+    }
+
+    @Test
+    public void testMonacoMaxPointDistanceMultiplePoints() {
+        GHPoint from = new GHPoint(43.741069, 7.426854);
+        GHPoint via = new GHPoint(43.744445, 7.429483);
+        GHPoint to = new GHPoint(43.727697, 7.419199);
+
+        GHRequest req = new GHRequest().
+                addPoint(from).
+                addPoint(via).
+                addPoint(to).
+                setVehicle(vehicle).setWeighting("fastest");
+
+        // Fail since points are too far
+        hopper.setMaxNonChPointDistance(1000);
+        GHResponse rsp = hopper.route(req);
+
+        assertTrue(rsp.hasErrors());
+        PointDistanceExceededException exception = (PointDistanceExceededException) rsp.getErrors().get(0);
+        assertEquals(2, exception.getDetails().get("to"));
 
         // Suceed since points are not far anymore
         hopper.setMaxNonChPointDistance(Integer.MAX_VALUE);
