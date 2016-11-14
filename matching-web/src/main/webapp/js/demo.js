@@ -158,7 +158,7 @@ GraphHopperMapMatching.prototype.doRequest = function (content, callback, reqArg
 function createMap(divId) {
     var osmAttr = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-    var omniscale = L.tileLayer.wms('https://maps.omniscale.net/v1/graphhp-7ae5b6f7/tile', {
+    var omniscale = L.tileLayer.wms('https://maps.omniscale.net/v1/mapmatching-23a1e8ea/tile', {
         layers: 'osm',
         attribution: osmAttr + ', &copy; <a href="http://maps.omniscale.com/">Omniscale</a>'
     });
