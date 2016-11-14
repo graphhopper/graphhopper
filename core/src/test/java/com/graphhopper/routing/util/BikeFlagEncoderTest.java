@@ -294,6 +294,33 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     }
 
     @Test
+    public void testWayAcceptance() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "cycleway");
+        way.setTag("vehicle", "no");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        // Sensless tagging: JOSM does create a warning here. We follow the highway tag:
+        way.setTag("bicycle", "no");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.setTag("bicycle", "designated");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "motorway");
+        assertFalse(encoder.acceptWay(way) > 0);
+        way.setTag("bicycle", "yes");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("bicycle", "yes");
+        way.setTag("access", "no");
+        assertTrue(encoder.acceptWay(way) > 0);
+    }
+
+    @Test
     public void testOneway() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "tertiary");
@@ -471,7 +498,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
         way.setTag("highway", "cycleway");
         way.setTag("sac_scale", "mountain_hiking");
-        // disallow
+        // disallow questionable combination as too dangerous
         assertEquals(0, encoder.acceptWay(way));
     }
 
