@@ -40,6 +40,7 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -86,6 +87,8 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
+
+    private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -638,6 +641,7 @@ public class GraphHopper implements GraphHopperAPI {
         // routing
         maxVisitedNodes = args.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
         maxRoundTripRetries = args.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
+        nonChMaxWaypointDistance = args.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
 
         return this;
     }
@@ -1027,6 +1031,7 @@ public class GraphHopper implements GraphHopperAPI {
                     routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
 
                 } else {
+                    checkNonChMaxWaypointDistance(points);
                     weighting = createWeighting(hints, encoder);
                     ghRsp.addDebugInfo("tmode:" + tMode.toString());
                 }
@@ -1076,6 +1081,27 @@ public class GraphHopper implements GraphHopperAPI {
             if (!bounds.contains(point.getLat(), point.getLon())) {
                 throw new PointOutOfBoundsException("Point " + i + " is ouf of bounds: " + point, i);
             }
+        }
+    }
+
+    private void checkNonChMaxWaypointDistance(List<GHPoint> points) {
+        if(nonChMaxWaypointDistance == Integer.MAX_VALUE){
+            return;
+        }
+        GHPoint lastPoint = points.get(0);
+        GHPoint point;
+        double dist;
+        DistanceCalc calc = Helper.DIST_3D;
+        for (int i = 1; i < points.size(); i++) {
+            point = points.get(i);
+            dist = calc.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
+            if (dist > nonChMaxWaypointDistance) {
+                Map<String, Object> detailMap = new HashMap<>(2);
+                detailMap.put("from", i-1);
+                detailMap.put("to", i);
+                throw new PointDistanceExceededException("Point " + i + " is too far from Point "+(i-1)+": " + point, detailMap);
+            }
+            lastPoint = point;
         }
     }
 
@@ -1179,4 +1205,9 @@ public class GraphHopper implements GraphHopperAPI {
         if (!allowWrites)
             throw new IllegalStateException("Writes are not allowed!");
     }
+
+    public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
+        this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
+    }
+
 }
