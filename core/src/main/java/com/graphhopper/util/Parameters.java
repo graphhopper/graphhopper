@@ -135,11 +135,11 @@ public class Parameters {
      */
     public static final class NON_CH {
 
-        private static final String PREFIX = "non_ch";
+        private static final String NON_CH_PREFIX = "non_ch.";
 
         /**
-         * Describes the max allowed distance between two consecutive waypoints of a non ch request
+         * Describes the max allowed distance between two consecutive waypoints of a non ch request. Distance is in Meter
          */
-        public static final String MAX_NON_CH_POINT_DISTANCE = PREFIX + "." + "max_waypoint_distance";
+        public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
     }
 }
