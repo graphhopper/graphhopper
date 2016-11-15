@@ -260,6 +260,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             flags |= directionBitMask;
         }
 
+        for (String restriction: restrictions) {
+            if(way.hasTag(restriction, "destination")){
+                flags = this.
+            }
+        }
+
         return flags;
     }
 
