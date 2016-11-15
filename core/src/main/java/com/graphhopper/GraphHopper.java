@@ -88,7 +88,7 @@ public class GraphHopper implements GraphHopperAPI {
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
 
-    private int maxNonChPointDistance = Integer.MAX_VALUE;
+    private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
     // for index
     private LocationIndex locationIndex;
     private int preciseIndexResolution = 300;
@@ -641,7 +641,7 @@ public class GraphHopper implements GraphHopperAPI {
         // routing
         maxVisitedNodes = args.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
         maxRoundTripRetries = args.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
-        maxNonChPointDistance = args.getInt(Routing.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
+        nonChMaxWaypointDistance = args.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
 
         return this;
     }
@@ -1031,7 +1031,7 @@ public class GraphHopper implements GraphHopperAPI {
                     routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
 
                 } else {
-                    checkPointBeelineDistance(points);
+                    checkNonChMaxWaypointDistance(points);
                     weighting = createWeighting(hints, encoder);
                     ghRsp.addDebugInfo("tmode:" + tMode.toString());
                 }
@@ -1084,8 +1084,8 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
-    private void checkPointBeelineDistance(List<GHPoint> points) {
-        if(maxNonChPointDistance == Integer.MAX_VALUE){
+    private void checkNonChMaxWaypointDistance(List<GHPoint> points) {
+        if(nonChMaxWaypointDistance == Integer.MAX_VALUE){
             return;
         }
         GHPoint lastPoint = points.get(0);
@@ -1095,7 +1095,7 @@ public class GraphHopper implements GraphHopperAPI {
         for (int i = 1; i < points.size(); i++) {
             point = points.get(i);
             dist = calc.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
-            if (dist > maxNonChPointDistance) {
+            if (dist > nonChMaxWaypointDistance) {
                 Map<String, Object> detailMap = new HashMap<>(2);
                 detailMap.put("from", i-1);
                 detailMap.put("to", i);
@@ -1206,8 +1206,8 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("Writes are not allowed!");
     }
 
-    public void setMaxNonChPointDistance(int maxNonChPointDistance) {
-        this.maxNonChPointDistance = maxNonChPointDistance;
+    public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
+        this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
     }
 
 }

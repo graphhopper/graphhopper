@@ -94,7 +94,6 @@ public class Parameters {
         public static final String EDGE_BASED = "edge_based";
         public static final String MAX_VISITED_NODES = "max_visited_nodes";
         public static final String INIT_MAX_VISITED_NODES = ROUTING_INIT_PREFIX + "max_visited_nodes";
-        public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + "max_non_ch_point_distance";
         public static final String INSTRUCTIONS = "instructions";
         public static final String CALC_POINTS = "calc_points";
         public static final String WAY_POINT_MAX_DISTANCE = "way_point_max_distance";
@@ -129,5 +128,18 @@ public class Parameters {
          * routing errors.
          */
         public static final String FORCE_HEADING = "ch.force_heading";
+    }
+
+    /**
+     * Properties for NON CH routing
+     */
+    public static final class NON_CH {
+
+        private static final String PREFIX = "non_ch";
+
+        /**
+         * Describes the max allowed distance between two consecutive waypoints of a non ch request
+         */
+        public static final String MAX_NON_CH_POINT_DISTANCE = PREFIX + "." + "max_waypoint_distance";
     }
 }

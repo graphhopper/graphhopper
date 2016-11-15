@@ -333,7 +333,7 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testMonacoMaxPointDistance() {
+    public void testMonacoNonChMaxWaypointDistance() {
         GHPoint from = new GHPoint(43.741069, 7.426854);
         GHPoint to = new GHPoint(43.727697, 7.419199);
 
@@ -343,20 +343,20 @@ public class GraphHopperIT {
                 setVehicle(vehicle).setWeighting("fastest");
 
         // Fail since points are too far
-        hopper.setMaxNonChPointDistance(1000);
+        hopper.setNonChMaxWaypointDistance(1000);
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
 
         // Suceed since points are not far anymore
-        hopper.setMaxNonChPointDistance(Integer.MAX_VALUE);
+        hopper.setNonChMaxWaypointDistance(Integer.MAX_VALUE);
         rsp = hopper.route(req);
 
         assertFalse(rsp.hasErrors());
     }
 
     @Test
-    public void testMonacoMaxPointDistanceMultiplePoints() {
+    public void testMonacoNonChMaxWaypointDistanceMultiplePoints() {
         GHPoint from = new GHPoint(43.741069, 7.426854);
         GHPoint via = new GHPoint(43.744445, 7.429483);
         GHPoint to = new GHPoint(43.727697, 7.419199);
@@ -368,7 +368,7 @@ public class GraphHopperIT {
                 setVehicle(vehicle).setWeighting("fastest");
 
         // Fail since points are too far
-        hopper.setMaxNonChPointDistance(1000);
+        hopper.setNonChMaxWaypointDistance(1000);
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
@@ -376,7 +376,7 @@ public class GraphHopperIT {
         assertEquals(2, exception.getDetails().get("to"));
 
         // Suceed since points are not far anymore
-        hopper.setMaxNonChPointDistance(Integer.MAX_VALUE);
+        hopper.setNonChMaxWaypointDistance(Integer.MAX_VALUE);
         rsp = hopper.route(req);
 
         assertFalse(rsp.hasErrors());
