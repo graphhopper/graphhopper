@@ -77,6 +77,9 @@ public class GenericWeighting extends AbstractWeighting {
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
+
+        time += time * flagEncoder.getDouble(edgeState.getFlags(), DataFlagEncoder.ACCESS_KEY);
+
         return time;
     }
 

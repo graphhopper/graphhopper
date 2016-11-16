@@ -228,7 +228,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/faundau_destination.osm.xml").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(new EncodingManager("car,generic", 8));
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(48.715516,9.628873, 48.714978,9.634216).
@@ -237,7 +237,15 @@ public class GraphHopperIT {
         // Take a massive detour, prior fastest was ~525m
         GHResponse rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(2538, rsp.getBest().getDistance(), 1);
+        assertEquals(2803, rsp.getBest().getDistance(), 1);
+
+        req = new GHRequest(48.715516,9.628873, 48.714978,9.634216).
+                setVehicle("generic").setWeighting("generic");
+
+        // Take a massive detour, prior fastest was ~525m
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(2803, rsp.getBest().getDistance(), 1);
     }
 
     @Test

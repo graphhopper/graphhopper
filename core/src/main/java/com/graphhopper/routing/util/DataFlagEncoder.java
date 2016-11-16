@@ -37,6 +37,9 @@ import java.util.Map.Entry;
  * @author Peter Karich
  */
 public class DataFlagEncoder extends AbstractFlagEncoder {
+
+    public static final int ACCESS_KEY = 578;
+
     private static final Map<String, Double> DEFAULT_SPEEDS = new LinkedHashMap<String, Double>() {
         {
             put("motorway", 100d);
@@ -61,6 +64,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     };
     private final Map<String, Integer> surfaceMap = new HashMap<>();
     private final Map<String, Integer> highwayMap = new HashMap<>();
+    private final Map<String, Integer> accessMap = new HashMap<>();
     private final List<String> transportModeList = new ArrayList<>();
     private final Map<String, Integer> transportModeMap = new HashMap<>();
     private final int transportModeTunnelValue;
@@ -71,6 +75,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private EncodedValue surfaceEncoder;
     private EncodedValue highwayEncoder;
     private EncodedValue transportModeEncoder;
+    private EncodedValue accessEncoder;
 
     public DataFlagEncoder() {
         // TODO include turn information
@@ -113,6 +118,27 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             surfaceMap.put(s, counter++);
         }
 
+        restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
+
+        //Ordered in increasingly restrictive order (currently done subjective
+        List<String> accessList = Arrays.asList(
+                //"designated",
+                "yes",
+                //"permissive",
+                // From here on, we should add weight
+                "customers",
+                "destination",
+                "delivery",
+                "agricultural",
+                "no"
+                );
+
+
+        counter = 0;
+        for (String s : accessList) {
+            accessMap.put(s, counter++);
+        }
+
         // hiking or biking or bus routes
         // detect border crossing -> barrier:border_control
     }
@@ -140,6 +166,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         transportModeEncoder = new EncodedValue("transport mode", shift, 3, 1, 0, transportModeMap.size(), true);
         shift += transportModeEncoder.getBits();
+
+        accessEncoder = new EncodedValue("access car", shift, 3, 1, 1, accessMap.size(), true);
+        shift += accessEncoder.getBits();
 
         return shift;
     }
@@ -178,6 +207,19 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             }
         }
         return hwValue;
+    }
+
+    int getAccessValue(ReaderWay way) {
+        int accessValue = 0;
+        Integer tmpAccessValue = 0;
+        for (String restriction: restrictions) {
+            tmpAccessValue = accessMap.get(way.getTag(restriction, "yes"));
+            if(tmpAccessValue != null && tmpAccessValue > accessValue){
+                accessValue = tmpAccessValue;
+            }
+        }
+
+        return accessValue;
     }
 
     @Override
@@ -265,6 +307,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             if (!isBit0Empty(flags))
                 throw new IllegalStateException("bit0 has to be empty on creation");
+
+            flags = accessEncoder.setValue(flags, getAccessValue(way));
 
             return flags;
         } catch (Exception ex) {
@@ -493,6 +537,16 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             return true;
 
         return GenericWeighting.class.isAssignableFrom(feature);
+    }
+
+    @Override
+    public double getDouble(long flags, int key) {
+        switch (key){
+            case ACCESS_KEY:
+                return accessEncoder.getValue(flags);
+            default:
+                throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
+        }
     }
 
     @Override
