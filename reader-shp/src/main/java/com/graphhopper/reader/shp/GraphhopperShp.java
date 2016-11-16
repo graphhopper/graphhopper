@@ -10,17 +10,16 @@ import com.graphhopper.storage.GraphHopperStorage;
 public class GraphhopperShp extends GraphHopper {
 	private final HashSet<EdgeAddedListener> edgeAddedListeners = new HashSet<>();
 
-    @Override
-    protected DataReader createReader(GraphHopperStorage ghStorage) {
-    	OSMShapeFileReader reader= new OSMShapeFileReader(ghStorage);
-    	for(EdgeAddedListener l:edgeAddedListeners){
-    		reader.addListener(l);
-    	}
-        return initDataReader(reader);
-    }
-    
+	@Override
+	protected DataReader createReader(GraphHopperStorage ghStorage) {
+		OSMShapeFileReader reader = new OSMShapeFileReader(ghStorage);
+		for (EdgeAddedListener l : edgeAddedListeners) {
+			reader.addListener(l);
+		}
+		return initDataReader(reader);
+	}
 
-	public void addListener(EdgeAddedListener l){
+	public void addListener(EdgeAddedListener l) {
 		edgeAddedListeners.add(l);
 	}
 

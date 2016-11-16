@@ -1,12 +1,10 @@
 package com.graphhopper.reader.shp;
 
-import com.graphhopper.reader.DataReader;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.*;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
-import com.vividsolutions.jts.geom.Coordinate;
+import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.FeatureSource;
@@ -15,13 +13,14 @@ import org.geotools.feature.FeatureIterator;
 import org.opengis.feature.simple.SimpleFeature;
 import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.filter.Filter;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import com.graphhopper.reader.DataReader;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.GraphStorage;
+import com.graphhopper.storage.NodeAccess;
+import com.vividsolutions.jts.geom.Coordinate;
 
 /**
  * ShapeFileReader takes care of reading a shape file and writing it to a road network graph
@@ -34,8 +33,6 @@ public abstract class ShapeFileReader implements DataReader {
 	private final NodeAccess nodeAccess;
 	protected final Graph graph;
 	protected EncodingManager encodingManager;
-
-	private static final Logger LOGGER = LoggerFactory.getLogger(ShapeFileReader.class);
 
 	public ShapeFileReader(GraphHopperStorage ghStorage) {
 		this.graphStorage = ghStorage;
@@ -54,7 +51,6 @@ public abstract class ShapeFileReader implements DataReader {
 	abstract void processJunctions() throws IOException;
 
 	abstract void processRoads() throws IOException;
-
 
 	protected FeatureIterator<SimpleFeature> getFeatureIerator(DataStore dataStore) throws IOException {
 		String typeName = dataStore.getTypeNames()[0];

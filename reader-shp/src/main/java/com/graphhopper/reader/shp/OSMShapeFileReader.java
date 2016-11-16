@@ -108,7 +108,7 @@ public class OSMShapeFileReader extends ShapeFileReader {
 								int nodeId = nextNodeId++;
 								coordState.put(c, nodeId);
 								saveTowerPosition(nodeId, c);
-							} else if(state == COORD_STATE_UNKNOWN){
+							} else if (state == COORD_STATE_UNKNOWN) {
 								// mark it as a pillar (which may get upgraded to an edge later)
 								coordState.put(c, COORD_STATE_PILLAR);
 							}

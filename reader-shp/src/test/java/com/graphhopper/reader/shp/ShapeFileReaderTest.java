@@ -231,8 +231,9 @@ public class ShapeFileReaderTest {
 			double pbfSecs = getSecondsTravel(pbfPath);
 
 			double frac = shpSecs / pbfSecs;
-			stats.accept(frac);
-			System.out.println( "" + (i+1) + " from " + pair.from + " to " + pair.to + " pbfSecs=" + pbfSecs + " shpSecs=" + shpSecs + " frac=" + frac);
+			double percentageDeviation = Math.abs(1.0 - frac) * 100;
+			stats.accept(percentageDeviation);
+			System.out.println( "" + (i+1) + " from " + pair.from + " to " + pair.to + " pbfSecs=" + pbfSecs + " shpSecs=" + shpSecs + " % deviation=" + percentageDeviation);
 		}
 		
 		assertTrue("Number of fails should be small for the chosen box",nbFails < nTests /3);
@@ -240,10 +241,8 @@ public class ShapeFileReaderTest {
 		// Test mean fraction. There will be some deviation as not all tags are considered etc,
 		// but we expect it to be small for a large number of tests
 		double mean = stats.getAverage();
-		System.out.println("Mean fraction between times " +mean);
-		double tol = 0.02;
-		assertTrue(mean > 1 - tol);
-		assertTrue(mean < 1 + tol);
+		System.out.println("Mean % deviation between times " +mean);
+		assertTrue(mean < 1.0);
 	}
 	
 	
