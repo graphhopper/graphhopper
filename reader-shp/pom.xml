@@ -58,10 +58,10 @@
         </dependency>
         
         <dependency>
+        	<!--  Inlucde the pbf reader for test purposes -->
             <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-core</artifactId>
+            <artifactId>graphhopper-reader-osm</artifactId>
             <version>${project.parent.version}</version>
-            <type>test-jar</type>
             <scope>test</scope>
         </dependency>        
     </dependencies>
