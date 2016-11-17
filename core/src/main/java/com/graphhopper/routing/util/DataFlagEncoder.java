@@ -220,6 +220,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return accessValue;
     }
 
+    //TODO It is bad that it's a bit static right now. If anyone changes the accessMap this method won't work anymore...
     public AccessValue getEdgeAccessValue(long flags){
         int accessValue = (int) accessEncoder.getValue(flags);
         switch (accessValue){
