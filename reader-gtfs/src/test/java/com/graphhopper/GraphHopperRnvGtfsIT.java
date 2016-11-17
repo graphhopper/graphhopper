@@ -55,7 +55,7 @@ public class GraphHopperRnvGtfsIT {
     public void testRouteAfterMidnight() {
         final double FROM_LAT = 49.4048, FROM_LON = 8.6765; // 116006, HD Hauptbahnhof
         final double TO_LAT = 49.42799, TO_LON = 8.6833; // 113612, Hans-Thoma-Platz
-        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(24, 0),
+        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(24, 20),
                 TO_LAT, TO_LON, time(24, 45));
     }
 
@@ -63,7 +63,7 @@ public class GraphHopperRnvGtfsIT {
     public void testRouteInSecondNight() {
         final double FROM_LAT = 49.4048, FROM_LON = 8.6765; // 116006, HD Hauptbahnhof
         final double TO_LAT = 49.42799, TO_LON = 8.6833; // 113612, Hans-Thoma-Platz
-        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(48, 0),
+        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(48, 20),
                 TO_LAT, TO_LON, time(48, 45));
     }
 
@@ -106,6 +106,14 @@ public class GraphHopperRnvGtfsIT {
         // If we couldn't walk, we would arrive at least one connection later.
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(19, 40),
                 TO_LAT, TO_LON, time(20, 8));
+    }
+
+    @Test
+    public void testRouteWithWalkingBeforeAndAfter() {
+        final double FROM_LAT = 49.517846, FROM_LON = 8.474073; // Stolberger Straße
+        final double TO_LAT = 49.45958, TO_LON = 8.479514; // Freiheitsplatz
+        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, time(21, 36),
+                TO_LAT, TO_LON, time(22, 21, 43));
     }
 
     private void assertRouteWeightIs(GraphHopperGtfs graphHopper, double from_lat, double from_lon, int earliestDepartureTime, double to_lat, double to_lon, int expectedWeight) {

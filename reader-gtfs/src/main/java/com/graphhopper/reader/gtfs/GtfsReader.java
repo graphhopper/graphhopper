@@ -15,6 +15,7 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.DistanceCalc;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.vividsolutions.jts.geom.Coordinate;
@@ -136,6 +137,8 @@ class GtfsReader implements DataReader {
                     edge.dest().getY(),
                     edge.dest().getX());
             ghEdge.setDistance(distance);
+            ghEdge.setFlags(graph.getEncodingManager().getEncoder("pt").setSpeed(ghEdge.getFlags(), 5.0));
+            ghEdge.setFlags(graph.getEncodingManager().getEncoder("pt").setAccess(ghEdge.getFlags(), true, true));
         }
     }
 

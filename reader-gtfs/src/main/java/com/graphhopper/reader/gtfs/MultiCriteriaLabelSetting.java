@@ -75,8 +75,7 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
         if (to.contains(from)) {
             targetLabels.add(label);
         }
-        EdgeFilter filter = new DefaultEdgeFilter(flagEncoder, false, true);
-        EdgeExplorer explorer = graph.createEdgeExplorer(filter);
+        EdgeExplorer explorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
         while (true) {
             visitedNodes++;
             if (maxVisitedNodes < getVisitedNodes())
