@@ -37,6 +37,7 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
  * mprins, improvements for travis CI and regarding JDK9 #806
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
  * ocampana, initial implementation for instructions
+ * PGWelch, shapefile reader #874
  * ratrun, route relations, GPX information, bike handling etc
  * rajanski, script to do routing via PostGIS
  * rodneyodonnell, improved dead end removal and fords
@@ -44,7 +45,7 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
  * seeebiii, motorcycle improvements 
  * Svantulden, improved documentation and nearest API
  * thehereward, code cleanups like #620
- * vvikas, ideas for many to many improvements
+ * vvikas, ideas for many to many improvements and #616
 
 ## Translations
 

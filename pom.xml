@@ -69,14 +69,7 @@
         <system>GitHub</system>
         <url>https://github.com/graphhopper/graphhopper/issues</url>
     </issueManagement>
-    <modules>
-        <module>tools-lgpl</module>
-        <module>core</module>
-        <module>reader-osm</module>
-        <module>reader-overlay-data</module>
-        <module>tools</module>
-        <module>web</module>
-    </modules>
+
     <prerequisites>
         <maven>3.2</maven>
     </prerequisites>
@@ -279,6 +272,16 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties />
+            <!-- update below module list too -->
+            <modules>
+                <module>tools-lgpl</module>
+                <module>core</module>
+                <module>reader-osm</module>
+                <module>reader-shp</module>
+                <module>reader-overlay-data</module>
+                <module>tools</module>
+                <module>web</module>
+            </modules>
             <build>
                 <plugins>
                     <plugin>
@@ -298,6 +301,18 @@
                 <jdk>9</jdk>
             </activation>
             <properties />
+            <modules>
+                <module>tools-lgpl</module>
+                <module>core</module>
+                <module>reader-osm</module>
+                <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
+                maybe there is a parameter solution for this instead
+                <module>reader-shp</module>
+                -->
+                <module>reader-overlay-data</module>
+                <module>tools</module>
+                <module>web</module>
+            </modules>
             <build>
                 <plugins>
                     <plugin>
