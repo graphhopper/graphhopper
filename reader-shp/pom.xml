@@ -10,7 +10,7 @@
     <name>GraphHopper Reader for Shapefile Data</name>
 	
     <properties>      
-        <geotools.version>13.2</geotools.version>
+        <geotools.version>15.2</geotools.version>
     </properties>
     	
     <parent>
@@ -58,7 +58,7 @@
         </dependency>
         
         <dependency>
-        	<!--  Inlucde the pbf reader for test purposes -->
+        	<!--  Include the pbf reader for test purposes -->
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-reader-osm</artifactId>
             <version>${project.parent.version}</version>
@@ -74,24 +74,4 @@
         </repository>
     </repositories>
 	
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>                
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <mainClass>com.graphhopper.import.osm.Import</mainClass>
-                        </manifest>
-                    </archive>
-                        	                    
-                    <!-- for standalone usage -->
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
 </project>
