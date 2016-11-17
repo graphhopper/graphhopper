@@ -38,8 +38,6 @@ import java.util.Map.Entry;
  */
 public class DataFlagEncoder extends AbstractFlagEncoder {
 
-    public static final int ACCESS_KEY = 578;
-
     private static final Map<String, Double> DEFAULT_SPEEDS = new LinkedHashMap<String, Double>() {
         {
             put("motorway", 100d);
@@ -220,6 +218,18 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
 
         return accessValue;
+    }
+
+    public AccessValue getEdgeAccessValue(long flags){
+        int accessValue = (int) accessEncoder.getValue(flags);
+        switch (accessValue){
+            case 0:
+                return AccessValue.ACCESSIBLE;
+            case 5:
+                return AccessValue.NOT_ACCESSIBLE;
+            default:
+                return AccessValue.EVENTUALLY_ACCESSIBLE;
+        }
     }
 
     @Override
@@ -540,16 +550,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public double getDouble(long flags, int key) {
-        switch (key){
-            case ACCESS_KEY:
-                return accessEncoder.getValue(flags);
-            default:
-                throw new UnsupportedOperationException("Unknown key " + key + " for double value.");
-        }
-    }
-
-    @Override
     public int getVersion() {
         return 1;
     }
@@ -572,5 +572,13 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         ConfigMap cMap = new ConfigMap();
         cMap.put("highways", map);
         return cMap;
+    }
+
+    public enum AccessValue{
+
+        ACCESSIBLE,
+        EVENTUALLY_ACCESSIBLE,
+        NOT_ACCESSIBLE
+
     }
 }
