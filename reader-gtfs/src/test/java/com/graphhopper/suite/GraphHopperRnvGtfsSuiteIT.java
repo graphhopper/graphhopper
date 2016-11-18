@@ -18,6 +18,7 @@ import org.jfree.chart.urls.StandardXYURLGenerator;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -79,9 +80,10 @@ public class GraphHopperRnvGtfsSuiteIT {
                 System.out.println(MessageFormat.format("Actual arrival: {0}", actualArrivalDateTime));
                 Duration expectedTravelTime = Duration.between(tripQuery.getDateTime(), expectedArrivalDateTime);
                 long actualTravelTimeSeconds = (long) route.getBest().getRouteWeight() - earliestDepartureTime;
-                travelTimes.add(expectedTravelTime.getSeconds(), actualTravelTimeSeconds);
+                long seconds = expectedTravelTime.getSeconds();
+                travelTimes.add(seconds, actualTravelTimeSeconds);
             } else {
-                System.out.println("Path not found.");
+                Assert.fail("No route found.");
             }
         }
         XYSeriesCollection dataset = new XYSeriesCollection();
@@ -91,7 +93,7 @@ public class GraphHopperRnvGtfsSuiteIT {
     }
 
     private JFreeChart createChart(XYSeriesCollection dataset) {
-        NumberAxis xAxis = new LogarithmicAxis("Web site");
+        NumberAxis xAxis = new LogarithmicAxis("bahn.de");
         xAxis.setRange(Math.min(dataset.getRangeLowerBound(false), dataset.getDomainLowerBound(false)), Math.max(dataset.getRangeUpperBound(false), dataset.getDomainUpperBound(false)));
         NumberAxis yAxis = new LogarithmicAxis("GraphHopper");
         yAxis.setRange(Math.min(dataset.getRangeLowerBound(false), dataset.getDomainLowerBound(false)), Math.max(dataset.getRangeUpperBound(false), dataset.getDomainUpperBound(false)));
