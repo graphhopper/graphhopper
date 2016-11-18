@@ -735,7 +735,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Opens existing graph.
+     * Opens existing graph folder.
      *
      * @param graphHopperFolder is the folder containing graphhopper files. Can be a compressed file
      *                          too ala folder-content.ghz.
@@ -749,9 +749,7 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("graph is already successfully loaded");
 
         if (graphHopperFolder.endsWith("-gh")) {
-            // do nothing  
-        } else if (graphHopperFolder.endsWith(".osm") || graphHopperFolder.endsWith(".xml")) {
-            throw new IllegalArgumentException("GraphHopperLocation cannot be the OSM file. Instead you need to use importOrLoad");
+            // do nothing
         } else if (!graphHopperFolder.contains(".")) {
             if (new File(graphHopperFolder + "-gh").exists())
                 graphHopperFolder += "-gh";
@@ -1085,7 +1083,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private void checkNonChMaxWaypointDistance(List<GHPoint> points) {
-        if(nonChMaxWaypointDistance == Integer.MAX_VALUE){
+        if (nonChMaxWaypointDistance == Integer.MAX_VALUE) {
             return;
         }
         GHPoint lastPoint = points.get(0);
@@ -1097,9 +1095,9 @@ public class GraphHopper implements GraphHopperAPI {
             dist = calc.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
             if (dist > nonChMaxWaypointDistance) {
                 Map<String, Object> detailMap = new HashMap<>(2);
-                detailMap.put("from", i-1);
+                detailMap.put("from", i - 1);
                 detailMap.put("to", i);
-                throw new PointDistanceExceededException("Point " + i + " is too far from Point "+(i-1)+": " + point, detailMap);
+                throw new PointDistanceExceededException("Point " + i + " is too far from Point " + (i - 1) + ": " + point, detailMap);
             }
             lastPoint = point;
         }
