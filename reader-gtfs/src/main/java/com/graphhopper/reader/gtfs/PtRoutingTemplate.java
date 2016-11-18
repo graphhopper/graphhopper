@@ -59,8 +59,8 @@ class PtRoutingTemplate implements RoutingTemplate {
 			ghResponse.addError(new PointNotFoundException("Cannot find entry point: " + enter, 0));
 		} else {
 //            ForwardInTime forwardInTime = new ForwardInTime(source);
-            int requestedTimeOfDay = ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) % (24 * 60 * 60);
-            int requestedDay = ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) / (24 * 60 * 60);
+            long requestedTimeOfDay = ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) % (24 * 60 * 60);
+            long requestedDay = ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) / (24 * 60 * 60);
 //            startNode = forwardInTime.find(requestedTimeOfDay);
 //            initialTime = forwardInTime.getTime() + requestedDay * (24 * 60 * 60);
 
@@ -163,7 +163,7 @@ class PtRoutingTemplate implements RoutingTemplate {
 						numBoardings++;
 					}
 				}
-				wrappedPath.setNumChanges(Math.max(numBoardings-1, 0));
+				wrappedPath.setNumChanges(numBoardings-1);
 				ghResponse.add(wrappedPath);
 			}
 		}

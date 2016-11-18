@@ -2,19 +2,17 @@ package com.graphhopper.suite;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.util.Helper;
-import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.LogarithmicAxis;
 import org.jfree.chart.axis.NumberAxis;
-import org.jfree.chart.labels.StandardXYToolTipGenerator;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
-import org.jfree.chart.urls.StandardXYURLGenerator;
+import org.jfree.data.xy.XYDataItem;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
 import org.junit.AfterClass;
@@ -22,6 +20,7 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
@@ -36,7 +35,7 @@ public class GraphHopperRnvGtfsSuiteIT {
 
     private static final String GRAPH_LOC = "target/graphhopperIT-rnv-gtfs";
     private static GraphHopperGtfs graphHopper;
-    public static final LocalDateTime GTFS_START_DATE = LocalDate.of(2016, 9, 19).atStartOfDay();
+    private static final LocalDateTime GTFS_START_DATE = LocalDate.of(2016, 10, 22).atStartOfDay();
 
     @BeforeClass
     public static void init() {
@@ -62,8 +61,7 @@ public class GraphHopperRnvGtfsSuiteIT {
         final List<TripQuery> tripQueries = reader.read(tripQueriesFile);
         XYSeries travelTimes = new XYSeries("Travel times", false, true);
         for (TripQuery tripQuery : tripQueries) {
-            LocalDateTime departureTime = tripQuery.getDateTime();
-            long earliestDepartureTime = Duration.between(GTFS_START_DATE, departureTime).getSeconds();
+            long earliestDepartureTime = Duration.between(GTFS_START_DATE, tripQuery.getDateTime()).getSeconds();
             GHRequest ghRequest = new GHRequest(tripQuery.getFromLat(), tripQuery.getFromLon(),
                             tripQuery.getToLat(), tripQuery.getToLon());
             ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT,
@@ -80,8 +78,7 @@ public class GraphHopperRnvGtfsSuiteIT {
                 System.out.println(MessageFormat.format("Actual arrival: {0}", actualArrivalDateTime));
                 Duration expectedTravelTime = Duration.between(tripQuery.getDateTime(), expectedArrivalDateTime);
                 long actualTravelTimeSeconds = (long) route.getBest().getRouteWeight() - earliestDepartureTime;
-                long seconds = expectedTravelTime.getSeconds();
-                travelTimes.add(seconds, actualTravelTimeSeconds);
+                travelTimes.add(new MyXYDataItem(expectedTravelTime.getSeconds(), actualTravelTimeSeconds, route.getBest()));
             } else {
                 Assert.fail("No route found.");
             }
@@ -93,15 +90,34 @@ public class GraphHopperRnvGtfsSuiteIT {
     }
 
     private JFreeChart createChart(XYSeriesCollection dataset) {
+        final double lower = Math.min(dataset.getRangeLowerBound(false), dataset.getDomainLowerBound(false));
+        final double upper = Math.max(dataset.getRangeUpperBound(false), dataset.getDomainUpperBound(false));
         NumberAxis xAxis = new LogarithmicAxis("bahn.de");
-        xAxis.setRange(Math.min(dataset.getRangeLowerBound(false), dataset.getDomainLowerBound(false)), Math.max(dataset.getRangeUpperBound(false), dataset.getDomainUpperBound(false)));
+        xAxis.setRange(lower, upper);
         NumberAxis yAxis = new LogarithmicAxis("GraphHopper");
-        yAxis.setRange(Math.min(dataset.getRangeLowerBound(false), dataset.getDomainLowerBound(false)), Math.max(dataset.getRangeUpperBound(false), dataset.getDomainUpperBound(false)));
-        XYPlot plot = new XYPlot(dataset, xAxis, yAxis, (XYItemRenderer)null);
-        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(false, true);
-        plot.setRenderer(renderer);
+        yAxis.setRange(lower, upper);
+        XYLineAndShapeRenderer renderer = new XYLineAndShapeRenderer(false, true) {
+            @Override
+            public Paint getItemPaint(int row, int column) {
+                if (((MyXYDataItem) dataset.getSeries(0).getDataItem(column)).bestRoute.getNumChanges() == -1) {
+                    return Color.RED;
+                } else {
+                    return Color.BLACK;
+                }
+            }
+        };
+        XYPlot plot = new XYPlot(dataset, xAxis, yAxis, renderer);
         plot.setOrientation(PlotOrientation.VERTICAL);
-        JFreeChart chart = new JFreeChart("Travel time [s]", JFreeChart.DEFAULT_TITLE_FONT, plot, true);
-        return chart;
+        return new JFreeChart("Travel time [s]", JFreeChart.DEFAULT_TITLE_FONT, plot, false);
     }
+
+    private static class MyXYDataItem extends XYDataItem {
+        final PathWrapper bestRoute;
+
+        MyXYDataItem(long seconds, long actualTravelTimeSeconds, PathWrapper bestRoute) {
+            super(seconds, actualTravelTimeSeconds);
+            this.bestRoute = bestRoute;
+        }
+    }
+
 }
