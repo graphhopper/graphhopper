@@ -274,6 +274,8 @@ elif [ "$ACTION" = "measurement" ]; then
  # IMPORT_TIME=$(($END - $START))
 
  function startMeasurement {
+    execMvn --projects core -DskipTests clean install
+    execMvn --projects tools -DskipTests install assembly:single
     COUNT=5000
     commit_info=$(git log -n 1 --pretty=oneline)
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
@@ -286,8 +288,6 @@ elif [ "$ACTION" = "measurement" ]; then
  last_commits=$3
   
  if [ "$last_commits" = "" ]; then
-   # use current version
-   execMvn --projects tools -DskipTests clean install assembly:single
    startMeasurement
    exit
  fi
@@ -300,7 +300,6 @@ elif [ "$ACTION" = "measurement" ]; then
    M_FILE_NAME="measurement$M_FILE_NAME.properties"
    echo -e "\nusing commit $commit and $M_FILE_NAME"
    
-   execMvn --projects tools -DskipTests clean install assembly:single
    startMeasurement
    echo -e "\nmeasurement.commit=$commit\n" >> "$M_FILE_NAME"
  done
