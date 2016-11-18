@@ -748,11 +748,10 @@ public class GraphHopper implements GraphHopperAPI {
         if (fullyLoaded)
             throw new IllegalStateException("graph is already successfully loaded");
 
-        if (graphHopperFolder.endsWith("-gh")) {
-            // do nothing
-        } else if (!graphHopperFolder.contains(".")) {
-            if (new File(graphHopperFolder + "-gh").exists())
-                graphHopperFolder += "-gh";
+        File tmpFileOrFolder = new File(graphHopperFolder);
+
+        if (!tmpFileOrFolder.isDirectory() && tmpFileOrFolder.exists()) {
+            throw new IllegalArgumentException("GraphHopperLocation cannot be an existing file. Has to be either non-existing or a folder.");
         } else {
             File compressed = new File(graphHopperFolder + ".ghz");
             if (compressed.exists() && !compressed.isDirectory()) {
