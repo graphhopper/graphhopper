@@ -648,6 +648,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private AStarBidirection createAStarBidirection(final Graph graph) {
         return new AStarBidirection(graph, prepareWeighting, traversalMode) {
+            @Override
+            protected void initCollections(int size) {
+                super.initCollections(Math.min(size, 2000));
+            }
 
             @Override
             protected boolean finished() {
@@ -680,6 +684,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private AbstractBidirAlgo createDijkstraBidirection(final Graph graph) {
         return new DijkstraBidirectionRef(graph, prepareWeighting, traversalMode) {
+            @Override
+            protected void initCollections(int size) {
+                super.initCollections(Math.min(size, 2000));
+            }
 
             @Override
             public boolean finished() {

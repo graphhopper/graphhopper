@@ -48,7 +48,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
 
     public DijkstraBidirectionRef(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
-        int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
+        int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
         initCollections(size);
     }
 
