@@ -56,7 +56,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
         openSetFrom = new PriorityQueue<SPTEntry>(size);
         bestWeightMapFrom = new TIntObjectHashMap<SPTEntry>(size);
 
-        openSetTo = new PriorityQueue<SPTEntry>(size / 10);
+        openSetTo = new PriorityQueue<SPTEntry>(size);
         bestWeightMapTo = new TIntObjectHashMap<SPTEntry>(size);
     }
 
