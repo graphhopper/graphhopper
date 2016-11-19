@@ -88,6 +88,14 @@ public class GraphHopperRnvGtfsIT {
     }
 
     @Test
+    public void testWeekendRouteWhichFailsIfBusinessDayIsNotRolledOver() {
+        final double FROM_LAT = 49.49058, FROM_LON = 8.37085; // Wilhelm-Tell-Str
+        final double TO_LAT = 49.41947, TO_LON = 8.66979; // Pädagog. Hochschule
+        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, LocalDateTime.of(2016,11,6,0,42),
+                TO_LAT, TO_LON, LocalDateTime.of(2016,11,6,2,46));
+    }
+
+    @Test
     public void testRouteWithVeryLongTravelTimeAccordingToBahnDe() {
         final double FROM_LAT = 49.442904, FROM_LON = 8.519059; // Sporwoerthplatz
         final double TO_LAT = 49.562158, TO_LON = 8.448643; // Fuellenweg
@@ -103,8 +111,8 @@ public class GraphHopperRnvGtfsIT {
         ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, getSeconds(earliestDepartureTime));
         GHResponse route = graphHopper.route(ghRequest);
         assertFalse(route.hasErrors());
-        assertNotEquals("Solution doesn't use transit at all.", -1, route.getBest().getNumChanges());
         assertEquals(expectedArrivalTime, GTFS_START_DATE.atStartOfDay().plusSeconds((long) route.getBest().getRouteWeight()));
+        assertNotEquals("Solution doesn't use transit at all.", -1, route.getBest().getNumChanges());
 
     }
 

@@ -282,7 +282,8 @@ class GtfsReader implements DataReader {
                     0.0,
                     false);
             edge.setName(getRouteName(feed, trip));
-            edges.put(edge.getEdge(), new BoardEdge(0, validOnDay));
+            int dayShift = orderedStop.departure_time / (24 * 60 * 60);
+            edges.put(edge.getEdge(), new BoardEdge(0, getValidOn(validOnDay, dayShift)));
             edge = graph.edge(
                     i-3,
                     i-1,
@@ -291,6 +292,20 @@ class GtfsReader implements DataReader {
             edge.setName(getRouteName(feed, trip));
             edges.put(edge.getEdge(), new DwellEdge(orderedStop.departure_time - orderedStop.arrival_time));
             prev = orderedStop;
+        }
+    }
+
+    private BitSet getValidOn(BitSet validOnDay, int dayShift) {
+        if (dayShift == 0) {
+            return validOnDay;
+        } else {
+            BitSet bitSet = new BitSet(validOnDay.length() + 1);
+            for (int i=0; i<validOnDay.length(); i++) {
+                if (validOnDay.get(i)) {
+                    bitSet.set(i+1);
+                }
+            }
+            return bitSet;
         }
     }
 
