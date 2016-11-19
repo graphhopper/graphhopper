@@ -274,7 +274,6 @@
             <properties />
             <!-- update below module list too -->
             <modules>
-                <module>tools-lgpl</module>
                 <module>core</module>
                 <module>reader-osm</module>
                 <module>reader-shp</module>
@@ -302,7 +301,6 @@
             </activation>
             <properties />
             <modules>
-                <module>tools-lgpl</module>
                 <module>core</module>
                 <module>reader-osm</module>
                 <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518

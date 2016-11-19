@@ -17,8 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.coll.IntDoubleBinHeap;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -43,7 +42,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     protected double[] weights;
     private int[] parents;
     private int[] edgeIds;
-    private IntDoubleBinHeap heap;
+    private IntDoubleBinaryHeap heap;
     private int visitedNodes;
     private boolean doClear = true;
     private int endNode;
@@ -63,7 +62,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
         Arrays.fill(weights, Double.MAX_VALUE);
 
-        heap = new IntDoubleBinHeap();
+        heap = new IntDoubleBinaryHeap(1000);
         changedNodes = new TIntArrayListWithCap();
     }
 

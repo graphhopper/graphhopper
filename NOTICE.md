@@ -11,16 +11,13 @@ The core module includes the following software:
  * protobuf - New BSD license
  * OSM-binary - LGPL license
  * Osmosis - public domain, see osmosis-copying.txt under core/files
- * XMLGraphics-Commons for CGIAR elevation files - (Apache License)
+ * XMLGraphics-Commons for CGIAR elevation files (Apache License)
  * Apache Commons Lang - we copied the implementation of the Levenshtein Distance (Apache License)
+ * Apache Commons Collections - we copied parts of the BinaryHeap (Apache License)
 
 tools:
 
- * apache-compress
-
-tools-lgpl:
-
- * tools from OpenTripPlanner licensed under LGPL
+ * uses Apache Compress
 
 web:
 

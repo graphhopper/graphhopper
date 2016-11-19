@@ -51,8 +51,10 @@ public abstract class AbstractBinHeapTest {
         binHeap.insert(123, 2);
         binHeap.insert(120, 3);
         binHeap.insert(130, 4);
+        binHeap.insert(80, 5);
 
         assertEquals(1, (int) binHeap.pollElement());
+        assertEquals(5, (int) binHeap.pollElement());
         assertEquals(3, (int) binHeap.pollElement());
         assertEquals(2, (int) binHeap.pollElement());
         assertEquals(1, (int) binHeap.getSize());
