@@ -200,12 +200,12 @@ public class Path {
         }
 
         setFromNode(goalEdge.adjNode);
-        time = (long) goalEdge.weight * 1000;
         reverseOrder();
 
         if (weighting instanceof TimeDependentWeighting) {
             // We have to calculate times again because the previously (backwardly) calculated travel times are wrong.
             // See processEdge.
+            time = (long) goalEdge.weight * 1000;
             distance = 0;
             forEveryEdge(new EdgeVisitor() {
                 @Override

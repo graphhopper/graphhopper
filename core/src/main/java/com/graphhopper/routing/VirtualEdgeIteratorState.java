@@ -37,12 +37,11 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     private final int originalTraversalKey;
     private double distance;
     private long flags;
-    private int additionalField;
     private String name;
     // indication if edges are dispreferred as start/stop edge 
     private boolean unfavored;
 
-    public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList, int additionalField) {
+    public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList) {
         this.originalTraversalKey = originalTraversalKey;
         this.edgeId = edgeId;
         this.baseNode = baseNode;
@@ -51,7 +50,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         this.flags = flags;
         this.name = name;
         this.pointList = pointList;
-        this.additionalField = additionalField;
     }
 
     /**
@@ -175,7 +173,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
 
     @Override
     public int getAdditionalField() {
-        return additionalField;
+        throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
