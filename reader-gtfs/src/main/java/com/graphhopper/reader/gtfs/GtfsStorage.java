@@ -1,8 +1,10 @@
 package com.graphhopper.reader.gtfs;
 
+import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
+import com.graphhopper.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
 import org.mapdb.*;
@@ -11,11 +13,19 @@ import java.io.File;
 import java.time.LocalDate;
 import java.util.*;
 
-class GtfsStorage implements GraphExtension{
+class GtfsStorage implements GraphExtension {
 	private Directory dir;
 	private final TIntObjectMap<AbstractPtEdge> edges = new TIntObjectHashMap<>();
 	private boolean flushed = false;
 	private LocalDate startDate;
+
+    static EdgeType getEdgeType(EdgeIterator iter) {
+        return EdgeType.values()[iter.getAdditionalField()];
+    }
+
+    enum EdgeType {
+        UNSPECIFIED, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, STOP_NODE_MARKER_EDGE, STOP_EXIT_NODE_MARKER_EDGE, HOP_EDGE, DWELL_EDGE, BOARD_EDGE, OVERNIGHT_EDGE, TRANSFER_EDGE, WAIT_IN_STATION_EDGE, TIME_PASSES_PT_EDGE;
+    }
 
 	public TIntObjectMap<AbstractPtEdge> getEdges() {
 		return edges;
@@ -42,7 +52,7 @@ class GtfsStorage implements GraphExtension{
 
 	@Override
 	public int getDefaultEdgeFieldValue() {
-		return 0;
+		return EdgeType.UNSPECIFIED.ordinal();
 	}
 
 	@Override

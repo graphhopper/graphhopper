@@ -8,10 +8,10 @@ class EnterTimeExpandedNetworkEdge extends AbstractPtEdge {
         this.time = time;
     }
 
-    double traveltime(long earliestStartTime) {
+    static double traveltime(int edgeTimeValue, long earliestStartTime) {
         int timeOfDay = (int) (earliestStartTime % (24*60*60));
-        if (timeOfDay <= this.time) {
-            return (time - timeOfDay);
+        if (timeOfDay <= edgeTimeValue) {
+            return (edgeTimeValue - timeOfDay);
         } else {
             return Double.POSITIVE_INFINITY;
         }

@@ -22,7 +22,6 @@ import com.google.common.collect.SetMultimap;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.TimeDependentRoutingAlgorithm;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TimeDependentWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -30,7 +29,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.*;
 
@@ -44,7 +42,7 @@ import java.util.*;
  */
 class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
     private final Graph graph;
-    private final FlagEncoder flagEncoder;
+    private final PtFlagEncoder flagEncoder;
     private final Weighting weighting;
     private final SetMultimap<Integer, SPTEntry> fromMap;
     private final PriorityQueue<SPTEntry> fromHeap;
@@ -55,7 +53,7 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
     MultiCriteriaLabelSetting(Graph graph, Weighting weighting, int maxVisitedNodes, GtfsStorage gtfsStorage) {
         this.graph = graph;
         this.weighting = weighting;
-        this.flagEncoder = weighting.getFlagEncoder();
+        this.flagEncoder = (PtFlagEncoder) weighting.getFlagEncoder();
         this.maxVisitedNodes = maxVisitedNodes;
         this.gtfsStorage = gtfsStorage;
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
@@ -87,15 +85,15 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
             while (iter.next()) {
                 if (iter.getEdge() == label.edge)
                     continue;
-                AbstractPtEdge edge = gtfsStorage.getEdges().get(iter.getEdge());
 
-                if (edge instanceof BoardEdge) {
+                GtfsStorage.EdgeType edgeType = GtfsStorage.getEdgeType(iter);
+                if (edgeType == GtfsStorage.EdgeType.BOARD_EDGE) {
                     int trafficDay = (int) (label.weight) / (24 * 60 * 60);
-                    if (!((BoardEdge) edge).validOn.get(trafficDay)) {
+                    if (!((BoardEdge) gtfsStorage.getEdges().get(iter.getEdge())).validOn.get(trafficDay)) {
                         continue;
                     }
-                } else if (edge instanceof EnterTimeExpandedNetworkEdge) {
-                    if ((int) (label.weight) % (24 * 60 * 60) > ((EnterTimeExpandedNetworkEdge) edge).time) {
+                } else if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
+                    if ((int) (label.weight) % (24 * 60 * 60) > flagEncoder.getTime(iter.getFlags())) {
                         continue;
                     } else {
                         if (foundEnteredTimeExpandedNetworkEdge) {
@@ -104,6 +102,9 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
                             foundEnteredTimeExpandedNetworkEdge = true;
                         }
                     }
+                } else if (edgeType == GtfsStorage.EdgeType.STOP_EXIT_NODE_MARKER_EDGE
+                        || edgeType == GtfsStorage.EdgeType.STOP_NODE_MARKER_EDGE) {
+                    continue;
                 }
 
                 double tmpWeight;
@@ -224,32 +225,4 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
         return "Ulrich";
     }
 
-    private static class SPTEntryComparator implements Comparator<SPTEntry> {
-        private final GtfsStorage gtfsStorage;
-
-        public SPTEntryComparator(GtfsStorage gtfsStorage) {
-            this.gtfsStorage = gtfsStorage;
-        }
-
-        @Override
-        public int compare(SPTEntry o1, SPTEntry o2) {
-            int weight1 = weight(o1);
-            int weight2 = weight(o2);
-            int r = Integer.compare(weight1, weight2);
-            if (r != 0) {
-                return r;
-            } else {
-                return o1.compareTo(o2);
-            }
-        }
-
-        private int weight(SPTEntry o1) {
-            AbstractPtEdge edge = gtfsStorage.getEdges().get(o1.edge);
-            if (edge instanceof HopEdge || edge instanceof DwellEdge || edge instanceof LeaveTimeExpandedNetworkEdge) {
-                return -1;
-            } else {
-                return 0;
-            }
-        }
-    }
 }

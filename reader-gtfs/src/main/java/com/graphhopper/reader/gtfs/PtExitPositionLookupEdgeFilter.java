@@ -4,15 +4,10 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.util.EdgeIteratorState;
 
 class PtExitPositionLookupEdgeFilter implements EdgeFilter {
-	private final GtfsStorage gtfsStorage;
-
-	PtExitPositionLookupEdgeFilter(GtfsStorage gtfsStorage) {
-		this.gtfsStorage = gtfsStorage;
-	}
 
 	@Override
 	public boolean accept(EdgeIteratorState edgeState) {
-		AbstractPtEdge ptEdge = gtfsStorage.getEdges().get(edgeState.getEdge());
-		return ptEdge == null || ptEdge instanceof StopExitNodeMarkerEdge;
+		GtfsStorage.EdgeType edgeType = GtfsStorage.EdgeType.values()[edgeState.getAdditionalField()];
+		return edgeType == GtfsStorage.EdgeType.UNSPECIFIED || edgeType == GtfsStorage.EdgeType.STOP_EXIT_NODE_MARKER_EDGE;
 	}
 }
