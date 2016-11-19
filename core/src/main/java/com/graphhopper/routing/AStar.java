@@ -17,7 +17,8 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.FlagEncoder;
+import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
@@ -28,8 +29,6 @@ import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Parameters;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.util.PriorityQueue;
 
@@ -45,7 +44,7 @@ import java.util.PriorityQueue;
 public class AStar extends AbstractRoutingAlgorithm {
     private WeightApproximator weightApprox;
     private int visitedCount;
-    private TIntObjectMap<AStarEntry> fromMap;
+    private IntObjectMap<AStarEntry> fromMap;
     private PriorityQueue<AStarEntry> prioQueueOpenSet;
     private AStarEntry currEdge;
     private int to1 = -1;
@@ -68,7 +67,7 @@ public class AStar extends AbstractRoutingAlgorithm {
     }
 
     protected void initCollections(int size) {
-        fromMap = new TIntObjectHashMap<AStarEntry>();
+        fromMap = new GHIntObjectHashMap<AStarEntry>();
         prioQueueOpenSet = new PriorityQueue<AStarEntry>(size);
     }
 

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
 import com.graphhopper.storage.Directory;
@@ -24,7 +25,6 @@ import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
-import gnu.trove.map.hash.TIntObjectHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,8 +49,8 @@ public class SRTMProvider implements ElevationProvider {
     private final int DEFAULT_WIDTH = 1201;
     private final int WIDTH_BYTE_INDEX = 0;
     // use a map as an array is not quite useful if we want to hold only parts of the world
-    private final TIntObjectHashMap<HeightTile> cacheData = new TIntObjectHashMap<HeightTile>();
-    private final TIntObjectHashMap<String> areas = new TIntObjectHashMap<String>();
+    private final GHIntObjectHashMap<HeightTile> cacheData = new GHIntObjectHashMap<HeightTile>();
+    private final GHIntObjectHashMap<String> areas = new GHIntObjectHashMap<String>();
     private final double precision = 1e7;
     private final double invPrecision = 1 / precision;
     private Directory dir;

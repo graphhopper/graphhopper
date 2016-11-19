@@ -17,6 +17,7 @@
  */
 package com.graphhopper.reader.osm;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -616,7 +617,7 @@ public class GraphHopperOSMTest {
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{10, 5, 6, 7, 11}, paths.get(0).calcNodes().toArray());
+        assertEquals(IntArrayList.from(9, 5, 6, 7, 11), paths.get(0).calcNodes());
     }
 
     @Test
@@ -636,8 +637,8 @@ public class GraphHopperOSMTest {
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
         assertEquals(1, response.getAll().size());
-        assertArrayEquals(new int[]{10, 4, 3, 11}, paths.get(0).calcNodes().toArray());
-        assertArrayEquals(new int[]{11, 8, 1, 2, 9}, paths.get(1).calcNodes().toArray());
+        assertEquals(IntArrayList.from(9, 4, 3, 10), paths.get(0).calcNodes());
+        assertEquals(IntArrayList.from(10, 8, 1, 2, 11), paths.get(1).calcNodes());
     }
 
     @Test
@@ -656,8 +657,8 @@ public class GraphHopperOSMTest {
         GHResponse response = new GHResponse();
         List<Path> paths = instance.calcPaths(req, response);
         assertFalse(response.hasErrors());
-        assertArrayEquals(new int[]{10, 4, 3, 8, 7, 9}, paths.get(0).calcNodes().toArray());
-        assertArrayEquals(new int[]{9, 6, 5, 10, 4, 3, 11}, paths.get(1).calcNodes().toArray());
+        assertEquals(IntArrayList.from(9, 4, 3, 8, 7, 11), paths.get(0).calcNodes());
+        assertEquals(IntArrayList.from(11, 6, 5, 9, 4, 3, 10), paths.get(1).calcNodes());
     }
 
     @Test

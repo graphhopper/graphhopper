@@ -35,18 +35,11 @@
             <comments>A business-friendly OSS license</comments>
         </license>
     </licenses>
-    <dependencies>
+    <dependencies>        
         <dependency>
-            <groupId>com.graphhopper</groupId>
-            <artifactId>graphhopper-tools-lgpl</artifactId>
-            <version>${project.parent.version}</version>
-        </dependency>
-
-        <!-- Trove is LGPL and slightly big (~3MB) -->
-        <dependency>
-            <groupId>net.sf.trove4j</groupId>
-            <artifactId>trove4j</artifactId>
-            <version>3.0.3</version>
+            <groupId>com.carrotsearch</groupId>
+            <artifactId>hppc</artifactId>
+            <version>0.7.2</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -88,7 +81,30 @@
             <version>${json.org.version}</version>
             <scope>test</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <scope>test</scope>
+            <version>2.44.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.opera</groupId>
+            <artifactId>operadriver</artifactId>
+            <scope>test</scope>
+            <version>1.5</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.seleniumhq.selenium</groupId>
+                    <artifactId>selenium-remote-driver</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <scope>test</scope>
+            <version>4.11</version>
+        </dependency>
     </dependencies>
 
     <build>

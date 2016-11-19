@@ -17,8 +17,7 @@
  */
 package com.graphhopper.reader;
 
-import gnu.trove.list.TLongList;
-import gnu.trove.list.array.TLongArrayList;
+import com.carrotsearch.hppc.LongArrayList;
 
 /**
  * Represents a way received from the reader.
@@ -27,13 +26,13 @@ import gnu.trove.list.array.TLongArrayList;
  * @author Nop
  */
 public class ReaderWay extends ReaderElement {
-    protected final TLongList nodes = new TLongArrayList(5);
+    protected final LongArrayList nodes = new LongArrayList(5);
 
     public ReaderWay(long id) {
         super(id, WAY);
     }
 
-    public TLongList getNodes() {
+    public LongArrayList getNodes() {
         return nodes;
     }
 

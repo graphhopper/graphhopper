@@ -17,8 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.carrotsearch.hppc.IntArrayDeque;
 import com.graphhopper.coll.GHBitSet;
-import gnu.trove.stack.array.TIntArrayStack;
 
 /**
  * Implementation of depth first search (DFS) by LIFO queue
@@ -34,19 +34,19 @@ public class DepthFirstSearch extends XFirstSearch {
      */
     @Override
     public void start(EdgeExplorer explorer, int startNode) {
-        TIntArrayStack stack = new TIntArrayStack();
+        IntArrayDeque stack = new IntArrayDeque();
 
         GHBitSet explored = createBitSet();
-        stack.push(startNode);
+        stack.addLast(startNode);
         int current;
         while (stack.size() > 0) {
-            current = stack.pop();
+            current = stack.removeLast();
             if (!explored.contains(current) && goFurther(current)) {
                 EdgeIterator iter = explorer.setBaseNode(current);
                 while (iter.next()) {
                     int connectedId = iter.getAdjNode();
                     if (checkAdjacent(iter)) {
-                        stack.push(connectedId);
+                        stack.addLast(connectedId);
                     }
                 }
                 explored.add(current);

@@ -17,18 +17,7 @@
  */
 package com.graphhopper.reader.shp;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-
-import org.geotools.data.DataStore;
-import org.geotools.feature.FeatureIterator;
-import org.opengis.feature.simple.SimpleFeature;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
+import com.graphhopper.coll.GHObjectIntHashMap;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
@@ -41,9 +30,17 @@ import com.graphhopper.util.shapes.GHPoint;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.LineString;
 import com.vividsolutions.jts.geom.MultiLineString;
+import org.geotools.data.DataStore;
+import org.geotools.feature.FeatureIterator;
+import org.opengis.feature.simple.SimpleFeature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import gnu.trove.impl.Constants;
-import gnu.trove.map.hash.TObjectIntHashMap;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 
 /**
  * OSMShapeFileReader for files present at : http://download.geofabrik.de/ It
@@ -53,13 +50,12 @@ import gnu.trove.map.hash.TObjectIntHashMap;
  * @author Philip Welch
  */
 public class OSMShapeFileReader extends ShapeFileReader {
-    private static final int COORD_STATE_UNKNOWN = -1;
+    private static final int COORD_STATE_UNKNOWN = 0;
     private static final int COORD_STATE_PILLAR = -2;
     private static final int FIRST_NODE_ID = 1;
     private static final String[] DIRECT_COPY_TAGS = new String[]{"name"};
     private File roadsFile;
-    private final TObjectIntHashMap<Coordinate> coordState = new TObjectIntHashMap<>(
-            Constants.DEFAULT_CAPACITY, Constants.DEFAULT_LOAD_FACTOR, COORD_STATE_UNKNOWN);
+    private final GHObjectIntHashMap<Coordinate> coordState = new GHObjectIntHashMap<>(1000, 0.7f);
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
     private static final Logger LOGGER = LoggerFactory.getLogger(OSMShapeFileReader.class);
     private final HashSet<EdgeAddedListener> edgeAddedListeners = new HashSet<>();

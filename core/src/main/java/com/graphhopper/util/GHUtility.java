@@ -17,6 +17,10 @@
  */
 package com.graphhopper.util;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntIndexedContainer;
+import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.LongIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
@@ -24,8 +28,6 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -168,13 +170,13 @@ public class GHUtility {
     }
 
     public static Graph shuffle(Graph g, Graph sortedGraph) {
-        int len = g.getNodes();
-        TIntList list = new TIntArrayList(len, -1);
-        list.fill(0, len, -1);
-        for (int i = 0; i < len; i++) {
+        int nodes = g.getNodes();
+        IntArrayList list = new IntArrayList(nodes);
+        fill(list, nodes, -1);
+        for (int i = 0; i < nodes; i++) {
             list.set(i, i);
         }
-        list.shuffle(new Random());
+        shuffle(list, new Random());
         return createSortedGraph(g, sortedGraph, list);
     }
 
@@ -183,9 +185,9 @@ public class GHUtility {
      * significant difference (bfs) for querying or are worse (z-curve).
      */
     public static Graph sortDFS(Graph g, Graph sortedGraph) {
-        final TIntList list = new TIntArrayList(g.getNodes(), -1);
         int nodes = g.getNodes();
-        list.fill(0, nodes, -1);
+        final IntArrayList list = new IntArrayList(nodes);
+        fill(list, nodes, -1);
         final GHBitSetImpl bitset = new GHBitSetImpl(nodes);
         final AtomicInteger ref = new AtomicInteger(-1);
         EdgeExplorer explorer = g.createEdgeExplorer();
@@ -207,7 +209,7 @@ public class GHUtility {
         return createSortedGraph(g, sortedGraph, list);
     }
 
-    static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final TIntList oldToNewNodeList) {
+    static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final IntIndexedContainer oldToNewNodeList) {
         AllEdgesIterator eIter = fromGraph.getAllEdges();
         while (eIter.next()) {
             int base = eIter.getBaseNode();
@@ -356,6 +358,50 @@ public class GHUtility {
      */
     public static int getEdgeFromEdgeKey(int edgeKey) {
         return edgeKey / 2;
+    }
+
+    public static IntArrayList reverse(final IntArrayList arr) {
+        final int[] buffer = arr.buffer;
+        for (int start = 0, end = arr.size() - 1; start < end; start++, end--) {
+            // swap the values
+            int tmp = buffer[start];
+            buffer[start] = buffer[end];
+            buffer[end] = tmp;
+        }
+        return arr;
+    }
+
+    public static IntArrayList fill(final IntArrayList arr, final int max, final int value) {
+        // TODO use System.arraycopy and direct buffer somehow
+        for (int i = 0; i < max; i++) {
+            arr.add(value);
+        }
+        return arr;
+    }
+
+    public static IntArrayList shuffle(final IntArrayList arr, Random random) {
+        int[] buffer = arr.buffer;
+        int max = arr.size();
+        int maxHalf = max / 2;
+        for (int x1 = 0; x1 < maxHalf; x1++) {
+            int x2 = random.nextInt(maxHalf) + maxHalf;
+            int tmp = buffer[x1];
+            buffer[x1] = buffer[x2];
+            buffer[x2] = tmp;
+        }
+        return arr;
+    }
+
+    /**
+     * @return a copy of inputArray from [offset, offset+length)
+     */
+    public static LongIndexedContainer copy(LongArrayList inputArray, int offset, int length) {
+        long transfer[] = new long[length];
+        System.arraycopy(inputArray.buffer, offset, transfer, 0, length);
+        LongArrayList arr = new LongArrayList(0);
+        arr.buffer = transfer;
+        arr.elementsCount = length;
+        return arr;
     }
 
     /**

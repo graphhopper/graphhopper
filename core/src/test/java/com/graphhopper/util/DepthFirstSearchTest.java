@@ -17,14 +17,13 @@
  */
 package com.graphhopper.util;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,8 +36,8 @@ import static org.junit.Assert.assertTrue;
 public class DepthFirstSearchTest {
 
     int counter;
-    TIntHashSet set = new TIntHashSet();
-    TIntList list = new TIntArrayList();
+    GHIntHashSet set = new GHIntHashSet();
+    IntArrayList list = new IntArrayList();
 
     @Before
     public void setup() {
@@ -72,7 +71,7 @@ public class DepthFirstSearchTest {
         dfs.start(g.createEdgeExplorer(new DefaultEdgeFilter(fe, false, true)), 1);
 
         assertTrue(counter > 0);
-        assertEquals("{1, 2, 3, 4, 5, 6}", list.toString());
+        assertEquals("[1, 2, 3, 4, 5, 6]", list.toString());
     }
 
     @Test
@@ -100,7 +99,7 @@ public class DepthFirstSearchTest {
         dfs.start(g.createEdgeExplorer(new DefaultEdgeFilter(fe, false, true)), 1);
 
         assertTrue(counter > 0);
-        assertEquals("{1, 2, 3, 4}", list.toString());
+        assertEquals("[1, 2, 3, 4]", list.toString());
     }
 
 }

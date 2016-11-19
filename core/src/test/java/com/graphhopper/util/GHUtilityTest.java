@@ -17,11 +17,17 @@
  */
 package com.graphhopper.util;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntIntHashMap;
+import com.carrotsearch.hppc.LongArrayList;
+import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
+import java.util.Random;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -106,7 +112,7 @@ public class GHUtilityTest {
     @Test
     public void testCopyWithSelfRef() {
         Graph g = initUnsorted(createGraph());
-        EdgeIteratorState eb = g.edge(0, 0, 11, true);
+        g.edge(0, 0, 11, true);
 
         CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate(new FastestWeighting(carEncoder));
         GHUtility.copyTo(g, lg);
@@ -170,5 +176,54 @@ public class GHUtilityTest {
         assertTrue(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(1, 2, 4, false), GHUtility.createEdgeKey(1, 2, 4, false)));
         assertTrue(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(2, 1, 4, false), GHUtility.createEdgeKey(1, 2, 4, false)));
         assertFalse(GHUtility.isSameEdgeKeys(GHUtility.createEdgeKey(1, 2, 4, false), GHUtility.createEdgeKey(1, 2, 5, false)));
+    }
+
+    @Test
+    public void testReverse() {
+        assertEquals(IntArrayList.from(4, 3, 2, 1), GHUtility.reverse(IntArrayList.from(1, 2, 3, 4)));
+        assertEquals(IntArrayList.from(5, 4, 3, 2, 1), GHUtility.reverse(IntArrayList.from(1, 2, 3, 4, 5)));
+    }
+
+    @Test
+    public void testShuffle() {
+        assertEquals(IntArrayList.from(4, 1, 3, 2), GHUtility.shuffle(IntArrayList.from(1, 2, 3, 4), new Random(0)));
+        assertEquals(IntArrayList.from(4, 3, 2, 1, 5), GHUtility.shuffle(IntArrayList.from(1, 2, 3, 4, 5), new Random(1)));
+    }
+
+    @Test
+    public void testFill() {
+        assertEquals(IntArrayList.from(-1, -1, -1, -1), GHUtility.fill(new IntArrayList(4), 4, -1));
+    }
+
+    @Test
+    public void testZeroValue() {
+        GHIntObjectHashMap map = new GHIntObjectHashMap<>();
+        map.put(0, null);
+        assertEquals(null, map.get(0));
+        assertEquals(null, map.get(1));
+
+        GHIntHashSet set = new GHIntHashSet();
+        assertFalse(set.contains(0));
+        set.add(0);
+        set.add(1);
+        assertTrue(set.contains(0));
+        assertTrue(set.contains(1));
+        assertFalse(set.contains(2));
+
+        IntIntHashMap map2 = new IntIntHashMap();
+        assertEquals(0, map2.get(0));
+        map2.put(1, 0);
+        map2.put(2, 1);
+
+        assertEquals(0, map2.get(1));
+        assertEquals(1, map2.get(2));
+        // wrong due to 0 is empty
+        assertEquals(0, map2.get(0));
+    }
+
+    @Test
+    public void testLongArrayListCopy() {
+        LongArrayList arr = LongArrayList.from(1, 2, 3, 4, 5, 6, 7);
+        assertEquals(LongArrayList.from(2, 3, 4, 5, 6), GHUtility.copy(arr, 1, 5));
     }
 }

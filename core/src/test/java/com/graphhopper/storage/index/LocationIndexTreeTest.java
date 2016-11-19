@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -24,7 +25,6 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -118,10 +118,10 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         // [LEAF 0 {2} {},    LEAF 2 {1} {},    LEAF 1 {2} {}, LEAF 3 {1} {}, LEAF 8 {0} {}, LEAF 10 {0} {}, LEAF 9 {0} {}, LEAF 4 {2} {}, LEAF 6 {0, 3} {},       LEAF 5 {0, 2, 3} {}, LEAF 7 {1, 2, 3} {}, LEAF 13 {1} {}]
         // System.out.println(inMemIndex.getLayer(2));
 
-        TIntHashSet set = new TIntHashSet();
+        GHIntHashSet set = new GHIntHashSet();
         set.add(0);
 
-        TIntHashSet foundIds = new TIntHashSet();
+        GHIntHashSet foundIds = new GHIntHashSet();
         index.findNetworkEntries(0.5, -0.5, foundIds, 0);
         assertEquals(set, foundIds);
 
@@ -178,10 +178,10 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         // get only 0 or any node in the lefter greater subgraph.
         // The other subnetwork is already perfect {26}.
         // For compaction see: https://github.com/graphhopper/graphhopper/blob/5594f7f9d98d932f365557dc37b4b2d3b7abf698/core/src/main/java/com/graphhopper/storage/index/Location2NodesNtree.java#L277
-        TIntHashSet set = new TIntHashSet();
-        set.addAll(Arrays.asList(28, 27, 26, 24, 23, 21, 19, 18, 16, 14, 6, 5, 4, 3, 2, 1, 0));
+        GHIntHashSet set = new GHIntHashSet();
+        set.addAll(28, 27, 26, 24, 23, 21, 19, 18, 16, 14, 6, 5, 4, 3, 2, 1, 0);
 
-        TIntHashSet foundIds = new TIntHashSet();
+        GHIntHashSet foundIds = new GHIntHashSet();
         index.findNetworkEntries(49.950, 11.5732, foundIds, 0);
         assertEquals(set, foundIds);
     }
@@ -412,7 +412,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
 
         assertTrue((rmin2 - check2) < 0.0001);
 
-        TIntHashSet points = new TIntHashSet();
+        GHIntHashSet points = new GHIntHashSet();
         assertEquals(Double.MAX_VALUE, index.calcMinDistance(0.05, -0.3, points), 1e-1);
 
         points.add(0);

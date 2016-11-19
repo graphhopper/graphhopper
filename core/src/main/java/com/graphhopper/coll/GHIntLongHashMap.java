@@ -17,14 +17,28 @@
  */
 package com.graphhopper.coll;
 
+import com.carrotsearch.hppc.HashOrderMixingStrategy;
+import com.carrotsearch.hppc.IntLongHashMap;
+import static com.graphhopper.coll.GHIntObjectHashMap.DETERMINISTIC;
+
 /**
+ *
  * @author Peter Karich
  */
-public class IntDoubleBinHeap extends OTPIntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
-    public IntDoubleBinHeap() {
+public class GHIntLongHashMap extends IntLongHashMap {
+    public GHIntLongHashMap() {
+        super(10, 0.75, DETERMINISTIC);
     }
 
-    public IntDoubleBinHeap(int capacity) {
-        super(capacity);
+    public GHIntLongHashMap(int capacity) {
+        super(capacity, 0.75, DETERMINISTIC);
+    }
+
+    public GHIntLongHashMap(int capacity, double loadFactor) {
+        super(capacity, loadFactor, DETERMINISTIC);
+    }
+
+    public GHIntLongHashMap(int capacity, double loadFactor, HashOrderMixingStrategy hashOrderMixer) {
+        super(capacity, loadFactor, hashOrderMixer);
     }
 }
