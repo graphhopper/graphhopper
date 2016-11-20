@@ -211,6 +211,16 @@ $(document).ready(function (e) {
 
 function initFromParams(params, doQuery) {
     ghRequest.init(params);
+    if (ghRequest.getEarliestDepartureTime()) {
+        // TODO set
+    } else {
+        var current = new Date();
+
+        $("#input_day_0").val(0);
+        $("#input_hour_0").val(current.getHours());
+        $("#input_min_0").val(current.getMinutes());
+    }
+
     var count = 0;
     var singlePointIndex;
     if (params.point)
@@ -336,10 +346,10 @@ function setStartCoord(e) {
 
 function setIntermediateCoord(e) {
     var routeLayers = mapLayer.getSubLayers("route");
-    var routeSegments = routeLayers.map(function(rl) {
+    var routeSegments = routeLayers.map(function (rl) {
         return {
             coordinates: rl.getLatLngs(),
-            wayPoints: rl.feature.properties.snapped_waypoints.coordinates.map(function(wp) {
+            wayPoints: rl.feature.properties.snapped_waypoints.coordinates.map(function (wp) {
                 return L.latLng(wp[1], wp[0]);
             })
         };
@@ -441,6 +451,10 @@ function resolveAll() {
     for (var i = 0, l = ghRequest.route.size(); i < l; i++) {
         ret[i] = resolveIndex(i);
     }
+    var day = $("#input_day_0").val();
+    var hour = $("#input_hour_0").val();
+    var min = $("#input_min_0").val();
+    ghRequest.setEarliestDepartureTime(parseInt(day), parseInt(hour), parseInt(min));
     return ret;
 }
 
@@ -601,11 +615,13 @@ function routeLatLng(request, doQuery) {
             buttons.append('|');
             buttons.append(miButton);
 
-            routeInfo.append(buttons);
+            routeInfo.append(buttons);            
 
             if (request.hasElevation()) {
                 routeInfo.append(translate.createEleInfoString(path.ascend, path.descend, request.useMiles));
             }
+            
+            routeInfo.append($("<div style='clear:both'/>"));
             oneTab.append(routeInfo);
 
             if (path.instructions) {

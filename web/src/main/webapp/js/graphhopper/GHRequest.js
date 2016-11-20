@@ -121,6 +121,16 @@ GHRequest.prototype.init = function (params) {
     }
 };
 
+GHRequest.prototype.setEarliestDepartureTime = function (day, hour, min) {
+    this.api_params.earliestDepartureTime = ((day * 24 + hour) * 60 + min) * 60;
+};
+
+GHRequest.prototype.getEarliestDepartureTime = function () {
+    if (this.api_params.earliestDepartureTime)
+        return this.api_params.earliestDepartureTime;
+    return undefined;
+};
+
 GHRequest.prototype.initVehicle = function (vehicle) {
     this.api_params.vehicle = vehicle;
     var featureSet = this.features[vehicle];
