@@ -89,6 +89,12 @@
             <scope>test</scope>
         </dependency>
 
+        <dependency>
+            <groupId>info.debatty</groupId>
+            <artifactId>java-string-similarity</artifactId>
+            <version>0.19</version>
+        </dependency>
+
     </dependencies>
 
     <build>

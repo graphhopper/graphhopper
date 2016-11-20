@@ -95,7 +95,7 @@ public class NameSimilarityEdgeFilterTest {
 
         // Two Typos
         edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Kaufamholystraße 154 Nürnberg");
-        // TODO assertTrue(edgeFilter.accept(edge));
+        assertTrue(edgeFilter.accept(edge));
 
         // Three Typos
         edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Kaufmholystraße 154 Nürnberg");
@@ -110,7 +110,7 @@ public class NameSimilarityEdgeFilterTest {
         assertTrue(edgeFilter.accept(edge));
 
         // Two Typos
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Hauptstrasi");
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Lauptstrase");
         assertFalse(edgeFilter.accept(edge));
 
         // Distance - PerfectDistance = 1

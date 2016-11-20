@@ -19,7 +19,10 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.apache.commons.lang3.StringUtils;
+import info.debatty.java.stringsimilarity.JaroWinkler;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -31,7 +34,9 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
 
     private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{L}]+");
     private final EdgeFilter edgeFilter;
-    private final String pointHint;
+    private final List<String> pointHint;
+
+    private JaroWinkler jw = new JaroWinkler();
 
     public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint) {
         this.edgeFilter = edgeFilter;
@@ -41,8 +46,18 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     /**
      * Removes any characters in the String that we don't care about in the matching procedure
      */
-    private String prepareName(String name) {
-        return NON_WORD_CHAR.matcher(name.toLowerCase()).replaceAll("");
+    private List<String> prepareName(String name) {
+        // TODO make this better, also split at ',' and others?
+        String[] arr = name.split(" ");
+        String tmp;
+        List<String> list = new ArrayList<>(arr.length);
+        for (int i = 0; i < arr.length; i++) {
+            tmp = NON_WORD_CHAR.matcher(arr[i].toLowerCase()).replaceAll("");
+            if(!tmp.isEmpty()){
+                list.add(tmp);
+            }
+        }
+        return list;
     }
 
     private String removeRelation(String edgeName) {
@@ -69,22 +84,62 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         }
 
         name = removeRelation(name);
-        name = prepareName(name);
-        return isLevenshteinSimilar(name);
+        List<String> edgeName = prepareName(name);
+
+        List<String> shorterList;
+        List<String> longerList;
+
+        if(pointHint.size() > edgeName.size()){
+            // Important to create a clone, since we remove entries
+            // TODO maybe the remove is not that good?
+            longerList = new ArrayList<>(pointHint);
+            shorterList = edgeName;
+        }else{
+            longerList = edgeName;
+            shorterList = new ArrayList<>(pointHint);
+        }
+        boolean similar = false;
+        for (String str1: shorterList) {
+            for (int i = 0; i < longerList.size(); i++) {
+                if(isJaroWinklerSimilar(str1, longerList.get(i))){
+                    // Avoid matchin same string twice, also make it more efficient
+                    longerList.remove(i);
+                    break;
+                }
+                // If in last iteration and no match was found
+                if(i == longerList.size()-1){
+                    return false;
+                }
+            }
+        }
+        // We found a match for every string in the shorter list, therefore strings are similar
+        return true;
     }
 
-    private boolean isLevenshteinSimilar(String name) {
+    private boolean isJaroWinklerSimilar(String str1, String str2) {
         // too big length difference
-        if (Math.min(name.length(), pointHint.length()) * 4 < Math.max(name.length(), pointHint.length()))
+        if (Math.min(str2.length(), str1.length()) * 4 < Math.max(str2.length(), str1.length()))
+            return false;
+
+        double jwSimilarity = jw.similarity(str1, str2);
+        //System.out.println(str1 + " vs. edge:" + str2 + ", " + jwSimilarity);
+        return jwSimilarity > .9;
+    }
+
+
+    private boolean isLevenshteinSimilar(String hint, String name) {
+        // too big length difference
+        if (Math.min(name.length(), hint.length()) * 4 < Math.max(name.length(), hint.length()))
             return false;
 
         // The part 'abs(pointHint.length - name.length)' tries to make differences regarding length less important
         // Ie. 'hauptstraßedresden' vs. 'hauptstr.' should be considered a match, but 'hauptstraßedresden' vs. 'klingestraßedresden' should not match
-        int factor = 1 + Math.abs(pointHint.length() - name.length());
-        int levDistance = StringUtils.getLevenshteinDistance(pointHint, name);
-        // System.out.println(pointHint + " vs. edge:" + name + ", " + levDistance + " <= " + factor);
+        int factor = 1 + Math.abs(hint.length() - name.length());
+        int levDistance = StringUtils.getLevenshteinDistance(hint, name);
+        // System.out.println(hint + " vs. edge:" + name + ", " + levDistance + " <= " + factor);
         return levDistance <= factor;
     }
+
 
     public static String longestSubstring(String str1, String str2) {
         StringBuilder sb = new StringBuilder();
