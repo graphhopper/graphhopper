@@ -17,17 +17,13 @@
  */
 package com.graphhopper.util;
 
-import com.carrotsearch.hppc.IntArrayList;
-import com.carrotsearch.hppc.IntIntHashMap;
 import com.carrotsearch.hppc.LongArrayList;
-import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.coll.GHIntObjectHashMap;
+import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
-import java.util.Random;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -179,46 +175,35 @@ public class GHUtilityTest {
     }
 
     @Test
-    public void testReverse() {
-        assertEquals(IntArrayList.from(4, 3, 2, 1), GHUtility.reverse(IntArrayList.from(1, 2, 3, 4)));
-        assertEquals(IntArrayList.from(5, 4, 3, 2, 1), GHUtility.reverse(IntArrayList.from(1, 2, 3, 4, 5)));
-    }
-
-    @Test
-    public void testShuffle() {
-        assertEquals(IntArrayList.from(4, 1, 3, 2), GHUtility.shuffle(IntArrayList.from(1, 2, 3, 4), new Random(0)));
-        assertEquals(IntArrayList.from(4, 3, 2, 1, 5), GHUtility.shuffle(IntArrayList.from(1, 2, 3, 4, 5), new Random(1)));
-    }
-
-    @Test
-    public void testFill() {
-        assertEquals(IntArrayList.from(-1, -1, -1, -1), GHUtility.fill(new IntArrayList(4), 4, -1));
-    }
-
-    @Test
     public void testZeroValue() {
-        GHIntObjectHashMap map = new GHIntObjectHashMap<>();
-        map.put(0, null);
-        assertEquals(null, map.get(0));
-        assertEquals(null, map.get(1));
+        GHIntLongHashMap map1 = new GHIntLongHashMap();
+        assertFalse(map1.containsKey(0));
+        // assertFalse(map1.containsValue(0));
+        map1.put(0, 3);
+        map1.put(1, 0);
+        map1.put(2, 1);
 
-        GHIntHashSet set = new GHIntHashSet();
-        assertFalse(set.contains(0));
-        set.add(0);
-        set.add(1);
-        assertTrue(set.contains(0));
-        assertTrue(set.contains(1));
-        assertFalse(set.contains(2));
+        // assertTrue(map1.containsValue(0));
+        assertEquals(3, map1.get(0));
+        assertEquals(0, map1.get(1));
+        assertEquals(1, map1.get(2));
 
-        IntIntHashMap map2 = new IntIntHashMap();
-        assertEquals(0, map2.get(0));
-        map2.put(1, 0);
-        map2.put(2, 1);
+        // instead of assertEquals(-1, map1.get(3)); with hppc we have to check before:
+        assertTrue(map1.containsKey(0));
 
-        assertEquals(0, map2.get(1));
-        assertEquals(1, map2.get(2));
-        // wrong due to 0 is empty
-        assertEquals(0, map2.get(0));
+        // trove4j behaviour was to return -1 if non existing:
+//        TIntLongHashMap map2 = new TIntLongHashMap(100, 0.7f, -1, -1);
+//        assertFalse(map2.containsKey(0));
+//        assertFalse(map2.containsValue(0));
+//        map2.put(0, 3);
+//        map2.put(1, 0);
+//        map2.put(2, 1);
+//        assertTrue(map2.containsKey(0));
+//        assertTrue(map2.containsValue(0));
+//        assertEquals(3, map2.get(0));
+//        assertEquals(0, map2.get(1));
+//        assertEquals(1, map2.get(2));
+//        assertEquals(-1, map2.get(3));
     }
 
     @Test

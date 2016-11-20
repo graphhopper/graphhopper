@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
@@ -59,7 +60,7 @@ public class Path {
     private FlagEncoder encoder;
     private boolean found;
     private int fromNode = -1;
-    private IntArrayList edgeIds;
+    private GHIntArrayList edgeIds;
     private double weight;
     private NodeAccess nodeAccess;
 
@@ -69,7 +70,7 @@ public class Path {
         this.nodeAccess = graph.getNodeAccess();
         this.weighting = weighting;
         this.encoder = weighting.getFlagEncoder();
-        this.edgeIds = new IntArrayList();
+        this.edgeIds = new GHIntArrayList();
     }
 
     /**
@@ -78,7 +79,7 @@ public class Path {
     Path(Path p) {
         this(p.graph, p.weighting);
         weight = p.weight;
-        edgeIds = new IntArrayList(p.edgeIds);
+        edgeIds = new GHIntArrayList(p.edgeIds);
         sptEntry = p.sptEntry;
     }
 
@@ -147,7 +148,7 @@ public class Path {
             throw new IllegalStateException("Switching order multiple times is not supported");
 
         reverseOrder = false;
-        GHUtility.reverse(edgeIds);
+        edgeIds.reverse();
     }
 
     public Path setDistance(double distance) {

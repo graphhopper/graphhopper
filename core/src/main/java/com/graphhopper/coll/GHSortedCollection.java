@@ -104,14 +104,18 @@ public class GHSortedCollection {
         if (size < 0) {
             throw new IllegalStateException("collection is already empty!?");
         }
+
         Entry<Integer, GHIntHashSet> e = map.firstEntry();
         GHIntHashSet set = e.getValue();
-        Iterator<IntCursor> iter = set.iterator();
         if (set.isEmpty()) {
             throw new IllegalStateException("internal set is already empty!?");
         }
+
+        
+        Iterator<IntCursor> iter = set.iterator();
         int val = iter.next().value;
-        iter.remove();
+        // trove4j allowed a more efficient removal via iter.remove()
+        set.remove(val);
         if (set.isEmpty()) {
             map.remove(e.getKey());
         }

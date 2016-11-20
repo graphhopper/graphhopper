@@ -26,7 +26,6 @@ import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.coll.GHLongHashSet;
 import com.graphhopper.coll.GHLongIntBTree;
 import com.graphhopper.coll.GHLongLongHashMap;
-import com.graphhopper.coll.GHLongObjectHashMap;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
@@ -73,7 +72,7 @@ import static com.graphhopper.util.Helper.nf;
  * @author Peter Karich
  */
 public class OSMReader implements DataReader {
-    protected static final int EMPTY = -1;
+    protected static final int EMPTY_NODE = -1;
     // pillar node is >= 3
     protected static final int PILLAR_NODE = 1;
     // tower node is <= -3
@@ -225,7 +224,7 @@ public class OSMReader implements DataReader {
     private IntLongMap getEdgeIdToOsmWayIdMap() {
         if (edgeIdToOsmWayIdMap == null)
             edgeIdToOsmWayIdMap = new GHIntLongHashMap(getOsmWayIdSet().size(), 0.5f);
-
+        
         return edgeIdToOsmWayIdMap;
     }
 
@@ -478,12 +477,12 @@ public class OSMReader implements DataReader {
         if (id < TOWER_NODE)
             return -id - 3;
 
-        return EMPTY;
+        return EMPTY_NODE;
     }
 
     // TODO remove this ugly stuff via better preparsing phase! E.g. putting every tags etc into a helper file!
     double getTmpLatitude(int id) {
-        if (id == EMPTY)
+        if (id == EMPTY_NODE)
             return Double.NaN;
         if (id < TOWER_NODE) {
             // tower node
@@ -499,7 +498,7 @@ public class OSMReader implements DataReader {
     }
 
     double getTmpLongitude(int id) {
-        if (id == EMPTY)
+        if (id == EMPTY_NODE)
             return Double.NaN;
         if (id < TOWER_NODE) {
             // tower node
@@ -533,7 +532,7 @@ public class OSMReader implements DataReader {
 
     boolean addNode(ReaderNode node) {
         int nodeType = getNodeMap().get(node.getId());
-        if (nodeType == EMPTY)
+        if (nodeType == EMPTY_NODE)
             return false;
 
         double lat = node.getLat();
@@ -575,11 +574,11 @@ public class OSMReader implements DataReader {
     }
 
     void prepareHighwayNode(long osmId) {
-        int tmpIndex = getNodeMap().get(osmId);
-        if (tmpIndex == EMPTY) {
+        int tmpGHNodeId = getNodeMap().get(osmId);
+        if (tmpGHNodeId == EMPTY_NODE) {
             // osmId is used exactly once
             getNodeMap().put(osmId, PILLAR_NODE);
-        } else if (tmpIndex > EMPTY) {
+        } else if (tmpGHNodeId > EMPTY_NODE) {
             // mark node as tower node as it occured at least twice times
             getNodeMap().put(osmId, TOWER_NODE);
         } else {
@@ -612,7 +611,7 @@ public class OSMReader implements DataReader {
             for (int i = 0; i < osmNodeIds.size(); i++) {
                 long osmId = osmNodeIds.get(i);
                 int tmpNode = getNodeMap().get(osmId);
-                if (tmpNode == EMPTY)
+                if (tmpNode == EMPTY_NODE)
                     continue;
 
                 // skip osmIds with no associated pillar or tower id (e.g. !OSMReader.isBounds)
