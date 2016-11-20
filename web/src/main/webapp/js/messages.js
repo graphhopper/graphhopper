@@ -39,8 +39,15 @@ module.exports.getSignName = function (sign) {
         return "roundabout";
     else if (sign === 7)
         return "keep_right";
+    else if (sign === 101)
+        return "pt_start_trip";
+    else if (sign === 102)
+        return "pt_transfer_to";
+    else if (sign === 103)
+        return "pt_end_trip";
     else
-        throw "did not find sign " + sign;
+        // throw "did not find sign " + sign;
+        return "unknown";
 };
 
 module.exports.browserTitle = "GraphHopper Maps - Driving Directions";

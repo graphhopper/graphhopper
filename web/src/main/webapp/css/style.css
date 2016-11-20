@@ -78,6 +78,17 @@ body {
     text-align: right;
 }
 
+.time_input {
+    float: right;
+    padding-right: 20px;
+}
+
+.time_input input {
+    float: left;
+    margin-left: 10px;
+    width: 220px;
+}
+
 .boxSizingBorder {
     -webkit-box-sizing: border-box;
     -moz-box-sizing: border-box;
@@ -340,8 +351,8 @@ td img.pic {
 }
 
 .ui-dialog {
-  /* Must be > 700, the z-index of .leaflet-popup-pane */
-  z-index: 1000;
+    /* Must be > 700, the z-index of .leaflet-popup-pane */
+    z-index: 1000;
 }
 
 .ui-dialog > .ui-widget-header {
