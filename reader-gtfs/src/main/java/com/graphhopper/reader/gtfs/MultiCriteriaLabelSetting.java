@@ -86,7 +86,7 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
                 if (iter.getEdge() == label.edge)
                     continue;
 
-                GtfsStorage.EdgeType edgeType = GtfsStorage.getEdgeType(iter);
+                GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(iter.getFlags());
                 if (edgeType == GtfsStorage.EdgeType.BOARD_EDGE) {
                     int trafficDay = (int) (label.weight) / (24 * 60 * 60);
                     if (!((BoardEdge) gtfsStorage.getEdges().get(iter.getEdge())).validOn.get(trafficDay)) {

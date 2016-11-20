@@ -42,7 +42,7 @@ class GtfsStorage implements GraphExtension {
 
 	@Override
 	public boolean isRequireEdgeField() {
-		return true;
+		return false;
 	}
 
 	@Override

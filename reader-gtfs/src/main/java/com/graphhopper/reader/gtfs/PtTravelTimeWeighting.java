@@ -31,7 +31,7 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
 
 	@Override
 	public double calcTravelTimeSeconds(EdgeIteratorState edgeState, double earliestStartTime) {
-        GtfsStorage.EdgeType edgeType = GtfsStorage.EdgeType.values()[edgeState.getAdditionalField()];
+        GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edgeState.getFlags());
         switch (edgeType) {
             case UNSPECIFIED:
                 long l = calcMillis(edgeState, false, -1);
@@ -50,7 +50,7 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
 
 	@Override
 	public int calcNTransfers(EdgeIteratorState edgeState) {
-		if (GtfsStorage.EdgeType.values()[edgeState.getAdditionalField()] == GtfsStorage.EdgeType.BOARD_EDGE) {
+		if (((PtFlagEncoder) getFlagEncoder()).getEdgeType(edgeState.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
 			return 1;
 		} else {
 			return 0;

@@ -28,8 +28,9 @@ class PtRoutingTemplate implements RoutingTemplate {
     private List<Integer> toNodes;
     private int startNode = -1;
     private long initialTime;
+	private PtFlagEncoder encoder;
 
-    PtRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex) {
+	PtRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex) {
         this.ghRequest = ghRequest;
 		this.ghResponse = ghRsp;
 		this.locationIndex = locationIndex;
@@ -37,13 +38,12 @@ class PtRoutingTemplate implements RoutingTemplate {
 
 	@Override
 	public List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder) {
+		this.encoder = (PtFlagEncoder) encoder;
         if (points.size() != 2)
 			throw new IllegalArgumentException("Exactly 2 points have to be specified, but was:" + points.size());
 
-		EdgeFilter enterFilter = new PtEnterPositionLookupEdgeFilter();
-		EdgeFilter exitFilter = new PtExitPositionLookupEdgeFilter();
-//		EdgeFilter enterFilter = new EverythingButPt(gtfsStorage);
-//		EdgeFilter exitFilter = new EverythingButPt(gtfsStorage);
+		EdgeFilter enterFilter = new PtEnterPositionLookupEdgeFilter((PtFlagEncoder) encoder);
+		EdgeFilter exitFilter = new PtExitPositionLookupEdgeFilter((PtFlagEncoder) encoder);
 
 		GHPoint enter = points.get(0);
 		QueryResult source = locationIndex.findClosest(enter.lat, enter.lon, enterFilter);
@@ -149,7 +149,7 @@ class PtRoutingTemplate implements RoutingTemplate {
 				wrappedPath.setTime(path.getTime());
 				int numBoardings = 0;
 				for (EdgeIteratorState edge : path.calcEdges()) {
-                    if (GtfsStorage.EdgeType.values()[edge.getAdditionalField()] == GtfsStorage.EdgeType.BOARD_EDGE) {
+                    if (encoder.getEdgeType(edge.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
                         numBoardings++;
                     }
                 }

@@ -5,8 +5,14 @@ import com.graphhopper.util.EdgeIteratorState;
 
 class EverythingButPt implements EdgeFilter {
 
+    PtFlagEncoder encoder;
+
+    EverythingButPt(PtFlagEncoder encoder) {
+        this.encoder = encoder;
+    }
+
     @Override
     public boolean accept(EdgeIteratorState edgeState) {
-        return GtfsStorage.EdgeType.values()[edgeState.getAdditionalField()] == GtfsStorage.EdgeType.UNSPECIFIED;
+        return encoder.getEdgeType(edgeState.getFlags()) == GtfsStorage.EdgeType.UNSPECIFIED;
     }
 }
