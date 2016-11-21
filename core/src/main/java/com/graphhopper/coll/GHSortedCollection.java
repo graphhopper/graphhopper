@@ -18,6 +18,7 @@
 package com.graphhopper.coll;
 
 import com.carrotsearch.hppc.cursors.IntCursor;
+import com.carrotsearch.hppc.predicates.IntPredicate;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -111,11 +112,14 @@ public class GHSortedCollection {
             throw new IllegalStateException("internal set is already empty!?");
         }
 
-        
         Iterator<IntCursor> iter = set.iterator();
-        int val = iter.next().value;
-        // trove4j allowed a more efficient removal via iter.remove()
-        set.remove(val);
+        final int val = iter.next().value;
+        set.removeAll(new IntPredicate() {
+            @Override
+            public boolean apply(int value) {
+                return value == val;
+            }
+        });
         if (set.isEmpty()) {
             map.remove(e.getKey());
         }
