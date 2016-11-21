@@ -507,7 +507,7 @@ public class LocationIndexTree implements LocationIndex {
         return min;
     }
 
-    final void findNetworkEntriesSingleRegion(TIntHashSet storedNetworkEntryIds, double queryLat, double queryLon) {
+    public final void findNetworkEntriesSingleRegion(TIntHashSet storedNetworkEntryIds, double queryLat, double queryLon) {
         long keyPart = createReverseKey(queryLat, queryLon);
         fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
     }
