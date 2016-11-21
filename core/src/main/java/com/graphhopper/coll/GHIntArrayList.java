@@ -49,7 +49,7 @@ public class GHIntArrayList extends IntArrayList {
     }
 
     public final GHIntArrayList fill(final int max, final int value) {
-        // TODO use System.arraycopy and direct buffer somehow
+        // TODO fill 100 then copy using System.arraycopy, then duplicate this via copying again etc
         for (int i = 0; i < max; i++) {
             add(value);
         }
