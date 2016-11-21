@@ -77,6 +77,7 @@ public class SimpleRouteSerializer implements RouteSerializer {
                 jsonPath.put("distance", Helper.round(ar.getDistance(), 3));
                 jsonPath.put("weight", Helper.round6(ar.getRouteWeight()));
                 jsonPath.put("time", ar.getTime());
+                jsonPath.put("transfers", ar.getNumChanges());
                 if (!ar.getDescription().isEmpty())
                     jsonPath.put("description", ar.getDescription());
 
