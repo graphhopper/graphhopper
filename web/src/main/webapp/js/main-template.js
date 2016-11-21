@@ -600,7 +600,7 @@ function routeLatLng(request, doQuery) {
                 routeInfo.text(path.description);
                 routeInfo.append("<br/>");
             }
-            routeInfo.append(translate.tr("route_info", [tmpDist, tmpTime]));
+            routeInfo.append("Arrives at " + tmpTime + " with " + path.transfers + " transfers " + "(" + tmpDist + ")");
 
             var kmButton = $("<button class='plain_text_button " + (request.useMiles ? "gray" : "") + "'>");
             kmButton.text(translate.tr2("km_abbr"));
