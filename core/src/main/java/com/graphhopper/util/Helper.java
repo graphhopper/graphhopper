@@ -61,7 +61,7 @@ public class Helper {
     private Helper() {
     }
 
-    public static ArrayList<Integer> IntListToArrayList(IntIndexedContainer from) {
+    public static ArrayList<Integer> intListToArrayList(IntIndexedContainer from) {
         int len = from.size();
         ArrayList<Integer> list = new ArrayList<Integer>(len);
         for (int i = 0; i < len; i++) {

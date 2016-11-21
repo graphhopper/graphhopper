@@ -224,7 +224,7 @@ public class OSMReader implements DataReader {
     private IntLongMap getEdgeIdToOsmWayIdMap() {
         if (edgeIdToOsmWayIdMap == null)
             edgeIdToOsmWayIdMap = new GHIntLongHashMap(getOsmWayIdSet().size(), 0.5f);
-        
+
         return edgeIdToOsmWayIdMap;
     }
 
@@ -377,9 +377,9 @@ public class OSMReader implements DataReader {
                             lastBarrier = 0;
 
                         // add way up to barrier shadow node                        
-                        int lastIndex = i - lastBarrier;
-                        LongIndexedContainer partNodeIds = GHUtility.copy(osmNodeIds, lastBarrier, lastIndex + 1);
-                        partNodeIds.set(lastIndex, newNodeId);
+                        int length = i - lastBarrier + 1;
+                        LongIndexedContainer partNodeIds = GHUtility.copy(osmNodeIds, lastBarrier, length);
+                        partNodeIds.set(length - 1, newNodeId);
                         createdEdges.addAll(addOSMWay(partNodeIds, wayFlags, wayOsmId));
 
                         // create zero length edge for barrier

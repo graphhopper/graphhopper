@@ -206,7 +206,6 @@ public class QueryGraph implements Graph {
         baseGraph.queryResults = queryResults;
 
         GHIntObjectHashMap<List<QueryResult>> edge2res = new GHIntObjectHashMap<List<QueryResult>>(resList.size());
-        // TIntObjectMap<List<QueryResult>> edge2res = new TGHIntObjectHashMap<List<QueryResult>>(resList.size());
 
         // Phase 1
         // calculate snapped point and swap direction of closest edge if necessary
@@ -259,12 +258,9 @@ public class QueryGraph implements Graph {
         // Phase 2 - now it is clear which points cut one edge
         // 1. create point lists
         // 2. create virtual edges between virtual nodes and its neighbor (virtual or normal nodes)
-//        edge2res.forEachValue(new TObjectProcedure<List<QueryResult>>() {
-//            @Override
-//            public boolean execute(List<QueryResult> results) {
         edge2res.forEach(new IntObjectPredicate<List<QueryResult>>() {
             @Override
-            public boolean apply(int key, List<QueryResult> results) {
+            public boolean apply(int edgeId, List<QueryResult> results) {
                 // we can expect at least one entry in the results
                 EdgeIteratorState closestEdge = results.get(0).getClosestEdge();
                 final PointList fullPL = closestEdge.fetchWayGeometry(3);
