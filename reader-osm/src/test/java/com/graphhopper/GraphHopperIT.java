@@ -224,6 +224,30 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void testFaundauDestination() {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/north-bayreuth.osm.gz").
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car,generic", 8));
+        tmpHopper.importOrLoad();
+
+        GHRequest req = new GHRequest(49.985307,11.50628, 49.985731,11.507465).
+                setVehicle("car").setWeighting("fastest");
+
+        GHResponse rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(550, rsp.getBest().getDistance(), 1);
+
+        req = new GHRequest(49.985307,11.50628, 49.985731,11.507465).
+                setVehicle("generic").setWeighting("generic");
+
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(550, rsp.getBest().getDistance(), 1);
+    }
+
+    @Test
     public void testMonacoVia() {
         GHResponse rsp = hopper.route(new GHRequest().
                 addPoint(new GHPoint(43.727687, 7.418737)).

@@ -190,6 +190,18 @@ public class CarFlagEncoderTest {
         way.clearTags();
     }
 
+
+    @Test
+    public void testDestinationTag() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+        assertEquals(60, encoder.getSpeed(way), 1e-1);
+
+        way.setTag("vehicle", "destination");
+        long flags = encoder.handleWayTags(way, encoder.acceptWay(way),0);
+        assertEquals(5, encoder.getSpeed(flags), 1e-1);
+    }
+
     @Test
     public void testSetAccess() {
         assertTrue(encoder.isForward(encoder.setProperties(0, true, true)));
