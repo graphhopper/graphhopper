@@ -17,7 +17,9 @@
  */
 package com.graphhopper.matching;
 
+import com.carrotsearch.hppc.procedures.IntProcedure;
 import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -25,8 +27,6 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
-import gnu.trove.procedure.TIntProcedure;
-import gnu.trove.set.hash.TIntHashSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -60,19 +60,19 @@ public class LocationIndexMatch extends LocationIndexTree {
 
         // implement a cheap priority queue via List, sublist and Collections.sort
         final List<QueryResult> queryResults = new ArrayList<QueryResult>();
-        TIntHashSet set = new TIntHashSet();
+        GHIntHashSet set = new GHIntHashSet();
 
         for (int iteration = 0; iteration < 2; iteration++) {
             // should we use the return value of earlyFinish?
             index.findNetworkEntries(queryLat, queryLon, set, iteration);
 
-            final GHBitSet exploredNodes = new GHTBitSet(new TIntHashSet(set));
+            final GHBitSet exploredNodes = new GHTBitSet(new GHIntHashSet(set));
             final EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
 
-            set.forEach(new TIntProcedure() {
+            set.forEach(new IntProcedure() {
 
                 @Override
-                public boolean execute(int node) {
+                public void apply(int node) {
                     new XFirstSearchCheck(queryLat, queryLon, exploredNodes, edgeFilter) {
                         @Override
                         protected double getQueryDistance() {
@@ -123,8 +123,7 @@ public class LocationIndexMatch extends LocationIndexTree {
                             }
                             return true;
                         }
-                    }.start(explorer, node);
-                    return true;
+                    }.start(explorer, node);                    
                 }
             });
         }
