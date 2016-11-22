@@ -359,19 +359,7 @@ public class GHUtility {
     public static int getEdgeFromEdgeKey(int edgeKey) {
         return edgeKey / 2;
     }
-
-    /**
-     * @return a copy of inputArray from [offset, offset+length)
-     */
-    public static LongIndexedContainer copy(LongArrayList inputArray, int offset, int length) {
-        long transfer[] = new long[length];
-        System.arraycopy(inputArray.buffer, offset, transfer, 0, length);
-        LongArrayList arr = new LongArrayList(0);
-        arr.buffer = transfer;
-        arr.elementsCount = length;
-        return arr;
-    }
-
+    
     /**
      * This edge iterator can be used in tests to mock specific iterator behaviour via overloading
      * certain methods.

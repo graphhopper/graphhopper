@@ -17,6 +17,7 @@
  */
 package com.graphhopper.coll;
 
+import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.predicates.IntPredicate;
 import java.util.Iterator;
@@ -113,13 +114,8 @@ public class GHSortedCollection {
         }
 
         Iterator<IntCursor> iter = set.iterator();
-        final int val = iter.next().value;
-        set.removeAll(new IntPredicate() {
-            @Override
-            public boolean apply(int value) {
-                return value == val;
-            }
-        });
+        final int val = iter.next().value;        
+        set.remove(val);
         if (set.isEmpty()) {
             map.remove(e.getKey());
         }

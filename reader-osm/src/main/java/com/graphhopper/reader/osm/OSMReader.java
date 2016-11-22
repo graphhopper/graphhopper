@@ -378,7 +378,8 @@ public class OSMReader implements DataReader {
 
                         // add way up to barrier shadow node                        
                         int length = i - lastBarrier + 1;
-                        LongIndexedContainer partNodeIds = GHUtility.copy(osmNodeIds, lastBarrier, length);
+                        LongArrayList partNodeIds = new LongArrayList();
+                        partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
                         partNodeIds.set(length - 1, newNodeId);
                         createdEdges.addAll(addOSMWay(partNodeIds, wayFlags, wayOsmId));
 
@@ -400,7 +401,8 @@ public class OSMReader implements DataReader {
         // just add remainder of way to graph if barrier was not the last node
         if (lastBarrier >= 0) {
             if (lastBarrier < size - 1) {
-                LongIndexedContainer partNodeIds = GHUtility.copy(osmNodeIds, lastBarrier, size - lastBarrier);
+                LongArrayList partNodeIds = new LongArrayList();
+                partNodeIds.add(osmNodeIds.buffer, lastBarrier, size - lastBarrier);
                 createdEdges.addAll(addOSMWay(partNodeIds, wayFlags, wayOsmId));
             }
         } else {

@@ -39,9 +39,10 @@ public class GHIntArrayList extends IntArrayList {
 
     public final GHIntArrayList reverse() {
         final int[] buffer = this.buffer;
+        int tmp;
         for (int start = 0, end = size() - 1; start < end; start++, end--) {
             // swap the values
-            int tmp = buffer[start];
+            tmp = buffer[start];
             buffer[start] = buffer[end];
             buffer[end] = tmp;
         }

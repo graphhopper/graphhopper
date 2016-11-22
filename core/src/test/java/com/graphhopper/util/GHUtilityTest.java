@@ -205,10 +205,4 @@ public class GHUtilityTest {
 //        assertEquals(1, map2.get(2));
 //        assertEquals(-1, map2.get(3));
     }
-
-    @Test
-    public void testLongArrayListCopy() {
-        LongArrayList arr = LongArrayList.from(1, 2, 3, 4, 5, 6, 7);
-        assertEquals(LongArrayList.from(2, 3, 4, 5, 6), GHUtility.copy(arr, 1, 5));
-    }
 }
