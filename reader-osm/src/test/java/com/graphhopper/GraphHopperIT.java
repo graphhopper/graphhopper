@@ -191,7 +191,7 @@ public class GraphHopperIT {
     @Test
     public void testPointHint() {
         GraphHopper tmpHopper = new GraphHopperOSM().
-                setOSMFile(DIR + "/Laufamholzstraße.osm.xml").
+                setOSMFile(DIR + "/Laufamholzstrasse.osm.xml").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("car"));
