@@ -140,15 +140,15 @@
                 </configuration>
             </plugin>       
             <plugin>
-                <!-- See http://code.google.com/p/maven-android-plugin/ -->
-                <groupId>com.jayway.maven.plugins.android.generation2</groupId>
+                <!-- See http://simpligility.github.io/android-maven-plugin/ -->
+                <groupId>com.simpligility.maven.plugins</groupId>
                 <artifactId>android-maven-plugin</artifactId>
-                <version>4.0.0-rc.2</version>
+                <version>4.4.3</version>
                 <extensions>true</extensions>
                 <configuration>
                     <sdk>
                         <!-- platform or api level (api level 8 = platform 2.2) -->                        
-                        <platform>22</platform>
+                        <platform>25</platform>
                     </sdk>
                     <deleteConflictingFiles>true</deleteConflictingFiles>
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>
