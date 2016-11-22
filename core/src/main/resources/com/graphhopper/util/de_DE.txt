@@ -1,5 +1,7 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
+pt_start_trip=einsteigen in %1$s
+pt_transfer_to=umsteigen auf %1$s
 continue=geradeaus
 continue_onto=geradeaus auf %1$s
 turn_left=links abbiegen

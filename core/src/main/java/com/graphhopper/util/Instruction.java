@@ -33,6 +33,8 @@ public class Instruction {
     public static final int FINISH = 4;
     public static final int REACHED_VIA = 5;
     public static final int USE_ROUNDABOUT = 6;
+    public static final int PT_START_TRIP = 101;
+    public static final int PT_TRANSFER = 102;
     private static final AngleCalc AC = Helper.ANGLE_CALC;
     protected final PointList points;
     protected final InstructionAnnotation annotation;
@@ -234,6 +236,10 @@ public class Instruction {
         int indi = getSign();
         if (indi == Instruction.CONTINUE_ON_STREET) {
             str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
+        } else if (indi == Instruction.PT_START_TRIP) {
+            str = tr.tr("pt_start_trip", streetName);
+        } else if (indi == Instruction.PT_TRANSFER) {
+            str = tr.tr("pt_transfer_to", streetName);
         } else {
             String dir = null;
             switch (indi) {
@@ -256,8 +262,10 @@ public class Instruction {
                     dir = tr.tr("turn_sharp_right");
                     break;
             }
-            if (dir == null)
-                throw new IllegalStateException("Turn indication not found " + indi);
+            if (dir == null) {
+                return "unknown " + (Helper.isEmpty(streetName) ? "" : streetName);
+                // throw new IllegalStateException("Turn indication not found " + indi);
+            }
 
             str = Helper.isEmpty(streetName) ? dir : tr.tr("turn_onto", dir, streetName);
         }

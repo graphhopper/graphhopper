@@ -511,4 +511,12 @@ public class InstructionListTest {
         assertEquals("_blup_", InstructionList.simpleXMLEscape("<blup>"));
         assertEquals("a&amp;b", InstructionList.simpleXMLEscape("a&b"));
     }
+
+    @Test
+    public void testTransfer() {
+        PointList pl = new PointList();
+        pl.add(1, 2);
+        Instruction currI = new Instruction(Instruction.PT_TRANSFER, "temp", InstructionAnnotation.EMPTY, pl);
+        assertEquals("transfer to temp", currI.getTurnDescription(usTR));
+    }
 }
