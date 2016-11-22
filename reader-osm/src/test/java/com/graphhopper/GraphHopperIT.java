@@ -225,27 +225,25 @@ public class GraphHopperIT {
     @Test
     public void testFaundauDestination() {
         GraphHopper tmpHopper = new GraphHopperOSM().
-                setOSMFile(DIR + "/faundau_destination.osm.xml").
+                setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("car,generic", 8));
         tmpHopper.importOrLoad();
 
-        GHRequest req = new GHRequest(48.715516,9.628873, 48.714978,9.634216).
+        GHRequest req = new GHRequest(49.985307,11.50628, 49.985731,11.507465).
                 setVehicle("car").setWeighting("fastest");
 
-        // Take a massive detour, prior fastest was ~525m
         GHResponse rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(2803, rsp.getBest().getDistance(), 1);
+        assertEquals(550, rsp.getBest().getDistance(), 1);
 
-        req = new GHRequest(48.715516,9.628873, 48.714978,9.634216).
+        req = new GHRequest(49.985307,11.50628, 49.985731,11.507465).
                 setVehicle("generic").setWeighting("generic");
 
-        // Take a massive detour, prior fastest was ~525m
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(2803, rsp.getBest().getDistance(), 1);
+        assertEquals(550, rsp.getBest().getDistance(), 1);
     }
 
     @Test
