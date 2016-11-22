@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 /**
- * Abstract Class that defines the basis for NameSimilarity matching using an EdgeFilter.
+ * This Class defines the basis for NameSimilarity matching using an EdgeFilter.
  *
  * @author Robin Boldt
  */
@@ -48,7 +48,9 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
      */
     private List<String> prepareName(String name) {
         // TODO make this better, also split at ',' and others?
-        String[] arr = name.split(" ");
+        // TODO This limits the approach to certain 'western' languages
+        // \s = A whitespace character: [ \t\n\x0B\f\r]
+        String[] arr = name.split("\\s");
         String tmp;
         List<String> list = new ArrayList<>(arr.length);
         for (int i = 0; i < arr.length; i++) {
@@ -86,6 +88,10 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         name = removeRelation(name);
         List<String> edgeName = prepareName(name);
 
+        // TODO Splitting Strings to merge them again is not very elegent, maybe we rather want to keep the OriginalPointHint and the OriginalEdgeName?
+        if(isJaroWinklerSimilar(listToString(pointHint), listToString(edgeName)))
+            return true;
+
         List<String> shorterList;
         List<String> longerList;
 
@@ -98,7 +104,6 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
             longerList = edgeName;
             shorterList = new ArrayList<>(pointHint);
         }
-        boolean similar = false;
         for (String str1: shorterList) {
             for (int i = 0; i < longerList.size(); i++) {
                 if(isJaroWinklerSimilar(str1, longerList.get(i))){
@@ -124,6 +129,14 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         double jwSimilarity = jw.similarity(str1, str2);
         //System.out.println(str1 + " vs. edge:" + str2 + ", " + jwSimilarity);
         return jwSimilarity > .9;
+    }
+
+    private final String listToString(List<String> list){
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i<list.size(); i++) {
+            b.append(list.get(i));
+        }
+        return b.toString();
     }
 
 
