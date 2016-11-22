@@ -1,8 +1,8 @@
 GraphHopper Map Matching is licensed under the Apache license, Version 2.0
 
-Copyright 2012 - Apr, 2016  Peter Karich
+Copyright 2012 - 2016 GraphHopper GmbH
 
-Copyright May, 2016 GraphHopper GmbH
+The copyright of contributions is listed in CONTRIBUTORS.md
 
 This product includes software from
 - https://github.com/bmwcarit/hmm-lib, under the Apache License 2.0 (see: hmm-lib module)
