@@ -426,11 +426,11 @@ public class LocationIndexTree implements LocationIndex {
     /**
      * Provide info about tilesize for testing / visualization
      */
-    double getDeltaLat() {
+    public double getDeltaLat() {
         return deltaLat;
     }
 
-    double getDeltaLon() {
+    public double getDeltaLon() {
         return deltaLon;
     }
 
