@@ -51,7 +51,7 @@ public final class GraphHopperGtfs extends GraphHopper {
         return new RoutingAlgorithmFactory() {
             @Override
             public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-                return new MultiCriteriaLabelSetting(g, opts.getWeighting(), opts.getMaxVisitedNodes(), (GtfsStorage) getGraphHopperStorage().getExtension());
+                return new ProfileDijkstra(g, opts.getWeighting(), opts.getMaxVisitedNodes(), (GtfsStorage) getGraphHopperStorage().getExtension());
             }
         };
     }

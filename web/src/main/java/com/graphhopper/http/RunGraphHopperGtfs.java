@@ -15,7 +15,7 @@ public class RunGraphHopperGtfs {
         CmdArgs cmdArgs = CmdArgs.read(args);
         GraphHopperGtfs graphHopper = new GraphHopperGtfs();
         graphHopper.setGtfsFile(cmdArgs.get("datareader.file", ""));
-        graphHopper.setGraphHopperLocation(cmdArgs.get("graph.location", "target/tmp"));
+        graphHopper.setGraphHopperLocation(cmdArgs.get("graph.location", "target/tmp4"));
         graphHopper.importOrLoad();
 
         Injector injector = Guice.createInjector(new AbstractModule() {

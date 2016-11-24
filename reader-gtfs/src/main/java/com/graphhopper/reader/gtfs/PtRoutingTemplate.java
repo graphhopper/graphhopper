@@ -98,7 +98,7 @@ class PtRoutingTemplate implements RoutingTemplate {
 
         sw = new StopWatch().start();
 
-        List<Path> tmpPathList = ((MultiCriteriaLabelSetting) algo).calcPaths(startNode, new HashSet(toNodes), (int) initialTime);
+        List<Path> tmpPathList = ((ProfileDijkstra) algo).calcPaths(startNode, new HashSet(toNodes), (int) initialTime);
         debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s";
 
         for (Path path : tmpPathList) {
