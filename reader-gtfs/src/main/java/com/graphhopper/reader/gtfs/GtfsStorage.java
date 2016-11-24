@@ -37,7 +37,7 @@ class GtfsStorage implements GraphExtension {
 
 	@Override
 	public boolean isRequireNodeField() {
-		return false;
+		return true;
 	}
 
 	@Override

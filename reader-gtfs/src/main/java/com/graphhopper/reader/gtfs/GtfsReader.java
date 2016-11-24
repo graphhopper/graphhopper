@@ -191,11 +191,13 @@ class GtfsReader implements DataReader {
         for (Stop stop : feed.stops.values()) {
             nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
             int stopEnterNode = i-1;
+            nodeAccess.setAdditionalNodeField(stopEnterNode, NodeType.STOP_ENTER_NODE.ordinal());
             stopNodes.put(stop.stop_id, stopEnterNode);
             EdgeIteratorState edge1 = graph.edge(stopEnterNode, stopEnterNode);
             setEdgeType(edge1, GtfsStorage.EdgeType.STOP_NODE_MARKER_EDGE);
             nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
             int stopExitNode = i-1;
+            nodeAccess.setAdditionalNodeField(stopExitNode, NodeType.STOP_EXIT_NODE.ordinal());
             EdgeIteratorState edge2 = graph.edge(stopExitNode, stopExitNode);
             setEdgeType(edge2, GtfsStorage.EdgeType.STOP_EXIT_NODE_MARKER_EDGE);
             int time = 0;
@@ -263,6 +265,7 @@ class GtfsReader implements DataReader {
         for (StopTime orderedStop : stopTimes) {
             Stop stop = feed.stops.get(orderedStop.stop_id);
             nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
+            nodeAccess.setAdditionalNodeField(i-1, NodeType.INTERNAL_PT.ordinal());
             times.put(i-1, orderedStop.arrival_time + time);
             arrivals.put(orderedStop.stop_id, i-1);
             if (prev != null) {
@@ -282,9 +285,11 @@ class GtfsReader implements DataReader {
                 edge.setFlags(encoder.setTime(edge.getFlags(), orderedStop.arrival_time - prev.departure_time));
             }
             nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
+            nodeAccess.setAdditionalNodeField(i-1, NodeType.INTERNAL_PT.ordinal());
             times.put(i-1, orderedStop.departure_time + time);
             stops.put(orderedStop.stop_id, i-1);
             nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
+            nodeAccess.setAdditionalNodeField(i-1, NodeType.INTERNAL_PT.ordinal());
             times.put(i-1, orderedStop.departure_time + time);
             EdgeIteratorState edge = graph.edge(
                     i-2,

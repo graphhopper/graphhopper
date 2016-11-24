@@ -8,6 +8,7 @@ import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.template.RoutingTemplate;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
@@ -24,6 +25,7 @@ public final class GraphHopperGtfs extends GraphHopper {
     public static final String DEFAULT_MINIMUM_TRANSFER_TIME_HINT = "defaultMinimumTransferTime";
 
     private boolean createWalkNetwork = false;
+    private GtfsGraph gtfsGraph;
 
     public GraphHopperGtfs() {
         super();
@@ -81,6 +83,32 @@ public final class GraphHopperGtfs extends GraphHopper {
 
     @Override
     protected GraphExtension createGraphExtension() {
+        gtfsGraph = new GtfsGraph() {
+            @Override
+            public EdgeFilter ptEnterPositions() {
+                return new PtEnterPositionLookupEdgeFilter((PtFlagEncoder) getEncodingManager().getEncoder("pt"));
+            }
+
+            @Override
+            public EdgeFilter ptExitPositions() {
+                return new PtExitPositionLookupEdgeFilter((PtFlagEncoder) getEncodingManager().getEncoder("pt"));
+            }
+
+            @Override
+            public EdgeFilter everythingButPt() {
+                return new EverythingButPt((PtFlagEncoder) getEncodingManager().getEncoder("pt"));
+            }
+
+            @Override
+            public Weighting fastestTravelTime() {
+                return new PtTravelTimeWeighting(getEncodingManager().getEncoder("pt"));
+            }
+
+        };
         return new GtfsStorage();
+    }
+
+    public GtfsGraph getGtfsGraph() {
+        return gtfsGraph;
     }
 }
