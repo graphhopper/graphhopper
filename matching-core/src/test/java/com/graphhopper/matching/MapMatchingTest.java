@@ -82,7 +82,7 @@ public class MapMatchingTest {
 
         // force CH
         AlgorithmOptions chOpts = AlgorithmOptions.start()
-                .maxVisitedNodes(40)
+                .maxVisitedNodes(1000)
                 .hints(new PMap().put(Parameters.CH.DISABLE, false))
                 .build();
 
@@ -208,7 +208,7 @@ public class MapMatchingTest {
         MatchResult mr = mapMatching.doWork(inputGPXEntries);
         assertEquals(Arrays.asList("Weinligstraße", "Weinligstraße", "Weinligstraße",
                 "Fechnerstraße", "Fechnerstraße"), fetchStreets(mr.getEdgeMatches()));
-        assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 11);
+        assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 11); // TODO: this should be around 300m according to Google ... need to check
         assertEquals(mr.getGpxEntriesMillis(), mr.getMatchMillis(), 3000);
     }
 

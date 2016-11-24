@@ -17,6 +17,7 @@
  */
 package com.graphhopper.matching;
 
+import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.matching.util.HmmProbabilities;
 import com.graphhopper.matching.util.TimeStep;
@@ -161,36 +162,68 @@ public class MapMatching {
                     + gpxList.size() + "). Correct format?");
         }
 
+        // filter the entries:
+        List<GPXEntry> filteredGPXEntries = filterGPXEntries(gpxList);
+        if (filteredGPXEntries.size() < 2) {
+            throw new IllegalStateException("Only " + filteredGPXEntries.size() + " filtered GPX entries (from " + gpxList.size() + "), but two or more are needed");
+        }
+        
+        // now find each of the entries in the graph:
         final EdgeFilter edgeFilter = new DefaultEdgeFilter(algoOptions.getWeighting().getFlagEncoder());
-
-        // Compute all candidates first.
-        // TODO: Generate candidates on-the-fly within computeViterbiSequence() if this does not
-        // degrade performance.
-        final List<QueryResult> allCandidates = new ArrayList<>();
-        List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = createTimeSteps(gpxList,
-                edgeFilter, allCandidates);
-
-        if (allCandidates.size() < 2) {
-            throw new IllegalArgumentException("Too few matching coordinates ("
-                    + allCandidates.size() + "). Wrong region imported?");
-        }
-        if (timeSteps.size() < 2) {
-            throw new IllegalStateException("Coordinates produced too few time steps "
-                    + timeSteps.size() + ", gpxList:" + gpxList.size());
-        }
-
+        List<List<QueryResult>> queriesPerEntry = findGPXEntriesInGraph(filteredGPXEntries, edgeFilter);
+        
+        // now look up the entries up in the graph:
         final QueryGraph queryGraph = new QueryGraph(routingGraph).setUseEdgeExplorerCache(true);
-        queryGraph.lookup(allCandidates);
+        List<QueryResult> allQueryResults = new ArrayList<QueryResult>();
+        for (List<QueryResult> qrs: queriesPerEntry)
+        	allQueryResults.addAll(qrs);
+        queryGraph.lookup(allQueryResults);
 
-        List<SequenceState<GPXExtension, GPXEntry, Path>> seq = computeViterbiSequence(timeSteps,
-                gpxList, queryGraph);
+        // create candidates from the entries in the graph (a candidate is basically an entry + direction):
+        List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = createTimeSteps(filteredGPXEntries, queriesPerEntry, queryGraph);
 
+        // viterbify:
+        List<SequenceState<GPXExtension, GPXEntry, Path>> seq = computeViterbiSequence(timeSteps, gpxList, queryGraph);
+
+        // finally, extract the result:
         final EdgeExplorer explorer = queryGraph.createEdgeExplorer(edgeFilter);
-        MatchResult matchResult = computeMatchResult(seq, gpxList, allCandidates, explorer);
+        MatchResult matchResult = computeMatchResult(seq, filteredGPXEntries, queriesPerEntry, explorer);
 
         return matchResult;
     }
-
+    
+    /**
+     * Filters GPX entries to only those which will be used for map matching (i.e. those which
+     * are separated by at least 2 * measurementErrorSigman
+     */
+    private List<GPXEntry> filterGPXEntries(List<GPXEntry> gpxList) {
+    	List<GPXEntry> filtered = new ArrayList<GPXEntry>();
+    	GPXEntry prevEntry = null;
+    	int last = gpxList.size() - 1;
+    	for (int i = 0; i <= last; i++) {
+    		GPXEntry gpxEntry = gpxList.get(i);
+    		if (i == 0 || i == last || distanceCalc.calcDist(
+    				prevEntry.getLat(), prevEntry.getLon(),
+    				gpxEntry.getLat(), gpxEntry.getLon()) > 2 * measurementErrorSigma) {
+    			filtered.add(gpxEntry);
+    			prevEntry = gpxEntry;
+    		}    		
+    	}
+    	return filtered;
+    }
+    /**
+     * Find the possible locations of each qpxEntry in the graph.
+     */
+    private List<List<QueryResult>> findGPXEntriesInGraph(List<GPXEntry> gpxList, EdgeFilter edgeFilter) {
+    	
+    	List<List<QueryResult>> gpxEntryLocations = new ArrayList<List<QueryResult>>(); 
+    	for (GPXEntry gpxEntry : gpxList) {
+    		gpxEntryLocations.add(locationIndex.findNClosest(gpxEntry.lat, gpxEntry.lon, edgeFilter, measurementErrorSigma));  
+    	}
+    	return gpxEntryLocations;
+    }
+    
+    
     /**
      * Creates TimeSteps for the GPX entries but does not create emission or
      * transition probabilities.
@@ -198,33 +231,64 @@ public class MapMatching {
      * @param outAllCandidates output parameter for all candidates, must be an
      *                         empty list.
      */
-    private List<TimeStep<GPXExtension, GPXEntry, Path>> createTimeSteps(List<GPXEntry> gpxList,
-                                                                         EdgeFilter edgeFilter, List<QueryResult> outAllCandidates) {
-        int indexGPX = 0;
-        TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep = null;
+    private List<TimeStep<GPXExtension, GPXEntry, Path>> createTimeSteps(List<GPXEntry> filteredGPXEntries,
+    		List<List<QueryResult>> queriesPerEntry, QueryGraph queryGraph) {
+    	
         final List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = new ArrayList<>();
 
-        for (GPXEntry gpxEntry : gpxList) {
-            if (prevTimeStep == null
-                    || distanceCalc.calcDist(
-                            prevTimeStep.observation.getLat(), prevTimeStep.observation.getLon(),
-                            gpxEntry.getLat(), gpxEntry.getLon()) > 2 * measurementErrorSigma
-                    // always include last point
-                    || indexGPX == gpxList.size() - 1) {
-                final List<QueryResult> queryResults = locationIndex.findNClosest(
-                        gpxEntry.lat, gpxEntry.lon,
-                        edgeFilter, measurementErrorSigma);
-                outAllCandidates.addAll(queryResults);
-                final List<GPXExtension> candidates = new ArrayList<>();
-                for (QueryResult candidate : queryResults) {
-                    candidates.add(new GPXExtension(gpxEntry, candidate, indexGPX));
-                }
-                final TimeStep<GPXExtension, GPXEntry, Path> timeStep
-                        = new TimeStep<>(gpxEntry, candidates);
-                timeSteps.add(timeStep);
-                prevTimeStep = timeStep;
-            }
-            indexGPX++;
+        int n = filteredGPXEntries.size();
+        assert queriesPerEntry.size() == n;
+        for (int i = 0; i < n; i++) {
+        	
+        	GPXEntry gpxEntry = filteredGPXEntries.get(i);
+        	List<QueryResult> queryResults = queriesPerEntry.get(i);
+                
+        	// as discussed in #51, if the closest node is virtual (i.e. inner-link) then we need to create two candidates:
+        	// one for each direction of each virtual edge. For example, in A---X---B, we'd add the edges A->X and B->X. Note
+        	// that we add the edges with an incoming direction (i.e. A->X not X->A). We can choose to enforce the incoming/outgoing
+        	// direction with the third argument of queryGraph.enforceHeading
+        	List<GPXExtension> candidates = new ArrayList<GPXExtension>();
+        	for (QueryResult qr: queryResults) {
+        		int closestNode = qr.getClosestNode();
+        		if (queryGraph.isVirtualNode(closestNode)) {
+        			// get virtual edges:
+        			List<VirtualEdgeIteratorState> virtualEdges = new ArrayList<VirtualEdgeIteratorState>();
+        			EdgeIterator iter = queryGraph.createEdgeExplorer().setBaseNode(closestNode);
+        			while (iter.next()) {
+                    	if (queryGraph.isVirtualEdge(iter.getEdge())) {
+                    		virtualEdges.add((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), iter.getAdjNode()));
+    	                }
+                    }
+        			assert virtualEdges.size() == 2;
+        			
+        			// create a candidate for each: the candidate being the querypoint plus the virtual edge to favour. Note
+        			// that we favour the virtual edge by *unfavoring* the rest, so we need to record these.
+        			VirtualEdgeIteratorState e1 = virtualEdges.get(0);
+        			VirtualEdgeIteratorState e2 = virtualEdges.get(1);
+        			for (int j = 0; j < 2; j++) {
+        				// get favored/unfavored edges:
+        				VirtualEdgeIteratorState incomingVirtualEdge = j == 0 ? e1 : e2;
+        				VirtualEdgeIteratorState outgoingVirtualEdge = j == 0 ? e2 : e1;
+            			// create candidate
+                		QueryResult vqr = new QueryResult(qr.getQueryPoint().lat, qr.getQueryPoint().lon);
+                		vqr.setQueryDistance(qr.getQueryDistance());
+                		vqr.setClosestNode(qr.getClosestNode());
+                		vqr.setWayIndex(qr.getWayIndex());
+                		vqr.setSnappedPosition(qr.getSnappedPosition());
+                		vqr.setClosestEdge(qr.getClosestEdge());
+                		vqr.calcSnappedPoint(distanceCalc);
+                		GPXExtension candidate = new GPXExtension(gpxEntry, vqr, incomingVirtualEdge, outgoingVirtualEdge);
+            			candidates.add(candidate);
+        			}
+        		} else {
+        			// just add the real edge, undirected
+        			GPXExtension candidate = new GPXExtension(gpxEntry, qr);
+        			candidates.add(candidate);
+        		} 
+        	}
+                
+            final TimeStep<GPXExtension, GPXEntry, Path> timeStep = new TimeStep<>(gpxEntry, candidates);
+            timeSteps.add(timeStep);
         }
         return timeSteps;
     }
@@ -301,9 +365,16 @@ public class MapMatching {
         for (GPXExtension from : prevTimeStep.candidates) {
             for (GPXExtension to : timeStep.candidates) {
                 RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOptions);
-                // System.out.println("algo " + algo.getName());
-                final Path path = algo.calcPath(from.getQueryResult().getClosestNode(),
-                        to.getQueryResult().getClosestNode());
+                // enforce heading if required:
+                if (from.isDirected()) {
+                	from.incomingVirtualEdge.setUnfavored(true);
+                }    
+                if (to.isDirected()) {
+                	// unfavor the favour virtual edge
+                	to.outgoingVirtualEdge.setUnfavored(true);
+                }
+                final Path path = algo.calcPath(from.getQueryResult().getClosestNode(), to.getQueryResult().getClosestNode());
+                queryGraph.clearUnfavoredStatus();
                 if (path.isFound()) {
                     timeStep.addRoadPath(from, to, path);
                     final double transitionLogProbability = probabilities
@@ -315,13 +386,15 @@ public class MapMatching {
     }
 
     private MatchResult computeMatchResult(List<SequenceState<GPXExtension, GPXEntry, Path>> seq,
-                                           List<GPXEntry> gpxList, List<QueryResult> allCandidates,
+                                           List<GPXEntry> gpxList, List<List<QueryResult>> queriesPerEntry,
                                            EdgeExplorer explorer) {
         // every virtual edge maps to its real edge where the orientation is already correct!
         // TODO use traversal key instead of string!
         final Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<>();
-        for (QueryResult candidate : allCandidates) {
-            fillVirtualEdges(virtualEdgesMap, explorer, candidate);
+        for (List<QueryResult> queryResults: queriesPerEntry) {
+        	for (QueryResult qr: queryResults) {
+        		fillVirtualEdges(virtualEdgesMap, explorer, qr);
+        	}
         }
 
         MatchResult matchResult = computeMatchedEdges(seq, virtualEdgesMap);
