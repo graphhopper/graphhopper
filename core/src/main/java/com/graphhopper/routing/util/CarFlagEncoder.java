@@ -158,6 +158,9 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
     protected double getSpeed(ReaderWay way) {
         String highwayValue = way.getTag("highway");
+        if (way.hasTag("motorroad", "yes")) {
+            highwayValue = "motorroad";
+        }
         Integer speed = defaultSpeedMap.get(highwayValue);
         if (speed == null)
             throw new IllegalStateException(toString() + ", no speed found for: " + highwayValue + ", tags: " + way);
