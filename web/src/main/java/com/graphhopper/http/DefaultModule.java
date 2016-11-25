@@ -75,8 +75,10 @@ public final class DefaultModule extends AbstractModule {
     @Singleton
     @Named("jsonp_allowed")
     Boolean isJsonpAllowed(CmdArgs args) {
-        logger.info("jsonp disabled");
-        return args.getBool("web.jsonp_allowed", false);
+        boolean jsonpAllowed = args.getBool("web.jsonp_allowed", false);
+        if (!jsonpAllowed)
+            logger.info("jsonp disabled");
+        return jsonpAllowed;
     }
 
     @Override
