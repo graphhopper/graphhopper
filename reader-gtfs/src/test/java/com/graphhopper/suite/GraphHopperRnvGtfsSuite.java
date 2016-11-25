@@ -31,7 +31,7 @@ import java.util.List;
 
 import static org.junit.Assert.assertFalse;
 
-public class GraphHopperRnvGtfsSuiteIT {
+public class GraphHopperRnvGtfsSuite {
 
     private static final String GRAPH_LOC = "target/graphhopperIT-rnv-gtfs";
     private static GraphHopperGtfs graphHopper;
