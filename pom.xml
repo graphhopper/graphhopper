@@ -73,6 +73,13 @@
     <prerequisites>
         <maven>3.2</maven>
     </prerequisites>
+    <modules>
+        <module>core</module>
+        <module>reader-osm</module>
+        <module>reader-overlay-data</module>
+        <module>tools</module>
+        <module>web</module>
+    </modules>
     <build>
         <plugins>
             <plugin>
@@ -183,6 +190,12 @@
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
+            <!-- this exception is valid for jdk8 profile below too -->
+            <modules>                
+                <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
+                Currently works for jdk8 only -->
+                <module>reader-shp</module>
+            </modules>
             <build>
                 <plugins>
                     <plugin>
@@ -257,14 +270,10 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties />
-            <!-- update below module list too -->
-            <modules>
-                <module>core</module>
-                <module>reader-osm</module>
+            <modules>                
+                <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
+                Currently works for jdk8 only -->
                 <module>reader-shp</module>
-                <module>reader-overlay-data</module>
-                <module>tools</module>
-                <module>web</module>
             </modules>
             <build>
                 <plugins>
@@ -284,18 +293,7 @@
                 <activeByDefault>false</activeByDefault>                                
                 <jdk>9</jdk>
             </activation>
-            <properties />
-            <modules>
-                <module>core</module>
-                <module>reader-osm</module>
-                <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
-                maybe there is a parameter solution for this instead
-                <module>reader-shp</module>
-                -->
-                <module>reader-overlay-data</module>
-                <module>tools</module>
-                <module>web</module>
-            </modules>
+            <properties />           
             <build>
                 <plugins>
                     <plugin>
