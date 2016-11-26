@@ -22,18 +22,18 @@
     }
   },
   "dependencies": {
-    "browserify": "13.1.0",
+    "browserify": "13.1.1",
     "browserify-swap": "0.2.2",
     "d3": "3.5.17",
     "jquery": "3.1.1",
-    "leaflet": "1.0.1",
+    "leaflet": "1.0.2",
     "leaflet-contextmenu": "1.1.1",
     "leaflet-loading": "0.1.23",
-    "uglifyify": "3.0.3"
+    "uglifyify": "3.0.4"
   },
   "devDependencies": {
     "jasmine": "2.5.2",
-    "jshint": "2.9.3",
+    "jshint": "2.9.4",
     "watchify": "3.7.0"
   }
 }
