@@ -17,6 +17,12 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.predicates.IntObjectPredicate;
+import com.carrotsearch.hppc.procedures.IntProcedure;
+import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -29,12 +35,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.procedure.TIntProcedure;
-import gnu.trove.procedure.TObjectProcedure;
-import gnu.trove.set.hash.TIntHashSet;
 
 import java.util.*;
 
@@ -205,7 +205,7 @@ public class QueryGraph implements Graph {
         baseGraph.virtualNodes = virtualNodes;
         baseGraph.queryResults = queryResults;
 
-        TIntObjectMap<List<QueryResult>> edge2res = new TIntObjectHashMap<List<QueryResult>>(resList.size());
+        GHIntObjectHashMap<List<QueryResult>> edge2res = new GHIntObjectHashMap<List<QueryResult>>(resList.size());
 
         // Phase 1
         // calculate snapped point and swap direction of closest edge if necessary
@@ -258,9 +258,9 @@ public class QueryGraph implements Graph {
         // Phase 2 - now it is clear which points cut one edge
         // 1. create point lists
         // 2. create virtual edges between virtual nodes and its neighbor (virtual or normal nodes)
-        edge2res.forEachValue(new TObjectProcedure<List<QueryResult>>() {
+        edge2res.forEach(new IntObjectPredicate<List<QueryResult>>() {
             @Override
-            public boolean execute(List<QueryResult> results) {
+            public boolean apply(int edgeId, List<QueryResult> results) {
                 // we can expect at least one entry in the results
                 EdgeIteratorState closestEdge = results.get(0).getClosestEdge();
                 final PointList fullPL = closestEdge.fetchWayGeometry(3);
@@ -577,11 +577,11 @@ public class QueryGraph implements Graph {
         // so we need to create the mapping on EVERY call!
         // This needs to be a HashMap (and cannot be an array) as we also need to tweak edges for some mainNodes!
         // The more query points we have the more inefficient this map could be. Hmmh.
-        final TIntObjectMap<VirtualEdgeIterator> node2EdgeMap
-                = new TIntObjectHashMap<VirtualEdgeIterator>(queryResults.size() * 3);
+        final IntObjectMap<VirtualEdgeIterator> node2EdgeMap
+                = new GHIntObjectHashMap<VirtualEdgeIterator>(queryResults.size() * 3);
 
         final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
-        final TIntHashSet towerNodesToChange = new TIntHashSet(queryResults.size());
+        final GHIntHashSet towerNodesToChange = new GHIntHashSet(queryResults.size());
 
         // 1. virtualEdges should also get fresh EdgeIterators on every createEdgeExplorer call!
         for (int i = 0; i < queryResults.size(); i++) {
@@ -618,11 +618,10 @@ public class QueryGraph implements Graph {
         // 2. the connected tower nodes from mainGraph need fresh EdgeIterators with possible fakes
         // where 'fresh' means independent of previous call and respecting the edgeFilter
         // -> setup fake iterators of detected tower nodes (virtual edges are already added)
-        towerNodesToChange.forEach(new TIntProcedure() {
+        towerNodesToChange.forEach(new IntProcedure() {
             @Override
-            public boolean execute(int value) {
+            public void apply(int value) {
                 fillVirtualEdges(node2EdgeMap, value, mainExplorer);
-                return true;
             }
         });
 
@@ -641,7 +640,7 @@ public class QueryGraph implements Graph {
     /**
      * Creates a fake edge iterator pointing to multiple edge states.
      */
-    private void addVirtualEdges(TIntObjectMap<VirtualEdgeIterator> node2EdgeMap, EdgeFilter filter, boolean base,
+    private void addVirtualEdges(IntObjectMap<VirtualEdgeIterator> node2EdgeMap, EdgeFilter filter, boolean base,
                                  int node, int virtNode) {
         VirtualEdgeIterator existingIter = node2EdgeMap.get(node);
         if (existingIter == null) {
@@ -655,12 +654,12 @@ public class QueryGraph implements Graph {
             existingIter.add(edge);
     }
 
-    void fillVirtualEdges(TIntObjectMap<VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl) {
+    void fillVirtualEdges(IntObjectMap<VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl) {
         if (isVirtualNode(towerNode))
             throw new IllegalStateException("Node should not be virtual:" + towerNode + ", " + node2Edge);
 
         VirtualEdgeIterator vIter = node2Edge.get(towerNode);
-        TIntArrayList ignoreEdges = new TIntArrayList(vIter.count() * 2);
+        IntArrayList ignoreEdges = new IntArrayList(vIter.count() * 2);
         while (vIter.next()) {
             EdgeIteratorState edge = queryResults.get(vIter.getAdjNode() - mainNodes).getClosestEdge();
             ignoreEdges.add(edge.getEdge());

@@ -17,8 +17,10 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -29,14 +31,11 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
-
 /**
  * Abstract base class for tunnel/bridge edge elevation interpolators. This
  * class estimates elevation of inner nodes of a tunnel/bridge based on
  * elevations of entry nodes. See #713 for more information.
- * 
+ *
  * <p>
  * Since inner nodes of tunnel or bridge do not lie on the Earth surface, we
  * should not use elevations returned by the elevation provider for these
@@ -64,7 +63,7 @@ public abstract class AbstractEdgeElevationInterpolator {
     private final ElevationInterpolator elevationInterpolator = new ElevationInterpolator();
 
     public AbstractEdgeElevationInterpolator(GraphHopperStorage storage,
-                    DataFlagEncoder dataFlagEncoder) {
+                                             DataFlagEncoder dataFlagEncoder) {
         this.storage = storage;
         this.dataFlagEncoder = dataFlagEncoder;
         this.nodeElevationInterpolator = new NodeElevationInterpolator(storage);
@@ -90,7 +89,7 @@ public abstract class AbstractEdgeElevationInterpolator {
             final int edgeId = edge.getEdge();
             if (isInterpolatableEdge(edge)) {
                 if (!visitedEdgeIds.contains(edgeId)) {
-                    interpolateEdge(edge, visitedEdgeIds, edgeExplorer, edgeId);
+                    interpolateEdge(edge, visitedEdgeIds, edgeExplorer);
                 }
             }
             visitedEdgeIds.add(edgeId);
@@ -98,19 +97,20 @@ public abstract class AbstractEdgeElevationInterpolator {
     }
 
     private void interpolateEdge(final EdgeIteratorState interpolatableEdge,
-                    final GHBitSet visitedEdgeIds, final EdgeExplorer edgeExplorer, int edgeId) {
-        final TIntSet outerNodeIds = new TIntHashSet();
-        final TIntSet innerNodeIds = new TIntHashSet();
+                                 final GHBitSet visitedEdgeIds, final EdgeExplorer edgeExplorer) {
+        final IntSet outerNodeIds = new GHIntHashSet();
+        final GHIntHashSet innerNodeIds = new GHIntHashSet();
         gatherOuterAndInnerNodeIds(edgeExplorer, interpolatableEdge, visitedEdgeIds, outerNodeIds,
-                        innerNodeIds);
+                innerNodeIds);
         nodeElevationInterpolator.interpolateElevationsOfInnerNodes(outerNodeIds.toArray(),
-                        innerNodeIds.toArray());
+                innerNodeIds.toArray());
     }
 
     public void gatherOuterAndInnerNodeIds(final EdgeExplorer edgeExplorer,
-                    final EdgeIteratorState interpolatableEdge, final GHBitSet visitedEdgesIds,
-                    final TIntSet outerNodeIds, final TIntSet innerNodeIds) {
+                                           final EdgeIteratorState interpolatableEdge, final GHBitSet visitedEdgesIds,
+                                           final IntSet outerNodeIds, final GHIntHashSet innerNodeIds) {
         final BreadthFirstSearch gatherOuterAndInnerNodeIdsSearch = new BreadthFirstSearch() {
+            @Override
             protected boolean checkAdjacent(EdgeIteratorState edge) {
                 visitedEdgesIds.add(edge.getEdge());
                 final int baseNodeId = edge.getBaseNode();
@@ -149,7 +149,7 @@ public abstract class AbstractEdgeElevationInterpolator {
                     double lat = pointList.getLat(index);
                     double lon = pointList.getLon(index);
                     double ele = elevationInterpolator.calculateElevationBasedOnTwoPoints(lat, lon,
-                                    lat0, lon0, ele0, lat1, lon1, ele1);
+                            lat0, lon0, ele0, lat1, lon1, ele1);
                     pointList.set(index, lat, lon, ele);
                 }
                 edge.setWayGeometry(pointList);

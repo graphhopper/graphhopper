@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
@@ -24,7 +25,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
-import gnu.trove.list.array.TIntArrayList;
 
 import java.util.Arrays;
 
@@ -38,7 +38,7 @@ import java.util.Arrays;
 public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     private static final int EMPTY_PARENT = -1;
     private static final int NOT_FOUND = -1;
-    private final TIntArrayListWithCap changedNodes;
+    private final IntArrayListWithCap changedNodes;
     protected double[] weights;
     private int[] parents;
     private int[] edgeIds;
@@ -63,7 +63,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         Arrays.fill(weights, Double.MAX_VALUE);
 
         heap = new IntDoubleBinaryHeap(1000);
-        changedNodes = new TIntArrayListWithCap();
+        changedNodes = new IntArrayListWithCap();
     }
 
     @Override
@@ -114,7 +114,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             }
 
             heap.clear();
-            changedNodes.reset();
+
+            // changedNodes.clear();
+            changedNodes.elementsCount = 0;
 
             currNode = from;
             if (!traversalMode.isEdgeBased()) {
@@ -226,12 +228,12 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
                 + "MB";
     }
 
-    private static class TIntArrayListWithCap extends TIntArrayList {
-        public TIntArrayListWithCap() {
+    private static class IntArrayListWithCap extends IntArrayList {
+        public IntArrayListWithCap() {
         }
 
         public int getCapacity() {
-            return _data.length;
+            return buffer.length;
         }
     }
 }

@@ -64,7 +64,7 @@ public class OSMTurnRelation {
 
         try {
             // street with restriction was not included (access or tag limits etc)
-            if (nodeVia == OSMReader.EMPTY)
+            if (nodeVia == OSMReader.EMPTY_NODE)
                 return Collections.emptyList();
 
             int edgeIdFrom = EdgeIterator.NO_EDGE;

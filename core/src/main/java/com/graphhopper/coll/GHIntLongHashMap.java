@@ -17,36 +17,28 @@
  */
 package com.graphhopper.coll;
 
+import com.carrotsearch.hppc.HashOrderMixingStrategy;
+import com.carrotsearch.hppc.IntLongHashMap;
+import static com.graphhopper.coll.GHIntObjectHashMap.DETERMINISTIC;
+
 /**
- * Wrapper interface of an integer container for different implementations like OpenBitset, BitSet,
- * ...
- * <p>
- * Loop via<br/>
- * <code>for (int i = set.next(0); i >= 0; i = set.next(i + 1)) {...}</code>
  *
  * @author Peter Karich
  */
-public interface GHBitSet {
-    boolean contains(int index);
+public class GHIntLongHashMap extends IntLongHashMap {
+    public GHIntLongHashMap() {
+        super(10, 0.75, DETERMINISTIC);
+    }
 
-    void add(int index);
+    public GHIntLongHashMap(int capacity) {
+        super(capacity, 0.75, DETERMINISTIC);
+    }
 
-    void remove(int index);
+    public GHIntLongHashMap(int capacity, double loadFactor) {
+        super(capacity, loadFactor, DETERMINISTIC);
+    }
 
-    int getCardinality();
-
-    void clear();
-
-    /**
-     * Searches for a greater or equal entry and returns it.
-     * <p>
-     *
-     * @return -1 if nothing found
-     */
-    int next(int index);
-
-    /**
-     * @return the specified MyBitSet bs
-     */
-    GHBitSet copyTo(GHBitSet bs);
+    public GHIntLongHashMap(int capacity, double loadFactor, HashOrderMixingStrategy hashOrderMixer) {
+        super(capacity, loadFactor, hashOrderMixer);
+    }
 }

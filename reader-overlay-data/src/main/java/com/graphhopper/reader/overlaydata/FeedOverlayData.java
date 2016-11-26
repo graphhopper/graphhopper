@@ -17,6 +17,8 @@
  */
 package com.graphhopper.reader.overlaydata;
 
+import com.carrotsearch.hppc.cursors.IntCursor;
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.json.GHson;
 import com.graphhopper.json.geo.Geometry;
 import com.graphhopper.json.geo.JsonFeature;
@@ -34,13 +36,11 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -121,7 +121,7 @@ public class FeedOverlayData {
     private long applyChange(JsonFeature jsonFeature, FlagEncoder encoder) {
         long updates = 0;
         EdgeFilter filter = new DefaultEdgeFilter(encoder);
-        TIntSet edges = new TIntHashSet();
+        GHIntHashSet edges = new GHIntHashSet();
         if (jsonFeature.hasGeometry()) {
             fillEdgeIDs(edges, jsonFeature.getGeometry(), filter);
         } else if (jsonFeature.getBBox() != null) {
@@ -129,10 +129,10 @@ public class FeedOverlayData {
         } else
             throw new IllegalArgumentException("Feature " + jsonFeature.getId() + " has no geometry and no bbox");
 
-        TIntIterator iter = edges.iterator();
+        Iterator<IntCursor> iter = edges.iterator();
         Map<String, Object> props = jsonFeature.getProperties();
         while (iter.hasNext()) {
-            int edgeId = iter.next();
+            int edgeId = iter.next().value;
             EdgeIteratorState edge = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
 
             if (props.containsKey("access")) {
@@ -157,7 +157,7 @@ public class FeedOverlayData {
         return updates;
     }
 
-    public void fillEdgeIDs(TIntSet edgeIds, Geometry geometry, EdgeFilter filter) {
+    public void fillEdgeIDs(GHIntHashSet edgeIds, Geometry geometry, EdgeFilter filter) {
         if (geometry.isPoint()) {
             GHPoint point = geometry.asPoint();
             QueryResult qr = locationIndex.findClosest(point.lat, point.lon, filter);
@@ -185,7 +185,7 @@ public class FeedOverlayData {
         }
     }
 
-    public void fillEdgeIDs(final TIntSet edgeIds, final BBox bbox, EdgeFilter filter) {
+    public void fillEdgeIDs(final GHIntHashSet edgeIds, final BBox bbox, EdgeFilter filter) {
         QueryResult qr = locationIndex.findClosest((bbox.maxLat + bbox.minLat) / 2, (bbox.maxLon + bbox.minLon) / 2, filter);
         if (!qr.isValid())
             return;

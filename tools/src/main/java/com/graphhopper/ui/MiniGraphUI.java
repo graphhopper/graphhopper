@@ -17,6 +17,7 @@
  */
 package com.graphhopper.ui;
 
+import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
@@ -32,7 +33,6 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Algorithms;
 import com.graphhopper.util.shapes.BBox;
-import gnu.trove.list.TIntList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -314,7 +314,7 @@ public class MiniGraphUI {
         double prevLat = Double.NaN;
         double prevLon = Double.NaN;
         boolean plotNodes = false;
-        TIntList nodes = tmpPath.calcNodes();
+        IntIndexedContainer nodes = tmpPath.calcNodes();
         if (plotNodes) {
             for (int i = 0; i < nodes.size(); i++) {
                 plotNodeName(g2, nodes.get(i));

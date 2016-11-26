@@ -17,7 +17,15 @@
  */
 package com.graphhopper.reader.osm;
 
+import com.carrotsearch.hppc.IntLongMap;
+import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.LongIndexedContainer;
+import com.carrotsearch.hppc.LongLongMap;
+import com.carrotsearch.hppc.LongSet;
+import com.graphhopper.coll.GHIntLongHashMap;
+import com.graphhopper.coll.GHLongHashSet;
 import com.graphhopper.coll.GHLongIntBTree;
+import com.graphhopper.coll.GHLongLongHashMap;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
@@ -29,16 +37,6 @@ import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import gnu.trove.list.TLongList;
-import gnu.trove.list.array.TLongArrayList;
-import gnu.trove.map.TIntLongMap;
-import gnu.trove.map.TLongLongMap;
-import gnu.trove.map.TLongObjectMap;
-import gnu.trove.map.hash.TIntLongHashMap;
-import gnu.trove.map.hash.TLongLongHashMap;
-import gnu.trove.map.hash.TLongObjectHashMap;
-import gnu.trove.set.TLongSet;
-import gnu.trove.set.hash.TLongHashSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +72,7 @@ import static com.graphhopper.util.Helper.nf;
  * @author Peter Karich
  */
 public class OSMReader implements DataReader {
-    protected static final int EMPTY = -1;
+    protected static final int EMPTY_NODE = -1;
     // pillar node is >= 3
     protected static final int PILLAR_NODE = 1;
     // tower node is <= -3
@@ -83,7 +81,7 @@ public class OSMReader implements DataReader {
     private final GraphStorage ghStorage;
     private final Graph graph;
     private final NodeAccess nodeAccess;
-    private final TLongList barrierNodeIds = new TLongArrayList();
+    private final LongIndexedContainer barrierNodeIds = new LongArrayList();
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
     private final DistanceCalc3D distCalc3D = Helper.DIST_3D;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
@@ -106,11 +104,11 @@ public class OSMReader implements DataReader {
     // smaller memory overhead for bigger data sets because of avoiding a "rehash"
     // remember how many times a node was used to identify tower nodes
     private LongIntMap osmNodeIdToInternalNodeMap;
-    private TLongLongHashMap osmNodeIdToNodeFlagsMap;
-    private TLongLongHashMap osmWayIdToRouteWeightMap;
+    private GHLongLongHashMap osmNodeIdToNodeFlagsMap;
+    private GHLongLongHashMap osmWayIdToRouteWeightMap;
     // stores osm way ids used by relations to identify which edge ids needs to be mapped later
-    private TLongHashSet osmWayIdSet = new TLongHashSet();
-    private TIntLongMap edgeIdToOsmWayIdMap;
+    private GHLongHashSet osmWayIdSet = new GHLongHashSet();
+    private IntLongMap edgeIdToOsmWayIdMap;
     private boolean doSimplify = true;
     private int nextTowerId = 0;
     private int nextPillarId = 0;
@@ -126,8 +124,8 @@ public class OSMReader implements DataReader {
         this.nodeAccess = graph.getNodeAccess();
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
-        osmNodeIdToNodeFlagsMap = new TLongLongHashMap(200, .5f, 0, 0);
-        osmWayIdToRouteWeightMap = new TLongLongHashMap(200, .5f, 0, 0);
+        osmNodeIdToNodeFlagsMap = new GHLongLongHashMap(200, .5f);
+        osmWayIdToRouteWeightMap = new GHLongLongHashMap(200, .5f);
         pillarInfo = new PillarInfo(nodeAccess.is3D(), ghStorage.getDirectory());
     }
 
@@ -172,7 +170,7 @@ public class OSMReader implements DataReader {
                     final ReaderWay way = (ReaderWay) item;
                     boolean valid = filterWay(way);
                     if (valid) {
-                        TLongList wayNodes = way.getNodes();
+                        LongIndexedContainer wayNodes = way.getNodes();
                         int s = wayNodes.size();
                         for (int index = 0; index < s; index++) {
                             prepareHighwayNode(wayNodes.get(index));
@@ -219,13 +217,13 @@ public class OSMReader implements DataReader {
     /**
      * @return all required osmWayIds to process e.g. relations.
      */
-    private TLongSet getOsmWayIdSet() {
+    private LongSet getOsmWayIdSet() {
         return osmWayIdSet;
     }
 
-    private TIntLongMap getEdgeIdToOsmWayIdMap() {
+    private IntLongMap getEdgeIdToOsmWayIdMap() {
         if (edgeIdToOsmWayIdMap == null)
-            edgeIdToOsmWayIdMap = new TIntLongHashMap(getOsmWayIdSet().size(), 0.5f, -1, -1);
+            edgeIdToOsmWayIdMap = new GHIntLongHashMap(getOsmWayIdSet().size(), 0.5f);
 
         return edgeIdToOsmWayIdMap;
     }
@@ -329,7 +327,7 @@ public class OSMReader implements DataReader {
         long relationFlags = getRelFlagsMap().get(way.getId());
 
         // TODO move this after we have created the edge and know the coordinates => encodingManager.applyWayTags
-        TLongList osmNodeIds = way.getNodes();
+        LongArrayList osmNodeIds = way.getNodes();
         // Estimate length of ways containing a route tag e.g. for ferry speed calculation
         if (osmNodeIds.size() > 1) {
             int first = getNodeMap().get(osmNodeIds.get(0));
@@ -378,11 +376,12 @@ public class OSMReader implements DataReader {
                         if (lastBarrier < 0)
                             lastBarrier = 0;
 
-                        // add way up to barrier shadow node
-                        long transfer[] = osmNodeIds.toArray(lastBarrier, i - lastBarrier + 1);
-                        transfer[transfer.length - 1] = newNodeId;
-                        TLongList partIds = new TLongArrayList(transfer);
-                        createdEdges.addAll(addOSMWay(partIds, wayFlags, wayOsmId));
+                        // add way up to barrier shadow node                        
+                        int length = i - lastBarrier + 1;
+                        LongArrayList partNodeIds = new LongArrayList();
+                        partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
+                        partNodeIds.set(length - 1, newNodeId);
+                        createdEdges.addAll(addOSMWay(partNodeIds, wayFlags, wayOsmId));
 
                         // create zero length edge for barrier
                         createdEdges.addAll(addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId));
@@ -402,8 +401,8 @@ public class OSMReader implements DataReader {
         // just add remainder of way to graph if barrier was not the last node
         if (lastBarrier >= 0) {
             if (lastBarrier < size - 1) {
-                long transfer[] = osmNodeIds.toArray(lastBarrier, size - lastBarrier);
-                TLongList partNodeIds = new TLongArrayList(transfer);
+                LongArrayList partNodeIds = new LongArrayList();
+                partNodeIds.add(osmNodeIds.buffer, lastBarrier, size - lastBarrier);
                 createdEdges.addAll(addOSMWay(partNodeIds, wayFlags, wayOsmId));
             }
         } else {
@@ -433,7 +432,7 @@ public class OSMReader implements DataReader {
     }
 
     public Collection<TurnCostTableEntry> analyzeTurnRelation(OSMTurnRelation turnRelation) {
-        TLongObjectMap<TurnCostTableEntry> entries = new TLongObjectHashMap<OSMTurnRelation.TurnCostTableEntry>();
+        Map<Long, TurnCostTableEntry> entries = new LinkedHashMap<Long, OSMTurnRelation.TurnCostTableEntry>();
 
         for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
             for (TurnCostTableEntry entry : analyzeTurnRelation(encoder, turnRelation)) {
@@ -447,7 +446,7 @@ public class OSMReader implements DataReader {
             }
         }
 
-        return entries.valueCollection();
+        return entries.values();
     }
 
     public Collection<TurnCostTableEntry> analyzeTurnRelation(FlagEncoder encoder, OSMTurnRelation turnRelation) {
@@ -480,12 +479,12 @@ public class OSMReader implements DataReader {
         if (id < TOWER_NODE)
             return -id - 3;
 
-        return EMPTY;
+        return EMPTY_NODE;
     }
 
     // TODO remove this ugly stuff via better preparsing phase! E.g. putting every tags etc into a helper file!
     double getTmpLatitude(int id) {
-        if (id == EMPTY)
+        if (id == EMPTY_NODE)
             return Double.NaN;
         if (id < TOWER_NODE) {
             // tower node
@@ -501,7 +500,7 @@ public class OSMReader implements DataReader {
     }
 
     double getTmpLongitude(int id) {
-        if (id == EMPTY)
+        if (id == EMPTY_NODE)
             return Double.NaN;
         if (id < TOWER_NODE) {
             // tower node
@@ -535,7 +534,7 @@ public class OSMReader implements DataReader {
 
     boolean addNode(ReaderNode node) {
         int nodeType = getNodeMap().get(node.getId());
-        if (nodeType == EMPTY)
+        if (nodeType == EMPTY_NODE)
             return false;
 
         double lat = node.getLat();
@@ -577,11 +576,11 @@ public class OSMReader implements DataReader {
     }
 
     void prepareHighwayNode(long osmId) {
-        int tmpIndex = getNodeMap().get(osmId);
-        if (tmpIndex == EMPTY) {
+        int tmpGHNodeId = getNodeMap().get(osmId);
+        if (tmpGHNodeId == EMPTY_NODE) {
             // osmId is used exactly once
             getNodeMap().put(osmId, PILLAR_NODE);
-        } else if (tmpIndex > EMPTY) {
+        } else if (tmpGHNodeId > EMPTY_NODE) {
             // mark node as tower node as it occured at least twice times
             getNodeMap().put(osmId, TOWER_NODE);
         } else {
@@ -604,7 +603,7 @@ public class OSMReader implements DataReader {
     /**
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
-    Collection<EdgeIteratorState> addOSMWay(final TLongList osmNodeIds, final long flags, final long wayOsmId) {
+    Collection<EdgeIteratorState> addOSMWay(final LongIndexedContainer osmNodeIds, final long flags, final long wayOsmId) {
         PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
         List<EdgeIteratorState> newEdges = new ArrayList<EdgeIteratorState>(5);
         int firstNode = -1;
@@ -614,7 +613,7 @@ public class OSMReader implements DataReader {
             for (int i = 0; i < osmNodeIds.size(); i++) {
                 long osmId = osmNodeIds.get(i);
                 int tmpNode = getNodeMap().get(osmId);
-                if (tmpNode == EMPTY)
+                if (tmpNode == EMPTY_NODE)
                     continue;
 
                 // skip osmIds with no associated pillar or tower id (e.g. !OSMReader.isBounds)
@@ -868,11 +867,11 @@ public class OSMReader implements DataReader {
         return osmNodeIdToInternalNodeMap;
     }
 
-    protected TLongLongMap getNodeFlagsMap() {
+    protected LongLongMap getNodeFlagsMap() {
         return osmNodeIdToNodeFlagsMap;
     }
 
-    TLongLongHashMap getRelFlagsMap() {
+    GHLongLongHashMap getRelFlagsMap() {
         return osmWayIdToRouteWeightMap;
     }
 

@@ -26,6 +26,7 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class GHSortedCollectionTest {
+    
     @Test
     public void testPoll() {
         GHSortedCollection instance = new GHSortedCollection();

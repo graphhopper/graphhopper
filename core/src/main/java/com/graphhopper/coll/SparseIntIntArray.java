@@ -75,7 +75,7 @@ public class SparseIntIntArray {
     }
 
     /**
-     * Gets the Object mapped from the specified key, or <code>null</code> if no such mapping has
+     * Gets the Object mapped from the specified key, or <code>-1</code> if no such mapping has
      * been made.
      */
     public int get(int key) {

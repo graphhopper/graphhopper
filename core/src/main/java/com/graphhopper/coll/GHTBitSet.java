@@ -17,24 +17,24 @@
  */
 package com.graphhopper.coll;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.set.hash.TIntHashSet;
+import com.carrotsearch.hppc.cursors.IntCursor;
+import java.util.Iterator;
 
 /**
- * Implements the bitset interface via a trove THashSet. More efficient for a few entries.
+ * Implements the bitset interface via a hash set. It is more efficient for only a few entries.
  * <p>
  *
  * @author Peter Karich
  */
 public class GHTBitSet implements GHBitSet {
-    private final TIntHashSet tHash;
+    private final GHIntHashSet tHash;
 
-    public GHTBitSet(TIntHashSet set) {
+    public GHTBitSet(GHIntHashSet set) {
         tHash = set;
     }
 
     public GHTBitSet(int no) {
-        tHash = new TIntHashSet(no, 0.7f, -1);
+        tHash = new GHIntHashSet(no, 0.7f);
     }
 
     public GHTBitSet() {
@@ -77,9 +77,9 @@ public class GHTBitSet implements GHBitSet {
         if (bs instanceof GHTBitSet) {
             ((GHTBitSet) bs).tHash.addAll(this.tHash);
         } else {
-            TIntIterator iter = tHash.iterator();
+            Iterator<IntCursor> iter = tHash.iterator();
             while (iter.hasNext()) {
-                bs.add(iter.next());
+                bs.add(iter.next().value);
             }
         }
         return bs;

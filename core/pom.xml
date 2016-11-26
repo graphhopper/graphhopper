@@ -35,12 +35,11 @@
             <comments>A business-friendly OSS license</comments>
         </license>
     </licenses>
-    <dependencies>
-        <!-- Trove is LGPL and slightly big (~3MB) -->
+    <dependencies>        
         <dependency>
-            <groupId>net.sf.trove4j</groupId>
-            <artifactId>trove4j</artifactId>
-            <version>3.0.3</version>
+            <groupId>com.carrotsearch</groupId>
+            <artifactId>hppc</artifactId>
+            <version>0.7.2</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -82,7 +81,6 @@
             <version>${json.org.version}</version>
             <scope>test</scope>
         </dependency>
-
     </dependencies>
 
     <build>

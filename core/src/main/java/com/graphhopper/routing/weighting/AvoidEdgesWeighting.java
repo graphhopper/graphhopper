@@ -17,9 +17,9 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.carrotsearch.hppc.IntSet;
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.util.EdgeIteratorState;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
 
 import java.util.Collection;
 
@@ -30,7 +30,7 @@ import java.util.Collection;
  */
 public class AvoidEdgesWeighting extends AbstractAdjustedWeighting {
     // contains the edge IDs of the already visited edges
-    protected final TIntSet visitedEdges = new TIntHashSet();
+    protected final IntSet visitedEdges = new GHIntHashSet();
 
     private double edgePenaltyFactor = 5.0;
 
