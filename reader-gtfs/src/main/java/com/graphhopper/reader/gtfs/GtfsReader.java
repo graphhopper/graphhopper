@@ -205,13 +205,13 @@ class GtfsReader implements DataReader {
             }
             for (Fun.Tuple2<Integer, Integer> e : timeNode.descendingSet()) {
                 EdgeIteratorState enterTimeExpandedNetworkEdge = graph.edge(stopEnterNode, e.b, 0.0, false);
-                enterTimeExpandedNetworkEdge.setName("EnterTimeExpandedNetwork-"+e.a+"-"+stop.stop_name);
+                enterTimeExpandedNetworkEdge.setName(stop.stop_name);
                 setEdgeType(enterTimeExpandedNetworkEdge, GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK);
                 enterTimeExpandedNetworkEdge.setFlags(encoder.setTime(enterTimeExpandedNetworkEdge.getFlags(), e.a));
                 if (prev != -1) {
                     EdgeIteratorState edge = graph.edge(e.b, prev, 0.0, false);
                     setEdgeType(edge, GtfsStorage.EdgeType.TIME_PASSES_PT_EDGE);
-                    edge.setName("Wait-"+e.a+"-"+time+"-"+stop.stop_name);
+                    edge.setName(stop.stop_name);
                     edge.setFlags(encoder.setTime(edge.getFlags(), time-e.a));
                 }
                 time = e.a;
@@ -221,7 +221,7 @@ class GtfsReader implements DataReader {
                 EdgeIteratorState edge = graph.edge(timeNode.last().b, timeNode.first().b, 0.0, false);
                 int rolloverTime = 24 * 60 * 60 - timeNode.last().a + timeNode.first().a;
                 setEdgeType(edge, GtfsStorage.EdgeType.TIME_PASSES_PT_EDGE);
-                edge.setName("WaitRollover-"+stop.stop_name);
+                edge.setName(stop.stop_name);
                 edge.setFlags(encoder.setTime(edge.getFlags(), rolloverTime));
             }
             Transfer withinStationTransfer = explicitWithinStationMinimumTransfers.get(stop.stop_id);
@@ -243,7 +243,6 @@ class GtfsReader implements DataReader {
             if (!tailSet.isEmpty()) {
                 Fun.Tuple2<Integer, Integer> e = tailSet.first();
                 EdgeIteratorState edge = graph.edge(arrivalNodeId, e.b, 0.0, false);
-                edge.setName("Transfer " + stop_id + " " + minimumTransferTime);
                 setEdgeType(edge, GtfsStorage.EdgeType.TIME_PASSES_PT_EDGE);
                 edge.setFlags(encoder.setTime(edge.getFlags(), e.a-arrivalTime));
             }
@@ -252,7 +251,7 @@ class GtfsReader implements DataReader {
 
     private String getRouteName(GTFSFeed feed, Trip trip) {
         Route route = feed.routes.get(trip.route_id);
-        return route.route_long_name != null ? route.route_long_name : route.route_short_name;
+        return (route.route_long_name != null ? route.route_long_name : route.route_short_name) + " " + trip.trip_headsign;
     }
 
     private void insert(int time, Iterable<StopTime> stopTimes, Trip trip, BitSet validOnDay) throws GTFSFeed.FirstAndLastStopsDoNotHaveTimes {
@@ -275,7 +274,7 @@ class GtfsReader implements DataReader {
                         i-1,
                         distance,
                         false);
-                edge.setName(getRouteName(feed, trip) + " " + trip.trip_headsign + " " + trip.trip_id);
+                edge.setName(getRouteName(feed, trip));
                 setEdgeType(edge, GtfsStorage.EdgeType.TIME_PASSES_PT_EDGE);
                 edge.setFlags(encoder.setTime(edge.getFlags(), orderedStop.arrival_time - prev.departure_time));
             }
