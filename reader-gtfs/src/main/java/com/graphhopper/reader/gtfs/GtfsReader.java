@@ -8,7 +8,6 @@ import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
@@ -51,7 +50,6 @@ class GtfsReader implements DataReader {
     private int i;
     private GTFSFeed feed;
     private TIntIntHashMap times;
-    private TreeMap<Integer, AbstractPtEdge> edges;
     private SetMultimap<String, Integer> stops;
     private Map<String, Integer> stopNodes = new HashMap<>();
     private SetMultimap<String, Integer> arrivals;
@@ -149,7 +147,6 @@ class GtfsReader implements DataReader {
         arrivals = HashMultimap.create();
         betweenStationTransfers = HashMultimap.create();
         times = new TIntIntHashMap();
-        edges = new TreeMap<>();
         for (Transfer transfer : feed.transfers.values()) {
             if (transfer.transfer_type == 2 && !transfer.from_stop_id.equals(transfer.to_stop_id)) {
                 betweenStationTransfers.put(transfer.to_stop_id, transfer);
@@ -237,8 +234,6 @@ class GtfsReader implements DataReader {
                 setEdgeType(edge, GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK);
             }
         }
-
-        gtfsStorage.setEdges(edges);
     }
 
     private void insertInboundTransfers(String stop_id, int minimumTransferTime, SortedSet<Fun.Tuple2<Integer, Integer>> timeNode) {
@@ -299,7 +294,15 @@ class GtfsReader implements DataReader {
             edge.setName(getRouteName(feed, trip));
             int dayShift = orderedStop.departure_time / (24 * 60 * 60);
             setEdgeType(edge, GtfsStorage.EdgeType.BOARD_EDGE);
-            edges.put(edge.getEdge(), new BoardEdge(0, getValidOn(validOnDay, dayShift)));
+            BitSet validOn = getValidOn(validOnDay, dayShift);
+            int index;
+            if (gtfsStorage.getOperatingDayPatterns().containsKey(validOn)) {
+                index = gtfsStorage.getOperatingDayPatterns().get(validOn);
+            } else {
+                index = gtfsStorage.getOperatingDayPatterns().size();
+                gtfsStorage.getOperatingDayPatterns().put(validOn, index);
+            }
+            edge.setFlags(encoder.setTime(edge.getFlags(), index));
             edge = graph.edge(
                     i-3,
                     i-1,

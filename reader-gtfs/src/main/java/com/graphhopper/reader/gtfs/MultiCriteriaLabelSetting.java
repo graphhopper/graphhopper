@@ -89,7 +89,7 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
                 GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(iter.getFlags());
                 if (edgeType == GtfsStorage.EdgeType.BOARD_EDGE) {
                     int trafficDay = (int) (label.weight) / (24 * 60 * 60);
-                    if (!((BoardEdge) gtfsStorage.getEdges().get(iter.getEdge())).validOn.get(trafficDay)) {
+                    if (!isValidOn(iter, trafficDay)) {
                         continue;
                     }
                 } else if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
@@ -149,6 +149,11 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
                     .extract());
         }
         return result;
+    }
+
+    private boolean isValidOn(EdgeIterator iter, int trafficDay) {
+
+        return gtfsStorage.getReverseOperatingDayPatterns().get((int) flagEncoder.getTime(iter.getFlags())).get(trafficDay);
     }
 
     private boolean improves(SPTEntry me, Set<SPTEntry> sptEntries) {

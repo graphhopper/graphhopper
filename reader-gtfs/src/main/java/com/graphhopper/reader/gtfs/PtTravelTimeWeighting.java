@@ -37,11 +37,11 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
                 long l = calcMillis(edgeState, false, -1);
                 return l / 1000;
             case ENTER_TIME_EXPANDED_NETWORK:
-                return EnterTimeExpandedNetworkEdge.traveltime((int) ((PtFlagEncoder) getFlagEncoder()).getTime(edgeState.getFlags()), (long) earliestStartTime);
+                return GtfsStorage.traveltime((int) ((PtFlagEncoder) getFlagEncoder()).getTime(edgeState.getFlags()), (long) earliestStartTime);
             case LEAVE_TIME_EXPANDED_NETWORK:
-                return 0.0;
+			case BOARD_EDGE:
+				return 0.0;
             case TIME_PASSES_PT_EDGE:
-            case BOARD_EDGE:
                 return ((PtFlagEncoder) getFlagEncoder()).getTime(edgeState.getFlags());
             default:
                 throw new IllegalStateException();

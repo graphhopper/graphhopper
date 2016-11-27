@@ -6,7 +6,10 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.util.EdgeIterator;
 import gnu.trove.map.TIntObjectMap;
+import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
+import gnu.trove.map.hash.TObjectIntHashMap;
+import gnu.trove.procedure.TObjectIntProcedure;
 import org.mapdb.*;
 
 import java.io.File;
@@ -14,24 +17,25 @@ import java.time.LocalDate;
 import java.util.*;
 
 class GtfsStorage implements GraphExtension {
-	private Directory dir;
-	private final TIntObjectMap<AbstractPtEdge> edges = new TIntObjectHashMap<>();
+
+    static double traveltime(int edgeTimeValue, long earliestStartTime) {
+        int timeOfDay = (int) (earliestStartTime % (24*60*60));
+        if (timeOfDay <= edgeTimeValue) {
+            return (edgeTimeValue - timeOfDay);
+        } else {
+            return Double.POSITIVE_INFINITY;
+        }
+    }
+
+    private Directory dir;
+    private TIntObjectHashMap<BitSet> reverseOperatingDayPatterns;
+    private final TObjectIntMap<BitSet> operatingDayPatterns = new TObjectIntHashMap<>();
 	private boolean flushed = false;
 	private LocalDate startDate;
-
-    static EdgeType getEdgeType(EdgeIterator iter) {
-        return EdgeType.values()[iter.getAdditionalField()];
-    }
 
     enum EdgeType {
         UNSPECIFIED, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, STOP_NODE_MARKER_EDGE, STOP_EXIT_NODE_MARKER_EDGE, HOP_EDGE, DWELL_EDGE, BOARD_EDGE, OVERNIGHT_EDGE, TRANSFER_EDGE, WAIT_IN_STATION_EDGE, TIME_PASSES_PT_EDGE;
     }
-
-	public TIntObjectMap<AbstractPtEdge> getEdges() {
-		return edges;
-	}
-
-
 
 	private DB data;
 
@@ -73,9 +77,10 @@ class GtfsStorage implements GraphExtension {
 	@Override
 	public boolean loadExisting() {
 		this.data = DBMaker.newFileDB(new File(dir.getLocation() + "/transit_schedule")).readOnly().make();
-		BTreeMap<Integer, AbstractPtEdge> edges = data.getTreeMap("edges");
-		for (Map.Entry<Integer, AbstractPtEdge> entry : edges.entrySet()) {
-			this.edges.put(entry.getKey(), entry.getValue());
+        reverseOperatingDayPatterns = new TIntObjectHashMap<BitSet>();
+        BTreeMap<Integer, BitSet> operatingDayPatterns = data.getTreeMap("validities");
+		for (Map.Entry<Integer, BitSet> entry : operatingDayPatterns.entrySet()) {
+			this.reverseOperatingDayPatterns.put(entry.getKey(), entry.getValue());
 		}
 		this.startDate = (LocalDate) data.getAtomicVar("startDate").get();
 		flushed = true;
@@ -88,17 +93,29 @@ class GtfsStorage implements GraphExtension {
 		return this;
 	}
 
-	@Override
+    TIntObjectHashMap<BitSet> getReverseOperatingDayPatterns() {
+        return reverseOperatingDayPatterns;
+    }
+
+    @Override
 	public void flush() {
 		if (!flushed) {
+            reverseOperatingDayPatterns = new TIntObjectHashMap<BitSet>();
+            operatingDayPatterns.forEachEntry(new TObjectIntProcedure<BitSet>() {
+                @Override
+                public boolean execute(BitSet bitSet, int i) {
+                    reverseOperatingDayPatterns.put(i, bitSet);
+                    return true;
+                }
+            });
 			TreeSet<Integer> wurst = new TreeSet<>();
-			for (int i : edges.keys()) {
+			for (int i : reverseOperatingDayPatterns.keys()) {
 				wurst.add(i);
 			}
-			data.createTreeMap("edges").pumpSource(wurst.descendingSet().iterator(), new Fun.Function1<Object, Integer>() {
+			data.createTreeMap("validities").pumpSource(wurst.descendingSet().iterator(), new Fun.Function1<Object, Integer>() {
 				@Override
 				public Object run(Integer i) {
-					return edges.get(i);
+					return reverseOperatingDayPatterns.get(i);
 				}
 			}).make();
 			data.getAtomicVar("startDate").set(startDate);
@@ -123,17 +140,16 @@ class GtfsStorage implements GraphExtension {
 		return 0;
 	}
 
-	public void setEdges(final TreeMap<Integer, AbstractPtEdge> edges) {
-		for (Integer integer : edges.descendingKeySet()) {
-			this.edges.put(integer, edges.get(integer));
-		}
-	}
-
-	public void setStartDate(LocalDate startDate) {
+	void setStartDate(LocalDate startDate) {
 		this.startDate = startDate;
 	}
 
-	public LocalDate getStartDate() {
+	LocalDate getStartDate() {
 		return startDate;
 	}
+
+    TObjectIntMap<BitSet> getOperatingDayPatterns() {
+        return operatingDayPatterns;
+    }
+
 }
