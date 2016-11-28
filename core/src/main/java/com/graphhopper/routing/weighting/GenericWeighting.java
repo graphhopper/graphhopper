@@ -17,9 +17,11 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Routing;
 
 /**
@@ -42,6 +44,8 @@ public class GenericWeighting extends AbstractWeighting {
     private final int accessType;
     private final int eventuallAccessiblePenalty = 10;
 
+    private final GHIntHashSet blockedEdges;
+
 
     public GenericWeighting(DataFlagEncoder encoder, ConfigMap cMap) {
         super(encoder);
@@ -60,6 +64,7 @@ public class GenericWeighting extends AbstractWeighting {
 
         maxSpeed = tmpSpeed / SPEED_CONV;
         accessType = gEncoder.getAccessType("motor_vehicle");
+        blockedEdges = cMap.get(Parameters.NON_CH.BLOCKED_EDGES, new GHIntHashSet(0));
     }
 
     @Override
@@ -85,6 +90,10 @@ public class GenericWeighting extends AbstractWeighting {
                 return Double.POSITIVE_INFINITY;
             case EVENTUALLY_ACCESSIBLE:
                 time = time * eventuallAccessiblePenalty;
+        }
+
+        if(!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())){
+            return Double.POSITIVE_INFINITY;
         }
 
         return time;

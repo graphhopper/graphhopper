@@ -141,5 +141,11 @@ public class Parameters {
          * Describes the max allowed distance between two consecutive waypoints of a non ch request. Distance is in Meter
          */
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
+
+        public static final String BLOCKED_EDGES = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "blocked_edges";
+
+        public static final String BLOCKED_POINTS = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "blocked_points";
+
+        public static final String BLOCKED_AREAS = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "blocked_areas";
     }
 }

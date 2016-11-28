@@ -24,6 +24,7 @@ import java.util.BitSet;
  */
 public class GHBitSetImpl extends BitSet implements GHBitSet {
     public GHBitSetImpl() {
+        super();
     }
 
     public GHBitSetImpl(int nbits) {
