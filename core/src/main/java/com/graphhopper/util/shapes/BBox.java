@@ -181,6 +181,11 @@ public class BBox implements Shape, Cloneable {
     }
 
     @Override
+    public GHPoint getCenter() {
+        return new GHPoint((maxLat + minLat) / 2, (maxLon + minLon) / 2);
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (obj == null)
             return false;

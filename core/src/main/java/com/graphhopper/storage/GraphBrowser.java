@@ -24,11 +24,14 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.BreadthFirstSearch;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.Shape;
 
 /**
  * This Class allows to easily Browse the Graph for Edges with Certain Properties
+ *
+ * TODO: Add Tests for this class (There are integration but no Unit tests)
+ * TODO: Maybe this class could be merged into Graph/BaseGraph/Graphstorage?
  *
  * @author Robin Boldt
  */
@@ -52,9 +55,11 @@ public class GraphBrowser {
             edgeIds.add(qr.getClosestEdge().getEdge());
     }
 
-    public void findEdgesInBBox(final GHIntHashSet edgeIds, final BBox bbox, EdgeFilter filter) {
+    public void findEdgesInShape(final GHIntHashSet edgeIds, final Shape shape, EdgeFilter filter) {
         // Issue with this is approach is, if there is no street close by, it won't work as qr is not valid
-        QueryResult qr = locationIndex.findClosest((bbox.maxLat + bbox.minLat) / 2, (bbox.maxLon + bbox.minLon) / 2, filter);
+        // Maybe we should check edge points (or random points in the Shape?) if we cannot find a valid edge at the center?
+        GHPoint center = shape.getCenter();
+        QueryResult qr = locationIndex.findClosest(center.getLat(), center.getLon(), filter);
 
         // We should throw an Exception here, or add an Error somehow. Otherwise the user will not understand what is happening
         // It might happen that a BBox center does not match an underlying street
@@ -63,16 +68,16 @@ public class GraphBrowser {
 
         BreadthFirstSearch bfs = new BreadthFirstSearch() {
             final NodeAccess na = graph.getNodeAccess();
-            final BBox localBBox = bbox;
+            final Shape localShape = shape;
 
             @Override
             protected boolean goFurther(int nodeId) {
-                return localBBox.contains(na.getLatitude(nodeId), na.getLongitude(nodeId));
+                return localShape.contains(na.getLatitude(nodeId), na.getLongitude(nodeId));
             }
 
             @Override
             protected boolean checkAdjacent(EdgeIteratorState edge) {
-                if (localBBox.contains(na.getLatitude(edge.getAdjNode()), na.getLongitude(edge.getAdjNode()))) {
+                if (localShape.contains(na.getLatitude(edge.getAdjNode()), na.getLongitude(edge.getAdjNode()))) {
                     edgeIds.add(edge.getEdge());
                     return true;
                 }

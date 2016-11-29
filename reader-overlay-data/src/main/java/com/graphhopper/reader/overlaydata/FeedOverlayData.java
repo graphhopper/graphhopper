@@ -124,7 +124,7 @@ public class FeedOverlayData {
         if (jsonFeature.hasGeometry()) {
             fillEdgeIDs(edges, jsonFeature.getGeometry(), filter);
         } else if (jsonFeature.getBBox() != null) {
-            graphBrowser.findEdgesInBBox(edges, jsonFeature.getBBox(), filter);
+            graphBrowser.findEdgesInShape(edges, jsonFeature.getBBox(), filter);
         } else
             throw new IllegalArgumentException("Feature " + jsonFeature.getId() + " has no geometry and no bbox");
 

@@ -146,6 +146,8 @@ public class Parameters {
 
         public static final String BLOCKED_POINTS = NON_CH_PREFIX + "blocked_points";
 
-        public static final String BLOCKED_AREAS = NON_CH_PREFIX + "blocked_areas";
+        public static final String BLOCKED_RECTANGULAR_AREAS = NON_CH_PREFIX + "blocked_rectangular_areas";
+
+        public static final String BLOCKED_CIRCULAR_AREAS = NON_CH_PREFIX + "blocked_circular_areas";
     }
 }

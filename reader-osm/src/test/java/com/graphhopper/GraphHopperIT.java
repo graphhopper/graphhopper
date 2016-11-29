@@ -278,7 +278,7 @@ public class GraphHopperIT {
         assertEquals(6684, rsp.getBest().getDistance(), 1);
 
         // Block Area 11.472902,49.97986,11.534357,50.003946
-        req.getHints().put(Parameters.NON_CH.BLOCKED_AREAS, "11.472902,49.97986,11.534357,50.003946");
+        req.getHints().put(Parameters.NON_CH.BLOCKED_RECTANGULAR_AREAS, "11.472902,49.97986,11.534357,50.003946");
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(12173, rsp.getBest().getDistance(), 1);
@@ -289,6 +289,19 @@ public class GraphHopperIT {
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(16674, rsp.getBest().getDistance(), 1);
+
+        req = new GHRequest(49.975845,11.522598, 50.026821,11.497364).
+                setVehicle("generic").setWeighting("generic");
+
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(6684, rsp.getBest().getDistance(), 1);
+
+        req.getHints().put(Parameters.NON_CH.BLOCKED_CIRCULAR_AREAS, "50.004871,11.51762,2000");
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(18151, rsp.getBest().getDistance(), 1);
+
     }
 
     @Test

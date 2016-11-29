@@ -44,6 +44,7 @@ import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -972,12 +973,12 @@ public class GraphHopper implements GraphHopperAPI {
             }
         }
 
-        // Add Blocked Areas
-        String blockedAreasStr = hints.get(Parameters.NON_CH.BLOCKED_AREAS, "");
+        // Add Blocked Rectangular Areas
+        String blockedAreasStr = hints.get(Parameters.NON_CH.BLOCKED_RECTANGULAR_AREAS, "");
         if (!blockedAreasStr.isEmpty()) {
             String[] blockedAreasArr = blockedAreasStr.split(",");
             if (blockedAreasArr.length % 4 != 0) {
-                throw new IllegalArgumentException(Parameters.NON_CH.BLOCKED_AREAS + " need to be defined as left,bottom,right,top");
+                throw new IllegalArgumentException(Parameters.NON_CH.BLOCKED_RECTANGULAR_AREAS + " need to be defined as left,bottom,right,top");
             }
 
             double left;
@@ -991,7 +992,29 @@ public class GraphHopper implements GraphHopperAPI {
                 top = Double.parseDouble(blockedAreasArr[4 * i + 3]);
 
                 final BBox bbox = new BBox(left, right, bottom, top);
-                browser.findEdgesInBBox(blockedEdges, bbox, filter);
+                browser.findEdgesInShape(blockedEdges, bbox, filter);
+            }
+
+        }
+
+        // Add Blocked Circular Areas
+        String blockedCircularAreasStr = hints.get(Parameters.NON_CH.BLOCKED_CIRCULAR_AREAS, "");
+        if (!blockedCircularAreasStr.isEmpty()) {
+            String[] blockedCircularAreasArr = blockedCircularAreasStr.split(",");
+            if (blockedCircularAreasArr.length % 3 != 0) {
+                //TODO: Do we ant radius or diameter?
+                throw new IllegalArgumentException(Parameters.NON_CH.BLOCKED_CIRCULAR_AREAS + " need to be defined as lat,lng,radius");
+            }
+
+            double lat;
+            double lng;
+            int radius;
+            for (int i = 0; i < blockedCircularAreasArr.length / 3; i++) {
+                lat= Double.parseDouble(blockedCircularAreasArr[3 * i]);
+                lng = Double.parseDouble(blockedCircularAreasArr[3 * i + 1]);
+                radius = Integer.parseInt(blockedCircularAreasArr[3 * i + 2]);
+                Circle circle = new Circle(lat, lng, radius);
+                browser.findEdgesInShape(blockedEdges, circle, filter);
             }
 
         }

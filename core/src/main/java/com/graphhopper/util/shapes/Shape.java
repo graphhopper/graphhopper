@@ -44,4 +44,9 @@ public interface Shape {
      * @return the minimal rectangular bounding box of this shape
      */
     BBox getBounds();
+
+    /**
+     * @return The center of the shape, if applicable
+     */
+    GHPoint getCenter();
 }
