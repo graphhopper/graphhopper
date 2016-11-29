@@ -22,6 +22,7 @@ import com.graphhopper.apache.commons.lang3.StringUtils;
 import info.debatty.java.stringsimilarity.JaroWinkler;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -55,7 +56,8 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         List<String> list = new ArrayList<>(arr.length);
         for (int i = 0; i < arr.length; i++) {
             tmp = NON_WORD_CHAR.matcher(arr[i].toLowerCase()).replaceAll("");
-            if(!tmp.isEmpty()){
+            // Ignore matching short frases like, de, rue, st, etc.
+            if(!tmp.isEmpty() && tmp.length() > 3){
                 list.add(tmp);
             }
         }
@@ -89,9 +91,12 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         List<String> edgeName = prepareName(name);
 
         // TODO Splitting Strings to merge them again is not very elegent, maybe we rather want to keep the OriginalPointHint and the OriginalEdgeName?
-        if(isJaroWinklerSimilar(listToString(pointHint), listToString(edgeName)))
+        if(isJaroWinklerSimilar(listToString(pointHint), listToString(edgeName), .8))
             return true;
 
+        return false;
+
+        /*
         List<String> shorterList;
         List<String> longerList;
 
@@ -106,29 +111,32 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         }
         for (String str1: shorterList) {
             for (int i = 0; i < longerList.size(); i++) {
-                if(isJaroWinklerSimilar(str1, longerList.get(i))){
+                if(isJaroWinklerSimilar(str1, longerList.get(i), .9)){
                     // Avoid matchin same string twice, also make it more efficient
                     longerList.remove(i);
                     break;
                 }
                 // If in last iteration and no match was found
                 if(i == longerList.size()-1){
+                    System.out.println("No: "+name+" for "+Arrays.toString(edgeName.toArray())+ Arrays.toString(pointHint.toArray()));
                     return false;
                 }
             }
         }
         // We found a match for every string in the shorter list, therefore strings are similar
+        System.out.println("Match for: "+name);
         return true;
+        */
     }
 
-    private boolean isJaroWinklerSimilar(String str1, String str2) {
+    private boolean isJaroWinklerSimilar(String str1, String str2, double similarityScore) {
         // too big length difference
         if (Math.min(str2.length(), str1.length()) * 4 < Math.max(str2.length(), str1.length()))
             return false;
 
         double jwSimilarity = jw.similarity(str1, str2);
-        //System.out.println(str1 + " vs. edge:" + str2 + ", " + jwSimilarity);
-        return jwSimilarity > .9;
+        // System.out.println(str1 + " vs. edge:" + str2 + ", " + jwSimilarity);
+        return jwSimilarity > similarityScore;
     }
 
     private final String listToString(List<String> list){
