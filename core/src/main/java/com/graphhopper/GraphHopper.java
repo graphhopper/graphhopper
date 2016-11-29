@@ -943,6 +943,8 @@ public class GraphHopper implements GraphHopperAPI {
 
     private GHIntHashSet getBlockedEdges(HintsMap hints, FlagEncoder encoder) {
         final GHIntHashSet blockedEdges = new GHIntHashSet();
+        GraphBrowser browser = new GraphBrowser(getGraphHopperStorage(), locationIndex);
+        EdgeFilter filter = new DefaultEdgeFilter(encoder);
 
         // Add Blocked Edges
         String blockedEdgesStr = hints.get(Parameters.NON_CH.BLOCKED_EDGES, "");
@@ -961,20 +963,16 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException(Parameters.NON_CH.BLOCKED_POINTS + " need to be defined as lat,lon");
             }
 
-            EdgeFilter filter = new DefaultEdgeFilter(encoder);
             double lat;
             double lng;
             for (int i = 0; i < blockedPointsArr.length / 2; i++) {
                 lat = Double.parseDouble(blockedPointsArr[2 * i]);
                 lng = Double.parseDouble(blockedPointsArr[2 * i + 1]);
-                QueryResult qr = locationIndex.findClosest(lat, lng, filter);
-                if (qr.isValid())
-                    blockedEdges.add(qr.getClosestEdge().getEdge());
+                browser.findClosestEdge(blockedEdges, lat, lng, filter);
             }
         }
 
         // Add Blocked Areas
-        // TODO Basically copied from FeedOverlayData
         String blockedAreasStr = hints.get(Parameters.NON_CH.BLOCKED_AREAS, "");
         if (!blockedAreasStr.isEmpty()) {
             String[] blockedAreasArr = blockedAreasStr.split(",");
@@ -982,7 +980,6 @@ public class GraphHopper implements GraphHopperAPI {
                 throw new IllegalArgumentException(Parameters.NON_CH.BLOCKED_AREAS + " need to be defined as left,bottom,right,top");
             }
 
-            EdgeFilter filter = new DefaultEdgeFilter(encoder);
             double left;
             double bottom;
             double right;
@@ -994,37 +991,7 @@ public class GraphHopper implements GraphHopperAPI {
                 top = Double.parseDouble(blockedAreasArr[4 * i + 3]);
 
                 final BBox bbox = new BBox(left, right, bottom, top);
-
-                // Issue with this is approach is, if there is no street close by, it won't work as qr is not valid
-                double lat = (bbox.maxLat + bbox.minLat) / 2;
-                double lon = (bbox.maxLon + bbox.minLon) / 2;
-                QueryResult qr = locationIndex.findClosest(lat, lon, filter);
-                if (qr.isValid()) {
-
-                    BreadthFirstSearch bfs = new BreadthFirstSearch() {
-
-                        final NodeAccess na = getGraphHopperStorage().getNodeAccess();
-                        final BBox localBBox = bbox;
-
-                        @Override
-                        protected boolean goFurther(int nodeId) {
-                            return localBBox.contains(na.getLatitude(nodeId), na.getLongitude(nodeId));
-                        }
-
-                        @Override
-                        protected boolean checkAdjacent(EdgeIteratorState edge) {
-                            if (localBBox.contains(na.getLatitude(edge.getAdjNode()), na.getLongitude(edge.getAdjNode()))) {
-                                blockedEdges.add(edge.getEdge());
-                                return true;
-                            }
-                            return false;
-                        }
-                    };
-                    bfs.start(getGraphHopperStorage().createEdgeExplorer(filter), qr.getClosestNode());
-                }else{
-                    throw new IllegalArgumentException("Could not find a valid edge for blocking areas at: "+lat+","+lon);
-                }
-
+                browser.findEdgesInBBox(blockedEdges, bbox, filter);
             }
 
         }

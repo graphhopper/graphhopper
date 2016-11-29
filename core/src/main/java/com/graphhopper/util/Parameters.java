@@ -142,10 +142,10 @@ public class Parameters {
          */
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
 
-        public static final String BLOCKED_EDGES = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "blocked_edges";
+        public static final String BLOCKED_EDGES = NON_CH_PREFIX + "blocked_edges";
 
-        public static final String BLOCKED_POINTS = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "blocked_points";
+        public static final String BLOCKED_POINTS = NON_CH_PREFIX + "blocked_points";
 
-        public static final String BLOCKED_AREAS = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "blocked_areas";
+        public static final String BLOCKED_AREAS = NON_CH_PREFIX + "blocked_areas";
     }
 }
