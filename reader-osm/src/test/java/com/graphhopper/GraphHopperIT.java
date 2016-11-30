@@ -290,6 +290,12 @@ public class GraphHopperIT {
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(16674, rsp.getBest().getDistance(), 1);
 
+        // Block by Shape
+        req.getHints().put(Parameters.NON_CH.BLOCK_BY_SHAPE, "true");
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(16674, rsp.getBest().getDistance(), 1);
+
         req = new GHRequest(49.975845,11.522598, 50.026821,11.497364).
                 setVehicle("generic").setWeighting("generic");
 
@@ -301,6 +307,13 @@ public class GraphHopperIT {
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(18151, rsp.getBest().getDistance(), 1);
+
+        // Block by Shape
+        req.getHints().put(Parameters.NON_CH.BLOCK_BY_SHAPE, "true");
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(18151, rsp.getBest().getDistance(), 1);
+
 
     }
 
