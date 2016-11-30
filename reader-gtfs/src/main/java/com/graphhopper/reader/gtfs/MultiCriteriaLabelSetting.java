@@ -22,7 +22,6 @@ import com.google.common.collect.SetMultimap;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.TimeDependentRoutingAlgorithm;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TimeDependentWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -31,6 +30,8 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
 import java.util.*;
+
+import static com.graphhopper.reader.gtfs.GtfsHelper.time;
 
 /**
  * Implements a Multi-Criteria Label Setting (MLS) path finding algorithm
@@ -47,6 +48,7 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
     private final SetMultimap<Integer, SPTEntry> fromMap;
     private final PriorityQueue<SPTEntry> fromHeap;
     private final int maxVisitedNodes;
+    private long rangeQueryEndTime;
     private GtfsStorage gtfsStorage;
     private int visitedNodes;
 
@@ -66,9 +68,10 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
         throw new UnsupportedOperationException();
     }
 
-    List<Path> calcPaths(int from, Set<Integer> to, int startTime) {
+    List<Path> calcPaths(int from, Set<Integer> to, long startTime, long rangeQueryEndTime) {
+        this.rangeQueryEndTime = rangeQueryEndTime;
         Set<SPTEntry> targetLabels = new HashSet<>();
-        SPTEntry label = new SPTEntry(EdgeIterator.NO_EDGE, from, startTime, 0);
+        SPTEntry label = new SPTEntry(EdgeIterator.NO_EDGE, from, startTime, 0, Long.MAX_VALUE);
         fromMap.put(from, label);
         if (to.contains(from)) {
             targetLabels.add(label);
@@ -109,17 +112,21 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
 
                 double tmpWeight;
                 int tmpNTransfers = label.nTransfers;
+                long tmpFirstPtDepartureTime = label.firstPtDepartureTime;
                 if (weighting instanceof TimeDependentWeighting) {
                     tmpWeight = ((TimeDependentWeighting) weighting).calcWeight(iter, false, label.edge, label.weight) + label.weight;
                     tmpNTransfers += ((TimeDependentWeighting) weighting).calcNTransfers(iter);
                 } else {
                     tmpWeight = weighting.calcWeight(iter, false, label.edge) + label.weight;
                 }
+                if (edgeType == GtfsStorage.EdgeType.BOARD_EDGE && tmpFirstPtDepartureTime == Long.MAX_VALUE) {
+                    tmpFirstPtDepartureTime = (long) tmpWeight;
+                }
                 if (Double.isInfinite(tmpWeight))
                     continue;
 
                 Set<SPTEntry> sptEntries = fromMap.get(iter.getAdjNode());
-                SPTEntry nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight, tmpNTransfers);
+                SPTEntry nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight, tmpNTransfers, tmpFirstPtDepartureTime);
                 nEdge.parent = label;
                 if (improves(nEdge, sptEntries) && improves(nEdge, targetLabels)) {
                     removeDominated(nEdge, sptEntries);
@@ -158,7 +165,7 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
 
     private boolean improves(SPTEntry me, Set<SPTEntry> sptEntries) {
         for (SPTEntry they : sptEntries) {
-            if (they.nTransfers <= me.nTransfers && they.weight <= me.weight) {
+            if (they.nTransfers <= me.nTransfers && they.weight <= me.weight && (they.firstPtDepartureTime >= me.firstPtDepartureTime || me.firstPtDepartureTime > rangeQueryEndTime)) {
                 return false;
             }
         }
@@ -196,10 +203,16 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
         if (me.nTransfers > they.nTransfers) {
             return false;
         }
+        if (me.firstPtDepartureTime < they.firstPtDepartureTime) {
+            return false;
+        }
         if (me.weight < they.weight) {
             return true;
         }
         if (me.nTransfers < they.nTransfers) {
+            return true;
+        }
+        if (me.firstPtDepartureTime > they.firstPtDepartureTime) {
             return true;
         }
         return false;

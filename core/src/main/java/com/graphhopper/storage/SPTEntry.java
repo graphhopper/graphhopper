@@ -28,13 +28,15 @@ public class SPTEntry implements Cloneable, Comparable<SPTEntry> {
     public int adjNode;
     public double weight;
     public int nTransfers;
+    public long firstPtDepartureTime = Long.MAX_VALUE;
     public SPTEntry parent;
 
-    public SPTEntry(int edgeId, int adjNode, double weight, int nTransfers) {
+    public SPTEntry(int edgeId, int adjNode, double weight, int nTransfers, long firstPtDepartureTime) {
         this.edge = edgeId;
         this.adjNode = adjNode;
         this.weight = weight;
         this.nTransfers = nTransfers;
+        this.firstPtDepartureTime = firstPtDepartureTime;
     }
 
     public SPTEntry(int edgeId, int adjNode, double weight) {
@@ -54,7 +56,7 @@ public class SPTEntry implements Cloneable, Comparable<SPTEntry> {
 
     @Override
     public SPTEntry clone() {
-        return new SPTEntry(edge, adjNode, weight, nTransfers);
+        return new SPTEntry(edge, adjNode, weight, nTransfers, firstPtDepartureTime);
     }
 
     public SPTEntry cloneFull() {
@@ -79,6 +81,10 @@ public class SPTEntry implements Cloneable, Comparable<SPTEntry> {
         else if (nTransfers < o.nTransfers)
             return -1;
         else if (nTransfers > o.nTransfers)
+            return 1;
+        else if (firstPtDepartureTime < o.firstPtDepartureTime)
+            return -1;
+        else if (firstPtDepartureTime > o.firstPtDepartureTime)
             return 1;
         return 0;
     }

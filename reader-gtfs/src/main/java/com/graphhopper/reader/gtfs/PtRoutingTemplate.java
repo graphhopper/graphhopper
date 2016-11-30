@@ -28,6 +28,7 @@ class PtRoutingTemplate implements RoutingTemplate {
     private List<Integer> toNodes;
     private int startNode = -1;
     private long initialTime;
+    private long rangeQueryEndTime;
     private PtFlagEncoder encoder;
 
     PtRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex) {
@@ -51,13 +52,11 @@ class PtRoutingTemplate implements RoutingTemplate {
             ghResponse.addError(new PointNotFoundException("Cannot find entry point: " + enter, 0));
         } else {
 //            ForwardInTime forwardInTime = new ForwardInTime(source);
-            long requestedTimeOfDay = ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) % (24 * 60 * 60);
-            long requestedDay = ghRequest.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) / (24 * 60 * 60);
-//            startNode = forwardInTime.find(requestedTimeOfDay);
-//            initialTime = forwardInTime.getTime() + requestedDay * (24 * 60 * 60);
-
+            long requestedTimeOfDay = ghRequest.getHints().getLong(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) % (24 * 60 * 60);
+            long requestedDay = ghRequest.getHints().getLong(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) / (24 * 60 * 60);
             startNode = source.getClosestNode();
             initialTime = requestedTimeOfDay + requestedDay * (24 * 60 * 60);
+            rangeQueryEndTime = ghRequest.getHints().getLong(GraphHopperGtfs.RANGE_QUERY_END_TIME, initialTime);
         }
         snappedWaypoints.add(source);
         GHPoint exit = points.get(1);
@@ -98,7 +97,7 @@ class PtRoutingTemplate implements RoutingTemplate {
 
         sw = new StopWatch().start();
 
-        List<Path> tmpPathList = ((MultiCriteriaLabelSetting) algo).calcPaths(startNode, new HashSet(toNodes), (int) initialTime);
+        List<Path> tmpPathList = ((MultiCriteriaLabelSetting) algo).calcPaths(startNode, new HashSet(toNodes), (int) initialTime, rangeQueryEndTime);
         debug += ", " + algo.getName() + "-routing:" + sw.stop().getSeconds() + "s";
 
         for (Path path : tmpPathList) {

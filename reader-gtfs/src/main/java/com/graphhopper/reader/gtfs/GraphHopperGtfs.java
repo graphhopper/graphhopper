@@ -22,7 +22,7 @@ import java.util.Arrays;
 public final class GraphHopperGtfs extends GraphHopper {
 
     public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliestDepartureTime";
-    public static final String DEFAULT_MINIMUM_TRANSFER_TIME_HINT = "defaultMinimumTransferTime";
+    public static final String RANGE_QUERY_END_TIME = "rangeQueryEndTime";
 
     private boolean createWalkNetwork = false;
     private GtfsGraph gtfsGraph;

@@ -38,7 +38,37 @@ public class GraphHopperGtfsIT {
     public void testRoute1() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, TO_LAT, TO_LON, time(6, 49));
+        int expectedWeight = time(6, 49);
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0);
+        GHResponse route = graphHopper.route(ghRequest);
+
+        assertFalse(route.hasErrors());
+        assertEquals(1, route.getAll().size());
+        assertEquals("Expected weight == scheduled arrival time", expectedWeight, route.getBest().getRouteWeight(), 0.1);
+        assertEquals("Expected travel time == scheduled arrival time", expectedWeight * 1000, route.getBest().getTime(), 0.1);
+    }
+
+    @Test
+    public void testRoute1Profile() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
+        int expectedWeight = time(6, 49);
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0);
+        ghRequest.getHints().put(GraphHopperGtfs.RANGE_QUERY_END_TIME, time(13,0));
+        GHResponse route = graphHopper.route(ghRequest);
+
+        assertFalse(route.hasErrors());
+        assertEquals(24, route.getAll().size());
+        assertEquals("Expected weight == scheduled arrival time", expectedWeight, route.getBest().getRouteWeight(), 0.1);
+        assertEquals("Expected travel time == scheduled arrival time", expectedWeight * 1000, route.getBest().getTime(), 0.1);
     }
 
     @Test
