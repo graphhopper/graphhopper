@@ -19,10 +19,15 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.shapes.Shape;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Calculates the best route according to a configurable weighting.
@@ -45,6 +50,8 @@ public class GenericWeighting extends AbstractWeighting {
     private final int eventuallAccessiblePenalty = 10;
 
     private final GHIntHashSet blockedEdges;
+    private final List<Shape> blockedShapes;
+    private final NodeAccess nodeAccess;
 
 
     public GenericWeighting(DataFlagEncoder encoder, ConfigMap cMap) {
@@ -65,6 +72,11 @@ public class GenericWeighting extends AbstractWeighting {
         maxSpeed = tmpSpeed / SPEED_CONV;
         accessType = gEncoder.getAccessType("motor_vehicle");
         blockedEdges = cMap.get(Parameters.NON_CH.BLOCKED_EDGES, new GHIntHashSet(0));
+        blockedShapes = cMap.get(Parameters.NON_CH.BLOCKED_SHAPES, Collections.EMPTY_LIST);
+        nodeAccess = cMap.get("node_access", null);
+        if(!blockedShapes.isEmpty() && nodeAccess == null){
+            throw new IllegalStateException("You have to pass a valid NodeAccess if you want to use Shape Blocking");
+        }
     }
 
     @Override
@@ -94,6 +106,14 @@ public class GenericWeighting extends AbstractWeighting {
 
         if(!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())){
             return Double.POSITIVE_INFINITY;
+        }
+
+        if(!blockedShapes.isEmpty()){
+            for (Shape shape: blockedShapes) {
+                if(shape.contains(nodeAccess.getLat(edgeState.getAdjNode()), nodeAccess.getLon(edgeState.getAdjNode()))){
+                    return Double.POSITIVE_INFINITY;
+                }
+            }
         }
 
         return time;

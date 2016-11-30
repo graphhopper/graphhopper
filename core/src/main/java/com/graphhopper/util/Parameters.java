@@ -149,5 +149,9 @@ public class Parameters {
         public static final String BLOCKED_RECTANGULAR_AREAS = NON_CH_PREFIX + "blocked_rectangular_areas";
 
         public static final String BLOCKED_CIRCULAR_AREAS = NON_CH_PREFIX + "blocked_circular_areas";
+
+        public static final String BLOCK_BY_SHAPE = NON_CH_PREFIX + "block_by_shape";
+
+        public static final String BLOCKED_SHAPES = NON_CH_PREFIX + "blocked_shapes";
     }
 }

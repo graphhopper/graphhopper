@@ -46,6 +46,7 @@ import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.Shape;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -922,7 +923,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (encoder.supports(GenericWeighting.class)) {
             DataFlagEncoder dataEncoder = (DataFlagEncoder) encoder;
             ConfigMap cMap = dataEncoder.readStringMap(hintsMap);
-            cMap.put(Parameters.NON_CH.BLOCKED_EDGES, getBlockedEdges(hintsMap, dataEncoder));
+            cMap = setupBlocking(cMap, hintsMap, dataEncoder);
             return new GenericWeighting(dataEncoder, cMap);
         } else if ("shortest".equalsIgnoreCase(weighting)) {
             return new ShortestWeighting(encoder);
@@ -942,8 +943,11 @@ public class GraphHopper implements GraphHopperAPI {
         throw new IllegalArgumentException("weighting " + weighting + " not supported");
     }
 
-    private GHIntHashSet getBlockedEdges(HintsMap hints, FlagEncoder encoder) {
+    private ConfigMap setupBlocking(ConfigMap cMap, HintsMap hints, FlagEncoder encoder) {
         final GHIntHashSet blockedEdges = new GHIntHashSet();
+        final List<Shape> blockedShapes = new ArrayList<>();
+        // We still need EdgeIds for PointBlocking
+        final boolean blockByShape = hints.getBool(Parameters.NON_CH.BLOCK_BY_SHAPE, false);
         GraphBrowser browser = new GraphBrowser(getGraphHopperStorage(), locationIndex);
         EdgeFilter filter = new DefaultEdgeFilter(encoder);
 
@@ -992,7 +996,11 @@ public class GraphHopper implements GraphHopperAPI {
                 top = Double.parseDouble(blockedAreasArr[4 * i + 3]);
 
                 final BBox bbox = new BBox(left, right, bottom, top);
-                browser.findEdgesInShape(blockedEdges, bbox, filter);
+                if(blockByShape){
+                    blockedShapes.add(bbox);
+                }else {
+                    browser.findEdgesInShape(blockedEdges, bbox, filter);
+                }
             }
 
         }
@@ -1014,12 +1022,20 @@ public class GraphHopper implements GraphHopperAPI {
                 lng = Double.parseDouble(blockedCircularAreasArr[3 * i + 1]);
                 radius = Integer.parseInt(blockedCircularAreasArr[3 * i + 2]);
                 Circle circle = new Circle(lat, lng, radius);
-                browser.findEdgesInShape(blockedEdges, circle, filter);
+                if(blockByShape){
+                    blockedShapes.add(circle);
+                }else {
+                    browser.findEdgesInShape(blockedEdges, circle, filter);
+                }
             }
 
         }
 
-        return blockedEdges;
+        cMap.put(Parameters.NON_CH.BLOCKED_EDGES, blockedEdges);
+        cMap.put(Parameters.NON_CH.BLOCKED_SHAPES, blockedShapes);
+        cMap.put("node_access", getGraphHopperStorage().getNodeAccess());
+
+        return cMap;
     }
 
     /**
