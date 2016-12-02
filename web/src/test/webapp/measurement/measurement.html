@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Java Routing with GraphHopper</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link type="image/png" rel="icon" href="/favicon.ico"/>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <style>
+            body {                
+                color: #000;
+                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;    
+                line-height: 1.4;    
+                color: #111111;
+                background-color: #EEEEEE;
+                margin: 0;
+            }
+            #tabs {                
+                width: 500px;
+                margin: 0 auto;
+            }
+        </style>
+
+        <script type="text/javascript" src="./js/jquery-2.1.0.min.js"></script>
+        <script type="text/javascript" src="./js/dygraph-combined.js"></script>
+        <script type="text/javascript">
+            var graphData = [];
+            var dates = [];
+
+            $(document).ready(function (e) {
+                // do not display 'nicht wohlgeformt' http://stackoverflow.com/q/335409/194609
+                $.ajaxSetup({'beforeSend': function (xhr) {
+                        if (xhr.overrideMimeType)
+                            xhr.overrideMimeType("text/plain");
+                    }});
+                var urls = [];
+                var MAIN_URL = "http://localhost:8080";
+
+                $.ajax({
+                    type: "GET",
+                    url: MAIN_URL,
+                    dataType: "text",
+                    success: function (allText) {
+                        var allTextLines = allText.split(/"/);
+                        var key = '.properties';
+                        for (var j = 0; j < allTextLines.length; j++) {
+                            var line = allTextLines[j];
+                            var index = line.indexOf(key);
+                            if (index > 0 && index == line.length - key.length) {
+                                // urls.push(line);
+                                urls.push(MAIN_URL + line);
+                            }
+                        }
+                        console.log(urls);
+
+                        grabData(urls);
+                    }
+                }).error(function (err) {
+                    console.log("problem while accessing server? " + err.statusText);
+                });
+
+                $("#tabs a").click(function () {
+                    $("#charts div").remove();
+                    plot($(this).text());
+                });
+            });
+
+            function grabData(urls) {
+                
+                var counter = 0;
+                for (var resIndex = 0; resIndex < urls.length; resIndex++) {
+                    var myurl = urls[resIndex];
+                    var index1 = myurl.indexOf("measurement");
+                    var index2 = myurl.indexOf(".properties");
+                    if (index1 < 0 || index2 < 0)
+                        continue;
+
+                    var dateStr = myurl.substring(index1 + 11, index2);
+                    var parts = dateStr.match(/(\d+)/g);
+                    if (parts !== null && parts.length > 5) {
+                        dates.push(new Date(parts[0], parts[1] - 1, parts[2], parts[3], parts[4], parts[5]));
+                    } else {
+                        dates.push(new Date(counter));
+                        counter += 24 * 3600 * 1000;
+                    }
+
+                    $.ajax({
+                        type: "GET",
+                        url: myurl,
+                        dataType: "text",
+                        success: function (data) {
+                            var map = processProperties(data);
+                            graphData.push(map);
+                        },
+                        async: false
+                    }).error(function (err) {
+                        console.log("problem while accessing server? " + err.statusText);
+                    });
+                }
+
+                console.log(dates);
+            }
+
+            function plot(graphKey) {
+                var values = {};
+                for (var resIndex = 0; resIndex < graphData.length; resIndex++) {
+                    var map = graphData[resIndex];
+                    var mainEntry = map[graphKey];
+                    for (var entry in mainEntry) {
+                        var val = mainEntry[entry];
+                        if (!values[entry])
+                            values[entry] = [];
+                        values[entry].push([dates[resIndex], val]);
+                    }
+                }
+
+                for (var val in values) {
+                    var id = graphKey + "_" + val;
+                    handleGraphs($("#charts"), values[val], id, id, ["dates", val]);
+                }
+            }
+
+            // dateHisto is an array with an object (time,count) entry
+            function handleGraphs(mydiv, values, id, name, labels) {
+                if (!name)
+                    name = id;
+
+                var chartDivId = id + '-chart';
+                var wStr = 'width:450px;';
+                var chartContainer = $('<div id="' + chartDivId + '-box" class="chart-box" style="' +
+                        wStr + '"><div class="chart-header">' + name + '</div></div>');
+                var chartDiv = $('<div id="' + chartDivId + '"/>').attr('style', wStr + ' height:400px');
+                chartContainer.append(chartDiv);
+                mydiv.append(chartContainer);
+                // we need getElementById here ...
+                var options = {
+                    labelsDivWidth: 380,
+                    labelsDivStyles: {
+                        'backgroundColor': 'transparent'
+                    },
+                    labelsSeparateLines: true,
+                    labels: labels,
+                    colors: ['#2da8b0']
+                };
+
+                var graph = new Dygraph(document.getElementById(chartDivId), values, options);
+
+                // TODO show gitinfo via graphData[index]["gitinfo"]
+//                graph.setAnnotations([ {
+//                        series: "Reopen Time (msec)",
+//                        x: "2011-04-25 23:00:01",
+//                        shortText: "A",
+//                        width: 20,
+//                        text: "Switched to 240 GB OCZ Vertex III"
+//                    },{ ... }]);
+            }
+
+            function processProperties(allText) {
+                var allTextLines = allText.split(/\r\n|\n/);
+                var result = {};
+                for (var j = 0; j < allTextLines.length; j++) {
+                    var line = allTextLines[j];
+                    var index = line.indexOf('=');
+                    if (index > 0) {
+                        if (line.indexOf("gitinfo") > 0) {
+                            result["gitinfo"] = line.substr(index + 1);
+                            continue;
+                        }
+                        var key = line.substr(0, index);
+                        var value = parseFloat(line.substr(index + 1));
+                        index = key.indexOf(".");
+                        if (index > 0) {
+                            var mainKey = key.substr(0, index);
+                            key = key.substr(index + 1);
+
+                            var mainEntry = result[mainKey];
+                            if (!mainEntry)
+                                result[mainKey] = mainEntry = {};
+
+                            mainEntry[key] = value;
+                        }
+                    }
+                }
+                return result;
+            }
+        </script>
+    </head>
+    <body>
+        <div id="main">
+            <div id="tabs">
+                <a href="#graph">graph</a>
+                <a href="#location_index">location_index</a>
+                <a href="#routing">routing</a>
+                <a href="#routingCH">routingCH</a>
+                <a href="#routingCH_no_instr">routingCH_no_instr</a>
+                <a href="#prepare">prepare</a>
+                <a href="#measurement">measurement</a>
+            </div>
+            <div id="charts">            
+            </div>            
+        </div>
+    </body>
+</html>
