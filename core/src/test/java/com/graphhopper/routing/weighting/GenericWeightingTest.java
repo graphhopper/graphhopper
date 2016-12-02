@@ -19,10 +19,15 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.Shape;
 import org.junit.Test;
@@ -62,22 +67,22 @@ public class GenericWeightingTest {
         way.setTag("maxspeed", "10");
         EdgeIteratorState edge = createEdge(27, 10, encoder.handleWayTags(way, 1, 0));
         ConfigMap cMap = encoder.readStringMap(new PMap());
-        Weighting instance = new GenericWeighting(encoder, cMap);
+        GenericWeighting instance = new GenericWeighting(encoder, cMap);
         assertEquals(3.0, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
 
         List<Shape> shapes = new ArrayList<>(1);
         shapes.add(new Circle(1, 1, 1));
         cMap.put(Parameters.NON_CH.BLOCKED_SHAPES, shapes);
-        cMap.put("node_access", getNodeAccess());
         instance = new GenericWeighting(encoder, cMap);
+        instance.setGraph(getGraph());
         assertEquals(Double.POSITIVE_INFINITY, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
 
         shapes.clear();
         // Do not match 1,1 of Edge - which is returned by NodeAccess
         shapes.add(new Circle(10, 10, 1));
         cMap.put(Parameters.NON_CH.BLOCKED_SHAPES, shapes);
-        cMap.put("node_access", getNodeAccess());
         instance = new GenericWeighting(encoder, cMap);
+        instance.setGraph(getGraph());
         assertEquals(3.0, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
     }
 
@@ -112,72 +117,132 @@ public class GenericWeightingTest {
         };
     }
 
-    NodeAccess getNodeAccess(){
-        // Return 1 for every LatLon
-        return new NodeAccess() {
+    // Fake Graph that returns a Node Acess that returns 1 for for every getLat,getLon Edge
+    Graph getGraph(){
+        return new Graph() {
             @Override
-            public int getAdditionalNodeField(int nodeId) {
+            public Graph getBaseGraph() {
+                return null;
+            }
+
+            @Override
+            public int getNodes() {
                 return 0;
             }
 
             @Override
-            public void setAdditionalNodeField(int nodeId, int additionalValue) {
+            public NodeAccess getNodeAccess() {
+                return new NodeAccess() {
+                    @Override
+                    public int getAdditionalNodeField(int nodeId) {
+                        return 0;
+                    }
 
+                    @Override
+                    public void setAdditionalNodeField(int nodeId, int additionalValue) {
+
+                    }
+
+                    @Override
+                    public boolean is3D() {
+                        return false;
+                    }
+
+                    @Override
+                    public int getDimension() {
+                        return 0;
+                    }
+
+                    @Override
+                    public void ensureNode(int nodeId) {
+
+                    }
+
+                    @Override
+                    public void setNode(int nodeId, double lat, double lon) {
+
+                    }
+
+                    @Override
+                    public void setNode(int nodeId, double lat, double lon, double ele) {
+
+                    }
+
+                    @Override
+                    public double getLatitude(int nodeId) {
+                        return 1;
+                    }
+
+                    @Override
+                    public double getLat(int nodeId) {
+                        return 1;
+                    }
+
+                    @Override
+                    public double getLongitude(int nodeId) {
+                        return 1;
+                    }
+
+                    @Override
+                    public double getLon(int nodeId) {
+                        return 1;
+                    }
+
+                    @Override
+                    public double getElevation(int nodeId) {
+                        return 0;
+                    }
+
+                    @Override
+                    public double getEle(int nodeId) {
+                        return 0;
+                    }
+                };
             }
 
             @Override
-            public boolean is3D() {
-                return false;
+            public BBox getBounds() {
+                return null;
             }
 
             @Override
-            public int getDimension() {
-                return 0;
+            public EdgeIteratorState edge(int a, int b) {
+                return null;
             }
 
             @Override
-            public void ensureNode(int nodeId) {
-
+            public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
+                return null;
             }
 
             @Override
-            public void setNode(int nodeId, double lat, double lon) {
-
+            public EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
+                return null;
             }
 
             @Override
-            public void setNode(int nodeId, double lat, double lon, double ele) {
-
+            public AllEdgesIterator getAllEdges() {
+                return null;
             }
 
             @Override
-            public double getLatitude(int nodeId) {
-                return 1;
+            public EdgeExplorer createEdgeExplorer(EdgeFilter filter) {
+                return null;
             }
 
             @Override
-            public double getLat(int nodeId) {
-                return 1;
+            public EdgeExplorer createEdgeExplorer() {
+                return null;
             }
 
             @Override
-            public double getLongitude(int nodeId) {
-                return 1;
+            public Graph copyTo(Graph g) {
+                return null;
             }
 
             @Override
-            public double getLon(int nodeId) {
-                return 1;
-            }
-
-            @Override
-            public double getElevation(int nodeId) {
-                return 0;
-            }
-
-            @Override
-            public double getEle(int nodeId) {
-                return 0;
+            public GraphExtension getExtension() {
+                return null;
             }
         };
     }

@@ -19,13 +19,16 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.Shape;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -50,9 +53,8 @@ public class GenericWeighting extends AbstractWeighting {
     private final int eventuallAccessiblePenalty = 10;
 
     private final GHIntHashSet blockedEdges;
-    private final List<Shape> blockedShapes;
-    private final NodeAccess nodeAccess;
-
+    private List<Shape> blockedShapes;
+    private Graph graph;
 
     public GenericWeighting(DataFlagEncoder encoder, ConfigMap cMap) {
         super(encoder);
@@ -73,10 +75,14 @@ public class GenericWeighting extends AbstractWeighting {
         accessType = gEncoder.getAccessType("motor_vehicle");
         blockedEdges = cMap.get(Parameters.NON_CH.BLOCKED_EDGES, new GHIntHashSet(0));
         blockedShapes = cMap.get(Parameters.NON_CH.BLOCKED_SHAPES, Collections.EMPTY_LIST);
-        nodeAccess = cMap.get("node_access", null);
-        if(!blockedShapes.isEmpty() && nodeAccess == null){
-            throw new IllegalStateException("You have to pass a valid NodeAccess if you want to use Shape Blocking");
+        // TODO Uncomment this, if you want to use Blocked Shapes with CH
+        /*
+        if(blockedShapes.isEmpty()){
+            // TODO add final Again
+            blockedShapes = new ArrayList<>();
+            blockedShapes.add(new Circle(48.491127,9.28894, 70000));
         }
+        */
     }
 
     @Override
@@ -108,9 +114,9 @@ public class GenericWeighting extends AbstractWeighting {
             return Double.POSITIVE_INFINITY;
         }
 
-        if(!blockedShapes.isEmpty()){
+        if(!blockedShapes.isEmpty() && graph != null){
             for (Shape shape: blockedShapes) {
-                if(shape.contains(nodeAccess.getLat(edgeState.getAdjNode()), nodeAccess.getLon(edgeState.getAdjNode()))){
+                if(shape.contains(graph.getNodeAccess().getLat(edgeState.getAdjNode()), graph.getNodeAccess().getLon(edgeState.getAdjNode()))){
                     return Double.POSITIVE_INFINITY;
                 }
             }
@@ -161,5 +167,9 @@ public class GenericWeighting extends AbstractWeighting {
     @Override
     public String getName() {
         return "generic";
+    }
+
+    public void setGraph(Graph graph) {
+        this.graph = graph;
     }
 }

@@ -839,7 +839,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (!chFactoryDecorator.hasWeightings())
             for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
                 for (String chWeightingStr : chFactoryDecorator.getWeightingsAsStrings()) {
-                    Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder);
+                    Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder, null);
                     chFactoryDecorator.addWeighting(weighting);
                 }
             }
@@ -914,17 +914,20 @@ public class GraphHopper implements GraphHopperAPI {
      * @param hintsMap all parameters influencing the weighting. E.g. parameters coming via
      *                 GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
      * @param encoder  the required vehicle
+     * @param graph The Graph, prefereably the QueryGraph is passed to a Weighting if neccessary
      * @return the weighting to be used for route calculation
      * @see HintsMap
      */
-    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder) {
+    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
         String weighting = hintsMap.getWeighting().toLowerCase();
 
         if (encoder.supports(GenericWeighting.class)) {
             DataFlagEncoder dataEncoder = (DataFlagEncoder) encoder;
             ConfigMap cMap = dataEncoder.readStringMap(hintsMap);
-            cMap = setupBlocking(cMap, hintsMap, dataEncoder);
-            return new GenericWeighting(dataEncoder, cMap);
+            cMap = setupBlocking(cMap, hintsMap, dataEncoder, graph);
+            GenericWeighting genericWeighting =  new GenericWeighting(dataEncoder, cMap);
+            genericWeighting.setGraph(graph);
+            return genericWeighting;
         } else if ("shortest".equalsIgnoreCase(weighting)) {
             return new ShortestWeighting(encoder);
         } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty()) {
@@ -943,12 +946,12 @@ public class GraphHopper implements GraphHopperAPI {
         throw new IllegalArgumentException("weighting " + weighting + " not supported");
     }
 
-    private ConfigMap setupBlocking(ConfigMap cMap, HintsMap hints, FlagEncoder encoder) {
+    private ConfigMap setupBlocking(ConfigMap cMap, HintsMap hints, FlagEncoder encoder, Graph graph) {
         final GHIntHashSet blockedEdges = new GHIntHashSet();
         final List<Shape> blockedShapes = new ArrayList<>();
         // We still need EdgeIds for PointBlocking
         final boolean blockByShape = hints.getBool(Parameters.NON_CH.BLOCK_BY_SHAPE, false);
-        GraphBrowser browser = new GraphBrowser(getGraphHopperStorage(), locationIndex);
+        GraphBrowser browser = new GraphBrowser(graph, locationIndex);
         EdgeFilter filter = new DefaultEdgeFilter(encoder);
 
         // Add Blocked Edges
@@ -1033,7 +1036,6 @@ public class GraphHopper implements GraphHopperAPI {
 
         cMap.put(Parameters.NON_CH.BLOCKED_EDGES, blockedEdges);
         cMap.put(Parameters.NON_CH.BLOCKED_SHAPES, blockedShapes);
-        cMap.put("node_access", getGraphHopperStorage().getNodeAccess());
 
         return cMap;
     }
@@ -1110,7 +1112,7 @@ public class GraphHopper implements GraphHopperAPI {
 
                 RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
                 Weighting weighting = null;
-                Graph routingGraph = ghStorage;
+                QueryGraph queryGraph;
 
                 boolean forceFlexibleMode = hints.getBool(CH.DISABLE, false);
                 if (!chFactoryDecorator.isDisablingAllowed() && forceFlexibleMode)
@@ -1125,11 +1127,13 @@ public class GraphHopper implements GraphHopperAPI {
 
                     tMode = getCHFactoryDecorator().getNodeBase();
                     weighting = ((PrepareContractionHierarchies) tmpAlgoFactory).getWeighting();
-                    routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
-
+                    queryGraph = new QueryGraph(ghStorage.getGraph(CHGraph.class, weighting));
+                    queryGraph.lookup(qResults);
                 } else {
                     checkNonChMaxWaypointDistance(points);
-                    weighting = createWeighting(hints, encoder);
+                    queryGraph = new QueryGraph(ghStorage);
+                    queryGraph.lookup(qResults);
+                    weighting = createWeighting(hints, encoder, queryGraph);
                     ghRsp.addDebugInfo("tmode:" + tMode.toString());
                 }
 
@@ -1137,8 +1141,6 @@ public class GraphHopper implements GraphHopperAPI {
                 if (maxVisitedNodesForRequest > maxVisitedNodes)
                     throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes);
 
-                QueryGraph queryGraph = new QueryGraph(routingGraph);
-                queryGraph.lookup(qResults);
                 weighting = createTurnWeighting(queryGraph, weighting, tMode);
 
                 AlgorithmOptions algoOpts = AlgorithmOptions.start().

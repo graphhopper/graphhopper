@@ -88,7 +88,7 @@ public class MiniGraphUI {
         // weighting = hopper.getCHFactoryDecorator().getWeightings().get(0);
         // routingGraph = hopper.getGraphHopperStorage().getGraph(CHGraph.class, weighting);
 
-        weighting = hopper.createWeighting(map, encoder);
+        weighting = hopper.createWeighting(map, encoder, this.graph);
         algoFactory = hopper.getAlgorithmFactory(map);
         algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, weighting);
 
