@@ -73,6 +73,13 @@
     <prerequisites>
         <maven>3.2</maven>
     </prerequisites>
+    <modules>
+        <module>core</module>
+        <module>reader-osm</module>
+        <module>reader-overlay-data</module>
+        <module>tools</module>
+        <module>web</module>
+    </modules>
     <build>
         <plugins>
             <plugin>
@@ -120,7 +127,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>2.6</version>
+                <version>3.0.0</version>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -142,21 +149,6 @@
             </plugin>
             -->
 
-            <!-- create html output for findbugs -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <version>3.5.1</version>
-                <configuration>
-                    <reportPlugins>
-                        <plugin>
-                            <groupId>org.codehaus.mojo</groupId>
-                            <artifactId>findbugs-maven-plugin</artifactId>
-                        </plugin>
-                    </reportPlugins>
-                </configuration>
-            </plugin>
-
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>findbugs-maven-plugin</artifactId>
@@ -165,7 +157,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-pmd-plugin</artifactId>
-                <version>3.6</version>
+                <version>3.7</version>
                 <!-- e.g. under core/target/site/pmd.html
                 <configuration>
                     <format>html</format>
@@ -198,6 +190,12 @@
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
+            <!-- this exception is valid for jdk8 profile below too -->
+            <modules>                
+                <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
+                Currently works for jdk8 only -->
+                <module>reader-shp</module>
+            </modules>
             <build>
                 <plugins>
                     <plugin>
@@ -272,15 +270,10 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties />
-            <!-- update below module list too -->
-            <modules>
-                <module>tools-lgpl</module>
-                <module>core</module>
-                <module>reader-osm</module>
+            <modules>                
+                <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
+                Currently works for jdk8 only -->
                 <module>reader-shp</module>
-                <module>reader-overlay-data</module>
-                <module>tools</module>
-                <module>web</module>
             </modules>
             <build>
                 <plugins>
@@ -300,19 +293,7 @@
                 <activeByDefault>false</activeByDefault>                                
                 <jdk>9</jdk>
             </activation>
-            <properties />
-            <modules>
-                <module>tools-lgpl</module>
-                <module>core</module>
-                <module>reader-osm</module>
-                <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
-                maybe there is a parameter solution for this instead
-                <module>reader-shp</module>
-                -->
-                <module>reader-overlay-data</module>
-                <module>tools</module>
-                <module>web</module>
-            </modules>
+            <properties />           
             <build>
                 <plugins>
                     <plugin>

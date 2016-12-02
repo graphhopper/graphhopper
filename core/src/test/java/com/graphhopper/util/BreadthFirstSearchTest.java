@@ -17,12 +17,11 @@
  */
 package com.graphhopper.util;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -34,8 +33,8 @@ import static org.junit.Assert.assertTrue;
  */
 public class BreadthFirstSearchTest {
     int counter;
-    TIntHashSet set = new TIntHashSet();
-    TIntList list = new TIntArrayList();
+    GHIntHashSet set = new GHIntHashSet();
+    IntArrayList list = new IntArrayList();
 
     @Before
     public void setup() {
@@ -73,7 +72,7 @@ public class BreadthFirstSearchTest {
 
         assertTrue(counter > 0);
         assertEquals(g.getNodes(), counter);
-        assertEquals("{0, 5, 3, 2, 1, 10, 8, 7, 6, 9, 4}", list.toString());
+        assertEquals("[0, 5, 3, 2, 1, 10, 8, 7, 6, 9, 4]", list.toString());
     }
 
     @Test
@@ -100,7 +99,7 @@ public class BreadthFirstSearchTest {
         bfs.start(g.createEdgeExplorer(), 1);
 
         assertTrue(counter > 0);
-        assertEquals("{1, 5, 2, 6, 3, 4}", list.toString());
+        assertEquals("[1, 5, 2, 6, 3, 4]", list.toString());
     }
 
 }

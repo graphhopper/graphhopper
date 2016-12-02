@@ -1,6 +1,7 @@
 // This software is released into the Public Domain.  See copying.txt for details.
 package com.graphhopper.reader.osm.pbf;
 
+import com.carrotsearch.hppc.LongIndexedContainer;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
@@ -8,7 +9,6 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.OSMFileHeader;
 import com.graphhopper.util.Helper;
-import gnu.trove.list.TLongList;
 import org.openstreetmap.osmosis.osmbinary.Fileformat;
 import org.openstreetmap.osmosis.osmbinary.Osmformat;
 import org.slf4j.Logger;
@@ -253,7 +253,7 @@ public class PbfBlobDecoder implements Runnable {
             // delta encoded meaning that each id is stored as a delta against
             // the previous one.
             long nodeId = 0;
-            TLongList wayNodes = osmWay.getNodes();
+            LongIndexedContainer wayNodes = osmWay.getNodes();
             for (long nodeIdOffset : way.getRefsList()) {
                 nodeId += nodeIdOffset;
                 wayNodes.add(nodeId);

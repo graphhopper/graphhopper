@@ -22,8 +22,6 @@ package com.graphhopper.apache.commons.lang3;
  * that can be found here: https://github.com/apache/commons-lang/blob/master/src/main/java/org/apache/commons/lang3/StringUtils.java
  *
  * The library can be found here: https://commons.apache.org/proper/commons-lang/
- *
- * @author Robin Boldt
  */
 public class StringUtils {
 

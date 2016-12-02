@@ -17,6 +17,7 @@
  */
 package com.graphhopper.reader.osm;
 
+import com.carrotsearch.hppc.LongIndexedContainer;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
@@ -33,7 +34,6 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import gnu.trove.list.TLongList;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -553,7 +553,7 @@ public class OSMReaderTest {
             }
 
             @Override
-            Collection<EdgeIteratorState> addOSMWay(TLongList osmNodeIds, long wayFlags, long osmId) {
+            Collection<EdgeIteratorState> addOSMWay(LongIndexedContainer osmNodeIds, long wayFlags, long osmId) {
                 return Collections.emptyList();
             }
         };

@@ -120,6 +120,19 @@ public class DataFlagEncoderTest {
     }
 
     @Test
+    public void testDestinationTag() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+        assertEquals(DataFlagEncoder.AccessValue.ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+
+        way.setTag("vehicle", "destination");
+        assertEquals(DataFlagEncoder.AccessValue.EVENTUALLY_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+
+        way.setTag("vehicle", "no");
+        assertEquals(DataFlagEncoder.AccessValue.NOT_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+    }
+
+    @Test
     public void testMaxspeed() {
         ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");

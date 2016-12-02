@@ -17,13 +17,13 @@
  */
 package com.graphhopper.routing.subnetwork;
 
+import com.carrotsearch.hppc.IntArrayDeque;
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIterator;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.stack.array.TIntArrayStack;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,9 +38,9 @@ import java.util.Stack;
  * http://www.timl.id.au/?p=327 and http://homepages.ecs.vuw.ac.nz/~djp/files/P05.pdf
  */
 public class TarjansSCCAlgorithm {
-    private final ArrayList<TIntArrayList> components = new ArrayList<TIntArrayList>();
+    private final ArrayList<IntArrayList> components = new ArrayList<IntArrayList>();
     private final GraphHopperStorage graph;
-    private final TIntArrayStack nodeStack;
+    private final IntArrayDeque nodeStack;
     private final GHBitSet onStack;
     private final GHBitSet ignoreSet;
     private final int[] nodeIndex;
@@ -51,7 +51,7 @@ public class TarjansSCCAlgorithm {
     public TarjansSCCAlgorithm(GraphHopperStorage graph, GHBitSet ignoreSet,
                                final EdgeFilter edgeFilter) {
         this.graph = graph;
-        this.nodeStack = new TIntArrayStack();
+        this.nodeStack = new IntArrayDeque();
         this.onStack = new GHBitSetImpl(graph.getNodes());
         this.nodeIndex = new int[graph.getNodes()];
         this.nodeLowLink = new int[graph.getNodes()];
@@ -62,7 +62,7 @@ public class TarjansSCCAlgorithm {
     /**
      * Find and return list of all strongly connected components in g.
      */
-    public List<TIntArrayList> findComponents() {
+    public List<IntArrayList> findComponents() {
         int nodes = graph.getNodes();
         for (int start = 0; start < nodes; start++) {
             if (nodeIndex[start] == 0
@@ -97,7 +97,7 @@ public class TarjansSCCAlgorithm {
                 nodeIndex[start] = index;
                 nodeLowLink[start] = index;
                 index++;
-                nodeStack.push(start);
+                nodeStack.addLast(start);
                 onStack.add(start);
 
                 iter = graph.createEdgeExplorer(edgeFilter).setBaseNode(start);
@@ -131,9 +131,9 @@ public class TarjansSCCAlgorithm {
             // If nodeLowLink == nodeIndex, then we are the first element in a component.
             // Add all nodes higher up on nodeStack to this component.
             if (nodeIndex[start] == nodeLowLink[start]) {
-                TIntArrayList component = new TIntArrayList();
+                IntArrayList component = new IntArrayList();
                 int node;
-                while ((node = nodeStack.pop()) != start) {
+                while ((node = nodeStack.removeLast()) != start) {
                     component.add(node);
                     onStack.remove(node);
                 }

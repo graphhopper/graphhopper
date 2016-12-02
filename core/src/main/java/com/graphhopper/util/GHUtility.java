@@ -17,15 +17,17 @@
  */
 package com.graphhopper.util;
 
+import com.carrotsearch.hppc.IntIndexedContainer;
+import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.LongIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -168,10 +170,10 @@ public class GHUtility {
     }
 
     public static Graph shuffle(Graph g, Graph sortedGraph) {
-        int len = g.getNodes();
-        TIntList list = new TIntArrayList(len, -1);
-        list.fill(0, len, -1);
-        for (int i = 0; i < len; i++) {
+        int nodes = g.getNodes();
+        GHIntArrayList list = new GHIntArrayList(nodes);
+        list.fill(nodes, -1);
+        for (int i = 0; i < nodes; i++) {
             list.set(i, i);
         }
         list.shuffle(new Random());
@@ -183,9 +185,9 @@ public class GHUtility {
      * significant difference (bfs) for querying or are worse (z-curve).
      */
     public static Graph sortDFS(Graph g, Graph sortedGraph) {
-        final TIntList list = new TIntArrayList(g.getNodes(), -1);
         int nodes = g.getNodes();
-        list.fill(0, nodes, -1);
+        final GHIntArrayList list = new GHIntArrayList(nodes);
+        list.fill(nodes, -1);
         final GHBitSetImpl bitset = new GHBitSetImpl(nodes);
         final AtomicInteger ref = new AtomicInteger(-1);
         EdgeExplorer explorer = g.createEdgeExplorer();
@@ -207,7 +209,7 @@ public class GHUtility {
         return createSortedGraph(g, sortedGraph, list);
     }
 
-    static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final TIntList oldToNewNodeList) {
+    static Graph createSortedGraph(Graph fromGraph, Graph toSortedGraph, final IntIndexedContainer oldToNewNodeList) {
         AllEdgesIterator eIter = fromGraph.getAllEdges();
         while (eIter.next()) {
             int base = eIter.getBaseNode();
@@ -357,7 +359,7 @@ public class GHUtility {
     public static int getEdgeFromEdgeKey(int edgeKey) {
         return edgeKey / 2;
     }
-
+    
     /**
      * This edge iterator can be used in tests to mock specific iterator behaviour via overloading
      * certain methods.

@@ -17,8 +17,9 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AStar.AStarEntry;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.ConsistentWeightApproximator;
@@ -27,8 +28,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
 
 import java.util.PriorityQueue;
 
@@ -59,19 +58,19 @@ import java.util.PriorityQueue;
  * @author jansoe
  */
 public class AStarBidirection extends AbstractBidirAlgo {
-    protected TIntObjectMap<AStarEntry> bestWeightMapFrom;
-    protected TIntObjectMap<AStarEntry> bestWeightMapTo;
+    protected IntObjectMap<AStarEntry> bestWeightMapFrom;
+    protected IntObjectMap<AStarEntry> bestWeightMapTo;
     protected AStarEntry currFrom;
     protected AStarEntry currTo;
     protected PathBidirRef bestPath;
     private ConsistentWeightApproximator weightApprox;
     private PriorityQueue<AStarEntry> prioQueueOpenSetFrom;
     private PriorityQueue<AStarEntry> prioQueueOpenSetTo;
-    private TIntObjectMap<AStarEntry> bestWeightMapOther;
+    private IntObjectMap<AStarEntry> bestWeightMapOther;
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
-        int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
+        int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
         initCollections(size);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
         defaultApprox.setDistanceCalc(new DistancePlaneProjection());
@@ -80,10 +79,10 @@ public class AStarBidirection extends AbstractBidirAlgo {
 
     protected void initCollections(int size) {
         prioQueueOpenSetFrom = new PriorityQueue<AStarEntry>(size);
-        bestWeightMapFrom = new TIntObjectHashMap<AStarEntry>(size);
+        bestWeightMapFrom = new GHIntObjectHashMap<AStarEntry>(size);
 
         prioQueueOpenSetTo = new PriorityQueue<AStarEntry>(size);
-        bestWeightMapTo = new TIntObjectHashMap<AStarEntry>(size);
+        bestWeightMapTo = new GHIntObjectHashMap<AStarEntry>(size);
     }
 
     /**
@@ -209,7 +208,7 @@ public class AStarBidirection extends AbstractBidirAlgo {
     }
 
     private void fillEdges(AStarEntry currEdge, PriorityQueue<AStarEntry> prioQueueOpenSet,
-                           TIntObjectMap<AStarEntry> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
+                           IntObjectMap<AStarEntry> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
 
         int currNode = currEdge.adjNode;
         EdgeIterator iter = explorer.setBaseNode(currNode);

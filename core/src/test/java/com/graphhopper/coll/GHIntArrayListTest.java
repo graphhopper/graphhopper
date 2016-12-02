@@ -17,14 +17,29 @@
  */
 package com.graphhopper.coll;
 
+import java.util.Random;
+import org.junit.Test;
+import static org.junit.Assert.*;
+
 /**
  * @author Peter Karich
  */
-public class IntDoubleBinHeap extends OTPIntDoubleBinHeap implements BinHeapWrapper<Number, Integer> {
-    public IntDoubleBinHeap() {
+public class GHIntArrayListTest {
+
+    @Test
+    public void testReverse() {
+        assertEquals(GHIntArrayList.from(4, 3, 2, 1), GHIntArrayList.from(1, 2, 3, 4).reverse());
+        assertEquals(GHIntArrayList.from(5, 4, 3, 2, 1), GHIntArrayList.from(1, 2, 3, 4, 5).reverse());
     }
 
-    public IntDoubleBinHeap(int capacity) {
-        super(capacity);
+    @Test
+    public void testShuffle() {
+        assertEquals(GHIntArrayList.from(4, 1, 3, 2), GHIntArrayList.from(1, 2, 3, 4).shuffle(new Random(0)));
+        assertEquals(GHIntArrayList.from(4, 3, 2, 1, 5), GHIntArrayList.from(1, 2, 3, 4, 5).shuffle(new Random(1)));
+    }
+
+    @Test
+    public void testFill() {
+        assertEquals(GHIntArrayList.from(-1, -1, -1, -1), new GHIntArrayList(4).fill(4, -1));
     }
 }

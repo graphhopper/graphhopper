@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
@@ -24,8 +27,6 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -59,7 +60,7 @@ public class Path {
     private FlagEncoder encoder;
     private boolean found;
     private int fromNode = -1;
-    private TIntList edgeIds;
+    private GHIntArrayList edgeIds;
     private double weight;
     private NodeAccess nodeAccess;
 
@@ -69,7 +70,7 @@ public class Path {
         this.nodeAccess = graph.getNodeAccess();
         this.weighting = weighting;
         this.encoder = weighting.getFlagEncoder();
-        this.edgeIds = new TIntArrayList();
+        this.edgeIds = new GHIntArrayList();
     }
 
     /**
@@ -78,7 +79,7 @@ public class Path {
     Path(Path p) {
         this(p.graph, p.weighting);
         weight = p.weight;
-        edgeIds = new TIntArrayList(p.edgeIds);
+        edgeIds = new GHIntArrayList(p.edgeIds);
         sptEntry = p.sptEntry;
     }
 
@@ -286,8 +287,8 @@ public class Path {
     /**
      * @return the uncached node indices of the tower nodes in this path.
      */
-    public TIntList calcNodes() {
-        final TIntArrayList nodes = new TIntArrayList(edgeIds.size() + 1);
+    public IntIndexedContainer calcNodes() {
+        final IntArrayList nodes = new IntArrayList(edgeIds.size() + 1);
         if (edgeIds.isEmpty()) {
             if (isFound()) {
                 nodes.add(endNode);

@@ -23,6 +23,7 @@ import org.junit.After;
 import org.junit.Before;
 
 import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -32,8 +33,6 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-
-import gnu.trove.set.hash.TIntHashSet;
 
 /**
  * @author Alexey Valikov
@@ -53,9 +52,9 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
     public void setUp() {
         dataFlagEncoder = new DataFlagEncoder();
         graph = new GraphHopperStorage(new RAMDirectory(),
-                        new EncodingManager(Arrays.asList(dataFlagEncoder, new FootFlagEncoder()),
-                                        8),
-                        true, new GraphExtension.NoOpExtension()).create(100);
+                new EncodingManager(Arrays.asList(dataFlagEncoder, new FootFlagEncoder()),
+                        8),
+                true, new GraphExtension.NoOpExtension()).create(100);
 
         edgeElevationInterpolator = createEdgeElevationInterpolator();
 
@@ -63,7 +62,7 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
         normalWay = new ReaderWay(0);
         normalWay.setTag("highway", "primary");
     }
-    
+
     @After
     public void tearDown() {
         Helper.close(graph);
@@ -76,9 +75,9 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
     }
 
     protected void gatherOuterAndInnerNodeIdsOfStructure(EdgeIteratorState edge,
-                    final TIntHashSet outerNodeIds, final TIntHashSet innerNodeIds) {
+                                                         final GHIntHashSet outerNodeIds, final GHIntHashSet innerNodeIds) {
         edgeElevationInterpolator.gatherOuterAndInnerNodeIds(
-                        edgeElevationInterpolator.getStorage().createEdgeExplorer(), edge,
-                        new GHBitSetImpl(), outerNodeIds, innerNodeIds);
+                edgeElevationInterpolator.getStorage().createEdgeExplorer(), edge,
+                new GHBitSetImpl(), outerNodeIds, innerNodeIds);
     }
 }

@@ -40,6 +40,8 @@ public class GenericWeighting extends AbstractWeighting {
     private final DataFlagEncoder gEncoder;
     private final double[] speedArray;
     private final int accessType;
+    private final int eventuallAccessiblePenalty = 10;
+
 
     public GenericWeighting(DataFlagEncoder encoder, ConfigMap cMap) {
         super(encoder);
@@ -77,6 +79,14 @@ public class GenericWeighting extends AbstractWeighting {
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
+
+        switch (gEncoder.getEdgeAccessValue(edgeState.getFlags())){
+            case NOT_ACCESSIBLE:
+                return Double.POSITIVE_INFINITY;
+            case EVENTUALLY_ACCESSIBLE:
+                time = time * eventuallAccessiblePenalty;
+        }
+
         return time;
     }
 

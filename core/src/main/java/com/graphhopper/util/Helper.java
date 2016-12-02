@@ -17,9 +17,9 @@
  */
 package com.graphhopper.util;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.util.shapes.BBox;
-import gnu.trove.list.TIntList;
-import gnu.trove.list.array.TIntArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +61,7 @@ public class Helper {
     private Helper() {
     }
 
-    public static ArrayList<Integer> tIntListToArrayList(TIntList from) {
+    public static ArrayList<Integer> intListToArrayList(IntIndexedContainer from) {
         int len = from.size();
         ArrayList<Integer> list = new ArrayList<Integer>(len);
         for (int i = 0; i < len; i++) {
@@ -283,12 +283,8 @@ public class Helper {
         return list;
     }
 
-    public static TIntList createTList(int... list) {
-        TIntList res = new TIntArrayList(list.length);
-        for (int val : list) {
-            res.add(val);
-        }
-        return res;
+    public static IntArrayList createTList(int... list) {
+        return IntArrayList.from(list);
     }
 
     public static PointList createPointList(double... list) {

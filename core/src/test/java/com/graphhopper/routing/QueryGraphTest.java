@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -24,7 +25,6 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import gnu.trove.map.TIntObjectMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -152,7 +152,7 @@ public class QueryGraphTest {
         QueryGraph queryGraph = new QueryGraph(g) {
 
             @Override
-            void fillVirtualEdges(TIntObjectMap<VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl) {
+            void fillVirtualEdges(IntObjectMap<VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl) {
                 super.fillVirtualEdges(node2Edge, towerNode, mainExpl);
                 // ignore nodes should include baseNode == 1
                 if (towerNode == 3)
