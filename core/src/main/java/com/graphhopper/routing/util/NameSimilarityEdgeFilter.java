@@ -21,23 +21,34 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.apache.commons.lang3.StringUtils;
 import info.debatty.java.stringsimilarity.JaroWinkler;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
- * This Class defines the basis for NameSimilarity matching using an EdgeFilter.
+ * This class defines the basis for NameSimilarity matching using an EdgeFilter.
+ * The typical use-case is to match not the nearest edge in
+ * {@link com.graphhopper.storage.index.LocationIndex#findClosest(double, double, EdgeFilter)}
+ * but the match the edge which name is closest to the pointHint
+ *
+ * Names that are similar to each other are (n1 name1, n2 name2):
+ * <ul>
+ *     <li>n1 == n2</li>
+ *     <li>n1 is significant substring of n2, e.g: n1="Main Road", n2="Main Road, New York"</li>
+ *     <li>n1 and n2 contain a reasonable longest common substring, e.g.: n1="Cape Point / Cape of Good Hope", n2="Cape Point Rd, Cape Peninsula, Cape Town, 8001, Afrique du Sud"</li>
+ * </ul>
+ *
+ * We aim for allowing slight typos/differences of the substrings, without having too much false positives.
  *
  * @author Robin Boldt
  */
 public class NameSimilarityEdgeFilter implements EdgeFilter {
 
     private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{L}]+");
-    private final EdgeFilter edgeFilter;
-    private final List<String> pointHint;
+    private final double JARO_WINKLER_ACCEPT_FACTOR = .79;
+    private final JaroWinkler jaroWinkler = new JaroWinkler();
 
-    private JaroWinkler jw = new JaroWinkler();
+    private final EdgeFilter edgeFilter;
+    private final String pointHint;
 
     public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint) {
         this.edgeFilter = edgeFilter;
@@ -46,8 +57,9 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
 
     /**
      * Removes any characters in the String that we don't care about in the matching procedure
+     * TODO: Remove common street names like: street, road, avenue?
      */
-    private List<String> prepareName(String name) {
+    private String prepareName(String name) {
         // TODO make this better, also split at ',' and others?
         // TODO This limits the approach to certain 'western' languages
         // \s = A whitespace character: [ \t\n\x0B\f\r]
@@ -61,7 +73,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
                 list.add(tmp);
             }
         }
-        return list;
+        return listToString(list);
     }
 
     private String removeRelation(String edgeName) {
@@ -77,7 +89,6 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
             return false;
         }
 
-        // Don't check if point hint is empty anyway
         if (pointHint.isEmpty()) {
             return true;
         }
@@ -88,55 +99,15 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         }
 
         name = removeRelation(name);
-        List<String> edgeName = prepareName(name);
+        String edgeName = prepareName(name);
 
-        // TODO Splitting Strings to merge them again is not very elegent, maybe we rather want to keep the OriginalPointHint and the OriginalEdgeName?
-        if(isJaroWinklerSimilar(listToString(pointHint), listToString(edgeName), .8))
-            return true;
-
-        return false;
-
-        /*
-        List<String> shorterList;
-        List<String> longerList;
-
-        if(pointHint.size() > edgeName.size()){
-            // Important to create a clone, since we remove entries
-            // TODO maybe the remove is not that good?
-            longerList = new ArrayList<>(pointHint);
-            shorterList = edgeName;
-        }else{
-            longerList = edgeName;
-            shorterList = new ArrayList<>(pointHint);
-        }
-        for (String str1: shorterList) {
-            for (int i = 0; i < longerList.size(); i++) {
-                if(isJaroWinklerSimilar(str1, longerList.get(i), .9)){
-                    // Avoid matchin same string twice, also make it more efficient
-                    longerList.remove(i);
-                    break;
-                }
-                // If in last iteration and no match was found
-                if(i == longerList.size()-1){
-                    System.out.println("No: "+name+" for "+Arrays.toString(edgeName.toArray())+ Arrays.toString(pointHint.toArray()));
-                    return false;
-                }
-            }
-        }
-        // We found a match for every string in the shorter list, therefore strings are similar
-        System.out.println("Match for: "+name);
-        return true;
-        */
+        return isJaroWinklerSimilar(pointHint, edgeName);
     }
 
-    private boolean isJaroWinklerSimilar(String str1, String str2, double similarityScore) {
-        // too big length difference
-        if (Math.min(str2.length(), str1.length()) * 4 < Math.max(str2.length(), str1.length()))
-            return false;
-
-        double jwSimilarity = jw.similarity(str1, str2);
+    private boolean isJaroWinklerSimilar(String str1, String str2) {
+        double jwSimilarity = jaroWinkler.similarity(str1, str2);
         // System.out.println(str1 + " vs. edge:" + str2 + ", " + jwSimilarity);
-        return jwSimilarity > similarityScore;
+        return jwSimilarity > JARO_WINKLER_ACCEPT_FACTOR;
     }
 
     private final String listToString(List<String> list){
@@ -161,41 +132,4 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         return levDistance <= factor;
     }
 
-
-    public static String longestSubstring(String str1, String str2) {
-        StringBuilder sb = new StringBuilder();
-
-        // java initializes them already with 0
-        int[][] num = new int[str1.length()][str2.length()];
-        int maxlen = 0;
-        int lastSubsBegin = 0;
-
-        for (int i = 0; i < str1.length(); i++) {
-            for (int j = 0; j < str2.length(); j++) {
-                if (str1.charAt(i) == str2.charAt(j)) {
-                    if ((i == 0) || (j == 0))
-                        num[i][j] = 1;
-                    else
-                        num[i][j] = 1 + num[i - 1][j - 1];
-
-                    if (num[i][j] > maxlen) {
-                        maxlen = num[i][j];
-                        // generate substring from str1 => i
-                        int thisSubsBegin = i - num[i][j] + 1;
-                        if (lastSubsBegin == thisSubsBegin) {
-                            //if the current LCS is the same as the last time this block ran
-                            sb.append(str1.charAt(i));
-                        } else {
-                            //this block resets the string builder if a different LCS is found
-                            lastSubsBegin = thisSubsBegin;
-                            sb = new StringBuilder();
-                            sb.append(str1.substring(lastSubsBegin, i + 1));
-                        }
-                    }
-                }
-            }
-        }
-
-        return sb.toString();
-    }
 }

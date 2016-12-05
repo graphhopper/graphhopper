@@ -76,6 +76,30 @@ public class NameSimilarityEdgeFilterTest {
         edge = createTestEdgeIterator("Hauptstr.");
         assertTrue(edgeFilter.accept(edge));
 
+    }
+
+    /**
+     * With Nominatim you should not use the "placename" for best results, otherwise the length difference becomes too big
+     */
+    @Test
+    public void testAcceptFromNominatim() {
+        EdgeFilter edgeFilter;
+        EdgeIteratorState edge;
+
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Wentworth Street, Caringbah South");
+        edge = createTestEdgeIterator("Wentworth Street");
+        assertTrue(edgeFilter.accept(edge));
+
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Zum Toffental, Altdorf bei Nürnnberg");
+        edge = createTestEdgeIterator("Zum Toffental");
+        assertTrue(edgeFilter.accept(edge));
+    }
+
+    @Test
+    public void testAcceptFromGoogleMapsGeocoding() {
+        EdgeFilter edgeFilter;
+        EdgeIteratorState edge;
+
         edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Rue Notre-Dame O Montréal");
         edge = createTestEdgeIterator("Rue Dupré");
         assertFalse(edgeFilter.accept(edge));
@@ -109,13 +133,26 @@ public class NameSimilarityEdgeFilterTest {
         edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Viale Puglie, 26, 20137 Milano, Italy");
         edge = createTestEdgeIterator("Viale Puglie");
         assertTrue(edgeFilter.accept(edge));
+    }
 
+    @Test
+    public void testAcceptMashup() {
+        EdgeFilter edgeFilter;
+        EdgeIteratorState edge;
 
+        edge = createTestEdgeIterator("Augustine Street");
 
+        // Google Maps
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Augustine St, Hunters Hill NSW 2110, Australia");
+        assertTrue(edgeFilter.accept(edge));
 
+        // Opencagedata
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Augustine Street, Sydney Neusüdwales 2110, Australien");
+        assertTrue(edgeFilter.accept(edge));
 
-
-
+        // Nominatim
+        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Augustine Street, Sydney, Municipality of Hunters Hill, Neusüdwales, 2111, Australien");
+        assertTrue(edgeFilter.accept(edge));
 
     }
 
