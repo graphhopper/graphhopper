@@ -44,6 +44,7 @@ public class PathWrapper {
     private PointList waypointList = PointList.EMPTY;
     private PointList pointList = PointList.EMPTY;
     private int numChanges;
+    private long firstPtLegDeparture;
 
     /**
      * @return the description of this route alternative to make it meaningful for the user e.g. it
@@ -273,5 +274,13 @@ public class PathWrapper {
 
     public int getNumChanges() {
         return numChanges;
+    }
+
+    public void setFirstPtLegDeparture(long firstPtLegDeparture) {
+        this.firstPtLegDeparture = firstPtLegDeparture;
+    }
+
+    public long getFirstPtLegDeparture() {
+        return firstPtLegDeparture;
     }
 }

@@ -10,6 +10,7 @@ import java.io.File;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 
 import static org.junit.Assert.*;
 
@@ -76,6 +77,41 @@ public class GraphHopperRnvGtfsIT {
         // If we couldn't walk, we would arrive at least one connection later.
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, GTFS_START_DATE.atTime(19, 40),
                 TO_LAT, TO_LON, GTFS_START_DATE.atTime(20, 8));
+    }
+
+    @Test
+    public void testTripWithWalkRangeQuery() {
+        final double FROM_LAT = 49.49436, FROM_LON = 8.43372; // BASF
+        final double TO_LAT = 49.47531, TO_LON = 8.48131; // Krappmuehlstr.
+        final long startTime = getSeconds(GTFS_START_DATE.atTime(19, 40));
+        final long rangeEndTime = getSeconds(GTFS_START_DATE.atTime(20, 40));
+        // Transfer at e.g. Universitaet, where we have to walk to the next stop pole.
+        // If we couldn't walk, we would arrive at least one connection later.
+
+        GHRequest request = new GHRequest(FROM_LAT, FROM_LON, TO_LAT, TO_LON);
+        request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, startTime);
+        request.getHints().put(GraphHopperGtfs.RANGE_QUERY_END_TIME, rangeEndTime);
+        GHResponse response = graphHopper.route(request);
+        assertFalse(response.hasErrors());
+
+        assertEquals("Number of solutions", 9, response.getAll().size());
+
+        assertEquals(GTFS_START_DATE.atTime(20, 8), GTFS_START_DATE.atStartOfDay().plusSeconds((long) response.getBest().getRouteWeight()));
+        assertNotEquals("Best solution doesn't use transit at all.", -1, response.getBest().getNumChanges());
+
+        for (PathWrapper solution : response.getAll()) {
+            assertTrue("First pt leg departure is after start time", solution.getFirstPtLegDeparture() >= startTime);
+            if (solution.getNumChanges() != -1) {
+                assertTrue("First pt leg departure is not after query range end time", solution.getFirstPtLegDeparture() <= rangeEndTime);
+            }
+        }
+
+        HashMap<Integer, Long> departureTimePerNTransfers = new HashMap<>();
+        for (PathWrapper solution : response.getAll()) {
+            assertTrue("a route with a later arrival must have a later departure, too", solution.getFirstPtLegDeparture() > departureTimePerNTransfers.getOrDefault(solution.getNumChanges(), Long.MIN_VALUE));
+            departureTimePerNTransfers.put(solution.getNumChanges(), solution.getFirstPtLegDeparture());
+        }
+
     }
 
     @Test

@@ -237,6 +237,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             path.setRouteWeight(pathBuilder.getWeight());
             path.setDistance(pathBuilder.getDistance());
             path.setTime(pathBuilder.getTime());
+            path.setFirstPtLegDeparture(solution.firstPtDepartureTime);
             int numBoardings = 0;
             for (EdgeIteratorState edge : pathBuilder.calcEdges()) {
                 if (encoder.getEdgeType(edge.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
