@@ -25,32 +25,34 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliestDepartureTime";
     public static final String RANGE_QUERY_END_TIME = "rangeQueryEndTime";
 
+    private String gtfsFile;
+    private boolean createWalkNetwork = false;
+
     private final EncodingManager encodingManager;
     private final TranslationMap trMap = new TranslationMap().doImport();
-    private boolean createWalkNetwork = false;
-    private GtfsGraph gtfsGraph;
-    private GraphHopperStorage storage;
+
+    private GraphHopperStorage graphHopperStorage;
     private LocationIndex locationIndex;
-    private String gtfsFile;
+    private GtfsGraph gtfsGraph;
 
     public GraphHopperGtfs() {
         super();
         this.encodingManager = new EncodingManager(Arrays.asList(new PtFlagEncoder()), 8);
     }
 
-    public void setCreateWalkNetwork(boolean createWalkNetwork) {
-        this.createWalkNetwork = createWalkNetwork;
+    public void setGtfsFile(String gtfsFile) {
+        this.gtfsFile = gtfsFile;
     }
 
-    public GtfsGraph getGtfsGraph() {
-        return gtfsGraph;
+    public void setCreateWalkNetwork(boolean createWalkNetwork) {
+        this.createWalkNetwork = createWalkNetwork;
     }
 
     public boolean load(String graphHopperFolder) {
         if (Helper.isEmpty(graphHopperFolder))
             throw new IllegalStateException("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before");
 
-        if (storage != null)
+        if (graphHopperStorage != null)
             throw new IllegalStateException("graph is already successfully loaded");
 
         if (graphHopperFolder.endsWith("-gh")) {
@@ -73,10 +75,17 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         }
 
         GHDirectory directory = new GHDirectory(graphHopperFolder, DAType.RAM_STORE);
-        storage = new GraphHopperStorage(directory, encodingManager, false, new GtfsStorage());
+        graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, new GtfsStorage());
+        locationIndex = new LocationIndexTree(graphHopperStorage, directory);
 
-        new GtfsReader(storage, createWalkNetwork).readGraph(new File(gtfsFile));
-        storage.flush();
+        if (!new File(graphHopperFolder).exists()) {
+            new GtfsReader(graphHopperStorage, createWalkNetwork).readGraph(new File(gtfsFile));
+            graphHopperStorage.flush();
+            locationIndex.prepareIndex();
+        } else {
+            graphHopperStorage.loadExisting();
+            locationIndex.loadExisting();
+        }
 
         gtfsGraph = new GtfsGraph() {
             @Override
@@ -100,8 +109,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             }
 
         };
-        locationIndex = new LocationIndexTree(storage, directory);
-        locationIndex.prepareIndex();
         return true;
     }
 
@@ -115,147 +122,149 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         GHResponse response = new GHResponse();
 
-        if (storage == null)
+        if (graphHopperStorage == null)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
 
-        if (storage.isClosed())
+        if (graphHopperStorage.isClosed())
             throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
 
+        PtFlagEncoder encoder = (PtFlagEncoder) encodingManager.getEncoder("pt");
 
-        try {
+        if (request.getPoints().size() != 2) {
+            throw new IllegalArgumentException("Exactly 2 points have to be specified, but was:" + request.getPoints().size());
+        }
 
-            PtFlagEncoder encoder = (PtFlagEncoder) encodingManager.getEncoder("pt");
-
-            if (request.getPoints().size() != 2) {
-                throw new IllegalArgumentException("Exactly 2 points have to be specified, but was:" + request.getPoints().size());
-            }
-
-            final GHPoint enter = request.getPoints().get(0);
-            final GHPoint exit = request.getPoints().get(1);
+        final GHPoint enter = request.getPoints().get(0);
+        final GHPoint exit = request.getPoints().get(1);
 
 
-            Locale locale = request.getLocale();
-            Translation tr = trMap.getWithFallBack(locale);
-            StopWatch stopWatch = new StopWatch().start();
+        Locale locale = request.getLocale();
+        Translation tr = trMap.getWithFallBack(locale);
+        StopWatch stopWatch = new StopWatch().start();
 
-            EdgeFilter enterFilter = new PtEnterPositionLookupEdgeFilter(encoder);
-            EdgeFilter exitFilter = new PtExitPositionLookupEdgeFilter(encoder);
+        EdgeFilter enterFilter = new PtEnterPositionLookupEdgeFilter(encoder);
+        EdgeFilter exitFilter = new PtExitPositionLookupEdgeFilter(encoder);
 
-            QueryResult source = locationIndex.findClosest(enter.lat, enter.lon, enterFilter);
-            if (!source.isValid()) {
-                response.addError(new PointNotFoundException("Cannot find entry point: " + enter, 0));
-                return response;
-            }
+        QueryResult source = locationIndex.findClosest(enter.lat, enter.lon, enterFilter);
+        if (!source.isValid()) {
+            response.addError(new PointNotFoundException("Cannot find entry point: " + enter, 0));
+            return response;
+        }
 
-            int startNode = source.getClosestNode();
+        int startNode = source.getClosestNode();
 
-            List<QueryResult> queryResults = new ArrayList<>();
-            queryResults.add(source);
-            QueryResult dest = locationIndex.findClosest(exit.lat, exit.lon, exitFilter);
-            ArrayList<Integer> toNodes = new ArrayList<>();
-            if (!dest.isValid()) {
-                response.addError(new PointNotFoundException("Cannot find exit point: " + exit, 0));
-                return response;
-            }
-            toNodes.add(dest.getClosestNode());
-            queryResults.add(dest);
+        List<QueryResult> queryResults = new ArrayList<>();
+        queryResults.add(source);
+        QueryResult dest = locationIndex.findClosest(exit.lat, exit.lon, exitFilter);
+        ArrayList<Integer> toNodes = new ArrayList<>();
+        if (!dest.isValid()) {
+            response.addError(new PointNotFoundException("Cannot find exit point: " + exit, 0));
+            return response;
+        }
+        toNodes.add(dest.getClosestNode());
+        queryResults.add(dest);
 
-            response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
+        response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
 
-            QueryGraph queryGraph = new QueryGraph(storage);
-            queryGraph.lookup(queryResults);
+        QueryGraph queryGraph = new QueryGraph(graphHopperStorage);
+        queryGraph.lookup(queryResults);
 
-            long visitedNodesSum = 0L;
+        long visitedNodesSum = 0L;
 
-            stopWatch = new StopWatch().start();
-            MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(storage, new PtTravelTimeWeighting(encoder), maxVisitedNodesForRequest, (GtfsStorage) storage.getExtension());
-            String debug = ", algoInit:" + stopWatch.stop().getSeconds() + "s";
+        stopWatch = new StopWatch().start();
+        MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphHopperStorage, new PtTravelTimeWeighting(encoder), maxVisitedNodesForRequest, (GtfsStorage) graphHopperStorage.getExtension());
+        String debug = ", algoInit:" + stopWatch.stop().getSeconds() + "s";
 
-            stopWatch = new StopWatch().start();
-            List<Path> paths = router.calcPaths(startNode, new HashSet(toNodes), initialTime, rangeQueryEndTime);
-            debug += ", routing:" + stopWatch.stop().getSeconds() + "s";
+        stopWatch = new StopWatch().start();
+        List<Path> paths = router.calcPaths(startNode, new HashSet(toNodes), initialTime, rangeQueryEndTime);
+        debug += ", routing:" + stopWatch.stop().getSeconds() + "s";
 
-            for (Path path : paths) {
-                if (path.getTime() < 0)
-                    throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
-                debug += ", " + path.getDebugInfo();
-            }
+        for (Path path : paths) {
+            if (path.getTime() < 0)
+                throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
+            debug += ", " + path.getDebugInfo();
+        }
 
-            response.addDebugInfo(debug);
+        response.addDebugInfo(debug);
 
-            if (router.getVisitedNodes() >= maxVisitedNodesForRequest)
-                throw new IllegalArgumentException("No path found due to maximum nodes exceeded " + maxVisitedNodesForRequest);
+        if (router.getVisitedNodes() >= maxVisitedNodesForRequest)
+            throw new IllegalArgumentException("No path found due to maximum nodes exceeded " + maxVisitedNodesForRequest);
 
-            visitedNodesSum += router.getVisitedNodes();
+        visitedNodesSum += router.getVisitedNodes();
 
-            response.getHints().put("visited_nodes.sum", visitedNodesSum);
-            response.getHints().put("visited_nodes.average", (float) visitedNodesSum);
+        response.getHints().put("visited_nodes.sum", visitedNodesSum);
+        response.getHints().put("visited_nodes.average", (float) visitedNodesSum);
 
-            for (Path path : paths) {
-                if (path.isFound()) {
-                    PathWrapper wrappedPath = new PathWrapper();
-                    PointList waypoints = new PointList(queryResults.size(), true);
-                    for (QueryResult qr : queryResults) {
-                        waypoints.add(qr.getSnappedPoint());
-                    }
-                    wrappedPath.setWaypoints(waypoints);
-                    InstructionList instructions = new InstructionList(tr);
-                    PointList points1 = path.calcPoints();
-                    List<EdgeIteratorState> edges = path.calcEdges();
-                    int transfer = 0;
-                    for (EdgeIteratorState edge1 : edges) {
-                        int sign = Instruction.CONTINUE_ON_STREET;
-                        if (encoder.getEdgeType(edge1.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
-                            if (transfer == 0) {
-                                sign = Instruction.PT_START_TRIP;
-                            } else {
-                                sign = Instruction.PT_TRANSFER;
-                            }
-
-                            transfer++;
-                        }
-
-                        instructions.add(new Instruction(sign, edge1.getName(), InstructionAnnotation.EMPTY, edge1.fetchWayGeometry(1)));
-                    }
-                    if (!points1.isEmpty()) {
-                        PointList end = new PointList();
-                        end.add(points1, points1.size() - 1);
-                        instructions.add(new FinishInstruction(points1, points1.size() - 1));
-                    }
-                    wrappedPath.setInstructions(instructions);
-                    wrappedPath.setDescription(path.getDescription());
-                    PointList pointsList = new PointList();
-                    for (Instruction instruction : instructions) {
-                        pointsList.add(instruction.getPoints());
-                    }
-                    wrappedPath.setPoints(pointsList);
-                    wrappedPath.setRouteWeight(path.getWeight());
-                    wrappedPath.setDistance(path.getDistance());
-                    wrappedPath.setTime(path.getTime());
-                    int numBoardings = 0;
-                    for (EdgeIteratorState edge : path.calcEdges()) {
-                        if (encoder.getEdgeType(edge.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
-                            numBoardings++;
-                        }
-                    }
-                    wrappedPath.setNumChanges(numBoardings - 1);
-                    response.add(wrappedPath);
+        for (Path path : paths) {
+            if (path.isFound()) {
+                PathWrapper wrappedPath = new PathWrapper();
+                PointList waypoints = new PointList(queryResults.size(), true);
+                for (QueryResult qr : queryResults) {
+                    waypoints.add(qr.getSnappedPoint());
                 }
+                wrappedPath.setWaypoints(waypoints);
+                InstructionList instructions = new InstructionList(tr);
+                PointList points1 = path.calcPoints();
+                List<EdgeIteratorState> edges = path.calcEdges();
+                int transfer = 0;
+                for (EdgeIteratorState edge1 : edges) {
+                    int sign = Instruction.CONTINUE_ON_STREET;
+                    if (encoder.getEdgeType(edge1.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
+                        if (transfer == 0) {
+                            sign = Instruction.PT_START_TRIP;
+                        } else {
+                            sign = Instruction.PT_TRANSFER;
+                        }
+
+                        transfer++;
+                    }
+
+                    instructions.add(new Instruction(sign, edge1.getName(), InstructionAnnotation.EMPTY, edge1.fetchWayGeometry(1)));
+                }
+                if (!points1.isEmpty()) {
+                    PointList end = new PointList();
+                    end.add(points1, points1.size() - 1);
+                    instructions.add(new FinishInstruction(points1, points1.size() - 1));
+                }
+                wrappedPath.setInstructions(instructions);
+                wrappedPath.setDescription(path.getDescription());
+                PointList pointsList = new PointList();
+                for (Instruction instruction : instructions) {
+                    pointsList.add(instruction.getPoints());
+                }
+                wrappedPath.setPoints(pointsList);
+                wrappedPath.setRouteWeight(path.getWeight());
+                wrappedPath.setDistance(path.getDistance());
+                wrappedPath.setTime(path.getTime());
+                int numBoardings = 0;
+                for (EdgeIteratorState edge : path.calcEdges()) {
+                    if (encoder.getEdgeType(edge.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
+                        numBoardings++;
+                    }
+                }
+                wrappedPath.setNumChanges(numBoardings - 1);
+                response.add(wrappedPath);
             }
-            if (response.getAll().isEmpty()) {
-                response.addError(new RuntimeException("No route found"));
-            } else {
-                Collections.sort(response.getAll(), (p1, p2) -> Double.compare(p1.getRouteWeight(), p2.getRouteWeight()));
-            }
-        } catch (IllegalArgumentException ex) {
-            response.addError(ex);
+        }
+        if (response.getAll().isEmpty()) {
+            response.addError(new RuntimeException("No route found"));
+        } else {
+            Collections.sort(response.getAll(), (p1, p2) -> Double.compare(p1.getRouteWeight(), p2.getRouteWeight()));
         }
         return response;
     }
 
-    public void setGtfsFile(String gtfsFile) {
-        this.gtfsFile = gtfsFile;
+    public Graph getGraph() {
+        return graphHopperStorage;
+    }
+
+    public LocationIndex getLocationIndex() {
+        return locationIndex;
+    }
+
+    public GtfsGraph getGtfsGraph() {
+        return gtfsGraph;
     }
 
     public void close() {
