@@ -20,15 +20,11 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.Shape;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -53,7 +49,7 @@ public class GenericWeighting extends AbstractWeighting {
     private final int eventuallAccessiblePenalty = 10;
 
     private final GHIntHashSet blockedEdges;
-    private List<Shape> blockedShapes;
+    private final List<Shape> blockedShapes;
     private Graph graph;
 
     public GenericWeighting(DataFlagEncoder encoder, ConfigMap cMap) {
@@ -73,16 +69,8 @@ public class GenericWeighting extends AbstractWeighting {
 
         maxSpeed = tmpSpeed / SPEED_CONV;
         accessType = gEncoder.getAccessType("motor_vehicle");
-        blockedEdges = cMap.get(Parameters.NON_CH.BLOCKED_EDGES, new GHIntHashSet(0));
-        blockedShapes = cMap.get(Parameters.NON_CH.BLOCKED_SHAPES, Collections.EMPTY_LIST);
-        // TODO Uncomment this, if you want to use Blocked Shapes with CH
-        /*
-        if(blockedShapes.isEmpty()){
-            // TODO add final Again
-            blockedShapes = new ArrayList<>();
-            blockedShapes.add(new Circle(48.491127,9.28894, 70000));
-        }
-        */
+        blockedEdges = cMap.get(Routing.BLOCKED_EDGES, new GHIntHashSet(0));
+        blockedShapes = cMap.get(Routing.BLOCKED_SHAPES, Collections.EMPTY_LIST);
     }
 
     @Override

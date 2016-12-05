@@ -54,7 +54,7 @@ public class GenericWeightingTest {
         assertEquals(3.0, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
 
         GHIntHashSet blockedEdges = new GHIntHashSet(1);
-        cMap.put(Parameters.NON_CH.BLOCKED_EDGES, blockedEdges);
+        cMap.put(Parameters.Routing.BLOCKED_EDGES, blockedEdges);
         blockedEdges.add(27);
         instance = new GenericWeighting(encoder, cMap);
         assertEquals(Double.POSITIVE_INFINITY, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
@@ -72,7 +72,7 @@ public class GenericWeightingTest {
 
         List<Shape> shapes = new ArrayList<>(1);
         shapes.add(new Circle(1, 1, 1));
-        cMap.put(Parameters.NON_CH.BLOCKED_SHAPES, shapes);
+        cMap.put(Parameters.Routing.BLOCKED_SHAPES, shapes);
         instance = new GenericWeighting(encoder, cMap);
         instance.setGraph(getGraph());
         assertEquals(Double.POSITIVE_INFINITY, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
@@ -80,7 +80,7 @@ public class GenericWeightingTest {
         shapes.clear();
         // Do not match 1,1 of Edge - which is returned by NodeAccess
         shapes.add(new Circle(10, 10, 1));
-        cMap.put(Parameters.NON_CH.BLOCKED_SHAPES, shapes);
+        cMap.put(Parameters.Routing.BLOCKED_SHAPES, shapes);
         instance = new GenericWeighting(encoder, cMap);
         instance.setGraph(getGraph());
         assertEquals(3.0, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);

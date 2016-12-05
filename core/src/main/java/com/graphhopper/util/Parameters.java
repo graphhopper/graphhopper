@@ -109,6 +109,15 @@ public class Parameters {
          */
         public static final double DEFAULT_HEADING_PENALTY = 300;
         public static final String HEADING_PENALTY = "heading_penalty";
+        /**
+         * Blocking Settings
+         */
+        public static final String BLOCKED_EDGES = "blocked_edges";
+        public static final String BLOCKED_POINTS = "blocked_points";
+        public static final String BLOCKED_RECTANGULAR_AREAS = "blocked_rectangular_areas";
+        public static final String BLOCKED_CIRCULAR_AREAS = "blocked_circular_areas";
+        public static final String BLOCK_BY_SHAPE = "block_by_shape";
+        public static final String BLOCKED_SHAPES = "blocked_shapes";
     }
 
     /**
@@ -142,16 +151,5 @@ public class Parameters {
          */
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
 
-        public static final String BLOCKED_EDGES = NON_CH_PREFIX + "blocked_edges";
-
-        public static final String BLOCKED_POINTS = NON_CH_PREFIX + "blocked_points";
-
-        public static final String BLOCKED_RECTANGULAR_AREAS = NON_CH_PREFIX + "blocked_rectangular_areas";
-
-        public static final String BLOCKED_CIRCULAR_AREAS = NON_CH_PREFIX + "blocked_circular_areas";
-
-        public static final String BLOCK_BY_SHAPE = NON_CH_PREFIX + "block_by_shape";
-
-        public static final String BLOCKED_SHAPES = NON_CH_PREFIX + "blocked_shapes";
     }
 }

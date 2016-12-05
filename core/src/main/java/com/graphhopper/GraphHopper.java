@@ -90,6 +90,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
+    private String blockedRectangularAreas = "";
 
     private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
     // for index
@@ -645,6 +646,7 @@ public class GraphHopper implements GraphHopperAPI {
         maxVisitedNodes = args.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
         maxRoundTripRetries = args.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
         nonChMaxWaypointDistance = args.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
+        blockedRectangularAreas = args.get(Routing.BLOCKED_RECTANGULAR_AREAS, "");
 
         return this;
     }
@@ -950,12 +952,12 @@ public class GraphHopper implements GraphHopperAPI {
         final GHIntHashSet blockedEdges = new GHIntHashSet();
         final List<Shape> blockedShapes = new ArrayList<>();
         // We still need EdgeIds for PointBlocking
-        final boolean blockByShape = hints.getBool(Parameters.NON_CH.BLOCK_BY_SHAPE, false);
+        final boolean blockByShape = hints.getBool(Routing.BLOCK_BY_SHAPE, true);
         GraphBrowser browser = new GraphBrowser(graph, locationIndex);
         EdgeFilter filter = new DefaultEdgeFilter(encoder);
 
         // Add Blocked Edges
-        String blockedEdgesStr = hints.get(Parameters.NON_CH.BLOCKED_EDGES, "");
+        String blockedEdgesStr = hints.get(Routing.BLOCKED_EDGES, "");
         if (!blockedEdgesStr.isEmpty()) {
             String[] blockedEdgesArr = blockedEdgesStr.split(",");
             for (int i = 0; i < blockedEdgesArr.length; i++) {
@@ -964,11 +966,11 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         // Add Blocked Points
-        String blockedPointsStr = hints.get(Parameters.NON_CH.BLOCKED_POINTS, "");
+        String blockedPointsStr = hints.get(Routing.BLOCKED_POINTS, "");
         if (!blockedPointsStr.isEmpty()) {
             String[] blockedPointsArr = blockedPointsStr.split(",");
             if (blockedPointsArr.length % 2 != 0) {
-                throw new IllegalArgumentException(Parameters.NON_CH.BLOCKED_POINTS + " need to be defined as lat,lon");
+                throw new IllegalArgumentException(Routing.BLOCKED_POINTS + " need to be defined as lat,lon");
             }
 
             double lat;
@@ -981,11 +983,17 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         // Add Blocked Rectangular Areas
-        String blockedAreasStr = hints.get(Parameters.NON_CH.BLOCKED_RECTANGULAR_AREAS, "");
+        String blockedAreasFromRequest = hints.get(Routing.BLOCKED_RECTANGULAR_AREAS, "");
+        String blockedAreasStr;
+        if (!this.blockedRectangularAreas.isEmpty() && !blockedAreasFromRequest.isEmpty()) {
+            blockedAreasStr = this.blockedRectangularAreas + "," + blockedAreasFromRequest;
+        } else {
+            blockedAreasStr = this.blockedRectangularAreas + blockedAreasFromRequest;
+        }
         if (!blockedAreasStr.isEmpty()) {
             String[] blockedAreasArr = blockedAreasStr.split(",");
             if (blockedAreasArr.length % 4 != 0) {
-                throw new IllegalArgumentException(Parameters.NON_CH.BLOCKED_RECTANGULAR_AREAS + " need to be defined as left,bottom,right,top");
+                throw new IllegalArgumentException(Routing.BLOCKED_RECTANGULAR_AREAS + " need to be defined as left,bottom,right,top");
             }
 
             double left;
@@ -999,9 +1007,9 @@ public class GraphHopper implements GraphHopperAPI {
                 top = Double.parseDouble(blockedAreasArr[4 * i + 3]);
 
                 final BBox bbox = new BBox(left, right, bottom, top);
-                if(blockByShape){
+                if (blockByShape) {
                     blockedShapes.add(bbox);
-                }else {
+                } else {
                     browser.findEdgesInShape(blockedEdges, bbox, filter);
                 }
             }
@@ -1009,33 +1017,33 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         // Add Blocked Circular Areas
-        String blockedCircularAreasStr = hints.get(Parameters.NON_CH.BLOCKED_CIRCULAR_AREAS, "");
+        String blockedCircularAreasStr = hints.get(Routing.BLOCKED_CIRCULAR_AREAS, "");
         if (!blockedCircularAreasStr.isEmpty()) {
             String[] blockedCircularAreasArr = blockedCircularAreasStr.split(",");
             if (blockedCircularAreasArr.length % 3 != 0) {
                 //TODO: Do we ant radius or diameter?
-                throw new IllegalArgumentException(Parameters.NON_CH.BLOCKED_CIRCULAR_AREAS + " need to be defined as lat,lng,radius");
+                throw new IllegalArgumentException(Routing.BLOCKED_CIRCULAR_AREAS + " need to be defined as lat,lng,radius");
             }
 
             double lat;
             double lng;
             int radius;
             for (int i = 0; i < blockedCircularAreasArr.length / 3; i++) {
-                lat= Double.parseDouble(blockedCircularAreasArr[3 * i]);
+                lat = Double.parseDouble(blockedCircularAreasArr[3 * i]);
                 lng = Double.parseDouble(blockedCircularAreasArr[3 * i + 1]);
                 radius = Integer.parseInt(blockedCircularAreasArr[3 * i + 2]);
                 Circle circle = new Circle(lat, lng, radius);
-                if(blockByShape){
+                if (blockByShape) {
                     blockedShapes.add(circle);
-                }else {
+                } else {
                     browser.findEdgesInShape(blockedEdges, circle, filter);
                 }
             }
 
         }
 
-        cMap.put(Parameters.NON_CH.BLOCKED_EDGES, blockedEdges);
-        cMap.put(Parameters.NON_CH.BLOCKED_SHAPES, blockedShapes);
+        cMap.put(Routing.BLOCKED_EDGES, blockedEdges);
+        cMap.put(Routing.BLOCKED_SHAPES, blockedShapes);
 
         return cMap;
     }
