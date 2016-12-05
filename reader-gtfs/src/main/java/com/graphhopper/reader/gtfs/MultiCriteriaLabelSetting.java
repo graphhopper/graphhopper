@@ -19,7 +19,6 @@ package com.graphhopper.reader.gtfs;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
-import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.weighting.TimeDependentWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -28,9 +27,10 @@ import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 
-import java.util.*;
-
-import static com.graphhopper.reader.gtfs.GtfsHelper.time;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.PriorityQueue;
+import java.util.Set;
 
 /**
  * Implements a Multi-Criteria Label Setting (MLS) path finding algorithm
@@ -62,7 +62,7 @@ class MultiCriteriaLabelSetting {
         fromMap = HashMultimap.create();
     }
 
-    List<Path> calcPaths(int from, Set<Integer> to, long startTime, long rangeQueryEndTime) {
+    Set<SPTEntry> calcPaths(int from, Set<Integer> to, long startTime, long rangeQueryEndTime) {
         this.rangeQueryEndTime = rangeQueryEndTime;
         Set<SPTEntry> targetLabels = new HashSet<>();
         SPTEntry label = new SPTEntry(EdgeIterator.NO_EDGE, from, startTime, 0, Long.MAX_VALUE);
@@ -142,14 +142,7 @@ class MultiCriteriaLabelSetting {
             if (label == null)
                 throw new AssertionError("Empty edge cannot happen");
         }
-        List<Path> result = new ArrayList<>();
-        for (SPTEntry solution : targetLabels) {
-            result.add(new Path(graph, weighting)
-                    .setWeight(solution.weight)
-                    .setSPTEntry(solution)
-                    .extract());
-        }
-        return result;
+        return targetLabels;
     }
 
     private boolean isValidOn(EdgeIterator iter, int trafficDay) {

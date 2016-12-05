@@ -173,18 +173,13 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         long visitedNodesSum = 0L;
 
         stopWatch = new StopWatch().start();
-        MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphHopperStorage, new PtTravelTimeWeighting(encoder), maxVisitedNodesForRequest, (GtfsStorage) graphHopperStorage.getExtension());
+        PtTravelTimeWeighting weighting = new PtTravelTimeWeighting(encoder);
+        MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphHopperStorage, weighting, maxVisitedNodesForRequest, (GtfsStorage) graphHopperStorage.getExtension());
         String debug = ", algoInit:" + stopWatch.stop().getSeconds() + "s";
 
         stopWatch = new StopWatch().start();
-        List<Path> paths = router.calcPaths(startNode, new HashSet(toNodes), initialTime, rangeQueryEndTime);
+        Set<SPTEntry> solutions = router.calcPaths(startNode, new HashSet(toNodes), initialTime, rangeQueryEndTime);
         debug += ", routing:" + stopWatch.stop().getSeconds() + "s";
-
-        for (Path path : paths) {
-            if (path.getTime() < 0)
-                throw new RuntimeException("Time was negative. Please report as bug and include:" + request);
-            debug += ", " + path.getDebugInfo();
-        }
 
         response.addDebugInfo(debug);
 
@@ -196,56 +191,60 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         response.getHints().put("visited_nodes.sum", visitedNodesSum);
         response.getHints().put("visited_nodes.average", (float) visitedNodesSum);
 
-        for (Path path : paths) {
-            if (path.isFound()) {
-                PathWrapper wrappedPath = new PathWrapper();
-                PointList waypoints = new PointList(queryResults.size(), true);
-                for (QueryResult qr : queryResults) {
-                    waypoints.add(qr.getSnappedPoint());
-                }
-                wrappedPath.setWaypoints(waypoints);
-                InstructionList instructions = new InstructionList(tr);
-                PointList points1 = path.calcPoints();
-                List<EdgeIteratorState> edges = path.calcEdges();
-                int transfer = 0;
-                for (EdgeIteratorState edge1 : edges) {
-                    int sign = Instruction.CONTINUE_ON_STREET;
-                    if (encoder.getEdgeType(edge1.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
-                        if (transfer == 0) {
-                            sign = Instruction.PT_START_TRIP;
-                        } else {
-                            sign = Instruction.PT_TRANSFER;
-                        }
+        for (SPTEntry solution : solutions) {
+            Path pathBuilder = new Path(graphHopperStorage, weighting)
+                    .setWeight(solution.weight)
+                    .setSPTEntry(solution);
+            pathBuilder.extract();
+            PointList points1 = pathBuilder.calcPoints();
 
-                        transfer++;
-                    }
 
-                    instructions.add(new Instruction(sign, edge1.getName(), InstructionAnnotation.EMPTY, edge1.fetchWayGeometry(1)));
-                }
-                if (!points1.isEmpty()) {
-                    PointList end = new PointList();
-                    end.add(points1, points1.size() - 1);
-                    instructions.add(new FinishInstruction(points1, points1.size() - 1));
-                }
-                wrappedPath.setInstructions(instructions);
-                wrappedPath.setDescription(path.getDescription());
-                PointList pointsList = new PointList();
-                for (Instruction instruction : instructions) {
-                    pointsList.add(instruction.getPoints());
-                }
-                wrappedPath.setPoints(pointsList);
-                wrappedPath.setRouteWeight(path.getWeight());
-                wrappedPath.setDistance(path.getDistance());
-                wrappedPath.setTime(path.getTime());
-                int numBoardings = 0;
-                for (EdgeIteratorState edge : path.calcEdges()) {
-                    if (encoder.getEdgeType(edge.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
-                        numBoardings++;
-                    }
-                }
-                wrappedPath.setNumChanges(numBoardings - 1);
-                response.add(wrappedPath);
+            PathWrapper path = new PathWrapper();
+            PointList waypoints = new PointList(queryResults.size(), true);
+            for (QueryResult qr : queryResults) {
+                waypoints.add(qr.getSnappedPoint());
             }
+            path.setWaypoints(waypoints);
+            InstructionList instructions = new InstructionList(tr);
+            List<EdgeIteratorState> edges = pathBuilder.calcEdges();
+            int transfer = 0;
+            for (EdgeIteratorState edge1 : edges) {
+                int sign = Instruction.CONTINUE_ON_STREET;
+                if (encoder.getEdgeType(edge1.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
+                    if (transfer == 0) {
+                        sign = Instruction.PT_START_TRIP;
+                    } else {
+                        sign = Instruction.PT_TRANSFER;
+                    }
+
+                    transfer++;
+                }
+
+                instructions.add(new Instruction(sign, edge1.getName(), InstructionAnnotation.EMPTY, edge1.fetchWayGeometry(1)));
+            }
+            if (!points1.isEmpty()) {
+                PointList end = new PointList();
+                end.add(points1, points1.size() - 1);
+                instructions.add(new FinishInstruction(points1, points1.size() - 1));
+            }
+            path.setInstructions(instructions);
+            path.setDescription(pathBuilder.getDescription());
+            PointList pointsList = new PointList();
+            for (Instruction instruction : instructions) {
+                pointsList.add(instruction.getPoints());
+            }
+            path.setPoints(pointsList);
+            path.setRouteWeight(pathBuilder.getWeight());
+            path.setDistance(pathBuilder.getDistance());
+            path.setTime(pathBuilder.getTime());
+            int numBoardings = 0;
+            for (EdgeIteratorState edge : pathBuilder.calcEdges()) {
+                if (encoder.getEdgeType(edge.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
+                    numBoardings++;
+                }
+            }
+            path.setNumChanges(numBoardings - 1);
+            response.add(path);
         }
         if (response.getAll().isEmpty()) {
             response.addError(new RuntimeException("No route found"));
