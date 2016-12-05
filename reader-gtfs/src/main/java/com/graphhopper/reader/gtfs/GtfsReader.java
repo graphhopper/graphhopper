@@ -4,10 +4,7 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.*;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
-import com.graphhopper.reader.DataReader;
-import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.RAMDirectory;
@@ -29,20 +26,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 
 import static java.time.temporal.ChronoUnit.DAYS;
 
-class GtfsReader implements DataReader {
+class GtfsReader {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GtfsReader.class);
 
     private final GraphHopperStorage graph;
     private final GtfsStorage gtfsStorage;
     private final boolean createWalkNetwork;
-    private File file;
 
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
     private final Map<String, Transfer> explicitWithinStationMinimumTransfers = new HashMap<>();
@@ -65,34 +60,7 @@ class GtfsReader implements DataReader {
         encoder = (PtFlagEncoder) graph.getEncodingManager().getEncoder("pt");
     }
 
-    @Override
-    public DataReader setFile(File file) {
-        this.file = file;
-        return this;
-    }
-
-    @Override
-    public DataReader setElevationProvider(ElevationProvider ep) {
-        return this;
-    }
-
-    @Override
-    public DataReader setWorkerThreads(int workerThreads) {
-        return this;
-    }
-
-    @Override
-    public DataReader setEncodingManager(EncodingManager em) {
-        return this;
-    }
-
-    @Override
-    public DataReader setWayPointMaxDistance(double wayPointMaxDistance) {
-        return this;
-    }
-
-    @Override
-    public void readGraph() throws IOException {
+    public void readGraph(File file) {
         feed = GTFSFeed.fromFile(file.getPath());
         i = 0;
         if (createWalkNetwork) {
@@ -333,8 +301,4 @@ class GtfsReader implements DataReader {
         }
     }
 
-    @Override
-    public Date getDataDate() {
-        return null;
-    }
 }

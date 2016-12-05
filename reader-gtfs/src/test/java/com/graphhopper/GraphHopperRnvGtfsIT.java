@@ -27,8 +27,7 @@ public class GraphHopperRnvGtfsIT {
         graphHopper = new GraphHopperGtfs();
         graphHopper.setGtfsFile("files/rnv.zip");
         graphHopper.setCreateWalkNetwork(true);
-        graphHopper.setGraphHopperLocation(GRAPH_LOC);
-        graphHopper.importOrLoad();
+        graphHopper.load(GRAPH_LOC);
     }
 
     @AfterClass

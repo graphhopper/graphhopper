@@ -24,8 +24,7 @@ public class GraphHopperGtfsIT {
 
         graphHopper = new GraphHopperGtfs();
         graphHopper.setGtfsFile("files/sample-feed.zip");
-        graphHopper.setGraphHopperLocation(GRAPH_LOC);
-        graphHopper.importOrLoad();
+        graphHopper.load(GRAPH_LOC);
     }
 
     @AfterClass

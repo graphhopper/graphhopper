@@ -20,7 +20,6 @@ package com.graphhopper.reader.gtfs;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.graphhopper.routing.Path;
-import com.graphhopper.routing.TimeDependentRoutingAlgorithm;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.weighting.TimeDependentWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -41,7 +40,7 @@ import static com.graphhopper.reader.gtfs.GtfsHelper.time;
  * @author Michael Zilske
  * @author Peter Karich
  */
-class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
+class MultiCriteriaLabelSetting {
     private final Graph graph;
     private final PtFlagEncoder flagEncoder;
     private final Weighting weighting;
@@ -63,11 +62,6 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
         fromMap = HashMultimap.create();
     }
 
-    @Override
-    public Path calcPath(int from, int to, int earliestDepartureTime) {
-        throw new UnsupportedOperationException();
-    }
-
     List<Path> calcPaths(int from, Set<Integer> to, long startTime, long rangeQueryEndTime) {
         this.rangeQueryEndTime = rangeQueryEndTime;
         Set<SPTEntry> targetLabels = new HashSet<>();
@@ -79,7 +73,7 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
         EdgeExplorer explorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
         while (true) {
             visitedNodes++;
-            if (maxVisitedNodes < getVisitedNodes())
+            if (maxVisitedNodes < visitedNodes)
                 break;
 
             int startNode = label.adjNode;
@@ -159,7 +153,6 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
     }
 
     private boolean isValidOn(EdgeIterator iter, int trafficDay) {
-
         return gtfsStorage.getReverseOperatingDayPatterns().get((int) flagEncoder.getTime(iter.getFlags())).get(trafficDay);
     }
 
@@ -180,11 +173,6 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
                 iterator.remove();
             }
         }
-    }
-
-    @Override
-    public List<Path> calcPaths(int from, int to, int earliestDepartureTime) {
-        throw new UnsupportedOperationException();
     }
 
     private boolean isNotDominatedBy(SPTEntry me, Set<SPTEntry> sptEntries) {
@@ -218,29 +206,8 @@ class MultiCriteriaLabelSetting implements TimeDependentRoutingAlgorithm {
         return false;
     }
 
-    @Override
-    public Path calcPath(int from, int to) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public List<Path> calcPaths(int from, int to) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void setMaxVisitedNodes(int numberOfNodes) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public int getVisitedNodes() {
+    int getVisitedNodes() {
         return visitedNodes;
-    }
-
-    @Override
-    public String getName() {
-        return "Ulrich";
     }
 
 }
