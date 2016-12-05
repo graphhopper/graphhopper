@@ -109,6 +109,15 @@ public class Parameters {
          */
         public static final double DEFAULT_HEADING_PENALTY = 300;
         public static final String HEADING_PENALTY = "heading_penalty";
+        /**
+         * Blocking Settings
+         */
+        public static final String BLOCKED_EDGES = "blocked_edges";
+        public static final String BLOCKED_POINTS = "blocked_points";
+        public static final String BLOCKED_RECTANGULAR_AREAS = "blocked_rectangular_areas";
+        public static final String BLOCKED_CIRCULAR_AREAS = "blocked_circular_areas";
+        public static final String BLOCK_BY_SHAPE = "block_by_shape";
+        public static final String BLOCKED_SHAPES = "blocked_shapes";
     }
 
     /**
@@ -141,5 +150,6 @@ public class Parameters {
          * Describes the max allowed distance between two consecutive waypoints of a non ch request. Distance is in Meter
          */
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
+
     }
 }

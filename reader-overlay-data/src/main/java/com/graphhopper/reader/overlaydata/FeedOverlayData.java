@@ -28,13 +28,10 @@ import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.GraphBrowser;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.BreadthFirstSearch;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +50,7 @@ public class FeedOverlayData {
     private final LocationIndex locationIndex;
     private final GHson ghson;
     private final EncodingManager em;
+    private final GraphBrowser graphBrowser;
     private boolean enableLogging = false;
 
     public FeedOverlayData(Graph graph, EncodingManager em, LocationIndex locationIndex, GHson ghson) {
@@ -60,6 +58,7 @@ public class FeedOverlayData {
         this.graph = graph;
         this.em = em;
         this.locationIndex = locationIndex;
+        this.graphBrowser = new GraphBrowser(graph, locationIndex);
     }
 
     public void setLogging(boolean log) {
@@ -125,7 +124,7 @@ public class FeedOverlayData {
         if (jsonFeature.hasGeometry()) {
             fillEdgeIDs(edges, jsonFeature.getGeometry(), filter);
         } else if (jsonFeature.getBBox() != null) {
-            fillEdgeIDs(edges, jsonFeature.getBBox(), filter);
+            graphBrowser.findEdgesInShape(edges, jsonFeature.getBBox(), filter);
         } else
             throw new IllegalArgumentException("Feature " + jsonFeature.getId() + " has no geometry and no bbox");
 
@@ -160,9 +159,7 @@ public class FeedOverlayData {
     public void fillEdgeIDs(GHIntHashSet edgeIds, Geometry geometry, EdgeFilter filter) {
         if (geometry.isPoint()) {
             GHPoint point = geometry.asPoint();
-            QueryResult qr = locationIndex.findClosest(point.lat, point.lon, filter);
-            if (qr.isValid())
-                edgeIds.add(qr.getClosestEdge().getEdge());
+            graphBrowser.findClosestEdgeToPoint(edgeIds, point, filter);
         } else if (geometry.isPointList()) {
             PointList pl = geometry.asPointList();
             if (geometry.getType().equals("LineString")) {
@@ -171,43 +168,13 @@ public class FeedOverlayData {
                 if (pl.size() >= 2) {
                     double meanLat = (pl.getLatitude(0) + pl.getLatitude(lastIdx)) / 2;
                     double meanLon = (pl.getLongitude(0) + pl.getLongitude(lastIdx)) / 2;
-                    QueryResult qr = locationIndex.findClosest(meanLat, meanLon, filter);
-                    if (qr.isValid())
-                        edgeIds.add(qr.getClosestEdge().getEdge());
+                    graphBrowser.findClosestEdge(edgeIds, meanLat, meanLon, filter);
                 }
             } else {
                 for (int i = 0; i < pl.size(); i++) {
-                    QueryResult qr = locationIndex.findClosest(pl.getLatitude(i), pl.getLongitude(i), filter);
-                    if (qr.isValid())
-                        edgeIds.add(qr.getClosestEdge().getEdge());
+                    graphBrowser.findClosestEdge(edgeIds, pl.getLatitude(i), pl.getLongitude(i), filter);
                 }
             }
         }
-    }
-
-    public void fillEdgeIDs(final GHIntHashSet edgeIds, final BBox bbox, EdgeFilter filter) {
-        QueryResult qr = locationIndex.findClosest((bbox.maxLat + bbox.minLat) / 2, (bbox.maxLon + bbox.minLon) / 2, filter);
-        if (!qr.isValid())
-            return;
-
-        BreadthFirstSearch bfs = new BreadthFirstSearch() {
-            final NodeAccess na = graph.getNodeAccess();
-            final BBox localBBox = bbox;
-
-            @Override
-            protected boolean goFurther(int nodeId) {
-                return localBBox.contains(na.getLatitude(nodeId), na.getLongitude(nodeId));
-            }
-
-            @Override
-            protected boolean checkAdjacent(EdgeIteratorState edge) {
-                if (localBBox.contains(na.getLatitude(edge.getAdjNode()), na.getLongitude(edge.getAdjNode()))) {
-                    edgeIds.add(edge.getEdge());
-                    return true;
-                }
-                return false;
-            }
-        };
-        bfs.start(graph.createEdgeExplorer(filter), qr.getClosestNode());
     }
 }

@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.BridgeElevationInterpolator;
 import com.graphhopper.reader.dem.CGIARProvider;
@@ -43,7 +44,9 @@ import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.Shape;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,6 +90,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
+    private String blockedRectangularAreas = "";
 
     private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
     // for index
@@ -642,6 +646,7 @@ public class GraphHopper implements GraphHopperAPI {
         maxVisitedNodes = args.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
         maxRoundTripRetries = args.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
         nonChMaxWaypointDistance = args.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
+        blockedRectangularAreas = args.get(Routing.BLOCKED_RECTANGULAR_AREAS, "");
 
         return this;
     }
@@ -836,7 +841,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (!chFactoryDecorator.hasWeightings())
             for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
                 for (String chWeightingStr : chFactoryDecorator.getWeightingsAsStrings()) {
-                    Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder);
+                    Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder, null);
                     chFactoryDecorator.addWeighting(weighting);
                 }
             }
@@ -911,15 +916,20 @@ public class GraphHopper implements GraphHopperAPI {
      * @param hintsMap all parameters influencing the weighting. E.g. parameters coming via
      *                 GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
      * @param encoder  the required vehicle
+     * @param graph The Graph, prefereably the QueryGraph is passed to a Weighting if neccessary
      * @return the weighting to be used for route calculation
      * @see HintsMap
      */
-    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder) {
+    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
         String weighting = hintsMap.getWeighting().toLowerCase();
 
         if (encoder.supports(GenericWeighting.class)) {
             DataFlagEncoder dataEncoder = (DataFlagEncoder) encoder;
-            return new GenericWeighting(dataEncoder, dataEncoder.readStringMap(hintsMap));
+            ConfigMap cMap = dataEncoder.readStringMap(hintsMap);
+            cMap = setupBlocking(cMap, hintsMap, dataEncoder, graph);
+            GenericWeighting genericWeighting =  new GenericWeighting(dataEncoder, cMap);
+            genericWeighting.setGraph(graph);
+            return genericWeighting;
         } else if ("shortest".equalsIgnoreCase(weighting)) {
             return new ShortestWeighting(encoder);
         } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty()) {
@@ -936,6 +946,106 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         throw new IllegalArgumentException("weighting " + weighting + " not supported");
+    }
+
+    private ConfigMap setupBlocking(ConfigMap cMap, HintsMap hints, FlagEncoder encoder, Graph graph) {
+        final GHIntHashSet blockedEdges = new GHIntHashSet();
+        final List<Shape> blockedShapes = new ArrayList<>();
+        // We still need EdgeIds for PointBlocking
+        final boolean blockByShape = hints.getBool(Routing.BLOCK_BY_SHAPE, true);
+        GraphBrowser browser = new GraphBrowser(graph, locationIndex);
+        EdgeFilter filter = new DefaultEdgeFilter(encoder);
+
+        // Add Blocked Edges
+        String blockedEdgesStr = hints.get(Routing.BLOCKED_EDGES, "");
+        if (!blockedEdgesStr.isEmpty()) {
+            String[] blockedEdgesArr = blockedEdgesStr.split(",");
+            for (int i = 0; i < blockedEdgesArr.length; i++) {
+                blockedEdges.add(Integer.parseInt(blockedEdgesArr[i]));
+            }
+        }
+
+        // Add Blocked Points
+        String blockedPointsStr = hints.get(Routing.BLOCKED_POINTS, "");
+        if (!blockedPointsStr.isEmpty()) {
+            String[] blockedPointsArr = blockedPointsStr.split(",");
+            if (blockedPointsArr.length % 2 != 0) {
+                throw new IllegalArgumentException(Routing.BLOCKED_POINTS + " need to be defined as lat,lon");
+            }
+
+            double lat;
+            double lng;
+            for (int i = 0; i < blockedPointsArr.length / 2; i++) {
+                lat = Double.parseDouble(blockedPointsArr[2 * i]);
+                lng = Double.parseDouble(blockedPointsArr[2 * i + 1]);
+                browser.findClosestEdge(blockedEdges, lat, lng, filter);
+            }
+        }
+
+        // Add Blocked Rectangular Areas
+        String blockedAreasFromRequest = hints.get(Routing.BLOCKED_RECTANGULAR_AREAS, "");
+        String blockedAreasStr;
+        if (!this.blockedRectangularAreas.isEmpty() && !blockedAreasFromRequest.isEmpty()) {
+            blockedAreasStr = this.blockedRectangularAreas + "," + blockedAreasFromRequest;
+        } else {
+            blockedAreasStr = this.blockedRectangularAreas + blockedAreasFromRequest;
+        }
+        if (!blockedAreasStr.isEmpty()) {
+            String[] blockedAreasArr = blockedAreasStr.split(",");
+            if (blockedAreasArr.length % 4 != 0) {
+                throw new IllegalArgumentException(Routing.BLOCKED_RECTANGULAR_AREAS + " need to be defined as left,bottom,right,top");
+            }
+
+            double left;
+            double bottom;
+            double right;
+            double top;
+            for (int i = 0; i < blockedAreasArr.length / 4; i++) {
+                left = Double.parseDouble(blockedAreasArr[4 * i]);
+                bottom = Double.parseDouble(blockedAreasArr[4 * i + 1]);
+                right = Double.parseDouble(blockedAreasArr[4 * i + 2]);
+                top = Double.parseDouble(blockedAreasArr[4 * i + 3]);
+
+                final BBox bbox = new BBox(left, right, bottom, top);
+                if (blockByShape) {
+                    blockedShapes.add(bbox);
+                } else {
+                    browser.findEdgesInShape(blockedEdges, bbox, filter);
+                }
+            }
+
+        }
+
+        // Add Blocked Circular Areas
+        String blockedCircularAreasStr = hints.get(Routing.BLOCKED_CIRCULAR_AREAS, "");
+        if (!blockedCircularAreasStr.isEmpty()) {
+            String[] blockedCircularAreasArr = blockedCircularAreasStr.split(",");
+            if (blockedCircularAreasArr.length % 3 != 0) {
+                //TODO: Do we ant radius or diameter?
+                throw new IllegalArgumentException(Routing.BLOCKED_CIRCULAR_AREAS + " need to be defined as lat,lng,radius");
+            }
+
+            double lat;
+            double lng;
+            int radius;
+            for (int i = 0; i < blockedCircularAreasArr.length / 3; i++) {
+                lat = Double.parseDouble(blockedCircularAreasArr[3 * i]);
+                lng = Double.parseDouble(blockedCircularAreasArr[3 * i + 1]);
+                radius = Integer.parseInt(blockedCircularAreasArr[3 * i + 2]);
+                Circle circle = new Circle(lat, lng, radius);
+                if (blockByShape) {
+                    blockedShapes.add(circle);
+                } else {
+                    browser.findEdgesInShape(blockedEdges, circle, filter);
+                }
+            }
+
+        }
+
+        cMap.put(Routing.BLOCKED_EDGES, blockedEdges);
+        cMap.put(Routing.BLOCKED_SHAPES, blockedShapes);
+
+        return cMap;
     }
 
     /**
@@ -1010,7 +1120,7 @@ public class GraphHopper implements GraphHopperAPI {
 
                 RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
                 Weighting weighting = null;
-                Graph routingGraph = ghStorage;
+                QueryGraph queryGraph;
 
                 boolean forceFlexibleMode = hints.getBool(CH.DISABLE, false);
                 if (!chFactoryDecorator.isDisablingAllowed() && forceFlexibleMode)
@@ -1025,11 +1135,13 @@ public class GraphHopper implements GraphHopperAPI {
 
                     tMode = getCHFactoryDecorator().getNodeBase();
                     weighting = ((PrepareContractionHierarchies) tmpAlgoFactory).getWeighting();
-                    routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
-
+                    queryGraph = new QueryGraph(ghStorage.getGraph(CHGraph.class, weighting));
+                    queryGraph.lookup(qResults);
                 } else {
                     checkNonChMaxWaypointDistance(points);
-                    weighting = createWeighting(hints, encoder);
+                    queryGraph = new QueryGraph(ghStorage);
+                    queryGraph.lookup(qResults);
+                    weighting = createWeighting(hints, encoder, queryGraph);
                     ghRsp.addDebugInfo("tmode:" + tMode.toString());
                 }
 
@@ -1037,8 +1149,6 @@ public class GraphHopper implements GraphHopperAPI {
                 if (maxVisitedNodesForRequest > maxVisitedNodes)
                     throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes);
 
-                QueryGraph queryGraph = new QueryGraph(routingGraph);
-                queryGraph.lookup(qResults);
                 weighting = createTurnWeighting(queryGraph, weighting, tMode);
 
                 AlgorithmOptions algoOpts = AlgorithmOptions.start().

@@ -17,10 +17,16 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.shapes.Shape;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Calculates the best route according to a configurable weighting.
@@ -42,6 +48,9 @@ public class GenericWeighting extends AbstractWeighting {
     private final int accessType;
     private final int eventuallAccessiblePenalty = 10;
 
+    private final GHIntHashSet blockedEdges;
+    private final List<Shape> blockedShapes;
+    private Graph graph;
 
     public GenericWeighting(DataFlagEncoder encoder, ConfigMap cMap) {
         super(encoder);
@@ -60,6 +69,8 @@ public class GenericWeighting extends AbstractWeighting {
 
         maxSpeed = tmpSpeed / SPEED_CONV;
         accessType = gEncoder.getAccessType("motor_vehicle");
+        blockedEdges = cMap.get(Routing.BLOCKED_EDGES, new GHIntHashSet(0));
+        blockedShapes = cMap.get(Routing.BLOCKED_SHAPES, Collections.EMPTY_LIST);
     }
 
     @Override
@@ -85,6 +96,18 @@ public class GenericWeighting extends AbstractWeighting {
                 return Double.POSITIVE_INFINITY;
             case EVENTUALLY_ACCESSIBLE:
                 time = time * eventuallAccessiblePenalty;
+        }
+
+        if(!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())){
+            return Double.POSITIVE_INFINITY;
+        }
+
+        if(!blockedShapes.isEmpty() && graph != null){
+            for (Shape shape: blockedShapes) {
+                if(shape.contains(graph.getNodeAccess().getLat(edgeState.getAdjNode()), graph.getNodeAccess().getLon(edgeState.getAdjNode()))){
+                    return Double.POSITIVE_INFINITY;
+                }
+            }
         }
 
         return time;
@@ -132,5 +155,9 @@ public class GenericWeighting extends AbstractWeighting {
     @Override
     public String getName() {
         return "generic";
+    }
+
+    public void setGraph(Graph graph) {
+        this.graph = graph;
     }
 }
