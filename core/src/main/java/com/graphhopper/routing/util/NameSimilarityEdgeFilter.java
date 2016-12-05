@@ -17,9 +17,9 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.apache.commons.lang3.StringUtils;
-import info.debatty.java.stringsimilarity.JaroWinkler;
 
 import java.util.*;
 import java.util.regex.Pattern;
