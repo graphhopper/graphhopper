@@ -17,33 +17,29 @@
  */
 package com.graphhopper.matching;
 
-import com.graphhopper.routing.VirtualEdgeIteratorState;
+import com.bmw.hmm.SequenceState;
+import com.bmw.hmm.ViterbiAlgorithm;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.matching.util.HmmProbabilities;
 import com.graphhopper.matching.util.TimeStep;
-import com.graphhopper.routing.weighting.Weighting;
-import com.bmw.hmm.SequenceState;
-import com.bmw.hmm.ViterbiAlgorithm;
-import com.graphhopper.routing.AlgorithmOptions;
-import com.graphhopper.routing.Path;
-import com.graphhopper.routing.QueryGraph;
-import com.graphhopper.routing.RoutingAlgorithm;
-import com.graphhopper.routing.RoutingAlgorithmFactory;
+import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.*;
 import java.util.Map.Entry;
 
 /**
@@ -66,6 +62,12 @@ import java.util.Map.Entry;
  */
 public class MapMatching {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
+    // Penalty in m for each U-turn performed at the beginning or end of a path between two
+    // subsequent candidates.
+    private double uTurnDistancePenalty;
+
     private final Graph routingGraph;
     private final LocationIndexMatch locationIndex;
     private double measurementErrorSigma = 50.0;
@@ -76,6 +78,12 @@ public class MapMatching {
     private final AlgorithmOptions algoOptions;
 
     public MapMatching(GraphHopper hopper, AlgorithmOptions algoOptions) {
+        // Convert heading penalty [s] into U-turn penalty [m]
+        final double PENALTY_CONVERSION_VELOCITY = 5;  // [m/s]
+        final double headingTimePenalty = algoOptions.getHints().getDouble(
+                Parameters.Routing.HEADING_PENALTY, Parameters.Routing.DEFAULT_HEADING_PENALTY);
+        uTurnDistancePenalty = headingTimePenalty * PENALTY_CONVERSION_VELOCITY;
+
         this.locationIndex = new LocationIndexMatch(hopper.getGraphHopperStorage(),
                 (LocationIndexTree) hopper.getLocationIndex());
 
@@ -170,8 +178,9 @@ public class MapMatching {
         
         // now find each of the entries in the graph:
         final EdgeFilter edgeFilter = new DefaultEdgeFilter(algoOptions.getWeighting().getFlagEncoder());
+
         List<List<QueryResult>> queriesPerEntry = findGPXEntriesInGraph(filteredGPXEntries, edgeFilter);
-        
+
         // now look up the entries up in the graph:
         final QueryGraph queryGraph = new QueryGraph(routingGraph).setUseEdgeExplorerCache(true);
         List<QueryResult> allQueryResults = new ArrayList<QueryResult>();
@@ -179,15 +188,54 @@ public class MapMatching {
         	allQueryResults.addAll(qrs);
         queryGraph.lookup(allQueryResults);
 
+        logger.debug("================= Query results =================");
+        int i = 1;
+        for (List<QueryResult> entries : queriesPerEntry) {
+            logger.debug("Query results for GPX entry {}", i++);
+            for (QueryResult qr : entries) {
+                logger.debug("Node id: {}, virtual: {}, snapped on: {}, pos: {},{}, "
+                        + "query distance: {}", qr.getClosestNode(),
+                        isVirtualNode(qr.getClosestNode()), qr.getSnappedPosition(),
+                        qr.getSnappedPoint().getLat(), qr.getSnappedPoint().getLon(),
+                        qr.getQueryDistance());
+            }
+        }
+
         // create candidates from the entries in the graph (a candidate is basically an entry + direction):
         List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps = createTimeSteps(filteredGPXEntries, queriesPerEntry, queryGraph);
+        logger.debug("=============== Time steps ===============");
+        i = 1;
+        for (TimeStep<GPXExtension, GPXEntry, Path> ts : timeSteps) {
+            logger.debug("Candidates for time step {}", i++);
+            for (GPXExtension candidate : ts.candidates) {
+                logger.debug(candidate.toString());
+            }
+        }
 
         // viterbify:
-        List<SequenceState<GPXExtension, GPXEntry, Path>> seq = computeViterbiSequence(timeSteps, gpxList, queryGraph);
+        List<SequenceState<GPXExtension, GPXEntry, Path>> seq = computeViterbiSequence(timeSteps,
+                gpxList.size(), queryGraph);
+
+        logger.debug("=============== Viterbi results =============== ");
+        i = 1;
+        for (SequenceState<GPXExtension, GPXEntry, Path> ss : seq) {
+            logger.debug("{}: {}, path: {}", i, ss.state,
+                    ss.transitionDescriptor != null ? ss.transitionDescriptor.calcEdges() : null);
+            i++;
+        }
 
         // finally, extract the result:
         final EdgeExplorer explorer = queryGraph.createEdgeExplorer(edgeFilter);
-        MatchResult matchResult = computeMatchResult(seq, filteredGPXEntries, queriesPerEntry, explorer);
+
+        // Needs original gpxList to compute stats.
+        MatchResult matchResult = computeMatchResult(seq, gpxList, queriesPerEntry, explorer);
+
+        logger.debug("=============== Matched real edges =============== ");
+        i = 1;
+        for (EdgeMatch em : matchResult.getEdgeMatches()) {
+            logger.debug("{}: {}", i, em.getEdgeState());
+            i++;
+        }
 
         return matchResult;
     }
@@ -259,10 +307,14 @@ public class MapMatching {
                     		virtualEdges.add((VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(iter.getEdge(), iter.getAdjNode()));
     	                }
                     }
-        			assert virtualEdges.size() == 2;
-        			
-        			// create a candidate for each: the candidate being the querypoint plus the virtual edge to favour. Note
-        			// that we favour the virtual edge by *unfavoring* the rest, so we need to record these.
+        			if(virtualEdges.size() != 2) {
+        			    throw new RuntimeException("Each virtual node must have exactly 2 "
+                                + "virtual edges (reverse virtual edges are not returned by the "
+                                + "EdgeIterator");
+                    }
+
+        			// Create a candidate for each of the two possible directions through the
+                    // virtual node. This is needed to penalize U-turns at virtual nodes.
         			VirtualEdgeIteratorState e1 = virtualEdges.get(0);
         			VirtualEdgeIteratorState e2 = virtualEdges.get(1);
         			for (int j = 0; j < 2; j++) {
@@ -284,7 +336,7 @@ public class MapMatching {
         			// just add the real edge, undirected
         			GPXExtension candidate = new GPXExtension(gpxEntry, qr);
         			candidates.add(candidate);
-        		} 
+        		}
         	}
                 
             final TimeStep<GPXExtension, GPXEntry, Path> timeStep = new TimeStep<>(gpxEntry, candidates);
@@ -294,15 +346,18 @@ public class MapMatching {
     }
 
     private List<SequenceState<GPXExtension, GPXEntry, Path>> computeViterbiSequence(
-            List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps, List<GPXEntry> gpxList,
-            final QueryGraph queryGraph) {
+            List<TimeStep<GPXExtension, GPXEntry, Path>> timeSteps, int originalGpxEntriesCount,
+            QueryGraph queryGraph) {
         final HmmProbabilities probabilities
                 = new HmmProbabilities(measurementErrorSigma, transitionProbabilityBeta);
         final ViterbiAlgorithm<GPXExtension, GPXEntry, Path> viterbi = new ViterbiAlgorithm<>();
 
+        logger.debug("\n=============== Paths ===============");
         int timeStepCounter = 0;
         TimeStep<GPXExtension, GPXEntry, Path> prevTimeStep = null;
+        int i = 1;
         for (TimeStep<GPXExtension, GPXEntry, Path> timeStep : timeSteps) {
+            logger.debug("\nPaths to time step {}", i++);
             computeEmissionProbabilities(timeStep, probabilities);
 
             if (prevTimeStep == null) {
@@ -328,9 +383,10 @@ public class MapMatching {
                 }
 
                 throw new RuntimeException("Sequence is broken for submitted track at time step "
-                        + timeStepCounter + " (" + gpxList.size() + " points). " + likelyReasonStr
-                        + "observation:" + timeStep.observation + ", "
-                        + timeStep.candidates.size() + " candidates: " + getSnappedCandidates(timeStep.candidates)
+                        + timeStepCounter + " (" + originalGpxEntriesCount + " points). "
+                        + likelyReasonStr + "observation:" + timeStep.observation + ", "
+                        + timeStep.candidates.size() + " candidates: "
+                        + getSnappedCandidates(timeStep.candidates)
                         + ". If a match is expected consider increasing max_visited_nodes.");
             }
 
@@ -361,28 +417,69 @@ public class MapMatching {
         // time difference in seconds
         final double timeDiff
                 = (timeStep.observation.getTime() - prevTimeStep.observation.getTime()) / 1000.0;
+        logger.debug("Time difference: {} s", timeDiff);
 
         for (GPXExtension from : prevTimeStep.candidates) {
             for (GPXExtension to : timeStep.candidates) {
-                RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOptions);
                 // enforce heading if required:
                 if (from.isDirected()) {
-                	from.incomingVirtualEdge.setUnfavored(true);
-                }    
-                if (to.isDirected()) {
-                	// unfavor the favour virtual edge
-                	to.outgoingVirtualEdge.setUnfavored(true);
+                    queryGraph.unfavorVirtualEdgePair(from.getQueryResult().getClosestNode(),
+                            from.incomingVirtualEdge.getEdge());
                 }
+                if (to.isDirected()) {
+                    queryGraph.unfavorVirtualEdgePair(to.getQueryResult().getClosestNode(),
+                            to.outgoingVirtualEdge.getEdge());
+                }
+                RoutingAlgorithm algo = algoFactory.createAlgo(queryGraph, algoOptions);
                 final Path path = algo.calcPath(from.getQueryResult().getClosestNode(), to.getQueryResult().getClosestNode());
-                queryGraph.clearUnfavoredStatus();
+
                 if (path.isFound()) {
                     timeStep.addRoadPath(from, to, path);
+
+                    // The router considers unfavored virtual edges using edge penalties.
+                    // However, if a virtual edge is included in the computed path,
+                    // the path distance does not include any penalty distance. Hence, we
+                    // need to add our own penalty distance for every unfavored edge in the path.
+                    final double penalizedPathDistance = penalizedPathDistance(path,
+                            queryGraph.getUnfavoredVirtualEdges());
+
+                    logger.debug("Path from: {}, to: {}, penalized path length: {}",
+                            from, to, penalizedPathDistance);
+
                     final double transitionLogProbability = probabilities
-                            .transitionLogProbability(path.getDistance(), linearDistance, timeDiff);
+                            .transitionLogProbability(penalizedPathDistance, linearDistance,
+                                    timeDiff);
                     timeStep.addTransitionLogProbability(from, to, transitionLogProbability);
+                } else {
+                    logger.debug("No path found for from: {}, to: {}", from, to);
                 }
+                queryGraph.clearUnfavoredStatus();
+
             }
         }
+    }
+
+    /**
+     * Returns the path length plus a penalty if the starting/ending edge is unfavored.
+     */
+    private double penalizedPathDistance(Path path,
+                                         Set<EdgeIteratorState> penalizedVirtualEdges) {
+        double totalPenalty = 0;
+
+        // Unfavored edges in the middle of the path should not be penalized because we are
+        // only concerned about the direction at the start/end.
+        final List<EdgeIteratorState> edges = path.calcEdges();
+        if (!edges.isEmpty()) {
+            if (penalizedVirtualEdges.contains(edges.get(0))) {
+                totalPenalty += uTurnDistancePenalty;
+            }
+        }
+        if (edges.size() > 1) {
+            if (penalizedVirtualEdges.contains(edges.get(edges.size() - 1))) {
+                totalPenalty += uTurnDistancePenalty;
+            }
+        }
+        return path.getDistance() + totalPenalty;
     }
 
     private MatchResult computeMatchResult(List<SequenceState<GPXExtension, GPXEntry, Path>> seq,
@@ -566,7 +663,7 @@ public class MapMatching {
                         }
                     }
                 }
-                System.out.println(index + ": " + Math.round(dist) + "m, minimum candidate: "
+                logger.debug(index + ": " + Math.round(dist) + "m, minimum candidate: "
                         + Math.round(minCand) + "m");
                 index++;
             }

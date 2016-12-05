@@ -17,8 +17,6 @@
  */
 package com.graphhopper.matching;
 
-import java.util.List;
-
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GPXEntry;
@@ -53,7 +51,13 @@ public class GPXExtension {
         
     @Override
     public String toString() {
-        return "entry:" + entry + ", query distance:" + queryResult.getQueryDistance();
+        return "GPXExtension{" +
+                "closest node=" + queryResult.getClosestNode() +
+                " at " + queryResult.getSnappedPoint().getLat() + "," +
+                queryResult.getSnappedPoint().getLon() +
+                ", incomingEdge=" + incomingVirtualEdge +
+                ", outgoingEdge=" + outgoingVirtualEdge +
+                '}';
     }
 
     public QueryResult getQueryResult() {
