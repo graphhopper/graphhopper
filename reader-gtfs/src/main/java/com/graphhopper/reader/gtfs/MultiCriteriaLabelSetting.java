@@ -19,18 +19,13 @@ package com.graphhopper.reader.gtfs;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.weighting.TimeDependentWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.PriorityQueue;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Implements a Multi-Criteria Label Setting (MLS) path finding algorithm
@@ -41,94 +36,97 @@ import java.util.Set;
  * @author Peter Karich
  */
 class MultiCriteriaLabelSetting {
+
+
+
     private final Graph graph;
     private final PtFlagEncoder flagEncoder;
     private final Weighting weighting;
-    private final SetMultimap<Integer, SPTEntry> fromMap;
-    private final PriorityQueue<SPTEntry> fromHeap;
+    private final SetMultimap<Integer, Label> fromMap;
+    private final PriorityQueue<Label> fromHeap;
     private final int maxVisitedNodes;
+    private final boolean reverse;
     private long rangeQueryEndTime;
     private GtfsStorage gtfsStorage;
     private int visitedNodes;
+    private final GraphExplorer explorer;
 
-    MultiCriteriaLabelSetting(Graph graph, Weighting weighting, int maxVisitedNodes, GtfsStorage gtfsStorage) {
+    MultiCriteriaLabelSetting(Graph graph, Weighting weighting, int maxVisitedNodes, GtfsStorage gtfsStorage, GraphExplorer explorer, boolean reverse) {
         this.graph = graph;
         this.weighting = weighting;
         this.flagEncoder = (PtFlagEncoder) weighting.getFlagEncoder();
         this.maxVisitedNodes = maxVisitedNodes;
         this.gtfsStorage = gtfsStorage;
+        this.explorer = explorer;
+        this.reverse = reverse;
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
-        fromHeap = new PriorityQueue<>(size/*, new SPTEntryComparator(gtfsStorage)*/);
+        fromHeap = new PriorityQueue<>(size, new Comparator<Label>() {
+            @Override
+            public int compare(Label o1, Label o) {
+                if (!reverse && o1.currentTime < o.currentTime)
+                    return -1;
+                else if(reverse && o1.currentTime > o.currentTime)
+                    return -1;
+                else if (!reverse && o1.currentTime > o.currentTime)
+                    return 1;
+                else if (reverse && o1.currentTime < o.currentTime)
+                    return 1;
+                else if (o1.nTransfers < o.nTransfers)
+                    return -1;
+                else if (o1.nTransfers > o.nTransfers)
+                    return 1;
+                else if (o1.firstPtDepartureTime < o.firstPtDepartureTime)
+                    return -1;
+                else if (o1.firstPtDepartureTime > o.firstPtDepartureTime)
+                    return 1;
+                return 0;
+            }
+
+            @Override
+            public boolean equals(Object obj) {
+                return false;
+            }
+        });
         fromMap = HashMultimap.create();
     }
 
-    Set<SPTEntry> calcPaths(int from, Set<Integer> to, long startTime, long rangeQueryEndTime) {
+    Set<Label> calcPaths(int from, Set<Integer> to, long startTime, long rangeQueryEndTime) {
         this.rangeQueryEndTime = rangeQueryEndTime;
-        Set<SPTEntry> targetLabels = new HashSet<>();
-        SPTEntry label = new SPTEntry(EdgeIterator.NO_EDGE, from, startTime, 0, Long.MAX_VALUE);
+        Set<Label> targetLabels = new HashSet<>();
+        Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, Long.MAX_VALUE, null);
         fromMap.put(from, label);
         if (to.contains(from)) {
             targetLabels.add(label);
         }
-        EdgeExplorer explorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
         while (true) {
             visitedNodes++;
             if (maxVisitedNodes < visitedNodes)
                 break;
 
-            int startNode = label.adjNode;
-            EdgeIterator iter = explorer.setBaseNode(startNode);
-            boolean foundEnteredTimeExpandedNetworkEdge = false;
-            while (iter.next()) {
-                if (iter.getEdge() == label.edge)
-                    continue;
-
-                GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(iter.getFlags());
-                if (edgeType == GtfsStorage.EdgeType.BOARD_EDGE) {
-                    int trafficDay = (int) (label.weight) / (24 * 60 * 60);
-                    if (!isValidOn(iter, trafficDay)) {
-                        continue;
-                    }
-                } else if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK) {
-                    if ((int) (label.weight) % (24 * 60 * 60) > flagEncoder.getTime(iter.getFlags())) {
-                        continue;
-                    } else {
-                        if (foundEnteredTimeExpandedNetworkEdge) {
-                            continue;
-                        } else {
-                            foundEnteredTimeExpandedNetworkEdge = true;
-                        }
-                    }
-                } else if (edgeType == GtfsStorage.EdgeType.STOP_EXIT_NODE_MARKER_EDGE
-                        || edgeType == GtfsStorage.EdgeType.STOP_NODE_MARKER_EDGE) {
-                    continue;
-                }
-
-                double tmpWeight;
+            for (EdgeIteratorState edge : explorer.exploreEdgesAround(label)) {
+                GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
                 int tmpNTransfers = label.nTransfers;
                 long tmpFirstPtDepartureTime = label.firstPtDepartureTime;
-                if (weighting instanceof TimeDependentWeighting) {
-                    tmpWeight = ((TimeDependentWeighting) weighting).calcWeight(iter, false, label.edge, label.weight) + label.weight;
-                    tmpNTransfers += ((TimeDependentWeighting) weighting).calcNTransfers(iter);
+                long nextTime;
+                if (reverse) {
+                    nextTime = label.currentTime - ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edge, label.currentTime);
                 } else {
-                    tmpWeight = weighting.calcWeight(iter, false, label.edge) + label.weight;
+                    nextTime = label.currentTime + ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edge, label.currentTime);
                 }
+                tmpNTransfers += ((TimeDependentWeighting) weighting).calcNTransfers(edge);
                 if (edgeType == GtfsStorage.EdgeType.BOARD_EDGE && tmpFirstPtDepartureTime == Long.MAX_VALUE) {
-                    tmpFirstPtDepartureTime = (long) tmpWeight;
+                    tmpFirstPtDepartureTime = nextTime;
                 }
-                if (Double.isInfinite(tmpWeight))
-                    continue;
 
-                Set<SPTEntry> sptEntries = fromMap.get(iter.getAdjNode());
-                SPTEntry nEdge = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight, tmpNTransfers, tmpFirstPtDepartureTime);
-                nEdge.parent = label;
+                Set<Label> sptEntries = fromMap.get(edge.getAdjNode());
+                Label nEdge = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), tmpNTransfers, tmpFirstPtDepartureTime, label);
                 if (improves(nEdge, sptEntries) && improves(nEdge, targetLabels)) {
                     removeDominated(nEdge, sptEntries);
-                    if (to.contains(iter.getAdjNode())) {
+                    if (to.contains(edge.getAdjNode())) {
                         removeDominated(nEdge, targetLabels);
                     }
-                    fromMap.put(iter.getAdjNode(), nEdge);
-                    if (to.contains(iter.getAdjNode())) {
+                    fromMap.put(edge.getAdjNode(), nEdge);
+                    if (to.contains(edge.getAdjNode())) {
                         targetLabels.add(nEdge);
                     }
                     fromHeap.add(nEdge);
@@ -145,22 +143,18 @@ class MultiCriteriaLabelSetting {
         return targetLabels;
     }
 
-    private boolean isValidOn(EdgeIterator iter, int trafficDay) {
-        return gtfsStorage.getReverseOperatingDayPatterns().get((int) flagEncoder.getTime(iter.getFlags())).get(trafficDay);
-    }
-
-    private boolean improves(SPTEntry me, Set<SPTEntry> sptEntries) {
-        for (SPTEntry they : sptEntries) {
-            if (they.nTransfers <= me.nTransfers && they.weight <= me.weight && (they.firstPtDepartureTime >= me.firstPtDepartureTime || me.firstPtDepartureTime > rangeQueryEndTime)) {
+    private boolean improves(Label me, Set<Label> sptEntries) {
+        for (Label they : sptEntries) {
+            if (they.nTransfers <= me.nTransfers && (reverse ? they.currentTime >= me.currentTime : they.currentTime <= me.currentTime) && (they.firstPtDepartureTime >= me.firstPtDepartureTime || me.firstPtDepartureTime > rangeQueryEndTime)) {
                 return false;
             }
         }
         return true;
     }
 
-    private void removeDominated(SPTEntry me, Set<SPTEntry> sptEntries) {
-        for (Iterator<SPTEntry> iterator = sptEntries.iterator(); iterator.hasNext();) {
-            SPTEntry sptEntry = iterator.next();
+    private void removeDominated(Label me, Set<Label> sptEntries) {
+        for (Iterator<Label> iterator = sptEntries.iterator(); iterator.hasNext();) {
+            Label sptEntry = iterator.next();
             if (dominates(me, sptEntry)) {
                 fromHeap.remove(sptEntry);
                 iterator.remove();
@@ -168,8 +162,8 @@ class MultiCriteriaLabelSetting {
         }
     }
 
-    private boolean isNotDominatedBy(SPTEntry me, Set<SPTEntry> sptEntries) {
-        for (SPTEntry they : sptEntries) {
+    private boolean isNotDominatedBy(Label me, Set<Label> sptEntries) {
+        for (Label they : sptEntries) {
             if (dominates(they, me)) {
                 return false;
             }
@@ -177,9 +171,15 @@ class MultiCriteriaLabelSetting {
         return true;
     }
 
-    private boolean dominates(SPTEntry me, SPTEntry they) {
-        if (me.weight > they.weight) {
-            return false;
+    private boolean dominates(Label me, Label they) {
+        if (reverse) {
+            if (me.currentTime < they.currentTime) {
+                return false;
+            }
+        } else {
+            if (me.currentTime > they.currentTime) {
+                return false;
+            }
         }
         if (me.nTransfers > they.nTransfers) {
             return false;
@@ -187,8 +187,14 @@ class MultiCriteriaLabelSetting {
         if (me.firstPtDepartureTime < they.firstPtDepartureTime) {
             return false;
         }
-        if (me.weight < they.weight) {
-            return true;
+        if (reverse) {
+            if (me.currentTime > they.currentTime) {
+                return true;
+            }
+        } else {
+            if (me.currentTime < they.currentTime) {
+                return true;
+            }
         }
         if (me.nTransfers < they.nTransfers) {
             return true;

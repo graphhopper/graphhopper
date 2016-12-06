@@ -18,12 +18,12 @@ import java.util.*;
 
 class GtfsStorage implements GraphExtension {
 
-    static double traveltime(int edgeTimeValue, long earliestStartTime) {
+    static long traveltime(int edgeTimeValue, long earliestStartTime) {
         int timeOfDay = (int) (earliestStartTime % (24*60*60));
         if (timeOfDay <= edgeTimeValue) {
             return (edgeTimeValue - timeOfDay);
         } else {
-            return Double.POSITIVE_INFINITY;
+            throw new RuntimeException();
         }
     }
 

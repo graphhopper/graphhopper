@@ -198,8 +198,10 @@ class GtfsReader {
                 insertInboundTransfers(transfer.from_stop_id, transfer.min_transfer_time, timeNode);
             }
             for (Integer arrivalNodeId : arrivals.get(stop.stop_id)) {
-                EdgeIteratorState edge = graph.edge(arrivalNodeId, stopExitNode, 0.0, false);
-                setEdgeType(edge, GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK);
+                EdgeIteratorState leaveTimeExpandedNetworkEdge = graph.edge(arrivalNodeId, stopExitNode, 0.0, false);
+                setEdgeType(leaveTimeExpandedNetworkEdge, GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK);
+                int arrivalTime = times.get(arrivalNodeId);
+                leaveTimeExpandedNetworkEdge.setFlags(encoder.setTime(leaveTimeExpandedNetworkEdge.getFlags(), arrivalTime));
             }
         }
     }

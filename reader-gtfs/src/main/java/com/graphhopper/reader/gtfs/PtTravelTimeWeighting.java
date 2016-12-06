@@ -7,8 +7,20 @@ import com.graphhopper.util.EdgeIteratorState;
 
 class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWeighting {
 
+    final boolean reverse;
+
     PtTravelTimeWeighting(FlagEncoder encoder) {
 		super(encoder);
+		this.reverse = false;
+    }
+
+    private PtTravelTimeWeighting(FlagEncoder encoder, boolean reverse) {
+        super(encoder);
+        this.reverse = reverse;
+    }
+
+    PtTravelTimeWeighting reverse() {
+        return new PtTravelTimeWeighting(flagEncoder, !reverse);
     }
 
 	@Override
@@ -22,25 +34,31 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
 	}
 
 	@Override
-	public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId, double earliestStartTime) {
-		if (reverse) {
-			throw new UnsupportedOperationException();
-		}
-		return calcTravelTimeSeconds(edgeState, earliestStartTime);
+	public double calcWeight(EdgeIteratorState edgeState, double earliestStartTime) {
+        throw new RuntimeException("Not supported.");
 	}
 
 	@Override
-	public double calcTravelTimeSeconds(EdgeIteratorState edgeState, double earliestStartTime) {
+	public long calcTravelTimeSeconds(EdgeIteratorState edgeState, long earliestStartTime) {
         GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edgeState.getFlags());
         switch (edgeType) {
             case UNSPECIFIED:
-                long l = calcMillis(edgeState, false, -1);
+                long l = calcMillis(edgeState, reverse, -1);
                 return l / 1000;
             case ENTER_TIME_EXPANDED_NETWORK:
-                return GtfsStorage.traveltime((int) ((PtFlagEncoder) getFlagEncoder()).getTime(edgeState.getFlags()), (long) earliestStartTime);
+                if (reverse) {
+                    return 0;
+                } else {
+                    return GtfsStorage.traveltime((int) ((PtFlagEncoder) getFlagEncoder()).getTime(edgeState.getFlags()), (long) earliestStartTime);
+                }
             case LEAVE_TIME_EXPANDED_NETWORK:
-			case BOARD_EDGE:
-				return 0.0;
+                if (reverse) {
+                    return GtfsStorage.traveltime((int) ((PtFlagEncoder) getFlagEncoder()).getTime(edgeState.getFlags()), (long) earliestStartTime);
+                } else {
+                    return 0;
+                }
+            case BOARD_EDGE:
+				return 0;
             case TIME_PASSES_PT_EDGE:
                 return ((PtFlagEncoder) getFlagEncoder()).getTime(edgeState.getFlags());
             default:

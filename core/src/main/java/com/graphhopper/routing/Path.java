@@ -214,7 +214,7 @@ public class Path {
                     distance += dist;
                     if (weighting != null && weighting instanceof TimeDependentWeighting) {
                         // TODO This should already be in the SPT, we shouldn't need to calculate it again here.
-                        time += ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edge, time / 1000.0) * 1000.0;
+                        time += ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edge, time / 1000) * 1000.0;
                     } else {
                         time += weighting.calcMillis(edge, false, prevEdgeId);
                     }
@@ -582,7 +582,7 @@ public class Path {
                 prevInstruction.setDistance(newDist + prevInstruction.getDistance());
                 if (weighting != null && weighting instanceof TimeDependentWeighting) {
                     // TODO This should already be in the SPT, we shouldn't need to calculate it again here.
-                    double edgeTime = ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edge, time / 1000.0) * 1000.0;
+                    double edgeTime = ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edge, time / 1000) * 1000.0;
                     time += edgeTime;
                     prevInstruction.setTime((long) edgeTime + prevInstruction.getTime());
                 } else {

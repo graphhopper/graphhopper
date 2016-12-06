@@ -88,7 +88,7 @@ public class Dijkstra extends AbstractTimeDependentRoutingAlgorithm {
                 int traversalId = traversalMode.createTraversalId(iter, false);
                 double tmpWeight;
                 if (weighting instanceof TimeDependentWeighting) {
-                    tmpWeight = ((TimeDependentWeighting) weighting).calcWeight(iter, false, currEdge.edge, currEdge.weight) + currEdge.weight;
+                    tmpWeight = ((TimeDependentWeighting) weighting).calcWeight(iter, currEdge.weight) + currEdge.weight;
                 } else {
                     tmpWeight = weighting.calcWeight(iter, false, currEdge.edge) + currEdge.weight;
                 }

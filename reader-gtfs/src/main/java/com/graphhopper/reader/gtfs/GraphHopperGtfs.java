@@ -4,7 +4,6 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.routing.Path;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
@@ -20,10 +19,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static com.graphhopper.reader.gtfs.Label.reverseEdges;
+
 public final class GraphHopperGtfs implements GraphHopperAPI {
 
     public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliestDepartureTime";
     public static final String RANGE_QUERY_END_TIME = "rangeQueryEndTime";
+    public static final String ARRIVE_BY = "arriveBy";
 
     private String gtfsFile;
     private boolean createWalkNetwork = false;
@@ -34,6 +36,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     private GraphHopperStorage graphHopperStorage;
     private LocationIndex locationIndex;
     private GtfsGraph gtfsGraph;
+    private GtfsStorage gtfsStorage;
 
     public GraphHopperGtfs() {
         super();
@@ -75,7 +78,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         }
 
         GHDirectory directory = new GHDirectory(graphHopperFolder, DAType.RAM_STORE);
-        graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, new GtfsStorage());
+        gtfsStorage = new GtfsStorage();
+        graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, gtfsStorage);
         locationIndex = new LocationIndexTree(graphHopperStorage, directory);
 
         if (!new File(graphHopperFolder).exists()) {
@@ -115,10 +119,11 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     @Override
     public GHResponse route(GHRequest request) {
         final int maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
-        final long requestedTimeOfDay = request.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) % (24 * 60 * 60);
-        final long requestedDay = request.getHints().getInt(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0) / (24 * 60 * 60);
+        final long requestedTimeOfDay = request.getHints().getInt(EARLIEST_DEPARTURE_TIME_HINT, 0) % (24 * 60 * 60);
+        final long requestedDay = request.getHints().getInt(EARLIEST_DEPARTURE_TIME_HINT, 0) / (24 * 60 * 60);
         final long initialTime = requestedTimeOfDay + requestedDay * (24 * 60 * 60);
-        final long rangeQueryEndTime = request.getHints().getLong(GraphHopperGtfs.RANGE_QUERY_END_TIME, initialTime);
+        final long rangeQueryEndTime = request.getHints().getLong(RANGE_QUERY_END_TIME, initialTime);
+        final boolean arriveBy = request.getHints().getBool(ARRIVE_BY, false);
 
         GHResponse response = new GHResponse();
 
@@ -145,24 +150,34 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         EdgeFilter enterFilter = new PtEnterPositionLookupEdgeFilter(encoder);
         EdgeFilter exitFilter = new PtExitPositionLookupEdgeFilter(encoder);
 
+        List<QueryResult> queryResults = new ArrayList<>();
+
         QueryResult source = locationIndex.findClosest(enter.lat, enter.lon, enterFilter);
         if (!source.isValid()) {
             response.addError(new PointNotFoundException("Cannot find entry point: " + enter, 0));
             return response;
         }
-
-        int startNode = source.getClosestNode();
-
-        List<QueryResult> queryResults = new ArrayList<>();
         queryResults.add(source);
+
         QueryResult dest = locationIndex.findClosest(exit.lat, exit.lon, exitFilter);
-        ArrayList<Integer> toNodes = new ArrayList<>();
         if (!dest.isValid()) {
             response.addError(new PointNotFoundException("Cannot find exit point: " + exit, 0));
             return response;
         }
-        toNodes.add(dest.getClosestNode());
         queryResults.add(dest);
+
+        int startNode;
+        int destNode;
+        if (arriveBy) {
+            startNode = dest.getClosestNode();
+            destNode = source.getClosestNode();
+        } else {
+            startNode = source.getClosestNode();
+            destNode = dest.getClosestNode();
+        }
+
+        ArrayList<Integer> toNodes = new ArrayList<>();
+        toNodes.add(destNode);
 
         response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
@@ -173,12 +188,32 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         long visitedNodesSum = 0L;
 
         stopWatch = new StopWatch().start();
-        PtTravelTimeWeighting weighting = new PtTravelTimeWeighting(encoder);
-        MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphHopperStorage, weighting, maxVisitedNodesForRequest, (GtfsStorage) graphHopperStorage.getExtension());
+
+        PtTravelTimeWeighting weighting;
+        if (arriveBy) {
+            weighting = new PtTravelTimeWeighting(encoder).reverse();
+        } else {
+            weighting = new PtTravelTimeWeighting(encoder);
+        }
+
+        GraphExplorer explorer;
+        if (arriveBy) {
+            explorer = new GraphExplorer(graphHopperStorage.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)), encoder, gtfsStorage, true);
+        } else {
+            explorer = new GraphExplorer(graphHopperStorage.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)), encoder, gtfsStorage, false);
+        }
+
+        MultiCriteriaLabelSetting router;
+        if (arriveBy) {
+           router = new MultiCriteriaLabelSetting(graphHopperStorage, weighting, maxVisitedNodesForRequest, (GtfsStorage) graphHopperStorage.getExtension(), explorer, true);
+        } else {
+           router = new MultiCriteriaLabelSetting(graphHopperStorage, weighting, maxVisitedNodesForRequest, (GtfsStorage) graphHopperStorage.getExtension(), explorer, false);
+        }
+
         String debug = ", algoInit:" + stopWatch.stop().getSeconds() + "s";
 
         stopWatch = new StopWatch().start();
-        Set<SPTEntry> solutions = router.calcPaths(startNode, new HashSet(toNodes), initialTime, rangeQueryEndTime);
+        Set<Label> solutions = router.calcPaths(startNode, new HashSet(toNodes), initialTime, rangeQueryEndTime);
         debug += ", routing:" + stopWatch.stop().getSeconds() + "s";
 
         response.addDebugInfo(debug);
@@ -191,13 +226,17 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         response.getHints().put("visited_nodes.sum", visitedNodesSum);
         response.getHints().put("visited_nodes.average", (float) visitedNodesSum);
 
-        for (SPTEntry solution : solutions) {
-            Path pathBuilder = new Path(graphHopperStorage, weighting)
-                    .setWeight(solution.weight)
-                    .setSPTEntry(solution);
-            pathBuilder.extract();
-            PointList points1 = pathBuilder.calcPoints();
+        for (Label solution : solutions) {
 
+            List<EdgeIteratorState> edges = new ArrayList<>();
+            if (arriveBy) {
+                reverseEdges(solution, graphHopperStorage)
+                        .forEach(edge -> edges.add(edge.detach(false)));
+            } else {
+                reverseEdges(solution, graphHopperStorage)
+                        .forEach(edge -> edges.add(edge.detach(true)));
+                Collections.reverse(edges);
+            }
 
             PathWrapper path = new PathWrapper();
             PointList waypoints = new PointList(queryResults.size(), true);
@@ -206,44 +245,35 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             }
             path.setWaypoints(waypoints);
             InstructionList instructions = new InstructionList(tr);
-            List<EdgeIteratorState> edges = pathBuilder.calcEdges();
-            int transfer = 0;
-            for (EdgeIteratorState edge1 : edges) {
+
+            int numBoardings = 0;
+            double distance = 0;
+            for (EdgeIteratorState edge : edges) {
                 int sign = Instruction.CONTINUE_ON_STREET;
-                if (encoder.getEdgeType(edge1.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
-                    if (transfer == 0) {
+                if (encoder.getEdgeType(edge.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
+                    if (numBoardings == 0) {
                         sign = Instruction.PT_START_TRIP;
                     } else {
                         sign = Instruction.PT_TRANSFER;
                     }
-
-                    transfer++;
+                    numBoardings++;
                 }
-
-                instructions.add(new Instruction(sign, edge1.getName(), InstructionAnnotation.EMPTY, edge1.fetchWayGeometry(1)));
+                instructions.add(new Instruction(sign, edge.getName(), InstructionAnnotation.EMPTY, edge.fetchWayGeometry(1)));
+                distance += edge.getDistance();
             }
-            if (!points1.isEmpty()) {
-                PointList end = new PointList();
-                end.add(points1, points1.size() - 1);
-                instructions.add(new FinishInstruction(points1, points1.size() - 1));
+            if (!edges.isEmpty()) {
+                instructions.add(new FinishInstruction(graphHopperStorage.getNodeAccess(), edges.get(edges.size()-1).getAdjNode()));
             }
             path.setInstructions(instructions);
-            path.setDescription(pathBuilder.getDescription());
             PointList pointsList = new PointList();
             for (Instruction instruction : instructions) {
                 pointsList.add(instruction.getPoints());
             }
             path.setPoints(pointsList);
-            path.setRouteWeight(pathBuilder.getWeight());
-            path.setDistance(pathBuilder.getDistance());
-            path.setTime(pathBuilder.getTime());
+            path.setRouteWeight(solution.currentTime);
+            path.setDistance(distance);
+            path.setTime(solution.currentTime * 1000);
             path.setFirstPtLegDeparture(solution.firstPtDepartureTime);
-            int numBoardings = 0;
-            for (EdgeIteratorState edge : pathBuilder.calcEdges()) {
-                if (encoder.getEdgeType(edge.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
-                    numBoardings++;
-                }
-            }
             path.setNumChanges(numBoardings - 1);
             response.add(path);
         }

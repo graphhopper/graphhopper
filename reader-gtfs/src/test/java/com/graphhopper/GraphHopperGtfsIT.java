@@ -52,6 +52,25 @@ public class GraphHopperGtfsIT {
     }
 
     @Test
+    public void testRoute1ArriveBy() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, time(6, 49));
+        ghRequest.getHints().put(GraphHopperGtfs.ARRIVE_BY, true);
+
+        GHResponse route = graphHopper.route(ghRequest);
+
+        assertFalse(route.hasErrors());
+        assertEquals(1, route.getAll().size());
+        assertEquals("Expected weight == scheduled departure time", time(6, 44), route.getBest().getRouteWeight(), 0.1);
+        assertEquals("Expected travel time == scheduled departure time", time(6, 44) * 1000, route.getBest().getTime(), 0.1);
+    }
+
+    @Test
     public void testRoute1Profile() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
