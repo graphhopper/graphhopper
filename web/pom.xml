@@ -25,7 +25,12 @@
             <artifactId>graphhopper-reader-osm</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-reader-json</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+        
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
@@ -88,7 +93,14 @@
             <version>${jetty.version}</version>
             <scope>test</scope>
         </dependency>
-
+        <!-- for integration tests of service --> 
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+            <version>3.4.2</version>
+            <scope>test</scope>
+        </dependency>
+        
     </dependencies>
 
     <build>

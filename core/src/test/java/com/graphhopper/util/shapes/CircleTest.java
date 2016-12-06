@@ -19,6 +19,7 @@ package com.graphhopper.util.shapes;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -47,6 +48,14 @@ public class CircleTest {
         assertTrue(c.contains(new BBox(9, 11, 10, 10.1)));
         assertFalse(c.contains(new BBox(9, 11, 8, 9)));
         assertFalse(c.contains(new BBox(9, 12, 10, 10.1)));
+    }
+
+    @Test
+    public void testGetCenter() {
+        Circle c = new Circle(10, 10, 10);
+        GHPoint center = c.getCenter();
+        assertEquals(10, center.getLat(), .00001);
+        assertEquals(10, center.getLon(), .00001);
     }
 
     @Test

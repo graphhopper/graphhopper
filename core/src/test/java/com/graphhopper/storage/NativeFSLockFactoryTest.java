@@ -36,11 +36,11 @@ public class NativeFSLockFactoryTest extends AbstractLockFactoryTester {
     public void testMultiReadObtain() {
         LockFactory instance = createLockFactory();
         instance.setLockDir(lockDir);
-        Lock writeLock1 = instance.create("test", true);
+        GHLock writeLock1 = instance.create("test", true);
         assertTrue(writeLock1.tryLock());
 
         // BUT disallow more than one write lock!
-        Lock lock2 = instance.create("test", false);
+        GHLock lock2 = instance.create("test", false);
         assertFalse(lock2.tryLock());
 
         writeLock1.release();
@@ -56,7 +56,7 @@ public class NativeFSLockFactoryTest extends AbstractLockFactoryTester {
         assertTrue(lock2.isLocked());
 
         // disallow write lock if currently reading
-        Lock writeLock4 = instance.create("test", true);
+        GHLock writeLock4 = instance.create("test", true);
         assertFalse(writeLock4.tryLock());
         assertEquals(OverlappingFileLockException.class, writeLock4.getObtainFailedReason().getClass());
         writeLock4.release();
