@@ -38,10 +38,9 @@ import java.util.List;
  */
 public class GenericWeighting extends AbstractWeighting {
     /**
-     * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
-     * costs or traffic light costs etc)
+     * Convert to milliseconds for correct calcMillis.
      */
-    protected final static double SPEED_CONV = 3.6;
+    private final static double SPEED_CONV = 3600;
     private final double headingPenalty;
     private final long headingPenaltyMillis;
     private final double maxSpeed;

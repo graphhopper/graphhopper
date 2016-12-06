@@ -41,14 +41,14 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class GenericWeightingTest {
-    private final EncodingManager em = new EncodingManager("generic");
-    private final DataFlagEncoder encoder = (DataFlagEncoder) em.getEncoder("generic");
+    private final DataFlagEncoder encoder = new DataFlagEncoder();
+    private final EncodingManager em = new EncodingManager(encoder);
     private Graph graph;
 
-    private final double edgeWeight = 566;
+    private final double edgeWeight = 566111;
 
     @Before
-    public void setup() {
+    public void setUp() {
         ReaderWay way = new ReaderWay(27l);
         way.setTag("highway", "primary");
         way.setTag("maxspeed", "10");
@@ -97,5 +97,13 @@ public class GenericWeightingTest {
         instance = new GenericWeighting(encoder, cMap);
         instance.setGraph(graph);
         assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
+    }
+
+    @Test
+    public void testCalcTime() {
+        ConfigMap cMap = encoder.readStringMap(new PMap());
+        GenericWeighting weighting = new GenericWeighting(encoder, cMap);
+        EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
+        assertEquals(edgeWeight, weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE), .1);
     }
 }

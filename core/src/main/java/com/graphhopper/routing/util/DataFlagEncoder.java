@@ -129,7 +129,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
                 "delivery",
                 "agricultural",
                 "no"
-                );
+        );
 
 
         counter = 0;
@@ -210,9 +210,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     int getAccessValue(ReaderWay way) {
         int accessValue = 0;
         Integer tmpAccessValue = 0;
-        for (String restriction: restrictions) {
+        for (String restriction : restrictions) {
             tmpAccessValue = accessMap.get(way.getTag(restriction, "yes"));
-            if(tmpAccessValue != null && tmpAccessValue > accessValue){
+            if (tmpAccessValue != null && tmpAccessValue > accessValue) {
                 accessValue = tmpAccessValue;
             }
         }
@@ -221,9 +221,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     //TODO It is bad that it's a bit static right now. If anyone changes the accessMap this method won't work anymore...
-    public AccessValue getEdgeAccessValue(long flags){
+    public AccessValue getEdgeAccessValue(long flags) {
         int accessValue = (int) accessEncoder.getValue(flags);
-        switch (accessValue){
+        switch (accessValue) {
             case 0:
                 return AccessValue.ACCESSIBLE;
             case 5:
@@ -355,6 +355,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     public double[] getHighwaySpeedMap(Map<String, Double> map) {
+        if (map == null)
+            throw new IllegalArgumentException("Map cannot be null when calling getHighwaySpeedMap");
+
         double[] res = new double[highwayMap.size()];
         for (Entry<String, Double> e : map.entrySet()) {
             Integer integ = highwayMap.get(e.getKey());
@@ -575,7 +578,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return cMap;
     }
 
-    public enum AccessValue{
+    public enum AccessValue {
 
         ACCESSIBLE,
         EVENTUALLY_ACCESSIBLE,
