@@ -19,12 +19,11 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 
 import java.util.Arrays;
 
@@ -38,52 +37,50 @@ import java.util.Arrays;
 public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     private static final int EMPTY_PARENT = -1;
     private static final int NOT_FOUND = -1;
-    private final IntArrayListWithCap changedNodes;
-    protected double[] weights;
-    private int[] parents;
-    private int[] edgeIds;
+    private StructuresContainer container;
     private IntDoubleBinaryHeap heap;
     private int visitedNodes;
     private boolean doClear = true;
-    private int endNode;
-    private int currNode, fromNode, to;
+    private int endNode, endId;
+    private int currId, fromNode, to;
     private double weightLimit = Double.MAX_VALUE;
 
     public DijkstraOneToMany(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
 
-        parents = new int[graph.getNodes()];
-        Arrays.fill(parents, EMPTY_PARENT);
+        int entityCount = graph.getNodes();
+        if (tMode.isEdgeBased()) {
+            entityCount = GHUtility.count(graph.getAllEdges()) * tMode.getNoOfStates();
+        }
 
-        edgeIds = new int[graph.getNodes()];
-        Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
-
-        weights = new double[graph.getNodes()];
-
-        Arrays.fill(weights, Double.MAX_VALUE);
+        if (tMode.isEdgeBased())
+            container = new EdgeBasedStructuresContainer(graph, tMode);
+        else
+            container = new NodeBasedStructuresContainer(graph);
 
         heap = new IntDoubleBinaryHeap(1000);
-        changedNodes = new IntArrayListWithCap();
     }
 
     @Override
     public Path calcPath(int from, int to) {
         fromNode = from;
-        endNode = findEndNode(from, to);
+        endId = findEndId(from, to);
+        if (endId != NOT_FOUND)
+            endNode = container.getNode(endId);
         return extractPath();
     }
 
     @Override
     public Path extractPath() {
-        PathNative p = new PathNative(graph, weighting, parents, edgeIds);
-        if (endNode >= 0)
-            p.setWeight(weights[endNode]);
-        p.setFromNode(fromNode);
-        // return 'not found' if invalid endNode or limit reached
-        if (endNode < 0 || isWeightLimitExceeded())
-            return p;
+        LocalPath path = new LocalPath(graph, weighting, container);
+        if (endId == NOT_FOUND || isWeightLimitExceeded())
+            return path;
 
-        return p.setEndNode(endNode).extract();
+        path.setFromNode(fromNode);
+        path.setEndNode(endNode);
+        path.setWeight(container.getWeight(endId));
+        path.setEndId(endId);
+        return path.extract();
     }
 
     /**
@@ -95,44 +92,38 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     }
 
     public double getWeight(int endNode) {
-        return weights[endNode];
+        return container.getBestWeight(endNode);
     }
 
     public int findEndNode(int from, int to) {
-        if (weights.length < 2)
+        int endId = findEndId(from, to);
+        if (endId == NOT_FOUND)
+            return NOT_FOUND;
+        return container.getNode(endId);
+    }
+
+    public int findEndId(int from, int to) {
+        if (graph.getNodes() < 2)
             return NOT_FOUND;
 
         this.to = to;
         if (doClear) {
             doClear = false;
-            int vn = changedNodes.size();
-            for (int i = 0; i < vn; i++) {
-                int n = changedNodes.get(i);
-                weights[n] = Double.MAX_VALUE;
-                parents[n] = EMPTY_PARENT;
-                edgeIds[n] = EdgeIterator.NO_EDGE;
-            }
-
+            container.clear();
             heap.clear();
 
-            // changedNodes.clear();
-            changedNodes.elementsCount = 0;
-
-            currNode = from;
-            if (!traversalMode.isEdgeBased()) {
-                weights[currNode] = 0;
-                changedNodes.add(currNode);
-            }
+            currId = traversalMode.createTraversalId(-1, from, EdgeIterator.NO_EDGE, false);
+            container.put(-1, from, EdgeIterator.NO_EDGE, 0, EMPTY_PARENT);
         } else {
             // Cached! Re-use existing data structures
-            int parentNode = parents[to];
-            if (parentNode != EMPTY_PARENT && weights[to] <= weights[currNode])
-                return to;
+            int endId = container.getTraversalIdByNode(to);
+            if (endId != -1 && container.getParentId(endId) != EMPTY_PARENT && container.getWeight(endId) <= container.getWeight(currId))
+                return endId;
 
             if (heap.isEmpty() || isMaxVisitedNodesExceeded())
                 return NOT_FOUND;
 
-            currNode = heap.poll_element();
+            currId = heap.poll_element();
         }
 
         visitedNodes = 0;
@@ -142,36 +133,31 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             // then we need a small workaround for special cases see #707
             if (heap.isEmpty())
                 doClear = true;
-            return currNode;
+            return currId;
         }
 
         while (true) {
             visitedNodes++;
+            int currNode = container.getNode(currId);
             EdgeIterator iter = outEdgeExplorer.setBaseNode(currNode);
+
             while (iter.next()) {
-                int adjNode = iter.getAdjNode();
-                int prevEdgeId = edgeIds[adjNode];
+                int prevEdgeId = container.getEdge(currId);
                 if (!accept(iter, prevEdgeId))
                     continue;
 
-                double tmpWeight = weighting.calcWeight(iter, false, prevEdgeId) + weights[currNode];
+                double tmpWeight = weighting.calcWeight(iter, false, prevEdgeId) + container.getWeight(currId);
                 if (Double.isInfinite(tmpWeight))
                     continue;
 
-                double w = weights[adjNode];
+                int traversalId = traversalMode.createTraversalId(iter, false);
+                double w = container.getWeight(traversalId);
                 if (w == Double.MAX_VALUE) {
-                    parents[adjNode] = currNode;
-                    weights[adjNode] = tmpWeight;
-                    heap.insert_(tmpWeight, adjNode);
-                    changedNodes.add(adjNode);
-                    edgeIds[adjNode] = iter.getEdge();
-
+                    container.put(iter, tmpWeight, currId);
+                    heap.insert_(tmpWeight, traversalId);
                 } else if (w > tmpWeight) {
-                    parents[adjNode] = currNode;
-                    weights[adjNode] = tmpWeight;
-                    heap.update_(tmpWeight, adjNode);
-                    changedNodes.add(adjNode);
-                    edgeIds[adjNode] = iter.getEdge();
+                    container.put(iter, tmpWeight, currId);
+                    heap.update_(tmpWeight, traversalId);
                 }
             }
 
@@ -179,9 +165,9 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
                 return NOT_FOUND;
 
             // calling just peek and not poll is important if the next query is cached
-            currNode = heap.peek_element();
+            currId = heap.peek_element();
             if (finished())
-                return currNode;
+                return currId;
 
             heap.poll_element();
         }
@@ -189,7 +175,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
     @Override
     public boolean finished() {
-        return currNode == to;
+        return container.getNode(currId) == to;
     }
 
     public void setWeightLimit(double weightLimit) {
@@ -197,13 +183,11 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
     }
 
     protected boolean isWeightLimitExceeded() {
-        return weights[currNode] > weightLimit;
+        return container.getWeight(currId) > weightLimit;
     }
 
     public void close() {
-        weights = null;
-        parents = null;
-        edgeIds = null;
+        container.close();
         heap = null;
     }
 
@@ -221,11 +205,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
      * List currently used memory in MB (approximately)
      */
     public String getMemoryUsageAsString() {
-        long len = weights.length;
-        return ((8L + 4L + 4L) * len
-                + changedNodes.getCapacity() * 4L
-                + heap.getCapacity() * (4L + 4L)) / Helper.MB
-                + "MB";
+        return container.getMemoryUsage() + (heap.getCapacity() * (4L + 4L)) / Helper.MB + "MB";
     }
 
     private static class IntArrayListWithCap extends IntArrayList {
@@ -234,6 +214,347 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
         public int getCapacity() {
             return buffer.length;
+        }
+    }
+
+
+
+    private static interface StructuresContainer {
+        void put(EdgeIteratorState iter, double weight, int parentId);
+
+        void put(int baseNode, int adjNode, int edgeId, double weight, int parentId);
+
+        double getWeight(int traversalId);
+
+        int getEdge(int traversalId);
+
+        int getNode(int travesalId);
+
+        int getParentId(int traversalId);
+
+        double getBestWeight(int nodeId);
+
+        int getTraversalIdByNode(int traversalId);
+
+        void clear();
+
+        void close();
+
+        /**
+         * List currently used memory in MB (approximatively)
+         */
+        long getMemoryUsage();
+
+    }
+
+    private static class NodeBasedStructuresContainer implements StructuresContainer
+    {
+        private final TraversalMode traversalMode = TraversalMode.NODE_BASED;
+
+        private double[] weights;
+        private int[] parents;
+        private int[] edgeIds;
+
+        private IntArrayListWithCap changedNodes = new IntArrayListWithCap();
+
+        public NodeBasedStructuresContainer(Graph graph)
+        {
+            parents = new int[graph.getNodes()];
+            Arrays.fill(parents, EMPTY_PARENT);
+
+            edgeIds = new int[graph.getNodes()];
+            Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
+
+            weights = new double[graph.getNodes()];
+            Arrays.fill(weights, Double.MAX_VALUE);
+        }
+
+        @Override
+        public void put(EdgeIteratorState iter, double weight, int parentId)
+        {
+            put(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(), weight, parentId);
+        }
+
+        @Override
+        public void put(int baseNode, int adjNode, int edgeId, double weight, int parentId)
+        {
+            int traversalId = traversalMode.createTraversalId(baseNode, adjNode, edgeId, false);
+            parents[traversalId] = parentId;
+            weights[traversalId] = weight;
+            edgeIds[traversalId] = edgeId;
+            changedNodes.add(traversalId);
+        }
+
+        @Override
+        public int getEdge(int nodeId)
+        {
+            return edgeIds[nodeId];
+        }
+
+        @Override
+        public int getNode(int travesalId)
+        {
+            return travesalId;
+        }
+
+        @Override
+        public int getParentId(int traversalId)
+        {
+            return parents[traversalId];
+        }
+
+        @Override
+        public void clear()
+        {
+            int vn = changedNodes.size();
+            for (int i = 0; i < vn; i++)
+            {
+                int n = changedNodes.get(i);
+                weights[n] = Double.MAX_VALUE;
+                parents[n] = EMPTY_PARENT;
+                edgeIds[n] = EdgeIterator.NO_EDGE;
+            }
+            changedNodes.elementsCount = 0;
+        }
+
+        @Override
+        public void close()
+        {
+            weights = null;
+            parents = null;
+            edgeIds = null;
+        }
+
+        @Override
+        public double getWeight(int nodeId)
+        {
+            return weights[nodeId];
+        }
+
+        @Override
+        public double getBestWeight(int nodeId)
+        {
+            return getWeight(nodeId);
+        }
+
+        @Override
+        public long getMemoryUsage()
+        {
+            long len = weights.length;
+            return ((8L + 4L + 4L) * len
+                    + changedNodes.getCapacity() * 4L / Helper.MB);
+        }
+
+        @Override
+        public int getTraversalIdByNode(int nodeId)
+        {
+            return nodeId;
+        }
+    }
+
+    private static class EdgeBasedStructuresContainer implements StructuresContainer {
+        private final TraversalMode traversalMode;
+
+        private double[] weights;
+        private int[] parents;
+        private int[] edgeIds;
+        private int[] nodeIds;
+
+        private int[] bestIdToNode;
+
+        private IntArrayListWithCap changedIds = new IntArrayListWithCap();
+        private IntArrayListWithCap changedNodes = new IntArrayListWithCap();
+
+
+        public EdgeBasedStructuresContainer(Graph graph, TraversalMode trMode)
+        {
+            if(!trMode.isEdgeBased())
+                throw new IllegalArgumentException("Traversal mode must be edgeBased");
+
+            traversalMode = trMode;
+
+            bestIdToNode = new int[graph.getNodes()];
+            Arrays.fill(bestIdToNode, -1);
+
+            // need +1 to handle the initial edge with id -1 (all traveral Ids will be shifted by 1 internally)
+            int capacity = (GHUtility.count(graph.getAllEdges()) + 2) * traversalMode.getNoOfStates();
+
+            weights = new double[capacity];
+            Arrays.fill(weights, Double.MAX_VALUE);
+
+            parents = new int[capacity];
+            Arrays.fill(parents, EMPTY_PARENT);
+
+            edgeIds = new int[capacity];
+            Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
+
+            nodeIds = new int[capacity];
+            Arrays.fill(nodeIds, -1);
+        }
+
+        private int traversalIdToIndex(int traversalId) {
+            return traversalId + 2;
+        }
+
+        private int indexToTraversalId(int index) {
+            return index - 2;
+        }
+
+        @Override
+        public void put(EdgeIteratorState iter, double weight, int parentId)
+        {
+            put(iter.getBaseNode(), iter.getAdjNode(), iter.getEdge(), weight, parentId);
+        }
+
+        @Override
+        public void put(int baseNode, int adjNode, int edgeId, double weight, int parentId)
+        {
+            int traversalId = traversalMode.createTraversalId(baseNode, adjNode, edgeId, false);
+            int index = traversalIdToIndex(traversalId);
+
+            parents[index] = parentId;
+            weights[index] = weight;
+            edgeIds[index] = edgeId;
+            nodeIds[index] = adjNode;
+            changedIds.add(index);
+
+            if(parentId == EMPTY_PARENT)
+                return;
+
+            int previousId = bestIdToNode[adjNode];
+            if(previousId == -1)
+            {
+                bestIdToNode[adjNode] = traversalId;
+                changedNodes.add(adjNode);
+            } else if(weight < getWeight(previousId))
+            {
+                bestIdToNode[adjNode] = traversalId;
+            }
+        }
+
+        @Override
+        public double getWeight(int traversalId)
+        {
+            return weights[traversalIdToIndex(traversalId)];
+        }
+
+        @Override
+        public int getEdge(int traversalId)
+        {
+            return edgeIds[traversalIdToIndex(traversalId)];
+        }
+
+        @Override
+        public int getNode(int travesalId)
+        {
+            return nodeIds[traversalIdToIndex(travesalId)];
+        }
+
+        @Override
+        public int getParentId(int traversalId)
+        {
+            return parents[traversalIdToIndex(traversalId)];
+        }
+
+        @Override
+        public double getBestWeight(int nodeId)
+        {
+            return getWeight(bestIdToNode[nodeId]);
+        }
+
+        @Override
+        public void clear()
+        {
+            int vn = changedIds.size();
+            for (int i = 0; i < vn; i++)
+            {
+                int n = changedIds.get(i);
+                weights[n] = Double.MAX_VALUE;
+                parents[n] = EMPTY_PARENT;
+                edgeIds[n] = EdgeIterator.NO_EDGE;
+                nodeIds[n] = -1;
+            }
+            changedIds.elementsCount = 0;
+
+            vn = changedNodes.size();
+            for(int i = 0; i < vn; i++)
+            {
+                int n = changedNodes.get(i);
+                bestIdToNode[n] = -1;
+            }
+            changedNodes.clear();
+        }
+
+        @Override
+        public void close()
+        {
+            weights = null;
+            parents = null;
+            edgeIds = null;
+            nodeIds = null;
+            bestIdToNode = null;
+        }
+
+        @Override
+        public long getMemoryUsage()
+        {
+            int len = weights.length;
+            //weights, parents, edgeIds, nodeIds
+            long usage = (8L + 4L + 4L + 4L) * len;
+
+            usage += 4L * bestIdToNode.length;
+
+            usage += 4L * changedNodes.getCapacity();
+            usage += 4L * changedIds.getCapacity();
+
+            return usage / Helper.MB;
+        }
+
+        @Override
+        public int getTraversalIdByNode(int nodeId)
+        {
+            return bestIdToNode[nodeId];
+        }
+    }
+
+    private static class LocalPath extends Path
+    {
+        private final StructuresContainer container;
+        private int endId = -1;
+
+        public LocalPath(Graph graph, Weighting weighting, StructuresContainer container)
+        {
+            super(graph, weighting);
+            this.container = container;
+        }
+
+        public LocalPath setEndId(int endId)
+        {
+            this.endId = endId;
+            return this;
+        }
+
+        @Override
+        public Path extract()
+        {
+            if(endId < 0)
+                return this;
+
+            int tailId = endId;
+            while(true)
+            {
+                int edgeId = container.getEdge(tailId);
+                int nodeId = container.getNode(tailId);
+
+                if (!EdgeIterator.Edge.isValid(edgeId))
+                    break;
+
+                // TODO: tailId correct?
+                processEdge(edgeId, nodeId, tailId);
+                tailId = container.getParentId(tailId);
+            }
+            reverseOrder();
+            return setFound(true);
         }
     }
 }
