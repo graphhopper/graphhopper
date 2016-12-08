@@ -279,7 +279,11 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         if (response.getAll().isEmpty()) {
             response.addError(new RuntimeException("No route found"));
         } else {
-            Collections.sort(response.getAll(), (p1, p2) -> Double.compare(p1.getRouteWeight(), p2.getRouteWeight()));
+            if (arriveBy) {
+                Collections.sort(response.getAll(), (p1, p2) -> -Double.compare(p1.getRouteWeight(), p2.getRouteWeight()));
+            } else {
+                Collections.sort(response.getAll(), (p1, p2) -> Double.compare(p1.getRouteWeight(), p2.getRouteWeight()));
+            }
         }
         return response;
     }

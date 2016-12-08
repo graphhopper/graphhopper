@@ -51,12 +51,6 @@ final class GraphExplorer {
                             } else if (edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && reverse) {
                                 if ((int) (label.currentTime) % (24 * 60 * 60) < flagEncoder.getTime(edgeIterator.getFlags())) {
                                     continue;
-                                } else {
-                                    if (foundEnteredTimeExpandedNetworkEdge) {
-                                        continue;
-                                    } else {
-                                        foundEnteredTimeExpandedNetworkEdge = true;
-                                    }
                                 }
                             } else if (edgeType == GtfsStorage.EdgeType.STOP_EXIT_NODE_MARKER_EDGE
                                     || edgeType == GtfsStorage.EdgeType.STOP_NODE_MARKER_EDGE) {

@@ -27,6 +27,15 @@ public class GtfsStorage implements GraphExtension {
         }
     }
 
+	static long traveltimeReverse(int edgeTimeValue, long latestExitTime) {
+		int timeOfDay = (int) (latestExitTime % (24*60*60));
+		if (timeOfDay >= edgeTimeValue) {
+			return (timeOfDay - edgeTimeValue);
+		} else {
+			throw new RuntimeException();
+		}
+	}
+
     private Directory dir;
     private TIntObjectHashMap<BitSet> reverseOperatingDayPatterns;
     private final TObjectIntMap<BitSet> operatingDayPatterns = new TObjectIntHashMap<>();

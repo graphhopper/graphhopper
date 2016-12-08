@@ -53,7 +53,7 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
                 }
             case LEAVE_TIME_EXPANDED_NETWORK:
                 if (reverse) {
-                    return GtfsStorage.traveltime((int) ((PtFlagEncoder) getFlagEncoder()).getTime(edgeState.getFlags()), (long) earliestStartTime);
+                    return GtfsStorage.traveltimeReverse((int) ((PtFlagEncoder) getFlagEncoder()).getTime(edgeState.getFlags()), (long) earliestStartTime);
                 } else {
                     return 0;
                 }

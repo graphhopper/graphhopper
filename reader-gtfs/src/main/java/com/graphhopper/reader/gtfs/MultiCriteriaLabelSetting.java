@@ -69,9 +69,13 @@ class MultiCriteriaLabelSetting {
                     return -1;
                 else if (o1.nTransfers > o.nTransfers)
                     return 1;
-                else if (o1.firstPtDepartureTime < o.firstPtDepartureTime)
+                else if (!reverse && o1.firstPtDepartureTime < o.firstPtDepartureTime)
                     return -1;
-                else if (o1.firstPtDepartureTime > o.firstPtDepartureTime)
+                else if (reverse && o1.firstPtDepartureTime > o.firstPtDepartureTime)
+                    return -1;
+                else if (!reverse && o1.firstPtDepartureTime > o.firstPtDepartureTime)
+                    return 1;
+                else if (reverse && o1.firstPtDepartureTime < o.firstPtDepartureTime)
                     return 1;
                 return 0;
             }
@@ -108,7 +112,10 @@ class MultiCriteriaLabelSetting {
                     nextTime = label.currentTime + ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edge, label.currentTime);
                 }
                 tmpNTransfers += ((TimeDependentWeighting) weighting).calcNTransfers(edge);
-                if (edgeType == GtfsStorage.EdgeType.BOARD_EDGE && tmpFirstPtDepartureTime == Long.MAX_VALUE) {
+                if (!reverse && edgeType == GtfsStorage.EdgeType.BOARD_EDGE && tmpFirstPtDepartureTime == Long.MAX_VALUE) {
+                    tmpFirstPtDepartureTime = nextTime;
+                }
+                if (reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && tmpFirstPtDepartureTime == Long.MAX_VALUE) {
                     tmpFirstPtDepartureTime = nextTime;
                 }
 
@@ -139,7 +146,9 @@ class MultiCriteriaLabelSetting {
 
     private boolean improves(Label me, Set<Label> sptEntries) {
         for (Label they : sptEntries) {
-            if (they.nTransfers <= me.nTransfers && (reverse ? they.currentTime >= me.currentTime : they.currentTime <= me.currentTime) && (they.firstPtDepartureTime >= me.firstPtDepartureTime || me.firstPtDepartureTime > rangeQueryEndTime)) {
+            if (they.nTransfers <= me.nTransfers &&
+                    (reverse ? they.currentTime >= me.currentTime : they.currentTime <= me.currentTime) &&
+                    (reverse ? (they.firstPtDepartureTime <= me.firstPtDepartureTime || me.firstPtDepartureTime < rangeQueryEndTime): (they.firstPtDepartureTime >= me.firstPtDepartureTime || me.firstPtDepartureTime > rangeQueryEndTime))) {
                 return false;
             }
         }
@@ -169,8 +178,14 @@ class MultiCriteriaLabelSetting {
         if (me.nTransfers > they.nTransfers) {
             return false;
         }
-        if (me.firstPtDepartureTime < they.firstPtDepartureTime) {
-            return false;
+        if (reverse) {
+            if (me.firstPtDepartureTime > they.firstPtDepartureTime) {
+                return false;
+            }
+        } else {
+            if (me.firstPtDepartureTime < they.firstPtDepartureTime) {
+                return false;
+            }
         }
         if (reverse) {
             if (me.currentTime > they.currentTime) {
@@ -184,8 +199,14 @@ class MultiCriteriaLabelSetting {
         if (me.nTransfers < they.nTransfers) {
             return true;
         }
-        if (me.firstPtDepartureTime > they.firstPtDepartureTime) {
-            return true;
+        if (reverse) {
+            if (me.firstPtDepartureTime < they.firstPtDepartureTime) {
+                return true;
+            }
+        } else {
+            if (me.firstPtDepartureTime > they.firstPtDepartureTime) {
+                return true;
+            }
         }
         return false;
     }
