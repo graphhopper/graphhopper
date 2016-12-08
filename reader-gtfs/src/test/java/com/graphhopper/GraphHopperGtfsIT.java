@@ -21,16 +21,13 @@ public class GraphHopperGtfsIT {
     @BeforeClass
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
-
-        graphHopper = new GraphHopperGtfs();
-        graphHopper.setGtfsFile("files/sample-feed.zip");
-        graphHopper.load(GRAPH_LOC);
+        graphHopper = GraphHopperGtfs.createGraphHopperGtfs(GRAPH_LOC, "files/sample-feed.zip", false);
     }
 
     @AfterClass
     public static void tearDown() {
-        if (graphHopper != null)
-            graphHopper.close();
+//        if (graphHopper != null)
+//            graphHopper.close();
     }
 
     @Test

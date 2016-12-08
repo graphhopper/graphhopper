@@ -17,10 +17,8 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.*;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.StopWatch;
@@ -30,6 +28,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -55,10 +54,16 @@ import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
  * @author Peter Karich
  */
 public class GraphHopperServlet extends GHBaseServlet {
+
     @Inject
-    private GraphHopper hopper;
+    private GraphHopperAPI hopper;
+    @Inject
+    private EncodingManager encodingManager;
     @Inject
     private RouteSerializer routeSerializer;
+    @Inject
+    @Named("hasElevation")
+    private boolean hasElevation;
 
     @Override
     public void doGet(HttpServletRequest httpReq, HttpServletResponse httpRes) throws ServletException, IOException {
@@ -90,16 +95,16 @@ public class GraphHopperServlet extends GHBaseServlet {
                     throw new IllegalArgumentException("heading list in from format: " + e.getMessage());
                 }
 
-                if (!hopper.getEncodingManager().supports(vehicleStr)) {
+                if (!encodingManager.supports(vehicleStr)) {
                     throw new IllegalArgumentException("Vehicle not supported: " + vehicleStr);
-                } else if (enableElevation && !hopper.hasElevation()) {
+                } else if (enableElevation && !hasElevation) {
                     throw new IllegalArgumentException("Elevation not supported!");
                 } else if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size()) {
                     throw new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
                             + "or equal to the number of points (" + requestPoints.size() + ")");
                 }
 
-                FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
+                FlagEncoder algoVehicle = encodingManager.getEncoder(vehicleStr);
                 GHRequest request;
                 if (favoredHeadings.size() > 0) {
                     // if only one favored heading is specified take as start heading

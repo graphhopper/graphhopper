@@ -20,7 +20,11 @@ package com.graphhopper.http;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
 import org.slf4j.Logger;
@@ -66,24 +70,34 @@ public final class DefaultModule extends AbstractModule {
 
     @Provides
     @Singleton
-    @Named("timeout")
-    Long getTimeout(CmdArgs args) {
-        return args.getLong("web.timeout", 3000);
+    GraphHopperStorage getGraphHopperStorage(GraphHopper graphHopper) {
+        return graphHopper.getGraphHopperStorage();
     }
 
     @Provides
     @Singleton
-    @Named("jsonp_allowed")
-    Boolean isJsonpAllowed(CmdArgs args) {
-        boolean jsonpAllowed = args.getBool("web.jsonp_allowed", false);
-        if (!jsonpAllowed)
-            logger.info("jsonp disabled");
-        return jsonpAllowed;
+    EncodingManager getEncodingManager(GraphHopper graphHopper) {
+        return graphHopper.getEncodingManager();
+    }
+
+    @Provides
+    @Singleton
+    LocationIndex getLocationIndex(GraphHopper graphHopper) {
+        return graphHopper.getLocationIndex();
+    }
+
+
+    @Provides
+    @Singleton
+    @Named("hasElevation")
+    boolean hasElevation(GraphHopper graphHopper) {
+        return graphHopper.hasElevation();
     }
 
     @Override
     protected void configure() {
-        bind(CmdArgs.class).toInstance(args);
+        install(new CmdArgsModule(args));
+        bind(GraphHopperAPI.class).to(GraphHopper.class);
     }
 
 }

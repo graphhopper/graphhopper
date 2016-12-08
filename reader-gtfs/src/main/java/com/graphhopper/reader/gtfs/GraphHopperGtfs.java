@@ -27,36 +27,26 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     public static final String RANGE_QUERY_END_TIME = "rangeQueryEndTime";
     public static final String ARRIVE_BY = "arriveBy";
 
-    private String gtfsFile;
-    private boolean createWalkNetwork = false;
-
+    private final TranslationMap translationMap;
     private final EncodingManager encodingManager;
-    private final TranslationMap trMap = new TranslationMap().doImport();
 
     private GraphHopperStorage graphHopperStorage;
     private LocationIndex locationIndex;
-    private GtfsGraph gtfsGraph;
     private GtfsStorage gtfsStorage;
 
-    public GraphHopperGtfs() {
-        super();
-        this.encodingManager = new EncodingManager(Arrays.asList(new PtFlagEncoder()), 8);
+    public GraphHopperGtfs(EncodingManager encodingManager, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        this.encodingManager = encodingManager;
+        this.translationMap = translationMap;
+        this.graphHopperStorage = graphHopperStorage;
+        this.locationIndex = locationIndex;
+        this.gtfsStorage = gtfsStorage;
     }
 
-    public void setGtfsFile(String gtfsFile) {
-        this.gtfsFile = gtfsFile;
-    }
+    public static GraphHopperGtfs createGraphHopperGtfs(String graphHopperFolder, String gtfsFile, boolean createWalkNetwork) {
+        EncodingManager encodingManager = createEncodingManager();
 
-    public void setCreateWalkNetwork(boolean createWalkNetwork) {
-        this.createWalkNetwork = createWalkNetwork;
-    }
-
-    public boolean load(String graphHopperFolder) {
         if (Helper.isEmpty(graphHopperFolder))
             throw new IllegalStateException("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before");
-
-        if (graphHopperStorage != null)
-            throw new IllegalStateException("graph is already successfully loaded");
 
         if (graphHopperFolder.endsWith("-gh")) {
             // do nothing
@@ -77,43 +67,52 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             }
         }
 
-        GHDirectory directory = new GHDirectory(graphHopperFolder, DAType.RAM_STORE);
-        gtfsStorage = new GtfsStorage();
-        graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, gtfsStorage);
-        locationIndex = new LocationIndexTree(graphHopperStorage, directory);
+        GtfsStorage gtfsStorage = createGtfsStorage();
 
-        if (!new File(graphHopperFolder).exists()) {
+        GHDirectory directory = createGHDirectory(graphHopperFolder);
+        GraphHopperStorage graphHopperStorage = createOrLoad(directory, encodingManager, gtfsStorage, createWalkNetwork, gtfsFile);
+        LocationIndex locationIndex = createOrLoadIndex(directory, graphHopperStorage);
+
+        return new GraphHopperGtfs(encodingManager, createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);
+    }
+
+    public static GtfsStorage createGtfsStorage() {
+        return new GtfsStorage();
+    }
+
+    public static GHDirectory createGHDirectory(String graphHopperFolder) {
+        return new GHDirectory(graphHopperFolder, DAType.RAM_STORE);
+    }
+
+    public static TranslationMap createTranslationMap() {
+        return new TranslationMap().doImport();
+    }
+
+    public static EncodingManager createEncodingManager() {
+        return new EncodingManager(Arrays.asList(new PtFlagEncoder()), 8);
+    }
+
+    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, boolean createWalkNetwork, String gtfsFile) {
+        GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, gtfsStorage);
+        if (!new File(directory.getLocation()).exists()) {
             new GtfsReader(graphHopperStorage, createWalkNetwork).readGraph(new File(gtfsFile));
             graphHopperStorage.flush();
-            locationIndex.prepareIndex();
         } else {
             graphHopperStorage.loadExisting();
-            locationIndex.loadExisting();
         }
+        return graphHopperStorage;
+    }
 
-        gtfsGraph = new GtfsGraph() {
-            @Override
-            public EdgeFilter ptEnterPositions() {
-                return new PtEnterPositionLookupEdgeFilter((PtFlagEncoder) encodingManager.getEncoder("pt"));
-            }
+    public static LocationIndex createOrLoadIndex(GHDirectory directory, GraphHopperStorage graphHopperStorage) {
+        LocationIndex locationIndex = new LocationIndexTree(graphHopperStorage, directory);
+        if (!locationIndex.loadExisting()) {
+            locationIndex.prepareIndex();
+        }
+        return locationIndex;
+    }
 
-            @Override
-            public EdgeFilter ptExitPositions() {
-                return new PtExitPositionLookupEdgeFilter((PtFlagEncoder) encodingManager.getEncoder("pt"));
-            }
-
-            @Override
-            public EdgeFilter everythingButPt() {
-                return new EverythingButPt((PtFlagEncoder) encodingManager.getEncoder("pt"));
-            }
-
-            @Override
-            public Weighting fastestTravelTime() {
-                return new PtTravelTimeWeighting(encodingManager.getEncoder("pt"));
-            }
-
-        };
-        return true;
+    public boolean load(String graphHopperFolder) {
+        throw new IllegalStateException("We are always loaded, or we wouldn't exist.");
     }
 
     @Override
@@ -144,7 +143,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
 
         Locale locale = request.getLocale();
-        Translation tr = trMap.getWithFallBack(locale);
+        Translation tr = translationMap.getWithFallBack(locale);
         StopWatch stopWatch = new StopWatch().start();
 
         EdgeFilter enterFilter = new PtEnterPositionLookupEdgeFilter(encoder);
@@ -205,9 +204,9 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         MultiCriteriaLabelSetting router;
         if (arriveBy) {
-           router = new MultiCriteriaLabelSetting(graphHopperStorage, weighting, maxVisitedNodesForRequest, (GtfsStorage) graphHopperStorage.getExtension(), explorer, true);
+           router = new MultiCriteriaLabelSetting(graphHopperStorage, weighting, maxVisitedNodesForRequest, explorer, true);
         } else {
-           router = new MultiCriteriaLabelSetting(graphHopperStorage, weighting, maxVisitedNodesForRequest, (GtfsStorage) graphHopperStorage.getExtension(), explorer, false);
+           router = new MultiCriteriaLabelSetting(graphHopperStorage, weighting, maxVisitedNodesForRequest, explorer, false);
         }
 
         String debug = ", algoInit:" + stopWatch.stop().getSeconds() + "s";
@@ -283,22 +282,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             Collections.sort(response.getAll(), (p1, p2) -> Double.compare(p1.getRouteWeight(), p2.getRouteWeight()));
         }
         return response;
-    }
-
-    public Graph getGraph() {
-        return graphHopperStorage;
-    }
-
-    public LocationIndex getLocationIndex() {
-        return locationIndex;
-    }
-
-    public GtfsGraph getGtfsGraph() {
-        return gtfsGraph;
-    }
-
-    public void close() {
-
     }
 
 }

@@ -16,7 +16,7 @@ import java.io.File;
 import java.time.LocalDate;
 import java.util.*;
 
-class GtfsStorage implements GraphExtension {
+public class GtfsStorage implements GraphExtension {
 
     static long traveltime(int edgeTimeValue, long earliestStartTime) {
         int timeOfDay = (int) (earliestStartTime % (24*60*60));

@@ -37,9 +37,6 @@ import java.util.*;
  */
 class MultiCriteriaLabelSetting {
 
-
-
-    private final Graph graph;
     private final PtFlagEncoder flagEncoder;
     private final Weighting weighting;
     private final SetMultimap<Integer, Label> fromMap;
@@ -47,16 +44,13 @@ class MultiCriteriaLabelSetting {
     private final int maxVisitedNodes;
     private final boolean reverse;
     private long rangeQueryEndTime;
-    private GtfsStorage gtfsStorage;
     private int visitedNodes;
     private final GraphExplorer explorer;
 
-    MultiCriteriaLabelSetting(Graph graph, Weighting weighting, int maxVisitedNodes, GtfsStorage gtfsStorage, GraphExplorer explorer, boolean reverse) {
-        this.graph = graph;
+    MultiCriteriaLabelSetting(Graph graph, Weighting weighting, int maxVisitedNodes, GraphExplorer explorer, boolean reverse) {
         this.weighting = weighting;
         this.flagEncoder = (PtFlagEncoder) weighting.getFlagEncoder();
         this.maxVisitedNodes = maxVisitedNodes;
-        this.gtfsStorage = gtfsStorage;
         this.explorer = explorer;
         this.reverse = reverse;
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
@@ -160,15 +154,6 @@ class MultiCriteriaLabelSetting {
                 iterator.remove();
             }
         }
-    }
-
-    private boolean isNotDominatedBy(Label me, Set<Label> sptEntries) {
-        for (Label they : sptEntries) {
-            if (dominates(they, me)) {
-                return false;
-            }
-        }
-        return true;
     }
 
     private boolean dominates(Label me, Label they) {

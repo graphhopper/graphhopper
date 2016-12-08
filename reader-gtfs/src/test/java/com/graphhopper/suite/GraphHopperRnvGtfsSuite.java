@@ -40,16 +40,13 @@ public class GraphHopperRnvGtfsSuite {
     @BeforeClass
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
-        graphHopper = new GraphHopperGtfs();
-        graphHopper.setGtfsFile("files/rnv.zip");
-        graphHopper.setCreateWalkNetwork(true);
-        graphHopper.load(GRAPH_LOC);
+        graphHopper = GraphHopperGtfs.createGraphHopperGtfs(GRAPH_LOC, "files/rnv.zip", true);
     }
 
     @AfterClass
     public static void tearDown() {
-        if (graphHopper != null)
-            graphHopper.close();
+//        if (graphHopper != null)
+//            graphHopper.close();
     }
 
     @Test
