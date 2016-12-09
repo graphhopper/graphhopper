@@ -19,10 +19,15 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.util.spatialrules.EmptySpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -74,6 +79,13 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private EncodedValue highwayEncoder;
     private EncodedValue transportModeEncoder;
     private EncodedValue accessEncoder;
+
+    private SpatialRuleLookup spatialRuleLookup = new EmptySpatialRuleLookup();
+
+    public DataFlagEncoder(SpatialRuleLookup spatialRuleLookup){
+        this();
+        this.spatialRuleLookup = spatialRuleLookup;
+    }
 
     public DataFlagEncoder() {
         // TODO include turn information
@@ -217,6 +229,15 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             }
         }
 
+        if(accessValue == 0){
+            GHPoint estmCentre = way.getTag("estimated_center", null);
+            if (estmCentre != null) {
+                SpatialRule rule = spatialRuleLookup.lookupRule(estmCentre);
+                accessValue = getEdgeValueForAccess(rule.isAccessible(way, ""));
+            }
+
+        }
+
         return accessValue;
     }
 
@@ -230,6 +251,19 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
                 return AccessValue.NOT_ACCESSIBLE;
             default:
                 return AccessValue.EVENTUALLY_ACCESSIBLE;
+        }
+    }
+
+    public int getEdgeValueForAccess(AccessValue accessValue) {
+        switch (accessValue) {
+            case ACCESSIBLE:
+                return 0;
+            case NOT_ACCESSIBLE:
+                return accessMap.get("no");
+            case EVENTUALLY_ACCESSIBLE:
+                return 5;
+            default:
+                return 0;
         }
     }
 
@@ -578,11 +612,4 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return cMap;
     }
 
-    public enum AccessValue {
-
-        ACCESSIBLE,
-        EVENTUALLY_ACCESSIBLE,
-        NOT_ACCESSIBLE
-
-    }
 }

@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.graphhopper.routing.util.spatialrules.AccessValue;
 import org.junit.Test;
 
 import com.graphhopper.reader.ReaderWay;
@@ -123,13 +124,13 @@ public class DataFlagEncoderTest {
     public void testDestinationTag() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
-        assertEquals(DataFlagEncoder.AccessValue.ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+        assertEquals(AccessValue.ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
 
         way.setTag("vehicle", "destination");
-        assertEquals(DataFlagEncoder.AccessValue.EVENTUALLY_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
 
         way.setTag("vehicle", "no");
-        assertEquals(DataFlagEncoder.AccessValue.NOT_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+        assertEquals(AccessValue.NOT_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
     }
 
     @Test
