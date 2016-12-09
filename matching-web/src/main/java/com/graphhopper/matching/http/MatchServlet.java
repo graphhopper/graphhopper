@@ -64,7 +64,6 @@ public class MatchServlet extends GraphHopperServlet {
     public void doPost(HttpServletRequest httpReq, HttpServletResponse httpRes)
             throws ServletException, IOException {
 
-    	logger.info("posted");
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale();
         String inType = "gpx";
         String contentType = httpReq.getContentType();
