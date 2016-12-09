@@ -42,7 +42,8 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
  * rajanski, script to do routing via PostGIS
  * rodneyodonnell, improved dead end removal and fords
  * rodo, more descriptions
- * seeebiii, motorcycle improvements 
+ * seeebiii, motorcycle improvements
+ * stefanholder, Stefan Holder, BMW AG, refactored unfavoring of virtual edges #885
  * Svantulden, improved documentation and nearest API
  * thehereward, code cleanups like #620
  * vvikas, ideas for many to many improvements and #616
