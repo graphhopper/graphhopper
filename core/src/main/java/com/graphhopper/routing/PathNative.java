@@ -42,8 +42,8 @@ public class PathNative extends Path {
     public Path extract() {
         if (endNode < 0)
             return this;
-        
-        int prevEdge = EdgeIterator.NO_EDGE;        
+
+        int prevEdge = EdgeIterator.NO_EDGE;
         while (true) {
             int edgeId = parentEdges[endNode];
             if (!EdgeIterator.Edge.isValid(edgeId))

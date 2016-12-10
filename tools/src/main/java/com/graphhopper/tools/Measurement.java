@@ -78,14 +78,12 @@ public class Measurement {
 
         GraphHopper hopper = new GraphHopperOSM() {
             @Override
-            protected void prepareCH()
-            {
+            protected void prepareCH() {
                 StopWatch sw = new StopWatch().start();
                 super.prepareCH();
                 put("prepare.ch.time", sw.stop().getTime());
                 int edges = getGraphHopperStorage().getAllEdges().getMaxId();
-                if (getCHFactoryDecorator().hasWeightings())
-                {
+                if (getCHFactoryDecorator().hasWeightings()) {
                     Weighting weighting = getCHFactoryDecorator().getWeightings().get(0);
                     int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().getMaxId();
                     put("prepare.ch.shortcuts", edgesAndShortcuts - edges);
@@ -121,25 +119,21 @@ public class Measurement {
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
             printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1);
 
-            if (hopper.getLMFactoryDecorator().isEnabled())
-            {
+            if (hopper.getLMFactoryDecorator().isEnabled()) {
                 System.gc();
                 isLM = true;
                 int lmCount = hopper.getLMFactoryDecorator().getLandmarks();
-                for (; lmCount > 1; lmCount = lmCount / 2)
-                {
+                for (; lmCount > 1; lmCount = lmCount / 2) {
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 10, "routingLM" + lmCount, vehicleStr, true, lmCount);
                 }
 
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
 
-            if (hopper.getCHFactoryDecorator().isEnabled())
-            {
+            if (hopper.getCHFactoryDecorator().isEnabled()) {
                 isCH = true;
 
-                if (hopper.getLMFactoryDecorator().isEnabled())
-                {
+                if (hopper.getLMFactoryDecorator().isEnabled()) {
                     isLM = true;
                     System.gc();
                     // try just one constellation, often max/2 is best
@@ -289,16 +283,14 @@ public class Measurement {
         print("unit_tests" + description + ".get_edge_state", miniPerf);
     }
 
-    private void compareRouting( final GraphHopper hopper, String vehicle, int count )
-    {
+    private void compareRouting(final GraphHopper hopper, String vehicle, int count) {
         logger.info("Comparing " + count + " routes. Differences will be printed to stderr.");
         String algo = Algorithms.ASTAR_BI;
         final Random rand = new Random(seed);
         final Graph g = hopper.getGraphHopperStorage();
         final NodeAccess na = g.getNodeAccess();
 
-        for (int i = 0; i < count; i++)
-        {
+        for (int i = 0; i < count; i++) {
             int from = rand.nextInt(maxNode);
             int to = rand.nextInt(maxNode);
 
@@ -316,8 +308,7 @@ public class Measurement {
             GHResponse originalRsp = hopper.route(req);
 
             String locStr = " iteration " + i + ". " + fromLat + "," + fromLon + " -> " + toLat + "," + toLon;
-            if (lmRsp.hasErrors())
-            {
+            if (lmRsp.hasErrors()) {
                 if (originalRsp.hasErrors())
                     continue;
                 logger.error("Error for LM but not for original response " + locStr);
@@ -333,10 +324,9 @@ public class Measurement {
         }
     }
 
-    private void printTimeOfRouteQuery( final GraphHopper hopper, final boolean ch, final boolean lm,
-                                        int count, String prefix, final String vehicle,
-                                        final boolean withInstructions, final int activeLandmarks )
-    {
+    private void printTimeOfRouteQuery(final GraphHopper hopper, final boolean ch, final boolean lm,
+                                       int count, String prefix, final String vehicle,
+                                       final boolean withInstructions, final int activeLandmarks) {
         final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);

@@ -25,9 +25,7 @@ import com.graphhopper.reader.shp.OSMShapeFileReader.EdgeAddedListener;
 import com.graphhopper.storage.GraphHopperStorage;
 
 /**
- *
  * @author Phil
- *
  */
 public class GraphhopperSHP extends GraphHopper {
     private final HashSet<EdgeAddedListener> edgeAddedListeners = new HashSet<>();

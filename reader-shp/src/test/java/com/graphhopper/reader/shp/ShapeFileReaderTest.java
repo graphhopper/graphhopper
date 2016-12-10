@@ -45,7 +45,6 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 
 /**
- *
  * @author Vikas Veshishth
  * @author Philip Welch
  */
@@ -273,14 +272,14 @@ public class ShapeFileReaderTest {
         // try a couple of test points, with an expected time range that will
         // only fail if something is really bad...
         ExpectedDuration[] expected = new ExpectedDuration[]{
-            new ExpectedDuration(35.899167, 14.515171, 35.894126, 14.502983, 60,
-            60 * 6),
-            new ExpectedDuration(35.899167, 14.515171, 35.877645, 14.398956, 8 * 60,
-            25 * 60),
-            new ExpectedDuration(35.85817, 14.561348, 35.877645, 14.398956, 10 * 60,
-            30 * 60),
-            new ExpectedDuration(35.812802, 14.528732, 35.979673, 14.335785, 20 * 60,
-            50 * 60),};
+                new ExpectedDuration(35.899167, 14.515171, 35.894126, 14.502983, 60,
+                        60 * 6),
+                new ExpectedDuration(35.899167, 14.515171, 35.877645, 14.398956, 8 * 60,
+                        25 * 60),
+                new ExpectedDuration(35.85817, 14.561348, 35.877645, 14.398956, 10 * 60,
+                        30 * 60),
+                new ExpectedDuration(35.812802, 14.528732, 35.979673, 14.335785, 20 * 60,
+                        50 * 60),};
 
         // The chosen locations should have small deviations in travel times
         double tolDiffFromPbf = 0.01;

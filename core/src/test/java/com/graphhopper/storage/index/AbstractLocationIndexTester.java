@@ -185,8 +185,8 @@ public abstract class AbstractLocationIndexTester {
             }
 
             assertTrue(i + " orig:" + (float) lat + "," + (float) lon
-                    + " full:" + fullLat + "," + fullLon + " fullDist:" + fullDist
-                    + " found:" + newLat + "," + newLon + " foundDist:" + newDist,
+                            + " full:" + fullLat + "," + fullLon + " fullDist:" + fullDist
+                            + " found:" + newLat + "," + newLon + " foundDist:" + newDist,
                     Math.abs(fullDist - newDist) < 50000);
         }
         fullIndex.close();

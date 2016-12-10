@@ -23,9 +23,8 @@ import com.graphhopper.util.CmdArgs;
 /**
  * @author Peter Karich
  */
-public interface RoutingAlgorithmFactoryDecorator
-{
-    void init( CmdArgs args );
+public interface RoutingAlgorithmFactoryDecorator {
+    void init(CmdArgs args);
 
     boolean isEnabled();
 

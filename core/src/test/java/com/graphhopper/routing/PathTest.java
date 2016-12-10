@@ -57,7 +57,7 @@ public class PathTest {
         Path p = new Path(g, new FastestWeighting(tmpEnc));
         long flags = tmpEnc.setSpeed(tmpEnc.setReverseSpeed(tmpEnc.setAccess(0, true, true), 10), 15);
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(100000, flags);
-                
+
         assertEquals(375 * 60 * 1000, p.calcMillis(edge, false));
         assertEquals(600 * 60 * 1000, p.calcMillis(edge, true));
 

@@ -47,8 +47,8 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
     /**
      * Removes any characters in the String that we don't care about in the matching procedure
      */
-    private String prepareName(String name){
-        if(name == null){
+    private String prepareName(String name) {
+        if (name == null) {
             name = "";
         }
 
@@ -58,8 +58,8 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         return name;
     }
 
-    private String removeRelation(String edgeName){
-        if(edgeName != null && edgeName.contains(", ")){
+    private String removeRelation(String edgeName) {
+        if (edgeName != null && edgeName.contains(", ")) {
             edgeName = edgeName.substring(0, edgeName.lastIndexOf(','));
         }
         return edgeName;
@@ -67,25 +67,25 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
 
     @Override
     public final boolean accept(EdgeIteratorState iter) {
-        if(!edgeFilter.accept(iter)){
+        if (!edgeFilter.accept(iter)) {
             return false;
         }
 
         // Don't check if PointHint is empty anyway
-        if(soughtName.isEmpty()){
+        if (soughtName.isEmpty()) {
             return true;
         }
 
         String name = iter.getName();
 
-        if(name == null || name.isEmpty()){
+        if (name == null || name.isEmpty()) {
             return false;
         }
 
         name = removeRelation(name);
         name = prepareName(name);
 
-        switch (STRING_MATCHING_ALGO){
+        switch (STRING_MATCHING_ALGO) {
             case LEVENSHTEIN:
                 return isLevenshteinSimilar(name);
             case EXACT:
@@ -95,8 +95,8 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
 
     }
 
-    private boolean isLevenshteinSimilar(String name){
-        int perfectDistance = (int) (Math.abs(soughtName.length()-name.length()) + Math.ceil(soughtName.length()*LEVENSHTEIN_ACCEPT_FACTOR));
+    private boolean isLevenshteinSimilar(String name) {
+        int perfectDistance = (int) (Math.abs(soughtName.length() - name.length()) + Math.ceil(soughtName.length() * LEVENSHTEIN_ACCEPT_FACTOR));
         int levDistance = StringUtils.getLevenshteinDistance(soughtName, name);
         return levDistance <= perfectDistance;
     }

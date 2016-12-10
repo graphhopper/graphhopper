@@ -28,22 +28,19 @@ import com.graphhopper.storage.Storable;
  *
  * @author Peter Karich
  */
-public class SubnetworkStorage implements Storable<SubnetworkStorage>
-{
+public class SubnetworkStorage implements Storable<SubnetworkStorage> {
     private final DataAccess da;
 
-    public SubnetworkStorage( Directory dir, String postfix )
-    {
+    public SubnetworkStorage(Directory dir, String postfix) {
         DAType type = dir.getDefaultType();
-        da = dir.find("subnetwork_" + postfix, type.isMMap()? DAType.MMAP : (type.isStoring() ? DAType.RAM_STORE : DAType.RAM));
+        da = dir.find("subnetwork_" + postfix, type.isMMap() ? DAType.MMAP : (type.isStoring() ? DAType.RAM_STORE : DAType.RAM));
     }
 
     /**
      * Returns the subnetwork ID for the specified nodeId or 0 if non is associated e.g. because the
      * subnetwork is too small.
      */
-    public int getSubnetwork( int nodeId )
-    {
+    public int getSubnetwork(int nodeId) {
         byte[] bytes = new byte[1];
         da.getBytes(nodeId, bytes, bytes.length);
 
@@ -54,8 +51,7 @@ public class SubnetworkStorage implements Storable<SubnetworkStorage>
      * This method sets the subnetwork if of the specified nodeId. Default is 0 and means subnetwork
      * was too small to be useful to be stored.
      */
-    public void setSubnetwork( int nodeId, int subnetwork )
-    {
+    public void setSubnetwork(int nodeId, int subnetwork) {
         if (subnetwork > 127)
             throw new IllegalArgumentException("Number of subnetworks is currently limited to 127 but requested " + subnetwork);
 
@@ -66,40 +62,34 @@ public class SubnetworkStorage implements Storable<SubnetworkStorage>
 
     @Override
 
-    public boolean loadExisting()
-    {
+    public boolean loadExisting() {
         return da.loadExisting();
     }
 
     @Override
-    public SubnetworkStorage create( long byteCount )
-    {
+    public SubnetworkStorage create(long byteCount) {
         da.create(2000);
         da.ensureCapacity(byteCount);
         return this;
     }
 
     @Override
-    public void flush()
-    {
+    public void flush() {
         da.flush();
     }
 
     @Override
-    public void close()
-    {
+    public void close() {
         da.close();
     }
 
     @Override
-    public boolean isClosed()
-    {
+    public boolean isClosed() {
         return da.isClosed();
     }
 
     @Override
-    public long getCapacity()
-    {
+    public long getCapacity() {
         return da.getCapacity();
     }
 }

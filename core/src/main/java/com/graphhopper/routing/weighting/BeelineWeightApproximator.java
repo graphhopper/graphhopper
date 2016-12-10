@@ -40,8 +40,7 @@ public class BeelineWeightApproximator implements WeightApproximator {
     }
 
     @Override
-    public void setTo( int toNode )
-    {
+    public void setTo(int toNode) {
         toLat = nodeAccess.getLatitude(toNode);
         toLon = nodeAccess.getLongitude(toNode);
     }
@@ -52,8 +51,7 @@ public class BeelineWeightApproximator implements WeightApproximator {
     }
 
     @Override
-    public WeightApproximator reverse()
-    {
+    public WeightApproximator reverse() {
         return new BeelineWeightApproximator(nodeAccess, weighting).
                 setDistanceCalc(distanceCalc).
                 setEpsilon(epsilon);
@@ -74,8 +72,7 @@ public class BeelineWeightApproximator implements WeightApproximator {
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         return "beeline";
     }
 }

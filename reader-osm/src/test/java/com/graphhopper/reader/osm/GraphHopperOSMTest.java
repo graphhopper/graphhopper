@@ -363,10 +363,10 @@ public class GraphHopperOSMTest {
     public void testFailsForWrongConfig() throws IOException {
         instance = new GraphHopperOSM().init(
                 new CmdArgs().
-                put("datareader.file", testOsm3).
-                put("datareader.dataaccess", "RAM").
-                put("graph.flag_encoders", "foot,car").
-                put("prepare.ch.weightings", "no")).
+                        put("datareader.file", testOsm3).
+                        put("datareader.dataaccess", "RAM").
+                        put("graph.flag_encoders", "foot,car").
+                        put("prepare.ch.weightings", "no")).
                 setGraphHopperLocation(ghLoc);
         instance.importOrLoad();
         assertEquals(5, instance.getGraphHopperStorage().getNodes());
@@ -376,10 +376,10 @@ public class GraphHopperOSMTest {
         try {
             GraphHopper tmpGH = new GraphHopperOSM().init(
                     new CmdArgs().
-                    put("datareader.file", testOsm3).
-                    put("datareader.dataaccess", "RAM").
-                    put("graph.flag_encoders", "foot").
-                    put("prepare.ch.weightings", "no")).
+                            put("datareader.file", testOsm3).
+                            put("datareader.dataaccess", "RAM").
+                            put("graph.flag_encoders", "foot").
+                            put("prepare.ch.weightings", "no")).
                     setDataReaderFile(testOsm3);
             tmpGH.load(ghLoc);
             assertTrue(false);
@@ -390,11 +390,11 @@ public class GraphHopperOSMTest {
         // different bytesForFlags should fail to load
         instance = new GraphHopperOSM().init(
                 new CmdArgs().
-                put("datareader.file", testOsm3).
-                put("datareader.dataaccess", "RAM").
-                put("graph.flag_encoders", "foot,car").
-                put("graph.bytes_for_flags", 8).
-                put("prepare.ch.weightings", "no")).
+                        put("datareader.file", testOsm3).
+                        put("datareader.dataaccess", "RAM").
+                        put("graph.flag_encoders", "foot,car").
+                        put("graph.bytes_for_flags", 8).
+                        put("prepare.ch.weightings", "no")).
                 setDataReaderFile(testOsm3);
         try {
             instance.load(ghLoc);
@@ -739,13 +739,11 @@ public class GraphHopperOSMTest {
         final RoutingAlgorithmFactory af = new RoutingAlgorithmFactorySimple();
         instance.addAlgorithmFactoryDecorator(new RoutingAlgorithmFactoryDecorator() {
             @Override
-            public void init( CmdArgs args )
-            {
+            public void init(CmdArgs args) {
             }
 
             @Override
-            public RoutingAlgorithmFactory getDecoratedAlgorithmFactory( RoutingAlgorithmFactory algoFactory, HintsMap map )
-            {
+            public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory algoFactory, HintsMap map) {
                 return af;
             }
 
@@ -762,8 +760,7 @@ public class GraphHopperOSMTest {
         final AtomicInteger cnt = new AtomicInteger(0);
         instance.addAlgorithmFactoryDecorator(new RoutingAlgorithmFactoryDecorator() {
             @Override
-            public void init( CmdArgs args )
-            {
+            public void init(CmdArgs args) {
             }
 
             public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory algoFactory, HintsMap map) {

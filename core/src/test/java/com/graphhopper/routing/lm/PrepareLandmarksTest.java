@@ -26,7 +26,9 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
+
 import java.io.File;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -43,15 +45,13 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class PrepareLandmarksTest
-/* extends AbstractRoutingAlgorithmTester */
-{
+/* extends AbstractRoutingAlgorithmTester */ {
     private GraphHopperStorage graph;
     private FlagEncoder encoder;
     private TraversalMode tm;
 
     @Before
-    public void setUp()
-    {
+    public void setUp() {
         encoder = new CarFlagEncoder();
         tm = TraversalMode.NODE_BASED;
         GraphHopperStorage tmp = new GraphHopperStorage(new RAMDirectory(),
@@ -61,18 +61,15 @@ public class PrepareLandmarksTest
     }
 
     @Test
-    public void testLandMarkStore()
-    {
+    public void testLandMarkStore() {
         // create graph with lat,lon 
         // 0  1  2  ...
         // 15 16 17 ...
         Random rand = new Random(0);
         int width = 15, height = 15;
 
-        for (int hIndex = 0; hIndex < height; hIndex++)
-        {
-            for (int wIndex = 0; wIndex < width; wIndex++)
-            {
+        for (int hIndex = 0; hIndex < height; hIndex++) {
+            for (int wIndex = 0; wIndex < width; wIndex++) {
                 int node = wIndex + hIndex * width;
 
                 long flags = encoder.setProperties(20 + rand.nextDouble() * 30, true, true);
@@ -166,8 +163,7 @@ public class PrepareLandmarksTest
     }
 
     @Test
-    public void testStoreAndLoad()
-    {
+    public void testStoreAndLoad() {
         graph.edge(0, 1, 80, true);
         graph.edge(1, 2, 80, true);
         String fileStr = "./target/tmp-lm";
@@ -182,9 +178,9 @@ public class PrepareLandmarksTest
 
         assertTrue(plm.getLandmarkStorage().isInitialized());
         assertEquals(Arrays.toString(new int[]
-        {
-            2, 0
-        }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
+                {
+                        2, 0
+                }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
         assertEquals(2, plm.getLandmarkStorage().getFromWeight(0, 1));
 
         dir = new RAMDirectory(fileStr, true);
@@ -192,9 +188,9 @@ public class PrepareLandmarksTest
         assertTrue(plm.loadExisting());
         assertEquals(expectedFactor, plm.getLandmarkStorage().getFactor(), 1e-6);
         assertEquals(Arrays.toString(new int[]
-        {
-            2, 0
-        }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
+                {
+                        2, 0
+                }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
         assertEquals(2, plm.getLandmarkStorage().getFromWeight(0, 1));
 
         Helper.removeDir(new File(fileStr));

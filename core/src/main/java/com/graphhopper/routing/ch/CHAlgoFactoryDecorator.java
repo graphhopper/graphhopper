@@ -324,7 +324,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         traversalMode = getNodeBase();
 
         for (Weighting weighting : getWeightings()) {
-            if(weighting instanceof GenericWeighting){
+            if (weighting instanceof GenericWeighting) {
                 ((GenericWeighting) weighting).setGraph(ghStorage);
             }
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(

@@ -10,7 +10,7 @@ import java.util.Date;
  * <p>
  *
  * @author Brett Henderson
- * <p>
+ *         <p>
  */
 public class PbfFieldDecoder {
     private static final double COORDINATE_SCALING_FACTOR = 0.000000001;

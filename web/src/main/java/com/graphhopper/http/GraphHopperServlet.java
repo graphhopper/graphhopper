@@ -23,7 +23,9 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+
 import static com.graphhopper.util.Parameters.Routing.*;
+
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import org.json.JSONObject;

@@ -114,7 +114,7 @@ public class NameSimilarityEdgeFilterTest {
         assertFalse(edgeFilter.accept(edge));
     }
 
-    private EdgeIteratorState createTestEdgeIterator(final String name){
+    private EdgeIteratorState createTestEdgeIterator(final String name) {
         return new GHUtility.DisabledEdgeIterator() {
 
             @Override

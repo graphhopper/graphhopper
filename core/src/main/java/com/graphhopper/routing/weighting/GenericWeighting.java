@@ -92,20 +92,20 @@ public class GenericWeighting extends AbstractWeighting {
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 
-        switch (gEncoder.getEdgeAccessValue(edgeState.getFlags())){
+        switch (gEncoder.getEdgeAccessValue(edgeState.getFlags())) {
             case NOT_ACCESSIBLE:
                 return Double.POSITIVE_INFINITY;
             case EVENTUALLY_ACCESSIBLE:
                 time = time * eventuallAccessiblePenalty;
         }
 
-        if(!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())){
+        if (!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())) {
             return Double.POSITIVE_INFINITY;
         }
 
-        if(!blockedShapes.isEmpty() && na != null){
-            for (Shape shape: blockedShapes) {
-                if(shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()))){
+        if (!blockedShapes.isEmpty() && na != null) {
+            for (Shape shape : blockedShapes) {
+                if (shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()))) {
                     return Double.POSITIVE_INFINITY;
                 }
             }
@@ -162,7 +162,7 @@ public class GenericWeighting extends AbstractWeighting {
      * Use this method to associate a graph with this weighting to calculate e.g. node locations too.
      */
     public void setGraph(Graph graph) {
-        if(graph == null)
+        if (graph == null)
             return;
         this.na = graph.getNodeAccess();
     }

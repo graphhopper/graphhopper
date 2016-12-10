@@ -644,8 +644,7 @@ public class GraphHopper implements GraphHopperAPI {
         minOneWayNetworkSize = args.getInt("prepare.min_one_way_network_size", minOneWayNetworkSize);
 
         // prepare CH, LM, ...
-        for (RoutingAlgorithmFactoryDecorator decorator : algoDecorators)
-        {
+        for (RoutingAlgorithmFactoryDecorator decorator : algoDecorators) {
             decorator.init(args);
         }
 
@@ -802,8 +801,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (lmFactoryDecorator.isEnabled())
             initLMAlgoFactoryDecorator();
 
-        if (chFactoryDecorator.isEnabled())
-        {
+        if (chFactoryDecorator.isEnabled()) {
             initCHAlgoFactoryDecorator();
             ghStorage = new GraphHopperStorage(chFactoryDecorator.getWeightings(), dir, encodingManager, hasElevation(), ext);
         } else {
@@ -879,20 +877,16 @@ public class GraphHopper implements GraphHopperAPI {
         chFactoryDecorator.createPreparations(ghStorage, traversalMode);
     }
 
-    public final LMAlgoFactoryDecorator getLMFactoryDecorator()
-    {
+    public final LMAlgoFactoryDecorator getLMFactoryDecorator() {
         return lmFactoryDecorator;
     }
 
-    private void initLMAlgoFactoryDecorator()
-    {
+    private void initLMAlgoFactoryDecorator() {
         if (lmFactoryDecorator.hasWeightings())
             return;
 
-        for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders())
-        {
-            for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings())
-            {
+        for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
+            for (String lmWeightingStr : lmFactoryDecorator.getWeightingsAsStrings()) {
                 Weighting weighting = createWeighting(new HintsMap(lmWeightingStr), encoder, null);
                 lmFactoryDecorator.addWeighting(weighting);
             }
@@ -1218,13 +1212,11 @@ public class GraphHopper implements GraphHopperAPI {
         locationIndex = createLocationIndex(ghStorage.getDirectory());
     }
 
-    private boolean isCHPrepared()
-    {
+    private boolean isCHPrepared() {
         return "true".equals(ghStorage.getProperties().get("prepare.ch.done"));
     }
 
-    protected void prepareCH()
-    {
+    protected void prepareCH() {
         boolean tmpPrepare = chFactoryDecorator.isEnabled();
         if (tmpPrepare) {
             ensureWriteAccess();
@@ -1238,11 +1230,9 @@ public class GraphHopper implements GraphHopperAPI {
         ghStorage.getProperties().put("prepare.ch.done", tmpPrepare);
     }
 
-    protected void prepareLM()
-    {
+    protected void prepareLM() {
         boolean tmpPrepare = lmFactoryDecorator.isEnabled();
-        if (tmpPrepare)
-        {
+        if (tmpPrepare) {
             ensureWriteAccess();
             ghStorage.freeze();
             lmFactoryDecorator.loadOrDoWork();

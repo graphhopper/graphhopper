@@ -39,10 +39,10 @@ public class FeatureJsonDeserializer implements JsonDeserializer<JsonFeature> {
         try {
             JsonObject obj = json.getAsJsonObject();
             String id, strType = null;
-            Map<String,Object> properties = null;
+            Map<String, Object> properties = null;
             BBox bbox = null;
             Geometry geometry = null;
-            
+
             // TODO ensure uniqueness
             if (obj.has("id"))
                 id = obj.get("id").getAsString();
@@ -50,7 +50,7 @@ public class FeatureJsonDeserializer implements JsonDeserializer<JsonFeature> {
                 id = UUID.randomUUID().toString();
 
             if (obj.has("properties")) {
-               properties= context.deserialize(obj.get("properties"), Map.class);
+                properties = context.deserialize(obj.get("properties"), Map.class);
             }
 
             if (obj.has("bbox"))
@@ -63,7 +63,7 @@ public class FeatureJsonDeserializer implements JsonDeserializer<JsonFeature> {
                     if (!geometryJson.has("type"))
                         throw new IllegalArgumentException("No type for non-empty coordinates specified");
 
-                     strType = context.deserialize(geometryJson.get("type"), String.class);
+                    strType = context.deserialize(geometryJson.get("type"), String.class);
                     if ("Point".equals(strType)) {
                         JsonArray arr = geometryJson.get("coordinates").getAsJsonArray();
                         double lon = arr.get(0).getAsDouble();

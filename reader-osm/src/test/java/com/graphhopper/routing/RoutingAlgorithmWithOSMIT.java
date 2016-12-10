@@ -45,6 +45,7 @@ import static com.graphhopper.GraphHopperIT.DIR;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.assertEquals;
+
 import org.junit.Ignore;
 
 /**
@@ -148,11 +149,11 @@ public class RoutingAlgorithmWithOSMIT {
         Helper.removeDir(new File(graphFile));
         GraphHopper hopper = new GraphHopperOSM().
                 // avoid that path.getDistance is too different to path.getPoint.calcDistance
-                setWayPointMaxDistance(0).
-                setDataReaderFile(osmFile).
-                setCHEnabled(false).
-                setGraphHopperLocation(graphFile).
-                setEncodingManager(new EncodingManager(importVehicles));
+                        setWayPointMaxDistance(0).
+                        setDataReaderFile(osmFile).
+                        setCHEnabled(false).
+                        setGraphHopperLocation(graphFile).
+                        setEncodingManager(new EncodingManager(importVehicles));
 
         hopper.importOrLoad();
 
@@ -521,14 +522,12 @@ public class RoutingAlgorithmWithOSMIT {
     }
 
     /**
-     *
      * @param withPreparedAlgos if true also the CH and LM algorithms will be tested which need
-     * preparation and takes a bit longer
+     *                          preparation and takes a bit longer
      */
-    Graph runAlgo( TestAlgoCollector testCollector, String osmFile,
-                   String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
-                   boolean withPreparedAlgos, String vehicle, String weightStr, boolean is3D )
-    {
+    Graph runAlgo(TestAlgoCollector testCollector, String osmFile,
+                  String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
+                  boolean withPreparedAlgos, String vehicle, String weightStr, boolean is3D) {
         AlgoHelperEntry algoEntry = null;
         OneRun tmpOneRun = null;
         try {
@@ -536,11 +535,11 @@ public class RoutingAlgorithmWithOSMIT {
             GraphHopper hopper = new GraphHopperOSM().
                     setStoreOnFlush(true).
                     // avoid that path.getDistance is too different to path.getPoint.calcDistance
-                    setWayPointMaxDistance(0).
-                    setDataReaderFile(osmFile).
-                    setCHEnabled(false).
-                    setGraphHopperLocation(graphFile).
-                    setEncodingManager(new EncodingManager(importVehicles));
+                            setWayPointMaxDistance(0).
+                            setDataReaderFile(osmFile).
+                            setCHEnabled(false).
+                            setGraphHopperLocation(graphFile).
+                            setEncodingManager(new EncodingManager(importVehicles));
             if (is3D)
                 hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
 
@@ -606,7 +605,7 @@ public class RoutingAlgorithmWithOSMIT {
         for (int no = 0; no < MAX; no++) {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {
                 String[] algos = new String[]{
-                    ASTAR, DIJKSTRA_BI
+                        ASTAR, DIJKSTRA_BI
                 };
                 for (final String algoStr : algos) {
                     // an algorithm is not thread safe! reuse via clear() is ONLY appropriated if used from same thread!

@@ -695,7 +695,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     public void testTwoWeightsPerEdge() {
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
         EncodingManager em = new EncodingManager(encoder);
-        AlgorithmOptions opts = AlgorithmOptions.start().                
+        AlgorithmOptions opts = AlgorithmOptions.start().
                 weighting(new FastestWeighting(encoder)).build();
         GraphHopperStorage graph = createGHStorage(em, Arrays.asList(opts.getWeighting()), true);
         initEleGraph(graph);

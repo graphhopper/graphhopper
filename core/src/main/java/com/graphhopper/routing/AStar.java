@@ -108,16 +108,14 @@ public class AStar extends AbstractRoutingAlgorithm {
 
                 int traversalId = traversalMode.createTraversalId(iter, false);
                 AStarEntry ase = fromMap.get(traversalId);
-                if (ase == null || ase.weightOfVisitedPath > alreadyVisitedWeight)
-                {
+                if (ase == null || ase.weightOfVisitedPath > alreadyVisitedWeight) {
                     int neighborNode = iter.getAdjNode();
                     currWeightToGoal = weightApprox.approximate(neighborNode);
                     estimationFullWeight = alreadyVisitedWeight + currWeightToGoal;
                     if (ase == null) {
                         ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, alreadyVisitedWeight);
                         fromMap.put(traversalId, ase);
-                    } else
-                    {
+                    } else {
 //                        assert (ase.weight > 0.9999999 * estimationFullWeight) : "Inconsistent distance estimate. It is expected weight >= estimationFullWeight but was "
 //                                + ase.weight + " < " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and weightOfVisitedPath:"
 //                                + ase.weightOfVisitedPath + " vs. alreadyVisitedWeight:" + alreadyVisitedWeight + " (" + ase.weightOfVisitedPath / alreadyVisitedWeight + ")";
@@ -183,8 +181,7 @@ public class AStar extends AbstractRoutingAlgorithm {
 
 
     @Override
-    public String getName()
-    {
+    public String getName() {
         return Parameters.Algorithms.ASTAR + "|" + weightApprox;
     }
 }

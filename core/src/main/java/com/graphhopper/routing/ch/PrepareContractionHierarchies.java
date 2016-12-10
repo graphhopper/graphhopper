@@ -647,8 +647,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     @Override
-    public RoutingAlgorithmFactory getOriginalRAFactory()
-    {
+    public RoutingAlgorithmFactory getOriginalRAFactory() {
         return this;
     }
 

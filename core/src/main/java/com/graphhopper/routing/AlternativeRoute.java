@@ -334,8 +334,8 @@ public class AlternativeRoute implements RoutingAlgorithm {
                         // TODO else if fromSPTEntry.parent != null fromSPTEntry = fromSPTEntry.parent;
 
                     } else // The alternative path is suboptimal when both entries are parallel
-                    if (fromSPTEntry.edge == toSPTEntry.edge)
-                        return true;
+                        if (fromSPTEntry.edge == toSPTEntry.edge)
+                            return true;
 
                     // (1) skip too long paths
                     final double weight = fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath();

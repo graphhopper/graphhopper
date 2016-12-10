@@ -74,8 +74,7 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
     }
 
     @Override
-    public RoutingAlgorithmFactory getOriginalRAFactory()
-    {
+    public RoutingAlgorithmFactory getOriginalRAFactory() {
         return this;
     }
 

@@ -359,7 +359,7 @@ public class GHUtility {
     public static int getEdgeFromEdgeKey(int edgeKey) {
         return edgeKey / 2;
     }
-    
+
     /**
      * This edge iterator can be used in tests to mock specific iterator behaviour via overloading
      * certain methods.

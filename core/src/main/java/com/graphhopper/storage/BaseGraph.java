@@ -29,6 +29,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import static com.graphhopper.util.Helper.nf;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

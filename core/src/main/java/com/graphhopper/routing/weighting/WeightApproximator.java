@@ -28,9 +28,9 @@ public interface WeightApproximator {
     /**
      * @return minimal weight of the currentNode to the to node
      */
-    double approximate( int currentNode );
+    double approximate(int currentNode);
 
-    void setTo( int to );
+    void setTo(int to);
 
     /**
      * Makes a 'reverse' copy of itself to make it possible using the two objects independent e.g.
