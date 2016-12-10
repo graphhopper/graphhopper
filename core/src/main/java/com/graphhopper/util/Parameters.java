@@ -169,12 +169,6 @@ public class Parameters {
          * This property name configures at start if DISABLE parameter can have an effect.
          */
         public static final String INIT_DISABLING_ALLOWED = ROUTING_INIT_PREFIX + "lm.disabling_allowed";
-        /**
-         * A low level parameter to recalculate the best active landmark set every X calls. The
-         * higher it gets the less often a recalculation is trigger, which reduces CPU cycles but
-         * could let less optimal landmarks being involved. Default is 500.
-         */
-        public static final String REFRESH_COUNT = "lm.refresh_count";
     }
 
     /**

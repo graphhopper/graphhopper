@@ -179,7 +179,6 @@ public class AStar extends AbstractRoutingAlgorithm {
         }
     }
 
-
     @Override
     public String getName() {
         return Parameters.Algorithms.ASTAR + "|" + weightApprox;

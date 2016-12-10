@@ -26,7 +26,7 @@ package com.graphhopper.routing.weighting;
  */
 public interface WeightApproximator {
     /**
-     * @return minimal weight of the currentNode to the to node
+     * @return minimal weight of the specified currentNode to the 'to' node
      */
     double approximate(int currentNode);
 

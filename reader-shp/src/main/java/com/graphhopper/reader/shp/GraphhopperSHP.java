@@ -25,6 +25,9 @@ import com.graphhopper.reader.shp.OSMShapeFileReader.EdgeAddedListener;
 import com.graphhopper.storage.GraphHopperStorage;
 
 /**
+ * This class is the main entry point to import from OpenStreetMap shape files similar to GraphHopperOSM which imports
+ * OSM xml and pbf files.
+ *
  * @author Phil
  */
 public class GraphhopperSHP extends GraphHopper {

@@ -214,7 +214,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     public List<String> getWeightingsAsStrings() {
         if (this.weightingsAsStrings.isEmpty())
-            throw new IllegalStateException("Potential bug: chWeightingList is empty");
+            throw new IllegalStateException("Potential bug: weightingsAsStrings is empty");
 
         return this.weightingsAsStrings;
     }
@@ -263,7 +263,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                 return p;
         }
 
-        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithFactory for weighting map " + map);
+        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map);
     }
 
     public int getPreparationThreads() {

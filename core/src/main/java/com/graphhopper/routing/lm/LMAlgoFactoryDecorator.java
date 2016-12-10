@@ -186,11 +186,6 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
                 return p.getDecoratedAlgorithm(g, algo, opts);
             }
-
-            @Override
-            public RoutingAlgorithmFactory getOriginalRAFactory() {
-                return defaultAlgoFactory;
-            }
         };
     }
 

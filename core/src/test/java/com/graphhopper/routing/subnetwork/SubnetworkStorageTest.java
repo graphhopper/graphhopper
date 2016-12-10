@@ -1,8 +1,6 @@
 package com.graphhopper.routing.subnetwork;
 
-import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.storage.RAMDirectory;
-import junit.framework.TestCase;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

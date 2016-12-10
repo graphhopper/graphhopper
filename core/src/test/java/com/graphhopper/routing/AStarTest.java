@@ -59,11 +59,6 @@ public class AStarTest extends AbstractRoutingAlgorithmTester {
             public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
                 return new AStar(g, opts.getWeighting(), traversalMode);
             }
-
-            @Override
-            public RoutingAlgorithmFactory getOriginalRAFactory() {
-                return this;
-            }
         };
     }
 }

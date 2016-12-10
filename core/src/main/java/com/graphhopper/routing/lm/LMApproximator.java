@@ -25,6 +25,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
+ * This class is a weight approximation based on precalculated landmarks.
+ *
  * @author Peter Karich
  */
 public class LMApproximator implements WeightApproximator {
@@ -50,15 +52,13 @@ public class LMApproximator implements WeightApproximator {
     private final boolean reverse;
     private final int maxBaseNodes;
     private final Graph graph;
-    private final int refreshCount;
     private final WeightApproximator fallBackApproximation;
     private boolean fallback = false;
     private final GHIntObjectHashMap<VirtEntry> virtNodeMap;
 
     public LMApproximator(Graph graph, int maxBaseNodes, LandmarkStorage lms, int activeCount,
-                          double factor, boolean reverse, int refreshCount) {
+                          double factor, boolean reverse) {
         this.reverse = reverse;
-        this.refreshCount = refreshCount;
         this.lms = lms;
         this.factor = factor;
         if (activeCount > lms.getLandmarkCount())
@@ -196,7 +196,7 @@ public class LMApproximator implements WeightApproximator {
 
     @Override
     public WeightApproximator reverse() {
-        return new LMApproximator(graph, maxBaseNodes, lms, activeLandmarks.length, factor, !reverse, refreshCount);
+        return new LMApproximator(graph, maxBaseNodes, lms, activeLandmarks.length, factor, !reverse);
     }
 
     @Override

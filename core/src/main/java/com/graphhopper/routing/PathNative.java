@@ -24,7 +24,6 @@ import com.graphhopper.util.EdgeIterator;
 
 /**
  * This class creates a Path from a DijkstraOneToMany algorithm
- * <p>
  *
  * @author Peter Karich
  */

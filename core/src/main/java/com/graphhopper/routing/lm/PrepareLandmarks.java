@@ -95,7 +95,6 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     }
 
     public RoutingAlgorithm getDecoratedAlgorithm(Graph qGraph, RoutingAlgorithm algo, AlgorithmOptions opts) {
-        int refreshCount = opts.getHints().getInt(Landmark.REFRESH_COUNT, 500);
         int activeLM = Math.max(1, opts.getHints().getInt(Landmark.ACTIVE_COUNT, defaultActiveLandmarks));
         if (algo instanceof AStar) {
             if (!lms.isInitialized())
@@ -104,7 +103,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR + ".epsilon", 1);
             AStar astar = (AStar) algo;
             // TODO change current factor appropriate to the potential different weighting!                        
-            astar.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false, refreshCount).
+            astar.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
             return algo;
         } else if (algo instanceof AStarBidirection) {
@@ -113,7 +112,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
 
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR_BI + ".epsilon", 1);
             AStarBidirection astarbi = (AStarBidirection) algo;
-            astarbi.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false, refreshCount).
+            astarbi.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
             return algo;
         }

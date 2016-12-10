@@ -28,7 +28,6 @@ import java.util.Locale;
 
 /**
  * GraphHopper request wrapper to simplify requesting GraphHopper.
- * <p>
  *
  * @author Peter Karich
  * @author ratrun

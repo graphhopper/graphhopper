@@ -52,9 +52,7 @@ public class BeelineWeightApproximator implements WeightApproximator {
 
     @Override
     public WeightApproximator reverse() {
-        return new BeelineWeightApproximator(nodeAccess, weighting).
-                setDistanceCalc(distanceCalc).
-                setEpsilon(epsilon);
+        return new BeelineWeightApproximator(nodeAccess, weighting).setDistanceCalc(distanceCalc).setEpsilon(epsilon);
     }
 
     @Override

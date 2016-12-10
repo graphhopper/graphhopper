@@ -36,7 +36,6 @@ import com.graphhopper.util.PointList;
  * class estimates elevation of inner nodes of a tunnel/bridge based on
  * elevations of entry nodes. See #713 for more information.
  * <p>
- * <p>
  * Since inner nodes of tunnel or bridge do not lie on the Earth surface, we
  * should not use elevations returned by the elevation provider for these
  * points. Instead, we'll estimate elevations of these points based on
