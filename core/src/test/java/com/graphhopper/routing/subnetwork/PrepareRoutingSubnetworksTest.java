@@ -18,7 +18,6 @@
 package com.graphhopper.routing.subnetwork;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepEdgeFilter;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.GraphBuilder;
@@ -264,9 +263,7 @@ public class PrepareRoutingSubnetworksTest {
 
         // Requires a single vehicle type, otherwise we throw.
         final EdgeFilter filter = new DefaultEdgeFilter(carFlagEncoder, false, true);
-
-        TarjansSCCAlgorithm tarjan
-                = new TarjansSCCAlgorithm(g, new GHBitSetImpl(), filter);
+        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(g, filter, false);
 
         List<IntArrayList> components = tarjan.findComponents();
 

@@ -516,7 +516,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         graph.edge(2, 3, 2, true).setWayGeometry(Helper.createPointList(0, 1.5));
         graph.edge(3, 4, 2, true).setWayGeometry(Helper.createPointList(0, 2));
 
-        // duplicate but one is longer
+        // reverse but one is longer
         graph.edge(0, 2, 1.2, true);
         graph.edge(0, 2, 1.5, true).setWayGeometry(Helper.createPointList(0.5, 0));
 

@@ -41,8 +41,8 @@ import java.util.concurrent.TimeUnit;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
 
 /**
- * This class implements the CH decorator for the routing algorithm factory and provides several
- * helper methods related to CH preparation and its vehicle profiles.
+ * This class implements the CH decorator and provides several helper methods related to CH
+ * preparation and its vehicle profiles.
  *
  * @author Peter Karich
  */
@@ -69,6 +69,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         setWeightingsAsStrings(Arrays.asList(getDefaultWeighting()));
     }
 
+    @Override
     public void init(CmdArgs args) {
         setPreparationThreads(args.getInt("prepare.threads", getPreparationThreads()));
 
@@ -262,7 +263,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                 return p;
         }
 
-        throw new IllegalArgumentException("Cannot find RoutingAlgorithmFactory for weighting map " + map);
+        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithFactory for weighting map " + map);
     }
 
     public int getPreparationThreads() {

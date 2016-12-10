@@ -101,7 +101,7 @@ public class AStarBidirection extends AbstractBidirAlgo {
     @Override
     public void initFrom(int from, double weight) {
         currFrom = new AStarEntry(EdgeIterator.NO_EDGE, from, weight, weight);
-        weightApprox.setSourceNode(from);
+        weightApprox.setFrom(from);
         prioQueueOpenSetFrom.add(currFrom);
 
         if (currTo != null) {
@@ -127,7 +127,7 @@ public class AStarBidirection extends AbstractBidirAlgo {
     @Override
     public void initTo(int to, double weight) {
         currTo = new AStarEntry(EdgeIterator.NO_EDGE, to, weight, weight);
-        weightApprox.setGoalNode(to);
+        weightApprox.setTo(to);
         prioQueueOpenSetTo.add(currTo);
 
         if (currFrom != null) {
@@ -233,9 +233,9 @@ public class AStarBidirection extends AbstractBidirAlgo {
                     ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, alreadyVisitedWeight);
                     bestWeightMap.put(traversalId, ase);
                 } else {
-                    assert (ase.weight > 0.999999 * estimationFullWeight) : "Inconsistent distance estimate "
-                            + ase.weight + " vs " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and:"
-                            + ase.getWeightOfVisitedPath() + " vs " + alreadyVisitedWeight + " (" + ase.getWeightOfVisitedPath() / alreadyVisitedWeight + ")";
+//                    assert (ase.weight > 0.999999 * estimationFullWeight) : "Inconsistent distance estimate "
+//                            + ase.weight + " vs " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and:"
+//                            + ase.getWeightOfVisitedPath() + " vs " + alreadyVisitedWeight + " (" + ase.getWeightOfVisitedPath() / alreadyVisitedWeight + ")";
                     prioQueueOpenSet.remove(ase);
                     ase.edge = iter.getEdge();
                     ase.weight = estimationFullWeight;

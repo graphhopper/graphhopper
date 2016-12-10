@@ -58,6 +58,12 @@ public class DijkstraBidirectionRefTest extends AbstractRoutingAlgorithmTester {
             public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
                 return new DijkstraBidirectionRef(g, opts.getWeighting(), traversalMode);
             }
+
+            @Override
+            public RoutingAlgorithmFactory getOriginalRAFactory()
+            {
+                return this;
+            }
         };
     }
 }

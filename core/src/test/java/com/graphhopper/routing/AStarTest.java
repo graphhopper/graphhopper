@@ -42,6 +42,7 @@ public class AStarTest extends AbstractRoutingAlgorithmTester {
      * Runs the same test with each of the supported traversal modes
      */
     @Parameters(name = "{0}")
+
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
             {TraversalMode.NODE_BASED},
@@ -57,6 +58,12 @@ public class AStarTest extends AbstractRoutingAlgorithmTester {
             @Override
             public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
                 return new AStar(g, opts.getWeighting(), traversalMode);
+            }
+
+            @Override
+            public RoutingAlgorithmFactory getOriginalRAFactory()
+            {
+                return this;
             }
         };
     }

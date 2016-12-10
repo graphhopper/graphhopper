@@ -29,7 +29,6 @@ package com.graphhopper.util;
 public interface EdgeExplorer {
     /**
      * This method sets the base node for iteration through neighboring edges (EdgeIteratorStates).
-     * <p>
      *
      * @return EdgeIterator around the specified baseNode. The resulting iterator can be a new
      * instance or a reused instance returned in a previous call. So be sure you do not use the

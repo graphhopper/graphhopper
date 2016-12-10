@@ -521,12 +521,14 @@ public class RoutingAlgorithmWithOSMIT {
     }
 
     /**
-     * @param testAlsoCH if true also the CH algorithms will be tested which needs preparation and
-     *                   takes a bit longer
+     *
+     * @param withPreparedAlgos if true also the CH and LM algorithms will be tested which need
+     * preparation and takes a bit longer
      */
-    Graph runAlgo(TestAlgoCollector testCollector, String osmFile,
-                  String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
-                  boolean testAlsoCH, String vehicle, String weightStr, boolean is3D) {
+    Graph runAlgo( TestAlgoCollector testCollector, String osmFile,
+                   String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
+                   boolean withPreparedAlgos, String vehicle, String weightStr, boolean is3D )
+    {
         AlgoHelperEntry algoEntry = null;
         OneRun tmpOneRun = null;
         try {
@@ -550,7 +552,8 @@ public class RoutingAlgorithmWithOSMIT {
             Weighting weighting = hopper.createWeighting(new HintsMap(weightStr), encoder, hopper.getGraphHopperStorage());
 
             Collection<AlgoHelperEntry> prepares = RoutingAlgorithmIT.createAlgos(hopper.getGraphHopperStorage(),
-                    hopper.getLocationIndex(), testAlsoCH, tMode, weighting, hopper.getEncodingManager());
+                    hopper.getLocationIndex(), withPreparedAlgos, tMode, weighting, hopper.getEncodingManager());
+
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (AlgoHelperEntry entry : prepares) {
                 algoEntry = entry;

@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
@@ -49,7 +50,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class RoutingAlgorithmIT {
     public static List<AlgoHelperEntry> createAlgos(GraphHopperStorage ghStorage,
-                                                    LocationIndex idx, boolean withCh,
+                                                    LocationIndex idx, boolean withPreparedAlgo,
                                                     final TraversalMode tMode, final Weighting weighting,
                                                     final EncodingManager manager) {
         List<AlgoHelperEntry> prepare = new ArrayList<AlgoHelperEntry>();
@@ -63,7 +64,18 @@ public class RoutingAlgorithmIT {
         prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, astarbiOpts, idx));
         prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, dijkstrabiOpts, idx));
 
-        if (withCh) {
+        if (withPreparedAlgo) {
+            Directory dir = new GHDirectory("", DAType.RAM_INT);
+            final PrepareLandmarks prepareLM = new PrepareLandmarks(dir, ghStorage, weighting, tMode, 16, 8);
+            prepareLM.doWork();
+
+            prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, astarbiOpts, idx) {
+                @Override
+                public RoutingAlgorithm createAlgo(Graph qGraph) {
+                    return prepareLM.getDecoratedAlgorithm(qGraph, new AStarBidirection(qGraph, weighting, tMode), astarbiOpts);
+                }
+            });
+
             GraphHopperStorage storageCopy = new GraphBuilder(manager).
                     set3D(ghStorage.getNodeAccess().is3D()).setCHGraph(weighting).
                     create();

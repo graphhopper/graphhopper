@@ -739,7 +739,13 @@ public class GraphHopperOSMTest {
         final RoutingAlgorithmFactory af = new RoutingAlgorithmFactorySimple();
         instance.addAlgorithmFactoryDecorator(new RoutingAlgorithmFactoryDecorator() {
             @Override
-            public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory algoFactory, HintsMap map) {
+            public void init( CmdArgs args )
+            {
+            }
+
+            @Override
+            public RoutingAlgorithmFactory getDecoratedAlgorithmFactory( RoutingAlgorithmFactory algoFactory, HintsMap map )
+            {
                 return af;
             }
 
@@ -756,6 +762,10 @@ public class GraphHopperOSMTest {
         final AtomicInteger cnt = new AtomicInteger(0);
         instance.addAlgorithmFactoryDecorator(new RoutingAlgorithmFactoryDecorator() {
             @Override
+            public void init( CmdArgs args )
+            {
+            }
+
             public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory algoFactory, HintsMap map) {
                 return new RoutingAlgorithmFactorySimple() {
                     @Override

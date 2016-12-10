@@ -646,6 +646,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return algo;
     }
 
+    @Override
+    public RoutingAlgorithmFactory getOriginalRAFactory()
+    {
+        return this;
+    }
+
     private AStarBidirection createAStarBidirection(final Graph graph) {
         return new AStarBidirection(graph, prepareWeighting, traversalMode) {
             @Override
@@ -675,7 +681,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
 
             @Override
-
             public String toString() {
                 return getName() + "|" + prepareWeighting;
             }

@@ -356,6 +356,10 @@ public class QueryGraph implements Graph {
         return baseGraph;
     }
 
+    public EdgeIteratorState getOriginalEdgeFromVirtNode(int nodeId) {
+        return queryResults.get(nodeId - mainNodes).getClosestEdge();
+    }
+
     public boolean isVirtualEdge(int edgeId) {
         return edgeId >= mainEdges;
     }

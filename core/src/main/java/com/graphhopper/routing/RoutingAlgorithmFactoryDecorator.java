@@ -18,11 +18,15 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.util.CmdArgs;
 
 /**
  * @author Peter Karich
  */
-public interface RoutingAlgorithmFactoryDecorator {
+public interface RoutingAlgorithmFactoryDecorator
+{
+    void init( CmdArgs args );
+
     boolean isEnabled();
 
     /**

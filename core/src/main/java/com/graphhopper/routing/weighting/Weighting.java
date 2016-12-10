@@ -29,10 +29,10 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public interface Weighting {
     /**
-     * Used only for the heuristic estimation in A
-     * <p>
+     * Used only for the heuristic estimation in A*
      *
-     * @return minimal weight. E.g. if you calculate the fastest way it is distance/maxVelocity
+     * @return minimal weight for the specified distance in meter. E.g. if you calculate the fastest
+     * way the return value is 'distance/max_velocity'
      */
     double getMinWeight(double distance);
 
