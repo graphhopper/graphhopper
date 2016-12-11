@@ -46,6 +46,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class LandmarkStorage implements Storable<LandmarkStorage> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LandmarkStorage.class);
     private static final int UNSET_SUBNETWORK = -1;
+    private static final int UNCLEAR_SUBNETWORK = 0;
     // one node has an associated landmark information ('one landmark row'): the forward and backward weight
     private long LM_ROW_LENGTH;
     private int landmarks;
@@ -63,7 +64,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private final TraversalMode traversalMode;
     private boolean initialized;
     // TODO NOW: change to 500_000 after subnetwork creation works flawlessly
-    private int minimumNodes = 100_000;
+    private int minimumNodes = 1000;
     private SubnetworkStorage subnetworkStorage;
 
     public LandmarkStorage(Graph graph, Directory dir, int landmarks, final Weighting weighting, TraversalMode traversalMode) {
@@ -226,38 +227,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private void createLandmarks(final int startNode, final byte[] subnetworks) {
         final int subnetworkId = landmarkIDs.size();
 
-//        System.out.println("start node: " + startNode + ", subnetwork:" + subnetworkId);
-//        final AtomicInteger unsetCounter = new AtomicInteger(0);
-//        final AtomicInteger setCounter = new AtomicInteger(0);
-//        final AtomicInteger setZeroCounter = new AtomicInteger(0);
-//        new BreadthFirstSearch() {
-//
-//            @Override
-//            protected boolean goFurther(int nodeId) {
-//                if (subnetworks[nodeId] == UNSET_SUBNETWORK) {
-//                    if (unsetCounter.get() < 10)
-//                        System.out.println("set=-1 " + nodeId + "\t " + getStr(graph, nodeId));
-//                    unsetCounter.incrementAndGet();
-//                } else if (subnetworks[nodeId] == 0) {
-//                    if (setZeroCounter.get() < 10)
-//                        System.out.println("set=0  " + nodeId + "\t " + getStr(graph, nodeId));
-//                    setZeroCounter.incrementAndGet();
-//                } else {
-//                    if (setCounter.get() < 10)
-//                        System.out.println("set>0  " + nodeId + "\t " + getStr(graph, nodeId) + " " + subnetworks[nodeId]);
-//
-//                    setCounter.incrementAndGet();
-//                }
-//
-//                return super.goFurther(nodeId);
-//            }
-//        }.start(graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)), startNode);
-
-        // set to zero is expected but others not!
-//        if (setCounter.get() > 0) {
-//            throw new RuntimeException("count(-1)=" + unsetCounter + " count(0)=" + setZeroCounter + " count(>0)=" + setCounter);
-//        }
-
         // 1a) pick landmarks via shortest weighting for a better geographical spreading
         // 'fastest' has big problems with ferries (slow&very long) and allowing arbitrary weighting is too dangerous
         Weighting initWeighting = lmSelectionWeighting;
@@ -271,8 +240,10 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             // too small subnetworks are initialized with special id==0
             // hint: we cannot use expectFresh=true as the strict two-direction edge filter is only a subset of the true network (due to oneways)
             // and so previously marked subnetwork entries could be already initialized with 0
-            explorer.setSubnetworks(subnetworks, 0, false);
+            explorer.setSubnetworks(subnetworks, 0);
         } else {
+//            if (explorer.setSubnetworks(subnetworks, subnetworkId, true))
+//                return;
 
             // 1b) we have one landmark, now calculate the rest
             int[] tmpLandmarkNodeIds = new int[landmarks];
@@ -307,7 +278,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 // set subnetwork id to all explored nodes, but do this only for the first landmark
                 // important here is that we do not use the more restrictive two-direction edge filter
                 if (lmIdx == 0) {
-                    if (explorer.setSubnetworks(subnetworks, subnetworkId, true))
+                    if (explorer.setSubnetworks(subnetworks, subnetworkId))
                         return;
                 }
 
@@ -318,7 +289,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 explorer.initLandmarkWeights(lmIdx, LM_ROW_LENGTH, TO_OFFSET);
 
                 if (lmIdx == 0) {
-                    if (explorer.setSubnetworks(subnetworks, subnetworkId, false))
+                    if (explorer.setSubnetworks(subnetworks, subnetworkId))
                         return;
                 }
 
@@ -419,7 +390,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         int subnetworkFrom = subnetworkStorage.getSubnetwork(fromNode);
         int subnetworkTo = subnetworkStorage.getSubnetwork(toNode);
         if (subnetworkFrom != subnetworkTo) {
-            if (subnetworkFrom == 0 || subnetworkTo == 0)
+            if (subnetworkFrom == UNCLEAR_SUBNETWORK || subnetworkTo == UNCLEAR_SUBNETWORK)
                 return false;
 
             throw new RuntimeException("Connection between locations not found. Different subnetworks " + subnetworkFrom + " vs. " + subnetworkTo);
@@ -466,7 +437,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     }
 
     public boolean isEmpty() {
-        return landmarkIDs.isEmpty();
+        return landmarkIDs.size() < 2;
     }
 
     @Override
@@ -620,7 +591,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             }
         }
 
-        public boolean setSubnetworks(final byte[] subnetworks, final int subnetworkId, final boolean expectFresh) {
+        public boolean setSubnetworks(final byte[] subnetworks, final int subnetworkId) {
             if (subnetworkId > 127)
                 throw new IllegalStateException("Too many subnetworks " + subnetworkId);
 
@@ -629,9 +600,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             map.forEach(new IntObjectPredicate<SPTEntry>() {
                 @Override
                 public boolean apply(int nodeId, SPTEntry value) {
-                    if (expectFresh) {
-                        int sn = subnetworks[nodeId];
-                        if (sn != UNSET_SUBNETWORK) {
+                    int sn = subnetworks[nodeId];
+                    if (sn != subnetworkId) {
+                        if (sn != UNSET_SUBNETWORK && sn != UNCLEAR_SUBNETWORK) {
                             // this is ugly but can happen in real world, see testWithOnewaySubnetworks
                             LOGGER.error("subnetworkId for node " + nodeId
                                     + " (" + getStr(graph, nodeId) + ") already set (" + sn + "). " + "Cannot change to " + subnetworkId);
@@ -639,9 +610,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                             failed.set(true);
                             return false;
                         }
-                    }
 
-                    subnetworks[nodeId] = (byte) subnetworkId;
+                        subnetworks[nodeId] = (byte) subnetworkId;
+                    }
                     return true;
                 }
             });
