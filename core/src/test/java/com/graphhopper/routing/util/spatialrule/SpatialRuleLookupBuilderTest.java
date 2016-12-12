@@ -23,13 +23,21 @@ public class SpatialRuleLookupBuilderTest {
         ReaderWay primary = new ReaderWay(0);
         primary.setTag("highway", "primary");
 
-        assertEquals(AccessValue.NOT_ACCESSIBLE, spatialRuleLookup.lookupRule(50.680797145321655, 7.0751953125).isAccessible(track, ""));
-        assertEquals(AccessValue.NOT_ACCESSIBLE, spatialRuleLookup.lookupRule(51.385495069223204, 10.17333984375).isAccessible(track, ""));
+        ReaderWay livingStreet = new ReaderWay(0);
+        livingStreet.setTag("highway", "living_street");
 
         // Berlin
-        assertEquals(AccessValue.NOT_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible(track, ""));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible(track, ""));
         assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible(primary, ""));
 
+        // Paris
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).isAccessible(track, ""));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).isAccessible(primary, ""));
+
+        // Vienna
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible(track, ""));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible(primary, ""));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible(livingStreet, ""));
     }
 
 }

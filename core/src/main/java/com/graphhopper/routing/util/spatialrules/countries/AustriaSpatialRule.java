@@ -22,11 +22,11 @@ import com.graphhopper.routing.util.spatialrules.AccessValue;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 
 /**
- * Defines the default rules for German roads
+ * Defines the default rules for Austria roads
  *
  * @author Robin Boldt
  */
-public class GermanySpatialRule implements SpatialRule {
+public class AustriaSpatialRule implements SpatialRule {
 
     public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
         String highwayTag = readerWay.getTag("highway", "");
@@ -34,9 +34,9 @@ public class GermanySpatialRule implements SpatialRule {
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         switch (highwayTag){
             case "motorway":
-                return Integer.MAX_VALUE;
+                return 130;
             case "trunk":
-                return Integer.MAX_VALUE;
+                return 100;
             case "primary":
                 return 100;
             case "secondary":
@@ -46,9 +46,9 @@ public class GermanySpatialRule implements SpatialRule {
             case "unclassified":
                 return 100;
             case "residential":
-                return 100;
+                return 50;
             case "living_street":
-                return 4;
+                return 20;
             default:
                 return Integer.MAX_VALUE;
         }
@@ -59,7 +59,7 @@ public class GermanySpatialRule implements SpatialRule {
 
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restriction
         switch (highwayTag){
-            case "track":
+            case "living_street":
                 return AccessValue.EVENTUALLY_ACCESSIBLE;
             default:
                 return AccessValue.ACCESSIBLE;
@@ -67,7 +67,7 @@ public class GermanySpatialRule implements SpatialRule {
     }
 
     public String getCountryIsoA3Name() {
-        return "DEU";
+        return "AUT";
     }
 
 }
