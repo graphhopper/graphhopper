@@ -88,39 +88,39 @@ public class PrepareLandmarksTest
         LocationIndex index = new LocationIndexTree(graph, dir);
         index.prepareIndex();
 
-        int lm = 4, activeLM = 2;
+        int lm = 5, activeLM = 2;
         Weighting weighting = new FastestWeighting(encoder);
         LandmarkStorage store = new LandmarkStorage(graph, dir, lm, weighting, tm);
-        store.setMinimumNodes(0);
-        // default is shortest, but this somehow does not work here and results in 3 corners and the middle (7*15+7=112)
-        store.setLMSelectionWeighting(weighting);
+        store.setMinimumNodes(2);
         store.createLandmarks();
 
         // landmarks should be the 4 corners of the grid:
         int[] intList = store.getLandmarks(1);
         Arrays.sort(intList);
-        assertEquals("[1, 14, 210, 224]", Arrays.toString(intList));
+        assertEquals("[0, 14, 112, 210, 224]", Arrays.toString(intList));
         // two landmarks: one for subnetwork 0 (all empty) and one for subnetwork 1
         assertEquals(2, store.getSubnetworksWithLandmarks());
 
-        assertEquals(0, store.getFromWeight(0, 224));
-        assertEquals(1984, store.getFromWeight(0, 47));
-        assertEquals(1545, store.getFromWeight(0, 52));
+        assertEquals(1423, store.getFromWeight(0, 224));
+        assertEquals(1194, store.getFromWeight(0, 47));
+        assertEquals(1534, store.getFromWeight(0, 52));
 
-        assertEquals(2375, store.getFromWeight(1, 224));
-        assertEquals(391, store.getFromWeight(1, 47));
+        int weight1_224 = store.getFromWeight(1, 224);
+        assertEquals(1579, weight1_224);
+        int weight1_47 = store.getFromWeight(1, 47);
+        assertEquals(1301, weight1_47);
 
         // grid is symmetric
-        assertEquals(2375, store.getToWeight(1, 224));
-        assertEquals(391, store.getToWeight(1, 47));
+        assertEquals(weight1_224, store.getToWeight(1, 224));
+        assertEquals(weight1_47, store.getToWeight(1, 47));
 
         // prefer the landmarks before and behind the goal
         int activeLandmarkIndices[] = new int[activeLM];
         int activeFroms[] = new int[activeLM];
         int activeTos[] = new int[activeLM];
         store.initActiveLandmarks(27, 47, activeLandmarkIndices, activeFroms, activeTos, false);
-        // 14, 210
-        assertEquals("[3, 2]", Arrays.toString(activeLandmarkIndices));
+        // TODO !? indices 1,0 means landmarks 0, 14 !?
+        assertEquals("[1, 0]", Arrays.toString(activeLandmarkIndices));
 
         AlgorithmOptions opts = AlgorithmOptions.start().weighting(weighting).traversalMode(tm).
                 build();
@@ -137,14 +137,14 @@ public class PrepareLandmarksTest
         Path path = oneDirAlgoWithLandmarks.calcPath(41, 183);
 
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 130, oneDirAlgoWithLandmarks.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 124, oneDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with bidir A*
         RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getDecoratedAlgorithm(graph,
                 new AStarBidirection(graph, weighting, tm), opts);
         path = biDirAlgoWithLandmarks.calcPath(41, 183);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 172, biDirAlgoWithLandmarks.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 174, biDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with A* and a QueryGraph. We expect slightly less optimal as two more cycles needs to be traversed
         // due to the two more virtual nodes but this should not harm in practise
@@ -159,7 +159,7 @@ public class PrepareLandmarksTest
         expectedAlgo = new AStar(qGraph, weighting, tm);
         expectedPath = expectedAlgo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 122, qGraphOneDirAlgo.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 123, qGraphOneDirAlgo.getVisitedNodes());
     }
 
     @Test
@@ -179,7 +179,7 @@ public class PrepareLandmarksTest
         assertTrue(plm.getLandmarkStorage().isInitialized());
         assertEquals(Arrays.toString(new int[]
                 {
-                        2, 0
+                        0, 2
                 }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
         assertEquals(2, plm.getLandmarkStorage().getFromWeight(0, 1));
 
@@ -189,7 +189,7 @@ public class PrepareLandmarksTest
         assertEquals(expectedFactor, plm.getLandmarkStorage().getFactor(), 1e-6);
         assertEquals(Arrays.toString(new int[]
                 {
-                        2, 0
+                        0, 2
                 }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
         assertEquals(2, plm.getLandmarkStorage().getFromWeight(0, 1));
 

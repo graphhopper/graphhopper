@@ -68,7 +68,7 @@ public class RoutingAlgorithmIT {
             Directory dir = new GHDirectory("", DAType.RAM_INT);
             final PrepareLandmarks prepareLM = new PrepareLandmarks(dir, ghStorage, weighting, tMode, 8, 4);
             // assume one big network
-            prepareLM.setMinimumNodes(ghStorage.getNodes() / 2);
+            prepareLM.setMinimumNodes(ghStorage.getNodes() / 3);
             prepareLM.doWork();
 
             prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, astarbiOpts, idx) {

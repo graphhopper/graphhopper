@@ -66,7 +66,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private final TraversalMode traversalMode;
     private boolean initialized;
     // TODO NOW: change to 500_000 after subnetwork creation works flawlessly
-    private int minimumNodes = 100_000;
+    private int minimumNodes = 500_000;
     private SubnetworkStorage subnetworkStorage;
 
     public LandmarkStorage(GraphHopperStorage graph, Directory dir, int landmarks, final Weighting weighting, TraversalMode traversalMode) {
@@ -85,7 +85,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             }
         };
 
-        // TODO make edge base working!
+        // TODO make edge base working! When adding turn costs while routing we can still use the normal traversal as this should be always a smaller weight
         this.traversalMode = traversalMode;
         final String name = AbstractWeighting.weightingToFileName(weighting);
         this.landmarkWeightDA = dir.find("landmarks_" + name);
@@ -172,22 +172,23 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         LOGGER.info("Calculated tarjan subnetworks in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
 
         EdgeExplorer tmpExplorer = graph.createEdgeExplorer(new RequireBothDirectionsEdgeFilter(encoder));
-        int nextStartNode = -1;
+
         MAIN:
         for (IntArrayList subnetworkIds : graphComponents) {
             if (subnetworkIds.size() < minimumNodes)
                 continue;
 
+            int nextStartNode = -1;
             // ensure start node is reachable from both sides and no subnetwork is associated
-            while (true) {
-                nextStartNode++;
-                if (nextStartNode >= graph.getNodes())
-                    break MAIN;
-
+            for (int index = 0; index < subnetworkIds.size(); index++) {
+                nextStartNode = subnetworkIds.get(index);
                 if (GHUtility.count(tmpExplorer.setBaseNode(nextStartNode)) > 0)
                     break;
             }
-            // TODO NOW: init subnetwork ID from tarjan component and not from own subnetwork!?
+            if (nextStartNode < 0) {
+                LOGGER.warn("next start node not found in big enough network of size " + subnetworkIds.size() + ", first element is " + subnetworkIds.get(0));
+                continue;
+            }
             createLandmarks(nextStartNode, subnetworks, subnetworkIds);
         }
 
@@ -253,8 +254,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         explorer.runAlgo(true);
 
         if (explorer.getFromCount() < minimumNodes) {
-            LOGGER.warn("Should not happen. The component calculated from Tarjan algo was " + subnetworkIds + " > " + minimumNodes
-                    + " but the network calculated from a more restrictive two-direction edge filter was smaller " + explorer.getFromCount());
+            LOGGER.warn("Should not happen. The component calculated from Tarjan algo was " + subnetworkIds.size() + " > " + minimumNodes
+                    + " but the network calculated from a more restrictive two-direction edge filter was smaller: " + explorer.getFromCount());
             // too small subnetworks are initialized with special id==0
             // hint: we cannot use expectFresh=true as the strict two-direction edge filter is only a subset of the true network (due to oneways)
             // and so previously marked subnetwork entries could be already initialized with 0
