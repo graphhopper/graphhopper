@@ -85,8 +85,9 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
                 + defaultActiveLandmarks + ", weighting:" + weighting + ", " + Helper.getMemInfo());
 
         lms.createLandmarks();
-        if (lms.isEmpty())
-            throw new IllegalStateException("No landmarks found!? " + lms.toString());
+//        if (lms.isEmpty())
+//            throw new IllegalStateException("No landmarks found! To small graph (" + graph.getNodes() + ") vs. minimum nodes (" + getLandmarkStorage().getMinimumNodes() + ")? landmark storage:" + lms.toString());
+
         lms.flush();
 
         LOGGER.info("Calculating landmarks for " + (lms.getSubnetworksWithLandmarks() - 1) + " subnetworks took:" + sw.stop().getSeconds() + " => "

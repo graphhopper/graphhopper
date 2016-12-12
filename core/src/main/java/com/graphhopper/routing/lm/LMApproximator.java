@@ -111,7 +111,7 @@ public class LMApproximator implements WeightApproximator {
 
     @Override
     public double approximate(final int queryNode) {
-        if (fallback)
+        if (fallback || lms.isEmpty())
             return fallBackApproximation.approximate(queryNode);
 
         int node = queryNode;

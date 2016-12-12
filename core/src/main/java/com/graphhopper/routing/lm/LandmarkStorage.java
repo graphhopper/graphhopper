@@ -17,12 +17,14 @@
  */
 package com.graphhopper.routing.lm;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
+import com.graphhopper.routing.subnetwork.TarjansSCCAlgorithm;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -57,17 +59,17 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private final List<int[]> landmarkIDs;
     private double factor = 1;
     private final static double DOUBLE_MLTPL = 1.0e6;
-    private final Graph graph;
+    private final GraphHopperStorage graph;
     private final FlagEncoder encoder;
     private final Weighting weighting;
     private Weighting lmSelectionWeighting;
     private final TraversalMode traversalMode;
     private boolean initialized;
     // TODO NOW: change to 500_000 after subnetwork creation works flawlessly
-    private int minimumNodes = 1000;
+    private int minimumNodes = 100_000;
     private SubnetworkStorage subnetworkStorage;
 
-    public LandmarkStorage(Graph graph, Directory dir, int landmarks, final Weighting weighting, TraversalMode traversalMode) {
+    public LandmarkStorage(GraphHopperStorage graph, Directory dir, int landmarks, final Weighting weighting, TraversalMode traversalMode) {
         this.graph = graph;
         this.encoder = weighting.getFlagEncoder();
         this.weighting = weighting;
@@ -99,6 +101,10 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
     public void setMinimumNodes(int minimumNodes) {
         this.minimumNodes = minimumNodes;
+    }
+
+    public int getMinimumNodes() {
+        return minimumNodes;
     }
 
     SubnetworkStorage getSubnetworkStorage() {
@@ -157,22 +163,32 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // 0 should only be used if subnetwork is too small
         Arrays.fill(subnetworks, (byte) UNSET_SUBNETWORK);
 
-        // myprint(2158719, 2158720, 2158721, 2158722, 5704661, 5704671, 5704672, 5704637);
+        // we cannot reuse the components calculated in PrepareRoutingSubnetworks as the edgeIds changed in between (called graph.optimize)
+        // also calculating subnetworks from scratch makes bigger problems when working with many oneways
+
+        StopWatch sw = new StopWatch().start();
+        TarjansSCCAlgorithm tarjanAlgo = new TarjansSCCAlgorithm(graph, new DefaultEdgeFilter(encoder, false, true), true);
+        List<IntArrayList> graphComponents = tarjanAlgo.findComponents();
+        LOGGER.info("Calculated tarjan subnetworks in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
+
         EdgeExplorer tmpExplorer = graph.createEdgeExplorer(new RequireBothDirectionsEdgeFilter(encoder));
         int nextStartNode = -1;
         MAIN:
-        while (true) {
+        for (IntArrayList subnetworkIds : graphComponents) {
+            if (subnetworkIds.size() < minimumNodes)
+                continue;
+
             // ensure start node is reachable from both sides and no subnetwork is associated
             while (true) {
                 nextStartNode++;
                 if (nextStartNode >= graph.getNodes())
                     break MAIN;
 
-                if (GHUtility.count(tmpExplorer.setBaseNode(nextStartNode)) > 0
-                        && subnetworks[nextStartNode] == UNSET_SUBNETWORK)
+                if (GHUtility.count(tmpExplorer.setBaseNode(nextStartNode)) > 0)
                     break;
             }
-            createLandmarks(nextStartNode, subnetworks);
+            // TODO NOW: init subnetwork ID from tarjan component and not from own subnetwork!?
+            createLandmarks(nextStartNode, subnetworks, subnetworkIds);
         }
 
         int subnetworkCount = landmarkIDs.size();
@@ -224,7 +240,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      *
      * @return landmark mapping
      */
-    private void createLandmarks(final int startNode, final byte[] subnetworks) {
+    private void createLandmarks(final int startNode, final byte[] subnetworks, IntArrayList subnetworkIds) {
         final int subnetworkId = landmarkIDs.size();
 
         // 1a) pick landmarks via shortest weighting for a better geographical spreading
@@ -237,13 +253,13 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         explorer.runAlgo(true);
 
         if (explorer.getFromCount() < minimumNodes) {
+            LOGGER.warn("Should not happen. The component calculated from Tarjan algo was " + subnetworkIds + " > " + minimumNodes
+                    + " but the network calculated from a more restrictive two-direction edge filter was smaller " + explorer.getFromCount());
             // too small subnetworks are initialized with special id==0
             // hint: we cannot use expectFresh=true as the strict two-direction edge filter is only a subset of the true network (due to oneways)
             // and so previously marked subnetwork entries could be already initialized with 0
             explorer.setSubnetworks(subnetworks, 0);
         } else {
-//            if (explorer.setSubnetworks(subnetworks, subnetworkId, true))
-//                return;
 
             // 1b) we have one landmark, now calculate the rest
             int[] tmpLandmarkNodeIds = new int[landmarks];
@@ -259,8 +275,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 explorer.runAlgo(true);
                 tmpLandmarkNodeIds[lmIdx + 1] = explorer.getLastNode();
                 if (lmIdx % logOffset == 0)
-                    LOGGER.info("Finding landmarks [" + weighting + "]. "
-                            + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%");
+                    LOGGER.info("Finding landmarks [" + weighting + "] in network [" + explorer.getVisitedNodes() + "]. "
+                            + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%, " + Helper.getMemInfo());
             }
 
             LOGGER.info("Finished searching landmarks for subnetwork " + subnetworkId + " of size " + explorer.getVisitedNodes()
@@ -301,17 +317,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             // TODO set weight to SHORT_MAX if entry has either no 'from' or no 'to' entry
             landmarkIDs.add(tmpLandmarkNodeIds);
         }
-
-//        for (int nodeIdx = 0; nodeIdx < graph.getNodes(); nodeIdx++)
-//        {
-//            for (int lmIdx = 0; lmIdx < landmarkIDs.length; lmIdx++)
-//            {
-//                // just from weights
-//                long pointer = nodeIdx * LM_ROW_LENGTH + lmIdx * 4;
-//                if (((int) da.getShort(pointer) & 0x0000FFFF) == INFINITY)
-//                    System.out.println("lm " + lmIdx + "\t node " + nodeIdx);
-//            }
-//        }
     }
 
     /**
@@ -393,6 +398,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             if (subnetworkFrom == UNCLEAR_SUBNETWORK || subnetworkTo == UNCLEAR_SUBNETWORK)
                 return false;
 
+            // TODO how to get the point indices and use throw new ConnectionNotFoundException?
             throw new RuntimeException("Connection between locations not found. Different subnetworks " + subnetworkFrom + " vs. " + subnetworkTo);
         }
 
