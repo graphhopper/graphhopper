@@ -27,6 +27,10 @@ import com.graphhopper.reader.ReaderWay;
  */
 public interface SpatialRule {
 
+    int getMaxSpeed(ReaderWay readerWay, String transportationMode);
+
     AccessValue isAccessible(ReaderWay readerWay, String transportationMode);
+
+    String getCountryIsoA3Name();
 
 }

@@ -21,6 +21,7 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -98,6 +99,11 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
 
     @Override
     public void addRule(SpatialRule rule, Polygon polygon) {
+        addRules(rule, Arrays.asList(new Polygon[]{polygon}));
+    }
+
+    @Override
+    public void addRules(SpatialRule rule, List<Polygon> polygons) {
         rules.add(rule);
         int ruleIndex = rules.size()-1;
 
@@ -108,8 +114,10 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
         // TODO could be done more efficiently by using the bounds of the polygon
         for (int i = 0; i < this.lookupArray.length; i++) {
             for (int j = 0; j < this.lookupArray[0].length; j++) {
-                if(polygon.contains(getCoordinatesForIndex(i,j))){
-                    lookupArray[i][j]= (byte) ruleIndex;
+                for (Polygon polygon: polygons) {
+                    if(polygon.contains(getCoordinatesForIndex(i,j))){
+                        lookupArray[i][j]= (byte) ruleIndex;
+                    }
                 }
             }
         }
@@ -119,6 +127,15 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
         double lon = bounds.minLon + x*resolution + resolution/2;
         double lat = bounds.minLat + y*resolution + resolution/2;
         return new GHPoint(lat, lon);
+    }
+
+    public void visualize(int stepSize){
+        for (int i = 0; i < lookupArray.length; i+=stepSize) {
+            for (int j = 0; j < lookupArray[0].length; j+=stepSize) {
+                System.out.print(lookupArray[i][j]);
+            }
+            System.out.println();
+        }
     }
 
 }

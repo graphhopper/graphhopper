@@ -17,11 +17,9 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.json.geo.Geometry;
 import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.Shape;
 
-import java.awt.*;
+import java.util.List;
 
 /**
  * Lookup a rule depending on the location.
@@ -34,5 +32,7 @@ public interface SpatialRuleLookup {
     SpatialRule lookupRule(GHPoint point);
 
     void addRule(SpatialRule rule, Polygon polygon);
+    void addRules(SpatialRule rule, List<Polygon> polygons);
 
+    void visualize(int i);
 }

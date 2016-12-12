@@ -15,43 +15,33 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules;
-
+package com.graphhopper.routing.util.spatialrules.countries;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.util.shapes.GHPoint;
-
-import java.util.List;
+import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
 
 /**
- * Allways returns the empty rule
+ * Defines the default rules for German roads
  *
  * @author Robin Boldt
  */
-public class EmptySpatialRuleLookup extends AbstractSpatialRuleLookup {
+public class GermanySpatialRule implements SpatialRule {
 
-    @Override
-    public SpatialRule lookupRule(double lat, double lon) {
-        return EMPTY_RULE;
+    public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
+        return Integer.MAX_VALUE;
     }
 
-    @Override
-    public SpatialRule lookupRule(GHPoint point) {
-        return EMPTY_RULE;
+    public AccessValue isAccessible(ReaderWay readerWay, String transportationMode) {
+        if(readerWay.hasTag("highway", "track")){
+            return AccessValue.NOT_ACCESSIBLE;
+        }else{
+            return AccessValue.ACCESSIBLE;
+        }
     }
 
-    @Override
-    public void addRule(SpatialRule rule, Polygon polygon) {
-        throw new IllegalStateException("Not implemented");
+    public String getCountryIsoA3Name() {
+        return "DEU";
     }
 
-    @Override
-    public void addRules(SpatialRule rule, List<Polygon> polygons) {
-        throw new IllegalStateException("Not implemented");
-    }
-
-    @Override
-    public void visualize(int i) {
-
-    }
 }

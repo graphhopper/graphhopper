@@ -27,8 +27,18 @@ public abstract class AbstractSpatialRuleLookup implements SpatialRuleLookup {
 
     public static final SpatialRule EMPTY_RULE = new SpatialRule() {
         @Override
+        public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
+            return Integer.MAX_VALUE;
+        }
+
+        @Override
         public AccessValue isAccessible(ReaderWay readerWay, String transportationMode) {
             return AccessValue.ACCESSIBLE;
+        }
+
+        @Override
+        public String getCountryIsoA3Name() {
+            return "";
         }
     };
 

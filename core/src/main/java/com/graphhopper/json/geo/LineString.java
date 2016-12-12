@@ -17,6 +17,7 @@
  */
 package com.graphhopper.json.geo;
 
+import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -53,5 +54,15 @@ public class LineString extends PointList implements Geometry {
     @Override
     public PointList asPointList() {
         return this;
+    }
+
+    @Override
+    public boolean isPolygon() {
+        return false;
+    }
+
+    @Override
+    public GeoJsonPolygon asPolygon() {
+        throw new UnsupportedOperationException("Not supported");
     }
 }

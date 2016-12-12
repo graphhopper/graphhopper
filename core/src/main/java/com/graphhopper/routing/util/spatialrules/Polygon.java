@@ -17,11 +17,7 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-
 import com.graphhopper.util.shapes.GHPoint;
-
-import static java.lang.Math.max;
-import static java.lang.Math.min;
 
 /**
  * TODO: Implement Shape?
@@ -48,26 +44,26 @@ public class Polygon {
         this.lon = lon;
 
         for (int i = 0; i < lat.length; i++) {
-            if(i == 0){
+            if (i == 0) {
                 minLat = lat[i];
                 maxLat = lat[i];
                 minLon = lon[i];
                 maxLon = lon[i];
-            }else{
-                if(lat[i]< minLat){
+            } else {
+                if (lat[i] < minLat) {
                     minLat = lat[i];
-                }else if(lat[i]> maxLat){
+                } else if (lat[i] > maxLat) {
                     maxLat = lat[i];
                 }
-                if(lon[i]< minLon){
+                if (lon[i] < minLon) {
                     minLon = lon[i];
-                }else if(lon[i]> maxLon){
+                } else if (lon[i] > maxLon) {
                     maxLon = lon[i];
                 }
             }
         }
 
-        epsilon = (maxLat-minLat)/10;
+        epsilon = (maxLat - minLat) / 10;
     }
 
     public boolean contains(GHPoint point) {
@@ -83,17 +79,17 @@ public class Polygon {
      * @return true if point is inside polygon
      */
     public boolean contains(double lat, double lon) {
-        if(lat < minLat || lat > maxLat || lon < minLon || lon > maxLon){
+        if (lat < minLat || lat > maxLat || lon < minLon || lon > maxLon) {
             return false;
         }
 
-        double rayStartLat = maxLat-(minLat/2);
+        double rayStartLat = maxLat - (minLat / 2);
         double rayStartLon = minLon - epsilon;
 
         boolean inside = false;
         int len = this.lat.length;
         for (int i = 0; i < len; i++) {
-            if(edgesAreIntersecting(rayStartLon, rayStartLat, lon, lat, this.lon[i], this.lat[i], this.lon[(i + 1) % len], this.lat[(i + 1) % len]))
+            if (edgesAreIntersecting(rayStartLon, rayStartLat, lon, lat, this.lon[i], this.lat[i], this.lon[(i + 1) % len], this.lat[(i + 1) % len]))
                 inside = !inside;
         }
         return inside;
@@ -104,7 +100,6 @@ public class Polygon {
             double v1x1, double v1y1, double v1x2, double v1y2,
             double v2x1, double v2y1, double v2x2, double v2y2
     ) {
-
 
 
         double d1, d2;

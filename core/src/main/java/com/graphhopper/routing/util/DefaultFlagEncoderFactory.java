@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.BBox;
@@ -51,16 +52,7 @@ public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
             }
 
             Polygon p = new Polygon(lats, lons);
-            spatialRuleLookup.addRule(new SpatialRule() {
-                @Override
-                public AccessValue isAccessible(ReaderWay readerWay, String transportationMode) {
-                    if(readerWay.hasTag("highway", "track")){
-                        return AccessValue.NOT_ACCESSIBLE;
-                    }else{
-                        return AccessValue.ACCESSIBLE;
-                    }
-                }
-            }, p);
+            spatialRuleLookup.addRule(new GermanySpatialRule(), p);
 
 
             return new DataFlagEncoder(spatialRuleLookup);
