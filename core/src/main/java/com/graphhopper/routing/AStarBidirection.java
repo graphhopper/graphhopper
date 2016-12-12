@@ -93,6 +93,10 @@ public class AStarBidirection extends AbstractBidirAlgo {
         return this;
     }
 
+    public WeightApproximator getApproximation() {
+        return weightApprox.getApproximation();
+    }
+
     @Override
     protected SPTEntry createSPTEntry(int node, double weight) {
         throw new IllegalStateException("use AStarEdge constructor directly");
