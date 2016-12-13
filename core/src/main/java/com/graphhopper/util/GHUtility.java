@@ -257,7 +257,10 @@ public class GHUtility {
                 tna.setNode(node, fna.getLatitude(node), fna.getLongitude(node), fna.getElevation(node));
             else
                 tna.setNode(node, fna.getLatitude(node), fna.getLongitude(node));
+            tna.setAdditionalNodeField(node, fna.getAdditionalNodeField(node));
         }
+
+        fromGraph.getExtension().copyTo(toGraph.getExtension());
         return toGraph;
     }
 

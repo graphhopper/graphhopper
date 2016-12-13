@@ -17,12 +17,17 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.CHEdgeIteratorState;
-import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.*;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Recursivly unpack shortcuts.
@@ -33,23 +38,41 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class Path4CH extends PathBidirRef {
     private final Graph routingGraph;
+    private final TraversalMode traversalMode;
+    private final List<EdgeIteratorState> finalEdges = new ArrayList<>();
 
-    public Path4CH(Graph routingGraph, Graph baseGraph, Weighting weighting) {
+    public Path4CH(Graph routingGraph, Graph baseGraph, Weighting weighting, TraversalMode traversalMode) {
         super(baseGraph, weighting);
         this.routingGraph = routingGraph;
+        this.traversalMode = traversalMode;
+    }
+
+    @Override
+    public Path extract() {
+        Path result = super.extract();
+
+        int prevId = EdgeIterator.NO_EDGE;
+        time = 0;
+        distance = 0;
+        for (int i = 0; i < finalEdges.size(); i++) {
+            EdgeIteratorState edge = finalEdges.get(i);
+            distance += edge.getDistance();
+            time += weighting.calcMillis(edge, false, prevId);
+            prevId = edge.getEdge();
+        }
+        return result;
     }
 
     @Override
     protected final void processEdge(int tmpEdge, int endNode, int prevEdgeId) {
         // Shortcuts do only contain valid weight so first expand before adding
         // to distance and time
-        expandEdge((CHEdgeIteratorState) routingGraph.getEdgeIteratorState(tmpEdge, endNode), false);
+        expandEdge((CHEdgeIteratorState) routingGraph.getEdgeIteratorState(tmpEdge, endNode), false, prevEdgeId);
     }
 
-    private void expandEdge(CHEdgeIteratorState mainEdgeState, boolean reverse) {
+    private void expandEdge(CHEdgeIteratorState mainEdgeState, boolean reverse, int prevEdgeId) {
         if (!mainEdgeState.isShortcut()) {
-            distance += mainEdgeState.getDistance();
-            time += weighting.calcMillis(mainEdgeState, reverse, EdgeIterator.NO_EDGE);
+            finalEdges.add(mainEdgeState);
             addEdge(mainEdgeState.getEdge());
             return;
         }
@@ -65,35 +88,65 @@ public class Path4CH extends PathBidirRef {
             to = tmp;
         }
 
-        // getEdgeProps could possibly return an empty edge if the shortcut is available for both directions
+        // getEdgeProps could possibly return an empty edge if the shortcut is available for both directions.
         if (reverseOrder) {
-            CHEdgeIteratorState edgeState = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, to);
-            boolean empty = edgeState == null;
+            CHEdgeIteratorState edgeState1 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, to);
+            boolean empty = edgeState1 == null;
             if (empty)
-                edgeState = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, to);
+                edgeState1 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, to);
 
-            expandEdge(edgeState, false);
-
+            CHEdgeIteratorState edgeState2;
             if (empty)
-                edgeState = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, from);
+                edgeState2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, from);
             else
-                edgeState = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, from);
+                edgeState2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, from);
 
-            expandEdge(edgeState, true);
+            expandEdge(edgeState1, false, edgeState2.getEdge());
+            expandLocalLoops(edgeState2, edgeState1, edgeState2.getBaseNode(), true);
+            expandEdge(edgeState2, true, prevEdgeId);
         } else {
             CHEdgeIteratorState iter = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, from);
             boolean empty = iter == null;
             if (empty)
                 iter = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, from);
 
-            expandEdge(iter, true);
-
+            CHEdgeIteratorState iter2;
             if (empty)
-                iter = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, to);
+                iter2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, to);
             else
-                iter = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, to);
+                iter2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, to);
 
-            expandEdge(iter, false);
+            expandEdge(iter, true, prevEdgeId);
+            expandLocalLoops(iter2, iter, iter.getBaseNode(), false);
+            expandEdge(iter, false, iter.getEdge());
+        }
+    }
+
+    private void expandLocalLoops(CHEdgeIteratorState skipped1, CHEdgeIteratorState skipped2, int skippedNode, boolean reverse) {
+        if (!traversalMode.isEdgeBased())
+            return;
+        double cost_uv = weighting.calcWeight(skipped1, true, EdgeIterator.NO_EDGE);
+        double cost_vw = weighting.calcWeight(skipped2, false, skipped1.getEdge());
+        double directCost = cost_uv + cost_vw;
+        EdgeIteratorState bestLoop = null;
+
+        EdgeExplorer explorer = routingGraph.createEdgeExplorer(new DefaultEdgeFilter(weighting.getFlagEncoder(), false, true));
+        EdgeIterator iter = explorer.setBaseNode(skippedNode);
+        while (iter.next()) {
+            if (iter.getAdjNode() != skippedNode)
+                continue;
+            // loop at node detected. Check if we get a better result by including this loop.
+            double cost_vloop = weighting.calcWeight(iter, false, skipped1.getEdge());
+            double cost_to_w = weighting.calcWeight(skipped2, false, iter.getEdge());
+            double total = cost_uv + cost_vloop + cost_to_w;
+            if (total < directCost) {
+                directCost = total;
+                bestLoop = iter.detach(false);
+            }
+        }
+
+        if (bestLoop != null) {
+            expandEdge((CHEdgeIteratorState) bestLoop, reverse, skipped1.getEdge());
         }
     }
 }

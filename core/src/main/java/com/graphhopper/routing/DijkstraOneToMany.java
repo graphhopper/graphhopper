@@ -17,9 +17,9 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.DoubleArrayList;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.apache.commons.collections.IntDoubleBinaryHeap;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -352,13 +352,14 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         }
     }
 
+    /** The amount of edges may change during contraction. Hence, this container needs to be able to grow */
     private static class EdgeBasedStructuresContainer implements StructuresContainer {
         private final TraversalMode traversalMode;
 
-        private double[] weights;
-        private int[] parents;
-        private int[] edgeIds;
-        private int[] nodeIds;
+        private DoubleArrayList weights;
+        private IntArrayList parents;
+        private IntArrayList edgeIds;
+        private IntArrayList nodeIds;
 
         private int[] bestIdToNode;
 
@@ -377,20 +378,14 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             Arrays.fill(bestIdToNode, -1);
 
             // need +1 to handle the initial edge with id -1 (all traveral Ids will be shifted by 1 internally)
-            int capacity = (GHUtility.count(graph.getAllEdges()) + 2) * traversalMode.getNoOfStates();
+            int capacity = (graph.getAllEdges().getMaxId() + 2) * traversalMode.getNoOfStates();
 
-            weights = new double[capacity];
-            Arrays.fill(weights, Double.MAX_VALUE);
-
-            parents = new int[capacity];
-            Arrays.fill(parents, EMPTY_PARENT);
-
-            edgeIds = new int[capacity];
-            Arrays.fill(edgeIds, EdgeIterator.NO_EDGE);
-
-            nodeIds = new int[capacity];
-            Arrays.fill(nodeIds, -1);
-        }
+            weights = new DoubleArrayList(0);
+            parents = new IntArrayList(0);
+            edgeIds = new IntArrayList(0);
+            nodeIds = new IntArrayList(0);
+            ensureIndex(capacity);
+       }
 
         private int traversalIdToIndex(int traversalId) {
             return traversalId + 2;
@@ -398,6 +393,30 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
 
         private int indexToTraversalId(int index) {
             return index - 2;
+        }
+
+        private void ensureIndex(int index) {
+            if (weights.size() > index)
+                return;
+
+            int addedStart = weights.size();
+            int size = index + 1;
+            if (index >= weights.buffer.length) {
+                weights.resize(size);
+                parents.resize(size);
+                edgeIds.resize(size);
+                nodeIds.resize(size);
+            } else {
+                weights.elementsCount = size;
+                parents.elementsCount = size;
+                edgeIds.elementsCount = size;
+                nodeIds.elementsCount = size;
+            }
+
+            Arrays.fill(weights.buffer, addedStart, size, Double.MAX_VALUE);
+            Arrays.fill(parents.buffer, addedStart, size, EMPTY_PARENT);
+            Arrays.fill(edgeIds.buffer, addedStart, size, EdgeIterator.NO_EDGE);
+            Arrays.fill(nodeIds.buffer, addedStart, size, -1);
         }
 
         @Override
@@ -411,11 +430,12 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         {
             int traversalId = traversalMode.createTraversalId(baseNode, adjNode, edgeId, false);
             int index = traversalIdToIndex(traversalId);
+            ensureIndex(index);
 
-            parents[index] = parentId;
-            weights[index] = weight;
-            edgeIds[index] = edgeId;
-            nodeIds[index] = adjNode;
+            parents.set(index, parentId);
+            weights.set(index, weight);
+            edgeIds.set(index, edgeId);
+            nodeIds.set(index, adjNode);
             changedIds.add(index);
 
             if(parentId == EMPTY_PARENT)
@@ -435,25 +455,33 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         @Override
         public double getWeight(int traversalId)
         {
-            return weights[traversalIdToIndex(traversalId)];
+            int index = traversalIdToIndex(traversalId);
+            ensureIndex(index);
+            return weights.get(index);
         }
 
         @Override
         public int getEdge(int traversalId)
         {
-            return edgeIds[traversalIdToIndex(traversalId)];
+            int index = traversalIdToIndex(traversalId);
+            ensureIndex(index);
+            return edgeIds.get(index);
         }
 
         @Override
-        public int getNode(int travesalId)
+        public int getNode(int traversalId)
         {
-            return nodeIds[traversalIdToIndex(travesalId)];
+            int index = traversalIdToIndex(traversalId);
+            ensureIndex(index);
+            return nodeIds.get(index);
         }
 
         @Override
         public int getParentId(int traversalId)
         {
-            return parents[traversalIdToIndex(traversalId)];
+            int index = traversalIdToIndex(traversalId);
+            ensureIndex(index);
+            return parents.get(index);
         }
 
         @Override
@@ -469,10 +497,10 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
             for (int i = 0; i < vn; i++)
             {
                 int n = changedIds.get(i);
-                weights[n] = Double.MAX_VALUE;
-                parents[n] = EMPTY_PARENT;
-                edgeIds[n] = EdgeIterator.NO_EDGE;
-                nodeIds[n] = -1;
+                weights.set(n, Double.MAX_VALUE);
+                parents.set(n, EMPTY_PARENT);
+                edgeIds.set(n, EdgeIterator.NO_EDGE);
+                nodeIds.set(n, -1);
             }
             changedIds.elementsCount = 0;
 
@@ -498,7 +526,7 @@ public class DijkstraOneToMany extends AbstractRoutingAlgorithm {
         @Override
         public long getMemoryUsage()
         {
-            int len = weights.length;
+            int len = weights.buffer.length;
             //weights, parents, edgeIds, nodeIds
             long usage = (8L + 4L + 4L + 4L) * len;
 

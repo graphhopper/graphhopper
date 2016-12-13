@@ -17,20 +17,19 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AbstractWeighting;
+import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
@@ -59,13 +58,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
     private final Random rand = new Random(123);
     private final StopWatch allSW = new StopWatch();
-    AddShortcutHandler addScHandler = new AddShortcutHandler();
-    CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
+    AddShortcutHandler addScHandler;
+    CalcShortcutHandler calcScHandler;
     private CHEdgeExplorer vehicleInExplorer;
     private CHEdgeExplorer vehicleOutExplorer;
     private CHEdgeExplorer vehicleAllExplorer;
     private CHEdgeExplorer vehicleAllTmpExplorer;
     private CHEdgeExplorer calcPrioAllExplorer;
+    private List<EdgeIteratorState> loopEdges = new ArrayList<>();
+    private int numLoops = 0; // this many entries in the loopEdges list are actually used for the current node
     private int maxLevel;
     // the most important nodes comes last
     private GHTreeMapComposed sortedNodes;
@@ -87,15 +88,22 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private double lazyTime;
     private double neighborTime;
     private int maxEdgesCount;
+    private TurnCostExtension turnCostStorage;
 
     public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
                                          Weighting weighting, TraversalMode traversalMode) {
         this.ghStorage = ghStorage;
         this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
+        if (traversalMode.isEdgeBased() && chGraph.getExtension() instanceof TurnCostExtension) {
+            // enable turn-cost support
+            this.turnCostStorage = (TurnCostExtension) chGraph.getExtension();
+        }
         levelFilter = new LevelEdgeFilter(prepareGraph);
 
-        prepareWeighting = new PreparationWeighting(weighting);
+        prepareWeighting = new PreparationWeighting(weighting, prepareGraph, traversalMode);
+        addScHandler = new AddShortcutHandler();
+        calcScHandler = new CalcShortcutHandler();
         originalEdges = dir.find("original_edges_" + AbstractWeighting.weightingToFileName(weighting));
         originalEdges.create(1000);
     }
@@ -318,7 +326,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     neighborSW.stop();
                 }
 
-                prepareGraph.disconnect(vehicleAllTmpExplorer, iter);
+                // TODO: no disconnect for edge-based routing -- will yield problems for small graphs with dead-ends as routing target
+                if (!traversalMode.isEdgeBased())
+                    prepareGraph.disconnect(vehicleAllTmpExplorer, iter);
             }
         }
 
@@ -439,6 +449,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
      */
     void findShortcuts(ShortcutHandler sch) {
         long tmpDegreeCounter = 0;
+        findLoops(sch.getNode());
         EdgeIterator incomingEdges = vehicleInExplorer.setBaseNode(sch.getNode());
         // collect outgoing nodes (goal-nodes) only once
         while (incomingEdges.next()) {
@@ -448,7 +459,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 continue;
 
             double v_u_dist = incomingEdges.getDistance();
-            double v_u_weight = prepareWeighting.calcWeight(incomingEdges, true, EdgeIterator.NO_EDGE);
             int skippedEdge1 = incomingEdges.getEdge();
             int incomingEdgeOrigCount = getOrigEdgeCount(skippedEdge1);
             // collect outgoing nodes (goal-nodes) only once
@@ -459,13 +469,19 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             while (outgoingEdges.next()) {
                 int w_toNode = outgoingEdges.getAdjNode();
                 // add only uncontracted nodes
-                if (prepareGraph.getLevel(w_toNode) != maxLevel || u_fromNode == w_toNode)
+                if (prepareGraph.getLevel(w_toNode) != maxLevel)
+                    continue;
+                // in node-based: don't add shortcuts for loops at all.
+                if (!traversalMode.isEdgeBased() && u_fromNode == w_toNode)
+                    continue;
+                // in edge-based: don't add shortcuts that would just represent a loop
+                if (traversalMode.isEdgeBased() && (u_fromNode == sch.getNode() || w_toNode == sch.getNode()))
                     continue;
 
                 // Limit weight as ferries or forbidden edges can increase local search too much.
                 // If we decrease the correct weight we only explore less and introduce more shortcuts.
                 // I.e. no change to accuracy is made.
-                double existingDirectWeight = v_u_weight + prepareWeighting.calcWeight(outgoingEdges, false, incomingEdges.getEdge());
+                double existingDirectWeight = computeExistingDirectWeight(incomingEdges, outgoingEdges);
                 if (Double.isNaN(existingDirectWeight))
                     throw new IllegalStateException("Weighting should never return NaN values"
                             + ", in:" + getCoords(incomingEdges, prepareGraph) + ", out:" + getCoords(outgoingEdges, prepareGraph)
@@ -481,10 +497,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
                 dijkstraSW.start();
                 dijkstraCount++;
-                int endNode = prepareAlgo.findEndNode(u_fromNode, w_toNode);
+                int endNode = findWitnessPath(u_fromNode, w_toNode, incomingEdges, outgoingEdges);
                 dijkstraSW.stop();
 
                 // compare end node as the limit could force dijkstra to finish earlier
+                // TODO: make witness search compatible with CH
                 if (endNode == w_toNode && prepareAlgo.getWeight(endNode) <= existingDirectWeight)
                     // FOUND witness path, so do not add shortcut
                     continue;
@@ -502,6 +519,59 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
     }
 
+    int findWitnessPath(int u_fromNode, int w_toNode, EdgeIteratorState edgeUv, EdgeIteratorState edgeVw) {
+        if (!traversalMode.isEdgeBased())
+            return prepareAlgo.findEndNode(u_fromNode, w_toNode);
+
+        prepareWeighting.initEdgebased(u_fromNode, w_toNode, edgeUv, edgeVw);
+        return prepareAlgo.findEndNode(u_fromNode, w_toNode);
+    }
+
+    void findLoops(int node) {
+        if (!traversalMode.isEdgeBased())
+            return;
+
+        EdgeIterator edges = vehicleOutExplorer.setBaseNode(node);
+        int writeIndex = 0;
+        while (edges.next()) {
+            if (edges.getAdjNode() == node) {
+
+                if (writeIndex >= loopEdges.size())
+                    // expand loop list
+                    loopEdges.add(edges.detach(false));
+                else
+                    loopEdges.set(writeIndex, edges.detach(false));
+                    // reuse existing loop list entry
+                    //edges.copyPropertiesTo(loopEdges.get(writeIndex));
+
+                writeIndex++;
+            }
+        }
+        this.numLoops = writeIndex;
+    }
+
+    double computeExistingDirectWeight(EdgeIteratorState inEdge, EdgeIteratorState outEdge) {
+        // In the node-based mode, we simply need to add c(u,v) + c(v,w).
+        // In the edge-based mode, we need to additionally consider loops at node v.
+        double cost_uv = prepareWeighting.calcWeight(inEdge, true, EdgeIterator.NO_EDGE);
+        double cost_vw = prepareWeighting.calcWeight(outEdge, false, inEdge.getEdge());
+        double directCost = cost_uv + cost_vw;
+        if (!traversalMode.isEdgeBased()) {
+            return directCost;
+        }
+
+        // find the best loop
+        for (int i = 0; i < this.numLoops; i++) {
+            EdgeIteratorState loopEdge = loopEdges.get(i);
+            double cost_vloop = prepareWeighting.calcWeight(loopEdge, false, inEdge.getEdge());
+            double cost_to_w = prepareWeighting.calcWeight(outEdge, false, loopEdge.getEdge());
+            double total = cost_uv + cost_vloop + cost_to_w;
+            if (total < directCost)
+                directCost = total;
+        }
+        return directCost;
+    }
+
     /**
      * Introduces the necessary shortcuts for adjNode v in the graph.
      */
@@ -514,29 +584,32 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             boolean updatedInGraph = false;
             // check if we need to update some existing shortcut in the graph
             CHEdgeIterator iter = vehicleOutExplorer.setBaseNode(sc.from);
-            while (iter.next()) {
-                if (iter.isShortcut() && iter.getAdjNode() == sc.to && iter.canBeOverwritten(sc.flags)) {
-                    if (sc.weight >= prepareWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE))
-                        continue NEXT_SC;
+            // TODO: implement similar optimization that respects turncost
+            if (!traversalMode.isEdgeBased()) {
+                while (iter.next()) {
+                    if (iter.isShortcut() && iter.getAdjNode() == sc.to && iter.canBeOverwritten(sc.flags)) {
+                        if (sc.weight >= prepareWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE))
+                            continue NEXT_SC;
 
-                    if (iter.getEdge() == sc.skippedEdge1 || iter.getEdge() == sc.skippedEdge2) {
-                        throw new IllegalStateException("Shortcut cannot update itself! " + iter.getEdge()
-                                + ", skipEdge1:" + sc.skippedEdge1 + ", skipEdge2:" + sc.skippedEdge2
-                                + ", edge " + iter + ":" + getCoords(iter, prepareGraph)
-                                + ", sc:" + sc
-                                + ", skippedEdge1: " + getCoords(prepareGraph.getEdgeIteratorState(sc.skippedEdge1, sc.from), prepareGraph)
-                                + ", skippedEdge2: " + getCoords(prepareGraph.getEdgeIteratorState(sc.skippedEdge2, sc.to), prepareGraph)
-                                + ", neighbors:" + GHUtility.getNeighbors(iter));
+                        if (iter.getEdge() == sc.skippedEdge1 || iter.getEdge() == sc.skippedEdge2) {
+                            throw new IllegalStateException("Shortcut cannot update itself! " + iter.getEdge()
+                                    + ", skipEdge1:" + sc.skippedEdge1 + ", skipEdge2:" + sc.skippedEdge2
+                                    + ", edge " + iter + ":" + getCoords(iter, prepareGraph)
+                                    + ", sc:" + sc
+                                    + ", skippedEdge1: " + getCoords(prepareGraph.getEdgeIteratorState(sc.skippedEdge1, sc.from), prepareGraph)
+                                    + ", skippedEdge2: " + getCoords(prepareGraph.getEdgeIteratorState(sc.skippedEdge2, sc.to), prepareGraph)
+                                    + ", neighbors:" + GHUtility.getNeighbors(iter));
+                        }
+
+                        // note: flags overwrite weight => call first
+                        iter.setFlags(sc.flags);
+                        iter.setWeight(sc.weight);
+                        iter.setDistance(sc.dist);
+                        iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
+                        setOrigEdgeCount(iter.getEdge(), sc.originalEdges);
+                        updatedInGraph = true;
+                        break;
                     }
-
-                    // note: flags overwrite weight => call first
-                    iter.setFlags(sc.flags);
-                    iter.setWeight(sc.weight);
-                    iter.setDistance(sc.dist);
-                    iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
-                    setOrigEdgeCount(iter.getEdge(), sc.originalEdges);
-                    updatedInGraph = true;
-                    break;
                 }
             }
 
@@ -548,6 +621,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 edgeState.setDistance(sc.dist);
                 edgeState.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
                 setOrigEdgeCount(edgeState.getEdge(), sc.originalEdges);
+                if (turnCostStorage != null) {
+                    for (TurnCostInfo info : sc.turnCostInfo) {
+                        if (info.viaNode == sc.from)
+                            turnCostStorage.addTurnInfo(info.fromEdge, info.viaNode, edgeState.getEdge(), info.flags);
+                        else if (info.viaNode == sc.to)
+                            turnCostStorage.addTurnInfo(edgeState.getEdge(), info.viaNode, info.toEdge, info.flags);
+
+                    }
+                }
                 tmpNewShortcuts++;
             }
         }
@@ -665,7 +747,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             @Override
             protected Path createAndInitPath() {
-                bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
+                bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting, traversalMode);
                 return bestPath;
             }
 
@@ -701,7 +783,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             @Override
             protected Path createAndInitPath() {
-                bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
+                bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting, traversalMode);
                 return bestPath;
             }
 
@@ -754,6 +836,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
     }
 
+    static class TurnCostInfo {
+        int fromEdge;
+        int viaNode;
+        int toEdge;
+        long flags;
+    }
+
     static class Shortcut {
         int from;
         int to;
@@ -763,12 +852,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         double weight;
         int originalEdges;
         long flags = PrepareEncoder.getScFwdDir();
+        ArrayList<TurnCostInfo> turnCostInfo;
 
         public Shortcut(int from, int to, double weight, double dist) {
             this.from = from;
             this.to = to;
             this.weight = weight;
             this.dist = dist;
+            if (from == to)
+                flags = PrepareEncoder.getScDirMask();
         }
 
         @Override
@@ -833,8 +925,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     class AddShortcutHandler implements ShortcutHandler {
         int node;
+        CHEdgeExplorer inExplorer;
+        CHEdgeExplorer outExplorer;
 
         public AddShortcutHandler() {
+            FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
+            inExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
+            outExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
         }
 
         @Override
@@ -850,6 +947,66 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         @Override
         public void foundShortcut(int u_fromNode, int w_toNode,
+                                  double existingDirectWeight, double existingDistSum,
+                                  EdgeIterator outgoingEdges,
+                                  int skippedEdge1, int incomingEdgeOrigCount) {
+            if (traversalMode.isEdgeBased())
+                foundShortcutEdgebased(u_fromNode, w_toNode, existingDirectWeight, existingDistSum, outgoingEdges, skippedEdge1, incomingEdgeOrigCount);
+            else
+                foundShortcutNodebased(u_fromNode, w_toNode, existingDirectWeight, existingDistSum, outgoingEdges, skippedEdge1, incomingEdgeOrigCount);
+        }
+
+        public void foundShortcutEdgebased(int u_fromNode, int w_toNode,
+                                  double existingDirectWeight, double existingDistSum,
+                                  EdgeIterator outgoingEdges,
+                                  int skippedEdge1, int incomingEdgeOrigCount) {
+            // TODO: check if we have a shortcut that is better in every respect.
+            // I.e. that means that:
+            // for all incoming edges to u ->
+            //   for all outgoing edges of w ->
+            //     turncost into u + sc-cost + turncost out of w <= existing-sc-cost
+
+            // add the shortcut as in node-based mode, then also add entries to the turn-cost table
+            Shortcut sc = new Shortcut(u_fromNode, w_toNode, existingDirectWeight, existingDistSum);
+
+            shortcuts.put(sc, sc);
+            sc.skippedEdge1 = skippedEdge1;
+            sc.skippedEdge2 = outgoingEdges.getEdge();
+            sc.originalEdges = incomingEdgeOrigCount + getOrigEdgeCount(outgoingEdges.getEdge());
+
+            if (turnCostStorage != null) {
+                sc.turnCostInfo = new ArrayList<>();
+
+                CHEdgeIterator iter = inExplorer.setBaseNode(u_fromNode);
+                while (iter.next()) {
+                    long flags = turnCostStorage.getTurnCostFlags(iter.getEdge(), u_fromNode, sc.skippedEdge1);
+                    if (flags == 0)
+                        continue;
+                    TurnCostInfo tc = new TurnCostInfo();
+                    tc.flags = flags;
+                    tc.fromEdge = iter.getEdge();
+                    tc.viaNode = u_fromNode;
+                    tc.toEdge = sc.skippedEdge1;
+                    sc.turnCostInfo.add(tc);
+                }
+
+                iter = outExplorer.setBaseNode(w_toNode);
+                while (iter.next()) {
+                    long flags = turnCostStorage.getTurnCostFlags(sc.skippedEdge2, w_toNode, iter.getEdge());
+                    if (flags == 0)
+                        continue;
+                    TurnCostInfo tc = new TurnCostInfo();
+                    tc.flags = flags;
+                    tc.fromEdge = sc.skippedEdge2;
+                    tc.viaNode = w_toNode;
+                    tc.toEdge = iter.getEdge();
+                    sc.turnCostInfo.add(tc);
+                }
+            }
+        }
+
+
+        public void foundShortcutNodebased(int u_fromNode, int w_toNode,
                                   double existingDirectWeight, double existingDistSum,
                                   EdgeIterator outgoingEdges,
                                   int skippedEdge1, int incomingEdgeOrigCount) {
