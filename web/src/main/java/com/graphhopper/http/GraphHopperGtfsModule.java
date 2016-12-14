@@ -33,7 +33,7 @@ public final class GraphHopperGtfsModule extends AbstractModule {
     @Provides
     @Singleton
     GraphHopperStorage createGraphHopperStorage(CmdArgs args, GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage) {
-        return GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, args.getBool("gtfs.createwalknetwork", false), Collections.singleton(args.get("datareader.file", "")));
+        return GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, args.getBool("gtfs.createwalknetwork", false), Collections.singleton(args.get("datareader.file", "")), Collections.emptyList());
     }
 
     @Provides

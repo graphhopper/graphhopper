@@ -5,6 +5,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.*;
@@ -71,7 +72,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         GtfsStorage gtfsStorage = createGtfsStorage();
 
         GHDirectory directory = createGHDirectory(graphHopperFolder);
-        GraphHopperStorage graphHopperStorage = createOrLoad(directory, encodingManager, gtfsStorage, createWalkNetwork, Collections.singleton(gtfsFile));
+        GraphHopperStorage graphHopperStorage = createOrLoad(directory, encodingManager, gtfsStorage, createWalkNetwork, Collections.singleton(gtfsFile), Collections.emptyList());
         LocationIndex locationIndex = createOrLoadIndex(directory, graphHopperStorage);
 
         return new GraphHopperGtfs(encodingManager, createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);
@@ -93,10 +94,21 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         return new EncodingManager(Arrays.asList(new PtFlagEncoder()), 8);
     }
 
-    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, boolean createWalkNetwork, Collection<String> gtfsFiles) {
+    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, boolean createWalkNetwork, Collection<String> gtfsFiles, Collection<String> osmFiles) {
         GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, gtfsStorage);
         if (!new File(directory.getLocation()).exists()) {
             graphHopperStorage.create(1000);
+            for (String osmFile : osmFiles) {
+                OSMReader osmReader = new OSMReader(graphHopperStorage);
+                osmReader.setEncodingManager(encodingManager);
+                osmReader.setFile(new File(osmFile));
+                osmReader.setDontCreateStorage(true);
+                try {
+                    osmReader.readGraph();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             List<GTFSFeed> feeds = gtfsFiles.parallelStream()
                     .map(filename -> GTFSFeed.fromFile(new File(filename).getPath()))
                     .collect(Collectors.toList());
@@ -104,7 +116,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 FakeWalkNetworkBuilder.buildWalkNetwork(feeds, graphHopperStorage, (PtFlagEncoder) encodingManager.getEncoder("pt"), Helper.DIST_EARTH);
             }
             for (GTFSFeed feed : feeds) {
-                new GtfsReader(feed, graphHopperStorage, createWalkNetwork).readGraph();
+                new GtfsReader(feed, graphHopperStorage).readGraph();
             }
             graphHopperStorage.flush();
         } else {

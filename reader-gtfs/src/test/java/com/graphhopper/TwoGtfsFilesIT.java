@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.Assert.assertFalse;
 
@@ -27,7 +28,7 @@ public class TwoGtfsFilesIT {
 
         EncodingManager encodingManager = GraphHopperGtfs.createEncodingManager();
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
-        GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, true, Arrays.asList("files/sample-feed.zip", "files/rnv.zip"));
+        GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, true, Arrays.asList("files/sample-feed.zip", "files/rnv.zip"), Collections.emptyList());
         LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
 
         graphHopper = new GraphHopperGtfs(encodingManager, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);

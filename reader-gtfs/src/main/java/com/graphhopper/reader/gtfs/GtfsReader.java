@@ -30,7 +30,6 @@ class GtfsReader {
 
     private final GraphHopperStorage graph;
     private final GtfsStorage gtfsStorage;
-    private final boolean createWalkNetwork;
 
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
     private final Map<String, Transfer> explicitWithinStationMinimumTransfers = new HashMap<>();
@@ -44,30 +43,25 @@ class GtfsReader {
     private SetMultimap<String, Transfer> betweenStationTransfers;
     private final PtFlagEncoder encoder;
 
-    GtfsReader(GTFSFeed feed, GraphHopperStorage ghStorage, boolean createWalkNetwork) {
+    GtfsReader(GTFSFeed feed, GraphHopperStorage ghStorage) {
         this.feed = feed;
         this.graph = ghStorage;
         this.gtfsStorage = (GtfsStorage) ghStorage.getExtension();
         this.nodeAccess = ghStorage.getNodeAccess();
-        this.createWalkNetwork = createWalkNetwork;
         encoder = (PtFlagEncoder) graph.getEncodingManager().getEncoder("pt");
     }
 
     public void readGraph() {
         i = graph.getNodes();
         buildPtNetwork();
-        if (createWalkNetwork) {
-            LocationIndex locationIndex = new LocationIndexTree(graph, new RAMDirectory()).prepareIndex();
-            EdgeFilter filter = new EverythingButPt(encoder);
-            for (Map.Entry<String, Integer> entry : stopNodes.entrySet()) {
-                int enterNode = entry.getValue();
-                QueryResult source = locationIndex.findClosest(nodeAccess.getLat(enterNode), nodeAccess.getLon(enterNode), filter);
-                if (!source.isValid()) {
-                    throw new IllegalStateException();
-                } else {
-                    graph.edge(source.getClosestNode(), enterNode, 0.0, false);
-                    graph.edge(enterNode+1, source.getClosestNode(), 0.0, false);
-                }
+        LocationIndex locationIndex = new LocationIndexTree(graph, new RAMDirectory()).prepareIndex();
+        EdgeFilter filter = new EverythingButPt(encoder);
+        for (Map.Entry<String, Integer> entry : stopNodes.entrySet()) {
+            int enterNode = entry.getValue();
+            QueryResult source = locationIndex.findClosest(nodeAccess.getLat(enterNode), nodeAccess.getLon(enterNode), filter);
+            if (source.isValid()) {
+                graph.edge(source.getClosestNode(), enterNode, 0.0, false);
+                graph.edge(enterNode+1, source.getClosestNode(), 0.0, false);
             }
         }
     }

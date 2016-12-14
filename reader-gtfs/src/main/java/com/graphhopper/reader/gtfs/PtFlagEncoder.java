@@ -2,14 +2,15 @@ package com.graphhopper.reader.gtfs;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodedValue;
+import com.graphhopper.routing.util.FootFlagEncoder;
 
-class PtFlagEncoder extends CarFlagEncoder {
+class PtFlagEncoder extends FootFlagEncoder {
 
 	private EncodedValue wurst;
 	private EncodedValue blubb;
 
 	PtFlagEncoder() {
-		super(6, 5, 0);
+		super(6, 5);
 		maxPossibleSpeed = 300;
 	}
 
