@@ -1,5 +1,6 @@
 package com.graphhopper.reader.gtfs;
 
+import com.conveyal.gtfs.GTFSFeed;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
@@ -17,6 +18,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.graphhopper.reader.gtfs.Label.reverseEdges;
 
@@ -95,8 +97,14 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, gtfsStorage);
         if (!new File(directory.getLocation()).exists()) {
             graphHopperStorage.create(1000);
-            for (String gtfsFile : gtfsFiles) {
-                new GtfsReader(graphHopperStorage, createWalkNetwork).readGraph(new File(gtfsFile));
+            List<GTFSFeed> feeds = gtfsFiles.parallelStream()
+                    .map(filename -> GTFSFeed.fromFile(new File(filename).getPath()))
+                    .collect(Collectors.toList());
+            if (createWalkNetwork) {
+                FakeWalkNetworkBuilder.buildWalkNetwork(feeds, graphHopperStorage, (PtFlagEncoder) encodingManager.getEncoder("pt"), Helper.DIST_EARTH);
+            }
+            for (GTFSFeed feed : feeds) {
+                new GtfsReader(feed, graphHopperStorage, createWalkNetwork).readGraph();
             }
             graphHopperStorage.flush();
         } else {

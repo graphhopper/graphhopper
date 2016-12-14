@@ -14,18 +14,11 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.triangulate.ConformingDelaunayTriangulator;
-import com.vividsolutions.jts.triangulate.ConstraintVertex;
-import com.vividsolutions.jts.triangulate.quadedge.QuadEdge;
-import com.vividsolutions.jts.triangulate.quadedge.QuadEdgeSubdivision;
-import com.vividsolutions.jts.triangulate.quadedge.Vertex;
 import gnu.trove.map.hash.TIntIntHashMap;
 import org.mapdb.Fun;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -43,7 +36,7 @@ class GtfsReader {
     private final Map<String, Transfer> explicitWithinStationMinimumTransfers = new HashMap<>();
     private final NodeAccess nodeAccess;
     private int i;
-    private GTFSFeed feed;
+    private final GTFSFeed feed;
     private TIntIntHashMap times;
     private SetMultimap<String, Integer> stops;
     private Map<String, Integer> stopNodes = new HashMap<>();
@@ -51,7 +44,8 @@ class GtfsReader {
     private SetMultimap<String, Transfer> betweenStationTransfers;
     private final PtFlagEncoder encoder;
 
-    GtfsReader(GraphHopperStorage ghStorage, boolean createWalkNetwork) {
+    GtfsReader(GTFSFeed feed, GraphHopperStorage ghStorage, boolean createWalkNetwork) {
+        this.feed = feed;
         this.graph = ghStorage;
         this.gtfsStorage = (GtfsStorage) ghStorage.getExtension();
         this.nodeAccess = ghStorage.getNodeAccess();
@@ -59,12 +53,8 @@ class GtfsReader {
         encoder = (PtFlagEncoder) graph.getEncodingManager().getEncoder("pt");
     }
 
-    public void readGraph(File file) {
-        feed = GTFSFeed.fromFile(file.getPath());
+    public void readGraph() {
         i = graph.getNodes();
-        if (createWalkNetwork) {
-            buildWalkNetwork();
-        }
         buildPtNetwork();
         if (createWalkNetwork) {
             LocationIndex locationIndex = new LocationIndexTree(graph, new RAMDirectory()).prepareIndex();
@@ -79,33 +69,6 @@ class GtfsReader {
                     graph.edge(enterNode+1, source.getClosestNode(), 0.0, false);
                 }
             }
-        }
-    }
-
-    private void buildWalkNetwork() {
-        Collection<ConstraintVertex> sites = new ArrayList<>();
-        Map<Vertex, Integer> vertex2nodeId = new HashMap<>();
-        for (Stop stop : feed.stops.values()) {
-            nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
-            ConstraintVertex site = new ConstraintVertex(new Coordinate(stop.stop_lon,stop.stop_lat));
-            sites.add(site);
-            vertex2nodeId.put(site, i-1);
-        }
-        ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
-        conformingDelaunayTriangulator.setConstraints(new ArrayList(), new ArrayList());
-        conformingDelaunayTriangulator.formInitialDelaunay();
-        QuadEdgeSubdivision tin = conformingDelaunayTriangulator.getSubdivision();
-        List<QuadEdge> edges = tin.getPrimaryEdges(false);
-        for (QuadEdge edge : edges) {
-            EdgeIteratorState ghEdge = graph.edge(vertex2nodeId.get(edge.orig()), vertex2nodeId.get(edge.dest()));
-            double distance = distCalc.calcDist(
-                    edge.orig().getY(),
-                    edge.orig().getX(),
-                    edge.dest().getY(),
-                    edge.dest().getX());
-            ghEdge.setDistance(distance);
-            ghEdge.setFlags(encoder.setSpeed(ghEdge.getFlags(), 5.0));
-            ghEdge.setFlags(encoder.setAccess(ghEdge.getFlags(), true, true));
         }
     }
 

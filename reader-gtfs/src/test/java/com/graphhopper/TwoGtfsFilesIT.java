@@ -13,8 +13,6 @@ import org.junit.Test;
 import java.io.File;
 import java.util.Arrays;
 
-import static com.graphhopper.reader.gtfs.GtfsHelper.time;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
 public class TwoGtfsFilesIT {
@@ -29,17 +27,16 @@ public class TwoGtfsFilesIT {
 
         EncodingManager encodingManager = GraphHopperGtfs.createEncodingManager();
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
-        GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, false, Arrays.asList("files/sample-feed.zip", "files/rnv.zip"));
+        GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, true, Arrays.asList("files/sample-feed.zip", "files/rnv.zip"));
         LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
 
         graphHopper = new GraphHopperGtfs(encodingManager, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);
     }
 
     @Test
-    public void testRoute1() {
+    public void testCanGoFromAmericaToRheinNeckar() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
-        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        int expectedWeight = time(6, 49);
+        final double TO_LAT = 49.42799, TO_LON = 8.6833; // 113612, Hans-Thoma-Platz
         GHRequest ghRequest = new GHRequest(
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
@@ -48,9 +45,6 @@ public class TwoGtfsFilesIT {
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());
-        assertEquals(1, route.getAll().size());
-        assertEquals("Expected weight == scheduled arrival time", expectedWeight, route.getBest().getRouteWeight(), 0.1);
-        assertEquals("Expected travel time == scheduled arrival time", expectedWeight * 1000, route.getBest().getTime(), 0.1);
     }
 
 
