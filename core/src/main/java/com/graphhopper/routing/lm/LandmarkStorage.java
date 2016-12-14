@@ -31,6 +31,8 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -173,8 +175,10 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         EdgeExplorer tmpExplorer = graph.createEdgeExplorer(new RequireBothDirectionsEdgeFilter(encoder));
 
+        int nodes = 0;
         MAIN:
         for (IntArrayList subnetworkIds : graphComponents) {
+            nodes += subnetworkIds.size();
             if (subnetworkIds.size() < minimumNodes)
                 continue;
 
@@ -218,6 +222,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             subnetworkStorage.setSubnetwork(nodeId, subnetworks[nodeId]);
         }
 
+        LOGGER.info("Finished landmark creation. Subnetwork node count sum " + nodes + " vs. nodes " + graph.getNodes());
         initialized = true;
     }
 
@@ -236,12 +241,17 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return str;
     }
 
+    private final BBox euBBox = BBox.parseTwoPoints("63.391522,-15.205078,33.358062,51.240234");
+
     /**
      * This method creates landmarks for the specified subnetwork (integer list)
      *
      * @return landmark mapping
      */
     private void createLandmarks(final int startNode, final byte[] subnetworks, IntArrayList subnetworkIds) {
+        GHPoint p = createPoint(graph, startNode);
+        LOGGER.info("start node: " + startNode + " (" + p + ") subnetwork size: " + subnetworkIds.size() + ", " + Helper.getMemInfo() + " EU=" + euBBox.contains(p.lat, p.lon));
+
         final int subnetworkId = landmarkIDs.size();
 
         // 1a) pick landmarks via shortest weighting for a better geographical spreading
@@ -280,8 +290,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                             + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%, " + Helper.getMemInfo());
             }
 
-            LOGGER.info("Finished searching landmarks for subnetwork " + subnetworkId + " of size " + explorer.getVisitedNodes()
-                    + ", start node: " + startNode + " (" + getStr(graph, startNode) + ")");
+            LOGGER.info("Finished searching landmarks for subnetwork " + subnetworkId + " of size " + explorer.getVisitedNodes());
 
             // 2) calculate weights for all landmarks -> 'from' and 'to' weight
             for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
@@ -395,10 +404,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         int subnetworkFrom = subnetworkStorage.getSubnetwork(fromNode);
         int subnetworkTo = subnetworkStorage.getSubnetwork(toNode);
+        if (subnetworkFrom == UNCLEAR_SUBNETWORK || subnetworkTo == UNCLEAR_SUBNETWORK)
+            return false;
         if (subnetworkFrom != subnetworkTo) {
-            if (subnetworkFrom == UNCLEAR_SUBNETWORK || subnetworkTo == UNCLEAR_SUBNETWORK)
-                return false;
-
             // TODO how to get the point indices and use throw new ConnectionNotFoundException?
             throw new RuntimeException("Connection between locations not found. Different subnetworks " + subnetworkFrom + " vs. " + subnetworkTo);
         }
@@ -612,7 +620,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                         if (sn != UNSET_SUBNETWORK && sn != UNCLEAR_SUBNETWORK) {
                             // this is ugly but can happen in real world, see testWithOnewaySubnetworks
                             LOGGER.error("subnetworkId for node " + nodeId
-                                    + " (" + getStr(graph, nodeId) + ") already set (" + sn + "). " + "Cannot change to " + subnetworkId);
+                                    + " (" + createPoint(graph, nodeId) + ") already set (" + sn + "). " + "Cannot change to " + subnetworkId);
 
                             failed.set(true);
                             return false;
@@ -647,8 +655,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         }
     };
 
-    static String getStr(Graph graph, int nodeId) {
-        return graph.getNodeAccess().getLatitude(nodeId) + "," + graph.getNodeAccess().getLongitude(nodeId);
+    static GHPoint createPoint(Graph graph, int nodeId) {
+        return new GHPoint(graph.getNodeAccess().getLatitude(nodeId), graph.getNodeAccess().getLongitude(nodeId));
     }
 
     final static class RequireBothDirectionsEdgeFilter implements EdgeFilter {
