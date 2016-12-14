@@ -36,15 +36,25 @@ import static com.graphhopper.util.Helper.createFormatter;
  *
  * @author Robin Boldt
  */
-public class DateRangeParser {
+public class DateRangeParser implements ConditionalValueParser {
     private static final DateFormat YEAR_MONTH_DAY_DF = createFormatter("yyyy MMM dd");
     private static final DateFormat MONTH_DAY_DF = createFormatter("MMM dd");
     private static final DateFormat MONTH_DAY2_DF = createFormatter("dd.MM");
     private static final DateFormat YEAR_MONTH_DF = createFormatter("yyyy MMM");
     private static final DateFormat MONTH_DF = createFormatter("MMM");
     private static final List<String> DAY_NAMES = Arrays.asList(new String[]{
-        "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"
+            "Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"
     });
+
+    private Calendar date;
+
+    public DateRangeParser() {
+        this(createCalendar());
+    }
+
+    public DateRangeParser(Calendar date) {
+        this.date = date;
+    }
 
     public static Calendar createCalendar() {
         // Use locale US as exception here (instead of UK) to match week order "Su-Sa" used in Calendar for day_of_week.
@@ -94,13 +104,14 @@ public class DateRangeParser {
         return parsedCalendar;
     }
 
-    public static DateRange parseDateRange(String dateRangeString) throws ParseException {
+    public DateRange getRange(String dateRangeString) throws ParseException {
         if (dateRangeString == null || dateRangeString.isEmpty())
             throw new IllegalArgumentException("Passing empty Strings is not allowed");
 
         String[] dateArr = dateRangeString.split("-");
         if (dateArr.length > 2 || dateArr.length < 1)
-            throw new IllegalArgumentException("Only Strings containing two Date separated by a '-' or a single Date are allowed");
+            return null;
+        // throw new IllegalArgumentException("Only Strings containing two Date separated by a '-' or a single Date are allowed");
 
         ParsedCalendar from = parseDateString(dateArr[0]);
         ParsedCalendar to;
@@ -114,4 +125,15 @@ public class DateRangeParser {
         return new DateRange(from, to);
     }
 
+    @Override
+    public ConditionState checkCondition(String dateRangeString) throws ParseException {
+        DateRange dr = getRange(dateRangeString);
+        if (dr == null)
+            return ConditionState.INVALID;
+
+        if (dr.isInRange(date))
+            return ConditionState.TRUE;
+        else
+            return ConditionState.FALSE;
+    }
 }

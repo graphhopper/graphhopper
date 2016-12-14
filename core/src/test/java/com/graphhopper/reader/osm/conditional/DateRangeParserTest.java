@@ -28,6 +28,8 @@ import static org.junit.Assert.*;
  * @author Robin Boldt
  */
 public class DateRangeParserTest extends CalendarBasedTest {
+    final DateRangeParser dateRangeParser = new DateRangeParser();
+
     @Test
     public void testParseConditional() throws ParseException {
         assertSameDate(2014, Calendar.DECEMBER, 15, "2014 Dec 15");
@@ -39,13 +41,13 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testToString() throws ParseException {
-        DateRange instance = DateRangeParser.parseDateRange("Mar-Oct");
+        DateRange instance = dateRangeParser.getRange("Mar-Oct");
         assertEquals("yearless:true, dayOnly:false, reverse:false, from:1970-03-01T00:00:00Z, to:1970-10-31T23:59:59Z", instance.toString());
     }
 
     @Test
     public void testParseSimpleDateRange() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("2014 Aug 10-2014 Aug 14");
+        DateRange dateRange = dateRangeParser.getRange("2014 Aug 10-2014 Aug 14");
         assertFalse(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 9)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 10)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 12)));
@@ -55,7 +57,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testParseSimpleDateRangeWithoutYear() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("Aug 10-Aug 14");
+        DateRange dateRange = dateRangeParser.getRange("Aug 10-Aug 14");
         assertFalse(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 9)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 10)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 12)));
@@ -65,7 +67,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testParseSimpleDateRangeWithoutYearAndDay() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("Jul-Aug");
+        DateRange dateRange = dateRangeParser.getRange("Jul-Aug");
         assertFalse(dateRange.isInRange(getCalendar(2014, Calendar.JUNE, 9)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.JULY, 10)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 12)));
@@ -74,7 +76,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testParseSimpleDateRangeWithoutYearAndDay2() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("Mar-Sep");
+        DateRange dateRange = dateRangeParser.getRange("Mar-Sep");
         assertFalse(dateRange.isInRange(getCalendar(2014, Calendar.FEBRUARY, 25)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.MARCH, 1)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.SEPTEMBER, 30)));
@@ -83,7 +85,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testParseReverseDateRange() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("2014 Aug 14-2015 Mar 10");
+        DateRange dateRange = dateRangeParser.getRange("2014 Aug 14-2015 Mar 10");
         assertFalse(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 13)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 14)));
         assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.MARCH, 10)));
@@ -92,7 +94,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testParseReverseDateRangeWithoutYear() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("Aug 14-Aug 10");
+        DateRange dateRange = dateRangeParser.getRange("Aug 14-Aug 10");
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.JANUARY, 9)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 9)));
         assertFalse(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 10)));
@@ -104,7 +106,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testParseReverseDateRangeWithoutYearAndDay() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("Sep-Mar");
+        DateRange dateRange = dateRangeParser.getRange("Sep-Mar");
         assertFalse(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 31)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.SEPTEMBER, 1)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.DECEMBER, 24)));
@@ -115,7 +117,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testParseReverseDateRangeWithoutYearAndDay_645() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("Aug 10-Jan");
+        DateRange dateRange = dateRangeParser.getRange("Aug 10-Jan");
         assertFalse(dateRange.isInRange(getCalendar(2016, Calendar.AUGUST, 9)));
         assertTrue(dateRange.isInRange(getCalendar(2016, Calendar.AUGUST, 10)));
         assertTrue(dateRange.isInRange(getCalendar(2016, Calendar.JANUARY, 1)));
@@ -126,7 +128,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testParseSingleDateRange() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("2014 Sep 1");
+        DateRange dateRange = dateRangeParser.getRange("2014 Sep 1");
         assertFalse(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 31)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.SEPTEMBER, 1)));
         assertFalse(dateRange.isInRange(getCalendar(2014, Calendar.SEPTEMBER, 30)));
@@ -136,7 +138,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testParseSingleDateRangeWithoutDay() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("2014 Sep");
+        DateRange dateRange = dateRangeParser.getRange("2014 Sep");
         assertFalse(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 31)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.SEPTEMBER, 1)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.SEPTEMBER, 30)));
@@ -146,7 +148,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testParseSingleDateRangeWithoutYearAndDay() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("Sep");
+        DateRange dateRange = dateRangeParser.getRange("Sep");
         assertFalse(dateRange.isInRange(getCalendar(2014, Calendar.AUGUST, 31)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.SEPTEMBER, 1)));
         assertTrue(dateRange.isInRange(getCalendar(2014, Calendar.SEPTEMBER, 30)));
@@ -155,7 +157,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testParseSingleDateRangeOneDayOnly() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("Sa");
+        DateRange dateRange = dateRangeParser.getRange("Sa");
         assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 25)));
         assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 26)));
         assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 27)));
@@ -163,7 +165,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testParseSingleDateRangeOneDayOnlyIncludingPh() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("Su, PH");
+        DateRange dateRange = dateRangeParser.getRange("Su, PH");
         assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 26)));
         assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 27)));
         assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 28)));
@@ -171,7 +173,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test
     public void testParseSingleDateRangeDayOnly() throws ParseException {
-        DateRange dateRange = DateRangeParser.parseDateRange("Mo-Fr");
+        DateRange dateRange = dateRangeParser.getRange("Mo-Fr");
         assertTrue(dateRange.dayOnly);
         assertFalse(dateRange.reverse);
         assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 20)));
@@ -186,7 +188,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
         // This is reverse since Su=7 and Mo=1 
         // Note: If we use Locale.Germany or Locale.UK for calendar creation 
         // then cal.set(DAY_OF_WEEK, 7) results in a "time in millis" after Saturday leading to reverse=false
-        DateRange dateRange = DateRangeParser.parseDateRange("Sa-Su");
+        DateRange dateRange = dateRangeParser.getRange("Sa-Su");
         assertTrue(dateRange.dayOnly);
         assertTrue(dateRange.reverse);
         assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 25)));
@@ -197,7 +199,7 @@ public class DateRangeParserTest extends CalendarBasedTest {
 
     @Test(expected = ParseException.class)
     public void testParseUnparsableDate() throws ParseException {
-        DateRangeParser.parseDateRange("Sat");
+        dateRangeParser.getRange("Sat");
         fail();
     }
 
