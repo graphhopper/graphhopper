@@ -53,7 +53,6 @@ class GtfsReader {
 
     GtfsReader(GraphHopperStorage ghStorage, boolean createWalkNetwork) {
         this.graph = ghStorage;
-        this.graph.create(1000);
         this.gtfsStorage = (GtfsStorage) ghStorage.getExtension();
         this.nodeAccess = ghStorage.getNodeAccess();
         this.createWalkNetwork = createWalkNetwork;
@@ -62,7 +61,7 @@ class GtfsReader {
 
     public void readGraph(File file) {
         feed = GTFSFeed.fromFile(file.getPath());
-        i = 0;
+        i = graph.getNodes();
         if (createWalkNetwork) {
             buildWalkNetwork();
         }

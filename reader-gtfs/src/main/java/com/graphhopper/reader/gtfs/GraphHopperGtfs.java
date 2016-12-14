@@ -6,7 +6,6 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -70,7 +69,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         GtfsStorage gtfsStorage = createGtfsStorage();
 
         GHDirectory directory = createGHDirectory(graphHopperFolder);
-        GraphHopperStorage graphHopperStorage = createOrLoad(directory, encodingManager, gtfsStorage, createWalkNetwork, gtfsFile);
+        GraphHopperStorage graphHopperStorage = createOrLoad(directory, encodingManager, gtfsStorage, createWalkNetwork, Collections.singleton(gtfsFile));
         LocationIndex locationIndex = createOrLoadIndex(directory, graphHopperStorage);
 
         return new GraphHopperGtfs(encodingManager, createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);
@@ -92,16 +91,20 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         return new EncodingManager(Arrays.asList(new PtFlagEncoder()), 8);
     }
 
-    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, boolean createWalkNetwork, String gtfsFile) {
+    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, boolean createWalkNetwork, Collection<String> gtfsFiles) {
         GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, gtfsStorage);
         if (!new File(directory.getLocation()).exists()) {
-            new GtfsReader(graphHopperStorage, createWalkNetwork).readGraph(new File(gtfsFile));
+            graphHopperStorage.create(1000);
+            for (String gtfsFile : gtfsFiles) {
+                new GtfsReader(graphHopperStorage, createWalkNetwork).readGraph(new File(gtfsFile));
+            }
             graphHopperStorage.flush();
         } else {
             graphHopperStorage.loadExisting();
         }
         return graphHopperStorage;
     }
+
 
     public static LocationIndex createOrLoadIndex(GHDirectory directory, GraphHopperStorage graphHopperStorage) {
         LocationIndex locationIndex = new LocationIndexTree(graphHopperStorage, directory);
