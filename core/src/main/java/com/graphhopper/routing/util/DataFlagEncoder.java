@@ -139,7 +139,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
                 "no"
         );
 
-
         counter = 0;
         for (String s : accessList) {
             accessMap.put(s, counter++);
@@ -370,11 +369,13 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
 
         try {
-            return valueEncoder.setDoubleValue(flags, val);
-        } catch (IllegalArgumentException e) {
-            LOG.warn("Unable to process meter value '{}' for way (OSM_ID = {}).", val, way.getId(), e);
-            return flags;
+            flags = valueEncoder.setDoubleValue(flags, val);
         }
+        catch (IllegalArgumentException e) {
+            LOG.warn("Unable to process value '{}' for way (OSM_ID = {}).", val, way.getId(), e);
+        }
+
+        return flags;
     }
 
     private long extractTons(ReaderWay way, long flags, EncodedDoubleValue valueEncoder, List<String> keys) {
@@ -386,10 +387,16 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             val = stringToTons(value);
         } catch (Throwable t) {
             LOG.warn("Unable to extract tons from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), t);
-            return flags;
+            val = 0.0;
         }
 
-        return valueEncoder.setDoubleValue(flags, val);
+        try {
+            flags = valueEncoder.setDoubleValue(flags, val);
+        } catch (IllegalArgumentException e) {
+            LOG.warn("Unable to process tons value '{}' for way (OSM_ID = {}).", val, way.getId(), e);
+        }
+
+        return flags;
     }
 
     public static double stringToTons(String value) {
