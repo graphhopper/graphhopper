@@ -112,39 +112,6 @@ public class Path4CH extends PathBidirRef {
             expandLocalLoops(skipped1, skipped2, skipped1.getAdjNode(), false);
             expandEdge(skipped2, false, skipped1.getEdge());
         }
-
-        // getEdgeProps could possibly return an empty edge if the shortcut is available for both directions.
-        /*if (reverseOrder) {
-            CHEdgeIteratorState edgeState1 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, to);
-            boolean empty = edgeState1 == null;
-            if (empty)
-                edgeState1 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, to);
-
-            CHEdgeIteratorState edgeState2;
-            if (empty)
-                edgeState2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, edgeState1.getBaseNode());
-            else
-                edgeState2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, edgeState1.getBaseNode());
-
-            expandEdge(edgeState1, false, edgeState2.getEdge());
-            expandLocalLoops(edgeState2, edgeState1, edgeState2.getBaseNode(), true);
-            expandEdge(edgeState2, false, prevEdgeId);
-        } else {
-            CHEdgeIteratorState iter = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, from);
-            boolean empty = iter == null;
-            if (empty)
-                iter = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, from);
-
-            CHEdgeIteratorState iter2;
-            if (empty)
-                iter2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, to);
-            else
-                iter2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, to);
-
-            expandEdge(iter, true, prevEdgeId);
-            expandLocalLoops(iter2, iter, iter.getBaseNode(), false);
-            expandEdge(iter, false, iter.getEdge());
-        }*/
     }
 
     private void expandLocalLoops(CHEdgeIteratorState skipped1, CHEdgeIteratorState skipped2, int skippedNode, boolean reverse) {

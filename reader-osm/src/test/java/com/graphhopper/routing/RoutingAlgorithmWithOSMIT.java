@@ -535,7 +535,6 @@ public class RoutingAlgorithmWithOSMIT {
                     hopper.getLocationIndex(), testAlsoCH, tMode, weighting);
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (AlgoHelperEntry entry : prepares) {
-                //if (!entry.toString().equals("dijkstrabiCH")) continue; // TODO: delete me
                 algoEntry = entry;
                 LocationIndex idx = entry.getIdx();
                 for (OneRun oneRun : forEveryAlgo) {

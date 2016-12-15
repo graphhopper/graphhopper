@@ -258,8 +258,6 @@ public class GHUtility {
             else
                 tna.setNode(node, fna.getLatitude(node), fna.getLongitude(node));
         }
-
-        fromGraph.getExtension().copyTo(toGraph.getExtension());
         return toGraph;
     }
 
