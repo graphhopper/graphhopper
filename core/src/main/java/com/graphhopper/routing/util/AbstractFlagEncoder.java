@@ -284,7 +284,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     @Override
-    public long setAccess(long flags, boolean forward, boolean backward) {       
+    public long setAccess(long flags, boolean forward, boolean backward) {
         return setBool(setBool(flags, K_BACKWARD, backward), K_FORWARD, forward);
     }
 
@@ -472,8 +472,11 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                             shortTripsSpeed = speedEncoder.factor / 2;
                         }
                     } else {
-                        logger.warn("Unrealistic long duration ignored in way with way ID=" + way.getId() + " : Duration tag value="
-                                + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes)");
+                        long lastId = way.getNodes().isEmpty() ? -1 : way.getNodes().get(way.getNodes().size() - 1);
+                        long firstId = way.getNodes().isEmpty() ? -1 : way.getNodes().get(0);
+                        if (firstId != lastId)
+                            logger.warn("Unrealistic long duration ignored in way with way ID=" + way.getId() + " : Duration tag value="
+                                    + way.getTag("duration") + " (=" + Math.round(duration / 60d) + " minutes)");
                         durationInHours = 0;
                     }
                 }
@@ -529,7 +532,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (maxTurnCosts == 0)
             return shift;
 
-        // optimization for turn restrictions only
+            // optimization for turn restrictions only
         else if (maxTurnCosts == 1) {
             turnRestrictionBit = 1L << shift;
             return shift + 1;
