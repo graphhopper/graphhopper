@@ -73,7 +73,7 @@ public class AStarBidirection extends AbstractBidirAlgo {
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 150_000);
         initCollections(size);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
-        defaultApprox.setDistanceCalc(new DistancePlaneProjection());
+        defaultApprox.setDistanceCalc(Helper.DIST_PLANE);
         setApproximation(defaultApprox);
     }
 

@@ -159,7 +159,7 @@ public class RoutingAlgorithmWithOSMIT {
         hopper.importOrLoad();
 
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-        Weighting weighting = hopper.createWeighting(new HintsMap("shortest"), encoder);
+        Weighting weighting = hopper.createWeighting(new HintsMap("shortest"), encoder, hopper.getGraphHopperStorage());
 
         List<AlgoHelperEntry> prepares = RoutingAlgorithmIT.createAlgos(hopper.getGraphHopperStorage(), hopper.getLocationIndex(),
                 true, TraversalMode.NODE_BASED, weighting, hopper.getEncodingManager());
@@ -573,7 +573,7 @@ public class RoutingAlgorithmWithOSMIT {
             TraversalMode tMode = importVehicles.contains("turn_costs=true")
                     ? TraversalMode.EDGE_BASED_1DIR : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            Weighting weighting = hopper.createWeighting(new HintsMap(weightStr), encoder);
+            Weighting weighting = hopper.createWeighting(new HintsMap(weightStr), encoder, hopper.getGraphHopperStorage());
 
             Collection<AlgoHelperEntry> prepares = RoutingAlgorithmIT.createAlgos(hopper.getGraphHopperStorage(),
                     hopper.getLocationIndex(), testAlsoCH, tMode, weighting, hopper.getEncodingManager());

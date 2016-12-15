@@ -35,7 +35,7 @@
             <comments>A business-friendly OSS license</comments>
         </license>
     </licenses>
-    <dependencies>        
+    <dependencies>
         <dependency>
             <groupId>com.carrotsearch</groupId>
             <artifactId>hppc</artifactId>

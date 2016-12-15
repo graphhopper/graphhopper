@@ -181,6 +181,11 @@ public class BBox implements Shape, Cloneable {
     }
 
     @Override
+    public GHPoint getCenter() {
+        return new GHPoint((maxLat + minLat) / 2, (maxLon + minLon) / 2);
+    }
+
+    @Override
     public boolean equals(Object obj) {
         if (obj == null)
             return false;
@@ -244,5 +249,46 @@ public class BBox implements Shape, Cloneable {
             list.add(Helper.round2(maxEle));
 
         return list;
+    }
+
+    /**
+     * @return an estimated area in m^2 using the mean value of latitudes for longitude distance
+     */
+    @Override
+    public double calculateArea() {
+        double meanLat = (maxLat + minLat) / 2;
+        return Helper.DIST_PLANE.calcDist(meanLat, minLon, meanLat, maxLon)
+                // left side should be equal to right side no mean value necessary
+                * Helper.DIST_PLANE.calcDist(minLat, minLon, maxLat, minLon);
+    }
+
+    /**
+     * This method creates a BBox out of a string in format lat1,lon1,lat2,lon2
+     */
+    public static BBox parseTwoPoints(String objectAsString) {
+        String[] splittedObject = objectAsString.split(",");
+
+        if (splittedObject.length != 4)
+            throw new IllegalArgumentException("BBox should have 4 parts but was " + objectAsString);
+
+        double minLat = Double.parseDouble(splittedObject[0]);
+        double minLon = Double.parseDouble(splittedObject[1]);
+
+        double maxLat = Double.parseDouble(splittedObject[2]);
+        double maxLon = Double.parseDouble(splittedObject[3]);
+
+        if (minLat > maxLat) {
+            double tmp = minLat;
+            minLat = maxLat;
+            maxLat = tmp;
+        }
+
+        if (minLon > maxLon) {
+            double tmp = minLon;
+            minLon = maxLon;
+            maxLon = tmp;
+        }
+
+        return new BBox(minLon, maxLon, minLat, maxLat);
     }
 }

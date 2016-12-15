@@ -49,9 +49,9 @@ public class GHServletModule extends ServletModule {
     protected void configureServlets() {
         filter("*").through(HeadFilter.class);
         bind(HeadFilter.class).in(Singleton.class);
-        
+
         filter("*").through(CORSFilter.class, params);
-        bind(CORSFilter.class).in(Singleton.class);        
+        bind(CORSFilter.class).in(Singleton.class);
 
         filter("*").through(IPFilter.class);
         bind(IPFilter.class).toInstance(new IPFilter(args.get("jetty.whiteips", ""), args.get("jetty.blackips", "")));
@@ -67,5 +67,8 @@ public class GHServletModule extends ServletModule {
 
         serve("/nearest*").with(NearestServlet.class);
         bind(NearestServlet.class).in(Singleton.class);
+
+        serve("/change*").with(ChangeGraphServlet.class);
+        bind(ChangeGraphServlet.class).in(Singleton.class);
     }
 }

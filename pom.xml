@@ -76,7 +76,7 @@
     <modules>
         <module>core</module>
         <module>reader-osm</module>
-        <module>reader-overlay-data</module>
+        <module>reader-json</module>
         <module>tools</module>
         <module>web</module>
     </modules>

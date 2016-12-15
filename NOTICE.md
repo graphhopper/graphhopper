@@ -11,6 +11,7 @@ The core module includes the following software:
  * XMLGraphics-Commons for CGIAR elevation files (Apache License)
  * Apache Commons Lang - we copied the implementation of the Levenshtein Distance (Apache License)
  * Apache Commons Collections - we copied parts of the BinaryHeap (Apache License)
+ * java-string-similarity - we copied the implementation of JaroWinkler (MIT license)
 
 reader-osm:
 

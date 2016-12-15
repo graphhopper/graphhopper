@@ -94,8 +94,11 @@ public class Parameters {
         public static final String EDGE_BASED = "edge_based";
         public static final String MAX_VISITED_NODES = "max_visited_nodes";
         public static final String INIT_MAX_VISITED_NODES = ROUTING_INIT_PREFIX + "max_visited_nodes";
+        /** if true the response will contain turn instructions */
         public static final String INSTRUCTIONS = "instructions";
+        /** if true the response will contain a point list */
         public static final String CALC_POINTS = "calc_points";
+        /** configure simplification of returned point list */
         public static final String WAY_POINT_MAX_DISTANCE = "way_point_max_distance";
         public static final String INIT_WAY_POINT_MAX_DISTANCE = ROUTING_INIT_PREFIX + "way_point_max_distance";
         /**
@@ -104,11 +107,17 @@ public class Parameters {
          * https://github.com/graphhopper/graphhopper/blob/master/docs/core/routing.md#heading
          */
         public static final String PASS_THROUGH = "pass_through";
+        public static final String POINT_HINT = "point_hint";
         /**
          * default heading penalty in seconds
          */
         public static final double DEFAULT_HEADING_PENALTY = 300;
         public static final String HEADING_PENALTY = "heading_penalty";
+        /**
+         * block road access via a point lat,lon or an area defined from a circle lat,lon,radius or
+         * a rectangular lat1,lon1,lat2,lon2
+         */
+        public static final String BLOCK_AREA = "block_area";
     }
 
     /**
@@ -141,5 +150,6 @@ public class Parameters {
          * Describes the max allowed distance between two consecutive waypoints of a non ch request. Distance is in Meter
          */
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
+
     }
 }
