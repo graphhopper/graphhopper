@@ -57,6 +57,14 @@ public class BBoxTest {
     }
 
     @Test
+    public void testGetCenter() {
+        BBox bBox = new BBox(0, 2, 0, 2);
+        GHPoint center = bBox.getCenter();
+        assertEquals(1, center.getLat(), .00001);
+        assertEquals(1, center.getLon(), .00001);
+    }
+
+    @Test
     public void testIntersect() {
         //    ---
         //    | |
@@ -120,5 +128,12 @@ public class BBoxTest {
                 return true;
             }
         });
+    }
+
+    @Test
+    public void testParseTwoPoints() {
+        assertEquals(new BBox(2, 4, 1, 3), BBox.parseTwoPoints("1,2,3,4"));
+        // stable parsing, i.e. if first point is in north or south it does not matter:
+        assertEquals(new BBox(2, 4, 1, 3), BBox.parseTwoPoints("3,2,1,4"));
     }
 }

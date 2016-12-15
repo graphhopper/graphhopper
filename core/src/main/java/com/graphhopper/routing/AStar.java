@@ -28,6 +28,7 @@ import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.DistancePlaneProjection;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 
 import java.util.PriorityQueue;
@@ -54,7 +55,7 @@ public class AStar extends AbstractRoutingAlgorithm {
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
         initCollections(size);
         BeelineWeightApproximator defaultApprox = new BeelineWeightApproximator(nodeAccess, weighting);
-        defaultApprox.setDistanceCalc(new DistancePlaneProjection());
+        defaultApprox.setDistanceCalc(Helper.DIST_PLANE);
         setApproximation(defaultApprox);
     }
 

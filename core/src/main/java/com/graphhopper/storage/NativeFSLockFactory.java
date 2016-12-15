@@ -64,7 +64,7 @@ public class NativeFSLockFactory implements LockFactory {
     }
 
     @Override
-    public synchronized Lock create(String fileName, boolean writeAccess) {
+    public synchronized GHLock create(String fileName, boolean writeAccess) {
         if (lockDir == null)
             throw new RuntimeException("Set lockDir before creating " + (writeAccess ? "write" : "read") + " locks");
 
@@ -81,7 +81,7 @@ public class NativeFSLockFactory implements LockFactory {
         }
     }
 
-    static class NativeLock implements Lock {
+    static class NativeLock implements GHLock {
         private final String name;
         private final File lockDir;
         private final File lockFile;

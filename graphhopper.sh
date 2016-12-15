@@ -2,6 +2,9 @@
 (set -o igncr) 2>/dev/null && set -o igncr; # this comment is required for handling Windows cr/lf 
 # See StackOverflow answer http://stackoverflow.com/a/14607651
 
+# bail if any errors ...
+set -e
+
 GH_CLASS=com.graphhopper.tools.Import
 GH_HOME=$(dirname "$0")
 JAVA=$JAVA_HOME/bin/java

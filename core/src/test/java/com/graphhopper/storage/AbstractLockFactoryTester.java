@@ -50,13 +50,13 @@ public abstract class AbstractLockFactoryTester {
     public void testObtain() {
         LockFactory instance = createLockFactory();
         instance.setLockDir(lockDir);
-        Lock lock = instance.create("test", true);
+        GHLock lock = instance.create("test", true);
         assertTrue(lock.tryLock());
         assertTrue(lock.isLocked());
         assertFalse(lock.tryLock());
         assertTrue(lock.isLocked());
 
-        Lock lock2 = instance.create("test", true);
+        GHLock lock2 = instance.create("test", true);
         assertFalse(lock2.tryLock());
         assertTrue(lock2.isLocked());
 
@@ -72,7 +72,7 @@ public abstract class AbstractLockFactoryTester {
     public void testForceDelete() {
         LockFactory instance = createLockFactory();
         instance.setLockDir(lockDir);
-        Lock lock = instance.create("testlock", true);
+        GHLock lock = instance.create("testlock", true);
         assertTrue(lock.tryLock());
         assertTrue(lock.isLocked());
 

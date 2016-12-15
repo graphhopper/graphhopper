@@ -30,7 +30,7 @@ public interface LockFactory {
      * Important note: even for read locks we need write access to the underlying filesystem in
      * order to avoid writes from other processes.
      */
-    Lock create(String fileName, boolean writeAccess);
+    GHLock create(String fileName, boolean writeAccess);
 
     /**
      * Removes the specified lock. Note: on windows we cannot forcefully remove an unreleased native

@@ -17,12 +17,15 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.BridgeElevationInterpolator;
 import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.TunnelElevationInterpolator;
+import com.graphhopper.storage.change.ChangeGraphHelper;
+import com.graphhopper.storage.change.ChangeGraphResponse;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
@@ -53,6 +56,10 @@ import java.text.DateFormat;
 import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.*;
+
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -87,6 +94,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
+    private String blockedRectangularAreas = "";
 
     private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
     // for index
@@ -103,6 +111,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean calcPoints = true;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = FlagEncoderFactory.DEFAULT;
+    private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -642,6 +651,7 @@ public class GraphHopper implements GraphHopperAPI {
         maxVisitedNodes = args.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
         maxRoundTripRetries = args.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
         nonChMaxWaypointDistance = args.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
+        blockedRectangularAreas = args.get(Routing.BLOCK_AREA, "");
 
         return this;
     }
@@ -672,7 +682,7 @@ public class GraphHopper implements GraphHopperAPI {
      */
     private GraphHopper process(String graphHopperLocation) {
         setGraphHopperLocation(graphHopperLocation);
-        Lock lock = null;
+        GHLock lock = null;
         try {
             if (ghStorage.getDirectory().getDefaultType().isStoring()) {
                 lockFactory.setLockDir(new File(graphHopperLocation));
@@ -788,7 +798,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (!new File(graphHopperFolder).exists())
             return false;
 
-        Lock lock = null;
+        GHLock lock = null;
         try {
             // create locks only if writes are allowed, if they are not allowed a lock cannot be created 
             // (e.g. on a read only filesystem locks would fail)
@@ -836,7 +846,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (!chFactoryDecorator.hasWeightings())
             for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
                 for (String chWeightingStr : chFactoryDecorator.getWeightingsAsStrings()) {
-                    Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder);
+                    Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder, null);
                     chFactoryDecorator.addWeighting(weighting);
                 }
             }
@@ -911,15 +921,30 @@ public class GraphHopper implements GraphHopperAPI {
      * @param hintsMap all parameters influencing the weighting. E.g. parameters coming via
      *                 GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
      * @param encoder  the required vehicle
+     * @param graph    The Graph enables the Weighting for NodeAccess and more
      * @return the weighting to be used for route calculation
      * @see HintsMap
      */
-    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder) {
+    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
         String weighting = hintsMap.getWeighting().toLowerCase();
 
         if (encoder.supports(GenericWeighting.class)) {
             DataFlagEncoder dataEncoder = (DataFlagEncoder) encoder;
-            return new GenericWeighting(dataEncoder, dataEncoder.readStringMap(hintsMap));
+            ConfigMap cMap = dataEncoder.readStringMap(hintsMap);
+
+            // add default blocked rectangular areas from config properties
+            if (!this.blockedRectangularAreas.isEmpty()) {
+                String val = this.blockedRectangularAreas;
+                String blockedAreasFromRequest = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
+                if (!blockedAreasFromRequest.isEmpty())
+                    val += ";" + blockedAreasFromRequest;
+                hintsMap.put(Parameters.Routing.BLOCK_AREA, val);
+            }
+
+            cMap = new GraphEdgeIdFinder(graph, locationIndex).parseStringHints(cMap, hintsMap, new DefaultEdgeFilter(encoder));
+            GenericWeighting genericWeighting = new GenericWeighting(dataEncoder, cMap);
+            genericWeighting.setGraph(graph);
+            return genericWeighting;
         } else if ("shortest".equalsIgnoreCase(weighting)) {
             return new ShortestWeighting(encoder);
         } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty()) {
@@ -969,6 +994,8 @@ public class GraphHopper implements GraphHopperAPI {
             request.setVehicle(vehicle);
         }
 
+        Lock readLock = readWriteLock.readLock();
+        readLock.lock();
         try {
             if (!encodingManager.supports(vehicle))
                 throw new IllegalArgumentException("Vehicle " + vehicle + " unsupported. "
@@ -1010,7 +1037,7 @@ public class GraphHopper implements GraphHopperAPI {
 
                 RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
                 Weighting weighting = null;
-                Graph routingGraph = ghStorage;
+                QueryGraph queryGraph;
 
                 boolean forceFlexibleMode = hints.getBool(CH.DISABLE, false);
                 if (!chFactoryDecorator.isDisablingAllowed() && forceFlexibleMode)
@@ -1025,11 +1052,13 @@ public class GraphHopper implements GraphHopperAPI {
 
                     tMode = getCHFactoryDecorator().getNodeBase();
                     weighting = ((PrepareContractionHierarchies) tmpAlgoFactory).getWeighting();
-                    routingGraph = ghStorage.getGraph(CHGraph.class, weighting);
-
+                    queryGraph = new QueryGraph(ghStorage.getGraph(CHGraph.class, weighting));
+                    queryGraph.lookup(qResults);
                 } else {
                     checkNonChMaxWaypointDistance(points);
-                    weighting = createWeighting(hints, encoder);
+                    queryGraph = new QueryGraph(ghStorage);
+                    queryGraph.lookup(qResults);
+                    weighting = createWeighting(hints, encoder, queryGraph);
                     ghRsp.addDebugInfo("tmode:" + tMode.toString());
                 }
 
@@ -1037,8 +1066,6 @@ public class GraphHopper implements GraphHopperAPI {
                 if (maxVisitedNodesForRequest > maxVisitedNodes)
                     throw new IllegalArgumentException("The max_visited_nodes parameter has to be below or equal to:" + maxVisitedNodes);
 
-                QueryGraph queryGraph = new QueryGraph(routingGraph);
-                queryGraph.lookup(qResults);
                 weighting = createTurnWeighting(queryGraph, weighting, tMode);
 
                 AlgorithmOptions algoOpts = AlgorithmOptions.start().
@@ -1068,6 +1095,29 @@ public class GraphHopper implements GraphHopperAPI {
         } catch (IllegalArgumentException ex) {
             ghRsp.addError(ex);
             return Collections.emptyList();
+        } finally {
+            readLock.unlock();
+        }
+    }
+
+    /**
+     * This method applies the changes to the graph specified as feature collection. It does so by locking the routing
+     * to avoid concurrent changes which could result in incorrect routing (like when done while a Dijkstra search) or
+     * also while just reading one edge row (inconsistent edge properties).
+     */
+    public ChangeGraphResponse changeGraph(Collection<JsonFeature> collection) {
+        // TODO allow calling this method if called before CH preparation
+        if (getCHFactoryDecorator().isEnabled())
+            throw new IllegalArgumentException("To use the changeGraph API you need to turn off CH");
+
+        Lock writeLock = readWriteLock.writeLock();
+        writeLock.lock();
+        try {
+            ChangeGraphHelper overlay = new ChangeGraphHelper(ghStorage, locationIndex);
+            long updateCount = overlay.applyChanges(encodingManager, collection);
+            return new ChangeGraphResponse(updateCount);
+        } finally {
+            writeLock.unlock();
         }
     }
 

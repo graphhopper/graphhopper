@@ -100,7 +100,7 @@ public class GHRequest {
     /**
      * Set routing request
      * <p>
-     *  @param points          List of stopover points in order: start, 1st stop, 2nd stop, ..., end
+     * @param points          List of stopover points in order: start, 1st stop, 2nd stop, ..., end
      * @param favoredHeadings List of favored headings for starting (start point) and arrival (via
      *                        and end points) Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal
      */
@@ -236,19 +236,6 @@ public class GHRequest {
         return this;
     }
 
-    @Override
-    public String toString() {
-        String res = "";
-        for (GHPoint point : points) {
-            if (res.isEmpty()) {
-                res = point.toString();
-            } else {
-                res += "; " + point.toString();
-            }
-        }
-        return res + "(" + algo + ")";
-    }
-
     public HintsMap getHints() {
         return hints;
     }
@@ -262,11 +249,20 @@ public class GHRequest {
         return pointHints;
     }
 
-    public String getPointHint(int index) {
-        return pointHints.get(index);
+    public boolean hasPointHints() {
+        return pointHints.size() == points.size();
     }
 
-    public boolean hasPointHints(){
-        return pointHints.size() == points.size();
+    @Override
+    public String toString() {
+        String res = "";
+        for (GHPoint point : points) {
+            if (res.isEmpty()) {
+                res = point.toString();
+            } else {
+                res += "; " + point.toString();
+            }
+        }
+        return res + "(" + algo + ")";
     }
 }

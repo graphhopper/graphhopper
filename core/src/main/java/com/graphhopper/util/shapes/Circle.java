@@ -19,12 +19,13 @@ package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.NumHelper;
 
 /**
  * @author Peter Karich
  */
 public class Circle implements Shape {
-    private final double radiusInKm;
+    private final double radiusInMeter;
     private final double lat;
     private final double lon;
     private final double normedDist;
@@ -39,7 +40,7 @@ public class Circle implements Shape {
         this.calc = calc;
         this.lat = lat;
         this.lon = lon;
-        this.radiusInKm = radiusInMeter;
+        this.radiusInMeter = radiusInMeter;
         this.normedDist = calc.calcNormalizedDist(radiusInMeter);
         bbox = calc.createBBox(lat, lon, radiusInMeter);
     }
@@ -60,6 +61,11 @@ public class Circle implements Shape {
     @Override
     public BBox getBounds() {
         return bbox;
+    }
+
+    @Override
+    public GHPoint getCenter() {
+        return new GHPoint(lat, lon);
     }
 
     private double normDist(double lat1, double lon1) {
@@ -127,7 +133,7 @@ public class Circle implements Shape {
             return false;
         }
 
-        return normDist(c.lat, c.lon) <= calc.calcNormalizedDist(radiusInKm + c.radiusInKm);
+        return normDist(c.lat, c.lon) <= calc.calcNormalizedDist(radiusInMeter + c.radiusInMeter);
     }
 
     public boolean contains(BBox b) {
@@ -140,7 +146,7 @@ public class Circle implements Shape {
     }
 
     public boolean contains(Circle c) {
-        double res = radiusInKm - c.radiusInKm;
+        double res = radiusInMeter - c.radiusInMeter;
         if (res < 0) {
             return false;
         }
@@ -149,7 +155,31 @@ public class Circle implements Shape {
     }
 
     @Override
+    public double calculateArea() {
+        return Math.PI * radiusInMeter * radiusInMeter;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null)
+            return false;
+
+        Circle b = (Circle) obj;
+        // equals within a very small range
+        return NumHelper.equalsEps(lat, b.lat) && NumHelper.equalsEps(lon, b.lon) && NumHelper.equalsEps(radiusInMeter, b.radiusInMeter);
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 3;
+        hash = 17 * hash + (int) (Double.doubleToLongBits(this.lat) ^ (Double.doubleToLongBits(this.lat) >>> 32));
+        hash = 17 * hash + (int) (Double.doubleToLongBits(this.lon) ^ (Double.doubleToLongBits(this.lon) >>> 32));
+        hash = 17 * hash + (int) (Double.doubleToLongBits(this.radiusInMeter) ^ (Double.doubleToLongBits(this.radiusInMeter) >>> 32));
+        return hash;
+    }
+
+    @Override
     public String toString() {
-        return lat + "," + lon + ", radius:" + radiusInKm;
+        return lat + "," + lon + ", radius:" + radiusInMeter;
     }
 }
