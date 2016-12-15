@@ -176,13 +176,10 @@ public class RoutingAlgorithmWithOSMIT {
     @Test
     public void testMoscowTurnCosts() {
         List<OneRun> list = new ArrayList<OneRun>();
-        //list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
-        //list.add(new OneRun(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
-        list.add(new OneRun(55.81387853206422,37.60180706385837, 55.8109825, 37.5943652, 1043.99, 12));
+        list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
+        list.add(new OneRun(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
         boolean testAlsoCH = true, is3D = false;
-        //runAlgo(testCollector, DIR + "/moscow.osm.gz", "target/graph-moscow",
-        //        list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
-        runAlgo(testCollector, DIR + "/moscow_small.osm", "target/graph-moscow_small",
+        runAlgo(testCollector, DIR + "/moscow.osm.gz", "target/graph-moscow",
                 list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
