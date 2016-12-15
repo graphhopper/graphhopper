@@ -112,7 +112,7 @@ class MultiCriteriaLabelSetting {
                     nextTime = label.currentTime + ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edge, label.currentTime);
                 }
                 tmpNTransfers += ((TimeDependentWeighting) weighting).calcNTransfers(edge);
-                if (!reverse && edgeType == GtfsStorage.EdgeType.BOARD_EDGE && tmpFirstPtDepartureTime == Long.MAX_VALUE) {
+                if (!reverse && edgeType == GtfsStorage.EdgeType.BOARD && tmpFirstPtDepartureTime == Long.MAX_VALUE) {
                     tmpFirstPtDepartureTime = nextTime;
                 }
                 if (reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && tmpFirstPtDepartureTime == Long.MAX_VALUE) {

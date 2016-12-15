@@ -169,8 +169,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         Translation tr = translationMap.getWithFallBack(locale);
         StopWatch stopWatch = new StopWatch().start();
 
-        EdgeFilter enterFilter = new PtEnterPositionLookupEdgeFilter(encoder);
-        EdgeFilter exitFilter = new PtExitPositionLookupEdgeFilter(encoder);
+        EdgeFilter enterFilter = new EverythingButPt(encoder);
+        EdgeFilter exitFilter = new EverythingButPt(encoder);
 
         List<QueryResult> queryResults = new ArrayList<>();
 
@@ -272,7 +272,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             double distance = 0;
             for (EdgeIteratorState edge : edges) {
                 int sign = Instruction.CONTINUE_ON_STREET;
-                if (encoder.getEdgeType(edge.getFlags()) == GtfsStorage.EdgeType.BOARD_EDGE) {
+                if (encoder.getEdgeType(edge.getFlags()) == GtfsStorage.EdgeType.BOARD) {
                     if (numBoardings == 0) {
                         sign = Instruction.PT_START_TRIP;
                     } else {

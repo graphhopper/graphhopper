@@ -1,15 +1,24 @@
 package com.graphhopper;
 
+import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.stats.FeedStats;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
+import com.graphhopper.reader.gtfs.GtfsStorage;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.GHDirectory;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.awt.geom.Rectangle2D;
 import java.io.File;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 
 import static org.junit.Assert.*;
@@ -24,13 +33,26 @@ public class GraphHopperRnvGtfsIT {
     @BeforeClass
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
-        graphHopper = GraphHopperGtfs.createGraphHopperGtfs(GRAPH_LOC, "files/rnv.zip", true);
+        EncodingManager encodingManager = GraphHopperGtfs.createEncodingManager();
+        GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
+        GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
+        GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, false, Collections.singleton("files/rnv.zip"), Collections.singleton("files/rnv.osm.pbf"));
+        LocationIndex locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
+        graphHopper = new GraphHopperGtfs(encodingManager, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);
     }
 
     @AfterClass
     public static void tearDown() {
 //        if (graphHopper != null)
 //            graphHopper.close();
+    }
+
+    @Test
+    public void testOSMDataFileBounds() {
+        GTFSFeed rnv = GTFSFeed.fromFile("files/rnv.zip");
+        FeedStats feedStats = rnv.calculateStats();
+        Rectangle2D bounds = feedStats.getBounds();
+        System.out.printf("(%f,%f,%f,%f)\n", bounds.getMinY(), bounds.getMinX(), bounds.getMaxY(), bounds.getMaxX());
     }
 
     @Test
@@ -72,7 +94,7 @@ public class GraphHopperRnvGtfsIT {
         // Transfer at e.g. Universitaet, where we have to walk to the next stop pole.
         // If we couldn't walk, we would arrive at least one connection later.
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, GTFS_START_DATE.atTime(19, 40),
-                TO_LAT, TO_LON, GTFS_START_DATE.atTime(20, 8));
+                TO_LAT, TO_LON, GTFS_START_DATE.atTime(20, 16,39));
     }
 
     @Test
@@ -90,9 +112,9 @@ public class GraphHopperRnvGtfsIT {
         GHResponse response = graphHopper.route(request);
         assertFalse(response.hasErrors());
 
-        assertEquals("Number of solutions", 9, response.getAll().size());
+        assertEquals("Number of solutions", 12, response.getAll().size());
 
-        assertEquals(GTFS_START_DATE.atTime(20, 8), GTFS_START_DATE.atStartOfDay().plusSeconds((long) response.getBest().getRouteWeight()));
+        assertEquals(GTFS_START_DATE.atTime(20, 16,39), GTFS_START_DATE.atStartOfDay().plusSeconds((long) response.getBest().getRouteWeight()));
         assertNotEquals("Best solution doesn't use transit at all.", -1, response.getBest().getNumChanges());
 
         for (PathWrapper solution : response.getAll()) {
@@ -115,7 +137,7 @@ public class GraphHopperRnvGtfsIT {
         final double FROM_LAT = 49.517846, FROM_LON = 8.474073; // Stolberger Straße
         final double TO_LAT = 49.45958, TO_LON = 8.479514; // Freiheitsplatz
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, GTFS_START_DATE.atTime(21, 36),
-                TO_LAT, TO_LON, GTFS_START_DATE.atTime(22, 21, 43));
+                TO_LAT, TO_LON, GTFS_START_DATE.atTime(22, 21));
     }
 
     @Test
@@ -131,7 +153,7 @@ public class GraphHopperRnvGtfsIT {
         final double FROM_LAT = 49.442904, FROM_LON = 8.519059; // Sporwoerthplatz
         final double TO_LAT = 49.562158, TO_LON = 8.448643; // Fuellenweg
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, LocalDateTime.of(2016, 11, 1, 19, 28),
-                TO_LAT, TO_LON, LocalDateTime.of(2016,11,1,20,51,2));
+                TO_LAT, TO_LON, LocalDateTime.of(2016,11,1,21,52,37));
     }
 
     private void assertRouteWeightIs(GraphHopperGtfs graphHopper, double from_lat, double from_lon, LocalDateTime earliestDepartureTime, double to_lat, double to_lon, LocalDateTime expectedArrivalTime) {

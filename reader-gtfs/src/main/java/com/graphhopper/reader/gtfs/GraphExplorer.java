@@ -33,7 +33,7 @@ final class GraphExplorer {
                     public boolean hasNext() {
                         while(edgeIterator.next()) {
                             GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator.getFlags());
-                            if (edgeType == GtfsStorage.EdgeType.BOARD_EDGE) {
+                            if (edgeType == GtfsStorage.EdgeType.BOARD) {
                                 int trafficDay = (int) (label.currentTime / (24 * 60 * 60));
                                 if (!isValidOn(edgeIterator, trafficDay)) {
                                     continue;
@@ -52,9 +52,6 @@ final class GraphExplorer {
                                 if ((int) (label.currentTime) % (24 * 60 * 60) < flagEncoder.getTime(edgeIterator.getFlags())) {
                                     continue;
                                 }
-                            } else if (edgeType == GtfsStorage.EdgeType.STOP_EXIT_NODE_MARKER_EDGE
-                                    || edgeType == GtfsStorage.EdgeType.STOP_NODE_MARKER_EDGE) {
-                                continue;
                             }
                             return true;
                         }
