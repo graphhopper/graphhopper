@@ -152,7 +152,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
         factor = weightMax / (1 << 16);
 
-        LOGGER.info("init landmarks for subnetworks with nodeCount > " + minimumNodes + ", weightMax:" + weightMax + ", factor:" + factor);
+        LOGGER.info("init landmarks for subnetworks with nodeCount greater than " + minimumNodes + ", weightMax:" + weightMax + ", factor:" + factor);
 
         // special subnetwork 0
         int[] empty = new int[landmarks];
@@ -182,18 +182,18 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             if (subnetworkIds.size() < minimumNodes)
                 continue;
 
-            int nextStartNode = -1;
+            int index = subnetworkIds.size() - 1;
             // ensure start node is reachable from both sides and no subnetwork is associated
-            for (int index = 0; index < subnetworkIds.size(); index++) {
-                nextStartNode = subnetworkIds.get(index);
-                if (GHUtility.count(tmpExplorer.setBaseNode(nextStartNode)) > 0)
-                    break;
+            for (; index >= 0; index--) {
+                int nextStartNode = subnetworkIds.get(index);
+                if (subnetworks[nextStartNode] == UNSET_SUBNETWORK
+                        && GHUtility.count(tmpExplorer.setBaseNode(nextStartNode)) > 0) {
+                    if (createLandmarks(nextStartNode, subnetworks, subnetworkIds))
+                        break;
+                }
             }
-            if (nextStartNode < 0) {
-                LOGGER.warn("next start node not found in big enough network of size " + subnetworkIds.size() + ", first element is " + subnetworkIds.get(0));
-                continue;
-            }
-            createLandmarks(nextStartNode, subnetworks, subnetworkIds);
+            if (index < 0)
+                LOGGER.warn("next start node not found in big enough network of size " + subnetworkIds.size() + ", first element is " + subnetworkIds.get(0) + ", " + createPoint(graph, subnetworkIds.get(0)));
         }
 
         int subnetworkCount = landmarkIDs.size();
@@ -248,7 +248,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      *
      * @return landmark mapping
      */
-    private void createLandmarks(final int startNode, final byte[] subnetworks, IntArrayList subnetworkIds) {
+    private boolean createLandmarks(final int startNode, final byte[] subnetworks, IntArrayList subnetworkIds) {
         GHPoint p = createPoint(graph, startNode);
         LOGGER.info("start node: " + startNode + " (" + p + ") subnetwork size: " + subnetworkIds.size() + ", " + Helper.getMemInfo() + " EU=" + euBBox.contains(p.lat, p.lon));
 
@@ -264,69 +264,70 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         explorer.runAlgo(true);
 
         if (explorer.getFromCount() < minimumNodes) {
-            LOGGER.warn("Should not happen. The component calculated from Tarjan algo was " + subnetworkIds.size() + " > " + minimumNodes
-                    + " but the network calculated from a more restrictive two-direction edge filter was smaller: " + explorer.getFromCount());
+//            LOGGER.warn("Should not happen. The component calculated from Tarjan algo was " + subnetworkIds.size() + " > " + minimumNodes
+//                    + " but the network calculated from a more restrictive two-direction edge filter was smaller: " + explorer.getFromCount());
             // too small subnetworks are initialized with special id==0
             // hint: we cannot use expectFresh=true as the strict two-direction edge filter is only a subset of the true network (due to oneways)
             // and so previously marked subnetwork entries could be already initialized with 0
             explorer.setSubnetworks(subnetworks, 0);
-        } else {
-
-            // 1b) we have one landmark, now calculate the rest
-            int[] tmpLandmarkNodeIds = new int[landmarks];
-            int logOffset = Math.max(1, tmpLandmarkNodeIds.length / 2);
-            tmpLandmarkNodeIds[0] = explorer.getLastNode();
-            for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length - 1; lmIdx++) {
-                explorer = new Explorer(graph, this, initWeighting, traversalMode);
-                explorer.setFilter(true, true);
-                // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
-                for (int j = 0; j < lmIdx + 1; j++) {
-                    explorer.initFrom(tmpLandmarkNodeIds[j], 0);
-                }
-                explorer.runAlgo(true);
-                tmpLandmarkNodeIds[lmIdx + 1] = explorer.getLastNode();
-                if (lmIdx % logOffset == 0)
-                    LOGGER.info("Finding landmarks [" + weighting + "] in network [" + explorer.getVisitedNodes() + "]. "
-                            + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%, " + Helper.getMemInfo());
-            }
-
-            LOGGER.info("Finished searching landmarks for subnetwork " + subnetworkId + " of size " + explorer.getVisitedNodes());
-
-            // 2) calculate weights for all landmarks -> 'from' and 'to' weight
-            for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
-                int lm = tmpLandmarkNodeIds[lmIdx];
-                explorer = new Explorer(graph, this, weighting, traversalMode);
-                explorer.initFrom(lm, 0);
-                explorer.setFilter(false, true);
-                explorer.runAlgo(true);
-                explorer.initLandmarkWeights(lmIdx, LM_ROW_LENGTH, FROM_OFFSET);
-
-                // set subnetwork id to all explored nodes, but do this only for the first landmark
-                // important here is that we do not use the more restrictive two-direction edge filter
-                if (lmIdx == 0) {
-                    if (explorer.setSubnetworks(subnetworks, subnetworkId))
-                        return;
-                }
-
-                explorer = new Explorer(graph, this, weighting, traversalMode);
-                explorer.initTo(lm, 0);
-                explorer.setFilter(true, false);
-                explorer.runAlgo(false);
-                explorer.initLandmarkWeights(lmIdx, LM_ROW_LENGTH, TO_OFFSET);
-
-                if (lmIdx == 0) {
-                    if (explorer.setSubnetworks(subnetworks, subnetworkId))
-                        return;
-                }
-
-                if (lmIdx % logOffset == 0)
-                    LOGGER.info("Set landmarks weights [" + weighting + "]. "
-                            + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%");
-            }
-
-            // TODO set weight to SHORT_MAX if entry has either no 'from' or no 'to' entry
-            landmarkIDs.add(tmpLandmarkNodeIds);
+            return false;
         }
+
+        // 1b) we have one landmark, now calculate the rest
+        int[] tmpLandmarkNodeIds = new int[landmarks];
+        int logOffset = Math.max(1, tmpLandmarkNodeIds.length / 2);
+        tmpLandmarkNodeIds[0] = explorer.getLastNode();
+        for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length - 1; lmIdx++) {
+            explorer = new Explorer(graph, this, initWeighting, traversalMode);
+            explorer.setFilter(true, true);
+            // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
+            for (int j = 0; j < lmIdx + 1; j++) {
+                explorer.initFrom(tmpLandmarkNodeIds[j], 0);
+            }
+            explorer.runAlgo(true);
+            tmpLandmarkNodeIds[lmIdx + 1] = explorer.getLastNode();
+            if (lmIdx % logOffset == 0)
+                LOGGER.info("Finding landmarks [" + weighting + "] in network [" + explorer.getVisitedNodes() + "]. "
+                        + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%, " + Helper.getMemInfo());
+        }
+
+        LOGGER.info("Finished searching landmarks for subnetwork " + subnetworkId + " of size " + explorer.getVisitedNodes());
+
+        // 2) calculate weights for all landmarks -> 'from' and 'to' weight
+        for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
+            int lm = tmpLandmarkNodeIds[lmIdx];
+            explorer = new Explorer(graph, this, weighting, traversalMode);
+            explorer.initFrom(lm, 0);
+            explorer.setFilter(false, true);
+            explorer.runAlgo(true);
+            explorer.initLandmarkWeights(lmIdx, LM_ROW_LENGTH, FROM_OFFSET);
+
+            // set subnetwork id to all explored nodes, but do this only for the first landmark
+            // important here is that we do not use the more restrictive two-direction edge filter
+            if (lmIdx == 0) {
+                if (explorer.setSubnetworks(subnetworks, subnetworkId))
+                    return false;
+            }
+
+            explorer = new Explorer(graph, this, weighting, traversalMode);
+            explorer.initTo(lm, 0);
+            explorer.setFilter(true, false);
+            explorer.runAlgo(false);
+            explorer.initLandmarkWeights(lmIdx, LM_ROW_LENGTH, TO_OFFSET);
+
+            if (lmIdx == 0) {
+                if (explorer.setSubnetworks(subnetworks, subnetworkId))
+                    return false;
+            }
+
+            if (lmIdx % logOffset == 0)
+                LOGGER.info("Set landmarks weights [" + weighting + "]. "
+                        + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%");
+        }
+
+        // TODO set weight to SHORT_MAX if entry has either no 'from' or no 'to' entry
+        landmarkIDs.add(tmpLandmarkNodeIds);
+        return true;
     }
 
     /**

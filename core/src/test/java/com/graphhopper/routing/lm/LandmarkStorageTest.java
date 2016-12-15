@@ -76,58 +76,6 @@ public class LandmarkStorageTest {
     }
 
     @Test
-    public void testWithSubnetworks() {
-        ghStorage.edge(0, 1, 10, true);
-        ghStorage.edge(1, 2, 10, true);
-
-        ghStorage.edge(2, 4).setFlags(encoder.setAccess(0, false, false));
-        ghStorage.edge(4, 5, 10, true);
-        ghStorage.edge(5, 6, 10, false);
-
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), 2, new FastestWeighting(encoder), TraversalMode.NODE_BASED);
-        storage.setMinimumNodes(2);
-        storage.createLandmarks();
-        assertEquals(3, storage.getSubnetworksWithLandmarks());
-        assertEquals("[0, 2]", Arrays.toString(storage.getLandmarks(1)));
-        assertEquals("[4, 5]", Arrays.toString(storage.getLandmarks(2)));
-    }
-
-    @Test
-    public void testWithOnewaySubnetworks() {
-        // create an indifferent problem: node 2 and 3 are part of two 'disconnected' subnetworks
-        ghStorage.edge(0, 1, 10, true);
-        ghStorage.edge(1, 2, 10, false);
-        ghStorage.edge(2, 3, 10, false);
-
-        ghStorage.edge(4, 5, 10, true);
-        ghStorage.edge(5, 2, 10, false);
-
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), 2, new FastestWeighting(encoder), TraversalMode.NODE_BASED);
-        storage.setMinimumNodes(2);
-        storage.createLandmarks();
-
-        assertEquals(2, storage.getSubnetworksWithLandmarks());
-        assertEquals("[0, 1]", Arrays.toString(storage.getLandmarks(1)));
-        // assertEquals("[5, 4]", Arrays.toString(storage.getLandmarks(2)));
-    }
-
-    @Test
-    public void testWeightingConsistence() {
-        // create an indifferent problem: shortest weighting can pass the speed==0 edge but fastest cannot (?)
-        ghStorage.edge(0, 1, 10, true);
-        ghStorage.edge(1, 2).setDistance(10).setFlags(encoder.setProperties(0.9, true, true));
-        ghStorage.edge(2, 3, 10, true);
-
-        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), 2, new FastestWeighting(encoder), TraversalMode.NODE_BASED);
-        storage.setMinimumNodes(2);
-        storage.createLandmarks();
-
-        assertEquals(2, storage.getSubnetworksWithLandmarks());
-        assertEquals("[2, 3]", Arrays.toString(storage.getLandmarks(1)));
-        // assertEquals("[3, 2]", Arrays.toString(storage.getLandmarks(2)));
-    }
-
-    @Test
     public void testSetGetWeight() {
         ghStorage.edge(0, 1, 40, true);
         Directory dir = new RAMDirectory();
@@ -152,4 +100,74 @@ public class LandmarkStorageTest {
         lms.setWeight(0, 79999);
         assertFalse(lms.isInfinity(0));
     }
+
+    @Test
+    public void testWithSubnetworks() {
+        ghStorage.edge(0, 1, 10, true);
+        ghStorage.edge(1, 2, 10, true);
+
+        ghStorage.edge(2, 4).setFlags(encoder.setAccess(0, false, false));
+        ghStorage.edge(4, 5, 10, true);
+        ghStorage.edge(5, 6, 10, false);
+
+        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), 2, new FastestWeighting(encoder), TraversalMode.NODE_BASED);
+        storage.setMinimumNodes(2);
+        storage.createLandmarks();
+        assertEquals(3, storage.getSubnetworksWithLandmarks());
+        assertEquals("[2, 0]", Arrays.toString(storage.getLandmarks(1)));
+        assertEquals("[5, 4]", Arrays.toString(storage.getLandmarks(2)));
+    }
+
+
+    @Test
+    public void testWithSubnetworks2() {
+        // 0 - 1 - 2 = 3 - 4
+        ghStorage.edge(0, 1, 10, true);
+        ghStorage.edge(1, 2, 10, true);
+        ghStorage.edge(2, 3, 10, false);
+        ghStorage.edge(3, 2, 10, false);
+        ghStorage.edge(3, 4, 10, true);
+
+        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), 2, new FastestWeighting(encoder), TraversalMode.NODE_BASED);
+        storage.setMinimumNodes(3);
+        storage.createLandmarks();
+        assertEquals(2, storage.getSubnetworksWithLandmarks());
+        assertEquals("[2, 0]", Arrays.toString(storage.getLandmarks(1)));
+    }
+
+    @Test
+    public void testWithOnewaySubnetworks() {
+        // create an indifferent problem: node 2 and 3 are part of two 'disconnected' subnetworks
+        ghStorage.edge(0, 1, 10, true);
+        ghStorage.edge(1, 2, 10, false);
+        ghStorage.edge(2, 3, 10, false);
+
+        ghStorage.edge(4, 5, 10, true);
+        ghStorage.edge(5, 2, 10, false);
+
+        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), 2, new FastestWeighting(encoder), TraversalMode.NODE_BASED);
+        storage.setMinimumNodes(2);
+        storage.createLandmarks();
+
+        assertEquals(2, storage.getSubnetworksWithLandmarks());
+        assertEquals("[1, 0]", Arrays.toString(storage.getLandmarks(1)));
+        // assertEquals("[5, 4]", Arrays.toString(storage.getLandmarks(2)));
+    }
+
+    @Test
+    public void testWeightingConsistence() {
+        // create an indifferent problem: shortest weighting can pass the speed==0 edge but fastest cannot (?)
+        ghStorage.edge(0, 1, 10, true);
+        ghStorage.edge(1, 2).setDistance(10).setFlags(encoder.setProperties(0.9, true, true));
+        ghStorage.edge(2, 3, 10, true);
+
+        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), 2, new FastestWeighting(encoder), TraversalMode.NODE_BASED);
+        storage.setMinimumNodes(2);
+        storage.createLandmarks();
+
+        assertEquals(2, storage.getSubnetworksWithLandmarks());
+        assertEquals("[1, 0]", Arrays.toString(storage.getLandmarks(1)));
+        // assertEquals("[3, 2]", Arrays.toString(storage.getLandmarks(2)));
+    }
+
 }
