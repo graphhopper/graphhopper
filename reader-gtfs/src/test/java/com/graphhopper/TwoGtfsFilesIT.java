@@ -8,6 +8,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -16,6 +17,7 @@ import java.util.Collections;
 
 import static org.junit.Assert.assertFalse;
 
+@Ignore // Currently chokes Travis
 public class TwoGtfsFilesIT {
 
     private static final String GRAPH_LOC = "target/graphhopperIT-twogtfs";
