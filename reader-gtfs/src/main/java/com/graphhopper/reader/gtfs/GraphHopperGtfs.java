@@ -109,14 +109,22 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     throw new RuntimeException(e);
                 }
             }
+            System.out.println("Loading feeds");
             List<GTFSFeed> feeds = gtfsFiles.parallelStream()
                     .map(filename -> GTFSFeed.fromFile(new File(filename).getPath()))
                     .collect(Collectors.toList());
             if (createWalkNetwork) {
                 FakeWalkNetworkBuilder.buildWalkNetwork(feeds, graphHopperStorage, (PtFlagEncoder) encodingManager.getEncoder("pt"), Helper.DIST_EARTH);
             }
+            System.out.println("Creating location index");
+            LocationIndex locationIndex;
+            if (graphHopperStorage.getNodes() > 0 ) {
+                locationIndex = new LocationIndexTree(graphHopperStorage, new RAMDirectory()).prepareIndex();
+            } else {
+                locationIndex = new EmptyLocationIndex();
+            }
             for (GTFSFeed feed : feeds) {
-                new GtfsReader(feed, graphHopperStorage).readGraph();
+                new GtfsReader(feed, graphHopperStorage, locationIndex).readGraph();
             }
             graphHopperStorage.flush();
         } else {

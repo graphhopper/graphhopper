@@ -29,6 +29,7 @@ class GtfsReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(GtfsReader.class);
 
     private final GraphHopperStorage graph;
+    private final LocationIndex locationIndex;
     private final GtfsStorage gtfsStorage;
 
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
@@ -43,18 +44,20 @@ class GtfsReader {
     private SetMultimap<String, Transfer> betweenStationTransfers;
     private final PtFlagEncoder encoder;
 
-    GtfsReader(GTFSFeed feed, GraphHopperStorage ghStorage) {
+    GtfsReader(GTFSFeed feed, GraphHopperStorage ghStorage, LocationIndex locationIndex) {
         this.feed = feed;
         this.graph = ghStorage;
         this.gtfsStorage = (GtfsStorage) ghStorage.getExtension();
         this.nodeAccess = ghStorage.getNodeAccess();
+        this.locationIndex = locationIndex;
         encoder = (PtFlagEncoder) graph.getEncodingManager().getEncoder("pt");
     }
 
     public void readGraph() {
         i = graph.getNodes();
+        System.out.println("Building pt");
         buildPtNetwork();
-        LocationIndex locationIndex = new LocationIndexTree(graph, new RAMDirectory()).prepareIndex();
+        System.out.println("Built pt");
         EdgeFilter filter = new EverythingButPt(encoder);
         for (Map.Entry<String, Integer> entry : stopNodes.entrySet()) {
             int enterNode = entry.getValue();
