@@ -73,14 +73,7 @@ public class TurnWeighting implements Weighting {
             return weight;
 
         int edgeId = edgeState.getEdge();
-        double turnCosts;
-        if (reverse)
-            turnCosts = calcTurnWeight(edgeId, edgeState.getBaseNode(), prevOrNextEdgeId);
-        else
-            turnCosts = calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeId);
-
-        if (turnCosts == 0 && edgeId == prevOrNextEdgeId)
-            return weight + defaultUTurnCost;
+        double turnCosts = calcTurnWeight(edgeId, edgeState.getBaseNode(), prevOrNextEdgeId, reverse, true);
 
         return weight + turnCosts;
     }
@@ -93,13 +86,21 @@ public class TurnWeighting implements Weighting {
 
         // TODO for now assume turn costs are returned in milliseconds?
         // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
-        long turnCostsInMillis;
-        if (reverse)
-            turnCostsInMillis = (long) calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId);
-        else
-            turnCostsInMillis = (long) calcTurnWeight(prevOrNextEdgeId, edgeState.getBaseNode(), edgeState.getEdge());
+        long turnCostsInMillis = (long) calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId, reverse, false);
 
         return millis + turnCostsInMillis;
+    }
+
+    public double calcTurnWeight(int edge, int nodeVia, int prevOrNextEdgeId, boolean reverse, boolean addUturnCost) {
+        double weight;
+        if (reverse)
+            weight = calcTurnWeight(edge, nodeVia, prevOrNextEdgeId);
+        else
+            weight = calcTurnWeight(prevOrNextEdgeId, nodeVia, edge);
+
+        if (addUturnCost && weight == 0 && edge == prevOrNextEdgeId)
+            weight += defaultUTurnCost;
+        return weight;
     }
 
     /**

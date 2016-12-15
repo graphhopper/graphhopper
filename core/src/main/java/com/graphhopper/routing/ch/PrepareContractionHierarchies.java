@@ -49,7 +49,7 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
  */
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final PreparationWeighting prepareWeighting;
+    private PreparationWeighting prepareWeighting;
     private final TraversalMode traversalMode;
     private final LevelEdgeFilter levelFilter;
     private final GraphHopperStorage ghStorage;
@@ -65,8 +65,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private CHEdgeExplorer vehicleAllExplorer;
     private CHEdgeExplorer vehicleAllTmpExplorer;
     private CHEdgeExplorer calcPrioAllExplorer;
-    private List<EdgeIteratorState> loopEdges = new ArrayList<>();
-    private int numLoops = 0; // this many entries in the loopEdges list are actually used for the current node
+    private List<Integer> loopEdges = new ArrayList<>();
     private int maxLevel;
     // the most important nodes comes last
     private GHTreeMapComposed sortedNodes;
@@ -95,13 +94,18 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         this.ghStorage = ghStorage;
         this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
-        if (traversalMode.isEdgeBased() && chGraph.getExtension() instanceof TurnCostExtension) {
+
+        if (weighting.getFlagEncoder().supports(TurnWeighting.class) && traversalMode.isEdgeBased() &&
+                chGraph.getExtension() instanceof TurnCostExtension) {
             // enable turn-cost support
             this.turnCostStorage = (TurnCostExtension) chGraph.getExtension();
+            weighting = new TurnWeighting(weighting, turnCostStorage);
         }
+        prepareWeighting = new PreparationWeighting(weighting, prepareGraph, traversalMode);
+
         levelFilter = new LevelEdgeFilter(prepareGraph);
 
-        prepareWeighting = new PreparationWeighting(weighting, prepareGraph, traversalMode);
+
         addScHandler = new AddShortcutHandler();
         calcScHandler = new CalcShortcutHandler();
         originalEdges = dir.find("original_edges_" + AbstractWeighting.weightingToFileName(weighting));
@@ -193,6 +197,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             return;
 
         contractNodes();
+        prepareWeighting.preparationFinished();
     }
 
     boolean prepareNodes() {
@@ -487,8 +492,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                             + ", in:" + getCoords(incomingEdges, prepareGraph) + ", out:" + getCoords(outgoingEdges, prepareGraph)
                             + ", dist:" + outgoingEdges.getDistance());
 
-                if (Double.isInfinite(existingDirectWeight))
+                if (Double.isInfinite(existingDirectWeight)) {
+                    computeExistingDirectWeight(incomingEdges, outgoingEdges);
                     continue;
+                }
 
                 double existingDistSum = v_u_dist + outgoingEdges.getDistance();
                 prepareAlgo.setWeightLimit(existingDirectWeight);
@@ -501,7 +508,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 dijkstraSW.stop();
 
                 // compare end node as the limit could force dijkstra to finish earlier
-                // TODO: make witness search compatible with CH
                 if (endNode == w_toNode && prepareAlgo.getWeight(endNode) <= existingDirectWeight)
                     // FOUND witness path, so do not add shortcut
                     continue;
@@ -524,7 +530,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             return prepareAlgo.findEndNode(u_fromNode, w_toNode);
 
         prepareWeighting.initEdgebased(u_fromNode, w_toNode, edgeUv, edgeVw);
-        return prepareAlgo.findEndNode(u_fromNode, w_toNode);
+        int result = prepareAlgo.findEndNode(u_fromNode, w_toNode);
+        prepareWeighting.preparationFinished();
+        return result;
     }
 
     void findLoops(int node) {
@@ -532,22 +540,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             return;
 
         EdgeIterator edges = vehicleOutExplorer.setBaseNode(node);
-        int writeIndex = 0;
+        loopEdges.clear();
         while (edges.next()) {
             if (edges.getAdjNode() == node) {
-
-                if (writeIndex >= loopEdges.size())
-                    // expand loop list
-                    loopEdges.add(edges.detach(false));
-                else
-                    loopEdges.set(writeIndex, edges.detach(false));
-                    // reuse existing loop list entry
-                    //edges.copyPropertiesTo(loopEdges.get(writeIndex));
-
-                writeIndex++;
+                loopEdges.add(edges.getEdge());
             }
         }
-        this.numLoops = writeIndex;
     }
 
     double computeExistingDirectWeight(EdgeIteratorState inEdge, EdgeIteratorState outEdge) {
@@ -561,8 +559,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
 
         // find the best loop
-        for (int i = 0; i < this.numLoops; i++) {
-            EdgeIteratorState loopEdge = loopEdges.get(i);
+        for (Integer loopEdgeId : loopEdges) {
+            EdgeIteratorState loopEdge = prepareGraph.getEdgeIteratorState(loopEdgeId, Integer.MIN_VALUE);
             double cost_vloop = prepareWeighting.calcWeight(loopEdge, false, inEdge.getEdge());
             double cost_to_w = prepareWeighting.calcWeight(outEdge, false, loopEdge.getEdge());
             double total = cost_uv + cost_vloop + cost_to_w;
@@ -623,7 +621,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 setOrigEdgeCount(edgeState.getEdge(), sc.originalEdges);
                 if (turnCostStorage != null) {
                     for (TurnCostInfo info : sc.turnCostInfo) {
-                        if (info.viaNode == sc.from)
+                        if (info.viaNode == sc.from && sc.from == sc.to)
+                            turnCostStorage.addTurnInfo(edgeState.getEdge(), info.viaNode, info.toEdge, info.flags); // loop shortcut
+                        else if (info.viaNode == sc.from)
                             turnCostStorage.addTurnInfo(info.fromEdge, info.viaNode, edgeState.getEdge(), info.flags);
                         else if (info.viaNode == sc.to)
                             turnCostStorage.addTurnInfo(edgeState.getEdge(), info.viaNode, info.toEdge, info.flags);
@@ -925,13 +925,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     class AddShortcutHandler implements ShortcutHandler {
         int node;
-        CHEdgeExplorer inExplorer;
-        CHEdgeExplorer outExplorer;
+        CHEdgeExplorer allExplorer;
 
         public AddShortcutHandler() {
             FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
-            inExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
-            outExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
+            allExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, true));
         }
 
         @Override
@@ -956,10 +954,37 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 foundShortcutNodebased(u_fromNode, w_toNode, existingDirectWeight, existingDistSum, outgoingEdges, skippedEdge1, incomingEdgeOrigCount);
         }
 
+        private void checkAddTurncosts(int atNode, int skippedEdge, List<TurnCostInfo> tcInfo) {
+            CHEdgeIterator iter = allExplorer.setBaseNode(atNode);
+            while (iter.next()) {
+                // flags from edge to shortcut
+                long flags = turnCostStorage.getTurnCostFlags(iter.getEdge(), atNode, skippedEdge);
+                if (flags != 0) {
+                    TurnCostInfo tc = new TurnCostInfo();
+                    tc.flags = flags;
+                    tc.fromEdge = iter.getEdge();
+                    tc.viaNode = atNode;
+                    tc.toEdge = skippedEdge;
+                    tcInfo.add(tc);
+                }
+
+                // flags from shortcut to edge
+                flags = turnCostStorage.getTurnCostFlags(skippedEdge, atNode, iter.getEdge());
+                if (flags != 0) {
+                    TurnCostInfo tc = new TurnCostInfo();
+                    tc.flags = flags;
+                    tc.fromEdge = skippedEdge;
+                    tc.viaNode = atNode;
+                    tc.toEdge = iter.getEdge();
+                    tcInfo.add(tc);
+                }
+            }
+        }
+
         public void foundShortcutEdgebased(int u_fromNode, int w_toNode,
-                                  double existingDirectWeight, double existingDistSum,
-                                  EdgeIterator outgoingEdges,
-                                  int skippedEdge1, int incomingEdgeOrigCount) {
+                                           double existingDirectWeight, double existingDistSum,
+                                           EdgeIterator outgoingEdges,
+                                           int skippedEdge1, int incomingEdgeOrigCount) {
             // TODO: check if we have a shortcut that is better in every respect.
             // I.e. that means that:
             // for all incoming edges to u ->
@@ -976,40 +1001,18 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             if (turnCostStorage != null) {
                 sc.turnCostInfo = new ArrayList<>();
-
-                CHEdgeIterator iter = inExplorer.setBaseNode(u_fromNode);
-                while (iter.next()) {
-                    long flags = turnCostStorage.getTurnCostFlags(iter.getEdge(), u_fromNode, sc.skippedEdge1);
-                    if (flags == 0)
-                        continue;
-                    TurnCostInfo tc = new TurnCostInfo();
-                    tc.flags = flags;
-                    tc.fromEdge = iter.getEdge();
-                    tc.viaNode = u_fromNode;
-                    tc.toEdge = sc.skippedEdge1;
-                    sc.turnCostInfo.add(tc);
-                }
-
-                iter = outExplorer.setBaseNode(w_toNode);
-                while (iter.next()) {
-                    long flags = turnCostStorage.getTurnCostFlags(sc.skippedEdge2, w_toNode, iter.getEdge());
-                    if (flags == 0)
-                        continue;
-                    TurnCostInfo tc = new TurnCostInfo();
-                    tc.flags = flags;
-                    tc.fromEdge = sc.skippedEdge2;
-                    tc.viaNode = w_toNode;
-                    tc.toEdge = iter.getEdge();
-                    sc.turnCostInfo.add(tc);
-                }
+                checkAddTurncosts(u_fromNode, sc.skippedEdge1, sc.turnCostInfo);
+                // if edge is bidirectional and results in a loop, don't add TC again
+                if (u_fromNode != w_toNode || sc.skippedEdge1 != sc.skippedEdge2)
+                    checkAddTurncosts(w_toNode, sc.skippedEdge2, sc.turnCostInfo);
             }
         }
 
 
         public void foundShortcutNodebased(int u_fromNode, int w_toNode,
-                                  double existingDirectWeight, double existingDistSum,
-                                  EdgeIterator outgoingEdges,
-                                  int skippedEdge1, int incomingEdgeOrigCount) {
+                                           double existingDirectWeight, double existingDistSum,
+                                           EdgeIterator outgoingEdges,
+                                           int skippedEdge1, int incomingEdgeOrigCount) {
             // FOUND shortcut
             // but be sure that it is the only shortcut in the collection
             // and also in the graph for u->w. If existing AND identical weight => update setProperties.

@@ -421,15 +421,6 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public EdgeIteratorState detach(boolean reverseArg) {
-            super.detach(false);
-            CHEdgeIteratorImpl result = new CHEdgeIteratorImpl(baseGraph, edgeAccess, filter);
-            result.setEdgeId(getEdge());
-            result._setBaseNode(baseNode);
-            return result;
-        }
-
-        @Override
         public final void setSkippedEdges(int edge1, int edge2) {
             checkShortcut(true, "setSkippedEdges");
             if (EdgeIterator.Edge.isValid(edge1) != EdgeIterator.Edge.isValid(edge2)) {

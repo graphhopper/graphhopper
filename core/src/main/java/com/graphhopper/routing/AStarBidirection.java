@@ -262,7 +262,7 @@ public class AStarBidirection extends AbstractBidirAlgo {
                 throw new IllegalStateException("cannot happen for edge based execution of " + getName());
 
             // see DijkstraBidirectionRef
-            if (entryOther.adjNode != entryCurrent.adjNode) {
+            if (entryOther.adjNode != entryCurrent.adjNode || entryCurrent.adjNode == entryCurrent.parent.adjNode) {
                 entryCurrent = (AStar.AStarEntry) entryCurrent.parent;
                 newWeight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
             } else if (!traversalMode.hasUTurnSupport())

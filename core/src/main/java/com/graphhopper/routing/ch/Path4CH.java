@@ -25,9 +25,12 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
+import javafx.util.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * Recursivly unpack shortcuts.
@@ -39,7 +42,7 @@ import java.util.List;
 public class Path4CH extends PathBidirRef {
     private final Graph routingGraph;
     private final TraversalMode traversalMode;
-    private final List<EdgeIteratorState> finalEdges = new ArrayList<>();
+    private final List<Pair<EdgeIteratorState, Boolean>> finalEdges = new ArrayList<>();
 
     public Path4CH(Graph routingGraph, Graph baseGraph, Weighting weighting, TraversalMode traversalMode) {
         super(baseGraph, weighting);
@@ -55,9 +58,10 @@ public class Path4CH extends PathBidirRef {
         time = 0;
         distance = 0;
         for (int i = 0; i < finalEdges.size(); i++) {
-            EdgeIteratorState edge = finalEdges.get(i);
+            EdgeIteratorState edge = finalEdges.get(i).getKey();
+            Boolean reverse = finalEdges.get(i).getValue();
             distance += edge.getDistance();
-            time += weighting.calcMillis(edge, false, prevId);
+            time += weighting.calcMillis(edge, reverse, prevId);
             prevId = edge.getEdge();
         }
         return result;
@@ -72,7 +76,7 @@ public class Path4CH extends PathBidirRef {
 
     private void expandEdge(CHEdgeIteratorState mainEdgeState, boolean reverse, int prevEdgeId) {
         if (!mainEdgeState.isShortcut()) {
-            finalEdges.add(mainEdgeState);
+            finalEdges.add(new Pair<EdgeIteratorState, Boolean>(mainEdgeState, reverse));
             addEdge(mainEdgeState.getEdge());
             return;
         }
@@ -89,7 +93,28 @@ public class Path4CH extends PathBidirRef {
         }
 
         // getEdgeProps could possibly return an empty edge if the shortcut is available for both directions.
+        // both edges in forward direction
+        CHEdgeIteratorState skipped2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, to);
+        CHEdgeIteratorState skipped1;
+        if (skipped2 == null) {
+            skipped2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, to);
+            skipped1 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, skipped2.getBaseNode());
+        } else {
+            skipped1 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, skipped2.getBaseNode());
+        }
+
         if (reverseOrder) {
+            expandEdge(skipped2, false, prevEdgeId);
+            expandLocalLoops(skipped1, skipped2, skipped1.getAdjNode(), true);
+            expandEdge(skipped1, false, skipped2.getEdge());
+        } else {
+            expandEdge(skipped1, false, prevEdgeId);
+            expandLocalLoops(skipped1, skipped2, skipped1.getAdjNode(), false);
+            expandEdge(skipped2, false, skipped1.getEdge());
+        }
+
+        // getEdgeProps could possibly return an empty edge if the shortcut is available for both directions.
+        /*if (reverseOrder) {
             CHEdgeIteratorState edgeState1 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, to);
             boolean empty = edgeState1 == null;
             if (empty)
@@ -97,13 +122,13 @@ public class Path4CH extends PathBidirRef {
 
             CHEdgeIteratorState edgeState2;
             if (empty)
-                edgeState2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, from);
+                edgeState2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, edgeState1.getBaseNode());
             else
-                edgeState2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, from);
+                edgeState2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, edgeState1.getBaseNode());
 
             expandEdge(edgeState1, false, edgeState2.getEdge());
             expandLocalLoops(edgeState2, edgeState1, edgeState2.getBaseNode(), true);
-            expandEdge(edgeState2, true, prevEdgeId);
+            expandEdge(edgeState2, false, prevEdgeId);
         } else {
             CHEdgeIteratorState iter = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, from);
             boolean empty = iter == null;
@@ -119,13 +144,13 @@ public class Path4CH extends PathBidirRef {
             expandEdge(iter, true, prevEdgeId);
             expandLocalLoops(iter2, iter, iter.getBaseNode(), false);
             expandEdge(iter, false, iter.getEdge());
-        }
+        }*/
     }
 
     private void expandLocalLoops(CHEdgeIteratorState skipped1, CHEdgeIteratorState skipped2, int skippedNode, boolean reverse) {
         if (!traversalMode.isEdgeBased())
             return;
-        double cost_uv = weighting.calcWeight(skipped1, true, EdgeIterator.NO_EDGE);
+        double cost_uv = weighting.calcWeight(skipped1, false, EdgeIterator.NO_EDGE);
         double cost_vw = weighting.calcWeight(skipped2, false, skipped1.getEdge());
         double directCost = cost_uv + cost_vw;
         EdgeIteratorState bestLoop = null;
@@ -144,6 +169,7 @@ public class Path4CH extends PathBidirRef {
                 bestLoop = iter.detach(false);
             }
         }
+        assert directCost != Double.MAX_VALUE || bestLoop != null;
 
         if (bestLoop != null) {
             expandEdge((CHEdgeIteratorState) bestLoop, reverse, skipped1.getEdge());

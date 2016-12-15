@@ -221,13 +221,14 @@ public class RoutingAlgorithmWithOSMIT {
     @Test
     public void testMoscowTurnCosts() {
         List<OneRun> list = new ArrayList<OneRun>();
-        list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
-        list.add(new OneRun(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
+        //list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
+        //list.add(new OneRun(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
+        list.add(new OneRun(55.81387853206422,37.60180706385837, 55.8109825, 37.5943652, 1043.99, 12));
         boolean testAlsoCH = true, is3D = false;
-        runAlgo(testCollector, DIR + "/moscow.osm.gz", "target/graph-moscow",
+        //runAlgo(testCollector, DIR + "/moscow.osm.gz", "target/graph-moscow",
+        //        list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
+        runAlgo(testCollector, DIR + "/moscow_small.osm", "target/graph-moscow_small",
                 list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
-        //runAlgo(testCollector, "/home/ben/Downloads/osm/saarland.pbf", "target/graph-moscow",
-        //                list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
@@ -238,6 +239,17 @@ public class RoutingAlgorithmWithOSMIT {
         list.add(new OneRun(-0.5, 0.0, 0.0, -0.5, 301015.98099, 6));
         boolean testAlsoCH = true, is3D = false;
         runAlgo(testCollector, DIR + "/test_simple_turncosts.osm.xml", "target/graph-simple_turncosts",
+                list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
+
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testSimplePTurn() {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(0, 1, -1, 0, 667.08, 6));
+        boolean testAlsoCH = true, is3D = false;
+        runAlgo(testCollector, DIR + "/test_simple_pturn.osm.xml", "target/graph-simple_turncosts",
                 list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -562,10 +574,6 @@ public class RoutingAlgorithmWithOSMIT {
                     ? TraversalMode.EDGE_BASED_1DIR : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
             Weighting weighting = hopper.createWeighting(new HintsMap(weightStr), encoder);
-
-            // TODO: should we really do this here?
-            if (tMode.isEdgeBased() && hopper.getGraphHopperStorage().getExtension() instanceof TurnCostExtension)
-                weighting = new TurnWeighting(weighting, (TurnCostExtension) hopper.getGraphHopperStorage().getExtension());
 
             Collection<AlgoHelperEntry> prepares = RoutingAlgorithmIT.createAlgos(hopper.getGraphHopperStorage(),
                     hopper.getLocationIndex(), testAlsoCH, tMode, weighting, hopper.getEncodingManager());

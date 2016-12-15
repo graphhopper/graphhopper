@@ -559,7 +559,9 @@ class BaseGraph implements Graph {
         clonedG.loadWayGeometryHeader();
 
         // extStorage
-        extStorage.copyTo(clonedG.extStorage);
+        // TODO: We can not simply copy extStorage like this, as the node-IDs might have changed
+        // during copy because of removed subnetworks.
+        // extStorage.copyTo(clonedG.extStorage);
 
         if (removedNodes == null)
             clonedG.removedNodes = null;

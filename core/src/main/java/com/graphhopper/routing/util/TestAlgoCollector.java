@@ -68,6 +68,7 @@ public class TestAlgoCollector {
                 setEnableInstructions(true);
         PathWrapper rsp = new PathWrapper();
         pathMerger.doWork(rsp, altPaths, trMap.getWithFallBack(Locale.US));
+        System.out.println(rsp.getInstructions().createGPX());
 
         if (rsp.hasErrors()) {
             errors.add(algoEntry + " response contains errors. Expected distance: " + rsp.getDistance()
