@@ -115,14 +115,14 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             if (createWalkNetwork) {
                 FakeWalkNetworkBuilder.buildWalkNetwork(feeds, graphHopperStorage, (PtFlagEncoder) encodingManager.getEncoder("pt"), Helper.DIST_EARTH);
             }
-            LocationIndex locationIndex;
+            LocationIndex walkNetworkIndex;
             if (graphHopperStorage.getNodes() > 0 ) {
-                locationIndex = new LocationIndexTree(graphHopperStorage, new RAMDirectory()).prepareIndex();
+                walkNetworkIndex = new LocationIndexTree(graphHopperStorage, new RAMDirectory()).prepareIndex();
             } else {
-                locationIndex = new EmptyLocationIndex();
+                walkNetworkIndex = new EmptyLocationIndex();
             }
             for (GTFSFeed feed : feeds) {
-                new GtfsReader(feed, graphHopperStorage, locationIndex).readGraph();
+                new GtfsReader(feed, graphHopperStorage, walkNetworkIndex).readGraph();
             }
             graphHopperStorage.flush();
         } else {

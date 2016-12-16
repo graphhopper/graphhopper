@@ -7,9 +7,7 @@ import com.google.common.collect.SetMultimap;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
@@ -29,7 +27,7 @@ class GtfsReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(GtfsReader.class);
 
     private final GraphHopperStorage graph;
-    private final LocationIndex locationIndex;
+    private final LocationIndex walkNetworkIndex;
     private final GtfsStorage gtfsStorage;
 
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
@@ -44,12 +42,12 @@ class GtfsReader {
     private SetMultimap<String, Transfer> betweenStationTransfers;
     private final PtFlagEncoder encoder;
 
-    GtfsReader(GTFSFeed feed, GraphHopperStorage ghStorage, LocationIndex locationIndex) {
+    GtfsReader(GTFSFeed feed, GraphHopperStorage ghStorage, LocationIndex walkNetworkIndex) {
         this.feed = feed;
         this.graph = ghStorage;
         this.gtfsStorage = (GtfsStorage) ghStorage.getExtension();
         this.nodeAccess = ghStorage.getNodeAccess();
-        this.locationIndex = locationIndex;
+        this.walkNetworkIndex = walkNetworkIndex;
         encoder = (PtFlagEncoder) graph.getEncodingManager().getEncoder("pt");
     }
 
@@ -59,7 +57,7 @@ class GtfsReader {
         EdgeFilter filter = new EverythingButPt(encoder);
         for (Map.Entry<String, Integer> entry : stopNodes.entrySet()) {
             int enterNode = entry.getValue();
-            QueryResult source = locationIndex.findClosest(nodeAccess.getLat(enterNode), nodeAccess.getLon(enterNode), filter);
+            QueryResult source = walkNetworkIndex.findClosest(nodeAccess.getLat(enterNode), nodeAccess.getLon(enterNode), filter);
             int streetNode;
             if (!source.isValid()) {
                 Stop stop = feed.stops.get(entry.getKey());
