@@ -26,6 +26,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import javafx.util.Pair;
+import sun.plugin.dom.exception.InvalidStateException;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -114,7 +116,7 @@ public class Path4CH extends PathBidirRef {
         }
     }
 
-    private void expandLocalLoops(CHEdgeIteratorState skipped1, CHEdgeIteratorState skipped2, int skippedNode, boolean reverse) {
+    private void expandLocalLoops(CHEdgeIteratorState skipped1, CHEdgeIteratorState skipped2, int skippedNode, boolean reverse) throws NotImplementedException {
         if (!traversalMode.isEdgeBased())
             return;
         double cost_uv = weighting.calcWeight(skipped1, false, EdgeIterator.NO_EDGE);
@@ -136,7 +138,9 @@ public class Path4CH extends PathBidirRef {
                 bestLoop = iter.detach(false);
             }
         }
-        assert directCost != Double.MAX_VALUE || bestLoop != null;
+
+        if (directCost == Double.MAX_VALUE && bestLoop == null)
+            throw new InvalidStateException("CH turncost don't support multiple p-turns at a single node yet");
 
         if (bestLoop != null) {
             expandEdge((CHEdgeIteratorState) bestLoop, reverse, skipped1.getEdge());

@@ -331,7 +331,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     neighborSW.stop();
                 }
 
-                // TODO: no disconnect for edge-based routing -- will yield problems for small graphs with dead-ends as routing target
+                // TODO optimize: no disconnect for edge-based routing -- will yield problems for small graphs with dead-ends as routing target
                 if (!traversalMode.isEdgeBased())
                     prepareGraph.disconnect(vehicleAllTmpExplorer, iter);
             }
@@ -493,7 +493,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                             + ", dist:" + outgoingEdges.getDistance());
 
                 if (Double.isInfinite(existingDirectWeight)) {
-                    computeExistingDirectWeight(incomingEdges, outgoingEdges);
                     continue;
                 }
 
@@ -582,7 +581,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             boolean updatedInGraph = false;
             // check if we need to update some existing shortcut in the graph
             CHEdgeIterator iter = vehicleOutExplorer.setBaseNode(sc.from);
-            // TODO: implement similar optimization that respects turncost
+            // TODO optimize: implement similar optimization that respects turncost
             if (!traversalMode.isEdgeBased()) {
                 while (iter.next()) {
                     if (iter.isShortcut() && iter.getAdjNode() == sc.to && iter.canBeOverwritten(sc.flags)) {
@@ -985,7 +984,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                                            double existingDirectWeight, double existingDistSum,
                                            EdgeIterator outgoingEdges,
                                            int skippedEdge1, int incomingEdgeOrigCount) {
-            // TODO: check if we have a shortcut that is better in every respect.
+            // TODO optimize: check if we have a shortcut that is better in every respect.
             // I.e. that means that:
             // for all incoming edges to u ->
             //   for all outgoing edges of w ->
