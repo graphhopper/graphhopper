@@ -98,7 +98,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
                 Path prevRoute = pathList.get(placeIndex - 2);
                 if (prevRoute.getEdgeCount() > 0) {
                     EdgeIteratorState incomingVirtualEdge = prevRoute.getFinalEdge();
-                    queryGraph.enforceHeadingByEdgeId(fromQResult.getClosestNode(), incomingVirtualEdge.getEdge(), false);
+                    queryGraph.unfavorVirtualEdgePair(fromQResult.getClosestNode(), incomingVirtualEdge.getEdge());
                 }
             }
 
