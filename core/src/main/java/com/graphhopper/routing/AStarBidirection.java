@@ -284,6 +284,6 @@ public class AStarBidirection extends AbstractBidirAlgo {
 
     @Override
     public String getName() {
-        return Parameters.Algorithms.ASTAR_BI;
+        return Parameters.Algorithms.ASTAR_BI + "|" + weightApprox;
     }
 }
