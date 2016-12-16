@@ -20,19 +20,17 @@ package com.graphhopper.routing.ch;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import javafx.util.Pair;
-import sun.plugin.dom.exception.InvalidStateException;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 /**
  * Recursivly unpack shortcuts.
@@ -116,7 +114,7 @@ public class Path4CH extends PathBidirRef {
         }
     }
 
-    private void expandLocalLoops(CHEdgeIteratorState skipped1, CHEdgeIteratorState skipped2, int skippedNode, boolean reverse) throws NotImplementedException {
+    private void expandLocalLoops(CHEdgeIteratorState skipped1, CHEdgeIteratorState skipped2, int skippedNode, boolean reverse) {
         if (!traversalMode.isEdgeBased())
             return;
         double cost_uv = weighting.calcWeight(skipped1, false, EdgeIterator.NO_EDGE);
@@ -140,7 +138,7 @@ public class Path4CH extends PathBidirRef {
         }
 
         if (directCost == Double.MAX_VALUE && bestLoop == null)
-            throw new InvalidStateException("CH turncost don't support multiple p-turns at a single node yet");
+            throw new IllegalStateException("CH turncost don't support multiple p-turns at a single node yet");
 
         if (bestLoop != null) {
             expandEdge((CHEdgeIteratorState) bestLoop, reverse, skipped1.getEdge());
