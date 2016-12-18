@@ -1036,7 +1036,7 @@ public class GraphHopper implements GraphHopperAPI {
                     return Collections.emptyList();
 
                 RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
-                Weighting weighting = null;
+                Weighting weighting;
                 QueryGraph queryGraph;
 
                 boolean forceFlexibleMode = hints.getBool(CH.DISABLE, false);

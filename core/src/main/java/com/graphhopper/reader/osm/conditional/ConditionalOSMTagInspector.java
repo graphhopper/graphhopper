@@ -33,19 +33,17 @@ import java.util.*;
 public class ConditionalOSMTagInspector implements ConditionalTagInspector {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final List<String> tagsToCheck;
-    private final Map<String, Object> valueMap;
     private final ConditionalParser permitParser, restrictiveParser;
     // enabling by default makes noise but could improve OSM data
     private boolean enabledLogs = true;
 
     public ConditionalOSMTagInspector(Object value, List<String> tagsToCheck,
                                       Set<String> restrictiveValues, Set<String> permittedValues) {
-        this(tagsToCheck, createDefaultMapping(value), restrictiveValues, permittedValues, false);
+        this(tagsToCheck, Arrays.asList(new DateRangeParser((Calendar) value)), restrictiveValues, permittedValues, false);
     }
 
-    public ConditionalOSMTagInspector(List<String> tagsToCheck, Map<String, Object> valueMap,
+    public ConditionalOSMTagInspector(List<String> tagsToCheck, List<? extends ConditionalValueParser> valueParsers,
                                       Set<String> restrictiveValues, Set<String> permittedValues, boolean enabledLogs) {
-        this.valueMap = valueMap;
         this.tagsToCheck = new ArrayList<>(tagsToCheck.size());
         for (String tagToCheck : tagsToCheck) {
             this.tagsToCheck.add(tagToCheck + ":conditional");
@@ -57,13 +55,15 @@ public class ConditionalOSMTagInspector implements ConditionalTagInspector {
         boolean logUnsupportedFeatures = false;
         this.permitParser = new ConditionalParser(permittedValues, logUnsupportedFeatures);
         this.restrictiveParser = new ConditionalParser(restrictiveValues, logUnsupportedFeatures);
+        for (ConditionalValueParser cvp : valueParsers) {
+            permitParser.addConditionalValueParser(cvp);
+            restrictiveParser.addConditionalValueParser(cvp);
+        }
     }
 
-    static Map<String, Object> createDefaultMapping(Object value) {
-        // parse date range and value is the time
-        Map<String, Object> map = new HashMap<String, Object>(1);
-        map.put(DateRange.KEY, value);
-        return map;
+    public void addValueParser(ConditionalValueParser vp) {
+        permitParser.addConditionalValueParser(vp);
+        restrictiveParser.addConditionalValueParser(vp);
     }
 
     @Override
@@ -84,22 +84,19 @@ public class ConditionalOSMTagInspector implements ConditionalTagInspector {
                 continue;
 
             try {
-                ValueRange valueRange;
-                if (checkPermissiveValues)
-                    valueRange = permitParser.getRange(val);
-                else
-                    valueRange = restrictiveParser.getRange(val);
-
-                if (valueRange != null) {
-                    Object value = valueMap.get(valueRange.getKey());
-                    if (value != null && valueRange.isInRange(value))
+                if (checkPermissiveValues) {
+                    if (permitParser.checkCondition(val))
+                        return true;
+                } else {
+                    if (restrictiveParser.checkCondition(val))
                         return true;
                 }
+
             } catch (Exception e) {
                 if (enabledLogs) {
                     // log only if no date ala 21:00 as currently date and numbers do not support time precise restrictions
                     if (!val.contains(":"))
-                        logger.warn(way.getId() + " - could not parse the conditional value:" + val + " of tag:" + tagToCheck + ". Exception:" + e.getMessage());
+                        logger.warn("for way " + way.getId() + " could not parse the conditional value '" + val + "' of tag '" + tagToCheck + "'. Exception:" + e.getMessage());
                 }
             }
         }
