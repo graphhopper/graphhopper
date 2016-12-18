@@ -147,12 +147,17 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         // introduce a factor to store weight without loosing too much precision 
         // AND making it compatible with weighting.calcWeight
-        double distanceInMeter = 6000 * 1000;
+
+        // roughly approximate the maximum distance of the current area but limit to world wide case
+        // too small is dangerous regarding performance, e.g. for Germany at least 1500km is very important otherwise speed is at least twice as slow e.g. for just 1000km
+        // double distanceInMeter = Math.min(50_000_000, 3 * Helper.DIST_EARTH.calcDist(graph.getBounds().maxLat, graph.getBounds().maxLon, graph.getBounds().minLat, graph.getBounds().minLon));
+        double distanceInMeter = 1000 * 1000;
         double weightMax = weighting.getMinWeight(distanceInMeter);
         // 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
         factor = weightMax / (1 << 16);
 
-        LOGGER.info("init landmarks for subnetworks with nodeCount greater than " + minimumNodes + ", weightMax:" + weightMax + ", factor:" + factor);
+        LOGGER.info("init landmarks for subnetworks with nodeCount greater than " + minimumNodes + ", weightMax:" + weightMax
+                + ", factor:" + factor + " from max distance:" + distanceInMeter / 1000f + "km");
 
         // special subnetwork 0
         int[] empty = new int[landmarks];
@@ -293,6 +298,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         LOGGER.info("Finished searching landmarks for subnetwork " + subnetworkId + " of size " + explorer.getVisitedNodes());
 
+        // TODO make parallel if first loop is okay
         // 2) calculate weights for all landmarks -> 'from' and 'to' weight
         for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
             int lm = tmpLandmarkNodeIds[lmIdx];
