@@ -369,7 +369,10 @@ public class Helper {
                     try {
                         // <=JDK8 class DirectByteBuffer {         sun.misc.Cleaner cleaner(Buffer buf) }
                         // >=JDK9 class DirectByteBuffer { jdk.internal.ref.Cleaner cleaner(Buffer buf) }
-                        final Class<?> directByteBufferClass = Class.forName("java.nio.DirectByteBuffer");
+                        // Regarding MappedByteBufferAdapter, see #914
+                        final Class<?> directByteBufferClass =
+                                buffer.getClass().getSimpleName().equals("MappedByteBufferAdapter") ?
+                                        Class.forName("java.nio.MappedByteBufferAdapter") : Class.forName("java.nio.DirectByteBuffer");
                         if (Constants.ANDROID) {
                             final Method dbbFreeMethod = directByteBufferClass.getMethod("free");
                             dbbFreeMethod.setAccessible(true);
