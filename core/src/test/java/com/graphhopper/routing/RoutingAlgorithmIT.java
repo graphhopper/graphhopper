@@ -28,6 +28,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import org.junit.Test;
 
@@ -48,10 +49,8 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class RoutingAlgorithmIT {
-    public static List<AlgoHelperEntry> createAlgos(GraphHopperStorage ghStorage,
-                                                    LocationIndex idx, boolean withCh,
-                                                    final TraversalMode tMode, final Weighting weighting,
-                                                    final EncodingManager manager) {
+    public static List<AlgoHelperEntry> createAlgos(GraphHopperStorage ghStorage, LocationIndex idx, boolean withCH,
+                                                    TraversalMode tMode, Weighting weighting) {
         List<AlgoHelperEntry> prepare = new ArrayList<AlgoHelperEntry>();
         prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, new AlgorithmOptions(ASTAR, weighting, tMode), idx));
         // later: include dijkstraOneToMany
@@ -63,31 +62,16 @@ public class RoutingAlgorithmIT {
         prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, astarbiOpts, idx));
         prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, dijkstrabiOpts, idx));
 
-        if (withCh) {
-            GraphHopperStorage storageCopy = new GraphBuilder(manager).
-                    set3D(ghStorage.getNodeAccess().is3D()).setCHGraph(weighting).
-                    create();
-            ghStorage.copyTo(storageCopy);
-            storageCopy.freeze();
-            final CHGraph graphCH = storageCopy.getGraph(CHGraph.class, weighting);
-            final PrepareContractionHierarchies prepareCH = new PrepareContractionHierarchies(
-                    new GHDirectory("", DAType.RAM_INT), storageCopy, graphCH, weighting, tMode);
-            prepareCH.doWork();
-            LocationIndex idxCH = new LocationIndexTree(storageCopy, new RAMDirectory()).prepareIndex();
-            prepare.add(new AlgoHelperEntry(graphCH, storageCopy, dijkstrabiOpts, idxCH) {
-                @Override
-                public RoutingAlgorithm createAlgo(Graph qGraph) {
-                    return prepareCH.createAlgo(qGraph, dijkstrabiOpts);
-                }
-            });
+        if (withCH) {
+            final AlgorithmOptions chOpts = AlgorithmOptions.start(dijkstrabiOpts).build();
+            chOpts.getHints().put(Parameters.CH.DISABLE, true);
+            prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, chOpts, idx));
 
-            prepare.add(new AlgoHelperEntry(graphCH, storageCopy, astarbiOpts, idxCH) {
-                @Override
-                public RoutingAlgorithm createAlgo(Graph qGraph) {
-                    return prepareCH.createAlgo(qGraph, astarbiOpts);
-                }
-            });
+            final AlgorithmOptions astarCH = AlgorithmOptions.start(astarbiOpts).build();
+            astarCH.getHints().put(Parameters.CH.DISABLE, true);
+            prepare.add(new AlgoHelperEntry(ghStorage, ghStorage, astarCH, idx));
         }
+
         return prepare;
     }
 
@@ -104,7 +88,7 @@ public class RoutingAlgorithmIT {
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile))).read();
         Collection<AlgoHelperEntry> prepares = createAlgos(graph, null, false, TraversalMode.NODE_BASED,
-                new ShortestWeighting(encoder), eManager);
+                new ShortestWeighting(encoder));
         for (AlgoHelperEntry entry : prepares) {
             StopWatch sw = new StopWatch();
             for (int i = 0; i < N; i++) {

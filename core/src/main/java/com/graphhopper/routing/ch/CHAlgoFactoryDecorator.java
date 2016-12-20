@@ -31,10 +31,7 @@ import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -52,7 +49,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     // we need to decouple weighting objects from the weighting list of strings 
     // as we need the strings to create the GraphHopperStorage and the GraphHopperStorage to create the preparations from the Weighting objects currently requiring the encoders
     private final List<Weighting> weightings = new ArrayList<>();
-    private final List<String> weightingsAsStrings = new ArrayList<>();
+    private final Set<String> weightingsAsStrings = new LinkedHashSet<>();
     private boolean disablingAllowed = false;
     // for backward compatibility enable CH by default.
     private boolean enabled = true;
@@ -215,7 +212,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (this.weightingsAsStrings.isEmpty())
             throw new IllegalStateException("Potential bug: chWeightingList is empty");
 
-        return this.weightingsAsStrings;
+        return new ArrayList<>(this.weightingsAsStrings);
     }
 
     /**
@@ -238,7 +235,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     private String getDefaultWeighting() {
-        return weightingsAsStrings.isEmpty() ? "fastest" : weightingsAsStrings.get(0);
+        return weightingsAsStrings.isEmpty() ? "fastest" : weightingsAsStrings.iterator().next();
     }
 
     public List<PrepareContractionHierarchies> getPreparations() {
@@ -323,7 +320,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         traversalMode = getNodeBase();
 
         for (Weighting weighting : getWeightings()) {
-            if(weighting instanceof GenericWeighting){
+            if (weighting instanceof GenericWeighting) {
                 ((GenericWeighting) weighting).setGraph(ghStorage);
             }
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
