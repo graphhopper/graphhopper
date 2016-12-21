@@ -174,9 +174,7 @@ NAME="${FILE%.*}"
 
 if [ "$FILE" == "-" ]; then
    OSM_FILE=
-elif [ ${FILE: -4} == ".osm" ]; then
-   OSM_FILE="$FILE"
-elif [ ${FILE: -4} == ".pbf" ]; then
+elif [ ${FILE: -4} == ".osm" ] || [ ${FILE: -4} == ".xml" ] || [ ${FILE: -4} == ".pbf" ]; then
    OSM_FILE="$FILE"
 elif [ ${FILE: -7} == ".osm.gz" ]; then
    OSM_FILE="$FILE"
