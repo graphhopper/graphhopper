@@ -25,7 +25,7 @@ import com.graphhopper.reader.ReaderWay;
  */
 public abstract class AbstractSpatialRuleLookup implements SpatialRuleLookup {
 
-    public static final SpatialRule EMPTY_RULE = new SpatialRule() {
+    public static final SpatialRule EMPTY_RULE = new AbstractSpatialRule() {
         @Override
         public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
             return Integer.MAX_VALUE;

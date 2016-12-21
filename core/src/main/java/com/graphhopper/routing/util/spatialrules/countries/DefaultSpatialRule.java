@@ -18,13 +18,13 @@
 package com.graphhopper.routing.util.spatialrules.countries;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.AccessValue;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
 
 /**
  * Default Implementation for the SpatialRule that contains the current default Values
  */
-public class DefaultSpatialRule implements SpatialRule {
+public class DefaultSpatialRule extends AbstractSpatialRule {
     @Override
     public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
         String highwayTag = readerWay.getTag("highway", "");

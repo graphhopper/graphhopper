@@ -41,12 +41,7 @@ public class EmptySpatialRuleLookup extends AbstractSpatialRuleLookup {
     }
 
     @Override
-    public void addRule(SpatialRule rule, Polygon polygon) {
-        throw new IllegalStateException("Not implemented");
-    }
-
-    @Override
-    public void addRules(SpatialRule rule, List<Polygon> polygons) {
+    public void addRule(SpatialRule rule) {
         throw new IllegalStateException("Not implemented");
     }
 

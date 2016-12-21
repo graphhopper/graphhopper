@@ -42,6 +42,7 @@ public class SpatialRuleLookupBuilder {
 
     private final static BBox DEFAULT_BOUNDS = new BBox(-180, 180, -90, 90);
     private final static double DEFAULT_RESOLUTION = .1;
+    private final static boolean DEFAULT_EXACT = true;
 
     private final static SpatialRule[] rules = new SpatialRule[]{
             new AustriaSpatialRule(),
@@ -49,11 +50,11 @@ public class SpatialRuleLookupBuilder {
     };
 
     public static SpatialRuleLookup build() {
-        return SpatialRuleLookupBuilder.build(DEFAULT_BOUNDS, DEFAULT_RESOLUTION);
+        return SpatialRuleLookupBuilder.build(DEFAULT_BOUNDS, DEFAULT_RESOLUTION, DEFAULT_EXACT);
     }
 
-    public static SpatialRuleLookup build(BBox bounds, double resolution) {
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(bounds, resolution);
+    public static SpatialRuleLookup build(BBox bounds, double resolution, boolean exact) {
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(bounds, resolution, exact);
         try {
             GHJson ghJson = new GHJsonBuilder().create();
             JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(new FileReader(new File(SpatialRuleLookupBuilder.class.getResource("countries.json").getFile())), JsonFeatureCollection.class);
@@ -62,9 +63,11 @@ public class SpatialRuleLookupBuilder {
                 for (JsonFeature jsonFeature : jsonFeatureCollection.getFeatures()) {
                     if (spatialRule.getCountryIsoA3Name().equals(jsonFeature.getProperty("ISO_A3"))) {
                         Geometry geometry = jsonFeature.getGeometry();
-                        if (geometry.isPolygon()) {
-                            spatialRuleLookup.addRules(spatialRule, geometry.asPolygon().getPolygons());
-                        }
+                        if(!geometry.isPolygon())
+                            continue;
+                        spatialRule.setBorders(geometry.asPolygon().getPolygons());
+                        spatialRuleLookup.addRule(spatialRule);
+                        break;
                     }
                 }
             }

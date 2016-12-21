@@ -31,8 +31,7 @@ public interface SpatialRuleLookup {
     SpatialRule lookupRule(double lat, double lon);
     SpatialRule lookupRule(GHPoint point);
 
-    void addRule(SpatialRule rule, Polygon polygon);
-    void addRules(SpatialRule rule, List<Polygon> polygons);
+    void addRule(SpatialRule rule);
 
     void visualize(int i);
 }

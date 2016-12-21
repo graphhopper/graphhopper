@@ -19,6 +19,8 @@ package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.reader.ReaderWay;
 
+import java.util.List;
+
 /**
  * Defines rules that are valid for a certain region, e.G. a country.
  * A rule might be access, max-speed, etc.
@@ -30,6 +32,10 @@ public interface SpatialRule {
     int getMaxSpeed(ReaderWay readerWay, String transportationMode);
 
     AccessValue isAccessible(ReaderWay readerWay, String transportationMode);
+
+    List<Polygon> getBorders();
+    void setBorders(List<Polygon> borders);
+    void addBorder(Polygon polygon);
 
     String getCountryIsoA3Name();
 
