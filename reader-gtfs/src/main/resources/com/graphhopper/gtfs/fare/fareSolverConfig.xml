@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<solver>
+  <!--<environmentMode>FAST_ASSERT</environmentMode>-->
+  <solutionClass>com.graphhopper.gtfs.fare.TicketPurchase</solutionClass>
+  <entityClass>com.graphhopper.gtfs.fare.FareAssignment</entityClass>
+
+  <scoreDirectorFactory>
+    <scoreDefinitionType>HARD_SOFT</scoreDefinitionType>
+    <easyScoreCalculatorClass>com.graphhopper.gtfs.fare.TicketPurchaseScoreCalculator</easyScoreCalculatorClass>
+  </scoreDirectorFactory>
+
+  <exhaustiveSearch>
+    <exhaustiveSearchType>BRUTE_FORCE</exhaustiveSearchType>
+  </exhaustiveSearch>
+</solver>

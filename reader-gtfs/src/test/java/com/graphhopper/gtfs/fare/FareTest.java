@@ -14,7 +14,6 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigDecimal;
-import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,16 +41,16 @@ public class FareTest {
 
 
     static {
-        tripWithOneSegment = new Trip(6000);
-        tripWithOneSegment.segments.add(new Trip.Segment("Route_1"));
+        tripWithOneSegment = new Trip();
+        tripWithOneSegment.segments.add(new Trip.Segment("Route_1", 0));
 
-        tripWithTwoSegments = new Trip(6000);
-        tripWithTwoSegments.segments.add(new Trip.Segment("Route_1"));
-        tripWithTwoSegments.segments.add(new Trip.Segment("Route_2"));
+        tripWithTwoSegments = new Trip();
+        tripWithTwoSegments.segments.add(new Trip.Segment("Route_1", 0));
+        tripWithTwoSegments.segments.add(new Trip.Segment("Route_2", 6000));
 
-        shortTripWithTwoSegments = new Trip(5000);
-        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_1"));
-        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_2"));
+        shortTripWithTwoSegments = new Trip();
+        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_1",0));
+        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_2",5000));
     }
 
     @Theory
@@ -101,7 +100,7 @@ public class FareTest {
         assumeThat("Only one fare.", fares.size(), equalTo(1));
         Fare onlyFare = fares.values().iterator().next();
         assumeThat("Fare allows the number of transfers we need for our trip.", onlyFare.fare_attribute.transfers, greaterThanOrEqualTo(trip.segments.size()));
-        assumeThat("Fare allows the time we need for our trip.", (long) onlyFare.fare_attribute.transfer_duration, greaterThanOrEqualTo(trip.duration()));
+        assumeThat("Fare allows the time we need for our trip.", (long) onlyFare.fare_attribute.transfer_duration, greaterThanOrEqualTo(trip.segments.get(trip.segments.size()-1).getStartTime() - trip.segments.get(0).getStartTime()));
 
         Amount amount = Fares.calculate(fares, trip);
         Assert.assertEquals(BigDecimal.valueOf(onlyFare.fare_attribute.price), amount.getAmount());
@@ -111,8 +110,9 @@ public class FareTest {
     public void buyMoreThanOneTicketIfTripIsLongerThanAllowedOnOne(Map<String, Fare> fares, Trip trip) throws IOException {
         assumeThat("Only one fare.", fares.size(), equalTo(1));
         Fare onlyFare = fares.values().iterator().next();
+        assumeThat("We have a transfer", trip.segments.size(), greaterThan(1));
         assumeThat("Fare allows the number of transfers we need for our trip.", onlyFare.fare_attribute.transfers, greaterThanOrEqualTo(trip.segments.size()));
-        assumeThat("Fare does not allow the time we need for our trip.", (long) onlyFare.fare_attribute.transfer_duration, lessThan(trip.duration()));
+        assumeThat("Fare does not allow the time we need for our trip.", (long) onlyFare.fare_attribute.transfer_duration, lessThan(trip.segments.get(trip.segments.size()-1).getStartTime() - trip.segments.get(0).getStartTime()));
 
         Amount amount = Fares.calculate(fares, trip);
         assertThat(amount.getAmount().doubleValue(), greaterThan(onlyFare.fare_attribute.price));

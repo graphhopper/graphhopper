@@ -1,15 +1,17 @@
 package com.graphhopper.gtfs.fare;
 
+import com.conveyal.gtfs.model.Fare;
+
 public class Ticket {
 
-    private String fareId;
+    private Fare fare;
 
-    public Ticket(String fareId) {
-        this.fareId = fareId;
+    public Ticket(Fare fare) {
+        this.fare = fare;
     }
 
-    public String getFareId() {
-        return fareId;
+    public Fare getFare() {
+        return fare;
     }
 
 }
