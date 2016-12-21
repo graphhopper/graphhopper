@@ -5,6 +5,8 @@ import java.util.List;
 
 public class Trip {
 
+    private final long duration;
+
     static class Segment {
 
         private final String route;
@@ -21,12 +23,12 @@ public class Trip {
 
     final List<Segment> segments = new ArrayList<>();
 
-    Trip() {
-
+    Trip(long duration) {
+        this.duration = duration;
     }
 
     public long duration() {
-        return 6000;
+        return duration;
     }
 
 }

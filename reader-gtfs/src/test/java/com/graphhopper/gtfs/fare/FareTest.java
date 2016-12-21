@@ -14,6 +14,8 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigDecimal;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -30,20 +32,47 @@ public class FareTest {
     public static @DataPoint Map<String, Fare> oneDollarUnlimitedTransfers = parseFares("only_fare,1.00,USD,0\n", "");
     public static @DataPoint Map<String, Fare> oneDollarNoTransfers = parseFares("only_fare,1.00,USD,0,0\n", "");
     public static @DataPoint Map<String, Fare> oneDollarTimeLimitedTransfers = parseFares("only_fare,1.00,USD,0,,5400\n", "");
-    public static @DataPoint Map<String, Fare> regularAndExpress = parseFares("local_fare,1.75,USD,0,0\n"+"express_fare,5.00,USD,0,0\n", "local_fare,Route_1\nexpress_fare,Route_2\nexpress_fare,Route3");
+    public static @DataPoint Map<String, Fare> regularAndExpress = parseFares("local_fare,1.75,USD,0,0\n"+"express_fare,5.00,USD,0,0\n", "local_fare,Route_1\nexpress_fare,Route_2\nexpress_fare,Route3\n");
+    public static @DataPoint Map<String, Fare> withTransfersOrWithout = parseFares("simple_fare,1.75,USD,0,0\n"+"plustransfer_fare,2.00,USD,0,,5400", "");
 
 
     public static @DataPoint Trip tripWithOneSegment;
     public static @DataPoint Trip tripWithTwoSegments;
+    public static @DataPoint Trip shortTripWithTwoSegments;
 
 
     static {
-        tripWithOneSegment = new Trip();
+        tripWithOneSegment = new Trip(6000);
         tripWithOneSegment.segments.add(new Trip.Segment("Route_1"));
 
-        tripWithTwoSegments = new Trip();
+        tripWithTwoSegments = new Trip(6000);
         tripWithTwoSegments.segments.add(new Trip.Segment("Route_1"));
         tripWithTwoSegments.segments.add(new Trip.Segment("Route_2"));
+
+        shortTripWithTwoSegments = new Trip(5000);
+        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_1"));
+        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_2"));
+    }
+
+    @Theory
+    public void irrelevantAlternatives(Map<String, Fare> fares, Trip trip) {
+        assumeThat("There are at least two fares.", fares.entrySet().size(), is(greaterThanOrEqualTo(2)));
+
+        // If we only use one fare, say, the most expensive one...
+        Fare mostExpensiveFare = fares.values().stream().max(Comparator.comparingDouble(f -> f.fare_attribute.price)).get();
+        HashMap<String, Fare> singleFare = new HashMap<>();
+        singleFare.put(mostExpensiveFare.fare_id, mostExpensiveFare);
+
+        // ..and that still works for our trip..
+        assumeThat("There is at least one fare for each segment.",
+                trip.segments.stream().map(segment -> Fares.calculate(singleFare, segment)).collect(Collectors.toList()),
+                everyItem(is(not(empty()))));
+        double priceWithOneOption = Fares.calculate(singleFare, trip).getAmount().doubleValue();
+
+        double priceWithAllOptions = Fares.calculate(fares, trip).getAmount().doubleValue();
+
+
+        assertThat("...it shouldn't get more expensive.", priceWithAllOptions, lessThanOrEqualTo(priceWithOneOption));
     }
 
     @Theory

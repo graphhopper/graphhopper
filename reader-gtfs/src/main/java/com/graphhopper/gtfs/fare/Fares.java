@@ -5,16 +5,32 @@ import com.conveyal.gtfs.model.FareRule;
 
 import java.math.BigDecimal;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class Fares {
     public static Amount calculate(Map<String, Fare> fares, Trip trip) {
+        return tickets(fares, trip)
+                .map(ticket -> {
+                    Fare fare = fares.get(ticket.getFareId());
+                    final BigDecimal priceOfOneTicket = BigDecimal.valueOf(fare.fare_attribute.price);
+                    return new Amount(priceOfOneTicket, fare.fare_attribute.currency_type);
+                })
+                .collect(Collectors.groupingBy(Amount::getCurrencyType, Collectors.mapping(Amount::getAmount, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))))
+                .entrySet()
+                .stream()
+                .collect(Collectors.toMap(e -> e.getKey(), e -> new Amount(e.getValue(), e.getKey())))
+                .get("USD");
+    }
+
+    private static Stream<Ticket> tickets(Map<String, Fare> fares, Trip trip) {
         return trip.segments.stream()
-                .collect(Collectors.groupingBy(segment -> calculate(fares, segment).iterator().next()))
+                .collect(Collectors.groupingBy(segment -> calculate(fares, segment).stream().min(Comparator.comparingDouble(fare -> fare.fare_attribute.price)).get()))
                 .entrySet().stream()
-                .map(e -> {
+                .flatMap(e -> {
                     Fare fare = e.getKey();
                     List<Trip.Segment> segmentsWithThisFare = e.getValue();
                     final int numberOfAllowedSegments;
@@ -27,15 +43,16 @@ public class Fares {
                     final int numberOfTicketsWeNeedForTransfers = (int) Math.ceil(Double.valueOf(segmentsWithThisFare.size()) / Double.valueOf(numberOfAllowedSegments));
                     final int numberOfTicketsWeNeedForDuration = (int) Math.ceil(Double.valueOf(trip.duration()) / Double.valueOf(fare.fare_attribute.transfer_duration));
                     final int numberOfTicketsWeNeed = Math.max(numberOfTicketsWeNeedForTransfers, numberOfTicketsWeNeedForDuration);
+                    Stream.Builder<Ticket> tickets = Stream.builder();
+                    for (int i=0;i<numberOfTicketsWeNeed; i++) {
+                        tickets.accept(new Ticket(fare.fare_id));
+                    }
+                    return tickets.build();
+                });
+    }
 
-                    final BigDecimal priceOfOneTicket = BigDecimal.valueOf(fare.fare_attribute.price);
-                    return new Amount(priceOfOneTicket.multiply(BigDecimal.valueOf(numberOfTicketsWeNeed)), fare.fare_attribute.currency_type);
-                })
-                .collect(Collectors.groupingBy(Amount::getCurrencyType, Collectors.mapping(Amount::getAmount, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))))
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(e -> e.getKey(), e -> new Amount(e.getValue(), e.getKey())))
-                .get("USD");
+    public static Collection<Ticket> calculateTickets(Map<String, Fare> fares, Trip trip) {
+        return tickets(fares, trip).collect(Collectors.toList());
     }
 
     public static Collection<Fare> calculate(Map<String, Fare> fares, Trip.Segment segment) {
