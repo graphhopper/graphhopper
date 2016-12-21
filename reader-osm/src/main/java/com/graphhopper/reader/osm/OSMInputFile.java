@@ -236,7 +236,7 @@ public class OSMInputFile implements Sink, Closeable {
     private void openPBFReader(InputStream stream) {
         hasIncomingData = true;
         if (workerThreads <= 0)
-            workerThreads = 2;
+            workerThreads = 1;
 
         PbfReader reader = new PbfReader(stream, this, workerThreads);
         pbfReaderThread = new Thread(reader, "PBF Reader");

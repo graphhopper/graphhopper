@@ -29,6 +29,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 
 import static com.graphhopper.util.Helper.nf;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -355,8 +356,10 @@ class BaseGraph implements Graph {
     void create(long initSize) {
         nodes.create(initSize);
         edges.create(initSize);
+
+        initSize = Math.min(initSize, 2000);
         wayGeometry.create(initSize);
-        nameIndex.create(1000);
+        nameIndex.create(initSize);
         extStorage.create(initSize);
         initStorage();
         // 0 stands for no separate geoRef
