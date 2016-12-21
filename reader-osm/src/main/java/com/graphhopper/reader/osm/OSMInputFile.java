@@ -54,7 +54,7 @@ public class OSMInputFile implements Sink, Closeable {
 
     public OSMInputFile(File file) throws IOException {
         bis = decode(file);
-        itemQueue = new LinkedBlockingQueue<ReaderElement>(50000);
+        itemQueue = new LinkedBlockingQueue<>(50_000);
     }
 
     public OSMInputFile open() throws XMLStreamException {
@@ -251,9 +251,10 @@ public class OSMInputFile implements Sink, Closeable {
         } catch (InterruptedException ex) {
             throw new RuntimeException(ex);
         }
+    }
 
-        // throw exception if full
-        // itemQueue.add(item);
+    public int getUnprocessedElements() {
+        return itemQueue.size();
     }
 
     @Override

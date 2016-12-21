@@ -421,8 +421,8 @@ public class OSMReaderTest {
         OSMReader reader = new OSMReader(ghStorage).
                 setEncodingManager(manager);
         ReaderRelation osmRel = new ReaderRelation(1);
-        osmRel.getMembers().add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
-        osmRel.getMembers().add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
+        osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
+        osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
 
         osmRel.setTag("route", "bicycle");
         osmRel.setTag("network", "lcn");
@@ -723,7 +723,7 @@ public class OSMReaderTest {
 
     @Test
     public void testDataDateWithinPBF() {
-        GraphHopper hopper = new GraphHopperTest(file6).importOrLoad();
+        GraphHopper hopper = new GraphHopperTest("test-osm6.pbf").importOrLoad();
         GraphHopperStorage graph = hopper.getGraphHopperStorage();
 
         assertEquals("2014-01-02T00:10:14Z", graph.getProperties().get("datareader.data.date"));
@@ -745,14 +745,15 @@ public class OSMReaderTest {
         assertEquals(56, qr.getClosestEdge().getDistance() / 1000, 1);
     }
 
+    @Test
     public void testRoutingRequestFails_issue665() {
         GraphHopper hopper = new GraphHopperOSM()
-                .setDataReaderFile("src/test/resources/com/graphhopper/reader/" + file7)
+                .setDataReaderFile(getClass().getResource(file7).getFile())
                 .setEncodingManager(new EncodingManager("car,motorcycle"))
                 .setGraphHopperLocation(dir);
         hopper.getCHFactoryDecorator().setEnabled(false);
         hopper.importOrLoad();
-        GHRequest req = new GHRequest(48.97725592769741, 8.256896138191223, 48.978875552977684, 8.25486302375793).
+        GHRequest req = new GHRequest(48.977277, 8.256896, 48.978876, 8.254884).
                 setWeighting("curvature").
                 setVehicle("motorcycle");
 

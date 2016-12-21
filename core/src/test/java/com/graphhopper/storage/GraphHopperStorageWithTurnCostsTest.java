@@ -93,7 +93,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
         graph.create(100); // 100 is the minimum size
 
         // assert that turnCostStorage can hold 104 turn cost entries at the beginning
-        assertEquals(104, turnCostStorage.getCapacity() / 16);
+        assertEquals(128, turnCostStorage.getCapacity());
 
         Random r = new Random();
 

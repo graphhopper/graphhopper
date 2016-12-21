@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -26,7 +27,7 @@ public class PbfDecoder implements Runnable {
     private final Sink sink;
     private final Lock lock;
     private final Condition dataWaitCondition;
-    private final List<PbfBlobResult> blobResults;
+    private final Queue<PbfBlobResult> blobResults;
 
     /**
      * Creates a new instance.
@@ -49,7 +50,8 @@ public class PbfDecoder implements Runnable {
         dataWaitCondition = lock.newCondition();
 
         // Create the queue of blobs being decoded.
-        blobResults = new ArrayList<>();
+        // TODO #916 blobResults = new ArrayBlockingQueue<>(1000);
+        blobResults = new LinkedList<>();
     }
 
     /**
@@ -75,7 +77,7 @@ public class PbfDecoder implements Runnable {
     private void sendResultsToSink(int targetQueueSize) {
         while (blobResults.size() > targetQueueSize) {
             // Get the next result from the queue and wait for it to complete.
-            PbfBlobResult blobResult = blobResults.remove(blobResults.size() - 1);
+            PbfBlobResult blobResult = blobResults.remove();
             while (!blobResult.isComplete()) {
                 // The thread hasn't finished processing yet so wait for an
                 // update from another thread before checking again.
