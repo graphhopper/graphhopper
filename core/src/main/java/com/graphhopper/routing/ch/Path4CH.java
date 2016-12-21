@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -27,10 +28,10 @@ import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
-import javafx.util.Pair;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Recursivly unpack shortcuts.
@@ -42,7 +43,7 @@ import java.util.List;
 public class Path4CH extends PathBidirRef {
     private final Graph routingGraph;
     private final TraversalMode traversalMode;
-    private final List<Pair<EdgeIteratorState, Boolean>> finalEdges = new ArrayList<>();
+    private final List<Map.Entry<EdgeIteratorState, Boolean>> finalEdges = new ArrayList<>();
 
     public Path4CH(Graph routingGraph, Graph baseGraph, Weighting weighting, TraversalMode traversalMode) {
         super(baseGraph, weighting);
@@ -76,7 +77,7 @@ public class Path4CH extends PathBidirRef {
 
     private void expandEdge(CHEdgeIteratorState mainEdgeState, boolean reverse, int prevEdgeId) {
         if (!mainEdgeState.isShortcut()) {
-            finalEdges.add(new Pair<EdgeIteratorState, Boolean>(mainEdgeState, reverse));
+            finalEdges.add(new MapEntry<EdgeIteratorState, Boolean>(mainEdgeState, reverse));
             addEdge(mainEdgeState.getEdge());
             return;
         }
