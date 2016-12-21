@@ -1,9 +1,7 @@
-package com.graphhopper.routing.util.spatialrule;
+package com.graphhopper.http;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.spatialrules.*;
-import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
-import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;

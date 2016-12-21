@@ -52,6 +52,9 @@ public class DefaultModule extends AbstractModule {
      */
     protected GraphHopper createGraphHopper(CmdArgs args) {
         GraphHopper tmp = new GraphHopperOSM().forServer().init(args);
+        //TODO We should set the BBox and resolution
+        //TODO, move to a more appropriate place
+        tmp.setSpatialRuleLookup(SpatialRuleLookupBuilder.build());
         tmp.importOrLoad();
         logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
                 + ", data_reader_file:" + tmp.getDataReaderFile()

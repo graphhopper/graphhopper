@@ -1,10 +1,13 @@
-package com.graphhopper.routing.util.spatialrules;
+package com.graphhopper.http;
 
 import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.json.geo.Geometry;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.json.geo.JsonFeatureCollection;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupArray;
 import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.util.shapes.BBox;
@@ -36,7 +39,7 @@ public class SpatialRuleLookupBuilder {
         SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(bounds, resolution);
         try {
             GHJson ghJson = new GHJsonBuilder().create();
-            JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(new FileReader(new File(SpatialRuleLookupBuilder.class.getResource("countries.json").getFile())), JsonFeatureCollection.class);
+            JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(new FileReader(new File(SpatialRuleLookup.class.getResource("countries.json").getFile())), JsonFeatureCollection.class);
 
             for (SpatialRule spatialRule : rules) {
                 for (JsonFeature jsonFeature : jsonFeatureCollection.getFeatures()) {

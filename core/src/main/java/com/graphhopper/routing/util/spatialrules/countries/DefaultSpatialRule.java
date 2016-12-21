@@ -22,35 +22,57 @@ import com.graphhopper.routing.util.spatialrules.AccessValue;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 
 /**
- * Defines the default rules for Austria roads
- *
- * @author Robin Boldt
+ * Default Implementation for the SpatialRule that contains the current default Values
  */
-public class AustriaSpatialRule extends DefaultSpatialRule {
-
+public class DefaultSpatialRule implements SpatialRule {
+    @Override
     public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
         String highwayTag = readerWay.getTag("highway", "");
 
-        // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
+        // We tried to estimate reasonable values: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
+        // We did not always used the highest value available, but we used a high value
         switch (highwayTag) {
+            case "motorway":
+                return 130;
             case "trunk":
+                return 130;
+            case "primary":
+                return 100;
+            case "secondary":
+                return 100;
+            case "tertiary":
+                return 100;
+            case "unclassified":
                 return 100;
             case "residential":
-                return 50;
+                return 90;
+            case "living_street":
+                return 20;
             default:
-                return super.getMaxSpeed(readerWay, transportationMode);
+                return Integer.MAX_VALUE;
         }
     }
 
+    @Override
     public AccessValue isAccessible(ReaderWay readerWay, String transportationMode) {
-        if (readerWay.hasTag("highway", "living_street"))
-            return AccessValue.EVENTUALLY_ACCESSIBLE;
+        String highwayTag = readerWay.getTag("highway", "");
 
-        return super.isAccessible(readerWay, transportationMode);
+        // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restriction
+        // We tried to find generally forbidden tags
+        switch (highwayTag) {
+            case "path":
+            case "bridleway":
+            case "cycleway":
+            case "footway":
+            case "pedestrian":
+                return AccessValue.NOT_ACCESSIBLE;
+            default:
+                return AccessValue.ACCESSIBLE;
+        }
     }
 
+    @Override
     public String getCountryIsoA3Name() {
-        return "AUT";
+        throw new UnsupportedOperationException("No country code for the DefaultSpatialRule");
     }
-
 }

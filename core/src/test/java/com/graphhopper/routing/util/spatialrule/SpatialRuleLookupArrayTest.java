@@ -83,7 +83,7 @@ public class SpatialRuleLookupArrayTest {
         livingStreet.setTag("highway", "living_street");
 
         // Berlin
-        assertEquals(AccessValue.NOT_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible(track, ""));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible(track, ""));
         assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible(primary, ""));
 
         // Paris

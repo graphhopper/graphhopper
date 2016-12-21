@@ -82,11 +82,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     private SpatialRuleLookup spatialRuleLookup = new EmptySpatialRuleLookup();
 
-    public DataFlagEncoder(SpatialRuleLookup spatialRuleLookup){
-        this();
-        this.spatialRuleLookup = spatialRuleLookup;
-    }
-
     public DataFlagEncoder() {
         // TODO include turn information
         super(5, 5, 0);
@@ -576,6 +571,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     public double getMaxPossibleSpeed() {
         return maxPossibleSpeed;
+    }
+
+    public void setSpatialRuleLookup(SpatialRuleLookup spatialRuleLookup) {
+        this.spatialRuleLookup = spatialRuleLookup;
     }
 
     @Override

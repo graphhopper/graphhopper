@@ -26,44 +26,31 @@ import com.graphhopper.routing.util.spatialrules.SpatialRule;
  *
  * @author Robin Boldt
  */
-public class GermanySpatialRule implements SpatialRule {
+public class GermanySpatialRule extends DefaultSpatialRule {
 
     public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
         String highwayTag = readerWay.getTag("highway", "");
 
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
-        switch (highwayTag){
+        switch (highwayTag) {
             case "motorway":
                 return Integer.MAX_VALUE;
             case "trunk":
                 return Integer.MAX_VALUE;
-            case "primary":
-                return 100;
-            case "secondary":
-                return 100;
-            case "tertiary":
-                return 100;
-            case "unclassified":
-                return 100;
             case "residential":
                 return 100;
             case "living_street":
                 return 4;
             default:
-                return Integer.MAX_VALUE;
+                return super.getMaxSpeed(readerWay, transportationMode);
         }
     }
 
     public AccessValue isAccessible(ReaderWay readerWay, String transportationMode) {
-        String highwayTag = readerWay.getTag("highway", "");
+        if (readerWay.hasTag("highway", "track"))
+            return AccessValue.EVENTUALLY_ACCESSIBLE;
 
-        // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restriction
-        switch (highwayTag){
-            case "track":
-                return AccessValue.EVENTUALLY_ACCESSIBLE;
-            default:
-                return AccessValue.ACCESSIBLE;
-        }
+        return super.isAccessible(readerWay, transportationMode);
     }
 
     public String getCountryIsoA3Name() {
