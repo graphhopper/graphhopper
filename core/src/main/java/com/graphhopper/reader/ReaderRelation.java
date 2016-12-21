@@ -18,6 +18,7 @@
 package com.graphhopper.reader;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,54 +28,37 @@ import java.util.List;
  * @author Nop
  */
 public class ReaderRelation extends ReaderElement {
-    protected final List<Member> members = new ArrayList<Member>(5);
+    protected List<Member> members;
 
     public ReaderRelation(long id) {
-        super(id, RELATION);
+        super(id, RELATION, 2);
     }
 
     @Override
     public String toString() {
-        return "Relation (" + getId() + ", " + members.size() + " members)";
+        return "Relation (" + getId() + ", " + ((members == null) ? 0 : members.size()) + " members)";
     }
 
     public List<Member> getMembers() {
+        if (members == null)
+            return Collections.emptyList();
+
         return members;
     }
 
     public boolean isMetaRelation() {
-        for (Member member : members) {
-            if (member.getType() == RELATION) {
-                return true;
+        if (members != null)
+            for (Member member : members) {
+                if (member.getType() == RELATION) {
+                    return true;
+                }
             }
-        }
         return false;
-    }
-
-    public boolean isMixedRelation() {
-        boolean hasRel = false;
-        boolean hasOther = false;
-
-        for (Member member : members) {
-            if (member.getType() == RELATION)
-                hasRel = true;
-            else
-                hasOther = true;
-
-            if (hasRel && hasOther)
-                return true;
-        }
-        return false;
-    }
-
-    public void removeRelations() {
-        for (int i = members.size() - 1; i >= 0; i--) {
-            if (members.get(i).getType() == RELATION)
-                members.remove(i);
-        }
     }
 
     public void add(Member member) {
+        if (members == null)
+            members = new ArrayList<>(3);
         members.add(member);
     }
 
@@ -88,12 +72,6 @@ public class ReaderRelation extends ReaderElement {
         private final int type;
         private final long ref;
         private final String role;
-
-        public Member(Member input) {
-            type = input.type;
-            ref = input.ref;
-            role = input.role;
-        }
 
         public Member(int type, long ref, String role) {
             this.type = type;

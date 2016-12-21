@@ -559,9 +559,7 @@ public class OSMReader implements DataReader {
         if (encodingManager.handleRelationTags(osmRelation, 0) == 0)
             return;
 
-        int size = osmRelation.getMembers().size();
-        for (int index = 0; index < size; index++) {
-            ReaderRelation.Member member = osmRelation.getMembers().get(index);
+        for (ReaderRelation.Member member : osmRelation.getMembers()) {
             if (member.getType() != ReaderRelation.Member.WAY)
                 continue;
 

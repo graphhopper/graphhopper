@@ -3,6 +3,7 @@ package com.graphhopper.reader.osm.pbf;
 
 import com.graphhopper.reader.ReaderElement;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -25,7 +26,7 @@ public class PbfDecoder implements Runnable {
     private final Sink sink;
     private final Lock lock;
     private final Condition dataWaitCondition;
-    private final Queue<PbfBlobResult> blobResults;
+    private final List<PbfBlobResult> blobResults;
 
     /**
      * Creates a new instance.
@@ -48,7 +49,7 @@ public class PbfDecoder implements Runnable {
         dataWaitCondition = lock.newCondition();
 
         // Create the queue of blobs being decoded.
-        blobResults = new LinkedList<PbfBlobResult>();
+        blobResults = new ArrayList<>();
     }
 
     /**
@@ -74,7 +75,7 @@ public class PbfDecoder implements Runnable {
     private void sendResultsToSink(int targetQueueSize) {
         while (blobResults.size() > targetQueueSize) {
             // Get the next result from the queue and wait for it to complete.
-            PbfBlobResult blobResult = blobResults.remove();
+            PbfBlobResult blobResult = blobResults.remove(blobResults.size() - 1);
             while (!blobResult.isComplete()) {
                 // The thread hasn't finished processing yet so wait for an
                 // update from another thread before checking again.
