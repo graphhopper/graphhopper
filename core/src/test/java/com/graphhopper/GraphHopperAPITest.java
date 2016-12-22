@@ -17,13 +17,22 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.change.ChangeGraphHelper;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
+
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.*;
 
@@ -33,23 +42,30 @@ import static org.junit.Assert.*;
 public class GraphHopperAPITest {
     final EncodingManager encodingManager = new EncodingManager("car");
 
-    @Test
-    public void testLoad() {
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+    void initGraph(GraphHopperStorage graph) {
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 42, 10);
         na.setNode(1, 42.1, 10.1);
         na.setNode(2, 42.1, 10.2);
         na.setNode(3, 42, 10.4);
-        na.setNode(4, 41.9, 10.2);
 
         graph.edge(0, 1, 10, true);
-        graph.edge(1, 2, 10, false);
         graph.edge(2, 3, 10, true);
+    }
+
+    @Test
+    public void testLoad() {
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        initGraph(graph);
+        // do further changes:
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(4, 41.9, 10.2);
+
+        graph.edge(1, 2, 10, false);
         graph.edge(0, 4, 40, true);
         graph.edge(4, 3, 40, true);
 
-        GraphHopper instance = new GraphHopperOSM().
+        GraphHopper instance = new GraphHopper().
                 setStoreOnFlush(false).
                 setEncodingManager(encodingManager).setCHEnabled(false).
                 loadGraph(graph);
@@ -70,14 +86,7 @@ public class GraphHopperAPITest {
     @Test
     public void testDisconnected179() {
         GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
-        NodeAccess na = graph.getNodeAccess();
-        na.setNode(0, 42, 10);
-        na.setNode(1, 42.1, 10.1);
-        na.setNode(2, 42.1, 10.2);
-        na.setNode(3, 42, 10.4);
-
-        graph.edge(0, 1, 10, true);
-        graph.edge(2, 3, 10, true);
+        initGraph(graph);
 
         GraphHopper instance = new GraphHopper().
                 setStoreOnFlush(false).
@@ -114,5 +123,70 @@ public class GraphHopperAPITest {
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Do a successful call to load or importOrLoad before routing"));
         }
+    }
+
+    @Test
+    public void testConcurrentGraphChange() throws InterruptedException {
+        final GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        initGraph(graph);
+        graph.edge(1, 2, 10, true);
+
+        final AtomicInteger checkPointCounter = new AtomicInteger(0);
+        final GraphHopper graphHopper = new GraphHopper() {
+            @Override
+            protected ChangeGraphHelper createChangeGraphHelper(Graph graph, LocationIndex locationIndex) {
+                return new ChangeGraphHelper(graph, locationIndex) {
+                    @Override
+                    public long applyChanges(EncodingManager em, Collection<JsonFeature> features) {
+                        // force sleep inside the lock
+                        try {
+                            Thread.sleep(1000);
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                        checkPointCounter.incrementAndGet();
+                        return super.applyChanges(em, features);
+                    }
+                };
+            }
+        }.setStoreOnFlush(false).setEncodingManager(encodingManager).setCHEnabled(false).
+                loadGraph(graph);
+
+        GHResponse rsp = graphHopper.route(new GHRequest(42, 10.4, 42, 10));
+        assertFalse(rsp.toString(), rsp.hasErrors());
+        assertEquals(1800, rsp.getBest().getTime());
+
+        final List<JsonFeature> list = new ArrayList<>();
+        Map<String, Object> properties = new HashMap<>();
+        properties.put("speed", 5);
+
+        list.add(new JsonFeature("1", "bbox",
+                new BBox(10.399, 10.4, 42.0, 42.001),
+                null, properties));
+
+        Thread thread1 = new Thread() {
+            @Override
+            public void run() {
+                graphHopper.changeGraph(list);
+                checkPointCounter.incrementAndGet();
+            }
+        };
+        thread1.start();
+
+        Thread thread2 = new Thread() {
+            @Override
+            public void run() {
+                assertEquals(0, checkPointCounter.get());
+                GHResponse rsp = graphHopper.route(new GHRequest(42, 10.4, 42, 10));
+                assertFalse(rsp.toString(), rsp.hasErrors());
+                assertEquals(8400, rsp.getBest().getTime());
+                checkPointCounter.incrementAndGet();
+            }
+        };
+        thread2.start();
+
+        thread1.join();
+        thread2.join();
+        assertEquals(3, checkPointCounter.get());
     }
 }
