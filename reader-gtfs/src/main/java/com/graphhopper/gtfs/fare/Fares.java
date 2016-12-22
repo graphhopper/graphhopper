@@ -41,7 +41,15 @@ public class Fares {
     }
 
     private static boolean applies(FareRule rule, Trip.Segment segment) {
-        return rule.route_id == null || rule.route_id.equals(segment.getRoute());
+        if (rule.route_id != null && !rule.route_id.equals(segment.getRoute())) {
+            return false;
+        } else if (rule.origin_id != null && !rule.origin_id.equals(segment.getOriginId())) {
+            return false;
+        } else if (rule.destination_id != null && !rule.destination_id.equals(segment.getDestinationId())) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
 }

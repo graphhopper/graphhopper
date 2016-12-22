@@ -33,7 +33,7 @@ public class FareTest {
     public static @DataPoint Map<String, Fare> oneDollarTimeLimitedTransfers = parseFares("only_fare,1.00,USD,0,,5400\n", "");
     public static @DataPoint Map<String, Fare> regularAndExpress = parseFares("local_fare,1.75,USD,0,0\n"+"express_fare,5.00,USD,0,0\n", "local_fare,Route_1\nexpress_fare,Route_2\nexpress_fare,Route3\n");
     public static @DataPoint Map<String, Fare> withTransfersOrWithout = parseFares("simple_fare,1.75,USD,0,0\n"+"plustransfer_fare,2.00,USD,0,,5400", "");
-
+    public static @DataPoint Map<String, Fare> stationPairs = parseFares("!S1_to_S2,1.75,USD,0\n!S1_to_S3,3.25,USD,0\n!S1_to_S4,4.55,USD,0\n!S4_to_S1,5.65,USD,0\n", "!S1_to_S2,,S1,S2\n!S1_to_S3,,S1,S3\n!S1_to_S4,,S1,S4\n!S4_to_S1,,S4,S1\n");
 
     public static @DataPoint Trip tripWithOneSegment;
     public static @DataPoint Trip tripWithTwoSegments;
@@ -42,15 +42,15 @@ public class FareTest {
 
     static {
         tripWithOneSegment = new Trip();
-        tripWithOneSegment.segments.add(new Trip.Segment("Route_1", 0));
+        tripWithOneSegment.segments.add(new Trip.Segment("Route_1", 0, "S1", "S2"));
 
         tripWithTwoSegments = new Trip();
-        tripWithTwoSegments.segments.add(new Trip.Segment("Route_1", 0));
-        tripWithTwoSegments.segments.add(new Trip.Segment("Route_2", 6000));
+        tripWithTwoSegments.segments.add(new Trip.Segment("Route_1", 0, "S1", "S4"));
+        tripWithTwoSegments.segments.add(new Trip.Segment("Route_2", 6000, "S4", "S1"));
 
         shortTripWithTwoSegments = new Trip();
-        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_1",0));
-        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_2",5000));
+        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_1",0, "S1", "S4"));
+        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_2",5000, "S4", "S1"));
     }
 
     @Theory
@@ -138,7 +138,7 @@ public class FareTest {
         new FareRule.Loader(feed, fares) {
             void load(String input){
                 reader = new CsvReader(new StringReader(input));
-                reader.setHeaders(new String[]{"fare_id","route_id"});
+                reader.setHeaders(new String[]{"fare_id","route_id","origin_id","destination_id"});
                 try {
                     while (reader.readRecord()) {
                         loadOneRow();
