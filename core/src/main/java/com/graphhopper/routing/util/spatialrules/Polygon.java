@@ -154,4 +154,20 @@ public class Polygon {
         // If they are not collinear, they must intersect in exactly one point.
         return true;
     }
+
+    public double getMinLat() {
+        return minLat;
+    }
+
+    public double getMinLon() {
+        return minLon;
+    }
+
+    public double getMaxLat() {
+        return maxLat;
+    }
+
+    public double getMaxLon() {
+        return maxLon;
+    }
 }

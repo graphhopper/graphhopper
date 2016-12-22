@@ -37,6 +37,8 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
 
     // resolution in full decimal degrees
     private final double resolution;
+    // When filling a tile with a rule we do a 5 point check, diff is the distance from the center we place a check point
+    private final double checkDiff;
     private final BBox bounds;
     private final boolean exact;
     private final int EMPTY_RULE_INDEX = 0;
@@ -49,11 +51,14 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
      * @param resolution of the array in decimal degrees, see: https://en.wikipedia.org/wiki/Decimal_degrees
      *                   The downside of using decimal degrees is that this is not fixed to a certain m range as
      * @param exact      if exact it will also perform a polygon contains for border tiles, might fail for small holes
-     *                   in the Polygon that are not represented in the tile array
+     *                   in the Polygon that are not represented in the tile array. TODO currently rules get overwritten
+     *                   therefore exact might produce incorrect results when two polyongs of different rules are close
+     *                   to each other.
      */
     public SpatialRuleLookupArray(BBox bounds, double resolution, boolean exact) {
         this.bounds = bounds;
         this.resolution = resolution;
+        this.checkDiff = (resolution/2) - (resolution/10);
         this.exact = exact;
 
         this.lookupArray = new byte[getNumberOfXGrids()][getNumberOfYGrids()];
@@ -89,11 +94,11 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
         SpatialRule rule = rules.get(ruleIndex);
         if (!exact)
             return rule;
-        if(!isBorderTile(xIndex,yIndex, ruleIndex))
+        if (!isBorderTile(xIndex, yIndex, ruleIndex))
             return rule;
 
-        for (Polygon p: rule.getBorders()) {
-            if(p.contains(lat,lon)){
+        for (Polygon p : rule.getBorders()) {
+            if (p.contains(lat, lon)) {
                 return rule;
             }
         }
@@ -101,11 +106,11 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
         return EMPTY_RULE;
     }
 
-    protected int getRuleIndex(int xIndex, int yIndex){
-        if(xIndex < 0 || xIndex > lookupArray.length){
+    protected int getRuleIndex(int xIndex, int yIndex) {
+        if (xIndex < 0 || xIndex > lookupArray.length) {
             return EMPTY_RULE_INDEX;
         }
-        if(yIndex < 0 || yIndex > lookupArray[0].length){
+        if (yIndex < 0 || yIndex > lookupArray[0].length) {
             return EMPTY_RULE_INDEX;
         }
         return (int) lookupArray[xIndex][yIndex];
@@ -114,11 +119,11 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
     /**
      * Might fail for small holes that do not occur in the array
      */
-    protected boolean isBorderTile(int xIndex, int yIndex, int ruleIndex){
+    protected boolean isBorderTile(int xIndex, int yIndex, int ruleIndex) {
         for (int i = -1; i < 2; i++) {
             for (int j = -1; j < 2; j++) {
-                if(i != xIndex && j != yIndex)
-                    if(ruleIndex != getRuleIndex(i,j))
+                if (i != xIndex && j != yIndex)
+                    if (ruleIndex != getRuleIndex(i, j))
                         return true;
             }
         }
@@ -147,14 +152,22 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
             throw new IllegalStateException("Cannot fit more than 255 rules");
         }
 
-        // TODO could be done more efficiently by using the bounds of the polygon
-        for (int i = 0; i < this.lookupArray.length; i++) {
-            for (int j = 0; j < this.lookupArray[0].length; j++) {
-                for (Polygon polygon : rule.getBorders()) {
-                    // TODO, check more points here? e.g. 5 points
-                    if (polygon.contains(getCoordinatesForIndex(i, j))) {
+        for (Polygon polygon : rule.getBorders()) {
+            for (int i = getXIndexForLon(polygon.getMinLon()); i < getXIndexForLon(polygon.getMaxLon()) + 1; i++) {
+                for (int j = getYIndexForLat(polygon.getMinLat()); j < getYIndexForLat(polygon.getMaxLat()) + 1; j++) {
+                    GHPoint center = getCoordinatesForIndex(i, j);
+                    if (polygon.contains(center)) {
+                        lookupArray[i][j] = (byte) ruleIndex;
+                    } else if (polygon.contains(center.getLat() - checkDiff, center.getLon() - checkDiff)) {
+                        lookupArray[i][j] = (byte) ruleIndex;
+                    } else if (polygon.contains(center.getLat() - checkDiff, center.getLon() + checkDiff)) {
+                        lookupArray[i][j] = (byte) ruleIndex;
+                    } else if (polygon.contains(center.getLat() + checkDiff, center.getLon() - checkDiff)) {
+                        lookupArray[i][j] = (byte) ruleIndex;
+                    } else if (polygon.contains(center.getLat() + checkDiff, center.getLon() + checkDiff)) {
                         lookupArray[i][j] = (byte) ruleIndex;
                     }
+
                 }
             }
         }
