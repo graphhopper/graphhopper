@@ -39,6 +39,7 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
     private final double resolution;
     private final BBox bounds;
     private final boolean exact;
+    private final int EMPTY_RULE_INDEX = 0;
 
     private final byte[][] lookupArray;
     private final List<SpatialRule> rules = new ArrayList<>();
@@ -83,13 +84,12 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
         }
         int xIndex = getXIndexForLon(lon);
         int yIndex = getYIndexForLat(lat);
-        int ruleIndex = (int) lookupArray[xIndex][yIndex];
+        int ruleIndex = getRuleIndex(xIndex, yIndex);
         SpatialRule rule = rules.get(ruleIndex);
         if (!exact)
             return rule;
-
-        // TODO Check if on the border
-        // TODO will fail for small holes
+        if(!isBorderTile(xIndex,yIndex, ruleIndex))
+            return rule;
 
         for (Polygon p: rule.getBorders()) {
             if(p.contains(lat,lon)){
@@ -98,6 +98,30 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
         }
 
         return EMPTY_RULE;
+    }
+
+    protected int getRuleIndex(int xIndex, int yIndex){
+        if(xIndex < 0 || xIndex > lookupArray.length){
+            return EMPTY_RULE_INDEX;
+        }
+        if(yIndex < 0 || yIndex > lookupArray[0].length){
+            return EMPTY_RULE_INDEX;
+        }
+        return (int) lookupArray[xIndex][yIndex];
+    }
+
+    /**
+     * Might fail for small holes that do not occur in the array
+     */
+    protected boolean isBorderTile(int xIndex, int yIndex, int ruleIndex){
+        for (int i = -1; i < 2; i++) {
+            for (int j = -1; j < 2; j++) {
+                if(i != xIndex && j != yIndex)
+                    if(ruleIndex != getRuleIndex(i,j))
+                        return true;
+            }
+        }
+        return false;
     }
 
     @Override
