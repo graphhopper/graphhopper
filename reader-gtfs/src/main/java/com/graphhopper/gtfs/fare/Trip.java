@@ -2,6 +2,7 @@ package com.graphhopper.gtfs.fare;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class Trip {
 
@@ -11,37 +12,36 @@ public class Trip {
         private long startTime;
         private String originId;
         private String destinationId;
+        private Set<String> zones;
 
-        public Segment(String route, long startTime, String originId, String destinationId) {
+        Segment(String route, long startTime, String originId, String destinationId, Set<String> zones) {
             this.route = route;
             this.startTime = startTime;
             this.originId = originId;
             this.destinationId = destinationId;
+            this.zones = zones;
         }
 
-        public String getRoute() {
+        String getRoute() {
             return route;
         }
 
-        public long getStartTime() {
+        long getStartTime() {
             return startTime;
         }
 
-        public String getOriginId() {
+        String getOriginId() {
             return originId;
         }
 
-        public void setOriginId(String originId) {
-            this.originId = originId;
-        }
-
-        public String getDestinationId() {
+        String getDestinationId() {
             return destinationId;
         }
 
-        public void setDestinationId(String destinationId) {
-            this.destinationId = destinationId;
+        Set<String> getZones() {
+            return zones;
         }
+
     }
 
     final List<Segment> segments = new ArrayList<>();

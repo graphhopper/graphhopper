@@ -14,9 +14,7 @@ import org.junit.runner.RunWith;
 import java.io.IOException;
 import java.io.StringReader;
 import java.math.BigDecimal;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -28,12 +26,16 @@ import static org.junit.Assume.assumeThat;
 @RunWith(Theories.class)
 public class FareTest {
 
+    // See https://code.google.com/archive/p/googletransitdatafeed/wikis/FareExamples.wiki
+
     public static @DataPoint Map<String, Fare> oneDollarUnlimitedTransfers = parseFares("only_fare,1.00,USD,0\n", "");
     public static @DataPoint Map<String, Fare> oneDollarNoTransfers = parseFares("only_fare,1.00,USD,0,0\n", "");
     public static @DataPoint Map<String, Fare> oneDollarTimeLimitedTransfers = parseFares("only_fare,1.00,USD,0,,5400\n", "");
     public static @DataPoint Map<String, Fare> regularAndExpress = parseFares("local_fare,1.75,USD,0,0\n"+"express_fare,5.00,USD,0,0\n", "local_fare,Route_1\nexpress_fare,Route_2\nexpress_fare,Route3\n");
     public static @DataPoint Map<String, Fare> withTransfersOrWithout = parseFares("simple_fare,1.75,USD,0,0\n"+"plustransfer_fare,2.00,USD,0,,5400", "");
     public static @DataPoint Map<String, Fare> stationPairs = parseFares("!S1_to_S2,1.75,USD,0\n!S1_to_S3,3.25,USD,0\n!S1_to_S4,4.55,USD,0\n!S4_to_S1,5.65,USD,0\n", "!S1_to_S2,,S1,S2\n!S1_to_S3,,S1,S3\n!S1_to_S4,,S1,S4\n!S4_to_S1,,S4,S1\n");
+    public static @DataPoint Map<String, Fare> zones = parseFares("F1,4.15,USD,0\nF2,2.20,USD,0\nF3,2.20,USD,0\nF4,2.95,USD,0\nF5,1.25,USD,0\nF6,1.95,USD,0\nF7,1.95,USD,0\n", "F1,,,,1\nF1,,,,2\nF1,,,,3\nF2,,,,1\nF2,,,,2\nF3,,,,1\nF3,,,,3\nF4,,,,2\nF4,,,,3\nF5,,,,1\nF6,,,,2\nF7,,,,3\n");
+
 
     public static @DataPoint Trip tripWithOneSegment;
     public static @DataPoint Trip tripWithTwoSegments;
@@ -42,15 +44,15 @@ public class FareTest {
 
     static {
         tripWithOneSegment = new Trip();
-        tripWithOneSegment.segments.add(new Trip.Segment("Route_1", 0, "S1", "S2"));
+        tripWithOneSegment.segments.add(new Trip.Segment("Route_1", 0, "S1", "S2", new HashSet<>(Arrays.asList("1","2","3"))));
 
         tripWithTwoSegments = new Trip();
-        tripWithTwoSegments.segments.add(new Trip.Segment("Route_1", 0, "S1", "S4"));
-        tripWithTwoSegments.segments.add(new Trip.Segment("Route_2", 6000, "S4", "S1"));
+        tripWithTwoSegments.segments.add(new Trip.Segment("Route_1", 0, "S1", "S4", new HashSet<>(Arrays.asList("1"))));
+        tripWithTwoSegments.segments.add(new Trip.Segment("Route_2", 6000, "S4", "S1", new HashSet<>(Arrays.asList("1"))));
 
         shortTripWithTwoSegments = new Trip();
-        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_1",0, "S1", "S4"));
-        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_2",5000, "S4", "S1"));
+        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_1",0, "S1", "S4", new HashSet<>(Arrays.asList("2", "3"))));
+        shortTripWithTwoSegments.segments.add(new Trip.Segment("Route_2",5000, "S4", "S1", new HashSet<>(Arrays.asList("2", "3"))));
     }
 
     @Theory
@@ -71,7 +73,7 @@ public class FareTest {
         double priceWithAllOptions = Fares.calculate(fares, trip).getAmount().doubleValue();
 
 
-        assertThat("...it shouldn't get more expensive.", priceWithAllOptions, lessThanOrEqualTo(priceWithOneOption));
+        assertThat("...it shouldn't get more expensive when we put the cheaper options back.", priceWithAllOptions, lessThanOrEqualTo(priceWithOneOption));
     }
 
     @Theory
@@ -138,7 +140,7 @@ public class FareTest {
         new FareRule.Loader(feed, fares) {
             void load(String input){
                 reader = new CsvReader(new StringReader(input));
-                reader.setHeaders(new String[]{"fare_id","route_id","origin_id","destination_id"});
+                reader.setHeaders(new String[]{"fare_id","route_id","origin_id","destination_id","contains_id"});
                 try {
                     while (reader.readRecord()) {
                         loadOneRow();

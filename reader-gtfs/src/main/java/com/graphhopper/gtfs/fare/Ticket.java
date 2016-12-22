@@ -6,7 +6,7 @@ public class Ticket {
 
     private Fare fare;
 
-    public Ticket(Fare fare) {
+    Ticket(Fare fare) {
         this.fare = fare;
     }
 

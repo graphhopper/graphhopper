@@ -8,17 +8,20 @@ import org.optaplanner.core.api.domain.variable.PlanningVariable;
 import java.util.Collection;
 
 @PlanningEntity
-public class FareAssignment {
+class FareAssignment {
 
     Trip.Segment segment;
     private Collection<Fare> possibleFares;
 
-    public FareAssignment() {
+    FareAssignment() {}
 
+    FareAssignment(Trip.Segment segment, Collection<Fare> possibleFares) {
+        this.segment = segment;
+        this.possibleFares = possibleFares;
     }
 
     @PlanningVariable(valueRangeProviderRefs = "possibleFares")
-    public Fare getFare() {
+    Fare getFare() {
         return fare;
     }
 
@@ -29,12 +32,8 @@ public class FareAssignment {
     Fare fare;
 
     @ValueRangeProvider(id = "possibleFares")
-    public Collection<Fare> getPossibleFares() {
+    Collection<Fare> getPossibleFares() {
         return possibleFares;
     }
 
-    public FareAssignment(Trip.Segment segment, Collection<Fare> possibleFares) {
-        this.segment = segment;
-        this.possibleFares = possibleFares;
-    }
 }

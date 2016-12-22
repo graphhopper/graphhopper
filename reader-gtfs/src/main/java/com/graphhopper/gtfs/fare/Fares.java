@@ -5,10 +5,14 @@ import com.conveyal.gtfs.model.FareRule;
 import org.optaplanner.core.api.solver.SolverFactory;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static java.util.stream.Collectors.toList;
 
 public class Fares {
     public static Amount calculate(Map<String, Fare> fares, Trip trip) {
@@ -33,23 +37,19 @@ public class Fares {
     }
 
     public static Collection<Fare> calculate(Map<String, Fare> fares, Trip.Segment segment) {
-        return fares.values().stream().filter(fare -> applies(fare, segment)).collect(Collectors.toList());
+        return fares.values().stream().filter(fare -> applies(fare, segment)).collect(toList());
     }
 
     private static boolean applies(Fare fare, Trip.Segment segment) {
-        return fare.fare_rules.isEmpty() || fare.fare_rules.stream().anyMatch(rule -> applies(rule, segment));
+        return fare.fare_rules.isEmpty() || sanitizeFareRules(fare.fare_rules).stream().anyMatch(rule -> rule.appliesTo(segment));
     }
 
-    private static boolean applies(FareRule rule, Trip.Segment segment) {
-        if (rule.route_id != null && !rule.route_id.equals(segment.getRoute())) {
-            return false;
-        } else if (rule.origin_id != null && !rule.origin_id.equals(segment.getOriginId())) {
-            return false;
-        } else if (rule.destination_id != null && !rule.destination_id.equals(segment.getDestinationId())) {
-            return false;
-        } else {
-            return true;
-        }
+    private static List<SanitizedFareRule> sanitizeFareRules(List<FareRule> gtfsFareRules) {
+        ArrayList<SanitizedFareRule> result = new ArrayList<>();
+        result.addAll(gtfsFareRules.stream().filter(rule -> rule.route_id != null).map(rule -> new RouteRule(rule.route_id)).collect(toList()));
+        result.addAll(gtfsFareRules.stream().filter(rule -> rule.origin_id != null && rule.destination_id != null).map(rule -> new OriginDestinationRule(rule.origin_id, rule.destination_id)).collect(toList()));
+        result.add(gtfsFareRules.stream().filter(rule -> rule.contains_id != null).map(rule -> rule.contains_id).collect(Collectors.collectingAndThen(toList(), ZoneRule::new)));
+        return result;
     }
 
 }

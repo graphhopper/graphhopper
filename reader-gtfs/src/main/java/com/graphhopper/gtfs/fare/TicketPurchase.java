@@ -15,11 +15,9 @@ public class TicketPurchase implements Solution {
     private Map<String, Fare> fares;
     private ArrayList<FareAssignment> fareAssignments = new ArrayList<>();
 
-    public TicketPurchase() {
+    TicketPurchase() {}
 
-    }
-
-    public TicketPurchase(Map<String, Fare> fares, Trip trip) {
+    TicketPurchase(Map<String, Fare> fares, Trip trip) {
         this.trip = trip;
         this.fares = fares;
         for (Trip.Segment segment : trip.segments) {
@@ -43,12 +41,12 @@ public class TicketPurchase implements Solution {
     }
 
     @PlanningEntityCollectionProperty
-    public List<FareAssignment> getFareAssignments() {
+    List<FareAssignment> getFareAssignments() {
         return fareAssignments;
     }
 
 
-    public List<Ticket> getTickets() {
+    List<Ticket> getTickets() {
         Map<String, TicketPurchaseScoreCalculator.TempTicket> currentTickets = new HashMap<>();
         for (FareAssignment fareAssignment : getFareAssignments()) {
             if (fareAssignment.fare != null) {
@@ -77,7 +75,7 @@ public class TicketPurchase implements Solution {
         return tickets;
     }
 
-    public int getNSchwarzfahrTrips() {
+    int getNSchwarzfahrTrips() {
         return (int) fareAssignments.stream().filter(assignment -> assignment.fare == null).count();
     }
 }
