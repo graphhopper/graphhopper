@@ -1,12 +1,12 @@
 package com.graphhopper.suite;
 
-import static org.junit.Assert.assertEquals;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import org.junit.Test;
+import static org.junit.Assert.assertEquals;
 
 public class TripQueryCsvReaderTest {
 

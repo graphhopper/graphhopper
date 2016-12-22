@@ -2,6 +2,9 @@ package com.graphhopper;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.stats.FeedStats;
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
+import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.routing.util.EncodingManager;

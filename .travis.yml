@@ -48,7 +48,7 @@ before_install:
 install: true
 
 script:
-  - mvn clean test verify -B
+  - mvn -pl '!pt-integration-tests' clean test verify -B
   #- ./core/files/travis-build.sh
 
 after_success:

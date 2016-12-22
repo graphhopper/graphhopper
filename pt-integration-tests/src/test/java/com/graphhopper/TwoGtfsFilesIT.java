@@ -1,5 +1,7 @@
 package com.graphhopper;
 
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.routing.util.EncodingManager;

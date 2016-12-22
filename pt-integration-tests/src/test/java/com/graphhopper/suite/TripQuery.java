@@ -1,11 +1,11 @@
 package com.graphhopper.suite;
 
-import java.time.LocalDateTime;
-
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+import java.time.LocalDateTime;
 
 @JsonPropertyOrder({ "query_id", "query_date_time", "query_from_id", "query_from_name",
                 "query_from_lon", "query_from_lat", "query_to_id", "query_to_name", "query_to_lon",

@@ -76,6 +76,7 @@
         <module>reader-gtfs</module>
         <module>reader-overlay-data</module>
         <module>tools</module>
+        <module>pt-integration-tests</module>
         <module>web</module>
     </modules>
     <prerequisites>
