@@ -48,7 +48,8 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
      * @param bounds     the outer bounds for the Lookup
      * @param resolution of the array in decimal degrees, see: https://en.wikipedia.org/wiki/Decimal_degrees
      *                   The downside of using decimal degrees is that this is not fixed to a certain m range as
-     * @param exact      if exact it will also perform a polygon contains
+     * @param exact      if exact it will also perform a polygon contains for border tiles, might fail for small holes
+     *                   in the Polygon that are not represented in the tile array
      */
     public SpatialRuleLookupArray(BBox bounds, double resolution, boolean exact) {
         this.bounds = bounds;
