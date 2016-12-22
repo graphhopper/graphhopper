@@ -7,23 +7,30 @@ import com.graphhopper.util.EdgeIteratorState;
 
 class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWeighting {
 
-    final boolean reverse;
+    private final boolean reverse;
+    private final int transferFactor;
 
     PtTravelTimeWeighting(FlagEncoder encoder) {
 		super(encoder);
 		this.reverse = false;
+        this.transferFactor = 1;
     }
 
-    private PtTravelTimeWeighting(FlagEncoder encoder, boolean reverse) {
+    private PtTravelTimeWeighting(FlagEncoder encoder, boolean reverse, int transferFactor) {
         super(encoder);
         this.reverse = reverse;
+        this.transferFactor = transferFactor;
     }
 
     PtTravelTimeWeighting reverse() {
-        return new PtTravelTimeWeighting(flagEncoder, !reverse);
+        return new PtTravelTimeWeighting(flagEncoder, !reverse, transferFactor);
     }
 
-	@Override
+    PtTravelTimeWeighting ignoringNumberOfTransfers() {
+        return new PtTravelTimeWeighting(flagEncoder, reverse, 0);
+    }
+
+    @Override
 	public double getMinWeight(double distance) {
 		return 0.0;
 	}
@@ -71,7 +78,7 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
 	@Override
 	public int calcNTransfers(EdgeIteratorState edgeState) {
 		if (((PtFlagEncoder) getFlagEncoder()).getEdgeType(edgeState.getFlags()) == GtfsStorage.EdgeType.BOARD) {
-			return 1;
+			return transferFactor;
 		} else {
 			return 0;
 		}

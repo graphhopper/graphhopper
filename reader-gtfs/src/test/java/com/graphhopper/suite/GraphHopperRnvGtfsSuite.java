@@ -5,6 +5,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.StopWatch;
 import org.jfree.chart.ChartUtilities;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.LogarithmicAxis;
@@ -12,9 +13,11 @@ import org.jfree.chart.axis.NumberAxis;
 import org.jfree.chart.plot.PlotOrientation;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.title.TextTitle;
 import org.jfree.data.xy.XYDataItem;
 import org.jfree.data.xy.XYSeries;
 import org.jfree.data.xy.XYSeriesCollection;
+import org.jfree.ui.RectangleEdge;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -55,10 +58,12 @@ public class GraphHopperRnvGtfsSuite {
         final File tripQueriesFile = new File("files/rnv-trips-least-duration-01.csv");
         final List<TripQuery> tripQueries = reader.read(tripQueriesFile);
         XYSeries travelTimes = new XYSeries("Travel times", false, true);
+        StopWatch stopWatch = new StopWatch().start();
         for (TripQuery tripQuery : tripQueries) {
             long earliestDepartureTime = Duration.between(GTFS_START_DATE, tripQuery.getDateTime()).getSeconds();
             GHRequest ghRequest = new GHRequest(tripQuery.getFromLat(), tripQuery.getFromLon(),
                             tripQuery.getToLat(), tripQuery.getToLon());
+            ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, true);
             ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT,
                     earliestDepartureTime);
             GHResponse route = graphHopper.route(ghRequest);
@@ -78,13 +83,15 @@ public class GraphHopperRnvGtfsSuite {
                 Assert.fail("No route found.");
             }
         }
+        stopWatch.stop();
+
         XYSeriesCollection dataset = new XYSeriesCollection();
         dataset.addSeries(travelTimes);
-        JFreeChart scatterPlot = createChart(dataset);
+        JFreeChart scatterPlot = createChart(dataset, tripQueries.size(), stopWatch.getTime());
         ChartUtilities.saveChartAsPNG(new File(GRAPH_LOC + "/traveltimes.png"), scatterPlot, 600, 600);
     }
 
-    private JFreeChart createChart(XYSeriesCollection dataset) {
+    private JFreeChart createChart(XYSeriesCollection dataset, int nQueries, long time) {
         final double lower = Math.min(dataset.getRangeLowerBound(false), dataset.getDomainLowerBound(false));
         final double upper = Math.max(dataset.getRangeUpperBound(false), dataset.getDomainUpperBound(false));
         NumberAxis xAxis = new LogarithmicAxis("bahn.de");
@@ -103,7 +110,11 @@ public class GraphHopperRnvGtfsSuite {
         };
         XYPlot plot = new XYPlot(dataset, xAxis, yAxis, renderer);
         plot.setOrientation(PlotOrientation.VERTICAL);
-        return new JFreeChart("Travel time [s]", JFreeChart.DEFAULT_TITLE_FONT, plot, false);
+        JFreeChart chart = new JFreeChart("Travel time [s]", JFreeChart.DEFAULT_TITLE_FONT, plot, false);
+        TextTitle legendText = new TextTitle(String.format("n: %d\truntime: %ds", nQueries, time /1000));
+        legendText.setPosition(RectangleEdge.BOTTOM);
+        chart.addSubtitle(legendText);
+        return chart;
     }
 
     private static class MyXYDataItem extends XYDataItem {

@@ -28,6 +28,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliestDepartureTime";
     public static final String RANGE_QUERY_END_TIME = "rangeQueryEndTime";
     public static final String ARRIVE_BY = "arriveBy";
+    public static final String IGNORE_TRANSFERS = "ignoreTransfers";
 
     private final TranslationMap translationMap;
     private final EncodingManager encodingManager;
@@ -152,6 +153,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         final long initialTime = requestedTimeOfDay + requestedDay * (24 * 60 * 60);
         final long rangeQueryEndTime = request.getHints().getLong(RANGE_QUERY_END_TIME, initialTime);
         final boolean arriveBy = request.getHints().getBool(ARRIVE_BY, false);
+        final boolean ignoreTransfers = request.getHints().getBool(IGNORE_TRANSFERS, false);
 
         GHResponse response = new GHResponse();
 
@@ -217,11 +219,12 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         stopWatch = new StopWatch().start();
 
-        PtTravelTimeWeighting weighting;
+        PtTravelTimeWeighting weighting = new PtTravelTimeWeighting(encoder);
         if (arriveBy) {
-            weighting = new PtTravelTimeWeighting(encoder).reverse();
-        } else {
-            weighting = new PtTravelTimeWeighting(encoder);
+            weighting = weighting.reverse();
+        }
+        if (ignoreTransfers) {
+            weighting = weighting.ignoringNumberOfTransfers();
         }
 
         GraphExplorer explorer;
