@@ -158,6 +158,9 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
                     GHPoint center = getCoordinatesForIndex(i, j);
                     if (polygon.contains(center)) {
                         lookupArray[i][j] = (byte) ruleIndex;
+                        // TODO Maybe only do this if we set exact = true? Or add another paramter
+                        // Downside is that other polygons might be too agressive and overwrite others that might have
+                        // a bigger part of the tiles
                     } else if (polygon.contains(center.getLat() - checkDiff, center.getLon() - checkDiff)) {
                         lookupArray[i][j] = (byte) ruleIndex;
                     } else if (polygon.contains(center.getLat() - checkDiff, center.getLon() + checkDiff)) {
