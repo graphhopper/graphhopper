@@ -62,4 +62,26 @@ public class MapMatching2Test {
         assertEquals(mr.getGpxEntriesLength(), mr.getMatchLength(), 2.5);
         assertEquals(28790, mr.getMatchMillis(), 50);
     }
+    
+    @Test
+    public void testIssue70() {
+        CarFlagEncoder encoder = new CarFlagEncoder();
+        TestGraphHopper hopper = new TestGraphHopper();
+        hopper.setDataReaderFile("../map-data/issue-70.osm.gz");
+        hopper.setGraphHopperLocation("../target/mapmatchingtest-70");
+        hopper.setEncodingManager(new EncodingManager(encoder));
+        hopper.importOrLoad();
+
+        AlgorithmOptions opts = AlgorithmOptions.start().build();
+        MapMatching mapMatching = new MapMatching(hopper, opts);
+
+        List<GPXEntry> inputGPXEntries = new GPXFile().
+                doImport("./src/test/resources/issue-70.gpx").getEntries();
+        MatchResult mr = mapMatching.doWork(inputGPXEntries);
+        
+        assertEquals(Arrays.asList("Милана Видака", "Милана Видака", "Милана Видака",
+        		"Бранка Радичевића", "Бранка Радичевића", "Здравка Челара"),
+                fetchStreets(mr.getEdgeMatches()));
+        // TODO: length/time
+    }
 }

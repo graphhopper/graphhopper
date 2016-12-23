@@ -58,8 +58,8 @@ public class MatchResultToJsonTest {
             }
         };
 
-        list.add(new GPXExtension(new GPXEntry(-3.4446, -38.9996, 100000), queryResult1, 1));
-        list.add(new GPXExtension(new GPXEntry(-3.4448, -38.9999, 100001), queryResult2, 1));
+        list.add(new GPXExtension(new GPXEntry(-3.4446, -38.9996, 100000), queryResult1));
+        list.add(new GPXExtension(new GPXEntry(-3.4448, -38.9999, 100001), queryResult2));
         return list;
     }
 

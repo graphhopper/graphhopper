@@ -89,7 +89,8 @@ public class MapMatchingMain {
                     hints(new HintsMap().put("weighting", "fastest").put("vehicle", firstEncoder.toString())).
                     build();
             MapMatching mapMatching = new MapMatching(hopper, opts);
-            mapMatching.setTransitionProbabilityBeta(args.getDouble("transition_probability_beta", 0.00959442));
+            mapMatching.setTransitionProbabilityBeta(args.getDouble
+                    ("transition_probability_beta", 2.0));
             mapMatching.setMeasurementErrorSigma(gpsAccuracy);
 
             // do the actual matching, get the GPX entries from a file or via stream
