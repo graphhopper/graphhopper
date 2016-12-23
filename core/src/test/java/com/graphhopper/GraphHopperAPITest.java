@@ -180,6 +180,8 @@ public class GraphHopperAPITest {
                 GHResponse rsp = graphHopper.route(new GHRequest(42, 10.4, 42, 10));
                 assertFalse(rsp.toString(), rsp.hasErrors());
                 assertEquals(8400, rsp.getBest().getTime());
+                // could be  1 or 2
+                assertTrue(checkPointCounter.get() > 0);
                 checkPointCounter.incrementAndGet();
             }
         };
