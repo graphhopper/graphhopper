@@ -4,8 +4,11 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
+
+import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 
@@ -78,6 +81,20 @@ public class SpatialRuleLookupArrayTest {
         assertEquals("", spatialRuleLookup.lookupRule(50.025342, 12.386262).getCountryIsoA3Name());
         assertEquals("", spatialRuleLookup.lookupRule(49.932900, 6.174023).getCountryIsoA3Name());
         assertEquals("", spatialRuleLookup.lookupRule(47.547463, 9.741948).getCountryIsoA3Name());
+
+        System.out.println("Started Performance Test");
+        StopWatch w = new StopWatch().start();
+        Random r = new Random();
+        double lat;
+        double lon;
+        for (int i = 0; i < 10000000; i++) {
+            // Somewhere in south west Germany, even close to the border
+            lat = 47+r.nextDouble();
+            lon = 9+r.nextDouble();
+            spatialRuleLookup.lookupRule(lat, lon);
+        }
+        w.stop();
+        System.out.println("Finished Performance Test in: "+w.getSeconds()+" seconds");
     }
 
     @Test
