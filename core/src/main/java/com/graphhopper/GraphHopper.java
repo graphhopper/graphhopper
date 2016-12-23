@@ -1050,7 +1050,6 @@ public class GraphHopper implements GraphHopperAPI {
                     else if (!(tmpAlgoFactory instanceof PrepareContractionHierarchies))
                         throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
 
-                    tMode = getCHFactoryDecorator().getNodeBase();
                     weighting = ((PrepareContractionHierarchies) tmpAlgoFactory).getWeighting();
                     queryGraph = new QueryGraph(ghStorage.getGraph(CHGraph.class, weighting));
                     queryGraph.lookup(qResults);
