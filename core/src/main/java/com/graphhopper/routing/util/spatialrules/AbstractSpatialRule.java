@@ -41,4 +41,13 @@ public abstract class AbstractSpatialRule implements SpatialRule{
         this.polygons.add(polygon);
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if(obj instanceof SpatialRule){
+            if (((SpatialRule) obj).getCountryIsoA3Name().equals(this.getCountryIsoA3Name())){
+                return true;
+            }
+        }
+        return false;
+    }
 }

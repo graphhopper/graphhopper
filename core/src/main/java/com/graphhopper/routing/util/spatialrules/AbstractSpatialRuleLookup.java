@@ -42,4 +42,6 @@ public abstract class AbstractSpatialRuleLookup implements SpatialRuleLookup {
         }
     };
 
+    public static final SpatialRuleContainer EMPTY_RULE_CONTAINER = new SpatialRuleContainer().addRule(EMPTY_RULE);
+
 }

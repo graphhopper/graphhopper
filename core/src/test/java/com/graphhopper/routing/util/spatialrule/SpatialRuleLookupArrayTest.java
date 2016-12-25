@@ -98,6 +98,18 @@ public class SpatialRuleLookupArrayTest {
     }
 
     @Test
+    public void testExactAdjacentBorder(){
+        BBox bounds = new BBox(1,4, 1, 4);
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(bounds ,1, true);
+        // Two rules that divide the tile in half
+        spatialRuleLookup.addRule(getSpatialRule(new Polygon(new double[]{1, 1, 1.5, 1.5}, new double[]{1, 2, 2, 1}), "top"));
+        spatialRuleLookup.addRule(getSpatialRule(new Polygon(new double[]{1.5, 1.5, 2, 2}, new double[]{1, 2, 2, 1}), "bot"));
+
+        assertEquals("top", spatialRuleLookup.lookupRule(1.4,1.5).getCountryIsoA3Name());
+        assertEquals("bot", spatialRuleLookup.lookupRule(1.6,1.5).getCountryIsoA3Name());
+    }
+
+    @Test
     public void testCountryScenario(){
 
         // TODO: Currently almost similar to SpatialRuleLookupBuilderTest, maybe delete this one?, but uses different polygones...
@@ -164,6 +176,10 @@ public class SpatialRuleLookupArrayTest {
     }
 
     private SpatialRule getSpatialRule(Polygon p){
+        return getSpatialRule(p, null);
+    }
+
+    private SpatialRule getSpatialRule(Polygon p, final String name){
         SpatialRule rule = new AbstractSpatialRule() {
             @Override
             public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
@@ -177,7 +193,7 @@ public class SpatialRuleLookupArrayTest {
 
             @Override
             public String getCountryIsoA3Name() {
-                return null;
+                return name;
             }
         };
         rule.addBorder(p);
