@@ -175,12 +175,15 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
                             lookupArray[i][j] = (byte) ruleIndex;
                         } else {
                             // Merge Rules
-                            SpatialRuleContainer curContainer = getContainerForIndex(i,j);
-                            SpatialRuleContainer newContainer =  curContainer.copy().addRule(rule);
+                            SpatialRuleContainer curContainer = getContainerForIndex(i, j);
+                            SpatialRuleContainer newContainer = curContainer.copy().addRule(rule);
                             int newIndex = this.rules.indexOf(newContainer);
-                            if(newIndex < 0){
+                            if (newIndex < 0) {
                                 this.rules.add(newContainer);
                                 newIndex = rules.size() - 1;
+                            }
+                            if (newIndex > 255) {
+                                throw new IllegalStateException("Cannot fit more than 255 rules");
                             }
 
                             lookupArray[i][j] = (byte) newIndex;
@@ -191,8 +194,8 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
         }
     }
 
-    private SpatialRuleContainer getContainerForIndex(int x, int y){
-        return this.rules.get(getRuleIndex(x,y));
+    private SpatialRuleContainer getContainerForIndex(int x, int y) {
+        return this.rules.get(getRuleIndex(x, y));
     }
 
     private GHPoint getCoordinatesForIndex(int x, int y) {
