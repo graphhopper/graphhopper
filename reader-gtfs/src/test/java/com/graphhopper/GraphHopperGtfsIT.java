@@ -78,6 +78,8 @@ public class GraphHopperGtfsIT {
         );
         ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, 0);
         ghRequest.getHints().put(GraphHopperGtfs.RANGE_QUERY_END_TIME, time(13,0));
+        ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, "true");
+
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());

@@ -148,7 +148,7 @@ class MultiCriteriaLabelSetting {
         for (Label they : sptEntries) {
             if (they.nTransfers <= me.nTransfers &&
                     (reverse ? they.currentTime >= me.currentTime : they.currentTime <= me.currentTime) &&
-                    (reverse ? (they.firstPtDepartureTime <= me.firstPtDepartureTime || me.firstPtDepartureTime < rangeQueryEndTime): (they.firstPtDepartureTime >= me.firstPtDepartureTime || me.firstPtDepartureTime > rangeQueryEndTime))) {
+                    (reverse ? (they.firstPtDepartureTime <= me.firstPtDepartureTime || me.firstPtDepartureTime < rangeQueryEndTime): (they.firstPtDepartureTime >= me.firstPtDepartureTime || me.firstPtDepartureTime != Long.MAX_VALUE && me.firstPtDepartureTime > rangeQueryEndTime))) {
                 return false;
             }
         }
