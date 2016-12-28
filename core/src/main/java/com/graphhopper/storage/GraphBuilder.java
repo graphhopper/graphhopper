@@ -98,10 +98,16 @@ public class GraphBuilder {
             dir = new RAMDirectory(location, store);
 
         GraphHopperStorage graph;
-        if (encodingManager.needsTurnCostsSupport() || singleCHWeighting == null)
-            graph = new GraphHopperStorage(dir, encodingManager, elevation, new TurnCostExtension());
+        GraphExtension extension;
+        if (encodingManager.needsTurnCostsSupport())
+            extension = new TurnCostExtension();
         else
-            graph = new GraphHopperStorage(Arrays.asList(singleCHWeighting), dir, encodingManager, elevation, new TurnCostExtension.NoOpExtension());
+            extension = new TurnCostExtension.NoOpExtension();
+
+        if (singleCHWeighting == null)
+            graph = new GraphHopperStorage(dir, encodingManager, elevation, extension);
+        else
+            graph = new GraphHopperStorage(Arrays.asList(singleCHWeighting), dir, encodingManager, elevation, extension);
 
         return graph;
     }

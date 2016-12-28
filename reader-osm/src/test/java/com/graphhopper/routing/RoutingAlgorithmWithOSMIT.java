@@ -24,9 +24,11 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
 import com.graphhopper.routing.weighting.ShortestWeighting;
+import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.GHUtility;
@@ -176,9 +178,30 @@ public class RoutingAlgorithmWithOSMIT {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(55.813357, 37.5958585, 55.811042, 37.594689, 1043.99, 12));
         list.add(new OneRun(55.813159, 37.593884, 55.811278, 37.594217, 1048, 13));
-        // TODO include CH
-        boolean testAlsoCH = false, is3D = false;
+        boolean testAlsoCH = true, is3D = false;
         runAlgo(testCollector, DIR + "/moscow.osm.gz", "target/graph-moscow",
+                list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
+
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testSimpleTurnCosts() {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(-0.5, 0.0, 0.0, -0.5, 301015.98099, 6));
+        boolean testAlsoCH = true, is3D = false;
+        runAlgo(testCollector, DIR + "/test_simple_turncosts.osm.xml", "target/graph-simple_turncosts",
+                list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
+
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
+    public void testSimplePTurn() {
+        List<OneRun> list = new ArrayList<OneRun>();
+        list.add(new OneRun(0, 1, -1, 0, 667.08, 6));
+        boolean testAlsoCH = true, is3D = false;
+        runAlgo(testCollector, DIR + "/test_simple_pturn.osm.xml", "target/graph-simple_turncosts",
                 list, "car|turn_costs=true", testAlsoCH, "car", "fastest", is3D);
 
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
@@ -534,7 +557,7 @@ public class RoutingAlgorithmWithOSMIT {
             throw new RuntimeException("cannot handle " + algoEntry.toString() + ", for " + tmpOneRun
                     + ", file " + osmFile + ", " + ex.getMessage(), ex);
         } finally {
-            // Helper.removeDir(new File(graphFile));
+            Helper.removeDir(new File(graphFile));
         }
     }
 

@@ -131,7 +131,8 @@ public class TurnCostExtension implements GraphExtension {
             while ((tmp = turnCosts.getInt((long) tmp * turnCostsEntryBytes + TC_NEXT)) != NO_TURN_ENTRY) {
                 previousEntryIndex = tmp;
                 // search for the last added cost entry
-                if (i++ > 1000) {
+                // TODO revert to 1000
+                if (i++ > 10_000) {
                     throw new IllegalStateException("Something unexpected happened. A node probably will not have 1000+ relations.");
                 }
             }

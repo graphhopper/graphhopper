@@ -17,12 +17,21 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.coll.MapEntry;
+import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathBidirRef;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Recursivly unpack shortcuts.
@@ -33,23 +42,42 @@ import com.graphhopper.util.EdgeIterator;
  */
 public class Path4CH extends PathBidirRef {
     private final Graph routingGraph;
+    private final TraversalMode traversalMode;
+    private final List<Map.Entry<EdgeIteratorState, Boolean>> finalEdges = new ArrayList<>();
 
-    public Path4CH(Graph routingGraph, Graph baseGraph, Weighting weighting) {
+    public Path4CH(Graph routingGraph, Graph baseGraph, Weighting weighting, TraversalMode traversalMode) {
         super(baseGraph, weighting);
         this.routingGraph = routingGraph;
+        this.traversalMode = traversalMode;
+    }
+
+    @Override
+    public Path extract() {
+        Path result = super.extract();
+
+        int prevId = EdgeIterator.NO_EDGE;
+        time = 0;
+        distance = 0;
+        for (int i = 0; i < finalEdges.size(); i++) {
+            EdgeIteratorState edge = finalEdges.get(i).getKey();
+            Boolean reverse = finalEdges.get(i).getValue();
+            distance += edge.getDistance();
+            time += weighting.calcMillis(edge, reverse, prevId);
+            prevId = edge.getEdge();
+        }
+        return result;
     }
 
     @Override
     protected final void processEdge(int tmpEdge, int endNode, int prevEdgeId) {
         // Shortcuts do only contain valid weight so first expand before adding
         // to distance and time
-        expandEdge((CHEdgeIteratorState) routingGraph.getEdgeIteratorState(tmpEdge, endNode), false);
+        expandEdge((CHEdgeIteratorState) routingGraph.getEdgeIteratorState(tmpEdge, endNode), false, prevEdgeId);
     }
 
-    private void expandEdge(CHEdgeIteratorState mainEdgeState, boolean reverse) {
+    private void expandEdge(CHEdgeIteratorState mainEdgeState, boolean reverse, int prevEdgeId) {
         if (!mainEdgeState.isShortcut()) {
-            distance += mainEdgeState.getDistance();
-            time += weighting.calcMillis(mainEdgeState, reverse, EdgeIterator.NO_EDGE);
+            finalEdges.add(new MapEntry<EdgeIteratorState, Boolean>(mainEdgeState, reverse));
             addEdge(mainEdgeState.getEdge());
             return;
         }
@@ -65,35 +93,56 @@ public class Path4CH extends PathBidirRef {
             to = tmp;
         }
 
-        // getEdgeProps could possibly return an empty edge if the shortcut is available for both directions
-        if (reverseOrder) {
-            CHEdgeIteratorState edgeState = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, to);
-            boolean empty = edgeState == null;
-            if (empty)
-                edgeState = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, to);
-
-            expandEdge(edgeState, false);
-
-            if (empty)
-                edgeState = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, from);
-            else
-                edgeState = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, from);
-
-            expandEdge(edgeState, true);
+        // getEdgeProps could possibly return an empty edge if the shortcut is available for both directions.
+        // both edges in forward direction
+        CHEdgeIteratorState skipped2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, to);
+        CHEdgeIteratorState skipped1;
+        if (skipped2 == null) {
+            skipped2 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, to);
+            skipped1 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, skipped2.getBaseNode());
         } else {
-            CHEdgeIteratorState iter = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, from);
-            boolean empty = iter == null;
-            if (empty)
-                iter = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, from);
+            skipped1 = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, skipped2.getBaseNode());
+        }
 
-            expandEdge(iter, true);
+        if (reverseOrder) {
+            expandEdge(skipped2, false, prevEdgeId);
+            expandLocalLoops(skipped1, skipped2, skipped1.getAdjNode(), true);
+            expandEdge(skipped1, false, skipped2.getEdge());
+        } else {
+            expandEdge(skipped1, false, prevEdgeId);
+            expandLocalLoops(skipped1, skipped2, skipped1.getAdjNode(), false);
+            expandEdge(skipped2, false, skipped1.getEdge());
+        }
+    }
 
-            if (empty)
-                iter = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge1, to);
-            else
-                iter = (CHEdgeIteratorState) routingGraph.getEdgeIteratorState(skippedEdge2, to);
+    private void expandLocalLoops(CHEdgeIteratorState skipped1, CHEdgeIteratorState skipped2, int skippedNode, boolean reverse) {
+        if (!traversalMode.isEdgeBased())
+            return;
+        double cost_uv = weighting.calcWeight(skipped1, false, EdgeIterator.NO_EDGE);
+        double cost_vw = weighting.calcWeight(skipped2, false, skipped1.getEdge());
+        double directCost = cost_uv + cost_vw;
+        EdgeIteratorState bestLoop = null;
 
-            expandEdge(iter, false);
+        EdgeExplorer explorer = routingGraph.createEdgeExplorer(new DefaultEdgeFilter(weighting.getFlagEncoder(), false, true));
+        EdgeIterator iter = explorer.setBaseNode(skippedNode);
+        while (iter.next()) {
+            if (iter.getAdjNode() != skippedNode)
+                continue;
+            // loop at node detected. Check if we get a better result by including this loop.
+            double cost_vloop = weighting.calcWeight(iter, false, skipped1.getEdge());
+            double cost_to_w = weighting.calcWeight(skipped2, false, iter.getEdge());
+            double total = cost_uv + cost_vloop + cost_to_w;
+            if (total < directCost) {
+                directCost = total;
+                bestLoop = iter.detach(false);
+            }
+        }
+
+        if (directCost == Double.MAX_VALUE && bestLoop == null)
+            throw new IllegalStateException("CH turncost don't support multiple p-turns at a single node yet");
+
+        if (bestLoop != null) {
+            expandEdge((CHEdgeIteratorState) bestLoop, reverse, skipped1.getEdge());
         }
     }
 }

@@ -203,12 +203,13 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
             if (entryOther.edge != entryCurrent.edge)
                 throw new IllegalStateException("cannot happen for edge based execution of " + getName());
 
-            if (entryOther.adjNode != entryCurrent.adjNode) {
+            if (entryOther.adjNode != entryCurrent.adjNode || entryCurrent.adjNode == entryCurrent.parent.adjNode) {
                 // prevents the path to contain the edge at the meeting point twice and subtract the weight (excluding turn weight => no previous edge)
+                // However, we do want to allow loops at the current node, as they be be shortcuts over a p-turn.
                 entryCurrent = entryCurrent.parent;
                 newWeight -= weighting.calcWeight(edgeState, reverse, EdgeIterator.NO_EDGE);
             } else if (!traversalMode.hasUTurnSupport())
-                // we detected a u-turn at meeting point, skip if not supported
+                // we detected a u-turn at meeting point, skip if not supported (but don't skip loops in edgebased mode)
                 return;
         }
 
