@@ -31,6 +31,8 @@ import org.junit.Test;
 
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -131,6 +133,7 @@ public class GraphHopperAPITest {
         initGraph(graph);
         graph.edge(1, 2, 10, true);
 
+        final CountDownLatch latch = new CountDownLatch(1);
         final AtomicInteger checkPointCounter = new AtomicInteger(0);
         final GraphHopper graphHopper = new GraphHopper() {
             @Override
@@ -138,9 +141,10 @@ public class GraphHopperAPITest {
                 return new ChangeGraphHelper(graph, locationIndex) {
                     @Override
                     public long applyChanges(EncodingManager em, Collection<JsonFeature> features) {
-                        // force sleep inside the lock
+                        // force sleep inside the lock and let the main thread run until the lock barrier
+                        latch.countDown();
                         try {
-                            Thread.sleep(1000);
+                            Thread.sleep(400);
                         } catch (InterruptedException e) {
                             throw new RuntimeException(e);
                         }
@@ -164,31 +168,27 @@ public class GraphHopperAPITest {
                 new BBox(10.399, 10.4, 42.0, 42.001),
                 null, properties));
 
-        Thread thread1 = new Thread() {
+        ExecutorService executorService = Executors.newFixedThreadPool(1);
+        executorService.submit(new Runnable() {
             @Override
             public void run() {
                 graphHopper.changeGraph(list);
                 checkPointCounter.incrementAndGet();
             }
-        };
-        thread1.start();
+        });
 
-        Thread thread2 = new Thread() {
-            @Override
-            public void run() {
-                assertEquals(0, checkPointCounter.get());
-                GHResponse rsp = graphHopper.route(new GHRequest(42, 10.4, 42, 10));
-                assertFalse(rsp.toString(), rsp.hasErrors());
-                assertEquals(8400, rsp.getBest().getTime());
-                // could be  1 or 2
-                assertTrue(checkPointCounter.get() > 0);
-                checkPointCounter.incrementAndGet();
-            }
-        };
-        thread2.start();
+        latch.await();
+        assertEquals(0, checkPointCounter.get());
+        rsp = graphHopper.route(new GHRequest(42, 10.4, 42, 10));
+        assertFalse(rsp.toString(), rsp.hasErrors());
+        assertEquals(8400, rsp.getBest().getTime());
+        // could be  1 or 2
+        assertTrue(checkPointCounter.get() > 0);
+        checkPointCounter.incrementAndGet();
 
-        thread1.join();
-        thread2.join();
+        executorService.shutdown();
+        executorService.awaitTermination(3, TimeUnit.SECONDS);
+
         assertEquals(3, checkPointCounter.get());
     }
 }
