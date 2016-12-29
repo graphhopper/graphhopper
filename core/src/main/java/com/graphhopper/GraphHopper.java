@@ -1113,12 +1113,16 @@ public class GraphHopper implements GraphHopperAPI {
         Lock writeLock = readWriteLock.writeLock();
         writeLock.lock();
         try {
-            ChangeGraphHelper overlay = new ChangeGraphHelper(ghStorage, locationIndex);
+            ChangeGraphHelper overlay = createChangeGraphHelper(ghStorage, locationIndex);
             long updateCount = overlay.applyChanges(encodingManager, collection);
             return new ChangeGraphResponse(updateCount);
         } finally {
             writeLock.unlock();
         }
+    }
+
+    protected ChangeGraphHelper createChangeGraphHelper(Graph graph, LocationIndex locationIndex) {
+        return new ChangeGraphHelper(graph, locationIndex);
     }
 
     private void checkIfPointsAreInBounds(List<GHPoint> points) {
