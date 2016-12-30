@@ -106,4 +106,11 @@ public class GenericWeightingTest {
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
         assertEquals(edgeWeight, weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE), .1);
     }
+
+    @Test
+    public void testNullGraph() {
+        ConfigMap cMap = encoder.readStringMap(new PMap());
+        GenericWeighting weighting = new GenericWeighting(encoder, cMap);
+        weighting.setGraph(null);
+    }
 }

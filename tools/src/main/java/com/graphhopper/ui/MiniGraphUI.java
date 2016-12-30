@@ -21,7 +21,9 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
+import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
+import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
@@ -30,8 +32,11 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Algorithms;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -152,57 +157,62 @@ public class MiniGraphUI {
 //                plotPath(path, g2, 1);
                 g2.setColor(Color.black);
 
-                EdgeExplorer explorer = graph.createEdgeExplorer(EdgeFilter.ALL_EDGES);
                 Color[] speedColors = generateColors(15);
-
-                for (int nodeIndex = 0; nodeIndex < locs; nodeIndex++) {
+                AllEdgesIterator edge = graph.getAllEdges();
+                while (edge.next()) {
                     if (fastPaint && rand.nextInt(30) > 1)
                         continue;
+
+                    int nodeIndex = edge.getBaseNode();
                     double lat = na.getLatitude(nodeIndex);
                     double lon = na.getLongitude(nodeIndex);
+                    int nodeId = edge.getAdjNode();
+                    double lat2 = na.getLatitude(nodeId);
+                    double lon2 = na.getLongitude(nodeId);
 
                     // mg.plotText(g2, lat, lon, "" + nodeIndex);
-                    if (lat < b.minLat || lat > b.maxLat || lon < b.minLon || lon > b.maxLon)
+                    if (!b.contains(lat, lon) && !b.contains(lat2, lon2))
                         continue;
 
-                    EdgeIterator edge = explorer.setBaseNode(nodeIndex);
-                    while (edge.next()) {
-                        int nodeId = edge.getAdjNode();
-                        int sum = nodeIndex + nodeId;
-                        if (fastPaint) {
-                            if (bitset.contains(sum))
-                                continue;
+                    int sum = nodeIndex + nodeId;
+                    if (fastPaint) {
+                        if (bitset.contains(sum))
+                            continue;
 
-                            bitset.add(sum);
-                        }
-                        double lat2 = na.getLatitude(nodeId);
-                        double lon2 = na.getLongitude(nodeId);
+                        bitset.add(sum);
+                    }
 
-                        // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, iter.getName());
-                        //mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
-                        double speed = encoder.getSpeed(edge.getFlags());
-                        Color color;
-                        if (speed >= 120) {
-                            // red
-                            color = speedColors[12];
-                        } else if (speed >= 100) {
-                            color = speedColors[10];
-                        } else if (speed >= 80) {
-                            color = speedColors[8];
-                        } else if (speed >= 60) {
-                            color = speedColors[6];
-                        } else if (speed >= 50) {
-                            color = speedColors[5];
-                        } else if (speed >= 40) {
-                            color = speedColors[4];
-                        } else if (speed >= 30) {
-                            color = Color.GRAY;
-                        } else {
-                            color = Color.LIGHT_GRAY;
-                        }
+                    // mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, iter.getName());
+                    //mg.plotText(g2, lat * 0.9 + lat2 * 0.1, lon * 0.9 + lon2 * 0.1, "s:" + (int) encoder.getSpeed(iter.getFlags()));
+                    double speed = encoder.getSpeed(edge.getFlags());
+                    Color color;
+                    if (speed >= 120) {
+                        // red
+                        color = speedColors[12];
+                    } else if (speed >= 100) {
+                        color = speedColors[10];
+                    } else if (speed >= 80) {
+                        color = speedColors[8];
+                    } else if (speed >= 60) {
+                        color = speedColors[6];
+                    } else if (speed >= 50) {
+                        color = speedColors[5];
+                    } else if (speed >= 40) {
+                        color = speedColors[4];
+                    } else if (speed >= 30) {
+                        color = Color.GRAY;
+                    } else {
+                        color = Color.LIGHT_GRAY;
+                    }
 
-                        g2.setColor(color);
-                        mg.plotEdge(g2, lat, lon, lat2, lon2, 1.2f);
+                    g2.setColor(color);
+                    boolean fwd = encoder.isForward(edge.getFlags());
+                    boolean bwd = encoder.isBackward(edge.getFlags());
+                    float width = 1.2f;
+                    if (fwd && !bwd) {
+                        mg.plotDirectedEdge(g2, lat, lon, lat2, lon2, width);
+                    } else {
+                        mg.plotEdge(g2, lat, lon, lat2, lon2, width);
                     }
                 }
 
@@ -273,7 +283,7 @@ public class MiniGraphUI {
 
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
-        GraphHopper hopper = new GraphHopper().init(args).importOrLoad();
+        GraphHopper hopper = new GraphHopperOSM().init(args).importOrLoad();
         boolean debug = args.getBool("minigraphui.debug", false);
         new MiniGraphUI(hopper, debug).visualize();
     }

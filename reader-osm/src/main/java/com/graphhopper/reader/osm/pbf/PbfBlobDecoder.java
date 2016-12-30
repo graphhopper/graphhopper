@@ -267,8 +267,6 @@ public class PbfBlobDecoder implements Runnable {
                                       List<Long> memberIds, List<Integer> memberRoles, List<Osmformat.Relation.MemberType> memberTypes,
                                       PbfFieldDecoder fieldDecoder) {
 
-        List<ReaderRelation.Member> members = relation.getMembers();
-
         // Ensure parallel lists are of equal size.
         if (checkData) {
             if ((memberIds.size() != memberRoles.size()) || (memberIds.size() != memberTypes.size())) {
@@ -302,8 +300,7 @@ public class PbfBlobDecoder implements Runnable {
             }
 
             ReaderRelation.Member member = new ReaderRelation.Member(entityType, refId, fieldDecoder.decodeString(memberRoleIterator.next()));
-
-            members.add(member);
+            relation.add(member);
         }
     }
 

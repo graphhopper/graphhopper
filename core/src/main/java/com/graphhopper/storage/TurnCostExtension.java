@@ -75,7 +75,7 @@ public class TurnCostExtension implements GraphExtension {
 
     @Override
     public TurnCostExtension create(long initBytes) {
-        turnCosts.create((long) initBytes * turnCostsEntryBytes);
+        turnCosts.create(initBytes);
         return this;
     }
 

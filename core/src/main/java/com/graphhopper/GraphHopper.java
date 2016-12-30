@@ -109,7 +109,7 @@ public class GraphHopper implements GraphHopperAPI {
     // for data reader
     private String dataReaderFile;
     private double dataReaderWayPointMaxDistance = 1;
-    private int dataReaderWorkerThreads = -1;
+    private int dataReaderWorkerThreads = 2;
     private boolean calcPoints = true;
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = FlagEncoderFactory.DEFAULT;
@@ -1040,7 +1040,7 @@ public class GraphHopper implements GraphHopperAPI {
                     return Collections.emptyList();
 
                 RoutingAlgorithmFactory tmpAlgoFactory = getAlgorithmFactory(hints);
-                Weighting weighting = null;
+                Weighting weighting;
                 QueryGraph queryGraph;
 
                 boolean forceFlexibleMode = hints.getBool(CH.DISABLE, false);
@@ -1117,12 +1117,16 @@ public class GraphHopper implements GraphHopperAPI {
         Lock writeLock = readWriteLock.writeLock();
         writeLock.lock();
         try {
-            ChangeGraphHelper overlay = new ChangeGraphHelper(ghStorage, locationIndex);
+            ChangeGraphHelper overlay = createChangeGraphHelper(ghStorage, locationIndex);
             long updateCount = overlay.applyChanges(encodingManager, collection);
             return new ChangeGraphResponse(updateCount);
         } finally {
             writeLock.unlock();
         }
+    }
+
+    protected ChangeGraphHelper createChangeGraphHelper(Graph graph, LocationIndex locationIndex) {
+        return new ChangeGraphHelper(graph, locationIndex);
     }
 
     private void checkIfPointsAreInBounds(List<GHPoint> points) {

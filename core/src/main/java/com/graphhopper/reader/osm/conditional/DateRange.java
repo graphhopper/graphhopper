@@ -24,12 +24,10 @@ import java.util.Calendar;
 
 /**
  * This class represents a date range and is able to determine if a given date is in that range.
- * <p>
  *
  * @author Robin Boldt
  */
-public class DateRange implements ValueRange<Calendar> {
-    public static final String KEY = "DateRange";
+public class DateRange {
     private final Calendar from;
     private final Calendar to;
     // Do not compare years
@@ -43,7 +41,7 @@ public class DateRange implements ValueRange<Calendar> {
 
         // This should never happen
         if (fromCal.get(Calendar.ERA) != toCal.get(Calendar.ERA)) {
-            throw new IllegalArgumentException("Different ERAs are not allowed. From:" + from + " To:" + to);
+            throw new IllegalArgumentException("Different calendar eras are not allowed. From:" + from + " To:" + to);
         }
 
         if (from.isYearless() && to.isYearless()) {
@@ -56,7 +54,7 @@ public class DateRange implements ValueRange<Calendar> {
 
         if (fromCal.getTimeInMillis() > toCal.getTimeInMillis()) {
             if (!yearless && !dayOnly) {
-                throw new IllegalArgumentException("From after to makes no sense, except for isYearless and isDayOnly DateRanges. From:" + from + " To:" + to);
+                throw new IllegalArgumentException("'from' after 'to' not allowed, except for isYearless and isDayOnly DateRanges. From:" + from + " To:" + to);
             } else {
                 reverse = true;
             }
@@ -66,12 +64,6 @@ public class DateRange implements ValueRange<Calendar> {
         this.to = to.getMax();
     }
 
-    @Override
-    public String getKey() {
-        return KEY;
-    }
-
-    @Override
     public boolean isInRange(Calendar date) {
         if (!yearless && !dayOnly)
             return date.after(from) && date.before(to);

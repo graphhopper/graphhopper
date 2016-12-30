@@ -3,9 +3,11 @@ package com.graphhopper.reader.osm.pbf;
 
 import com.graphhopper.reader.ReaderElement;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -48,7 +50,8 @@ public class PbfDecoder implements Runnable {
         dataWaitCondition = lock.newCondition();
 
         // Create the queue of blobs being decoded.
-        blobResults = new LinkedList<PbfBlobResult>();
+        // TODO #916 blobResults = new ArrayBlockingQueue<>(1000);
+        blobResults = new LinkedList<>();
     }
 
     /**
