@@ -57,7 +57,7 @@ public class SpatialRuleLookupBuilder {
         SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(bounds, resolution, exact);
         try {
             GHJson ghJson = new GHJsonBuilder().create();
-            JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(new FileReader(new File(SpatialRuleLookupBuilder.class.getResource("countries.json").getFile())), JsonFeatureCollection.class);
+            JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(new FileReader(new File(SpatialRuleLookupBuilder.class.getResource("countries.geo.json").getFile())), JsonFeatureCollection.class);
 
             // TODO find outer Border of all used features and create SpatialRuleLookupArray onlyo for these Bounds
 
