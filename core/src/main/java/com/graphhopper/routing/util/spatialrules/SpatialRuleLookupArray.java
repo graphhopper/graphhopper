@@ -51,9 +51,7 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
      * @param resolution of the array in decimal degrees, see: https://en.wikipedia.org/wiki/Decimal_degrees
      *                   The downside of using decimal degrees is that this is not fixed to a certain m range as
      * @param exact      if exact it will also perform a polygon contains for border tiles, might fail for small holes
-     *                   in the Polygon that are not represented in the tile array. TODO currently rules get overwritten
-     *                   therefore exact might produce incorrect results when two polyongs of different rules are close
-     *                   to each other.
+     *                   in the Polygon that are not represented in the tile array.
      */
     public SpatialRuleLookupArray(BBox bounds, double resolution, boolean exact) {
         this.bounds = bounds;
@@ -117,7 +115,7 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
         if (yIndex < 0 || yIndex > lookupArray[0].length) {
             return EMPTY_RULE_INDEX;
         }
-        return (int) lookupArray[xIndex][yIndex];
+        return castByteToInt(lookupArray[xIndex][yIndex]);
     }
 
     /**
@@ -193,6 +191,11 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
             }
         }
     }
+
+    private int castByteToInt(byte b){
+        return b & 0xFF;
+    }
+
 
     private SpatialRuleContainer getContainerForIndex(int x, int y) {
         return this.rules.get(getRuleIndex(x, y));
