@@ -49,7 +49,7 @@ public class DefaultSpatialRule extends AbstractSpatialRule {
             case "living_street":
                 return 20;
             default:
-                return Integer.MAX_VALUE;
+                return -1;
         }
     }
 

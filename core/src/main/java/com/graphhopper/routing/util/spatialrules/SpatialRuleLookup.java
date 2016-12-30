@@ -33,5 +33,7 @@ public interface SpatialRuleLookup {
 
     void addRule(SpatialRule rule);
 
+    SpatialRule getEmptyRule();
+
     void visualize(int i);
 }

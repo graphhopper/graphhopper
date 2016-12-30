@@ -32,13 +32,15 @@ public abstract class AbstractSpatialRule implements SpatialRule{
     public List<Polygon> getBorders(){
         return polygons;
     }
-    public void setBorders(List<Polygon> polygons){
+    public SpatialRule setBorders(List<Polygon> polygons){
         this.polygons = polygons;
+        return this;
     }
-    public void addBorder(Polygon polygon){
+    public SpatialRule addBorder(Polygon polygon){
         if(polygons.isEmpty())
             polygons = new ArrayList<>();
         this.polygons.add(polygon);
+        return this;
     }
 
     @Override

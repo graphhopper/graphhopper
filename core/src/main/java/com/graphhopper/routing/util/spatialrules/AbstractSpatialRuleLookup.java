@@ -28,7 +28,7 @@ public abstract class AbstractSpatialRuleLookup implements SpatialRuleLookup {
     public static final SpatialRule EMPTY_RULE = new AbstractSpatialRule() {
         @Override
         public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
-            return Integer.MAX_VALUE;
+            return -1;
         }
 
         @Override
@@ -43,5 +43,9 @@ public abstract class AbstractSpatialRuleLookup implements SpatialRuleLookup {
     };
 
     public static final SpatialRuleContainer EMPTY_RULE_CONTAINER = new SpatialRuleContainer().addRule(EMPTY_RULE);
+
+    public SpatialRule getEmptyRule() {
+        return EMPTY_RULE;
+    }
 
 }

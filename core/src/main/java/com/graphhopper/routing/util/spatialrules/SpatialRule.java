@@ -34,8 +34,8 @@ public interface SpatialRule {
     AccessValue isAccessible(ReaderWay readerWay, String transportationMode);
 
     List<Polygon> getBorders();
-    void setBorders(List<Polygon> borders);
-    void addBorder(Polygon polygon);
+    SpatialRule setBorders(List<Polygon> borders);
+    SpatialRule addBorder(Polygon polygon);
 
     String getCountryIsoA3Name();
 
