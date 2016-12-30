@@ -59,6 +59,8 @@ public class SpatialRuleLookupBuilder {
             GHJson ghJson = new GHJsonBuilder().create();
             JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(new FileReader(new File(SpatialRuleLookupBuilder.class.getResource("countries.json").getFile())), JsonFeatureCollection.class);
 
+            // TODO find outer Border of all used features and create SpatialRuleLookupArray onlyo for these Bounds
+
             for (SpatialRule spatialRule : rules) {
                 for (JsonFeature jsonFeature : jsonFeatureCollection.getFeatures()) {
                     if (spatialRule.getCountryIsoA3Name().equals(jsonFeature.getProperty("ISO_A3"))) {
