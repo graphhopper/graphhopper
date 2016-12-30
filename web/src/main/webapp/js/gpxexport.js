@@ -51,14 +51,14 @@ var ensureOneCheckboxSelected = function () {
 module.exports.addGpxExport = function (ghRequest) {
     var dialog;
 
-    function exportGPX(withRoute, withTrack, withWayPoint) {
+    function exportGPX(withRoute, withTrack, withWayPoint, trackName) {
         if (ghRequest.route.isResolved())
-            window.open(ghRequest.createGPXURL(withRoute, withTrack, withWayPoint));
+            window.open(ghRequest.createGPXURL(withRoute, withTrack, withWayPoint, trackName));
         return false;
     }
 
     function exportFlaggedGPX() {
-        exportGPX($("#gpx_route").is(':checked'), $("#gpx_track").is(':checked'), $("#gpx_waypoints").is(':checked'));
+        exportGPX($("#gpx_route").is(':checked'), $("#gpx_track").is(':checked'), $("#gpx_waypoints").is(':checked'), $("#gpx_trackname").val());
         dialog.dialog("close");
         return false;
     }

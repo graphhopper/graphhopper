@@ -158,8 +158,8 @@ GHRequest.prototype.createURL = function () {
     return this.createPath(this.host + "/route?" + this.createPointParams(false) + "&type=" + this.dataType + "&key=" + this.key);
 };
 
-GHRequest.prototype.createGPXURL = function (withRoute, withTrack, withWayPoints) {
-    return this.createPath(this.host + "/route?" + this.createPointParams(false) + "&type=gpx&key=" + this.key + "&gpx.route=" + withRoute + "&gpx.track=" + withTrack + "&gpx.waypoints=" + withWayPoints);
+GHRequest.prototype.createGPXURL = function (withRoute, withTrack, withWayPoints, trackName) {
+    return this.createPath(this.host + "/route?" + this.createPointParams(false) + "&type=gpx&key=" + this.key + "&gpx.route=" + withRoute + "&gpx.track=" + withTrack + "&gpx.waypoints=" + withWayPoints + "&gpx.trackname=" + trackName);
 };
 
 GHRequest.prototype.createHistoryURL = function () {
