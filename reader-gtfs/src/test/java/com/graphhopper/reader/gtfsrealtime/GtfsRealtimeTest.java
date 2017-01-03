@@ -23,6 +23,15 @@ public class GtfsRealtimeTest {
                             .max(Comparator.comparingInt(update ->
                                     update.getDeparture().getDelay())).get().getDeparture().getDelay()
         )).get();
+        for (GtfsRealtime.FeedEntity entity : feed.getEntityList()) {
+            if (entity.hasTripUpdate()) {
+                Trip trip = gtfsFeed.trips.get(entity.getTripUpdate().getTrip().getTripId());
+                System.out.println(trip);
+
+                System.out.println(entity.getTripUpdate());
+            }
+        }
+        System.out.println("---");
         System.out.println(tripUpdateWithBiggestDelay);
         Assert.assertEquals(tripUpdateWithBiggestDelay.getTripUpdate().getTrip().getTripId(), "20DCM21");
         Trip trip = gtfsFeed.trips.get("20DCM21");
