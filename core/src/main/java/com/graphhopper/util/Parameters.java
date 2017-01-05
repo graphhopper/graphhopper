@@ -17,8 +17,6 @@
  */
 package com.graphhopper.util;
 
-import static com.graphhopper.util.Parameters.Algorithms.ALT_ROUTE;
-
 /**
  * @author Peter Karich
  */
@@ -172,6 +170,6 @@ public class Parameters {
         //TODO rename to gpx.trackname?
         public static final String TRACK_NAME = "trackname";
 
-        public static final String PATH_INDEX = "gpx."+ALT_ROUTE+".path_index";
+        public static final String PATH_INDEX = "gpx." + Parameters.Algorithms.ALT_ROUTE + ".path_index";
     }
 }
