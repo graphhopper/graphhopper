@@ -176,6 +176,21 @@ public class GraphHopperServletIT extends BaseServletTester {
     }
 
     @Test
+    public void testGPXSelectedPath() throws Exception {
+        //TODO Example Properties does not allow disabling ch, therefore we cannot test alternative routes here
+        //TODO Is it worth the overhead to create a non-ch environment for this small change?
+
+        // No alternative, therefore path_index=1 is out of range
+        queryString("point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.alternative_route.path_index=1", 400);
+
+        String str = queryString("point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.alternative_route.path_index=0", 200);
+        // For backward compatibility we currently export route and track.
+        assertTrue(str.contains("<gh:distance>115.1</gh:distance>"));
+        assertFalse(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));
+        assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
+    }
+
+    @Test
     public void testGPXWithExcludedRouteSelection() throws Exception {
         String str = queryString("point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false", 200);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));

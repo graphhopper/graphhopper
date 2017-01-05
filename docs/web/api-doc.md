@@ -36,6 +36,8 @@ Parameter     | Default | Description
 gpx.track     |	true    | Include <trk> tag in gpx result. Only applicable if type=gpx is specified.
 gpx.route     | true    | Include <rte> tag in gpx result. Only applicable if type=gpx is specified.
 gpx.waypoints | false   | Include <wpt> tag in gpx result. Only applicable if type=gpx is specified.
+trackname     | GraphHopper Track   | Set the value of the <name> tag in the <trk> segment.
+gpx.alternative_route.path_index | -1      | If `algorithm=alternative_route` this parameter is needed to specify which path should be exported.
 
 ### Flexible
 
