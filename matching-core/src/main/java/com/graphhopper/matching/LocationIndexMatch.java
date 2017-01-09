@@ -52,16 +52,24 @@ public class LocationIndexMatch extends LocationIndexTree {
         this.index = index;
     }
 
-    public List<QueryResult> findNClosest(final double queryLat, final double queryLon, final EdgeFilter edgeFilter,
-                                          double gpxAccuracyInMetern) {
+    /**
+     * Returns all edges that are within the specified radius around the queried position.
+     * Searches at most 9 cells to avoid performance problems. Hence, if the radius is larger than
+     * the cell width then not all edges might be returned.
+     *
+     * @param radius in meters
+     */
+    public List<QueryResult> findNClosest(final double queryLat, final double queryLon,
+            final EdgeFilter edgeFilter, double radius) {
         // Return ALL results which are very close and e.g. within the GPS signal accuracy.
         // Also important to get all edges if GPS point is close to a junction.
-        final double returnAllResultsWithin = distCalc.calcNormalizedDist(gpxAccuracyInMetern);
+        final double returnAllResultsWithin = distCalc.calcNormalizedDist(radius);
 
         // implement a cheap priority queue via List, sublist and Collections.sort
         final List<QueryResult> queryResults = new ArrayList<QueryResult>();
         GHIntHashSet set = new GHIntHashSet();
 
+        // Doing 2 iterations means searching 9 tiles.
         for (int iteration = 0; iteration < 2; iteration++) {
             // should we use the return value of earlyFinish?
             index.findNetworkEntries(queryLat, queryLon, set, iteration);

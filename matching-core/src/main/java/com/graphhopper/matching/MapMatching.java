@@ -183,18 +183,29 @@ public class MapMatching {
         // now find each of the entries in the graph:
         final EdgeFilter edgeFilter = new DefaultEdgeFilter(algoOptions.getWeighting().getFlagEncoder());
 
-        List<List<QueryResult>> queriesPerEntry = lookupGPXEntries(filteredGPXEntries, edgeFilter);
+        List<Collection<QueryResult>> queriesPerEntry =
+                lookupGPXEntries(filteredGPXEntries, edgeFilter);
 
-        // now look up the entries up in the graph:
+        // Add virtual nodes and edges to the graph so that candidates on edges can be represented
+        // by virtual nodes.
         final QueryGraph queryGraph = new QueryGraph(routingGraph).setUseEdgeExplorerCache(true);
         List<QueryResult> allQueryResults = new ArrayList<>();
-        for (List<QueryResult> qrs: queriesPerEntry)
+        for (Collection<QueryResult> qrs: queriesPerEntry)
             allQueryResults.addAll(qrs);
         queryGraph.lookup(allQueryResults);
 
+        // Different QueryResults can have the same tower node as their closest node.
+        // Hence, we now dedupe the query results of each GPX entry by their closest node (#91).
+        // This must be done after calling queryGraph.lookup() since this replaces some of the
+        // QueryResult nodes with virtual nodes. Virtual nodes are not deduped since there is at
+        // most one QueryResult per edge and virtual nodes are inserted into the middle of an edge.
+        // Reducing the number of QueryResults improves performance since less shortest/fastest
+        // routes need to be computed.
+        queriesPerEntry = dedupeQueryResultsByClosestNode(queriesPerEntry);
+
         logger.debug("================= Query results =================");
         int i = 1;
-        for (List<QueryResult> entries : queriesPerEntry) {
+        for (Collection<QueryResult> entries : queriesPerEntry) {
             logger.debug("Query results for GPX entry {}", i++);
             for (QueryResult qr : entries) {
                 logger.debug("Node id: {}, virtual: {}, snapped on: {}, pos: {},{}, "
@@ -269,17 +280,32 @@ public class MapMatching {
     }
 
     /**
-     * Find the possible locations of each qpxEntry in the graph.
+     * Find the possible locations (edges) of each GPXEntry in the graph.
      */
-    private List<List<QueryResult>> lookupGPXEntries(List<GPXEntry> gpxList,
+    private List<Collection<QueryResult>> lookupGPXEntries(List<GPXEntry> gpxList,
                                                      EdgeFilter edgeFilter) {
 
-        List<List<QueryResult>> gpxEntryLocations = new ArrayList<>();
+        final List<Collection<QueryResult>> gpxEntryLocations = new ArrayList<>();
         for (GPXEntry gpxEntry : gpxList) {
-            gpxEntryLocations.add(locationIndex.findNClosest(gpxEntry.lat, gpxEntry.lon, edgeFilter,
-                    measurementErrorSigma));
+            final List<QueryResult> queryResults = locationIndex.findNClosest(
+                    gpxEntry.lat, gpxEntry.lon, edgeFilter, measurementErrorSigma);
+            gpxEntryLocations.add(queryResults);
         }
         return gpxEntryLocations;
+    }
+
+    private List<Collection<QueryResult>> dedupeQueryResultsByClosestNode(
+            List<Collection<QueryResult>> queriesPerEntry) {
+        final List<Collection<QueryResult>> result = new ArrayList<>(queriesPerEntry.size());
+
+        for (Collection<QueryResult> queryResults : queriesPerEntry) {
+            final Map<Integer, QueryResult> dedupedQueryResults = new HashMap<>();
+            for (QueryResult qr : queryResults) {
+                dedupedQueryResults.put(qr.getClosestNode(), qr);
+            }
+            result.add(dedupedQueryResults.values());
+        }
+        return result;
     }
 
     /**
@@ -288,7 +314,7 @@ public class MapMatching {
      * candidates for real nodes.
      */
     private List<TimeStep<GPXExtension, GPXEntry, Path>> createTimeSteps(
-            List<GPXEntry> filteredGPXEntries, List<List<QueryResult>> queriesPerEntry,
+            List<GPXEntry> filteredGPXEntries, List<Collection<QueryResult>> queriesPerEntry,
             QueryGraph queryGraph) {
         final int n = filteredGPXEntries.size();
         if (queriesPerEntry.size() != n) {
@@ -300,7 +326,7 @@ public class MapMatching {
         for (int i = 0; i < n; i++) {
 
             GPXEntry gpxEntry = filteredGPXEntries.get(i);
-            List<QueryResult> queryResults = queriesPerEntry.get(i);
+            final Collection<QueryResult> queryResults = queriesPerEntry.get(i);
 
             List<GPXExtension> candidates = new ArrayList<>();
             for (QueryResult qr: queryResults) {
@@ -512,7 +538,7 @@ public class MapMatching {
 
     private MatchResult computeMatchResult(List<SequenceState<GPXExtension, GPXEntry, Path>> seq,
                                            List<GPXEntry> gpxList,
-                                           List<List<QueryResult>> queriesPerEntry,
+                                           List<Collection<QueryResult>> queriesPerEntry,
                                            EdgeExplorer explorer) {
         final Map<String, EdgeIteratorState> virtualEdgesMap = createVirtualEdgesMap(
                 queriesPerEntry, explorer);
@@ -611,10 +637,10 @@ public class MapMatching {
      * Returns a map where every virtual edge maps to its real edge with correct orientation.
      */
     private Map<String, EdgeIteratorState> createVirtualEdgesMap(
-            List<List<QueryResult>> queriesPerEntry, EdgeExplorer explorer) {
+            List<Collection<QueryResult>> queriesPerEntry, EdgeExplorer explorer) {
         // TODO For map key, use the traversal key instead of string!
         Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<>();
-        for (List<QueryResult> queryResults: queriesPerEntry) {
+        for (Collection<QueryResult> queryResults: queriesPerEntry) {
             for (QueryResult qr: queryResults) {
                 if (isVirtualNode(qr.getClosestNode())) {
                     EdgeIterator iter = explorer.setBaseNode(qr.getClosestNode());

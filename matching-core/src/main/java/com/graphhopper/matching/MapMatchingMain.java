@@ -86,6 +86,8 @@ public class MapMatchingMain {
                     algorithm(Parameters.Algorithms.DIJKSTRA_BI).traversalMode(hopper.getTraversalMode()).
                     weighting(new FastestWeighting(firstEncoder)).
                     maxVisitedNodes(args.getInt("max_visited_nodes", 1000)).
+                    // Penalizing inner-link U-turns only works with fastest weighting, since
+                    // shortest weighting does not apply penalties to unfavored virtual edges.
                     hints(new HintsMap().put("weighting", "fastest").put("vehicle", firstEncoder.toString())).
                     build();
             MapMatching mapMatching = new MapMatching(hopper, opts);
