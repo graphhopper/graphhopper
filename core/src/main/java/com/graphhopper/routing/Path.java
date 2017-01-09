@@ -143,7 +143,7 @@ public class Path {
         return this;
     }
 
-    void reverseOrder() {
+    protected void reverseOrder() {
         if (!reverseOrder)
             throw new IllegalStateException("Switching order multiple times is not supported");
 

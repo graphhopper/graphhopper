@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.template;
 
+import com.carrotsearch.hppc.IntObjectHashMap;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;

@@ -153,7 +153,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
 
     @Override
     public String toString() {
-        return baseNode + "->" + adjNode;
+        return edgeId + " " + baseNode + "->" + adjNode;
     }
 
     @Override

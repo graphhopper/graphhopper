@@ -36,7 +36,7 @@ public class TurnWeighting implements Weighting {
      * Encoder, which decodes the turn flags
      */
     private final TurnCostEncoder turnCostEncoder;
-    private final TurnCostExtension turnCostExt;
+    private TurnCostExtension turnCostExt;
     private final Weighting superWeighting;
     private double defaultUTurnCost = 40;
 
@@ -46,8 +46,14 @@ public class TurnWeighting implements Weighting {
     public TurnWeighting(Weighting superWeighting, TurnCostExtension turnCostExt) {
         this.turnCostEncoder = (TurnCostEncoder) superWeighting.getFlagEncoder();
         this.superWeighting = superWeighting;
+        if (superWeighting instanceof TurnWeighting)
+            throw new IllegalArgumentException("Currently we protect us against embedding TurnWeighting within a TurnWeighting");
+
+        setTurnCostExtension(turnCostExt);
+    }
+
+    public void setTurnCostExtension(TurnCostExtension turnCostExt) {
         this.turnCostExt = turnCostExt;
-        
         if (turnCostExt == null)
             throw new RuntimeException("No storage set to calculate turn weight");
     }
@@ -72,9 +78,7 @@ public class TurnWeighting implements Weighting {
         if (prevOrNextEdgeId == EdgeIterator.NO_EDGE)
             return weight;
 
-        int edgeId = edgeState.getEdge();
-        double turnCosts = calcTurnWeight(edgeId, edgeState.getBaseNode(), prevOrNextEdgeId, reverse, true);
-
+        double turnCosts = calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId, reverse, true);
         return weight + turnCosts;
     }
 
@@ -84,11 +88,16 @@ public class TurnWeighting implements Weighting {
         if (prevOrNextEdgeId == EdgeIterator.NO_EDGE)
             return millis;
 
-        // TODO for now assume turn costs are returned in milliseconds?
+        // TODO turn costs are returned in seconds (API should store in seconds but return milliseconds?)
         // should we also separate weighting vs. time for turn? E.g. a fast but dangerous turn - is this common?
-        long turnCostsInMillis = (long) calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId, reverse, false);
+        // TODO why do not adding u-turn costs but added calcWeight?
+        double turnWeight = calcTurnWeight(edgeState.getEdge(), edgeState.getBaseNode(), prevOrNextEdgeId, reverse, false);
+        if (Double.isInfinite(turnWeight))
+            throw new IllegalStateException("Cannot calculate time for forbidden turn "
+                    + prevOrNextEdgeId + "--(" + edgeState.getBaseNode() + ")-->" + edgeState.getEdge()
+                    + " reverse=" + reverse + " " + edgeState.fetchWayGeometry(3));
 
-        return millis + turnCostsInMillis;
+        return millis + (long) turnWeight;
     }
 
     public double calcTurnWeight(int edge, int nodeVia, int prevOrNextEdgeId, boolean reverse, boolean addUturnCost) {

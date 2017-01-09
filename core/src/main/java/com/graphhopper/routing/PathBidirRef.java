@@ -24,8 +24,7 @@ import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIterator;
 
 /**
- * This class creates a DijkstraPath from two Edge's resulting from a BidirectionalDijkstra
- * <p>
+ * This class creates a Path from two Edges resulting from a bidirectional Dijkstra
  *
  * @author Peter Karich
  */

@@ -49,6 +49,7 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private PreparationWeighting prepareWeighting;
+    private Weighting originalWeighting;
     private final TraversalMode traversalMode;
     private final LevelEdgeFilter levelFilter;
     private final GraphHopperStorage ghStorage;
@@ -93,18 +94,19 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         this.ghStorage = ghStorage;
         this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
+        this.originalWeighting = weighting;
 
         if (weighting.getFlagEncoder().supports(TurnWeighting.class) && traversalMode.isEdgeBased() &&
                 chGraph.getExtension() instanceof TurnCostExtension) {
             // enable turn-cost support
             this.turnCostStorage = (TurnCostExtension) chGraph.getExtension();
+
+            // TODO turn cost storage should be the one from QueryGraph
             weighting = new TurnWeighting(weighting, turnCostStorage);
         }
         prepareWeighting = new PreparationWeighting(weighting, prepareGraph, traversalMode);
 
         levelFilter = new LevelEdgeFilter(prepareGraph);
-
-
         addScHandler = new AddShortcutHandler();
         calcScHandler = new CalcShortcutHandler();
         originalEdges = dir.find("original_edges_" + AbstractWeighting.weightingToFileName(weighting));
@@ -330,7 +332,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     neighborSW.stop();
                 }
 
-                // TODO optimize: no disconnect for edge-based routing -- will yield problems for small graphs with dead-ends as routing target
+                // TODO optimize: for now no disconnect for edge-based routing as it will yield problems for graphs with dead-ends as routing target
                 if (!traversalMode.isEdgeBased())
                     prepareGraph.disconnect(vehicleAllTmpExplorer, iter);
             }
@@ -410,7 +412,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // set of shortcuts that would be added if adjNode v would be contracted next.
         findShortcuts(calcScHandler.setNode(v));
 
-//        System.out.println(v + "\t " + tmpShortcuts);
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
         //
         // every adjNode has an 'original edge' number associated. initially it is r=1
@@ -418,9 +419,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // r(u,w)=r(u,v)+r(v,w) now we can define
         // originalEdgesCount = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
         int originalEdgesCount = calcScHandler.originalEdgesCount;
-//        for (Shortcut sc : tmpShortcuts) {
-//            originalEdgesCount += sc.originalEdges;
-//        }
 
         // # lowest influence on preparation speed or shortcut creation count
         // (but according to paper should speed up queries)
@@ -709,14 +707,23 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     @Override
     public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
+        Weighting weighting = originalWeighting;
+
+        if (weighting.getFlagEncoder().supports(TurnWeighting.class) && traversalMode.isEdgeBased() &&
+                graph.getExtension() instanceof TurnCostExtension) {
+            // in case of turn costs we need a new weighting as the QueryGraph its TurnCostExtension is stateful
+            weighting = new TurnWeighting(weighting, (TurnCostExtension) graph.getExtension());
+        }
+        PreparationWeighting tmpWeighting = new PreparationWeighting(weighting, prepareGraph, traversalMode);
+
         AbstractBidirAlgo algo;
         if (ASTAR_BI.equals(opts.getAlgorithm())) {
-            AStarBidirection tmpAlgo = createAStarBidirection(graph);
+            AStarBidirection tmpAlgo = createAStarBidirection(graph, tmpWeighting);
             tmpAlgo.setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
             algo = tmpAlgo;
 
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
-            algo = createDijkstraBidirection(graph);
+            algo = createDijkstraBidirection(graph, tmpWeighting);
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");
         }
@@ -726,8 +733,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return algo;
     }
 
-    private AStarBidirection createAStarBidirection(final Graph graph) {
-        return new AStarBidirection(graph, prepareWeighting, traversalMode) {
+    private AStarBidirection createAStarBidirection(final Graph graph, Weighting tmpWeighting) {
+        return new AStarBidirection(graph, tmpWeighting, traversalMode) {
             @Override
             protected void initCollections(int size) {
                 super.initCollections(Math.min(size, 2000));
@@ -753,17 +760,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             public String getName() {
                 return "astarbiCH";
             }
-
-            @Override
-
-            public String toString() {
-                return getName() + "|" + prepareWeighting;
-            }
         };
     }
 
-    private AbstractBidirAlgo createDijkstraBidirection(final Graph graph) {
-        return new DijkstraBidirectionRef(graph, prepareWeighting, traversalMode) {
+    private AbstractBidirAlgo createDijkstraBidirection(final Graph graph, Weighting tmpWeighting) {
+        return new DijkstraBidirectionRef(graph, tmpWeighting, traversalMode) {
             @Override
             protected void initCollections(int size) {
                 super.initCollections(Math.min(size, 2000));
@@ -788,11 +789,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             @Override
             public String getName() {
                 return "dijkstrabiCH";
-            }
-
-            @Override
-            public String toString() {
-                return getName() + "|" + prepareWeighting;
             }
         };
     }
@@ -998,7 +994,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             sc.originalEdges = incomingEdgeOrigCount + getOrigEdgeCount(outgoingEdges.getEdge());
 
             if (turnCostStorage != null) {
-                sc.turnCostInfo = new ArrayList<>();
+                sc.turnCostInfo = new ArrayList<>(5);
                 checkAddTurncosts(u_fromNode, sc.skippedEdge1, sc.turnCostInfo);
                 // if edge is bidirectional and results in a loop, don't add TC again
                 if (u_fromNode != w_toNode || sc.skippedEdge1 != sc.skippedEdge2)

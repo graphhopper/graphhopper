@@ -40,8 +40,6 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class PreparationWeighting implements Weighting {
     private final Weighting userWeighting;
-    private final CHGraphImpl prepareGraph;
-
     private EdgeIteratorState origEdgeUv;
     private EdgeIteratorState origEdgeVw;
     private EdgeExplorer srcInExplorer;
@@ -53,7 +51,6 @@ public class PreparationWeighting implements Weighting {
 
     public PreparationWeighting(Weighting userWeighting, CHGraphImpl prepareGraph, TraversalMode traversalMode) {
         this.userWeighting = userWeighting;
-        this.prepareGraph = prepareGraph;
         this.srcInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(getFlagEncoder(), true, false));
         this.targetOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(getFlagEncoder(), false, true));
         this.traversalMode = traversalMode;
