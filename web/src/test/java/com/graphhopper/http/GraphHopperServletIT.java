@@ -133,6 +133,8 @@ public class GraphHopperServletIT extends BaseServletTester {
         assertEquals(23, instructions.size());
         assertEquals("Continue onto la Callisa", instructions.get(0).get("text"));
         assertEquals("At roundabout, take exit 2", instructions.get(3).get("text"));
+        assertEquals(true, instructions.get(3).get("exited"));
+        assertEquals(false, instructions.get(21).get("exited"));
     }
 
     @Test
