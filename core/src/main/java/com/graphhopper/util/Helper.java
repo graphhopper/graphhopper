@@ -370,9 +370,27 @@ public class Helper {
             AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
                 @Override
                 public Object run() throws Exception {
+                    if (Constants.JAVA_VERSION.equals("9-ea")) {
+                        // >=JDK9 class sun.misc.Unsafe { void invokeCleaner(ByteBuffer buf) }
+                        final Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+                        // we do not need to check for a specific class, we can call the Unsafe method with any buffer class
+                        MethodHandle unmapper = MethodHandles.lookup().findVirtual(unsafeClass, "invokeCleaner",
+                                MethodType.methodType(void.class, ByteBuffer.class));
+                        // fetch the unsafe instance and bind it to the virtual MethodHandle
+                        final Field f = unsafeClass.getDeclaredField("theUnsafe");
+                        f.setAccessible(true);
+                        final Object theUnsafe = f.get(null);
+                        try {
+                            unmapper.bindTo(theUnsafe).invokeExact(buffer);
+                        } catch (Throwable t) {
+                            throw new RuntimeException(t);
+                        }
+                    }
+
                     // Regarding MappedByteBufferAdapter, see #914
                     final Class<?> directByteBufferClass = buffer.getClass().getSimpleName().equals("MappedByteBufferAdapter") ?
                             Class.forName("java.nio.MappedByteBufferAdapter") : Class.forName("java.nio.DirectByteBuffer");
+
                     if (Constants.ANDROID) {
                         final Method dbbFreeMethod = directByteBufferClass.getMethod("free");
                         dbbFreeMethod.setAccessible(true);
@@ -398,25 +416,6 @@ public class Helper {
                     } catch (NoSuchMethodException ex2) {
                         // ignore if method cleaner or clean is not available
 
-                    } catch (RuntimeException ex) {
-                        // a bit ugly as InaccessibleObjectException is available in JDK9 and not before
-                        if (!ex.getClass().getSimpleName().equals("InaccessibleObjectException"))
-                            throw ex;
-
-                        // >=JDK9 class sun.misc.Unsafe { void invokeCleaner(ByteBuffer buf) }
-                        try {
-                            final Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
-                            // we do not need to check for a specific class, we can call the Unsafe method with any buffer class
-                            MethodHandle unmapper = MethodHandles.lookup().findVirtual(unsafeClass, "invokeCleaner",
-                                    MethodType.methodType(void.class, ByteBuffer.class));
-                            // fetch the unsafe instance and bind it to the virtual MethodHandle
-                            final Field f = unsafeClass.getDeclaredField("theUnsafe");
-                            f.setAccessible(true);
-                            final Object theUnsafe = f.get(null);
-                            unmapper.bindTo(theUnsafe).invokeExact(buffer);
-                        } catch (Throwable ex2) {
-                            throw new RuntimeException(ex);
-                        }
                     }
                     return null;
                 }
