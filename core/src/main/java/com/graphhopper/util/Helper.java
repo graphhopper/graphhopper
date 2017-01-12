@@ -395,7 +395,6 @@ public class Helper {
                             // now call sun.misc.Cleaner.clean
                             cleanMethod.invoke(cleaner);
                         }
-                        System.out.println("JDK8 " + Constants.JAVA_VERSION + " " + cleaner);
                     } catch (NoSuchMethodException ex2) {
                         // ignore if method cleaner or clean is not available
 
