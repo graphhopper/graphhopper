@@ -382,6 +382,7 @@ public class Helper {
                         final Object theUnsafe = f.get(null);
                         try {
                             unmapper.bindTo(theUnsafe).invokeExact(buffer);
+                            return null;
                         } catch (Throwable t) {
                             throw new RuntimeException(t);
                         }
