@@ -387,27 +387,36 @@ public class Helper {
                         }
                     }
 
-                    // Regarding MappedByteBufferAdapter, see #914
-                    final Class<?> directByteBufferClass = buffer.getClass().getSimpleName().equals("MappedByteBufferAdapter") ?
-                            Class.forName("java.nio.MappedByteBufferAdapter") : Class.forName("java.nio.DirectByteBuffer");
-
                     // <=JDK8 class DirectByteBuffer { sun.misc.Cleaner cleaner(Buffer buf) }
                     //        then call sun.misc.Cleaner.clean
                     try {
-                        final Method dbbCleanerMethod = directByteBufferClass.getMethod("cleaner");
-                        dbbCleanerMethod.setAccessible(true);
-                        // now call DirectByteBuffer.cleaner(buffer)
-                        final Object cleaner = dbbCleanerMethod.invoke(buffer);
-                        if (cleaner != null) {
-                            final Class<?> cleanerMethodReturnType = dbbCleanerMethod.getReturnType();
-                            final Method cleanMethod = cleanerMethodReturnType.getDeclaredMethod("clean");
-                            cleanMethod.setAccessible(true);
-                            // now call sun.misc.Cleaner.clean
-                            cleanMethod.invoke(cleaner);
+                        if (buffer.getClass().getSimpleName().equals("MappedByteBufferAdapter")) {
+                            if (!Constants.ANDROID)
+                                throw new RuntimeException("MappedByteBufferAdapter only supported for Android at the moment");
+
+                            // Regarding MappedByteBufferAdapter on Android 4.1, see #914
+                            final Class<?> directByteBufferClass = Class.forName("java.nio.MappedByteBufferAdapter");
+                            final Method dbbFreeMethod = directByteBufferClass.getMethod("free");
+                            dbbFreeMethod.setAccessible(true);
+                            // call: ((MappedByteBufferAdapter)buffer).free()
+                            dbbFreeMethod.invoke(buffer);
+                        } else {
+                            final Class<?> directByteBufferClass = Class.forName("java.nio.DirectByteBuffer");
+                            final Method dbbCleanerMethod = directByteBufferClass.getMethod("cleaner");
+                            dbbCleanerMethod.setAccessible(true);
+                            // call: cleaner = ((DirectByteBuffer)buffer).cleaner()
+                            final Object cleaner = dbbCleanerMethod.invoke(buffer);
+                            if (cleaner != null) {
+                                final Class<?> cleanerMethodReturnType = dbbCleanerMethod.getReturnType();
+                                final Method cleanMethod = cleanerMethodReturnType.getDeclaredMethod("clean");
+                                cleanMethod.setAccessible(true);
+                                // call: ((sun.misc.Cleaner)cleaner).clean()
+                                cleanMethod.invoke(cleaner);
+                            }
                         }
                     } catch (NoSuchMethodException ex2) {
                         // ignore if method cleaner or clean is not available
-                        LOGGER.warn("NoSuchMethodException | " + directByteBufferClass.getName() + " | " + Constants.JAVA_VERSION, ex2);
+                        LOGGER.warn("NoSuchMethodException | " + Constants.JAVA_VERSION, ex2);
                     }
                     return null;
                 }
