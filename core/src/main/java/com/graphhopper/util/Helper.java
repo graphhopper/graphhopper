@@ -391,14 +391,6 @@ public class Helper {
                     final Class<?> directByteBufferClass = buffer.getClass().getSimpleName().equals("MappedByteBufferAdapter") ?
                             Class.forName("java.nio.MappedByteBufferAdapter") : Class.forName("java.nio.DirectByteBuffer");
 
-                    if (Constants.ANDROID) {
-                        final Method dbbFreeMethod = directByteBufferClass.getMethod("free");
-                        dbbFreeMethod.setAccessible(true);
-                        // call DirectByteBuffer.free(buffer)
-                        dbbFreeMethod.invoke(buffer);
-                        return null;
-                    }
-
                     // <=JDK8 class DirectByteBuffer { sun.misc.Cleaner cleaner(Buffer buf) }
                     //        then call sun.misc.Cleaner.clean
                     try {
@@ -415,13 +407,13 @@ public class Helper {
                         }
                     } catch (NoSuchMethodException ex2) {
                         // ignore if method cleaner or clean is not available
-
+                        LOGGER.warn("NoSuchMethodException | " + directByteBufferClass.getName() + " | " + Constants.JAVA_VERSION, ex2);
                     }
                     return null;
                 }
             });
         } catch (PrivilegedActionException e) {
-            throw new RuntimeException("unable to unmap the mapped buffer", e);
+            throw new RuntimeException("Unable to unmap the mapped buffer", e);
         }
     }
 
