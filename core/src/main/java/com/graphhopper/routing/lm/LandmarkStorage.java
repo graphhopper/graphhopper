@@ -67,7 +67,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private Weighting lmSelectionWeighting;
     private final TraversalMode traversalMode;
     private boolean initialized;
-    // TODO NOW: change to 500_000 after subnetwork creation works flawlessly
     private int minimumNodes = 500_000;
     private SubnetworkStorage subnetworkStorage;
 
@@ -87,7 +86,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             }
         };
 
-        // TODO make edge base working! When adding turn costs while routing we can still use the normal traversal as this should be always a smaller weight
+        // later make edge base working! Not really necessary as when adding turn costs while routing we can still
+        // use the node based traversal as this is a smaller weight approximation
         this.traversalMode = traversalMode;
         final String name = AbstractWeighting.weightingToFileName(weighting);
         this.landmarkWeightDA = dir.find("landmarks_" + name);
