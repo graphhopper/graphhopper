@@ -17,7 +17,15 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
+import com.graphhopper.util.DouglasPeucker;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.shapes.BBox;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class creates FlagEncoders that are already included in the GraphHopper distribution.

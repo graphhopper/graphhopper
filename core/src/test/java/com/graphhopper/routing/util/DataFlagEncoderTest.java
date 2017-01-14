@@ -7,6 +7,9 @@ import static org.junit.Assert.assertTrue;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
 import com.graphhopper.reader.ReaderWay;
@@ -123,13 +126,13 @@ public class DataFlagEncoderTest {
     public void testDestinationTag() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
-        assertEquals(DataFlagEncoder.AccessValue.ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+        assertEquals(AccessValue.ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
 
         way.setTag("vehicle", "destination");
-        assertEquals(DataFlagEncoder.AccessValue.EVENTUALLY_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
 
         way.setTag("vehicle", "no");
-        assertEquals(DataFlagEncoder.AccessValue.NOT_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+        assertEquals(AccessValue.NOT_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
     }
 
     @Test
@@ -222,5 +225,44 @@ public class DataFlagEncoderTest {
         // important to filter out illegal highways to reduce the number of edges before adding them to the graph
         osmWay.setTag("highway", "building");
         assertTrue(encoder.acceptWay(osmWay) == 0);
+    }
+
+    @Test
+    public void testSpatialLookup() {
+        final ReaderWay osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "track");
+        osmWay.setTag("estimated_center", new GHPoint(1.5, 1.5));
+
+        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertEquals(-1, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
+        assertEquals(AccessValue.ACCESSIBLE, encoder.getEdgeAccessValue(edge.getFlags()));
+
+        SpatialRuleLookup lookup = new SpatialRuleLookupArray(new BBox(1, 2, 1, 2), 1, false);
+        lookup.addRule(new AbstractSpatialRule() {
+            @Override
+            public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
+                return 10;
+            }
+
+            @Override
+            public AccessValue isAccessible(ReaderWay readerWay, String transportationMode) {
+                if(osmWay.hasTag("highway", "track")){
+                    return AccessValue.NOT_ACCESSIBLE;
+                }
+                return AccessValue.ACCESSIBLE;
+            }
+
+            @Override
+            public String getCountryIsoA3Name() {
+                return null;
+            }
+        }.addBorder(new Polygon(new double[]{1,1,2,2}, new double[]{1,2,2,1})));
+        encoder.setSpatialRuleLookup(lookup);
+
+        flags = encoder.handleWayTags(osmWay, 1, 0);
+        edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertEquals(10, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
+        assertEquals(AccessValue.NOT_ACCESSIBLE, encoder.getEdgeAccessValue(edge.getFlags()));
     }
 }

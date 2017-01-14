@@ -17,11 +17,12 @@
  */
 package com.graphhopper.json.geo;
 
+import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 
 /**
- * This interface is used to define an area or location being used to block or change areas in the graph.
+ * This interface is used to define an area or location in a geojson file.
  *
  * @author Peter Karich
  */
@@ -35,4 +36,8 @@ public interface Geometry {
     boolean isPointList();
 
     PointList asPointList();
+
+    boolean isPolygon();
+
+    GeoJsonPolygon asPolygon();
 }
