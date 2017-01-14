@@ -169,6 +169,12 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
                             polygon.contains(center.getLat() + checkDiff, center.getLon() - checkDiff) ||
                             polygon.contains(center.getLat() + checkDiff, center.getLon() + checkDiff)) {
 
+                        if (i >= lookupArray.length)
+                            throw new IllegalArgumentException("longitudes have incorrect boundaries " + polygon.getMinLon() + " -> " + polygon.getMaxLon());
+
+                        if (j >= lookupArray[i].length)
+                            throw new IllegalArgumentException("latitudes have incorrect boundaries " + polygon.getMinLat() + " -> " + polygon.getMaxLat());
+
                         if (lookupArray[i][j] == EMPTY_RULE_INDEX) {
                             lookupArray[i][j] = (byte) ruleIndex;
                         } else {
@@ -192,7 +198,7 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
         }
     }
 
-    private int castByteToInt(byte b){
+    private int castByteToInt(byte b) {
         return b & 0xFF;
     }
 

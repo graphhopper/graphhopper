@@ -65,7 +65,7 @@ public class SpatialRuleLookupBuilder {
                 for (JsonFeature jsonFeature : jsonFeatureCollection.getFeatures()) {
                     if (spatialRule.getCountryIsoA3Name().equals(jsonFeature.getProperty("ISO_A3"))) {
                         Geometry geometry = jsonFeature.getGeometry();
-                        if(!geometry.isPolygon())
+                        if (!geometry.isPolygon())
                             continue;
                         spatialRule.setBorders(geometry.asPolygon().getPolygons());
                         spatialRuleLookup.addRule(spatialRule);
@@ -74,9 +74,8 @@ public class SpatialRuleLookupBuilder {
                 }
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            throw new RuntimeException(e);
         }
-
 
         return spatialRuleLookup;
     }
