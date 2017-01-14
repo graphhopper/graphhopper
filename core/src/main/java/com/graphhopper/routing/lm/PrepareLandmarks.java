@@ -19,12 +19,15 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Landmark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * This class does the preprocessing for the ALT algorithm (A* , landmark, triangle inequality).
@@ -39,7 +42,6 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     private final LandmarkStorage lms;
     private final Weighting weighting;
     private int defaultActiveLandmarks;
-    private Weighting lmSelectionWeighting;
 
     public PrepareLandmarks(Directory dir, GraphHopperStorage graph, Weighting weighting,
                             TraversalMode traversalMode, int landmarks, int activeLandmarks) {
@@ -54,7 +56,11 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     }
 
     public void setLMSelectionWeighting(Weighting w) {
-        lms.setLMSelectionWeighting(lmSelectionWeighting);
+        lms.setLMSelectionWeighting(w);
+    }
+
+    public void setBorderMap(Map<String, Polygon> borderMap) {
+        lms.setBorderMap(borderMap);
     }
 
     public void setMinimumNodes(int nodes) {
@@ -103,7 +109,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
 
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR + ".epsilon", 1);
             AStar astar = (AStar) algo;
-            // TODO change current factor appropriate to the potential different weighting!                        
+            // TODO change current factor appropriate to the potential different weighting (fastest/shortest..)!
             astar.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
             return algo;
