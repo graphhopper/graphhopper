@@ -65,6 +65,9 @@ public class DefaultModule extends AbstractModule {
         GraphHopper tmp = new GraphHopperOSM(){
             @Override
             protected void prepareLM() {
+                if(getLMFactoryDecorator().getPreparations().isEmpty())
+                    return;
+
                 try {
                     GHJson ghJson = new GHJsonBuilder().create();
                     JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(
@@ -84,9 +87,6 @@ public class DefaultModule extends AbstractModule {
                             }
                         }
                     }
-
-                    if (getLMFactoryDecorator().getPreparations().isEmpty())
-                        throw new RuntimeException("LM preps are empty!?");
 
                     for (PrepareLandmarks prep : getLMFactoryDecorator().getPreparations()) {
                         prep.setBorderMap(map);
