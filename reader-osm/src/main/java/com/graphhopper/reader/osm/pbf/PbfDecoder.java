@@ -50,7 +50,6 @@ public class PbfDecoder implements Runnable {
         dataWaitCondition = lock.newCondition();
 
         // Create the queue of blobs being decoded.
-        // TODO #916 blobResults = new ArrayBlockingQueue<>(1000);
         blobResults = new LinkedList<>();
     }
 

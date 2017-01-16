@@ -23,6 +23,8 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 
+import java.util.List;
+
 /**
  * Result of LocationIndex lookup.
  * <pre> X=query coordinates S=snapped coordinates: "snapping" real coords to road N=tower or pillar
@@ -49,8 +51,10 @@ public class QueryResult {
     }
 
     /**
-     * @return the closest matching node. -1 if nothing found, this should be avoided via a call of
-     * 'isValid'
+     * Returns the closest matching node. This is either a tower node of the base graph
+     * or a virtual node (see also {@link com.graphhopper.routing.QueryGraph#lookup(List)}).
+     *
+     * @return -1 if nothing found, this should be avoided via a call of 'isValid'
      */
     public int getClosestNode() {
         return closestNode;
@@ -165,6 +169,9 @@ public class QueryResult {
     }
 
     /**
+     * Whether the query point is projected onto a tower node, pillar node or somewhere within
+     * the closest edge.
+     *
      * Due to precision differences it is hard to define when something is exactly 90° or "on-node"
      * like TOWER or PILLAR or if it is more "on-edge" (EDGE). The default mechanism is to prefer
      * "on-edge" even if it could be 90°. To prefer "on-node" you could use e.g. GHPoint.equals with

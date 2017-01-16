@@ -291,7 +291,7 @@
             <id>jdk9</id>
             <activation>
                 <activeByDefault>false</activeByDefault>                                
-                <jdk>9</jdk>
+                <jdk>9-ea</jdk>
             </activation>
             <properties />           
             <build>
