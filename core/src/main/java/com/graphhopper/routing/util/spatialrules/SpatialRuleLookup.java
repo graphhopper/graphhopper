@@ -36,8 +36,6 @@ public interface SpatialRuleLookup {
 
     void addRule(SpatialRule rule);
 
-    SpatialRule getEmptyRule();
-
     void visualize(int i);
 
     SpatialRule EMPTY_RULE = new AbstractSpatialRule() {
