@@ -17,18 +17,21 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.List;
 
 /**
- * Lookup a rule depending on the location.
+ * SpatialRuleLookup defines a container that stores SpatialRules and can lookup
+ * a SpatialRule rule depending on the location.
  *
  * @author Robin Boldt
  */
 public interface SpatialRuleLookup {
 
     SpatialRule lookupRule(double lat, double lon);
+
     SpatialRule lookupRule(GHPoint point);
 
     void addRule(SpatialRule rule);
@@ -36,4 +39,21 @@ public interface SpatialRuleLookup {
     SpatialRule getEmptyRule();
 
     void visualize(int i);
+
+    SpatialRule EMPTY_RULE = new AbstractSpatialRule() {
+        @Override
+        public double getMaxSpeed(ReaderWay readerWay, String transportationMode) {
+            return -1;
+        }
+
+        @Override
+        public AccessValue isAccessible(ReaderWay readerWay, String transportationMode) {
+            return AccessValue.ACCESSIBLE;
+        }
+
+        @Override
+        public String getCountryIsoA3Name() {
+            return "";
+        }
+    };
 }

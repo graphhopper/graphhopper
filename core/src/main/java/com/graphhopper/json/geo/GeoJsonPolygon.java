@@ -25,7 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Created by robin on 12.12.16.
+ * Wrapper class for the {@link Polygon}.
  */
 public class GeoJsonPolygon implements Geometry {
 
@@ -34,7 +34,7 @@ public class GeoJsonPolygon implements Geometry {
 
     @Override
     public String getType() {
-        return null;
+        return "Polygon";
     }
 
     @Override
@@ -44,7 +44,7 @@ public class GeoJsonPolygon implements Geometry {
 
     @Override
     public GHPoint asPoint() {
-        return null;
+        throw new UnsupportedOperationException("Not supported");
     }
 
     @Override
@@ -54,7 +54,7 @@ public class GeoJsonPolygon implements Geometry {
 
     @Override
     public PointList asPointList() {
-        return null;
+        throw new UnsupportedOperationException("Not supported");
     }
 
     @Override

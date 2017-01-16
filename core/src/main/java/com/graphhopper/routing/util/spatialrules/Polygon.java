@@ -20,7 +20,10 @@ package com.graphhopper.routing.util.spatialrules;
 import com.graphhopper.util.shapes.GHPoint;
 
 /**
- * TODO: Implement Shape?
+ * This class represents a polygon that is defined by a set of points.
+ * Every point i is connected to point i-1 and i+1.
+ * <p>
+ * TODO: Howto design inner rings in the polygon?
  *
  * @author Robin Boldt
  */
@@ -66,6 +69,9 @@ public class Polygon {
         epsilon = (maxLat - minLat) / 10;
     }
 
+    /**
+     * Wrapper method for {@link Polygon#contains(double, double)}.
+     */
     public boolean contains(GHPoint point) {
         return contains(point.lat, point.lon);
     }
@@ -74,8 +80,8 @@ public class Polygon {
      * Implements the ray casting algorithm
      * Code is inspired from here: http://stackoverflow.com/a/218081/1548788
      *
-     * @param lat
-     * @param lon
+     * @param lat Latitude of the point to be checked
+     * @param lon Longitude of the point to be checked
      * @return true if point is inside polygon
      */
     public boolean contains(double lat, double lon) {

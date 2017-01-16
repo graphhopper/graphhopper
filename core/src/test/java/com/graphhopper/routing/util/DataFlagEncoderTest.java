@@ -241,7 +241,7 @@ public class DataFlagEncoderTest {
         SpatialRuleLookup lookup = new SpatialRuleLookupArray(new BBox(1, 2, 1, 2), 1, false);
         lookup.addRule(new AbstractSpatialRule() {
             @Override
-            public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
+            public double getMaxSpeed(ReaderWay readerWay, String transportationMode) {
                 return 10;
             }
 

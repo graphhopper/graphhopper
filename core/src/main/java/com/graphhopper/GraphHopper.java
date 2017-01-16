@@ -24,8 +24,6 @@ import com.graphhopper.reader.dem.CGIARProvider;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.dem.TunnelElevationInterpolator;
-import com.graphhopper.routing.util.spatialrules.EmptySpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.storage.change.ChangeGraphHelper;
 import com.graphhopper.storage.change.ChangeGraphResponse;
 import com.graphhopper.routing.*;
@@ -114,8 +112,6 @@ public class GraphHopper implements GraphHopperAPI {
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = FlagEncoderFactory.DEFAULT;
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
-
-    private SpatialRuleLookup spatialRuleLookup = new EmptySpatialRuleLookup();
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -1263,15 +1259,5 @@ public class GraphHopper implements GraphHopperAPI {
 
     public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
         this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
-    }
-
-    public void setSpatialRuleLookup(SpatialRuleLookup spatialRuleLookup) {
-        this.spatialRuleLookup = spatialRuleLookup;
-        if(encodingManager.supports("generic")){
-            DataFlagEncoder encoder = (DataFlagEncoder) encodingManager.getEncoder("generic");
-            encoder.setSpatialRuleLookup(spatialRuleLookup);
-        }
-
-
     }
 }

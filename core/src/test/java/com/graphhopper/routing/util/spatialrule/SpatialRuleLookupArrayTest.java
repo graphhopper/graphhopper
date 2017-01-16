@@ -182,7 +182,7 @@ public class SpatialRuleLookupArrayTest {
     private SpatialRule getSpatialRule(Polygon p, final String name){
         SpatialRule rule = new AbstractSpatialRule() {
             @Override
-            public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
+            public double getMaxSpeed(ReaderWay readerWay, String transportationMode) {
                 return 0;
             }
 

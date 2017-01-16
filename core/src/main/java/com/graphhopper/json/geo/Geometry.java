@@ -22,7 +22,7 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint;
 
 /**
- * This interface is used to define an area or location in a geojson file.
+ * This interface is used to define an area or location in geojson format.
  *
  * @author Peter Karich
  */

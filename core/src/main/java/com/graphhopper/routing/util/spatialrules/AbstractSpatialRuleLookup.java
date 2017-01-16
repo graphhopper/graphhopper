@@ -25,27 +25,6 @@ import com.graphhopper.reader.ReaderWay;
  */
 public abstract class AbstractSpatialRuleLookup implements SpatialRuleLookup {
 
-    public static final SpatialRule EMPTY_RULE = new AbstractSpatialRule() {
-        @Override
-        public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
-            return -1;
-        }
-
-        @Override
-        public AccessValue isAccessible(ReaderWay readerWay, String transportationMode) {
-            return AccessValue.ACCESSIBLE;
-        }
-
-        @Override
-        public String getCountryIsoA3Name() {
-            return "";
-        }
-    };
-
     public static final SpatialRuleContainer EMPTY_RULE_CONTAINER = new SpatialRuleContainer().addRule(EMPTY_RULE);
-
-    public SpatialRule getEmptyRule() {
-        return EMPTY_RULE;
-    }
 
 }

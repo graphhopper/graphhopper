@@ -26,7 +26,7 @@ import com.graphhopper.routing.util.spatialrules.AccessValue;
  */
 public class DefaultSpatialRule extends AbstractSpatialRule {
     @Override
-    public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
+    public double getMaxSpeed(ReaderWay readerWay, String transportationMode) {
         String highwayTag = readerWay.getTag("highway", "");
 
         // We tried to estimate reasonable values: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar

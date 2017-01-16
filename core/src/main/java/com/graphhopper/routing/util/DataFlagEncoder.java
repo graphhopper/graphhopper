@@ -224,7 +224,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             }
         }
 
-        if(accessValue == 0){
+        if (accessValue == 0) {
             GHPoint estmCentre = way.getTag("estimated_center", null);
             if (estmCentre != null) {
                 SpatialRule rule = spatialRuleLookup.lookupRule(estmCentre);
@@ -283,7 +283,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             // MAXSPEED
             double maxSpeed = parseSpeed(way.getTag("maxspeed"));
-            if(maxSpeed < 0){
+            if (maxSpeed < 0) {
                 // TODO What if no maxspeed is set, but only forward and backward, and both are higher than the usually allowed?
                 // TODO Is this the correct place to do this? We could also do this in the GenericWeighting, the DataFlagEncoder.
                 // TODO Should the DataFlagEncoder only place data in the graph if it comes from the source data? e.g. only if data exists in OSM
@@ -362,12 +362,12 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
     }
 
-    private SpatialRule getSpatialRule(ReaderWay way){
+    private SpatialRule getSpatialRule(ReaderWay way) {
         GHPoint estmCentre = way.getTag("estimated_center", null);
         if (estmCentre != null) {
             return spatialRuleLookup.lookupRule(estmCentre);
         }
-        return spatialRuleLookup.getEmptyRule();
+        return spatialRuleLookup.EMPTY_RULE;
     }
 
     @Override

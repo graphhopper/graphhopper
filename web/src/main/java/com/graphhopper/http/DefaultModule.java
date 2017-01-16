@@ -22,6 +22,7 @@ import com.google.inject.name.Names;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
 import org.slf4j.Logger;
@@ -54,7 +55,9 @@ public class DefaultModule extends AbstractModule {
         GraphHopper tmp = new GraphHopperOSM().forServer().init(args);
         //TODO We should set the BBox and resolution
         //TODO, move to a more appropriate place
-        tmp.setSpatialRuleLookup(SpatialRuleLookupBuilder.build());
+        if (tmp.getEncodingManager().supports(("generic"))) {
+            ((DataFlagEncoder) tmp.getEncodingManager().getEncoder("generic")).setSpatialRuleLookup(SpatialRuleLookupBuilder.build());
+        }
         tmp.importOrLoad();
         logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
                 + ", data_reader_file:" + tmp.getDataReaderFile()

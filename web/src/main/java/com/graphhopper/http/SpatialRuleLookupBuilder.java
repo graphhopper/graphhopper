@@ -59,13 +59,13 @@ public class SpatialRuleLookupBuilder {
             GHJson ghJson = new GHJsonBuilder().create();
             JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(new FileReader(new File(SpatialRuleLookupBuilder.class.getResource("countries.geo.json").getFile())), JsonFeatureCollection.class);
 
-            // TODO find outer Border of all used features and create SpatialRuleLookupArray onlyo for these Bounds
+            // TODO find outer border of all SpatialRules and create SpatialRuleLookupArray only for these bounds
 
             for (SpatialRule spatialRule : rules) {
                 for (JsonFeature jsonFeature : jsonFeatureCollection.getFeatures()) {
                     if (spatialRule.getCountryIsoA3Name().equals(jsonFeature.getProperty("ISO_A3"))) {
                         Geometry geometry = jsonFeature.getGeometry();
-                        if(!geometry.isPolygon())
+                        if (!geometry.isPolygon())
                             continue;
                         spatialRule.setBorders(geometry.asPolygon().getPolygons());
                         spatialRuleLookup.addRule(spatialRule);
@@ -74,9 +74,8 @@ public class SpatialRuleLookupBuilder {
                 }
             }
         } catch (FileNotFoundException e) {
-            e.printStackTrace();
+            throw new RuntimeException("File not found", e);
         }
-
 
         return spatialRuleLookup;
     }

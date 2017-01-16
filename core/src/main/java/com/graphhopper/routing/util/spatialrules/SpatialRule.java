@@ -29,7 +29,7 @@ import java.util.List;
  */
 public interface SpatialRule {
 
-    int getMaxSpeed(ReaderWay readerWay, String transportationMode);
+    double getMaxSpeed(ReaderWay readerWay, String transportationMode);
 
     AccessValue isAccessible(ReaderWay readerWay, String transportationMode);
 

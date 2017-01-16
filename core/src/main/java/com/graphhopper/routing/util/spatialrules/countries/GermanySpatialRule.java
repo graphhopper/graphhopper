@@ -28,7 +28,7 @@ import com.graphhopper.routing.util.spatialrules.SpatialRule;
  */
 public class GermanySpatialRule extends DefaultSpatialRule {
 
-    public int getMaxSpeed(ReaderWay readerWay, String transportationMode) {
+    public double getMaxSpeed(ReaderWay readerWay, String transportationMode) {
         String highwayTag = readerWay.getTag("highway", "");
 
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
