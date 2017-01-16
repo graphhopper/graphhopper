@@ -160,8 +160,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         // roughly approximate the maximum distance of the current area but limit to world wide case
         // too small is dangerous regarding performance, e.g. for Germany at least 1500km is very important otherwise speed is at least twice as slow e.g. for just 1000km
-        double distanceInMeter = Math.min(50_000_000, 3 * Helper.DIST_EARTH.calcDist(graph.getBounds().maxLat, graph.getBounds().maxLon, graph.getBounds().minLat, graph.getBounds().minLon));
-//        double distanceInMeter = 1000 * 1000;
+        // TODO approximate the size of the biggest subnetwork instead!
+        // double distanceInMeter = Math.min(50_000_000, 3 * Helper.DIST_EARTH.calcDist(graph.getBounds().maxLat, graph.getBounds().maxLon, graph.getBounds().minLat, graph.getBounds().minLon));
+        double distanceInMeter = 40_000_000;
         double weightMax = weighting.getMinWeight(distanceInMeter);
         // 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
         factor = weightMax / (1 << 16);
