@@ -66,7 +66,7 @@ public class GHServer {
         resHandler.setWelcomeFiles(new String[]{
             "index.html"
         });
-        resHandler.setResourceBase(args.get("jetty.resourcebase", "./src/main/webapp"));
+        resHandler.setResourceBase(args.get("jetty.resourcebase", "./web/src/main/webapp"));
 
         server = new Server();
         // getSessionHandler and getSecurityHandler should always return null

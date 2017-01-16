@@ -43,6 +43,11 @@ import java.util.*;
  * introducing virtual nodes and edges. It is lightweight in order to be created every time a new
  * query comes in, which makes the behaviour thread safe.
  * <p>
+ * Calling any <tt>lookup</tt> method creates virtual edges between the tower nodes of the existing
+ * graph and new virtual tower nodes. Every virtual node has two adjacent nodes and is connected
+ * to each adjacent nodes via 2 virtual edges with opposite base node / adjacent node encoding.
+ * However, the edge explorer returned by {@link #createEdgeExplorer()} only returns two
+ * virtual edges per virtual node (the ones with correct base node).
  *
  * @author Peter Karich
  */
@@ -57,10 +62,8 @@ public class QueryGraph implements Graph {
     private final GraphExtension wrappedExtension;
     // TODO when spreading it on different threads we need multiple independent explorers
     private final Map<Integer, EdgeExplorer> cacheMap = new HashMap<Integer, EdgeExplorer>(4);
-    /**
-     * Virtual edges are created between existing graph and new virtual tower nodes. For every
-     * virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
-     */
+
+    // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
     List<VirtualEdgeIteratorState> virtualEdges;
     private List<QueryResult> queryResults;
     /**
@@ -183,6 +186,8 @@ public class QueryGraph implements Graph {
 
     /**
      * Convenient method to initialize this QueryGraph with the two specified query results.
+     *
+     * @see #lookup(List)
      */
     public QueryGraph lookup(QueryResult fromRes, QueryResult toRes) {
         List<QueryResult> results = new ArrayList<QueryResult>(2);
@@ -193,8 +198,11 @@ public class QueryGraph implements Graph {
     }
 
     /**
-     * For all specified query results calculate snapped point and set closest node and edge to a
-     * virtual one if necessary. Additionally the wayIndex can change if an edge is swapped.
+     * For all specified query results calculate snapped point and if necessary set closest node
+     * to a virtual one and reverse closest edge. Additionally the wayIndex can change if an edge is
+     * swapped.
+     *
+     * @see QueryGraph
      */
     public void lookup(List<QueryResult> resList) {
         if (isInitialized())
@@ -694,6 +702,9 @@ public class QueryGraph implements Graph {
     }
 
     @Override
+    /**
+     * @see QueryGraph
+     */
     public EdgeExplorer createEdgeExplorer() {
         return createEdgeExplorer(EdgeFilter.ALL_EDGES);
     }
