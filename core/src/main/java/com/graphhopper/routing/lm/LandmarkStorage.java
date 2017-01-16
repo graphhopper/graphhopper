@@ -81,6 +81,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
     public LandmarkStorage(GraphHopperStorage graph, Directory dir, int landmarks, final Weighting weighting, TraversalMode traversalMode) {
         this.graph = graph;
+        this.minimumNodes = Math.min(graph.getNodes() / 2, 500_000);
         this.encoder = weighting.getFlagEncoder();
         this.weighting = weighting;
         this.lmSelectionWeighting = new ShortestWeighting(encoder) {
@@ -159,13 +160,13 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         // roughly approximate the maximum distance of the current area but limit to world wide case
         // too small is dangerous regarding performance, e.g. for Germany at least 1500km is very important otherwise speed is at least twice as slow e.g. for just 1000km
-        // double distanceInMeter = Math.min(50_000_000, 3 * Helper.DIST_EARTH.calcDist(graph.getBounds().maxLat, graph.getBounds().maxLon, graph.getBounds().minLat, graph.getBounds().minLon));
-        double distanceInMeter = 1000 * 1000;
+        double distanceInMeter = Math.min(50_000_000, 3 * Helper.DIST_EARTH.calcDist(graph.getBounds().maxLat, graph.getBounds().maxLon, graph.getBounds().minLat, graph.getBounds().minLon));
+//        double distanceInMeter = 1000 * 1000;
         double weightMax = weighting.getMinWeight(distanceInMeter);
         // 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
         factor = weightMax / (1 << 16);
 
-        LOGGER.info("init landmarks for subnetworks with nodeCount greater than " + minimumNodes + ", weightMax:" + weightMax
+        LOGGER.info("init landmarks for subnetworks with node count greater than " + minimumNodes + ", weightMax:" + weightMax
                 + ", factor:" + factor + " from max distance:" + distanceInMeter / 1000f + "km");
 
         // special subnetwork 0
