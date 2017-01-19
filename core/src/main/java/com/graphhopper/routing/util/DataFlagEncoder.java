@@ -358,31 +358,27 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     private long extractMeter(ReaderWay way, long flags, EncodedDoubleValue valueEncoder, List<String> keys) {
-        String value = extractRoadAttribute(way, keys);
-
+        String value = way.getFirstPriorityTag(keys);
         if (Helper.isEmpty(value)) return flags;
 
         double val;
         try {
             val = stringToMeter(value);
-        } catch (Throwable t) {
-            LOG.warn("Unable to extract meter from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), t);
-            val = 0.0;
+        } catch (Exception ex) {
+            LOG.warn("Unable to extract meter from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), ex);
+            return flags;
         }
 
         try {
-            flags = valueEncoder.setDoubleValue(flags, val);
+            return valueEncoder.setDoubleValue(flags, val);
+        } catch (IllegalArgumentException e) {
+            LOG.warn("Unable to process meter value '{}' for way (OSM_ID = {}).", val, way.getId(), e);
+            return flags;
         }
-        catch (IllegalArgumentException e) {
-            LOG.warn("Unable to process value '{}' for way (OSM_ID = {}).", val, way.getId(), e);
-        }
-
-        return flags;
     }
 
     private long extractTons(ReaderWay way, long flags, EncodedDoubleValue valueEncoder, List<String> keys) {
-        String value = extractRoadAttribute(way, keys);
-
+        String value = way.getFirstPriorityTag(keys);
         if (Helper.isEmpty(value)) return flags;
 
         double val;
@@ -390,25 +386,15 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             val = stringToTons(value);
         } catch (Throwable t) {
             LOG.warn("Unable to extract tons from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), t);
-            val = 0.0;
+            return flags;
         }
 
         return valueEncoder.setDoubleValue(flags, val);
     }
 
-    private String extractRoadAttribute(ReaderWay way, List<String> keys) {
-        String value = null;
-
-        for (String key : keys) {
-            value = way.getTag(key);
-            if (!Helper.isEmpty(value)) break;
-        }
-
-        return value;
-    }
-
-    double stringToTons(String value) {
+    public static double stringToTons(String value) {
         value = value.toLowerCase().replaceAll(" ", "").replaceAll("(tons|ton)", "t");
+        value = value.replace("mgw", "").trim();
         double factor = 1;
         if (value.endsWith("t")) {
             value = value.substring(0, value.length() - 1);
@@ -420,11 +406,15 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return Double.parseDouble(value) * factor;
     }
 
-    double stringToMeter(String value) {
+    public static double stringToMeter(String value) {
         value = value.toLowerCase().replaceAll(" ", "").replaceAll("(meters|meter|mtrs|mtr|mt|m\\.)", "m");
         double factor = 1;
         double offset = 0;
         value = value.replaceAll("(\\\"|\'\')", "in").replaceAll("(\'|feet)", "ft");
+        if (value.startsWith("~") || value.contains("approx")) {
+            value = value.replaceAll("(\\~|approx)", "").trim();
+            factor = 0.8;
+        }
 
         if (value.endsWith("in")) {
             int startIndex = value.indexOf("ft");

@@ -231,38 +231,54 @@ public class DataFlagEncoderTest {
 
     @Test
     public void stringToMeter() {
-        double height = 1.5;
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5m"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5 m"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5   m"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5 meter"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("4 ft 11 in"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("4'11''"), DELTA);
 
-        assertEquals(height, encoder.stringToMeter("1.5"), DELTA);
-        assertEquals(height, encoder.stringToMeter("1.5m"), DELTA);
-        assertEquals(height, encoder.stringToMeter("1.5 m"), DELTA);
-        assertEquals(height, encoder.stringToMeter("1.5   m"), DELTA);
-        assertEquals(height, encoder.stringToMeter("1.5 meter"), DELTA);
-        assertEquals(height, encoder.stringToMeter("4 ft 11 in"), DELTA);
-        assertEquals(height, encoder.stringToMeter("4'11''"), DELTA);
+
+        assertEquals(3, DataFlagEncoder.stringToMeter("3 m."), DELTA);
+        assertEquals(3, DataFlagEncoder.stringToMeter("3meters"), DELTA);
+        assertEquals(0.8 * 3, DataFlagEncoder.stringToMeter("~3"), DELTA);
+        assertEquals(3 * 0.8, DataFlagEncoder.stringToMeter("3 m approx"), DELTA);
+
+        // 2.743 + 0.178
+        assertEquals(2.921, DataFlagEncoder.stringToMeter("9 ft 7in"), DELTA);
+        assertEquals(2.921, DataFlagEncoder.stringToMeter("9'7\""), DELTA);
+        assertEquals(2.921, DataFlagEncoder.stringToMeter("9'7''"), DELTA);
+        assertEquals(2.921, DataFlagEncoder.stringToMeter("9' 7\""), DELTA);
+
+        assertEquals(2.743, DataFlagEncoder.stringToMeter("9'"), DELTA);
+        assertEquals(2.743, DataFlagEncoder.stringToMeter("9 feet"), DELTA);
     }
 
     @Test(expected = NumberFormatException.class)
     public void stringToMeterException() {
         // Unexpected values
-        encoder.stringToMeter("height limit 1.5m");
+        DataFlagEncoder.stringToMeter("height limit 1.5m");
     }
 
     @Test
     public void stringToTons() {
-        double weight = 1.5;
+        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5 t"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5   t"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5 tons"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5 ton"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToTons("3306.9 lbs"), DELTA);
+        assertEquals(3, DataFlagEncoder.stringToTons("3 T"), DELTA);
+        assertEquals(3, DataFlagEncoder.stringToTons("3ton"), DELTA);
 
-        assertEquals(weight, encoder.stringToTons("1.5"), DELTA);
-        assertEquals(weight, encoder.stringToTons("1.5 t"), DELTA);
-        assertEquals(weight, encoder.stringToTons("1.5   t"), DELTA);
-        assertEquals(weight, encoder.stringToTons("1.5 tons"), DELTA);
-        assertEquals(weight, encoder.stringToTons("1.5 ton"), DELTA);
-        assertEquals(weight, encoder.stringToTons("3306.9 lbs"), DELTA);
+        // maximum gross weight
+        assertEquals(6, DataFlagEncoder.stringToTons("6t mgw"), DELTA);
     }
 
     @Test(expected = NumberFormatException.class)
     public void stringToTonsException() {
         // Unexpected values
-        encoder.stringToTons("weight limit 1.5t");
+        DataFlagEncoder.stringToTons("weight limit 1.5t");
     }
 }
