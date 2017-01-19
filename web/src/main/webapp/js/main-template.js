@@ -555,6 +555,14 @@ function routeLatLng(request, doQuery) {
             };
         };
 
+        if(json.paths.length > 0 && json.paths[0].points_order) {
+            mapLayer.clearLayers();
+            var po = json.paths[0].points_order;
+            for (var i = 0; i < po.length; i++) {
+                setFlag(ghRequest.route.getIndex(po[i]), i);
+            }
+        }
+
         for (var pathIndex = 0; pathIndex < json.paths.length; pathIndex++) {
             var tabHeader = $("<li>").append((pathIndex + 1) + "<img class='alt_route_img' src='img/alt_route.png'/>");
             if (pathIndex === 0)
