@@ -4,9 +4,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.graphhopper.reader.ReaderWay;
@@ -15,6 +17,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
+import org.junit.rules.ExpectedException;
 
 /**
  * @author Peter Karich
@@ -24,9 +27,11 @@ public class DataFlagEncoderTest {
     private final EncodingManager encodingManager;
     private final int motorVehicleInt;
 
+    private final double DELTA = 0.1;
+
     public DataFlagEncoderTest() {
         encoder = new DataFlagEncoder();
-        encodingManager = new EncodingManager(encoder);
+        encodingManager = new EncodingManager(Arrays.asList(encoder), 8);
 
         motorVehicleInt = encoder.getAccessType("motor_vehicle");
     }
@@ -222,5 +227,42 @@ public class DataFlagEncoderTest {
         // important to filter out illegal highways to reduce the number of edges before adding them to the graph
         osmWay.setTag("highway", "building");
         assertTrue(encoder.acceptWay(osmWay) == 0);
+    }
+
+    @Test
+    public void stringToMeter() {
+        double height = 1.5;
+
+        assertEquals(height, encoder.stringToMeter("1.5"), DELTA);
+        assertEquals(height, encoder.stringToMeter("1.5m"), DELTA);
+        assertEquals(height, encoder.stringToMeter("1.5 m"), DELTA);
+        assertEquals(height, encoder.stringToMeter("1.5   m"), DELTA);
+        assertEquals(height, encoder.stringToMeter("1.5 meter"), DELTA);
+        assertEquals(height, encoder.stringToMeter("4 ft 11 in"), DELTA);
+        assertEquals(height, encoder.stringToMeter("4'11''"), DELTA);
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void stringToMeterException() {
+        // Unexpected values
+        encoder.stringToMeter("height limit 1.5m");
+    }
+
+    @Test
+    public void stringToTons() {
+        double weight = 1.5;
+
+        assertEquals(weight, encoder.stringToTons("1.5"), DELTA);
+        assertEquals(weight, encoder.stringToTons("1.5 t"), DELTA);
+        assertEquals(weight, encoder.stringToTons("1.5   t"), DELTA);
+        assertEquals(weight, encoder.stringToTons("1.5 tons"), DELTA);
+        assertEquals(weight, encoder.stringToTons("1.5 ton"), DELTA);
+        assertEquals(weight, encoder.stringToTons("3306.9 lbs"), DELTA);
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void stringToTonsException() {
+        // Unexpected values
+        encoder.stringToTons("weight limit 1.5t");
     }
 }

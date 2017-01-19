@@ -19,11 +19,13 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.util.EncodedValue;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.shapes.Shape;
 
@@ -37,21 +39,28 @@ import java.util.List;
  * @author Peter Karich
  */
 public class GenericWeighting extends AbstractWeighting {
+
+    public static final String HEIGHT_LIMIT = "height";
+    public static final String WEIGHT_LIMIT = "weight";
+    public static final String WIDTH_LIMIT = "width";
     /**
      * Convert to milliseconds for correct calcMillis.
      */
-    private final static double SPEED_CONV = 3600;
-    private final double headingPenalty;
-    private final long headingPenaltyMillis;
-    private final double maxSpeed;
-    private final DataFlagEncoder gEncoder;
-    private final double[] speedArray;
-    private final int accessType;
-    private final int eventuallAccessiblePenalty = 10;
+    protected final static double SPEED_CONV = 3600;
+    protected final double headingPenalty;
+    protected final long headingPenaltyMillis;
+    protected final double maxSpeed;
+    protected final DataFlagEncoder gEncoder;
+    protected final double[] speedArray;
+    protected final int accessType;
+    protected final int eventuallAccessiblePenalty = 10;
 
-    private final GHIntHashSet blockedEdges;
-    private final List<Shape> blockedShapes;
-    private NodeAccess na;
+    protected final double height;
+    protected final double weight;
+    protected final double width;
+    protected final GHIntHashSet blockedEdges;
+    protected final List<Shape> blockedShapes;
+    protected NodeAccess na;
 
     public GenericWeighting(DataFlagEncoder encoder, ConfigMap cMap) {
         super(encoder);
@@ -72,6 +81,9 @@ public class GenericWeighting extends AbstractWeighting {
         accessType = gEncoder.getAccessType("motor_vehicle");
         blockedEdges = cMap.get(GraphEdgeIdFinder.BLOCKED_EDGES, new GHIntHashSet(0));
         blockedShapes = cMap.get(GraphEdgeIdFinder.BLOCKED_SHAPES, Collections.EMPTY_LIST);
+        height = cMap.getDouble(HEIGHT_LIMIT, 0d);
+        weight = cMap.getDouble(WEIGHT_LIMIT, 0d);
+        width = cMap.getDouble(WIDTH_LIMIT, 0d);
     }
 
     @Override
@@ -86,6 +98,11 @@ public class GenericWeighting extends AbstractWeighting {
             if (!gEncoder.isBackward(edgeState, accessType))
                 return Double.POSITIVE_INFINITY;
         } else if (!gEncoder.isForward(edgeState, accessType))
+            return Double.POSITIVE_INFINITY;
+
+        if (overLimit(height, gEncoder.getHeightLimit(edgeState)) ||
+            overLimit(weight, gEncoder.getWeightLimit(edgeState)) ||
+            overLimit(width, gEncoder.getWidthLimit(edgeState)))
             return Double.POSITIVE_INFINITY;
 
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
@@ -112,6 +129,10 @@ public class GenericWeighting extends AbstractWeighting {
         }
 
         return time;
+    }
+
+    private boolean overLimit(double height, double heightLimit) {
+        return height > 0 && heightLimit > 0 && height >= heightLimit;
     }
 
     @Override

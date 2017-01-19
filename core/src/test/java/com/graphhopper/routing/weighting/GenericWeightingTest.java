@@ -33,6 +33,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -42,7 +43,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class GenericWeightingTest {
     private final DataFlagEncoder encoder = new DataFlagEncoder();
-    private final EncodingManager em = new EncodingManager(encoder);
+    private final EncodingManager em = new EncodingManager(Arrays.asList(encoder), 8);
     private Graph graph;
 
     private final double edgeWeight = 566111;
@@ -52,6 +53,7 @@ public class GenericWeightingTest {
         ReaderWay way = new ReaderWay(27l);
         way.setTag("highway", "primary");
         way.setTag("maxspeed", "10");
+        way.setTag("maxheight", "4.4");
 
         graph = new GraphBuilder(em).create();
         // 0-1
@@ -112,5 +114,18 @@ public class GenericWeightingTest {
         ConfigMap cMap = encoder.readStringMap(new PMap());
         GenericWeighting weighting = new GenericWeighting(encoder, cMap);
         weighting.setGraph(null);
+    }
+
+    @Test
+    public void testRoadAttributeRestriction() {
+        EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
+        ConfigMap cMap = encoder.readStringMap(new PMap());
+        cMap.put(GenericWeighting.HEIGHT_LIMIT, 4.0);
+        Weighting instance = new GenericWeighting(encoder, cMap);
+        assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
+
+        cMap.put(GenericWeighting.HEIGHT_LIMIT, 5.0);
+        instance = new GenericWeighting(encoder, cMap);
+        assertEquals(Double.POSITIVE_INFINITY, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
     }
 }

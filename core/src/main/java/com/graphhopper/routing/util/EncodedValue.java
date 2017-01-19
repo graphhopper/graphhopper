@@ -85,6 +85,10 @@ public class EncodedValue {
         return flags | value;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public long getValue(long flags) {
         // find value
         flags &= mask;

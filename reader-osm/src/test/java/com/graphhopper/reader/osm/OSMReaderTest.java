@@ -64,6 +64,7 @@ public class OSMReaderTest {
     private final String fileNegIds = "test-osm-negative-ids.xml";
     private final String fileBarriers = "test-barriers.xml";
     private final String fileTurnRestrictions = "test-restrictions.xml";
+    private final String fileRoadAttributes = "test-road-attributes.xml";
     private final String dir = "./target/tmp/test-db";
     private CarFlagEncoder carEncoder;
     private BikeFlagEncoder bikeEncoder;
@@ -509,6 +510,48 @@ public class OSMReaderTest {
         costsFlags = tcStorage.getTurnCostFlags(edge10_11, n11, edge11_14);
         assertFalse(carEncoder.isTurnRestricted(costsFlags));
         assertTrue(bikeEncoder.isTurnRestricted(costsFlags));
+    }
+
+    @Test
+    public void testRoadAttributes() {
+        GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
+        hopper.setEncodingManager(new EncodingManager("generic", 8));
+        hopper.importOrLoad();
+
+        Graph graph = hopper.getGraphHopperStorage();
+        DataFlagEncoder encoder = (DataFlagEncoder) hopper.getEncodingManager().getEncoder("generic");
+        assertEquals(5, graph.getNodes());
+
+        int na = AbstractGraphStorageTester.getIdOf(graph, 11.1, 50);
+        int nb = AbstractGraphStorageTester.getIdOf(graph, 12, 51);
+        int nc = AbstractGraphStorageTester.getIdOf(graph, 11.2, 52);
+        int nd = AbstractGraphStorageTester.getIdOf(graph, 11.3, 51);
+        int ne = AbstractGraphStorageTester.getIdOf( graph, 10, 51 );
+
+        EdgeIteratorState edge_ab = GHUtility.getEdge(graph, na, nb);
+        EdgeIteratorState edge_ad = GHUtility.getEdge(graph, na, nd);
+        EdgeIteratorState edge_ae = GHUtility.getEdge(graph, na, ne);
+        EdgeIteratorState edge_bc = GHUtility.getEdge(graph, nb, nc);
+        EdgeIteratorState edge_bd = GHUtility.getEdge(graph, nb, nd);
+        EdgeIteratorState edge_cd = GHUtility.getEdge(graph, nc, nd);
+        EdgeIteratorState edge_ce = GHUtility.getEdge(graph, nc, ne);
+        EdgeIteratorState edge_de = GHUtility.getEdge(graph, nd, ne);
+
+        assertEquals(4.0, encoder.getHeightLimit(edge_ab), 1e-5);
+        assertEquals(2.5, encoder.getWidthLimit(edge_ab), 1e-5);
+        assertEquals(4.4, encoder.getWeightLimit(edge_ab), 1e-5);
+
+        assertEquals(4.0, encoder.getHeightLimit(edge_bc), 1e-5);
+        assertEquals(2.5, encoder.getWidthLimit(edge_bc), 1e-5);
+        assertEquals(4.4, encoder.getWeightLimit(edge_bc), 1e-5);
+
+        assertEquals(4.4, encoder.getHeightLimit(edge_ad), 1e-5);
+        assertEquals(3.5, encoder.getWidthLimit(edge_ad), 1e-5);
+        assertEquals(17.5, encoder.getWeightLimit(edge_ad), 1e-5);
+
+        assertEquals(4.4, encoder.getHeightLimit(edge_cd), 1e-5);
+        assertEquals(3.5, encoder.getWidthLimit(edge_cd), 1e-5);
+        assertEquals(17.5, encoder.getWeightLimit(edge_cd), 1e-5);
     }
 
     @Test

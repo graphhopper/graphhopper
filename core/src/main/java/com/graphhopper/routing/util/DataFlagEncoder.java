@@ -22,7 +22,10 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -37,6 +40,8 @@ import java.util.Map.Entry;
  * @author Peter Karich
  */
 public class DataFlagEncoder extends AbstractFlagEncoder {
+
+    private static final Logger LOG = LoggerFactory.getLogger(DataFlagEncoder.class);
 
     private static final Map<String, Double> DEFAULT_SPEEDS = new LinkedHashMap<String, Double>() {
         {
@@ -70,6 +75,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private long bit0;
     private EncodedDoubleValue carFwdMaxspeedEncoder;
     private EncodedDoubleValue carBwdMaxspeedEncoder;
+    private EncodedDoubleValue heightEncoder;
+    private EncodedDoubleValue weightEncoder;
+    private EncodedDoubleValue widthEncoder;
     private EncodedValue surfaceEncoder;
     private EncodedValue highwayEncoder;
     private EncodedValue transportModeEncoder;
@@ -155,6 +163,18 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         carBwdMaxspeedEncoder = new EncodedDoubleValue("car bwd maxspeed", shift, speedBits, speedFactor, 0, maxPossibleSpeed, true);
         shift += carBwdMaxspeedEncoder.getBits();
+
+        /* Value range: [3.0m, 5.4m] */
+        heightEncoder = new EncodedDoubleValue("height restriction", shift, 7, 0.1, 0, 12, true);
+        shift += heightEncoder.getBits();
+
+        /* Value range: [1.0t, 59.5t] */
+        weightEncoder = new EncodedDoubleValue("weight restriction", shift, 10, 0.1, 0, 100, true);
+        shift += weightEncoder.getBits();
+
+        /* Value range: [2.5m, 3.5m] */
+        widthEncoder = new EncodedDoubleValue("width restriction", shift, 6, 0.1, 0, 6, true);
+        shift += widthEncoder.getBits();
 
         highwayEncoder = new EncodedValue("highway", shift, 5, 1, 0, highwayMap.size(), true);
         shift += highwayEncoder.getBits();
@@ -276,6 +296,16 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             if (bwdSpeed > 0)
                 flags = carBwdMaxspeedEncoder.setDoubleValue(flags, bwdSpeed);
 
+            // Road attributes (height, weight, width)
+            List<String> heightTags = Arrays.asList("maxheight", "maxheight:physical");
+            flags = extractMeter(way, flags, heightEncoder, heightTags);
+
+            List<String> weightTags = Arrays.asList("maxweight", "maxgcweight");
+            flags = extractTons(way, flags, weightEncoder, weightTags);
+
+            List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical");
+            flags = extractMeter(way, flags, widthEncoder, widthTags);
+
             // SURFACE
             String surfaceValue = way.getTag("surface");
             Integer sValue = surfaceMap.get(surfaceValue);
@@ -324,6 +354,103 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             return flags;
         } catch (Exception ex) {
             throw new RuntimeException("Error while parsing way " + way.toString(), ex);
+        }
+    }
+
+    private long extractMeter(ReaderWay way, long flags, EncodedDoubleValue valueEncoder, List<String> keys) {
+        String value = extractRoadAttribute(way, keys);
+
+        if (Helper.isEmpty(value)) return flags;
+
+        double val;
+        try {
+            val = stringToMeter(value);
+        } catch (Throwable t) {
+            LOG.warn("Unable to extract meter from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), t);
+            val = 0.0;
+        }
+
+        try {
+            flags = valueEncoder.setDoubleValue(flags, val);
+        }
+        catch (IllegalArgumentException e) {
+            LOG.warn("Unable to process value '{}' for way (OSM_ID = {}).", val, way.getId(), e);
+        }
+
+        return flags;
+    }
+
+    private long extractTons(ReaderWay way, long flags, EncodedDoubleValue valueEncoder, List<String> keys) {
+        String value = extractRoadAttribute(way, keys);
+
+        if (Helper.isEmpty(value)) return flags;
+
+        double val;
+        try {
+            val = stringToTons(value);
+        } catch (Throwable t) {
+            LOG.warn("Unable to extract tons from malformed road attribute '{}' for way (OSM_ID = {}).", value, way.getId(), t);
+            val = 0.0;
+        }
+
+        return valueEncoder.setDoubleValue(flags, val);
+    }
+
+    private String extractRoadAttribute(ReaderWay way, List<String> keys) {
+        String value = null;
+
+        for (String key : keys) {
+            value = way.getTag(key);
+            if (!Helper.isEmpty(value)) break;
+        }
+
+        return value;
+    }
+
+    double stringToTons(String value) {
+        value = value.toLowerCase().replaceAll(" ", "").replaceAll("(tons|ton)", "t");
+        double factor = 1;
+        if (value.endsWith("t")) {
+            value = value.substring(0, value.length() - 1);
+        } else if (value.endsWith("lbs")) {
+            value = value.substring(0, value.length() - 3);
+            factor = 0.00045359237;
+        }
+
+        return Double.parseDouble(value) * factor;
+    }
+
+    double stringToMeter(String value) {
+        value = value.toLowerCase().replaceAll(" ", "").replaceAll("(meters|meter|mtrs|mtr|mt|m\\.)", "m");
+        double factor = 1;
+        double offset = 0;
+        value = value.replaceAll("(\\\"|\'\')", "in").replaceAll("(\'|feet)", "ft");
+
+        if (value.endsWith("in")) {
+            int startIndex = value.indexOf("ft");
+            String inchValue;
+            if (startIndex < 0) {
+                startIndex = 0;
+            } else {
+                startIndex += 2;
+            }
+
+            inchValue = value.substring(startIndex, value.length() - 2);
+            value = value.substring(0, startIndex);
+            offset = Double.parseDouble(inchValue) * 0.0254;
+        }
+
+        if (value.endsWith("ft")) {
+            value = value.substring(0, value.length() - 2);
+            factor *= 0.3048;
+        } else if (value.endsWith("m")) {
+            value = value.substring(0, value.length() - 1);
+        }
+
+        if (value.isEmpty()) {
+            return offset;
+        } else {
+            return Double.parseDouble(value) * factor + offset;
         }
     }
 
@@ -475,6 +602,21 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return val;
     }
 
+    public double getHeightLimit(EdgeIteratorState edge) {
+        long flags = edge.getFlags();
+        return heightEncoder.getDoubleValue(flags);
+    }
+
+    public double getWeightLimit(EdgeIteratorState edge) {
+        long flags = edge.getFlags();
+        return weightEncoder.getDoubleValue(flags);
+    }
+
+    public double getWidthLimit(EdgeIteratorState edge) {
+        long flags = edge.getFlags();
+        return widthEncoder.getDoubleValue(flags);
+    }
+
     @Override
     public long flagsDefault(boolean forward, boolean backward) {
         // just pick car mode to set access values?
@@ -575,7 +717,18 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         ConfigMap cMap = new ConfigMap();
         cMap.put("highways", map);
+
+        cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.HEIGHT_LIMIT, 0d);
+        cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.WEIGHT_LIMIT, 0d);
+        cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.WIDTH_LIMIT, 0d);
+
         return cMap;
+    }
+
+    private void cloneDoubleAttribute(PMap weightingMap, ConfigMap cMap, String key, double _default) {
+        if (weightingMap.has(key))
+            cMap.put(key, weightingMap.getDouble(key, _default));
+
     }
 
     public enum AccessValue {
