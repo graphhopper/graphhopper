@@ -69,7 +69,7 @@ but of course this is not necessary.
 OpenStreetMap is directly supported from GraphHopper. Without the amazing data from
 OpenStreetMap GraphHopper wouldn't be possible at all.
 Other map data will need a custom import procedure, see e.g. <a href="https://github.com/graphhopper/graphhopper/issues/277">Ordnance Survey</a>,
-<a href="https://github.com/graphhopper/graphhopper/pull/616">Shapefile like ESRI</a> or <a href="https://github.com/knowname/morituri">Navteq</a>.
+<a href="https://github.com/graphhopper/graphhopper/tree/master/reader-shp">Shapefile like ESRI</a> or <a href="https://github.com/knowname/morituri">Navteq</a>.
 
 ## Written in Java
 
