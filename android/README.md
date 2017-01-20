@@ -1,6 +1,5 @@
-This maven module can be used for various IDEs like NetBeans or Eclipse to
-make GraphHopper offline routing working on Android. For offline
-maps the mapsforge project is used. For more information see the 
-[android docs](https://github.com/graphhopper/graphhopper/blob/master/docs/android/index.md).
+# Android Demo
 
-![simple routing](http://karussell.files.wordpress.com/2012/09/graphhopper-android.png)
+Please visit the documentation [here](../docs/android/index.md)
+
+![simple routing](https://graphhopper.com/blog/wp-content/uploads/2016/10/android-demo-screenshot-2.png)

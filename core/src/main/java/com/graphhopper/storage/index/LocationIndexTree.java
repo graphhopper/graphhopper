@@ -17,7 +17,11 @@
  */
 package com.graphhopper.storage.index;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.cursors.IntCursor;
+import com.carrotsearch.hppc.predicates.IntPredicate;
 import com.graphhopper.coll.GHBitSet;
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.coll.GHTBitSet;
 import com.graphhopper.geohash.SpatialKeyAlgo;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -25,16 +29,13 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.procedure.TIntProcedure;
-import gnu.trove.set.hash.TIntHashSet;
+import java.util.ArrayList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -137,7 +138,7 @@ public class LocationIndexTree implements LocationIndex {
                 (bounds.maxLon - bounds.minLon) / 360 * preciseDistCalc.calcCircumference(lat));
         double tmp = maxDistInMeter / minResolutionInMeter;
         tmp = tmp * tmp;
-        TIntArrayList tmpEntries = new TIntArrayList();
+        IntArrayList tmpEntries = new IntArrayList();
         // the last one is always 4 to reduce costs if only a single entry
         tmp /= 4;
         while (tmp > 1) {
@@ -336,12 +337,13 @@ public class LocationIndexTree implements LocationIndex {
         dataAccess.setSegmentSize(bytes);
     }
 
-    TIntArrayList getEntries() {
-        return new TIntArrayList(entries);
+    // just for test
+    IntArrayList getEntries() {
+        return IntArrayList.from(entries);
     }
 
     // fillIDs according to how they are stored
-    final void fillIDs(long keyPart, int intIndex, TIntHashSet set, int depth) {
+    final void fillIDs(long keyPart, int intIndex, GHIntHashSet set, int depth) {
         long pointer = (long) intIndex << 2;
         if (depth == entries.length) {
             int value = dataAccess.getInt(pointer);
@@ -426,11 +428,11 @@ public class LocationIndexTree implements LocationIndex {
     /**
      * Provide info about tilesize for testing / visualization
      */
-    double getDeltaLat() {
+    public double getDeltaLat() {
         return deltaLat;
     }
 
-    double getDeltaLon() {
+    public double getDeltaLon() {
         return deltaLon;
     }
 
@@ -452,7 +454,7 @@ public class LocationIndexTree implements LocationIndex {
      * iteration is necessary and no early finish possible.
      */
     public final boolean findNetworkEntries(double queryLat, double queryLon,
-                                            TIntHashSet foundEntries, int iteration) {
+                                            GHIntHashSet foundEntries, int iteration) {
         // find entries in border of searchbox
         for (int yreg = -iteration; yreg <= iteration; yreg++) {
             double subqueryLat = queryLat + yreg * deltaLat;
@@ -492,11 +494,11 @@ public class LocationIndexTree implements LocationIndex {
         return false;
     }
 
-    final double calcMinDistance(double queryLat, double queryLon, TIntHashSet pointset) {
+    final double calcMinDistance(double queryLat, double queryLon, GHIntHashSet pointset) {
         double min = Double.MAX_VALUE;
-        TIntIterator itr = pointset.iterator();
+        Iterator<IntCursor> itr = pointset.iterator();
         while (itr.hasNext()) {
-            int node = itr.next();
+            int node = itr.next().value;
             double lat = nodeAccess.getLat(node);
             double lon = nodeAccess.getLon(node);
             double dist = distCalc.calcDist(queryLat, queryLon, lat, lon);
@@ -507,7 +509,7 @@ public class LocationIndexTree implements LocationIndex {
         return min;
     }
 
-    final void findNetworkEntriesSingleRegion(TIntHashSet storedNetworkEntryIds, double queryLat, double queryLon) {
+    public final void findNetworkEntriesSingleRegion(GHIntHashSet storedNetworkEntryIds, double queryLat, double queryLon) {
         long keyPart = createReverseKey(queryLat, queryLon);
         fillIDs(keyPart, START_POINTER, storedNetworkEntryIds, 0);
     }
@@ -517,21 +519,21 @@ public class LocationIndexTree implements LocationIndex {
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
 
-        TIntHashSet allCollectedEntryIds = new TIntHashSet();
+        GHIntHashSet allCollectedEntryIds = new GHIntHashSet();
         final QueryResult closestMatch = new QueryResult(queryLat, queryLon);
         for (int iteration = 0; iteration < maxRegionSearch; iteration++) {
-            TIntHashSet storedNetworkEntryIds = new TIntHashSet();
+            GHIntHashSet storedNetworkEntryIds = new GHIntHashSet();
             boolean earlyFinish = findNetworkEntries(queryLat, queryLon, storedNetworkEntryIds, iteration);
             storedNetworkEntryIds.removeAll(allCollectedEntryIds);
             allCollectedEntryIds.addAll(storedNetworkEntryIds);
 
             // clone storedIds to avoid interference with forEach
-            final GHBitSet checkBitset = new GHTBitSet(new TIntHashSet(storedNetworkEntryIds));
+            final GHBitSet checkBitset = new GHTBitSet(new GHIntHashSet(storedNetworkEntryIds));
             // find nodes from the network entries which are close to 'point'
             final EdgeExplorer explorer = graph.createEdgeExplorer();
-            storedNetworkEntryIds.forEach(new TIntProcedure() {
+            storedNetworkEntryIds.forEach(new IntPredicate() {
                 @Override
-                public boolean execute(int networkEntryNodeId) {
+                public boolean apply(int networkEntryNodeId) {
                     new XFirstSearchCheck(queryLat, queryLon, checkBitset, edgeFilter) {
                         @Override
                         protected double getQueryDistance() {
@@ -596,13 +598,13 @@ public class LocationIndexTree implements LocationIndex {
             return "LEAF " + /*key +*/ " " + super.toString();
         }
 
-        TIntArrayList getResults() {
+        IntArrayList getResults() {
             return this;
         }
     }
 
     // Space efficient sorted integer set. Suited for only a few entries.
-    static class SortedIntSet extends TIntArrayList {
+    static class SortedIntSet extends IntArrayList {
         public SortedIntSet() {
         }
 
@@ -614,7 +616,7 @@ public class LocationIndexTree implements LocationIndex {
          * Allow adding a value only once
          */
         public boolean addOnce(int value) {
-            int foundIndex = binarySearch(value);
+            int foundIndex = Arrays.binarySearch(buffer, 0, size(), value);
             if (foundIndex >= 0) {
                 return false;
             }
@@ -769,7 +771,7 @@ public class LocationIndexTree implements LocationIndex {
                 int bits = keyAlgo.getBits();
                 // print reverse keys
                 sb.append(BitUtil.BIG.toBitString(BitUtil.BIG.reverse(key, bits), bits)).append("  ");
-                TIntArrayList entries = leaf.getResults();
+                IntArrayList entries = leaf.getResults();
                 for (int i = 0; i < entries.size(); i++) {
                     sb.append(leaf.get(i)).append(',');
                 }
@@ -791,7 +793,7 @@ public class LocationIndexTree implements LocationIndex {
             long refPointer = (long) intIndex * 4;
             if (entry.isLeaf()) {
                 InMemLeafEntry leaf = ((InMemLeafEntry) entry);
-                TIntArrayList entries = leaf.getResults();
+                IntArrayList entries = leaf.getResults();
                 int len = entries.size();
                 if (len == 0) {
                     return intIndex;

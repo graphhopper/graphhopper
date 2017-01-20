@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
 import com.graphhopper.routing.util.BikeFlagEncoder;
@@ -28,7 +29,6 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
-import gnu.trove.list.TIntList;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -635,7 +635,7 @@ public class PrepareContractionHierarchiesTest {
         checkPath(ghStorage, bikeWeighting, 9, 5, Helper.createTList(3, 10, 14, 16, 13, 12));
     }
 
-    void checkPath(GraphHopperStorage ghStorage, Weighting w, int expShortcuts, double expDistance, TIntList expNodes) {
+    void checkPath(GraphHopperStorage ghStorage, Weighting w, int expShortcuts, double expDistance, IntIndexedContainer expNodes) {
         CHGraph lg = ghStorage.getGraph(CHGraph.class, w);
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, ghStorage, lg, w, tMode);
         prepare.doWork();

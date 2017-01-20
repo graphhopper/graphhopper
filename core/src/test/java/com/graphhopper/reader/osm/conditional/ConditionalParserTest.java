@@ -31,11 +31,10 @@ import static org.junit.Assert.*;
  * @author Robin Boldt
  */
 public class ConditionalParserTest extends CalendarBasedTest {
-    ConditionalParser parser;
 
-    @Before
-    public void setup() {
-        HashSet<String> restrictedValues = new HashSet<String>();
+    private final HashSet<String> restrictedValues = new HashSet<String>();
+
+    public ConditionalParserTest() {
         restrictedValues.add("private");
         restrictedValues.add("agricultural");
         restrictedValues.add("forestry");
@@ -44,86 +43,94 @@ public class ConditionalParserTest extends CalendarBasedTest {
         restrictedValues.add("delivery");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
+    }
 
-        parser = new ConditionalParser(restrictedValues);
+    ConditionalParser createParser(Calendar date) {
+        return new ConditionalParser(restrictedValues).addConditionalValueParser(new DateRangeParser(date));
     }
 
     @Test
     public void testParseConditional() throws ParseException {
-        ValueRange dateRange = parser.getRange("no @ (2015 Sep 1-2015 Sep 30)");
-        assertFalse(dateRange.isInRange(getCalendar(2015, Calendar.AUGUST, 31)));
-        assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.SEPTEMBER, 30)));
+        String str = "no @ (2015 Sep 1-2015 Sep 30)";
+        assertFalse(createParser(getCalendar(2015, Calendar.AUGUST, 31)).checkCondition(str));
+        assertTrue(createParser(getCalendar(2015, Calendar.SEPTEMBER, 30)).checkCondition(str));
     }
 
     @Test
     public void testParseAllowingCondition() throws ParseException {
-        ValueRange dateRange = parser.getRange("yes @ (2015 Sep 1-2015 Sep 30)");
-        assertNull(dateRange);
+        assertFalse(createParser(getCalendar(2015, Calendar.JANUARY, 12)).
+                checkCondition("yes @ (2015 Sep 1-2015 Sep 30)"));
     }
 
     @Test
     public void testParsingOfLeading0() throws ParseException {
-        ValueRange dateRange = parser.getRange("no @ (01.11. - 31.03.)");
-        assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 2)));
+        assertTrue(createParser(getCalendar(2015, Calendar.DECEMBER, 2)).
+                checkCondition("no @ (01.11. - 31.03.)"));
 
-        dateRange = parser.getRange("no @ (01.11 - 31.03)");
-        assertTrue(dateRange.isInRange(getCalendar(2015, Calendar.DECEMBER, 2)));
+        assertTrue(createParser(getCalendar(2015, Calendar.DECEMBER, 2)).
+                checkCondition("no @ (01.11 - 31.03)"));
     }
 
     @Test
     public void testGetRange() throws Exception {
+        assertTrue(ConditionalParser.createNumberParser("weight", 11).checkCondition("weight > 10").isCheckPassed());
+        assertFalse(ConditionalParser.createNumberParser("weight", 10).checkCondition("weight > 10").isCheckPassed());
+        assertFalse(ConditionalParser.createNumberParser("weight", 9).checkCondition("weight > 10").isCheckPassed());
+        assertFalse(ConditionalParser.createNumberParser("xy", 9).checkCondition("weight > 10").isValid());
+
         Set<String> set = new HashSet<>();
         set.add("no");
-        ConditionalParser instance = new ConditionalParser(set);
+        ConditionalParser instance = new ConditionalParser(set).
+                setConditionalValueParser(ConditionalParser.createNumberParser("weight", 11));
+        assertTrue(instance.checkCondition("no @weight>10"));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 10));
+        assertFalse(instance.checkCondition("no @weight>10"));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 9));
+        assertFalse(instance.checkCondition("no @weight>10"));
 
-        ValueRange result = instance.getRange("no @ weight > 10");
-        assertEquals("weight", result.getKey());
-        assertTrue(result.isInRange(11));
-        assertFalse(result.isInRange(10));
-        assertFalse(result.isInRange(9));
-
-        result = instance.getRange("no @weight>10");
-        assertTrue(result.isInRange(11));
-        assertFalse(result.isInRange(10));
-        assertFalse(result.isInRange(9));
-
-        result = instance.getRange("no @ weight < 10");
-        assertFalse(result.isInRange(11));
-        assertFalse(result.isInRange(10));
-        assertTrue(result.isInRange(9));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 11));
+        assertFalse(instance.checkCondition("no @ weight < 10"));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 10));
+        assertFalse(instance.checkCondition("no @ weight < 10"));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 9));
+        assertTrue(instance.checkCondition("no @ weight < 10"));
 
         // equals is ignored for now (not that bad for weight)
-        result = instance.getRange("no @ weight <= 10");
-        assertFalse(result.isInRange(11));
-        assertFalse(result.isInRange(10));
-        assertTrue(result.isInRange(9));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 11));
+        assertFalse(instance.checkCondition("no @ weight <= 10"));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 10));
+        assertFalse(instance.checkCondition("no @ weight <= 10"));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 9));
+        assertTrue(instance.checkCondition("no @ weight <= 10"));
 
-        result = instance.getRange("no @ weight<=10");
-        assertFalse(result.isInRange(11));
-        assertFalse(result.isInRange(10));
-        assertTrue(result.isInRange(9));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 11));
+        assertFalse(instance.checkCondition("no @ weight<=10"));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 10));
+        assertFalse(instance.checkCondition("no @ weight<=10"));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("weight", 9));
+        assertTrue(instance.checkCondition("no @ weight<=10"));
 
-        result = instance.getRange("no @ height > 2");
-        assertEquals("height", result.getKey());
-        assertFalse(result.isInRange(1));
-        assertFalse(result.isInRange(2));
-        assertTrue(result.isInRange(3));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("height", 1));
+        assertFalse(instance.checkCondition("no @ height > 2"));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("height", 2));
+        assertFalse(instance.checkCondition("no @ height > 2"));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("height", 3));
+        assertTrue(instance.checkCondition("no @ height > 2"));
 
-        // unit is allowed according to wiki :/
-        result = instance.getRange("no @ height > 2t");
-        assertEquals("height", result.getKey());
-        assertFalse(result.isInRange(1));
-        assertFalse(result.isInRange(2));
-        assertTrue(result.isInRange(3));
+        // unit is allowed according to wiki
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("height", 1));
+        assertFalse(instance.checkCondition("no @ height > 2t"));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("height", 2));
+        assertFalse(instance.checkCondition("no @ height > 2t"));
+        instance.setConditionalValueParser(ConditionalParser.createNumberParser("height", 3));
+        assertTrue(instance.checkCondition("no @ height > 2t"));
     }
 
     @Test
     public void parseNumber() {
-        // TODO currently no unit conversation is done which can be required if a different one is passed in isInRange        
-        Set<String> set = new HashSet<>();
-        ConditionalParser p = new ConditionalParser(set);
-        assertEquals(3, p.parseNumber("3t"), .1);
-        assertEquals(3.1, p.parseNumber("3.1 t"), .1);
-        assertEquals(3, p.parseNumber("3 meters"), .1);
+        // TODO currently no unit conversation is done which can be required if a different one is passed in checkCondition
+        assertEquals(3, ConditionalParser.parseNumber("3t"), .1);
+        assertEquals(3.1, ConditionalParser.parseNumber("3.1 t"), .1);
+        assertEquals(3, ConditionalParser.parseNumber("3 meters"), .1);
     }
 }

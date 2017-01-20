@@ -23,10 +23,12 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.*;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +40,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class GraphHopperIT {
-    private static final double PRECISION = 0.01;
+
     public static final String DIR = "../core/files";
     private static final String graphFileFoot = "target/graphhopperIT-foot";
     private static final String osmFile = DIR + "/monaco.osm.gz";
@@ -87,7 +89,7 @@ public class GraphHopperIT {
         assertEquals(698, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         PathWrapper arsp = rsp.getBest();
-        assertEquals(3437.58, arsp.getDistance(), PRECISION);
+        assertEquals(3437.6, arsp.getDistance(), .1);
         assertEquals(89, arsp.getPoints().getSize());
 
         assertEquals(43.7276852, arsp.getWaypoints().getLat(0), 1e-7);
@@ -187,6 +189,120 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void testPointHint() {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/Laufamholzstrasse.osm.xml").
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car"));
+        tmpHopper.importOrLoad();
+
+        GHRequest req = new GHRequest(49.46553, 11.154669, 49.465244, 11.152577).
+                setVehicle("car").setWeighting("fastest");
+
+        req.setPointHints(new ArrayList<>(Arrays.asList("Laufamholzstraße, 90482, Nürnberg, Deutschland", "")));
+        GHResponse rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        GHPoint snappedPoint = rsp.getBest().getWaypoints().toGHPoint(0);
+        assertEquals(49.465686, snappedPoint.getLat(), .000001);
+        assertEquals(11.154605, snappedPoint.getLon(), .000001);
+
+        req.setPointHints(new ArrayList<>(Arrays.asList("", "")));
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        snappedPoint = rsp.getBest().getWaypoints().toGHPoint(0);
+        assertEquals(49.465502, snappedPoint.getLat(), .000001);
+        assertEquals(11.154498, snappedPoint.getLon(), .000001);
+
+        // Match to closest edge, since hint was not found
+        req.setPointHints(new ArrayList<>(Arrays.asList("xy", "")));
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        snappedPoint = rsp.getBest().getWaypoints().toGHPoint(0);
+        assertEquals(49.465502, snappedPoint.getLat(), .000001);
+        assertEquals(11.154498, snappedPoint.getLon(), .000001);
+    }
+
+    @Test
+    public void testNorthBayreuthDestination() {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/north-bayreuth.osm.gz").
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car,generic", 8));
+        tmpHopper.importOrLoad();
+
+        GHRequest req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
+                setVehicle("car").setWeighting("fastest");
+
+        GHResponse rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(550, rsp.getBest().getDistance(), 1);
+
+        req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
+                setVehicle("generic").setWeighting("generic");
+
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(550, rsp.getBest().getDistance(), 1);
+    }
+
+    @Test
+    public void testNorthBayreuthBlockeEdges() {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/north-bayreuth.osm.gz").
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("generic", 4));
+        tmpHopper.importOrLoad();
+
+        GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
+                setVehicle("generic").setWeighting("generic");
+
+        GHResponse rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(122, rsp.getBest().getDistance(), 1);
+
+        // block point 49.985759,11.50687
+        req.getHints().put(Routing.BLOCK_AREA, "49.985759,11.50687");
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(365, rsp.getBest().getDistance(), 1);
+
+        req = new GHRequest(49.975845, 11.522598, 50.026821, 11.497364).
+                setVehicle("generic").setWeighting("generic");
+
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(6684, rsp.getBest().getDistance(), 1);
+
+        // block by area
+        String someArea = "49.97986,11.472902,50.003946,11.534357";
+        req.getHints().put(Routing.BLOCK_AREA, someArea);
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(12173, rsp.getBest().getDistance(), 1);
+
+        // Add blocked point to above area, to increase detour        
+        req.getHints().put(Routing.BLOCK_AREA, "50.017578,11.547527;" + someArea);
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(16674, rsp.getBest().getDistance(), 1);
+
+        // block by edge IDs -> i.e. use small circular area
+        req.getHints().put(Routing.BLOCK_AREA, "49.981599,11.517448,100");
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(6879, rsp.getBest().getDistance(), 1);
+
+        // block by edge IDs -> i.e. use small rectangular area
+        req.getHints().put(Routing.BLOCK_AREA, "49.981875,11.515818,49.981088,11.519423");
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(6879, rsp.getBest().getDistance(), 1);
+    }
+
+    @Test
     public void testMonacoVia() {
         GHResponse rsp = hopper.route(new GHRequest().
                 addPoint(new GHPoint(43.727687, 7.418737)).
@@ -195,7 +311,7 @@ public class GraphHopperIT {
                 setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         PathWrapper arsp = rsp.getBest();
-        assertEquals(6875.17, arsp.getDistance(), PRECISION);
+        assertEquals(6875.2, arsp.getDistance(), .1);
         assertEquals(179, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
@@ -237,8 +353,8 @@ public class GraphHopperIT {
                 setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         arsp = rsp.getBest();
-        assertEquals(0, arsp.getDistance(), PRECISION);
-        assertEquals(0, arsp.getRouteWeight(), PRECISION);
+        assertEquals(0, arsp.getDistance(), .1);
+        assertEquals(0, arsp.getRouteWeight(), .1);
         assertEquals(1, arsp.getPoints().getSize());
         assertEquals(1, arsp.getInstructions().size());
         assertEquals("Finish!", arsp.getInstructions().createJson().get(0).get("text"));
@@ -251,8 +367,8 @@ public class GraphHopperIT {
                 setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         arsp = rsp.getBest();
-        assertEquals(0, arsp.getDistance(), PRECISION);
-        assertEquals(0, arsp.getRouteWeight(), PRECISION);
+        assertEquals(0, arsp.getDistance(), .1);
+        assertEquals(0, arsp.getRouteWeight(), .1);
         assertEquals(2, arsp.getPoints().getSize());
         assertEquals(2, arsp.getInstructions().size());
         assertEquals(Instruction.REACHED_VIA, arsp.getInstructions().createJson().get(0).get("sign"));
@@ -290,6 +406,56 @@ public class GraphHopperIT {
                 addPoint(from).
                 addPoint(to).
                 setVehicle(vehicle).setWeighting("fastest");
+        rsp = hopper.route(req);
+
+        assertFalse(rsp.hasErrors());
+    }
+
+    @Test
+    public void testMonacoNonChMaxWaypointDistance() {
+        GHPoint from = new GHPoint(43.741069, 7.426854);
+        GHPoint to = new GHPoint(43.727697, 7.419199);
+
+        GHRequest req = new GHRequest().
+                addPoint(from).
+                addPoint(to).
+                setVehicle(vehicle).setWeighting("fastest");
+
+        // Fail since points are too far
+        hopper.setNonChMaxWaypointDistance(1000);
+        GHResponse rsp = hopper.route(req);
+
+        assertTrue(rsp.hasErrors());
+
+        // Suceed since points are not far anymore
+        hopper.setNonChMaxWaypointDistance(Integer.MAX_VALUE);
+        rsp = hopper.route(req);
+
+        assertFalse(rsp.hasErrors());
+    }
+
+    @Test
+    public void testMonacoNonChMaxWaypointDistanceMultiplePoints() {
+        GHPoint from = new GHPoint(43.741069, 7.426854);
+        GHPoint via = new GHPoint(43.744445, 7.429483);
+        GHPoint to = new GHPoint(43.727697, 7.419199);
+
+        GHRequest req = new GHRequest().
+                addPoint(from).
+                addPoint(via).
+                addPoint(to).
+                setVehicle(vehicle).setWeighting("fastest");
+
+        // Fail since points are too far
+        hopper.setNonChMaxWaypointDistance(1000);
+        GHResponse rsp = hopper.route(req);
+
+        assertTrue(rsp.hasErrors());
+        PointDistanceExceededException exception = (PointDistanceExceededException) rsp.getErrors().get(0);
+        assertEquals(2, exception.getDetails().get("to"));
+
+        // Suceed since points are not far anymore
+        hopper.setNonChMaxWaypointDistance(Integer.MAX_VALUE);
         rsp = hopper.route(req);
 
         assertFalse(rsp.hasErrors());
@@ -336,7 +502,7 @@ public class GraphHopperIT {
                 setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         PathWrapper arsp = rsp.getBest();
-        assertEquals(1626.81, arsp.getDistance(), PRECISION);
+        assertEquals(1626.8, arsp.getDistance(), .1);
         assertEquals(60, arsp.getPoints().getSize());
         assertTrue(arsp.getPoints().is3D());
 
@@ -377,56 +543,54 @@ public class GraphHopperIT {
     @Test
     public void testSRTMWithoutTunnelInterpolation() throws Exception {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
-                        .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                        .setEncodingManager(new EncodingManager(importVehicles, 8));
+                .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
+                .setEncodingManager(new EncodingManager(importVehicles, 8));
 
         tmpHopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
         tmpHopper.importOrLoad();
 
         GHResponse rsp = tmpHopper.route(new GHRequest(43.74056471749763, 7.4299266210693755,
-                        43.73790260334179, 7.427984089259056).setAlgorithm(ASTAR)
-                                        .setVehicle(vehicle).setWeighting(weightCalcStr));
+                43.73790260334179, 7.427984089259056).setAlgorithm(ASTAR)
+                .setVehicle(vehicle).setWeighting(weightCalcStr));
         PathWrapper arsp = rsp.getBest();
-        assertEquals(356.79, arsp.getDistance(), PRECISION);
+        assertEquals(356.5, arsp.getDistance(), .1);
         PointList pointList = arsp.getPoints();
         assertEquals(6, pointList.getSize());
         assertTrue(pointList.is3D());
 
-        assertEquals(17.0, pointList.getEle(0), PRECISION);
-        assertEquals(23.0, pointList.getEle(1), PRECISION);
-        assertEquals(23.0, pointList.getEle(2), PRECISION);
-        assertEquals(41.0, pointList.getEle(3), PRECISION);
-        assertEquals(19.0, pointList.getEle(4), PRECISION);
-        assertEquals(26.5, pointList.getEle(5), PRECISION);
+        assertEquals(20.0, pointList.getEle(0), .1);
+        assertEquals(23.0, pointList.getEle(1), .1);
+        assertEquals(23.0, pointList.getEle(2), .1);
+        assertEquals(41.0, pointList.getEle(3), .1);
+        assertEquals(19.0, pointList.getEle(4), .1);
+        assertEquals(26.5, pointList.getEle(5), .1);
     }
 
     @Test
     public void testSRTMWithTunnelInterpolation() throws Exception {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
-                        .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                        .setEncodingManager(new EncodingManager(genericImportVehicles, 8));
+                .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
+                .setEncodingManager(new EncodingManager(genericImportVehicles, 8));
 
         tmpHopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
         tmpHopper.importOrLoad();
 
         GHResponse rsp = tmpHopper.route(new GHRequest(43.74056471749763, 7.4299266210693755,
-                        43.73790260334179, 7.427984089259056).setAlgorithm(ASTAR)
-                                        .setVehicle(vehicle).setWeighting(weightCalcStr));
+                43.73790260334179, 7.427984089259056).setAlgorithm(ASTAR)
+                .setVehicle(vehicle).setWeighting(weightCalcStr));
         PathWrapper arsp = rsp.getBest();
-        // Without
-        // interpolation:
-        // 356.79372559007476
-        assertEquals(351.39, arsp.getDistance(), PRECISION);
+        // Without interpolation: 356.5
+        assertEquals(351.4, arsp.getDistance(), .1);
         PointList pointList = arsp.getPoints();
         assertEquals(6, pointList.getSize());
         assertTrue(pointList.is3D());
 
-        assertEquals(17, pointList.getEle(0), PRECISION);
-        assertEquals(19.04, pointList.getEle(1), PRECISION);
-        assertEquals(21.67, pointList.getEle(2), PRECISION);
-        assertEquals(25.03, pointList.getEle(3), PRECISION);
-        assertEquals(28.65, pointList.getEle(4), PRECISION);
-        assertEquals(31.32, pointList.getEle(5), PRECISION);
+        assertEquals(17, pointList.getEle(0), .1);
+        assertEquals(19.04, pointList.getEle(1), .1);
+        assertEquals(21.67, pointList.getEle(2), .1);
+        assertEquals(25.03, pointList.getEle(3), .1);
+        assertEquals(28.65, pointList.getEle(4), .1);
+        assertEquals(31.32, pointList.getEle(5), .1);
     }
 
     @Test
@@ -448,7 +612,7 @@ public class GraphHopperIT {
                 setAlgorithm(ASTAR).setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
 
         PathWrapper arsp = rsp.getBest();
-        assertEquals(6932.24, arsp.getDistance(), PRECISION);
+        assertEquals(6932.2, arsp.getDistance(), .1);
         assertEquals(110, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
@@ -599,7 +763,7 @@ public class GraphHopperIT {
         long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
         assertTrue("Too many nodes visited " + sum, sum < 120);
-        assertEquals(3437.59, bestPath.getDistance(), PRECISION);
+        assertEquals(3437.6, bestPath.getDistance(), .1);
         assertEquals(89, bestPath.getPoints().getSize());
 
         tmpHopper.close();
@@ -619,7 +783,7 @@ public class GraphHopperIT {
 
         assertEquals(1, rsp.getAll().size());
         PathWrapper pw = rsp.getBest();
-        assertEquals(1.45, rsp.getBest().getDistance() / 1000f, PRECISION);
+        assertEquals(1.45, rsp.getBest().getDistance() / 1000f, .01);
         assertEquals(17, rsp.getBest().getTime() / 1000f / 60, 1);
         assertEquals(65, pw.getPoints().size());
     }

@@ -17,22 +17,20 @@
  */
 package com.graphhopper.storage.index;
 
+import com.carrotsearch.hppc.IntSet;
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import gnu.trove.list.TIntList;
-import gnu.trove.set.TIntSet;
-import gnu.trove.set.hash.TIntHashSet;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -108,19 +106,16 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
         lg.setLevel(1, 10);
         lg.setLevel(2, 30);
         lg.setLevel(3, 20);
-        TIntList tlist = Helper.createTList(1, 2, 3);
 
         // nodes with high level should come first to be covered by lower level nodes
-        ArrayList<Integer> list = Helper.tIntListToArrayList(tlist);
+        List<Integer> list = Arrays.asList(1, 2, 3);
         Collections.sort(list, new Comparator<Integer>() {
             @Override
             public int compare(Integer o1, Integer o2) {
                 return lg.getLevel(o2) - lg.getLevel(o1);
             }
         });
-        tlist.clear();
-        tlist.addAll(list);
-        assertEquals(Helper.createTList(2, 3, 1), tlist);
+        assertEquals("[2, 3, 1]", list.toString());
     }
 
     @Test
@@ -155,10 +150,10 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
         LocationIndexTree index = createIndex(g, 100000);
 
         // very close to 2, but should match the edge 0--1
-        TIntHashSet set = new TIntHashSet();
+        GHIntHashSet set = new GHIntHashSet();
         index.findNetworkEntries(0.51, 0.2, set, 0);
         index.findNetworkEntries(0.51, 0.2, set, 1);
-        TIntSet expectedSet = new TIntHashSet();
+        IntSet expectedSet = new GHIntHashSet();
         expectedSet.add(0);
         expectedSet.add(2);
         assertEquals(expectedSet, set);

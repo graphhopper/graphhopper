@@ -21,12 +21,9 @@ import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.BeelineWeightApproximator;
-import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
-import static com.graphhopper.util.Parameters.Algorithms.ASTAR;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -651,6 +648,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private AStarBidirection createAStarBidirection(final Graph graph) {
         return new AStarBidirection(graph, prepareWeighting, traversalMode) {
+            @Override
+            protected void initCollections(int size) {
+                super.initCollections(Math.min(size, 2000));
+            }
 
             @Override
             protected boolean finished() {
@@ -683,6 +684,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     private AbstractBidirAlgo createDijkstraBidirection(final Graph graph) {
         return new DijkstraBidirectionRef(graph, prepareWeighting, traversalMode) {
+            @Override
+            protected void initCollections(int size) {
+                super.initCollections(Math.min(size, 2000));
+            }
 
             @Override
             public boolean finished() {

@@ -21,6 +21,8 @@ package com.graphhopper.coll;
  * Wrapper interface of an integer container for different implementations like OpenBitset, BitSet,
  * ...
  * <p>
+ * Loop via<br/>
+ * <code>for (int i = set.next(0); i >= 0; i = set.next(i + 1)) {...}</code>
  *
  * @author Peter Karich
  */

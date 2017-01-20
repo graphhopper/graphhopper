@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.subnetwork;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks.PrepEdgeFilter;
 import com.graphhopper.routing.util.*;
@@ -26,7 +27,6 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import gnu.trove.list.array.TIntArrayList;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -98,7 +98,7 @@ public class PrepareRoutingSubnetworksTest {
         GraphHopperStorage g = createSubnetworkTestStorage();
         PrepEdgeFilter filter = new PrepEdgeFilter(carFlagEncoder);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder));
-        List<TIntArrayList> components = instance.findSubnetworks(filter);
+        List<IntArrayList> components = instance.findSubnetworks(filter);
 
         assertEquals(3, components.size());
 
@@ -114,7 +114,7 @@ public class PrepareRoutingSubnetworksTest {
         GraphHopperStorage g = createSubnetworkTestStorage();
         PrepEdgeFilter filter = new PrepEdgeFilter(carFlagEncoder);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, Collections.singletonList(carFlagEncoder));
-        List<TIntArrayList> components = instance.findSubnetworks(filter);
+        List<IntArrayList> components = instance.findSubnetworks(filter);
         assertEquals(3, components.size());
         int removedEdges = instance.keepLargeNetworks(filter, components);
         assertEquals(8, removedEdges);
@@ -268,13 +268,13 @@ public class PrepareRoutingSubnetworksTest {
         TarjansSCCAlgorithm tarjan
                 = new TarjansSCCAlgorithm(g, new GHBitSetImpl(), filter);
 
-        List<TIntArrayList> components = tarjan.findComponents();
+        List<IntArrayList> components = tarjan.findComponents();
 
         assertEquals(4, components.size());
-        assertEquals(new TIntArrayList(new int[]{13, 5, 3, 7, 0}), components.get(0));
-        assertEquals(new TIntArrayList(new int[]{2, 4, 12, 11, 8, 1}), components.get(1));
-        assertEquals(new TIntArrayList(new int[]{10, 14, 6}), components.get(2));
-        assertEquals(new TIntArrayList(new int[]{15, 9}), components.get(3));
+        assertEquals(IntArrayList.from(13, 5, 3, 7, 0), components.get(0));
+        assertEquals(IntArrayList.from(2, 4, 12, 11, 8, 1), components.get(1));
+        assertEquals(IntArrayList.from(10, 14, 6), components.get(2));
+        assertEquals(IntArrayList.from(15, 9), components.get(3));
     }
 
     // Previous two-pass implementation failed on 1 -> 2 -> 0
@@ -314,7 +314,7 @@ public class PrepareRoutingSubnetworksTest {
         instance.doWork();
 
         // only one remaining network
-        List<TIntArrayList> components = instance.findSubnetworks(new PrepEdgeFilter(carFlagEncoder));
+        List<IntArrayList> components = instance.findSubnetworks(new PrepEdgeFilter(carFlagEncoder));
         assertEquals(1, components.size());
     }
 }

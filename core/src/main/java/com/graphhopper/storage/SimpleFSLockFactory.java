@@ -42,7 +42,7 @@ public class SimpleFSLockFactory implements LockFactory {
     }
 
     @Override
-    public synchronized Lock create(String fileName, boolean writeAccess) {
+    public synchronized GHLock create(String fileName, boolean writeAccess) {
         // TODO no read access-only support
         if (lockDir == null)
             throw new RuntimeException("Set lockDir before creating locks");
@@ -59,7 +59,7 @@ public class SimpleFSLockFactory implements LockFactory {
         }
     }
 
-    static class SimpleLock implements Lock {
+    static class SimpleLock implements GHLock {
         private final File lockDir;
         private final File lockFile;
         private final String name;

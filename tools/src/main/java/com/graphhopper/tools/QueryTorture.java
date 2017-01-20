@@ -48,11 +48,12 @@ public class QueryTorture {
     private AtomicInteger routingErrorCounter;
     private CountDownLatch workerStartedBarrier;
     private CountDownLatch logfileEOFBarrier;
-    private int skippedTooShort;
-    private int readQueries;
-    private int maxQueries;
+    private long skippedTooShort;
+    private long readQueries;
+    private long maxQueries;
     private int timeout;
-    private int statusUpdateCnt;
+    private long statusUpdateCnt;
+    private double tooShortDistance;
     private boolean logRequest = false;
 
     public QueryTorture() {
@@ -66,7 +67,8 @@ public class QueryTorture {
         String logfile = cmdArgs.get("logfile", "");
         int workers = cmdArgs.getInt("workers", 1);
         baseUrl = cmdArgs.get("baseurl", "");
-        maxQueries = cmdArgs.getInt("maxqueries", 1000);
+        tooShortDistance = cmdArgs.getDouble("too_short_distance", 50d);
+        maxQueries = cmdArgs.getLong("maxqueries", 1000L);
         timeout = cmdArgs.getInt("timeout", 3000);
         logRequest = cmdArgs.getBool("log_request", false);
         statusUpdateCnt = maxQueries / 10;
@@ -143,10 +145,10 @@ public class QueryTorture {
                 try {
                     logger.info(getName() + " started with " + workers + " workers");
                     service.invokeAll(workerCollection);
-                    logger.info(getName() + " FINISHED");
+                    logger.info(getName() + " FINISHED. Queue: " + queryQueue.size() + ", successfullQueries:" + successfullQueries.get());
                 } catch (RejectedExecutionException ex) {
                     logger.info(getName() + " cannot create threads", ex);
-                } catch (InterruptedException ex) {                    
+                } catch (InterruptedException ex) {
                     // logger.info(getName() + " was interrupted", ex);
                 }
             }
@@ -167,8 +169,8 @@ public class QueryTorture {
             else
                 successfullQueries.incrementAndGet();
 
-            if (successfullQueries.get() % statusUpdateCnt == 0) {
-                logger.info("progress: " + (int) (successfullQueries.get() * 100 / maxQueries) + "%");
+            if (query.realCount % statusUpdateCnt == 0) {
+                logger.info("progress: " + (int) (query.realCount * 100 / maxQueries) + "%");
             }
         } catch (MalformedURLException ex) {
             logger.error("Error while querying", ex);
@@ -200,11 +202,12 @@ public class QueryTorture {
                                 continue;
 
                             double dist = distCalc.calcDist(q.start.lat, q.start.lon, q.end.lat, q.end.lon);
-                            if (dist < 100) {
+                            if (dist < tooShortDistance) {
                                 skippedTooShort++;
                                 continue;
                             }
                             readQueries++;
+                            q.realCount = readQueries;
                             if (noDuplicate.size() >= maxQueries)
                                 break;
                             if (noDuplicate.add(q))
@@ -235,6 +238,7 @@ public class QueryTorture {
     static class Query {
         GHPoint start;
         GHPoint end;
+        long realCount;
         List<String> points = new ArrayList<String>();
         Map<String, String> params = new HashMap<String, String>();
 

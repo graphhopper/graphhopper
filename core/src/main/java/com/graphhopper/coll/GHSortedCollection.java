@@ -17,9 +17,10 @@
  */
 package com.graphhopper.coll;
 
-import gnu.trove.iterator.TIntIterator;
-import gnu.trove.set.hash.TIntHashSet;
-
+import com.carrotsearch.hppc.LongArrayList;
+import com.carrotsearch.hppc.cursors.IntCursor;
+import com.carrotsearch.hppc.predicates.IntPredicate;
+import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.TreeMap;
 
@@ -32,12 +33,12 @@ import java.util.TreeMap;
  */
 public class GHSortedCollection {
     private final int slidingMeanValue = 20;
-    private final TreeMap<Integer, TIntHashSet> map;
+    private final TreeMap<Integer, GHIntHashSet> map;
     private int size;
 
     public GHSortedCollection() {
         // use size as indicator for maxEntries => try radix sort?
-        map = new TreeMap<Integer, TIntHashSet>();
+        map = new TreeMap<Integer, GHIntHashSet>();
     }
 
     public void clear() {
@@ -46,7 +47,7 @@ public class GHSortedCollection {
     }
 
     void remove(int key, int value) {
-        TIntHashSet set = map.get(value);
+        GHIntHashSet set = map.get(value);
         if (set == null || !set.remove(key)) {
             throw new IllegalStateException("cannot remove key " + key + " with value " + value
                     + " - did you insert " + key + "," + value + " before?");
@@ -63,9 +64,9 @@ public class GHSortedCollection {
     }
 
     public void insert(int key, int value) {
-        TIntHashSet set = map.get(value);
+        GHIntHashSet set = map.get(value);
         if (set == null) {
-            map.put(value, set = new TIntHashSet(slidingMeanValue));
+            map.put(value, set = new GHIntHashSet(slidingMeanValue));
         }
 //        else
 //            slidingMeanValue = Math.max(5, (slidingMeanValue + set.size()) / 2);
@@ -79,7 +80,7 @@ public class GHSortedCollection {
         if (size == 0) {
             throw new IllegalStateException("collection is already empty!?");
         }
-        Entry<Integer, TIntHashSet> e = map.firstEntry();
+        Entry<Integer, GHIntHashSet> e = map.firstEntry();
         if (e.getValue().isEmpty()) {
             throw new IllegalStateException("internal set is already empty!?");
         }
@@ -90,11 +91,11 @@ public class GHSortedCollection {
         if (size == 0) {
             throw new IllegalStateException("collection is already empty!?");
         }
-        TIntHashSet set = map.firstEntry().getValue();
+        GHIntHashSet set = map.firstEntry().getValue();
         if (set.isEmpty()) {
             throw new IllegalStateException("internal set is already empty!?");
         }
-        return set.iterator().next();
+        return set.iterator().next().value;
     }
 
     /**
@@ -105,14 +106,16 @@ public class GHSortedCollection {
         if (size < 0) {
             throw new IllegalStateException("collection is already empty!?");
         }
-        Entry<Integer, TIntHashSet> e = map.firstEntry();
-        TIntHashSet set = e.getValue();
-        TIntIterator iter = set.iterator();
+
+        Entry<Integer, GHIntHashSet> e = map.firstEntry();
+        GHIntHashSet set = e.getValue();
         if (set.isEmpty()) {
             throw new IllegalStateException("internal set is already empty!?");
         }
-        int val = iter.next();
-        iter.remove();
+
+        Iterator<IntCursor> iter = set.iterator();
+        final int val = iter.next().value;        
+        set.remove(val);
         if (set.isEmpty()) {
             map.remove(e.getKey());
         }
@@ -135,7 +138,7 @@ public class GHSortedCollection {
     public String toString() {
         int min = Integer.MAX_VALUE;
         int max = Integer.MIN_VALUE;
-        for (Entry<Integer, TIntHashSet> e : map.entrySet()) {
+        for (Entry<Integer, GHIntHashSet> e : map.entrySet()) {
             int tmpSize = e.getValue().size();
             if (min > tmpSize) {
                 min = tmpSize;

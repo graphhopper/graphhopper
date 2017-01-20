@@ -294,6 +294,33 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     }
 
     @Test
+    public void testWayAcceptance() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "cycleway");
+        way.setTag("vehicle", "no");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        // Sensless tagging: JOSM does create a warning here. We follow the highway tag:
+        way.setTag("bicycle", "no");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.setTag("bicycle", "designated");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "motorway");
+        assertFalse(encoder.acceptWay(way) > 0);
+        way.setTag("bicycle", "yes");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("bicycle", "yes");
+        way.setTag("access", "no");
+        assertTrue(encoder.acceptWay(way) > 0);
+    }
+
+    @Test
     public void testOneway() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "tertiary");
@@ -364,6 +391,14 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         way.setTag("highway", "tertiary");
         way.setTag("oneway", "yes");
         way.setTag("cycleway", "opposite");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+
+        way.clearTags();
+        way.setTag("highway", "residential");
+        way.setTag("oneway", "yes");
+        way.setTag("cycleway:left", "opposite_lane");
         flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertTrue(encoder.isForward(flags));
         assertTrue(encoder.isBackward(flags));
@@ -471,7 +506,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
         way.setTag("highway", "cycleway");
         way.setTag("sac_scale", "mountain_hiking");
-        // disallow
+        // disallow questionable combination as too dangerous
         assertEquals(0, encoder.acceptWay(way));
     }
 

@@ -17,10 +17,18 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphEdgeIdFinder;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.shapes.Shape;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Calculates the best route according to a configurable weighting.
@@ -30,16 +38,20 @@ import com.graphhopper.util.Parameters.Routing;
  */
 public class GenericWeighting extends AbstractWeighting {
     /**
-     * Converting to seconds is not necessary but makes adding other penalties easier (e.g. turn
-     * costs or traffic light costs etc)
+     * Convert to milliseconds for correct calcMillis.
      */
-    protected final static double SPEED_CONV = 3.6;
+    private final static double SPEED_CONV = 3600;
     private final double headingPenalty;
     private final long headingPenaltyMillis;
     private final double maxSpeed;
     private final DataFlagEncoder gEncoder;
     private final double[] speedArray;
     private final int accessType;
+    private final int eventuallAccessiblePenalty = 10;
+
+    private final GHIntHashSet blockedEdges;
+    private final List<Shape> blockedShapes;
+    private NodeAccess na;
 
     public GenericWeighting(DataFlagEncoder encoder, ConfigMap cMap) {
         super(encoder);
@@ -58,6 +70,8 @@ public class GenericWeighting extends AbstractWeighting {
 
         maxSpeed = tmpSpeed / SPEED_CONV;
         accessType = gEncoder.getAccessType("motor_vehicle");
+        blockedEdges = cMap.get(GraphEdgeIdFinder.BLOCKED_EDGES, new GHIntHashSet(0));
+        blockedShapes = cMap.get(GraphEdgeIdFinder.BLOCKED_SHAPES, Collections.EMPTY_LIST);
     }
 
     @Override
@@ -77,6 +91,26 @@ public class GenericWeighting extends AbstractWeighting {
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
+
+        switch (gEncoder.getEdgeAccessValue(edgeState.getFlags())){
+            case NOT_ACCESSIBLE:
+                return Double.POSITIVE_INFINITY;
+            case EVENTUALLY_ACCESSIBLE:
+                time = time * eventuallAccessiblePenalty;
+        }
+
+        if(!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())){
+            return Double.POSITIVE_INFINITY;
+        }
+
+        if(!blockedShapes.isEmpty() && na != null){
+            for (Shape shape: blockedShapes) {
+                if(shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()))){
+                    return Double.POSITIVE_INFINITY;
+                }
+            }
+        }
+
         return time;
     }
 
@@ -122,5 +156,14 @@ public class GenericWeighting extends AbstractWeighting {
     @Override
     public String getName() {
         return "generic";
+    }
+
+    /**
+     * Use this method to associate a graph with this weighting to calculate e.g. node locations too.
+     */
+    public void setGraph(Graph graph) {
+        if(graph == null)
+            return;
+        this.na = graph.getNodeAccess();
     }
 }

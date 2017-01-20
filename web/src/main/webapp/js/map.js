@@ -72,7 +72,6 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
         minZoom: 2,
         // zoomSnap: 0,  // allow fractional zoom levels
         contextmenu: true,
-        contextmenuWidth: 150,
         contextmenuItems: defaultContextmenuItems,
         zoomControl: false,
         loadingControl: false
@@ -80,17 +79,20 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
 
     var _startItem = {
         text: translate.tr('set_start'),
+        icon: './img/marker-small-green.png',
         callback: setStartCoord,
         index: 0
     };
     var _intItem = {
         text: translate.tr('set_intermediate'),
+        icon: './img/marker-small-blue.png',
         callback: setIntermediateCoord,
         disabled: true,
         index: 1
     };
     var _endItem = {
         text: translate.tr('set_end'),
+        icon: './img/marker-small-red.png',
         callback: setEndCoord,
         index: 2
     };
@@ -171,6 +173,7 @@ function initMap(bounds, setStartCoord, setIntermediateCoord, setEndCoord, selec
                 index: 0
             }, {
                 text: translate.tr('set_intermediate'),
+                icon: './img/marker-small-blue.png',
                 callback: setIntermediateCoord,
                 index: 1
             }]),
@@ -319,6 +322,7 @@ module.exports.createMarker = function (index, coord, setToEnd, setToStart, dele
                 index: 0
             }, {
                 text: translate.tr((toFrom !== TO) ? "set_end" : "set_start"),
+                icon: (toFrom !== TO) ? './img/marker-small-red.png' : './img/marker-small-green.png',
                 callback: (toFrom !== TO) ? setToEnd : setToStart,
                 index: 2
             }, {

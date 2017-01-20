@@ -3,7 +3,6 @@ package com.graphhopper.android;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
-import android.graphics.Color;
 import android.graphics.Path;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -17,38 +16,49 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.Window;
-import android.widget.*;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.Spinner;
+import android.widget.TextView;
+import android.widget.Toast;
+
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters.*;
+import com.graphhopper.util.Parameters.Algorithms;
+import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.ProgressListener;
 import com.graphhopper.util.StopWatch;
-import org.mapsforge.core.graphics.Bitmap;
-import org.mapsforge.core.graphics.Paint;
-import org.mapsforge.core.graphics.Style;
-import org.mapsforge.core.model.LatLong;
-import org.mapsforge.core.model.MapPosition;
-import org.mapsforge.core.model.Point;
-import org.mapsforge.map.android.graphics.AndroidGraphicFactory;
-import org.mapsforge.map.android.util.AndroidUtil;
-import org.mapsforge.map.android.view.MapView;
-import org.mapsforge.map.datastore.MapDataStore;
-import org.mapsforge.map.layer.Layers;
-import org.mapsforge.map.layer.cache.TileCache;
-import org.mapsforge.map.layer.overlay.Marker;
-import org.mapsforge.map.layer.overlay.Polyline;
-import org.mapsforge.map.layer.renderer.TileRendererLayer;
-import org.mapsforge.map.reader.MapFile;
-import org.mapsforge.map.rendertheme.InternalRenderTheme;
+
+import org.oscim.android.MapView;
+import org.oscim.android.canvas.AndroidGraphics;
+import org.oscim.backend.canvas.Bitmap;
+import org.oscim.core.GeoPoint;
+import org.oscim.core.Tile;
+import org.oscim.event.Gesture;
+import org.oscim.event.GestureListener;
+import org.oscim.event.MotionEvent;
+import org.oscim.layers.Layer;
+import org.oscim.layers.marker.ItemizedLayer;
+import org.oscim.layers.marker.MarkerItem;
+import org.oscim.layers.marker.MarkerSymbol;
+import org.oscim.layers.tile.buildings.BuildingLayer;
+import org.oscim.layers.tile.vector.VectorTileLayer;
+import org.oscim.layers.tile.vector.labeling.LabelLayer;
+import org.oscim.layers.vector.PathLayer;
+import org.oscim.layers.vector.geometries.Style;
+import org.oscim.theme.VtmThemes;
+import org.oscim.tiling.source.mapfile.MapFileTileSource;
 
 import java.io.File;
 import java.io.FilenameFilter;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -57,8 +67,8 @@ public class MainActivity extends Activity {
     private static final int NEW_MENU_ID = Menu.FIRST + 1;
     private MapView mapView;
     private GraphHopper hopper;
-    private LatLong start;
-    private LatLong end;
+    private GeoPoint start;
+    private GeoPoint end;
     private Spinner localSpinner;
     private Button localButton;
     private Spinner remoteSpinner;
@@ -70,9 +80,10 @@ public class MainActivity extends Activity {
     private String prefixURL = fileListURL;
     private String downloadURL;
     private File mapsFolder;
-    private TileCache tileCache;
+    private ItemizedLayer<MarkerItem> itemizedLayer;
+    private PathLayer pathLayer;
 
-    protected boolean onMapTap(LatLong tapLatLong) {
+    protected boolean onLongPress(GeoPoint p) {
         if (!isReady())
             return false;
 
@@ -80,30 +91,24 @@ public class MainActivity extends Activity {
             logUser("Calculation still in progress");
             return false;
         }
-        Layers layers = mapView.getLayerManager().getLayers();
 
         if (start != null && end == null) {
-            end = tapLatLong;
+            end = p;
             shortestPathRunning = true;
-            Marker marker = createMarker(tapLatLong, R.drawable.flag_red);
-            if (marker != null) {
-                layers.add(marker);
-            }
+            itemizedLayer.addItem(createMarkerItem(p, R.drawable.marker_icon_red));
+            mapView.map().updateMap(true);
 
-            calcPath(start.latitude, start.longitude, end.latitude,
-                    end.longitude);
+            calcPath(start.getLatitude(), start.getLongitude(), end.getLatitude(),
+                    end.getLongitude());
         } else {
-            start = tapLatLong;
+            start = p;
             end = null;
-            // remove all layers but the first one, which is the map
-            while (layers.size() > 1) {
-                layers.remove(1);
-            }
+            // remove routing layers
+            mapView.map().layers().remove(pathLayer);
+            itemizedLayer.removeAllItems();
 
-            Marker marker = createMarker(start, R.drawable.flag_green);
-            if (marker != null) {
-                layers.add(marker);
-            }
+            itemizedLayer.addItem(createMarkerItem(start, R.drawable.marker_icon_green));
+            mapView.map().updateMap(true);
         }
         return true;
     }
@@ -113,14 +118,9 @@ public class MainActivity extends Activity {
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        AndroidGraphicFactory.createInstance(getApplication());
 
+        Tile.SIZE = Tile.calculateTileSize(getResources().getDisplayMetrics().scaledDensity);
         mapView = new MapView(this);
-        mapView.setClickable(true);
-        mapView.setBuiltInZoomControls(true);
-
-        tileCache = AndroidUtil.createTileCache(this, getClass().getSimpleName(), mapView.getModel().displayModel.getTileSize(),
-                1f, mapView.getModel().frameBufferModel.getOverdrawFactor());
 
         final EditText input = new EditText(this);
         input.setText(currentArea);
@@ -152,6 +152,18 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        mapView.onResume();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        mapView.onPause();
+    }
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
         if (hopper != null)
@@ -161,9 +173,8 @@ public class MainActivity extends Activity {
         // necessary?
         System.gc();
 
-        // Cleanup Mapsforge
-        this.mapView.destroyAll();
-        AndroidGraphicFactory.clearResourceMemoryCache();
+        // Cleanup VTM
+        mapView.map().destroy();
     }
 
     boolean isReady() {
@@ -195,20 +206,18 @@ public class MainActivity extends Activity {
                         .endsWith("-gh"));
             }
         });
-        for (String file : files) {
-            nameList.add(file);
-        }
+        Collections.addAll(nameList, files);
 
         if (nameList.isEmpty())
             return;
 
         chooseArea(localButton, localSpinner, nameList,
                 new MySpinnerListener() {
-            @Override
-            public void onSelect(String selectedArea, String selectedFile) {
-                initFiles(selectedArea);
-            }
-        });
+                    @Override
+                    public void onSelect(String selectedArea, String selectedFile) {
+                        initFiles(selectedArea);
+                    }
+                });
     }
 
     private void chooseAreaFromRemote() {
@@ -316,11 +325,11 @@ public class MainActivity extends Activity {
                 downloader.setTimeout(30000);
                 downloader.downloadAndUnzip(downloadURL, localFolder,
                         new ProgressListener() {
-                    @Override
-                    public void update(long val) {
-                        publishProgress((int) val);
-                    }
-                });
+                            @Override
+                            public void update(long val) {
+                                publishProgress((int) val);
+                            }
+                        });
                 return null;
             }
 
@@ -344,21 +353,25 @@ public class MainActivity extends Activity {
 
     void loadMap(File areaFolder) {
         logUser("loading map");
-        MapDataStore mapDataStore = new MapFile(new File(areaFolder, currentArea + ".map"));
 
-        mapView.getLayerManager().getLayers().clear();
+        // Long press receiver
+        mapView.map().layers().add(new LongPressLayer(mapView.map()));
 
-        TileRendererLayer tileRendererLayer = new TileRendererLayer(tileCache, mapDataStore,
-                mapView.getModel().mapViewPosition, false, true, false, AndroidGraphicFactory.INSTANCE) {
-            @Override
-            public boolean onLongPress(LatLong tapLatLong, Point layerXY, Point tapXY) {
-                return onMapTap(tapLatLong);
-            }
-        };
-        tileRendererLayer.setTextScale(1.5f);
-        tileRendererLayer.setXmlRenderTheme(InternalRenderTheme.OSMARENDER);
-        mapView.getModel().mapViewPosition.setMapPosition(new MapPosition(mapDataStore.boundingBox().getCenterPoint(), (byte) 15));
-        mapView.getLayerManager().getLayers().add(tileRendererLayer);
+        // Map file source
+        MapFileTileSource tileSource = new MapFileTileSource();
+        tileSource.setMapFile(new File(areaFolder, currentArea + ".map").getAbsolutePath());
+        VectorTileLayer l = mapView.map().setBaseMap(tileSource);
+        mapView.map().setTheme(VtmThemes.DEFAULT);
+        mapView.map().layers().add(new BuildingLayer(mapView.map(), l));
+        mapView.map().layers().add(new LabelLayer(mapView.map(), l));
+
+        // Markers layer
+        itemizedLayer = new ItemizedLayer<>(mapView.map(), (MarkerSymbol) null);
+        mapView.map().layers().add(itemizedLayer);
+
+        // Map position
+        GeoPoint mapCenter = tileSource.getMapInfo().boundingBox.getCenterPoint();
+        mapView.map().setMapPosition(mapCenter.getLatitude(), mapCenter.getLongitude(), 1 << 15);
 
         setContentView(mapView);
         loadGraphStorage();
@@ -392,28 +405,29 @@ public class MainActivity extends Activity {
         prepareInProgress = false;
     }
 
-    private Polyline createPolyline(PathWrapper response) {
-        Paint paintStroke = AndroidGraphicFactory.INSTANCE.createPaint();
-        paintStroke.setStyle(Style.STROKE);
-        paintStroke.setColor(Color.argb(128, 0, 0xCC, 0x33));
-        paintStroke.setDashPathEffect(new float[]{25, 15});
-        paintStroke.setStrokeWidth(8);
-
-        Polyline line = new Polyline(paintStroke, AndroidGraphicFactory.INSTANCE);
-        List<LatLong> geoPoints = line.getLatLongs();
-        PointList tmp = response.getPoints();
-        for (int i = 0; i < response.getPoints().getSize(); i++) {
-            geoPoints.add(new LatLong(tmp.getLatitude(i), tmp.getLongitude(i)));
-        }
-
-        return line;
+    private PathLayer createPathLayer(PathWrapper response) {
+        Style style = Style.builder()
+                .generalization(Style.GENERALIZATION_SMALL)
+                .strokeColor(0x9900cc33)
+                .strokeWidth(4 * getResources().getDisplayMetrics().density)
+                .build();
+        PathLayer pathLayer = new PathLayer(mapView.map(), style);
+        List<GeoPoint> geoPoints = new ArrayList<>();
+        PointList pointList = response.getPoints();
+        for (int i = 0; i < pointList.getSize(); i++)
+            geoPoints.add(new GeoPoint(pointList.getLatitude(i), pointList.getLongitude(i)));
+        pathLayer.setPoints(geoPoints);
+        return pathLayer;
     }
 
     @SuppressWarnings("deprecation")
-    private Marker createMarker(LatLong p, int resource) {
+    private MarkerItem createMarkerItem(GeoPoint p, int resource) {
         Drawable drawable = getResources().getDrawable(resource);
-        Bitmap bitmap = AndroidGraphicFactory.convertToBitmap(drawable);
-        return new Marker(p, bitmap, 0, -bitmap.getHeight() / 2);
+        Bitmap bitmap = AndroidGraphics.drawableToBitmap(drawable);
+        MarkerSymbol markerSymbol = new MarkerSymbol(bitmap, 0.5f, 1);
+        MarkerItem markerItem = new MarkerItem("", "", p);
+        markerItem.setMarker(markerSymbol);
+        return markerItem;
     }
 
     public void calcPath(final double fromLat, final double fromLon,
@@ -443,8 +457,9 @@ public class MainActivity extends Activity {
                     logUser("the route is " + (int) (resp.getDistance() / 100) / 10f
                             + "km long, time:" + resp.getTime() / 60000f + "min, debug:" + time);
 
-                    mapView.getLayerManager().getLayers().add(createPolyline(resp));
-                    //mapView.redraw();
+                    pathLayer = createPathLayer(resp);
+                    mapView.map().layers().add(pathLayer);
+                    mapView.map().updateMap(true);
                 } else {
                     logUser("Error:" + resp.getErrors());
                 }
@@ -486,8 +501,8 @@ public class MainActivity extends Activity {
                 intent.setClassName("com.google.android.apps.maps",
                         "com.google.android.maps.MapsActivity");
                 intent.setData(Uri.parse("http://maps.google.com/maps?saddr="
-                        + start.latitude + "," + start.longitude + "&daddr="
-                        + end.latitude + "," + end.longitude));
+                        + start.getLatitude() + "," + start.getLongitude() + "&daddr="
+                        + end.getLatitude() + "," + end.getLongitude()));
                 startActivity(intent);
                 break;
         }
@@ -496,5 +511,21 @@ public class MainActivity extends Activity {
 
     public interface MySpinnerListener {
         void onSelect(String selectedArea, String selectedFile);
+    }
+
+    class LongPressLayer extends Layer implements GestureListener {
+
+        LongPressLayer(org.oscim.map.Map map) {
+            super(map);
+        }
+
+        @Override
+        public boolean onGesture(Gesture g, MotionEvent e) {
+            if (g instanceof Gesture.LongPress) {
+                GeoPoint p = mMap.viewport().fromScreenPoint(e.getX(), e.getY());
+                return onLongPress(p);
+            }
+            return false;
+        }
     }
 }

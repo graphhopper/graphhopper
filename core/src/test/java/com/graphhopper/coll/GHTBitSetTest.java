@@ -39,6 +39,6 @@ public class GHTBitSetTest extends AbstractMyBitSetTest {
         GHBitSet bs = createBitSet(100);
         bs.add(12);
         bs.add(1);
-        assertEquals("{12,1}", bs.toString());
+        assertEquals("[1, 12]", bs.toString());
     }
 }

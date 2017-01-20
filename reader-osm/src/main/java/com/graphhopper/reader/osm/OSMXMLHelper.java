@@ -85,17 +85,17 @@ public class OSMXMLHelper {
         ReaderRelation rel = new ReaderRelation(id);
 
         parser.nextTag();
-        readMembers(rel.getMembers(), parser);
+        readMembers(rel, parser);
         readTags(rel, parser);
         return rel;
     }
 
-    private static void readMembers(List<Member> members, XMLStreamReader parser) throws XMLStreamException {
+    private static void readMembers(ReaderRelation rel, XMLStreamReader parser) throws XMLStreamException {
         int event = parser.getEventType();
         while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equalsIgnoreCase("member")) {
             if (event == XMLStreamConstants.START_ELEMENT) {
                 // read member
-                members.add(createMember(parser));
+                rel.add(createMember(parser));
             }
 
             event = parser.nextTag();

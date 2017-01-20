@@ -1,6 +1,7 @@
 // This software is released into the Public Domain.  See copying.txt for details.
 package com.graphhopper.reader.osm.pbf;
 
+import com.carrotsearch.hppc.LongIndexedContainer;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.graphhopper.reader.ReaderElement;
 import com.graphhopper.reader.ReaderNode;
@@ -8,7 +9,6 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.osm.OSMFileHeader;
 import com.graphhopper.util.Helper;
-import gnu.trove.list.TLongList;
 import org.openstreetmap.osmosis.osmbinary.Fileformat;
 import org.openstreetmap.osmosis.osmbinary.Osmformat;
 import org.slf4j.Logger;
@@ -229,7 +229,8 @@ public class PbfBlobDecoder implements Runnable {
                 int valueIndex = keysValuesIterator.next();
 
                 if (tags == null) {
-                    tags = new HashMap<String, String>();
+                    // devide by 2 as key&value, multiple by 2 because of the better approximation
+                    tags = new HashMap<String, String>(Math.max(3, 2 * (nodes.getKeysValsList().size() / 2) / idList.size()));
                 }
 
                 tags.put(fieldDecoder.decodeString(keyIndex), fieldDecoder.decodeString(valueIndex));
@@ -253,7 +254,7 @@ public class PbfBlobDecoder implements Runnable {
             // delta encoded meaning that each id is stored as a delta against
             // the previous one.
             long nodeId = 0;
-            TLongList wayNodes = osmWay.getNodes();
+            LongIndexedContainer wayNodes = osmWay.getNodes();
             for (long nodeIdOffset : way.getRefsList()) {
                 nodeId += nodeIdOffset;
                 wayNodes.add(nodeId);
@@ -266,8 +267,6 @@ public class PbfBlobDecoder implements Runnable {
     private void buildRelationMembers(ReaderRelation relation,
                                       List<Long> memberIds, List<Integer> memberRoles, List<Osmformat.Relation.MemberType> memberTypes,
                                       PbfFieldDecoder fieldDecoder) {
-
-        List<ReaderRelation.Member> members = relation.getMembers();
 
         // Ensure parallel lists are of equal size.
         if (checkData) {
@@ -302,8 +301,7 @@ public class PbfBlobDecoder implements Runnable {
             }
 
             ReaderRelation.Member member = new ReaderRelation.Member(entityType, refId, fieldDecoder.decodeString(memberRoleIterator.next()));
-
-            members.add(member);
+            relation.add(member);
         }
     }
 
@@ -327,7 +325,6 @@ public class PbfBlobDecoder implements Runnable {
         PbfFieldDecoder fieldDecoder = new PbfFieldDecoder(block);
 
         for (Osmformat.PrimitiveGroup primitiveGroup : block.getPrimitivegroupList()) {
-            log.debug("Processing OSM primitive group.");
             processNodes(primitiveGroup.getDense(), fieldDecoder);
             processNodes(primitiveGroup.getNodesList(), fieldDecoder);
             processWays(primitiveGroup.getWaysList(), fieldDecoder);

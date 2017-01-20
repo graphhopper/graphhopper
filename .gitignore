@@ -41,3 +41,5 @@ local.properties
 .DS_Store
 /core/nbproject/
 /reader-overlay-data/nbproject/
+!malta-latest.osm.pbf
+/reader-json/nbproject/

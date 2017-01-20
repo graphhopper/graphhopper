@@ -392,6 +392,7 @@ function setFlag(coord, index) {
         };
         var _tempItem = {
             text: translate.tr('set_start'),
+            icon: './img/marker-small-green.png',
             callback: setToStart,
             index: 1
         };
@@ -553,6 +554,14 @@ function routeLatLng(request, doQuery) {
                 routeLatLng(ghRequest);
             };
         };
+
+        if(json.paths.length > 0 && json.paths[0].points_order) {
+            mapLayer.clearLayers();
+            var po = json.paths[0].points_order;
+            for (var i = 0; i < po.length; i++) {
+                setFlag(ghRequest.route.getIndex(po[i]), i);
+            }
+        }
 
         for (var pathIndex = 0; pathIndex < json.paths.length; pathIndex++) {
             var tabHeader = $("<li>").append((pathIndex + 1) + "<img class='alt_route_img' src='img/alt_route.png'/>");

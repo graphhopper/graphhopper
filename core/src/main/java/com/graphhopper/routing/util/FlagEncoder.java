@@ -84,7 +84,8 @@ public interface FlagEncoder extends TurnCostEncoder {
     long setProperties(double speed, boolean forward, boolean backward);
 
     /**
-     * Reports whether the edge is available in forward direction for a certain vehicle
+     * Reports whether the edge is available in forward direction (i.e. from base node to adj node)
+     * for a certain vehicle.
      */
     boolean isForward(long flags);
 
@@ -94,7 +95,8 @@ public interface FlagEncoder extends TurnCostEncoder {
      * Currently this means starting from 100, and subclasses of this class start from 10000 and so on.
      */
     /**
-     * Reports whether the edge is available in backward direction for a certain vehicle
+     * Reports whether the edge is available in backward direction (i.e. from adj node to base node)
+     * for a certain vehicle.
      */
     boolean isBackward(long flags);
 

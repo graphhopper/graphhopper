@@ -69,13 +69,25 @@ but of course this is not necessary.
 OpenStreetMap is directly supported from GraphHopper. Without the amazing data from
 OpenStreetMap GraphHopper wouldn't be possible at all.
 Other map data will need a custom import procedure, see e.g. <a href="https://github.com/graphhopper/graphhopper/issues/277">Ordnance Survey</a>,
-<a href="https://github.com/graphhopper/graphhopper/pull/616">Shapefile like ESRI</a> or <a href="https://github.com/knowname/morituri">Navteq</a>.
+<a href="https://github.com/graphhopper/graphhopper/tree/master/reader-shp">Shapefile like ESRI</a> or <a href="https://github.com/knowname/morituri">Navteq</a>.
 
 ## Written in Java
 
 GraphHopper is written in Java and runs on Linux, Mac OS X,
-Windows, BSD, Solaris, Raspberry Pi, Android, Blackberry and even iOS. Other 
-environments which supports at least Java 7 will work too.
+Windows, BSD, Solaris, Raspberry Pi, Android, Blackberry and even iOS.
+
+### Maven
+
+Embed the core of GraphHopper into your Java application via the following
+snippet
+
+```xml
+<dependency>
+    <groupId>com.graphhopper</groupId>
+    <artifactId>graphhopper-core</artifactId>
+    <version>0.8.2</version>
+</dependency>
+```
 
 ## Customizable
 
@@ -105,6 +117,10 @@ GraphHopper also runs on the Desktop in a Java application without internet acce
 E.g. you could use the rough user interface called MiniGraphUI provided in the tools module, see some
 visualizations done with it [here](https://graphhopper.com/blog/2016/01/19/alternative-roads-to-rome/).
 A fast and production ready map visualization for the Desktop can be easily implemented via mapsforge.
+
+### Docker
+
+Install GraphHopper via [Docker](https://github.com/graphhopper/graphhopper/pull/849).
 
 # Features
 

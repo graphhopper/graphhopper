@@ -17,6 +17,12 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.predicates.IntObjectPredicate;
+import com.carrotsearch.hppc.procedures.IntProcedure;
+import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -29,12 +35,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
-import gnu.trove.list.array.TIntArrayList;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.procedure.TIntProcedure;
-import gnu.trove.procedure.TObjectProcedure;
-import gnu.trove.set.hash.TIntHashSet;
 
 import java.util.*;
 
@@ -43,6 +43,11 @@ import java.util.*;
  * introducing virtual nodes and edges. It is lightweight in order to be created every time a new
  * query comes in, which makes the behaviour thread safe.
  * <p>
+ * Calling any <tt>lookup</tt> method creates virtual edges between the tower nodes of the existing
+ * graph and new virtual tower nodes. Every virtual node has two adjacent nodes and is connected
+ * to each adjacent nodes via 2 virtual edges with opposite base node / adjacent node encoding.
+ * However, the edge explorer returned by {@link #createEdgeExplorer()} only returns two
+ * virtual edges per virtual node (the ones with correct base node).
  *
  * @author Peter Karich
  */
@@ -57,10 +62,8 @@ public class QueryGraph implements Graph {
     private final GraphExtension wrappedExtension;
     // TODO when spreading it on different threads we need multiple independent explorers
     private final Map<Integer, EdgeExplorer> cacheMap = new HashMap<Integer, EdgeExplorer>(4);
-    /**
-     * Virtual edges are created between existing graph and new virtual tower nodes. For every
-     * virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
-     */
+
+    // For every virtual node there are 4 edges: base-snap, snap-base, snap-adj, adj-snap.
     List<VirtualEdgeIteratorState> virtualEdges;
     private List<QueryResult> queryResults;
     /**
@@ -141,7 +144,10 @@ public class QueryGraph implements Graph {
             return getElevation(nodeId);
         }
     };
-    private List<VirtualEdgeIteratorState> modifiedEdges = new ArrayList<VirtualEdgeIteratorState>(5);
+
+    // Use LinkedHashSet for predictable iteration order.
+    private final Set<VirtualEdgeIteratorState> unfavoredEdges = new LinkedHashSet<>(5);
+
     private boolean useEdgeExplorerCache = false;
 
     public QueryGraph(Graph graph) {
@@ -180,6 +186,8 @@ public class QueryGraph implements Graph {
 
     /**
      * Convenient method to initialize this QueryGraph with the two specified query results.
+     *
+     * @see #lookup(List)
      */
     public QueryGraph lookup(QueryResult fromRes, QueryResult toRes) {
         List<QueryResult> results = new ArrayList<QueryResult>(2);
@@ -190,8 +198,11 @@ public class QueryGraph implements Graph {
     }
 
     /**
-     * For all specified query results calculate snapped point and set closest node and edge to a
-     * virtual one if necessary. Additionally the wayIndex can change if an edge is swapped.
+     * For all specified query results calculate snapped point and if necessary set closest node
+     * to a virtual one and reverse closest edge. Additionally the wayIndex can change if an edge is
+     * swapped.
+     *
+     * @see QueryGraph
      */
     public void lookup(List<QueryResult> resList) {
         if (isInitialized())
@@ -205,7 +216,7 @@ public class QueryGraph implements Graph {
         baseGraph.virtualNodes = virtualNodes;
         baseGraph.queryResults = queryResults;
 
-        TIntObjectMap<List<QueryResult>> edge2res = new TIntObjectHashMap<List<QueryResult>>(resList.size());
+        GHIntObjectHashMap<List<QueryResult>> edge2res = new GHIntObjectHashMap<List<QueryResult>>(resList.size());
 
         // Phase 1
         // calculate snapped point and swap direction of closest edge if necessary
@@ -258,9 +269,9 @@ public class QueryGraph implements Graph {
         // Phase 2 - now it is clear which points cut one edge
         // 1. create point lists
         // 2. create virtual edges between virtual nodes and its neighbor (virtual or normal nodes)
-        edge2res.forEachValue(new TObjectProcedure<List<QueryResult>>() {
+        edge2res.forEach(new IntObjectPredicate<List<QueryResult>>() {
             @Override
-            public boolean execute(List<QueryResult> results) {
+            public boolean apply(int edgeId, List<QueryResult> results) {
                 // we can expect at least one entry in the results
                 EdgeIteratorState closestEdge = results.get(0).getClosestEdge();
                 final PointList fullPL = closestEdge.fetchWayGeometry(3);
@@ -407,7 +418,7 @@ public class QueryGraph implements Graph {
 
     /**
      * Set those edges at the virtual node (nodeId) to 'unfavored' that require at least a turn of
-     * 100° from favoredHeading
+     * 100° from favoredHeading.
      * <p>
      *
      * @param nodeId         VirtualNode at which edges get unfavored
@@ -451,11 +462,11 @@ public class QueryGraph implements Graph {
             if (Math.abs(delta) > 1.74) // penalize if a turn of more than 100°
             {
                 edge.setUnfavored(true);
-                modifiedEdges.add(edge);
+                unfavoredEdges.add(edge);
                 //also apply to opposite edge for reverse routing
                 VirtualEdgeIteratorState reverseEdge = virtualEdges.get(virtNodeIDintern * 4 + getPosOfReverseEdge(edgePos));
                 reverseEdge.setUnfavored(true);
-                modifiedEdges.add(reverseEdge);
+                unfavoredEdges.add(reverseEdge);
                 enforcementOccurred = true;
             }
 
@@ -464,35 +475,49 @@ public class QueryGraph implements Graph {
     }
 
     /**
-     * Set one specific edge at the virtual node with nodeId to 'unfavored' to enforce routing along
-     * other edges
+     * Sets the virtual edge with virtualEdgeId and its reverse edge to 'unfavored', which
+     * effectively penalizes both virtual edges towards an adjacent node of virtualNodeId.
+     * This makes it more likely (but does not guarantee) that the router chooses a route towards
+     * the other adjacent node of virtualNodeId.
      * <p>
      *
-     * @param nodeId   VirtualNode at which edges get unfavored
-     * @param edgeId   edge to become unfavored
-     * @param incoming if true, incoming edge is unfavored, else outgoing edge
-     * @return boolean indicating if enforcement took place
+     * @param virtualNodeId  virtual node at which edges get unfavored
+     * @param virtualEdgeId  this edge and the reverse virtual edge become unfavored
      */
-    public boolean enforceHeadingByEdgeId(int nodeId, int edgeId, boolean incoming) {
-        if (!isVirtualNode(nodeId))
-            return false;
+    public void unfavorVirtualEdgePair(int virtualNodeId, int virtualEdgeId) {
+        if (!isVirtualNode(virtualNodeId)) {
+            throw new IllegalArgumentException("Node id " + virtualNodeId
+                    + " must be a virtual node.");
+        }
 
-        VirtualEdgeIteratorState incomingEdge = (VirtualEdgeIteratorState) getEdgeIteratorState(edgeId, nodeId);
-        VirtualEdgeIteratorState reverseEdge = (VirtualEdgeIteratorState) getEdgeIteratorState(edgeId, incomingEdge.getBaseNode());
+        VirtualEdgeIteratorState incomingEdge =
+                (VirtualEdgeIteratorState) getEdgeIteratorState(virtualEdgeId, virtualNodeId);
+        VirtualEdgeIteratorState reverseEdge = (VirtualEdgeIteratorState) getEdgeIteratorState(
+                virtualEdgeId, incomingEdge.getBaseNode());
         incomingEdge.setUnfavored(true);
-        modifiedEdges.add(incomingEdge);
+        unfavoredEdges.add(incomingEdge);
         reverseEdge.setUnfavored(true);
-        modifiedEdges.add(reverseEdge);
-        return true;
+        unfavoredEdges.add(reverseEdge);
+    }
+
+    /**
+     * Returns all virtual edges that have been unfavored via
+     * {@link #enforceHeading(int, double, boolean)} or {@link #unfavorVirtualEdgePair(int, int)}.
+     */
+    public Set<EdgeIteratorState> getUnfavoredVirtualEdges() {
+        // Need to create a new set to convert Set<VirtualEdgeIteratorState> to
+        // Set<EdgeIteratorState>.
+        return new LinkedHashSet<EdgeIteratorState>(unfavoredEdges);
     }
 
     /**
      * Removes the 'unfavored' status of all virtual edges.
      */
     public void clearUnfavoredStatus() {
-        for (VirtualEdgeIteratorState edge : modifiedEdges) {
+        for (VirtualEdgeIteratorState edge : unfavoredEdges) {
             edge.setUnfavored(false);
         }
+        unfavoredEdges.clear();
     }
 
     @Override
@@ -577,11 +602,11 @@ public class QueryGraph implements Graph {
         // so we need to create the mapping on EVERY call!
         // This needs to be a HashMap (and cannot be an array) as we also need to tweak edges for some mainNodes!
         // The more query points we have the more inefficient this map could be. Hmmh.
-        final TIntObjectMap<VirtualEdgeIterator> node2EdgeMap
-                = new TIntObjectHashMap<VirtualEdgeIterator>(queryResults.size() * 3);
+        final IntObjectMap<VirtualEdgeIterator> node2EdgeMap
+                = new GHIntObjectHashMap<VirtualEdgeIterator>(queryResults.size() * 3);
 
         final EdgeExplorer mainExplorer = mainGraph.createEdgeExplorer(edgeFilter);
-        final TIntHashSet towerNodesToChange = new TIntHashSet(queryResults.size());
+        final GHIntHashSet towerNodesToChange = new GHIntHashSet(queryResults.size());
 
         // 1. virtualEdges should also get fresh EdgeIterators on every createEdgeExplorer call!
         for (int i = 0; i < queryResults.size(); i++) {
@@ -618,11 +643,10 @@ public class QueryGraph implements Graph {
         // 2. the connected tower nodes from mainGraph need fresh EdgeIterators with possible fakes
         // where 'fresh' means independent of previous call and respecting the edgeFilter
         // -> setup fake iterators of detected tower nodes (virtual edges are already added)
-        towerNodesToChange.forEach(new TIntProcedure() {
+        towerNodesToChange.forEach(new IntProcedure() {
             @Override
-            public boolean execute(int value) {
+            public void apply(int value) {
                 fillVirtualEdges(node2EdgeMap, value, mainExplorer);
-                return true;
             }
         });
 
@@ -641,7 +665,7 @@ public class QueryGraph implements Graph {
     /**
      * Creates a fake edge iterator pointing to multiple edge states.
      */
-    private void addVirtualEdges(TIntObjectMap<VirtualEdgeIterator> node2EdgeMap, EdgeFilter filter, boolean base,
+    private void addVirtualEdges(IntObjectMap<VirtualEdgeIterator> node2EdgeMap, EdgeFilter filter, boolean base,
                                  int node, int virtNode) {
         VirtualEdgeIterator existingIter = node2EdgeMap.get(node);
         if (existingIter == null) {
@@ -655,12 +679,12 @@ public class QueryGraph implements Graph {
             existingIter.add(edge);
     }
 
-    void fillVirtualEdges(TIntObjectMap<VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl) {
+    void fillVirtualEdges(IntObjectMap<VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl) {
         if (isVirtualNode(towerNode))
             throw new IllegalStateException("Node should not be virtual:" + towerNode + ", " + node2Edge);
 
         VirtualEdgeIterator vIter = node2Edge.get(towerNode);
-        TIntArrayList ignoreEdges = new TIntArrayList(vIter.count() * 2);
+        IntArrayList ignoreEdges = new IntArrayList(vIter.count() * 2);
         while (vIter.next()) {
             EdgeIteratorState edge = queryResults.get(vIter.getAdjNode() - mainNodes).getClosestEdge();
             ignoreEdges.add(edge.getEdge());
@@ -678,6 +702,9 @@ public class QueryGraph implements Graph {
     }
 
     @Override
+    /**
+     * @see QueryGraph
+     */
     public EdgeExplorer createEdgeExplorer() {
         return createEdgeExplorer(EdgeFilter.ALL_EDGES);
     }

@@ -43,8 +43,8 @@ public class NameIndex implements Storable<NameIndex> {
     }
 
     @Override
-    public NameIndex create(long cap) {
-        names.create(cap);
+    public NameIndex create(long initBytes) {
+        names.create(initBytes);
         return this;
     }
 

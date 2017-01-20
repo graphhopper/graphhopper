@@ -19,7 +19,7 @@
         <version>0.8.2</version>
     </parent>
     <properties>
-        <mapsforge.version>0.6.1</mapsforge.version>
+        <vtm.version>0.6.0</vtm.version>
         <!-- do not put the properties here as it differs from dev to dev <android.sdk.path>/home/peterk/Programme/android-sdk-linux_x86</android.sdk.path>
         instead use your IDE to set it up or specify android sdk via command line
         using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
@@ -46,24 +46,54 @@
         -->          
         <dependency>
             <groupId>org.mapsforge</groupId>            
-            <artifactId>mapsforge-core</artifactId>
-            <version>${mapsforge.version}</version>
+            <artifactId>vtm</artifactId>
+            <version>${vtm.version}</version>
         </dependency>    
         <dependency>
             <groupId>org.mapsforge</groupId>            
-            <artifactId>mapsforge-map</artifactId>
-            <version>${mapsforge.version}</version>
+            <artifactId>vtm-android</artifactId>
+            <version>${vtm.version}</version>
         </dependency>
+        
         <dependency>
             <groupId>org.mapsforge</groupId>            
-            <artifactId>mapsforge-map-android</artifactId>
-            <version>${mapsforge.version}</version>
+            <artifactId>vtm-android</artifactId>
+            <version>${vtm.version}</version>
+            <classifier>natives-armeabi</classifier>
+        </dependency>  
+         <dependency>
+            <groupId>org.mapsforge</groupId>            
+            <artifactId>vtm-android</artifactId>
+            <version>${vtm.version}</version>
+            <classifier>natives-armeabi-v7a</classifier>
+        </dependency>  
+         <dependency>
+            <groupId>org.mapsforge</groupId>            
+            <artifactId>vtm-android</artifactId>
+            <version>${vtm.version}</version>
+            <classifier>natives-x86</classifier>
         </dependency>        
+        
         <dependency>
             <groupId>org.mapsforge</groupId>            
-            <artifactId>mapsforge-map-reader</artifactId>
-            <version>${mapsforge.version}</version>
+            <artifactId>vtm-jts</artifactId>
+            <version>${vtm.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.mapsforge</groupId>            
+            <artifactId>vtm-themes</artifactId>
+            <version>${vtm.version}</version>
+        </dependency> 
+        <dependency>
+            <groupId>com.caverock</groupId>            
+            <artifactId>androidsvg</artifactId>
+            <version>1.2.2-beta-1</version>
+        </dependency> 
+        <dependency>
+            <groupId>com.vividsolutions</groupId>            
+            <artifactId>jts</artifactId>
+            <version>1.13</version>            
+        </dependency> 
         
         <dependency>
             <groupId>org.slf4j</groupId>
@@ -110,15 +140,15 @@
                 </configuration>
             </plugin>       
             <plugin>
-                <!-- See http://code.google.com/p/maven-android-plugin/ -->
-                <groupId>com.jayway.maven.plugins.android.generation2</groupId>
+                <!-- See http://simpligility.github.io/android-maven-plugin/ -->
+                <groupId>com.simpligility.maven.plugins</groupId>
                 <artifactId>android-maven-plugin</artifactId>
-                <version>4.0.0-rc.2</version>
+                <version>4.4.3</version>
                 <extensions>true</extensions>
                 <configuration>
                     <sdk>
                         <!-- platform or api level (api level 8 = platform 2.2) -->                        
-                        <platform>22</platform>
+                        <platform>25</platform>
                     </sdk>
                     <deleteConflictingFiles>true</deleteConflictingFiles>
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>

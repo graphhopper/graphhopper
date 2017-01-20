@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -24,12 +25,13 @@ import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
-import gnu.trove.map.TIntObjectMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
 
 import static com.graphhopper.storage.index.QueryResult.Position.*;
 import static org.junit.Assert.*;
@@ -152,7 +154,7 @@ public class QueryGraphTest {
         QueryGraph queryGraph = new QueryGraph(g) {
 
             @Override
-            void fillVirtualEdges(TIntObjectMap<VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl) {
+            void fillVirtualEdges(IntObjectMap<VirtualEdgeIterator> node2Edge, int towerNode, EdgeExplorer mainExpl) {
                 super.fillVirtualEdges(node2Edge, towerNode, mainExpl);
                 // ignore nodes should include baseNode == 1
                 if (towerNode == 3)
@@ -602,7 +604,7 @@ public class QueryGraphTest {
     }
 
     @Test
-    public void testEnforceHeadingByEdgeId() {
+    public void testunfavorVirtualEdgePair() {
 
         initHorseshoeGraph(g);
         EdgeIteratorState edge = GHUtility.getEdge(g, 0, 1);
@@ -613,22 +615,21 @@ public class QueryGraphTest {
         queryGraph.lookup(Arrays.asList(qr));
 
         // enforce coming in north
-        queryGraph.enforceHeadingByEdgeId(2, 1, false);
+        queryGraph.unfavorVirtualEdgePair(2, 1);
         // test penalized south
-        boolean expect = true;
         VirtualEdgeIteratorState incomingEdge = (VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(1, 2);
-
         VirtualEdgeIteratorState incomingEdgeReverse = (VirtualEdgeIteratorState) queryGraph.getEdgeIteratorState(1, incomingEdge.getBaseNode());
-        // expect incoming edge in reverse direction to be avoided
+        boolean expect = true;  // expect incoming and reverse incoming edge to be avoided
         assertEquals(expect, incomingEdge.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, !expect));
-        // expect reverse incoming edge to be avoided
         assertEquals(expect, incomingEdgeReverse.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, !expect));
+        assertEquals(new LinkedHashSet<>(Arrays.asList(incomingEdge, incomingEdgeReverse)),
+                queryGraph.getUnfavoredVirtualEdges());
 
         queryGraph.clearUnfavoredStatus();
-        expect = false;
+        expect = false; // expect incoming and reverse incoming edge not to be avoided
         assertEquals(expect, incomingEdge.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, !expect));
-        // expect reverse incoming edge to be unfavored
         assertEquals(expect, incomingEdgeReverse.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, !expect));
+        assertEquals(new LinkedHashSet<>(), queryGraph.getUnfavoredVirtualEdges());
     }
 
     @Test

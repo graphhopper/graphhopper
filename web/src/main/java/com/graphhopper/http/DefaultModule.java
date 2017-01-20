@@ -20,11 +20,13 @@ package com.graphhopper.http;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import com.graphhopper.json.GHJson;
 
 /**
  * @author Peter Karich
@@ -68,12 +70,13 @@ public class DefaultModule extends AbstractModule {
             long timeout = args.getLong("web.timeout", 3000);
             bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);
             boolean jsonpAllowed = args.getBool("web.jsonp_allowed", false);
-            if (!jsonpAllowed)
-                logger.info("jsonp disabled");
 
             bind(Boolean.class).annotatedWith(Names.named("jsonp_allowed")).toInstance(jsonpAllowed);
 
             bind(RouteSerializer.class).toInstance(new SimpleRouteSerializer(graphHopper.getGraphHopperStorage().getBounds()));
+
+            // should be thread safe
+            bind(GHJson.class).toInstance(new GHJsonBuilder().create());
         } catch (Exception ex) {
             throw new IllegalStateException("Couldn't load graph", ex);
         }

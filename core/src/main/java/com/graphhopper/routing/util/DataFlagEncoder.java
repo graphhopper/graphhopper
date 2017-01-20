@@ -37,6 +37,7 @@ import java.util.Map.Entry;
  * @author Peter Karich
  */
 public class DataFlagEncoder extends AbstractFlagEncoder {
+
     private static final Map<String, Double> DEFAULT_SPEEDS = new LinkedHashMap<String, Double>() {
         {
             put("motorway", 100d);
@@ -61,6 +62,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     };
     private final Map<String, Integer> surfaceMap = new HashMap<>();
     private final Map<String, Integer> highwayMap = new HashMap<>();
+    private final Map<String, Integer> accessMap = new HashMap<>();
     private final List<String> transportModeList = new ArrayList<>();
     private final Map<String, Integer> transportModeMap = new HashMap<>();
     private final int transportModeTunnelValue;
@@ -71,6 +73,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private EncodedValue surfaceEncoder;
     private EncodedValue highwayEncoder;
     private EncodedValue transportModeEncoder;
+    private EncodedValue accessEncoder;
 
     public DataFlagEncoder() {
         // TODO include turn information
@@ -113,6 +116,27 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             surfaceMap.put(s, counter++);
         }
 
+        restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
+
+        //Ordered in increasingly restrictive order (currently done subjective
+        List<String> accessList = Arrays.asList(
+                //"designated",
+                "yes",
+                //"permissive",
+                // From here on, we should add weight
+                "customers",
+                "destination",
+                "delivery",
+                "agricultural",
+                "no"
+        );
+
+
+        counter = 0;
+        for (String s : accessList) {
+            accessMap.put(s, counter++);
+        }
+
         // hiking or biking or bus routes
         // detect border crossing -> barrier:border_control
     }
@@ -140,6 +164,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         transportModeEncoder = new EncodedValue("transport mode", shift, 3, 1, 0, transportModeMap.size(), true);
         shift += transportModeEncoder.getBits();
+
+        accessEncoder = new EncodedValue("access car", shift, 3, 1, 1, accessMap.size(), true);
+        shift += accessEncoder.getBits();
 
         return shift;
     }
@@ -180,6 +207,32 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return hwValue;
     }
 
+    int getAccessValue(ReaderWay way) {
+        int accessValue = 0;
+        Integer tmpAccessValue = 0;
+        for (String restriction : restrictions) {
+            tmpAccessValue = accessMap.get(way.getTag(restriction, "yes"));
+            if (tmpAccessValue != null && tmpAccessValue > accessValue) {
+                accessValue = tmpAccessValue;
+            }
+        }
+
+        return accessValue;
+    }
+
+    //TODO It is bad that it's a bit static right now. If anyone changes the accessMap this method won't work anymore...
+    public AccessValue getEdgeAccessValue(long flags) {
+        int accessValue = (int) accessEncoder.getValue(flags);
+        switch (accessValue) {
+            case 0:
+                return AccessValue.ACCESSIBLE;
+            case 5:
+                return AccessValue.NOT_ACCESSIBLE;
+            default:
+                return AccessValue.EVENTUALLY_ACCESSIBLE;
+        }
+    }
+
     @Override
     public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
         if (!isAccept(allowed))
@@ -204,10 +257,16 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             double fwdSpeed = parseSpeed(way.getTag("maxspeed:forward"));
             if (fwdSpeed < 0 || maxSpeed > 0 && maxSpeed < fwdSpeed)
                 fwdSpeed = maxSpeed;
+            if (fwdSpeed > getMaxPossibleSpeed())
+                fwdSpeed = getMaxPossibleSpeed();
+
 
             double bwdSpeed = parseSpeed(way.getTag("maxspeed:backward"));
             if (bwdSpeed < 0 || maxSpeed > 0 && maxSpeed < bwdSpeed)
                 bwdSpeed = maxSpeed;
+            if (bwdSpeed > getMaxPossibleSpeed())
+                bwdSpeed = getMaxPossibleSpeed();
+
 
             // 0 is reserved for default i.e. no maxspeed sign (does not imply no speed limit)
             // TODO and 140 should be used for "none" speed limit on German Autobahn
@@ -260,6 +319,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             if (!isBit0Empty(flags))
                 throw new IllegalStateException("bit0 has to be empty on creation");
 
+            flags = accessEncoder.setValue(flags, getAccessValue(way));
+
             return flags;
         } catch (Exception ex) {
             throw new RuntimeException("Error while parsing way " + way.toString(), ex);
@@ -294,6 +355,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     public double[] getHighwaySpeedMap(Map<String, Double> map) {
+        if (map == null)
+            throw new IllegalArgumentException("Map cannot be null when calling getHighwaySpeedMap");
+
         double[] res = new double[highwayMap.size()];
         for (Entry<String, Double> e : map.entrySet()) {
             Integer integ = highwayMap.get(e.getKey());
@@ -512,5 +576,13 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         ConfigMap cMap = new ConfigMap();
         cMap.put("highways", map);
         return cMap;
+    }
+
+    public enum AccessValue {
+
+        ACCESSIBLE,
+        EVENTUALLY_ACCESSIBLE,
+        NOT_ACCESSIBLE
+
     }
 }

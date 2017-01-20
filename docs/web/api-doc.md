@@ -21,10 +21,11 @@ locale      | en      | The locale of the resulting turn instructions. E.g. `pt_
 instructions| true    | If instruction should be calculated and returned
 vehicle     | car     | The vehicle for which the route should be calculated. Other vehicles are foot, bike, motorcycle, hike, ...
 elevation   | false   | If `true` a third dimension - the elevation - is included in the polyline or in the GeoJson. IMPORTANT: If enabled you have to use a modified version of the decoding method or set points_encoded to `false`. See the points_encoded attribute for more details. Additionally a request can fail if the vehicle does not support elevation. See the features object for every vehicle.
-points_encoded     | true    | If `false` the coordinates in `point` and `snapped_waypoints` are returned as array using the order [lon,lat,elevation] for every point. If `true` the coordinates will be encoded as string leading to less bandwith usage. You'll need a special handling for the decoding of this string on the client-side. We provide open source code in [Java](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/java/com/graphhopper/http/WebHelper.java#L43) and [JavaScript](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/webapp/js/ghrequest.js#L139). It is especially important to use no 3rd party client if you set `elevation=true`!
-debug              | false   | If true, the output will be formated.
-calc_points        | true    | If the points for the route should be calculated at all printing out only distance and time.
-type               | json    | Specifies the resulting format of the route, for `json` the content type will be application/json. Other possible format options: <br> `jsonp` you'll need to provide the callback function via the callback parameter. The content type will be application/javascript<br> `gpx`, the content type will be application/gpx+xml, see below for more parameters.
+points_encoded   | true    | If `false` the coordinates in `point` and `snapped_waypoints` are returned as array using the order [lon,lat,elevation] for every point. If `true` the coordinates will be encoded as string leading to less bandwith usage. You'll need a special handling for the decoding of this string on the client-side. We provide open source code in [Java](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/java/com/graphhopper/http/WebHelper.java#L43) and [JavaScript](https://github.com/graphhopper/graphhopper/blob/d70b63660ac5200b03c38ba3406b8f93976628a6/web/src/main/webapp/js/ghrequest.js#L139). It is especially important to use no 3rd party client if you set `elevation=true`!
+debug            | false   | If true, the output will be formated.
+calc_points      | true    | If the points for the route should be calculated at all printing out only distance and time.
+type             | json    | Specifies the resulting format of the route, for `json` the content type will be application/json. Other possible format options: <br> `jsonp` you'll need to provide the callback function via the callback parameter. The content type will be application/javascript<br> `gpx`, the content type will be application/gpx+xml, see below for more parameters.
+point_hint       | -       | Optional parameter. Specifies a hint for each `point` parameter to prefer a certain street for the closest location lookup. E.g. if there is an address or house with two or more neighboring streets you can control for which street the closest location is looked up.
 
 ### GPX
 
@@ -80,6 +81,7 @@ paths[0].instructions[0].sign                 | A number which specifies the sig
 paths[0].instructions[0].annotation_text      | [optional] A text describing the instruction in more detail, e.g. like surface of the way, warnings or involved costs
 paths[0].instructions[0].annotation_importance| [optional] 0 stands for INFO, 1 for warning, 2 for costs, 3 for costs and warning
 paths[0].instructions[0].exit_number          | [optional] Only available for USE_ROUNDABOUT instructions. The count of exits at which the route leaves the roundabout.
+paths[0].instructions[0].exited               | [optional] Only available for USE_ROUNDABOUT instructions. True if the roundabout should be exited. False if a via point or end is placed in the roundabout, thus, the roundabout should not be exited due to this instruction.
 paths[0].instructions[0].turn_angle           | [optional] Only available for USE_ROUNDABOUT instructions. The radian of the route within the roundabout: 0<r<2*PI for clockwise and -2PI<r<0 for counterclockwise transit. Null if the direction of rotation is undefined.
 
 ```json

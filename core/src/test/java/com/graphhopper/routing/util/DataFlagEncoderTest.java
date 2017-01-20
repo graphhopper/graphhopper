@@ -120,6 +120,19 @@ public class DataFlagEncoderTest {
     }
 
     @Test
+    public void testDestinationTag() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "secondary");
+        assertEquals(DataFlagEncoder.AccessValue.ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+
+        way.setTag("vehicle", "destination");
+        assertEquals(DataFlagEncoder.AccessValue.EVENTUALLY_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+
+        way.setTag("vehicle", "no");
+        assertEquals(DataFlagEncoder.AccessValue.NOT_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+    }
+
+    @Test
     public void testMaxspeed() {
         ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
@@ -136,6 +149,25 @@ public class DataFlagEncoderTest {
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
         assertEquals(10, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
         assertEquals(-1, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
+    }
+
+    @Test
+    public void testLargeMaxspeed() {
+        ReaderWay osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "primary");
+        osmWay.setTag("maxspeed", "145");
+        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertEquals(140, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
+        assertEquals(140, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
+
+        osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "primary");
+        osmWay.setTag("maxspeed", "1000");
+        flags = encoder.handleWayTags(osmWay, 1, 0);
+        edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertEquals(140, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
+        assertEquals(140, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
     }
 
     @Test
