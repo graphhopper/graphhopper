@@ -178,14 +178,16 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // Currently we the restrictive two-direction edge filter to count nodes and detect subnetworks (roughly)
         // should we use Tarjan algorithm to be more precise?
         byte[] subnetworks = new byte[graph.getNodes()];
-        // 0 should only be used if subnetwork is too small
+        // UNCLEAR_SUBNETWORK == 0 should only be used if subnetwork is too small
         Arrays.fill(subnetworks, (byte) UNSET_SUBNETWORK);
 
         // we cannot reuse the components calculated in PrepareRoutingSubnetworks as the edgeIds changed in between (called graph.optimize)
         // also calculating subnetworks from scratch makes bigger problems when working with many oneways
 
         StopWatch sw = new StopWatch().start();
-        int edges = splitCountries(borderMap, createEU_Africa_RU_BBox());
+        // TODO make better testable for smaller area
+        SpatialRuleLookupArray ruleLookup = new SpatialRuleLookupArray(createEU_Africa_RU_BBox(), 0.1, true);
+        int edges = splitCountries(borderMap, ruleLookup);
         LOGGER.info("Made " + edges + " edges inaccessible. Calculated country cut in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
         sw = new StopWatch().start();
         TarjansSCCAlgorithm tarjanAlgo = new TarjansSCCAlgorithm(graph, new DefaultEdgeFilter(encoder, false, true), true);
@@ -207,6 +209,11 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 int nextStartNode = subnetworkIds.get(index);
                 if (subnetworks[nextStartNode] == UNSET_SUBNETWORK
                         && GHUtility.count(tmpExplorer.setBaseNode(nextStartNode)) > 0) {
+
+                    GHPoint p = createPoint(graph, nextStartNode);
+                    LOGGER.info("start node: " + nextStartNode + " (" + p + ") subnetwork size: " + subnetworkIds.size()
+                            + ", " + Helper.getMemInfo() + " area:" + ruleLookup.lookupRule(p).getCountryIsoA3Name());
+
                     if (createLandmarks(nextStartNode, subnetworks, subnetworkIds))
                         break;
                 }
@@ -254,12 +261,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      * This method makes edges crossing the specified border inaccessible to split a bigger area into smaller subnetworks.
      * Important for the world wide use case to limit the maximum distance but also to faster detect unreasonable routes.
      */
-    protected int splitCountries(Map<String, Polygon> borderMap, BBox bbox) {
+    protected int splitCountries(Map<String, Polygon> borderMap, SpatialRuleLookupArray ruleLookup) {
         if (borderMap.isEmpty())
             return 0;
-
-        // TODO make better testable for smaller area
-        SpatialRuleLookupArray ruleLookup = new SpatialRuleLookupArray(bbox, 0.1, true);
 
         for (final Map.Entry<String, Polygon> polgonEntry : borderMap.entrySet())
             ruleLookup.addRule(new DefaultSpatialRule() {
@@ -302,17 +306,12 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return str;
     }
 
-    private final BBox euBBox = BBox.parseTwoPoints("63.391522,-15.205078,33.358062,51.240234");
-
     /**
      * This method creates landmarks for the specified subnetwork (integer list)
      *
      * @return landmark mapping
      */
     private boolean createLandmarks(final int startNode, final byte[] subnetworks, IntArrayList subnetworkIds) {
-        GHPoint p = createPoint(graph, startNode);
-        LOGGER.info("start node: " + startNode + " (" + p + ") subnetwork size: " + subnetworkIds.size() + ", " + Helper.getMemInfo() + " EU=" + euBBox.contains(p.lat, p.lon));
-
         final int subnetworkId = landmarkIDs.size();
 
         // 1a) pick landmarks via shortest weighting for a better geographical spreading
