@@ -1,13 +1,10 @@
 package com.graphhopper.routing.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.graphhopper.util.PMap;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -17,12 +14,14 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
-import org.junit.rules.ExpectedException;
+
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
  */
 public class DataFlagEncoderTest {
+    private final PMap properties;
     private final DataFlagEncoder encoder;
     private final EncodingManager encodingManager;
     private final int motorVehicleInt;
@@ -30,10 +29,30 @@ public class DataFlagEncoderTest {
     private final double DELTA = 0.1;
 
     public DataFlagEncoderTest() {
-        encoder = new DataFlagEncoder();
+        properties = new PMap();
+        properties.put("limit_height", true);
+        properties.put("limit_weight", true);
+        properties.put("limit_width", true);
+        encoder = new DataFlagEncoder(properties);
         encodingManager = new EncodingManager(Arrays.asList(encoder), 8);
 
         motorVehicleInt = encoder.getAccessType("motor_vehicle");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testInsufficientEncoderBitLength() {
+        EncodingManager em = new EncodingManager(Arrays.asList(new DataFlagEncoder(properties)));
+    }
+
+    @Test
+    public void testSufficientEncoderBitLength() {
+        try {
+            EncodingManager em = new EncodingManager(Arrays.asList(new DataFlagEncoder(properties)), 8);
+            EncodingManager em1 = new EncodingManager(Arrays.asList(new DataFlagEncoder()));
+        }
+        catch (Throwable t) {
+            fail();
+        }
     }
 
     @Test

@@ -42,11 +42,21 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class GenericWeightingTest {
-    private final DataFlagEncoder encoder = new DataFlagEncoder();
-    private final EncodingManager em = new EncodingManager(Arrays.asList(encoder), 8);
+    private final PMap properties;
+    private final DataFlagEncoder encoder;
+    private final EncodingManager em;
     private Graph graph;
 
     private final double edgeWeight = 566111;
+
+    public GenericWeightingTest() {
+        properties = new PMap();
+        properties.put("limit_height", true);
+        properties.put("limit_weight", true);
+        properties.put("limit_width", true);
+        encoder = new DataFlagEncoder(properties);
+        em = new EncodingManager(Arrays.asList(encoder), 8);
+    }
 
     @Before
     public void setUp() {
@@ -127,5 +137,30 @@ public class GenericWeightingTest {
         cMap.put(GenericWeighting.HEIGHT_LIMIT, 5.0);
         instance = new GenericWeighting(encoder, cMap);
         assertEquals(Double.POSITIVE_INFINITY, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
+    }
+
+    @Test
+    public void testDisabledRoadAttributes() {
+        DataFlagEncoder simpleEncoder = new DataFlagEncoder();
+        EncodingManager simpleEncodingManager = new EncodingManager(simpleEncoder);
+        Graph simpleGraph = new GraphBuilder(simpleEncodingManager).create();
+
+        ReaderWay way = new ReaderWay(27l);
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed", "10");
+        way.setTag("maxheight", "4.4");
+
+        // 0-1
+        simpleGraph.edge(0, 1, 1, true);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(simpleGraph, 0, 0.00, 0.00);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(simpleGraph, 1, 0.01, 0.01);
+        simpleGraph.getEdgeIteratorState(0, 1).setFlags(simpleEncoder.handleWayTags(way, 1, 0));
+
+        EdgeIteratorState edge = simpleGraph.getEdgeIteratorState(0, 1);
+        ConfigMap cMap = simpleEncoder.readStringMap(new PMap());
+        cMap.put(GenericWeighting.HEIGHT_LIMIT, 5.0);
+        Weighting instance = new GenericWeighting(simpleEncoder, cMap);
+
+        assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
     }
 }

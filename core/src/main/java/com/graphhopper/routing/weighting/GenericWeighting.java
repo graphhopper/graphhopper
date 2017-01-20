@@ -100,9 +100,9 @@ public class GenericWeighting extends AbstractWeighting {
         } else if (!gEncoder.isForward(edgeState, accessType))
             return Double.POSITIVE_INFINITY;
 
-        if (overLimit(height, gEncoder.getHeightLimit(edgeState)) ||
-            overLimit(weight, gEncoder.getWeightLimit(edgeState)) ||
-            overLimit(width, gEncoder.getWidthLimit(edgeState)))
+        if ((gEncoder.isHeightLimitEnabled() && overLimit(height, gEncoder.getHeightLimit(edgeState))) ||
+                (gEncoder.isWeightLimitEnabled() && overLimit(weight, gEncoder.getWeightLimit(edgeState))) ||
+                (gEncoder.isWidthLimitEnabled() && overLimit(width, gEncoder.getWidthLimit(edgeState))))
             return Double.POSITIVE_INFINITY;
 
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);

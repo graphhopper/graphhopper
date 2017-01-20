@@ -515,7 +515,8 @@ public class OSMReaderTest {
     @Test
     public void testRoadAttributes() {
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
-        hopper.setEncodingManager(new EncodingManager("generic", 8));
+        DataFlagEncoder dataFlagEncoder = (new DataFlagEncoder()).enableHeightLimit(true).enableWeightLimit(true).enableWidthLimit(true);
+        hopper.setEncodingManager(new EncodingManager(Arrays.asList(dataFlagEncoder), 8));
         hopper.importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
