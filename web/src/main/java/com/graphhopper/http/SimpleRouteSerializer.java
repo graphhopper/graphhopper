@@ -17,6 +17,8 @@
  */
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.util.Helper;
@@ -25,6 +27,7 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.exceptions.GHException;
 import com.graphhopper.util.shapes.BBox;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -32,9 +35,11 @@ import java.util.*;
  */
 public class SimpleRouteSerializer implements RouteSerializer {
     private final BBox maxBounds;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     public SimpleRouteSerializer(BBox maxBounds) {
         this.maxBounds = maxBounds;
+        this.objectMapper.setDateFormat(new SimpleDateFormat("YYYY-MM-dd'T'HH:mm")); // ISO8601 without time zone
     }
 
     private String getMessage(Throwable t) {
@@ -96,6 +101,8 @@ public class SimpleRouteSerializer implements RouteSerializer {
                         InstructionList instructions = ar.getInstructions();
                         jsonPath.put("instructions", instructions.createJson());
                     }
+
+                    jsonPath.put("legs", objectMapper.convertValue(ar.getLegs(), new TypeReference<List<Map<String, Object>>>() {}));
 
                     jsonPath.put("ascend", ar.getAscend());
                     jsonPath.put("descend", ar.getDescend());

@@ -69,6 +69,7 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
             case EXIT_PT:
 				return 0;
             case TIME_PASSES:
+            case TRANSFER:
                 return ((PtFlagEncoder) getFlagEncoder()).getTime(edgeState.getFlags());
             default:
                 throw new IllegalStateException();

@@ -173,7 +173,7 @@ class GtfsReader {
             if (!tailSet.isEmpty()) {
                 Fun.Tuple2<Integer, Integer> e = tailSet.first();
                 EdgeIteratorState edge = graph.edge(arrivalNodeId, e.b, 0.0, false);
-                setEdgeType(edge, GtfsStorage.EdgeType.TIME_PASSES);
+                setEdgeType(edge, GtfsStorage.EdgeType.TRANSFER);
                 edge.setFlags(encoder.setTime(edge.getFlags(), e.a-arrivalTime));
             }
         }

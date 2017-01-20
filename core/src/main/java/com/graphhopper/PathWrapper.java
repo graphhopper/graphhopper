@@ -45,6 +45,7 @@ public class PathWrapper {
     private PointList pointList = PointList.EMPTY;
     private int numChanges;
     private long firstPtLegDeparture;
+    private final List<Trip.Leg> legs = new ArrayList<>();
 
     /**
      * @return the description of this route alternative to make it meaningful for the user e.g. it
@@ -283,4 +284,9 @@ public class PathWrapper {
     public long getFirstPtLegDeparture() {
         return firstPtLegDeparture;
     }
+
+    public List<Trip.Leg> getLegs() {
+        return legs;
+    }
+
 }

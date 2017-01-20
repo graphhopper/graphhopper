@@ -1,10 +1,7 @@
 package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.*;
@@ -18,7 +15,11 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import static com.graphhopper.reader.gtfs.Label.reverseEdges;
@@ -292,6 +293,10 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 instructions.add(new Instruction(sign, edge.getName(), InstructionAnnotation.EMPTY, edge.fetchWayGeometry(1)));
                 distance += edge.getDistance();
             }
+
+
+            List<List<EdgeIteratorState>> partitions = edges.stream().collect(splittingBefore(e -> EnumSet.of(GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK).contains(encoder.getEdgeType(e.getFlags()))));
+            path.getLegs().addAll(partitions.stream().flatMap(partition -> legs(partition, encoder).stream()).collect(Collectors.toList()));
             if (!edges.isEmpty()) {
                 instructions.add(new FinishInstruction(graphHopperStorage.getNodeAccess(), edges.get(edges.size()-1).getAdjNode()));
             }
@@ -318,6 +323,60 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             }
         }
         return response;
+    }
+
+    // Ugly: What we are writing here is a parser. We are parsing a string of edges
+    // into a hierarchical trip.
+    // One could argue that one should never write a parser
+    // by hand, because it is always ugly, but use a parser library.
+    // The code would then read like a specification of what paths through the graph mean.
+    private List<Trip.Leg> legs(List<EdgeIteratorState> timeExpandedNetworkPath, PtFlagEncoder encoder) {
+        if (EnumSet.of(GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK).contains(encoder.getEdgeType(timeExpandedNetworkPath.get(0).getFlags()))) {
+            List<Trip.Leg> result = new ArrayList<>();
+            LocalDateTime time = gtfsStorage.getStartDate().atStartOfDay().plusSeconds(encoder.getTime(timeExpandedNetworkPath.get(0).getFlags()));
+            LocalDateTime boardTime = null;
+            List<EdgeIteratorState> partition = null;
+            for (int i=1; i<timeExpandedNetworkPath.size(); i++) {
+                EdgeIteratorState edge = timeExpandedNetworkPath.get(i);
+                GtfsStorage.EdgeType edgeType = encoder.getEdgeType(edge.getFlags());
+                if (edgeType == GtfsStorage.EdgeType.BOARD) {
+                    if (boardTime != null) {
+                        result.add(new Trip.PtLeg(partition, Date.from(time.atZone(ZoneId.systemDefault()).toInstant())));
+                    }
+                    boardTime = time;
+                    partition = new ArrayList<>();
+                }
+                if (partition != null) {
+                    partition.add(edge);
+                }
+                if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.TIME_PASSES).contains(edgeType)) {
+                    time = time.plusSeconds(encoder.getTime(edge.getFlags()));
+                }
+            }
+            if (boardTime != null) {
+                result.add(new Trip.PtLeg(partition, Date.from(time.atZone(ZoneId.systemDefault()).toInstant())));
+            }
+            return result;
+        } else {
+            return Collections.singletonList(new Trip.Leg(timeExpandedNetworkPath));
+        }
+    }
+
+    static <T> Collector<T, ArrayList<List<T>>, ArrayList<List<T>>> splittingBefore(Predicate<T> p) {
+        return Collector.of(ArrayList::new, (legs, edge) -> {
+            if (legs.isEmpty() || p.test(edge)) {
+                legs.add(new ArrayList<>());
+            }
+            legs.get(legs.size()-1).add(edge);
+        }, (legs1, legs2) -> {
+            if (!legs2.isEmpty() && !legs2.get(0).isEmpty() && !p.test(legs2.get(0).get(0))) {
+                legs1.get(legs1.size()-1).addAll(legs2.get(0));
+                legs1.addAll(legs2.subList(1, legs2.size()-1));
+            } else {
+                legs1.addAll(legs2);
+            }
+            return legs1;
+        });
     }
 
 }
