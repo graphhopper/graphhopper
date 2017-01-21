@@ -99,13 +99,14 @@ public class PrepareLandmarksTest
         assertEquals(2, store.getSubnetworksWithLandmarks());
 
         assertEquals(0, store.getFromWeight(0, 224));
-        assertEquals(11904, store.getFromWeight(0, 47));
-        assertEquals(9275, store.getFromWeight(0, 52));
+        double factor = store.getFactor();
+        assertEquals(4671, Math.round(store.getFromWeight(0, 47) * factor));
+        assertEquals(3639, Math.round(store.getFromWeight(0, 52) * factor));
 
-        int weight1_224 = store.getFromWeight(1, 224);
-        assertEquals(14080, weight1_224);
-        int weight1_47 = store.getFromWeight(1, 47);
-        assertEquals(2346, weight1_47);
+        long weight1_224 = store.getFromWeight(1, 224);
+        assertEquals(5525, Math.round(weight1_224 * factor));
+        long weight1_47 = store.getFromWeight(1, 47);
+        assertEquals(920, Math.round(weight1_47 * factor));
 
         // grid is symmetric
         assertEquals(weight1_224, store.getToWeight(1, 224));
@@ -137,6 +138,7 @@ public class PrepareLandmarksTest
         RoutingAlgorithm oneDirAlgoWithLandmarks = prepare.getDecoratedAlgorithm(graph, new AStar(graph, weighting, tm), opts);
         Path path = oneDirAlgoWithLandmarks.calcPath(41, 183);
 
+        assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
         assertEquals(expectedAlgo.getVisitedNodes() - 155, oneDirAlgoWithLandmarks.getVisitedNodes());
 
@@ -144,6 +146,7 @@ public class PrepareLandmarksTest
         RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getDecoratedAlgorithm(graph,
                 new AStarBidirection(graph, weighting, tm), opts);
         path = biDirAlgoWithLandmarks.calcPath(41, 183);
+        assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
         assertEquals(expectedAlgo.getVisitedNodes() - 176, biDirAlgoWithLandmarks.getVisitedNodes());
 
@@ -159,14 +162,15 @@ public class PrepareLandmarksTest
 
         expectedAlgo = new AStar(qGraph, weighting, tm);
         expectedPath = expectedAlgo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
+        assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
         assertEquals(expectedAlgo.getVisitedNodes() - 122, qGraphOneDirAlgo.getVisitedNodes());
     }
 
     @Test
     public void testStoreAndLoad() {
-        graph.edge(0, 1, 80, true);
-        graph.edge(1, 2, 80, true);
+        graph.edge(0, 1, 80_000, true);
+        graph.edge(1, 2, 80_000, true);
         String fileStr = "./target/tmp-lm";
         Helper.removeDir(new File(fileStr));
 
@@ -175,13 +179,13 @@ public class PrepareLandmarksTest
         PrepareLandmarks plm = new PrepareLandmarks(dir, graph, weighting, tm, 2, 2);
         plm.setMinimumNodes(2);
         plm.doWork();
-        double expectedFactor = plm.getLandmarkStorage().getFactor();
 
+        double expectedFactor = plm.getLandmarkStorage().getFactor();
         assertTrue(plm.getLandmarkStorage().isInitialized());
         assertEquals(Arrays.toString(new int[]{
                 2, 0
         }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
-        assertEquals(12, plm.getLandmarkStorage().getFromWeight(0, 1));
+        assertEquals(4791, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
 
         dir = new RAMDirectory(fileStr, true);
         plm = new PrepareLandmarks(dir, graph, weighting, tm, 2, 2);
@@ -190,7 +194,7 @@ public class PrepareLandmarksTest
         assertEquals(Arrays.toString(new int[]{
                 2, 0
         }), Arrays.toString(plm.getLandmarkStorage().getLandmarks(1)));
-        assertEquals(12, plm.getLandmarkStorage().getFromWeight(0, 1));
+        assertEquals(4791, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
 
         Helper.removeDir(new File(fileStr));
     }

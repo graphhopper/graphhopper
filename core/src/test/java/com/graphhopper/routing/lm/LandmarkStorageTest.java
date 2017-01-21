@@ -115,12 +115,12 @@ public class LandmarkStorageTest {
         storage.createLandmarks();
         assertEquals(3, storage.getSubnetworksWithLandmarks());
         assertEquals("[2, 0]", Arrays.toString(storage.getLandmarks(1)));
-        assertEquals("[5, 4]", Arrays.toString(storage.getLandmarks(2)));
+        assertEquals("[6, 4]", Arrays.toString(storage.getLandmarks(2)));
     }
-
 
     @Test
     public void testWithSubnetworks2() {
+        // should not happen with subnetwork preparation
         // 0 - 1 - 2 = 3 - 4
         ghStorage.edge(0, 1, 10, true);
         ghStorage.edge(1, 2, 10, true);
@@ -132,11 +132,12 @@ public class LandmarkStorageTest {
         storage.setMinimumNodes(3);
         storage.createLandmarks();
         assertEquals(2, storage.getSubnetworksWithLandmarks());
-        assertEquals("[2, 0]", Arrays.toString(storage.getLandmarks(1)));
+        assertEquals("[4, 0]", Arrays.toString(storage.getLandmarks(1)));
     }
 
     @Test
     public void testWithOnewaySubnetworks() {
+        // should not happen with subnetwork preparation
         // create an indifferent problem: node 2 and 3 are part of two 'disconnected' subnetworks
         ghStorage.edge(0, 1, 10, true);
         ghStorage.edge(1, 2, 10, false);
@@ -150,8 +151,7 @@ public class LandmarkStorageTest {
         storage.createLandmarks();
 
         assertEquals(2, storage.getSubnetworksWithLandmarks());
-        assertEquals("[1, 0]", Arrays.toString(storage.getLandmarks(1)));
-        // assertEquals("[5, 4]", Arrays.toString(storage.getLandmarks(2)));
+        assertEquals("[4, 0]", Arrays.toString(storage.getLandmarks(1)));
     }
 
     @Test
@@ -167,7 +167,5 @@ public class LandmarkStorageTest {
 
         assertEquals(2, storage.getSubnetworksWithLandmarks());
         assertEquals("[1, 0]", Arrays.toString(storage.getLandmarks(1)));
-        // assertEquals("[3, 2]", Arrays.toString(storage.getLandmarks(2)));
     }
-
 }

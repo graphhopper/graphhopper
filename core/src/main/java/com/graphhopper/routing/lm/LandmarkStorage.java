@@ -22,17 +22,13 @@ import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.MapEntry;
-import com.graphhopper.geohash.SpatialKeyAlgo;
-import com.graphhopper.json.geo.GeoJsonPolygon;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjansSCCAlgorithm;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupArray;
-import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.DefaultSpatialRule;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -68,7 +64,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     /* every subnetwork has its own landmark mapping but the count of landmarks is always the same */
     private final List<int[]> landmarkIDs;
     private double factor = 1;
-    private final static double DOUBLE_MLTPL = 1.0e6;
+    private final static double DOUBLE_MLTPL = 1e6;
     private final GraphHopperStorage graph;
     private final FlagEncoder encoder;
     private final Weighting weighting;
@@ -160,12 +156,15 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         // roughly approximate the maximum distance of the current area but limit to world wide case
         // too small is dangerous regarding performance, e.g. for Germany at least 1500km is very important otherwise speed is at least twice as slow e.g. for just 1000km
-        // TODO approximate the size of the biggest subnetwork instead!
-        // double distanceInMeter = Math.min(50_000_000, 3 * Helper.DIST_EARTH.calcDist(graph.getBounds().maxLat, graph.getBounds().maxLon, graph.getBounds().minLat, graph.getBounds().minLon));
-        double distanceInMeter = 40_000_000;
+        BBox bounds = graph.getBounds();
+        double maxTmp = 30_000_000;
+        double distanceInMeter = !bounds.isValid() ? maxTmp : (Helper.DIST_EARTH.calcDist(bounds.maxLat, bounds.maxLon, bounds.minLat, bounds.minLon) > 50_000 ? maxTmp : 1_000_000);
         double weightMax = weighting.getMinWeight(distanceInMeter);
         // 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
         factor = weightMax / (1 << 16);
+
+        if (Double.isInfinite(factor) || Double.isNaN(factor))
+            throw new IllegalStateException("Illegal factor calculated from distance " + distanceInMeter + " and weight " + weightMax);
 
         LOGGER.info("init landmarks for subnetworks with node count greater than " + minimumNodes + ", weightMax:" + weightMax
                 + ", factor:" + factor + " from max distance:" + distanceInMeter / 1000f + "km");
@@ -175,8 +174,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         Arrays.fill(empty, -1);
         landmarkIDs.add(empty);
 
-        // Currently we the restrictive two-direction edge filter to count nodes and detect subnetworks (roughly)
-        // should we use Tarjan algorithm to be more precise?
         byte[] subnetworks = new byte[graph.getNodes()];
         // UNCLEAR_SUBNETWORK == 0 should only be used if subnetwork is too small
         Arrays.fill(subnetworks, (byte) UNSET_SUBNETWORK);
@@ -252,7 +249,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         initialized = true;
     }
 
-    // TODO move into GeoJSON or calculate from GeoJSON
+    // TODO calculate from GeoJSON, #926
     protected BBox createEU_Africa_RU_BBox() {
         return new BBox(-20, 179, -50, 85);
     }
@@ -319,17 +316,12 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         Weighting initWeighting = lmSelectionWeighting;
         Explorer explorer = new Explorer(graph, this, initWeighting, traversalMode);
         explorer.initFrom(startNode, 0);
-        // force landmarks being always accessible in both directions (restrictive two-direction edge filter)
         explorer.setFilter(true, true);
         explorer.runAlgo(true);
 
         if (explorer.getFromCount() < minimumNodes) {
-//            LOGGER.warn("Should not happen. The component calculated from Tarjan algo was " + subnetworkIds.size() + " > " + minimumNodes
-//                    + " but the network calculated from a more restrictive two-direction edge filter was smaller: " + explorer.getFromCount());
             // too small subnetworks are initialized with special id==0
-            // hint: we cannot use expectFresh=true as the strict two-direction edge filter is only a subset of the true network (due to oneways)
-            // and so previously marked subnetwork entries could be already initialized with 0
-            explorer.setSubnetworks(subnetworks, 0);
+            explorer.setSubnetworks(subnetworks, UNCLEAR_SUBNETWORK);
             return false;
         }
 
@@ -364,7 +356,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             explorer.initLandmarkWeights(lmIdx, LM_ROW_LENGTH, FROM_OFFSET);
 
             // set subnetwork id to all explored nodes, but do this only for the first landmark
-            // important here is that we do not use the more restrictive two-direction edge filter
             if (lmIdx == 0) {
                 if (explorer.setSubnetworks(subnetworks, subnetworkId))
                     return false;
@@ -630,8 +621,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         }
 
         public void setFilter(boolean bwd, boolean fwd) {
-
-            EdgeFilter ef = bwd && fwd ? new RequireBothDirectionsEdgeFilter(flagEncoder) : new DefaultEdgeFilter(flagEncoder, bwd, fwd);
+            EdgeFilter ef = new DefaultEdgeFilter(flagEncoder, bwd, fwd);
             outEdgeExplorer = graph.createEdgeExplorer(ef);
             inEdgeExplorer = graph.createEdgeExplorer(ef);
         }
