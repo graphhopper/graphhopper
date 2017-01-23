@@ -47,17 +47,23 @@ public class TestAlgoCollector {
 
     public TestAlgoCollector assertDistance(AlgoHelperEntry algoEntry, List<QueryResult> queryList,
                                             OneRun oneRun) {
-        List<Path> altPaths = new ArrayList<Path>();
+        List<Path> altPaths = new ArrayList<>();
         QueryGraph queryGraph = new QueryGraph(algoEntry.getForQueryGraph());
         queryGraph.lookup(queryList);
-        AlgorithmOptions opts = algoEntry.opts;
+        AlgorithmOptions opts = algoEntry.getAlgorithmOptions();
         FlagEncoder encoder = opts.getWeighting().getFlagEncoder();
-        if (encoder.supports(TurnWeighting.class))
+        if (encoder.supports(TurnWeighting.class)) {
+            if (!opts.getTraversalMode().isEdgeBased()) {
+                errors.add("Cannot use TurnWeighting with a node based traversal");
+                return this;
+            }
             algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(new TurnWeighting(opts.getWeighting(), (TurnCostExtension) queryGraph.getExtension())).build());
+        }
 
         RoutingAlgorithmFactory factory = algoEntry.createRoutingFactory();
         for (int i = 0; i < queryList.size() - 1; i++) {
-            RoutingAlgorithm algo = factory.createAlgo(queryGraph, opts);
+            RoutingAlgorithm algo = factory.createAlgo(queryGraph, algoEntry.getAlgorithmOptions());
+
 //            if (!algoEntry.getExpectedAlgo().equals(algo.toString())) {
 //                errors.add("Algorithm expected " + algoEntry.getExpectedAlgo() + " but was " + algo.toString());
 //                return this;
