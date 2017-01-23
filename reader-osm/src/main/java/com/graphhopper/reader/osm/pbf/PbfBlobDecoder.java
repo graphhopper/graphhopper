@@ -229,7 +229,8 @@ public class PbfBlobDecoder implements Runnable {
                 int valueIndex = keysValuesIterator.next();
 
                 if (tags == null) {
-                    tags = new HashMap<String, String>();
+                    // devide by 2 as key&value, multiple by 2 because of the better approximation
+                    tags = new HashMap<String, String>(Math.max(3, 2 * (nodes.getKeysValsList().size() / 2) / idList.size()));
                 }
 
                 tags.put(fieldDecoder.decodeString(keyIndex), fieldDecoder.decodeString(valueIndex));
@@ -267,8 +268,6 @@ public class PbfBlobDecoder implements Runnable {
                                       List<Long> memberIds, List<Integer> memberRoles, List<Osmformat.Relation.MemberType> memberTypes,
                                       PbfFieldDecoder fieldDecoder) {
 
-        List<ReaderRelation.Member> members = relation.getMembers();
-
         // Ensure parallel lists are of equal size.
         if (checkData) {
             if ((memberIds.size() != memberRoles.size()) || (memberIds.size() != memberTypes.size())) {
@@ -302,8 +301,7 @@ public class PbfBlobDecoder implements Runnable {
             }
 
             ReaderRelation.Member member = new ReaderRelation.Member(entityType, refId, fieldDecoder.decodeString(memberRoleIterator.next()));
-
-            members.add(member);
+            relation.add(member);
         }
     }
 
@@ -327,7 +325,6 @@ public class PbfBlobDecoder implements Runnable {
         PbfFieldDecoder fieldDecoder = new PbfFieldDecoder(block);
 
         for (Osmformat.PrimitiveGroup primitiveGroup : block.getPrimitivegroupList()) {
-            log.debug("Processing OSM primitive group.");
             processNodes(primitiveGroup.getDense(), fieldDecoder);
             processNodes(primitiveGroup.getNodesList(), fieldDecoder);
             processWays(primitiveGroup.getWaysList(), fieldDecoder);

@@ -39,12 +39,16 @@ public class PMap {
     }
 
     public PMap(Map<String, String> map) {
-        this.map = map;
+        this.map = new HashMap<>(map);
+    }
+
+    public PMap(PMap map) {
+        this.map = new HashMap<>(map.map);
     }
 
     public PMap(String propertiesString) {
         // five chosen as arbitrary initial capacity
-        this.map = new HashMap<String, String>(5);
+        this.map = new HashMap<>(5);
 
         for (String s : propertiesString.split("\\|")) {
             s = s.trim();

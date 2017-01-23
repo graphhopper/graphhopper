@@ -93,11 +93,11 @@ public interface DistanceCalc {
                                     double b_lat_deg, double b_lon_deg);
 
     /**
-     * This methods projects a point given in lat and long (in degrees) into a direction, given as
-     * heading, measured clockwise from north in degrees. The distance is passed in km.
+     * This methods creates a point (lat, lon in degrees) in a certain distance and direction from the specified
+     * point (lat, lon in degrees). The heading is measured clockwise from north in degrees. The distance is passed in meter.
      */
-    public GHPoint projectCoordinate(double lat_deg, double lon_deg,
-                                     double distanceInMeter, double headingClockwiseFromNorth);
+    GHPoint projectCoordinate(double lat, double lon,
+                              double distanceInMeter, double headingClockwiseFromNorth);
 
     /*
      * Simple heuristic to detect if the specified two points are crossing the boundary +-180°. See

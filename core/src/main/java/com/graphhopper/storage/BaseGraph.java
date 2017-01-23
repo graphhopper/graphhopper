@@ -356,8 +356,10 @@ class BaseGraph implements Graph {
     void create(long initSize) {
         nodes.create(initSize);
         edges.create(initSize);
+
+        initSize = Math.min(initSize, 2000);
         wayGeometry.create(initSize);
-        nameIndex.create(1000);
+        nameIndex.create(initSize);
         extStorage.create(initSize);
         initStorage();
         // 0 stands for no separate geoRef

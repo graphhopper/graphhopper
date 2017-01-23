@@ -76,9 +76,9 @@
     <modules>
         <module>core</module>
         <module>reader-osm</module>
+        <module>reader-json</module>
         <module>tools</module>
         <module>web</module>
-        <module>reader-json</module>
     </modules>
     <build>
         <plugins>
@@ -291,7 +291,7 @@
             <id>jdk9</id>
             <activation>
                 <activeByDefault>false</activeByDefault>                                
-                <jdk>9</jdk>
+                <jdk>9-ea</jdk>
             </activation>
             <properties />           
             <build>
@@ -300,7 +300,7 @@
                         <artifactId>maven-failsafe-plugin</artifactId>
                         <configuration>
                             <systemPropertyVariables />
-                            <argLine>--add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine>
+                            <argLine>--add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                         </configuration>
                     </plugin>
                     <plugin>
@@ -308,12 +308,9 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>2.19.1</version>
                         <configuration>
-                            <!-- Without the add-exports/addExports options we get
-                                 java.lang.reflect.InaccessibleObjectException: Unable to make member of class 
-                                 jdk.internal.ref.Cleaner accessible: module java.base does not export jdk.internal.ref to unnamed module @bd8be5
-                                 See #852                                 
+                            <!-- See #852 and #701 for the add exports or add opens option
                             -->                            
-                            <argLine>-Xmx100m -Xms100m --add-exports java.base/jdk.internal.ref=ALL-UNNAMED</argLine>
+                            <argLine>-Xmx100m -Xms100m --add-opens java.base/java.lang=ALL-UNNAMED</argLine>
                         </configuration>
                     </plugin>
                 </plugins>

@@ -2,9 +2,6 @@
 (set -o igncr) 2>/dev/null && set -o igncr; # this comment is required for handling Windows cr/lf 
 # See StackOverflow answer http://stackoverflow.com/a/14607651
 
-# bail if any errors ...
-set -e
-
 GH_CLASS=com.graphhopper.tools.Import
 GH_HOME=$(dirname "$0")
 JAVA=$JAVA_HOME/bin/java
@@ -29,7 +26,7 @@ FILE=$2
 
 function printUsage {
  echo
- echo "./graphhopper.sh import|web <your-osm-file>"
+ echo "./graphhopper.sh import|web <some-map-file>"
  echo "./graphhopper.sh clean|build|buildweb|help"
  echo
  echo "  help        this message"
@@ -38,11 +35,11 @@ function printUsage {
  echo "  build       creates the graphhopper JAR (without the web module)"
  echo "  buildweb    creates the graphhopper JAR (with the web module)"
  echo "  clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
- echo "  measurement does performance analysis of the current source version via artificial, random routes (Measurement class)"
- echo "  torture     can be used to test real world routes via feeding graphhopper logs into a graphhopper system (Torture class)"
+ echo "  measurement does performance analysis of the current source version via random routes (Measurement class)"
+ echo "  torture     can be used to test real world routes via feeding graphhopper logs into a GraphHopper system (Torture class)"
  echo "  miniui      is a simple Java/Swing visualization application used for debugging purposes (MiniGraphUI class)"
- echo "  extract     calls the overpass API to easily grab any area as .osm file"
- echo "  android     builds, deploys and starts the Android demo to your connected device"
+ echo "  extract     calls the overpass API to grab any area as .osm file"
+ echo "  android     builds, deploys and starts the Android demo for your connected device"
 }
 
 if [ "$ACTION" = "" ]; then
@@ -50,7 +47,7 @@ if [ "$ACTION" = "" ]; then
  printUsage
 fi
 
-function ensureOsmXml { 
+function ensureOsm { 
   if [ "$OSM_FILE" = "" ]; then
     # skip
     return
@@ -104,7 +101,6 @@ function ensureMaven {
 }
 
 function execMvn {
-  # echo "exec maven with $@"
   "$MAVEN_HOME/bin/mvn" "$@" > /tmp/graphhopper-compile.log
   returncode=$?
   if [[ $returncode != 0 ]] ; then
@@ -121,7 +117,7 @@ function packageCoreJar {
   fi
   
   if [ ! -f "$JAR" ]; then
-    echo "## now building graphhopper jar: $JAR"
+    echo "## building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
     
     execMvn --projects tools -am -DskipTests=true install
@@ -178,9 +174,7 @@ NAME="${FILE%.*}"
 
 if [ "$FILE" == "-" ]; then
    OSM_FILE=
-elif [ ${FILE: -4} == ".osm" ]; then
-   OSM_FILE="$FILE"
-elif [ ${FILE: -4} == ".pbf" ]; then
+elif [ ${FILE: -4} == ".osm" ] || [ ${FILE: -4} == ".xml" ] || [ ${FILE: -4} == ".pbf" ]; then
    OSM_FILE="$FILE"
 elif [ ${FILE: -7} == ".osm.gz" ]; then
    OSM_FILE="$FILE"
@@ -219,7 +213,7 @@ if [ "$JAVA_OPTS" = "" ]; then
   JAVA_OPTS="-Xmx1000m -Xms1000m -server"
 fi
 
-ensureOsmXml
+ensureOsm
 packageCoreJar
 
 echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"

@@ -93,7 +93,7 @@ public class OSMReader implements DataReader {
     private long locations;
     private long skippedLocations;
     private EncodingManager encodingManager = null;
-    private int workerThreads = -1;
+    private int workerThreads = 2;
     // Using the correct Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
     //
     // very slow: new SparseLongLongArray
@@ -176,7 +176,7 @@ public class OSMReader implements DataReader {
                             prepareHighwayNode(wayNodes.get(index));
                         }
 
-                        if (++tmpWayCounter % 5000000 == 0) {
+                        if (++tmpWayCounter % 10_000_000 == 0) {
                             LOGGER.info(nf(tmpWayCounter) + " (preprocess), osmIdMap:" + nf(getNodeMap().getSize()) + " ("
                                     + getNodeMap().getMemoryUsage() + "MB) " + Helper.getMemInfo());
                         }
@@ -189,7 +189,7 @@ public class OSMReader implements DataReader {
                     if (relation.hasTag("type", "restriction"))
                         prepareRestrictionRelation(relation);
 
-                    if (++tmpRelationCounter % 50000 == 0) {
+                    if (++tmpRelationCounter % 100_000 == 0) {
                         LOGGER.info(nf(tmpRelationCounter) + " (preprocess), osmWayMap:" + nf(getRelFlagsMap().size())
                                 + " " + Helper.getMemInfo());
                     }
@@ -248,7 +248,7 @@ public class OSMReader implements DataReader {
     }
 
     /**
-     * Creates the edges and nodes files from the specified osm file.
+     * Creates the graph with edges and nodes from the specified osm file.
      */
     private void writeOsm2Graph(File osmFile) {
         int tmp = (int) Math.max(getNodeMap().getSize() / 50, 100);
@@ -290,10 +290,13 @@ public class OSMReader implements DataReader {
                     default:
                         throw new IllegalStateException("Unknown type " + item.getType());
                 }
-                if (++counter % 100000000 == 0) {
+                if (++counter % 200_000_000 == 0) {
                     LOGGER.info(nf(counter) + ", locs:" + nf(locations) + " (" + skippedLocations + ") " + Helper.getMemInfo());
                 }
             }
+
+            if (in.getUnprocessedElements() > 0)
+                throw new IllegalStateException("Still unprocessed elements in reader queue " + in.getUnprocessedElements());
 
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
         } catch (Exception ex) {
@@ -304,7 +307,7 @@ public class OSMReader implements DataReader {
 
         finishedReading();
         if (graph.getNodes() == 0)
-            throw new IllegalStateException("osm must not be empty. read " + counter + " lines and " + locations + " locations");
+            throw new RuntimeException("Graph after reading OSM must not be empty. Read " + counter + " items and " + locations + " locations");
     }
 
     /**
@@ -559,9 +562,7 @@ public class OSMReader implements DataReader {
         if (encodingManager.handleRelationTags(osmRelation, 0) == 0)
             return;
 
-        int size = osmRelation.getMembers().size();
-        for (int index = 0; index < size; index++) {
-            ReaderRelation.Member member = osmRelation.getMembers().get(index);
+        for (ReaderRelation.Member member : osmRelation.getMembers()) {
             if (member.getType() != ReaderRelation.Member.WAY)
                 continue;
 

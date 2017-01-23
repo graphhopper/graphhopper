@@ -125,6 +125,11 @@ public class TurnWeighting implements Weighting {
     }
 
     @Override
+    public String toString() {
+        return "turn|" + superWeighting.toString();
+    }
+
+    @Override
     public String getName() {
         return "turn|" + superWeighting.getName();
     }

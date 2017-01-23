@@ -17,45 +17,63 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.apache.commons.lang3.StringUtils;
 
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
- * Abstract Class that defines the basis for NameSimilarity matching using an EdgeFilter.
+ * This class defines the basis for NameSimilarity matching using an EdgeFilter.
+ * The typical use-case is to match not the nearest edge in
+ * {@link com.graphhopper.storage.index.LocationIndex#findClosest(double, double, EdgeFilter)}
+ * but the match the edge which name is closest to the pointHint
+ * <p>
+ * Names that are similar to each other are (n1 name1, n2 name2):
+ * <ul>
+ * <li>n1 == n2</li>
+ * <li>n1 is significant substring of n2, e.g: n1="Main Road", n2="Main Road, New York"</li>
+ * <li>n1 and n2 contain a reasonable longest common substring, e.g.: n1="Cape Point / Cape of Good Hope", n2="Cape Point Rd, Cape Peninsula, Cape Town, 8001, Afrique du Sud"</li>
+ * </ul>
+ * <p>
+ * We aim for allowing slight typos/differences of the substrings, without having too much false positives.
  *
  * @author Robin Boldt
  */
 public class NameSimilarityEdgeFilter implements EdgeFilter {
 
-    public static final int EXACT = 0;
-    public static final int LEVENSHTEIN = 1;
-    public static final int STRING_MATCHING_ALGO = LEVENSHTEIN;
-
-    private static final double LEVENSHTEIN_ACCEPT_FACTOR = .05;
+    private static final Pattern NON_WORD_CHAR = Pattern.compile("[^\\p{L}]+");
+    private final double JARO_WINKLER_ACCEPT_FACTOR = .79;
+    private final JaroWinkler jaroWinkler = new JaroWinkler();
 
     private final EdgeFilter edgeFilter;
-    private final String soughtName;
-    private static final Pattern nonWordCharacter = Pattern.compile("[^\\p{L}]+");
+    private final String pointHint;
 
-    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String soughtName) {
+    public NameSimilarityEdgeFilter(EdgeFilter edgeFilter, String pointHint) {
         this.edgeFilter = edgeFilter;
-        this.soughtName = prepareName(soughtName);
+        this.pointHint = prepareName(pointHint == null ? "" : pointHint);
     }
 
     /**
      * Removes any characters in the String that we don't care about in the matching procedure
+     * TODO: Remove common street names like: street, road, avenue?
      */
     private String prepareName(String name) {
-        if (name == null) {
-            name = "";
+        // TODO make this better, also split at ',' and others?
+        // TODO This limits the approach to certain 'western' languages
+        // \s = A whitespace character: [ \t\n\x0B\f\r]
+        String[] arr = name.split("\\s");
+        String tmp;
+        List<String> list = new ArrayList<>(arr.length);
+        for (int i = 0; i < arr.length; i++) {
+            tmp = NON_WORD_CHAR.matcher(arr[i].toLowerCase()).replaceAll("");
+            // Ignore matching short frases like, de, rue, st, etc.
+            if (!tmp.isEmpty() && tmp.length() > 3) {
+                list.add(tmp);
+            }
         }
-
-        name = nonWordCharacter.matcher(name).replaceAll("");
-        name = name.toLowerCase();
-
-        return name;
+        return listToString(list);
     }
 
     private String removeRelation(String edgeName) {
@@ -71,33 +89,45 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
             return false;
         }
 
-        // Don't check if PointHint is empty anyway
-        if (soughtName.isEmpty()) {
+        if (pointHint.isEmpty()) {
             return true;
         }
 
         String name = iter.getName();
-
         if (name == null || name.isEmpty()) {
             return false;
         }
 
         name = removeRelation(name);
-        name = prepareName(name);
+        String edgeName = prepareName(name);
 
-        switch (STRING_MATCHING_ALGO) {
-            case LEVENSHTEIN:
-                return isLevenshteinSimilar(name);
-            case EXACT:
-            default:
-                return name.equals(soughtName);
-        }
-
+        return isJaroWinklerSimilar(pointHint, edgeName);
     }
 
-    private boolean isLevenshteinSimilar(String name) {
-        int perfectDistance = (int) (Math.abs(soughtName.length() - name.length()) + Math.ceil(soughtName.length() * LEVENSHTEIN_ACCEPT_FACTOR));
-        int levDistance = StringUtils.getLevenshteinDistance(soughtName, name);
-        return levDistance <= perfectDistance;
+    private boolean isJaroWinklerSimilar(String str1, String str2) {
+        double jwSimilarity = jaroWinkler.similarity(str1, str2);
+        // System.out.println(str1 + " vs. edge:" + str2 + ", " + jwSimilarity);
+        return jwSimilarity > JARO_WINKLER_ACCEPT_FACTOR;
+    }
+
+    private final String listToString(List<String> list) {
+        StringBuilder b = new StringBuilder();
+        for (int i = 0; i < list.size(); i++) {
+            b.append(list.get(i));
+        }
+        return b.toString();
+    }
+
+    private boolean isLevenshteinSimilar(String hint, String name) {
+        // too big length difference
+        if (Math.min(name.length(), hint.length()) * 4 < Math.max(name.length(), hint.length()))
+            return false;
+
+        // The part 'abs(pointHint.length - name.length)' tries to make differences regarding length less important
+        // Ie. 'hauptstraßedresden' vs. 'hauptstr.' should be considered a match, but 'hauptstraßedresden' vs. 'klingestraßedresden' should not match
+        int factor = 1 + Math.abs(hint.length() - name.length());
+        int levDistance = StringUtils.getLevenshteinDistance(hint, name);
+        // System.out.println(hint + " vs. edge:" + name + ", " + levDistance + " <= " + factor);
+        return levDistance <= factor;
     }
 }

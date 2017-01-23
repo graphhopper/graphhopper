@@ -24,6 +24,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
@@ -361,47 +365,65 @@ public class Helper {
     }
 
     public static void cleanMappedByteBuffer(final ByteBuffer buffer) {
-
+        // TODO avoid reflection on every call
         try {
             AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
                 @Override
                 public Object run() throws Exception {
+                    if (Constants.JAVA_VERSION.equals("9-ea")) {
+                        // >=JDK9 class sun.misc.Unsafe { void invokeCleaner(ByteBuffer buf) }
+                        final Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
+                        // we do not need to check for a specific class, we can call the Unsafe method with any buffer class
+                        MethodHandle unmapper = MethodHandles.lookup().findVirtual(unsafeClass, "invokeCleaner",
+                                MethodType.methodType(void.class, ByteBuffer.class));
+                        // fetch the unsafe instance and bind it to the virtual MethodHandle
+                        final Field f = unsafeClass.getDeclaredField("theUnsafe");
+                        f.setAccessible(true);
+                        final Object theUnsafe = f.get(null);
+                        try {
+                            unmapper.bindTo(theUnsafe).invokeExact(buffer);
+                            return null;
+                        } catch (Throwable t) {
+                            throw new RuntimeException(t);
+                        }
+                    }
+
+                    // <=JDK8 class DirectByteBuffer { sun.misc.Cleaner cleaner(Buffer buf) }
+                    //        then call sun.misc.Cleaner.clean
                     try {
-                        // <=JDK8 class DirectByteBuffer {         sun.misc.Cleaner cleaner(Buffer buf) }
-                        // >=JDK9 class DirectByteBuffer { jdk.internal.ref.Cleaner cleaner(Buffer buf) }
-                        final Class<?> directByteBufferClass = Class.forName("java.nio.DirectByteBuffer");
-                        if (Constants.ANDROID) {
+                        if (buffer.getClass().getSimpleName().equals("MappedByteBufferAdapter")) {
+                            if (!Constants.ANDROID)
+                                throw new RuntimeException("MappedByteBufferAdapter only supported for Android at the moment");
+
+                            // Regarding MappedByteBufferAdapter on Android 4.1, see #914
+                            final Class<?> directByteBufferClass = Class.forName("java.nio.MappedByteBufferAdapter");
                             final Method dbbFreeMethod = directByteBufferClass.getMethod("free");
                             dbbFreeMethod.setAccessible(true);
-                            // call DirectByteBuffer.free(buffer)
+                            // call: ((MappedByteBufferAdapter)buffer).free()
                             dbbFreeMethod.invoke(buffer);
-                            return null;
-                        }
-
-                        final Method dbbCleanerMethod = directByteBufferClass.getMethod("cleaner");
-                        dbbCleanerMethod.setAccessible(true);
-                        // call DirectByteBuffer.cleaner(buffer)
-                        final Object cleaner = dbbCleanerMethod.invoke(buffer);
-                        if (cleaner != null) {
-                            final Class<?> cleanerMethodReturnType = dbbCleanerMethod.getReturnType();
-                            final Method cleanMethod;
-                            if (Runnable.class.isAssignableFrom(cleanerMethodReturnType)) {
-                                // >=JDK9 
-                                cleanMethod = cleanerMethodReturnType.getDeclaredMethod("run");
-                            } else {
-                                cleanMethod = cleanerMethodReturnType.getDeclaredMethod("clean");
+                        } else {
+                            final Class<?> directByteBufferClass = Class.forName("java.nio.DirectByteBuffer");
+                            final Method dbbCleanerMethod = directByteBufferClass.getMethod("cleaner");
+                            dbbCleanerMethod.setAccessible(true);
+                            // call: cleaner = ((DirectByteBuffer)buffer).cleaner()
+                            final Object cleaner = dbbCleanerMethod.invoke(buffer);
+                            if (cleaner != null) {
+                                final Class<?> cleanerMethodReturnType = dbbCleanerMethod.getReturnType();
+                                final Method cleanMethod = cleanerMethodReturnType.getDeclaredMethod("clean");
+                                cleanMethod.setAccessible(true);
+                                // call: ((sun.misc.Cleaner)cleaner).clean()
+                                cleanMethod.invoke(cleaner);
                             }
-                            cleanMethod.setAccessible(true);
-                            cleanMethod.invoke(cleaner);
                         }
-                    } catch (NoSuchMethodException ex) {
-                        // ignore if method cleaner or clean is not available, like on Android
+                    } catch (NoSuchMethodException ex2) {
+                        // ignore if method cleaner or clean is not available
+                        LOGGER.warn("NoSuchMethodException | " + Constants.JAVA_VERSION, ex2);
                     }
                     return null;
                 }
             });
         } catch (PrivilegedActionException e) {
-            throw new RuntimeException("unable to unmap the mapped buffer", e);
+            throw new RuntimeException("Unable to unmap the mapped buffer", e);
         }
     }
 

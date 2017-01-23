@@ -135,7 +135,7 @@ public class Parameters {
          */
         public static final String DISABLE = "ch.disable";
         /**
-         * This property name configures at start if DISABLE parameter can have an effect.
+         * This property name configures at start if the DISABLE parameter can have an effect.
          */
         public static final String INIT_DISABLING_ALLOWED = ROUTING_INIT_PREFIX + "ch.disabling_allowed";
         /**
@@ -166,20 +166,20 @@ public class Parameters {
          */
         public static final String COUNT = "prepare.lm.landmarks";
         /**
-         * This property name configures at start if DISABLE parameter can have an effect.
+         * This property name configures at start if the DISABLE parameter can have an effect.
          */
         public static final String INIT_DISABLING_ALLOWED = ROUTING_INIT_PREFIX + "lm.disabling_allowed";
     }
 
     /**
-     * Properties for NON CH routing
+     * Properties for non-CH routing
      */
     public static final class NON_CH {
 
         private static final String NON_CH_PREFIX = "non_ch.";
 
         /**
-         * Describes the max allowed distance between two consecutive waypoints of a non ch request. Distance is in Meter
+         * Describes the maximum allowed distance between two consecutive waypoints of a non-CH request. Distance is in meter.
          */
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
     }

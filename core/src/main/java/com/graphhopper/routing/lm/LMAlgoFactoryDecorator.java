@@ -27,6 +27,7 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Landmark;
 
 import java.util.ArrayList;

@@ -37,11 +37,16 @@ public abstract class ReaderElement {
     public static final int FILEHEADER = 3;
     private final int type;
     private final long id;
-    private final Map<String, Object> properties = new HashMap<String, Object>(5);
+    private final Map<String, Object> properties;
 
     protected ReaderElement(long id, int type) {
+        this(id, type, 4);
+    }
+
+    protected ReaderElement(long id, int type, int propertyMapSize) {
         this.id = id;
         this.type = type;
+        properties = new HashMap<>(propertyMapSize);
     }
 
     public long getId() {

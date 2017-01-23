@@ -34,6 +34,8 @@ keep in mind that this requires storing your Email there. The same applies if yo
 Note, our CLA does not influence your rights on your contribution but it makes sure for others that you agree to the Apache License, Version 2.
 After this you'll appear in the <a href="CONTRIBUTORS.md">contributors list</a> and your pull request can also be discussed technically.
 
+For companies that would like that their developers work for us, we need an additional [corporate CLA signed](https://graphhopper.com/agreements/corporate-cla.html).
+
 ## Code formatting
 
 We use IntelliJ defaults and a very similar configuration for NetBeans defined in the root pom.xml. For eclipse there is this [configuration](https://github.com/graphhopper/graphhopper/files/481920/GraphHopper.Formatter.zip). Also for other IDEs 

@@ -21,6 +21,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.text.ParseException;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -33,6 +36,7 @@ import java.util.Set;
 public class ConditionalParser {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final Set<String> restrictedTags;
+    private final List<ConditionalValueParser> valueParsers = new ArrayList<>(5);
     private final boolean enabledLogs;
 
     public ConditionalParser(Set<String> restrictedTags) {
@@ -45,14 +49,69 @@ public class ConditionalParser {
         this.enabledLogs = enabledLogs;
     }
 
-    public ValueRange getRange(String conditionalTag) throws ParseException {
+    public static ConditionalValueParser createNumberParser(final String assertKey, final Number obj) {
+        return new ConditionalValueParser() {
+            @Override
+            public ConditionState checkCondition(String conditionalValue) throws ParseException {
+                int indexLT = conditionalValue.indexOf("<");
+                if (indexLT > 0 && conditionalValue.length() > 2) {
+                    final String key = conditionalValue.substring(0, indexLT).trim();
+                    if (!assertKey.equals(key))
+                        return ConditionState.INVALID;
+
+                    if (conditionalValue.charAt(indexLT + 1) == '=')
+                        indexLT++;
+                    final double value = parseNumber(conditionalValue.substring(indexLT + 1));
+                    if (obj.doubleValue() < value)
+                        return ConditionState.TRUE;
+                    else
+                        return ConditionState.FALSE;
+                }
+
+                int indexGT = conditionalValue.indexOf(">");
+                if (indexGT > 0 && conditionalValue.length() > 2) {
+                    final String key = conditionalValue.substring(0, indexGT).trim();
+                    if (!assertKey.equals(key))
+                        return ConditionState.INVALID;
+
+                    // for now just ignore equals sign
+                    if (conditionalValue.charAt(indexGT + 1) == '=')
+                        indexGT++;
+
+                    final double value = parseNumber(conditionalValue.substring(indexGT + 1));
+                    if (obj.doubleValue() > value)
+                        return ConditionState.TRUE;
+                    else
+                        return ConditionState.FALSE;
+                }
+
+                return ConditionState.INVALID;
+            }
+        };
+    }
+
+    /**
+     * This method adds a new value parser. The one added last has a higher priority.
+     */
+    public ConditionalParser addConditionalValueParser(ConditionalValueParser vp) {
+        valueParsers.add(0, vp);
+        return this;
+    }
+
+    public ConditionalParser setConditionalValueParser(ConditionalValueParser vp) {
+        valueParsers.clear();
+        valueParsers.add(vp);
+        return this;
+    }
+
+    public boolean checkCondition(String conditionalTag) throws ParseException {
         if (conditionalTag == null || conditionalTag.isEmpty() || !conditionalTag.contains("@"))
-            return null;
+            return false;
 
         if (conditionalTag.contains(";")) {
             if (enabledLogs)
                 logger.warn("We do not support multiple conditions yet: " + conditionalTag);
-            return null;
+            return false;
         }
 
         String[] conditionalArr = conditionalTag.split("@");
@@ -62,59 +121,22 @@ public class ConditionalParser {
 
         String restrictiveValue = conditionalArr[0].trim();
         if (!restrictedTags.contains(restrictiveValue))
-            return null;
+            return false;
 
-        String conditional = conditionalArr[1];
-        conditional = conditional.replace('(', ' ');
-        conditional = conditional.replace(')', ' ');
-        conditional = conditional.trim();
+        String conditionalValue = conditionalArr[1];
+        conditionalValue = conditionalValue.replace('(', ' ');
+        conditionalValue = conditionalValue.replace(')', ' ');
+        conditionalValue = conditionalValue.trim();
 
-        int index = conditional.indexOf(">");
-        if (index > 0 && conditional.length() > 2) {
-            final String key = conditional.substring(0, index).trim();
-            // for now just ignore equals sign
-            if (conditional.charAt(index + 1) == '=')
-                index++;
-
-            final double value = parseNumber(conditional.substring(index + 1));
-            return new ValueRange<Number>() {
-                @Override
-                public boolean isInRange(Number obj) {
-                    return obj.doubleValue() > value;
-                }
-
-                @Override
-                public String getKey() {
-                    return key;
-                }
-            };
+        for (ConditionalValueParser valueParser : valueParsers) {
+            ConditionalValueParser.ConditionState c = valueParser.checkCondition(conditionalValue);
+            if (c.isValid())
+                return c.isCheckPassed();
         }
-
-        index = conditional.indexOf("<");
-        if (index > 0 && conditional.length() > 2) {
-            final String key = conditional.substring(0, index).trim();
-            if (conditional.charAt(index + 1) == '=')
-                index++;
-
-            final double value = parseNumber(conditional.substring(index + 1));
-            return new ValueRange<Number>() {
-
-                @Override
-                public boolean isInRange(Number obj) {
-                    return obj.doubleValue() < value;
-                }
-
-                @Override
-                public String getKey() {
-                    return key;
-                }
-            };
-        }
-
-        return DateRangeParser.parseDateRange(conditional);
+        return false;
     }
 
-    protected double parseNumber(String str) {
+    protected static double parseNumber(String str) {
         int untilIndex = str.length() - 1;
         for (; untilIndex >= 0; untilIndex--) {
             if (Character.isDigit(str.charAt(untilIndex)))

@@ -127,6 +127,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
                             ri.setExitNumber(jsonObj.getInt("exit_number"));
                         }
 
+                        if (jsonObj.has("exited")) {
+                            if(jsonObj.getBoolean("exited"))
+                                ri.setExited();
+                        }
+
                         if (jsonObj.has("turn_angle")) {
                             // TODO provide setTurnAngle setter
                             double angle = jsonObj.getDouble("turn_angle");
