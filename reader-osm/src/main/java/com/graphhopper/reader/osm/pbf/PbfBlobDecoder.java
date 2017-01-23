@@ -325,11 +325,6 @@ public class PbfBlobDecoder implements Runnable {
         PbfFieldDecoder fieldDecoder = new PbfFieldDecoder(block);
 
         for (Osmformat.PrimitiveGroup primitiveGroup : block.getPrimitivegroupList()) {
-            if (primitiveGroup.getDense().getKeysValsList().size() > 100_000 || primitiveGroup.getNodesList().size() > 100_000 || primitiveGroup.getWaysList().size() > 100_00)
-                log.warn("Processing unusual large OSM primitive group could result in memory problems, workaround is to increase -Xmx and see #916. nodes:"
-                        + primitiveGroup.getDense().getKeysValsList().size() + " | " + primitiveGroup.getDense().getIdList().size()
-                        + ", " + primitiveGroup.getNodesList().size() + ", ways: " + primitiveGroup.getWaysList().size() + ", rels:" + primitiveGroup.getRelationsList().size());
-
             processNodes(primitiveGroup.getDense(), fieldDecoder);
             processNodes(primitiveGroup.getNodesList(), fieldDecoder);
             processWays(primitiveGroup.getWaysList(), fieldDecoder);
