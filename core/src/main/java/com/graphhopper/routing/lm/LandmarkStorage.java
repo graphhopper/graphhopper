@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class stores the landmark nodes and the weights from and to all other nodes in every
@@ -325,7 +326,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             return false;
         }
 
-        // 1b) we have one landmark, now calculate the rest
+        // 1b) we have one landmark, now determine the other landmarks
         int[] tmpLandmarkNodeIds = new int[landmarks];
         int logOffset = Math.max(1, tmpLandmarkNodeIds.length / 2);
         tmpLandmarkNodeIds[0] = explorer.getLastNode();
@@ -345,7 +346,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         LOGGER.info("Finished searching landmarks for subnetwork " + subnetworkId + " of size " + explorer.getVisitedNodes());
 
-        // TODO make parallel if first loop is okay
         // 2) calculate weights for all landmarks -> 'from' and 'to' weight
         for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
             int lm = tmpLandmarkNodeIds[lmIdx];
@@ -430,12 +430,21 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     // We have large values that do not fit into a short, use a specific maximum value
     private static final int SHORT_MAX = SHORT_INFINITY - 1;
 
-    final void setWeight(long pointer, double value) {
+    /**
+     * @return false if the value capacity was reached and instead of the real value the SHORT_MAX was stored.
+     */
+    final boolean setWeight(long pointer, double value) {
         double tmpVal = value / factor;
         if (tmpVal > Integer.MAX_VALUE)
             throw new UnsupportedOperationException("Cannot store infinity explicitely, pointer=" + pointer + ", value: " + value);
-        else
-            landmarkWeightDA.setShort(pointer, (short) ((tmpVal >= SHORT_MAX) ? SHORT_MAX : tmpVal));
+
+        if (tmpVal >= SHORT_MAX) {
+            landmarkWeightDA.setShort(pointer, (short) SHORT_MAX);
+            return false;
+        } else {
+            landmarkWeightDA.setShort(pointer, (short) tmpVal);
+            return true;
+        }
     }
 
     boolean isInfinity(long pointer) {
@@ -692,12 +701,18 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         public void initLandmarkWeights(final int lmIdx, final long rowSize, final int offset) {
             IntObjectMap<SPTEntry> map = from ? bestWeightMapFrom : bestWeightMapTo;
+            final AtomicInteger maxedout = new AtomicInteger(0);
+
             map.forEach(new IntObjectProcedure<SPTEntry>() {
                 @Override
                 public void apply(int nodeId, SPTEntry b) {
-                    lms.setWeight(nodeId * rowSize + lmIdx * 4 + offset, b.weight);
+                    if (!lms.setWeight(nodeId * rowSize + lmIdx * 4 + offset, b.weight))
+                        maxedout.incrementAndGet();
                 }
             });
+
+            if ((double) maxedout.get() / map.size() > 0.1)
+                LOGGER.warn("Too many weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Use a bigger factor " + lms.getFactor());
         }
     }
 
