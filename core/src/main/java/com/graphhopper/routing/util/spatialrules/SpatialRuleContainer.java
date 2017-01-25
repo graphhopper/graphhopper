@@ -47,21 +47,10 @@ public class SpatialRuleContainer {
         return this.rules.iterator().next();
     }
 
-    public boolean represents(Set<SpatialRule> rules) {
-        if(this.rules.size() != rules.size())
-            return false;
-        for (SpatialRule rule : rules) {
-            if(!this.rules.contains(rule)){
-                return false;
-            }
-        }
-        return true;
-    }
-
     @Override
     public boolean equals(Object o){
         if(o instanceof SpatialRuleContainer){
-            if(this.represents(((SpatialRuleContainer) o).getRules()))
+            if(this.rules.equals(((SpatialRuleContainer) o).getRules()))
                 return true;
         }
         return false;
