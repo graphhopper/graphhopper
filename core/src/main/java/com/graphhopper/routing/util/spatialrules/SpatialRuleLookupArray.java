@@ -161,6 +161,10 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
         for (Polygon polygon : rule.getBorders()) {
             for (int i = getXIndexForLon(polygon.getMinLon()); i < getXIndexForLon(polygon.getMaxLon()) + 1; i++) {
                 for (int j = getYIndexForLat(polygon.getMinLat()); j < getYIndexForLat(polygon.getMaxLat()) + 1; j++) {
+                    if (i >= lookupArray.length || j >= lookupArray[0].length) {
+                        continue;
+                    }
+
                     GHPoint center = getCoordinatesForIndex(i, j);
                     // TODO: Consider creating a new method in Polygon that does the 5 checks - p.partOfTile?
                     if (polygon.contains(center) ||
@@ -192,7 +196,7 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
         }
     }
 
-    private int castByteToInt(byte b){
+    private int castByteToInt(byte b) {
         return b & 0xFF;
     }
 
@@ -214,6 +218,11 @@ public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
             }
             System.out.println();
         }
+    }
+
+    @Override
+    public BBox getBounds() {
+        return bounds;
     }
 
 }

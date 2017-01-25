@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util.spatialrules;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.List;
@@ -37,6 +38,8 @@ public interface SpatialRuleLookup {
     void addRule(SpatialRule rule);
 
     void visualize(int i);
+
+    BBox getBounds();
 
     SpatialRule EMPTY_RULE = new AbstractSpatialRule() {
         @Override

@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.spatialrules;
 
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.List;
@@ -29,6 +30,8 @@ import java.util.List;
  * @author Robin Boldt
  */
 public class EmptySpatialRuleLookup extends AbstractSpatialRuleLookup {
+
+    BBox bounds = new BBox(-180, 180, -90, 90);
 
     @Override
     public SpatialRule lookupRule(double lat, double lon) {
@@ -48,5 +51,10 @@ public class EmptySpatialRuleLookup extends AbstractSpatialRuleLookup {
     @Override
     public void visualize(int i) {
 
+    }
+
+    @Override
+    public BBox getBounds() {
+        return bounds;
     }
 }

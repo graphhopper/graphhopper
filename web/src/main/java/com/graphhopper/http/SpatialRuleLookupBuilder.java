@@ -22,6 +22,7 @@ import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.json.geo.Geometry;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.json.geo.JsonFeatureCollection;
+import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupArray;
@@ -54,13 +55,11 @@ public class SpatialRuleLookupBuilder {
     }
 
     public static SpatialRuleLookup build(BBox bounds, double resolution, boolean exact) {
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(bounds, resolution, exact);
         try {
             GHJson ghJson = new GHJsonBuilder().create();
             JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(new FileReader(new File(SpatialRuleLookupBuilder.class.getResource("countries.geo.json").getFile())), JsonFeatureCollection.class);
 
-            // TODO find outer border of all SpatialRules and create SpatialRuleLookupArray only for these bounds
-
+            // TODO Filter out polyons that don't intersect with the given BBox, will be implicitly done later anyway
             for (SpatialRule spatialRule : rules) {
                 for (JsonFeature jsonFeature : jsonFeatureCollection.getFeatures()) {
                     if (spatialRule.getCountryIsoA3Name().equals(jsonFeature.getProperty("ISO_A3"))) {
@@ -68,16 +67,68 @@ public class SpatialRuleLookupBuilder {
                         if (!geometry.isPolygon())
                             continue;
                         spatialRule.setBorders(geometry.asPolygon().getPolygons());
-                        spatialRuleLookup.addRule(spatialRule);
                         break;
                     }
                 }
             }
+
+            Double minLon = null;
+            Double maxLon = null;
+            Double minLat = null;
+            Double maxLat = null;
+            for (SpatialRule spatialRule : rules) {
+                if (!spatialRule.getBorders().isEmpty()) {
+                    for (Polygon polygon : spatialRule.getBorders()) {
+                        if (minLon == null) {
+                            minLon = polygon.getMinLon();
+                            maxLon = polygon.getMaxLon();
+                            minLat = polygon.getMinLat();
+                            maxLat = polygon.getMaxLon();
+                        } else {
+                            if (minLon > polygon.getMinLon()) {
+                                minLon = polygon.getMinLon();
+                            }
+                            if (maxLon < polygon.getMaxLon()) {
+                                maxLon = polygon.getMaxLon();
+                            }
+                            if (minLat > polygon.getMinLat()) {
+                                minLat = polygon.getMinLat();
+                            }
+                            if (maxLat < polygon.getMaxLat()) {
+                                maxLat = polygon.getMaxLat();
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (minLon == null) {
+                throw new IllegalStateException("No SpatialRules defined or Polygons defined");
+            }
+
+            // Find intersection of given Bounds with calculated Bounds
+            if (bounds.minLon > minLon) {
+                minLon = bounds.minLon;
+            }
+            if (bounds.maxLon < maxLon) {
+                maxLon = bounds.maxLon;
+            }
+            if (bounds.minLat > minLat) {
+                minLat = bounds.minLat;
+            }
+            if (bounds.maxLat < maxLat) {
+                maxLat = bounds.maxLat;
+            }
+
+            SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(new BBox(minLon, maxLon, minLat, maxLat), resolution, exact);
+            for (SpatialRule spatialRule : rules) {
+                spatialRuleLookup.addRule(spatialRule);
+            }
+            return spatialRuleLookup;
+
         } catch (FileNotFoundException e) {
             throw new RuntimeException("File not found", e);
         }
-
-        return spatialRuleLookup;
     }
 
 }
