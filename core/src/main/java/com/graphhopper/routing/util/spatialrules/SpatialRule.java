@@ -29,12 +29,17 @@ import java.util.List;
  */
 public interface SpatialRule {
 
-    double getMaxSpeed(ReaderWay readerWay, String transportationMode);
+    String MAXSPEED_KEY = "max_speed";
+    String ACCESS_KEY = "access";
 
-    AccessValue isAccessible(ReaderWay readerWay, String transportationMode);
+    Object getObject(String key, ReaderWay readerWay, String transportationMode, Object _default);
+
+    <T> T get(String key, ReaderWay readerWay, String transportationMode, T _default);
 
     List<Polygon> getBorders();
+
     SpatialRule setBorders(List<Polygon> borders);
+
     SpatialRule addBorder(Polygon polygon);
 
     String getCountryIsoA3Name();
