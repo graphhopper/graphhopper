@@ -130,7 +130,7 @@ public class FeatureJsonDeserializer implements JsonDeserializer<JsonFeature> {
             throw new IllegalStateException("The passed Array should be of format: [[[coords1],[coords2],....[coordsN]]]");
         }
         /*
-         TODO We currently Ignore holes/interior rings the spec defines:
+         TODO We currently ignore holes/interior rings the spec defines:
         For type "Polygon", the "coordinates" member must be an array of LinearRing coordinate arrays.
         For Polygons with multiple rings, the first must be the exterior ring and any others must be
         interior rings or holes.
