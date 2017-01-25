@@ -476,12 +476,12 @@ public class RoutingAlgorithmWithOSMIT {
     }
 
     /**
-     * @param testAlsoCH if true also the CH algorithms will be tested which needs preparation and
-     *                   takes a bit longer
+     * @param withPreparedAlgos if true also the CH and LM algorithms will be tested which need
+     *                          preparation and takes a bit longer
      */
     Graph runAlgo(TestAlgoCollector testCollector, String osmFile,
                   String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
-                  boolean testAlsoCH, String vehicle, String weightStr, boolean is3D) {
+                  boolean withPreparedAlgos, String vehicle, String weightStr, boolean is3D) {
 
         // for different weightings we need a different storage, otherwise we would need to remove the graph folder
         // everytime we come with a different weighting
@@ -493,7 +493,7 @@ public class RoutingAlgorithmWithOSMIT {
             Helper.removeDir(new File(graphFile));
             GraphHopper hopper = new GraphHopperOSM().
                     setStoreOnFlush(true).
-                    setCHEnabled(testAlsoCH).
+                    setCHEnabled(false).
                     setDataReaderFile(osmFile).
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(new EncodingManager(importVehicles));
@@ -501,20 +501,23 @@ public class RoutingAlgorithmWithOSMIT {
             // avoid that path.getDistance is too different to path.getPoint.calcDistance
             hopper.setWayPointMaxDistance(0);
 
-            if (testAlsoCH)
+            if (withPreparedAlgos) {
+                hopper.getCHFactoryDecorator().setEnabled(true);
                 hopper.getCHFactoryDecorator().addWeighting(weightStr);
+            }
+
             if (is3D)
                 hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
 
             hopper.importOrLoad();
 
             TraversalMode tMode = importVehicles.contains("turn_costs=true")
-                    ? TraversalMode.EDGE_BASED_1DIR : TraversalMode.NODE_BASED;
+                    ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;
             FlagEncoder encoder = hopper.getEncodingManager().getEncoder(vehicle);
-            Weighting weighting = hopper.createWeighting(new HintsMap(weightStr), encoder, hopper.getGraphHopperStorage());
+            HintsMap hints = new HintsMap().setWeighting(weightStr).setVehicle(vehicle);
 
-            Collection<AlgoHelperEntry> prepares = RoutingAlgorithmIT.createAlgos(hopper.getGraphHopperStorage(),
-                    hopper.getLocationIndex(), testAlsoCH, tMode, weighting);
+            Collection<AlgoHelperEntry> prepares = RoutingAlgorithmIT.createAlgos(hopper, hints, tMode);
+
             EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
             for (AlgoHelperEntry entry : prepares) {
                 algoEntry = entry;
@@ -544,7 +547,7 @@ public class RoutingAlgorithmWithOSMIT {
         String graphFile = "target/monaco-gh";
         Helper.removeDir(new File(graphFile));
         final EncodingManager encodingManager = new EncodingManager("car");
-        GraphHopper hopper = new GraphHopperOSM().
+        final GraphHopper hopper = new GraphHopperOSM().
                 setStoreOnFlush(true).
                 setEncodingManager(encodingManager).setCHEnabled(false).
                 setWayPointMaxDistance(0).
@@ -564,6 +567,7 @@ public class RoutingAlgorithmWithOSMIT {
         int algosLength = 2;
         final Weighting weighting = new ShortestWeighting(encodingManager.getEncoder("car"));
         final EdgeFilter filter = new DefaultEdgeFilter(carEncoder);
+        final HintsMap hints = new HintsMap().setWeighting("shortest").setVehicle("car");
         for (int no = 0; no < MAX; no++) {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {
                 String[] algos = new String[]{
@@ -577,7 +581,7 @@ public class RoutingAlgorithmWithOSMIT {
                         public void run() {
                             OneRun oneRun = instances.get(instanceIndex);
                             AlgorithmOptions opts = AlgorithmOptions.start().weighting(weighting).algorithm(algoStr).build();
-                            testCollector.assertDistance(new AlgoHelperEntry(g, g, opts, idx),
+                            testCollector.assertDistance(new AlgoHelperEntry(g, opts, idx, algoStr + "|" + weighting),
                                     oneRun.getList(idx, filter), oneRun);
                             integ.addAndGet(1);
                         }

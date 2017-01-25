@@ -149,7 +149,7 @@ public class PMap {
      * This method copies the underlying structur into a new Map object
      */
     public Map<String, String> toMap() {
-        return new HashMap<String, String>(map);
+        return new HashMap<>(map);
     }
 
     private Map<String, String> getMap() {

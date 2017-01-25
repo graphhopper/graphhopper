@@ -162,7 +162,8 @@ GHRequest.prototype.createGPXURL = function (withRoute, withTrack, withWayPoints
 };
 
 GHRequest.prototype.createHistoryURL = function () {
-    return this.createPath("?" + this.createPointParams(true)) + "&use_miles=" + !!this.useMiles;
+    var skip = {"key": true};
+    return this.createPath("?" + this.createPointParams(true), skip) + "&use_miles=" + !!this.useMiles;
 };
 
 GHRequest.prototype.createPointParams = function (useRawInput) {
@@ -180,9 +181,12 @@ GHRequest.prototype.createPointParams = function (useRawInput) {
     return (str);
 };
 
-GHRequest.prototype.createPath = function (url) {
+GHRequest.prototype.createPath = function (url, skipParameters) {
     for (var key in this.api_params) {
         var val = this.api_params[key];
+        if(skipParameters && skipParameters[key])
+            continue;
+
         if (GHRoute.isArray(val)) {
             for (var keyIndex in val) {
                 url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val[keyIndex]);

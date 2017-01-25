@@ -671,7 +671,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             @Override
             public String getName() {
-                return "astarbiCH";
+                return "astarbi|ch";
             }
 
             @Override
@@ -707,7 +707,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             @Override
             public String getName() {
-                return "dijkstrabiCH";
+                return "dijkstrabi|ch";
             }
 
             @Override

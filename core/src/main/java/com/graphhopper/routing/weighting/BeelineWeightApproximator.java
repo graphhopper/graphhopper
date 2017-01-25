@@ -69,4 +69,9 @@ public class BeelineWeightApproximator implements WeightApproximator {
         this.distanceCalc = distanceCalc;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "beeline";
+    }
 }
