@@ -17,6 +17,7 @@
  */
 package com.graphhopper.http;
 
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GHResponse;
@@ -40,6 +41,7 @@ public class SimpleRouteSerializer implements RouteSerializer {
     public SimpleRouteSerializer(BBox maxBounds) {
         this.maxBounds = maxBounds;
         this.objectMapper.setDateFormat(new SimpleDateFormat("YYYY-MM-dd'T'HH:mm")); // ISO8601 without time zone
+        this.objectMapper.registerModule(new JtsModule());
     }
 
     private String getMessage(Throwable t) {

@@ -58,9 +58,9 @@ class GtfsReader {
         for (Map.Entry<String, Integer> entry : stopNodes.entrySet()) {
             int enterNode = entry.getValue();
             QueryResult source = walkNetworkIndex.findClosest(nodeAccess.getLat(enterNode), nodeAccess.getLon(enterNode), filter);
+            Stop stop = feed.stops.get(entry.getKey());
             int streetNode;
             if (!source.isValid()) {
-                Stop stop = feed.stops.get(entry.getKey());
                 streetNode = i;
                 nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
                 graph.edge(streetNode, streetNode, 0.0, false);
@@ -69,8 +69,10 @@ class GtfsReader {
             }
             EdgeIteratorState entryEdge = graph.edge(streetNode, enterNode, 0.0, false);
             setEdgeType(entryEdge, GtfsStorage.EdgeType.ENTER_PT);
+            entryEdge.setName(stop.stop_name);
             EdgeIteratorState exitEdge = graph.edge(enterNode + 1, streetNode, 0.0, false);
             setEdgeType(exitEdge, GtfsStorage.EdgeType.EXIT_PT);
+            exitEdge.setName(stop.stop_name);
         }
     }
 
@@ -204,8 +206,8 @@ class GtfsReader {
                         i-1,
                         distance,
                         false);
-                edge.setName(getRouteName(feed, trip));
-                setEdgeType(edge, GtfsStorage.EdgeType.TIME_PASSES);
+                edge.setName(stop.stop_name);
+                setEdgeType(edge, GtfsStorage.EdgeType.HOP);
                 edge.setFlags(encoder.setTime(edge.getFlags(), orderedStop.arrival_time - prev.departure_time));
             }
             nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
