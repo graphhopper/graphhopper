@@ -45,17 +45,17 @@ public class SpatialRuleLookupBuilderTest {
         livingStreet.setTag("highway", "living_street");
 
         // Berlin
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible(track, ""));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible(primary, ""));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible(track, "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible(primary, "", AccessValue.ACCESSIBLE));
 
         // Paris
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).isAccessible(track, ""));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).isAccessible(primary, ""));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).isAccessible(track, "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).isAccessible(primary, "", AccessValue.ACCESSIBLE));
 
         // Vienna
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible(track, ""));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible(primary, ""));
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible(livingStreet, ""));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible(track, "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible(primary, "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible(livingStreet, "", AccessValue.ACCESSIBLE));
     }
 
     @Test
@@ -74,7 +74,13 @@ public class SpatialRuleLookupBuilderTest {
             We are creating a BBox smaller than Germany. We have the German Spatial rule acitivated by default.
             So the BBox should not contain a Point lying somewhere close in Germany.
          */
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.build(new BBox(9,10,51, 52), 1, true);
-        assertFalse("BBox seems to be incorrectly contracted", spatialRuleLookup.getBounds().contains(49.9,8.9));
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.build(new BBox(9, 10, 51, 52), 1, true);
+        assertFalse("BBox seems to be incorrectly contracted", spatialRuleLookup.getBounds().contains(49.9, 8.9));
+    }
+
+    @Test
+    public void testNoIntersection() {
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.build(new BBox(-180, -179, -90, -89), 1, true);
+        assertEquals(EmptySpatialRuleLookup.class, spatialRuleLookup.getClass());
     }
 }

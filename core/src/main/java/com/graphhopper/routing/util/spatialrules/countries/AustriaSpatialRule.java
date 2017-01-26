@@ -28,7 +28,8 @@ import com.graphhopper.routing.util.spatialrules.SpatialRule;
  */
 public class AustriaSpatialRule extends DefaultSpatialRule {
 
-    public double getMaxSpeed(ReaderWay readerWay, String transportationMode) {
+    @Override
+    public double getMaxSpeed(ReaderWay readerWay, String transportationMode, double _default) {
         String highwayTag = readerWay.getTag("highway", "");
 
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
@@ -38,18 +39,20 @@ public class AustriaSpatialRule extends DefaultSpatialRule {
             case "residential":
                 return 50;
             default:
-                return super.getMaxSpeed(readerWay, transportationMode);
+                return super.getMaxSpeed(readerWay, transportationMode, _default);
         }
     }
 
-    public AccessValue isAccessible(ReaderWay readerWay, String transportationMode) {
+    @Override
+    public AccessValue isAccessible(ReaderWay readerWay, String transportationMode, AccessValue _default) {
         if (readerWay.hasTag("highway", "living_street"))
             return AccessValue.EVENTUALLY_ACCESSIBLE;
 
-        return super.isAccessible(readerWay, transportationMode);
+        return super.isAccessible(readerWay, transportationMode, _default);
     }
 
-    public String getCountryIsoA3Name() {
+    @Override
+    public String getUniqueName() {
         return "AUT";
     }
 

@@ -29,12 +29,9 @@ import java.util.List;
  */
 public interface SpatialRule {
 
-    String MAXSPEED_KEY = "max_speed";
-    String ACCESS_KEY = "access";
+    double getMaxSpeed(ReaderWay readerWay, String transportationMode, double _default);
 
-    Object getObject(String key, ReaderWay readerWay, String transportationMode, Object _default);
-
-    <T> T get(String key, ReaderWay readerWay, String transportationMode, T _default);
+    AccessValue isAccessible(ReaderWay readerWay, String transportationMode, AccessValue _default);
 
     List<Polygon> getBorders();
 
@@ -42,6 +39,10 @@ public interface SpatialRule {
 
     SpatialRule addBorder(Polygon polygon);
 
-    String getCountryIsoA3Name();
+    /**
+     * Get the unique name for this rule. Important, every rule has to return a different name.
+     * For countries it is a good idea to use the country code.
+     */
+    String getUniqueName();
 
 }

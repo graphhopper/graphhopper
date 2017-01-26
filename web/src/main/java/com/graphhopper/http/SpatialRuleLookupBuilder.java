@@ -22,10 +22,7 @@ import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.json.geo.Geometry;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.routing.util.spatialrules.Polygon;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupArray;
+import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.util.shapes.BBox;
@@ -62,7 +59,7 @@ public class SpatialRuleLookupBuilder {
             // TODO Filter out polyons that don't intersect with the given BBox, will be implicitly done later anyway
             for (SpatialRule spatialRule : rules) {
                 for (JsonFeature jsonFeature : jsonFeatureCollection.getFeatures()) {
-                    if (spatialRule.getCountryIsoA3Name().equals(jsonFeature.getProperty("ISO_A3"))) {
+                    if (spatialRule.getUniqueName().equals(jsonFeature.getProperty("ISO_A3"))) {
                         Geometry geometry = jsonFeature.getGeometry();
                         if (!geometry.isPolygon())
                             continue;
@@ -72,60 +69,32 @@ public class SpatialRuleLookupBuilder {
                 }
             }
 
-            Double minLon = null;
-            Double maxLon = null;
-            Double minLat = null;
-            Double maxLat = null;
+            BBox polygonBounds = BBox.createInverse(false);
             for (SpatialRule spatialRule : rules) {
                 if (!spatialRule.getBorders().isEmpty()) {
                     for (Polygon polygon : spatialRule.getBorders()) {
-                        if (minLon == null) {
-                            minLon = polygon.getMinLon();
-                            maxLon = polygon.getMaxLon();
-                            minLat = polygon.getMinLat();
-                            maxLat = polygon.getMaxLon();
-                        } else {
-                            if (minLon > polygon.getMinLon()) {
-                                minLon = polygon.getMinLon();
-                            }
-                            if (maxLon < polygon.getMaxLon()) {
-                                maxLon = polygon.getMaxLon();
-                            }
-                            if (minLat > polygon.getMinLat()) {
-                                minLat = polygon.getMinLat();
-                            }
-                            if (maxLat < polygon.getMaxLat()) {
-                                maxLat = polygon.getMaxLat();
-                            }
-                        }
+                        polygonBounds.update(polygon.getMinLat(), polygon.getMinLon());
+                        polygonBounds.update(polygon.getMaxLat(), polygon.getMaxLon());
                     }
                 }
             }
 
-            if (minLon == null) {
+            if (polygonBounds.minLon == Double.MAX_VALUE) {
                 throw new IllegalStateException("No SpatialRules defined or Polygons defined");
             }
 
-            // Find intersection of given Bounds with calculated Bounds
-            if (bounds.minLon > minLon) {
-                minLon = bounds.minLon;
-            }
-            if (bounds.maxLon < maxLon) {
-                maxLon = bounds.maxLon;
-            }
-            if (bounds.minLat > minLat) {
-                minLat = bounds.minLat;
-            }
-            if (bounds.maxLat < maxLat) {
-                maxLat = bounds.maxLat;
-            }
+            // Only create a SpatialRuleLookup if there rules defined in the given bounds
+            if (polygonBounds.intersect(bounds)) {
+                BBox calculatedBounds = polygonBounds.calculateIntersection(bounds);
 
-            SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(new BBox(minLon, maxLon, minLat, maxLat), resolution, exact);
-            for (SpatialRule spatialRule : rules) {
-                spatialRuleLookup.addRule(spatialRule);
+                SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(calculatedBounds, resolution, exact);
+                for (SpatialRule spatialRule : rules) {
+                    spatialRuleLookup.addRule(spatialRule);
+                }
+                return spatialRuleLookup;
+            } else {
+                return new EmptySpatialRuleLookup();
             }
-            return spatialRuleLookup;
-
         } catch (FileNotFoundException e) {
             throw new RuntimeException("File not found", e);
         }

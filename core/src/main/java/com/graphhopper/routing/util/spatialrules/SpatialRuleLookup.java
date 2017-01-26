@@ -43,17 +43,17 @@ public interface SpatialRuleLookup {
 
     SpatialRule EMPTY_RULE = new AbstractSpatialRule() {
         @Override
-        public double getMaxSpeed(ReaderWay readerWay, String transportationMode) {
-            return -1;
+        public double getMaxSpeed(ReaderWay readerWay, String transportationMode, double _default) {
+            return _default;
         }
 
         @Override
-        public AccessValue isAccessible(ReaderWay readerWay, String transportationMode) {
+        public AccessValue isAccessible(ReaderWay readerWay, String transportationMode, AccessValue _default) {
             return AccessValue.ACCESSIBLE;
         }
 
         @Override
-        public String getCountryIsoA3Name() {
+        public String getUniqueName() {
             return "";
         }
     };

@@ -46,7 +46,7 @@ public abstract class AbstractSpatialRule implements SpatialRule{
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof SpatialRule){
-            if (((SpatialRule) obj).getCountryIsoA3Name().equals(this.getCountryIsoA3Name())){
+            if (((SpatialRule) obj).getUniqueName().equals(this.getUniqueName())){
                 return true;
             }
         }

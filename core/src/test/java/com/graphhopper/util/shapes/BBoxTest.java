@@ -90,6 +90,25 @@ public class BBoxTest {
     }
 
     @Test
+    public void testCalculateIntersection() {
+
+        BBox b1 = new BBox(0, 2, 0, 1);
+        BBox b2 = new BBox(-1, 1, -1, 2);
+        BBox expected = new BBox(0,1,0,1);
+
+        assertEquals(expected, b1.calculateIntersection(b2));
+
+        //No intersection
+        b2 = new BBox(100,200,100,200);
+        try {
+            b1.calculateIntersection(b2);
+            fail();
+        }catch (IllegalArgumentException e){
+
+        }
+    }
+
+    @Test
     public void testBasicJavaOverload() {
         new BBox(2, 4, 0, 1) {
             @Override
