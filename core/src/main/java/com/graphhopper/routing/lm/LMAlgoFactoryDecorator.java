@@ -68,8 +68,9 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         return landmarkCount;
     }
 
-    public void setDisablingAllowed(boolean disablingAllowed) {
+    public LMAlgoFactoryDecorator setDisablingAllowed(boolean disablingAllowed) {
         this.disablingAllowed = disablingAllowed;
+        return this;
     }
 
     public final boolean isDisablingAllowed() {
@@ -79,8 +80,9 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     /**
      * Enables or disables this decorator. This speed-up mode is disabled by default.
      */
-    public final void setEnabled(boolean enabled) {
+    public final LMAlgoFactoryDecorator setEnabled(boolean enabled) {
         this.enabled = enabled;
+        return this;
     }
 
     @Override

@@ -35,6 +35,7 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
+import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
@@ -95,7 +96,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         // later make edge base working! Not really necessary as when adding turn costs while routing we can still
         // use the node based traversal as this is a smaller weight approximation
-        this.traversalMode = traversalMode;
+        this.traversalMode = TraversalMode.NODE_BASED;
         final String name = AbstractWeighting.weightingToFileName(weighting);
         this.landmarkWeightDA = dir.find("landmarks_" + name);
 
@@ -469,8 +470,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         if (subnetworkFrom == UNCLEAR_SUBNETWORK || subnetworkTo == UNCLEAR_SUBNETWORK)
             return false;
         if (subnetworkFrom != subnetworkTo) {
-            // TODO how to get the point indices and use throw new ConnectionNotFoundException?
-            throw new RuntimeException("Connection between locations not found. Different subnetworks " + subnetworkFrom + " vs. " + subnetworkTo);
+            throw new ConnectionNotFoundException("Connection between locations not found. Different subnetworks " + subnetworkFrom + " vs. " + subnetworkTo, new HashMap<String, Object>());
         }
 
         int[] tmpIDs = landmarkIDs.get(subnetworkFrom);
@@ -618,7 +618,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         this.borderMap = borderMap;
     }
 
-    // TODO use DijkstraOneToMany for max speed but higher memory consumption if executed in parallel threads?
     private static class Explorer extends DijkstraBidirectionRef {
         private int lastNode;
         private boolean from;

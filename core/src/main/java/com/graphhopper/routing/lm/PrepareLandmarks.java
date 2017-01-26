@@ -109,7 +109,6 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
 
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR + ".epsilon", 1);
             AStar astar = (AStar) algo;
-            // TODO change current factor appropriate to the potential different weighting (fastest/shortest..)!
             astar.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
             return algo;

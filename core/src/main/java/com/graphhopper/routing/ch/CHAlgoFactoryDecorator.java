@@ -155,8 +155,9 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     /**
      * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
      */
-    public final void setEnabled(boolean enabled) {
+    public final CHAlgoFactoryDecorator setEnabled(boolean enabled) {
         this.enabled = enabled;
+        return this;
     }
 
     public final boolean isDisablingAllowed() {

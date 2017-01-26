@@ -183,7 +183,13 @@ public class TestAlgoCollector {
 
         @Override
         public String toString() {
-            return "algoEntry(" + opts.getAlgorithm() + (forQueryGraph instanceof CHGraph ? "|ch" : "") + ")";
+            String algo = opts.getAlgorithm();
+            if (getExpectedAlgo().contains("landmarks"))
+                algo += "|landmarks";
+            if (forQueryGraph instanceof CHGraph)
+                algo += "|ch";
+
+            return "algoEntry(" + algo + ")";
         }
     }
 
