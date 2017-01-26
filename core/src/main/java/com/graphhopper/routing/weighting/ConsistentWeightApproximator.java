@@ -31,6 +31,9 @@ public class ConsistentWeightApproximator {
     private final WeightApproximator uniDirApproximatorForward, uniDirApproximatorReverse;
 
     public ConsistentWeightApproximator(WeightApproximator weightApprox) {
+        if (weightApprox == null)
+            throw new IllegalArgumentException("WeightApproximator cannot be null");
+
         uniDirApproximatorForward = weightApprox;
         uniDirApproximatorReverse = weightApprox.reverse();
     }

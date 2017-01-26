@@ -121,6 +121,15 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
             astarbi.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
             return algo;
+        } else if (algo instanceof AlternativeRoute) {
+            if (!lms.isInitialized())
+                throw new IllegalStateException("Initalize landmark storage before creating algorithms");
+
+            AlternativeRoute altRoute = (AlternativeRoute) algo;
+            altRoute.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false));
+            // landmark algorithm follows good compromise between fast response and exploring 'interesting' paths so we
+            // can decrease this exploration factor further (1->dijkstra, 0.8->bidir. A*)
+            altRoute.setMaxExplorationFactor(0.6);
         }
 
         return algo;
