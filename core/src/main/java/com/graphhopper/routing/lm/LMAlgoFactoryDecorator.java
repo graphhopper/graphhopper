@@ -52,7 +52,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     public void init(CmdArgs args) {
         landmarkCount = args.getInt(Landmark.COUNT, landmarkCount);
         activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.max(2, landmarkCount / 2));
-        String lmWeightingsStr = args.get("prepare.lm.weightings", "");
+        String lmWeightingsStr = args.get(Landmark.PREPARE + "weightings", "");
         if (!lmWeightingsStr.isEmpty()) {
             List<String> tmpLMWeightingList = Arrays.asList(lmWeightingsStr.split(","));
             setWeightingsAsStrings(tmpLMWeightingList);

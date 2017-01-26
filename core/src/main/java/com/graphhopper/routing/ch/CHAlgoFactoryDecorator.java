@@ -28,6 +28,7 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,18 +70,16 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     @Override
     public void init(CmdArgs args) {
-        setPreparationThreads(args.getInt("prepare.threads", getPreparationThreads()));
+        // throw explicit error for deprecated configs
+        if (!args.get("prepare.threads", "").isEmpty())
+            throw new IllegalStateException("Use " + CH.PREPARE + "threads instead of prepare.threads");
+        if (!args.get("prepare.chWeighting", "").isEmpty() || !args.get("prepare.chWeightings", "").isEmpty())
+            throw new IllegalStateException("Use " + CH.PREPARE + "weightings and a comma separated list instead of prepare.chWeighting or prepare.chWeightings");
 
-        String deprecatedWeightingConfig = args.get("prepare.chWeighting", "");
-        if (!deprecatedWeightingConfig.isEmpty())
-            throw new IllegalStateException("Use prepare.ch.weightings and a comma separated list instead of prepare.chWeighting");
+        setPreparationThreads(args.getInt(CH.PREPARE + "threads", getPreparationThreads()));
 
         // default is enabled & fastest
-        String chWeightingsStr = args.get("prepare.ch.weightings", "");
-
-        // backward compatibility
-        if (chWeightingsStr.isEmpty())
-            chWeightingsStr = args.get("prepare.chWeightings", "");
+        String chWeightingsStr = args.get(CH.PREPARE + "weightings", "");
 
         if ("no".equals(chWeightingsStr)) {
             // default is fastest and we need to clear this explicitely
@@ -95,11 +94,11 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (enableThis)
             setDisablingAllowed(args.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
-        setPreparationPeriodicUpdates(args.getInt("prepare.updates.periodic", getPreparationPeriodicUpdates()));
-        setPreparationLazyUpdates(args.getInt("prepare.updates.lazy", getPreparationLazyUpdates()));
-        setPreparationNeighborUpdates(args.getInt("prepare.updates.neighbor", getPreparationNeighborUpdates()));
-        setPreparationContractedNodes(args.getInt("prepare.contracted_nodes", getPreparationContractedNodes()));
-        setPreparationLogMessages(args.getDouble("prepare.log_messages", getPreparationLogMessages()));
+        setPreparationPeriodicUpdates(args.getInt(CH.PREPARE + "updates.periodic", getPreparationPeriodicUpdates()));
+        setPreparationLazyUpdates(args.getInt(CH.PREPARE + "updates.lazy", getPreparationLazyUpdates()));
+        setPreparationNeighborUpdates(args.getInt(CH.PREPARE + "updates.neighbor", getPreparationNeighborUpdates()));
+        setPreparationContractedNodes(args.getInt(CH.PREPARE + "contracted_nodes", getPreparationContractedNodes()));
+        setPreparationLogMessages(args.getDouble(CH.PREPARE + "log_messages", getPreparationLogMessages()));
     }
 
     public int getPreparationPeriodicUpdates() {
@@ -289,7 +288,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             chPreparePool.execute(new Runnable() {
                 @Override
                 public void run() {
-                    String errorKey = "prepare.error." + name;
+                    String errorKey = CH.PREPARE + "error." + name;
                     try {
                         properties.put(errorKey, "CH preparation incomplete");
                         // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options                        
@@ -297,7 +296,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                         Thread.currentThread().setName(name);
                         prepare.doWork();
                         properties.remove(errorKey);
-                        properties.put("prepare.date." + name, Helper.createFormatter().format(new Date()));
+                        properties.put(CH.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
                     } catch (Exception ex) {
                         logger.error("Problem while CH preparation " + name, ex);
                         properties.put(errorKey, ex.getMessage());

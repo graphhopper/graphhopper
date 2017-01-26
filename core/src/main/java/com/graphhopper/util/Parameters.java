@@ -130,6 +130,7 @@ public class Parameters {
      * Properties for routing with contraction hierarchies speedup
      */
     public static final class CH {
+        public static final String PREPARE = "prepare.ch.";
         /**
          * This property name in HintsMap configures at runtime if CH routing should be ignored.
          */
@@ -149,6 +150,7 @@ public class Parameters {
      * Properties for routing with landmark speedup
      */
     public static final class Landmark {
+        public static final String PREPARE = "prepare.lm.";
         /**
          * This property name in HintsMap configures at runtime if CH routing should be ignored.
          */
@@ -164,7 +166,7 @@ public class Parameters {
         /**
          * Specifies how many landmarks should be created
          */
-        public static final String COUNT = "prepare.lm.landmarks";
+        public static final String COUNT = PREPARE + "landmarks";
         /**
          * This property name configures at start if the DISABLE parameter can have an effect.
          */

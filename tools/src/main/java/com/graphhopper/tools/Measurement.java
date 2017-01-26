@@ -81,12 +81,12 @@ public class Measurement {
             protected void prepareCH() {
                 StopWatch sw = new StopWatch().start();
                 super.prepareCH();
-                put("prepare.ch.time", sw.stop().getTime());
+                put(Parameters.CH.PREPARE + "time", sw.stop().getTime());
                 int edges = getGraphHopperStorage().getAllEdges().getMaxId();
                 if (getCHFactoryDecorator().hasWeightings()) {
                     Weighting weighting = getCHFactoryDecorator().getWeightings().get(0);
                     int edgesAndShortcuts = getGraphHopperStorage().getGraph(CHGraph.class, weighting).getAllEdges().getMaxId();
-                    put("prepare.ch.shortcuts", edgesAndShortcuts - edges);
+                    put(Parameters.CH.PREPARE + "shortcuts", edgesAndShortcuts - edges);
                 }
             }
 

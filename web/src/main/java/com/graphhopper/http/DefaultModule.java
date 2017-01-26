@@ -99,7 +99,6 @@ public class DefaultModule extends AbstractModule {
             }
         }.forServer().init(args);
 
-        //TODO We should set the BBox and resolution
         //TODO, move to a more appropriate place
         // tmp.setSpatialRuleLookup(SpatialRuleLookupBuilder.build());
 

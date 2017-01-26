@@ -45,6 +45,7 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
+import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
@@ -951,10 +952,6 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
-    private boolean isPrepared() {
-        return "true".equals(ghStorage.getProperties().get("prepare.done"));
-    }
-
     /**
      * Based on the hintsMap and the specified encoder a Weighting instance can be
      * created. Note that all URL parameters are available in the hintsMap as String if
@@ -1221,7 +1218,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private boolean isCHPrepared() {
-        return "true".equals(ghStorage.getProperties().get("prepare.ch.done"));
+        return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"));
     }
 
     protected void prepareCH() {
@@ -1235,7 +1232,7 @@ public class GraphHopper implements GraphHopperAPI {
             ghStorage.freeze();
             chFactoryDecorator.prepare(ghStorage.getProperties());
         }
-        ghStorage.getProperties().put("prepare.ch.done", tmpPrepare);
+        ghStorage.getProperties().put(CH.PREPARE + "done", tmpPrepare);
     }
 
     protected void prepareLM() {
@@ -1245,7 +1242,7 @@ public class GraphHopper implements GraphHopperAPI {
             ghStorage.freeze();
             lmFactoryDecorator.loadOrDoWork();
         }
-        ghStorage.getProperties().put("prepare.lm.done", tmpPrepare);
+        ghStorage.getProperties().put(Landmark.PREPARE + "done", tmpPrepare);
     }
 
     /**
@@ -1319,7 +1316,7 @@ public class GraphHopper implements GraphHopperAPI {
 
     public void setSpatialRuleLookup(SpatialRuleLookup spatialRuleLookup) {
         this.spatialRuleLookup = spatialRuleLookup;
-        if(encodingManager.supports("generic")){
+        if (encodingManager.supports("generic")) {
             DataFlagEncoder encoder = (DataFlagEncoder) encodingManager.getEncoder("generic");
             encoder.setSpatialRuleLookup(spatialRuleLookup);
         }

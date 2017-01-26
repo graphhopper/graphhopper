@@ -1,5 +1,7 @@
 0.9
-    
+    introduced landmarks based hybrid mode, #780
+    moving all prepare.xy configs to prepare.ch.xy and e.g. disallow the old
+
 0.8
     refactoring to Weighting class, see #807
     removed FlagEncoder from parameters as weighting.getFlagEncoder can and is used

@@ -19,6 +19,7 @@ package com.graphhopper.http;
 
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
 import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Before;
@@ -43,7 +44,7 @@ public class ChangeGraphServletIT extends BaseServletTester {
     @Before
     public void setUp() {
         CmdArgs args = new CmdArgs().
-                put("prepare.ch.weightings", "no").
+                put(Parameters.CH.PREPARE + "weightings", "no").
                 put("graph.flag_encoders", "car").
                 put("graph.location", DIR).
                 put("datareader.file", "../core/files/andorra.osm.pbf");
