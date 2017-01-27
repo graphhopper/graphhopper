@@ -22,8 +22,6 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
-import static com.graphhopper.util.Parameters.Routing.*;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import org.json.JSONObject;
@@ -43,8 +41,8 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
-import java.util.Map.Entry;
 
+import static com.graphhopper.util.Parameters.Routing.*;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 
 /**
@@ -120,7 +118,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                     request = new GHRequest(requestPoints);
                 }
 
-                initHints(request, httpReq.getParameterMap());
+                initHints(request.getHints(), httpReq.getParameterMap());
                 request.setVehicle(algoVehicle.toString()).
                         setWeighting(weighting).
                         setAlgorithm(algoStr).
@@ -256,13 +254,5 @@ public class GraphHopperServlet extends GHBaseServlet {
         }
 
         return infoPoints;
-    }
-
-    protected void initHints(GHRequest request, Map<String, String[]> parameterMap) {
-        HintsMap m = request.getHints();
-        for (Entry<String, String[]> e : parameterMap.entrySet()) {
-            if (e.getValue().length == 1)
-                m.put(e.getKey(), e.getValue()[0]);
-        }
     }
 }

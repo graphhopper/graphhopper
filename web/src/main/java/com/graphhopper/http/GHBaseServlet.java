@@ -17,6 +17,8 @@
  */
 package com.graphhopper.http;
 
+import com.graphhopper.GHRequest;
+import com.graphhopper.routing.util.HintsMap;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -31,6 +33,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
@@ -160,6 +163,13 @@ public class GHBaseServlet extends HttpServlet {
             res.getWriter().append(str);
         } catch (IOException ex) {
             logger.error("Cannot write message:" + str, ex);
+        }
+    }
+
+    protected void initHints(HintsMap m, Map<String, String[]> parameterMap) {
+        for (Map.Entry<String, String[]> e : parameterMap.entrySet()) {
+            if (e.getValue().length == 1)
+                m.put(e.getKey(), e.getValue()[0]);
         }
     }
 }
