@@ -14,6 +14,7 @@ import com.graphhopper.util.TranslationMap;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
+import java.util.Arrays;
 import java.util.Collections;
 
 public final class GraphHopperGtfsModule extends AbstractModule {
@@ -33,7 +34,10 @@ public final class GraphHopperGtfsModule extends AbstractModule {
     @Provides
     @Singleton
     GraphHopperStorage createGraphHopperStorage(CmdArgs args, GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage) {
-        return GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, args.getBool("gtfs.createwalknetwork", false), Collections.singleton(args.get("datareader.file", "")), Collections.emptyList());
+        return GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage,
+                args.getBool("gtfs.createwalknetwork", false),
+                args.has("gtfs.file") ? Arrays.asList(args.get("gtfs.file", "").split(",")) : Collections.emptyList(),
+                args.has("datareader.file") ? Arrays.asList(args.get("datareader.file", "").split(",")) : Collections.emptyList());
     }
 
     @Provides
