@@ -23,7 +23,10 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+
 import static com.graphhopper.util.Parameters.Routing.*;
+import static com.graphhopper.util.Parameters.GPX_EXPORT.*;
+
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import org.json.JSONObject;
@@ -72,6 +75,7 @@ public class GraphHopperServlet extends GHBaseServlet {
         boolean calcPoints = getBooleanParam(httpReq, CALC_POINTS, true);
         boolean enableElevation = getBooleanParam(httpReq, "elevation", false);
         boolean pointsEncoded = getBooleanParam(httpReq, "points_encoded", true);
+        int pathIndex = getIntParam(httpReq, PATH_INDEX, -1);
 
         String vehicleStr = getParam(httpReq, "vehicle", "car");
         String weighting = getParam(httpReq, "weighting", "fastest");
@@ -144,8 +148,14 @@ public class GraphHopperServlet extends GHBaseServlet {
         httpRes.setHeader("X-GH-Took", "" + Math.round(took * 1000));
 
         int alternatives = ghRsp.getAll().size();
-        if (writeGPX && alternatives > 1)
-            ghRsp.addError(new IllegalArgumentException("Alternatives are currently not yet supported for GPX"));
+        if (writeGPX && alternatives > 1 && pathIndex < 0)
+            ghRsp.addError(new IllegalArgumentException("Alternatives are currently not yet supported for GPX. " +
+                    "Consider passing " + PATH_INDEX + " to select an alternative to export."));
+
+        if (pathIndex >= alternatives) {
+            ghRsp.addError(new IllegalArgumentException("The value of " + PATH_INDEX +
+                    " cannot be greater than the number of alternatives"));
+        }
 
         if (ghRsp.hasErrors()) {
             logger.error(logStr + ", errors:" + ghRsp.getErrors());
@@ -163,8 +173,9 @@ public class GraphHopperServlet extends GHBaseServlet {
                 httpRes.setStatus(SC_BAD_REQUEST);
                 httpRes.getWriter().append(errorsToXML(ghRsp.getErrors()));
             } else {
-                // no error => we can now safely call getFirst
-                String xml = createGPXString(httpReq, httpRes, ghRsp.getBest());
+                pathIndex = pathIndex < 0 ? 0 : pathIndex;
+                // no error => we can now safely call getAll()
+                String xml = createGPXString(httpReq, httpRes, ghRsp.getAll().get(pathIndex));
                 writeResponse(httpRes, xml);
             }
         } else {
@@ -186,16 +197,16 @@ public class GraphHopperServlet extends GHBaseServlet {
     protected String createGPXString(HttpServletRequest req, HttpServletResponse res, PathWrapper rsp) {
         boolean includeElevation = getBooleanParam(req, "elevation", false);
         // default to false for the route part in next API version, see #437
-        boolean withRoute = getBooleanParam(req, "gpx.route", true);
-        boolean withTrack = getBooleanParam(req, "gpx.track", true);
-        boolean withWayPoints = getBooleanParam(req, "gpx.waypoints", false);
+        boolean withRoute = getBooleanParam(req, ROUTE, true);
+        boolean withTrack = getBooleanParam(req, TRACK, true);
+        boolean withWayPoints = getBooleanParam(req, WAYPOINTS, false);
         res.setCharacterEncoding("UTF-8");
         if ("application/xml".equals(req.getContentType()))
             res.setContentType("application/xml");
         else
             res.setContentType("application/gpx+xml");
 
-        String trackName = getParam(req, "trackname", "GraphHopper Track");
+        String trackName = getParam(req, TRACK_NAME, "GraphHopper Track");
         res.setHeader("Content-Disposition", "attachment;filename=" + "GraphHopper.gpx");
         long time = getLongParam(req, "millis", System.currentTimeMillis());
         return rsp.getInstructions().createGPX(trackName, time, includeElevation, withRoute, withTrack, withWayPoints);

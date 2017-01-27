@@ -94,11 +94,17 @@ public class Parameters {
         public static final String EDGE_BASED = "edge_based";
         public static final String MAX_VISITED_NODES = "max_visited_nodes";
         public static final String INIT_MAX_VISITED_NODES = ROUTING_INIT_PREFIX + "max_visited_nodes";
-        /** if true the response will contain turn instructions */
+        /**
+         * if true the response will contain turn instructions
+         */
         public static final String INSTRUCTIONS = "instructions";
-        /** if true the response will contain a point list */
+        /**
+         * if true the response will contain a point list
+         */
         public static final String CALC_POINTS = "calc_points";
-        /** configure simplification of returned point list */
+        /**
+         * configure simplification of returned point list
+         */
         public static final String WAY_POINT_MAX_DISTANCE = "way_point_max_distance";
         public static final String INIT_WAY_POINT_MAX_DISTANCE = ROUTING_INIT_PREFIX + "way_point_max_distance";
         /**
@@ -151,5 +157,19 @@ public class Parameters {
          */
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
 
+    }
+
+    /**
+     * Properties for gpx export
+     */
+    public static final class GPX_EXPORT {
+        public static final String ROUTE = "gpx.route";
+        public static final String TRACK = "gpx.track";
+        public static final String WAYPOINTS = "gpx.waypoints";
+
+        //TODO rename to gpx.trackname?
+        public static final String TRACK_NAME = "trackname";
+
+        public static final String PATH_INDEX = "gpx." + Parameters.Algorithms.ALT_ROUTE + ".path_index";
     }
 }
