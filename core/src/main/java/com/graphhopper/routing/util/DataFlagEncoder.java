@@ -19,10 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.util.spatialrules.AccessValue;
-import com.graphhopper.routing.util.spatialrules.EmptySpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
@@ -79,6 +76,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private EncodedValue highwayEncoder;
     private EncodedValue transportModeEncoder;
     private EncodedValue accessEncoder;
+    private EncodedValue spatialEncoder;
 
     private SpatialRuleLookup spatialRuleLookup = new EmptySpatialRuleLookup();
 
@@ -175,6 +173,12 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         accessEncoder = new EncodedValue("access car", shift, 3, 1, 1, accessMap.size(), true);
         shift += accessEncoder.getBits();
 
+        int maxId = SpatialRuleRegister.INSTANCE.getMaxId();
+        // TODO Should we calculate # of bits automatically? Might create serious issues? Graph becomes too big?
+        int bits = 32 - Integer.numberOfLeadingZeros(maxId);
+        spatialEncoder = new EncodedValue("spatial_location", shift, bits, 1, 1, maxId, true);
+        shift += spatialEncoder.getBits();
+
         return shift;
     }
 
@@ -222,15 +226,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             if (tmpAccessValue != null && tmpAccessValue > accessValue) {
                 accessValue = tmpAccessValue;
             }
-        }
-
-        if (accessValue == 0) {
-            GHPoint estmCentre = way.getTag("estimated_center", null);
-            if (estmCentre != null) {
-                SpatialRule rule = spatialRuleLookup.lookupRule(estmCentre);
-                accessValue = getEdgeValueForAccess(rule.isAccessible(way, "", AccessValue.ACCESSIBLE));
-            }
-
         }
 
         return accessValue;
@@ -283,12 +278,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             // MAXSPEED
             double maxSpeed = parseSpeed(way.getTag("maxspeed"));
-            if (maxSpeed < 0) {
-                // TODO What if no maxspeed is set, but only forward and backward, and both are higher than the usually allowed?
-                // TODO Is this the correct place to do this? We could also do this in the GenericWeighting, the DataFlagEncoder.
-                // TODO Should the DataFlagEncoder only place data in the graph if it comes from the source data? e.g. only if data exists in OSM
-                maxSpeed = getSpatialRule(way).getMaxSpeed(way, "", -1);
-            }
             double fwdSpeed = parseSpeed(way.getTag("maxspeed:forward"));
             if (fwdSpeed < 0 || maxSpeed > 0 && maxSpeed < fwdSpeed)
                 fwdSpeed = maxSpeed;
@@ -356,6 +345,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             flags = accessEncoder.setValue(flags, getAccessValue(way));
 
+            SpatialRule rule = getSpatialRule(way);
+            flags = spatialEncoder.setValue(flags, SpatialRuleRegister.INSTANCE.getIdForName(rule.getUniqueName()));
+
             return flags;
         } catch (Exception ex) {
             throw new RuntimeException("Error while parsing way " + way.toString(), ex);
@@ -374,6 +366,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     public long reverseFlags(long flags) {
         // see #728 for an explanation
         return flags ^ bit0;
+    }
+
+    public int getSpatialId(long flags) {
+        return (int) spatialEncoder.getValue(flags);
     }
 
     /**

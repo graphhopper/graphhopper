@@ -29,9 +29,7 @@ import com.graphhopper.routing.util.spatialrules.SpatialRule;
 public class GermanySpatialRule extends DefaultSpatialRule {
 
     @Override
-    public double getMaxSpeed(ReaderWay readerWay, String transportationMode, double _default) {
-        String highwayTag = readerWay.getTag("highway", "");
-
+    public double getMaxSpeed(String highwayTag, double _default) {
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         switch (highwayTag) {
             case "motorway":
@@ -43,16 +41,16 @@ public class GermanySpatialRule extends DefaultSpatialRule {
             case "living_street":
                 return 4;
             default:
-                return super.getMaxSpeed(readerWay, transportationMode, _default);
+                return super.getMaxSpeed(highwayTag, _default);
         }
     }
 
     @Override
-    public AccessValue isAccessible(ReaderWay readerWay, String transportationMode, AccessValue _default) {
-        if (readerWay.hasTag("highway", "track"))
+    public AccessValue isAccessible(String highwayTag, String transportationMode, AccessValue _default) {
+        if (highwayTag.equals("track"))
             return AccessValue.EVENTUALLY_ACCESSIBLE;
 
-        return super.isAccessible(readerWay, transportationMode, _default);
+        return super.isAccessible(highwayTag, transportationMode, _default);
     }
 
     @Override

@@ -35,27 +35,18 @@ public class SpatialRuleLookupBuilderTest {
     public void test() {
         SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.build();
 
-        ReaderWay track = new ReaderWay(0);
-        track.setTag("highway", "track");
-
-        ReaderWay primary = new ReaderWay(0);
-        primary.setTag("highway", "primary");
-
-        ReaderWay livingStreet = new ReaderWay(0);
-        livingStreet.setTag("highway", "living_street");
-
         // Berlin
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible(track, "", AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible(primary, "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible("track", "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible("primary", "", AccessValue.ACCESSIBLE));
 
         // Paris
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).isAccessible(track, "", AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).isAccessible(primary, "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).isAccessible("track", "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).isAccessible("primary", "", AccessValue.ACCESSIBLE));
 
         // Vienna
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible(track, "", AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible(primary, "", AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible(livingStreet, "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible("track", "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible("primary", "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible("living_street", "", AccessValue.ACCESSIBLE));
     }
 
     @Test

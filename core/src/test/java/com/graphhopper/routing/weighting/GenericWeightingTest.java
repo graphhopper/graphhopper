@@ -21,13 +21,17 @@ import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.storage.*;
 
 import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_EDGES;
 import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_SHAPES;
 
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
+import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.Shape;
 import org.junit.Before;
 import org.junit.Test;
@@ -105,6 +109,43 @@ public class GenericWeightingTest {
         GenericWeighting weighting = new GenericWeighting(encoder, cMap);
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
         assertEquals(edgeWeight, weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE), .1);
+    }
+
+    @Test
+    public void testSpatial() {
+        DataFlagEncoder encoder = new DataFlagEncoder();
+        EncodingManager em = new EncodingManager(encoder);
+        Graph graph;
+
+        SpatialRuleLookup lookup = new SpatialRuleLookupArray(new BBox(0, 1, 0, 1), 1, false);
+        SpatialRule germanRule = new GermanySpatialRule();
+        germanRule.addBorder(new Polygon(new double[]{0, 0, 1, 1}, new double[]{0, 1, 1, 0}));
+        lookup.addRule(germanRule);
+        encoder.setSpatialRuleLookup(lookup);
+
+        ReaderWay way = new ReaderWay(27l);
+        way.setTag("highway", "track");
+        way.setTag("estimated_center", new GHPoint(0.005, 0.005));
+
+        ReaderWay way2 = new ReaderWay(28l);
+        way2.setTag("highway", "track");
+        way2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
+
+        graph = new GraphBuilder(em).create();
+        EdgeIteratorState e1 = graph.edge(0, 1, 1, true);
+        EdgeIteratorState e2 = graph.edge(0, 2, 1, true);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, -0.01, -0.01);
+        graph.getEdgeIteratorState(e1.getEdge(), e1.getAdjNode()).setFlags(encoder.handleWayTags(way, 1, 0));
+        graph.getEdgeIteratorState(e2.getEdge(), e2.getAdjNode()).setFlags(encoder.handleWayTags(way2, 1, 0));
+
+        ConfigMap cMap = encoder.readStringMap(new PMap());
+        GenericWeighting weighting = new GenericWeighting(encoder, cMap);
+        EdgeIteratorState edge1 = graph.getEdgeIteratorState(e1.getEdge(), e1.getAdjNode());
+        EdgeIteratorState edge2 = graph.getEdgeIteratorState(e2.getEdge(), e2.getAdjNode());
+        // * 10 is the "eventuallAccessiblePenalty" of the GenericWeighting
+        assertEquals(weighting.calcWeight(edge2, false, EdgeIterator.NO_EDGE) * 10, weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE), .1);
     }
 
     @Test

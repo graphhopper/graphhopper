@@ -43,12 +43,12 @@ public interface SpatialRuleLookup {
 
     SpatialRule EMPTY_RULE = new AbstractSpatialRule() {
         @Override
-        public double getMaxSpeed(ReaderWay readerWay, String transportationMode, double _default) {
+        public double getMaxSpeed(String highwayTag, double _default) {
             return _default;
         }
 
         @Override
-        public AccessValue isAccessible(ReaderWay readerWay, String transportationMode, AccessValue _default) {
+        public AccessValue isAccessible(String highwayTag, String transportationMode, AccessValue _default) {
             return AccessValue.ACCESSIBLE;
         }
 

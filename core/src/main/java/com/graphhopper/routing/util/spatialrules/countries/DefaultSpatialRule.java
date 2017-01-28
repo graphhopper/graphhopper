@@ -27,9 +27,7 @@ import com.graphhopper.routing.util.spatialrules.AccessValue;
 public class DefaultSpatialRule extends AbstractSpatialRule {
 
     @Override
-    public double getMaxSpeed(ReaderWay readerWay, String transportationMode, double _default) {
-        String highwayTag = readerWay.getTag("highway", "");
-
+    public double getMaxSpeed(String highwayTag, double _default) {
         // We tried to estimate reasonable values: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         // We did not always used the highest value available, but we used a high value
         switch (highwayTag) {
@@ -55,8 +53,7 @@ public class DefaultSpatialRule extends AbstractSpatialRule {
     }
 
     @Override
-    public AccessValue isAccessible(ReaderWay readerWay, String transportationMode, AccessValue _default) {
-        String highwayTag = readerWay.getTag("highway", "");
+    public AccessValue isAccessible(String highwayTag, String transportationMode, AccessValue _default) {
 
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restriction
         // We tried to find generally forbidden tags

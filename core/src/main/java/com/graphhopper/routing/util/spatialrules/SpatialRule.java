@@ -29,9 +29,9 @@ import java.util.List;
  */
 public interface SpatialRule {
 
-    double getMaxSpeed(ReaderWay readerWay, String transportationMode, double _default);
+    double getMaxSpeed(String highwayTag, double _default);
 
-    AccessValue isAccessible(ReaderWay readerWay, String transportationMode, AccessValue _default);
+    AccessValue isAccessible(String highwayTag, String transportationMode, AccessValue _default);
 
     List<Polygon> getBorders();
 

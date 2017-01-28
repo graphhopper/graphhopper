@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
@@ -239,30 +240,12 @@ public class DataFlagEncoderTest {
         assertEquals(AccessValue.ACCESSIBLE, encoder.getEdgeAccessValue(edge.getFlags()));
 
         SpatialRuleLookup lookup = new SpatialRuleLookupArray(new BBox(1, 2, 1, 2), 1, false);
-        lookup.addRule(new AbstractSpatialRule() {
-            @Override
-            public double getMaxSpeed(ReaderWay readerWay, String transportationMode, double _default) {
-                return 10;
-            }
-
-            @Override
-            public AccessValue isAccessible(ReaderWay readerWay, String transportationMode, AccessValue _default) {
-                if (osmWay.hasTag("highway", "track")) {
-                    return AccessValue.NOT_ACCESSIBLE;
-                }
-                return _default;
-            }
-
-            @Override
-            public String getUniqueName() {
-                return null;
-            }
-        }.addBorder(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1})));
+        SpatialRule germanRule = new GermanySpatialRule();
+        germanRule.addBorder(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1}));
+        lookup.addRule(germanRule);
         encoder.setSpatialRuleLookup(lookup);
 
         flags = encoder.handleWayTags(osmWay, 1, 0);
-        edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals(10, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
-        assertEquals(AccessValue.NOT_ACCESSIBLE, encoder.getEdgeAccessValue(edge.getFlags()));
+        assertEquals(SpatialRuleRegister.INSTANCE.getIdForName("DEU"), encoder.getSpatialId(flags));
     }
 }

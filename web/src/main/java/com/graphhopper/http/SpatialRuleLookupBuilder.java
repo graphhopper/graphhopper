@@ -30,6 +30,7 @@ import com.graphhopper.util.shapes.BBox;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.util.List;
 
 /**
  * Crates a SpatialRuleLookup for every relevant Country
@@ -42,10 +43,7 @@ public class SpatialRuleLookupBuilder {
     private final static double DEFAULT_RESOLUTION = .1;
     private final static boolean DEFAULT_EXACT = true;
 
-    private final static SpatialRule[] rules = new SpatialRule[]{
-            new AustriaSpatialRule(),
-            new GermanySpatialRule()
-    };
+    private final static List<SpatialRule> rules = SpatialRuleRegister.INSTANCE.getRules();
 
     public static SpatialRuleLookup build() {
         return SpatialRuleLookupBuilder.build(DEFAULT_BOUNDS, DEFAULT_RESOLUTION, DEFAULT_EXACT);

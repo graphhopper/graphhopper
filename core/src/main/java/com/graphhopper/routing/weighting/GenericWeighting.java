@@ -19,6 +19,9 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleRegister;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.NodeAccess;
@@ -92,26 +95,38 @@ public class GenericWeighting extends AbstractWeighting {
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 
-        switch (gEncoder.getEdgeAccessValue(edgeState.getFlags())){
+        int spatialId = gEncoder.getSpatialId(edgeState.getFlags());
+        SpatialRule spatialRule = SpatialRuleRegister.INSTANCE.getRuleForId(spatialId);
+        AccessValue edgeAccessValue = gEncoder.getEdgeAccessValue(edgeState.getFlags());
+        AccessValue mergeAccessValue = mergeAccessValues(edgeAccessValue, spatialRule.isAccessible(gEncoder.getHighwayAsString(edgeState), "motor_vehicle", edgeAccessValue));
+        switch (mergeAccessValue) {
             case NOT_ACCESSIBLE:
                 return Double.POSITIVE_INFINITY;
             case EVENTUALLY_ACCESSIBLE:
                 time = time * eventuallAccessiblePenalty;
         }
 
-        if(!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())){
+        if (!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())) {
             return Double.POSITIVE_INFINITY;
         }
 
-        if(!blockedShapes.isEmpty() && na != null){
-            for (Shape shape: blockedShapes) {
-                if(shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()))){
+        if (!blockedShapes.isEmpty() && na != null) {
+            for (Shape shape : blockedShapes) {
+                if (shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()))) {
                     return Double.POSITIVE_INFINITY;
                 }
             }
         }
 
         return time;
+    }
+
+    private AccessValue mergeAccessValues(AccessValue av1, AccessValue av2) {
+        if (AccessValue.NOT_ACCESSIBLE.equals(av1) || AccessValue.NOT_ACCESSIBLE.equals(av2))
+            return AccessValue.NOT_ACCESSIBLE;
+        if (AccessValue.EVENTUALLY_ACCESSIBLE.equals(av1) || AccessValue.EVENTUALLY_ACCESSIBLE.equals(av2))
+            return AccessValue.EVENTUALLY_ACCESSIBLE;
+        return AccessValue.ACCESSIBLE;
     }
 
     @Override
@@ -126,6 +141,13 @@ public class GenericWeighting extends AbstractWeighting {
                     + ", highway:" + highwayVal + ", reverse:" + reverse);
         if (speed == 0)
             return Long.MAX_VALUE;
+
+        int spatialId = gEncoder.getSpatialId(edgeState.getFlags());
+        SpatialRule spatialRule = SpatialRuleRegister.INSTANCE.getRuleForId(spatialId);
+        double spatialRuleMaxSpeed = spatialRule.getMaxSpeed(gEncoder.getHighwayAsString(edgeState), speed);
+        if (speed > spatialRuleMaxSpeed) {
+            speed = spatialRuleMaxSpeed;
+        }
 
         // TODO inner city guessing -> lit, maxspeed <= 50, residential etc => create new encoder.isInnerCity(edge)
         // See #472 use edge.getDouble((encoder), K_MAXSPEED_MOTORVEHICLE_FORWARD, _default) or edge.getMaxSpeed(...) instead?
@@ -162,7 +184,7 @@ public class GenericWeighting extends AbstractWeighting {
      * Use this method to associate a graph with this weighting to calculate e.g. node locations too.
      */
     public void setGraph(Graph graph) {
-        if(graph == null)
+        if (graph == null)
             return;
         this.na = graph.getNodeAccess();
     }
