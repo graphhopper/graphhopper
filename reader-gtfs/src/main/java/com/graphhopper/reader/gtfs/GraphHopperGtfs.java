@@ -204,6 +204,9 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         }
         queryResults.add(dest);
 
+        QueryGraph queryGraph = new QueryGraph(graphHopperStorage);
+        queryGraph.lookup(queryResults);
+
         int startNode;
         int destNode;
         if (arriveBy) {
@@ -219,10 +222,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
-
-        QueryGraph queryGraph = new QueryGraph(graphHopperStorage);
-        queryGraph.lookup(queryResults);
-
         long visitedNodesSum = 0L;
 
         stopWatch = new StopWatch().start();
@@ -231,16 +230,16 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         GraphExplorer explorer;
         if (arriveBy) {
-            explorer = new GraphExplorer(graphHopperStorage.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)), encoder, gtfsStorage, true);
+            explorer = new GraphExplorer(queryGraph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)), encoder, gtfsStorage, true);
         } else {
-            explorer = new GraphExplorer(graphHopperStorage.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)), encoder, gtfsStorage, false);
+            explorer = new GraphExplorer(queryGraph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)), encoder, gtfsStorage, false);
         }
 
         MultiCriteriaLabelSetting router;
         if (arriveBy) {
-           router = new MultiCriteriaLabelSetting(graphHopperStorage, weighting, maxVisitedNodesForRequest, explorer, true);
+           router = new MultiCriteriaLabelSetting(queryGraph, weighting, maxVisitedNodesForRequest, explorer, true);
         } else {
-           router = new MultiCriteriaLabelSetting(graphHopperStorage, weighting, maxVisitedNodesForRequest, explorer, false);
+           router = new MultiCriteriaLabelSetting(queryGraph, weighting, maxVisitedNodesForRequest, explorer, false);
         }
 
         String debug = ", algoInit:" + stopWatch.stop().getSeconds() + "s";
@@ -263,10 +262,10 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
             List<EdgeIteratorState> edges = new ArrayList<>();
             if (arriveBy) {
-                reverseEdges(solution, graphHopperStorage)
+                reverseEdges(solution, queryGraph)
                         .forEach(edge -> edges.add(edge.detach(false)));
             } else {
-                reverseEdges(solution, graphHopperStorage)
+                reverseEdges(solution, queryGraph)
                         .forEach(edge -> edges.add(edge.detach(true)));
                 Collections.reverse(edges);
             }
@@ -286,7 +285,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 partitions.get(partitions.size()-1).add(edge);
             }
 
-            path.getLegs().addAll(partitions.stream().flatMap(partition -> legs(partition, encoder, weighting, tr).stream()).collect(Collectors.toList()));
+            path.getLegs().addAll(partitions.stream().flatMap(partition -> legs(partition, queryGraph, encoder, weighting, tr).stream()).collect(Collectors.toList()));
 
             InstructionList instructions = new InstructionList(tr);
             for (Trip.Leg leg : path.getLegs()) {
@@ -345,7 +344,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     // One could argue that one should never write a parser
     // by hand, because it is always ugly, but use a parser library.
     // The code would then read like a specification of what paths through the graph mean.
-    private List<Trip.Leg> legs(List<EdgeIteratorState> path, PtFlagEncoder encoder, Weighting weighting, Translation tr) {
+    private List<Trip.Leg> legs(List<EdgeIteratorState> path, Graph graph, PtFlagEncoder encoder, Weighting weighting, Translation tr) {
         GeometryFactory geometryFactory = new GeometryFactory();
         if (GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK == encoder.getEdgeType(path.get(0).getFlags())) {
             Trip.Stop stop = stopFromHopEdge(geometryFactory, path.get(0));
@@ -381,7 +380,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             return result;
         } else {
             InstructionList instructions = new InstructionList(tr);
-            InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(path.get(0).getBaseNode(), graphHopperStorage, weighting, weighting.getFlagEncoder(), graphHopperStorage.getNodeAccess(), tr, instructions);
+            InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(path.get(0).getBaseNode(), graph, weighting, weighting.getFlagEncoder(), graph.getNodeAccess(), tr, instructions);
             int prevEdgeId = -1;
             for (int i=0; i<path.size(); i++) {
                 EdgeIteratorState edge = path.get(i);

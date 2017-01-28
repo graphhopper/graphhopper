@@ -63,7 +63,7 @@ public class GraphHopperRnvGtfsIT {
         final double FROM_LAT = 49.4048, FROM_LON = 8.6765; // 116006, HD Hauptbahnhof
         final double TO_LAT = 49.42799, TO_LON = 8.6833; // 113612, Hans-Thoma-Platz
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, GTFS_START_DATE.atTime(15, 0),
-                TO_LAT, TO_LON, GTFS_START_DATE.atTime(15, 17));
+                TO_LAT, TO_LON, GTFS_START_DATE.atTime(15, 17, 7));
     }
 
     @Test
@@ -71,7 +71,7 @@ public class GraphHopperRnvGtfsIT {
         final double FROM_LAT = 49.4048, FROM_LON = 8.6765; // 116006, HD Hauptbahnhof
         final double TO_LAT = 49.42799, TO_LON = 8.6833; // 113612, Hans-Thoma-Platz
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, GTFS_START_DATE.atTime(15, 7),
-                TO_LAT, TO_LON, GTFS_START_DATE.atTime(15, 21));
+                TO_LAT, TO_LON, GTFS_START_DATE.atTime(15, 21, 7));
     }
 
     @Test
@@ -79,7 +79,7 @@ public class GraphHopperRnvGtfsIT {
         final double FROM_LAT = 49.4048, FROM_LON = 8.6765; // 116006, HD Hauptbahnhof
         final double TO_LAT = 49.42799, TO_LON = 8.6833; // 113612, Hans-Thoma-Platz
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, GTFS_START_DATE.plusDays(1).atTime(0, 20),
-                TO_LAT, TO_LON, GTFS_START_DATE.plusDays(1).atTime(0, 45));
+                TO_LAT, TO_LON, GTFS_START_DATE.plusDays(1).atTime(0, 45, 7));
     }
 
     @Test
@@ -87,7 +87,7 @@ public class GraphHopperRnvGtfsIT {
         final double FROM_LAT = 49.4048, FROM_LON = 8.6765; // 116006, HD Hauptbahnhof
         final double TO_LAT = 49.42799, TO_LON = 8.6833; // 113612, Hans-Thoma-Platz
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, GTFS_START_DATE.plusDays(2).atTime(0, 20),
-                TO_LAT, TO_LON, GTFS_START_DATE.plusDays(2).atTime(0, 45));
+                TO_LAT, TO_LON, GTFS_START_DATE.plusDays(2).atTime(0, 45, 7));
     }
 
     @Test
@@ -97,7 +97,7 @@ public class GraphHopperRnvGtfsIT {
         // Transfer at e.g. Universitaet, where we have to walk to the next stop pole.
         // If we couldn't walk, we would arrive at least one connection later.
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, GTFS_START_DATE.atTime(19, 40),
-                TO_LAT, TO_LON, GTFS_START_DATE.atTime(20, 16,39));
+                TO_LAT, TO_LON, GTFS_START_DATE.atTime(20, 16,33));
     }
 
     @Test
@@ -117,7 +117,7 @@ public class GraphHopperRnvGtfsIT {
 
         assertEquals("Number of solutions", 12, response.getAll().size());
 
-        assertEquals(GTFS_START_DATE.atTime(20, 16,39), GTFS_START_DATE.atStartOfDay().plusSeconds((long) response.getBest().getRouteWeight()));
+        assertEquals(GTFS_START_DATE.atTime(20, 16,33), GTFS_START_DATE.atStartOfDay().plusSeconds((long) response.getBest().getRouteWeight()));
         assertNotEquals("Best solution doesn't use transit at all.", -1, response.getBest().getNumChanges());
 
         for (PathWrapper solution : response.getAll()) {
@@ -139,8 +139,8 @@ public class GraphHopperRnvGtfsIT {
     public void testRouteWithWalkingBeforeAndAfter() {
         final double FROM_LAT = 49.517846, FROM_LON = 8.474073; // Stolberger Straße
         final double TO_LAT = 49.45958, TO_LON = 8.479514; // Freiheitsplatz
-        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, GTFS_START_DATE.atTime(21, 36),
-                TO_LAT, TO_LON, GTFS_START_DATE.atTime(22, 21));
+        assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, GTFS_START_DATE.atTime(21, 36, 19),
+                TO_LAT, TO_LON, GTFS_START_DATE.atTime(22, 21, 19));
     }
 
     @Test
@@ -148,7 +148,7 @@ public class GraphHopperRnvGtfsIT {
         final double FROM_LAT = 49.49058, FROM_LON = 8.37085; // Wilhelm-Tell-Str
         final double TO_LAT = 49.41947, TO_LON = 8.66979; // Pädagog. Hochschule
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, LocalDateTime.of(2016,11,6,0,42),
-                TO_LAT, TO_LON, LocalDateTime.of(2016,11,6,2,46));
+                TO_LAT, TO_LON, LocalDateTime.of(2016,11,6,2,47,28));
     }
 
     @Test
@@ -156,7 +156,7 @@ public class GraphHopperRnvGtfsIT {
         final double FROM_LAT = 49.442904, FROM_LON = 8.519059; // Sporwoerthplatz
         final double TO_LAT = 49.562158, TO_LON = 8.448643; // Fuellenweg
         assertRouteWeightIs(graphHopper, FROM_LAT, FROM_LON, LocalDateTime.of(2016, 11, 1, 19, 28),
-                TO_LAT, TO_LON, LocalDateTime.of(2016,11,1,21,52,37));
+                TO_LAT, TO_LON, LocalDateTime.of(2016,11,1,21,52,23));
     }
 
     private void assertRouteWeightIs(GraphHopperGtfs graphHopper, double from_lat, double from_lon, LocalDateTime earliestDepartureTime, double to_lat, double to_lon, LocalDateTime expectedArrivalTime) {

@@ -18,8 +18,15 @@
 package com.graphhopper.http;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationConfig;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
+import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.util.Helper;
@@ -30,6 +37,7 @@ import com.graphhopper.util.shapes.BBox;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Peter Karich
@@ -42,6 +50,25 @@ public class SimpleRouteSerializer implements RouteSerializer {
         this.maxBounds = maxBounds;
         this.objectMapper.setDateFormat(new SimpleDateFormat("YYYY-MM-dd'T'HH:mm")); // ISO8601 without time zone
         this.objectMapper.registerModule(new JtsModule());
+
+        // Because VirtualEdgeIteratorState has getters which throw Exceptions.
+        // http://stackoverflow.com/questions/35359430/how-to-make-jackson-ignore-properties-if-the-getters-throw-exceptions
+        this.objectMapper.registerModule(new SimpleModule().setSerializerModifier(new BeanSerializerModifier() {
+            @Override
+            public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
+                return beanProperties.stream().map(bpw -> new BeanPropertyWriter(bpw) {
+                    @Override
+                    public void serializeAsField(Object bean, JsonGenerator gen, SerializerProvider prov) throws Exception {
+                        try {
+                            super.serializeAsField(bean, gen, prov);
+                        } catch (Exception e) {
+                            System.out.println(String.format("ignoring %s for field '%s' of %s instance", e.getClass().getName(), this.getName(), bean.getClass().getName()));
+                        }
+                    }
+                }).collect(Collectors.toList());
+            }
+        }));
+
     }
 
     private String getMessage(Throwable t) {
