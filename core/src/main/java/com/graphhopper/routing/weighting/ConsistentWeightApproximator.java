@@ -52,4 +52,9 @@ public class ConsistentWeightApproximator {
 
         return weightApproximation;
     }
+
+    @Override
+    public String toString() {
+        return uniDirApproximatorForward.toString();
+    }
 }

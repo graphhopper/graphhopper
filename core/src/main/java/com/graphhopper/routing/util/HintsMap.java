@@ -35,6 +35,10 @@ public class HintsMap extends PMap {
         setWeighting(weighting);
     }
 
+    public HintsMap(HintsMap map) {
+        super(map.toMap());
+    }
+
     @Override
     public HintsMap put(String key, Object str) {
         super.put(key, str);

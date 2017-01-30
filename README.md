@@ -132,8 +132,10 @@ Here is a list of the more detailed features including a link to the documentati
  * GraphHopper is fast. And with the so called "Contraction Hierarchies" it can be even faster (enabled by default).
  * Memory efficient data structures, algorithms and [the low and high level API](./docs/core/low-level-api.md) is tuned towards ease of use and efficiency
  * Provides a simple [web API](./docs/web/api-doc.md) including JavaScript and Java clients
+ * Multiple weightings (fastest/shortest/...) and pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle, ...
  * Offers turn instructions in more than 35 languages, contribute or improve [here](./docs/core/translations.md)
  * Displays and takes into account [elevation data](./docs/core/elevation.md) (per default disabled)
+<<<<<<< Updated upstream
  * Can apply [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexibility only)
  * Customize vehicle profiles per request (flexibility only)
  * Possibility to specify a '[heading parameter](./docs/core/routing.md)' for start, end and via points for navigation applications via `pass_through` or `heading` parameters (flexibility only)
@@ -141,6 +143,14 @@ Here is a list of the more detailed features including a link to the documentati
  * [Turn costs and restrictions](https://github.com/graphhopper/graphhopper/pull/55#issuecomment-31089096) (flexibility only)
  * Multiple profiles and weightings (flexibility and speed mode)
  * Several pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle, ...
+=======
+ * Can apply [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexible and hybrid mode only)
+ * Customize vehicle profiles per request (flexible and hybrid mode only)
+ * Possibility to specify a '[heading parameter](./docs/core/routing.md)' for start, end and via points for navigation applications via `pass_through` or `heading` parameters (flexible and hybrid mode only)
+ * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424) (flexible mode only)
+ * [Turn costs and restrictions](https://github.com/graphhopper/graphhopper/pull/55#issuecomment-31089096) (flexible and hybrid mode only)
+ * Avoid areas (flexible and hybrid mode only)
+>>>>>>> Stashed changes
  * The core uses only a few dependencies (trove4j and slf4j)
  * Scales from small indoor-sized to world-wide-sized graphs
  * Find nearest point on street e.g. to get elevation or 'snapp to road'

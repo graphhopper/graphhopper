@@ -47,7 +47,7 @@ public class TurnWeighting implements Weighting {
         this.turnCostEncoder = (TurnCostEncoder) superWeighting.getFlagEncoder();
         this.superWeighting = superWeighting;
         this.turnCostExt = turnCostExt;
-        
+
         if (turnCostExt == null)
             throw new RuntimeException("No storage set to calculate turn weight");
     }
@@ -122,6 +122,11 @@ public class TurnWeighting implements Weighting {
     public boolean matches(HintsMap weightingMap) {
         // TODO without 'turn' in comparison
         return superWeighting.matches(weightingMap);
+    }
+
+    @Override
+    public String toString() {
+        return "turn|" + superWeighting.toString();
     }
 
     @Override

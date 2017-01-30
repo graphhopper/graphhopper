@@ -103,17 +103,6 @@ public class GenericWeighting extends AbstractWeighting {
                 (gEncoder.isStoreWidth() && overLimit(width, gEncoder.getWidth(edgeState))))
             return Double.POSITIVE_INFINITY;
 
-        long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
-        if (time == Long.MAX_VALUE)
-            return Double.POSITIVE_INFINITY;
-
-        switch (gEncoder.getEdgeAccessValue(edgeState.getFlags())){
-            case NOT_ACCESSIBLE:
-                return Double.POSITIVE_INFINITY;
-            case EVENTUALLY_ACCESSIBLE:
-                time = time * eventuallAccessiblePenalty;
-        }
-
         if(!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())){
             return Double.POSITIVE_INFINITY;
         }
@@ -124,6 +113,17 @@ public class GenericWeighting extends AbstractWeighting {
                     return Double.POSITIVE_INFINITY;
                 }
             }
+        }
+
+        long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
+        if (time == Long.MAX_VALUE)
+            return Double.POSITIVE_INFINITY;
+
+        switch (gEncoder.getEdgeAccessValue(edgeState.getFlags())){
+            case NOT_ACCESSIBLE:
+                return Double.POSITIVE_INFINITY;
+            case EVENTUALLY_ACCESSIBLE:
+                time = time * eventuallAccessiblePenalty;
         }
 
         return time;
