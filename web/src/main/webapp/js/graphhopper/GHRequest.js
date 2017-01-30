@@ -121,8 +121,8 @@ GHRequest.prototype.init = function (params) {
     }
 };
 
-GHRequest.prototype.setEarliestDepartureTime = function (day, hour, min) {
-    this.api_params.earliestDepartureTime = ((day * 24 + hour) * 60 + min) * 60;
+GHRequest.prototype.setEarliestDepartureTime = function (localdatetime) {
+    this.api_params.earliestDepartureTime = localdatetime;
 };
 
 GHRequest.prototype.getEarliestDepartureTime = function () {

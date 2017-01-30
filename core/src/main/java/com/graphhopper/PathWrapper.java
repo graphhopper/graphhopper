@@ -281,10 +281,6 @@ public class PathWrapper {
         this.firstPtLegDeparture = firstPtLegDeparture;
     }
 
-    public long getFirstPtLegDeparture() {
-        return firstPtLegDeparture;
-    }
-
     public List<Trip.Leg> getLegs() {
         return legs;
     }

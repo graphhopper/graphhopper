@@ -2,9 +2,6 @@ package com.graphhopper;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.stats.FeedStats;
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.routing.util.EncodingManager;
@@ -18,11 +15,12 @@ import org.junit.Test;
 
 import java.awt.geom.Rectangle2D;
 import java.io.File;
-import java.time.Duration;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Optional;
 
 import static org.junit.Assert.*;
 
@@ -104,14 +102,14 @@ public class GraphHopperRnvGtfsIT {
     public void testTripWithWalkRangeQuery() {
         final double FROM_LAT = 49.49436, FROM_LON = 8.43372; // BASF
         final double TO_LAT = 49.47531, TO_LON = 8.48131; // Krappmuehlstr.
-        final long startTime = getSeconds(GTFS_START_DATE.atTime(19, 40));
-        final long rangeEndTime = getSeconds(GTFS_START_DATE.atTime(20, 40));
+        final LocalDateTime startTime = GTFS_START_DATE.atTime(19, 40);
+        final LocalDateTime rangeEndTime = GTFS_START_DATE.atTime(20, 40);
         // Transfer at e.g. Universitaet, where we have to walk to the next stop pole.
         // If we couldn't walk, we would arrive at least one connection later.
 
         GHRequest request = new GHRequest(FROM_LAT, FROM_LON, TO_LAT, TO_LON);
-        request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, startTime);
-        request.getHints().put(GraphHopperGtfs.RANGE_QUERY_END_TIME, rangeEndTime);
+        request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, startTime.toString());
+        request.getHints().put(GraphHopperGtfs.RANGE_QUERY_END_TIME, rangeEndTime.toString());
         GHResponse response = graphHopper.route(request);
         assertFalse(response.hasErrors());
 
@@ -121,18 +119,21 @@ public class GraphHopperRnvGtfsIT {
         assertNotEquals("Best solution doesn't use transit at all.", -1, response.getBest().getNumChanges());
 
         for (PathWrapper solution : response.getAll()) {
-            assertTrue("First pt leg departure is after start time", solution.getFirstPtLegDeparture() >= startTime);
-            if (solution.getNumChanges() != -1) {
-                assertTrue("First pt leg departure is not after query range end time", solution.getFirstPtLegDeparture() <= rangeEndTime);
-            }
+            getFirstPtLegDeparture(solution)
+                    .ifPresent(firstPtLegDeparture -> {
+                        assertTrue("First pt leg departure is after start time", !firstPtLegDeparture.isBefore(startTime));
+                        assertTrue("First pt leg departure is not after query range end time", !firstPtLegDeparture.isAfter(rangeEndTime));
+                    });
         }
 
-        HashMap<Integer, Long> departureTimePerNTransfers = new HashMap<>();
+        HashMap<Integer, LocalDateTime> departureTimePerNTransfers = new HashMap<>();
         for (PathWrapper solution : response.getAll()) {
-            assertTrue("a route with a later arrival must have a later departure, too", solution.getFirstPtLegDeparture() > departureTimePerNTransfers.getOrDefault(solution.getNumChanges(), Long.MIN_VALUE));
-            departureTimePerNTransfers.put(solution.getNumChanges(), solution.getFirstPtLegDeparture());
+            getFirstPtLegDeparture(solution)
+                    .ifPresent(firstPtLegDeparture -> {
+                        assertTrue("a route with a later arrival must have a later departure, too", firstPtLegDeparture.isAfter(departureTimePerNTransfers.getOrDefault(solution.getNumChanges(), LocalDateTime.MIN)));
+                        departureTimePerNTransfers.put(solution.getNumChanges(), firstPtLegDeparture);
+                    });
         }
-
     }
 
     @Test
@@ -164,7 +165,7 @@ public class GraphHopperRnvGtfsIT {
                 from_lat, from_lon,
                 to_lat, to_lon
         );
-        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, getSeconds(earliestDepartureTime));
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, earliestDepartureTime.toString());
         GHResponse route = graphHopper.route(ghRequest);
         assertFalse(route.hasErrors());
         assertEquals(expectedArrivalTime, GTFS_START_DATE.atStartOfDay().plusSeconds((long) route.getBest().getRouteWeight()));
@@ -172,8 +173,12 @@ public class GraphHopperRnvGtfsIT {
 
     }
 
-    private long getSeconds(LocalDateTime dateTime) {
-        return Duration.between(GTFS_START_DATE.atStartOfDay(), dateTime).getSeconds();
+    private Optional<LocalDateTime> getFirstPtLegDeparture(PathWrapper path) {
+        return path.getLegs().stream()
+                .filter(leg -> leg instanceof Trip.PtLeg)
+                .findFirst()
+                .map(ptleg -> ((Trip.PtLeg) ptleg).departureTime)
+                .map(date -> LocalDateTime.parse(new SimpleDateFormat("YYYY-MM-dd'T'HH:mm").format(date)));
     }
 
 }

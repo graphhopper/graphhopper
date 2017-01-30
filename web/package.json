@@ -29,6 +29,7 @@
     "leaflet": "1.0.1",
     "leaflet-contextmenu": "1.1.1",
     "leaflet-loading": "0.1.23",
+    "moment": "2.17.1",
     "uglifyify": "3.0.3"
   },
   "devDependencies": {

@@ -5,7 +5,9 @@ import com.graphhopper.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.QueryGraph;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -20,11 +22,10 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
-import java.util.function.Predicate;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -156,10 +157,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     @Override
     public GHResponse route(GHRequest request) {
         final int maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
-        final long requestedTimeOfDay = request.getHints().getInt(EARLIEST_DEPARTURE_TIME_HINT, 0) % (24 * 60 * 60);
-        final long requestedDay = request.getHints().getInt(EARLIEST_DEPARTURE_TIME_HINT, 0) / (24 * 60 * 60);
-        final long initialTime = requestedTimeOfDay + requestedDay * (24 * 60 * 60);
-        final long rangeQueryEndTime = request.getHints().getLong(RANGE_QUERY_END_TIME, initialTime);
+        final long initialTime = Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(request.getHints().get(EARLIEST_DEPARTURE_TIME_HINT, ""))).getSeconds();
+        final long rangeQueryEndTime = request.getHints().has(RANGE_QUERY_END_TIME) ? Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(request.getHints().get(RANGE_QUERY_END_TIME, ""))).getSeconds() : initialTime;
         final boolean arriveBy = request.getHints().getBool(ARRIVE_BY, false);
         final boolean ignoreTransfers = request.getHints().getBool(IGNORE_TRANSFERS, false);
 
@@ -311,7 +310,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             path.setPoints(pointsList);
             path.setRouteWeight(solution.currentTime);
             path.setDistance(path.getLegs().stream().mapToDouble(Trip.Leg::getDistance).sum());
-            path.setTime(solution.currentTime * 1000);
+            path.setTime((solution.currentTime - initialTime) * 1000);
             path.setFirstPtLegDeparture(solution.firstPtDepartureTime);
             path.setNumChanges((int) path.getLegs().stream().filter(l->l instanceof Trip.PtLeg).count() - 1);
             response.add(path);

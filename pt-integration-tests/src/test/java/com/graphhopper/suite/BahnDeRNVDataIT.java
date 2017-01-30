@@ -60,12 +60,11 @@ public class BahnDeRNVDataIT {
         XYSeries travelTimes = new XYSeries("Travel times", false, true);
         StopWatch stopWatch = new StopWatch().start();
         for (TripQuery tripQuery : tripQueries) {
-            long earliestDepartureTime = Duration.between(GTFS_START_DATE, tripQuery.getDateTime()).getSeconds();
             GHRequest ghRequest = new GHRequest(tripQuery.getFromLat(), tripQuery.getFromLon(),
                             tripQuery.getToLat(), tripQuery.getToLon());
             ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, true);
             ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT,
-                    earliestDepartureTime);
+                    tripQuery.getDateTime().toString());
             GHResponse route = graphHopper.route(ghRequest);
             assertFalse(route.hasErrors());
             System.out.println(MessageFormat.format("Routing from {0} to {1} at {2} (trip query id {3}).",
@@ -77,8 +76,7 @@ public class BahnDeRNVDataIT {
                 final LocalDateTime actualArrivalDateTime = GTFS_START_DATE.plusSeconds(Math.round(route.getBest().getRouteWeight()));
                 System.out.println(MessageFormat.format("Actual arrival: {0}", actualArrivalDateTime));
                 Duration expectedTravelTime = Duration.between(tripQuery.getDateTime(), expectedArrivalDateTime);
-                long actualTravelTimeSeconds = (long) route.getBest().getRouteWeight() - earliestDepartureTime;
-                travelTimes.add(new MyXYDataItem(expectedTravelTime.getSeconds(), actualTravelTimeSeconds, route.getBest()));
+                travelTimes.add(new MyXYDataItem(expectedTravelTime.getSeconds(), route.getBest().getTime() / 1000, route.getBest()));
             } else {
                 Assert.fail("No route found.");
             }

@@ -2,6 +2,7 @@ global.d3 = require('d3');
 var L = require('leaflet');
 require('leaflet-contextmenu');
 require('leaflet-loading');
+var moment = require('moment');
 require('./lib/leaflet.elevation-0.0.4.min.js');
 require('./lib/leaflet_numbered_markers.js');
 
@@ -214,11 +215,11 @@ function initFromParams(params, doQuery) {
     if (ghRequest.getEarliestDepartureTime()) {
         // TODO set
     } else {
-        var current = new Date();
-
-        $("#input_day_0").val(0);
-        $("#input_hour_0").val(current.getHours());
-        $("#input_min_0").val(current.getMinutes());
+        $("#input_date_0").val(moment().date());
+        $("#input_month_0").val(moment().month()+1);
+        $("#input_year_0").val(moment().year());
+        $("#input_hour_0").val(moment().hour());
+        $("#input_min_0").val(moment().minute());
     }
 
     var count = 0;
@@ -451,10 +452,14 @@ function resolveAll() {
     for (var i = 0, l = ghRequest.route.size(); i < l; i++) {
         ret[i] = resolveIndex(i);
     }
-    var day = $("#input_day_0").val();
-    var hour = $("#input_hour_0").val();
-    var min = $("#input_min_0").val();
-    ghRequest.setEarliestDepartureTime(parseInt(day), parseInt(hour), parseInt(min));
+    ghRequest.setEarliestDepartureTime(
+        moment()
+            .date($("#input_date_0").val())
+            .month($("#input_month_0").val()-1)
+            .year($("#input_year_0").val())
+            .hour($("#input_hour_0").val())
+            .minute($("#input_min_0").val())
+            .format("YYYY-MM-DDTHH:mm"));
     return ret;
 }
 
@@ -593,14 +598,18 @@ function routeLatLng(request, doQuery) {
             routeResultsDiv.append(oneTab);
             tabHeader.click(createClickHandler(geoJsons, pathIndex, tabHeader, oneTab, request.hasElevation(), request.useMiles));
 
-            var tmpTime = translate.createTimeString(path.time);
-            var tmpDist = translate.createDistanceString(path.distance, request.useMiles);
             var routeInfo = $("<div class='route_description'>");
             if (path.description && path.description.length > 0) {
                 routeInfo.text(path.description);
                 routeInfo.append("<br/>");
             }
-            routeInfo.append("Arrives at " + tmpTime + " with " + path.transfers + " transfers " + "(" + tmpDist + ")");
+            console.log(path.time)
+            routeInfo.append("Arrives at "
+                + moment(ghRequest.getEarliestDepartureTime())
+                    .add(path.time, 'milliseconds')
+                    .format('LT')
+                + " with " + path.transfers + " transfers "
+                + "(" + translate.createDistanceString(path.distance, request.useMiles) + ")");
 
             var kmButton = $("<button class='plain_text_button " + (request.useMiles ? "gray" : "") + "'>");
             kmButton.text(translate.tr2("km_abbr"));

@@ -134,27 +134,18 @@ module.exports.createTimeString = function (time) {
     var resTimeStr;
     if (tmpTime > 60) {
         if (tmpTime / 60 > 24) {
-            resTimeStr = mathTools.floor(tmpTime / 60 / 24, 1) + tr2("day_abbr") + " later";
+            resTimeStr = mathTools.floor(tmpTime / 60 / 24, 1) + tr2("day_abbr");
             tmpTime = mathTools.floor(((tmpTime / 60) % 24), 1);
             if (tmpTime > 0)
-                resTimeStr += " " + tmpTime + ":";
+                resTimeStr += " " + tmpTime + tr2("hour_abbr");
         } else {
-            resTimeStr = mathTools.floor(tmpTime / 60, 1) + ":";
-        }
-        
+            resTimeStr = mathTools.floor(tmpTime / 60, 1) + tr2("hour_abbr");
         tmpTime = mathTools.floor(tmpTime % 60, 1);
-        if (tmpTime > 0) {
-            if (tmpTime < 10)
-                tmpTime = "0" + tmpTime;
-            resTimeStr += tmpTime;
+            if (tmpTime > 0)
+                resTimeStr += " " + tmpTime + tr2("min_abbr");
         }
-
-    } else {
-        tmpTime = mathTools.round(tmpTime % 60, 1);
-        if (tmpTime < 10)
-            tmpTime = "0" + tmpTime;
-        resTimeStr += tmpTime;
-    }
+    } else
+        resTimeStr = mathTools.round(tmpTime % 60, 1) + tr2("min_abbr");
     return resTimeStr;
 };
 
