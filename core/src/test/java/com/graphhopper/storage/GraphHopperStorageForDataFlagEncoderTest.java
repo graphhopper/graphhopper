@@ -33,9 +33,9 @@ public class GraphHopperStorageForDataFlagEncoderTest {
 
     public GraphHopperStorageForDataFlagEncoderTest() {
         properties = new PMap();
-        properties.put("limit_height", true);
-        properties.put("limit_weight", true);
-        properties.put("limit_width", false);
+        properties.put("store_height", true);
+        properties.put("store_weight", true);
+        properties.put("store_width", false);
         encoder = new DataFlagEncoder(properties);
         encodingManager = new EncodingManager(Arrays.asList(encoder), 8);
     }
@@ -95,8 +95,8 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         assertTrue(flagEncoder instanceof DataFlagEncoder);
 
         DataFlagEncoder dataFlagEncoder = (DataFlagEncoder)flagEncoder;
-        assertTrue(dataFlagEncoder.isHeightLimitEnabled());
-        assertTrue(dataFlagEncoder.isWeightLimitEnabled());
-        assertFalse(dataFlagEncoder.isWidthLimitEnabled());
+        assertTrue(dataFlagEncoder.isStoreHeight());
+        assertTrue(dataFlagEncoder.isStoreWeight());
+        assertFalse(dataFlagEncoder.isStoreWidth());
     }
 }

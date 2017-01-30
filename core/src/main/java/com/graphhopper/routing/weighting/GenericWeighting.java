@@ -19,13 +19,11 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.EncodedValue;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.shapes.Shape;
 
@@ -100,9 +98,9 @@ public class GenericWeighting extends AbstractWeighting {
         } else if (!gEncoder.isForward(edgeState, accessType))
             return Double.POSITIVE_INFINITY;
 
-        if ((gEncoder.isHeightLimitEnabled() && overLimit(height, gEncoder.getHeightLimit(edgeState))) ||
-                (gEncoder.isWeightLimitEnabled() && overLimit(weight, gEncoder.getWeightLimit(edgeState))) ||
-                (gEncoder.isWidthLimitEnabled() && overLimit(width, gEncoder.getWidthLimit(edgeState))))
+        if ((gEncoder.isStoreHeight() && overLimit(height, gEncoder.getHeight(edgeState))) ||
+                (gEncoder.isStoreWeight() && overLimit(weight, gEncoder.getWeight(edgeState))) ||
+                (gEncoder.isStoreWidth() && overLimit(width, gEncoder.getWidth(edgeState))))
             return Double.POSITIVE_INFINITY;
 
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);

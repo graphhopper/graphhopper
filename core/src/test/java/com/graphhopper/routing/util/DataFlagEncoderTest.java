@@ -30,9 +30,9 @@ public class DataFlagEncoderTest {
 
     public DataFlagEncoderTest() {
         properties = new PMap();
-        properties.put("limit_height", true);
-        properties.put("limit_weight", true);
-        properties.put("limit_width", true);
+        properties.put("store_height", true);
+        properties.put("store_weight", true);
+        properties.put("store_width", true);
         encoder = new DataFlagEncoder(properties);
         encodingManager = new EncodingManager(Arrays.asList(encoder), 8);
 

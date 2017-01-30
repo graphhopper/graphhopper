@@ -51,9 +51,9 @@ public class GenericWeightingTest {
 
     public GenericWeightingTest() {
         properties = new PMap();
-        properties.put("limit_height", true);
-        properties.put("limit_weight", true);
-        properties.put("limit_width", true);
+        properties.put("store_height", true);
+        properties.put("store_weight", true);
+        properties.put("store_width", true);
         encoder = new DataFlagEncoder(properties);
         em = new EncodingManager(Arrays.asList(encoder), 8);
     }

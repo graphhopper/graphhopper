@@ -82,9 +82,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private EncodedValue highwayEncoder;
     private EncodedValue transportModeEncoder;
     private EncodedValue accessEncoder;
-    private boolean heightLimitEnabled = false;
-    private boolean weightLimitEnabled = false;
-    private boolean widthLimitEnabled = false;
+    private boolean storeHeight = false;
+    private boolean storeWeight = false;
+    private boolean storeWidth = false;
 
     public DataFlagEncoder() {
         this(5, 5, 0);
@@ -95,9 +95,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
         this.properties = properties;
-        this.enableHeightLimit(properties.getBool("limit_height", false));
-        this.enableWeightLimit(properties.getBool("limit_weight", false));
-        this.enableWidthLimit(properties.getBool("limit_width", false));
+        this.setStoreHeight(properties.getBool("store_height", false));
+        this.setStoreWeight(properties.getBool("store_weight", false));
+        this.setStoreWidth(properties.getBool("store_width", false));
     }
 
     public DataFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
@@ -181,19 +181,19 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         shift += carBwdMaxspeedEncoder.getBits();
 
         /* Value range: [3.0m, 5.4m] */
-        if (isHeightLimitEnabled()) {
+        if (isStoreHeight()) {
             heightEncoder = new EncodedDoubleValue("height restriction", shift, 7, 0.1, 0, 12, true);
             shift += heightEncoder.getBits();
         }
 
         /* Value range: [1.0t, 59.5t] */
-        if (isWeightLimitEnabled()) {
+        if (isStoreWeight()) {
             weightEncoder = new EncodedDoubleValue("weight restriction", shift, 10, 0.1, 0, 100, true);
             shift += weightEncoder.getBits();
         }
 
         /* Value range: [2.5m, 3.5m] */
-        if (isWidthLimitEnabled()) {
+        if (isStoreWidth()) {
             widthEncoder = new EncodedDoubleValue("width restriction", shift, 6, 0.1, 0, 6, true);
             shift += widthEncoder.getBits();
         }
@@ -319,17 +319,17 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
                 flags = carBwdMaxspeedEncoder.setDoubleValue(flags, bwdSpeed);
 
             // Road attributes (height, weight, width)
-            if (isHeightLimitEnabled()) {
+            if (isStoreHeight()) {
                 List<String> heightTags = Arrays.asList("maxheight", "maxheight:physical");
                 flags = extractMeter(way, flags, heightEncoder, heightTags);
             }
 
-            if (isWeightLimitEnabled()) {
+            if (isStoreWeight()) {
                 List<String> weightTags = Arrays.asList("maxweight", "maxgcweight");
                 flags = extractTons(way, flags, weightEncoder, weightTags);
             }
 
-            if (isWidthLimitEnabled()) {
+            if (isStoreWidth()) {
                 List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical");
                 flags = extractMeter(way, flags, widthEncoder, widthTags);
             }
@@ -628,17 +628,17 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return val;
     }
 
-    public double getHeightLimit(EdgeIteratorState edge) {
+    public double getHeight(EdgeIteratorState edge) {
         long flags = edge.getFlags();
         return heightEncoder.getDoubleValue(flags);
     }
 
-    public double getWeightLimit(EdgeIteratorState edge) {
+    public double getWeight(EdgeIteratorState edge) {
         long flags = edge.getFlags();
         return weightEncoder.getDoubleValue(flags);
     }
 
-    public double getWidthLimit(EdgeIteratorState edge) {
+    public double getWidth(EdgeIteratorState edge) {
         long flags = edge.getFlags();
         return widthEncoder.getDoubleValue(flags);
     }
@@ -721,39 +721,39 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return GenericWeighting.class.isAssignableFrom(feature);
     }
 
-    public DataFlagEncoder enableHeightLimit(boolean heightLimitEnabled) {
-        this.heightLimitEnabled = heightLimitEnabled;
+    public DataFlagEncoder setStoreHeight(boolean storeHeight) {
+        this.storeHeight = storeHeight;
         return this;
     }
 
-    public boolean isHeightLimitEnabled() {
-        return heightLimitEnabled;
+    public boolean isStoreHeight() {
+        return storeHeight;
     }
 
-    public DataFlagEncoder enableWeightLimit(boolean weightLimitEnabled) {
-        this.weightLimitEnabled = weightLimitEnabled;
+    public DataFlagEncoder setStoreWeight(boolean storeWeight) {
+        this.storeWeight = storeWeight;
         return this;
     }
 
-    public boolean isWeightLimitEnabled() {
-        return weightLimitEnabled;
+    public boolean isStoreWeight() {
+        return storeWeight;
     }
 
-    public DataFlagEncoder enableWidthLimit(boolean widthLimitEnabled) {
-        this.widthLimitEnabled = widthLimitEnabled;
+    public DataFlagEncoder setStoreWidth(boolean storeWidth) {
+        this.storeWidth = storeWidth;
         return this;
     }
 
-    public boolean isWidthLimitEnabled() {
-        return widthLimitEnabled;
+    public boolean isStoreWidth() {
+        return storeWidth;
     }
 
     @Override
     protected String getPropertiesString() {
         return super.getPropertiesString() +
-                "|limit_height=" + heightLimitEnabled +
-                "|limit_weight=" + weightLimitEnabled +
-                "|limit_width=" + widthLimitEnabled;
+                "|store_height=" + storeHeight +
+                "|store_weight=" + storeWeight +
+                "|store_width=" + storeWidth;
     }
 
     @Override

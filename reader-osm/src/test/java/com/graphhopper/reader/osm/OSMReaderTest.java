@@ -515,7 +515,7 @@ public class OSMReaderTest {
     @Test
     public void testRoadAttributes() {
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
-        DataFlagEncoder dataFlagEncoder = (new DataFlagEncoder()).enableHeightLimit(true).enableWeightLimit(true).enableWidthLimit(true);
+        DataFlagEncoder dataFlagEncoder = (new DataFlagEncoder()).setStoreHeight(true).setStoreWeight(true).setStoreWidth(true);
         hopper.setEncodingManager(new EncodingManager(Arrays.asList(dataFlagEncoder), 8));
         hopper.importOrLoad();
 
@@ -538,21 +538,21 @@ public class OSMReaderTest {
         EdgeIteratorState edge_ce = GHUtility.getEdge(graph, nc, ne);
         EdgeIteratorState edge_de = GHUtility.getEdge(graph, nd, ne);
 
-        assertEquals(4.0, encoder.getHeightLimit(edge_ab), 1e-5);
-        assertEquals(2.5, encoder.getWidthLimit(edge_ab), 1e-5);
-        assertEquals(4.4, encoder.getWeightLimit(edge_ab), 1e-5);
+        assertEquals(4.0, encoder.getHeight(edge_ab), 1e-5);
+        assertEquals(2.5, encoder.getWidth(edge_ab), 1e-5);
+        assertEquals(4.4, encoder.getWeight(edge_ab), 1e-5);
 
-        assertEquals(4.0, encoder.getHeightLimit(edge_bc), 1e-5);
-        assertEquals(2.5, encoder.getWidthLimit(edge_bc), 1e-5);
-        assertEquals(4.4, encoder.getWeightLimit(edge_bc), 1e-5);
+        assertEquals(4.0, encoder.getHeight(edge_bc), 1e-5);
+        assertEquals(2.5, encoder.getWidth(edge_bc), 1e-5);
+        assertEquals(4.4, encoder.getWeight(edge_bc), 1e-5);
 
-        assertEquals(4.4, encoder.getHeightLimit(edge_ad), 1e-5);
-        assertEquals(3.5, encoder.getWidthLimit(edge_ad), 1e-5);
-        assertEquals(17.5, encoder.getWeightLimit(edge_ad), 1e-5);
+        assertEquals(4.4, encoder.getHeight(edge_ad), 1e-5);
+        assertEquals(3.5, encoder.getWidth(edge_ad), 1e-5);
+        assertEquals(17.5, encoder.getWeight(edge_ad), 1e-5);
 
-        assertEquals(4.4, encoder.getHeightLimit(edge_cd), 1e-5);
-        assertEquals(3.5, encoder.getWidthLimit(edge_cd), 1e-5);
-        assertEquals(17.5, encoder.getWeightLimit(edge_cd), 1e-5);
+        assertEquals(4.4, encoder.getHeight(edge_cd), 1e-5);
+        assertEquals(3.5, encoder.getWidth(edge_cd), 1e-5);
+        assertEquals(17.5, encoder.getWeight(edge_cd), 1e-5);
     }
 
     @Test
