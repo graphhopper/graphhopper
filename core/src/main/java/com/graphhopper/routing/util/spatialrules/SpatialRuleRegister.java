@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * SpatialRules can be registered in this Singleton.
+ * SpatialRules can be registered in this class.
  * Every rule gets a unique integer id assigned.
  * The conversion of rule name to id and id to name can be done fast and efficient.
  * <p>
@@ -34,24 +34,36 @@ import java.util.Map;
  *
  * @author Robin Boldt
  */
-public enum SpatialRuleRegister {
+public class SpatialRuleRegister {
 
-    INSTANCE;
-
-    // TODO: Make the rules configureable, e.g. in the Config
-    private final List<SpatialRule> rules = Arrays.asList(new SpatialRule[]{
+    private final static SpatialRule[] DEFAULT_RULES = new SpatialRule[]{
             new GermanySpatialRule(),
             new AustriaSpatialRule()
-    });
+    };
 
-    private final Map<Integer, SpatialRule> toRule = new HashMap<>(rules.size());
-    private final Map<String, Integer> toInt = new HashMap<>(rules.size());
+    private final List<SpatialRule> rules;
 
-    private SpatialRuleRegister() {
+    private final Map<Integer, SpatialRule> toRule = new HashMap<>();
+    private final Map<String, Integer> toInt = new HashMap<>();
+
+    /**
+     * The default constructer registers all rules of the DEFAULT_RULES array.
+     */
+    public SpatialRuleRegister() {
+        this(DEFAULT_RULES);
+    }
+
+    /**
+     * Registers the rule and create a unique id for these rules. The ids stay consistent as long as you pass the same
+     * set of rules.
+     */
+    public SpatialRuleRegister(SpatialRule... rules) {
+        this.rules = Arrays.asList(rules);
+
         toRule.put(0, SpatialRuleLookup.EMPTY_RULE);
-        for (int i = 0; i < rules.size(); i++) {
-            toRule.put(i + 1, rules.get(i));
-            toInt.put(rules.get(i).getUniqueName(), i + 1);
+        for (int i = 0; i < this.rules.size(); i++) {
+            toRule.put(i + 1, this.rules.get(i));
+            toInt.put(this.rules.get(i).getUniqueName(), i + 1);
         }
     }
 

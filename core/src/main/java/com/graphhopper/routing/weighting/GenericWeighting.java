@@ -52,6 +52,8 @@ public class GenericWeighting extends AbstractWeighting {
     private final int accessType;
     private final int eventuallAccessiblePenalty = 10;
 
+    SpatialRuleRegister spatialRuleRegister = new SpatialRuleRegister();
+
     private final GHIntHashSet blockedEdges;
     private final List<Shape> blockedShapes;
     private NodeAccess na;
@@ -96,7 +98,7 @@ public class GenericWeighting extends AbstractWeighting {
             return Double.POSITIVE_INFINITY;
 
         int spatialId = gEncoder.getSpatialId(edgeState.getFlags());
-        SpatialRule spatialRule = SpatialRuleRegister.INSTANCE.getRuleForId(spatialId);
+        SpatialRule spatialRule = spatialRuleRegister.getRuleForId(spatialId);
         AccessValue edgeAccessValue = gEncoder.getEdgeAccessValue(edgeState.getFlags());
         AccessValue mergeAccessValue = mergeAccessValues(edgeAccessValue, spatialRule.isAccessible(gEncoder.getHighwayAsString(edgeState), "motor_vehicle", edgeAccessValue));
         switch (mergeAccessValue) {
@@ -143,7 +145,7 @@ public class GenericWeighting extends AbstractWeighting {
             return Long.MAX_VALUE;
 
         int spatialId = gEncoder.getSpatialId(edgeState.getFlags());
-        SpatialRule spatialRule = SpatialRuleRegister.INSTANCE.getRuleForId(spatialId);
+        SpatialRule spatialRule = spatialRuleRegister.getRuleForId(spatialId);
         double spatialRuleMaxSpeed = spatialRule.getMaxSpeed(gEncoder.getHighwayAsString(edgeState), speed);
         if (speed > spatialRuleMaxSpeed) {
             speed = spatialRuleMaxSpeed;

@@ -246,6 +246,7 @@ public class DataFlagEncoderTest {
         encoder.setSpatialRuleLookup(lookup);
 
         flags = encoder.handleWayTags(osmWay, 1, 0);
-        assertEquals(SpatialRuleRegister.INSTANCE.getIdForName("DEU"), encoder.getSpatialId(flags));
+        SpatialRuleRegister spatialRuleRegister = new SpatialRuleRegister();
+        assertEquals(spatialRuleRegister.getIdForName("DEU"), encoder.getSpatialId(flags));
     }
 }

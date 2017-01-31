@@ -79,6 +79,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private EncodedValue spatialEncoder;
 
     private SpatialRuleLookup spatialRuleLookup = new EmptySpatialRuleLookup();
+    SpatialRuleRegister spatialRuleRegister = new SpatialRuleRegister();
 
     public DataFlagEncoder() {
         // TODO include turn information
@@ -173,7 +174,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         accessEncoder = new EncodedValue("access car", shift, 3, 1, 1, accessMap.size(), true);
         shift += accessEncoder.getBits();
 
-        int maxId = SpatialRuleRegister.INSTANCE.getMaxId();
+
+        int maxId = spatialRuleRegister.getMaxId();
         // TODO Should we calculate # of bits automatically? Might create serious issues? Graph becomes too big?
         int bits = 32 - Integer.numberOfLeadingZeros(maxId);
         spatialEncoder = new EncodedValue("spatial_location", shift, bits, 1, 1, maxId, true);
@@ -346,7 +348,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             flags = accessEncoder.setValue(flags, getAccessValue(way));
 
             SpatialRule rule = getSpatialRule(way);
-            flags = spatialEncoder.setValue(flags, SpatialRuleRegister.INSTANCE.getIdForName(rule.getUniqueName()));
+            flags = spatialEncoder.setValue(flags, spatialRuleRegister.getIdForName(rule.getUniqueName()));
 
             return flags;
         } catch (Exception ex) {

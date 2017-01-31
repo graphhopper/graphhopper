@@ -43,7 +43,8 @@ public class SpatialRuleLookupBuilder {
     private final static double DEFAULT_RESOLUTION = .1;
     private final static boolean DEFAULT_EXACT = true;
 
-    private final static List<SpatialRule> rules = SpatialRuleRegister.INSTANCE.getRules();
+    private final static SpatialRuleRegister spatialRuleRegister = new SpatialRuleRegister();
+    private final static List<SpatialRule> rules = spatialRuleRegister.getRules();
 
     public static SpatialRuleLookup build() {
         return SpatialRuleLookupBuilder.build(DEFAULT_BOUNDS, DEFAULT_RESOLUTION, DEFAULT_EXACT);
