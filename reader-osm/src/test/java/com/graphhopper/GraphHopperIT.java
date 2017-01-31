@@ -253,7 +253,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("generic", 4));
+                setEncodingManager(new EncodingManager("generic", 8));
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
