@@ -138,6 +138,19 @@ public class GraphHopperServletIT extends BaseServletTester {
     }
 
     @Test
+    public void testNonTranslatedInstructions() {
+        GraphHopperAPI hopper = new GraphHopperWeb();
+        assertTrue(hopper.load(getTestRouteAPIUrl()));
+        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));
+        assertEquals("Continue onto Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(2).getName());
+
+        GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        request.getHints().put("translate_instructions", false);
+        rsp = hopper.route(request);
+        assertEquals("Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(2).getName());
+    }
+
+    @Test
     public void testGraphHopperWebRealExceptions() {
         GraphHopperAPI hopper = new GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
