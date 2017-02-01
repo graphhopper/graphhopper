@@ -1,12 +1,11 @@
 package com.graphhopper.routing.util;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.graphhopper.util.PMap;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.graphhopper.reader.ReaderWay;
@@ -16,19 +15,44 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 
+import static org.junit.Assert.*;
+
 /**
  * @author Peter Karich
  */
 public class DataFlagEncoderTest {
+    private final PMap properties;
     private final DataFlagEncoder encoder;
     private final EncodingManager encodingManager;
     private final int motorVehicleInt;
 
+    private final double DELTA = 0.1;
+
     public DataFlagEncoderTest() {
-        encoder = new DataFlagEncoder();
-        encodingManager = new EncodingManager(encoder);
+        properties = new PMap();
+        properties.put("store_height", true);
+        properties.put("store_weight", true);
+        properties.put("store_width", true);
+        encoder = new DataFlagEncoder(properties);
+        encodingManager = new EncodingManager(Arrays.asList(encoder), 8);
 
         motorVehicleInt = encoder.getAccessType("motor_vehicle");
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testInsufficientEncoderBitLength() {
+        EncodingManager em = new EncodingManager(Arrays.asList(new DataFlagEncoder(properties)));
+    }
+
+    @Test
+    public void testSufficientEncoderBitLength() {
+        try {
+            EncodingManager em = new EncodingManager(Arrays.asList(new DataFlagEncoder(properties)), 8);
+            EncodingManager em1 = new EncodingManager(Arrays.asList(new DataFlagEncoder()));
+        }
+        catch (Throwable t) {
+            fail();
+        }
     }
 
     @Test
@@ -222,5 +246,58 @@ public class DataFlagEncoderTest {
         // important to filter out illegal highways to reduce the number of edges before adding them to the graph
         osmWay.setTag("highway", "building");
         assertTrue(encoder.acceptWay(osmWay) == 0);
+    }
+
+    @Test
+    public void stringToMeter() {
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5m"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5 m"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5   m"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5 meter"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("4 ft 11 in"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToMeter("4'11''"), DELTA);
+
+
+        assertEquals(3, DataFlagEncoder.stringToMeter("3 m."), DELTA);
+        assertEquals(3, DataFlagEncoder.stringToMeter("3meters"), DELTA);
+        assertEquals(0.8 * 3, DataFlagEncoder.stringToMeter("~3"), DELTA);
+        assertEquals(3 * 0.8, DataFlagEncoder.stringToMeter("3 m approx"), DELTA);
+
+        // 2.743 + 0.178
+        assertEquals(2.921, DataFlagEncoder.stringToMeter("9 ft 7in"), DELTA);
+        assertEquals(2.921, DataFlagEncoder.stringToMeter("9'7\""), DELTA);
+        assertEquals(2.921, DataFlagEncoder.stringToMeter("9'7''"), DELTA);
+        assertEquals(2.921, DataFlagEncoder.stringToMeter("9' 7\""), DELTA);
+
+        assertEquals(2.743, DataFlagEncoder.stringToMeter("9'"), DELTA);
+        assertEquals(2.743, DataFlagEncoder.stringToMeter("9 feet"), DELTA);
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void stringToMeterException() {
+        // Unexpected values
+        DataFlagEncoder.stringToMeter("height limit 1.5m");
+    }
+
+    @Test
+    public void stringToTons() {
+        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5 t"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5   t"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5 tons"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5 ton"), DELTA);
+        assertEquals(1.5, DataFlagEncoder.stringToTons("3306.9 lbs"), DELTA);
+        assertEquals(3, DataFlagEncoder.stringToTons("3 T"), DELTA);
+        assertEquals(3, DataFlagEncoder.stringToTons("3ton"), DELTA);
+
+        // maximum gross weight
+        assertEquals(6, DataFlagEncoder.stringToTons("6t mgw"), DELTA);
+    }
+
+    @Test(expected = NumberFormatException.class)
+    public void stringToTonsException() {
+        // Unexpected values
+        DataFlagEncoder.stringToTons("weight limit 1.5t");
     }
 }
