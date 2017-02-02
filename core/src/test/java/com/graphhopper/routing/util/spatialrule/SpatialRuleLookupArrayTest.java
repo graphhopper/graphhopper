@@ -82,6 +82,7 @@ public class SpatialRuleLookupArrayTest {
         assertEquals("", spatialRuleLookup.lookupRule(49.932900, 6.174023).getUniqueName());
         assertEquals("", spatialRuleLookup.lookupRule(47.547463, 9.741948).getUniqueName());
 
+        /*
         System.out.println("Started Performance Test");
         StopWatch w = new StopWatch().start();
         Random r = new Random();
@@ -95,6 +96,7 @@ public class SpatialRuleLookupArrayTest {
         }
         w.stop();
         System.out.println("Finished Performance Test in: " + w.getSeconds() + " seconds");
+        */
     }
 
     @Test

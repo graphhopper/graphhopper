@@ -57,4 +57,17 @@ public interface SpatialRuleLookup {
             return "";
         }
     };
+
+    SpatialRuleContainer EMPTY_RULE_CONTAINER = new SpatialRuleContainer() {
+
+        {
+            this.rules.add(EMPTY_RULE);
+        }
+
+        @Override
+        public SpatialRuleContainer addRule(SpatialRule rule) {
+            throw new UnsupportedOperationException("You cannot add rules to the EMPTY RULE CONTAINER");
+        }
+
+    };
 }

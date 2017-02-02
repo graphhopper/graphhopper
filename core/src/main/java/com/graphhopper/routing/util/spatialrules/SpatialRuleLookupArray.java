@@ -33,7 +33,7 @@ import java.util.List;
  *
  * @author Robin Boldt
  */
-public class SpatialRuleLookupArray extends AbstractSpatialRuleLookup {
+public class SpatialRuleLookupArray implements SpatialRuleLookup {
 
     // resolution in full decimal degrees
     private final double resolution;

@@ -29,7 +29,7 @@ import java.util.List;
  *
  * @author Robin Boldt
  */
-public class EmptySpatialRuleLookup extends AbstractSpatialRuleLookup {
+public class EmptySpatialRuleLookup implements SpatialRuleLookup {
 
     BBox bounds = new BBox(-180, 180, -90, 90);
 
