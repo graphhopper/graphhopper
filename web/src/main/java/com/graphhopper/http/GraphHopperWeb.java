@@ -53,6 +53,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private String key = "";
     private boolean instructions = true;
     private boolean calcPoints = true;
+    private boolean translateInstructions = true;
     private boolean elevation = false;
 
     public GraphHopperWeb() {
@@ -77,7 +78,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
     }
 
     public static PathWrapper createPathWrapper(JSONObject path,
-                                                boolean tmpCalcPoints, boolean tmpInstructions, boolean tmpElevation) {
+                                                boolean tmpCalcPoints, boolean tmpInstructions,
+                                                boolean tmpElevation, boolean translateInstructions) {
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.addErrors(readErrors(path));
         if (pathWrapper.hasErrors())
@@ -102,7 +104,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 for (int instrIndex = 0; instrIndex < instrArr.length(); instrIndex++) {
                     JSONObject jsonObj = instrArr.getJSONObject(instrIndex);
                     double instDist = jsonObj.getDouble("distance");
-                    String text = jsonObj.getString("text");
+                    String text = translateInstructions ? jsonObj.getString("text") : jsonObj.getString("street_name");
                     long instTime = jsonObj.getLong("time");
                     int sign = jsonObj.getInt("sign");
                     JSONArray iv = jsonObj.getJSONArray("interval");
@@ -127,7 +129,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                         }
 
                         if (jsonObj.has("exited")) {
-                            if(jsonObj.getBoolean("exited"))
+                            if (jsonObj.getBoolean("exited"))
                                 ri.setExited();
                         }
 
@@ -152,7 +154,9 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
                     // The translation is done from the routing service so just use the provided string
                     // instead of creating a combination with sign and name etc
-                    instr.setUseRawName();
+                    // However, you can translate it on the client side by passing translate_insructions=false
+                    if(translateInstructions)
+                        instr.setUseRawName();
 
                     instr.setDistance(instDist).setTime(instTime);
                     il.add(instr);
@@ -290,6 +294,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
             boolean tmpInstructions = request.getHints().getBool("instructions", instructions);
             boolean tmpCalcPoints = request.getHints().getBool("calc_points", calcPoints);
+            boolean tmpTranslateInstructions = request.getHints().getBool("translate_instructions", translateInstructions);
 
             if (tmpInstructions && !tmpCalcPoints)
                 throw new IllegalStateException("Cannot calculate instructions without points (only points without instructions). "
@@ -337,7 +342,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
             JSONArray paths = json.getJSONArray("paths");
             for (int index = 0; index < paths.length(); index++) {
                 JSONObject path = paths.getJSONObject(index);
-                PathWrapper altRsp = createPathWrapper(path, tmpCalcPoints, tmpInstructions, tmpElevation);
+                PathWrapper altRsp = createPathWrapper(path, tmpCalcPoints, tmpInstructions, tmpElevation, tmpTranslateInstructions);
                 res.add(altRsp);
             }
 

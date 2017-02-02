@@ -23,6 +23,7 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.json.JSONObject;
@@ -32,6 +33,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -148,6 +150,10 @@ public class GraphHopperServletIT extends BaseServletTester {
         request.getHints().put("translate_instructions", false);
         rsp = hopper.route(request);
         assertEquals("Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(2).getName());
+        // TODO I think we should remove this later on?
+        TranslationMap tr = new TranslationMap().doImport();
+        // TODO First character is small, this is different from web... Maybe we should return the first char as upper case with getTurnDescription?
+        assertEquals("continue onto Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(2).getTurnDescription(tr.getWithFallBack(Locale.UK)));
     }
 
     @Test

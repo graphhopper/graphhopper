@@ -34,8 +34,7 @@ public interface RouteSerializer {
      */
     Map<String, Object> toJSON(GHResponse response,
                                boolean calcPoints, boolean pointsEncoded,
-                               boolean includeElevation, boolean enableInstructions,
-                               boolean translateInstructions);
+                               boolean includeElevation, boolean enableInstructions);
 
     /**
      * This method returns either a Map containing the GeoJSON of the specified points OR the string

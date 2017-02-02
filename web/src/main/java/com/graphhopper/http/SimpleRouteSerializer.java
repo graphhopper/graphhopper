@@ -47,7 +47,7 @@ public class SimpleRouteSerializer implements RouteSerializer {
     @Override
     public Map<String, Object> toJSON(GHResponse rsp,
                                       boolean calcPoints, boolean pointsEncoded,
-                                      boolean includeElevation, boolean enableInstructions, boolean translateInstructions) {
+                                      boolean includeElevation, boolean enableInstructions) {
         Map<String, Object> json = new HashMap<String, Object>();
 
         if (rsp.hasErrors()) {
@@ -93,7 +93,7 @@ public class SimpleRouteSerializer implements RouteSerializer {
 
                     if (enableInstructions) {
                         InstructionList instructions = ar.getInstructions();
-                        jsonPath.put("instructions", instructions.createJson(translateInstructions));
+                        jsonPath.put("instructions", instructions.createJson());
                     }
 
                     jsonPath.put("ascend", ar.getAscend());

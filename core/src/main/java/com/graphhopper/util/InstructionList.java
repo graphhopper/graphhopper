@@ -67,14 +67,7 @@ public class InstructionList implements Iterable<Instruction> {
         return instructions.size();
     }
 
-    /**
-     * Wraps {@link this#createJson(boolean)} with translateInstructions=true
-     */
     public List<Map<String, Object>> createJson() {
-        return this.createJson(true);
-    }
-
-    public List<Map<String, Object>> createJson(boolean translateInsturctions) {
         List<Map<String, Object>> instrList = new ArrayList<Map<String, Object>>(instructions.size());
         int pointsIndex = 0;
         int counter = 0;
@@ -83,7 +76,7 @@ public class InstructionList implements Iterable<Instruction> {
             instrList.add(instrJson);
 
             InstructionAnnotation ia = instruction.getAnnotation();
-            String text = translateInsturctions ? instruction.getTurnDescription(tr) : instruction.getName();
+            String text = instruction.getTurnDescription(tr);
             if (Helper.isEmpty(text))
                 text = ia.getMessage();
             instrJson.put("text", Helper.firstBig(text));
@@ -92,6 +85,7 @@ public class InstructionList implements Iterable<Instruction> {
                 instrJson.put("annotation_importance", ia.getImportance());
             }
 
+            instrJson.put("street_name", instruction.getName());
             instrJson.put("time", instruction.getTime());
             instrJson.put("distance", Helper.round(instruction.getDistance(), 3));
             instrJson.put("sign", instruction.getSign());

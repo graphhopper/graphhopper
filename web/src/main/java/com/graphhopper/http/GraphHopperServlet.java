@@ -68,7 +68,6 @@ public class GraphHopperServlet extends GHBaseServlet {
         boolean writeGPX = "gpx".equalsIgnoreCase(getParam(httpReq, "type", "json"));
         boolean enableInstructions = writeGPX || getBooleanParam(httpReq, INSTRUCTIONS, true);
         boolean calcPoints = getBooleanParam(httpReq, CALC_POINTS, true);
-        boolean translateInstructions = getBooleanParam(httpReq, "translate_instructions", true);
         boolean enableElevation = getBooleanParam(httpReq, "elevation", false);
         boolean pointsEncoded = getBooleanParam(httpReq, "points_encoded", true);
 
@@ -168,7 +167,7 @@ public class GraphHopperServlet extends GHBaseServlet {
             }
         } else {
             Map<String, Object> map = routeSerializer.toJSON(ghRsp, calcPoints, pointsEncoded,
-                    enableElevation, enableInstructions, translateInstructions);
+                    enableElevation, enableInstructions);
 
             Object infoMap = map.get("info");
             if (infoMap != null)
