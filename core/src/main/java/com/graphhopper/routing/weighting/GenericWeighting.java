@@ -40,18 +40,25 @@ import java.util.List;
  * @author Peter Karich
  */
 public class GenericWeighting extends AbstractWeighting {
+
+    public static final String HEIGHT_LIMIT = "height";
+    public static final String WEIGHT_LIMIT = "weight";
+    public static final String WIDTH_LIMIT = "width";
     /**
      * Convert to milliseconds for correct calcMillis.
      */
-    private final static double SPEED_CONV = 3600;
-    private final double headingPenalty;
-    private final long headingPenaltyMillis;
-    private final double maxSpeed;
-    private final DataFlagEncoder gEncoder;
-    private final double[] speedArray;
-    private final int accessType;
-    private final int eventuallAccessiblePenalty = 10;
+    protected final static double SPEED_CONV = 3600;
+    protected final double headingPenalty;
+    protected final long headingPenaltyMillis;
+    protected final double maxSpeed;
+    protected final DataFlagEncoder gEncoder;
+    protected final double[] speedArray;
+    protected final int accessType;
+    protected final int eventuallAccessiblePenalty = 10;
 
+    protected final double height;
+    protected final double weight;
+    protected final double width;
     SpatialRuleRegister spatialRuleRegister = new SpatialRuleRegister();
 
     private final GHIntHashSet blockedEdges;
@@ -77,6 +84,9 @@ public class GenericWeighting extends AbstractWeighting {
         accessType = gEncoder.getAccessType("motor_vehicle");
         blockedEdges = cMap.get(GraphEdgeIdFinder.BLOCKED_EDGES, new GHIntHashSet(0));
         blockedShapes = cMap.get(GraphEdgeIdFinder.BLOCKED_SHAPES, Collections.EMPTY_LIST);
+        height = cMap.getDouble(HEIGHT_LIMIT, 0d);
+        weight = cMap.getDouble(WEIGHT_LIMIT, 0d);
+        width = cMap.getDouble(WIDTH_LIMIT, 0d);
     }
 
     @Override
@@ -92,6 +102,23 @@ public class GenericWeighting extends AbstractWeighting {
                 return Double.POSITIVE_INFINITY;
         } else if (!gEncoder.isForward(edgeState, accessType))
             return Double.POSITIVE_INFINITY;
+
+        if ((gEncoder.isStoreHeight() && overLimit(height, gEncoder.getHeight(edgeState))) ||
+                (gEncoder.isStoreWeight() && overLimit(weight, gEncoder.getWeight(edgeState))) ||
+                (gEncoder.isStoreWidth() && overLimit(width, gEncoder.getWidth(edgeState))))
+            return Double.POSITIVE_INFINITY;
+
+        if(!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())){
+            return Double.POSITIVE_INFINITY;
+        }
+
+        if(!blockedShapes.isEmpty() && na != null){
+            for (Shape shape: blockedShapes) {
+                if(shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()))){
+                    return Double.POSITIVE_INFINITY;
+                }
+            }
+        }
 
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
         if (time == Long.MAX_VALUE)
@@ -129,6 +156,10 @@ public class GenericWeighting extends AbstractWeighting {
         if (AccessValue.EVENTUALLY_ACCESSIBLE.equals(av1) || AccessValue.EVENTUALLY_ACCESSIBLE.equals(av2))
             return AccessValue.EVENTUALLY_ACCESSIBLE;
         return AccessValue.ACCESSIBLE;
+    }
+
+    private boolean overLimit(double height, double heightLimit) {
+        return height > 0 && heightLimit > 0 && height >= heightLimit;
     }
 
     @Override

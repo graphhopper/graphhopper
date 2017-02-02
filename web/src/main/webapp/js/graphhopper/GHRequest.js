@@ -269,8 +269,8 @@ GHRequest.prototype.setLocale = function (locale) {
 };
 
 GHRequest.prototype.getKey = function() {
-    return this.api_params["key"];
-}
+    return this.api_params.key;
+};
 
 GHRequest.prototype.fetchTranslationMap = function (urlLocaleParam) {
     if (!urlLocaleParam)
