@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 import java.text.DateFormat;
 import java.util.*;
 
@@ -76,7 +78,7 @@ public class InstructionList extends AbstractList<Instruction> {
         instructions.set(instructions.size() - 1, instr);
     }
 
-    public List<Map<String, Object>> createJson() {
+    @JsonValue public List<Map<String, Object>> createJson() {
         List<Map<String, Object>> instrList = new ArrayList<>(instructions.size());
         int pointsIndex = 0;
         int counter = 0;

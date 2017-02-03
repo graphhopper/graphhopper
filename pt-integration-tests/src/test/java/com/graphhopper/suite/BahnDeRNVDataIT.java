@@ -28,8 +28,8 @@ import java.io.File;
 import java.io.IOException;
 import java.text.MessageFormat;
 import java.time.Duration;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static org.junit.Assert.assertFalse;
@@ -38,7 +38,6 @@ public class BahnDeRNVDataIT {
 
     private static final String GRAPH_LOC = "target/graphhopperIT-rnv-gtfs";
     private static GraphHopperGtfs graphHopper;
-    private static final LocalDateTime GTFS_START_DATE = LocalDate.of(2016, 10, 22).atStartOfDay();
 
     @BeforeClass
     public static void init() {
@@ -73,7 +72,7 @@ public class BahnDeRNVDataIT {
             final LocalDateTime expectedArrivalDateTime = tripQuery.getTripLastArrivalDateTime();
             System.out.println(MessageFormat.format("Expected arrival: {0}.", expectedArrivalDateTime));
             if (!route.getAll().isEmpty()) {
-                final LocalDateTime actualArrivalDateTime = GTFS_START_DATE.plusSeconds(Math.round(route.getBest().getRouteWeight()));
+                final LocalDateTime actualArrivalDateTime = tripQuery.getDateTime().plus(route.getBest().getTime(), ChronoUnit.MILLIS);
                 System.out.println(MessageFormat.format("Actual arrival: {0}", actualArrivalDateTime));
                 Duration expectedTravelTime = Duration.between(tripQuery.getDateTime(), expectedArrivalDateTime);
                 travelTimes.add(new MyXYDataItem(expectedTravelTime.getSeconds(), route.getBest().getTime() / 1000, route.getBest()));

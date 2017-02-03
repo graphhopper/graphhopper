@@ -2,6 +2,7 @@ package com.graphhopper;
 
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Instruction;
+import com.graphhopper.util.InstructionList;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.Point;
 
@@ -40,9 +41,9 @@ public class Trip {
         }
     }
     public static class WalkLeg extends Leg {
-        public final List<Instruction> instructions;
+        public final InstructionList instructions;
 
-        public WalkLeg(String departureLocation, List<EdgeIteratorState> edges, Geometry geometry, double distance, List<Instruction> instructions) {
+        public WalkLeg(String departureLocation, List<EdgeIteratorState> edges, Geometry geometry, double distance, InstructionList instructions) {
             super("walk", departureLocation, edges, geometry, distance);
             this.instructions = instructions;
         }

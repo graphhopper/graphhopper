@@ -157,7 +157,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     @Override
     public GHResponse route(GHRequest request) {
         final int maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
-        final long initialTime = Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(request.getHints().get(EARLIEST_DEPARTURE_TIME_HINT, ""))).getSeconds();
+        final long initialTime = Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(request.getHints().get(EARLIEST_DEPARTURE_TIME_HINT, "earliestDepartureTime is a required parameter"))).getSeconds();
         final long rangeQueryEndTime = request.getHints().has(RANGE_QUERY_END_TIME) ? Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(request.getHints().get(RANGE_QUERY_END_TIME, ""))).getSeconds() : initialTime;
         final boolean arriveBy = request.getHints().getBool(ARRIVE_BY, false);
         final boolean ignoreTransfers = request.getHints().getBool(IGNORE_TRANSFERS, false);
@@ -308,9 +308,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 pointsList.add(instruction.getPoints());
             }
             path.setPoints(pointsList);
-            path.setRouteWeight(solution.currentTime);
             path.setDistance(path.getLegs().stream().mapToDouble(Trip.Leg::getDistance).sum());
-            path.setTime((solution.currentTime - initialTime) * 1000);
+            path.setTime((solution.currentTime - initialTime) * 1000 * (arriveBy ? -1 : 1));
             path.setFirstPtLegDeparture(solution.firstPtDepartureTime);
             path.setNumChanges((int) path.getLegs().stream().filter(l->l instanceof Trip.PtLeg).count() - 1);
             response.add(path);
@@ -318,11 +317,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         if (response.getAll().isEmpty()) {
             response.addError(new RuntimeException("No route found"));
         } else {
-            if (arriveBy) {
-                Collections.sort(response.getAll(), (p1, p2) -> -Double.compare(p1.getRouteWeight(), p2.getRouteWeight()));
-            } else {
-                Collections.sort(response.getAll(), (p1, p2) -> Double.compare(p1.getRouteWeight(), p2.getRouteWeight()));
-            }
+            response.getAll().sort(Comparator.comparingDouble(PathWrapper::getTime));
         }
         return response;
     }
@@ -392,7 +387,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     path,
                     lineStringFromEdges(geometryFactory, path),
                     path.stream().mapToDouble(EdgeIteratorState::getDistance).sum(),
-                    StreamSupport.stream(instructions.spliterator(), false).collect(Collectors.toList())));
+                    StreamSupport.stream(instructions.spliterator(), false).collect(Collectors.toCollection(() -> new InstructionList(tr)))));
         }
     }
 

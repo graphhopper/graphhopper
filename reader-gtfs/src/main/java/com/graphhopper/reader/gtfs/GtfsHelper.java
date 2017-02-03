@@ -34,10 +34,9 @@ public class GtfsHelper {
     private static final int MINUTES_IN_HOUR = 60;
     private static final int HOURS_IN_DAY = 24;
     private static final int SECONDS_IN_HOUR = SECONDS_IN_MINUTE * MINUTES_IN_HOUR;
-    private static final int SECONDS_IN_DAY = SECONDS_IN_HOUR * HOURS_IN_DAY;
 
     public static int time(int hours, int minutes, int seconds) {
-        return hours * SECONDS_IN_HOUR + minutes * SECONDS_IN_MINUTE + seconds;
+        return (hours * SECONDS_IN_HOUR + minutes * SECONDS_IN_MINUTE + seconds) * 1000;
     }
 
     public static int time(int hours, int minutes) {
