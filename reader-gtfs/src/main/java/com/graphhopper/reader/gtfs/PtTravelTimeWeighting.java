@@ -50,6 +50,10 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
         GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edgeState.getFlags());
         switch (edgeType) {
             case UNSPECIFIED:
+                if (getFlagEncoder().getSpeed(edgeState.getFlags()) == 0.0) {
+                    // // FIXME: Shouldn't happen, but does.
+                    return 0;
+                }
                 long l = calcMillis(edgeState, reverse, -1);
                 return l / 1000;
             case ENTER_TIME_EXPANDED_NETWORK:
