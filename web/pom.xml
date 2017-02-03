@@ -142,7 +142,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>com.graphhopper.http.GHServer</mainClass>
+                            <mainClass>com.graphhopper.http.RunGraphHopperGtfs</mainClass>
                         </manifest>
                     </archive>
                     <descriptors>
