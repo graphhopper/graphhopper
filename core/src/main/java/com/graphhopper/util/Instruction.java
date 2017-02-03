@@ -35,6 +35,8 @@ public class Instruction {
     public static final int USE_ROUNDABOUT = 6;
     public static final int PT_START_TRIP = 101;
     public static final int PT_TRANSFER = 102;
+    public static final int PT_END_TRIP = 103;
+
     private static final AngleCalc AC = Helper.ANGLE_CALC;
     protected final PointList points;
     protected final InstructionAnnotation annotation;
@@ -103,7 +105,7 @@ public class Instruction {
     }
 
     /**
-     * Time in time until no new instruction
+     * Duration until the next instruction, in milliseconds
      */
     public long getTime() {
         return time;
@@ -240,6 +242,8 @@ public class Instruction {
             str = tr.tr("pt_start_trip", streetName);
         } else if (indi == Instruction.PT_TRANSFER) {
             str = tr.tr("pt_transfer_to", streetName);
+        } else if (indi == Instruction.PT_END_TRIP) {
+            str = tr.tr("pt_end_trip", streetName);
         } else {
             String dir = null;
             switch (indi) {

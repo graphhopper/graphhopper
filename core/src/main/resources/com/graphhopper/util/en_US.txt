@@ -1,7 +1,8 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-pt_start_trip=Start trip with %1$s
+pt_start_trip=board %1$s
 pt_transfer_to=transfer to %1$s
+pt_end_trip=exit at %1$s
 continue=continue
 continue_onto=continue onto %1$s
 turn_left=turn left

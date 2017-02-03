@@ -2,6 +2,7 @@
 
 pt_start_trip=einsteigen in %1$s
 pt_transfer_to=umsteigen auf %1$s
+pt_end_trip=auf %1$s aussteigen
 continue=geradeaus
 continue_onto=geradeaus auf %1$s
 turn_left=links abbiegen

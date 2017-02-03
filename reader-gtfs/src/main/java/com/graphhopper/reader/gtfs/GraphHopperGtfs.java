@@ -286,19 +286,28 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
             path.getLegs().addAll(partitions.stream().flatMap(partition -> legs(partition, queryGraph, encoder, weighting, tr).stream()).collect(Collectors.toList()));
 
-            InstructionList instructions = new InstructionList(tr);
+            final InstructionList instructions = new InstructionList(tr);
             for (Trip.Leg leg : path.getLegs()) {
                 if (leg instanceof Trip.WalkLeg) {
-                    for (Instruction instruction : ((Trip.WalkLeg) leg).instructions.subList(0, ((Trip.WalkLeg) leg).instructions.size()-1)) {
+                    final Trip.WalkLeg walkLeg = ((Trip.WalkLeg) leg);
+                    for (Instruction instruction : walkLeg.instructions.subList(0, walkLeg.instructions.size()-1)) {
                         instructions.add(instruction);
                     }
                 } else if (leg instanceof Trip.PtLeg) {
-                    PointList pl = new PointList();
-                    pl.add(((Trip.PtLeg) leg).boardStop.geometry.getY(), ((Trip.PtLeg) leg).boardStop.geometry.getX());
-                    for (Trip.Stop stop : ((Trip.PtLeg) leg).stops) {
+                    final Trip.PtLeg ptLeg = ((Trip.PtLeg) leg);
+                    final PointList pl = new PointList();
+                    pl.add(ptLeg.boardStop.geometry.getY(), ptLeg.boardStop.geometry.getX());
+                    for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size()-1)) {
                         pl.add(stop.geometry.getY(), stop.geometry.getX());
                     }
-                    instructions.add(new Instruction(Instruction.PT_START_TRIP, ((Trip.PtLeg) leg).trip_headsign, InstructionAnnotation.EMPTY, pl));
+                    final Instruction departureInstruction = new Instruction(Instruction.PT_START_TRIP, ptLeg.trip_headsign, InstructionAnnotation.EMPTY, pl);
+                    departureInstruction.setDistance(leg.getDistance());
+                    departureInstruction.setTime(ptLeg.travelTime);
+                    instructions.add(departureInstruction);
+                    final PointList arrivalPointList = new PointList();
+                    final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size()-1);
+                    arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
+                    instructions.add(new Instruction(Instruction.PT_END_TRIP, arrivalStop.name, InstructionAnnotation.EMPTY, arrivalPointList));
                 }
             }
 
@@ -351,9 +360,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 EdgeIteratorState edge = path.get(i);
                 GtfsStorage.EdgeType edgeType = encoder.getEdgeType(edge.getFlags());
                 if (edgeType == GtfsStorage.EdgeType.BOARD) {
-                    if (boardTime != null) {
-                        result.add(createPtLeg(geometryFactory, encoder, boardStop, partition, Date.from(boardTime.atZone(ZoneId.systemDefault()).toInstant())));
-                    }
                     boardTime = time;
                     boardStop = stop;
                     partition = new ArrayList<>();
@@ -361,15 +367,16 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 if (partition != null) {
                     partition.add(edge);
                 }
+                if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK).contains(edgeType)) {
+                    result.add(createPtLeg(geometryFactory, encoder, boardStop, partition, Date.from(boardTime.atZone(ZoneId.systemDefault()).toInstant()), Duration.between(boardTime, time).toMillis()));
+                    partition = null;
+                }
                 if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.HOP, GtfsStorage.EdgeType.TIME_PASSES).contains(edgeType)) {
                     time = time.plusSeconds(encoder.getTime(edge.getFlags()));
                 }
                 if (edgeType == GtfsStorage.EdgeType.HOP) {
                     stop = stopFromHopEdge(geometryFactory, edge);
                 }
-            }
-            if (boardTime != null) {
-                result.add(createPtLeg(geometryFactory, encoder, boardStop, partition, Date.from(boardTime.atZone(ZoneId.systemDefault()).toInstant())));
             }
             return result;
         } else {
@@ -391,10 +398,10 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         }
     }
 
-    static Trip.PtLeg createPtLeg(GeometryFactory geometryFactory, PtFlagEncoder encoder, Trip.Stop stop, List<EdgeIteratorState> edges, Date departureTime) {
+    static Trip.PtLeg createPtLeg(GeometryFactory geometryFactory, PtFlagEncoder encoder, Trip.Stop stop, List<EdgeIteratorState> edges, Date departureTime, long travelTime) {
         Geometry lineString = lineStringFromEdges(geometryFactory, edges);
         List<Trip.Stop> stops = edges.stream().filter(e -> EnumSet.of(GtfsStorage.EdgeType.HOP).contains(encoder.getEdgeType(e.getFlags()))).map(e -> stopFromHopEdge(geometryFactory, e)).collect(Collectors.toList());
-        return new Trip.PtLeg(stop, edges, departureTime, stops, edges.stream().mapToDouble(EdgeIteratorState::getDistance).sum(), lineString);
+        return new Trip.PtLeg(stop, edges, departureTime, stops, edges.stream().mapToDouble(EdgeIteratorState::getDistance).sum(), travelTime, lineString);
     }
 
     private static Geometry lineStringFromEdges(GeometryFactory geometryFactory, List<EdgeIteratorState> edges) {

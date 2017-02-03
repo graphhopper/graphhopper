@@ -52,14 +52,16 @@ public class Trip {
 
         public final String trip_headsign;
         public final Date departureTime;  // TODO: Java 8: Should be LocalDateTime
+        public final long travelTime;
         public final List<Stop> stops;
         public final Stop boardStop;
 
-        public PtLeg(Stop stop, List<EdgeIteratorState> edges, Date departureTime, List<Stop> stops, double distance, Geometry geometry) {
+        public PtLeg(Stop stop, List<EdgeIteratorState> edges, Date departureTime, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
             super("pt", stop.name, edges, geometry, distance);
             this.boardStop = stop;
             this.trip_headsign = edges.get(0).getName();
             this.departureTime = departureTime;
+            this.travelTime = travelTime;
             this.stops = stops;
         }
 

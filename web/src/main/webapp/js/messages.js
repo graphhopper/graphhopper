@@ -39,6 +39,8 @@ module.exports.getSignName = function (sign) {
         return "pt_start_trip";
     else if (sign === 102)
         return "pt_transfer_to";
+    else if (sign === 103)
+        return "pt_start_trip"; // FIXME: make a new sign for ending a trip
     else
         throw "did not find sign " + sign;
 };
