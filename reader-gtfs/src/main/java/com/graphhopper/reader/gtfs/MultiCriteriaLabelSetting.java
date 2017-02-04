@@ -121,7 +121,7 @@ class MultiCriteriaLabelSetting {
 
                 Set<Label> sptEntries = fromMap.get(edge.getAdjNode());
                 Label nEdge = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), tmpNTransfers, tmpFirstPtDepartureTime, label);
-                if (improves(nEdge, sptEntries) && improves(nEdge, targetLabels)) {
+                if (improves(nEdge, sptEntries) && improvesTarget(nEdge, targetLabels)) {
                     removeDominated(nEdge, sptEntries);
                     if (to.contains(edge.getAdjNode())) {
                         removeDominated(nEdge, targetLabels);
@@ -148,7 +148,20 @@ class MultiCriteriaLabelSetting {
         for (Label they : sptEntries) {
             if (they.nTransfers <= me.nTransfers &&
                     (reverse ? they.currentTime >= me.currentTime : they.currentTime <= me.currentTime) &&
-                    (reverse ? (they.firstPtDepartureTime <= me.firstPtDepartureTime || me.firstPtDepartureTime < rangeQueryEndTime): (they.firstPtDepartureTime >= me.firstPtDepartureTime || me.firstPtDepartureTime != Long.MAX_VALUE && me.firstPtDepartureTime > rangeQueryEndTime))) {
+                    (me.firstPtDepartureTime == Long.MAX_VALUE || they.firstPtDepartureTime == Long.MAX_VALUE ||  (reverse ? (they.firstPtDepartureTime <= me.firstPtDepartureTime || me.firstPtDepartureTime < rangeQueryEndTime): (they.firstPtDepartureTime >= me.firstPtDepartureTime ||  me.firstPtDepartureTime > rangeQueryEndTime)))
+                    ) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean improvesTarget(Label me, Set<Label> sptEntries) {
+        for (Label they : sptEntries) {
+            if (they.nTransfers <= me.nTransfers &&
+                    (reverse ? they.currentTime >= me.currentTime : they.currentTime <= me.currentTime) &&
+                    (reverse ? (they.firstPtDepartureTime <= me.firstPtDepartureTime || me.firstPtDepartureTime < rangeQueryEndTime): (they.firstPtDepartureTime >= me.firstPtDepartureTime ||  me.firstPtDepartureTime != Long.MAX_VALUE && me.firstPtDepartureTime > rangeQueryEndTime))
+                    ) {
                 return false;
             }
         }
@@ -179,11 +192,11 @@ class MultiCriteriaLabelSetting {
             return false;
         }
         if (reverse) {
-            if (me.firstPtDepartureTime > they.firstPtDepartureTime) {
+            if (me.firstPtDepartureTime != Long.MAX_VALUE && they.firstPtDepartureTime != Long.MAX_VALUE && me.firstPtDepartureTime > they.firstPtDepartureTime) {
                 return false;
             }
         } else {
-            if (me.firstPtDepartureTime < they.firstPtDepartureTime) {
+            if (me.firstPtDepartureTime != Long.MAX_VALUE && they.firstPtDepartureTime != Long.MAX_VALUE && me.firstPtDepartureTime < they.firstPtDepartureTime) {
                 return false;
             }
         }
@@ -200,11 +213,11 @@ class MultiCriteriaLabelSetting {
             return true;
         }
         if (reverse) {
-            if (me.firstPtDepartureTime < they.firstPtDepartureTime) {
+            if (me.firstPtDepartureTime == Long.MAX_VALUE || they.firstPtDepartureTime == Long.MAX_VALUE  || me.firstPtDepartureTime < they.firstPtDepartureTime) {
                 return true;
             }
         } else {
-            if (me.firstPtDepartureTime > they.firstPtDepartureTime) {
+            if (me.firstPtDepartureTime == Long.MAX_VALUE || they.firstPtDepartureTime == Long.MAX_VALUE || me.firstPtDepartureTime > they.firstPtDepartureTime) {
                 return true;
             }
         }
