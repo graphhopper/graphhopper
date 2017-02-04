@@ -227,7 +227,8 @@ function initFromParams(params, doQuery) {
     });
 
     if (ghRequest.getEarliestDepartureTime()) {
-        var localDate = moment.utc(ghRequest.getEarliestDepartureTime(), 'YYYY-MM-DDTHH:mm').local().format("YYYY-MM-DD HH:mm");
+        // var localDate = moment.utc(ghRequest.getEarliestDepartureTime(), 'YYYY-MM-DDTHH:mm').local().format("YYYY-MM-DD HH:mm");
+        var localDate = moment(ghRequest.getEarliestDepartureTime(), 'YYYY-MM-DDTHH:mm').local().format("YYYY-MM-DD HH:mm");
         flatpickr.setDate(localDate);
     }
 
@@ -463,7 +464,8 @@ function resolveAll() {
     }
 
     ghRequest.setEarliestDepartureTime(
-        moment($("#input_date_0").val(), 'YYYY-MM-DD HH:mm').utc().
+        moment($("#input_date_0").val(), 'YYYY-MM-DD HH:mm').
+        // utc().
         format("YYYY-MM-DDTHH:mm"));
 
     return ret;
