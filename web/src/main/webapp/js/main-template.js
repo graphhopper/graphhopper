@@ -1,4 +1,6 @@
 global.d3 = require('d3');
+var Flatpickr = require('flatpickr');
+
 var L = require('leaflet');
 require('leaflet-contextmenu');
 require('leaflet-loading');
@@ -212,14 +214,21 @@ $(document).ready(function (e) {
 
 function initFromParams(params, doQuery) {
     ghRequest.init(params);
+
+    var flatpickr = new Flatpickr(document.getElementById("input_date_0"), {
+        // utc: true,
+        defaultDate: new Date(),
+        allowInput: true, /* somehow then does not sync!? */
+        minuteIncrement: 15,
+        time_24hr: true,
+        enableTime: true,
+        // altInput: true,
+        // altFormat: "F j, H:i"
+    });
+
     if (ghRequest.getEarliestDepartureTime()) {
-        // TODO set
-    } else {
-        $("#input_date_0").val(moment().date());
-        $("#input_month_0").val(moment().month()+1);
-        $("#input_year_0").val(moment().year());
-        $("#input_hour_0").val(moment().hour());
-        $("#input_min_0").val(moment().minute());
+        console.log(ghRequest.getEarliestDepartureTime());
+        flatpickr.setDate(ghRequest.getEarliestDepartureTime());
     }
 
     var count = 0;
@@ -452,14 +461,7 @@ function resolveAll() {
     for (var i = 0, l = ghRequest.route.size(); i < l; i++) {
         ret[i] = resolveIndex(i);
     }
-    ghRequest.setEarliestDepartureTime(
-        moment()
-            .date($("#input_date_0").val())
-            .month($("#input_month_0").val()-1)
-            .year($("#input_year_0").val())
-            .hour($("#input_hour_0").val())
-            .minute($("#input_min_0").val())
-            .format("YYYY-MM-DDTHH:mm"));
+    ghRequest.setEarliestDepartureTime($("#input_date_0").val().replace(" ", "T"));
     return ret;
 }
 
@@ -604,11 +606,12 @@ function routeLatLng(request, doQuery) {
                 routeInfo.append("<br/>");
             }
             console.log(path.time)
+
             routeInfo.append("Arrives at "
                 + moment(ghRequest.getEarliestDepartureTime())
                     .add(path.time, 'milliseconds')
                     .format('LT')
-                + " with " + path.transfers + " transfers "
+                + ((path.transfers < 0) ?  " with just walking " : " with " + path.transfers + " transfers ")
                 + "(" + translate.createDistanceString(path.distance, request.useMiles) + ")");
 
             var kmButton = $("<button class='plain_text_button " + (request.useMiles ? "gray" : "") + "'>");

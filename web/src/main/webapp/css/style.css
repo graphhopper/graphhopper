@@ -78,13 +78,14 @@ body {
 }
 
 .time_input {
-    float: right;   
-    padding-bottom: 5px;
+    float: right;
     padding-right: 20px;
 }
 
-.time_input input {    
-    max-width: 40px;
+.time_input input {
+    float: left;
+    margin-left: 10px;
+    width: 220px;
 }
 
 .boxSizingBorder {
