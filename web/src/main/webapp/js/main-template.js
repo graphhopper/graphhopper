@@ -227,8 +227,8 @@ function initFromParams(params, doQuery) {
     });
 
     if (ghRequest.getEarliestDepartureTime()) {
-        console.log(ghRequest.getEarliestDepartureTime());
-        flatpickr.setDate(ghRequest.getEarliestDepartureTime());
+        var localDate = moment.utc(ghRequest.getEarliestDepartureTime(), 'YYYY-MM-DDTHH:mm').local().format("YYYY-MM-DD HH:mm");
+        flatpickr.setDate(localDate);
     }
 
     var count = 0;
@@ -461,7 +461,11 @@ function resolveAll() {
     for (var i = 0, l = ghRequest.route.size(); i < l; i++) {
         ret[i] = resolveIndex(i);
     }
-    ghRequest.setEarliestDepartureTime($("#input_date_0").val().replace(" ", "T"));
+
+    ghRequest.setEarliestDepartureTime(
+        moment($("#input_date_0").val(), 'YYYY-MM-DD HH:mm').utc().
+        format("YYYY-MM-DDTHH:mm"));
+
     return ret;
 }
 
