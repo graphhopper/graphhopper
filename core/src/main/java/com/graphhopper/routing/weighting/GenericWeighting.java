@@ -19,9 +19,6 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.spatialrules.AccessValue;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleRegister;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.NodeAccess;
@@ -35,7 +32,6 @@ import java.util.List;
 
 /**
  * Calculates the best route according to a configurable weighting.
- * <p>
  *
  * @author Peter Karich
  */
@@ -59,7 +55,6 @@ public class GenericWeighting extends AbstractWeighting {
     protected final double height;
     protected final double weight;
     protected final double width;
-    SpatialRuleRegister spatialRuleRegister = new SpatialRuleRegister();
 
     private final GHIntHashSet blockedEdges;
     private final List<Shape> blockedShapes;
@@ -108,33 +103,6 @@ public class GenericWeighting extends AbstractWeighting {
                 (gEncoder.isStoreWidth() && overLimit(width, gEncoder.getWidth(edgeState))))
             return Double.POSITIVE_INFINITY;
 
-        if(!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())){
-            return Double.POSITIVE_INFINITY;
-        }
-
-        if(!blockedShapes.isEmpty() && na != null){
-            for (Shape shape: blockedShapes) {
-                if(shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()))){
-                    return Double.POSITIVE_INFINITY;
-                }
-            }
-        }
-
-        long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
-        if (time == Long.MAX_VALUE)
-            return Double.POSITIVE_INFINITY;
-
-        int spatialId = gEncoder.getSpatialId(edgeState.getFlags());
-        SpatialRule spatialRule = spatialRuleRegister.getRuleForId(spatialId);
-        AccessValue edgeAccessValue = gEncoder.getEdgeAccessValue(edgeState.getFlags());
-        AccessValue mergeAccessValue = mergeAccessValues(edgeAccessValue, spatialRule.isAccessible(gEncoder.getHighwayAsString(edgeState), "motor_vehicle", edgeAccessValue));
-        switch (mergeAccessValue) {
-            case NOT_ACCESSIBLE:
-                return Double.POSITIVE_INFINITY;
-            case EVENTUALLY_ACCESSIBLE:
-                time = time * eventuallAccessiblePenalty;
-        }
-
         if (!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())) {
             return Double.POSITIVE_INFINITY;
         }
@@ -147,15 +115,18 @@ public class GenericWeighting extends AbstractWeighting {
             }
         }
 
-        return time;
-    }
+        long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
+        if (time == Long.MAX_VALUE)
+            return Double.POSITIVE_INFINITY;
 
-    private AccessValue mergeAccessValues(AccessValue av1, AccessValue av2) {
-        if (AccessValue.NOT_ACCESSIBLE.equals(av1) || AccessValue.NOT_ACCESSIBLE.equals(av2))
-            return AccessValue.NOT_ACCESSIBLE;
-        if (AccessValue.EVENTUALLY_ACCESSIBLE.equals(av1) || AccessValue.EVENTUALLY_ACCESSIBLE.equals(av2))
-            return AccessValue.EVENTUALLY_ACCESSIBLE;
-        return AccessValue.ACCESSIBLE;
+        switch (gEncoder.getAccessValue(edgeState.getFlags())) {
+            case NOT_ACCESSIBLE:
+                return Double.POSITIVE_INFINITY;
+            case EVENTUALLY_ACCESSIBLE:
+                time = time * eventuallAccessiblePenalty;
+        }
+
+        return time;
     }
 
     private boolean overLimit(double height, double heightLimit) {
@@ -174,13 +145,6 @@ public class GenericWeighting extends AbstractWeighting {
                     + ", highway:" + highwayVal + ", reverse:" + reverse);
         if (speed == 0)
             return Long.MAX_VALUE;
-
-        int spatialId = gEncoder.getSpatialId(edgeState.getFlags());
-        SpatialRule spatialRule = spatialRuleRegister.getRuleForId(spatialId);
-        double spatialRuleMaxSpeed = spatialRule.getMaxSpeed(gEncoder.getHighwayAsString(edgeState), speed);
-        if (speed > spatialRuleMaxSpeed) {
-            speed = spatialRuleMaxSpeed;
-        }
 
         // TODO inner city guessing -> lit, maxspeed <= 50, residential etc => create new encoder.isInnerCity(edge)
         // See #472 use edge.getDouble((encoder), K_MAXSPEED_MOTORVEHICLE_FORWARD, _default) or edge.getMaxSpeed(...) instead?
@@ -217,8 +181,7 @@ public class GenericWeighting extends AbstractWeighting {
      * Use this method to associate a graph with this weighting to calculate e.g. node locations too.
      */
     public void setGraph(Graph graph) {
-        if (graph == null)
-            return;
-        this.na = graph.getNodeAccess();
+        if (graph != null)
+            this.na = graph.getNodeAccess();
     }
 }

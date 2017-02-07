@@ -17,51 +17,56 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
- * Contains SpatialRules
+ * This class contains a collection of SpatialRule and is used for the implementation SpatialRuleLookupArray.
  *
  * @author Robin Boldt
  */
-public class SpatialRuleContainer {
+class SpatialRuleContainer {
 
     protected final Set<SpatialRule> rules = new LinkedHashSet<>();
 
-    public SpatialRuleContainer addRule(SpatialRule rule) {
-        rules.add(rule);
+    public SpatialRuleContainer addRule(SpatialRule spatialRule) {
+        rules.add(spatialRule);
         return this;
     }
 
-    public Set<SpatialRule> getRules() {
+    public SpatialRuleContainer addRules(Collection<SpatialRule> rules) {
+        this.rules.addAll(rules);
+        return this;
+    }
+
+    public Collection<SpatialRule> getRules() {
         return rules;
     }
 
-    public int size(){
+    public int size() {
         return this.rules.size();
     }
 
-    public SpatialRule first(){
+    public SpatialRule first() {
         return this.rules.iterator().next();
     }
 
     @Override
-    public boolean equals(Object o){
-        if(o instanceof SpatialRuleContainer){
-            if(this.rules.equals(((SpatialRuleContainer) o).getRules()))
+    public int hashCode() {
+        return rules.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof SpatialRuleContainer) {
+            if (this.rules.equals(((SpatialRuleContainer) o).getRules()))
                 return true;
         }
         return false;
     }
 
-    public SpatialRuleContainer copy(){
+    public SpatialRuleContainer copy() {
         SpatialRuleContainer container = new SpatialRuleContainer();
-        for (SpatialRule rule: this.rules) {
-            container.addRule(rule);
-        }
+        container.addRules(this.rules);
         return container;
     }
-
 }

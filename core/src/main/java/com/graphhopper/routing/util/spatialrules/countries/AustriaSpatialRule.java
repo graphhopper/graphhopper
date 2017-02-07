@@ -17,9 +17,7 @@
  */
 package com.graphhopper.routing.util.spatialrules.countries;
 
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.spatialrules.AccessValue;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
 
 /**
  * Defines the default rules for Austria roads
@@ -43,16 +41,15 @@ public class AustriaSpatialRule extends DefaultSpatialRule {
     }
 
     @Override
-    public AccessValue isAccessible(String highwayTag, String transportationMode, AccessValue _default) {
+    public AccessValue getAccessible(String highwayTag, String transportationMode, AccessValue _default) {
         if (highwayTag.equals("living_street"))
             return AccessValue.EVENTUALLY_ACCESSIBLE;
 
-        return super.isAccessible(highwayTag, transportationMode, _default);
+        return super.getAccessible(highwayTag, transportationMode, _default);
     }
 
     @Override
     public String getUniqueName() {
         return "AUT";
     }
-
 }

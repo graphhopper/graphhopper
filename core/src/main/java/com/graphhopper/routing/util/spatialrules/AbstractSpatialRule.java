@@ -49,10 +49,19 @@ public abstract class AbstractSpatialRule implements SpatialRule {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof SpatialRule) {
-            if (((SpatialRule) obj).getUniqueName().equals(this.getUniqueName())) {
+            if (((SpatialRule) obj).getUniqueName().equals(this.getUniqueName()))
                 return true;
-            }
         }
         return false;
+    }
+
+    @Override
+    public int hashCode() {
+        return getUniqueName().hashCode();
+    }
+
+    @Override
+    public String toString() {
+        return getUniqueName();
     }
 }

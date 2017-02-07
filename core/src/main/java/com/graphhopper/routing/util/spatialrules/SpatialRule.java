@@ -17,21 +17,19 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.reader.ReaderWay;
-
 import java.util.List;
 
 /**
- * Defines rules that are valid for a certain region, e.G. a country.
- * A rule might be access, max-speed, etc.
+ * Defines rules that are valid for a certain region, e.g. a country.
+ * A rule might makes access, max-speed, etc. dependent on this region.
  *
  * @author Robin Boldt
  */
 public interface SpatialRule {
 
-    double getMaxSpeed(String highwayTag, double _default);
+    double getMaxSpeed(String highway, double _default);
 
-    AccessValue isAccessible(String highwayTag, String transportationMode, AccessValue _default);
+    AccessValue getAccessible(String highwayTag, String transportationMode, AccessValue _default);
 
     List<Polygon> getBorders();
 
@@ -40,9 +38,39 @@ public interface SpatialRule {
     SpatialRule addBorder(Polygon polygon);
 
     /**
-     * Get the unique name for this rule. Important, every rule has to return a different name.
-     * For countries it is a good idea to use the country code.
+     * Get the unique name for this rule, e.g. the ISO name of the country.
      */
     String getUniqueName();
 
+    SpatialRule EMPTY = new SpatialRule() {
+        @Override
+        public double getMaxSpeed(String highwayTag, double _default) {
+            return _default;
+        }
+
+        @Override
+        public AccessValue getAccessible(String highwayTag, String transportationMode, AccessValue _default) {
+            return AccessValue.ACCESSIBLE;
+        }
+
+        @Override
+        public String getUniqueName() {
+            return "";
+        }
+
+        @Override
+        public List<Polygon> getBorders() {
+            throw new IllegalArgumentException("Empty rule does not have borders");
+        }
+
+        @Override
+        public SpatialRule setBorders(List<Polygon> borders) {
+            throw new IllegalArgumentException("Empty rule cannot have borders");
+        }
+
+        @Override
+        public SpatialRule addBorder(Polygon polygon) {
+            throw new IllegalArgumentException("Empty rule cannot have borders");
+        }
+    };
 }

@@ -17,13 +17,16 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.util.shapes.BBox;
+import org.junit.Before;
 import org.junit.Test;
+
+import java.io.*;
 
 import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -32,27 +35,28 @@ import static org.junit.Assert.assertTrue;
 public class SpatialRuleLookupBuilderTest {
 
     @Test
-    public void test() {
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.build();
+    public void testIndex() {
+        Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
+        SpatialRuleLookup spatialRuleLookup = DefaultModule.buildIndex(reader, new BBox(-180, 180, -90, 90));
 
         // Berlin
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible("track", "", AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).isAccessible("primary", "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccessible("track", "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccessible("primary", "", AccessValue.ACCESSIBLE));
 
-        // Paris
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).isAccessible("track", "", AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).isAccessible("primary", "", AccessValue.ACCESSIBLE));
+        // Paris -> empty rule
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccessible("track", "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.864716, 2.349014).getAccessible("primary", "", AccessValue.ACCESSIBLE));
 
         // Vienna
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible("track", "", AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible("primary", "", AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).isAccessible("living_street", "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccessible("track", "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccessible("primary", "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccessible("living_street", "", AccessValue.ACCESSIBLE));
     }
 
     @Test
     public void testBounds() {
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.build();
-
+        Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
+        SpatialRuleLookup spatialRuleLookup = DefaultModule.buildIndex(reader, new BBox(-180, 180, -90, 90));
         BBox almostWorldWide = new BBox(-179, 179, -89, 89);
 
         // Might fail if a polygon is defined outside the above coordinates
@@ -65,13 +69,15 @@ public class SpatialRuleLookupBuilderTest {
             We are creating a BBox smaller than Germany. We have the German Spatial rule acitivated by default.
             So the BBox should not contain a Point lying somewhere close in Germany.
          */
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.build(new BBox(9, 10, 51, 52), 1, true);
+        Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
+        SpatialRuleLookup spatialRuleLookup = DefaultModule.buildIndex(reader, new BBox(9, 10, 51, 52));
         assertFalse("BBox seems to be incorrectly contracted", spatialRuleLookup.getBounds().contains(49.9, 8.9));
     }
 
     @Test
     public void testNoIntersection() {
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.build(new BBox(-180, -179, -90, -89), 1, true);
-        assertEquals(EmptySpatialRuleLookup.class, spatialRuleLookup.getClass());
+        Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
+        SpatialRuleLookup spatialRuleLookup = DefaultModule.buildIndex(reader, new BBox(-180, -179, -90, -89));
+        assertNull(spatialRuleLookup);
     }
 }

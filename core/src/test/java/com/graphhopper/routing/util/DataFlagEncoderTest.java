@@ -1,9 +1,13 @@
 package com.graphhopper.routing.util;
 
-import java.util.Arrays;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
+import com.graphhopper.json.geo.GeoJsonPolygon;
+import com.graphhopper.json.geo.Geometry;
+import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.json.geo.JsonFeatureCollection;
+import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
+import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.util.PMap;
 import org.junit.Ignore;
 import com.graphhopper.routing.util.spatialrules.*;
@@ -19,6 +23,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 
+import static com.graphhopper.routing.util.spatialrules.SpatialRule.EMPTY;
 import static org.junit.Assert.*;
 
 /**
@@ -53,8 +58,7 @@ public class DataFlagEncoderTest {
         try {
             EncodingManager em = new EncodingManager(Arrays.asList(new DataFlagEncoder(properties)), 8);
             EncodingManager em1 = new EncodingManager(Arrays.asList(new DataFlagEncoder()));
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             fail();
         }
     }
@@ -151,13 +155,13 @@ public class DataFlagEncoderTest {
     public void testDestinationTag() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
-        assertEquals(AccessValue.ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+        assertEquals(AccessValue.ACCESSIBLE, encoder.getAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
 
         way.setTag("vehicle", "destination");
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, encoder.getAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
 
         way.setTag("vehicle", "no");
-        assertEquals(AccessValue.NOT_ACCESSIBLE, encoder.getEdgeAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+        assertEquals(AccessValue.NOT_ACCESSIBLE, encoder.getAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
     }
 
     @Test
@@ -306,24 +310,43 @@ public class DataFlagEncoderTest {
     }
 
     @Test
-    public void testSpatialLookup() {
-        final ReaderWay osmWay = new ReaderWay(0);
-        osmWay.setTag("highway", "track");
-        osmWay.setTag("estimated_center", new GHPoint(1.5, 1.5));
+    public void testSpatialId() {
+        List<SpatialRule> rules = Collections.<SpatialRule>singletonList(new GermanySpatialRule());
+        final BBox bbox = new BBox(0, 1, 0, 1);
+        JsonFeatureCollection jsonFeatures = new JsonFeatureCollection() {
+            @Override
+            public List<JsonFeature> getFeatures() {
+                Geometry geometry = new GeoJsonPolygon().addPolygon(new Polygon(new double[]{0, 0, 1, 1}, new double[]{0, 1, 1, 0}));
+                Map<String, Object> properties = new HashMap<>();
+                properties.put("ISO_A3", "DEU");
+                return Collections.singletonList(new JsonFeature("x", "Polygon", bbox, geometry, properties));
+            }
+        };
 
-        long flags = encoder.handleWayTags(osmWay, 1, 0);
-        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals(-1, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
-        assertEquals(AccessValue.ACCESSIBLE, encoder.getEdgeAccessValue(edge.getFlags()));
+        SpatialRuleLookup index = new SpatialRuleLookupBuilder().build(rules, jsonFeatures, bbox, 1, false);
+        DataFlagEncoder encoder = new DataFlagEncoder(new PMap().put("spatial_rules", index.size()));
+        encoder.setSpatialRuleLookup(index);
+        EncodingManager em = new EncodingManager(encoder);
 
-        SpatialRuleLookup lookup = new SpatialRuleLookupArray(new BBox(1, 2, 1, 2), 1, false);
-        SpatialRule germanRule = new GermanySpatialRule();
-        germanRule.addBorder(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1}));
-        lookup.addRule(germanRule);
-        encoder.setSpatialRuleLookup(lookup);
+        ReaderWay way = new ReaderWay(27l);
+        way.setTag("highway", "track");
+        way.setTag("estimated_center", new GHPoint(0.005, 0.005));
 
-        flags = encoder.handleWayTags(osmWay, 1, 0);
-        SpatialRuleRegister spatialRuleRegister = new SpatialRuleRegister();
-        assertEquals(spatialRuleRegister.getIdForName("DEU"), encoder.getSpatialId(flags));
+        ReaderWay way2 = new ReaderWay(28l);
+        way2.setTag("highway", "track");
+        way2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
+
+        Graph graph = new GraphBuilder(em).create();
+        EdgeIteratorState e1 = graph.edge(0, 1, 1, true);
+        EdgeIteratorState e2 = graph.edge(0, 2, 1, true);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, -0.01, -0.01);
+
+        e1.setFlags(encoder.handleWayTags(way, 1, 0));
+        e2.setFlags(encoder.handleWayTags(way2, 1, 0));
+
+        assertEquals(encoder.getSpatialId(e1.getFlags()), encoder.getSpatialId(e1.getFlags()));
+        assertEquals(index.getSpatialId(EMPTY), encoder.getSpatialId(e2.getFlags()));
     }
 }

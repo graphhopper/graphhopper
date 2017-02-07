@@ -46,16 +46,15 @@ public class GermanySpatialRule extends DefaultSpatialRule {
     }
 
     @Override
-    public AccessValue isAccessible(String highwayTag, String transportationMode, AccessValue _default) {
+    public AccessValue getAccessible(String highwayTag, String transportationMode, AccessValue _default) {
         if (highwayTag.equals("track"))
             return AccessValue.EVENTUALLY_ACCESSIBLE;
 
-        return super.isAccessible(highwayTag, transportationMode, _default);
+        return super.getAccessible(highwayTag, transportationMode, _default);
     }
 
     @Override
     public String getUniqueName() {
         return "DEU";
     }
-
 }

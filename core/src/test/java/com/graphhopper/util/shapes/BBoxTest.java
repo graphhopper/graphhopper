@@ -39,10 +39,6 @@ public class BBoxTest {
 
         assertEquals(51.1007, b.minLat, 1e-4);
         assertEquals(11.4607, b.maxLon, 1e-4);
-
-        // something about 141 = sqrt(2*100^2)
-//        System.out.println(c.calcDist(52, 10, 52.8993, 11.4607));
-//        System.out.println(c.calcDist(52, 10, 51.1007, 8.5393));
     }
 
     @Test
@@ -94,18 +90,13 @@ public class BBoxTest {
 
         BBox b1 = new BBox(0, 2, 0, 1);
         BBox b2 = new BBox(-1, 1, -1, 2);
-        BBox expected = new BBox(0,1,0,1);
+        BBox expected = new BBox(0, 1, 0, 1);
 
         assertEquals(expected, b1.calculateIntersection(b2));
 
         //No intersection
-        b2 = new BBox(100,200,100,200);
-        try {
-            b1.calculateIntersection(b2);
-            fail();
-        }catch (IllegalArgumentException e){
-
-        }
+        b2 = new BBox(100, 200, 100, 200);
+        assertNull(b1.calculateIntersection(b2));
     }
 
     @Test

@@ -17,12 +17,11 @@
  */
 package com.graphhopper.routing.util.spatialrules.countries;
 
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.AccessValue;
 
 /**
- * Default Implementation for the SpatialRule that contains the current default Values
+ * Default implementation for the SpatialRule that contains the current default values
  */
 public class DefaultSpatialRule extends AbstractSpatialRule {
 
@@ -53,8 +52,7 @@ public class DefaultSpatialRule extends AbstractSpatialRule {
     }
 
     @Override
-    public AccessValue isAccessible(String highwayTag, String transportationMode, AccessValue _default) {
-
+    public AccessValue getAccessible(String highwayTag, String transportationMode, AccessValue _default) {
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restriction
         // We tried to find generally forbidden tags
         switch (highwayTag) {

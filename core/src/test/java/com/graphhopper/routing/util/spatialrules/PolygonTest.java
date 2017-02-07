@@ -1,10 +1,6 @@
-package com.graphhopper.routing.util.spatialrule;
+package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.routing.util.spatialrules.Polygon;
 import org.junit.Test;
-
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 import static org.junit.Assert.*;
 

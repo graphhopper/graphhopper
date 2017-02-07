@@ -31,7 +31,6 @@ public class GeoJsonPolygon implements Geometry {
 
     private List<Polygon> polygons = new ArrayList<>();
 
-
     @Override
     public String getType() {
         return "Polygon";
@@ -71,7 +70,8 @@ public class GeoJsonPolygon implements Geometry {
         return polygons;
     }
 
-    public void addPolygon(Polygon polygon) {
+    public GeoJsonPolygon addPolygon(Polygon polygon) {
         this.polygons.add(polygon);
+        return this;
     }
 }

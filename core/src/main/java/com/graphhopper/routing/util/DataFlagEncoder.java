@@ -19,15 +19,17 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -84,13 +86,13 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private EncodedValue highwayEncoder;
     private EncodedValue transportModeEncoder;
     private EncodedValue accessEncoder;
+    private static int NOT_ACCESSIBLE_KEY;
     private boolean storeHeight = false;
     private boolean storeWeight = false;
     private boolean storeWidth = false;
     private EncodedValue spatialEncoder;
-
-    private SpatialRuleLookup spatialRuleLookup = new EmptySpatialRuleLookup();
-    SpatialRuleRegister spatialRuleRegister = new SpatialRuleRegister();
+    private int spatialRules = 0;
+    private SpatialRuleLookup spatialRuleLookup;
 
     public DataFlagEncoder() {
         this(5, 5, 0);
@@ -104,6 +106,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         this.setStoreHeight(properties.getBool("store_height", false));
         this.setStoreWeight(properties.getBool("store_weight", false));
         this.setStoreWidth(properties.getBool("store_width", false));
+        this.setSpatialRules(properties.getInt("spatial_rules", 0));
     }
 
     public DataFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
@@ -119,8 +122,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         List<String> highwayList = Arrays.asList(
                 /* reserve index=0 for unset roads (not accessible) */
                 "_default",
-                "motorway", "motorway_link", "motorroad",
-                "trunk", "trunk_link",
+                "motorway", "motorway_link", "motorroad", "trunk", "trunk_link",
                 "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
                 "unclassified", "residential", "living_street", "service", "road", "track",
                 "forestry", "cycleway", "steps", "path", "footway", "pedestrian",
@@ -149,17 +151,11 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         restrictions.addAll(Arrays.asList("motorcar", "motor_vehicle", "vehicle", "access"));
 
-        //Ordered in increasingly restrictive order (currently done subjective
+        // Ordered in increasingly restrictive order
+        // Note: if you update this list you have to update the method getAccessValue too
         List<String> accessList = Arrays.asList(
-                //"designated",
-                "yes",
-                //"permissive",
-                // From here on, we should add weight
-                "customers",
-                "destination",
-                "delivery",
-                "agricultural",
-                "no"
+                //"designated", "permissive", "customers", "delivery",
+                "yes", "destination", "private", "no"
         );
 
         counter = 0;
@@ -167,8 +163,14 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             accessMap.put(s, counter++);
         }
 
-        // hiking or biking or bus routes
-        // detect border crossing -> barrier:border_control
+        accessMap.put("designated", accessMap.get("yes"));
+        accessMap.put("permissive", accessMap.get("yes"));
+
+        accessMap.put("customers", accessMap.get("destination"));
+        accessMap.put("delivery", accessMap.get("destination"));
+
+        NOT_ACCESSIBLE_KEY = accessMap.get("no");
+        // accessMap.put("forestry", accessMap.get("agricultural"));
     }
 
     @Override
@@ -213,15 +215,15 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         transportModeEncoder = new EncodedValue("transport mode", shift, 3, 1, 0, transportModeMap.size(), true);
         shift += transportModeEncoder.getBits();
 
-        accessEncoder = new EncodedValue("access car", shift, 3, 1, 1, accessMap.size(), true);
+        accessEncoder = new EncodedValue("access car", shift, 3, 1, 1, 4, true);
         shift += accessEncoder.getBits();
 
-
-        int maxId = spatialRuleRegister.getMaxId();
-        // TODO Should we calculate # of bits automatically? Might create serious issues? Graph becomes too big?
-        int bits = 32 - Integer.numberOfLeadingZeros(maxId);
-        spatialEncoder = new EncodedValue("spatial_location", shift, bits, 1, 1, maxId, true);
-        shift += spatialEncoder.getBits();
+        if (spatialRules > 0) {
+            int tmpMax = spatialRules + 1;
+            int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
+            spatialEncoder = new EncodedValue("spatial_location", shift, bits, 1, 1, tmpMax, true);
+            shift += spatialEncoder.getBits();
+        }
 
         return shift;
     }
@@ -264,7 +266,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     int getAccessValue(ReaderWay way) {
         int accessValue = 0;
-        Integer tmpAccessValue = 0;
+        Integer tmpAccessValue;
         for (String restriction : restrictions) {
             tmpAccessValue = accessMap.get(way.getTag(restriction, "yes"));
             if (tmpAccessValue != null && tmpAccessValue > accessValue) {
@@ -275,29 +277,16 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return accessValue;
     }
 
-    //TODO It is bad that it's a bit static right now. If anyone changes the accessMap this method won't work anymore...
-    public AccessValue getEdgeAccessValue(long flags) {
+    public AccessValue getAccessValue(long flags) {
         int accessValue = (int) accessEncoder.getValue(flags);
         switch (accessValue) {
             case 0:
                 return AccessValue.ACCESSIBLE;
-            case 5:
+            // NOT_ACCESSIBLE_KEY
+            case 3:
                 return AccessValue.NOT_ACCESSIBLE;
             default:
                 return AccessValue.EVENTUALLY_ACCESSIBLE;
-        }
-    }
-
-    public int getEdgeValueForAccess(AccessValue accessValue) {
-        switch (accessValue) {
-            case ACCESSIBLE:
-                return 0;
-            case NOT_ACCESSIBLE:
-                return accessMap.get("no");
-            case EVENTUALLY_ACCESSIBLE:
-                return 5;
-            default:
-                return 0;
         }
     }
 
@@ -405,8 +394,23 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             flags = accessEncoder.setValue(flags, getAccessValue(way));
 
-            SpatialRule rule = getSpatialRule(way);
-            flags = spatialEncoder.setValue(flags, spatialRuleRegister.getIdForName(rule.getUniqueName()));
+            if (spatialRules > 0) {
+                if (spatialRuleLookup == null)
+                    throw new IllegalStateException("This encoder was asked to store spatial IDs for every edge, " +
+                            "but no spatial lookup was specified");
+
+                GHPoint estimatedCenter = way.getTag("estimated_center", null);
+                if (estimatedCenter != null) {
+                    SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
+                    flags = spatialEncoder.setValue(flags, spatialRuleLookup.getSpatialId(rule));
+
+                    // block access if rule says so?
+//                    if (rule.getAccessible(way.getTag("highway"), "", AccessValue.ACCESSIBLE).
+//                            equals(AccessValue.NOT_ACCESSIBLE)) {
+//                        flags = accessEncoder.setValue(flags, NOT_ACCESSIBLE_KEY);
+//                    }
+                }
+            }
 
             return flags;
         } catch (Exception ex) {
@@ -428,8 +432,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         try {
             flags = valueEncoder.setDoubleValue(flags, val);
-        }
-        catch (IllegalArgumentException e) {
+        } catch (IllegalArgumentException e) {
             LOG.warn("Unable to process value '{}' for way (OSM_ID = {}).", val, way.getId(), e);
         }
 
@@ -509,22 +512,28 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
     }
 
-    private SpatialRule getSpatialRule(ReaderWay way) {
-        GHPoint estmCentre = way.getTag("estimated_center", null);
-        if (estmCentre != null) {
-            return spatialRuleLookup.lookupRule(estmCentre);
-        }
-        return spatialRuleLookup.EMPTY_RULE;
+    /**
+     * This method returns the spatialId stored in the specified flags or -1 if not enabled for this encoder.
+     */
+    public int getSpatialId(long flags) {
+        if (spatialEncoder == null)
+            return -1;
+
+        return (int) spatialEncoder.getValue(flags);
+    }
+
+    /**
+     * This method set the spatial ID (e.g. country ID) of the specified flags to the specified id. Fetch the unique
+     * spatial ID via spatialRuleLookup.lookup().getSpatialId
+     */
+    public long setSpatialId(long flags, int id) {
+        return spatialEncoder.setValue(flags, id);
     }
 
     @Override
     public long reverseFlags(long flags) {
         // see #728 for an explanation
         return flags ^ bit0;
-    }
-
-    public int getSpatialId(long flags) {
-        return (int) spatialEncoder.getValue(flags);
     }
 
     /**
@@ -539,6 +548,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return (int) highwayEncoder.getValue(edge.getFlags());
     }
 
+    /**
+     * Do not use within weighting as this is suboptimal from performance point of view.
+     */
     public String getHighwayAsString(EdgeIteratorState edge) {
         int val = getHighway(edge);
         for (Entry<String, Integer> e : highwayMap.entrySet()) {
@@ -688,8 +700,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     public long flagsDefault(boolean forward, boolean backward) {
         // just pick car mode to set access values?
         // throw new RuntimeException("do not call flagsDefault");
-        // TODO This is called on each of the encoders so I had to replace the runtime 
-        // exception with something, but I'm not sure this is correct.        
         return setAccess(0, forward, backward);
     }
 
@@ -753,10 +763,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return maxPossibleSpeed;
     }
 
-    public void setSpatialRuleLookup(SpatialRuleLookup spatialRuleLookup) {
-        this.spatialRuleLookup = spatialRuleLookup;
-    }
-
     @Override
     public boolean supports(Class<?> feature) {
         boolean ret = super.supports(feature);
@@ -793,17 +799,33 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return storeWidth;
     }
 
+
+    public DataFlagEncoder setSpatialRules(int rules) {
+        this.spatialRules = rules;
+        return this;
+    }
+
+    public DataFlagEncoder setSpatialRuleLookup(SpatialRuleLookup spatialRuleLookup) {
+        if (spatialRuleLookup.size() != spatialRules)
+            throw new IllegalArgumentException("You have to configure the encoder to accept the identical amount of rules " +
+                    "that the spatial rule lookup has (" + spatialRuleLookup.size() + ") but it was " + spatialRules);
+
+        this.spatialRuleLookup = spatialRuleLookup;
+        return this;
+    }
+
     @Override
     protected String getPropertiesString() {
         return super.getPropertiesString() +
                 "|store_height=" + storeHeight +
                 "|store_weight=" + storeWeight +
-                "|store_width=" + storeWidth;
+                "|store_width=" + storeWidth +
+                "|spatial_rules=" + spatialRules;
     }
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     @Override
@@ -834,6 +856,5 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private void cloneDoubleAttribute(PMap weightingMap, ConfigMap cMap, String key, double _default) {
         if (weightingMap.has(key))
             cMap.put(key, weightingMap.getDouble(key, _default));
-
     }
 }

@@ -17,11 +17,8 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
-
-import java.util.List;
 
 /**
  * SpatialRuleLookup defines a container that stores SpatialRules and can lookup
@@ -37,37 +34,15 @@ public interface SpatialRuleLookup {
 
     void addRule(SpatialRule rule);
 
-    void visualize(int i);
+    /**
+     * This method returns an identification number from 0 to size (exclusive) for the specified rule.
+     */
+    int getSpatialId(SpatialRule rule);
 
     BBox getBounds();
 
-    SpatialRule EMPTY_RULE = new AbstractSpatialRule() {
-        @Override
-        public double getMaxSpeed(String highwayTag, double _default) {
-            return _default;
-        }
-
-        @Override
-        public AccessValue isAccessible(String highwayTag, String transportationMode, AccessValue _default) {
-            return AccessValue.ACCESSIBLE;
-        }
-
-        @Override
-        public String getUniqueName() {
-            return "";
-        }
-    };
-
-    SpatialRuleContainer EMPTY_RULE_CONTAINER = new SpatialRuleContainer() {
-
-        {
-            this.rules.add(EMPTY_RULE);
-        }
-
-        @Override
-        public SpatialRuleContainer addRule(SpatialRule rule) {
-            throw new UnsupportedOperationException("You cannot add rules to the EMPTY RULE CONTAINER");
-        }
-
-    };
+    /**
+     * @return the number of rules added to this lookup.
+     */
+    int size();
 }
