@@ -116,8 +116,10 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
 
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR_BI + ".epsilon", 1);
             AStarBidirection astarbi = (AStarBidirection) algo;
-            astarbi.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
-                    setEpsilon(epsilon));
+            LMApproximator approximator = new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).setEpsilon(epsilon);
+            // approximator.setRecalcHook(astarbi);
+            // astarbi.setEdgeFilter(approximator.createRecalcFilter());
+            astarbi.setApproximation(approximator);
             return algo;
         } else if (algo instanceof AlternativeRoute) {
             if (!lms.isInitialized())

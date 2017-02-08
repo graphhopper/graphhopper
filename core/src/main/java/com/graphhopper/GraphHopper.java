@@ -124,7 +124,7 @@ public class GraphHopper implements GraphHopperAPI {
         chFactoryDecorator.setEnabled(true);
         lmFactoryDecorator.setEnabled(false);
 
-        // order is important
+        // order is important to use CH as base algo and set the approximation in the followed lm factory decorator
         algoDecorators.add(chFactoryDecorator);
         algoDecorators.add(lmFactoryDecorator);
     }
@@ -1015,6 +1015,9 @@ public class GraphHopper implements GraphHopperAPI {
         return response;
     }
 
+    /**
+     * This method calculates the alternative path list using the low level Path objects.
+     */
     public List<Path> calcPaths(GHRequest request, GHResponse ghRsp) {
         if (ghStorage == null || !fullyLoaded)
             throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
@@ -1043,9 +1046,16 @@ public class GraphHopper implements GraphHopperAPI {
                 tMode = hints.getBool(Routing.EDGE_BASED, false) ? TraversalMode.EDGE_BASED_2DIR : TraversalMode.NODE_BASED;
 
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
-            List<GHPoint> points = request.getPoints();
-            String algoStr = request.getAlgorithm().isEmpty() ? DIJKSTRA_BI : request.getAlgorithm();
 
+            boolean forceFlexibleMode = hints.getBool(CH.DISABLE, false);
+            if (!chFactoryDecorator.isDisablingAllowed() && forceFlexibleMode)
+                throw new IllegalArgumentException("Flexible mode not enabled on the server-side");
+            String algoStr = request.getAlgorithm();
+            if (algoStr.isEmpty())
+                algoStr = chFactoryDecorator.isEnabled() && !forceFlexibleMode &&
+                        !(lmFactoryDecorator.isEnabled() && !hints.getBool(Landmark.DISABLE, false)) ? DIJKSTRA_BI : ASTAR_BI;
+
+            List<GHPoint> points = request.getPoints();
             // TODO Maybe we should think about a isRequestValid method that checks all that stuff that we could do to fail fast
             // For example see #734
             checkIfPointsAreInBounds(points);
@@ -1073,20 +1083,22 @@ public class GraphHopper implements GraphHopperAPI {
                 Weighting weighting;
                 QueryGraph queryGraph;
 
-                boolean forceFlexibleMode = hints.getBool(CH.DISABLE, false);
-                if (!chFactoryDecorator.isDisablingAllowed() && forceFlexibleMode)
-                    throw new IllegalArgumentException("Flexible mode not enabled on the server-side");
-
                 if (chFactoryDecorator.isEnabled() && !forceFlexibleMode) {
                     boolean forceCHHeading = hints.getBool(CH.FORCE_HEADING, false);
                     if (!forceCHHeading && request.hasFavoredHeading(0))
                         throw new IllegalArgumentException("Heading is not (fully) supported for CHGraph. See issue #483");
+
                     // if LM is enabled we have the LMFactory with the CH algo!
-//                    else if (!(tmpAlgoFactory instanceof PrepareContractionHierarchies))
-//                        throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
+                    RoutingAlgorithmFactory chAlgoFactory = tmpAlgoFactory;
+                    if (tmpAlgoFactory instanceof LMAlgoFactoryDecorator.LMRAFactory)
+                        chAlgoFactory = ((LMAlgoFactoryDecorator.LMRAFactory) tmpAlgoFactory).getDefaultAlgoFactory();
+
+                    if (chAlgoFactory instanceof PrepareContractionHierarchies)
+                        weighting = ((PrepareContractionHierarchies) chAlgoFactory).getWeighting();
+                    else
+                        throw new IllegalStateException("Although CH was enabled a non-CH algorithm factory was returned " + tmpAlgoFactory);
 
                     tMode = getCHFactoryDecorator().getNodeBase();
-                    weighting = ((PrepareContractionHierarchies) tmpAlgoFactory).getWeighting();
                     queryGraph = new QueryGraph(ghStorage.getGraph(CHGraph.class, weighting));
                     queryGraph.lookup(qResults);
                 } else {

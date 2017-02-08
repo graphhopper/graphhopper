@@ -122,9 +122,9 @@ public class Measurement {
             if (hopper.getLMFactoryDecorator().isEnabled()) {
                 System.gc();
                 isLM = true;
-                int lmCount = hopper.getLMFactoryDecorator().getLandmarks();
-                for (; lmCount > 1; lmCount = lmCount / 2) {
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 10, "routingLM" + lmCount, vehicleStr, true, lmCount);
+                int activeLMCount = 10;
+                for (; activeLMCount > 3; activeLMCount -= 2) {
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount);
                 }
 
                 // compareRouting(hopper, vehicleStr, count / 5);
@@ -136,8 +136,8 @@ public class Measurement {
                 if (hopper.getLMFactoryDecorator().isEnabled()) {
                     isLM = true;
                     System.gc();
-                    // try just one constellation, often max/2 is best
-                    int lmCount = hopper.getLMFactoryDecorator().getLandmarks() / 2;
+                    // try just one constellation, often ~4-6 is best
+                    int lmCount = 5;
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount);
                 }
 
@@ -343,10 +343,6 @@ public class Measurement {
         final Random rand = new Random(seed);
         final NodeAccess na = g.getNodeAccess();
 
-        // if using none-bidirectional algorithm make sure you exclude CH routing
-        // final String algoStr = lm ? Algorithms.ASTAR_BI : Algorithms.DIJKSTRA_BI;
-        final String algoStr = Algorithms.ASTAR_BI;
-
         MiniPerfTest miniPerf = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
@@ -358,19 +354,15 @@ public class Measurement {
                 double toLon = na.getLongitude(to);
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
                         setWeighting("fastest").
-                        setVehicle(vehicle).
-                        setAlgorithm(algoStr);
-                if (!ch)
-                    req.getHints().put(CH.DISABLE, true);
+                        setVehicle(vehicle);
 
-                if (!lm)
-                    req.getHints().put(Landmark.DISABLE, true);
-                else
-                    req.getHints().put(Landmark.ACTIVE_COUNT, activeLandmarks);
+                req.getHints().put(CH.DISABLE, !ch).
+                        put(Landmark.DISABLE, !lm).
+                        put(Landmark.ACTIVE_COUNT, activeLandmarks).
+                        put("instructions", withInstructions);
+                // put(algo + ".approximation", "BeelineSimplification").
+                // put(algo + ".epsilon", 2);
 
-                // req.getHints().put(algo + ".approximation", "BeelineSimplification");
-                // req.getHints().put(algo + ".epsilon", 2);
-                req.getHints().put("instructions", withInstructions);
                 GHResponse rsp;
                 try {
                     rsp = hopper.route(req);
@@ -416,7 +408,9 @@ public class Measurement {
 
         count -= failedCount.get();
 
-        put(prefix + ".algorithm", algoStr);
+        // if using none-bidirectional algorithm make sure you exclude CH routing
+        final String algoStr = ch ? Algorithms.DIJKSTRA_BI : Algorithms.ASTAR_BI;
+        put(prefix + ".guessed_algorithm", algoStr);
         put(prefix + ".failed_count", failedCount.get());
         put(prefix + ".distance_min", minDistance.get());
         put(prefix + ".distance_mean", (float) distSum.get() / count);

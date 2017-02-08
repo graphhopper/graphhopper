@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.lm;
 
+import com.graphhopper.GHRequest;
+import com.graphhopper.GHResponse;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
@@ -27,12 +29,13 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Landmark;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.graphhopper.util.Parameters.Landmark.DISABLE;
 
 /**
  * This class implements the A*, landmark and triangulation (ALT) decorator.
@@ -41,7 +44,7 @@ import java.util.List;
  */
 public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator {
     private int landmarkCount = 8;
-    private int activeLandmarkCount = landmarkCount / 2;
+    private int activeLandmarkCount = 4;
     private final List<PrepareLandmarks> preparations = new ArrayList<>();
     private final List<String> weightingsAsStrings = new ArrayList<>();
     private final List<Weighting> weightings = new ArrayList<>();
@@ -51,7 +54,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     @Override
     public void init(CmdArgs args) {
         landmarkCount = args.getInt(Landmark.COUNT, landmarkCount);
-        activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.max(2, landmarkCount / 2));
+        activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(4, landmarkCount));
         String lmWeightingsStr = args.get(Landmark.PREPARE + "weightings", "");
         if (!lmWeightingsStr.isEmpty()) {
             List<String> tmpLMWeightingList = Arrays.asList(lmWeightingsStr.split(","));
@@ -165,6 +168,10 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     @Override
     public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map) {
+        boolean forceFlexMode = map.getBool(DISABLE, true);
+        if (!isEnabled() || disablingAllowed && forceFlexMode)
+            return defaultAlgoFactory;
+
         if (preparations.isEmpty())
             throw new IllegalStateException("No preparations added to this decorator");
 
@@ -177,19 +184,33 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         return createRAFactory(preparations.get(0), defaultAlgoFactory);
     }
 
-    private RoutingAlgorithmFactory createRAFactory(final PrepareLandmarks p,
-                                                    final RoutingAlgorithmFactory defaultAlgoFactory) {
-        return new RoutingAlgorithmFactory() {
-            @Override
-            public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
-                RoutingAlgorithm algo = defaultAlgoFactory.createAlgo(g, opts);
-                boolean disable = opts.getHints().getBool(Landmark.DISABLE, false);
-                if (disablingAllowed && disable)
-                    return algo;
+    private RoutingAlgorithmFactory createRAFactory(final PrepareLandmarks p, final RoutingAlgorithmFactory defaultAlgoFactory) {
+        return new LMRAFactory(p, defaultAlgoFactory);
+    }
 
-                return p.getDecoratedAlgorithm(g, algo, opts);
-            }
-        };
+    /**
+     * TODO needs to be public to pick defaultAlgoFactory.weighting if the defaultAlgoFactory is a CH one.
+     *
+     * @see com.graphhopper.GraphHopper#calcPaths(GHRequest, GHResponse)
+     */
+    public static class LMRAFactory implements RoutingAlgorithmFactory {
+        private RoutingAlgorithmFactory defaultAlgoFactory;
+        private PrepareLandmarks p;
+
+        public LMRAFactory(PrepareLandmarks p, RoutingAlgorithmFactory defaultAlgoFactory) {
+            this.defaultAlgoFactory = defaultAlgoFactory;
+            this.p = p;
+        }
+
+        public RoutingAlgorithmFactory getDefaultAlgoFactory() {
+            return defaultAlgoFactory;
+        }
+
+        @Override
+        public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
+            RoutingAlgorithm algo = defaultAlgoFactory.createAlgo(g, opts);
+            return p.getDecoratedAlgorithm(g, algo, opts);
+        }
     }
 
     public void createPreparations(GraphHopperStorage ghStorage, TraversalMode traversalMode) {
