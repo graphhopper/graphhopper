@@ -20,24 +20,13 @@ package com.graphhopper.http;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonBuilder;
-import com.graphhopper.json.geo.GeoJsonPolygon;
-import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.lm.PrepareLandmarks;
-import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.graphhopper.json.GHJson;
-
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @author Peter Karich
@@ -62,46 +51,7 @@ public class DefaultModule extends AbstractModule {
      * @return an initialized GraphHopper instance
      */
     protected GraphHopper createGraphHopper(CmdArgs args) {
-        GraphHopper tmp = new GraphHopperOSM(){
-            @Override
-            protected void prepareLM() {
-                if(getLMFactoryDecorator().getPreparations().isEmpty())
-                    return;
-
-                try {
-                    GHJson ghJson = new GHJsonBuilder().create();
-                    JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(
-                            new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream()),
-                            JsonFeatureCollection.class);
-                    Map<String, Polygon> map = new HashMap<>();
-                    for (JsonFeature feature : jsonFeatureCollection.getFeatures()) {
-                        String name = (String) feature.getProperties().get("country");
-                        if (name == null)
-                            name = "unnamed";
-
-                        if (feature.hasGeometry()) {
-                            if (feature.getGeometry() instanceof GeoJsonPolygon) {
-                                Polygon res = map.put(name, ((GeoJsonPolygon) feature.getGeometry()).getPolygons().get(0));
-                                if (res != null)
-                                    throw new RuntimeException("Duplicate JsonFeature " + name + " in collection");
-                            }
-                        }
-                    }
-
-                    for (PrepareLandmarks prep : getLMFactoryDecorator().getPreparations()) {
-                        prep.setBorderMap(map);
-                    }
-                } catch (IOException ex) {
-                    logger.error("Problem while reading splitting map GeoJSON. Using empty map.", ex);
-                }
-
-                super.prepareLM();
-            }
-        }.forServer().init(args);
-
-        //TODO, move to a more appropriate place
-        // tmp.setSpatialRuleLookup(SpatialRuleLookupBuilder.build());
-
+        GraphHopper tmp = new GraphHopperOSM().forServer().init(args);
         tmp.importOrLoad();
         logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
                 + ", data_reader_file:" + tmp.getDataReaderFile()

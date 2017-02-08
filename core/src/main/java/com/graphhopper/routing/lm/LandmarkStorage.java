@@ -25,11 +25,10 @@ import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjansSCCAlgorithm;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.spatialrules.Polygon;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupArray;
-import com.graphhopper.routing.util.spatialrules.countries.DefaultSpatialRule;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -75,7 +74,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private boolean initialized;
     private int minimumNodes = 500_000;
     private SubnetworkStorage subnetworkStorage;
-    private Map<String, Polygon> borderMap = new HashMap<>();
+    // private Map<String, Polygon> borderMap = new HashMap<>();
 
     public LandmarkStorage(GraphHopperStorage graph, Directory dir, int landmarks, final Weighting weighting, TraversalMode traversalMode) {
         this.graph = graph;
@@ -182,13 +181,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         // we cannot reuse the components calculated in PrepareRoutingSubnetworks as the edgeIds changed in between (called graph.optimize)
         // also calculating subnetworks from scratch makes bigger problems when working with many oneways
-
         StopWatch sw = new StopWatch().start();
-        // TODO make better testable for smaller area
-        SpatialRuleLookupArray ruleLookup = new SpatialRuleLookupArray(createEU_Africa_RU_BBox(), 0.1, true);
-        int edges = splitCountries(borderMap, ruleLookup);
-        LOGGER.info("Made " + edges + " edges inaccessible. Calculated country cut in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
-        sw = new StopWatch().start();
         TarjansSCCAlgorithm tarjanAlgo = new TarjansSCCAlgorithm(graph, new DefaultEdgeFilter(encoder, false, true), true);
         List<IntArrayList> graphComponents = tarjanAlgo.findComponents();
         LOGGER.info("Calculated tarjan subnetworks in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
@@ -211,7 +204,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
                     GHPoint p = createPoint(graph, nextStartNode);
                     LOGGER.info("start node: " + nextStartNode + " (" + p + ") subnetwork size: " + subnetworkIds.size()
-                            + ", " + Helper.getMemInfo() + " area:" + ruleLookup.lookupRule(p).getCountryIsoA3Name());
+                            + ", " + Helper.getMemInfo());
 
                     if (createLandmarks(nextStartNode, subnetworks, subnetworkIds))
                         break;
@@ -249,45 +242,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         LOGGER.info("Finished landmark creation. Subnetwork node count sum " + nodes + " vs. nodes " + graph.getNodes());
         initialized = true;
-    }
-
-    // TODO calculate from GeoJSON, #926
-    protected BBox createEU_Africa_RU_BBox() {
-        return new BBox(-20, 179, -50, 85);
-    }
-
-    /**
-     * This method makes edges crossing the specified border inaccessible to split a bigger area into smaller subnetworks.
-     * Important for the world wide use case to limit the maximum distance but also to faster detect unreasonable routes.
-     */
-    protected int splitCountries(Map<String, Polygon> borderMap, SpatialRuleLookupArray ruleLookup) {
-        if (borderMap.isEmpty())
-            return 0;
-
-        for (final Map.Entry<String, Polygon> polgonEntry : borderMap.entrySet())
-            ruleLookup.addRule(new DefaultSpatialRule() {
-                @Override
-                public String getCountryIsoA3Name() {
-                    return polgonEntry.getKey();
-                }
-            }.addBorder(polgonEntry.getValue()));
-
-        AllEdgesIterator allEdgesIterator = graph.getAllEdges();
-        NodeAccess nodeAccess = graph.getNodeAccess();
-        int inaccessible = 0;
-        while (allEdgesIterator.next()) {
-            int adjNode = allEdgesIterator.getAdjNode();
-            SpatialRule ruleAdj = ruleLookup.lookupRule(nodeAccess.getLatitude(adjNode), nodeAccess.getLongitude(adjNode));
-
-            int baseNode = allEdgesIterator.getBaseNode();
-            SpatialRule ruleBase = ruleLookup.lookupRule(nodeAccess.getLatitude(baseNode), nodeAccess.getLongitude(baseNode));
-            // TODO cache rule for all nodes to avoid calling "2*nodes" of lookup
-            if (ruleAdj != ruleBase) {
-                inaccessible++;
-                allEdgesIterator.setFlags(encoder.setAccess(allEdgesIterator.getFlags(), false, false));
-            }
-        }
-        return inaccessible;
     }
 
     private String myprint(int... ints) {
@@ -612,10 +566,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     @Override
     public long getCapacity() {
         return landmarkWeightDA.getCapacity() + subnetworkStorage.getCapacity();
-    }
-
-    public void setBorderMap(Map<String, Polygon> borderMap) {
-        this.borderMap = borderMap;
     }
 
     private static class Explorer extends DijkstraBidirectionRef {

@@ -17,9 +17,11 @@
  */
 package com.graphhopper.json;
 
-import com.graphhopper.json.geo.*;
+import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.json.geo.Geometry;
+import com.graphhopper.json.geo.Point;
+import com.graphhopper.json.geo.LineString;
 import com.google.gson.*;
-import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.util.shapes.BBox;
 
 import java.lang.reflect.Type;
@@ -77,10 +79,6 @@ public class FeatureJsonDeserializer implements JsonDeserializer<JsonFeature> {
                     } else if ("LineString".equals(strType)) {
                         geometry = parseLineString(geometryJson);
 
-                    } else if ("Polygon".equals(strType)) {
-                        geometry = parsePolygonString(geometryJson);
-                    } else if ("MultiPolygon".equals(strType)) {
-                        geometry = parsePolygonString(geometryJson);
                     } else {
                         throw new IllegalArgumentException("Coordinates type " + strType + " not yet supported");
                     }
@@ -109,44 +107,6 @@ public class FeatureJsonDeserializer implements JsonDeserializer<JsonFeature> {
                 lineString.add(lat, lon);
         }
         return lineString;
-    }
-
-    GeoJsonPolygon parsePolygonString(JsonObject geometry) {
-        JsonArray arr = geometry.get("coordinates").getAsJsonArray();
-        GeoJsonPolygon geoJsonPolygon = new GeoJsonPolygon();
-
-        if (geometry.get("type").getAsString().equals("Polygon")) {
-            geoJsonPolygon.addPolygon(parseSinglePolygonCoordinates(arr));
-        } else {
-            for (int i = 0; i < arr.size(); i++) {
-                geoJsonPolygon.addPolygon(parseSinglePolygonCoordinates(arr.get(i).getAsJsonArray()));
-            }
-        }
-        return geoJsonPolygon;
-    }
-
-    private Polygon parseSinglePolygonCoordinates(JsonArray arr) {
-        if (arr.size() == 0) {
-            throw new IllegalStateException("The passed Array should be of format: [[[coords1],[coords2],....[coordsN]]]");
-        }
-        /*
-         TODO We currently ignore holes/interior rings the spec defines:
-        For type "Polygon", the "coordinates" member must be an array of LinearRing coordinate arrays.
-        For Polygons with multiple rings, the first must be the exterior ring and any others must be
-        interior rings or holes.
-         */
-        JsonArray polygonArr = arr.get(0).getAsJsonArray();
-
-        double[] lats = new double[polygonArr.size()];
-        double[] lons = new double[polygonArr.size()];
-
-        for (int i = 0; i < polygonArr.size(); i++) {
-            JsonArray pointArr = polygonArr.get(i).getAsJsonArray();
-            lons[i] = pointArr.get(0).getAsDouble();
-            lats[i] = pointArr.get(1).getAsDouble();
-        }
-
-        return new Polygon(lats, lons);
     }
 
     private BBox parseBBox(JsonArray arr) {

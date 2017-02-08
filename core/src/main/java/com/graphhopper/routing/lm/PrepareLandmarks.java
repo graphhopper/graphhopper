@@ -18,16 +18,18 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.spatialrules.Polygon;
+import com.graphhopper.routing.util.AbstractAlgoPreparation;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
+import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.Map;
 
 /**
  * This class does the preprocessing for the ALT algorithm (A* , landmark, triangle inequality).
@@ -57,10 +59,6 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
 
     public void setLMSelectionWeighting(Weighting w) {
         lms.setLMSelectionWeighting(w);
-    }
-
-    public void setBorderMap(Map<String, Polygon> borderMap) {
-        lms.setBorderMap(borderMap);
     }
 
     public void setMinimumNodes(int nodes) {
