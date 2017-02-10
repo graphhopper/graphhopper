@@ -18,7 +18,7 @@
 package com.graphhopper.storage;
 
 /**
- * Abstraction of the underlying datastructure with a unique id and location. To ensure that the id
+ * Abstraction of the underlying data structure with a unique id and location. To ensure that the id
  * is unique use a Directory.attach or findAttach, if you don't need uniqueness call
  * Directory.create. Current implementations are RAM and memory mapped access.
  * <p>

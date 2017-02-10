@@ -26,7 +26,7 @@ import java.util.Collection;
 /**
  * Rates already used Paths worse.
  *
- * @author RobinBoldt
+ * @author Robin Boldt
  */
 public class AvoidEdgesWeighting extends AbstractAdjustedWeighting {
     // contains the edge IDs of the already visited edges

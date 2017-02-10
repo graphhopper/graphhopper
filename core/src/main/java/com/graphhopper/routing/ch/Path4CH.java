@@ -25,7 +25,7 @@ import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 
 /**
- * Recursivly unpack shortcuts.
+ * Recursively unpack shortcuts.
  * <p>
  *
  * @author Peter Karich
