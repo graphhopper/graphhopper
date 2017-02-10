@@ -140,20 +140,16 @@ public class GraphHopperServletIT extends BaseServletTester {
     }
 
     @Test
-    public void testNonTranslatedInstructions() {
+    public void testRawNameInstructions() {
         GraphHopperAPI hopper = new GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
-        GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));
+        GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        GHResponse rsp = hopper.route(request);
         assertEquals("Continue onto Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(2).getName());
 
-        GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
-        request.getHints().put("translate_instructions", false);
+        request.getHints().put("instructions_use_turn_description", false);
         rsp = hopper.route(request);
         assertEquals("Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(2).getName());
-        // TODO I think we should remove this later on?
-        TranslationMap tr = new TranslationMap().doImport();
-        // TODO First character is small, this is different from web... Maybe we should return the first char as upper case with getTurnDescription?
-        assertEquals("continue onto Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(2).getTurnDescription(tr.getWithFallBack(Locale.UK)));
     }
 
     @Test

@@ -53,7 +53,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private String key = "";
     private boolean instructions = true;
     private boolean calcPoints = true;
-    private boolean translateInstructions = true;
+    private boolean useTurnDescription = true;
     private boolean elevation = false;
 
     public GraphHopperWeb() {
@@ -79,7 +79,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
     public static PathWrapper createPathWrapper(JSONObject path,
                                                 boolean tmpCalcPoints, boolean tmpInstructions,
-                                                boolean tmpElevation, boolean translateInstructions) {
+                                                boolean tmpElevation, boolean useTurnDescription) {
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.addErrors(readErrors(path));
         if (pathWrapper.hasErrors())
@@ -104,7 +104,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 for (int instrIndex = 0; instrIndex < instrArr.length(); instrIndex++) {
                     JSONObject jsonObj = instrArr.getJSONObject(instrIndex);
                     double instDist = jsonObj.getDouble("distance");
-                    String text = translateInstructions ? jsonObj.getString("text") : jsonObj.getString("street_name");
+                    String text = useTurnDescription ? jsonObj.getString("text") : jsonObj.getString("street_name");
                     long instTime = jsonObj.getLong("time");
                     int sign = jsonObj.getInt("sign");
                     JSONArray iv = jsonObj.getJSONArray("interval");
@@ -152,10 +152,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
                         instr = new Instruction(sign, text, ia, instPL);
                     }
 
-                    // The translation is done from the routing service so just use the provided string
-                    // instead of creating a combination with sign and name etc
-                    // However, you can translate it on the client side by passing translate_insructions=false
-                    if(translateInstructions)
+                    // Usually, the translation is done from the routing service so just use the provided string
+                    // instead of creating a combination with sign and name etc.
+                    // This is called the turn description.
+                    // This can be changed by passing <code>instructions_use_turn_description=false</code>.
+                    if(useTurnDescription)
                         instr.setUseRawName();
 
                     instr.setDistance(instDist).setTime(instTime);
@@ -294,7 +295,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
             boolean tmpInstructions = request.getHints().getBool("instructions", instructions);
             boolean tmpCalcPoints = request.getHints().getBool("calc_points", calcPoints);
-            boolean tmpTranslateInstructions = request.getHints().getBool("translate_instructions", translateInstructions);
+            boolean tmpUseTurnDescription = request.getHints().getBool("instructions_use_turn_description", useTurnDescription);
 
             if (tmpInstructions && !tmpCalcPoints)
                 throw new IllegalStateException("Cannot calculate instructions without points (only points without instructions). "
@@ -342,7 +343,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
             JSONArray paths = json.getJSONArray("paths");
             for (int index = 0; index < paths.length(); index++) {
                 JSONObject path = paths.getJSONObject(index);
-                PathWrapper altRsp = createPathWrapper(path, tmpCalcPoints, tmpInstructions, tmpElevation, tmpTranslateInstructions);
+                PathWrapper altRsp = createPathWrapper(path, tmpCalcPoints, tmpInstructions, tmpElevation, tmpUseTurnDescription);
                 res.add(altRsp);
             }
 
