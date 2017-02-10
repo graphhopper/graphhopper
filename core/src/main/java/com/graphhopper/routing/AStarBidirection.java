@@ -86,7 +86,7 @@ public class AStarBidirection extends AbstractBidirAlgo {
     }
 
     /**
-     * @param approx if true it enables approximative distance calculation from lat,lon values
+     * @param approx if true it enables approximate distance calculation from lat,lon values
      */
     public AStarBidirection setApproximation(WeightApproximator approx) {
         weightApprox = new ConsistentWeightApproximator(approx);
