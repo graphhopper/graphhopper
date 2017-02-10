@@ -140,14 +140,14 @@ public class GraphHopperServletIT extends BaseServletTester {
     }
 
     @Test
-    public void testRawNameInstructions() {
+    public void testInitInstructionsWithTurnDescription() {
         GraphHopperAPI hopper = new GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         GHResponse rsp = hopper.route(request);
         assertEquals("Continue onto Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(2).getName());
 
-        request.getHints().put("instructions_use_turn_description", false);
+        request.getHints().put("instructions_init_with_turn_description", false);
         rsp = hopper.route(request);
         assertEquals("Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(2).getName());
     }

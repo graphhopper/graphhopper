@@ -53,7 +53,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private String key = "";
     private boolean instructions = true;
     private boolean calcPoints = true;
-    private boolean useTurnDescription = true;
+    private boolean initWithTurnDescription = true;
     private boolean elevation = false;
 
     public GraphHopperWeb() {
@@ -79,7 +79,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
     public static PathWrapper createPathWrapper(JSONObject path,
                                                 boolean tmpCalcPoints, boolean tmpInstructions,
-                                                boolean tmpElevation, boolean useTurnDescription) {
+                                                boolean tmpElevation, boolean initWithTurnDescription) {
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.addErrors(readErrors(path));
         if (pathWrapper.hasErrors())
@@ -104,7 +104,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 for (int instrIndex = 0; instrIndex < instrArr.length(); instrIndex++) {
                     JSONObject jsonObj = instrArr.getJSONObject(instrIndex);
                     double instDist = jsonObj.getDouble("distance");
-                    String text = useTurnDescription ? jsonObj.getString("text") : jsonObj.getString("street_name");
+                    String text = initWithTurnDescription ? jsonObj.getString("text") : jsonObj.getString("street_name");
                     long instTime = jsonObj.getLong("time");
                     int sign = jsonObj.getInt("sign");
                     JSONArray iv = jsonObj.getJSONArray("interval");
@@ -156,7 +156,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                     // instead of creating a combination with sign and name etc.
                     // This is called the turn description.
                     // This can be changed by passing <code>instructions_use_turn_description=false</code>.
-                    if(useTurnDescription)
+                    if(initWithTurnDescription)
                         instr.setUseRawName();
 
                     instr.setDistance(instDist).setTime(instTime);
@@ -295,7 +295,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
             boolean tmpInstructions = request.getHints().getBool("instructions", instructions);
             boolean tmpCalcPoints = request.getHints().getBool("calc_points", calcPoints);
-            boolean tmpUseTurnDescription = request.getHints().getBool("instructions_use_turn_description", useTurnDescription);
+            boolean tmpInitWithTurnDescription = request.getHints().getBool("instructions_init_with_turn_description", initWithTurnDescription);
 
             if (tmpInstructions && !tmpCalcPoints)
                 throw new IllegalStateException("Cannot calculate instructions without points (only points without instructions). "
@@ -343,7 +343,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
             JSONArray paths = json.getJSONArray("paths");
             for (int index = 0; index < paths.length(); index++) {
                 JSONObject path = paths.getJSONObject(index);
-                PathWrapper altRsp = createPathWrapper(path, tmpCalcPoints, tmpInstructions, tmpElevation, tmpUseTurnDescription);
+                PathWrapper altRsp = createPathWrapper(path, tmpCalcPoints, tmpInstructions, tmpElevation, tmpInitWithTurnDescription);
                 res.add(altRsp);
             }
 
