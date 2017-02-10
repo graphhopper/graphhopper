@@ -55,7 +55,7 @@ public interface Weighting {
     /**
      * This method calculates the time taken (in milli seconds) for the specified edgeState and
      * optionally include the turn costs (in seconds) of the previous (or next) edgeId via
-     * prevOrNextEdgeId. Typically used for post-processing and on only a few thausend edges.
+     * prevOrNextEdgeId. Typically used for post-processing and on only a few thousand edges.
      */
     long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
 

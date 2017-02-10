@@ -28,7 +28,7 @@ import com.graphhopper.util.shapes.GHPoint;
  * <p>
  * lat0 lon0 | lat1 lon1 | lat2 lon2
  * <p>
- * This works similar to how BIG endianess works for bytes to int packing. Detailed information is
+ * This works similar to how BIG endianness works for bytes to int packing. Detailed information is
  * available in this blog post:
  * http://karussell.wordpress.com/2012/05/23/spatial-keys-memory-efficient-geohashes/
  * <p>
