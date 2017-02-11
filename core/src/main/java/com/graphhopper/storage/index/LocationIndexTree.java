@@ -217,15 +217,6 @@ public class LocationIndexTree implements LocationIndex {
     }
 
     @Override
-    public int findID(double lat, double lon) {
-        QueryResult res = findClosest(lat, lon, EdgeFilter.ALL_EDGES);
-        if (!res.isValid())
-            return -1;
-
-        return res.getClosestNode();
-    }
-
-    @Override
     public LocationIndex setResolution(int minResolutionInMeter) {
         if (minResolutionInMeter <= 0)
             throw new IllegalStateException("Negative precision is not allowed!");

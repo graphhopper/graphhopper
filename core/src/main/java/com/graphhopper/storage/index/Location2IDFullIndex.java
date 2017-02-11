@@ -103,11 +103,6 @@ public class Location2IDFullIndex implements LocationIndex {
     }
 
     @Override
-    public int findID(double lat, double lon) {
-        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
-    }
-
-    @Override
     public LocationIndex create(long size) {
         return this;
     }
