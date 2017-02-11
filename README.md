@@ -84,7 +84,7 @@ Or use this Java snippet:
 
 ```java
 // import OpenStreetMap data
-GraphHopper hopper = new GraphHopper();
+GraphHopper hopper = new GraphHopperOSM();
 hopper.setOSMFile("./map-data/leipzig_germany.osm.pbf");
 hopper.setGraphHopperLocation("./target/mapmatchingtest");
 CarFlagEncoder encoder = new CarFlagEncoder();
