@@ -20,7 +20,7 @@ package com.graphhopper.util;
 import static java.lang.Math.*;
 
 /**
- * Calculates the approximative distance of two points on earth. Very good results if delat_lon is
+ * Calculates the approximate distance of two points on earth. Very good results if delat_lon is
  * not too big (see DistanceCalcTest), e.g. the distance is small.
  * <p>
  * http://en.wikipedia.org/wiki/Geographical_distance#Spherical_Earth_projected_to_a_plane

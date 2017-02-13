@@ -51,7 +51,7 @@ import java.util.Random;
 
 /**
  * A rough graphical user interface for visualizing the OSM graph. Mainly for debugging algorithms
- * and spatial datastructures. See e.g. this blog post:
+ * and spatial data structures. See e.g. this blog post:
  * https://graphhopper.com/blog/2016/01/19/alternative-roads-to-rome/
  * <p>
  * Use the web module for a better/faster/userfriendly/... alternative!
