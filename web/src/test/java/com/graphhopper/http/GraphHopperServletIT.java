@@ -147,7 +147,7 @@ public class GraphHopperServletIT extends BaseServletTester {
         GHResponse rsp = hopper.route(request);
         assertEquals("Continue onto Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(2).getName());
 
-        request.getHints().put("instructions_init_with_turn_description", false);
+        request.getHints().put("turn_description", false);
         rsp = hopper.route(request);
         assertEquals("Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(2).getName());
     }
