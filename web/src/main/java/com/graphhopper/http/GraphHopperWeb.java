@@ -155,7 +155,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                     // Usually, the translation is done from the routing service so just use the provided string
                     // instead of creating a combination with sign and name etc.
                     // This is called the turn description.
-                    // This can be changed by passing <code>instructions_use_turn_description=false</code>.
+                    // This can be changed by passing <code>turn_description=false</code>.
                     if(turnDescription)
                         instr.setUseRawName();
 
