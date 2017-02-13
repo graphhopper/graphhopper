@@ -38,6 +38,7 @@ body {
 
 .instructions_info {
     overflow: auto;
+    width: 100%;
 }
 
 .route_description {

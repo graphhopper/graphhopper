@@ -41,7 +41,7 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
     }
 
     /**
-     * Returns the flagEncoder of the superWeighting. Usually we do not have a Flagencoder here.
+     * Returns the flagEncoder of the superWeighting. Usually we do not have a FlagEncoder here.
      */
     @Override
     public FlagEncoder getFlagEncoder() {

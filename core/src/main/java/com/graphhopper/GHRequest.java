@@ -229,7 +229,7 @@ public class GHRequest {
     }
 
     /**
-     * Specifiy car, bike or foot. Or specify empty to use default.
+     * Specify car, bike or foot. Or specify empty to use default.
      */
     public GHRequest setVehicle(String vehicle) {
         hints.setVehicle(vehicle);
