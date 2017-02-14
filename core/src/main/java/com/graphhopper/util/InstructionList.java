@@ -76,15 +76,16 @@ public class InstructionList implements Iterable<Instruction> {
             instrList.add(instrJson);
 
             InstructionAnnotation ia = instruction.getAnnotation();
-            String str = instruction.getTurnDescription(tr);
-            if (Helper.isEmpty(str))
-                str = ia.getMessage();
-            instrJson.put("text", Helper.firstBig(str));
+            String text = instruction.getTurnDescription(tr);
+            if (Helper.isEmpty(text))
+                text = ia.getMessage();
+            instrJson.put("text", Helper.firstBig(text));
             if (!ia.isEmpty()) {
                 instrJson.put("annotation_text", ia.getMessage());
                 instrJson.put("annotation_importance", ia.getImportance());
             }
 
+            instrJson.put("street_name", instruction.getName());
             instrJson.put("time", instruction.getTime());
             instrJson.put("distance", Helper.round(instruction.getDistance(), 3));
             instrJson.put("sign", instruction.getSign());
