@@ -1,5 +1,5 @@
 0.9
-    removed deprecated methods in GraphHopper, Path.calcMillis, LocationIndex.findID
+    removed deprecated methods in GraphHopper (setCHWeighting, setCHWeightings, getCHWeightings, setCHWeightings, getCHPrepareThreads, setCHPrepareThreads), Path.calcMillis, findID of LocationIndex and all implementations
 
 0.8
     refactoring to Weighting class, see #807
