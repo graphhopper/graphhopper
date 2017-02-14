@@ -74,6 +74,7 @@ paths[0].bbox              | The bounding box of the route, format: <br> minLon,
 paths[0].snapped_waypoints | This value contains the snapped input points. If `points_encoded=true` or no `points_encoded` parameter was specified then an encoded string will be returned, otherwise an array is returned. See the parameter `points_encoded` for more information.
 paths[0].instructions      | Contains information about the instructions for this route. The last instruction is always the Finish instruction and takes 0ms and 0meter. Keep in mind that instructions are currently under active development and can sometimes contain misleading information, so, make sure you always show an image of the map at the same time when navigating your users!
 paths[0].instructions[0].text                 | A description what the user has to do in order to follow the route. The language depends on the locale parameter.
+paths[0].instructions[0].street_name          | The name of the street to turn onto in order to follow the route.
 paths[0].instructions[0].distance             | The distance for this instruction, in meter
 paths[0].instructions[0].time                 | The duration for this instruction, in ms
 paths[0].instructions[0].interval             | An array containing the first and the last index (relative to paths[0].points) of the points for this instruction. This is useful to know for which part of the route the instructions are valid.
