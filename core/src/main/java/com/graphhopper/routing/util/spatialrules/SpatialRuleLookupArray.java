@@ -22,12 +22,9 @@ import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.*;
 
-import static com.graphhopper.routing.util.spatialrules.SpatialRule.EMPTY;
-
 /**
  * SpatialRuleLookup implementation using an array as data structure. Currently limited to 255 ruleContainers
  * The covered area is indexed as tiles, with every tile being "quadratic" having the same degree length on every side.
- * Currently only a limited amount of rule combinations per tile are allowed.
  *
  * @author Robin Boldt
  */
@@ -65,10 +62,10 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
         this.exact = exact;
 
         lookupArray = new byte[getNumberOfXGrids()][getNumberOfYGrids()];
-        addSingleRule(EMPTY);
+        addSingleRule(SpatialRule.EMPTY);
         ruleContainers.add(new SpatialRuleContainer() {
             {
-                this.rules.add(EMPTY);
+                this.rules.add(SpatialRule.EMPTY);
             }
 
             @Override
@@ -94,7 +91,7 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
     @Override
     public SpatialRule lookupRule(double lat, double lon) {
         if (lon < bounds.minLon || lon > bounds.maxLon || lat < bounds.minLat || lat > bounds.maxLat)
-            return EMPTY;
+            return SpatialRule.EMPTY;
 
         int xIndex = getXIndexForLon(lon);
         int yIndex = getYIndexForLat(lat);
@@ -115,7 +112,7 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
             }
         }
 
-        return EMPTY;
+        return SpatialRule.EMPTY;
     }
 
     protected int getRuleContainerIndex(int xIndex, int yIndex) {
@@ -160,7 +157,7 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
         if (rule == null)
             throw new IllegalArgumentException("rule cannot be null");
 
-        if (rule.equals(EMPTY))
+        if (rule.equals(SpatialRule.EMPTY))
             throw new IllegalArgumentException("rule cannot be EMPTY");
 
         addSingleRule(rule);

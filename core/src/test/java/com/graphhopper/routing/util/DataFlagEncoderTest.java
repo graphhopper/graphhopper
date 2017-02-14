@@ -23,7 +23,6 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 
-import static com.graphhopper.routing.util.spatialrules.SpatialRule.EMPTY;
 import static org.junit.Assert.*;
 
 /**
@@ -346,7 +345,11 @@ public class DataFlagEncoderTest {
         e1.setFlags(encoder.handleWayTags(way, 1, 0));
         e2.setFlags(encoder.handleWayTags(way2, 1, 0));
 
-        assertEquals(encoder.getSpatialId(e1.getFlags()), encoder.getSpatialId(e1.getFlags()));
-        assertEquals(index.getSpatialId(EMPTY), encoder.getSpatialId(e2.getFlags()));
+        assertEquals(index.getSpatialId(new GermanySpatialRule()), encoder.getSpatialId(e1.getFlags()));
+        assertEquals(index.getSpatialId(SpatialRule.EMPTY), encoder.getSpatialId(e2.getFlags()));
+
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, encoder.getAccessValue(e1.getFlags()));
+        assertEquals(AccessValue.ACCESSIBLE, encoder.getAccessValue(e2.getFlags()));
+
     }
 }

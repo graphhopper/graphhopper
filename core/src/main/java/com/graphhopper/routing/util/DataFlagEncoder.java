@@ -274,6 +274,20 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             }
         }
 
+        if (spatialRuleLookupEnabled() && accessValue == 0) {
+            switch (getSpatialRule(way).getAccessible(way.getTag("highway", ""), "", AccessValue.ACCESSIBLE)){
+                case ACCESSIBLE:
+                    accessValue = accessMap.get("yes");
+                    break;
+                case EVENTUALLY_ACCESSIBLE:
+                    accessValue = accessMap.get("destination");
+                    break;
+                case NOT_ACCESSIBLE:
+                    accessValue = accessMap.get("no");
+                    break;
+            }
+        }
+
         return accessValue;
     }
 
@@ -311,6 +325,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             // MAXSPEED
             double maxSpeed = parseSpeed(way.getTag("maxspeed"));
+            if (spatialRuleLookupEnabled() && maxSpeed < 0) {
+                // TODO What if no maxspeed is set, but only forward and backward, and both are higher than the usually allowed?
+                maxSpeed = getSpatialRule(way).getMaxSpeed(way.getTag("highway", ""), maxSpeed);
+            }
             double fwdSpeed = parseSpeed(way.getTag("maxspeed:forward"));
             if (fwdSpeed < 0 || maxSpeed > 0 && maxSpeed < fwdSpeed)
                 fwdSpeed = maxSpeed;
@@ -394,21 +412,12 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             flags = accessEncoder.setValue(flags, getAccessValue(way));
 
-            if (spatialRules > 0) {
-                if (spatialRuleLookup == null)
-                    throw new IllegalStateException("This encoder was asked to store spatial IDs for every edge, " +
-                            "but no spatial lookup was specified");
 
+            if(spatialRuleLookupEnabled()){
                 GHPoint estimatedCenter = way.getTag("estimated_center", null);
                 if (estimatedCenter != null) {
                     SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
                     flags = spatialEncoder.setValue(flags, spatialRuleLookup.getSpatialId(rule));
-
-                    // block access if rule says so?
-//                    if (rule.getAccessible(way.getTag("highway"), "", AccessValue.ACCESSIBLE).
-//                            equals(AccessValue.NOT_ACCESSIBLE)) {
-//                        flags = accessEncoder.setValue(flags, NOT_ACCESSIBLE_KEY);
-//                    }
                 }
             }
 
@@ -416,6 +425,25 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         } catch (Exception ex) {
             throw new RuntimeException("Error while parsing way " + way.toString(), ex);
         }
+    }
+
+    private boolean spatialRuleLookupEnabled(){
+        if (spatialRules > 0) {
+            if (spatialRuleLookup == null)
+                throw new IllegalStateException("This encoder was asked to store spatial IDs for every edge, " +
+                        "but no spatial lookup was specified");
+
+            return true;
+        }
+        return false;
+    }
+
+    private SpatialRule getSpatialRule(ReaderWay way) {
+        GHPoint estmCentre = way.getTag("estimated_center", null);
+        if (estmCentre != null) {
+            return spatialRuleLookup.lookupRule(estmCentre);
+        }
+        return SpatialRule.EMPTY;
     }
 
     private long extractMeter(ReaderWay way, long flags, EncodedDoubleValue valueEncoder, List<String> keys) {

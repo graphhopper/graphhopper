@@ -18,25 +18,16 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.json.geo.GeoJsonPolygon;
-import com.graphhopper.json.geo.Geometry;
-import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.spatialrules.*;
-import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.storage.*;
 
-import static com.graphhopper.routing.util.spatialrules.SpatialRule.EMPTY;
 import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_EDGES;
 import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_SHAPES;
 
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
-import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.Shape;
 import org.junit.Before;
 import org.junit.Test;
