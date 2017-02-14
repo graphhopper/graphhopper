@@ -853,7 +853,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * This method creates prepations.
+     * This method creates preparations.
      *
      * @deprecated use getCHFactoryDecorator().createPreparations() instead. Will be removed in 0.8.
      */

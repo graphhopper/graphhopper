@@ -297,6 +297,27 @@ public class CarFlagEncoderTest {
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(30, encoder.getSpeed(encoded), 1e-1);
 
+        way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("motorroad", "yes");
+        allowed = encoder.acceptWay(way);
+        encoded = encoder.handleWayTags(way, allowed, 0);
+        assertEquals(90, encoder.getSpeed(encoded), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "motorway");
+        way.setTag("motorroad", "yes"); // this tag should be ignored
+        allowed = encoder.acceptWay(way);
+        encoded = encoder.handleWayTags(way, allowed, 0);
+        assertEquals(100, encoder.getSpeed(encoded), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "motorway_link");
+        way.setTag("motorroad", "yes"); // this tag should be ignored
+        allowed = encoder.acceptWay(way);
+        encoded = encoder.handleWayTags(way, allowed, 0);
+        assertEquals(70, encoder.getSpeed(encoded), 1e-1);
+
         try {
             encoder.setSpeed(0, -1);
             assertTrue(false);
