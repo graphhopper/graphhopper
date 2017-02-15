@@ -335,15 +335,29 @@ public class DataFlagEncoderTest {
         way2.setTag("highway", "track");
         way2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
 
+        ReaderWay livingStreet = new ReaderWay(29l);
+        livingStreet.setTag("highway", "living_street");
+        livingStreet.setTag("estimated_center", new GHPoint(0.005, 0.005));
+
+        ReaderWay livingStreet2 = new ReaderWay(30l);
+        livingStreet2.setTag("highway", "living_street");
+        livingStreet2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
+
         Graph graph = new GraphBuilder(em).create();
         EdgeIteratorState e1 = graph.edge(0, 1, 1, true);
         EdgeIteratorState e2 = graph.edge(0, 2, 1, true);
+        EdgeIteratorState e3 = graph.edge(0, 3, 1, true);
+        EdgeIteratorState e4 = graph.edge(0, 4, 1, true);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, -0.01, -0.01);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 3, 0.01, 0.01);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 4, -0.01, -0.01);
 
         e1.setFlags(encoder.handleWayTags(way, 1, 0));
         e2.setFlags(encoder.handleWayTags(way2, 1, 0));
+        e3.setFlags(encoder.handleWayTags(livingStreet, 1, 0));
+        e4.setFlags(encoder.handleWayTags(livingStreet2, 1, 0));
 
         assertEquals(index.getSpatialId(new GermanySpatialRule()), encoder.getSpatialId(e1.getFlags()));
         assertEquals(index.getSpatialId(SpatialRule.EMPTY), encoder.getSpatialId(e2.getFlags()));
@@ -351,5 +365,7 @@ public class DataFlagEncoderTest {
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, encoder.getAccessValue(e1.getFlags()));
         assertEquals(AccessValue.ACCESSIBLE, encoder.getAccessValue(e2.getFlags()));
 
+        assertEquals(5, encoder.getMaxspeed(e3, -1, false), .1);
+        assertEquals(-1, encoder.getMaxspeed(e4, -1, false), .1);
     }
 }

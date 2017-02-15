@@ -330,14 +330,14 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
                 maxSpeed = getSpatialRule(way).getMaxSpeed(way.getTag("highway", ""), maxSpeed);
             }
             double fwdSpeed = parseSpeed(way.getTag("maxspeed:forward"));
-            if (fwdSpeed < 0 || maxSpeed > 0 && maxSpeed < fwdSpeed)
+            if (fwdSpeed < 0 || maxSpeed > 0)
                 fwdSpeed = maxSpeed;
             if (fwdSpeed > getMaxPossibleSpeed())
                 fwdSpeed = getMaxPossibleSpeed();
 
 
             double bwdSpeed = parseSpeed(way.getTag("maxspeed:backward"));
-            if (bwdSpeed < 0 || maxSpeed > 0 && maxSpeed < bwdSpeed)
+            if (bwdSpeed < 0 || maxSpeed > 0)
                 bwdSpeed = maxSpeed;
             if (bwdSpeed > getMaxPossibleSpeed())
                 bwdSpeed = getMaxPossibleSpeed();
