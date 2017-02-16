@@ -477,40 +477,15 @@ public class Path {
                     prevName = name;
                     prevAnnotation = annotation;
 
-                } else if ((!name.equals(prevName)) || (!annotation.equals(prevAnnotation))) {
-                    prevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
-                    double orientation = AC.calcOrientation(prevLat, prevLon, latitude, longitude);
-                    orientation = AC.alignOrientation(prevOrientation, orientation);
-                    double delta = orientation - prevOrientation;
-                    double absDelta = Math.abs(delta);
-                    int sign;
+                } else{
+                    int sign = calculateSign(latitude, longitude);
 
-                    if (absDelta < 0.2) {
-                        // 0.2 ~= 11°
-                        sign = Instruction.CONTINUE_ON_STREET;
-
-                    } else if (absDelta < 0.8) {
-                        // 0.8 ~= 40°
-                        if (delta > 0)
-                            sign = Instruction.TURN_SLIGHT_LEFT;
-                        else
-                            sign = Instruction.TURN_SLIGHT_RIGHT;
-
-                    } else if (absDelta < 1.8) {
-                        // 1.8 ~= 103°
-                        if (delta > 0)
-                            sign = Instruction.TURN_LEFT;
-                        else
-                            sign = Instruction.TURN_RIGHT;
-
-                    } else if (delta > 0)
-                        sign = Instruction.TURN_SHARP_LEFT;
-                    else
-                        sign = Instruction.TURN_SHARP_RIGHT;
-                    prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
-                    ways.add(prevInstruction);
-                    prevName = name;
-                    prevAnnotation = annotation;
+                    if (isTurn(sign)) {
+                        prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                        ways.add(prevInstruction);
+                        prevName = name;
+                        prevAnnotation = annotation;
+                    }
                 }
 
                 updatePointsAndInstruction(edge, wayGeo);
@@ -541,6 +516,41 @@ public class Path {
                     }
                     ways.add(new FinishInstruction(nodeAccess, adjNode));
                 }
+            }
+
+            private boolean isTurn(int sign){
+                return (!name.equals(prevName)) || (!annotation.equals(prevAnnotation));
+            }
+
+            private int calculateSign(double latitude, double longitude){
+                prevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
+                double orientation = AC.calcOrientation(prevLat, prevLon, latitude, longitude);
+                orientation = AC.alignOrientation(prevOrientation, orientation);
+                double delta = orientation - prevOrientation;
+                double absDelta = Math.abs(delta);
+
+                if (absDelta < 0.2) {
+                    // 0.2 ~= 11°
+                    return Instruction.CONTINUE_ON_STREET;
+
+                } else if (absDelta < 0.8) {
+                    // 0.8 ~= 40°
+                    if (delta > 0)
+                        return Instruction.TURN_SLIGHT_LEFT;
+                    else
+                        return Instruction.TURN_SLIGHT_RIGHT;
+
+                } else if (absDelta < 1.8) {
+                    // 1.8 ~= 103°
+                    if (delta > 0)
+                        return Instruction.TURN_LEFT;
+                    else
+                        return Instruction.TURN_RIGHT;
+
+                } else if (delta > 0)
+                    return Instruction.TURN_SHARP_LEFT;
+                else
+                    return Instruction.TURN_SHARP_RIGHT;
             }
 
             private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl) {
