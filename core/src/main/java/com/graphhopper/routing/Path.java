@@ -28,6 +28,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,6 +46,8 @@ import java.util.List;
  * @author jan soe
  */
 public class Path {
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     private static final AngleCalc AC = Helper.ANGLE_CALC;
     final StopWatch extractSW = new StopWatch("extract");
     protected Graph graph;
@@ -363,7 +367,7 @@ public class Path {
              */
             private double prevLat = nodeAccess.getLatitude(tmpNode);
             private double prevLon = nodeAccess.getLongitude(tmpNode);
-            private double doublePrevLat, doublePrevLong; // Lat and Lon of node t-2
+            private double doublePrevLat, doublePrevLon; // Lat and Lon of node t-2
             private int prevNode = -1;
             private double prevOrientation;
             private Instruction prevInstruction;
@@ -371,6 +375,7 @@ public class Path {
             private String name, prevName = null;
             private InstructionAnnotation annotation, prevAnnotation;
             private EdgeExplorer outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+            private EdgeExplorer crossingExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, true));
             private final JaroWinkler jaroWinkler = new JaroWinkler();
 
             @Override
@@ -426,7 +431,7 @@ public class Path {
                             }
 
                             // previous orientation is last orientation before entering roundabout
-                            prevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
+                            prevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
 
                             // calculate direction of entrance turn to determine direction of rotation
                             // right turn == counterclockwise and vice versa
@@ -467,7 +472,7 @@ public class Path {
 
                     // calculate direction of exit turn to determine direction of rotation
                     // right turn == counterclockwise and vice versa
-                    double recentOrientation = AC.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
+                    double recentOrientation = AC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
                     orientation = AC.alignOrientation(recentOrientation, orientation);
                     double deltaOut = (orientation - recentOrientation);
 
@@ -479,10 +484,10 @@ public class Path {
                     prevName = name;
                     prevAnnotation = annotation;
 
-                } else{
+                } else {
                     int sign = calculateSign(latitude, longitude);
 
-                    if (isTurn(sign)) {
+                    if (isTurn(sign, baseNode, prevNode, adjNode, latitude, longitude)) {
                         prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
                         ways.add(prevInstruction);
                         prevName = name;
@@ -494,11 +499,11 @@ public class Path {
 
                 if (wayGeo.getSize() <= 2) {
                     doublePrevLat = prevLat;
-                    doublePrevLong = prevLon;
+                    doublePrevLon = prevLon;
                 } else {
                     int beforeLast = wayGeo.getSize() - 2;
                     doublePrevLat = wayGeo.getLatitude(beforeLast);
-                    doublePrevLong = wayGeo.getLongitude(beforeLast);
+                    doublePrevLon = wayGeo.getLongitude(beforeLast);
                 }
 
                 prevInRoundabout = isRoundabout;
@@ -510,7 +515,7 @@ public class Path {
                 if (lastEdge) {
                     if (isRoundabout) {
                         // calc angle between roundabout entrance and finish
-                        double orientation = AC.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
+                        double orientation = AC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
                         orientation = AC.alignOrientation(prevOrientation, orientation);
                         double delta = (orientation - prevOrientation);
                         ((RoundaboutInstruction) prevInstruction).setRadian(delta);
@@ -520,20 +525,106 @@ public class Path {
                 }
             }
 
-            private boolean isTurn(int sign){
-                if(sign == Instruction.CONTINUE_ON_STREET)
-                    return false;
-
-                // TODO Analyze Turns, if this is the only turn, return false
-
-                // TODO Name changes are not neccessarily turns
-                if(!isNameSimilar(name, prevName) || (!annotation.equals(prevAnnotation)))
+            private boolean isTurn(int sign, int baseNode, int prevNode, int adjNode, double lat, double lon) {
+                // TODO remove boolean, just for testing right now
+                boolean improvedTurninstruction = true;
+                if (improvedTurninstruction) {
+                    // TODO Assume that if the annotation changes, we always want an instruction?
+                    // TODO For example, get of bike and carry it up some stairs?
+                    if (!annotation.equals(prevAnnotation)) {
                         return true;
+                    }
+                    if (sign == Instruction.CONTINUE_ON_STREET)
+                        return false;
 
-                return false;
+                    int nrOfPossibleTurns = nrOfPossibleTurns(baseNode, prevNode, adjNode);
+
+                    // there is no other turn possible
+                    if (nrOfPossibleTurns <= 1) {
+                        return false;
+                    }
+
+                    // Very certain, this is a turn
+                    if (Math.abs(sign) > 1) {
+                        return true;
+                    }
+
+                    // There is at least one other possibility to turn, and we are almost going straight
+                    // Check the other turns if one of them is also going almost straight
+                    // If not, we don't need a turn instruction
+                    EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
+                    int tmpSign;
+                    boolean otherContinue = false;
+                    while (edgeIter.next()) {
+                        if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
+                            double tmpLat;
+                            double tmpLon;
+                            PointList tmpWayGeo = edgeIter.fetchWayGeometry(3);
+                            if (tmpWayGeo.getSize() <= 2) {
+                                tmpLat = nodeAccess.getLatitude(edgeIter.getAdjNode());
+                                tmpLon = nodeAccess.getLongitude(edgeIter.getAdjNode());
+                            } else {
+                                tmpLat = tmpWayGeo.getLatitude(1);
+                                tmpLon = tmpWayGeo.getLongitude(1);
+                            }
+                            tmpSign = calculateSign(tmpLat, tmpLon);
+                            if (Math.abs(tmpSign) <= 1) {
+                                otherContinue = true;
+                            }
+                        }
+                    }
+
+                    // This state is bad! Two streets are going more or less straight
+                    // Happens a lot for trunk_links
+                    // For _links, comparing flags works quite good, as links usually have different speeds => different flags
+                    if (otherContinue) {
+                        logger.warn("Uncertain Turn Instruction, turning from " + prevName + " onto " + name + " from " + doublePrevLat + "," + doublePrevLon + " via " + prevLat + "," + prevLon + " to " + lat + "," + lon);
+                        // For this case we need to consider bwd true, therefore we have to use another explorer, e.g. on Trunk, edges are oneways, therefore bwd=false
+                        EdgeIterator flagIter = crossingExplorer.setBaseNode(baseNode);
+                        long prevFlags = -1;
+                        long flags = -1;
+                        while (flagIter.next()) {
+                            if (flagIter.getAdjNode() == prevNode || flagIter.getBaseNode() == prevNode)
+                                prevFlags = flagIter.getFlags();
+
+                            if (flagIter.getAdjNode() == adjNode || flagIter.getBaseNode() == adjNode)
+                                flags = flagIter.getFlags();
+
+                        }
+                        if (prevFlags == -1 || flags == -1) {
+                            throw new IllegalStateException("Couldn't retrieve flags for turn instruction generation");
+                        }
+                        // TODO I am not really happy with this if.
+                        // The idea is, if there are only a random tracks, they usually don't have names and they
+                        // usually don't have any special flags (e.g. speed limit).
+                        // In this case we should force the turn instruction.
+                        if (name.isEmpty() && prevName.isEmpty())
+                            return true;
+                        return !(isNameSimilar(name, prevName) && prevFlags == flags);
+                    }
+
+                    return false;
+                } else {
+                    return ((!name.equals(prevName)) || (!annotation.equals(prevAnnotation)));
+                }
+            }
+
+            private int nrOfPossibleTurns(int baseNode, int prevNode, int adjNode) {
+                EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
+                int count = 1;
+                while (edgeIter.next()) {
+                    if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode)
+                        count++;
+                }
+                return count;
             }
 
             private boolean isNameSimilar(String name1, String name2) {
+                if (name1.equals(name2)) {
+                    return true;
+                }
+                name1 = getRef(name1);
+                name2 = getRef(name2);
                 // TODO Copied from the name similarity filter
                 // TODO Check only for the ref and not the full street name?
                 double jwSimilarity = jaroWinkler.similarity(name1, name2);
@@ -541,13 +632,23 @@ public class Path {
                 return jwSimilarity > .79;
             }
 
-            private int calculateSign(double latitude, double longitude){
-                prevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLong, prevLat, prevLon);
+            private String getRef(String name) {
+                int index = name.lastIndexOf(',');
+                if (index > 0 && name.length() > index + 2)
+                    return name.substring(index + 2);
+                return name;
+            }
+
+            private int calculateSign(double latitude, double longitude) {
+                prevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
                 double orientation = AC.calcOrientation(prevLat, prevLon, latitude, longitude);
                 orientation = AC.alignOrientation(prevOrientation, orientation);
                 double delta = orientation - prevOrientation;
                 double absDelta = Math.abs(delta);
 
+                // TODO not only calculate the mathematical orientation, but also compare to other streets
+                // TODO If there is one street turning slight right and one right, but no straight street
+                // TODO We can assume the slight right street would be a continue
                 if (absDelta < 0.2) {
                     // 0.2 ~= 11°
                     return Instruction.CONTINUE_ON_STREET;

@@ -378,6 +378,70 @@ public class PathTest {
         return list;
     }
 
+    @Test
+    public void testCalcInstructionsIgnoreContinue() {
+        // Follow a couple of straight edges, including a name change
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(4, 11);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        // Contain only start and finish instruction, no CONTINUE
+        assertEquals(2, wayList.size());
+    }
+
+    @Test
+    public void testCalcInstructionsIgnoreTurnIfNoAlternative() {
+        // The street turns left, but there is not turn
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(10, 12);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        // Contain only start and finish instruction
+        assertEquals(2, wayList.size());
+    }
+
+    @Test
+    public void testCalcInstructionsForTurn() {
+        // The street turns left, but there is not turn
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(11, 13);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        // Contain start, turn, and finish instruction
+        assertEquals(3, wayList.size());
+        // Assert turn right
+        assertEquals(2, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testCalcInstructionsForSlightTurnWithOtherSlightTurn() {
+        // Test for a fork with two sligh turns. Since there are two sligh turns, show the turn instruction
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(12, 16);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        // Contain start, turn, and finish instruction
+        assertEquals(3, wayList.size());
+        // Assert turn right
+        assertEquals(1, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testIgnoreInstructionsForSlightTurnWithOtherTurn() {
+        // Test for a fork with one sligh turn and one actual turn. We are going along the slight turn. No turn instruction needed in this case
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(16, 19);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        // Contain start, and finish instruction
+        assertEquals(2, wayList.size());
+    }
+
     private class RoundaboutGraph {
         final public Graph g = new GraphBuilder(mixedEncoders).create();
         final public NodeAccess na = g.getNodeAccess();
@@ -386,12 +450,12 @@ public class PathTest {
         List<EdgeIteratorState> roundaboutEdges = new LinkedList<EdgeIteratorState>();
 
         private RoundaboutGraph() {
-            //
-            //      8
-            //       \
-            //         5
-            //       /  \
-            //  1 - 2    4 - 7
+            //                                       18
+            //      8                 14              |
+            //       \                 |      / 16 - 17
+            //         5              12 - 13          \-- 19
+            //       /  \              |      \ 15
+            //  1 - 2    4 - 7 - 10 - 11
             //       \  /
             //        3
             //        | \
@@ -406,6 +470,16 @@ public class PathTest {
             na.setNode(7, 52.514, 13.352);
             na.setNode(8, 52.515, 13.351);
             na.setNode(9, 52.513, 13.351);
+            na.setNode(10, 52.514, 13.353);
+            na.setNode(11, 52.514, 13.354);
+            na.setNode(12, 52.515, 13.354);
+            na.setNode(13, 52.515, 13.355);
+            na.setNode(14, 52.516, 13.354);
+            na.setNode(15, 52.516, 13.360);
+            na.setNode(16, 52.514, 13.360);
+            na.setNode(17, 52.514, 13.361);
+            na.setNode(18, 52.513, 13.361);
+            na.setNode(19, 52.515, 13.368);
 
             g.edge(1, 2, 5, true).setName("MainStreet 1 2");
 
@@ -420,6 +494,19 @@ public class PathTest {
 
             edge3to6 = g.edge(3, 6, 5, true).setName("3-6");
             edge3to9 = g.edge(3, 9, 5, false).setName("3-9");
+
+            // Don't set names
+            g.edge(7, 10, 5, true);
+            g.edge(10, 11, 5, true);
+            g.edge(11, 12, 5, true);
+            g.edge(12, 13, 5, true);
+            g.edge(12, 14, 5, true);
+            g.edge(13, 15, 5, true);
+            g.edge(13, 16, 5, true);
+            g.edge(16, 17, 5, true);
+            g.edge(17, 18, 5, true);
+            g.edge(17, 19, 5, true);
+
 
             setRoundabout(clockwise);
             inverse3to9();
