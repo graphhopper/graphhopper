@@ -22,6 +22,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.spatialrules.AccessValue;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
@@ -86,7 +87,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private EncodedValue highwayEncoder;
     private EncodedValue transportModeEncoder;
     private EncodedValue accessEncoder;
-    private static int NOT_ACCESSIBLE_KEY;
     private boolean storeHeight = false;
     private boolean storeWeight = false;
     private boolean storeWidth = false;
@@ -169,7 +169,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         accessMap.put("customers", accessMap.get("destination"));
         accessMap.put("delivery", accessMap.get("destination"));
 
-        NOT_ACCESSIBLE_KEY = accessMap.get("no");
         // accessMap.put("forestry", accessMap.get("agricultural"));
     }
 
@@ -275,7 +274,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
 
         if (spatialRuleLookupEnabled() && accessValue == 0) {
-            switch (getSpatialRule(way).getAccessible(way.getTag("highway", ""), "", AccessValue.ACCESSIBLE)){
+            // TODO Fix transportation mode when adding other forms of transportation
+            switch (getSpatialRule(way).getAccessValue(way.getTag("highway", ""), TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE)){
                 case ACCESSIBLE:
                     accessValue = accessMap.get("yes");
                     break;
@@ -330,14 +330,14 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
                 maxSpeed = getSpatialRule(way).getMaxSpeed(way.getTag("highway", ""), maxSpeed);
             }
             double fwdSpeed = parseSpeed(way.getTag("maxspeed:forward"));
-            if (fwdSpeed < 0 || maxSpeed > 0)
+            if (fwdSpeed < 0 && maxSpeed > 0)
                 fwdSpeed = maxSpeed;
             if (fwdSpeed > getMaxPossibleSpeed())
                 fwdSpeed = getMaxPossibleSpeed();
 
 
             double bwdSpeed = parseSpeed(way.getTag("maxspeed:backward"));
-            if (bwdSpeed < 0 || maxSpeed > 0)
+            if (bwdSpeed < 0 && maxSpeed > 0)
                 bwdSpeed = maxSpeed;
             if (bwdSpeed > getMaxPossibleSpeed())
                 bwdSpeed = getMaxPossibleSpeed();

@@ -33,7 +33,7 @@ public class SpatialRuleLookupBuilder {
 
     /**
      * This method connects the rules with the jsonFeatureCollection via their ISO_A3 property and the rules its
-     * getUniqueName method.
+     * getId method.
      *
      * @return the index or null if the specified bounds does not intersect with the calculated ones from the rules.
      */
@@ -43,7 +43,7 @@ public class SpatialRuleLookupBuilder {
         // TODO filter out polyons that don't intersect with the given BBox, will be implicitly done later anyway
         for (SpatialRule spatialRule : rules) {
             for (JsonFeature jsonFeature : jsonFeatureCollection.getFeatures()) {
-                if (spatialRule.getUniqueName().equals(jsonFeature.getProperty("ISO_A3"))) {
+                if (spatialRule.getId().equals(jsonFeature.getProperty("ISO_A3"))) {
                     Geometry geometry = jsonFeature.getGeometry();
                     if (!geometry.isPolygon())
                         continue;
@@ -63,7 +63,7 @@ public class SpatialRuleLookupBuilder {
             }
         }
 
-        if (polygonBounds.minLon == Double.MAX_VALUE) {
+        if (!polygonBounds.isValid()) {
             throw new IllegalStateException("No SpatialRules defined or Polygons defined");
         }
 

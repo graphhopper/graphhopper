@@ -252,15 +252,6 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
         return new GHPoint(lat, lon);
     }
 
-    void sout(int stepSize) {
-        for (int i = 0; i < lookupArray.length; i += stepSize) {
-            for (int j = 0; j < lookupArray[0].length; j += stepSize) {
-                System.out.print(lookupArray[i][j]);
-            }
-            System.out.println();
-        }
-    }
-
     @Override
     public int size() {
         return singleRules.size();

@@ -180,6 +180,16 @@ public class DataFlagEncoderTest {
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
         assertEquals(10, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
         assertEquals(-1, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
+
+        osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "primary");
+        osmWay.setTag("maxspeed:forward", "50");
+        osmWay.setTag("maxspeed:backward", "50");
+        osmWay.setTag("maxspeed", "60");
+        flags = encoder.handleWayTags(osmWay, 1, 0);
+        edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertEquals(50, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
+        assertEquals(50, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
     }
 
     @Test

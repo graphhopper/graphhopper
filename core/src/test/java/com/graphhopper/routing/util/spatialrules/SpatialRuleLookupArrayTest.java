@@ -23,7 +23,7 @@ public class SpatialRuleLookupArrayTest {
 
         SpatialRule rule = lookup.lookupRule(1.5, 1.5);
         assertEquals(germanyRule, rule);
-        assertEquals("DEU", rule.getUniqueName());
+        assertEquals("DEU", rule.getId());
         int id = lookup.getSpatialId(rule);
         assertTrue(id > 0);
         assertEquals(rule, lookup.getSpatialRule(id));
@@ -35,11 +35,11 @@ public class SpatialRuleLookupArrayTest {
         SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(bounds, 1, false);
         spatialRuleLookup.addRule(getSpatialRule(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1}), "1"));
         spatialRuleLookup.addRule(getSpatialRule(new Polygon(new double[]{1, 1, 3.6, 3.6}, new double[]{3, 4, 4, 3}), "2"));
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 1.7).getAccessible(null, "", AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 3.7).getAccessible(null, "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 1.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 3.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
         // Not in the second Polygon anymore, but due to the resolution of 1, this should be still match the rule
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(3.9, 3.7).getAccessible(null, "", AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(2.2, 1.7).getAccessible(null, "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(3.9, 3.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(2.2, 1.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
     }
 
     @Test
@@ -48,11 +48,11 @@ public class SpatialRuleLookupArrayTest {
         SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(bounds, 1, true);
         spatialRuleLookup.addRule(getSpatialRule(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1}), "1"));
         spatialRuleLookup.addRule(getSpatialRule(new Polygon(new double[]{1, 1, 3.6, 3.6}, new double[]{3, 4, 4, 3}), "2"));
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 1.7).getAccessible(null, "", AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 3.7).getAccessible(null, "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 1.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 3.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
         // Not in the second Polygon anymore
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(3.9, 3.7).getAccessible(null, "", AccessValue.ACCESSIBLE));
-        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(2.2, 1.7).getAccessible(null, "", AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(3.9, 3.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
+        assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(2.2, 1.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
     }
 
     @Test
@@ -65,26 +65,26 @@ public class SpatialRuleLookupArrayTest {
         spatialRuleLookup.addRule(new GermanySpatialRule().addBorder(germanPolygon));
 
         // Far from the border of Germany, in Germany
-        assertEquals("DEU", spatialRuleLookup.lookupRule(48.777106, 9.180769).getUniqueName());
-        assertEquals("DEU", spatialRuleLookup.lookupRule(51.806281, 7.269380).getUniqueName());
-        assertEquals("DEU", spatialRuleLookup.lookupRule(50.636710, 12.514561).getUniqueName());
+        assertEquals("DEU", spatialRuleLookup.lookupRule(48.777106, 9.180769).getId());
+        assertEquals("DEU", spatialRuleLookup.lookupRule(51.806281, 7.269380).getId());
+        assertEquals("DEU", spatialRuleLookup.lookupRule(50.636710, 12.514561).getId());
 
         // Far from the border of Germany, not in Germany
-        assertEquals("", spatialRuleLookup.lookupRule(48.029533, 7.250122).getUniqueName());
-        assertEquals("", spatialRuleLookup.lookupRule(51.694467, 15.209218).getUniqueName());
-        assertEquals("", spatialRuleLookup.lookupRule(47.283669, 11.167381).getUniqueName());
+        assertEquals("", spatialRuleLookup.lookupRule(48.029533, 7.250122).getId());
+        assertEquals("", spatialRuleLookup.lookupRule(51.694467, 15.209218).getId());
+        assertEquals("", spatialRuleLookup.lookupRule(47.283669, 11.167381).getId());
 
         // Close to the border of Germany, in Germany - Whereas the borders are defined by the GeoJson above and do not strictly follow the acutal border
-        assertEquals("DEU", spatialRuleLookup.lookupRule(50.017714, 12.356129).getUniqueName());
-        assertEquals("DEU", spatialRuleLookup.lookupRule(49.949930, 6.225853).getUniqueName());
-        assertEquals("DEU", spatialRuleLookup.lookupRule(47.580866, 9.707582).getUniqueName());
-        assertEquals("DEU", spatialRuleLookup.lookupRule(47.565101, 9.724267).getUniqueName());
-        assertEquals("DEU", spatialRuleLookup.lookupRule(47.557166, 9.738343).getUniqueName());
+        assertEquals("DEU", spatialRuleLookup.lookupRule(50.017714, 12.356129).getId());
+        assertEquals("DEU", spatialRuleLookup.lookupRule(49.949930, 6.225853).getId());
+        assertEquals("DEU", spatialRuleLookup.lookupRule(47.580866, 9.707582).getId());
+        assertEquals("DEU", spatialRuleLookup.lookupRule(47.565101, 9.724267).getId());
+        assertEquals("DEU", spatialRuleLookup.lookupRule(47.557166, 9.738343).getId());
 
         // Close to the border of Germany, not in Germany
-        assertEquals("", spatialRuleLookup.lookupRule(50.025342, 12.386262).getUniqueName());
-        assertEquals("", spatialRuleLookup.lookupRule(49.932900, 6.174023).getUniqueName());
-        assertEquals("", spatialRuleLookup.lookupRule(47.547463, 9.741948).getUniqueName());
+        assertEquals("", spatialRuleLookup.lookupRule(50.025342, 12.386262).getId());
+        assertEquals("", spatialRuleLookup.lookupRule(49.932900, 6.174023).getId());
+        assertEquals("", spatialRuleLookup.lookupRule(47.547463, 9.741948).getId());
     }
 
     @Test
@@ -95,8 +95,8 @@ public class SpatialRuleLookupArrayTest {
         spatialRuleLookup.addRule(getSpatialRule(new Polygon(new double[]{1, 1, 1.5, 1.5}, new double[]{1, 2, 2, 1}), "top"));
         spatialRuleLookup.addRule(getSpatialRule(new Polygon(new double[]{1.5, 1.5, 2, 2}, new double[]{1, 2, 2, 1}), "bottom"));
 
-        assertEquals("top", spatialRuleLookup.lookupRule(1.4, 1.5).getUniqueName());
-        assertEquals("bottom", spatialRuleLookup.lookupRule(1.6, 1.5).getUniqueName());
+        assertEquals("top", spatialRuleLookup.lookupRule(1.4, 1.5).getId());
+        assertEquals("bottom", spatialRuleLookup.lookupRule(1.6, 1.5).getId());
     }
 
     private Polygon parsePolygonString(String polygonString) {
@@ -123,12 +123,12 @@ public class SpatialRuleLookupArrayTest {
             }
 
             @Override
-            public AccessValue getAccessible(String highwayTag, String transportationMode, AccessValue _default) {
+            public AccessValue getAccessValue(String highwayTag, TransportationMode transportationMode, AccessValue _default) {
                 return AccessValue.EVENTUALLY_ACCESSIBLE;
             }
 
             @Override
-            public String getUniqueName() {
+            public String getId() {
                 return name;
             }
         };

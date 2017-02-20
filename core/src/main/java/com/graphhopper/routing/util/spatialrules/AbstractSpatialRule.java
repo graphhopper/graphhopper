@@ -17,8 +17,6 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.reader.ReaderWay;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -49,7 +47,7 @@ public abstract class AbstractSpatialRule implements SpatialRule {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof SpatialRule) {
-            if (((SpatialRule) obj).getUniqueName().equals(this.getUniqueName()))
+            if (((SpatialRule) obj).getId().equals(this.getId()))
                 return true;
         }
         return false;
@@ -57,11 +55,11 @@ public abstract class AbstractSpatialRule implements SpatialRule {
 
     @Override
     public int hashCode() {
-        return getUniqueName().hashCode();
+        return getId().hashCode();
     }
 
     @Override
     public String toString() {
-        return getUniqueName();
+        return getId();
     }
 }

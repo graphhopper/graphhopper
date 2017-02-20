@@ -21,26 +21,52 @@ import java.util.List;
 
 /**
  * Defines rules that are valid for a certain region, e.g. a country.
- * A rule might makes access, max-speed, etc. dependent on this region.
+ * A rule defines access, max-speed, etc. dependent on this region.
+ *
+ * Every SpatialRule has a set of borders. The rules are valid inside of these borders.
  *
  * @author Robin Boldt
  */
 public interface SpatialRule {
 
+    /**
+     * Return the max speed for a certain highway type. If there is no max speed defined, _default will be returned.
+     *
+     * @param highway The highway type, e.g. primary, secondary
+     * @param _default The default max speed
+     * @return max speed
+     */
     double getMaxSpeed(String highway, double _default);
 
-    AccessValue getAccessible(String highwayTag, String transportationMode, AccessValue _default);
+    /**
+     * Returns the {@link AccessValue} for a certain highway type and transportation mode. If nothing is defined,
+     * _default will be returned.
+     *
+     * @param highwayTag The highway type, e.g. primary, secondary
+     * @param transportationMode The mode of transportation
+     * @param _default The default AccessValue
+     */
+    AccessValue getAccessValue(String highwayTag, TransportationMode transportationMode, AccessValue _default);
 
+    /**
+     * Returns the borders in which the SpatialRule is valid
+     */
     List<Polygon> getBorders();
 
+    /**
+     * Set the borders in which the SpatialRule is valid
+     */
     SpatialRule setBorders(List<Polygon> borders);
 
+    /**
+     * Add a polygon to the borders in which the SpatialRule is valid
+     */
     SpatialRule addBorder(Polygon polygon);
 
     /**
-     * Get the unique name for this rule, e.g. the ISO name of the country.
+     * Returns the id for this rule, e.g. the ISO name of the country. The id has to be unique.
      */
-    String getUniqueName();
+    String getId();
 
     SpatialRule EMPTY = new SpatialRule() {
         @Override
@@ -49,12 +75,12 @@ public interface SpatialRule {
         }
 
         @Override
-        public AccessValue getAccessible(String highwayTag, String transportationMode, AccessValue _default) {
+        public AccessValue getAccessValue(String highwayTag, TransportationMode transportationMode, AccessValue _default) {
             return AccessValue.ACCESSIBLE;
         }
 
         @Override
-        public String getUniqueName() {
+        public String getId() {
             return "";
         }
 

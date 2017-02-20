@@ -28,17 +28,35 @@ import com.graphhopper.util.shapes.GHPoint;
  */
 public interface SpatialRuleLookup {
 
+    /**
+     * Return an applicable rule for this location.
+     * If there is more than one rule for the location, the implementation can decide which rule to return.
+     * For example this might be the first occurring or the most relevant, see the implementation JavaDoc.
+     * <p>
+     * If the requested location is outside of the supported bounds or no SpatialRule is registered at this location
+     * {@link SpatialRule#EMPTY} is returned.
+     */
     SpatialRule lookupRule(double lat, double lon);
 
+    /**
+     * See {@link #lookupRule(double, double)} for details.
+     */
     SpatialRule lookupRule(GHPoint point);
 
+    /**
+     * Add a rule to the lookup.
+     */
     void addRule(SpatialRule rule);
 
     /**
      * This method returns an identification number from 0 to size (exclusive) for the specified rule.
+     * The id is fix for a given set of SpatialRules. When the set of rules is modified, the id might change.
      */
     int getSpatialId(SpatialRule rule);
 
+    /**
+     * Returns the outer bounds of the spatial lookup.
+     */
     BBox getBounds();
 
     /**

@@ -19,6 +19,7 @@ package com.graphhopper.routing.util.spatialrules.countries;
 
 import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
 /**
  * Default implementation for the SpatialRule that contains the current default values
@@ -52,23 +53,26 @@ public class DefaultSpatialRule extends AbstractSpatialRule {
     }
 
     @Override
-    public AccessValue getAccessible(String highwayTag, String transportationMode, AccessValue _default) {
+    public AccessValue getAccessValue(String highwayTag, TransportationMode transportationMode, AccessValue _default) {
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restriction
         // We tried to find generally forbidden tags
-        switch (highwayTag) {
-            case "path":
-            case "bridleway":
-            case "cycleway":
-            case "footway":
-            case "pedestrian":
-                return AccessValue.NOT_ACCESSIBLE;
-            default:
-                return _default;
+        if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
+            switch (highwayTag) {
+                case "path":
+                case "bridleway":
+                case "cycleway":
+                case "footway":
+                case "pedestrian":
+                    return AccessValue.NOT_ACCESSIBLE;
+                default:
+                    return _default;
+            }
         }
+        return _default;
     }
 
     @Override
-    public String getUniqueName() {
+    public String getId() {
         throw new UnsupportedOperationException("No country code for the DefaultSpatialRule");
     }
 }
