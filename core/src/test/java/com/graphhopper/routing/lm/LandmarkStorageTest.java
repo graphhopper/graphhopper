@@ -21,7 +21,6 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -28,11 +28,15 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Parameters.Landmark;
+import com.graphhopper.util.shapes.GHPoint;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.util.Parameters.Landmark.DISABLE;
@@ -50,11 +54,13 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private final List<Weighting> weightings = new ArrayList<>();
     private boolean enabled = false;
     private boolean disablingAllowed = false;
+    private List<String> lmSuggestionsLocations = Collections.emptyList();
 
     @Override
     public void init(CmdArgs args) {
         landmarkCount = args.getInt(Landmark.COUNT, landmarkCount);
         activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(4, landmarkCount));
+        lmSuggestionsLocations = Arrays.asList(args.get("prepare.lm.suggestions_location", "").split(","));
         String lmWeightingsStr = args.get(Landmark.PREPARE + "weightings", "");
         if (!lmWeightingsStr.isEmpty()) {
             List<String> tmpLMWeightingList = Arrays.asList(lmWeightingsStr.split(","));
@@ -213,15 +219,29 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         }
     }
 
-    public void createPreparations(GraphHopperStorage ghStorage, TraversalMode traversalMode) {
+    /**
+     * This method triggers the landmark creation.
+     */
+    public void createPreparations(GraphHopperStorage ghStorage, TraversalMode traversalMode, LocationIndex locationIndex) {
         if (!isEnabled() || !preparations.isEmpty())
             return;
         if (weightings.isEmpty())
             throw new IllegalStateException("No landmark weightings found");
 
+        List<LandmarkSuggestion> suggestions = new ArrayList<>(lmSuggestionsLocations.size());
+        if (!lmSuggestionsLocations.isEmpty()) {
+            try {
+                for (String loc : lmSuggestionsLocations) {
+                    suggestions.add(LandmarkSuggestion.readLandmarks(loc, locationIndex));
+                }
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
         for (Weighting weighting : getWeightings()) {
             PrepareLandmarks tmpPrepareLM = new PrepareLandmarks(ghStorage.getDirectory(), ghStorage,
-                    weighting, traversalMode, landmarkCount, activeLandmarkCount);
+                    weighting, traversalMode, landmarkCount, activeLandmarkCount).
+                    setLandmarkSuggestions(suggestions);
 
             addPreparation(tmpPrepareLM);
         }

@@ -26,6 +26,7 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -235,7 +236,7 @@ public class PrepareRoutingSubnetworks {
 
     int removeEdges(EdgeExplorer explorer, FlagEncoder encoder, IntIndexedContainer component, int min) {
         int removedEdges = 0;
-        if (component.size() < min)
+        if (component.size() < min) {
             for (int i = 0; i < component.size(); i++) {
                 EdgeIterator edge = explorer.setBaseNode(component.get(i));
                 while (edge.next()) {
@@ -243,6 +244,7 @@ public class PrepareRoutingSubnetworks {
                     removedEdges++;
                 }
             }
+        }
 
         return removedEdges;
     }

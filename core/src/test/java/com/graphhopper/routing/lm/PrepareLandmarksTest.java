@@ -116,6 +116,7 @@ public class PrepareLandmarksTest
         int activeLandmarkIndices[] = new int[activeLM];
         int activeFroms[] = new int[activeLM];
         int activeTos[] = new int[activeLM];
+        Arrays.fill(activeLandmarkIndices, -1);
         store.initActiveLandmarks(27, 47, activeLandmarkIndices, activeFroms, activeTos, false);
         List<Integer> list = new ArrayList<>();
         for (int idx : activeLandmarkIndices) {
@@ -143,6 +144,7 @@ public class PrepareLandmarksTest
         assertEquals(expectedAlgo.getVisitedNodes() - 155, oneDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with bidir A*
+        opts.getHints().put("lm.recalc_count", 50);
         RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getDecoratedAlgorithm(graph,
                 new AStarBidirection(graph, weighting, tm), opts);
         path = biDirAlgoWithLandmarks.calcPath(41, 183);

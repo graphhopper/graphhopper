@@ -162,7 +162,7 @@ public class Parameters {
         /**
          * Default for active count
          */
-        public static final String ACTIVE_COUNT_DEFAULT = ROUTING_INIT_PREFIX + "lm.active_landmarks";
+        public static final String ACTIVE_COUNT_DEFAULT = ROUTING_INIT_PREFIX + ACTIVE_COUNT;
         /**
          * Specifies how many landmarks should be created
          */

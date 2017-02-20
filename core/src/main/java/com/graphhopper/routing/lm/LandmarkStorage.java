@@ -18,6 +18,7 @@
 package com.graphhopper.routing.lm;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
@@ -73,7 +74,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private final TraversalMode traversalMode;
     private boolean initialized;
     private int minimumNodes = 500_000;
-    private SubnetworkStorage subnetworkStorage;
+    private final SubnetworkStorage subnetworkStorage;
+    private List<LandmarkSuggestion> landmarkSuggestions = Collections.emptyList();
     // private Map<String, Polygon> borderMap = new HashMap<>();
 
     public LandmarkStorage(GraphHopperStorage graph, Directory dir, int landmarks, final Weighting weighting, TraversalMode traversalMode) {
@@ -108,10 +110,29 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         this.subnetworkStorage = new SubnetworkStorage(dir, "landmarks_" + name);
     }
 
+    /**
+     * This method forces the landmark preparation to skip the landmark search and uses the specified landmark list instead.
+     * Useful for manual tuning of larger areas to safe import time or improve quality.
+     */
+    public LandmarkStorage setLandmarkSuggestions(List<LandmarkSuggestion> landmarkSuggestions) {
+        if (landmarkSuggestions == null)
+            throw new IllegalArgumentException("landmark suggestions cannot be null");
+
+        this.landmarkSuggestions = landmarkSuggestions;
+        return this;
+    }
+
+    /**
+     * This method sets the required number of nodes of a subnetwork for which landmarks should be calculated. Every
+     * subnetwork below this count will be ignored.
+     */
     public void setMinimumNodes(int minimumNodes) {
         this.minimumNodes = minimumNodes;
     }
 
+    /**
+     * @see #setMinimumNodes(int)
+     */
     public int getMinimumNodes() {
         return minimumNodes;
     }
@@ -128,6 +149,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         this.lmSelectionWeighting = lmSelectionWeighting;
     }
 
+    /**
+     * This method returns the weighting for which the landmarks are originally created
+     */
     public Weighting getWeighting() {
         return weighting;
     }
@@ -266,45 +290,78 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      */
     private boolean createLandmarks(final int startNode, final byte[] subnetworks, IntArrayList subnetworkIds) {
         final int subnetworkId = landmarkIDs.size();
-
-        // 1a) pick landmarks via shortest weighting for a better geographical spreading
-        // 'fastest' has big problems with ferries (slow&very long) and allowing arbitrary weighting is too dangerous
-        Weighting initWeighting = lmSelectionWeighting;
-        Explorer explorer = new Explorer(graph, this, initWeighting, traversalMode);
-        explorer.initFrom(startNode, 0);
-        explorer.setFilter(true, true);
-        explorer.runAlgo(true);
-
-        if (explorer.getFromCount() < minimumNodes) {
-            // too small subnetworks are initialized with special id==0
-            explorer.setSubnetworks(subnetworks, UNCLEAR_SUBNETWORK);
-            return false;
-        }
-
-        // 1b) we have one landmark, now determine the other landmarks
+        boolean random = false;
         int[] tmpLandmarkNodeIds = new int[landmarks];
         int logOffset = Math.max(1, tmpLandmarkNodeIds.length / 2);
-        tmpLandmarkNodeIds[0] = explorer.getLastNode();
-        for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length - 1; lmIdx++) {
-            explorer = new Explorer(graph, this, initWeighting, traversalMode);
-            explorer.setFilter(true, true);
-            // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
-            for (int j = 0; j < lmIdx + 1; j++) {
-                explorer.initFrom(tmpLandmarkNodeIds[j], 0);
+        boolean pickedPrecalculatedLandmarks = false;
+
+        if (!landmarkSuggestions.isEmpty()) {
+            NodeAccess na = graph.getNodeAccess();
+            double lat = na.getLatitude(startNode), lon = na.getLongitude(startNode);
+            LandmarkSuggestion selectedSuggestion = null;
+            for (LandmarkSuggestion lmsugg : landmarkSuggestions) {
+                if (lmsugg.getBox().contains(lat, lon)) {
+                    selectedSuggestion = lmsugg;
+                    break;
+                }
             }
-            explorer.runAlgo(true);
-            tmpLandmarkNodeIds[lmIdx + 1] = explorer.getLastNode();
-            if (lmIdx % logOffset == 0)
-                LOGGER.info("Finding landmarks [" + weighting + "] in network [" + explorer.getVisitedNodes() + "]. "
-                        + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%, " + Helper.getMemInfo());
+
+            if (selectedSuggestion != null) {
+                if (selectedSuggestion.getNodeIds().size() < tmpLandmarkNodeIds.length)
+                    throw new IllegalArgumentException("landmark suggestions are too few " + selectedSuggestion.getNodeIds().size() + " for requested landmarks " + landmarks);
+
+                pickedPrecalculatedLandmarks = true;
+                for (int i = 0; i < tmpLandmarkNodeIds.length; i++) {
+                    int lmNodeId = selectedSuggestion.getNodeIds().get(i);
+                    tmpLandmarkNodeIds[i] = lmNodeId;
+                }
+            }
+//            Random randomInst = new Random();
+//            for (int i = 0; i < tmpLandmarkNodeIds.length; i++) {
+//                int index = randomInst.nextInt(subnetworkIds.size());
+//                tmpLandmarkNodeIds[i] = subnetworkIds.get(index);
+//            }
         }
 
-        LOGGER.info("Finished searching landmarks for subnetwork " + subnetworkId + " of size " + explorer.getVisitedNodes());
+        if (pickedPrecalculatedLandmarks) {
+            LOGGER.info("Picked " + tmpLandmarkNodeIds.length + " landmark suggestions, skipped expensive landmark determination");
+        } else {
+            // 1a) pick landmarks via shortest weighting for a better geographical spreading
+            // 'fastest' has big problems with ferries (slow&very long) and allowing arbitrary weighting is too dangerous
+            Weighting initWeighting = lmSelectionWeighting;
+            Explorer explorer = new Explorer(graph, this, initWeighting, traversalMode);
+            explorer.initFrom(startNode, 0);
+            explorer.setFilter(true, true);
+            explorer.runAlgo(true);
+
+            if (explorer.getFromCount() < minimumNodes) {
+                // too small subnetworks are initialized with special id==0
+                explorer.setSubnetworks(subnetworks, UNCLEAR_SUBNETWORK);
+                return false;
+            }
+
+            // 1b) we have one landmark, now determine the other landmarks
+            tmpLandmarkNodeIds[0] = explorer.getLastNode();
+            for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length - 1; lmIdx++) {
+                explorer = new Explorer(graph, this, initWeighting, traversalMode);
+                explorer.setFilter(true, true);
+                // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
+                for (int j = 0; j < lmIdx + 1; j++) {
+                    explorer.initFrom(tmpLandmarkNodeIds[j], 0);
+                }
+                explorer.runAlgo(true);
+                tmpLandmarkNodeIds[lmIdx + 1] = explorer.getLastNode();
+                if (lmIdx % logOffset == 0)
+                    LOGGER.info("Finding landmarks [" + weighting + "] in network [" + explorer.getVisitedNodes() + "]. "
+                            + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%, " + Helper.getMemInfo());
+            }
+            LOGGER.info("Finished searching landmarks for subnetwork " + subnetworkId + " of size " + explorer.getVisitedNodes());
+        }
 
         // 2) calculate weights for all landmarks -> 'from' and 'to' weight
         for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
             int lm = tmpLandmarkNodeIds[lmIdx];
-            explorer = new Explorer(graph, this, weighting, traversalMode);
+            Explorer explorer = new Explorer(graph, this, weighting, traversalMode);
             explorer.initFrom(lm, 0);
             explorer.setFilter(false, true);
             explorer.runAlgo(true);
@@ -410,9 +467,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return (int) (weighting.calcWeight(edge, reverse, EdgeIterator.NO_EDGE) / factor);
     }
 
-    // From all available landmarks pick just a few active ones. TODO: we can change the landmark set, 
-    // while we calculate the route but this requires resetting the map and queue in the algo itself! 
-    // Still according to papers this should give a speed up
+    // From all available landmarks pick just a few active ones
     boolean initActiveLandmarks(int fromNode, int toNode, int[] activeLandmarkIndices,
                                 int[] activeFroms, int[] activeTos, boolean reverse) {
         if (fromNode < 0 || toNode < 0)
@@ -442,8 +497,26 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         Collections.sort(list, SORT_BY_WEIGHT);
 
-        for (int i = 0; i < activeLandmarkIndices.length; i++) {
-            activeLandmarkIndices[i] = list.get(i).getValue();
+        if (activeLandmarkIndices[0] >= 0) {
+            IntHashSet set = new IntHashSet(activeLandmarkIndices.length);
+            set.addAll(activeLandmarkIndices);
+            int existingLandmarkCounter = 0;
+            final int COUNT = Math.min(activeLandmarkIndices.length - 2, 2);
+            for (int i = 0; i < activeLandmarkIndices.length; i++) {
+                if (i >= activeLandmarkIndices.length - COUNT + existingLandmarkCounter) {
+                    // keep at least two of the previous landmarks (pick the best)
+                    break;
+                } else {
+                    activeLandmarkIndices[i] = list.get(i).getValue();
+                    if (set.contains(activeLandmarkIndices[i]))
+                        existingLandmarkCounter++;
+                }
+            }
+
+        } else {
+            for (int i = 0; i < activeLandmarkIndices.length; i++) {
+                activeLandmarkIndices[i] = list.get(i).getValue();
+            }
         }
 
         // store weight values of active landmarks in 'cache' arrays
@@ -463,6 +536,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return landmarkIDs.get(subnetwork);
     }
 
+    /**
+     * @return the number of subnetworks that have landmarks
+     */
     public int getSubnetworksWithLandmarks() {
         return landmarkIDs.size();
     }
@@ -661,7 +737,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             });
 
             if ((double) maxedout.get() / map.size() > 0.1)
-                LOGGER.warn("Too many weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Use a bigger factor " + lms.getFactor());
+                LOGGER.warn("landmark " + lmIdx + " -> too many weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Use a bigger factor " + lms.factor);
         }
     }
 

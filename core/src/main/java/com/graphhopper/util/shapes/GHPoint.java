@@ -35,12 +35,22 @@ public class GHPoint {
     }
 
     public static GHPoint parse(String str) {
-        // if the point is in the format of lat,lon we don't need to call geocoding service
+        return parse(str, false);
+    }
+
+    public static GHPoint parseLonLat(String str) {
+        return parse(str, true);
+    }
+
+    private static GHPoint parse(String str, boolean lonLatOrder) {
         String[] fromStrs = str.split(",");
         if (fromStrs.length == 2) {
             try {
                 double fromLat = Double.parseDouble(fromStrs[0]);
                 double fromLon = Double.parseDouble(fromStrs[1]);
+                if (lonLatOrder)
+                    return new GHPoint(fromLon, fromLat);
+
                 return new GHPoint(fromLat, fromLon);
             } catch (Exception ex) {
             }

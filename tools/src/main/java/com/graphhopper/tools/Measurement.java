@@ -117,13 +117,13 @@ public class Measurement {
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
-            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1);
+//            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1);
 
             if (hopper.getLMFactoryDecorator().isEnabled()) {
                 System.gc();
                 isLM = true;
-                int activeLMCount = 10;
-                for (; activeLMCount > 3; activeLMCount -= 2) {
+                int activeLMCount = 12;
+                for (; activeLMCount > 3; activeLMCount -= 4) {
                     printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount);
                 }
 
@@ -376,7 +376,9 @@ public class Measurement {
                     if (!warmup)
                         failedCount.incrementAndGet();
 
-                    if (!rsp.getErrors().get(0).getMessage().toLowerCase().contains("not found"))
+                    if (rsp.getErrors().get(0).getMessage() == null)
+                        rsp.getErrors().get(0).printStackTrace();
+                    else if (!rsp.getErrors().get(0).getMessage().toLowerCase().contains("not found"))
                         logger.error("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
 
                     return 0;

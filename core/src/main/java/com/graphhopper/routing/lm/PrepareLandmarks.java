@@ -19,17 +19,26 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This class does the preprocessing for the ALT algorithm (A* , landmark, triangle inequality).
@@ -57,10 +66,24 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         lms = new LandmarkStorage(graph, dir, landmarks, weighting, traversalMode);
     }
 
+    /**
+     * @see LandmarkStorage#setLandmarkSuggestions(List)
+     */
+    public PrepareLandmarks setLandmarkSuggestions(List<LandmarkSuggestion> landmarkSuggestions) {
+        lms.setLandmarkSuggestions(landmarkSuggestions);
+        return this;
+    }
+
+    /**
+     * @see LandmarkStorage#setLMSelectionWeighting(Weighting)
+     */
     public void setLMSelectionWeighting(Weighting w) {
         lms.setLMSelectionWeighting(w);
     }
 
+    /**
+     * @see LandmarkStorage#setMinimumNodes(int)
+     */
     public void setMinimumNodes(int nodes) {
         if (nodes < 2)
             throw new IllegalArgumentException("minimum node count must be at least 2");
@@ -89,9 +112,6 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
                 + defaultActiveLandmarks + ", weighting:" + weighting + ", " + Helper.getMemInfo());
 
         lms.createLandmarks();
-//        if (lms.isEmpty())
-//            throw new IllegalStateException("No landmarks found! To small graph (" + graph.getNodes() + ") vs. minimum nodes (" + getLandmarkStorage().getMinimumNodes() + ")? landmark storage:" + lms.toString());
-
         lms.flush();
 
         LOGGER.info("Calculating landmarks for " + (lms.getSubnetworksWithLandmarks() - 1) + " subnetworks took:" + sw.stop().getSeconds() + " => "
@@ -107,18 +127,19 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
 
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR + ".epsilon", 1);
             AStar astar = (AStar) algo;
-            astar.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
+            astar.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, -1, lms.getFactor(), false).
                     setEpsilon(epsilon));
             return algo;
         } else if (algo instanceof AStarBidirection) {
             if (!lms.isInitialized())
                 throw new IllegalStateException("Initalize landmark storage before creating algorithms");
 
+            int recalcCount = Math.max(10, opts.getHints().getInt("lm.recalc_count", 8000));
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR_BI + ".epsilon", 1);
             AStarBidirection astarbi = (AStarBidirection) algo;
-            LMApproximator approximator = new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).setEpsilon(epsilon);
-            // approximator.setRecalcHook(astarbi);
-            // astarbi.setEdgeFilter(approximator.createRecalcFilter());
+            LMApproximator approximator = new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, recalcCount, lms.getFactor(), false).setEpsilon(epsilon);
+            // TODO changing landmarks while exploration can be better but no config can be given yet which works for more than a few cases.
+//            approximator.setRecalculationHook(astarbi);
             astarbi.setApproximation(approximator);
             return algo;
         } else if (algo instanceof AlternativeRoute) {
@@ -126,7 +147,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
                 throw new IllegalStateException("Initalize landmark storage before creating algorithms");
 
             AlternativeRoute altRoute = (AlternativeRoute) algo;
-            altRoute.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false));
+            altRoute.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, -1, lms.getFactor(), false));
             // landmark algorithm follows good compromise between fast response and exploring 'interesting' paths so we
             // can decrease this exploration factor further (1->dijkstra, 0.8->bidir. A*)
             altRoute.setMaxExplorationFactor(0.6);
