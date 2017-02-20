@@ -858,8 +858,8 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (lmFactoryDecorator.isEnabled())
             lmFactoryDecorator.createPreparations(ghStorage, traversalMode, locationIndex);
-
-        prepareLM();
+        if (!isLMPrepared())
+            prepareLM();
     }
 
     private void interpolateBridgesAndOrTunnels() {
@@ -1161,6 +1161,10 @@ public class GraphHopper implements GraphHopperAPI {
 
     private boolean isCHPrepared() {
         return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"));
+    }
+
+    private boolean isLMPrepared() {
+        return "true".equals(ghStorage.getProperties().get(Landmark.PREPARE + "done"));
     }
 
     protected void prepareCH() {

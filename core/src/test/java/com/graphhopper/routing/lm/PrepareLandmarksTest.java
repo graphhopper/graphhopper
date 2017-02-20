@@ -88,7 +88,7 @@ public class PrepareLandmarksTest
         Weighting weighting = new FastestWeighting(encoder);
         LandmarkStorage store = new LandmarkStorage(graph, dir, lm, weighting, tm);
         store.setMinimumNodes(2);
-        store.createLandmarksForSubnetwork();
+        store.createLandmarks();
 
         // landmarks should be the 4 corners of the grid:
         int[] intList = store.getLandmarks(1);

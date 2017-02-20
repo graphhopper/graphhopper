@@ -104,7 +104,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         LOGGER.info("Start calculating " + lms.getLandmarkCount() + " landmarks, default active lms:"
                 + defaultActiveLandmarks + ", weighting:" + weighting + ", " + Helper.getMemInfo());
 
-        lms.createLandmarksForSubnetwork();
+        lms.createLandmarks();
         lms.flush();
 
         LOGGER.info("Calculating landmarks for " + (lms.getSubnetworksWithLandmarks() - 1) + " subnetworks took:" + sw.stop().getSeconds() + " => "

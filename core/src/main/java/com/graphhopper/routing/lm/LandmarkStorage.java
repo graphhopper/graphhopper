@@ -165,7 +165,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     /**
      * This method calculates the landmarks and initial weightings to & from them.
      */
-    public void createLandmarksForSubnetwork() {
+    public void createLandmarks() {
         if (isInitialized())
             throw new IllegalStateException("Initialize the landmark storage only once!");
 
