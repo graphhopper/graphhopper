@@ -24,6 +24,8 @@ import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.lm.LandmarkStorage;
+import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
@@ -37,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 
@@ -62,8 +65,7 @@ public class DefaultModule extends AbstractModule {
     static SpatialRuleLookup buildIndex(Reader reader, BBox graphBBox) {
         GHJson ghJson = new GHJsonBuilder().create();
         JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(reader, JsonFeatureCollection.class);
-        return new SpatialRuleLookupBuilder().build(
-                Arrays.asList(new GermanySpatialRule(), new AustriaSpatialRule()),
+        return new SpatialRuleLookupBuilder().build(Arrays.asList(new GermanySpatialRule(), new AustriaSpatialRule()),
                 jsonFeatureCollection, graphBBox, 1, true);
     }
 
@@ -71,7 +73,31 @@ public class DefaultModule extends AbstractModule {
      * @return an initialized GraphHopper instance
      */
     protected GraphHopper createGraphHopper(CmdArgs args) {
-        GraphHopper tmp = new GraphHopperOSM().forServer().init(args);
+        GraphHopper tmp = new GraphHopperOSM() {
+            @Override
+            protected void prepareLM() {
+                if (!getLMFactoryDecorator().isEnabled() || getLMFactoryDecorator().getPreparations().isEmpty())
+                    return;
+
+                try {
+                    JsonFeatureCollection jsonFeatureCollection = new GHJsonBuilder().create().fromJson(
+                            new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream()), JsonFeatureCollection.class);
+                    if (!jsonFeatureCollection.getFeatures().isEmpty()) {
+                        SpatialRuleLookup ruleLookup = new SpatialRuleLookupBuilder().build("country",
+                                new SpatialRuleLookupBuilder.SpatialRuleDefaultFactory(), jsonFeatureCollection,
+                                getGraphHopperStorage().getBounds(), 0.1, true);
+                        for (PrepareLandmarks prep : getLMFactoryDecorator().getPreparations()) {
+                            prep.setSpatialRuleLookup(ruleLookup);
+                        }
+                    }
+                } catch (IOException ex) {
+                    logger.error("Problem while reading border map GeoJSON. Skipping this.", ex);
+                }
+
+                super.prepareLM();
+            }
+        }.forServer().init(args);
+
         String location = args.get("spatial_rules.location", "");
         if (!location.isEmpty()) {
             if (!tmp.getEncodingManager().supports(("generic"))) {

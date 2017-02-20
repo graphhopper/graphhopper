@@ -26,10 +26,12 @@ import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjansSCCAlgorithm;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.spatialrules.Polygon;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
+import com.graphhopper.routing.util.spatialrules.countries.DefaultSpatialRule;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -78,7 +80,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private int minimumNodes = 500_000;
     private final SubnetworkStorage subnetworkStorage;
     private List<LandmarkSuggestion> landmarkSuggestions = Collections.emptyList();
-    // private Map<String, Polygon> borderMap = new HashMap<>();
+    private SpatialRuleLookup ruleLookup;
 
     public LandmarkStorage(GraphHopperStorage graph, Directory dir, int landmarks, final Weighting weighting, TraversalMode traversalMode) {
         this.graph = graph;
@@ -205,11 +207,29 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         byte[] subnetworks = new byte[graph.getNodes()];
         Arrays.fill(subnetworks, (byte) UNSET_SUBNETWORK);
+        EdgeFilter tarjanFilter = new DefaultEdgeFilter(encoder, false, true);
+
+        // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
+        if (ruleLookup != null && ruleLookup.size() > 0) {
+            StopWatch sw = new StopWatch().start();
+            final IntHashSet blockedEdges = splitCountries(ruleLookup);
+            tarjanFilter = new EdgeFilter() {
+                @Override
+                public boolean accept(EdgeIteratorState edgeState) {
+                    if (blockedEdges.contains(edgeState.getEdge()))
+                        return false;
+
+                    return edgeState.isForward(encoder);
+                }
+            };
+            LOGGER.info("Made " + blockedEdges.size() + " edges inaccessible. Calculated country cut in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
+        }
+
+        StopWatch sw = new StopWatch().start();
 
         // we cannot reuse the components calculated in PrepareRoutingSubnetworks as the edgeIds changed in between (called graph.optimize)
         // also calculating subnetworks from scratch makes bigger problems when working with many oneways
-        StopWatch sw = new StopWatch().start();
-        TarjansSCCAlgorithm tarjanAlgo = new TarjansSCCAlgorithm(graph, new DefaultEdgeFilter(encoder, false, true), true);
+        TarjansSCCAlgorithm tarjanAlgo = new TarjansSCCAlgorithm(graph, tarjanFilter, true);
         List<IntArrayList> graphComponents = tarjanAlgo.findComponents();
         LOGGER.info("Calculated tarjan subnetworks in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
 
@@ -230,7 +250,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
                     GHPoint p = createPoint(graph, nextStartNode);
                     LOGGER.info("start node: " + nextStartNode + " (" + p + ") subnetwork size: " + subnetworkIds.size()
-                            + ", " + Helper.getMemInfo());
+                            + ", " + Helper.getMemInfo() + ((ruleLookup == null) ? "" : " area:" + ruleLookup.lookupRule(p).getId()));
 
                     if (createLandmarksForSubnetwork(nextStartNode, subnetworks, subnetworkIds))
                         break;
@@ -379,6 +399,34 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // TODO set weight to SHORT_MAX if entry has either no 'from' or no 'to' entry
         landmarkIDs.add(tmpLandmarkNodeIds);
         return true;
+    }
+
+    /**
+     * This method specifies the polygons which should be used to split the world wide area to improve performance and
+     * quality in this scenario.
+     */
+    public void setSpatialRuleLookup(SpatialRuleLookup ruleLookup) {
+        this.ruleLookup = ruleLookup;
+    }
+
+    /**
+     * This method makes edges crossing the specified border inaccessible to split a bigger area into smaller subnetworks.
+     * This is important for the world wide use case to limit the maximum distance and also to detect unreasonable routes faster.
+     */
+    protected IntHashSet splitCountries(SpatialRuleLookup ruleLookup) {
+        AllEdgesIterator allEdgesIterator = graph.getAllEdges();
+        NodeAccess nodeAccess = graph.getNodeAccess();
+        IntHashSet inaccessible = new IntHashSet();
+        while (allEdgesIterator.next()) {
+            int adjNode = allEdgesIterator.getAdjNode();
+            SpatialRule ruleAdj = ruleLookup.lookupRule(nodeAccess.getLatitude(adjNode), nodeAccess.getLongitude(adjNode));
+
+            int baseNode = allEdgesIterator.getBaseNode();
+            SpatialRule ruleBase = ruleLookup.lookupRule(nodeAccess.getLatitude(baseNode), nodeAccess.getLongitude(baseNode));
+            if (ruleAdj != ruleBase)
+                inaccessible.add(allEdgesIterator.getEdge());
+        }
+        return inaccessible;
     }
 
     /**

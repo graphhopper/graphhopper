@@ -65,7 +65,7 @@ public class SpatialRuleLookupBuilderTest {
     @Test
     public void testIntersection() {
         /*
-            We are creating a BBox smaller than Germany. We have the German Spatial rule acitivated by default.
+            We are creating a BBox smaller than Germany. We have the German Spatial rule activated by default.
             So the BBox should not contain a Point lying somewhere close in Germany.
          */
         Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
