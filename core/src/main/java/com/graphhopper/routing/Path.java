@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHIntArrayList;
+import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
@@ -370,6 +371,7 @@ public class Path {
             private String name, prevName = null;
             private InstructionAnnotation annotation, prevAnnotation;
             private EdgeExplorer outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+            private final JaroWinkler jaroWinkler = new JaroWinkler();
 
             @Override
             public void next(EdgeIteratorState edge, int index) {
@@ -519,7 +521,24 @@ public class Path {
             }
 
             private boolean isTurn(int sign){
-                return (!name.equals(prevName)) || (!annotation.equals(prevAnnotation));
+                if(sign == Instruction.CONTINUE_ON_STREET)
+                    return false;
+
+                // TODO Analyze Turns, if this is the only turn, return false
+
+                // TODO Name changes are not neccessarily turns
+                if(!isNameSimilar(name, prevName) || (!annotation.equals(prevAnnotation)))
+                        return true;
+
+                return false;
+            }
+
+            private boolean isNameSimilar(String name1, String name2) {
+                // TODO Copied from the name similarity filter
+                // TODO Check only for the ref and not the full street name?
+                double jwSimilarity = jaroWinkler.similarity(name1, name2);
+                // System.out.println(str1 + " vs. edge:" + str2 + ", " + jwSimilarity);
+                return jwSimilarity > .79;
             }
 
             private int calculateSign(double latitude, double longitude){
