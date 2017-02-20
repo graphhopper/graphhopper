@@ -42,12 +42,6 @@ public interface LocationIndex extends Storable<LocationIndex> {
     LocationIndex prepareIndex();
 
     /**
-     * @return the closest node id for the specified geo location (latitude,longitude)
-     * @deprecated will be removed with 0.8 use 'QueryResult findClosest' instead
-     */
-    int findID(double lat, double lon);
-
-    /**
      * This method returns the closest QueryResult for the specified location (lat, lon) and only if
      * the filter accepts the edge as valid candidate (e.g. filtering away car-only results for bike
      * search)

@@ -291,73 +291,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Wrapper method for {@link GraphHopper#setCHWeightings(List)}
-     *
-     * @deprecated This method is used as a deprecated wrapper to not break the JavaApi. This will
-     * be removed in 0.7. Please use {@link GraphHopper#setCHWeightings(List)} or
-     * {@link GraphHopper#setCHWeightings(String...)}
-     */
-    @Deprecated
-    public GraphHopper setCHWeighting(String weightingName) {
-        return this.setCHWeightings(weightingName);
-    }
-
-    /**
-     * Wrapper method for {@link GraphHopper#setCHWeightings(List)}
-     *
-     * @deprecated Use getCHFactoryDecorator().setWeightingsAsStrings() instead. Will be removed in
-     * 0.8.
-     */
-    public GraphHopper setCHWeightings(String... weightingNames) {
-        return this.setCHWeightings(Arrays.asList(weightingNames));
-    }
-
-    /**
-     * Returns all CHWeighting names
-     *
-     * @deprecated Use getCHFactoryDecorator().getWeightingsAsStrings() instead. Will be removed in
-     * 0.8.
-     */
-    public List<String> getCHWeightings() {
-        return chFactoryDecorator.getWeightingsAsStrings();
-    }
-
-    /**
-     * Enables the use of contraction hierarchies to reduce query times. Enabled by default.
-     *
-     * @param weightingList A list containing multiple weightings like: "fastest", "shortest" or
-     *                      your own weight-calculation type.
-     * @deprecated Use getCHFactoryDecorator().setWeightingsAsStrings() instead. Will be removed in
-     * 0.8.
-     */
-    public GraphHopper setCHWeightings(List<String> weightingList) {
-        ensureNotLoaded();
-        chFactoryDecorator.setWeightingsAsStrings(weightingList);
-        return this;
-    }
-
-    /**
-     * @deprecated Use getCHFactoryDecorator().getCHPrepareThreads() instead. Will be removed in
-     * 0.8.
-     */
-    public int getCHPrepareThreads() {
-        return chFactoryDecorator.getPreparationThreads();
-    }
-
-    /**
-     * This method changes the number of threads used for preparation on import. Default is 1. Make
-     * sure that you have enough memory to increase this number!
-     *
-     * @deprecated Use getCHFactoryDecorator().setCHPrepareThreads() instead. Will be removed in
-     * 0.8.
-     */
-    public GraphHopper setCHPrepareThreads(int prepareThreads) {
-        chFactoryDecorator.setPreparationThreads(prepareThreads);
-        return this;
-    }
-
-    /**
-     * @deprecated Use setEnabled() instead. Will be removed in 0.8.
+     * This method enabled or disables the speed mode (Contraction Hierarchies)
      */
     public GraphHopper setCHEnable(boolean enable) {
         return setCHEnabled(enable);
