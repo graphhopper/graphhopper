@@ -111,7 +111,7 @@ public class LandmarkStorageTest {
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), 2, new FastestWeighting(encoder), TraversalMode.NODE_BASED);
         storage.setMinimumNodes(2);
-        storage.createLandmarks();
+        storage.createLandmarksForSubnetwork();
         assertEquals(3, storage.getSubnetworksWithLandmarks());
         assertEquals("[2, 0]", Arrays.toString(storage.getLandmarks(1)));
         assertEquals("[6, 4]", Arrays.toString(storage.getLandmarks(2)));
@@ -129,7 +129,7 @@ public class LandmarkStorageTest {
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), 2, new FastestWeighting(encoder), TraversalMode.NODE_BASED);
         storage.setMinimumNodes(3);
-        storage.createLandmarks();
+        storage.createLandmarksForSubnetwork();
         assertEquals(2, storage.getSubnetworksWithLandmarks());
         assertEquals("[4, 0]", Arrays.toString(storage.getLandmarks(1)));
     }
@@ -147,7 +147,7 @@ public class LandmarkStorageTest {
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), 2, new FastestWeighting(encoder), TraversalMode.NODE_BASED);
         storage.setMinimumNodes(2);
-        storage.createLandmarks();
+        storage.createLandmarksForSubnetwork();
 
         assertEquals(2, storage.getSubnetworksWithLandmarks());
         assertEquals("[4, 0]", Arrays.toString(storage.getLandmarks(1)));
@@ -162,7 +162,7 @@ public class LandmarkStorageTest {
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), 2, new FastestWeighting(encoder), TraversalMode.NODE_BASED);
         storage.setMinimumNodes(2);
-        storage.createLandmarks();
+        storage.createLandmarksForSubnetwork();
 
         assertEquals(2, storage.getSubnetworksWithLandmarks());
         assertEquals("[1, 0]", Arrays.toString(storage.getLandmarks(1)));

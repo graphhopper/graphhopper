@@ -34,7 +34,6 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static java.util.Arrays.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -89,7 +88,7 @@ public class PrepareLandmarksTest
         Weighting weighting = new FastestWeighting(encoder);
         LandmarkStorage store = new LandmarkStorage(graph, dir, lm, weighting, tm);
         store.setMinimumNodes(2);
-        store.createLandmarks();
+        store.createLandmarksForSubnetwork();
 
         // landmarks should be the 4 corners of the grid:
         int[] intList = store.getLandmarks(1);

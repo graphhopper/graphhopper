@@ -19,25 +19,18 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -111,7 +104,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         LOGGER.info("Start calculating " + lms.getLandmarkCount() + " landmarks, default active lms:"
                 + defaultActiveLandmarks + ", weighting:" + weighting + ", " + Helper.getMemInfo());
 
-        lms.createLandmarks();
+        lms.createLandmarksForSubnetwork();
         lms.flush();
 
         LOGGER.info("Calculating landmarks for " + (lms.getSubnetworksWithLandmarks() - 1) + " subnetworks took:" + sw.stop().getSeconds() + " => "

@@ -55,7 +55,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class LandmarkStorage implements Storable<LandmarkStorage> {
     private static final Logger LOGGER = LoggerFactory.getLogger(LandmarkStorage.class);
+    // This value is used to identify nodes where no subnetwork is associated
     private static final int UNSET_SUBNETWORK = -1;
+    // This value should only be used if subnetwork is too small to be explicitely stored
     private static final int UNCLEAR_SUBNETWORK = 0;
     // one node has an associated landmark information ('one landmark row'): the forward and backward weight
     private long LM_ROW_LENGTH;
@@ -163,9 +165,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     /**
      * This method calculates the landmarks and initial weightings to & from them.
      */
-    public void createLandmarks() {
+    public void createLandmarksForSubnetwork() {
         if (isInitialized())
-            throw new IllegalStateException("Initialize the landmark storage once!");
+            throw new IllegalStateException("Initialize the landmark storage only once!");
 
         // fill 'from' and 'to' weights with maximum value
         long maxBytes = (long) graph.getNodes() * LM_ROW_LENGTH;
@@ -176,15 +178,17 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             landmarkWeightDA.setShort(pointer, (short) SHORT_INFINITY);
         }
 
-        // introduce a factor to store weight without loosing too much precision 
-        // AND making it compatible with weighting.calcWeight
-
-        // roughly approximate the maximum distance of the current area but limit to world wide case
-        // too small is dangerous regarding performance, e.g. for Germany at least 1500km is very important otherwise speed is at least twice as slow e.g. for just 1000km
+        // 'factor' is necessary to store the weight without loosing too much precision AND making it compatible with weighting.calcWeight.
+        // For simplicity we just pick either 1000km or 30 000km. Picking it too small is dangerous regarding performance e.g. for Germany at least 1500km is very important otherwise speed is at least twice as slow e.g. for just 1000km
         BBox bounds = graph.getBounds();
-        double maxTmp = 30_000_000;
-        double distanceInMeter = !bounds.isValid() ? maxTmp : (Helper.DIST_EARTH.calcDist(bounds.maxLat, bounds.maxLon, bounds.minLat, bounds.minLon) > 50_000 ? maxTmp : 1_000_000);
+        double maxDistanceFallback = 30_000_000;
+        double distanceInMeter = Helper.DIST_EARTH.calcDist(bounds.maxLat, bounds.maxLon, bounds.minLat, bounds.minLon) > 100_000 ? maxDistanceFallback : 1_000_000;
+        // for tests and convenience we do for now:
+        if (!bounds.isValid())
+            distanceInMeter = maxDistanceFallback;
+
         double weightMax = weighting.getMinWeight(distanceInMeter);
+
         // 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
         factor = weightMax / (1 << 16);
 
@@ -196,11 +200,10 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         // special subnetwork 0
         int[] empty = new int[landmarks];
-        Arrays.fill(empty, -1);
+        Arrays.fill(empty, UNSET_SUBNETWORK);
         landmarkIDs.add(empty);
 
         byte[] subnetworks = new byte[graph.getNodes()];
-        // UNCLEAR_SUBNETWORK == 0 should only be used if subnetwork is too small
         Arrays.fill(subnetworks, (byte) UNSET_SUBNETWORK);
 
         // we cannot reuse the components calculated in PrepareRoutingSubnetworks as the edgeIds changed in between (called graph.optimize)
@@ -213,7 +216,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         EdgeExplorer tmpExplorer = graph.createEdgeExplorer(new RequireBothDirectionsEdgeFilter(encoder));
 
         int nodes = 0;
-        MAIN:
         for (IntArrayList subnetworkIds : graphComponents) {
             nodes += subnetworkIds.size();
             if (subnetworkIds.size() < minimumNodes)
@@ -230,7 +232,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                     LOGGER.info("start node: " + nextStartNode + " (" + p + ") subnetwork size: " + subnetworkIds.size()
                             + ", " + Helper.getMemInfo());
 
-                    if (createLandmarks(nextStartNode, subnetworks, subnetworkIds))
+                    if (createLandmarksForSubnetwork(nextStartNode, subnetworks, subnetworkIds))
                         break;
                 }
             }
@@ -268,27 +270,12 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         initialized = true;
     }
 
-    private String myprint(int... ints) {
-        EdgeFilter outEdgeFilter = new DefaultEdgeFilter(encoder, false, true);
-        EdgeFilter inEdgeFilter = new DefaultEdgeFilter(encoder, true, false);
-        String str = "";
-
-        for (int node : ints) {
-            if (node < graph.getNodes()) {
-                str += "out " + GHUtility.getNodeInfo(graph, node, outEdgeFilter) + "\n\n";
-                str += "in  " + GHUtility.getNodeInfo(graph, node, inEdgeFilter) + "\n\n";
-            }
-        }
-        System.out.println(str);
-        return str;
-    }
-
     /**
      * This method creates landmarks for the specified subnetwork (integer list)
      *
      * @return landmark mapping
      */
-    private boolean createLandmarks(final int startNode, final byte[] subnetworks, IntArrayList subnetworkIds) {
+    private boolean createLandmarksForSubnetwork(final int startNode, final byte[] subnetworks, IntArrayList subnetworkIds) {
         final int subnetworkId = landmarkIDs.size();
         boolean random = false;
         int[] tmpLandmarkNodeIds = new int[landmarks];
@@ -329,7 +316,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             // 1a) pick landmarks via shortest weighting for a better geographical spreading
             // 'fastest' has big problems with ferries (slow&very long) and allowing arbitrary weighting is too dangerous
             Weighting initWeighting = lmSelectionWeighting;
-            Explorer explorer = new Explorer(graph, this, initWeighting, traversalMode);
+            LandmarkExplorer explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode);
             explorer.initFrom(startNode, 0);
             explorer.setFilter(true, true);
             explorer.runAlgo(true);
@@ -343,7 +330,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             // 1b) we have one landmark, now determine the other landmarks
             tmpLandmarkNodeIds[0] = explorer.getLastNode();
             for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length - 1; lmIdx++) {
-                explorer = new Explorer(graph, this, initWeighting, traversalMode);
+                explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode);
                 explorer.setFilter(true, true);
                 // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
                 for (int j = 0; j < lmIdx + 1; j++) {
@@ -361,7 +348,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // 2) calculate weights for all landmarks -> 'from' and 'to' weight
         for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
             int lm = tmpLandmarkNodeIds[lmIdx];
-            Explorer explorer = new Explorer(graph, this, weighting, traversalMode);
+            LandmarkExplorer explorer = new LandmarkExplorer(graph, this, weighting, traversalMode);
             explorer.initFrom(lm, 0);
             explorer.setFilter(false, true);
             explorer.runAlgo(true);
@@ -373,7 +360,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                     return false;
             }
 
-            explorer = new Explorer(graph, this, weighting, traversalMode);
+            explorer = new LandmarkExplorer(graph, this, weighting, traversalMode);
             explorer.initTo(lm, 0);
             explorer.setFilter(true, false);
             explorer.runAlgo(false);
@@ -644,12 +631,15 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         return landmarkWeightDA.getCapacity() + subnetworkStorage.getCapacity();
     }
 
-    private static class Explorer extends DijkstraBidirectionRef {
+    /**
+     * This class is used to calculate landmark location (equally distributed).
+     */
+    private static class LandmarkExplorer extends DijkstraBidirectionRef {
         private int lastNode;
         private boolean from;
         private final LandmarkStorage lms;
 
-        public Explorer(Graph g, LandmarkStorage lms, Weighting weighting, TraversalMode tMode) {
+        public LandmarkExplorer(Graph g, LandmarkStorage lms, Weighting weighting, TraversalMode tMode) {
             super(g, weighting, tMode);
             this.lms = lms;
         }
