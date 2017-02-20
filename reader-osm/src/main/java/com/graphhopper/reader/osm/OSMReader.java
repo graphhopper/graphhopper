@@ -60,12 +60,12 @@ import static com.graphhopper.util.Helper.nf;
  * of the relation.
  * <p>
  * 2.a) Reads nodes from OSM file and stores lat+lon information either into the intermediate
- * datastructure for the pillar nodes (pillarLats/pillarLons) or, if a tower node, directly into the
+ * data structure for the pillar nodes (pillarLats/pillarLons) or, if a tower node, directly into the
  * graphStorage via setLatitude/setLongitude. It can also happen that a pillar node needs to be
  * transformed into a tower node e.g. via barriers or different speed values for one way.
  * <p>
  * 2.b) Reads ways OSM file and creates edges while calculating the speed etc from the OSM tags.
- * When creating an edge the pillar node information from the intermediate datastructure will be
+ * When creating an edge the pillar node information from the intermediate data structure will be
  * stored in the way geometry of that edge.
  * <p>
  *

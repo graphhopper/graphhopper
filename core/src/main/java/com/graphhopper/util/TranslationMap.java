@@ -94,7 +94,7 @@ public class TranslationMap {
     }
 
     /**
-     * Returns the Translation object for the specified locale and falls back to english if the
+     * Returns the Translation object for the specified locale and falls back to English if the
      * locale was not found.
      */
     public Translation getWithFallBack(Locale locale) {

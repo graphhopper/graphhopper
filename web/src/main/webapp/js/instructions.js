@@ -101,7 +101,7 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
     hiddenDiv.append(osmRouteLink);
 
     var osrmLink = $("<a>OSRM</a>");
-    osrmLink.attr("href", "http://map.project-osrm.org/?loc=" + request.from + "&loc=" + request.to);
+    osrmLink.attr("href", "http://map.project-osrm.org/?z=13&loc=" + request.from + "&loc=" + request.to);
     hiddenDiv.append("<br/><span>Compare with: </span>");
     hiddenDiv.append(osrmLink);
     var googleLink = $("<a>Google</a> ");

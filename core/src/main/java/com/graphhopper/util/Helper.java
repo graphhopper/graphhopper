@@ -318,7 +318,7 @@ public class Helper {
     /**
      * Converts into an integer to be compatible with the still limited DataAccess class (accepts
      * only integer values). But this conversion also reduces memory consumption where the precision
-     * loss is accceptable. As +- 180° and +-90° are assumed as maximum values.
+     * loss is acceptable. As +- 180° and +-90° are assumed as maximum values.
      * <p>
      *
      * @return the integer of the specified degree
@@ -437,7 +437,7 @@ public class Helper {
 
     public static String nf(long no) {
         // I like french localization the most: 123654 will be 123 654 instead
-        // of comma vs. point confusion for english/german guys.
+        // of comma vs. point confusion for English/German people.
         // NumberFormat is not thread safe => but getInstance looks like it's cached
         return NumberFormat.getInstance(Locale.FRANCE).format(no);
     }

@@ -112,6 +112,23 @@ public class BBox implements Shape, Cloneable {
 
     }
 
+    /**
+     * Calculates the intersecting BBox between this and the specified BBox
+     *
+     * @return the intersecting BBox or null if not intersecting
+     */
+    public BBox calculateIntersection(BBox bBox) {
+        if (!this.intersect(bBox))
+            return null;
+
+        double minLon = Math.max(this.minLon, bBox.minLon);
+        double maxLon = Math.min(this.maxLat, bBox.maxLat);
+        double minLat = Math.max(this.minLat, bBox.minLat);
+        double maxLat = Math.min(this.maxLat, bBox.maxLat);
+
+        return new BBox(minLon, maxLon, minLat, maxLat);
+    }
+
     @Override
     public BBox clone() {
         return new BBox(minLon, maxLon, minLat, maxLat, minEle, maxEle, elevation);

@@ -43,7 +43,7 @@ import java.util.List;
 /**
  * This implementation implements an n-tree to get the closest node or edge from GPS coordinates.
  * <p>
- * All leafs are at the same depth, otherwise it is quite complicated to calculate the bresenham
+ * All leafs are at the same depth, otherwise it is quite complicated to calculate the Bresenham
  * line for different resolutions, especially if a leaf node could be split into a tree-node and
  * resolution changes.
  * <p>
@@ -216,15 +216,6 @@ public class LocationIndexTree implements LocationIndex {
         InMemConstructionIndex memIndex = new InMemConstructionIndex(entries[0]);
         memIndex.prepare();
         return memIndex;
-    }
-
-    @Override
-    public int findID(double lat, double lon) {
-        QueryResult res = findClosest(lat, lon, EdgeFilter.ALL_EDGES);
-        if (!res.isValid())
-            return -1;
-
-        return res.getClosestNode();
     }
 
     @Override

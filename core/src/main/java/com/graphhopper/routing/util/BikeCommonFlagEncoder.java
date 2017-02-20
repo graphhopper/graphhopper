@@ -316,7 +316,7 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
      *
      * @param way:   needed to retrieve tags
      * @param speed: speed guessed e.g. from the road type or other tags
-     * @return The assumed avererage speed.
+     * @return The assumed average speed.
      */
     @Override
     protected double applyMaxSpeed(ReaderWay way, double speed) {

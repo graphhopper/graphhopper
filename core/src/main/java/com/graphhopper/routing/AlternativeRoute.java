@@ -42,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class implements the alternative paths search using the "plateau" and partially the
- * "penalty" method discribed in the following papers.
+ * "penalty" method described in the following papers.
  * <p>
  * <ul>
  * <li>Choice Routing Explanation - Camvit 2009:

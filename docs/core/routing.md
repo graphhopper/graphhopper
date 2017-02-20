@@ -5,7 +5,7 @@ To do routing in your Java code you'll need just a few lines of code:
 ```java
 // create one GraphHopper instance
 GraphHopper hopper = new GraphHopperOSM().forServer();
-hopper.setOSMFile(osmFile);
+hopper.setDataReaderFile(osmFile);
 // where to store graphhopper files?
 hopper.setGraphHopperLocation(graphFolder);
 hopper.setEncodingManager(new EncodingManager("car"));
