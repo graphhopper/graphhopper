@@ -403,6 +403,37 @@ public class PathTest {
     }
 
     @Test
+    public void testCalcInstructionForForkWithSameName() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Actual example: point=48.982618%2C13.122021&point=48.982336%2C13.121002
+        // 1-2 & 2-4 have the same Street name, but other from that, it would be hard to see the difference
+        // We have to enforce a turn instruction here
+        //      3
+        //        \
+        //          2   --  1
+        //        /
+        //      4
+        na.setNode(1, 48.982618, 13.122021);
+        na.setNode(2, 48.982565, 13.121597);
+        na.setNode(3, 48.982611, 13.121012);
+        na.setNode(4, 48.982336, 13.121002);
+
+        g.edge(1, 2, 5, true).setName("Regener Weg");
+        g.edge(2, 4, 5, true).setName("Regener Weg");
+        g.edge(2, 3, 5, true);
+
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(1, 4);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        assertEquals(3, wayList.size());
+        assertEquals(-1, wayList.get(1).getSign());
+    }
+
+    @Test
     public void testCalcInstructionsForTurn() {
         // The street turns left, but there is not turn
         Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)

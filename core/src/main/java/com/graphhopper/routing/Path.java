@@ -490,9 +490,11 @@ public class Path {
                     if (isTurn(sign, baseNode, prevNode, adjNode, latitude, longitude)) {
                         prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
                         ways.add(prevInstruction);
-                        prevName = name;
                         prevAnnotation = annotation;
                     }
+                    // Updated the prevName, since we don't always create an instruction on name changes the previous
+                    // name can be an old name. This leads to incorrect turn instructions due to name changes
+                    prevName = name;
                 }
 
                 updatePointsAndInstruction(edge, wayGeo);
@@ -530,7 +532,7 @@ public class Path {
                 boolean improvedTurninstruction = true;
                 if (improvedTurninstruction) {
                     // TODO Assume that if the annotation changes, we always want an instruction?
-                    // TODO For example, get of bike and carry it up some stairs?
+                    // For example, get of bike
                     if (!annotation.equals(prevAnnotation)) {
                         return true;
                     }
@@ -546,33 +548,22 @@ public class Path {
 
                     // Very certain, this is a turn
                     if (Math.abs(sign) > 1) {
+                        /*
+                         * Don't show an instruction if the user is following a street, even though the street is
+                         * bending. We should only do this, if following the street is the obvious choice.
+                         */
+                        if (isNameSimilar(name, prevName) && surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 2)) {
+                            return false;
+                        }
+
                         return true;
                     }
 
                     // There is at least one other possibility to turn, and we are almost going straight
                     // Check the other turns if one of them is also going almost straight
                     // If not, we don't need a turn instruction
-                    EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
-                    int tmpSign;
-                    boolean otherContinue = false;
-                    while (edgeIter.next()) {
-                        if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
-                            double tmpLat;
-                            double tmpLon;
-                            PointList tmpWayGeo = edgeIter.fetchWayGeometry(3);
-                            if (tmpWayGeo.getSize() <= 2) {
-                                tmpLat = nodeAccess.getLatitude(edgeIter.getAdjNode());
-                                tmpLon = nodeAccess.getLongitude(edgeIter.getAdjNode());
-                            } else {
-                                tmpLat = tmpWayGeo.getLatitude(1);
-                                tmpLon = tmpWayGeo.getLongitude(1);
-                            }
-                            tmpSign = calculateSign(tmpLat, tmpLon);
-                            if (Math.abs(tmpSign) <= 1) {
-                                otherContinue = true;
-                            }
-                        }
-                    }
+                    boolean otherContinue = isThereAnotherContinue(baseNode, prevNode, adjNode);
+
 
                     // This state is bad! Two streets are going more or less straight
                     // Happens a lot for trunk_links
@@ -594,13 +585,12 @@ public class Path {
                         if (prevFlags == -1 || flags == -1) {
                             throw new IllegalStateException("Couldn't retrieve flags for turn instruction generation");
                         }
-                        // TODO I am not really happy with this if.
                         // The idea is, if there are only a random tracks, they usually don't have names and they
                         // usually don't have any special flags (e.g. speed limit).
                         // In this case we should force the turn instruction.
-                        if (name.isEmpty() && prevName.isEmpty())
-                            return true;
-                        return !(isNameSimilar(name, prevName) && prevFlags == flags);
+                        return !(isNameSimilar(name, prevName) &&
+                                prevFlags == flags &&
+                                surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 1));
                     }
 
                     return false;
@@ -609,6 +599,67 @@ public class Path {
                 }
             }
 
+            /**
+             * Checks the other crossings for a street that is going more or less straight
+             */
+            private boolean isThereAnotherContinue(int baseNode, int prevNode, int adjNode) {
+                EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
+                int tmpSign;
+                while (edgeIter.next()) {
+                    if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
+                        double tmpLat;
+                        double tmpLon;
+                        PointList tmpWayGeo = edgeIter.fetchWayGeometry(3);
+                        if (tmpWayGeo.getSize() <= 2) {
+                            tmpLat = nodeAccess.getLatitude(edgeIter.getAdjNode());
+                            tmpLon = nodeAccess.getLongitude(edgeIter.getAdjNode());
+                        } else {
+                            tmpLat = tmpWayGeo.getLatitude(1);
+                            tmpLon = tmpWayGeo.getLongitude(1);
+                        }
+                        tmpSign = calculateSign(tmpLat, tmpLon);
+                        if (Math.abs(tmpSign) <= 1) {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+
+            /**
+             * Checks if the surrounding streets are slower. If they are, this indicates, that we are staying
+             * on the prominent street that one would follow anyway.
+             */
+            private boolean surroundingStreetsAreSlowerByFactor(int baseNode, int prevNode, int adjNode, double factor) {
+                EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
+                double pathSpeed = -1;
+                double maxSurroundingSpeed = -1;
+                double tmpSpeed;
+                while (edgeIter.next()) {
+                    tmpSpeed = encoder.getSpeed(edgeIter.getFlags());
+                    if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
+                        if (tmpSpeed > maxSurroundingSpeed)
+                            maxSurroundingSpeed = tmpSpeed;
+                    } else {
+                        if (pathSpeed < 0) {
+                            pathSpeed = tmpSpeed;
+                        } else {
+                            // Speed-Change on the path indicates, that we change road types, show instruction
+                            if (tmpSpeed != pathSpeed) {
+                                return false;
+                            }
+                        }
+                    }
+                }
+
+                // Surrounding streets need to be significantly slower and not just a little
+                return maxSurroundingSpeed * factor < pathSpeed;
+            }
+
+            /**
+             * This method calculates the number of possible turns.
+             * The edge we are comming from and the edge we are going to is ignored.
+             */
             private int nrOfPossibleTurns(int baseNode, int prevNode, int adjNode) {
                 EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
                 int count = 1;
@@ -620,6 +671,11 @@ public class Path {
             }
 
             private boolean isNameSimilar(String name1, String name2) {
+                // We don't want two empty names to be similar
+                // The idea is, if there are only a random tracks, they usually don't have names
+                if (name1.isEmpty() && name2.isEmpty()) {
+                    return false;
+                }
                 if (name1.equals(name2)) {
                     return true;
                 }
