@@ -27,11 +27,8 @@ import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjansSCCAlgorithm;
 import com.graphhopper.routing.util.*;
-import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
-import com.graphhopper.routing.util.spatialrules.countries.DefaultSpatialRule;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -212,7 +209,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
         if (ruleLookup != null && ruleLookup.size() > 0) {
             StopWatch sw = new StopWatch().start();
-            final IntHashSet blockedEdges = splitCountries(ruleLookup);
+            final IntHashSet blockedEdges = findBorderEdgeIds(ruleLookup);
             tarjanFilter = new EdgeFilter() {
                 @Override
                 public boolean accept(EdgeIteratorState edgeState) {
@@ -413,7 +410,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      * This method makes edges crossing the specified border inaccessible to split a bigger area into smaller subnetworks.
      * This is important for the world wide use case to limit the maximum distance and also to detect unreasonable routes faster.
      */
-    protected IntHashSet splitCountries(SpatialRuleLookup ruleLookup) {
+    protected IntHashSet findBorderEdgeIds(SpatialRuleLookup ruleLookup) {
         AllEdgesIterator allEdgesIterator = graph.getAllEdges();
         NodeAccess nodeAccess = graph.getNodeAccess();
         IntHashSet inaccessible = new IntHashSet();

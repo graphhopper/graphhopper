@@ -131,7 +131,7 @@ public class SpatialRuleLookupBuilder {
             return null;
 
         if (!polygonBounds.isValid()) {
-            throw new IllegalStateException("No rules found or no associated Polygons found in JsonFeatureCollection");
+            throw new IllegalStateException("No associated polygons found in JsonFeatureCollection for rules " + rules);
         }
 
         // Only create a SpatialRuleLookup if there are rules defined in the given bounds
