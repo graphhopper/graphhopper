@@ -113,7 +113,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
 
         StopWatch sw = new StopWatch().start();
         LOGGER.info("Start calculating " + lms.getLandmarkCount() + " landmarks, default active lms:"
-                + defaultActiveLandmarks + ", weighting:" + weighting + ", " + Helper.getMemInfo());
+                + defaultActiveLandmarks + ", weighting:" + lms.getLmSelectionWeighting() + ", " + Helper.getMemInfo());
 
         lms.createLandmarks();
         lms.flush();

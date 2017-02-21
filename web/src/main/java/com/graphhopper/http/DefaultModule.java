@@ -32,6 +32,7 @@ import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
@@ -75,13 +76,14 @@ public class DefaultModule extends AbstractModule {
     protected GraphHopper createGraphHopper(CmdArgs args) {
         GraphHopper tmp = new GraphHopperOSM() {
             @Override
-            protected void prepareLM() {
+            protected void loadOrPrepareLM() {
                 if (!getLMFactoryDecorator().isEnabled() || getLMFactoryDecorator().getPreparations().isEmpty())
                     return;
 
                 try {
-                    JsonFeatureCollection jsonFeatureCollection = new GHJsonBuilder().create().fromJson(
-                            new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream()), JsonFeatureCollection.class);
+                    String location = args.get(Parameters.Landmark.PREPARE + "split_area_location", "");
+                    Reader reader = location.isEmpty() ? new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream()) : new FileReader(location);
+                    JsonFeatureCollection jsonFeatureCollection = new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class);
                     if (!jsonFeatureCollection.getFeatures().isEmpty()) {
                         SpatialRuleLookup ruleLookup = new SpatialRuleLookupBuilder().build("country",
                                 new SpatialRuleLookupBuilder.SpatialRuleDefaultFactory(), jsonFeatureCollection,
@@ -94,7 +96,7 @@ public class DefaultModule extends AbstractModule {
                     logger.error("Problem while reading border map GeoJSON. Skipping this.", ex);
                 }
 
-                super.prepareLM();
+                super.loadOrPrepareLM();
             }
         }.forServer().init(args);
 

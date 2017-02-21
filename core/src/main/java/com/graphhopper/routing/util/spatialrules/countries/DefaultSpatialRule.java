@@ -73,6 +73,6 @@ public class DefaultSpatialRule extends AbstractSpatialRule {
 
     @Override
     public String getId() {
-        throw new UnsupportedOperationException("No country code for the DefaultSpatialRule");
+        throw new UnsupportedOperationException("No id for the DefaultSpatialRule");
     }
 }

@@ -54,13 +54,16 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private final List<Weighting> weightings = new ArrayList<>();
     private boolean enabled = false;
     private boolean disablingAllowed = false;
-    private List<String> lmSuggestionsLocations = Collections.emptyList();
+    private final List<String> lmSuggestionsLocations = new ArrayList<>(5);
 
     @Override
     public void init(CmdArgs args) {
         landmarkCount = args.getInt(Landmark.COUNT, landmarkCount);
         activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(4, landmarkCount));
-        lmSuggestionsLocations = Arrays.asList(args.get("prepare.lm.suggestions_location", "").split(","));
+        for (String loc : args.get("prepare.lm.suggestions_location", "").split(",")) {
+            if (!loc.trim().isEmpty())
+                lmSuggestionsLocations.add(loc.trim());
+        }
         String lmWeightingsStr = args.get(Landmark.PREPARE + "weightings", "");
         if (!lmWeightingsStr.isEmpty()) {
             List<String> tmpLMWeightingList = Arrays.asList(lmWeightingsStr.split(","));
@@ -228,11 +231,11 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (weightings.isEmpty())
             throw new IllegalStateException("No landmark weightings found");
 
-        List<LandmarkSuggestion> suggestions = new ArrayList<>(lmSuggestionsLocations.size());
+        List<LandmarkSuggestion> lmSuggestions = new ArrayList<>(lmSuggestionsLocations.size());
         if (!lmSuggestionsLocations.isEmpty()) {
             try {
                 for (String loc : lmSuggestionsLocations) {
-                    suggestions.add(LandmarkSuggestion.readLandmarks(loc, locationIndex));
+                    lmSuggestions.add(LandmarkSuggestion.readLandmarks(loc, locationIndex));
                 }
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
@@ -241,7 +244,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         for (Weighting weighting : getWeightings()) {
             PrepareLandmarks tmpPrepareLM = new PrepareLandmarks(ghStorage.getDirectory(), ghStorage,
                     weighting, traversalMode, landmarkCount, activeLandmarkCount).
-                    setLandmarkSuggestions(suggestions);
+                    setLandmarkSuggestions(lmSuggestions);
 
             addPreparation(tmpPrepareLM);
         }

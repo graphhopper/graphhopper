@@ -803,15 +803,6 @@ public class GraphHopper implements GraphHopperAPI {
         }
     }
 
-    /**
-     * This method creates preparations.
-     *
-     * @deprecated use getCHFactoryDecorator().createPreparations() instead. Will be removed in 0.8.
-     */
-    protected void createCHPreparations() {
-        chFactoryDecorator.createPreparations(ghStorage, traversalMode);
-    }
-
     public final LMAlgoFactoryDecorator getLMFactoryDecorator() {
         return lmFactoryDecorator;
     }
@@ -852,14 +843,13 @@ public class GraphHopper implements GraphHopperAPI {
         initLocationIndex();
 
         if (chFactoryDecorator.isEnabled())
-            createCHPreparations();
+            chFactoryDecorator.createPreparations(ghStorage, traversalMode);
         if (!isCHPrepared())
             prepareCH();
 
         if (lmFactoryDecorator.isEnabled())
             lmFactoryDecorator.createPreparations(ghStorage, traversalMode, locationIndex);
-        if (!isLMPrepared())
-            prepareLM();
+        loadOrPrepareLM();
     }
 
     private void interpolateBridgesAndOrTunnels() {
@@ -1181,7 +1171,10 @@ public class GraphHopper implements GraphHopperAPI {
         ghStorage.getProperties().put(CH.PREPARE + "done", tmpPrepare);
     }
 
-    protected void prepareLM() {
+    /**
+     * For landmarks it is required to always call this method: either it creates the landmark data or it loads it.
+     */
+    protected void loadOrPrepareLM() {
         boolean tmpPrepare = lmFactoryDecorator.isEnabled();
         if (tmpPrepare) {
             ensureWriteAccess();

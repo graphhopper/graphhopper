@@ -17,10 +17,16 @@
  */
 package com.graphhopper.routing.lm;
 
+import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.countries.DefaultSpatialRule;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -166,5 +172,63 @@ public class LandmarkStorageTest {
 
         assertEquals(2, storage.getSubnetworksWithLandmarks());
         assertEquals("[1, 0]", Arrays.toString(storage.getLandmarks(1)));
+    }
+
+    @Test
+    public void testWithBorderBlocking() {
+        AbstractRoutingAlgorithmTester.initBiGraph(ghStorage);
+
+        LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), 2, new FastestWeighting(encoder), TraversalMode.NODE_BASED);
+        final SpatialRule ruleRight = new DefaultSpatialRule() {
+            @Override
+            public String getId() {
+                return "right";
+            }
+        };
+        final SpatialRule ruleLeft = new DefaultSpatialRule() {
+            @Override
+            public String getId() {
+                return "left";
+            }
+        };
+        final SpatialRuleLookup lookup = new SpatialRuleLookup() {
+
+            @Override
+            public SpatialRule lookupRule(double lat, double lon) {
+                if (lon > 0.00105)
+                    return ruleRight;
+
+                return ruleLeft;
+            }
+
+            @Override
+            public SpatialRule lookupRule(GHPoint point) {
+                return lookupRule(point.lat, point.lon);
+            }
+
+            @Override
+            public void addRule(SpatialRule rule) {
+            }
+
+            @Override
+            public int getSpatialId(SpatialRule rule) {
+                throw new IllegalStateException();
+            }
+
+            @Override
+            public BBox getBounds() {
+                throw new IllegalStateException();
+            }
+
+            @Override
+            public int size() {
+                return 2;
+            }
+        };
+
+        storage.setSpatialRuleLookup(lookup);
+        storage.setMinimumNodes(2);
+        storage.createLandmarks();
+        assertEquals(3, storage.getSubnetworksWithLandmarks());
     }
 }

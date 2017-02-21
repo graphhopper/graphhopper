@@ -116,10 +116,10 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
     }
 
     protected int getRuleContainerIndex(int xIndex, int yIndex) {
-        if (xIndex < 0 || xIndex > lookupArray.length) {
+        if (xIndex < 0 || xIndex >= lookupArray.length) {
             return EMPTY_RULE_INDEX;
         }
-        if (yIndex < 0 || yIndex > lookupArray[0].length) {
+        if (yIndex < 0 || yIndex >= lookupArray[0].length) {
             return EMPTY_RULE_INDEX;
         }
         return castByteToInt(lookupArray[xIndex][yIndex]);

@@ -57,7 +57,7 @@ public class PrepareLandmarksTest
     }
 
     @Test
-    public void testLandMarkStore() {
+    public void testLandmarkStore() {
         // create graph with lat,lon 
         // 0  1  2  ...
         // 15 16 17 ...
@@ -93,19 +93,19 @@ public class PrepareLandmarksTest
         // landmarks should be the 4 corners of the grid:
         int[] intList = store.getLandmarks(1);
         Arrays.sort(intList);
-        assertEquals("[0, 14, 112, 210, 224]", Arrays.toString(intList));
+        assertEquals("[0, 14, 70, 182, 224]", Arrays.toString(intList));
         // two landmarks: one for subnetwork 0 (all empty) and one for subnetwork 1
         assertEquals(2, store.getSubnetworksWithLandmarks());
 
         assertEquals(0, store.getFromWeight(0, 224));
         double factor = store.getFactor();
         assertEquals(4671, Math.round(store.getFromWeight(0, 47) * factor));
-        assertEquals(3639, Math.round(store.getFromWeight(0, 52) * factor));
+        assertEquals(3640, Math.round(store.getFromWeight(0, 52) * factor));
 
         long weight1_224 = store.getFromWeight(1, 224);
         assertEquals(5525, Math.round(weight1_224 * factor));
         long weight1_47 = store.getFromWeight(1, 47);
-        assertEquals(920, Math.round(weight1_47 * factor));
+        assertEquals(921, Math.round(weight1_47 * factor));
 
         // grid is symmetric
         assertEquals(weight1_224, store.getToWeight(1, 224));
@@ -122,7 +122,7 @@ public class PrepareLandmarksTest
             list.add(store.getLandmarks(1)[idx]);
         }
         // TODO should better select 0 and 224?
-        assertEquals(Arrays.asList(112, 224), list);
+        assertEquals(Arrays.asList(224, 70), list);
 
         AlgorithmOptions opts = AlgorithmOptions.start().weighting(weighting).traversalMode(tm).
                 build();
@@ -140,7 +140,7 @@ public class PrepareLandmarksTest
 
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 155, oneDirAlgoWithLandmarks.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 153, oneDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with bidir A*
         opts.getHints().put("lm.recalc_count", 50);
@@ -149,7 +149,7 @@ public class PrepareLandmarksTest
         path = biDirAlgoWithLandmarks.calcPath(41, 183);
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 176, biDirAlgoWithLandmarks.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 164, biDirAlgoWithLandmarks.getVisitedNodes());
 
         // landmarks with A* and a QueryGraph. We expect slightly less optimal as two more cycles needs to be traversed
         // due to the two more virtual nodes but this should not harm in practise
@@ -165,7 +165,7 @@ public class PrepareLandmarksTest
         expectedPath = expectedAlgo.calcPath(fromQR.getClosestNode(), toQR.getClosestNode());
         assertEquals(expectedPath.getWeight(), path.getWeight(), .1);
         assertEquals(expectedPath.calcNodes(), path.calcNodes());
-        assertEquals(expectedAlgo.getVisitedNodes() - 122, qGraphOneDirAlgo.getVisitedNodes());
+        assertEquals(expectedAlgo.getVisitedNodes() - 135, qGraphOneDirAlgo.getVisitedNodes());
     }
 
     @Test
