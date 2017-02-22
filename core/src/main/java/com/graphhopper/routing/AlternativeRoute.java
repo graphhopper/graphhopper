@@ -341,7 +341,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
                         if (toSPTEntry.parent != null)
                             // move to parent for two reasons:
                             // 1. make only turn costs missing in 'weight' and not duplicating current edge.weight
-                            // 2. to avoid reverse edge in Path
+                            // 2. to avoid duplicate edge in Path
                             toSPTEntry = toSPTEntry.parent;
                         // TODO else if fromSPTEntry.parent != null fromSPTEntry = fromSPTEntry.parent;
 

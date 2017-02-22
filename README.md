@@ -55,11 +55,11 @@ in its default settings. The downsides are that the speed mode allows only pre-d
 and requires a time consuming and resource intense preparation. And implementing certain features are not possible 
 or very complex compared to the flexible mode. 
 
-The [latest development branch contains](https://github.com/graphhopper/graphhopper/pull/780)
-also a **hybrid mode** based on A* using so called landmarks, which still requires preparation time and memory
-but is much more flexible regarding changing properties per request or e.g. integrating 
-traffic data and more. Furthermore this hybrid mode is slower than the speed mode but it is an order of magnitude faster than
- the flexible mode and uses also less RAM for a request.
+The [master branch contains](https://github.com/graphhopper/graphhopper/pull/780)
+a **hybrid mode** based on A* using so called landmarks, which still requires preparation time and memory
+but is much more flexible regarding changing properties per request or e.g. integrating traffic data and more. 
+Furthermore this hybrid mode is slower than the speed mode (depends on the number of landmarks) but it is an 
+order of magnitude faster than the flexible mode and uses also less RAM for one request.
 
 You can switch between all modes at request time.
 
@@ -147,7 +147,7 @@ Here is a list of the more detailed features including a link to the documentati
  * [Turn costs and restrictions](https://github.com/graphhopper/graphhopper/pull/55#issuecomment-31089096) (flexible and hybrid mode only)
  * Multiple profiles and weightings
  * Several pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle, ...
- * The core uses only a few dependencies (trove4j and slf4j)
+ * The core uses only a few dependencies (hppc and slf4j)
  * Scales from small indoor-sized to world-wide-sized graphs
  * Find nearest point on street e.g. to get elevation or 'snapp to road'
  * Do [map matching](https://github.com/graphhopper/map-matching) with GraphHopper

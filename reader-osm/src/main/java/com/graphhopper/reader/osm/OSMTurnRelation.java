@@ -148,7 +148,7 @@ public class OSMTurnRelation {
         public long flags;
 
         /**
-         * @return an unique id (edgeFrom, edgeTo) to avoid reverse entries if multiple encoders
+         * @return an unique id (edgeFrom, edgeTo) to avoid duplicate entries if multiple encoders
          * are involved.
          */
         public long getItemId() {
