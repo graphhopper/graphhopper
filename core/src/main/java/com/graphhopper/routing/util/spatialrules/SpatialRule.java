@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * Defines rules that are valid for a certain region, e.g. a country.
  * A rule defines access, max-speed, etc. dependent on this region.
- *
+ * <p>
  * Every SpatialRule has a set of borders. The rules are valid inside of these borders.
  *
  * @author Robin Boldt
@@ -32,7 +32,7 @@ public interface SpatialRule {
     /**
      * Return the max speed for a certain highway type. If there is no max speed defined, _default will be returned.
      *
-     * @param highway The highway type, e.g. primary, secondary
+     * @param highway  The highway type, e.g. primary, secondary
      * @param _default The default max speed
      * @return max speed
      */
@@ -42,9 +42,9 @@ public interface SpatialRule {
      * Returns the {@link AccessValue} for a certain highway type and transportation mode. If nothing is defined,
      * _default will be returned.
      *
-     * @param highwayTag The highway type, e.g. primary, secondary
+     * @param highwayTag         The highway type, e.g. primary, secondary
      * @param transportationMode The mode of transportation
-     * @param _default The default AccessValue
+     * @param _default           The default AccessValue
      */
     AccessValue getAccessValue(String highwayTag, TransportationMode transportationMode, AccessValue _default);
 
@@ -97,6 +97,11 @@ public interface SpatialRule {
         @Override
         public SpatialRule addBorder(Polygon polygon) {
             throw new IllegalArgumentException("Empty rule cannot have borders");
+        }
+
+        @Override
+        public String toString() {
+            return "SpatialRule.EMPTY";
         }
     };
 }

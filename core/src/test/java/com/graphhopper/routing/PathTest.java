@@ -50,7 +50,6 @@ public class PathTest {
         g.close();
     }
 
-    @Test
     public void testWayList() {
         GraphHopperStorage g = new GraphBuilder(carManager).create();
         NodeAccess na = g.getNodeAccess();

@@ -20,10 +20,10 @@ package com.graphhopper.coll;
 import com.carrotsearch.hppc.HashOrderMixingStrategy;
 import com.carrotsearch.hppc.ObjectIntAssociativeContainer;
 import com.carrotsearch.hppc.ObjectIntHashMap;
+
 import static com.graphhopper.coll.GHIntObjectHashMap.DETERMINISTIC;
 
 /**
- *
  * @author Peter Karich
  */
 public class GHObjectIntHashMap<T> extends ObjectIntHashMap<T> {

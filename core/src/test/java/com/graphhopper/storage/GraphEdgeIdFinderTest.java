@@ -24,17 +24,22 @@ import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+
 import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_EDGES;
 import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_SHAPES;
+
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.Shape;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import org.junit.Test;
+
 import static org.junit.Assert.*;
 
 /**

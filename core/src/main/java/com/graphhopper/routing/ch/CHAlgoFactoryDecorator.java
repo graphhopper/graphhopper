@@ -27,6 +27,8 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -38,8 +40,8 @@ import java.util.concurrent.TimeUnit;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
 
 /**
- * This class implements the CH decorator for the routing algorithm factory and provides several
- * helper methods related to CH preparation and its vehicle profiles.
+ * This class implements the CH decorator and provides several helper methods related to CH
+ * preparation and its vehicle profiles.
  *
  * @author Peter Karich
  */
@@ -66,19 +68,18 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         setWeightingsAsStrings(Arrays.asList(getDefaultWeighting()));
     }
 
+    @Override
     public void init(CmdArgs args) {
-        setPreparationThreads(args.getInt("prepare.threads", getPreparationThreads()));
+        // throw explicit error for deprecated configs
+        if (!args.get("prepare.threads", "").isEmpty())
+            throw new IllegalStateException("Use " + CH.PREPARE + "threads instead of prepare.threads");
+        if (!args.get("prepare.chWeighting", "").isEmpty() || !args.get("prepare.chWeightings", "").isEmpty())
+            throw new IllegalStateException("Use " + CH.PREPARE + "weightings and a comma separated list instead of prepare.chWeighting or prepare.chWeightings");
 
-        String deprecatedWeightingConfig = args.get("prepare.chWeighting", "");
-        if (!deprecatedWeightingConfig.isEmpty())
-            throw new IllegalStateException("Use prepare.ch.weightings and a comma separated list instead of prepare.chWeighting");
+        setPreparationThreads(args.getInt(CH.PREPARE + "threads", getPreparationThreads()));
 
         // default is enabled & fastest
-        String chWeightingsStr = args.get("prepare.ch.weightings", "");
-
-        // backward compatibility
-        if (chWeightingsStr.isEmpty())
-            chWeightingsStr = args.get("prepare.chWeightings", "");
+        String chWeightingsStr = args.get(CH.PREPARE + "weightings", "");
 
         if ("no".equals(chWeightingsStr)) {
             // default is fastest and we need to clear this explicitely
@@ -93,11 +94,11 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (enableThis)
             setDisablingAllowed(args.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
-        setPreparationPeriodicUpdates(args.getInt("prepare.updates.periodic", getPreparationPeriodicUpdates()));
-        setPreparationLazyUpdates(args.getInt("prepare.updates.lazy", getPreparationLazyUpdates()));
-        setPreparationNeighborUpdates(args.getInt("prepare.updates.neighbor", getPreparationNeighborUpdates()));
-        setPreparationContractedNodes(args.getInt("prepare.contracted_nodes", getPreparationContractedNodes()));
-        setPreparationLogMessages(args.getDouble("prepare.log_messages", getPreparationLogMessages()));
+        setPreparationPeriodicUpdates(args.getInt(CH.PREPARE + "updates.periodic", getPreparationPeriodicUpdates()));
+        setPreparationLazyUpdates(args.getInt(CH.PREPARE + "updates.lazy", getPreparationLazyUpdates()));
+        setPreparationNeighborUpdates(args.getInt(CH.PREPARE + "updates.neighbor", getPreparationNeighborUpdates()));
+        setPreparationContractedNodes(args.getInt(CH.PREPARE + "contracted_nodes", getPreparationContractedNodes()));
+        setPreparationLogMessages(args.getDouble(CH.PREPARE + "log_messages", getPreparationLogMessages()));
     }
 
     public int getPreparationPeriodicUpdates() {
@@ -153,8 +154,9 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     /**
      * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
      */
-    public final void setEnabled(boolean enabled) {
+    public final CHAlgoFactoryDecorator setEnabled(boolean enabled) {
         this.enabled = enabled;
+        return this;
     }
 
     public final boolean isDisablingAllowed() {
@@ -210,7 +212,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     public List<String> getWeightingsAsStrings() {
         if (this.weightingsAsStrings.isEmpty())
-            throw new IllegalStateException("Potential bug: chWeightingList is empty");
+            throw new IllegalStateException("Potential bug: weightingsAsStrings is empty");
 
         return new ArrayList<>(this.weightingsAsStrings);
     }
@@ -254,12 +256,15 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (map.getWeighting().isEmpty())
             map.setWeighting(getDefaultWeighting());
 
+        String entriesStr = "";
         for (PrepareContractionHierarchies p : preparations) {
             if (p.getWeighting().matches(map))
                 return p;
+
+            entriesStr += p.getWeighting() + ", ";
         }
 
-        throw new IllegalArgumentException("Cannot find RoutingAlgorithmFactory for weighting map " + map);
+        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries " + entriesStr);
     }
 
     public int getPreparationThreads() {
@@ -283,7 +288,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             chPreparePool.execute(new Runnable() {
                 @Override
                 public void run() {
-                    String errorKey = "prepare.error." + name;
+                    String errorKey = CH.PREPARE + "error." + name;
                     try {
                         properties.put(errorKey, "CH preparation incomplete");
                         // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options                        
@@ -291,7 +296,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                         Thread.currentThread().setName(name);
                         prepare.doWork();
                         properties.remove(errorKey);
-                        properties.put("prepare.date." + name, Helper.createFormatter().format(new Date()));
+                        properties.put(CH.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
                     } catch (Exception ex) {
                         logger.error("Problem while CH preparation " + name, ex);
                         properties.put(errorKey, ex.getMessage());

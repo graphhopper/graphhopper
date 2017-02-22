@@ -22,9 +22,7 @@ import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.GeometryFactory;
 
 /**
- *
  * @author Phil
- *
  */
 public class Utils {
     public static String toWKT(PointList list) {

@@ -64,7 +64,7 @@ public class GHServer {
         ResourceHandler resHandler = new ResourceHandler();
         resHandler.setDirectoriesListed(false);
         resHandler.setWelcomeFiles(new String[]{
-            "index.html"
+                "index.html"
         });
         resHandler.setResourceBase(args.get("jetty.resourcebase", "./web/src/main/webapp"));
 
@@ -95,7 +95,7 @@ public class GHServer {
 
         HandlerList handlers = new HandlerList();
         handlers.setHandlers(new Handler[]{
-            resHandler, servHandler
+                resHandler, servHandler
         });
 
         GzipHandler gzipHandler = new GzipHandler();

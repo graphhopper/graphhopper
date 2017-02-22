@@ -155,7 +155,7 @@ public class MMapDataAccess extends AbstractDataAccess {
         ByteBuffer buf = null;
         IOException ioex = null;
         // One retry if it fails. It could fail e.g. if previously buffer wasn't yet unmapped from the jvm
-        for (int trial = 0; trial < 1;) {
+        for (int trial = 0; trial < 1; ) {
             try {
                 buf = raFile.getChannel().map(
                         allowWrites ? FileChannel.MapMode.READ_WRITE : FileChannel.MapMode.READ_ONLY,

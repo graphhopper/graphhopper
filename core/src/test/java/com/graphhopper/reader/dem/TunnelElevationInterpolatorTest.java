@@ -18,6 +18,7 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHIntHashSet;
+
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
@@ -49,7 +50,7 @@ public class TunnelElevationInterpolatorTest extends AbstractEdgeElevationInterp
 
         // @formatter:off
         /*
-		 * Graph structure:
+         * Graph structure:
 		 * 0--T--1--T--2     3--T--4
 		 * Tunnel 0-1-2 has a single outer node 2.
          */

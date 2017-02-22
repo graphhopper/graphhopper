@@ -20,6 +20,7 @@ package com.graphhopper.coll;
 import com.carrotsearch.hppc.LongArrayList;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.carrotsearch.hppc.predicates.IntPredicate;
+
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -114,7 +115,7 @@ public class GHSortedCollection {
         }
 
         Iterator<IntCursor> iter = set.iterator();
-        final int val = iter.next().value;        
+        final int val = iter.next().value;
         set.remove(val);
         if (set.isEmpty()) {
             map.remove(e.getKey());

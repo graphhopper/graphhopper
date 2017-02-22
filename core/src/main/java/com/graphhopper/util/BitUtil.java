@@ -27,7 +27,6 @@ import java.nio.ByteOrder;
  * 2=&gt;...
  * </pre> LITTLE endianness is default for GraphHopper and most microprocessors.
  *
- *
  * @author Peter Karich
  */
 public abstract class BitUtil {

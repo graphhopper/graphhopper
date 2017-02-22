@@ -62,11 +62,10 @@ public class RoutingAlgorithmIT {
         FlagEncoder encoder = hopper.getEncodingManager().getEncoder(hints.getVehicle());
         Weighting weighting = hopper.createWeighting(hints, encoder, hopper.getGraphHopperStorage());
 
-        HintsMap defaultHints = new HintsMap().put(Parameters.CH.DISABLE, true)
+        HintsMap defaultHints = new HintsMap().put(Parameters.CH.DISABLE, true).put(Parameters.Landmark.DISABLE, true)
                 .setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting());
 
         AlgorithmOptions defaultOpts = AlgorithmOptions.start(new AlgorithmOptions("", weighting, tMode)).hints(defaultHints).build();
-
         List<AlgoHelperEntry> prepare = new ArrayList<>();
         prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(ASTAR).build(), idx, "astar|beeline|" + addStr + weighting));
         // later: include dijkstraOneToMany
@@ -78,7 +77,17 @@ public class RoutingAlgorithmIT {
         prepare.add(new AlgoHelperEntry(ghStorage, astarbiOpts, idx, "astarbi|beeline|" + addStr + weighting));
         prepare.add(new AlgoHelperEntry(ghStorage, dijkstrabiOpts, idx, "dijkstrabi|" + addStr + weighting));
 
-        // add additional preparations if CH preparation are enabled
+        // add additional preparations if CH and LM preparation are enabled
+        if (hopper.getLMFactoryDecorator().isEnabled()) {
+            final HintsMap lmHints = new HintsMap(defaultHints).put(Parameters.Landmark.DISABLE, false);
+            prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
+                @Override
+                public RoutingAlgorithmFactory createRoutingFactory() {
+                    return hopper.getAlgorithmFactory(lmHints);
+                }
+            });
+        }
+
         if (hopper.getCHFactoryDecorator().isEnabled()) {
             final HintsMap chHints = new HintsMap(defaultHints).put(Parameters.CH.DISABLE, false);
             Weighting pickedWeighting = null;

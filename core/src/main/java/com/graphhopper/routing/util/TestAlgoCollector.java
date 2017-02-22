@@ -63,6 +63,7 @@ public class TestAlgoCollector {
         RoutingAlgorithmFactory factory = algoEntry.createRoutingFactory();
         for (int i = 0; i < queryList.size() - 1; i++) {
             RoutingAlgorithm algo = factory.createAlgo(queryGraph, algoEntry.getAlgorithmOptions());
+
 //            if (!algoEntry.getExpectedAlgo().equals(algo.toString())) {
 //                errors.add("Algorithm expected " + algoEntry.getExpectedAlgo() + " but was " + algo.toString());
 //                return this;
@@ -182,7 +183,13 @@ public class TestAlgoCollector {
 
         @Override
         public String toString() {
-            return "algoEntry(" + opts.getAlgorithm() + (forQueryGraph instanceof CHGraph ? "|ch" : "") + ")";
+            String algo = opts.getAlgorithm();
+            if (getExpectedAlgo().contains("landmarks"))
+                algo += "|landmarks";
+            if (forQueryGraph instanceof CHGraph)
+                algo += "|ch";
+
+            return "algoEntry(" + algo + ")";
         }
     }
 

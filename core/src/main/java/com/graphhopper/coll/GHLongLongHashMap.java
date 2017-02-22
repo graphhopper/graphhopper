@@ -19,10 +19,10 @@ package com.graphhopper.coll;
 
 import com.carrotsearch.hppc.HashOrderMixingStrategy;
 import com.carrotsearch.hppc.LongLongHashMap;
+
 import static com.graphhopper.coll.GHIntObjectHashMap.DETERMINISTIC;
 
 /**
- *
  * @author Peter Karich
  */
 public class GHLongLongHashMap extends LongLongHashMap {

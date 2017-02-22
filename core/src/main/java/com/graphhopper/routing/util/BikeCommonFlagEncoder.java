@@ -258,9 +258,9 @@ public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         }
 
         // use the way if it is tagged for bikes
-        if (way.hasTag("bicycle", intendedValues) || 
-            way.hasTag("bicycle", "dismount") || 
-            way.hasTag("highway", "cycleway"))
+        if (way.hasTag("bicycle", intendedValues) ||
+                way.hasTag("bicycle", "dismount") ||
+                way.hasTag("highway", "cycleway"))
             return acceptBit;
 
         // accept only if explicitly tagged for bike usage

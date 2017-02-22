@@ -37,6 +37,16 @@ gpx.track     |	true    | Include <trk> tag in gpx result. Only applicable if ty
 gpx.route     | true    | Include <rte> tag in gpx result. Only applicable if type=gpx is specified.
 gpx.waypoints | false   | Include <wpt> tag in gpx result. Only applicable if type=gpx is specified.
 
+### Hybrid
+
+If you enabled hybrid mode in the config you can use most of the features from flexible mode
+and still benefit from a speed up.
+
+Parameter        | Default    | Description
+:----------------|:-----------|:-----------
+ch.disable       | `false`    | Set to `true` in order to use the hybrid mode for all weightings that are enabled
+lm.active_landmarks| 4        | Not recommended to change this
+
 ### Flexible
 
 Unlock certain flexible features via `ch.disable=true` or disable CH on the server-side in the config.properties via `prepare.ch.weightings=no`
@@ -46,7 +56,7 @@ Parameter        | Default    | Description
 ch.disable       | `false`    | Use this parameter in combination with one or more parameters of this table
 weighting        | `fastest`  | Which kind of 'best' route calculation you need. Other option is `shortest` (e.g. for `vehicle=foot` or `bike`), `short_fastest` if time and distance is expensive (e.g. for `vehicle=truck`) and `curvature` (only for `vehicle=motorcycle`)
 edge_traversal   |`false`     | Use `true` if you want to consider turn restrictions for bike and motor vehicles. Keep in mind that the response time is roughly 2 times slower.
-algorithm        |`dijkstrabi`| The algorithm to calculate the route. Other options are `dijkstra`, `astar`, `astarbi`, `alternative_route` and `round_trip`
+algorithm        |`astarbi`   | The algorithm to calculate the route. Other options are `dijkstra`, `astar`, `astarbi`, `alternative_route` and `round_trip`
 heading          | NaN        | Favour a heading direction for a certain point. Specify either one heading for the start point or as many as there are points. In this case headings are associated by their order to the specific points. Headings are given as north based clockwise angle between 0 and 360 degree. This parameter also influences the tour generated with `algorithm=round_trip` and force the initial direction.
 heading_penalty  | 120        | Penalty for omitting a specified heading. The penalty corresponds to the accepted time delay in seconds in comparison to the route without a heading.
 pass_through     | `false`    | If `true` u-turns are avoided at via-points with regard to the `heading_penalty`.
