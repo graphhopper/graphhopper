@@ -47,8 +47,8 @@ import static com.graphhopper.util.Parameters.Landmark.DISABLE;
  * @author Peter Karich
  */
 public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator {
-    private int landmarkCount = 8;
-    private int activeLandmarkCount = 4;
+    private int landmarkCount = 16;
+    private int activeLandmarkCount = 8;
     private final List<PrepareLandmarks> preparations = new ArrayList<>();
     private final List<String> weightingsAsStrings = new ArrayList<>();
     private final List<Weighting> weightings = new ArrayList<>();
@@ -59,7 +59,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     @Override
     public void init(CmdArgs args) {
         landmarkCount = args.getInt(Landmark.COUNT, landmarkCount);
-        activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(4, landmarkCount));
+        activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, landmarkCount));
         for (String loc : args.get("prepare.lm.suggestions_location", "").split(",")) {
             if (!loc.trim().isEmpty())
                 lmSuggestionsLocations.add(loc.trim());
