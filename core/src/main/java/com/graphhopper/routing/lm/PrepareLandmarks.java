@@ -131,7 +131,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
 
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR + ".epsilon", 1);
             AStar astar = (AStar) algo;
-            astar.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, -1, lms.getFactor(), false).
+            astar.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
             return algo;
         } else if (algo instanceof AStarBidirection) {
@@ -141,9 +141,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
             int recalcCount = Math.max(10, opts.getHints().getInt("lm.recalc_count", 8000));
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR_BI + ".epsilon", 1);
             AStarBidirection astarbi = (AStarBidirection) algo;
-            LMApproximator approximator = new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, recalcCount, lms.getFactor(), false).setEpsilon(epsilon);
-            // TODO changing landmarks while exploration can be better but no config can be given yet which works for more than a few cases.
-//            approximator.setRecalculationHook(astarbi);
+            LMApproximator approximator = new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).setEpsilon(epsilon);
             astarbi.setApproximation(approximator);
             return algo;
         } else if (algo instanceof AlternativeRoute) {
@@ -151,7 +149,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
                 throw new IllegalStateException("Initalize landmark storage before creating algorithms");
 
             AlternativeRoute altRoute = (AlternativeRoute) algo;
-            altRoute.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, -1, lms.getFactor(), false));
+            altRoute.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false));
             // landmark algorithm follows good compromise between fast response and exploring 'interesting' paths so we
             // can decrease this exploration factor further (1->dijkstra, 0.8->bidir. A*)
             altRoute.setMaxExplorationFactor(0.6);

@@ -19,7 +19,6 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.QueryGraph;
-import com.graphhopper.routing.RecalculationHook;
 import com.graphhopper.routing.weighting.BeelineWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.storage.Graph;
@@ -58,17 +57,13 @@ public class LMApproximator implements WeightApproximator {
     private final WeightApproximator fallBackApproximation;
     private boolean fallback = false;
     private final GHIntObjectHashMap<VirtEntry> virtNodeMap;
-    private RecalculationHook recalculationHook;
     private boolean changeActiveLandmarks = true;
-    private int recalculateCount;
 
     public LMApproximator(Graph graph, int maxBaseNodes, LandmarkStorage lms, int activeCount,
-                          int recalculateCount,
                           double factor, boolean reverse) {
         this.reverse = reverse;
         this.lms = lms;
         this.factor = factor;
-        this.recalculateCount = 2000;
         if (activeCount > lms.getLandmarkCount())
             throw new IllegalArgumentException("Active landmarks " + activeCount
                     + " should be lower or equals to landmark count " + lms.getLandmarkCount());
@@ -110,10 +105,6 @@ public class LMApproximator implements WeightApproximator {
         }
     }
 
-    public void setRecalculationHook(RecalculationHook recalculationHook) {
-        this.recalculationHook = recalculationHook;
-    }
-
     /**
      * Increase approximation with higher epsilon
      */
@@ -145,43 +136,6 @@ public class LMApproximator implements WeightApproximator {
             if (counter == 0) {
                 boolean res = lms.initActiveLandmarks(node, to, activeLandmarks, activeFromIntWeights, activeToIntWeights, reverse);
                 if (!res) {
-                    // note: fallback==true means forever true!
-                    fallback = true;
-                    return fallBackApproximation.approximate(queryNode);
-                }
-            } else if (recalculationHook != null && counter % recalculateCount == 0) {
-
-                // TODO add landmarks and start with just 2
-                int[] newActiveLandmarks = Arrays.copyOf(activeLandmarks, activeLandmarks.length);
-                int[] newActiveFromIntWeights = Arrays.copyOf(activeFromIntWeights, activeFromIntWeights.length);
-                int[] newActiveToIntWeights = Arrays.copyOf(activeToIntWeights, activeToIntWeights.length);
-
-                boolean res = lms.initActiveLandmarks(node, to, newActiveLandmarks, newActiveFromIntWeights, newActiveToIntWeights, reverse);
-                if (res) {
-                    // update active landmarks only if newly picked landmarks have at least a 1% better lower bound
-                    int newMaxWeightInt = getMaxWeight(node, virtEdgeWeightInt, newActiveLandmarks, newActiveFromIntWeights, newActiveToIntWeights);
-                    int oldMaxWeightInt = getMaxWeight(node, virtEdgeWeightInt, activeLandmarks, activeFromIntWeights, activeToIntWeights);
-
-                    counter = 1;
-                    if (newMaxWeightInt < oldMaxWeightInt * 1.01) {
-
-                        // dynamic recalc count between 200 and 20_000
-                        recalculateCount = Math.min((int) (recalculateCount * 1.2), 20_000);
-                        return oldMaxWeightInt * factor * epsilon;
-                    }
-
-                    recalculateCount = Math.max((int) (recalculateCount * 0.8), 200);
-
-                    activeLandmarks = newActiveLandmarks;
-                    activeFromIntWeights = newActiveFromIntWeights;
-                    activeToIntWeights = newActiveToIntWeights;
-
-//                    System.out.println("update " + newMaxWeightInt + " vs " + oldMaxWeightInt + ", " + recalculateCount);
-
-                    changeActiveLandmarks = false;
-                    recalculationHook.afterHeuristicChange(true, true);
-                    changeActiveLandmarks = true;
-                } else {
                     // note: fallback==true means forever true!
                     fallback = true;
                     return fallBackApproximation.approximate(queryNode);
@@ -253,7 +207,7 @@ public class LMApproximator implements WeightApproximator {
 
     @Override
     public WeightApproximator reverse() {
-        return new LMApproximator(graph, maxBaseNodes, lms, activeLandmarks.length, recalculateCount, factor, !reverse);
+        return new LMApproximator(graph, maxBaseNodes, lms, activeLandmarks.length, factor, !reverse);
     }
 
     @Override

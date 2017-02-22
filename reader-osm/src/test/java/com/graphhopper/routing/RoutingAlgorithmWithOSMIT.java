@@ -567,7 +567,6 @@ public class RoutingAlgorithmWithOSMIT {
         int algosLength = 2;
         final Weighting weighting = new ShortestWeighting(encodingManager.getEncoder("car"));
         final EdgeFilter filter = new DefaultEdgeFilter(carEncoder);
-        final HintsMap hints = new HintsMap().setWeighting("shortest").setVehicle("car");
         for (int no = 0; no < MAX; no++) {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {
                 String[] algos = new String[]{
