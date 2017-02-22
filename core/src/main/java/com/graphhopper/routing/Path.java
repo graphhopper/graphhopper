@@ -536,8 +536,6 @@ public class Path {
                     if (!annotation.equals(prevAnnotation)) {
                         return true;
                     }
-                    if (sign == Instruction.CONTINUE_ON_STREET)
-                        return false;
 
                     int nrOfPossibleTurns = nrOfPossibleTurns(baseNode, prevNode, adjNode);
 
@@ -559,6 +557,39 @@ public class Path {
                         return true;
                     }
 
+                    /*
+                    The current state is a bit uncertain. So we are going more or less straight sign < 2
+                    So it really depends on the surrounding street if we need a turn instruction or not
+                    In most cases this will be a simple follow the current street and we don't necessarily
+                    need a turn instruction
+                     */
+
+                    int prevEdge = -1;
+                    int edge = -1;
+                    EdgeIterator flagIter = crossingExplorer.setBaseNode(baseNode);
+                    while (flagIter.next()) {
+                        if (flagIter.getAdjNode() == prevNode || flagIter.getBaseNode() == prevNode)
+                            prevEdge = flagIter.getEdge();
+
+                        if (flagIter.getAdjNode() == adjNode || flagIter.getBaseNode() == adjNode)
+                            edge = flagIter.getEdge();
+
+                    }
+                    if (prevEdge == -1 || edge == -1) {
+                        throw new IllegalStateException("Couldn't find the edges for " + prevNode + "-" + baseNode + "-" + adjNode);
+                    }
+
+                    long flag = graph.getEdgeIteratorState(edge, adjNode).getFlags();
+                    long prevFlag = graph.getEdgeIteratorState(prevEdge, baseNode).getFlags();
+
+                    boolean surroundingStreetsAreSlower = surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 1);
+
+                    // Leave the current road -> create instruction
+                    if (isLeavingCurrentStreet(flag, prevFlag, baseNode, prevNode, adjNode)
+                            && !surroundingStreetsAreSlower) {
+                        return true;
+                    }
+
                     // There is at least one other possibility to turn, and we are almost going straight
                     // Check the other turns if one of them is also going almost straight
                     // If not, we don't need a turn instruction
@@ -571,32 +602,42 @@ public class Path {
                     if (otherContinue) {
                         logger.warn("Uncertain Turn Instruction, turning from " + prevName + " onto " + name + " from " + doublePrevLat + "," + doublePrevLon + " via " + prevLat + "," + prevLon + " to " + lat + "," + lon);
                         // For this case we need to consider bwd true, therefore we have to use another explorer, e.g. on Trunk, edges are oneways, therefore bwd=false
-                        EdgeIterator flagIter = crossingExplorer.setBaseNode(baseNode);
-                        long prevFlags = -1;
-                        long flags = -1;
-                        while (flagIter.next()) {
-                            if (flagIter.getAdjNode() == prevNode || flagIter.getBaseNode() == prevNode)
-                                prevFlags = flagIter.getFlags();
 
-                            if (flagIter.getAdjNode() == adjNode || flagIter.getBaseNode() == adjNode)
-                                flags = flagIter.getFlags();
-
-                        }
-                        if (prevFlags == -1 || flags == -1) {
-                            throw new IllegalStateException("Couldn't retrieve flags for turn instruction generation");
-                        }
                         // The idea is, if there are only a random tracks, they usually don't have names and they
                         // usually don't have any special flags (e.g. speed limit).
                         // In this case we should force the turn instruction.
                         return !(isNameSimilar(name, prevName) &&
-                                prevFlags == flags &&
-                                surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 1));
+                                prevFlag == flag &&
+                                surroundingStreetsAreSlower);
                     }
 
                     return false;
                 } else {
                     return ((!name.equals(prevName)) || (!annotation.equals(prevAnnotation)));
                 }
+            }
+
+            private boolean isLeavingCurrentStreet(long flag, long prevFlag, int baseNode, int prevNode, int adjNode) {
+                if (isNameSimilar(name, prevName)) {
+                    return false;
+                }
+
+                boolean checkFlag = flag != prevFlag;
+
+                EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
+                while (edgeIter.next()) {
+                    if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
+                        if (isNameSimilar(prevName, edgeIter.getName())) {
+                            if (checkFlag) {
+                                if (prevFlag == edgeIter.getFlags())
+                                    return true;
+                            } else {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
             }
 
             /**
@@ -631,7 +672,7 @@ public class Path {
              * on the prominent street that one would follow anyway.
              */
             private boolean surroundingStreetsAreSlowerByFactor(int baseNode, int prevNode, int adjNode, double factor) {
-                EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
+                EdgeIterator edgeIter = crossingExplorer.setBaseNode(baseNode);
                 double pathSpeed = -1;
                 double maxSurroundingSpeed = -1;
                 double tmpSpeed;
@@ -652,7 +693,7 @@ public class Path {
                     }
                 }
 
-                // Surrounding streets need to be significantly slower and not just a little
+                // Surrounding streets need to be slower by a factor
                 return maxSurroundingSpeed * factor < pathSpeed;
             }
 
