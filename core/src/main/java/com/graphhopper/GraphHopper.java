@@ -1194,5 +1194,4 @@ public class GraphHopper implements GraphHopperAPI {
     public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
         this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
     }
-
 }

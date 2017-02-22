@@ -21,12 +21,24 @@ import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.json.GHJsonBuilder;
+import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
+import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
+import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.graphhopper.json.GHJson;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.Reader;
+import java.util.Arrays;
 
 /**
  * @author Peter Karich
@@ -47,11 +59,34 @@ public class DefaultModule extends AbstractModule {
         return graphHopper;
     }
 
+    static SpatialRuleLookup buildIndex(Reader reader, BBox graphBBox) {
+        GHJson ghJson = new GHJsonBuilder().create();
+        JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(reader, JsonFeatureCollection.class);
+        return new SpatialRuleLookupBuilder().build(
+                Arrays.asList(new GermanySpatialRule(), new AustriaSpatialRule()),
+                jsonFeatureCollection, graphBBox, 1, true);
+    }
+
     /**
      * @return an initialized GraphHopper instance
      */
     protected GraphHopper createGraphHopper(CmdArgs args) {
         GraphHopper tmp = new GraphHopperOSM().forServer().init(args);
+        String location = args.get("spatial_rules.location", "");
+        if (!location.isEmpty()) {
+            if (!tmp.getEncodingManager().supports(("generic"))) {
+                logger.warn("spatial_rules.location was specified but 'generic' encoder is missing to utilize the index");
+            } else
+                try {
+                    SpatialRuleLookup index = buildIndex(new FileReader(location), tmp.getGraphHopperStorage().getBounds());
+                    if (index != null) {
+                        logger.info("Set spatial rule lookup with " + index.size() + " rules");
+                        ((DataFlagEncoder) tmp.getEncodingManager().getEncoder("generic")).setSpatialRuleLookup(index);
+                    }
+                } catch (IOException ex) {
+                    throw new RuntimeException(ex);
+                }
+        }
         tmp.importOrLoad();
         logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
                 + ", data_reader_file:" + tmp.getDataReaderFile()

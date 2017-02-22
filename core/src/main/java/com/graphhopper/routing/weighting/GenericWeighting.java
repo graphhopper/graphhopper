@@ -32,7 +32,6 @@ import java.util.List;
 
 /**
  * Calculates the best route according to a configurable weighting.
- * <p>
  *
  * @author Peter Karich
  */
@@ -56,9 +55,10 @@ public class GenericWeighting extends AbstractWeighting {
     protected final double height;
     protected final double weight;
     protected final double width;
-    protected final GHIntHashSet blockedEdges;
-    protected final List<Shape> blockedShapes;
-    protected NodeAccess na;
+
+    private final GHIntHashSet blockedEdges;
+    private final List<Shape> blockedShapes;
+    private NodeAccess na;
 
     public GenericWeighting(DataFlagEncoder encoder, ConfigMap cMap) {
         super(encoder);
@@ -103,13 +103,13 @@ public class GenericWeighting extends AbstractWeighting {
                 (gEncoder.isStoreWidth() && overLimit(width, gEncoder.getWidth(edgeState))))
             return Double.POSITIVE_INFINITY;
 
-        if(!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())){
+        if (!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())) {
             return Double.POSITIVE_INFINITY;
         }
 
-        if(!blockedShapes.isEmpty() && na != null){
-            for (Shape shape: blockedShapes) {
-                if(shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()))){
+        if (!blockedShapes.isEmpty() && na != null) {
+            for (Shape shape : blockedShapes) {
+                if (shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()))) {
                     return Double.POSITIVE_INFINITY;
                 }
             }
@@ -119,7 +119,7 @@ public class GenericWeighting extends AbstractWeighting {
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 
-        switch (gEncoder.getEdgeAccessValue(edgeState.getFlags())){
+        switch (gEncoder.getAccessValue(edgeState.getFlags())) {
             case NOT_ACCESSIBLE:
                 return Double.POSITIVE_INFINITY;
             case EVENTUALLY_ACCESSIBLE:
@@ -181,8 +181,7 @@ public class GenericWeighting extends AbstractWeighting {
      * Use this method to associate a graph with this weighting to calculate e.g. node locations too.
      */
     public void setGraph(Graph graph) {
-        if(graph == null)
-            return;
-        this.na = graph.getNodeAccess();
+        if (graph != null)
+            this.na = graph.getNodeAccess();
     }
 }
