@@ -225,6 +225,7 @@ if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
   fi
   WEB_JAR="$GH_HOME/web/target/graphhopper-web-$VERSION-with-dep.jar"
   if [ ! -s "$WEB_JAR" ]; then
+    execMvn --projects web -am -DskipTests=true install
     execMvn --projects web -DskipTests=true install assembly:single
   fi
 
