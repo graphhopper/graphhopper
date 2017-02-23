@@ -1179,7 +1179,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (tmpPrepare) {
             ensureWriteAccess();
             ghStorage.freeze();
-            lmFactoryDecorator.loadOrDoWork();
+            lmFactoryDecorator.loadOrDoWork(ghStorage.getProperties());
         }
         ghStorage.getProperties().put(Landmark.PREPARE + "done", tmpPrepare);
     }
