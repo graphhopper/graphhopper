@@ -79,6 +79,14 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     }
 
     /**
+     * @see LandmarkStorage#setMaximumWeight(double)
+     */
+    public PrepareLandmarks setMaximumWeight(double maximumWeight) {
+        lms.setMaximumWeight(maximumWeight);
+        return this;
+    }
+
+    /**
      * @see LandmarkStorage#setLMSelectionWeighting(Weighting)
      */
     public void setLMSelectionWeighting(Weighting w) {

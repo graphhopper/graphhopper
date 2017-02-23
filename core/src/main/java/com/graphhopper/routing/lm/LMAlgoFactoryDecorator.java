@@ -55,6 +55,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private boolean enabled = false;
     private boolean disablingAllowed = false;
     private final List<String> lmSuggestionsLocations = new ArrayList<>(5);
+    private double maximumWeight = -1;
 
     @Override
     public void init(CmdArgs args) {
@@ -74,6 +75,8 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         setEnabled(enableThis);
         if (enableThis)
             setDisablingAllowed(args.getBool(Landmark.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
+
+        maximumWeight = args.getDouble(Landmark.PREPARE + "maximum_weight", -1);
     }
 
     public int getLandmarks() {
@@ -244,7 +247,8 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         for (Weighting weighting : getWeightings()) {
             PrepareLandmarks tmpPrepareLM = new PrepareLandmarks(ghStorage.getDirectory(), ghStorage,
                     weighting, traversalMode, landmarkCount, activeLandmarkCount).
-                    setLandmarkSuggestions(lmSuggestions);
+                    setLandmarkSuggestions(lmSuggestions).
+                    setMaximumWeight(maximumWeight);
 
             addPreparation(tmpPrepareLM);
         }
