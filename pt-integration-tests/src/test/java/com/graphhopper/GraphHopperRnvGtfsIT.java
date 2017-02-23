@@ -3,6 +3,7 @@ package com.graphhopper;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.stats.FeedStats;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
+import com.graphhopper.reader.gtfs.GtfsHelper;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GHDirectory;
@@ -15,7 +16,6 @@ import org.junit.Test;
 
 import java.awt.geom.Rectangle2D;
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -180,7 +180,7 @@ public class GraphHopperRnvGtfsIT {
                 .filter(leg -> leg instanceof Trip.PtLeg)
                 .findFirst()
                 .map(ptleg -> ((Trip.PtLeg) ptleg).departureTime)
-                .map(date -> LocalDateTime.parse(new SimpleDateFormat("YYYY-MM-dd'T'HH:mm").format(date)));
+                .map(GtfsHelper::localDateTimeFromDate);
     }
 
 }

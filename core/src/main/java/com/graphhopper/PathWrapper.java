@@ -21,6 +21,7 @@ import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -46,6 +47,7 @@ public class PathWrapper {
     private int numChanges;
     private long firstPtLegDeparture;
     private final List<Trip.Leg> legs = new ArrayList<>();
+    private BigDecimal fare;
 
     /**
      * @return the description of this route alternative to make it meaningful for the user e.g. it
@@ -285,4 +287,11 @@ public class PathWrapper {
         return legs;
     }
 
+    public void setFare(BigDecimal fare) {
+        this.fare = fare;
+    }
+
+    public BigDecimal getFare() {
+        return fare;
+    }
 }

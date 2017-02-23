@@ -6,7 +6,7 @@ import java.util.Set;
 
 public class Trip {
 
-    static class Segment {
+    public static class Segment {
 
         private final String route;
         private long startTime;
@@ -14,7 +14,7 @@ public class Trip {
         private String destinationId;
         private Set<String> zones;
 
-        Segment(String route, long startTime, String originId, String destinationId, Set<String> zones) {
+        public Segment(String route, long startTime, String originId, String destinationId, Set<String> zones) {
             this.route = route;
             this.startTime = startTime;
             this.originId = originId;
@@ -44,7 +44,7 @@ public class Trip {
 
     }
 
-    final List<Segment> segments = new ArrayList<>();
+    public final List<Segment> segments = new ArrayList<>();
 
 
 }

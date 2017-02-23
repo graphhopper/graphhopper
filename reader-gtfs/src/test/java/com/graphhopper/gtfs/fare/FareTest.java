@@ -68,9 +68,9 @@ public class FareTest {
         assumeThat("There is at least one fare for each segment.",
                 trip.segments.stream().map(segment -> Fares.calculate(singleFare, segment)).collect(Collectors.toList()),
                 everyItem(is(not(empty()))));
-        double priceWithOneOption = Fares.calculate(singleFare, trip).getAmount().doubleValue();
+        double priceWithOneOption = Fares.calculate(singleFare, trip).get().getAmount().doubleValue();
 
-        double priceWithAllOptions = Fares.calculate(fares, trip).getAmount().doubleValue();
+        double priceWithAllOptions = Fares.calculate(fares, trip).get().getAmount().doubleValue();
 
 
         assertThat("...it shouldn't get more expensive when we put the cheaper options back.", priceWithAllOptions, lessThanOrEqualTo(priceWithOneOption));
@@ -93,7 +93,7 @@ public class FareTest {
                 .map(segment -> Fares.calculate(fares, segment))
                 .forEach(candidateFares -> assertThat("Only one fare candidate per segment.", candidateFares.size(), equalTo(1)));
         assertThat("Total fare is the sum of all individual fares.",
-                Fares.calculate(fares, trip).getAmount().doubleValue(),
+                Fares.calculate(fares, trip).get().getAmount().doubleValue(),
                 equalTo(trip.segments.stream().flatMap(segment -> Fares.calculate(fares, segment).stream()).mapToDouble(fare -> fare.fare_attribute.price).sum()));
     }
 
@@ -104,7 +104,7 @@ public class FareTest {
         assumeThat("Fare allows the number of transfers we need for our trip.", onlyFare.fare_attribute.transfers, greaterThanOrEqualTo(trip.segments.size()));
         assumeThat("Fare allows the time we need for our trip.", (long) onlyFare.fare_attribute.transfer_duration, greaterThanOrEqualTo(trip.segments.get(trip.segments.size()-1).getStartTime() - trip.segments.get(0).getStartTime()));
 
-        Amount amount = Fares.calculate(fares, trip);
+        Amount amount = Fares.calculate(fares, trip).get();
         Assert.assertEquals(BigDecimal.valueOf(onlyFare.fare_attribute.price), amount.getAmount());
     }
 
@@ -116,7 +116,7 @@ public class FareTest {
         assumeThat("Fare allows the number of transfers we need for our trip.", onlyFare.fare_attribute.transfers, greaterThanOrEqualTo(trip.segments.size()));
         assumeThat("Fare does not allow the time we need for our trip.", (long) onlyFare.fare_attribute.transfer_duration, lessThan(trip.segments.get(trip.segments.size()-1).getStartTime() - trip.segments.get(0).getStartTime()));
 
-        Amount amount = Fares.calculate(fares, trip);
+        Amount amount = Fares.calculate(fares, trip).get();
         assertThat(amount.getAmount().doubleValue(), greaterThan(onlyFare.fare_attribute.price));
     }
 

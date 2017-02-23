@@ -35,6 +35,7 @@ import com.graphhopper.util.PointList;
 import com.graphhopper.util.exceptions.GHException;
 import com.graphhopper.util.shapes.BBox;
 
+import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -138,6 +139,9 @@ public class SimpleRouteSerializer implements RouteSerializer {
                 }
 
                 jsonPath.put("snapped_waypoints", createPoints(ar.getWaypoints(), pointsEncoded, includeElevation));
+                if (ar.getFare() != null) {
+                    jsonPath.put("fare", NumberFormat.getCurrencyInstance().format(ar.getFare()));
+                }
                 jsonPathList.add(jsonPath);
             }
 

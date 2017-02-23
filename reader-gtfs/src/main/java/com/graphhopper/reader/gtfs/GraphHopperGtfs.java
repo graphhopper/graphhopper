@@ -2,6 +2,8 @@ package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.graphhopper.*;
+import com.graphhopper.Trip;
+import com.graphhopper.gtfs.fare.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.QueryGraph;
@@ -22,6 +24,7 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -322,6 +325,21 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             path.setTime((solution.currentTime - initialTime) * 1000 * (arriveBy ? -1 : 1));
             path.setFirstPtLegDeparture(solution.firstPtDepartureTime);
             path.setNumChanges((int) path.getLegs().stream().filter(l->l instanceof Trip.PtLeg).count() - 1);
+            com.graphhopper.gtfs.fare.Trip faresTrip = new com.graphhopper.gtfs.fare.Trip();
+            path.getLegs().stream()
+                    .filter(leg -> leg instanceof Trip.PtLeg)
+                    .map(leg -> (Trip.PtLeg) leg)
+                    .findFirst()
+                    .ifPresent(firstPtLeg -> {
+                        LocalDateTime firstPtDepartureTime = GtfsHelper.localDateTimeFromDate(firstPtLeg.departureTime);
+                        path.getLegs().stream()
+                                .filter(leg -> leg instanceof Trip.PtLeg)
+                                .map(leg -> (Trip.PtLeg) leg)
+                                .map(ptLeg -> new com.graphhopper.gtfs.fare.Trip.Segment("FIXME", Duration.between(firstPtDepartureTime, GtfsHelper.localDateTimeFromDate(ptLeg.departureTime)).getSeconds(), ptLeg.boardStop.name, ptLeg.stops.get(ptLeg.stops.size()-1).name, Collections.emptySet()))
+                                .forEach(faresTrip.segments::add);
+                        Fares.calculate(Collections.emptyMap() /* FIXME */, faresTrip)
+                                .ifPresent(amount -> path.setFare(amount.getAmount()));
+                    });
             response.add(path);
         }
         if (response.getAll().isEmpty()) {

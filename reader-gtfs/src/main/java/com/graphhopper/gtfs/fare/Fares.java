@@ -11,24 +11,24 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 
 public class Fares {
-    public static Amount calculate(Map<String, Fare> fares, Trip trip) {
+    public static Optional<Amount> calculate(Map<String, Fare> fares, Trip trip) {
         return ticketsBruteForce(fares, trip)
-                .map(ticket -> {
-                    Fare fare = fares.get(ticket.getFare().fare_id);
-                    final BigDecimal priceOfOneTicket = BigDecimal.valueOf(fare.fare_attribute.price);
-                    return new Amount(priceOfOneTicket, fare.fare_attribute.currency_type);
-                })
-                .collect(Collectors.groupingBy(Amount::getCurrencyType, Collectors.mapping(Amount::getAmount, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))))
-                .entrySet()
-                .stream()
-                .collect(Collectors.toMap(e -> e.getKey(), e -> new Amount(e.getValue(), e.getKey())))
-                .get("USD");
+                .map(tickets -> tickets.stream()
+                        .map(ticket -> {
+                            Fare fare = fares.get(ticket.getFare().fare_id);
+                            final BigDecimal priceOfOneTicket = BigDecimal.valueOf(fare.fare_attribute.price);
+                            return new Amount(priceOfOneTicket, fare.fare_attribute.currency_type);
+                        })
+                        .collect(Collectors.groupingBy(Amount::getCurrencyType, Collectors.mapping(Amount::getAmount, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))))
+                        .entrySet()
+                        .stream()
+                        .collect(Collectors.toMap(e -> e.getKey(), e -> new Amount(e.getValue(), e.getKey())))
+                        .get("USD"));
     }
 
-    private static Stream<Ticket> ticketsBruteForce(Map<String, Fare> fares, Trip trip) {
+    private static Optional<List<Ticket>> ticketsBruteForce(Map<String, Fare> fares, Trip trip) {
         TicketPurchaseScoreCalculator ticketPurchaseScoreCalculator = new TicketPurchaseScoreCalculator();
-        TicketPurchase solution = allTicketPurchases(fares, trip).max(Comparator.comparingInt(ticketPurchaseScoreCalculator::calculateScore)).get();
-        return solution.getTickets().stream();
+        return allTicketPurchases(fares, trip).max(Comparator.comparingInt(ticketPurchaseScoreCalculator::calculateScore)).map(solution -> solution.getTickets());
     }
 
     private static Stream<TicketPurchase> allTicketPurchases(Map<String, Fare> fares, Trip trip) {
