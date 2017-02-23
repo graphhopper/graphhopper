@@ -3,7 +3,7 @@ cd $HOME/..
 
 destination=src/main/resources/com/graphhopper/util/
 
-translations="en_US SKIP ar ast bg ca cs_CZ da_DK de_DE el es fa fil fi fr_FR fr_CH gl he hr_HR hsb hu_HU it ja ko lt_LT ne nl pl_PL pt_BR pt_PT ro ru si sk sv_SE tr uk vi_VI zh_CN zh_HK"
+translations="en_US SKIP ar ast bg ca cs_CZ da_DK de_DE el es fa fil fi fr_FR fr_CH gl he hr_HR hsb hu_HU it ja ko lt_LT ne nl pl_PL pt_BR pt_PT ro ru sl_SI sk sv_SE tr uk vi_VI zh_CN zh_HK"
 file=$1
 
 # You can execute the following
