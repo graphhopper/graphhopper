@@ -287,10 +287,11 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             path.getLegs().addAll(partitions.stream().flatMap(partition -> legs(partition, queryGraph, encoder, weighting, tr).stream()).collect(Collectors.toList()));
 
             final InstructionList instructions = new InstructionList(tr);
-            for (Trip.Leg leg : path.getLegs()) {
+            for (int i=0; i<path.getLegs().size(); ++i) {
+                Trip.Leg leg = path.getLegs().get(i);
                 if (leg instanceof Trip.WalkLeg) {
                     final Trip.WalkLeg walkLeg = ((Trip.WalkLeg) leg);
-                    for (Instruction instruction : walkLeg.instructions.subList(0, walkLeg.instructions.size()-1)) {
+                    for (Instruction instruction : walkLeg.instructions.subList(0, i < path.getLegs().size()-1 ? walkLeg.instructions.size()-1 : walkLeg.instructions.size())) {
                         instructions.add(instruction);
                     }
                 } else if (leg instanceof Trip.PtLeg) {
