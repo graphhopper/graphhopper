@@ -1,7 +1,6 @@
 0.9
-    
-0.8
     EncodedDoubleValue requires maxValue/factor to be a natural number #954
+0.8
     refactoring to Weighting class, see #807
     removed FlagEncoder from parameters as weighting.getFlagEncoder can and is used
     all properties with prefix "osmreader." changed to "datareader." and osmreader.osm changed to datareader.file

@@ -32,9 +32,8 @@ public class EncodedDoubleValue extends EncodedValue {
     public EncodedDoubleValue(String name, int shift, int bits, double factor, long defaultValue, int maxValue, boolean allowZero) {
         super(name, shift, bits, factor, defaultValue, maxValue, allowZero);
         double factorDivision = maxValue / factor;
-        // Interestingly we cannot use modulo here, e.g. 10%00.1 != 0
         if (factorDivision != (int) factorDivision) {
-            throw new IllegalStateException("MaxValue needs to be divideable by factor without remainder");
+            throw new IllegalStateException("MaxValue needs to be divisible by factor without remainder");
         }
     }
 
