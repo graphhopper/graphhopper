@@ -303,6 +303,8 @@ public class GraphHopper implements GraphHopperAPI {
 
     /**
      * This method enabled or disables the speed mode (Contraction Hierarchies)
+     *
+     * @deprecated use {@link #setCHEnabled(boolean)} instead
      */
     public GraphHopper setCHEnable(boolean enable) {
         return setCHEnabled(enable);
