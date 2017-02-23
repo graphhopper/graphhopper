@@ -2,13 +2,9 @@ package com.graphhopper.gtfs.fare;
 
 import com.conveyal.gtfs.model.Fare;
 import com.conveyal.gtfs.model.FareRule;
-import org.optaplanner.core.api.solver.SolverFactory;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -16,7 +12,7 @@ import static java.util.stream.Collectors.toList;
 
 public class Fares {
     public static Amount calculate(Map<String, Fare> fares, Trip trip) {
-        return tickets(fares, trip)
+        return ticketsBruteForce(fares, trip)
                 .map(ticket -> {
                     Fare fare = fares.get(ticket.getFare().fare_id);
                     final BigDecimal priceOfOneTicket = BigDecimal.valueOf(fare.fare_attribute.price);
@@ -29,11 +25,39 @@ public class Fares {
                 .get("USD");
     }
 
-    private static Stream<Ticket> tickets(Map<String, Fare> fares, Trip trip) {
-        SolverFactory<TicketPurchase> sf = SolverFactory.createFromXmlResource("com/graphhopper/gtfs/fare/fareSolverConfig.xml");
-        TicketPurchase problem = new TicketPurchase(fares, trip);
-        TicketPurchase solution = sf.buildSolver().solve(problem);
+    private static Stream<Ticket> ticketsBruteForce(Map<String, Fare> fares, Trip trip) {
+        TicketPurchaseScoreCalculator ticketPurchaseScoreCalculator = new TicketPurchaseScoreCalculator();
+        TicketPurchase solution = allTicketPurchases(fares, trip).max(Comparator.comparingInt(ticketPurchaseScoreCalculator::calculateScore)).get();
         return solution.getTickets().stream();
+    }
+
+    private static Stream<TicketPurchase> allTicketPurchases(Map<String, Fare> fares, Trip trip) {
+        List<Trip.Segment> segments = trip.segments;
+        List<List<FareAssignment>> result = allTicketPurchases(fares, segments);
+        return result.stream().map(fareAssignment -> new TicketPurchase(fareAssignment));
+    }
+
+    private static List<List<FareAssignment>> allTicketPurchases(Map<String, Fare> fares, List<Trip.Segment> segments) {
+        if (segments.isEmpty()) {
+            ArrayList<List<FareAssignment>> emptyList = new ArrayList<>();
+            emptyList.add(Collections.emptyList());
+            return emptyList;
+        } else {
+            List<List<FareAssignment>> result = new ArrayList<>();
+            Trip.Segment segment = segments.get(0);
+            List<List<FareAssignment>> tail = allTicketPurchases(fares, segments.subList(1, segments.size()));
+            Collection<Fare> possibleFares = Fares.calculate(fares, segment);
+            for (Fare fare : possibleFares) {
+                for (List<FareAssignment> fareAssignments : tail) {
+                    ArrayList arrayList = new ArrayList(fareAssignments);
+                    FareAssignment fareAssignment = new FareAssignment(segment);
+                    fareAssignment.setFare(fare);
+                    arrayList.add(0, fareAssignment);
+                    result.add(arrayList);
+                }
+            }
+            return result;
+        }
     }
 
     public static Collection<Fare> calculate(Map<String, Fare> fares, Trip.Segment segment) {
