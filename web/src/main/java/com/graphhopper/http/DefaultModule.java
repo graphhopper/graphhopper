@@ -100,16 +100,20 @@ public class DefaultModule extends AbstractModule {
             }
         }.forServer().init(args);
 
-        String location = args.get("spatial_rules.location", "");
-        if (!location.isEmpty()) {
+        String spatialRuleLocation = args.get("spatial_rules.location", "");
+        if (!spatialRuleLocation.isEmpty()) {
             if (!tmp.getEncodingManager().supports(("generic"))) {
                 logger.warn("spatial_rules.location was specified but 'generic' encoder is missing to utilize the index");
             } else
                 try {
-                    SpatialRuleLookup index = buildIndex(new FileReader(location), tmp.getGraphHopperStorage().getBounds());
+                    BBox spatialRuleBBox = BBox.parseBBoxString(args.get("spatial_rules.bbox", "0,0,0,0"));
+                    SpatialRuleLookup index = buildIndex(new FileReader(spatialRuleLocation), spatialRuleBBox);
                     if (index != null) {
-                        logger.info("Set spatial rule lookup with " + index.size() + " rules");
+                        logger.info("Set spatial rule lookup with " + index.size() + " rules and a BBox of " + spatialRuleBBox);
                         ((DataFlagEncoder) tmp.getEncodingManager().getEncoder("generic")).setSpatialRuleLookup(index);
+                    } else {
+                        // Throws an exception if spatialRuleLookup was enabled
+                        ((DataFlagEncoder) tmp.getEncodingManager().getEncoder("generic")).spatialRuleLookupEnabled();
                     }
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);

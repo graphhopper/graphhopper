@@ -427,7 +427,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
     }
 
-    private boolean spatialRuleLookupEnabled(){
+    public boolean spatialRuleLookupEnabled(){
         if (spatialRules > 0) {
             if (spatialRuleLookup == null)
                 throw new IllegalStateException("This encoder was asked to store spatial IDs for every edge, " +
