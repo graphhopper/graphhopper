@@ -1152,7 +1152,9 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private boolean isCHPrepared() {
-        return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"));
+        return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"))
+                // remove old property in >0.9
+                || "true".equals(ghStorage.getProperties().get("prepare.done"));
     }
 
     private boolean isLMPrepared() {
