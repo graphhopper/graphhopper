@@ -38,13 +38,13 @@ import java.util.concurrent.TimeUnit;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
 
 /**
- * This class implements the CH decorator for the routing algorithm factory and provides several
- * helper methods related to CH preparation and its vehicle profiles.
+ * This class implements the CH decorator and provides several helper methods related to CH
+ * preparation and its vehicle profiles.
  *
  * @author Peter Karich
  */
 public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger LOGGER = LoggerFactory.getLogger(getClass());
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
     // we need to decouple weighting objects from the weighting list of strings 
     // as we need the strings to create the GraphHopperStorage and the GraphHopperStorage to create the preparations from the Weighting objects currently requiring the encoders
@@ -54,7 +54,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     // for backward compatibility enable CH by default.
     private boolean enabled = true;
     private int preparationThreads;
-    private ExecutorService chPreparePool;
+    private ExecutorService threadPool;
     private int preparationPeriodicUpdates = -1;
     private int preparationLazyUpdates = -1;
     private int preparationNeighborUpdates = -1;
@@ -66,19 +66,18 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         setWeightingsAsStrings(Arrays.asList(getDefaultWeighting()));
     }
 
+    @Override
     public void init(CmdArgs args) {
-        setPreparationThreads(args.getInt("prepare.threads", getPreparationThreads()));
+        // throw explicit error for deprecated configs
+        if (!args.get("prepare.threads", "").isEmpty())
+            throw new IllegalStateException("Use " + CH.PREPARE + "threads instead of prepare.threads");
+        if (!args.get("prepare.chWeighting", "").isEmpty() || !args.get("prepare.chWeightings", "").isEmpty())
+            throw new IllegalStateException("Use " + CH.PREPARE + "weightings and a comma separated list instead of prepare.chWeighting or prepare.chWeightings");
 
-        String deprecatedWeightingConfig = args.get("prepare.chWeighting", "");
-        if (!deprecatedWeightingConfig.isEmpty())
-            throw new IllegalStateException("Use prepare.ch.weightings and a comma separated list instead of prepare.chWeighting");
+        setPreparationThreads(args.getInt(CH.PREPARE + "threads", getPreparationThreads()));
 
         // default is enabled & fastest
-        String chWeightingsStr = args.get("prepare.ch.weightings", "");
-
-        // backward compatibility
-        if (chWeightingsStr.isEmpty())
-            chWeightingsStr = args.get("prepare.chWeightings", "");
+        String chWeightingsStr = args.get(CH.PREPARE + "weightings", "");
 
         if ("no".equals(chWeightingsStr)) {
             // default is fastest and we need to clear this explicitely
@@ -93,11 +92,11 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (enableThis)
             setDisablingAllowed(args.getBool(CH.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
 
-        setPreparationPeriodicUpdates(args.getInt("prepare.updates.periodic", getPreparationPeriodicUpdates()));
-        setPreparationLazyUpdates(args.getInt("prepare.updates.lazy", getPreparationLazyUpdates()));
-        setPreparationNeighborUpdates(args.getInt("prepare.updates.neighbor", getPreparationNeighborUpdates()));
-        setPreparationContractedNodes(args.getInt("prepare.contracted_nodes", getPreparationContractedNodes()));
-        setPreparationLogMessages(args.getDouble("prepare.log_messages", getPreparationLogMessages()));
+        setPreparationPeriodicUpdates(args.getInt(CH.PREPARE + "updates.periodic", getPreparationPeriodicUpdates()));
+        setPreparationLazyUpdates(args.getInt(CH.PREPARE + "updates.lazy", getPreparationLazyUpdates()));
+        setPreparationNeighborUpdates(args.getInt(CH.PREPARE + "updates.neighbor", getPreparationNeighborUpdates()));
+        setPreparationContractedNodes(args.getInt(CH.PREPARE + "contracted_nodes", getPreparationContractedNodes()));
+        setPreparationLogMessages(args.getDouble(CH.PREPARE + "log_messages", getPreparationLogMessages()));
     }
 
     public int getPreparationPeriodicUpdates() {
@@ -153,8 +152,9 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     /**
      * Enables or disables contraction hierarchies (CH). This speed-up mode is enabled by default.
      */
-    public final void setEnabled(boolean enabled) {
+    public final CHAlgoFactoryDecorator setEnabled(boolean enabled) {
         this.enabled = enabled;
+        return this;
     }
 
     public final boolean isDisablingAllowed() {
@@ -210,7 +210,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     public List<String> getWeightingsAsStrings() {
         if (this.weightingsAsStrings.isEmpty())
-            throw new IllegalStateException("Potential bug: chWeightingList is empty");
+            throw new IllegalStateException("Potential bug: weightingsAsStrings is empty");
 
         return new ArrayList<>(this.weightingsAsStrings);
     }
@@ -254,12 +254,15 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (map.getWeighting().isEmpty())
             map.setWeighting(getDefaultWeighting());
 
+        String entriesStr = "";
         for (PrepareContractionHierarchies p : preparations) {
             if (p.getWeighting().matches(map))
                 return p;
+
+            entriesStr += p.getWeighting() + ", ";
         }
 
-        throw new IllegalArgumentException("Cannot find RoutingAlgorithmFactory for weighting map " + map);
+        throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries " + entriesStr);
     }
 
     public int getPreparationThreads() {
@@ -268,45 +271,45 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     /**
      * This method changes the number of threads used for preparation on import. Default is 1. Make
-     * sure that you have enough memory to increase this number!
+     * sure that you have enough memory when increasing this number!
      */
     public void setPreparationThreads(int preparationThreads) {
         this.preparationThreads = preparationThreads;
-        this.chPreparePool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
+        this.threadPool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
     }
 
     public void prepare(final StorableProperties properties) {
         int counter = 0;
         for (final PrepareContractionHierarchies prepare : getPreparations()) {
-            logger.info((++counter) + "/" + getPreparations().size() + " calling prepare.doWork for " + prepare.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
+            LOGGER.info((++counter) + "/" + getPreparations().size() + " calling CH prepare.doWork for " + prepare.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
             final String name = AbstractWeighting.weightingToFileName(prepare.getWeighting());
-            chPreparePool.execute(new Runnable() {
+            threadPool.execute(new Runnable() {
                 @Override
                 public void run() {
-                    String errorKey = "prepare.error." + name;
+                    String errorKey = CH.PREPARE + "error." + name;
                     try {
-                        properties.put(errorKey, "CH preparation incomplete");
-                        // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options                        
-
+                        // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                         Thread.currentThread().setName(name);
+
+                        properties.put(errorKey, "CH preparation incomplete");
                         prepare.doWork();
                         properties.remove(errorKey);
-                        properties.put("prepare.date." + name, Helper.createFormatter().format(new Date()));
+                        properties.put(CH.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
                     } catch (Exception ex) {
-                        logger.error("Problem while CH preparation " + name, ex);
+                        LOGGER.error("Problem while CH preparation " + name, ex);
                         properties.put(errorKey, ex.getMessage());
                     }
                 }
             });
         }
 
-        chPreparePool.shutdown();
+        threadPool.shutdown();
         try {
-            if (!chPreparePool.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS))
-                chPreparePool.shutdownNow();
+            if (!threadPool.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS))
+                threadPool.shutdownNow();
 
         } catch (InterruptedException ie) {
-            chPreparePool.shutdownNow();
+            threadPool.shutdownNow();
             throw new RuntimeException(ie);
         }
     }

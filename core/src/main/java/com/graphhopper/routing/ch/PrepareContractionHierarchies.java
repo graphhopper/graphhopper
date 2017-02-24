@@ -675,7 +675,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
 
             @Override
-
             public String toString() {
                 return getName() + "|" + prepareWeighting;
             }
@@ -719,7 +718,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     @Override
     public String toString() {
-        return "prepare|CH|dijkstrabi";
+        return "prepare|dijkstrabi|ch";
     }
 
     interface ShortcutHandler {

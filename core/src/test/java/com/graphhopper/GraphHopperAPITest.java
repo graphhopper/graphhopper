@@ -71,6 +71,7 @@ public class GraphHopperAPITest {
                 setStoreOnFlush(false).
                 setEncodingManager(encodingManager).setCHEnabled(false).
                 loadGraph(graph);
+        // 3 -> 0
         GHResponse rsp = instance.route(new GHRequest(42, 10.4, 42, 10));
         assertFalse(rsp.hasErrors());
         PathWrapper arsp = rsp.getBest();

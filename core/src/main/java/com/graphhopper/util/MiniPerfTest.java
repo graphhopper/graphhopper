@@ -92,7 +92,7 @@ public abstract class MiniPerfTest {
     }
 
     public String nf(Number num) {
-        return new DecimalFormat("#.#").format(num);
+        return new DecimalFormat("#.###").format(num);
     }
 
     /**

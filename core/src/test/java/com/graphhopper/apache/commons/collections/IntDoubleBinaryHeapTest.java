@@ -4,7 +4,6 @@ import com.graphhopper.coll.AbstractBinHeapTest;
 import com.graphhopper.coll.BinHeapWrapper;
 
 /**
- *
  * @author Peter Karich
  */
 public class IntDoubleBinaryHeapTest extends AbstractBinHeapTest {

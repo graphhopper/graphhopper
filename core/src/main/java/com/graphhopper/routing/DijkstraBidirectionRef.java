@@ -158,7 +158,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
     }
 
     void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
-                   IntObjectMap<SPTEntry> shortestWeightMap, EdgeExplorer explorer, boolean reverse) {
+                   IntObjectMap<SPTEntry> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
         EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
             if (!accept(iter, currEdge.edge))
@@ -168,12 +168,11 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
             double tmpWeight = weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.weight;
             if (Double.isInfinite(tmpWeight))
                 continue;
-
-            SPTEntry ee = shortestWeightMap.get(traversalId);
+            SPTEntry ee = bestWeightMap.get(traversalId);
             if (ee == null) {
                 ee = new SPTEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
                 ee.parent = currEdge;
-                shortestWeightMap.put(traversalId, ee);
+                bestWeightMap.put(traversalId, ee);
                 prioQueue.add(ee);
             } else if (ee.weight > tmpWeight) {
                 prioQueue.remove(ee);
@@ -250,7 +249,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
         // inEdgeExplorer
     }
 
-    void setUpdateBestPath(boolean b) {
+    protected void setUpdateBestPath(boolean b) {
         updateBestPath = b;
     }
 

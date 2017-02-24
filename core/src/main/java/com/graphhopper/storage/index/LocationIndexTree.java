@@ -29,7 +29,9 @@ import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
+
 import java.util.ArrayList;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -214,15 +216,6 @@ public class LocationIndexTree implements LocationIndex {
         InMemConstructionIndex memIndex = new InMemConstructionIndex(entries[0]);
         memIndex.prepare();
         return memIndex;
-    }
-
-    @Override
-    public int findID(double lat, double lon) {
-        QueryResult res = findClosest(lat, lon, EdgeFilter.ALL_EDGES);
-        if (!res.isValid())
-            return -1;
-
-        return res.getClosestNode();
     }
 
     @Override

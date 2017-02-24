@@ -28,16 +28,19 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.EdgeIteratorState;
+
 import java.util.Collection;
 import java.util.Iterator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.util.List;
 import java.util.Map;
 
 /**
  * This graph applies permanent changes passed as JsonFeature to the specified graph.
- *
+ * <p>
  * This class is not thread-safe. It is currently only safe to use it via GraphHopper.changeGraph
  *
  * @author Peter Karich

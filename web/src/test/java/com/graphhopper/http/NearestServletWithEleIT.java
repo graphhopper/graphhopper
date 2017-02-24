@@ -19,6 +19,7 @@ package com.graphhopper.http;
 
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.junit.AfterClass;
@@ -47,7 +48,7 @@ public class NearestServletWithEleIT extends BaseServletTester {
         CmdArgs args = new CmdArgs().
                 put("graph.elevation.provider", "srtm").
                 put("graph.elevation.cachedir", "../core/files/").
-                put("prepare.ch.weightings", "no").
+                put(Parameters.CH.PREPARE + "weightings", "no").
                 put("prepare.min_one_way_network_size", "0").
                 put("config", "../config-example.properties").
                 put("datareader.file", "../core/files/monaco.osm.gz").

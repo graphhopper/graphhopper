@@ -234,16 +234,6 @@ public class Path {
     }
 
     /**
-     * Calculates the time in millis for the specified distance in meter and speed (in km/h) via
-     * flags.
-     *
-     * @deprecated use Weighting
-     */
-    protected long calcMillis(EdgeIteratorState edge, boolean reverse) {
-        return weighting.calcMillis(edge, reverse, EdgeIterator.NO_EDGE);
-    }
-
-    /**
      * Iterates over all edges in this path sorted from start to end and calls the visitor callback
      * for every edge.
      * <p>

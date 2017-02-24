@@ -21,10 +21,12 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -206,22 +208,8 @@ public class PrepareRoutingSubnetworks {
         StopWatch sw = new StopWatch(bothFilter.getEncoder() + " findComponents").start();
         final EdgeFilter outFilter = new DefaultEdgeFilter(bothFilter.getEncoder(), false, true);
 
-        // Very important special case for single entry components: we don't need them! See #520
-        // But they'll be created a lot for multiple vehicles as many nodes e.g. for foot are not accessible at all for car.
-        // We can ignore these single entry components as they are already set 'not accessible'
-        EdgeExplorer explorer = ghStorage.createEdgeExplorer(outFilter);
-        int nodes = ghStorage.getNodes();
-        GHBitSet ignoreSet = new GHBitSetImpl(ghStorage.getNodes());
-        for (int start = 0; start < nodes; start++) {
-            if (!ghStorage.isNodeRemoved(start)) {
-                EdgeIterator iter = explorer.setBaseNode(start);
-                if (!iter.next())
-                    ignoreSet.add(start);
-            }
-        }
-
         // partition graph into strongly connected components using Tarjan's algorithm        
-        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, ignoreSet, outFilter);
+        TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, outFilter, true);
         List<IntArrayList> components = tarjan.findComponents();
         logger.info(sw.stop() + ", size:" + components.size());
 
@@ -248,7 +236,7 @@ public class PrepareRoutingSubnetworks {
 
     int removeEdges(EdgeExplorer explorer, FlagEncoder encoder, IntIndexedContainer component, int min) {
         int removedEdges = 0;
-        if (component.size() < min)
+        if (component.size() < min) {
             for (int i = 0; i < component.size(); i++) {
                 EdgeIterator edge = explorer.setBaseNode(component.get(i));
                 while (edge.next()) {
@@ -256,6 +244,7 @@ public class PrepareRoutingSubnetworks {
                     removedEdges++;
                 }
             }
+        }
 
         return removedEdges;
     }

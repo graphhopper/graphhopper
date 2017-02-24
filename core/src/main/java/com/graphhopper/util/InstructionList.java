@@ -45,7 +45,7 @@ public class InstructionList implements Iterable<Instruction> {
         // We could even use the 'more flexible' CDATA section but for now do the following. The 'and' could be important sometimes:
         return str.replaceAll("&", "&amp;").
                 // but do not care for:
-                replaceAll("[\\<\\>]", "_");
+                        replaceAll("[\\<\\>]", "_");
     }
 
     public void replaceLast(Instruction instr) {
@@ -76,15 +76,16 @@ public class InstructionList implements Iterable<Instruction> {
             instrList.add(instrJson);
 
             InstructionAnnotation ia = instruction.getAnnotation();
-            String str = instruction.getTurnDescription(tr);
-            if (Helper.isEmpty(str))
-                str = ia.getMessage();
-            instrJson.put("text", Helper.firstBig(str));
+            String text = instruction.getTurnDescription(tr);
+            if (Helper.isEmpty(text))
+                text = ia.getMessage();
+            instrJson.put("text", Helper.firstBig(text));
             if (!ia.isEmpty()) {
                 instrJson.put("annotation_text", ia.getMessage());
                 instrJson.put("annotation_importance", ia.getImportance());
             }
 
+            instrJson.put("street_name", instruction.getName());
             instrJson.put("time", instruction.getTime());
             instrJson.put("distance", Helper.round(instruction.getDistance(), 3));
             instrJson.put("sign", instruction.getSign());

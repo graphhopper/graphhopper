@@ -22,12 +22,14 @@ import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.storage.change.ChangeGraphResponse;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.json.JSONObject;
 import com.graphhopper.json.GHJson;
 

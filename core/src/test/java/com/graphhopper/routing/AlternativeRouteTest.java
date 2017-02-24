@@ -56,8 +56,8 @@ public class AlternativeRouteTest {
     @Parameterized.Parameters(name = "{0}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
-            {TraversalMode.NODE_BASED},
-            {TraversalMode.EDGE_BASED_2DIR}
+                {TraversalMode.NODE_BASED},
+                {TraversalMode.EDGE_BASED_2DIR}
         });
     }
 

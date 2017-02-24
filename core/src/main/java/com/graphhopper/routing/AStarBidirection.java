@@ -17,7 +17,9 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntObjectMap;
+import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AStar.AStarEntry;
 import com.graphhopper.routing.util.TraversalMode;
@@ -58,15 +60,15 @@ import java.util.PriorityQueue;
  * @author jansoe
  */
 public class AStarBidirection extends AbstractBidirAlgo {
-    protected IntObjectMap<AStarEntry> bestWeightMapFrom;
-    protected IntObjectMap<AStarEntry> bestWeightMapTo;
     protected AStarEntry currFrom;
     protected AStarEntry currTo;
     protected PathBidirRef bestPath;
+    protected IntObjectMap<AStarEntry> bestWeightMapFrom;
+    protected IntObjectMap<AStarEntry> bestWeightMapTo;
+    private IntObjectMap<AStarEntry> bestWeightMapOther;
     private ConsistentWeightApproximator weightApprox;
     private PriorityQueue<AStarEntry> prioQueueOpenSetFrom;
     private PriorityQueue<AStarEntry> prioQueueOpenSetTo;
-    private IntObjectMap<AStarEntry> bestWeightMapOther;
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
@@ -93,6 +95,10 @@ public class AStarBidirection extends AbstractBidirAlgo {
         return this;
     }
 
+    public WeightApproximator getApproximation() {
+        return weightApprox.getApproximation();
+    }
+
     @Override
     protected SPTEntry createSPTEntry(int node, double weight) {
         throw new IllegalStateException("use AStarEdge constructor directly");
@@ -101,7 +107,7 @@ public class AStarBidirection extends AbstractBidirAlgo {
     @Override
     public void initFrom(int from, double weight) {
         currFrom = new AStarEntry(EdgeIterator.NO_EDGE, from, weight, weight);
-        weightApprox.setSourceNode(from);
+        weightApprox.setFrom(from);
         prioQueueOpenSetFrom.add(currFrom);
 
         if (currTo != null) {
@@ -127,7 +133,7 @@ public class AStarBidirection extends AbstractBidirAlgo {
     @Override
     public void initTo(int to, double weight) {
         currTo = new AStarEntry(EdgeIterator.NO_EDGE, to, weight, weight);
-        weightApprox.setGoalNode(to);
+        weightApprox.setTo(to);
         prioQueueOpenSetTo.add(currTo);
 
         if (currFrom != null) {
@@ -218,6 +224,7 @@ public class AStarBidirection extends AbstractBidirAlgo {
 
             int neighborNode = iter.getAdjNode();
             int traversalId = traversalMode.createTraversalId(iter, reverse);
+
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
             double alreadyVisitedWeight = weighting.calcWeight(iter, reverse, currEdge.edge)
@@ -233,9 +240,9 @@ public class AStarBidirection extends AbstractBidirAlgo {
                     ase = new AStarEntry(iter.getEdge(), neighborNode, estimationFullWeight, alreadyVisitedWeight);
                     bestWeightMap.put(traversalId, ase);
                 } else {
-                    assert (ase.weight > 0.999999 * estimationFullWeight) : "Inconsistent distance estimate "
-                            + ase.weight + " vs " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and:"
-                            + ase.getWeightOfVisitedPath() + " vs " + alreadyVisitedWeight + " (" + ase.getWeightOfVisitedPath() / alreadyVisitedWeight + ")";
+//                    assert (ase.weight > 0.999999 * estimationFullWeight) : "Inconsistent distance estimate "
+//                            + ase.weight + " vs " + estimationFullWeight + " (" + ase.weight / estimationFullWeight + "), and:"
+//                            + ase.getWeightOfVisitedPath() + " vs " + alreadyVisitedWeight + " (" + ase.getWeightOfVisitedPath() / alreadyVisitedWeight + ")";
                     prioQueueOpenSet.remove(ase);
                     ase.edge = iter.getEdge();
                     ase.weight = estimationFullWeight;

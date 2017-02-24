@@ -21,6 +21,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
 import org.json.JSONObject;
 
@@ -70,8 +71,11 @@ public class InfoServlet extends GHBaseServlet {
         if (!Helper.isEmpty(props.get("datareader.data.date")))
             json.put("data_date", props.get("datareader.data.date"));
 
-        if (!Helper.isEmpty(props.get("prepare.date")))
-            json.put("prepare_date", props.get("prepare.date"));
+        String tmpDate = props.get(Parameters.CH.PREPARE + "date");
+        if (!Helper.isEmpty(tmpDate)) {
+            json.put("prepare_ch_date", tmpDate);
+            json.put("prepare_date", tmpDate);
+        }
 
         writeJson(req, res, json);
     }

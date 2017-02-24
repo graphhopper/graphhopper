@@ -94,6 +94,7 @@ public interface FlagEncoder extends TurnCostEncoder {
      * uses a minimum value which is two magnitudes higher than in the super class. 
      * Currently this means starting from 100, and subclasses of this class start from 10000 and so on.
      */
+
     /**
      * Reports whether the edge is available in backward direction (i.e. from adj node to base node)
      * for a certain vehicle.

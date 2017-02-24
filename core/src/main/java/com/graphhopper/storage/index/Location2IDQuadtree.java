@@ -276,14 +276,6 @@ class Location2IDQuadtree implements LocationIndex {
         return dx * dx + dy * dy;
     }
 
-    /**
-     * @return the node id (corresponding to a coordinate) closest to the specified lat,lon.
-     */
-    @Override
-    public int findID(final double lat, final double lon) {
-        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
-    }
-
     @Override
     public QueryResult findClosest(final double queryLat, final double queryLon,
                                    final EdgeFilter edgeFilter) {

@@ -32,9 +32,7 @@ import com.graphhopper.util.shapes.Shape;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 
@@ -71,7 +69,6 @@ public class GenericWeightingTest {
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
         graph.getEdgeIteratorState(0, 1).setFlags(encoder.handleWayTags(way, 1, 0));
-
     }
 
     @Test
