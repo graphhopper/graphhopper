@@ -40,6 +40,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -788,19 +789,22 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         public void initLandmarkWeights(final int lmIdx, int lmNodeId, final long rowSize, final int offset) {
             IntObjectMap<SPTEntry> map = from ? bestWeightMapFrom : bestWeightMapTo;
             final AtomicInteger maxedout = new AtomicInteger(0);
+            final Map.Entry<Double, Double> finalMaxWeight = new MapEntry<>(0d, 0d);
 
             map.forEach(new IntObjectProcedure<SPTEntry>() {
                 @Override
                 public void apply(int nodeId, SPTEntry b) {
-                    if (!lms.setWeight(nodeId * rowSize + lmIdx * 4 + offset, b.weight))
+                    if (!lms.setWeight(nodeId * rowSize + lmIdx * 4 + offset, b.weight)) {
                         maxedout.incrementAndGet();
+                        finalMaxWeight.setValue(Math.max(b.weight, finalMaxWeight.getValue());
+                    }
                 }
             });
 
             if ((double) maxedout.get() / map.size() > 0.1) {
                 LOGGER.warn("landmark " + lmIdx + " (" + nodeAccess.getLatitude(lmNodeId) + "," + nodeAccess.getLongitude(lmNodeId) + "): " +
                         "too many weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Use a bigger factor than " + lms.factor
-                        + ". For example use the following in the config.properties: prepare.lm.maximum_weight=" + lms.factor * 2);
+                        + ". For example use the following in the config.properties: prepare.lm.maximum_weight=" + finalMaxWeight.getValue() * 1.2 / PRECISION);
             }
         }
     }
