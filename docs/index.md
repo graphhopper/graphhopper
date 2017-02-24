@@ -56,8 +56,9 @@ Various topics are explained in more detail separately:
  * [Simple routing](./core/routing.md): Tutorial how to integrate GraphHopper in your Java application (or pick any JVM language)
  * [Create custom weighting](./core/weighting.md): Documentation about how to create a custom weighting class to influence the track calculation.
  * [LocationIndex](./core/location-index.md): Documentation about how to get the location index for getting i.e. the nearest edge. 
+ * [Hybrid Mode](./core/landmarks.md): Details about speeding up the route calculation via A* and landmarks.
+ * [Speed Mode](./core/ch.md): Details about speeding up the route calculations via [Contraction Hierarchies](http://en.wikipedia.org/wiki/Contraction_hierarchies).
  * [Low level API](./core/low-level-api.md): Instructions how to use GraphHopper as a Java library.
- * [Contraction Hierarchies](./core/ch.md): Details about speeding up the track calculations by [Contraction Hierarchies](http://en.wikipedia.org/wiki/Contraction_hierarchies).
  * [Create new FlagEncoder](./core/create-new-flagencoder.md): Documentation to create new routing profiles to influence which ways to favor and how the track-time is calculated.
 
 ### Android
