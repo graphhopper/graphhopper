@@ -32,7 +32,6 @@ import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Landmark;
-import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.IOException;
 import java.util.*;
@@ -266,10 +265,19 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         }
     }
 
-    public void loadOrDoWork() {
+    /**
+     * This method calculates the landmark data for all weightings or if already existent loads it.
+     *
+     * @return true if the preparation data for at least one weighting was calculated.
+     */
+    public boolean loadOrDoWork() {
+        boolean prepared = false;
         for (PrepareLandmarks plm : preparations) {
-            if (!plm.loadExisting())
+            if (!plm.loadExisting()) {
                 plm.doWork();
+                prepared = true;
+            }
         }
+        return prepared;
     }
 }
