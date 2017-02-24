@@ -436,6 +436,8 @@ public class PathTest {
         assertEquals(-1, wayList.get(1).getSign());
     }
 
+
+
     @Test
     public void testCalcInstructionContinueLeavingStreet() {
         final Graph g = new GraphBuilder(carManager).create();
@@ -489,6 +491,34 @@ public class PathTest {
         assertEquals(3, wayList.size());
         // Assert turn right
         assertEquals(1, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testCalcInstructionsForSlightTurnOntoDifferentStreet() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Actual example: point=48.76445%2C8.679054&point=48.764152%2C8.678722
+        //      1
+        //     /
+        // 2 - 3 - 4
+        //
+        na.setNode(1, 48.76423, 8.679103);
+        na.setNode(2, 48.76417, 8.678647);
+        na.setNode(3, 48.764149, 8.678926);
+        na.setNode(4, 48.764085, 8.679183);
+
+        g.edge(1, 3, 5, true).setName("Talstraße, K 4313");
+        g.edge(2, 3, 5, true).setName("Calmbacher Straße, K 4312");
+        g.edge(3, 4, 5, true).setName("Calmbacher Straße, K 4312");
+
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(1, 2);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        assertEquals(3, wayList.size());
+        assertEquals(Instruction.TURN_SLIGHT_RIGHT, wayList.get(1).getSign());
     }
 
     @Test

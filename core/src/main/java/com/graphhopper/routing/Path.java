@@ -590,6 +590,11 @@ public class Path {
                         return true;
                     }
 
+                    // There are too many cases where this leads to unwanted continues
+                    if(sign == Instruction.CONTINUE_ON_STREET){
+                        return false;
+                    }
+
                     // There is at least one other possibility to turn, and we are almost going straight
                     // Check the other turns if one of them is also going almost straight
                     // If not, we don't need a turn instruction
@@ -622,14 +627,19 @@ public class Path {
                     return false;
                 }
 
+                // If flags are changing, there might be a chance we find the flags somewhere else
                 boolean checkFlag = flag != prevFlag;
 
                 EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
                 while (edgeIter.next()) {
                     if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
-                        if (isNameSimilar(prevName, edgeIter.getName())) {
+                        String edgename = edgeIter.getName();
+                        long edgeflag = edgeIter.getFlags();
+                        // leave the current street || enter a different street
+                        if (isNameSimilar(prevName, edgename) || isNameSimilar(name, edgename)) {
                             if (checkFlag) {
-                                if (prevFlag == edgeIter.getFlags())
+                                // leave the current street || enter a different street
+                                if (prevFlag == edgeflag || flag == edgeflag)
                                     return true;
                             } else {
                                 return true;
@@ -720,14 +730,17 @@ public class Path {
                 if (name1.equals(name2)) {
                     return true;
                 }
-                name1 = getRef(name1);
-                name2 = getRef(name2);
                 // TODO Copied from the name similarity filter
                 // TODO Check only for the ref and not the full street name?
-                double jwSimilarity = jaroWinkler.similarity(name1, name2);
-                // System.out.println(str1 + " vs. edge:" + str2 + ", " + jwSimilarity);
-                return jwSimilarity > .79;
+                // Do jaro winkler on the full name and not just the ref
+                // Refs are oftimes similar like 'K 4313' is similar to 'K 4312'
+                if (jaroWinkler.similarity(name1, name2) > .79) {
+                    return true;
+                }
+
+                return (getRef(name1).equals(getRef(name2)));
             }
+
 
             private String getRef(String name) {
                 int index = name.lastIndexOf(',');
