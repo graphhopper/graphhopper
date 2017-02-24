@@ -26,6 +26,8 @@ import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.lm.LandmarkStorage;
+import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -792,10 +794,10 @@ public class GraphHopperOSMTest {
         // try all parallelization modes        
         for (int threadCount = 1; threadCount < 6; threadCount++) {
             EncodingManager em = new EncodingManager(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
-                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()),
-                    8);
+                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()), 8);
 
-            GraphHopper tmpGH = new GraphHopperOSM().setStoreOnFlush(false).
+            GraphHopper tmpGH = new GraphHopperOSM().
+                    setStoreOnFlush(false).
                     setEncodingManager(em).
                     setGraphHopperLocation(ghLoc).
                     setDataReaderFile(testOsm);
@@ -820,6 +822,50 @@ public class GraphHopperOSMTest {
                 assertTrue("Properties for " + name + " should NOT contain error " + valueError + " [" + threadCount + "]", valueError.isEmpty());
 
                 String key = Parameters.CH.PREPARE + "date." + name;
+                String value = tmpGH.getGraphHopperStorage().getProperties().get(key);
+                assertTrue("Properties for " + name + " did NOT contain finish date [" + threadCount + "]", !value.isEmpty());
+            }
+            tmpGH.close();
+        }
+    }
+
+    @Test
+    public void testMultipleLMPreparationsInParallel() {
+        HashMap<String, Integer> landmarkCount = new HashMap<String, Integer>();
+        // try all parallelization modes
+        for (int threadCount = 1; threadCount < 6; threadCount++) {
+            EncodingManager em = new EncodingManager(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
+                    new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()), 8);
+
+            GraphHopper tmpGH = new GraphHopperOSM().
+                    setStoreOnFlush(false).
+                    setCHEnabled(false).
+                    setEncodingManager(em).
+                    setGraphHopperLocation(ghLoc).
+                    setDataReaderFile(testOsm);
+            tmpGH.getLMFactoryDecorator().
+                    addWeighting("fastest").
+                    setEnabled(true).
+                    setPreparationThreads(threadCount);
+
+            tmpGH.importOrLoad();
+
+            assertEquals(5, tmpGH.getLMFactoryDecorator().getPreparations().size());
+            for (PrepareLandmarks prepLM : tmpGH.getLMFactoryDecorator().getPreparations()) {
+                assertTrue("Preparation wasn't run! [" + threadCount + "]", prepLM.isPrepared());
+
+                String name = AbstractWeighting.weightingToFileName(prepLM.getWeighting());
+                Integer singleThreadShortcutCount = landmarkCount.get(name);
+                if (singleThreadShortcutCount == null)
+                    landmarkCount.put(name, prepLM.getSubnetworksWithLandmarks());
+                else
+                    assertEquals((int) singleThreadShortcutCount, prepLM.getSubnetworksWithLandmarks());
+
+                String keyError = Parameters.Landmark.PREPARE + "error." + name;
+                String valueError = tmpGH.getGraphHopperStorage().getProperties().get(keyError);
+                assertTrue("Properties for " + name + " should NOT contain error " + valueError + " [" + threadCount + "]", valueError.isEmpty());
+
+                String key = Parameters.Landmark.PREPARE + "date." + name;
                 String value = tmpGH.getGraphHopperStorage().getProperties().get(key);
                 assertTrue("Properties for " + name + " did NOT contain finish date [" + threadCount + "]", !value.isEmpty());
             }

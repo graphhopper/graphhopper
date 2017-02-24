@@ -25,16 +25,24 @@ import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.util.Parameters.Landmark.DISABLE;
 
@@ -44,6 +52,7 @@ import static com.graphhopper.util.Parameters.Landmark.DISABLE;
  * @author Peter Karich
  */
 public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator {
+    private Logger LOGGER = LoggerFactory.getLogger(LMAlgoFactoryDecorator.class);
     private int landmarkCount = 16;
     private int activeLandmarkCount = 8;
 
@@ -56,10 +65,18 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private boolean enabled = false;
     private boolean disablingAllowed = false;
     private final List<String> lmSuggestionsLocations = new ArrayList<>(5);
+    private int preparationThreads;
+    private ExecutorService threadPool;
+
+    public LMAlgoFactoryDecorator() {
+        setPreparationThreads(1);
+    }
 
     @Override
     public void init(CmdArgs args) {
-        landmarkCount = args.getInt(Landmark.COUNT, landmarkCount);
+        setPreparationThreads(args.getInt(Parameters.Landmark.PREPARE + "threads", getPreparationThreads()));
+
+        landmarkCount = args.getInt(Parameters.Landmark.COUNT, landmarkCount);
         activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, landmarkCount));
         for (String loc : args.get("prepare.lm.suggestions_location", "").split(",")) {
             if (!loc.trim().isEmpty())
@@ -101,6 +118,19 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     @Override
     public final boolean isEnabled() {
         return enabled;
+    }
+
+    public int getPreparationThreads() {
+        return preparationThreads;
+    }
+
+    /**
+     * This method changes the number of threads used for preparation on import. Default is 1. Make
+     * sure that you have enough memory when increasing this number!
+     */
+    public void setPreparationThreads(int preparationThreads) {
+        this.preparationThreads = preparationThreads;
+        this.threadPool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
     }
 
     /**
@@ -232,7 +262,54 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     /**
-     * This method triggers the landmark creation.
+     * This method calculates the landmark data for all weightings (optionally in parallel) or if already existent loads it.
+     *
+     * @return true if the preparation data for at least one weighting was calculated.
+     * @see com.graphhopper.routing.ch.CHAlgoFactoryDecorator#prepare(StorableProperties) for a very similar method
+     */
+    public boolean loadOrDoWork(final StorableProperties properties) {
+        int counter = 0;
+        boolean prepared = false;
+        for (final PrepareLandmarks plm : preparations) {
+            counter++;
+            if (plm.loadExisting())
+                continue;
+
+            prepared = true;
+            LOGGER.info(counter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
+            final String name = AbstractWeighting.weightingToFileName(plm.getWeighting());
+            threadPool.execute(new Runnable() {
+                @Override
+                public void run() {
+                    String errorKey = Landmark.PREPARE + "error." + name;
+                    try {
+                        Thread.currentThread().setName(name);
+                        properties.put(errorKey, "LM preparation incomplete");
+                        plm.doWork();
+                        properties.remove(errorKey);
+                        properties.put(Landmark.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
+                    } catch (Exception ex) {
+                        LOGGER.error("Problem while LM preparation " + name, ex);
+                        properties.put(errorKey, ex.getMessage());
+                    }
+                }
+            });
+        }
+
+        threadPool.shutdown();
+        try {
+            if (!threadPool.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS))
+                threadPool.shutdownNow();
+
+        } catch (InterruptedException ie) {
+            threadPool.shutdownNow();
+            throw new RuntimeException(ie);
+        }
+        return prepared;
+    }
+
+    /**
+     * This method creates the landmark storages ready for landmark creation.
      */
     public void createPreparations(GraphHopperStorage ghStorage, TraversalMode traversalMode, LocationIndex locationIndex) {
         if (!isEnabled() || !preparations.isEmpty())
@@ -263,21 +340,5 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
             addPreparation(tmpPrepareLM);
         }
-    }
-
-    /**
-     * This method calculates the landmark data for all weightings or if already existent loads it.
-     *
-     * @return true if the preparation data for at least one weighting was calculated.
-     */
-    public boolean loadOrDoWork() {
-        boolean prepared = false;
-        for (PrepareLandmarks plm : preparations) {
-            if (!plm.loadExisting()) {
-                plm.doWork();
-                prepared = true;
-            }
-        }
-        return prepared;
     }
 }

@@ -27,8 +27,6 @@ import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,7 +44,7 @@ import static com.graphhopper.util.Parameters.CH.DISABLE;
  * @author Peter Karich
  */
 public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private final Logger LOGGER = LoggerFactory.getLogger(getClass());
     private final List<PrepareContractionHierarchies> preparations = new ArrayList<>();
     // we need to decouple weighting objects from the weighting list of strings 
     // as we need the strings to create the GraphHopperStorage and the GraphHopperStorage to create the preparations from the Weighting objects currently requiring the encoders
@@ -56,7 +54,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     // for backward compatibility enable CH by default.
     private boolean enabled = true;
     private int preparationThreads;
-    private ExecutorService chPreparePool;
+    private ExecutorService threadPool;
     private int preparationPeriodicUpdates = -1;
     private int preparationLazyUpdates = -1;
     private int preparationNeighborUpdates = -1;
@@ -273,45 +271,45 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     /**
      * This method changes the number of threads used for preparation on import. Default is 1. Make
-     * sure that you have enough memory to increase this number!
+     * sure that you have enough memory when increasing this number!
      */
     public void setPreparationThreads(int preparationThreads) {
         this.preparationThreads = preparationThreads;
-        this.chPreparePool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
+        this.threadPool = java.util.concurrent.Executors.newFixedThreadPool(preparationThreads);
     }
 
     public void prepare(final StorableProperties properties) {
         int counter = 0;
         for (final PrepareContractionHierarchies prepare : getPreparations()) {
-            logger.info((++counter) + "/" + getPreparations().size() + " calling prepare.doWork for " + prepare.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
+            LOGGER.info((++counter) + "/" + getPreparations().size() + " calling CH prepare.doWork for " + prepare.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
             final String name = AbstractWeighting.weightingToFileName(prepare.getWeighting());
-            chPreparePool.execute(new Runnable() {
+            threadPool.execute(new Runnable() {
                 @Override
                 public void run() {
                     String errorKey = CH.PREPARE + "error." + name;
                     try {
-                        properties.put(errorKey, "CH preparation incomplete");
-                        // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options                        
-
+                        // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                         Thread.currentThread().setName(name);
+
+                        properties.put(errorKey, "CH preparation incomplete");
                         prepare.doWork();
                         properties.remove(errorKey);
                         properties.put(CH.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
                     } catch (Exception ex) {
-                        logger.error("Problem while CH preparation " + name, ex);
+                        LOGGER.error("Problem while CH preparation " + name, ex);
                         properties.put(errorKey, ex.getMessage());
                     }
                 }
             });
         }
 
-        chPreparePool.shutdown();
+        threadPool.shutdown();
         try {
-            if (!chPreparePool.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS))
-                chPreparePool.shutdownNow();
+            if (!threadPool.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS))
+                threadPool.shutdownNow();
 
         } catch (InterruptedException ie) {
-            chPreparePool.shutdownNow();
+            threadPool.shutdownNow();
             throw new RuntimeException(ie);
         }
     }

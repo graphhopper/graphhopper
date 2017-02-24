@@ -107,6 +107,10 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         return lms;
     }
 
+    public int getSubnetworksWithLandmarks() {
+        return lms.getSubnetworksWithLandmarks();
+    }
+
     public Weighting getWeighting() {
         return weighting;
     }

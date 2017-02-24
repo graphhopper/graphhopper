@@ -298,6 +298,8 @@ public class GraphHopper implements GraphHopperAPI {
 
     /**
      * This method enabled or disables the speed mode (Contraction Hierarchies)
+     *
+     * @deprecated use {@link #setCHEnabled(boolean)} instead
      */
     public GraphHopper setCHEnable(boolean enable) {
         return setCHEnabled(enable);
@@ -1145,7 +1147,9 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private boolean isCHPrepared() {
-        return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"));
+        return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"))
+                // remove old property in >0.9
+                || "true".equals(ghStorage.getProperties().get("prepare.done"));
     }
 
     private boolean isLMPrepared() {
@@ -1174,7 +1178,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (tmpPrepare) {
             ensureWriteAccess();
             ghStorage.freeze();
-            if (lmFactoryDecorator.loadOrDoWork())
+            if (lmFactoryDecorator.loadOrDoWork(ghStorage.getProperties()))
                 ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
         }
     }
