@@ -35,13 +35,14 @@ import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
-import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.ExecutionException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -251,17 +252,20 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     /**
-     * This method triggers the optional parallel landmark creation or if already available loads them.
+     * This method calculates the landmark data for all weightings (optionally in parallel) or if already existent loads it.
      *
+     * @return true if the preparation data for at least one weighting was calculated.
      * @see com.graphhopper.routing.ch.CHAlgoFactoryDecorator#prepare(StorableProperties) for a very similar method
      */
-    public void loadOrDoWork(final StorableProperties properties) {
+    public boolean loadOrDoWork(final StorableProperties properties) {
         int counter = 0;
+        boolean prepared = false;
         for (final PrepareLandmarks plm : preparations) {
             counter++;
             if (plm.loadExisting())
                 continue;
 
+            prepared = true;
             LOGGER.info(counter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
             final String name = AbstractWeighting.weightingToFileName(plm.getWeighting());
             threadPool.execute(new Runnable() {
@@ -291,6 +295,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             threadPool.shutdownNow();
             throw new RuntimeException(ie);
         }
+        return prepared;
     }
 
     /**
