@@ -40,7 +40,6 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -796,7 +795,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 public void apply(int nodeId, SPTEntry b) {
                     if (!lms.setWeight(nodeId * rowSize + lmIdx * 4 + offset, b.weight)) {
                         maxedout.incrementAndGet();
-                        finalMaxWeight.setValue(Math.max(b.weight, finalMaxWeight.getValue());
+                        finalMaxWeight.setValue(Math.max(b.weight, finalMaxWeight.getValue()));
                     }
                 }
             });
