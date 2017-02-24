@@ -67,7 +67,7 @@ public class LandmarkStorageTest {
             public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
                 return Integer.MAX_VALUE * 2L;
             }
-        }, TraversalMode.NODE_BASED).calcWeight(edge, false);
+        }, TraversalMode.NODE_BASED).setMaximumWeight(LandmarkStorage.PRECISION).calcWeight(edge, false);
         assertEquals(Integer.MAX_VALUE, res);
 
         dir = new RAMDirectory();
@@ -76,7 +76,7 @@ public class LandmarkStorageTest {
             public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
                 return Double.POSITIVE_INFINITY;
             }
-        }, TraversalMode.NODE_BASED).calcWeight(edge, false);
+        }, TraversalMode.NODE_BASED).setMaximumWeight(LandmarkStorage.PRECISION).calcWeight(edge, false);
         assertEquals(Integer.MAX_VALUE, res);
     }
 
@@ -87,7 +87,7 @@ public class LandmarkStorageTest {
         DataAccess da = dir.find("landmarks_fastest_car");
         da.create(2000);
 
-        LandmarkStorage lms = new LandmarkStorage(ghStorage, dir, 4, new FastestWeighting(encoder), tm);
+        LandmarkStorage lms = new LandmarkStorage(ghStorage, dir, 4, new FastestWeighting(encoder), tm).setMaximumWeight(LandmarkStorage.PRECISION);
         // 2^16=65536, use -1 for infinity and -2 for maximum
         lms.setWeight(0, 65536);
         // reached maximum value but do not reset to 0 instead use 2^16-2
