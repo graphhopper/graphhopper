@@ -30,14 +30,12 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.graphhopper.util.Parameters.Landmark.DISABLE;
 
@@ -49,13 +47,16 @@ import static com.graphhopper.util.Parameters.Landmark.DISABLE;
 public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator {
     private int landmarkCount = 16;
     private int activeLandmarkCount = 8;
+
     private final List<PrepareLandmarks> preparations = new ArrayList<>();
+    // input weighting list from configuration file
+    // one such entry can result into multiple Weighting objects e.g. fastest & car,foot => fastest|car and fastest|foot
     private final List<String> weightingsAsStrings = new ArrayList<>();
     private final List<Weighting> weightings = new ArrayList<>();
+    private final Map<String, Double> maximumWeights = new HashMap<>();
     private boolean enabled = false;
     private boolean disablingAllowed = false;
     private final List<String> lmSuggestionsLocations = new ArrayList<>(5);
-    private double maximumWeight = -1;
 
     @Override
     public void init(CmdArgs args) {
@@ -75,8 +76,6 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         setEnabled(enableThis);
         if (enableThis)
             setDisablingAllowed(args.getBool(Landmark.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
-
-        maximumWeight = args.getDouble(Landmark.PREPARE + "maximum_weight", -1);
     }
 
     public int getLandmarks() {
@@ -132,7 +131,15 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     public LMAlgoFactoryDecorator addWeighting(String weighting) {
-        weightingsAsStrings.add(weighting);
+        String str[] = weighting.split("\\|");
+        double value = -1;
+        if (str.length > 1) {
+            PMap map = new PMap(weighting);
+            value = map.getDouble("maximum", -1);
+        }
+
+        weightingsAsStrings.add(str[0]);
+        maximumWeights.put(str[0], value);
         return this;
     }
 
@@ -244,7 +251,12 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                 throw new RuntimeException(ex);
             }
         }
+
         for (Weighting weighting : getWeightings()) {
+            Double maximumWeight = maximumWeights.get(weighting.getName());
+            if (maximumWeight == null)
+                throw new IllegalStateException("maximumWeight cannot be null. Default should be just negative");
+
             PrepareLandmarks tmpPrepareLM = new PrepareLandmarks(ghStorage.getDirectory(), ghStorage,
                     weighting, traversalMode, landmarkCount, activeLandmarkCount).
                     setLandmarkSuggestions(lmSuggestions).
