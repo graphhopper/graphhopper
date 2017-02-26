@@ -225,15 +225,11 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
         for (final PrepareLandmarks p : preparations) {
             if (p.getWeighting().matches(map))
-                return createRAFactory(p, defaultAlgoFactory);
+                return new LMRAFactory(p, defaultAlgoFactory);
         }
 
-        // if the initial encoder&weighting has certain properies we can even cross query it unlike CH        
-        return createRAFactory(preparations.get(0), defaultAlgoFactory);
-    }
-
-    private RoutingAlgorithmFactory createRAFactory(final PrepareLandmarks p, final RoutingAlgorithmFactory defaultAlgoFactory) {
-        return new LMRAFactory(p, defaultAlgoFactory);
+        // if the initial encoder&weighting has certain properies we could cross query it but for now avoid this
+        return defaultAlgoFactory;
     }
 
     /**
