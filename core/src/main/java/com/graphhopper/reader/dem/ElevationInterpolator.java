@@ -18,12 +18,13 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.util.PointList;
+
 import static com.graphhopper.util.Helper.round2;
 
 /**
  * Elevation interpolator calculates elevation for the given lat/lon coordinates
  * based on lat/lon/ele coordinates of the given points.
- * 
+ * <p>
  * <p>
  * In case of two points, elevation is calculated using linear interpolation
  * (see
@@ -47,7 +48,7 @@ public class ElevationInterpolator {
     public static final double EPSILON2 = EPSILON * EPSILON;
 
     public double calculateElevationBasedOnTwoPoints(double lat, double lon, double lat0,
-                    double lon0, double ele0, double lat1, double lon1, double ele1) {
+                                                     double lon0, double ele0, double lat1, double lon1, double ele1) {
         double dlat0 = lat0 - lat;
         double dlon0 = lon0 - lon;
         double dlat1 = lat1 - lat;
@@ -66,8 +67,8 @@ public class ElevationInterpolator {
     }
 
     public double calculateElevationBasedOnThreePoints(double lat, double lon, double lat0,
-                    double lon0, double ele0, double lat1, double lon1, double ele1, double lat2,
-                    double lon2, double ele2) {
+                                                       double lon0, double ele0, double lat1, double lon1, double ele1, double lat2,
+                                                       double lon2, double ele2) {
 
         double dlat10 = lat1 - lat0;
         double dlon10 = lon1 - lon0;
@@ -91,13 +92,13 @@ public class ElevationInterpolator {
 
             if (l21 > l10 && l21 > l20) {
                 return calculateElevationBasedOnTwoPoints(lat, lon, lat1, lon1, ele1, lat2, lon2,
-                                ele2);
+                        ele2);
             } else if (l20 > l10 && l20 > l21) {
                 return calculateElevationBasedOnTwoPoints(lat, lon, lat0, lon0, ele0, lat2, lon2,
-                                ele2);
+                        ele2);
             } else {
                 return calculateElevationBasedOnTwoPoints(lat, lon, lat0, lon0, ele0, lat1, lon1,
-                                ele1);
+                        ele1);
             }
 
         } else {
@@ -117,13 +118,13 @@ public class ElevationInterpolator {
             return pointList.getEle(0);
         } else if (size == 2) {
             return calculateElevationBasedOnTwoPoints(lat, lon, pointList.getLat(0),
-                            pointList.getLon(0), pointList.getEle(0), pointList.getLat(1),
-                            pointList.getLon(1), pointList.getEle(1));
+                    pointList.getLon(0), pointList.getEle(0), pointList.getLat(1),
+                    pointList.getLon(1), pointList.getEle(1));
         } else if (size == 3) {
             return calculateElevationBasedOnThreePoints(lat, lon, pointList.getLat(0),
-                            pointList.getLon(0), pointList.getEle(0), pointList.getLat(1),
-                            pointList.getLon(1), pointList.getEle(1), pointList.getLat(2),
-                            pointList.getLon(2), pointList.getEle(2));
+                    pointList.getLon(0), pointList.getEle(0), pointList.getLat(1),
+                    pointList.getLon(1), pointList.getEle(1), pointList.getLat(2),
+                    pointList.getLon(2), pointList.getEle(2));
         } else {
             double[] vs = new double[size];
             double[] eles = new double[size];

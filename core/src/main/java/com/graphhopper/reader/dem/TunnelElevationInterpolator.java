@@ -30,7 +30,7 @@ import com.graphhopper.util.EdgeIteratorState;
 public class TunnelElevationInterpolator extends AbstractEdgeElevationInterpolator {
 
     public TunnelElevationInterpolator(GraphHopperStorage storage,
-                    DataFlagEncoder dataFlagEncoder) {
+                                       DataFlagEncoder dataFlagEncoder) {
         super(storage, dataFlagEncoder);
     }
 

@@ -18,6 +18,7 @@
 package com.graphhopper.coll;
 
 import com.carrotsearch.hppc.cursors.IntCursor;
+
 import java.util.Iterator;
 
 /**

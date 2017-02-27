@@ -25,5 +25,8 @@ import com.graphhopper.storage.Graph;
  * @author Peter Karich
  */
 public interface RoutingAlgorithmFactory {
+    /**
+     * This method creates an algorithm out of this factory based on the specified opts and graph.
+     */
     RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts);
 }

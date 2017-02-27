@@ -1,4 +1,8 @@
 0.9
+    EncodedDoubleValue requires maxValue/factor to be a natural number #954
+    default base algorithm for all modes is bidirectional A* (except speed mode)
+    introduced landmarks based hybrid mode, #780
+    moving all prepare.xy configs to prepare.ch.xy and e.g. disallow the old
     removed deprecated methods in GraphHopper (setCHWeighting, setCHWeightings, getCHWeightings, setCHWeightings, getCHPrepareThreads, setCHPrepareThreads), Path.calcMillis, findID of LocationIndex and all implementations
 
 0.8

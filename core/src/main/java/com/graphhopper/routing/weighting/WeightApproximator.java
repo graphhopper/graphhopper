@@ -20,20 +20,23 @@ package com.graphhopper.routing.weighting;
 /**
  * Specifies a weight approximation between an node and the goalNode according to the specified
  * weighting.
- * <p>
  *
  * @author jansoe
+ * @author Peter Karich
  */
 public interface WeightApproximator {
     /**
-     * @return minimal weight fromNode to the goalNode
+     * @return minimal weight of the specified currentNode to the 'to' node
      */
-    double approximate(int fromNode);
+    double approximate(int currentNode);
 
-    void setGoalNode(int to);
+    void setTo(int to);
 
     /**
-     * makes a deep copy of itself
+     * Makes a 'reverse' copy of itself to make it possible using the two objects independent e.g.
+     * on different threads. Do not copy state depending on the current approximate calls. 'reverse'
+     * means the WeightApproximator should handle approximate calls towards the 'from' instead
+     * towards the 'to'.
      */
-    WeightApproximator duplicate();
+    WeightApproximator reverse();
 }

@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.util.Parameters.Routing.PASS_THROUGH;
+
 import com.graphhopper.util.shapes.GHPoint;
 
 /**
@@ -52,7 +53,7 @@ final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
     public List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder) {
         if (points.size() > 2)
             throw new IllegalArgumentException("Currently alternative routes work only with start and end point. You tried to use: " + points.size() + " points");
-        
+
         return super.lookup(points, encoder);
     }
 

@@ -87,8 +87,8 @@ public interface DataAccess extends Storable<DataAccess> {
     int getHeader(int bytePos);
 
     /**
-     * The first time you use a DataAccess object after configuring it you need to call this. After
-     * that first call you have to use ensureCapacity to ensure that enough space is reserved.
+     * The first time you use a DataAccess object after configuring it you need to call this method.
+     * After that first call you have to use ensureCapacity to ensure that enough space is reserved.
      */
     @Override
     DataAccess create(long bytes);

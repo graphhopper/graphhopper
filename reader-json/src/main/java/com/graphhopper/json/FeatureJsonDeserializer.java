@@ -90,7 +90,7 @@ public class FeatureJsonDeserializer implements JsonDeserializer<JsonFeature> {
             return new JsonFeature(id, strType, bbox, geometry, properties);
 
         } catch (Exception ex) {
-            throw new JsonParseException("Problem parsing JSON feature " + json);
+            throw new JsonParseException("Problem parsing JSON feature " + json, ex);
         }
     }
 

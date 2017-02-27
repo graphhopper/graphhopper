@@ -125,7 +125,8 @@ public class AlgorithmOptions {
     }
 
     public static class Builder {
-        private final AlgorithmOptions opts = new AlgorithmOptions();
+        private AlgorithmOptions opts = new AlgorithmOptions();
+        private boolean buildCalled;
 
         public Builder traversalMode(TraversalMode traversalMode) {
             if (traversalMode == null)
@@ -141,7 +142,7 @@ public class AlgorithmOptions {
         }
 
         /**
-         * For possible values see AlgorithmOptions.*
+         * For possible values see Parameters.Algorithms
          */
         public Builder algorithm(String algorithm) {
             this.opts.algorithm = algorithm;
@@ -159,6 +160,10 @@ public class AlgorithmOptions {
         }
 
         public AlgorithmOptions build() {
+            if (buildCalled)
+                throw new IllegalStateException("Cannot call AlgorithmOptions.Builder.build() twice");
+
+            buildCalled = true;
             return opts;
         }
     }

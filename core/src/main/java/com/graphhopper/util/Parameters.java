@@ -94,11 +94,17 @@ public class Parameters {
         public static final String EDGE_BASED = "edge_based";
         public static final String MAX_VISITED_NODES = "max_visited_nodes";
         public static final String INIT_MAX_VISITED_NODES = ROUTING_INIT_PREFIX + "max_visited_nodes";
-        /** if true the response will contain turn instructions */
+        /**
+         * if true the response will contain turn instructions
+         */
         public static final String INSTRUCTIONS = "instructions";
-        /** if true the response will contain a point list */
+        /**
+         * if true the response will contain a point list
+         */
         public static final String CALC_POINTS = "calc_points";
-        /** configure simplification of returned point list */
+        /**
+         * configure simplification of returned point list
+         */
         public static final String WAY_POINT_MAX_DISTANCE = "way_point_max_distance";
         public static final String INIT_WAY_POINT_MAX_DISTANCE = ROUTING_INIT_PREFIX + "way_point_max_distance";
         /**
@@ -121,15 +127,16 @@ public class Parameters {
     }
 
     /**
-     * Properties for CH routing
+     * Properties for routing with contraction hierarchies speedup
      */
     public static final class CH {
+        public static final String PREPARE = "prepare.ch.";
         /**
          * This property name in HintsMap configures at runtime if CH routing should be ignored.
          */
         public static final String DISABLE = "ch.disable";
         /**
-         * This property name configures at start if DISABLE parameter can have an effect.
+         * This property name configures at start if the DISABLE parameter can have an effect.
          */
         public static final String INIT_DISABLING_ALLOWED = ROUTING_INIT_PREFIX + "ch.disabling_allowed";
         /**
@@ -140,16 +147,42 @@ public class Parameters {
     }
 
     /**
-     * Properties for NON CH routing
+     * Properties for routing with landmark speedup
+     */
+    public static final class Landmark {
+        public static final String PREPARE = "prepare.lm.";
+        /**
+         * This property name in HintsMap configures at runtime if CH routing should be ignored.
+         */
+        public static final String DISABLE = "lm.disable";
+        /**
+         * Specifies how many active landmarks should be used when routing
+         */
+        public static final String ACTIVE_COUNT = "lm.active_landmarks";
+        /**
+         * Default for active count
+         */
+        public static final String ACTIVE_COUNT_DEFAULT = ROUTING_INIT_PREFIX + ACTIVE_COUNT;
+        /**
+         * Specifies how many landmarks should be created
+         */
+        public static final String COUNT = PREPARE + "landmarks";
+        /**
+         * This property name configures at start if the DISABLE parameter can have an effect.
+         */
+        public static final String INIT_DISABLING_ALLOWED = ROUTING_INIT_PREFIX + "lm.disabling_allowed";
+    }
+
+    /**
+     * Properties for non-CH routing
      */
     public static final class NON_CH {
 
         private static final String NON_CH_PREFIX = "non_ch.";
 
         /**
-         * Describes the max allowed distance between two consecutive waypoints of a non ch request. Distance is in Meter
+         * Describes the maximum allowed distance between two consecutive waypoints of a non-CH request. Distance is in meter.
          */
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
-
     }
 }

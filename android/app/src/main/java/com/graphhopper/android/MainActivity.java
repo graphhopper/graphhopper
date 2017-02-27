@@ -354,8 +354,8 @@ public class MainActivity extends Activity {
     void loadMap(File areaFolder) {
         logUser("loading map");
 
-        // Long press receiver
-        mapView.map().layers().add(new LongPressLayer(mapView.map()));
+        // Map events receiver
+        mapView.map().layers().add(new MapEventsReceiver(mapView.map()));
 
         // Map file source
         MapFileTileSource tileSource = new MapFileTileSource();
@@ -393,7 +393,7 @@ public class MainActivity extends Activity {
                     logUser("An error happened while creating graph:"
                             + getErrorMessage());
                 } else {
-                    logUser("Finished loading graph. Press long to define where to start and end the route.");
+                    logUser("Finished loading graph. Long press to define where to start and end the route.");
                 }
 
                 finishPrepare();
@@ -513,9 +513,9 @@ public class MainActivity extends Activity {
         void onSelect(String selectedArea, String selectedFile);
     }
 
-    class LongPressLayer extends Layer implements GestureListener {
+    class MapEventsReceiver extends Layer implements GestureListener {
 
-        LongPressLayer(org.oscim.map.Map map) {
+        MapEventsReceiver(org.oscim.map.Map map) {
             super(map);
         }
 

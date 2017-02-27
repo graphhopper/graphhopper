@@ -45,7 +45,7 @@ public class InstructionList implements Iterable<Instruction> {
         // We could even use the 'more flexible' CDATA section but for now do the following. The 'and' could be important sometimes:
         return str.replaceAll("&", "&amp;").
                 // but do not care for:
-                replaceAll("[\\<\\>]", "_");
+                        replaceAll("[\\<\\>]", "_");
     }
 
     public void replaceLast(Instruction instr) {

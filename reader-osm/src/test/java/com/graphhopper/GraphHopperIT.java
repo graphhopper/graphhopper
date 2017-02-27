@@ -22,6 +22,7 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
+import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
@@ -513,17 +514,17 @@ public class GraphHopperIT {
         String str = arsp.getPoints().toString();
 
         assertEquals("(43.73068455771767,7.421283689825812,62.0), (43.73067957305937,7.421382123709815,66.0), "
-                + "(43.73109792316924,7.421546222751131,45.0), (43.73129908884985,7.421589994913116,45.0), "
-                + "(43.731327028527716,7.421414533736137,45.0), (43.73125047381037,7.421366291225693,45.0), "
-                + "(43.73125457162979,7.421274090288746,52.0), "
-                + "(43.73128213877862,7.421115579183003,52.0), (43.731362232521825,7.421145381506057,52.0), "
-                + "(43.731371359483255,7.421123216028286,52.0), (43.731485725897976,7.42117332118392,52.0), "
-                + "(43.731575132867135,7.420868778695214,52.0), (43.73160605277731,7.420824820268709,52.0), "
-                + "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,52.0)",
+                        + "(43.73109792316924,7.421546222751131,45.0), (43.73129908884985,7.421589994913116,45.0), "
+                        + "(43.731327028527716,7.421414533736137,45.0), (43.73125047381037,7.421366291225693,45.0), "
+                        + "(43.73125457162979,7.421274090288746,52.0), "
+                        + "(43.73128213877862,7.421115579183003,52.0), (43.731362232521825,7.421145381506057,52.0), "
+                        + "(43.731371359483255,7.421123216028286,52.0), (43.731485725897976,7.42117332118392,52.0), "
+                        + "(43.731575132867135,7.420868778695214,52.0), (43.73160605277731,7.420824820268709,52.0), "
+                        + "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,52.0)",
                 str.substring(0, 662));
 
         assertEquals("(43.727778875703635,7.418772930326453,11.0), (43.72768239068275,7.419007064826944,11.0), "
-                + "(43.727680946587874,7.419198768422206,11.0)",
+                        + "(43.727680946587874,7.419198768422206,11.0)",
                 str.substring(str.length() - 132));
 
         assertEquals(84, arsp.getAscend(), 1e-1);
@@ -798,7 +799,11 @@ public class GraphHopperIT {
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("car"));
 
-        tmpHopper.getCHFactoryDecorator().
+        tmpHopper.getCHFactoryDecorator().setEnabled(true).
+                setWeightingsAsStrings(Arrays.asList("fastest")).
+                setDisablingAllowed(true);
+
+        tmpHopper.getLMFactoryDecorator().setEnabled(true).
                 setWeightingsAsStrings(Arrays.asList("fastest")).
                 setDisablingAllowed(true);
 
@@ -806,19 +811,50 @@ public class GraphHopperIT {
 
         GHRequest req = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566).
                 setVehicle("car");
+        req.getHints().put(Landmark.DISABLE, true);
+        req.getHints().put(CH.DISABLE, false);
 
         GHResponse rsp = tmpHopper.route(req);
-        long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
-        assertTrue("Too many visited nodes for ch mode " + sum, sum < 60);
+        long chSum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        assertTrue("Too many visited nodes for ch mode " + chSum, chSum < 60);
         PathWrapper bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
         assertEquals(92, bestPath.getPoints().getSize());
 
-        // now request flex mode
+        // request flex mode
+        req.setAlgorithm(Parameters.Algorithms.ASTAR_BI);
+        req.getHints().put(Landmark.DISABLE, true);
         req.getHints().put(CH.DISABLE, true);
         rsp = tmpHopper.route(req);
-        sum = rsp.getHints().getLong("visited_nodes.sum", 0);
-        assertTrue("Too few visited nodes for flex mode " + sum, sum > 60);
+        long flexSum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        assertTrue("Too few visited nodes for flex mode " + flexSum, flexSum > 60);
+
+        bestPath = rsp.getBest();
+        assertEquals(3587, bestPath.getDistance(), 1);
+        assertEquals(92, bestPath.getPoints().getSize());
+
+        // request hybrid mode
+        req.getHints().put(Landmark.DISABLE, false);
+        req.getHints().put(CH.DISABLE, true);
+        rsp = tmpHopper.route(req);
+
+        long hSum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        // hybrid is better than CH: 40 vs. 42 !
+        assertTrue("Visited nodes for hybrid mode should be different to CH but " + hSum + "==" + chSum, hSum != chSum);
+        assertTrue("Too many visited nodes for hybrid mode " + hSum + ">=" + flexSum, hSum < flexSum);
+
+        bestPath = rsp.getBest();
+        assertEquals(3587, bestPath.getDistance(), 1);
+        assertEquals(92, bestPath.getPoints().getSize());
+
+        // speed² mode is currently less optimal than CH so just check different nodes and correctness
+        req.getHints().put(Landmark.DISABLE, false);
+        req.getHints().put(CH.DISABLE, false);
+        rsp = tmpHopper.route(req);
+
+        long speed2Sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        assertTrue("Visited nodes for speed² mode should be different but " + speed2Sum + " == " + chSum, speed2Sum != chSum);
+        assertTrue("Visited nodes for speed² mode should be different but " + speed2Sum + " == " + flexSum, speed2Sum != flexSum);
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);

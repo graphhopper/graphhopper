@@ -42,12 +42,13 @@ public class AStarTest extends AbstractRoutingAlgorithmTester {
      * Runs the same test with each of the supported traversal modes
      */
     @Parameters(name = "{0}")
+
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
-            {TraversalMode.NODE_BASED},
-            {TraversalMode.EDGE_BASED_1DIR},
-            {TraversalMode.EDGE_BASED_2DIR},
-            {TraversalMode.EDGE_BASED_2DIR_UTURN}
+                {TraversalMode.NODE_BASED},
+                {TraversalMode.EDGE_BASED_1DIR},
+                {TraversalMode.EDGE_BASED_2DIR},
+                {TraversalMode.EDGE_BASED_2DIR_UTURN}
         });
     }
 

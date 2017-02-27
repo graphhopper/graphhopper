@@ -88,14 +88,28 @@ public class MiniGraphUI {
         encoder = hopper.getEncodingManager().getEncoder("car");
         HintsMap map = new HintsMap("fastest");
         map.put(Parameters.CH.DISABLE, true);
+
         // for CH we need:
         // map.setVehicle("car");
         // weighting = hopper.getCHFactoryDecorator().getWeightings().get(0);
         // routingGraph = hopper.getGraphHopperStorage().getGraph(CHGraph.class, weighting);
 
         weighting = hopper.createWeighting(map, encoder, this.graph);
-        algoFactory = hopper.getAlgorithmFactory(map);
-        algoOpts = new AlgorithmOptions(Algorithms.DIJKSTRA_BI, weighting);
+        final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
+        algoFactory = new RoutingAlgorithmFactory() {
+
+            @Override
+            public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
+                RoutingAlgorithm algo = tmpFactory.createAlgo(g, opts);
+                if (algo instanceof AStarBidirection) {
+                    return new DebugAStarBi(g, opts.getWeighting(), opts.getTraversalMode(), mg).
+                            setApproximation(((AStarBidirection) algo).getApproximation());
+                }
+                return algo;
+            }
+        };
+
+        algoOpts = new AlgorithmOptions(Algorithms.ASTAR_BI, weighting);
 
         logger.info("locations:" + graph.getNodes() + ", debug:" + debug + ", algoOpts:" + algoOpts);
         mg = new GraphicsWrapper(graph);
@@ -241,7 +255,7 @@ public class MiniGraphUI {
                 }
 
                 StopWatch sw = new StopWatch().start();
-                logger.info("start searching from:" + fromRes + " to:" + toRes + " " + weighting);
+                logger.info("start searching with " + algo + " from:" + fromRes + " to:" + toRes + " " + weighting);
 
 //                GHPoint qp = fromRes.getQueryPoint();
 //                TIntHashSet set = index.findNetworkEntries(qp.lat, qp.lon, 1);
@@ -269,7 +283,7 @@ public class MiniGraphUI {
                 logger.info("found path in " + sw.getSeconds() + "s with nodes:"
                         + path.calcNodes().size() + ", millis: " + path.getTime());// + ", " + path);
                 g2.setColor(Color.BLUE.brighter().brighter());
-                plotPath(path, g2, 1);
+                plotPath(path, g2, 2);
             }
         });
 

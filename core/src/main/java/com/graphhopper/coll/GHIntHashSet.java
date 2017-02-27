@@ -20,6 +20,7 @@ package com.graphhopper.coll;
 import com.carrotsearch.hppc.HashOrderMixingStrategy;
 import com.carrotsearch.hppc.IntContainer;
 import com.carrotsearch.hppc.IntHashSet;
+
 import static com.graphhopper.coll.GHIntObjectHashMap.DETERMINISTIC;
 
 /**

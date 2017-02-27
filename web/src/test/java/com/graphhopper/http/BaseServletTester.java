@@ -23,19 +23,23 @@ import com.google.inject.Module;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
+
 import java.io.IOException;
+
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.HttpURLConnection;
 import java.util.concurrent.TimeUnit;
+
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.eclipse.jetty.http.HttpStatus;
+
 import static org.junit.Assert.assertEquals;
 
 /**

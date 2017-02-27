@@ -18,10 +18,10 @@
 package com.graphhopper.coll;
 
 import com.carrotsearch.hppc.IntArrayList;
+
 import java.util.Random;
 
 /**
- *
  * @author Peter Karich
  */
 public class GHIntArrayList extends IntArrayList {

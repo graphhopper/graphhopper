@@ -54,11 +54,11 @@ public class EdgeBasedRoutingAlgorithmTest {
     @Parameters(name = "{0}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
-            {DIJKSTRA},
-            {DIJKSTRA_BI},
-            {ASTAR},
-            {ASTAR_BI}
-        // TODO { AlgorithmOptions.DIJKSTRA_ONE_TO_MANY }
+                {DIJKSTRA},
+                {DIJKSTRA_BI},
+                {ASTAR},
+                {ASTAR_BI}
+                // TODO { AlgorithmOptions.DIJKSTRA_ONE_TO_MANY }
         });
     }
 

@@ -20,22 +20,22 @@ package com.graphhopper.apache.commons.lang3;
 /**
  * This class is a partial Copy of the org.apache.commons.lang3.StringUtils
  * that can be found here: https://github.com/apache/commons-lang/blob/master/src/main/java/org/apache/commons/lang3/StringUtils.java
- *
+ * <p>
  * The library can be found here: https://commons.apache.org/proper/commons-lang/
  */
 public class StringUtils {
 
     /**
      * <p>Find the Levenshtein distance between two Strings.</p>
-     *
+     * <p>
      * <p>This is the number of changes needed to change one String into
      * another, where each change is a single character modification (deletion,
      * insertion or substitution).</p>
-     *
+     * <p>
      * <p>The implementation uses a single-dimensional array of length s.length() + 1. See
      * <a href="http://blog.softwx.net/2014/12/optimizing-levenshtein-algorithm-in-c.html">
      * http://blog.softwx.net/2014/12/optimizing-levenshtein-algorithm-in-c.html</a> for details.</p>
-     *
+     * <p>
      * <pre>
      * StringUtils.getLevenshteinDistance(null, *)             = IllegalArgumentException
      * StringUtils.getLevenshteinDistance(*, null)             = IllegalArgumentException
@@ -50,8 +50,8 @@ public class StringUtils {
      * StringUtils.getLevenshteinDistance("hello", "hallo")    = 1
      * </pre>
      *
-     * @param s  the first String, must not be null
-     * @param t  the second String, must not be null
+     * @param s the first String, must not be null
+     * @param t the second String, must not be null
      * @return result distance
      * @throws IllegalArgumentException if either String input {@code null}
      * @since 3.0 Changed signature from getLevenshteinDistance(String, String) to

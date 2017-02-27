@@ -25,7 +25,6 @@ import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -45,8 +44,6 @@ import static com.graphhopper.GraphHopperIT.DIR;
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.assertEquals;
-
-import org.junit.Ignore;
 
 /**
  * Try algorithms, indices and graph storages with real data
@@ -476,12 +473,12 @@ public class RoutingAlgorithmWithOSMIT {
     }
 
     /**
-     * @param withPreparedAlgos if true also the CH and LM algorithms will be tested which need
-     *                          preparation and takes a bit longer
+     * @param withCH if true also the CH and LM algorithms will be tested which need
+     *               preparation and takes a bit longer
      */
     Graph runAlgo(TestAlgoCollector testCollector, String osmFile,
                   String graphFile, List<OneRun> forEveryAlgo, String importVehicles,
-                  boolean withPreparedAlgos, String vehicle, String weightStr, boolean is3D) {
+                  boolean withCH, String vehicle, String weightStr, boolean is3D) {
 
         // for different weightings we need a different storage, otherwise we would need to remove the graph folder
         // everytime we come with a different weighting
@@ -501,10 +498,13 @@ public class RoutingAlgorithmWithOSMIT {
             // avoid that path.getDistance is too different to path.getPoint.calcDistance
             hopper.setWayPointMaxDistance(0);
 
-            if (withPreparedAlgos) {
-                hopper.getCHFactoryDecorator().setEnabled(true);
-                hopper.getCHFactoryDecorator().addWeighting(weightStr);
-            }
+            // always enable landmarks
+            hopper.getLMFactoryDecorator().addWeighting(weightStr).
+                    setEnabled(true).setDisablingAllowed(true);
+
+            if (withCH)
+                hopper.getCHFactoryDecorator().addWeighting(weightStr).
+                        setEnabled(true).setDisablingAllowed(true);
 
             if (is3D)
                 hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
@@ -567,7 +567,6 @@ public class RoutingAlgorithmWithOSMIT {
         int algosLength = 2;
         final Weighting weighting = new ShortestWeighting(encodingManager.getEncoder("car"));
         final EdgeFilter filter = new DefaultEdgeFilter(carEncoder);
-        final HintsMap hints = new HintsMap().setWeighting("shortest").setVehicle("car");
         for (int no = 0; no < MAX; no++) {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {
                 String[] algos = new String[]{
