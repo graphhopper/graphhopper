@@ -487,7 +487,7 @@ public class Path {
                 } else {
                     int sign = calculateSign(latitude, longitude);
 
-                    if (isTurn(sign, baseNode, prevNode, adjNode, latitude, longitude)) {
+                    if (isTurn(sign, baseNode, prevNode, adjNode)) {
                         prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
                         ways.add(prevInstruction);
                         prevAnnotation = annotation;
@@ -527,7 +527,7 @@ public class Path {
                 }
             }
 
-            private boolean isTurn(int sign, int baseNode, int prevNode, int adjNode, double lat, double lon) {
+            private boolean isTurn(int sign, int baseNode, int prevNode, int adjNode) {
                 // TODO remove boolean, just for testing right now
                 boolean improvedTurninstruction = true;
                 if (improvedTurninstruction) {
@@ -582,16 +582,18 @@ public class Path {
                     long flag = graph.getEdgeIteratorState(edge, adjNode).getFlags();
                     long prevFlag = graph.getEdgeIteratorState(prevEdge, baseNode).getFlags();
 
+                    boolean leavingCurrentStreet = isLeavingCurrentStreet(flag, prevFlag, baseNode, prevNode, adjNode);
+
                     boolean surroundingStreetsAreSlower = surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 1);
 
                     // Leave the current road -> create instruction
-                    if (isLeavingCurrentStreet(flag, prevFlag, baseNode, prevNode, adjNode)
+                    if (leavingCurrentStreet
                             && !surroundingStreetsAreSlower) {
                         return true;
                     }
 
                     // There are too many cases where this leads to unwanted continues
-                    if(sign == Instruction.CONTINUE_ON_STREET){
+                    if (sign == Instruction.CONTINUE_ON_STREET) {
                         return false;
                     }
 
@@ -605,9 +607,6 @@ public class Path {
                     // Happens a lot for trunk_links
                     // For _links, comparing flags works quite good, as links usually have different speeds => different flags
                     if (otherContinue) {
-                        logger.warn("Uncertain Turn Instruction, turning from " + prevName + " onto " + name + " from " + doublePrevLat + "," + doublePrevLon + " via " + prevLat + "," + prevLon + " to " + lat + "," + lon);
-                        // For this case we need to consider bwd true, therefore we have to use another explorer, e.g. on Trunk, edges are oneways, therefore bwd=false
-
                         // The idea is, if there are only a random tracks, they usually don't have names and they
                         // usually don't have any special flags (e.g. speed limit).
                         // In this case we should force the turn instruction.
@@ -622,12 +621,17 @@ public class Path {
                 }
             }
 
+            /**
+             * If the name and prevName changes this method checks if either the current street is continued on a
+             * different edge or if the edge we are turning onto is continued on a different edge.
+             * If either of these properties is true, we can be quite certain that a turn instruction should be provided.
+             */
             private boolean isLeavingCurrentStreet(long flag, long prevFlag, int baseNode, int prevNode, int adjNode) {
                 if (isNameSimilar(name, prevName)) {
                     return false;
                 }
 
-                // If flags are changing, there might be a chance we find the flags somewhere else
+                // If flags are changing, there might be a chance we find these flags on a different edge
                 boolean checkFlag = flag != prevFlag;
 
                 EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
