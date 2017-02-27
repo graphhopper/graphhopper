@@ -85,7 +85,7 @@ Or use this Java snippet:
 ```java
 // import OpenStreetMap data
 GraphHopper hopper = new GraphHopperOSM();
-hopper.setOSMFile("./map-data/leipzig_germany.osm.pbf");
+hopper.setDataReaderFile("./map-data/leipzig_germany.osm.pbf");
 hopper.setGraphHopperLocation("./target/mapmatchingtest");
 CarFlagEncoder encoder = new CarFlagEncoder();
 hopper.setEncodingManager(new EncodingManager(encoder));
@@ -93,11 +93,10 @@ hopper.getCHFactoryDecorator().setEnabled(false);
 hopper.importOrLoad();
 
 // create MapMatching object, can and should be shared accross threads
-
-GraphHopperStorage graph = hopper.getGraphHopperStorage();
-LocationIndexMatch locationIndex = new LocationIndexMatch(graph,
-                (LocationIndexTree) hopper.getLocationIndex());
-MapMatching mapMatching = new MapMatching(graph, locationIndex, encoder);
+String algorithm = Parameters.Algorithms.DIJKSTRA_BI;
+Weighting weighting = new FastestWeighting(encoder);
+AlgorithmOptions algoOptions = new AlgorithmOptions(algorithm, weighting);
+MapMatching mapMatching = new MapMatching(hopper, algoOptions);
 
 // do the actual matching, get the GPX entries from a file or via stream
 List<GPXEntry> inputGPXEntries = new GPXFile().doImport("nice.gpx").getEntries();
