@@ -51,6 +51,7 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles) {
 
         // Debug Turn Instructions more easily
         L.marker([lngLat[1], lngLat[0]], {
+            draggable: true
         }).addTo(mapLayer.getRoutingLayer()).bindPopup(title);
     }
     main.append(instructionDiv);
