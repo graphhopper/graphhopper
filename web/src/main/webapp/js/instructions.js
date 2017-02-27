@@ -46,7 +46,12 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles) {
                     setLatLng([lngLat[1], lngLat[0]]).
                     setContent(title).
                     openOn(mapLayer.getMap());
+
         });
+
+        // Debug Turn Instructions more easily
+        L.marker([lngLat[1], lngLat[0]], {
+        }).addTo(mapLayer.getRoutingLayer()).bindPopup(title);
     }
     main.append(instructionDiv);
 }
