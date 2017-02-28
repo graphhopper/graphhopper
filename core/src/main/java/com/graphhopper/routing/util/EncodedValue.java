@@ -73,9 +73,9 @@ public class EncodedValue {
     }
 
     public long setValue(long flags, long value) {
-        checkValue(value);
         // scale value
-        value /= factor;
+        value = Math.round(value / factor);
+        checkValue((long) (value * factor));
         value <<= shift;
 
         // clear value bits
