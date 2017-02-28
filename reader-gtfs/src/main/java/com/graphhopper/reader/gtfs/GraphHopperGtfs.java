@@ -24,7 +24,6 @@ import com.vividsolutions.jts.geom.GeometryFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -335,9 +334,9 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                         path.getLegs().stream()
                                 .filter(leg -> leg instanceof Trip.PtLeg)
                                 .map(leg -> (Trip.PtLeg) leg)
-                                .map(ptLeg -> new com.graphhopper.gtfs.fare.Trip.Segment("FIXME", Duration.between(firstPtDepartureTime, GtfsHelper.localDateTimeFromDate(ptLeg.departureTime)).getSeconds(), ptLeg.boardStop.name, ptLeg.stops.get(ptLeg.stops.size()-1).name, Collections.emptySet()))
+                                .map(ptLeg -> new com.graphhopper.gtfs.fare.Trip.Segment(ptLeg.routeId, Duration.between(firstPtDepartureTime, GtfsHelper.localDateTimeFromDate(ptLeg.departureTime)).getSeconds(), ptLeg.boardStop.name, ptLeg.stops.get(ptLeg.stops.size()-1).name, Collections.emptySet()))
                                 .forEach(faresTrip.segments::add);
-                        Fares.calculate(Collections.emptyMap() /* FIXME */, faresTrip)
+                        Fares.calculate(gtfsStorage.getFares(), faresTrip)
                                 .ifPresent(amount -> path.setFare(amount.getAmount()));
                     });
             response.add(path);
@@ -387,7 +386,9 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     partition.add(edge);
                 }
                 if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK).contains(edgeType)) {
-                    result.add(createPtLeg(geometryFactory, encoder, boardStop, partition, Date.from(boardTime.atZone(ZoneId.systemDefault()).toInstant()), Duration.between(boardTime, time).toMillis()));
+                    Geometry lineString = lineStringFromEdges(geometryFactory, partition);
+                    List<Trip.Stop> stops = partition.stream().filter(e -> EnumSet.of(GtfsStorage.EdgeType.HOP).contains(encoder.getEdgeType(e.getFlags()))).map(e -> stopFromHopEdge(geometryFactory, e)).collect(Collectors.toList());
+                    result.add(new Trip.PtLeg(boardStop, gtfsStorage.getExtraString(partition.get(0)), partition, Date.from(boardTime.atZone(ZoneId.systemDefault()).toInstant()), stops, partition.stream().mapToDouble(EdgeIteratorState::getDistance).sum(), Duration.between(boardTime, time).toMillis(), lineString));
                     partition = null;
                 }
                 if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.HOP, GtfsStorage.EdgeType.TIME_PASSES).contains(edgeType)) {
@@ -415,12 +416,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     path.stream().mapToDouble(EdgeIteratorState::getDistance).sum(),
                     StreamSupport.stream(instructions.spliterator(), false).collect(Collectors.toCollection(() -> new InstructionList(tr)))));
         }
-    }
-
-    static Trip.PtLeg createPtLeg(GeometryFactory geometryFactory, PtFlagEncoder encoder, Trip.Stop stop, List<EdgeIteratorState> edges, Date departureTime, long travelTime) {
-        Geometry lineString = lineStringFromEdges(geometryFactory, edges);
-        List<Trip.Stop> stops = edges.stream().filter(e -> EnumSet.of(GtfsStorage.EdgeType.HOP).contains(encoder.getEdgeType(e.getFlags()))).map(e -> stopFromHopEdge(geometryFactory, e)).collect(Collectors.toList());
-        return new Trip.PtLeg(stop, edges, departureTime, stops, edges.stream().mapToDouble(EdgeIteratorState::getDistance).sum(), travelTime, lineString);
     }
 
     private static Geometry lineStringFromEdges(GeometryFactory geometryFactory, List<EdgeIteratorState> edges) {

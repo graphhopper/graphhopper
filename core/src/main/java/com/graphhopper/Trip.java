@@ -55,10 +55,12 @@ public class Trip {
         public final long travelTime;
         public final List<Stop> stops;
         public final Stop boardStop;
+        public final String routeId;
 
-        public PtLeg(Stop stop, List<EdgeIteratorState> edges, Date departureTime, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
+        public PtLeg(Stop stop, String routeId, List<EdgeIteratorState> edges, Date departureTime, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
             super("pt", stop.name, edges, geometry, distance);
             this.boardStop = stop;
+            this.routeId = routeId;
             this.trip_headsign = edges.get(0).getName();
             this.departureTime = departureTime;
             this.travelTime = travelTime;

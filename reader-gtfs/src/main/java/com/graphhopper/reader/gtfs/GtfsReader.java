@@ -52,6 +52,7 @@ class GtfsReader {
     }
 
     public void readGraph() {
+        gtfsStorage.getFares().putAll(feed.fares);
         i = graph.getNodes();
         buildPtNetwork();
         EdgeFilter filter = new EverythingButPt(encoder);
@@ -225,6 +226,7 @@ class GtfsReader {
             edge.setName(getRouteName(feed, trip));
             int dayShift = orderedStop.departure_time / (24 * 60 * 60);
             setEdgeType(edge, GtfsStorage.EdgeType.BOARD);
+            gtfsStorage.setExtraString(edge, trip.route_id);
             BitSet validOn = getValidOn(validOnDay, dayShift);
             int index;
             if (gtfsStorage.getOperatingDayPatterns().containsKey(validOn)) {
@@ -240,15 +242,14 @@ class GtfsReader {
                     0.0,
                     false);
             edge.setName(getRouteName(feed, trip));
-            GtfsStorage.EdgeType timePassesPtEdge = GtfsStorage.EdgeType.TIME_PASSES;
-            setEdgeType(edge, timePassesPtEdge);
+            setEdgeType(edge, GtfsStorage.EdgeType.TIME_PASSES);
             edge.setFlags(encoder.setTime(edge.getFlags(), orderedStop.departure_time - orderedStop.arrival_time));
             prev = orderedStop;
         }
     }
 
-    private void setEdgeType(EdgeIteratorState edge, GtfsStorage.EdgeType timePassesPtEdge) {
-        edge.setFlags(encoder.setEdgeType(edge.getFlags(), timePassesPtEdge));
+    private void setEdgeType(EdgeIteratorState edge, GtfsStorage.EdgeType edgeType) {
+        edge.setFlags(encoder.setEdgeType(edge.getFlags(), edgeType));
     }
 
     private BitSet getValidOn(BitSet validOnDay, int dayShift) {

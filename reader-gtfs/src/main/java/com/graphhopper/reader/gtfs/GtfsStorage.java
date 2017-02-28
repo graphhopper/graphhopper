@@ -1,10 +1,12 @@
 package com.graphhopper.reader.gtfs;
 
+import com.conveyal.gtfs.model.Fare;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import gnu.trove.map.TIntObjectMap;
 import gnu.trove.map.TObjectIntMap;
 import gnu.trove.map.hash.TIntObjectHashMap;
@@ -18,7 +20,7 @@ import java.util.*;
 
 public class GtfsStorage implements GraphExtension {
 
-    static long traveltime(int edgeTimeValue, long earliestStartTime) {
+	static long traveltime(int edgeTimeValue, long earliestStartTime) {
         int timeOfDay = (int) (earliestStartTime % (24*60*60));
         if (timeOfDay <= edgeTimeValue) {
             return (edgeTimeValue - timeOfDay);
@@ -41,8 +43,10 @@ public class GtfsStorage implements GraphExtension {
     private final TObjectIntMap<BitSet> operatingDayPatterns = new TObjectIntHashMap<>();
 	private boolean flushed = false;
 	private LocalDate startDate;
+	private Map<Integer, String> extra;
+	private Map<String, Fare> fares;
 
-    enum EdgeType {
+	enum EdgeType {
         UNSPECIFIED, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL_EDGE, BOARD, OVERNIGHT_EDGE, TRANSFER, WAIT_IN_STATION_EDGE, TIME_PASSES;
     }
 
@@ -92,6 +96,8 @@ public class GtfsStorage implements GraphExtension {
 			this.reverseOperatingDayPatterns.put(entry.getKey(), entry.getValue());
 		}
 		this.startDate = (LocalDate) data.getAtomicVar("startDate").get();
+		this.extra = data.getTreeMap("extra");
+		this.fares = data.getTreeMap("fares");
 		flushed = true;
 		return true;
 	}
@@ -99,6 +105,8 @@ public class GtfsStorage implements GraphExtension {
 	@Override
 	public GraphExtension create(long byteCount) {
 		this.data = DBMaker.newFileDB(new File(dir.getLocation() + "/transit_schedule")).transactionDisable().mmapFileEnable().asyncWriteEnable().make();
+		this.extra = data.getTreeMap("extra");
+		this.fares = data.getTreeMap("fares");
 		return this;
 	}
 
@@ -128,20 +136,18 @@ public class GtfsStorage implements GraphExtension {
 				}
 			}).make();
 			data.getAtomicVar("startDate").set(startDate);
-			data.close();
 			flushed = true;
 		}
 	}
 
 	@Override
 	public void close() {
+		data.close();
 	}
 
 	@Override
 	public boolean isClosed() {
-		// Flushing and closing is the same for us.
-		// We use the data store only for dumping to file, not as a live data structure.
-		return flushed;
+		return data.isClosed();
 	}
 
 	@Override
@@ -160,5 +166,17 @@ public class GtfsStorage implements GraphExtension {
     TObjectIntMap<BitSet> getOperatingDayPatterns() {
         return operatingDayPatterns;
     }
+
+    void setExtraString(EdgeIteratorState edge, String string) {
+		extra.put(edge.getEdge(), string);
+	}
+
+	String getExtraString(EdgeIteratorState edge) {
+		return extra.get(edge.getEdge());
+	}
+
+	Map<String, Fare> getFares() {
+		return fares;
+	}
 
 }

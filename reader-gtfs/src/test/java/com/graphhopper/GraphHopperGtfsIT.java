@@ -6,6 +6,7 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 import static org.junit.Assert.assertEquals;
@@ -110,7 +111,18 @@ public class GraphHopperGtfsIT {
     public void testRoute5() {
         final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
         final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
-        assertTravelTimeIs(graphHopper, FROM_LAT, FROM_LON, TO_LAT, TO_LON, time(8, 10));
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,0,0));
+        GHResponse route = graphHopper.route(ghRequest);
+
+        assertFalse(route.hasErrors());
+        assertFalse(route.getAll().isEmpty());
+        assertEquals("Expected travel time == scheduled travel time", time(8, 10), route.getBest().getTime(), 0.1);
+        assertEquals("Using expected route", "STBA", (((Trip.PtLeg) route.getBest().getLegs().get(1)).routeId));
+        assertEquals("Paid expected fare", 250, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue()); // Two legs, no transfers allowed. Need two 'p' tickets costing 125 cents each.
     }
 
     @Test
@@ -141,7 +153,18 @@ public class GraphHopperGtfsIT {
         GHResponse route = graphHopper.route(ghRequest);
         Assert.assertTrue(route.getAll().isEmpty()); // No service on monday morning, and we cannot spend the night at stations yet
 
-        assertTravelTimeIs(graphHopper, FROM_LAT, FROM_LON, LocalDateTime.of(2007,1,6,0,0), TO_LAT, TO_LON, time(9, 0)); // Saturday morning
+        GHRequest ghRequest1 = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest1.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,6,0,0));
+        GHResponse route1 = graphHopper.route(ghRequest1);
+
+        assertFalse(route1.hasErrors());
+        assertFalse(route1.getAll().isEmpty());
+        assertEquals("Expected travel time == scheduled travel time", time(9, 0), route1.getBest().getTime(), 0.1);
+        assertEquals("Using expected route", "AAMV", (((Trip.PtLeg) route1.getBest().getLegs().get(1)).routeId));
+        assertEquals("Paid expected fare", 525, route1.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue());
 
     }
 
