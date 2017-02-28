@@ -59,6 +59,11 @@ public class EncodedValue {
         if (maxValue > this.maxValue)
             throw new IllegalStateException(name + " -> maxValue " + maxValue + " is too large for " + bits + " bits");
 
+        double factorDivision = maxValue / factor;
+        if (factorDivision != (int) factorDivision) {
+            throw new IllegalStateException("MaxValue needs to be divisible by factor without remainder");
+        }
+
         mask = tmpMask << shift;
         this.allowZero = allowZero;
     }
