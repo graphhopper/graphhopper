@@ -42,20 +42,27 @@ public class PrepareEncoder {
     }
 
     /**
-     * Returns true if flags1 can be overwritten in the edge by flags2 without restricting or
-     * changing the directions of flags1.
-     * <p>
+     * Returns 1 if existingEdgeFlags can be overwritten in the edge by newEdgeFlags without limiting or
+     * changing the directions of existingEdgeFlags. It returns 2 for the same condition AND if the edge
+     * with newEdgeFlags has to be added even if weight is higher than existing edge weight.
+     * <pre>
+     *                    | newEdgeFlags:
+     * existingEdgeFlags  | -> | <- | <->
+     * ->                 |  1 | 0  | 2
+     * <-                 |  0 | 1  | 2
+     * <->                |  0 | 0  | 1
+     * </pre>
      *
-     * @return true if flags2 is enabled in both directions or if both flags are pointing into the
+     * @return 1 if newEdgeFlags is enabled in both directions or if both flags are pointing into the
      * same direction.
      */
-    //        \  flags2:
-    // flags1  \ -> | <- | <->
-    // ->         t | f  | t
-    // <-         f | t  | t
-    // <->        f | f  | t
-    public static final boolean canBeOverwritten(long flags1, long flags2) {
-        return (flags2 & scDirMask) == scDirMask
-                || (flags1 & scDirMask) == (flags2 & scDirMask);
+
+    public static final int getMergeStatus(long existingEdgeFlags, long newEdgeFlags) {
+        if ((existingEdgeFlags & scDirMask) == (newEdgeFlags & scDirMask))
+            return 1;
+        else if ((newEdgeFlags & scDirMask) == scDirMask)
+            return 2;
+
+        return 0;
     }
 }

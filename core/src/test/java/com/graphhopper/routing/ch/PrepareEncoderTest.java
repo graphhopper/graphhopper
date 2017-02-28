@@ -19,6 +19,7 @@ package com.graphhopper.routing.ch;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -32,15 +33,15 @@ public class PrepareEncoderTest {
         long forward = PrepareEncoder.getScFwdDir();
         long backward = PrepareEncoder.getScFwdDir() ^ PrepareEncoder.getScDirMask();
         long both = PrepareEncoder.getScDirMask();
-        assertTrue(PrepareEncoder.canBeOverwritten(forward, forward));
-        assertTrue(PrepareEncoder.canBeOverwritten(backward, backward));
-        assertTrue(PrepareEncoder.canBeOverwritten(forward, both));
-        assertTrue(PrepareEncoder.canBeOverwritten(backward, both));
+        assertEquals(1, PrepareEncoder.getMergeStatus(forward, forward));
+        assertEquals(1, PrepareEncoder.getMergeStatus(backward, backward));
+        assertEquals(2, PrepareEncoder.getMergeStatus(forward, both));
+        assertEquals(2, PrepareEncoder.getMergeStatus(backward, both));
 
-        assertTrue(PrepareEncoder.canBeOverwritten(both, both));
-        assertFalse(PrepareEncoder.canBeOverwritten(both, forward));
-        assertFalse(PrepareEncoder.canBeOverwritten(both, backward));
-        assertFalse(PrepareEncoder.canBeOverwritten(forward, backward));
-        assertFalse(PrepareEncoder.canBeOverwritten(backward, forward));
+        assertEquals(1, PrepareEncoder.getMergeStatus(both, both));
+        assertEquals(0, PrepareEncoder.getMergeStatus(both, forward));
+        assertEquals(0, PrepareEncoder.getMergeStatus(both, backward));
+        assertEquals(0, PrepareEncoder.getMergeStatus(forward, backward));
+        assertEquals(0, PrepareEncoder.getMergeStatus(backward, forward));
     }
 }
