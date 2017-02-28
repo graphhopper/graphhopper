@@ -406,7 +406,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public final long getFlags() {
-//            checkShortcut(false, "getFlags");
+            checkShortcut(false, "getFlags");
             return super.getDirectFlags();
         }
 

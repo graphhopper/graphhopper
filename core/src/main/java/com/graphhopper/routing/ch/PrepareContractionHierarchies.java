@@ -53,7 +53,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private final GraphHopperStorage ghStorage;
     private final CHGraphImpl prepareGraph;
     private final DataAccess originalEdges;
-    final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
+    private final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
     private final Random rand = new Random(123);
     private final StopWatch allSW = new StopWatch();
     AddShortcutHandler addScHandler = new AddShortcutHandler();
