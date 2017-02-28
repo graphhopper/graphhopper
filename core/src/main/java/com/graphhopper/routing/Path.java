@@ -531,9 +531,9 @@ public class Path {
                 // TODO remove boolean, just for testing right now
                 boolean improvedTurninstruction = true;
                 if (improvedTurninstruction) {
-                    // TODO Assume that if the annotation changes, we always want an instruction?
+                    // TODO Assume that if the annotation changes, but only if the current instruction is not empty
                     // For example, get of bike
-                    if (!annotation.equals(prevAnnotation)) {
+                    if (!annotation.equals(prevAnnotation) && !annotation.isEmpty()) {
                         return true;
                     }
 
