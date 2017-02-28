@@ -1,22 +1,16 @@
 package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.model.Fare;
-import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import gnu.trove.map.TIntObjectMap;
-import gnu.trove.map.TObjectIntMap;
-import gnu.trove.map.hash.TIntObjectHashMap;
-import gnu.trove.map.hash.TObjectIntHashMap;
-import gnu.trove.procedure.TObjectIntProcedure;
 import org.mapdb.*;
 
 import java.io.File;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.BitSet;
+import java.util.Collections;
+import java.util.Map;
 
 public class GtfsStorage implements GraphExtension {
 
@@ -39,15 +33,15 @@ public class GtfsStorage implements GraphExtension {
 	}
 
     private Directory dir;
-    private TIntObjectHashMap<BitSet> reverseOperatingDayPatterns;
-    private final TObjectIntMap<BitSet> operatingDayPatterns = new TObjectIntHashMap<>();
+    private HTreeMap<BitSet, Integer> operatingDayPatterns;
+	private Map<Integer, BitSet> reverseOperatingDayPatterns;
 	private boolean flushed = false;
-	private LocalDate startDate;
+	private Atomic.Var<LocalDate> startDate;
 	private Map<Integer, String> extra;
 	private Map<String, Fare> fares;
 
 	enum EdgeType {
-        UNSPECIFIED, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL_EDGE, BOARD, OVERNIGHT_EDGE, TRANSFER, WAIT_IN_STATION_EDGE, TIME_PASSES;
+        UNSPECIFIED, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL_EDGE, BOARD, OVERNIGHT_EDGE, TRANSFER, WAIT_IN_STATION_EDGE, TIME_PASSES
     }
 
 	private DB data;
@@ -90,54 +84,28 @@ public class GtfsStorage implements GraphExtension {
 	@Override
 	public boolean loadExisting() {
 		this.data = DBMaker.newFileDB(new File(dir.getLocation() + "/transit_schedule")).readOnly().make();
-        reverseOperatingDayPatterns = new TIntObjectHashMap<BitSet>();
-        BTreeMap<Integer, BitSet> operatingDayPatterns = data.getTreeMap("validities");
-		for (Map.Entry<Integer, BitSet> entry : operatingDayPatterns.entrySet()) {
-			this.reverseOperatingDayPatterns.put(entry.getKey(), entry.getValue());
-		}
-		this.startDate = (LocalDate) data.getAtomicVar("startDate").get();
-		this.extra = data.getTreeMap("extra");
-		this.fares = data.getTreeMap("fares");
-		flushed = true;
+		init();
 		return true;
 	}
 
 	@Override
 	public GraphExtension create(long byteCount) {
-		this.data = DBMaker.newFileDB(new File(dir.getLocation() + "/transit_schedule")).transactionDisable().mmapFileEnable().asyncWriteEnable().make();
-		this.extra = data.getTreeMap("extra");
-		this.fares = data.getTreeMap("fares");
+		this.data = DBMaker.newFileDB(new File(dir.getLocation() + "/transit_schedule")).transactionDisable().mmapFileEnable().asyncWriteEnable().closeOnJvmShutdown().make();
+		init();
 		return this;
 	}
 
-    TIntObjectHashMap<BitSet> getReverseOperatingDayPatterns() {
-        return reverseOperatingDayPatterns;
-    }
+	private void init() {
+		this.operatingDayPatterns = data.getHashMap("validities");
+		this.reverseOperatingDayPatterns = data.getTreeMap("reverseValidities");
+		Bind.mapInverse(this.operatingDayPatterns, this.reverseOperatingDayPatterns);
+		this.startDate = data.getAtomicVar("startDate");
+		this.extra = data.getTreeMap("extra");
+		this.fares = data.getTreeMap("fares");
+	}
 
-    @Override
+	@Override
 	public void flush() {
-		if (!flushed) {
-            reverseOperatingDayPatterns = new TIntObjectHashMap<BitSet>();
-            operatingDayPatterns.forEachEntry(new TObjectIntProcedure<BitSet>() {
-                @Override
-                public boolean execute(BitSet bitSet, int i) {
-                    reverseOperatingDayPatterns.put(i, bitSet);
-                    return true;
-                }
-            });
-			TreeSet<Integer> wurst = new TreeSet<>();
-			for (int i : reverseOperatingDayPatterns.keys()) {
-				wurst.add(i);
-			}
-			data.createTreeMap("validities").pumpSource(wurst.descendingSet().iterator(), new Fun.Function1<Object, Integer>() {
-				@Override
-				public Object run(Integer i) {
-					return reverseOperatingDayPatterns.get(i);
-				}
-			}).make();
-			data.getAtomicVar("startDate").set(startDate);
-			flushed = true;
-		}
 	}
 
 	@Override
@@ -156,23 +124,23 @@ public class GtfsStorage implements GraphExtension {
 	}
 
 	void setStartDate(LocalDate startDate) {
-		this.startDate = startDate;
+		this.startDate.set(startDate);
 	}
 
 	LocalDate getStartDate() {
-		return startDate;
+		return startDate.get();
 	}
 
-    TObjectIntMap<BitSet> getOperatingDayPatterns() {
+    Map<BitSet, Integer> getOperatingDayPatterns() {
         return operatingDayPatterns;
     }
 
-    void setExtraString(EdgeIteratorState edge, String string) {
-		extra.put(edge.getEdge(), string);
+	Map<Integer, BitSet> getReverseOperatingDayPatterns() {
+		return Collections.unmodifiableMap(reverseOperatingDayPatterns);
 	}
 
-	String getExtraString(EdgeIteratorState edge) {
-		return extra.get(edge.getEdge());
+	Map<Integer, String> getExtraStrings() {
+		return extra;
 	}
 
 	Map<String, Fare> getFares() {

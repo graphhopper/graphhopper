@@ -226,7 +226,7 @@ class GtfsReader {
             edge.setName(getRouteName(feed, trip));
             int dayShift = orderedStop.departure_time / (24 * 60 * 60);
             setEdgeType(edge, GtfsStorage.EdgeType.BOARD);
-            gtfsStorage.setExtraString(edge, trip.route_id);
+            gtfsStorage.getExtraStrings().put(edge.getEdge(), trip.route_id);
             BitSet validOn = getValidOn(validOnDay, dayShift);
             int index;
             if (gtfsStorage.getOperatingDayPatterns().containsKey(validOn)) {

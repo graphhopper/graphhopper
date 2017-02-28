@@ -388,7 +388,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK).contains(edgeType)) {
                     Geometry lineString = lineStringFromEdges(geometryFactory, partition);
                     List<Trip.Stop> stops = partition.stream().filter(e -> EnumSet.of(GtfsStorage.EdgeType.HOP).contains(encoder.getEdgeType(e.getFlags()))).map(e -> stopFromHopEdge(geometryFactory, e)).collect(Collectors.toList());
-                    result.add(new Trip.PtLeg(boardStop, gtfsStorage.getExtraString(partition.get(0)), partition, Date.from(boardTime.atZone(ZoneId.systemDefault()).toInstant()), stops, partition.stream().mapToDouble(EdgeIteratorState::getDistance).sum(), Duration.between(boardTime, time).toMillis(), lineString));
+                    result.add(new Trip.PtLeg(boardStop, gtfsStorage.getExtraStrings().get(partition.get(0).getEdge()), partition, Date.from(boardTime.atZone(ZoneId.systemDefault()).toInstant()), stops, partition.stream().mapToDouble(EdgeIteratorState::getDistance).sum(), Duration.between(boardTime, time).toMillis(), lineString));
                     partition = null;
                 }
                 if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.HOP, GtfsStorage.EdgeType.TIME_PASSES).contains(edgeType)) {
