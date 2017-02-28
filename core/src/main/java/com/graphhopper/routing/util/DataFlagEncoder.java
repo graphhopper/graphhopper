@@ -24,10 +24,7 @@ import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.GenericWeighting;
-import com.graphhopper.util.ConfigMap;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +74,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private final Map<String, Integer> transportModeMap = new HashMap<>();
     private final int transportModeTunnelValue;
     private final int transportModeBridgeValue;
+    private final int transportModeFordValue;
     private long bit0;
     private EncodedDoubleValue carFwdMaxspeedEncoder;
     private EncodedDoubleValue carBwdMaxspeedEncoder;
@@ -141,6 +139,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
         transportModeTunnelValue = transportModeMap.get("tunnel");
         transportModeBridgeValue = transportModeMap.get("bridge");
+        transportModeFordValue = transportModeMap.get("ford");
 
         List<String> surfaceList = Arrays.asList("_default", "asphalt", "unpaved", "paved", "gravel",
                 "ground", "dirt", "grass", "concrete", "paving_stones", "sand", "compacted", "cobblestone", "mud", "ice");
@@ -275,7 +274,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         if (spatialRuleLookupEnabled() && accessValue == 0) {
             // TODO Fix transportation mode when adding other forms of transportation
-            switch (getSpatialRule(way).getAccessValue(way.getTag("highway", ""), TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE)){
+            switch (getSpatialRule(way).getAccessValue(way.getTag("highway", ""), TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE)) {
                 case ACCESSIBLE:
                     accessValue = accessMap.get("yes");
                     break;
@@ -413,7 +412,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             flags = accessEncoder.setValue(flags, getAccessValue(way));
 
 
-            if(spatialRuleLookupEnabled()){
+            if (spatialRuleLookupEnabled()) {
                 GHPoint estimatedCenter = way.getTag("estimated_center", null);
                 if (estimatedCenter != null) {
                     SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
@@ -427,7 +426,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
     }
 
-    private boolean spatialRuleLookupEnabled(){
+    private boolean spatialRuleLookupEnabled() {
         if (spatialRules > 0) {
             if (spatialRuleLookup == null)
                 throw new IllegalStateException("This encoder was asked to store spatial IDs for every edge, " +
@@ -629,6 +628,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     public boolean isTransportModeBridge(EdgeIteratorState edge) {
         return transportModeEncoder.getValue(edge.getFlags()) == this.transportModeBridgeValue;
+    }
+
+    public boolean isTransportModeFord(long flags) {
+        return transportModeEncoder.getValue(flags) == this.transportModeFordValue;
     }
 
     public String getTransportModeAsString(EdgeIteratorState edge) {
@@ -841,6 +844,16 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         this.spatialRuleLookup = spatialRuleLookup;
         return this;
     }
+
+    @Override
+    public InstructionAnnotation getAnnotation(long flags, Translation tr) {
+        if (isTransportModeFord(flags)) {
+            return new InstructionAnnotation(1, tr.tr("way_contains_ford"));
+        }
+
+        return super.getAnnotation(flags, tr);
+    }
+
 
     @Override
     protected String getPropertiesString() {

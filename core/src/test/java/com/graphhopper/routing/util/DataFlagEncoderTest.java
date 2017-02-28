@@ -7,11 +7,9 @@ import com.graphhopper.json.geo.Geometry;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
-import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
-import com.graphhopper.util.PMap;
-import org.junit.Ignore;
 import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
@@ -19,9 +17,6 @@ import org.junit.Test;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
 
 import static org.junit.Assert.*;
 
@@ -135,6 +130,18 @@ public class DataFlagEncoderTest {
         assertEquals("bridge", encoder.getTransportModeAsString(edge));
         assertFalse(encoder.isTransportModeTunnel(edge));
         assertTrue(encoder.isTransportModeBridge(edge));
+    }
+
+    @Test
+    public void testFord() {
+        ReaderWay osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "unclassified");
+        osmWay.setTag("ford", "yes");
+        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertEquals("ford", encoder.getTransportModeAsString(edge));
+        assertTrue(encoder.isTransportModeFord(edge.getFlags()));
+        assertEquals("ford", encoder.getAnnotation(edge.getFlags(), getTranslation("ford")).getMessage());
     }
 
     @Test
@@ -377,5 +384,29 @@ public class DataFlagEncoderTest {
 
         assertEquals(5, encoder.getMaxspeed(e3, -1, false), .1);
         assertEquals(-1, encoder.getMaxspeed(e4, -1, false), .1);
+    }
+
+    private Translation getTranslation(final String msg) {
+        return new Translation() {
+            @Override
+            public String tr(String key, Object... params) {
+                return msg;
+            }
+
+            @Override
+            public Map<String, String> asMap() {
+                return null;
+            }
+
+            @Override
+            public Locale getLocale() {
+                return null;
+            }
+
+            @Override
+            public String getLanguage() {
+                return null;
+            }
+        };
     }
 }
