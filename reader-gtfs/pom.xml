@@ -21,10 +21,6 @@
             <name>Conveyal Maven Repository</name>
             <url>http://maven.conveyal.com/</url>
         </repository>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
     </repositories>
 
     <dependencies>
@@ -39,9 +35,9 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.graphhopper</groupId>
+            <groupId>com.conveyal</groupId>
             <artifactId>gtfs-lib</artifactId>
-            <version>3162f1d</version>
+            <version>1.4.0</version>
             
             <exclusions>
                 <exclusion> 
