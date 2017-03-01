@@ -7,8 +7,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
 import org.mapdb.*;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -38,13 +37,13 @@ public class GtfsStorage implements GraphExtension {
 	private Set<String> gtfsFeedIds;
 	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
 	private HTreeMap<BitSet, Integer> operatingDayPatterns;
-	private Map<Integer, BitSet> reverseOperatingDayPatterns;
+	private Map<Integer, BitSet> validities;
 	private Atomic.Var<LocalDate> startDate;
 	private Map<Integer, String> extra;
 	private Map<String, Fare> fares;
 
 	enum EdgeType {
-        UNSPECIFIED, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL_EDGE, BOARD, OVERNIGHT_EDGE, TRANSFER, WAIT_IN_STATION_EDGE, TIME_PASSES
+        UNSPECIFIED, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, OVERNIGHT_EDGE, TRANSFER, WAIT_IN_STATION_EDGE, TIME_PASSES
     }
 
 	private DB data;
@@ -110,8 +109,12 @@ public class GtfsStorage implements GraphExtension {
 	private void init() {
 		this.gtfsFeedIds = data.getHashSet("gtfsFeeds");
 		this.operatingDayPatterns = data.getHashMap("validities");
-		this.reverseOperatingDayPatterns = data.getTreeMap("reverseValidities");
-		Bind.mapInverse(this.operatingDayPatterns, this.reverseOperatingDayPatterns);
+		Map<Integer, BitSet> reverseOperatingDayPatterns = new HashMap<>();
+		for (Map.Entry<BitSet, Integer> entry : this.operatingDayPatterns.entrySet()) {
+			reverseOperatingDayPatterns.put(entry.getValue(), entry.getKey());
+		}
+		Bind.mapInverse(this.operatingDayPatterns, reverseOperatingDayPatterns);
+		this.validities = Collections.unmodifiableMap(reverseOperatingDayPatterns);
 		this.startDate = data.getAtomicVar("startDate");
 		this.extra = data.getTreeMap("extra");
 		this.fares = data.getTreeMap("fares");
@@ -163,8 +166,8 @@ public class GtfsStorage implements GraphExtension {
         return operatingDayPatterns;
     }
 
-	Map<Integer, BitSet> getReverseOperatingDayPatterns() {
-		return Collections.unmodifiableMap(reverseOperatingDayPatterns);
+	Map<Integer, BitSet> getValidities() {
+		return validities;
 	}
 
 	Map<Integer, String> getExtraStrings() {

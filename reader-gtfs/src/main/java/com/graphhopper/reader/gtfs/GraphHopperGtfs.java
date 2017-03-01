@@ -409,7 +409,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                             lineString));
                     partition = null;
                 }
-                if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.HOP, GtfsStorage.EdgeType.TIME_PASSES).contains(edgeType)) {
+                if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.HOP, GtfsStorage.EdgeType.TIME_PASSES, GtfsStorage.EdgeType.DWELL).contains(edgeType)) {
                     time = time.plusSeconds(encoder.getTime(edge.getFlags()));
                 }
                 if (edgeType == GtfsStorage.EdgeType.HOP) {

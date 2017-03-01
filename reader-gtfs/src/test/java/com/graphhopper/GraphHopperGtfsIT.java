@@ -162,10 +162,25 @@ public class GraphHopperGtfsIT {
 
         assertFalse(route1.hasErrors());
         assertFalse(route1.getAll().isEmpty());
-        assertEquals("Expected travel time == scheduled travel time", time(9, 0), route1.getBest().getTime(), 0.1);
+        assertEquals("Expected travel time == scheduled travel time", time(9, 0), route1.getBest().getTime());
         assertEquals("Using expected trip", "AAMV1", (((Trip.PtLeg) route1.getBest().getLegs().get(1)).tripId));
         assertEquals("Paid expected fare", 525, route1.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue());
 
+    }
+
+    @Test
+    public void testBlockTrips() {
+        final double FROM_LAT = 36.868446, FROM_LON = -116.784582; // BEATTY_AIRPORT stop
+        final double TO_LAT = 36.425288, TO_LON = -117.133162; // FUR_CREEK_RES stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,8,0));
+        GHResponse route = graphHopper.route(ghRequest);
+        assertEquals("Only find one solution. If blocks wouldn't work, there would be two.", 1, route.getAll().size());
+        assertEquals("Expected travel time == scheduled travel time", time(1,20), route.getBest().getTime());
+        assertEquals("No transfers", 0, route.getBest().getNumChanges());
     }
 
     private void assertTravelTimeIs(GraphHopperGtfs graphHopper, double from_lat, double from_lon, LocalDateTime earliestDepartureTime, double to_lat, double to_lon, int expectedTravelTime) {

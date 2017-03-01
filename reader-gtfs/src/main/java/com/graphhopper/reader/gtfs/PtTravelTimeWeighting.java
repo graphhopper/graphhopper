@@ -68,26 +68,14 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
                 } else {
                     return 0;
                 }
-            case BOARD:
-            case ENTER_PT:
-            case EXIT_PT:
-				return 0;
-            case TIME_PASSES:
-            case TRANSFER:
-            case HOP:
-                return ((PtFlagEncoder) getFlagEncoder()).getTime(edgeState.getFlags());
             default:
-                throw new IllegalStateException();
+                return ((PtFlagEncoder) getFlagEncoder()).getTime(edgeState.getFlags());
         }
 	}
 
 	@Override
 	public int calcNTransfers(EdgeIteratorState edgeState) {
-		if (((PtFlagEncoder) getFlagEncoder()).getEdgeType(edgeState.getFlags()) == GtfsStorage.EdgeType.BOARD) {
-			return transferFactor;
-		} else {
-			return 0;
-		}
+        return transferFactor * ((PtFlagEncoder) getFlagEncoder()).getTransfers(edgeState.getFlags());
 	}
 
 	@Override

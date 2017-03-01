@@ -33,12 +33,11 @@ final class GraphExplorer {
                     public boolean hasNext() {
                         while(edgeIterator.next()) {
                             GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator.getFlags());
-                            if (edgeType == GtfsStorage.EdgeType.BOARD) {
-                                int trafficDay = (int) (label.currentTime / (24 * 60 * 60));
-                                if (!isValidOn(edgeIterator, trafficDay)) {
-                                    continue;
-                                }
-                            } else if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK && !reverse) {
+                            int trafficDay = (int) (label.currentTime / (24 * 60 * 60));
+                            if (!isValidOn(edgeIterator, trafficDay)) {
+                                continue;
+                            }
+                            if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK && !reverse) {
                                 if ((int) (label.currentTime) % (24 * 60 * 60) > flagEncoder.getTime(edgeIterator.getFlags())) {
                                     continue;
                                 } else {
@@ -67,8 +66,8 @@ final class GraphExplorer {
         };
     }
 
-    private boolean isValidOn(EdgeIteratorState iter, int trafficDay) {
-        return gtfsStorage.getReverseOperatingDayPatterns().get((int) flagEncoder.getTime(iter.getFlags())).get(trafficDay);
+    private boolean isValidOn(EdgeIteratorState edge, int trafficDay) {
+        return gtfsStorage.getValidities().get((int) flagEncoder.getValidityId(edge.getFlags())).get(trafficDay);
     }
 
 }
