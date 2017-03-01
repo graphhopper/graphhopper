@@ -1,7 +1,6 @@
 package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
-import com.conveyal.gtfs.model.Stop;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
@@ -16,7 +15,7 @@ import java.util.*;
 
 class FakeWalkNetworkBuilder {
 
-    static void buildWalkNetwork(List<GTFSFeed> feeds, GraphHopperStorage graph, PtFlagEncoder encoder, DistanceCalc distCalc) {
+    static void buildWalkNetwork(Collection<GTFSFeed> feeds, GraphHopperStorage graph, PtFlagEncoder encoder, DistanceCalc distCalc) {
         Collection<ConstraintVertex> sites = new ArrayList<>();
         Map<Vertex, Integer> vertex2nodeId = new HashMap<>();
         feeds.stream().flatMap(feed -> feed.stops.values().stream()).forEach( stop -> {

@@ -33,8 +33,9 @@ class GtfsReader {
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
     private final Map<String, Transfer> explicitWithinStationMinimumTransfers = new HashMap<>();
     private final NodeAccess nodeAccess;
+    private final String id;
     private int i;
-    private final GTFSFeed feed;
+    private GTFSFeed feed;
     private TIntIntHashMap times;
     private SetMultimap<String, Integer> stops;
     private Map<String, Integer> stopNodes = new HashMap<>();
@@ -42,8 +43,8 @@ class GtfsReader {
     private SetMultimap<String, Transfer> betweenStationTransfers;
     private final PtFlagEncoder encoder;
 
-    GtfsReader(GTFSFeed feed, GraphHopperStorage ghStorage, LocationIndex walkNetworkIndex) {
-        this.feed = feed;
+    GtfsReader(String id, GraphHopperStorage ghStorage, LocationIndex walkNetworkIndex) {
+        this.id = id;
         this.graph = ghStorage;
         this.gtfsStorage = (GtfsStorage) ghStorage.getExtension();
         this.nodeAccess = ghStorage.getNodeAccess();
@@ -52,6 +53,7 @@ class GtfsReader {
     }
 
     public void readGraph() {
+        feed = this.gtfsStorage.getGtfsFeeds().get(id);
         gtfsStorage.getFares().putAll(feed.fares);
         i = graph.getNodes();
         buildPtNetwork();
@@ -139,6 +141,7 @@ class GtfsReader {
                 enterTimeExpandedNetworkEdge.setName(stop.stop_name);
                 setEdgeType(enterTimeExpandedNetworkEdge, GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK);
                 enterTimeExpandedNetworkEdge.setFlags(encoder.setTime(enterTimeExpandedNetworkEdge.getFlags(), e.a));
+                gtfsStorage.getExtraStrings().put(enterTimeExpandedNetworkEdge.getEdge(), id);
                 if (prev != -1) {
                     EdgeIteratorState edge = graph.edge(e.b, prev, 0.0, false);
                     setEdgeType(edge, GtfsStorage.EdgeType.TIME_PASSES);
@@ -226,7 +229,7 @@ class GtfsReader {
             edge.setName(getRouteName(feed, trip));
             int dayShift = orderedStop.departure_time / (24 * 60 * 60);
             setEdgeType(edge, GtfsStorage.EdgeType.BOARD);
-            gtfsStorage.getExtraStrings().put(edge.getEdge(), trip.route_id);
+            gtfsStorage.getExtraStrings().put(edge.getEdge(), trip.trip_id);
             BitSet validOn = getValidOn(validOnDay, dayShift);
             int index;
             if (gtfsStorage.getOperatingDayPatterns().containsKey(validOn)) {

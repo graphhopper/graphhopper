@@ -31,6 +31,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
+import java.util.zip.ZipFile;
 
 import static com.graphhopper.reader.gtfs.Label.reverseEdges;
 
@@ -121,11 +122,16 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     throw new RuntimeException(e);
                 }
             }
-            List<GTFSFeed> feeds = gtfsFiles.parallelStream()
-                    .map(filename -> GTFSFeed.fromFile(new File(filename).getPath()))
-                    .collect(Collectors.toList());
+            int id = 0;
+            for (String gtfsFile : gtfsFiles) {
+                try {
+                    ((GtfsStorage) graphHopperStorage.getExtension()).loadGtfsFromFile("gtfs_" + id++, new ZipFile(gtfsFile));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
             if (createWalkNetwork) {
-                FakeWalkNetworkBuilder.buildWalkNetwork(feeds, graphHopperStorage, (PtFlagEncoder) encodingManager.getEncoder("pt"), Helper.DIST_EARTH);
+                FakeWalkNetworkBuilder.buildWalkNetwork(((GtfsStorage) graphHopperStorage.getExtension()).getGtfsFeeds().values(), graphHopperStorage, (PtFlagEncoder) encodingManager.getEncoder("pt"), Helper.DIST_EARTH);
             }
             LocationIndex walkNetworkIndex;
             if (graphHopperStorage.getNodes() > 0 ) {
@@ -133,8 +139,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             } else {
                 walkNetworkIndex = new EmptyLocationIndex();
             }
-            for (GTFSFeed feed : feeds) {
-                new GtfsReader(feed, graphHopperStorage, walkNetworkIndex).readGraph();
+            for (int i=0;i<id;i++) {
+                new GtfsReader("gtfs_" + i, graphHopperStorage, walkNetworkIndex).readGraph();
             }
             graphHopperStorage.flush();
         } else {
@@ -334,7 +340,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                         path.getLegs().stream()
                                 .filter(leg -> leg instanceof Trip.PtLeg)
                                 .map(leg -> (Trip.PtLeg) leg)
-                                .map(ptLeg -> new com.graphhopper.gtfs.fare.Trip.Segment(ptLeg.routeId, Duration.between(firstPtDepartureTime, GtfsHelper.localDateTimeFromDate(ptLeg.departureTime)).getSeconds(), ptLeg.boardStop.name, ptLeg.stops.get(ptLeg.stops.size()-1).name, Collections.emptySet()))
+                                .map(ptLeg -> new com.graphhopper.gtfs.fare.Trip.Segment(gtfsStorage.getGtfsFeeds().get(ptLeg.feedId).trips.get(ptLeg.tripId).route_id, Duration.between(firstPtDepartureTime, GtfsHelper.localDateTimeFromDate(ptLeg.departureTime)).getSeconds(), ptLeg.boardStop.name, ptLeg.stops.get(ptLeg.stops.size()-1).name, Collections.emptySet()))
                                 .forEach(faresTrip.segments::add);
                         Fares.cheapestFare(gtfsStorage.getFares(), faresTrip)
                                 .ifPresent(amount -> path.setFare(amount.getAmount()));
@@ -368,6 +374,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     private List<Trip.Leg> legs(List<EdgeIteratorState> path, Graph graph, PtFlagEncoder encoder, Weighting weighting, Translation tr) {
         GeometryFactory geometryFactory = new GeometryFactory();
         if (GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK == encoder.getEdgeType(path.get(0).getFlags())) {
+            String feedId = gtfsStorage.getExtraStrings().get(path.get(0).getEdge());
             Trip.Stop stop = stopFromHopEdge(geometryFactory, path.get(0));
             List<Trip.Leg> result = new ArrayList<>();
             LocalDateTime time = gtfsStorage.getStartDate().atStartOfDay().plusSeconds(encoder.getTime(path.get(0).getFlags()));
@@ -388,7 +395,18 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK).contains(edgeType)) {
                     Geometry lineString = lineStringFromEdges(geometryFactory, partition);
                     List<Trip.Stop> stops = partition.stream().filter(e -> EnumSet.of(GtfsStorage.EdgeType.HOP).contains(encoder.getEdgeType(e.getFlags()))).map(e -> stopFromHopEdge(geometryFactory, e)).collect(Collectors.toList());
-                    result.add(new Trip.PtLeg(boardStop, gtfsStorage.getExtraStrings().get(partition.get(0).getEdge()), partition, Date.from(boardTime.atZone(ZoneId.systemDefault()).toInstant()), stops, partition.stream().mapToDouble(EdgeIteratorState::getDistance).sum(), Duration.between(boardTime, time).toMillis(), lineString));
+                    String tripId = gtfsStorage.getExtraStrings().get(partition.get(0).getEdge());
+                    result.add(new Trip.PtLeg(
+                            feedId,
+                            boardStop,
+                            tripId,
+                            gtfsStorage.getGtfsFeeds().get(feedId).trips.get(tripId).route_id,
+                            partition,
+                            Date.from(boardTime.atZone(ZoneId.systemDefault()).toInstant()),
+                            stops,
+                            partition.stream().mapToDouble(EdgeIteratorState::getDistance).sum(),
+                            Duration.between(boardTime, time).toMillis(),
+                            lineString));
                     partition = null;
                 }
                 if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.HOP, GtfsStorage.EdgeType.TIME_PASSES).contains(edgeType)) {

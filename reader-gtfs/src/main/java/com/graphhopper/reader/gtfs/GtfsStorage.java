@@ -1,5 +1,6 @@
 package com.graphhopper.reader.gtfs;
 
+import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -7,10 +8,11 @@ import com.graphhopper.storage.GraphExtension;
 import org.mapdb.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
-import java.util.BitSet;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.zip.ZipFile;
 
 public class GtfsStorage implements GraphExtension {
 
@@ -33,9 +35,10 @@ public class GtfsStorage implements GraphExtension {
 	}
 
     private Directory dir;
-    private HTreeMap<BitSet, Integer> operatingDayPatterns;
+	private Set<String> gtfsFeedIds;
+	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
+	private HTreeMap<BitSet, Integer> operatingDayPatterns;
 	private Map<Integer, BitSet> reverseOperatingDayPatterns;
-	private boolean flushed = false;
 	private Atomic.Var<LocalDate> startDate;
 	private Map<Integer, String> extra;
 	private Map<String, Fare> fares;
@@ -85,6 +88,15 @@ public class GtfsStorage implements GraphExtension {
 	public boolean loadExisting() {
 		this.data = DBMaker.newFileDB(new File(dir.getLocation() + "/transit_schedule")).readOnly().make();
 		init();
+		for (String gtfsFeedId : this.gtfsFeedIds) {
+			try {
+				GTFSFeed feed = new GTFSFeed(dir.getLocation() + "/" + gtfsFeedId);
+				Runtime.getRuntime().addShutdownHook(new Thread(feed::close));
+				this.gtfsFeeds.put(gtfsFeedId, feed);
+			} catch (IOException | ExecutionException e) {
+				throw new RuntimeException(e);
+			}
+		}
 		return true;
 	}
 
@@ -96,12 +108,25 @@ public class GtfsStorage implements GraphExtension {
 	}
 
 	private void init() {
+		this.gtfsFeedIds = data.getHashSet("gtfsFeeds");
 		this.operatingDayPatterns = data.getHashMap("validities");
 		this.reverseOperatingDayPatterns = data.getTreeMap("reverseValidities");
 		Bind.mapInverse(this.operatingDayPatterns, this.reverseOperatingDayPatterns);
 		this.startDate = data.getAtomicVar("startDate");
 		this.extra = data.getTreeMap("extra");
 		this.fares = data.getTreeMap("fares");
+	}
+
+	void loadGtfsFromFile(String id, ZipFile zip) {
+		try {
+			GTFSFeed feed = new GTFSFeed(dir.getLocation() + "/" + id);
+			Runtime.getRuntime().addShutdownHook(new Thread(feed::close));
+			feed.loadFromFile(zip);
+			this.gtfsFeeds.put(id, feed);
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+		this.gtfsFeedIds.add(id);
 	}
 
 	@Override
@@ -111,6 +136,9 @@ public class GtfsStorage implements GraphExtension {
 	@Override
 	public void close() {
 		data.close();
+		for (GTFSFeed feed : gtfsFeeds.values()) {
+			feed.close();
+		}
 	}
 
 	@Override
@@ -145,6 +173,10 @@ public class GtfsStorage implements GraphExtension {
 
 	Map<String, Fare> getFares() {
 		return fares;
+	}
+
+	Map<String, GTFSFeed> getGtfsFeeds() {
+		return Collections.unmodifiableMap(gtfsFeeds);
 	}
 
 }
