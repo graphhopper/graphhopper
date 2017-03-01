@@ -11,9 +11,9 @@ import java.util.stream.Stream;
 import static java.util.stream.Collectors.toList;
 
 public class Fares {
-    public static Optional<Amount> calculate(Map<String, Fare> fares, Trip trip) {
+    public static Optional<Amount> cheapestFare(Map<String, Fare> fares, Trip trip) {
         return ticketsBruteForce(fares, trip)
-                .map(tickets -> tickets.stream()
+                .flatMap(tickets -> tickets.stream()
                         .map(ticket -> {
                             Fare fare = fares.get(ticket.getFare().fare_id);
                             final BigDecimal priceOfOneTicket = BigDecimal.valueOf(fare.fare_attribute.price);
@@ -22,22 +22,28 @@ public class Fares {
                         .collect(Collectors.groupingBy(Amount::getCurrencyType, Collectors.mapping(Amount::getAmount, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))))
                         .entrySet()
                         .stream()
-                        .collect(Collectors.toMap(e -> e.getKey(), e -> new Amount(e.getValue(), e.getKey())))
-                        .get("USD"));
+                        .findFirst() // TODO: Tickets in different currencies for one trip
+                        .map(e -> new Amount(e.getValue(), e.getKey())));
     }
 
     private static Optional<List<Ticket>> ticketsBruteForce(Map<String, Fare> fares, Trip trip) {
+        // Recursively enumerate all packages of tickets with which the trip can be done.
+        // Take the cheapest.
         TicketPurchaseScoreCalculator ticketPurchaseScoreCalculator = new TicketPurchaseScoreCalculator();
-        return allTicketPurchases(fares, trip).max(Comparator.comparingInt(ticketPurchaseScoreCalculator::calculateScore)).map(solution -> solution.getTickets());
+        return allShoppingCarts(fares, trip)
+                .max(Comparator.comparingInt(ticketPurchaseScoreCalculator::calculateScore))
+                .map(TicketPurchase::getTickets);
     }
 
-    private static Stream<TicketPurchase> allTicketPurchases(Map<String, Fare> fares, Trip trip) {
+    private static Stream<TicketPurchase> allShoppingCarts(Map<String, Fare> fares, Trip trip) {
+        // Recursively enumerate all packages of tickets with which the trip can be done.
         List<Trip.Segment> segments = trip.segments;
-        List<List<FareAssignment>> result = allTicketPurchases(fares, segments);
-        return result.stream().map(fareAssignment -> new TicketPurchase(fareAssignment));
+        List<List<FareAssignment>> result = allFareAssignments(fares, segments);
+        return result.stream().map(TicketPurchase::new);
     }
 
-    private static List<List<FareAssignment>> allTicketPurchases(Map<String, Fare> fares, List<Trip.Segment> segments) {
+    private static List<List<FareAssignment>> allFareAssignments(Map<String, Fare> fares, List<Trip.Segment> segments) {
+        // Recursively enumerate all possible ways of assigning trip segments to fares.
         if (segments.isEmpty()) {
             ArrayList<List<FareAssignment>> emptyList = new ArrayList<>();
             emptyList.add(Collections.emptyList());
@@ -45,22 +51,22 @@ public class Fares {
         } else {
             List<List<FareAssignment>> result = new ArrayList<>();
             Trip.Segment segment = segments.get(0);
-            List<List<FareAssignment>> tail = allTicketPurchases(fares, segments.subList(1, segments.size()));
-            Collection<Fare> possibleFares = Fares.calculate(fares, segment);
+            List<List<FareAssignment>> tail = allFareAssignments(fares, segments.subList(1, segments.size()));
+            Collection<Fare> possibleFares = Fares.possibleFares(fares, segment);
             for (Fare fare : possibleFares) {
-                for (List<FareAssignment> fareAssignments : tail) {
-                    ArrayList arrayList = new ArrayList(fareAssignments);
+                for (List<FareAssignment> tailFareAssignments : tail) {
+                    ArrayList<FareAssignment> fairAssignments = new ArrayList<>(tailFareAssignments);
                     FareAssignment fareAssignment = new FareAssignment(segment);
                     fareAssignment.setFare(fare);
-                    arrayList.add(0, fareAssignment);
-                    result.add(arrayList);
+                    fairAssignments.add(0, fareAssignment);
+                    result.add(fairAssignments);
                 }
             }
             return result;
         }
     }
 
-    public static Collection<Fare> calculate(Map<String, Fare> fares, Trip.Segment segment) {
+    static Collection<Fare> possibleFares(Map<String, Fare> fares, Trip.Segment segment) {
         return fares.values().stream().filter(fare -> applies(fare, segment)).collect(toList());
     }
 
@@ -69,6 +75,7 @@ public class Fares {
     }
 
     private static List<SanitizedFareRule> sanitizeFareRules(List<FareRule> gtfsFareRules) {
+        // Make proper fare rule objects from the CSV-like FareRule
         ArrayList<SanitizedFareRule> result = new ArrayList<>();
         result.addAll(gtfsFareRules.stream().filter(rule -> rule.route_id != null).map(rule -> new RouteRule(rule.route_id)).collect(toList()));
         result.addAll(gtfsFareRules.stream().filter(rule -> rule.origin_id != null && rule.destination_id != null).map(rule -> new OriginDestinationRule(rule.origin_id, rule.destination_id)).collect(toList()));

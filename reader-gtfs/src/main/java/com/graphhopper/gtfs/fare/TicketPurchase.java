@@ -2,7 +2,7 @@ package com.graphhopper.gtfs.fare;
 
 import java.util.*;
 
-public class TicketPurchase {
+class TicketPurchase {
     private List<FareAssignment> fareAssignments = new ArrayList<>();
 
     TicketPurchase(List<FareAssignment> fareAssignments) {

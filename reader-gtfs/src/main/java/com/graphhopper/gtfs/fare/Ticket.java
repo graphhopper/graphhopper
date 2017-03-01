@@ -2,7 +2,7 @@ package com.graphhopper.gtfs.fare;
 
 import com.conveyal.gtfs.model.Fare;
 
-public class Ticket {
+class Ticket {
 
     private Fare fare;
 

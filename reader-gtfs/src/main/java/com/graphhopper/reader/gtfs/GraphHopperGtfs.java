@@ -336,7 +336,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                                 .map(leg -> (Trip.PtLeg) leg)
                                 .map(ptLeg -> new com.graphhopper.gtfs.fare.Trip.Segment(ptLeg.routeId, Duration.between(firstPtDepartureTime, GtfsHelper.localDateTimeFromDate(ptLeg.departureTime)).getSeconds(), ptLeg.boardStop.name, ptLeg.stops.get(ptLeg.stops.size()-1).name, Collections.emptySet()))
                                 .forEach(faresTrip.segments::add);
-                        Fares.calculate(gtfsStorage.getFares(), faresTrip)
+                        Fares.cheapestFare(gtfsStorage.getFares(), faresTrip)
                                 .ifPresent(amount -> path.setFare(amount.getAmount()));
                     });
             response.add(path);
