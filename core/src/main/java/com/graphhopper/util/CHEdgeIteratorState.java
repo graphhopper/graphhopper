@@ -46,7 +46,7 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
     /**
      * This method is only used on preparation.
      *
-     * @see PrepareEncoder#getMergeStatus(long, long)
+     * @see PrepareEncoder#getScMergeStatus(long, long)
      */
     int getMergeStatus(long flags);
 

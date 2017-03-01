@@ -18,8 +18,8 @@
 package com.graphhopper.routing.ch;
 
 /**
- * The flags are stored differently for shortcuts: just one weight and the direction flags.
- * <p>
+ * The flags are stored differently for shortcuts: just one weight and the two direction bits which is handled by this
+ * class for now as static methods.
  *
  * @author Peter Karich
  */
@@ -29,38 +29,47 @@ public class PrepareEncoder {
     private static final long scBwdDir = 0x2;
     private static final long scDirMask = 0x3;
 
+    /**
+     * A bitmask for two directions
+     */
     public static final long getScDirMask() {
         return scDirMask;
     }
 
+    /**
+     * The bit for forward direction
+     */
     public static final long getScFwdDir() {
         return scFwdDir;
     }
 
+    /**
+     * The bit for backward direction
+     */
     public static final long getScBwdDir() {
         return scBwdDir;
     }
 
     /**
-     * Returns 1 if existingEdgeFlags can be overwritten in the edge by newEdgeFlags without limiting or
-     * changing the directions of existingEdgeFlags. It returns 2 for the same condition AND if the edge
-     * with newEdgeFlags has to be added even if weight is higher than existing edge weight.
+     * Returns 1 if existingScFlags of an existing shortcut can be overwritten with a new shortcut by
+     * newScFlags without limiting or changing the directions of the existing shortcut.
+     * The method returns 2 for the same condition but only if the new shortcut has to be added
+     * even if weight is higher than existing shortcut weight.
      * <pre>
-     *                    | newEdgeFlags:
-     * existingEdgeFlags  | -> | <- | <->
-     * ->                 |  1 | 0  | 2
-     * <-                 |  0 | 1  | 2
-     * <->                |  0 | 0  | 1
+     *                 | newScFlags:
+     * existingScFlags | -> | <- | <->
+     * ->              |  1 | 0  | 2
+     * <-              |  0 | 1  | 2
+     * <->             |  0 | 0  | 1
      * </pre>
      *
-     * @return 1 if newEdgeFlags is enabled in both directions or if both flags are pointing into the
-     * same direction.
+     * @return 1 if newScFlags is identical to existingScFlags for the two direction bits and 0 otherwise.
+     * There are two special cases when it returns 2.
      */
-
-    public static final int getMergeStatus(long existingEdgeFlags, long newEdgeFlags) {
-        if ((existingEdgeFlags & scDirMask) == (newEdgeFlags & scDirMask))
+    public static final int getScMergeStatus(long existingScFlags, long newScFlags) {
+        if ((existingScFlags & scDirMask) == (newScFlags & scDirMask))
             return 1;
-        else if ((newEdgeFlags & scDirMask) == scDirMask)
+        else if ((newScFlags & scDirMask) == scDirMask)
             return 2;
 
         return 0;

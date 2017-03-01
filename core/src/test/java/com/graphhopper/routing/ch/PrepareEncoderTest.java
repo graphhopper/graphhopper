@@ -33,15 +33,15 @@ public class PrepareEncoderTest {
         long forward = PrepareEncoder.getScFwdDir();
         long backward = PrepareEncoder.getScFwdDir() ^ PrepareEncoder.getScDirMask();
         long both = PrepareEncoder.getScDirMask();
-        assertEquals(1, PrepareEncoder.getMergeStatus(forward, forward));
-        assertEquals(1, PrepareEncoder.getMergeStatus(backward, backward));
-        assertEquals(2, PrepareEncoder.getMergeStatus(forward, both));
-        assertEquals(2, PrepareEncoder.getMergeStatus(backward, both));
+        assertEquals(1, PrepareEncoder.getScMergeStatus(forward, forward));
+        assertEquals(1, PrepareEncoder.getScMergeStatus(backward, backward));
+        assertEquals(2, PrepareEncoder.getScMergeStatus(forward, both));
+        assertEquals(2, PrepareEncoder.getScMergeStatus(backward, both));
 
-        assertEquals(1, PrepareEncoder.getMergeStatus(both, both));
-        assertEquals(0, PrepareEncoder.getMergeStatus(both, forward));
-        assertEquals(0, PrepareEncoder.getMergeStatus(both, backward));
-        assertEquals(0, PrepareEncoder.getMergeStatus(forward, backward));
-        assertEquals(0, PrepareEncoder.getMergeStatus(backward, forward));
+        assertEquals(1, PrepareEncoder.getScMergeStatus(both, both));
+        assertEquals(0, PrepareEncoder.getScMergeStatus(both, forward));
+        assertEquals(0, PrepareEncoder.getScMergeStatus(both, backward));
+        assertEquals(0, PrepareEncoder.getScMergeStatus(forward, backward));
+        assertEquals(0, PrepareEncoder.getScMergeStatus(backward, forward));
     }
 }

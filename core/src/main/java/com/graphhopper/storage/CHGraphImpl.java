@@ -524,7 +524,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public int getMergeStatus(long flags) {
-            return PrepareEncoder.getMergeStatus(getDirectFlags(), flags);
+            return PrepareEncoder.getScMergeStatus(getDirectFlags(), flags);
         }
     }
 
@@ -620,7 +620,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public int getMergeStatus(long flags) {
-            return PrepareEncoder.getMergeStatus(getDirectFlags(), flags);
+            return PrepareEncoder.getScMergeStatus(getDirectFlags(), flags);
         }
     }
 }
