@@ -50,6 +50,7 @@ roundabout_exit=使用 %1$s 出口離開迴旋處
 roundabout_exit_onto=使用 %1$s 出口離開迴旋處到 %2$s 
 total_ascend=總共上昇 %1$s
 total_descend=總共下降 %1$s
+way_contains_ford=
 web.start_label=起點
 web.intermediate_label=途經點
 web.end_label=目的地

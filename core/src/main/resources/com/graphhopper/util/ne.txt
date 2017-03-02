@@ -50,6 +50,7 @@ roundabout_exit=घुम्तीमा %1$s नम्बर को मोड�
 roundabout_exit_onto=घुम्तीमा %1$s नम्बर को मोडबाट निस्केर %2$s मा जानुहोस
 total_ascend=
 total_descend=
+way_contains_ford=
 web.start_label=
 web.intermediate_label=
 web.end_label=

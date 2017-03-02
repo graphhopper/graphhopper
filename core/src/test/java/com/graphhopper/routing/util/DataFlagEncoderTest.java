@@ -141,7 +141,7 @@ public class DataFlagEncoderTest {
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
         assertEquals("ford", encoder.getTransportModeAsString(edge));
         assertTrue(encoder.isTransportModeFord(edge.getFlags()));
-        assertEquals("ford", encoder.getAnnotation(edge.getFlags(), getTranslation("ford")).getMessage());
+        assertTrue(encoder.getAnnotation(edge.getFlags(), TranslationMapTest.SINGLETON.get("en")).getMessage().contains("ford"));
     }
 
     @Test
@@ -384,29 +384,5 @@ public class DataFlagEncoderTest {
 
         assertEquals(5, encoder.getMaxspeed(e3, -1, false), .1);
         assertEquals(-1, encoder.getMaxspeed(e4, -1, false), .1);
-    }
-
-    private Translation getTranslation(final String msg) {
-        return new Translation() {
-            @Override
-            public String tr(String key, Object... params) {
-                return msg;
-            }
-
-            @Override
-            public Map<String, String> asMap() {
-                return null;
-            }
-
-            @Override
-            public Locale getLocale() {
-                return null;
-            }
-
-            @Override
-            public String getLanguage() {
-                return null;
-            }
-        };
     }
 }

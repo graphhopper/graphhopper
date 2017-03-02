@@ -50,6 +50,7 @@ roundabout_exit=En la rotonda, toma la %1$sª salida
 roundabout_exit_onto=En la rotonda, toma la %1$sª salida hacia %2$s
 total_ascend=Ascender %1$s en total
 total_descend=Descender %1$s en total
+way_contains_ford=
 web.start_label=Punto de partida
 web.intermediate_label=Punto intermedio
 web.end_label=Punto de finalización

@@ -50,6 +50,7 @@ roundabout_exit=Na kruhovém objezdu použijte %1$s. výjezd
 roundabout_exit_onto=Na kruhovém objezdu použijte %1$s. výjezd, směrem na %2$s
 total_ascend=Celkové stoupání %1$s
 total_descend=Celkové klesání %1$s
+way_contains_ford=
 web.start_label=Start
 web.intermediate_label=Zastávka
 web.end_label=Cíl

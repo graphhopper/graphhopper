@@ -50,6 +50,7 @@ roundabout_exit=Im Kreisverkehr Ausfahrt %1$s nehmen
 roundabout_exit_onto=Im Kreisverkehr Ausfahrt %1$s auf %2$s nehmen
 total_ascend=%1$s Gesamtaufstieg
 total_descend=%1$s Gesamtabstieg
+way_contains_ford=es liegt eine Furt auf dem Weg
 web.start_label=Start
 web.intermediate_label=Zwischenziel
 web.end_label=Ziel
