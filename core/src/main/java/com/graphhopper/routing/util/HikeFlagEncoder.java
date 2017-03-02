@@ -62,7 +62,7 @@ public class HikeFlagEncoder extends FootFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     @Override
