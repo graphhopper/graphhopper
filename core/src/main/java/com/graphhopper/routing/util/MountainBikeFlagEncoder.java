@@ -140,7 +140,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     @Override
