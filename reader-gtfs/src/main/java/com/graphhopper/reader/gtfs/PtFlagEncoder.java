@@ -24,6 +24,7 @@ class PtFlagEncoder extends AbstractFlagEncoder {
 		// Still, I have to do this. Otherwise 'acceptWay' returns 0 even though
 		// it wants to accept. Basically, I have to tell it what 'true' means.
 		footFlagEncoder.defineWayBits(1, 0);
+		footFlagEncoder.defineRelationBits(1, 0);
 	}
 
 	@Override
