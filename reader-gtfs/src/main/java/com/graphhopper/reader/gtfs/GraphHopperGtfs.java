@@ -41,6 +41,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     public static final String RANGE_QUERY_END_TIME = "rangeQueryEndTime";
     public static final String ARRIVE_BY = "arriveBy";
     public static final String IGNORE_TRANSFERS = "ignoreTransfers";
+    public static final String WALK_SPEED_KM_H = "walkSpeedKmH";
 
     private final TranslationMap translationMap;
     private final EncodingManager encodingManager;
@@ -169,6 +170,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         final long rangeQueryEndTime = request.getHints().has(RANGE_QUERY_END_TIME) ? Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(request.getHints().get(RANGE_QUERY_END_TIME, ""))).getSeconds() : initialTime;
         final boolean arriveBy = request.getHints().getBool(ARRIVE_BY, false);
         final boolean ignoreTransfers = request.getHints().getBool(IGNORE_TRANSFERS, false);
+        final double walkSpeedKmH = request.getHints().getDouble(WALK_SPEED_KM_H, 5.0);
 
         GHResponse response = new GHResponse();
 
@@ -233,7 +235,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         stopWatch = new StopWatch().start();
 
-        PtTravelTimeWeighting weighting = createPtTravelTimeWeighting(encoder, arriveBy, ignoreTransfers);
+        PtTravelTimeWeighting weighting = createPtTravelTimeWeighting(encoder, arriveBy, ignoreTransfers, walkSpeedKmH);
 
         GraphExplorer explorer;
         if (arriveBy) {
@@ -355,8 +357,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         return response;
     }
 
-    private static PtTravelTimeWeighting createPtTravelTimeWeighting(PtFlagEncoder encoder, boolean arriveBy, boolean ignoreTransfers) {
-        PtTravelTimeWeighting weighting = new PtTravelTimeWeighting(encoder);
+    private static PtTravelTimeWeighting createPtTravelTimeWeighting(PtFlagEncoder encoder, boolean arriveBy, boolean ignoreTransfers, double walkSpeedKmH) {
+        PtTravelTimeWeighting weighting = new PtTravelTimeWeighting(encoder, walkSpeedKmH);
         if (arriveBy) {
             weighting = weighting.reverse();
         }

@@ -94,10 +94,34 @@ public class GraphHopperRnvGtfsIT {
     public void testTripWithWalk() {
         final double FROM_LAT = 49.49436, FROM_LON = 8.43372; // BASF
         final double TO_LAT = 49.47531, TO_LON = 8.48131; // Krappmuehlstr.
-        // Transfer at e.g. Universitaet, where we have to walk to the next stop pole.
+        // Transfer at e.g. LU Rathaus, where we have to walk to the next stop pole.
         // If we couldn't walk, we would arrive at least one connection later.
-        assertArrivalTimeIs(graphHopper, FROM_LAT, FROM_LON, GTFS_START_DATE.atTime(19, 40),
-                TO_LAT, TO_LON, GTFS_START_DATE.atTime(20, 16,33));
+        LocalDateTime earliestDepartureTime = GTFS_START_DATE.atTime(19, 40);
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, earliestDepartureTime.toString());
+        GHResponse route = graphHopper.route(ghRequest);
+        assertFalse(route.hasErrors());
+        assertEquals(GTFS_START_DATE.atTime(20, 16,33), earliestDepartureTime.plus(route.getBest().getTime(), ChronoUnit.MILLIS));
+    }
+
+    @Test
+    public void testTripWithSlowerWalk() {
+        final double FROM_LAT = 49.49436, FROM_LON = 8.43372; // BASF
+        final double TO_LAT = 49.47531, TO_LON = 8.48131; // Krappmuehlstr.
+        LocalDateTime earliestDepartureTime = GTFS_START_DATE.atTime(19, 40);
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, earliestDepartureTime.toString());
+        // Walk very slowly so we can't take the above route.
+        ghRequest.getHints().put(GraphHopperGtfs.WALK_SPEED_KM_H, 0.1);
+        GHResponse route = graphHopper.route(ghRequest);
+        assertFalse(route.hasErrors());
+        assertEquals(GTFS_START_DATE.atTime(20, 40,14), earliestDepartureTime.plus(route.getBest().getTime(), ChronoUnit.MILLIS));
     }
 
     @Test

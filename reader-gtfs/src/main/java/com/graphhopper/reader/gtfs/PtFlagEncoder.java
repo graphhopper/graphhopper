@@ -1,23 +1,40 @@
 package com.graphhopper.reader.gtfs;
 
+import com.graphhopper.reader.ReaderRelation;
+import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.util.AbstractFlagEncoder;
+import com.graphhopper.routing.util.EncodedDoubleValue;
 import com.graphhopper.routing.util.EncodedValue;
 import com.graphhopper.routing.util.FootFlagEncoder;
 
-class PtFlagEncoder extends FootFlagEncoder {
+class PtFlagEncoder extends AbstractFlagEncoder {
 
+	private final FootFlagEncoder footFlagEncoder;
 	private EncodedValue time;
 	private EncodedValue transfers;
 	private EncodedValue validityId;
 	private EncodedValue type;
 
 	PtFlagEncoder() {
-		super(6, 5);
-		maxPossibleSpeed = 300;
+		super(0, 1, 0);
+
+		// I use the foot flag encoder only as a delegate to filter by OSM tags,
+		// not to encode flags.
+		footFlagEncoder = new FootFlagEncoder();
+		// Still, I have to do this. Otherwise 'acceptWay' returns 0 even though
+		// it wants to accept. Basically, I have to tell it what 'true' means.
+		footFlagEncoder.defineWayBits(1, 0);
 	}
 
 	@Override
 	public int defineWayBits(int index, int shift) {
 		shift = super.defineWayBits(index, shift);
+
+		// I have to set super.speedEncoder even though
+		// super already knows speedBits and speedFactor because they are constructor parameters.
+		speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, 0, 0);
+		shift += speedEncoder.getBits();
+
 		time = new EncodedValue("time", shift, 32, 1.0, 0, Integer.MAX_VALUE);
 		shift += time.getBits();
 		transfers = new EncodedValue("transfers", shift, 1, 1.0, 0, 1);
@@ -28,6 +45,21 @@ class PtFlagEncoder extends FootFlagEncoder {
 		type = new EncodedValue("type", shift, 6, 1.0, GtfsStorage.EdgeType.UNSPECIFIED.ordinal(), edgeTypes[edgeTypes.length-1].ordinal());
 		shift += type.getBits();
 		return shift;
+	}
+
+	@Override
+	public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
+		return footFlagEncoder.handleRelationTags(relation, oldRelationFlags);
+	}
+
+	@Override
+	public long acceptWay(ReaderWay way) {
+		return footFlagEncoder.acceptWay(way);
+	}
+
+	@Override
+	public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
+		return footFlagEncoder.handleWayTags(way, allowed, relationFlags);
 	}
 
 	long getTime(long flags) {
@@ -66,4 +98,8 @@ class PtFlagEncoder extends FootFlagEncoder {
 		return "pt";
 	}
 
+	@Override
+	public int getVersion() {
+		return 0;
+	}
 }

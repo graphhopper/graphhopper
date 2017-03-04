@@ -8,26 +8,26 @@ import com.graphhopper.util.EdgeIteratorState;
 class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWeighting {
 
     private final boolean reverse;
+    private final double walkSpeedKmH;
     private final int transferFactor;
 
-    PtTravelTimeWeighting(FlagEncoder encoder) {
-		super(encoder);
-		this.reverse = false;
-        this.transferFactor = 1;
+    PtTravelTimeWeighting(FlagEncoder encoder, double walkSpeedKmH) {
+		this(encoder, false, walkSpeedKmH, 1);
     }
 
-    private PtTravelTimeWeighting(FlagEncoder encoder, boolean reverse, int transferFactor) {
+    private PtTravelTimeWeighting(FlagEncoder encoder, boolean reverse, double walkSpeedKmH, int transferFactor) {
         super(encoder);
         this.reverse = reverse;
+        this.walkSpeedKmH = walkSpeedKmH;
         this.transferFactor = transferFactor;
     }
 
     PtTravelTimeWeighting reverse() {
-        return new PtTravelTimeWeighting(flagEncoder, !reverse, transferFactor);
+        return new PtTravelTimeWeighting(flagEncoder, !reverse, walkSpeedKmH, transferFactor);
     }
 
     PtTravelTimeWeighting ignoringNumberOfTransfers() {
-        return new PtTravelTimeWeighting(flagEncoder, reverse, 0);
+        return new PtTravelTimeWeighting(flagEncoder, reverse, walkSpeedKmH, 0);
     }
 
     @Override
@@ -50,12 +50,7 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
         GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edgeState.getFlags());
         switch (edgeType) {
             case UNSPECIFIED:
-                if (getFlagEncoder().getSpeed(edgeState.getFlags()) == 0.0) {
-                    // // FIXME: Shouldn't happen, but does.
-                    return 0;
-                }
-                long l = calcMillis(edgeState, reverse, -1);
-                return l / 1000;
+                return (long) (edgeState.getDistance() * 3.6 / walkSpeedKmH) ;
             case ENTER_TIME_EXPANDED_NETWORK:
                 if (reverse) {
                     return 0;
