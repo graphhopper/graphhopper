@@ -64,6 +64,7 @@ public class DefaultModule extends AbstractModule {
     }
 
     static SpatialRuleLookup buildIndex(Reader reader, String rules) {
+        // The world-wide BBox will be automatically shrinked to fit the defined rules
         return buildIndex(reader, rules, new BBox(-180, 180, -90, 90));
     }
 

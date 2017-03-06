@@ -829,6 +829,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
 
     public DataFlagEncoder setSpatialRules(int rules) {
+        if(rules > 0){
+            // Add +1 for the Empty rule
+            rules++;
+        }
         this.spatialRules = rules;
         return this;
     }
