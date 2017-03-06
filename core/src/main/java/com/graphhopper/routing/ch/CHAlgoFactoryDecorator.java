@@ -32,8 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 import static com.graphhopper.util.Parameters.CH.DISABLE;
 
@@ -279,13 +278,15 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     public void prepare(final StorableProperties properties) {
+        ExecutorCompletionService completionService = new ExecutorCompletionService<>(threadPool);
+
         int counter = 0;
         for (final PrepareContractionHierarchies prepare : getPreparations()) {
             LOGGER.info((++counter) + "/" + getPreparations().size() + " calling CH prepare.doWork for " + prepare.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
             final String name = AbstractWeighting.weightingToFileName(prepare.getWeighting());
-            threadPool.execute(new Runnable() {
+            completionService.submit(new Callable<Void>() {
                 @Override
-                public void run() {
+                public Void call() {
                     String errorKey = CH.PREPARE + "error." + name;
                     try {
                         // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
@@ -298,17 +299,21 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                     } catch (Exception ex) {
                         LOGGER.error("Problem while CH preparation " + name, ex);
                         properties.put(errorKey, ex.getMessage());
+                        throw ex;
                     }
+                    return null;
                 }
             });
+
         }
 
         threadPool.shutdown();
-        try {
-            if (!threadPool.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS))
-                threadPool.shutdownNow();
 
-        } catch (InterruptedException ie) {
+        try {
+            for(int i=0; i< getPreparations().size(); i++){
+                completionService.take().get();
+            }
+        } catch (InterruptedException | ExecutionException ie) {
             threadPool.shutdownNow();
             throw new RuntimeException(ie);
         }
