@@ -63,11 +63,14 @@ public class DefaultModule extends AbstractModule {
         return graphHopper;
     }
 
-    static SpatialRuleLookup buildIndex(Reader reader, BBox graphBBox) {
+    static SpatialRuleLookup buildIndex(Reader reader, String rules) {
+        return buildIndex(reader, rules, new BBox(-180, 180, -90, 90));
+    }
+
+    static SpatialRuleLookup buildIndex(Reader reader, String rules, BBox bbox) {
         GHJson ghJson = new GHJsonBuilder().create();
         JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(reader, JsonFeatureCollection.class);
-        return new SpatialRuleLookupBuilder().build(Arrays.asList(new GermanySpatialRule(), new AustriaSpatialRule()),
-                jsonFeatureCollection, graphBBox, 1, true);
+        return new SpatialRuleLookupBuilder().build(rules, jsonFeatureCollection, bbox, 1, true);
     }
 
     /**
@@ -106,10 +109,10 @@ public class DefaultModule extends AbstractModule {
                 logger.warn("spatial_rules.location was specified but 'generic' encoder is missing to utilize the index");
             } else
                 try {
-                    BBox spatialRuleBBox = BBox.parseBBoxString(args.get("spatial_rules.bbox", "0,0,0,0"));
-                    SpatialRuleLookup index = buildIndex(new FileReader(spatialRuleLocation), spatialRuleBBox);
+                    String ruleFQN = args.get("spatial_rules.fqn", "");
+                    SpatialRuleLookup index = buildIndex(new FileReader(spatialRuleLocation), ruleFQN);
                     if (index != null) {
-                        logger.info("Set spatial rule lookup with " + index.size() + " rules and a BBox of " + spatialRuleBBox);
+                        logger.info("Set spatial rule lookup with " + index.size() + " rules and the following Rules " + ruleFQN);
                         ((DataFlagEncoder) tmp.getEncodingManager().getEncoder("generic")).setSpatialRuleLookup(index);
                     } else {
                         // Throws an exception if spatialRuleLookup was enabled

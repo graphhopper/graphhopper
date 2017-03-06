@@ -22,6 +22,8 @@ import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.util.spatialrules.countries.DefaultSpatialRule;
 import com.graphhopper.util.shapes.BBox;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -32,6 +34,8 @@ import java.util.*;
  */
 public class SpatialRuleLookupBuilder {
 
+    private final Logger logger = LoggerFactory.getLogger(getClass());
+
     public interface SpatialRuleFactory {
         /**
          * This method creates a SpatialRule out of the provided polygons indicating the 'border'.
@@ -40,10 +44,42 @@ public class SpatialRuleLookupBuilder {
     }
 
     public static class SpatialRuleListFactory implements SpatialRuleFactory {
+        private final Logger logger = LoggerFactory.getLogger(getClass());
         private final Map<String, SpatialRule> ruleMap;
 
         public SpatialRuleListFactory(SpatialRule... rules) {
             this(Arrays.asList(rules));
+        }
+
+        public SpatialRuleListFactory(String rules) {
+            this(rules.split(","));
+        }
+
+        public SpatialRuleListFactory(String... rules) {
+            if (rules.length == 0) {
+                throw new IllegalStateException("You have to pass at least one rule");
+            }
+            ruleMap = new HashMap<>(rules.length);
+            for (String rule : rules) {
+                try {
+                    // Makes it easy to define a rule as CountrySpatialRule and skip the fqn
+                    if (!rule.contains(".")) {
+                        rule = "com.graphhopper.routing.util.spatialrules.countries." + rule;
+                    }
+                    Object o = Class.forName(rule).newInstance();
+                    if (SpatialRule.class.isAssignableFrom(o.getClass())) {
+                        ruleMap.put(((SpatialRule) o).getId(), (SpatialRule) o);
+                    } else {
+                        String ex = "Cannot find SpatialRule for rule " + rule + " but found " + o.getClass();
+                        logger.error(ex);
+                        throw new IllegalArgumentException(ex);
+                    }
+                } catch (ReflectiveOperationException e) {
+                    String ex = "Cannot find SpatialRule for rule " + rule;
+                    logger.error(ex);
+                    throw new IllegalArgumentException(ex, e);
+                }
+            }
         }
 
         public SpatialRuleListFactory(List<SpatialRule> rules) {
@@ -79,13 +115,13 @@ public class SpatialRuleLookupBuilder {
         }
     }
 
-    public SpatialRuleLookup build(List<SpatialRule> rules, JsonFeatureCollection jsonFeatureCollection,
-                                   BBox bounds, double resolution, boolean exact) {
-        return build("ISO_A3", new SpatialRuleListFactory(rules), jsonFeatureCollection, bounds, resolution, exact);
+    public SpatialRuleLookup build(String rulesFQN, JsonFeatureCollection jsonFeatureCollection, BBox bounds,
+                                   double resolution, boolean exact) {
+        return build("ISO_A3", new SpatialRuleListFactory(rulesFQN), jsonFeatureCollection, bounds, resolution, exact);
     }
 
     /**
-     * This method connects the rules with the jsonFeatureCollection via their ISO_A3 property and the rules its
+     * This method connects the rules with the jsonFeatureCollection via their <code>jsonProperty</code> property and the rules its
      * getId method.
      *
      * @param jsonProperty the key that should be used to fetch the ID that is passed to SpatialRuleFactory#createSpatialRule
@@ -94,7 +130,6 @@ public class SpatialRuleLookupBuilder {
     public SpatialRuleLookup build(String jsonProperty, SpatialRuleFactory ruleFactory, JsonFeatureCollection jsonFeatureCollection,
                                    BBox bounds, double resolution, boolean exact) {
 
-        // TODO filter out polyons that don't intersect with the given BBox, will be implicitly done later anyway
         BBox polygonBounds = BBox.createInverse(false);
         List<SpatialRule> rules = new ArrayList<>();
         Set<String> ids = new HashSet<>();
@@ -143,6 +178,10 @@ public class SpatialRuleLookupBuilder {
         for (SpatialRule spatialRule : rules) {
             spatialRuleLookup.addRule(spatialRule);
         }
+
+        logger.info("Created the SpatialRuleLookup with " + rules.size() + " rules and a BBox of " + calculatedBounds +
+                " and the following rules: " + Arrays.toString(rules.toArray()));
+
         return spatialRuleLookup;
     }
 }
