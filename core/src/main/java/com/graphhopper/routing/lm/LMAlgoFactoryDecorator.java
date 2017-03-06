@@ -33,15 +33,14 @@ import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
-import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -56,9 +55,13 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private Logger LOGGER = LoggerFactory.getLogger(LMAlgoFactoryDecorator.class);
     private int landmarkCount = 16;
     private int activeLandmarkCount = 8;
+
     private final List<PrepareLandmarks> preparations = new ArrayList<>();
+    // input weighting list from configuration file
+    // one such entry can result into multiple Weighting objects e.g. fastest & car,foot => fastest|car and fastest|foot
     private final List<String> weightingsAsStrings = new ArrayList<>();
     private final List<Weighting> weightings = new ArrayList<>();
+    private final Map<String, Double> maximumWeights = new HashMap<>();
     private boolean enabled = false;
     private boolean disablingAllowed = false;
     private final List<String> lmSuggestionsLocations = new ArrayList<>(5);
@@ -73,7 +76,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     public void init(CmdArgs args) {
         setPreparationThreads(args.getInt(Parameters.Landmark.PREPARE + "threads", getPreparationThreads()));
 
-        landmarkCount = args.getInt(Landmark.COUNT, landmarkCount);
+        landmarkCount = args.getInt(Parameters.Landmark.COUNT, landmarkCount);
         activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, landmarkCount));
         for (String loc : args.get("prepare.lm.suggestions_location", "").split(",")) {
             if (!loc.trim().isEmpty())
@@ -157,7 +160,15 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     public LMAlgoFactoryDecorator addWeighting(String weighting) {
-        weightingsAsStrings.add(weighting);
+        String str[] = weighting.split("\\|");
+        double value = -1;
+        if (str.length > 1) {
+            PMap map = new PMap(weighting);
+            value = map.getDouble("maximum", -1);
+        }
+
+        weightingsAsStrings.add(str[0]);
+        maximumWeights.put(str[0], value);
         return this;
     }
 
@@ -214,15 +225,11 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
         for (final PrepareLandmarks p : preparations) {
             if (p.getWeighting().matches(map))
-                return createRAFactory(p, defaultAlgoFactory);
+                return new LMRAFactory(p, defaultAlgoFactory);
         }
 
-        // if the initial encoder&weighting has certain properies we can even cross query it unlike CH        
-        return createRAFactory(preparations.get(0), defaultAlgoFactory);
-    }
-
-    private RoutingAlgorithmFactory createRAFactory(final PrepareLandmarks p, final RoutingAlgorithmFactory defaultAlgoFactory) {
-        return new LMRAFactory(p, defaultAlgoFactory);
+        // if the initial encoder&weighting has certain properies we could cross query it but for now avoid this
+        return defaultAlgoFactory;
     }
 
     /**
@@ -251,17 +258,20 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     /**
-     * This method triggers the optional parallel landmark creation or if already available loads them.
+     * This method calculates the landmark data for all weightings (optionally in parallel) or if already existent loads it.
      *
+     * @return true if the preparation data for at least one weighting was calculated.
      * @see com.graphhopper.routing.ch.CHAlgoFactoryDecorator#prepare(StorableProperties) for a very similar method
      */
-    public void loadOrDoWork(final StorableProperties properties) {
+    public boolean loadOrDoWork(final StorableProperties properties) {
         int counter = 0;
+        boolean prepared = false;
         for (final PrepareLandmarks plm : preparations) {
             counter++;
             if (plm.loadExisting())
                 continue;
 
+            prepared = true;
             LOGGER.info(counter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
             final String name = AbstractWeighting.weightingToFileName(plm.getWeighting());
             threadPool.execute(new Runnable() {
@@ -291,6 +301,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             threadPool.shutdownNow();
             throw new RuntimeException(ie);
         }
+        return prepared;
     }
 
     /**
@@ -312,10 +323,16 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                 throw new RuntimeException(ex);
             }
         }
+
         for (Weighting weighting : getWeightings()) {
+            Double maximumWeight = maximumWeights.get(weighting.getName());
+            if (maximumWeight == null)
+                throw new IllegalStateException("maximumWeight cannot be null. Default should be just negative");
+
             PrepareLandmarks tmpPrepareLM = new PrepareLandmarks(ghStorage.getDirectory(), ghStorage,
                     weighting, traversalMode, landmarkCount, activeLandmarkCount).
-                    setLandmarkSuggestions(lmSuggestions);
+                    setLandmarkSuggestions(lmSuggestions).
+                    setMaximumWeight(maximumWeight);
 
             addPreparation(tmpPrepareLM);
         }

@@ -79,6 +79,14 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     }
 
     /**
+     * @see LandmarkStorage#setMaximumWeight(double)
+     */
+    public PrepareLandmarks setMaximumWeight(double maximumWeight) {
+        lms.setMaximumWeight(maximumWeight);
+        return this;
+    }
+
+    /**
      * @see LandmarkStorage#setLMSelectionWeighting(Weighting)
      */
     public void setLMSelectionWeighting(Weighting w) {
@@ -142,18 +150,19 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
             if (!lms.isInitialized())
                 throw new IllegalStateException("Initalize landmark storage before creating algorithms");
 
-            int recalcCount = Math.max(10, opts.getHints().getInt("lm.recalc_count", 8000));
             double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR_BI + ".epsilon", 1);
             AStarBidirection astarbi = (AStarBidirection) algo;
-            LMApproximator approximator = new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).setEpsilon(epsilon);
-            astarbi.setApproximation(approximator);
+            astarbi.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
+                    setEpsilon(epsilon));
             return algo;
         } else if (algo instanceof AlternativeRoute) {
             if (!lms.isInitialized())
                 throw new IllegalStateException("Initalize landmark storage before creating algorithms");
 
+            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR_BI + ".epsilon", 1);
             AlternativeRoute altRoute = (AlternativeRoute) algo;
-            altRoute.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false));
+            altRoute.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
+                    setEpsilon(epsilon));
             // landmark algorithm follows good compromise between fast response and exploring 'interesting' paths so we
             // can decrease this exploration factor further (1->dijkstra, 0.8->bidir. A*)
             altRoute.setMaxExplorationFactor(0.6);

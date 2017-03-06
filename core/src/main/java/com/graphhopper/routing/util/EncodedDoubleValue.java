@@ -54,7 +54,7 @@ public class EncodedDoubleValue extends EncodedValue {
 
         // scale value
         long tmpValue = Math.round(value / factor);
-        checkValue(Math.round(tmpValue * factor));
+        checkValue((long) (tmpValue * factor));
         tmpValue <<= shift;
 
         // clear value bits

@@ -66,7 +66,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private final DataAccess landmarkWeightDA;
     /* every subnetwork has its own landmark mapping but the count of landmarks is always the same */
     private final List<int[]> landmarkIDs;
-    private double factor = 1;
+    private double factor = -1;
     private final static double DOUBLE_MLTPL = 1e6;
     private final GraphHopperStorage graph;
     private final FlagEncoder encoder;
@@ -78,6 +78,10 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private final SubnetworkStorage subnetworkStorage;
     private List<LandmarkSuggestion> landmarkSuggestions = Collections.emptyList();
     private SpatialRuleLookup ruleLookup;
+    /**
+     * 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
+     */
+    static final long PRECISION = 1 << 16;
 
     public LandmarkStorage(GraphHopperStorage graph, Directory dir, int landmarks, final Weighting weighting, TraversalMode traversalMode) {
         this.graph = graph;
@@ -116,6 +120,24 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         this.TO_OFFSET = 2;
         this.landmarkIDs = new ArrayList<>();
         this.subnetworkStorage = new SubnetworkStorage(dir, "landmarks_" + name);
+    }
+
+    /**
+     * Specify the maximum possible value for your used area. With this maximum weight value you can influence the storage
+     * precision for your weights that help A* finding its way to the goal. The same value is used for all subnetworks.
+     * Note, if you pick this value too big then too similar weights are stored
+     * (some bits of the storage capability will be left unused) which could lead to suboptimal routes.
+     * If too low then far away values will have the same maximum value associated ("maxed out") leading to bad performance.
+     *
+     * @param maxWeight use a negative value to automatically determine this value.
+     */
+    public LandmarkStorage setMaximumWeight(double maxWeight) {
+        if (maxWeight > 0) {
+            this.factor = maxWeight / PRECISION;
+            if (Double.isInfinite(factor) || Double.isNaN(factor))
+                throw new IllegalStateException("Illegal factor " + factor + " calculated from maximum weight " + maxWeight);
+        }
+        return this;
     }
 
     /**
@@ -188,28 +210,26 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             landmarkWeightDA.setShort(pointer, (short) SHORT_INFINITY);
         }
 
-        // A 'factor' is necessary to store the weight in just a short value but without loosing too much precision and
-        // also to make it compatible with weighting.calcWeight. This factor is rather delicate to pick, we estimate
-        // it through the graph boundaries its maximum distance. For small areas we use max_bounds_dist*10 and otherwise
-        // we use 30 000km for this distance. If we would pick the distance too big for small areas this could lead to (slightly)
-        // suboptimal routes for few nodes as there will be too big rounding errors.
-        // But picking it too small is dangerous regarding performance e.g. for Germany at least 1500km is very important
-        // otherwise speed is at least twice as slow e.g. for just 1000km
-        BBox bounds = graph.getBounds();
-        double distanceInMeter = Helper.DIST_EARTH.calcDist(bounds.maxLat, bounds.maxLon, bounds.minLat, bounds.minLon) * 5;
-        if (distanceInMeter > 50_000 * 5 || /* for tests and convenience we do for now: */ !bounds.isValid())
-            distanceInMeter = 30_000_000;
+        String additionalInfo = "";
+        // guess the factor
+        if (factor <= 0) {
+            // A 'factor' is necessary to store the weight in just a short value but without loosing too much precision.
+            // This factor is rather delicate to pick, we estimate it through the graph boundaries its maximum distance.
+            // For small areas we use max_bounds_dist*X and otherwise we use a big fixed value for this distance.
+            // If we would pick the distance too big for small areas this could lead to (slightly) suboptimal routes as there
+            // will be too big rounding errors. But picking it too small is dangerous regarding performance
+            // e.g. for Germany at least 1500km is very important otherwise speed is at least twice as slow e.g. for just 1000km
+            BBox bounds = graph.getBounds();
+            double distanceInMeter = Helper.DIST_EARTH.calcDist(bounds.maxLat, bounds.maxLon, bounds.minLat, bounds.minLon) * 7;
+            if (distanceInMeter > 50_000 * 7 || /* for tests and convenience we do for now: */ !bounds.isValid())
+                distanceInMeter = 30_000_000;
 
-        double weightMax = weighting.getMinWeight(distanceInMeter);
+            double maxWeight = weighting.getMinWeight(distanceInMeter);
+            setMaximumWeight(maxWeight);
+            additionalInfo = ", maxWeight:" + maxWeight + ", from max distance:" + distanceInMeter / 1000f + "km";
+        }
 
-        // 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
-        factor = weightMax / (1 << 16);
-
-        if (Double.isInfinite(factor) || Double.isNaN(factor))
-            throw new IllegalStateException("Illegal factor calculated from distance " + distanceInMeter + " and weight " + weightMax);
-
-        LOGGER.info("init landmarks for subnetworks with node count greater than " + minimumNodes + ", weightMax:" + weightMax
-                + ", factor:" + factor + " from max distance:" + distanceInMeter / 1000f + "km");
+        LOGGER.info("init landmarks for subnetworks with node count greater than " + minimumNodes + " with factor:" + factor + additionalInfo);
 
         // special subnetwork 0
         int[] empty = new int[landmarks];
@@ -370,12 +390,12 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         // 2) calculate weights for all landmarks -> 'from' and 'to' weight
         for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
-            int lm = tmpLandmarkNodeIds[lmIdx];
+            int lmNodeId = tmpLandmarkNodeIds[lmIdx];
             LandmarkExplorer explorer = new LandmarkExplorer(graph, this, weighting, traversalMode);
-            explorer.initFrom(lm, 0);
+            explorer.initFrom(lmNodeId, 0);
             explorer.setFilter(blockedEdges, false, true);
             explorer.runAlgo(true);
-            explorer.initLandmarkWeights(lmIdx, LM_ROW_LENGTH, FROM_OFFSET);
+            explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH, FROM_OFFSET);
 
             // set subnetwork id to all explored nodes, but do this only for the first landmark
             if (lmIdx == 0) {
@@ -384,10 +404,10 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             }
 
             explorer = new LandmarkExplorer(graph, this, weighting, traversalMode);
-            explorer.initTo(lm, 0);
+            explorer.initTo(lmNodeId, 0);
             explorer.setFilter(blockedEdges, true, false);
             explorer.runAlgo(false);
-            explorer.initLandmarkWeights(lmIdx, LM_ROW_LENGTH, TO_OFFSET);
+            explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH, TO_OFFSET);
 
             if (lmIdx == 0) {
                 if (explorer.setSubnetworks(subnetworks, subnetworkId))
@@ -436,9 +456,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      * The factor is used to convert double values into more compact int values.
      */
     double getFactor() {
-        if (!isInitialized())
-            throw new IllegalStateException("Cannot return factor in uninitialized state");
-
         return factor;
     }
 
@@ -765,20 +782,26 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             return failed.get();
         }
 
-        public void initLandmarkWeights(final int lmIdx, final long rowSize, final int offset) {
+        public void initLandmarkWeights(final int lmIdx, int lmNodeId, final long rowSize, final int offset) {
             IntObjectMap<SPTEntry> map = from ? bestWeightMapFrom : bestWeightMapTo;
             final AtomicInteger maxedout = new AtomicInteger(0);
+            final Map.Entry<Double, Double> finalMaxWeight = new MapEntry<>(0d, 0d);
 
             map.forEach(new IntObjectProcedure<SPTEntry>() {
                 @Override
                 public void apply(int nodeId, SPTEntry b) {
-                    if (!lms.setWeight(nodeId * rowSize + lmIdx * 4 + offset, b.weight))
+                    if (!lms.setWeight(nodeId * rowSize + lmIdx * 4 + offset, b.weight)) {
                         maxedout.incrementAndGet();
+                        finalMaxWeight.setValue(Math.max(b.weight, finalMaxWeight.getValue()));
+                    }
                 }
             });
 
-            if ((double) maxedout.get() / map.size() > 0.1)
-                LOGGER.warn("landmark " + lmIdx + " -> too many weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Use a bigger factor " + lms.factor);
+            if ((double) maxedout.get() / map.size() > 0.1) {
+                LOGGER.warn("landmark " + lmIdx + " (" + nodeAccess.getLatitude(lmNodeId) + "," + nodeAccess.getLongitude(lmNodeId) + "): " +
+                        "too many weights were maxed out (" + maxedout.get() + "/" + map.size() + "). Use a bigger factor than " + lms.factor
+                        + ". For example use the following in the config.properties: weighting=" + weighting.getName() + "|maximum=" + finalMaxWeight.getValue() * 1.2);
+            }
         }
     }
 

@@ -103,6 +103,7 @@ public class Measurement {
                 forDesktop();
 
         hopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        hopper.getLMFactoryDecorator().setDisablingAllowed(true);
         hopper.importOrLoad();
 
         GraphHopperStorage g = hopper.getGraphHopperStorage();

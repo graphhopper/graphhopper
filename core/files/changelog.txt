@@ -1,4 +1,6 @@
 0.9
+    EncodedValue uses Math.round(value/factor). This can change the retrieved values for EncodedValues #954
+    EncodedDoubleValue and EncodedValue requires maxValue/factor to be a natural number #954
     default base algorithm for all modes is bidirectional A* (except speed mode)
     introduced landmarks based hybrid mode, #780
     moving all prepare.xy configs to prepare.ch.xy and e.g. disallow the old

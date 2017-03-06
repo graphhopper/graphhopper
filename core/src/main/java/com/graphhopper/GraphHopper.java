@@ -19,17 +19,11 @@ package com.graphhopper;
 
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
-import com.graphhopper.reader.dem.BridgeElevationInterpolator;
-import com.graphhopper.reader.dem.CGIARProvider;
-import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.reader.dem.TunnelElevationInterpolator;
-import com.graphhopper.storage.change.ChangeGraphHelper;
-import com.graphhopper.storage.change.ChangeGraphResponse;
+import com.graphhopper.reader.dem.*;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
+import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -38,6 +32,8 @@ import com.graphhopper.routing.template.ViaRoutingTemplate;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.*;
+import com.graphhopper.storage.change.ChangeGraphHelper;
+import com.graphhopper.storage.change.ChangeGraphResponse;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
@@ -56,12 +52,11 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DateFormat;
 import java.util.*;
-
-import static com.graphhopper.util.Parameters.Algorithms.*;
-
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+
+import static com.graphhopper.util.Parameters.Algorithms.*;
 
 /**
  * Easy to use access point to configure import and (offline) routing.
@@ -1152,7 +1147,9 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     private boolean isCHPrepared() {
-        return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"));
+        return "true".equals(ghStorage.getProperties().get(CH.PREPARE + "done"))
+                // remove old property in >0.9
+                || "true".equals(ghStorage.getProperties().get("prepare.done"));
     }
 
     private boolean isLMPrepared() {
@@ -1169,8 +1166,8 @@ public class GraphHopper implements GraphHopperAPI {
 
             ghStorage.freeze();
             chFactoryDecorator.prepare(ghStorage.getProperties());
+            ghStorage.getProperties().put(CH.PREPARE + "done", true);
         }
-        ghStorage.getProperties().put(CH.PREPARE + "done", tmpPrepare);
     }
 
     /**
@@ -1181,9 +1178,9 @@ public class GraphHopper implements GraphHopperAPI {
         if (tmpPrepare) {
             ensureWriteAccess();
             ghStorage.freeze();
-            lmFactoryDecorator.loadOrDoWork(ghStorage.getProperties());
+            if (lmFactoryDecorator.loadOrDoWork(ghStorage.getProperties()))
+                ghStorage.getProperties().put(Landmark.PREPARE + "done", true);
         }
-        ghStorage.getProperties().put(Landmark.PREPARE + "done", tmpPrepare);
     }
 
     /**

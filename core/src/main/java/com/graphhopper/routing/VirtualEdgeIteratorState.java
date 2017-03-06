@@ -177,7 +177,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public boolean canBeOverwritten(long flags) {
+    public int getMergeStatus(long flags) {
         throw new UnsupportedOperationException("Not supported.");
     }
 

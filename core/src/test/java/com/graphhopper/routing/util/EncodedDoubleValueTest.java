@@ -32,6 +32,11 @@ public class EncodedDoubleValueTest {
         assertEquals(10.12, instance.getDoubleValue(instance.setDoubleValue(0, 10.12)), 1e-4);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalFactorMaxValueCombination() {
+        new EncodedDoubleValue("illegalcombination", 6, 2, 2, 0, 3);
+    }
+
     @Test
     public void testMaxValue() {
         EncodedDoubleValue instance1 = new EncodedDoubleValue("test1", 0, 8, 0.5, 60, 100);
