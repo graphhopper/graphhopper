@@ -40,6 +40,7 @@ public class GtfsStorage implements GraphExtension {
 	private Map<Integer, BitSet> validities;
 	private Atomic.Var<LocalDate> startDate;
 	private Map<Integer, String> extra;
+	private Map<Integer, Integer> stopSequences;
 	private Map<String, Fare> fares;
 
 	enum EdgeType {
@@ -117,6 +118,7 @@ public class GtfsStorage implements GraphExtension {
 		this.validities = Collections.unmodifiableMap(reverseOperatingDayPatterns);
 		this.startDate = data.getAtomicVar("startDate");
 		this.extra = data.getTreeMap("extra");
+		this.stopSequences = data.getTreeMap("stopSequences");
 		this.fares = data.getTreeMap("fares");
 	}
 
@@ -172,6 +174,10 @@ public class GtfsStorage implements GraphExtension {
 
 	Map<Integer, String> getExtraStrings() {
 		return extra;
+	}
+
+	Map<Integer, Integer> getStopSequences() {
+		return stopSequences;
 	}
 
 	Map<String, Fare> getFares() {

@@ -1,6 +1,8 @@
 package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.Stop;
+import com.conveyal.gtfs.model.StopTime;
 import com.graphhopper.*;
 import com.graphhopper.Trip;
 import com.graphhopper.gtfs.fare.*;
@@ -21,6 +23,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
 import com.vividsolutions.jts.geom.GeometryFactory;
+import org.mapdb.Fun;
 
 import java.io.File;
 import java.io.IOException;
@@ -29,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import java.util.zip.ZipFile;
@@ -306,19 +310,29 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     }
                 } else if (leg instanceof Trip.PtLeg) {
                     final Trip.PtLeg ptLeg = ((Trip.PtLeg) leg);
-                    final PointList pl = new PointList();
+                    final PointList pl;
+                    if (!ptLeg.isInSameVehicleAsPrevious) {
+                        pl = new PointList();
+                        final Instruction departureInstruction = new Instruction(Instruction.PT_START_TRIP, ptLeg.trip_headsign, InstructionAnnotation.EMPTY, pl);
+                        departureInstruction.setDistance(leg.getDistance());
+                        departureInstruction.setTime(ptLeg.travelTime);
+                        instructions.add(departureInstruction);
+                    } else {
+                        pl = instructions.get(instructions.size()-2).getPoints();
+                    }
                     pl.add(ptLeg.boardStop.geometry.getY(), ptLeg.boardStop.geometry.getX());
                     for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size()-1)) {
                         pl.add(stop.geometry.getY(), stop.geometry.getX());
                     }
-                    final Instruction departureInstruction = new Instruction(Instruction.PT_START_TRIP, ptLeg.trip_headsign, InstructionAnnotation.EMPTY, pl);
-                    departureInstruction.setDistance(leg.getDistance());
-                    departureInstruction.setTime(ptLeg.travelTime);
-                    instructions.add(departureInstruction);
                     final PointList arrivalPointList = new PointList();
                     final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size()-1);
                     arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
-                    instructions.add(new Instruction(Instruction.PT_END_TRIP, arrivalStop.name, InstructionAnnotation.EMPTY, arrivalPointList));
+                    Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.name, InstructionAnnotation.EMPTY, arrivalPointList);
+                    if (ptLeg.isInSameVehicleAsPrevious) {
+                        instructions.replaceLast(arrivalInstruction);
+                    } else {
+                        instructions.add(arrivalInstruction);
+                    }
                 }
             }
 
@@ -331,7 +345,10 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             path.setDistance(path.getLegs().stream().mapToDouble(Trip.Leg::getDistance).sum());
             path.setTime((solution.currentTime - initialTime) * 1000 * (arriveBy ? -1 : 1));
             path.setFirstPtLegDeparture(solution.firstPtDepartureTime);
-            path.setNumChanges((int) path.getLegs().stream().filter(l->l instanceof Trip.PtLeg).count() - 1);
+            path.setNumChanges((int) path.getLegs().stream()
+                    .filter(l->l instanceof Trip.PtLeg)
+                    .filter(l -> !((Trip.PtLeg) l).isInSameVehicleAsPrevious)
+                    .count() - 1);
             com.graphhopper.gtfs.fare.Trip faresTrip = new com.graphhopper.gtfs.fare.Trip();
             path.getLegs().stream()
                     .filter(leg -> leg instanceof Trip.PtLeg)
@@ -377,18 +394,15 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         GeometryFactory geometryFactory = new GeometryFactory();
         if (GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK == encoder.getEdgeType(path.get(0).getFlags())) {
             String feedId = gtfsStorage.getExtraStrings().get(path.get(0).getEdge());
-            Trip.Stop stop = stopFromHopEdge(geometryFactory, path.get(0));
             List<Trip.Leg> result = new ArrayList<>();
             LocalDateTime time = gtfsStorage.getStartDate().atStartOfDay().plusSeconds(encoder.getTime(path.get(0).getFlags()));
             LocalDateTime boardTime = null;
             List<EdgeIteratorState> partition = null;
-            Trip.Stop boardStop = null;
             for (int i=1; i<path.size(); i++) {
                 EdgeIteratorState edge = path.get(i);
                 GtfsStorage.EdgeType edgeType = encoder.getEdgeType(edge.getFlags());
                 if (edgeType == GtfsStorage.EdgeType.BOARD) {
                     boardTime = time;
-                    boardStop = stop;
                     partition = new ArrayList<>();
                 }
                 if (partition != null) {
@@ -396,13 +410,20 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 }
                 if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK).contains(edgeType)) {
                     Geometry lineString = lineStringFromEdges(geometryFactory, partition);
-                    List<Trip.Stop> stops = partition.stream().filter(e -> EnumSet.of(GtfsStorage.EdgeType.HOP).contains(encoder.getEdgeType(e.getFlags()))).map(e -> stopFromHopEdge(geometryFactory, e)).collect(Collectors.toList());
                     String tripId = gtfsStorage.getExtraStrings().get(partition.get(0).getEdge());
+                    List<EdgeIteratorState> edges = partition.stream()
+                            .filter(e -> EnumSet.of(GtfsStorage.EdgeType.HOP, GtfsStorage.EdgeType.BOARD).contains(encoder.getEdgeType(e.getFlags())))
+                            .collect(Collectors.toList());
+                    List<Trip.Stop> stops = edges.stream()
+                            .map(e -> stopFromHopEdge(geometryFactory, feedId, tripId, gtfsStorage.getStopSequences().get(e.getEdge())))
+                            .collect(Collectors.toList());
+                    com.conveyal.gtfs.model.Trip trip = gtfsStorage.getGtfsFeeds().get(feedId).trips.get(tripId);
                     result.add(new Trip.PtLeg(
                             feedId,
-                            boardStop,
+                            encoder.getTransfers(partition.get(0).getFlags()) == 0,
+                            stops.get(0),
                             tripId,
-                            gtfsStorage.getGtfsFeeds().get(feedId).trips.get(tripId).route_id,
+                            trip.route_id,
                             partition,
                             Date.from(boardTime.atZone(ZoneId.systemDefault()).toInstant()),
                             stops,
@@ -413,9 +434,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 }
                 if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.HOP, GtfsStorage.EdgeType.TIME_PASSES, GtfsStorage.EdgeType.DWELL).contains(edgeType)) {
                     time = time.plusSeconds(encoder.getTime(edge.getFlags()));
-                }
-                if (edgeType == GtfsStorage.EdgeType.HOP) {
-                    stop = stopFromHopEdge(geometryFactory, edge);
                 }
             }
             return result;
@@ -447,8 +465,11 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                             coords -> geometryFactory.createLineString(coords.toArray(new Coordinate[]{}))));
     }
 
-    private static Trip.Stop stopFromHopEdge(GeometryFactory geometryFactory, EdgeIteratorState e) {
-        return new Trip.Stop(e.getName(), geometryFactory.createPoint(new Coordinate(e.fetchWayGeometry(2).getLon(0), e.fetchWayGeometry(2).getLat(0))));
+    private Trip.Stop stopFromHopEdge(GeometryFactory geometryFactory, String feedId, String tripId, int stopSequence) {
+        GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
+        StopTime stopTime = gtfsFeed.stop_times.get(new Fun.Tuple2<>(tripId, stopSequence));
+        Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
+        return new Trip.Stop(stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)));
     }
 
 }

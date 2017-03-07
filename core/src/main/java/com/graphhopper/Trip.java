@@ -49,6 +49,7 @@ public class Trip {
     }
     public static class PtLeg extends Leg {
         public final String feedId;
+        public final boolean isInSameVehicleAsPrevious;
         public final String trip_headsign;
         public final Date departureTime;  // TODO: Java 8: Should be LocalDateTime
         public final long travelTime;
@@ -57,9 +58,10 @@ public class Trip {
         public final String tripId;
         public final String routeId;
 
-        public PtLeg(String feedId, Stop stop, String tripId, String routeId, List<EdgeIteratorState> edges, Date departureTime, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
+        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, Stop stop, String tripId, String routeId, List<EdgeIteratorState> edges, Date departureTime, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
             super("pt", stop.name, edges, geometry, distance);
             this.feedId = feedId;
+            this.isInSameVehicleAsPrevious = isInSameVehicleAsPrevious;
             this.boardStop = stop;
             this.tripId = tripId;
             this.routeId = routeId;

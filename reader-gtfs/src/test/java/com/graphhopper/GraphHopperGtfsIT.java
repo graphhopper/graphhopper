@@ -2,6 +2,7 @@ package com.graphhopper;
 
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Instruction;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -178,9 +179,11 @@ public class GraphHopperGtfsIT {
         );
         ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,8,0));
         GHResponse route = graphHopper.route(ghRequest);
-        assertEquals("Only find one solution. If blocks wouldn't work, there would be two.", 1, route.getAll().size());
+        assertEquals("Only find one solution. If blocks wouldn't work, there would be two. (There is a slower alternative without transfer.)", 1, route.getAll().size());
         assertEquals("Expected travel time == scheduled travel time", time(1,20), route.getBest().getTime());
-        assertEquals("No transfers", 0, route.getBest().getNumChanges());
+        assertEquals("Four legs: walk, pt, pt, walk, but the two pt legs are in one vehicle, so...", 4, route.getBest().getLegs().size());
+        assertEquals("...one boarding instruction", 1, route.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_START_TRIP).count());
+        assertEquals("...and one alighting instruction", 1, route.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_END_TRIP).count());
     }
 
     private void assertTravelTimeIs(GraphHopperGtfs graphHopper, double from_lat, double from_lon, LocalDateTime earliestDepartureTime, double to_lat, double to_lon, int expectedTravelTime) {

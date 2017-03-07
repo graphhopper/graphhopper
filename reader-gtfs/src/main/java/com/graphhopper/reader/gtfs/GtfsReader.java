@@ -133,13 +133,13 @@ class GtfsReader {
                         StopTime prev = null;
                         int arrivalNode = -1;
                         int departureNode = -1;
-                        for (StopTime orderedStop : getInterpolatedStopTimesForTrip(trip.trip_id)) {
-                            Stop stop = feed.stops.get(orderedStop.stop_id);
+                        for (StopTime stopTime : getInterpolatedStopTimesForTrip(trip.trip_id)) {
+                            Stop stop = feed.stops.get(stopTime.stop_id);
                             arrivalNode = i++;
                             nodeAccess.setNode(arrivalNode, stop.stop_lat, stop.stop_lon);
                             nodeAccess.setAdditionalNodeField(arrivalNode, NodeType.INTERNAL_PT.ordinal());
-                            times.put(arrivalNode, orderedStop.arrival_time + time - frequency.start_time);
-                            arrivals.put(orderedStop.stop_id, arrivalNode);
+                            times.put(arrivalNode, stopTime.arrival_time + time - frequency.start_time);
+                            arrivals.put(stopTime.stop_id, arrivalNode);
                             if (prev != null) {
                                 Stop fromStop = feed.stops.get(prev.stop_id);
                                 double distance = distCalc.calcDist(
@@ -154,24 +154,26 @@ class GtfsReader {
                                         false);
                                 edge.setName(stop.stop_name);
                                 setEdgeType(edge, GtfsStorage.EdgeType.HOP);
-                                edge.setFlags(encoder.setTime(edge.getFlags(), orderedStop.arrival_time - prev.departure_time));
+                                edge.setFlags(encoder.setTime(edge.getFlags(), stopTime.arrival_time - prev.departure_time));
+                                gtfsStorage.getStopSequences().put(edge.getEdge(), stopTime.stop_sequence);
                             }
                             nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
                             nodeAccess.setAdditionalNodeField(i - 1, NodeType.INTERNAL_PT.ordinal());
-                            times.put(i - 1, orderedStop.departure_time + time - frequency.start_time);
-                            stops.put(orderedStop.stop_id, i - 1);
+                            times.put(i - 1, stopTime.departure_time + time - frequency.start_time);
+                            stops.put(stopTime.stop_id, i - 1);
                             departureNode = i++;
                             nodeAccess.setNode(departureNode, stop.stop_lat, stop.stop_lon);
                             nodeAccess.setAdditionalNodeField(departureNode, NodeType.INTERNAL_PT.ordinal());
-                            times.put(departureNode, orderedStop.departure_time + time - frequency.start_time);
+                            times.put(departureNode, stopTime.departure_time + time - frequency.start_time);
                             EdgeIteratorState edge = graph.edge(
                                     i - 2,
                                     departureNode,
                                     0.0,
                                     false);
                             edge.setName(getRouteName(feed, trip));
-                            int dayShift = orderedStop.departure_time / (24 * 60 * 60);
+                            int dayShift = stopTime.departure_time / (24 * 60 * 60);
                             setEdgeType(edge, GtfsStorage.EdgeType.BOARD);
+                            gtfsStorage.getStopSequences().put(edge.getEdge(), stopTime.stop_sequence);
                             gtfsStorage.getExtraStrings().put(edge.getEdge(), trip.trip_id);
                             BitSet validOn = getValidOn(validOnDay, dayShift);
                             int validityId;
@@ -190,25 +192,37 @@ class GtfsReader {
                                     false);
                             edge.setName(getRouteName(feed, trip));
                             setEdgeType(edge, GtfsStorage.EdgeType.DWELL);
-                            edge.setFlags(encoder.setTime(edge.getFlags(), orderedStop.departure_time - orderedStop.arrival_time));
+                            edge.setFlags(encoder.setTime(edge.getFlags(), stopTime.departure_time - stopTime.arrival_time));
                             if (prev == null) {
                                 for (int lastTripArrivalNode : arrivalNodes) {
                                     int dwellTime = times.get(departureNode) - times.get(lastTripArrivalNode);
                                     if (dwellTime >= 0) {
+                                        nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
+                                        nodeAccess.setAdditionalNodeField(i-1, NodeType.INTERNAL_PT.ordinal());
+
                                         edge = graph.edge(
                                                 lastTripArrivalNode,
+                                                i-1,
+                                                0.0,
+                                                false);
+                                        setEdgeType(edge, GtfsStorage.EdgeType.TRANSFER);
+                                        edge.setFlags(encoder.setTime(edge.getFlags(), dwellTime));
+
+                                        edge = graph.edge(
+                                                i-1,
                                                 departureNode,
                                                 0.0,
                                                 false);
-                                        setEdgeType(edge, GtfsStorage.EdgeType.DWELL);
-                                        edge.setFlags(encoder.setTime(edge.getFlags(), dwellTime));
+                                        setEdgeType(edge, GtfsStorage.EdgeType.BOARD);
                                         edge.setFlags(encoder.setValidityId(edge.getFlags(), validityId));
+                                        gtfsStorage.getStopSequences().put(edge.getEdge(), stopTime.stop_sequence);
+                                        gtfsStorage.getExtraStrings().put(edge.getEdge(), trip.trip_id);
                                     }
                                 }
                             }
-                            prev = orderedStop;
+                            prev = stopTime;
                         }
-                        arrivalNodes.add(i - 3);
+                        arrivalNodes.add(arrivalNode);
                     }
                 }
             }
