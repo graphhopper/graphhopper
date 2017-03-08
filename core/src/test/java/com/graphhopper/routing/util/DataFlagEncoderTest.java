@@ -334,7 +334,7 @@ public class DataFlagEncoderTest {
 
         SpatialRuleLookup index = new SpatialRuleLookupBuilder().build("GermanySpatialRule",
                 jsonFeatures, bbox, 1, false);
-        DataFlagEncoder encoder = new DataFlagEncoder(new PMap().put("spatial_rules", index.size()));
+        DataFlagEncoder encoder = new DataFlagEncoder(new PMap().put("spatial_rules", index.size()-1));
         encoder.setSpatialRuleLookup(index);
         EncodingManager em = new EncodingManager(encoder);
 
