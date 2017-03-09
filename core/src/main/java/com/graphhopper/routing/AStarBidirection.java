@@ -59,7 +59,7 @@ import java.util.PriorityQueue;
  * @author Peter Karich
  * @author jansoe
  */
-public class AStarBidirection extends AbstractBidirAlgo {
+public class AStarBidirection extends AbstractBidirAlgo implements RecalculationHook {
     protected AStarEntry currFrom;
     protected AStarEntry currTo;
     protected PathBidirRef bestPath;
@@ -69,6 +69,8 @@ public class AStarBidirection extends AbstractBidirAlgo {
     private ConsistentWeightApproximator weightApprox;
     private PriorityQueue<AStarEntry> prioQueueOpenSetFrom;
     private PriorityQueue<AStarEntry> prioQueueOpenSetTo;
+    private final IntHashSet ignoreExplorationFrom = new IntHashSet();
+    private final IntHashSet ignoreExplorationTo = new IntHashSet();
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
@@ -196,7 +198,7 @@ public class AStarBidirection extends AbstractBidirAlgo {
 
         currFrom = prioQueueOpenSetFrom.poll();
         bestWeightMapOther = bestWeightMapTo;
-        fillEdges(currFrom, prioQueueOpenSetFrom, bestWeightMapFrom, outEdgeExplorer, false);
+        fillEdges(currFrom, prioQueueOpenSetFrom, bestWeightMapFrom, ignoreExplorationFrom, outEdgeExplorer, false);
         visitedCountFrom++;
         return true;
     }
@@ -208,13 +210,14 @@ public class AStarBidirection extends AbstractBidirAlgo {
 
         currTo = prioQueueOpenSetTo.poll();
         bestWeightMapOther = bestWeightMapFrom;
-        fillEdges(currTo, prioQueueOpenSetTo, bestWeightMapTo, inEdgeExplorer, true);
+        fillEdges(currTo, prioQueueOpenSetTo, bestWeightMapTo, ignoreExplorationTo, inEdgeExplorer, true);
         visitedCountTo++;
         return true;
     }
 
     private void fillEdges(AStarEntry currEdge, PriorityQueue<AStarEntry> prioQueueOpenSet,
-                           IntObjectMap<AStarEntry> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
+                           IntObjectMap<AStarEntry> bestWeightMap, IntHashSet ignoreExploration,
+                           EdgeExplorer explorer, boolean reverse) {
 
         int currNode = currEdge.adjNode;
         EdgeIterator iter = explorer.setBaseNode(currNode);
@@ -224,6 +227,8 @@ public class AStarBidirection extends AbstractBidirAlgo {
 
             int neighborNode = iter.getAdjNode();
             int traversalId = traversalMode.createTraversalId(iter, reverse);
+            if (ignoreExploration.contains(traversalId))
+                continue;
 
             // TODO performance: check if the node is already existent in the opposite direction
             // then we could avoid the approximation as we already know the exact complete path!
@@ -282,6 +287,46 @@ public class AStarBidirection extends AbstractBidirAlgo {
             bestPath.sptEntry = entryCurrent;
             bestPath.edgeTo = entryOther;
             bestPath.setWeight(newWeight);
+        }
+    }
+
+    @Override
+    public void afterHeuristicChange(boolean forward, boolean backward) {
+        if (forward) {
+            ignoreExplorationFrom.ensureCapacity(bestWeightMapFrom.size());
+            bestWeightMapFrom.forEach(new IntObjectPredicate<AStarEntry>() {
+                @Override
+                public boolean apply(int key, AStarEntry value) {
+                    value.weight = value.weightOfVisitedPath + weightApprox.approximate(value.adjNode, false);
+                    ignoreExplorationFrom.add(key);
+                    return true;
+                }
+            });
+
+            // update PQ with new entries
+            if (!prioQueueOpenSetFrom.isEmpty()) {
+                final PriorityQueue<AStarEntry> tmpFrom = new PriorityQueue<>(prioQueueOpenSetFrom.size());
+                tmpFrom.addAll(prioQueueOpenSetFrom);
+                prioQueueOpenSetFrom = tmpFrom;
+            }
+        }
+
+        if (backward) {
+            ignoreExplorationTo.ensureCapacity(bestWeightMapTo.size());
+            bestWeightMapTo.forEach(new IntObjectPredicate<AStarEntry>() {
+                @Override
+                public boolean apply(int key, AStarEntry value) {
+                    value.weight = value.weightOfVisitedPath + weightApprox.approximate(value.adjNode, true);
+                    ignoreExplorationTo.add(key);
+                    return true;
+                }
+            });
+
+            if (!prioQueueOpenSetTo.isEmpty()) {
+                final PriorityQueue<AStarEntry> tmpTo = new PriorityQueue<>(prioQueueOpenSetTo.size());
+                tmpTo.addAll(prioQueueOpenSetTo);
+                prioQueueOpenSetTo = tmpTo;
+            }
         }
     }
 
