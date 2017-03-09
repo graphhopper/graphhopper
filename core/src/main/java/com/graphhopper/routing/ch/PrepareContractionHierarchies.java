@@ -644,12 +644,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
         AbstractBidirAlgo algo;
         if (ASTAR_BI.equals(opts.getAlgorithm())) {
-            AStarBidirection tmpAlgo = createAStarBidirection(graph);
+            AStarBidirection tmpAlgo = new AStarBidirectionCH(graph, prepareWeighting, traversalMode);
             tmpAlgo.setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
             algo = tmpAlgo;
 
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
-            algo = createDijkstraBidirection(graph);
+            algo = new DijkstraBidirectionCH(graph, prepareWeighting, traversalMode);
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");
         }
@@ -659,74 +659,78 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return algo;
     }
 
-    private AStarBidirection createAStarBidirection(final Graph graph) {
-        return new AStarBidirection(graph, prepareWeighting, traversalMode) {
-            @Override
-            protected void initCollections(int size) {
-                super.initCollections(Math.min(size, 2000));
-            }
+    public static class AStarBidirectionCH extends AStarBidirection {
+        public AStarBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
+            super(graph, weighting, traversalMode);
+        }
 
-            @Override
-            protected boolean finished() {
-                // we need to finish BOTH searches for CH!
-                if (finishedFrom && finishedTo)
-                    return true;
+        @Override
+        protected void initCollections(int size) {
+            super.initCollections(Math.min(size, 2000));
+        }
 
-                // changed finish condition for CH
-                return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
-            }
+        @Override
+        protected boolean finished() {
+            // we need to finish BOTH searches for CH!
+            if (finishedFrom && finishedTo)
+                return true;
 
-            @Override
-            protected Path createAndInitPath() {
-                bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
-                return bestPath;
-            }
+            // changed finish condition for CH
+            return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
+        }
 
-            @Override
-            public String getName() {
-                return "astarbi|ch";
-            }
+        @Override
+        protected Path createAndInitPath() {
+            bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
+            return bestPath;
+        }
 
-            @Override
-            public String toString() {
-                return getName() + "|" + prepareWeighting;
-            }
-        };
+        @Override
+        public String getName() {
+            return "astarbi|ch";
+        }
+
+        @Override
+        public String toString() {
+            return getName() + "|" + weighting;
+        }
     }
 
-    private AbstractBidirAlgo createDijkstraBidirection(final Graph graph) {
-        return new DijkstraBidirectionRef(graph, prepareWeighting, traversalMode) {
-            @Override
-            protected void initCollections(int size) {
-                super.initCollections(Math.min(size, 2000));
-            }
+    public static class DijkstraBidirectionCH extends DijkstraBidirectionRef {
+        public DijkstraBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
+            super(graph, weighting, traversalMode);
+        }
 
-            @Override
-            public boolean finished() {
-                // we need to finish BOTH searches for CH!
-                if (finishedFrom && finishedTo)
-                    return true;
+        @Override
+        protected void initCollections(int size) {
+            super.initCollections(Math.min(size, 2000));
+        }
 
-                // changed also the final finish condition for CH
-                return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
-            }
+        @Override
+        public boolean finished() {
+            // we need to finish BOTH searches for CH!
+            if (finishedFrom && finishedTo)
+                return true;
 
-            @Override
-            protected Path createAndInitPath() {
-                bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
-                return bestPath;
-            }
+            // changed also the final finish condition for CH
+            return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
+        }
 
-            @Override
-            public String getName() {
-                return "dijkstrabi|ch";
-            }
+        @Override
+        protected Path createAndInitPath() {
+            bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
+            return bestPath;
+        }
 
-            @Override
-            public String toString() {
-                return getName() + "|" + prepareWeighting;
-            }
-        };
+        @Override
+        public String getName() {
+            return "dijkstrabi|ch";
+        }
+
+        @Override
+        public String toString() {
+            return getName() + "|" + weighting;
+        }
     }
 
     @Override
