@@ -427,7 +427,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
     }
 
-    private boolean spatialRuleLookupEnabled(){
+    public boolean spatialRuleLookupEnabled(){
         if (spatialRules > 0) {
             if (spatialRuleLookup == null)
                 throw new IllegalStateException("This encoder was asked to store spatial IDs for every edge, " +
@@ -829,6 +829,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
 
     public DataFlagEncoder setSpatialRules(int rules) {
+        if(rules > 0){
+            // Add +1 for the Empty rule
+            rules++;
+        }
         this.spatialRules = rules;
         return this;
     }

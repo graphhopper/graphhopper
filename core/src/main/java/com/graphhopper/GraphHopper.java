@@ -497,6 +497,10 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
+    public FlagEncoderFactory getFlagEncoderFactory() {
+        return this.flagEncoderFactory;
+    }
+
     /**
      * Reads configuration from a CmdArgs object. Which can be manually filled, or via main(String[]
      * args) ala CmdArgs.read(args) or via configuration file ala

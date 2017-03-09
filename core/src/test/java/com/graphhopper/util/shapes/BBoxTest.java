@@ -146,4 +146,9 @@ public class BBoxTest {
         // stable parsing, i.e. if first point is in north or south it does not matter:
         assertEquals(new BBox(2, 4, 1, 3), BBox.parseTwoPoints("3,2,1,4"));
     }
+
+    @Test
+    public void testParseBBoxString() {
+        assertEquals(new BBox(2, 4, 1, 3), BBox.parseBBoxString("2,4,1,3"));
+    }
 }
