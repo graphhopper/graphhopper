@@ -42,8 +42,7 @@ public class DAType {
      */
     public static final DAType RAM_INT_STORE = new DAType(MemRef.HEAP, true, true, true);
     /**
-     * Memory mapped DA object. See MMapDataAccess. To make it read and write thread-safe you need
-     * to use 'new DAType(MMAP, true)'
+     * Memory mapped DA object. See MMapDataAccess.
      */
     public static final DAType MMAP = new DAType(MemRef.MMAP, true, false, true);
 
