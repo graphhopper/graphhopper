@@ -279,21 +279,19 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     public void prepare(final StorableProperties properties) {
         ExecutorCompletionService completionService = new ExecutorCompletionService<>(threadPool);
-        List<Future> runningPreparations = new ArrayList<>(getPreparations().size());
-
         int counter = 0;
         for (final PrepareContractionHierarchies prepare : getPreparations()) {
             LOGGER.info((++counter) + "/" + getPreparations().size() + " calling CH prepare.doWork for " + prepare.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
             final String name = AbstractWeighting.weightingToFileName(prepare.getWeighting());
             final int finalCounter = counter;
-            runningPreparations.add(completionService.submit(new Callable<Void>() {
+            completionService.submit(new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
                     String errorKey = CH.PREPARE + "error." + name;
                     try {
                         // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                         Thread.currentThread().setName(name);
-                        if(finalCounter == 1){
+                        if (finalCounter == 1) {
                             throw new Exception("I want to see this early!");
                         }
                         properties.put(errorKey, "CH preparation incomplete");
@@ -307,21 +305,18 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                     }
                     return null;
                 }
-            }));
+            });
 
         }
 
         threadPool.shutdown();
 
         try {
-            for(int i=0; i< getPreparations().size(); i++){
+            for (int i = 0; i < getPreparations().size(); i++) {
                 completionService.take().get();
             }
         } catch (Exception e) {
-            for (Future f: runningPreparations) {
-                f.cancel(true);
-
-            }
+            threadPool.shutdownNow();
             throw new RuntimeException(e);
         }
     }
