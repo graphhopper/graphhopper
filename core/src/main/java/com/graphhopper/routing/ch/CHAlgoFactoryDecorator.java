@@ -283,7 +283,6 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         for (final PrepareContractionHierarchies prepare : getPreparations()) {
             LOGGER.info((++counter) + "/" + getPreparations().size() + " calling CH prepare.doWork for " + prepare.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
             final String name = AbstractWeighting.weightingToFileName(prepare.getWeighting());
-            final int finalCounter = counter;
             completionService.submit(new Callable<Void>() {
                 @Override
                 public Void call() throws Exception {
@@ -291,9 +290,6 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                     try {
                         // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                         Thread.currentThread().setName(name);
-                        if (finalCounter == 1) {
-                            throw new Exception("I want to see this early!");
-                        }
                         properties.put(errorKey, "CH preparation incomplete");
                         prepare.doWork();
                         properties.remove(errorKey);
