@@ -46,7 +46,7 @@ public class DebugDijkstraBidirection extends DijkstraBidirectionRef implements 
     @Override
     public void updateBestPath(EdgeIteratorState es, SPTEntry bestEE, int currLoc) {
         if (g2 != null) {
-            mg.plotNode(g2, currLoc, Color.BLUE);
+            mg.plotNode(g2, currLoc, Color.YELLOW);
         }
         // System.out.println("new node:" + currLoc);
         super.updateBestPath(es, bestEE, currLoc);
