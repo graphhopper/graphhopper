@@ -332,9 +332,20 @@ public class DataFlagEncoderTest {
             }
         };
 
-        SpatialRuleLookup index = new SpatialRuleLookupBuilder().build("GermanySpatialRule",
+        SpatialRuleLookup index = new SpatialRuleLookupBuilder().build(
+                new SpatialRuleLookupBuilder.SpatialRuleFactory() {
+                    @Override
+                    public SpatialRule createSpatialRule(String id, List<Polygon> polygons) {
+                        if (id.equals("DEU")) {
+                            SpatialRule rule = new GermanySpatialRule();
+                            rule.setBorders(polygons);
+                            return rule;
+                        }
+                        return SpatialRule.EMPTY;
+                    }
+                },
                 jsonFeatures, bbox, 1, false);
-        DataFlagEncoder encoder = new DataFlagEncoder(new PMap().put("spatial_rules", index.size()-1));
+        DataFlagEncoder encoder = new DataFlagEncoder(new PMap().put("spatial_rules", index.size() - 1));
         encoder.setSpatialRuleLookup(index);
         EncodingManager em = new EncodingManager(encoder);
 

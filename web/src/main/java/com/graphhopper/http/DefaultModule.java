@@ -27,11 +27,15 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.FlagEncoderFactory;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.BBox;
@@ -43,6 +47,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
+import java.util.HashMap;
 
 /**
  * @author Peter Karich
@@ -71,7 +76,7 @@ public class DefaultModule extends AbstractModule {
     static SpatialRuleLookup buildIndex(Reader reader, String rules, BBox bbox) {
         GHJson ghJson = new GHJsonBuilder().create();
         JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(reader, JsonFeatureCollection.class);
-        return new SpatialRuleLookupBuilder().build(rules, jsonFeatureCollection, bbox, 1, true);
+        return new SpatialRuleLookupBuilder().build(new SpatialRuleListReflectionFactory(rules), jsonFeatureCollection, bbox, 1, true);
     }
 
     /**
@@ -102,27 +107,39 @@ public class DefaultModule extends AbstractModule {
 
                 super.loadOrPrepareLM();
             }
-        }.forServer().init(args);
+        }.forServer();
 
         String spatialRuleLocation = args.get("spatial_rules.location", "");
         if (!spatialRuleLocation.isEmpty()) {
-            if (!tmp.getEncodingManager().supports(("generic"))) {
-                logger.warn("spatial_rules.location was specified but 'generic' encoder is missing to utilize the index");
-            } else
-                try {
-                    String ruleFQN = args.get("spatial_rules.fqn", "");
-                    SpatialRuleLookup index = buildIndex(new FileReader(spatialRuleLocation), ruleFQN);
-                    if (index != null) {
-                        logger.info("Set spatial rule lookup with " + index.size() + " rules and the following Rules " + ruleFQN);
-                        ((DataFlagEncoder) tmp.getEncodingManager().getEncoder("generic")).setSpatialRuleLookup(index);
-                    } else {
-                        // Throws an exception if spatialRuleLookup was enabled
-                        ((DataFlagEncoder) tmp.getEncodingManager().getEncoder("generic")).spatialRuleLookupEnabled();
-                    }
-                } catch (IOException ex) {
-                    throw new RuntimeException(ex);
+            try {
+                String ruleFQN = args.get("spatial_rules.fqn", "");
+                final SpatialRuleLookup index = buildIndex(new FileReader(spatialRuleLocation), ruleFQN);
+                if (index != null) {
+                    logger.info("Set spatial rule lookup with " + index.size() + " rules and the following Rules " + ruleFQN);
+                    final FlagEncoderFactory oldFEF = tmp.getFlagEncoderFactory();
+                    tmp.setFlagEncoderFactory(new FlagEncoderFactory() {
+                        @Override
+                        public FlagEncoder createFlagEncoder(String name, PMap configuration) {
+                            if (name.equals(GENERIC)) {
+                                configuration.put("spatial_rules", index.size()-1);
+                                return new DataFlagEncoder(configuration).setSpatialRuleLookup(index);
+                            }
+
+                            return oldFEF.createFlagEncoder(name, configuration);
+                        }
+                    });
+                } else {
+                    throw new IllegalArgumentException("Even though you enabled the SpatialRuleLookup the result is null");
                 }
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
+            }
         }
+
+
+        tmp.init(args);
+
+
         tmp.importOrLoad();
         logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
                 + ", data_reader_file:" + tmp.getDataReaderFile()
@@ -151,5 +168,39 @@ public class DefaultModule extends AbstractModule {
         } catch (Exception ex) {
             throw new IllegalStateException("Couldn't load graph", ex);
         }
+    }
+
+    public static class SpatialRuleListReflectionFactory extends SpatialRuleLookupBuilder.SpatialRuleListFactory {
+        public SpatialRuleListReflectionFactory(String rules) {
+            this(rules.split(","));
+        }
+
+        public SpatialRuleListReflectionFactory(String... rules) {
+            if (rules.length == 0) {
+                throw new IllegalStateException("You have to pass at least one rule");
+            }
+            ruleMap = new HashMap<>(rules.length);
+            for (String rule : rules) {
+                try {
+                    // Makes it easy to define a rule as CountrySpatialRule and skip the fqn
+                    if (!rule.contains(".")) {
+                        rule = "com.graphhopper.routing.util.spatialrules.countries." + rule;
+                    }
+                    Object o = Class.forName(rule).newInstance();
+                    if (SpatialRule.class.isAssignableFrom(o.getClass())) {
+                        ruleMap.put(((SpatialRule) o).getId(), (SpatialRule) o);
+                    } else {
+                        String ex = "Cannot find SpatialRule for rule " + rule + " but found " + o.getClass();
+                        logger.error(ex);
+                        throw new IllegalArgumentException(ex);
+                    }
+                } catch (ReflectiveOperationException e) {
+                    String ex = "Cannot find SpatialRule for rule " + rule;
+                    logger.error(ex);
+                    throw new IllegalArgumentException(ex, e);
+                }
+            }
+        }
+
     }
 }

@@ -44,43 +44,13 @@ public class SpatialRuleLookupBuilder {
     }
 
     public static class SpatialRuleListFactory implements SpatialRuleFactory {
-        private final Logger logger = LoggerFactory.getLogger(getClass());
-        private final Map<String, SpatialRule> ruleMap;
+        protected final Logger logger = LoggerFactory.getLogger(getClass());
+        protected Map<String, SpatialRule> ruleMap;
 
         public SpatialRuleListFactory(SpatialRule... rules) {
             this(Arrays.asList(rules));
         }
 
-        public SpatialRuleListFactory(String rules) {
-            this(rules.split(","));
-        }
-
-        public SpatialRuleListFactory(String... rules) {
-            if (rules.length == 0) {
-                throw new IllegalStateException("You have to pass at least one rule");
-            }
-            ruleMap = new HashMap<>(rules.length);
-            for (String rule : rules) {
-                try {
-                    // Makes it easy to define a rule as CountrySpatialRule and skip the fqn
-                    if (!rule.contains(".")) {
-                        rule = "com.graphhopper.routing.util.spatialrules.countries." + rule;
-                    }
-                    Object o = Class.forName(rule).newInstance();
-                    if (SpatialRule.class.isAssignableFrom(o.getClass())) {
-                        ruleMap.put(((SpatialRule) o).getId(), (SpatialRule) o);
-                    } else {
-                        String ex = "Cannot find SpatialRule for rule " + rule + " but found " + o.getClass();
-                        logger.error(ex);
-                        throw new IllegalArgumentException(ex);
-                    }
-                } catch (ReflectiveOperationException e) {
-                    String ex = "Cannot find SpatialRule for rule " + rule;
-                    logger.error(ex);
-                    throw new IllegalArgumentException(ex, e);
-                }
-            }
-        }
 
         public SpatialRuleListFactory(List<SpatialRule> rules) {
             ruleMap = new HashMap<>(rules.size());
@@ -115,9 +85,9 @@ public class SpatialRuleLookupBuilder {
         }
     }
 
-    public SpatialRuleLookup build(String rulesFQN, JsonFeatureCollection jsonFeatureCollection, BBox bounds,
+    public SpatialRuleLookup build(SpatialRuleFactory ruleFactory, JsonFeatureCollection jsonFeatureCollection, BBox bounds,
                                    double resolution, boolean exact) {
-        return build("ISO_A3", new SpatialRuleListFactory(rulesFQN), jsonFeatureCollection, bounds, resolution, exact);
+        return build("ISO_A3", ruleFactory, jsonFeatureCollection, bounds, resolution, exact);
     }
 
     /**
