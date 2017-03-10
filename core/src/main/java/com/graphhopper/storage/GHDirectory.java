@@ -117,9 +117,6 @@ public class GHDirectory implements Directory {
             da = new UnsafeDataAccess(name, location, byteOrder);
         }
 
-        if (type.isSynched())
-            da = new SynchedDAWrapper(da);
-
         map.put(name, da);
         return da;
     }
