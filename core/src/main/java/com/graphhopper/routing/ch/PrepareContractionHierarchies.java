@@ -270,11 +270,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                         + ", algo:" + prepareAlgo.getMemoryUsageAsString()
                         + ", " + Helper.getMemInfo());
 
-                if(Thread.interrupted()){
-                    logger.warn("Thread was interrupted");
-                    throw new RuntimeException("Thread was interrupted");
-                }
-
                 dijkstraSW = new StopWatch();
                 periodSW = new StopWatch();
                 lazySW = new StopWatch();
@@ -324,6 +319,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 }
 
                 prepareGraph.disconnect(vehicleAllTmpExplorer, iter);
+            }
+
+            if(Thread.currentThread().isInterrupted()){
+                throw new RuntimeException("Thread was interrupted");
             }
         }
 

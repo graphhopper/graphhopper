@@ -294,12 +294,12 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                         prepare.doWork();
                         properties.remove(errorKey);
                         properties.put(CH.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
+                        return null;
                     } catch (Exception ex) {
                         LOGGER.error("Problem while CH preparation " + name, ex);
                         properties.put(errorKey, ex.getMessage());
                         throw ex;
                     }
-                    return null;
                 }
             });
 
