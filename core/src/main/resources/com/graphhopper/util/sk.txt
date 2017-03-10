@@ -50,6 +50,7 @@ roundabout_exit=Na kruhovom objazde, ho opustite cez %1$s. výjazd
 roundabout_exit_onto=Na kruhovom objazde, ho opustite cez %1$s. výjazd na %2$s
 total_ascend=%1$s celkové stúpanie
 total_descend=%1$s celkové klesanie
+way_contains_ford=
 web.start_label=Začiatok
 web.intermediate_label=Bod trasy
 web.end_label=Koniec

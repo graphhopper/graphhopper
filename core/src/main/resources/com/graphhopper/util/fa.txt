@@ -50,6 +50,7 @@ roundabout_exit=در میدان خروجی  %1$s را انتخاب کنید
 roundabout_exit_onto=در میدان خروجی  %1$s به %2$s را انتخاب کنید
 total_ascend=
 total_descend=
+way_contains_ford=
 web.start_label=
 web.intermediate_label=
 web.end_label=

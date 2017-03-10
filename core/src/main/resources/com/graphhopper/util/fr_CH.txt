@@ -50,6 +50,7 @@ roundabout_exit=Au giratoire, prenez la %1$s sortie
 roundabout_exit_onto=Au giratoire, prenez la %1$s sortie vers %2$s
 total_ascend=%1$s de dénivelé positif
 total_descend=%1$s de dénivelé négatif
+way_contains_ford=
 web.start_label=Départ
 web.intermediate_label=Point intermédiaire
 web.end_label=Arrivée

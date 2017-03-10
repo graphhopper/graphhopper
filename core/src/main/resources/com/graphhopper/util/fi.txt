@@ -50,6 +50,7 @@ roundabout_exit=Liikenneympyrästä poistu %1$s. liittymästä
 roundabout_exit_onto=Liikenneympyrästä poistu %1$s. liittymästä suuntaan %2$s
 total_ascend=
 total_descend=
+way_contains_ford=
 web.start_label=
 web.intermediate_label=
 web.end_label=
