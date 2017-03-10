@@ -272,7 +272,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             }
         }
 
-        if (spatialRuleLookupEnabled() && accessValue == 0) {
+        if (isSpatialRuleLookupEnabled() && accessValue == 0) {
             // TODO Fix transportation mode when adding other forms of transportation
             switch (getSpatialRule(way).getAccessValue(way.getTag("highway", ""), TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE)) {
                 case ACCESSIBLE:
@@ -324,7 +324,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             // MAXSPEED
             double maxSpeed = parseSpeed(way.getTag("maxspeed"));
-            if (spatialRuleLookupEnabled() && maxSpeed < 0) {
+            if (isSpatialRuleLookupEnabled() && maxSpeed < 0) {
                 // TODO What if no maxspeed is set, but only forward and backward, and both are higher than the usually allowed?
                 maxSpeed = getSpatialRule(way).getMaxSpeed(way.getTag("highway", ""), maxSpeed);
             }
@@ -412,7 +412,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             flags = accessEncoder.setValue(flags, getAccessValue(way));
 
 
-            if (spatialRuleLookupEnabled()) {
+            if (isSpatialRuleLookupEnabled()) {
                 GHPoint estimatedCenter = way.getTag("estimated_center", null);
                 if (estimatedCenter != null) {
                     SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
@@ -426,7 +426,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
     }
 
-    private boolean spatialRuleLookupEnabled() {
+    private boolean isSpatialRuleLookupEnabled() {
         if (spatialRules > 0) {
             if (spatialRuleLookup == null)
                 throw new IllegalStateException("This encoder was asked to store spatial IDs for every edge, " +
