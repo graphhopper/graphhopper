@@ -31,10 +31,6 @@ public class EncodedDoubleValue extends EncodedValue {
 
     public EncodedDoubleValue(String name, int shift, int bits, double factor, long defaultValue, int maxValue, boolean allowZero) {
         super(name, shift, bits, factor, defaultValue, maxValue, allowZero);
-        double factorDivision = maxValue / factor;
-        if (factorDivision != (int) factorDivision) {
-            throw new IllegalStateException("MaxValue needs to be divisible by factor without remainder");
-        }
     }
 
     @Override
