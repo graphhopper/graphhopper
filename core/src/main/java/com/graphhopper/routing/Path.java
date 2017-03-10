@@ -485,8 +485,6 @@ public class Path {
                     prevAnnotation = annotation;
 
                 } else {
-
-                    prevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
                     int sign = getTurn(latitude, longitude, baseNode, prevNode, adjNode);
 
                     if (sign != Instruction.IGNORE) {
@@ -753,6 +751,7 @@ public class Path {
 
 
             private double calculateOrientationDelta(double latitude, double longitude) {
+                prevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
                 double orientation = AC.calcOrientation(prevLat, prevLon, latitude, longitude);
                 orientation = AC.alignOrientation(prevOrientation, orientation);
                 return orientation - prevOrientation;
