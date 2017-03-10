@@ -485,9 +485,11 @@ public class Path {
                     prevAnnotation = annotation;
 
                 } else {
-                    int sign = calculateSign(latitude, longitude);
 
-                    if (isTurn(sign, baseNode, prevNode, adjNode)) {
+                    prevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
+                    int sign = getTurn(latitude, longitude, baseNode, prevNode, adjNode);
+
+                    if (sign != Instruction.IGNORE) {
                         prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
                         ways.add(prevInstruction);
                         prevAnnotation = annotation;
@@ -527,35 +529,34 @@ public class Path {
                 }
             }
 
-            private boolean isTurn(int sign, int baseNode, int prevNode, int adjNode) {
-                // TODO remove boolean, just for testing right now
-                boolean improvedTurninstruction = true;
-                if (improvedTurninstruction) {
-                    // TODO Assume that if the annotation changes, but only if the current instruction is not empty
-                    // For example, get of bike
-                    if (!annotation.equals(prevAnnotation) && !annotation.isEmpty()) {
-                        return true;
-                    }
+            private int getTurn(double lat, double lon, int baseNode, int prevNode, int adjNode) {
+                int sign = calculateSign(lat, lon);
 
-                    int nrOfPossibleTurns = nrOfPossibleTurns(baseNode, prevNode, adjNode);
+                // TODO Assume that if the annotation changes, but only if the current instruction is not empty
+                // For example, get of bike
+                if (!annotation.equals(prevAnnotation) && !annotation.isEmpty()) {
+                    return sign;
+                }
 
-                    // there is no other turn possible
-                    if (nrOfPossibleTurns <= 1) {
-                        return false;
-                    }
+                int nrOfPossibleTurns = nrOfPossibleTurns(baseNode, prevNode, adjNode);
 
-                    // Very certain, this is a turn
-                    if (Math.abs(sign) > 1) {
+                // there is no other turn possible
+                if (nrOfPossibleTurns <= 1) {
+                    return Instruction.IGNORE;
+                }
+
+                // Very certain, this is a turn
+                if (Math.abs(sign) > 1) {
                         /*
                          * Don't show an instruction if the user is following a street, even though the street is
                          * bending. We should only do this, if following the street is the obvious choice.
                          */
-                        if (isNameSimilar(name, prevName) && surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 2)) {
-                            return false;
-                        }
-
-                        return true;
+                    if (isNameSimilar(name, prevName) && surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 2)) {
+                        return Instruction.IGNORE;
                     }
+
+                    return sign;
+                }
 
                     /*
                     The current state is a bit uncertain. So we are going more or less straight sign < 2
@@ -564,61 +565,74 @@ public class Path {
                     need a turn instruction
                      */
 
-                    int prevEdge = -1;
-                    int edge = -1;
-                    EdgeIterator flagIter = crossingExplorer.setBaseNode(baseNode);
-                    while (flagIter.next()) {
-                        if (flagIter.getAdjNode() == prevNode || flagIter.getBaseNode() == prevNode)
-                            prevEdge = flagIter.getEdge();
+                int prevEdge = -1;
+                int edge = -1;
+                EdgeIterator flagIter = crossingExplorer.setBaseNode(baseNode);
+                while (flagIter.next()) {
+                    if (flagIter.getAdjNode() == prevNode || flagIter.getBaseNode() == prevNode)
+                        prevEdge = flagIter.getEdge();
 
-                        if (flagIter.getAdjNode() == adjNode || flagIter.getBaseNode() == adjNode)
-                            edge = flagIter.getEdge();
+                    if (flagIter.getAdjNode() == adjNode || flagIter.getBaseNode() == adjNode)
+                        edge = flagIter.getEdge();
 
-                    }
-                    if (prevEdge == -1 || edge == -1) {
-                        throw new IllegalStateException("Couldn't find the edges for " + prevNode + "-" + baseNode + "-" + adjNode);
-                    }
-
-                    long flag = graph.getEdgeIteratorState(edge, adjNode).getFlags();
-                    long prevFlag = graph.getEdgeIteratorState(prevEdge, baseNode).getFlags();
-
-                    boolean leavingCurrentStreet = isLeavingCurrentStreet(flag, prevFlag, baseNode, prevNode, adjNode);
-
-                    boolean surroundingStreetsAreSlower = surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 1);
-
-                    // Leave the current road -> create instruction
-                    if (leavingCurrentStreet
-                            && !surroundingStreetsAreSlower) {
-                        return true;
-                    }
-
-                    // There are too many cases where this leads to unwanted continues
-                    if (sign == Instruction.CONTINUE_ON_STREET) {
-                        return false;
-                    }
-
-                    // There is at least one other possibility to turn, and we are almost going straight
-                    // Check the other turns if one of them is also going almost straight
-                    // If not, we don't need a turn instruction
-                    boolean otherContinue = isThereAnotherContinue(baseNode, prevNode, adjNode);
-
-
-                    // This state is bad! Two streets are going more or less straight
-                    // Happens a lot for trunk_links
-                    // For _links, comparing flags works quite good, as links usually have different speeds => different flags
-                    if (otherContinue) {
-                        // The idea is, if there are only a random tracks, they usually don't have names and they
-                        // usually don't have any special flags (e.g. speed limit).
-                        // In this case we should force the turn instruction.
-                        return !(isNameSimilar(name, prevName) &&
-                                prevFlag == flag &&
-                                surroundingStreetsAreSlower);
-                    }
-
-                    return false;
-                } else {
-                    return ((!name.equals(prevName)) || (!annotation.equals(prevAnnotation)));
                 }
+                if (prevEdge == -1 || edge == -1) {
+                    throw new IllegalStateException("Couldn't find the edges for " + prevNode + "-" + baseNode + "-" + adjNode);
+                }
+
+                long flag = graph.getEdgeIteratorState(edge, adjNode).getFlags();
+                long prevFlag = graph.getEdgeIteratorState(prevEdge, baseNode).getFlags();
+
+                boolean leavingCurrentStreet = isLeavingCurrentStreet(flag, prevFlag, baseNode, prevNode, adjNode);
+
+                boolean surroundingStreetsAreSlower = surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 1);
+
+                // There is at least one other possibility to turn, and we are almost going straight
+                // Check the other turns if one of them is also going almost straight
+                // If not, we don't need a turn instruction
+                EdgeIteratorState otherContinue = getOtherContinue(baseNode, prevNode, adjNode);
+
+                // This state is bad! Two streets are going more or less straight
+                // Happens a lot for trunk_links
+                // For _links, comparing flags works quite good, as links usually have different speeds => different flags
+                if (otherContinue != null) {
+                    //We are at a fork
+                    if (!isNameSimilar(name, prevName)
+                            || isNameSimilar(otherContinue.getName(), prevName)
+                            || prevFlag != flag
+                            || prevFlag == otherContinue.getFlags()
+                            || !surroundingStreetsAreSlower) {
+                        // Evidence shows that this might need an instruction
+                        double tmpLat;
+                        double tmpLon;
+                        PointList tmpWayGeo = otherContinue.fetchWayGeometry(3);
+                        if (tmpWayGeo.getSize() <= 2) {
+                            tmpLat = nodeAccess.getLatitude(otherContinue.getAdjNode());
+                            tmpLon = nodeAccess.getLongitude(otherContinue.getAdjNode());
+                        } else {
+                            tmpLat = tmpWayGeo.getLatitude(1);
+                            tmpLon = tmpWayGeo.getLongitude(1);
+                        }
+                        double otherDelta = calculateOrientationDelta(tmpLat, tmpLon);
+                        double delta = calculateOrientationDelta(lat, lon);
+
+                        if (otherDelta < delta) {
+                            return Instruction.KEEP_LEFT;
+                        } else {
+                            return Instruction.KEEP_RIGHT;
+                        }
+
+
+                    }
+                }
+
+                // Leave the current road -> create instruction
+                if (leavingCurrentStreet
+                        && !surroundingStreetsAreSlower) {
+                    return sign;
+                }
+
+                return Instruction.IGNORE;
             }
 
             /**
@@ -657,7 +671,7 @@ public class Path {
             /**
              * Checks the other crossings for a street that is going more or less straight
              */
-            private boolean isThereAnotherContinue(int baseNode, int prevNode, int adjNode) {
+            private EdgeIteratorState getOtherContinue(int baseNode, int prevNode, int adjNode) {
                 EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
                 int tmpSign;
                 while (edgeIter.next()) {
@@ -674,11 +688,11 @@ public class Path {
                         }
                         tmpSign = calculateSign(tmpLat, tmpLon);
                         if (Math.abs(tmpSign) <= 1) {
-                            return true;
+                            return edgeIter;
                         }
                     }
                 }
-                return false;
+                return null;
             }
 
             /**
@@ -734,30 +748,18 @@ public class Path {
                 if (name1.equals(name2)) {
                     return true;
                 }
-                // TODO Copied from the name similarity filter
-                // TODO Check only for the ref and not the full street name?
-                // Do jaro winkler on the full name and not just the ref
-                // Refs are oftimes similar like 'K 4313' is similar to 'K 4312'
-                if (jaroWinkler.similarity(name1, name2) > .79) {
-                    return true;
-                }
-
-                return (getRef(name1).equals(getRef(name2)));
+                return false;
             }
 
 
-            private String getRef(String name) {
-                int index = name.lastIndexOf(',');
-                if (index > 0 && name.length() > index + 2)
-                    return name.substring(index + 2);
-                return name;
+            private double calculateOrientationDelta(double latitude, double longitude) {
+                double orientation = AC.calcOrientation(prevLat, prevLon, latitude, longitude);
+                orientation = AC.alignOrientation(prevOrientation, orientation);
+                return orientation - prevOrientation;
             }
 
             private int calculateSign(double latitude, double longitude) {
-                prevOrientation = AC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
-                double orientation = AC.calcOrientation(prevLat, prevLon, latitude, longitude);
-                orientation = AC.alignOrientation(prevOrientation, orientation);
-                double delta = orientation - prevOrientation;
+                double delta = calculateOrientationDelta(latitude, longitude);
                 double absDelta = Math.abs(delta);
 
                 // TODO not only calculate the mathematical orientation, but also compare to other streets

@@ -433,7 +433,7 @@ public class PathTest {
         InstructionList wayList = p.calcInstructions(tr);
 
         assertEquals(3, wayList.size());
-        assertEquals(-1, wayList.get(1).getSign());
+        assertEquals(-7, wayList.get(1).getSign());
     }
 
 
@@ -462,7 +462,7 @@ public class PathTest {
         InstructionList wayList = p.calcInstructions(tr);
 
         assertEquals(3, wayList.size());
-        assertEquals(0, wayList.get(1).getSign());
+        assertEquals(-7, wayList.get(1).getSign());
     }
 
     @Test
@@ -490,7 +490,7 @@ public class PathTest {
         // Contain start, turn, and finish instruction
         assertEquals(3, wayList.size());
         // Assert turn right
-        assertEquals(1, wayList.get(1).getSign());
+        assertEquals(7, wayList.get(1).getSign());
     }
 
     @Test

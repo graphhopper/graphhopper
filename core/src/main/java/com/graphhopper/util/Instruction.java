@@ -33,6 +33,9 @@ public class Instruction {
     public static final int FINISH = 4;
     public static final int REACHED_VIA = 5;
     public static final int USE_ROUNDABOUT = 6;
+    public static final int IGNORE = Integer.MIN_VALUE;
+    public static final int KEEP_LEFT = -7;
+    public static final int KEEP_RIGHT = 7;
     private static final AngleCalc AC = Helper.ANGLE_CALC;
     protected final PointList points;
     protected final InstructionAnnotation annotation;
@@ -237,6 +240,9 @@ public class Instruction {
         } else {
             String dir = null;
             switch (indi) {
+                case Instruction.KEEP_LEFT:
+                    dir = tr.tr("keep_left");
+                    break;
                 case Instruction.TURN_SHARP_LEFT:
                     dir = tr.tr("turn_sharp_left");
                     break;
@@ -254,6 +260,9 @@ public class Instruction {
                     break;
                 case Instruction.TURN_SHARP_RIGHT:
                     dir = tr.tr("turn_sharp_right");
+                    break;
+                case Instruction.KEEP_RIGHT:
+                    dir = tr.tr("keep_right");
                     break;
             }
             if (dir == null)
