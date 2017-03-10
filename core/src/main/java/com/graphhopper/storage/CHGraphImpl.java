@@ -523,8 +523,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public boolean canBeOverwritten(long flags) {
-            return PrepareEncoder.canBeOverwritten(getDirectFlags(), flags);
+        public int getMergeStatus(long flags) {
+            return PrepareEncoder.getScMergeStatus(getDirectFlags(), flags);
         }
     }
 
@@ -619,8 +619,8 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public boolean canBeOverwritten(long flags) {
-            return PrepareEncoder.canBeOverwritten(getDirectFlags(), flags);
+        public int getMergeStatus(long flags) {
+            return PrepareEncoder.getScMergeStatus(getDirectFlags(), flags);
         }
     }
 }

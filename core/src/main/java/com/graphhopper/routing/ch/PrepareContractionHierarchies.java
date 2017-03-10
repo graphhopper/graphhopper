@@ -27,10 +27,7 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
@@ -281,6 +278,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             counter++;
             int polledNode = sortedNodes.pollKey();
+
             if (!sortedNodes.isEmpty() && sortedNodes.getSize() < lastNodesLazyUpdates) {
                 lazySW.start();
                 int priority = oldPriorities[polledNode] = calculatePriority(polledNode);
@@ -293,8 +291,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 lazySW.stop();
             }
 
-            // contract!
-            newShortcuts += addShortcuts(polledNode);
+            // contract node v!
+            shortcuts.clear();
+            findShortcuts(addScHandler.setNode(polledNode));
+            newShortcuts += addShortcuts(shortcuts.keySet());
             prepareGraph.setLevel(polledNode, level);
             level++;
 
@@ -505,19 +505,27 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     /**
      * Introduces the necessary shortcuts for adjNode v in the graph.
      */
-    int addShortcuts(int v) {
-        shortcuts.clear();
-        findShortcuts(addScHandler.setNode(v));
+    int addShortcuts(Collection<Shortcut> tmpShortcuts) {
         int tmpNewShortcuts = 0;
         NEXT_SC:
-        for (Shortcut sc : shortcuts.keySet()) {
+        for (Shortcut sc : tmpShortcuts) {
             boolean updatedInGraph = false;
             // check if we need to update some existing shortcut in the graph
             CHEdgeIterator iter = vehicleOutExplorer.setBaseNode(sc.from);
             while (iter.next()) {
-                if (iter.isShortcut() && iter.getAdjNode() == sc.to && iter.canBeOverwritten(sc.flags)) {
-                    if (sc.weight >= prepareWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE))
+                if (iter.isShortcut() && iter.getAdjNode() == sc.to) {
+                    int status = iter.getMergeStatus(sc.flags);
+                    if (status == 0)
+                        continue;
+
+                    if (sc.weight >= prepareWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE)) {
+                        // special case if a bidirectional shortcut has worse weight and still has to be added as otherwise the opposite direction would be missing
+                        // see testShortcutMergeBug
+                        if (status == 2)
+                            break;
+
                         continue NEXT_SC;
+                    }
 
                     if (iter.getEdge() == sc.skippedEdge1 || iter.getEdge() == sc.skippedEdge2) {
                         throw new IllegalStateException("Shortcut cannot update itself! " + iter.getEdge()
@@ -871,7 +879,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 }
             }
 
-            shortcuts.put(sc, sc);
+            Shortcut old = shortcuts.put(sc, sc);
+            if (old != null)
+                throw new IllegalStateException("Shortcut did not exist (" + sc + ") but was overwriting another one? " + old);
+
             sc.skippedEdge1 = skippedEdge1;
             sc.skippedEdge2 = outgoingEdges.getEdge();
             sc.originalEdges = incomingEdgeOrigCount + getOrigEdgeCount(outgoingEdges.getEdge());
