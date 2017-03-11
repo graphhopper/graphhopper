@@ -19,10 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.util.spatialrules.AccessValue;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
+import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
@@ -91,8 +88,32 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private boolean storeWeight = false;
     private boolean storeWidth = false;
     private EncodedValue spatialEncoder;
-    private int spatialRules = 0;
-    private SpatialRuleLookup spatialRuleLookup;
+    private SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookup() {
+        @Override
+        public SpatialRule lookupRule(double lat, double lon) {
+            return SpatialRule.EMPTY;
+        }
+
+        @Override
+        public SpatialRule lookupRule(GHPoint point) {
+            return SpatialRule.EMPTY;
+        }
+
+        @Override
+        public void addRule(SpatialRule rule) {
+
+        }
+
+        @Override
+        public int getSpatialId(SpatialRule rule) {
+            return 0;
+        }
+
+        @Override
+        public int size() {
+            return 0;
+        }
+    };
 
     public DataFlagEncoder() {
         this(5, 5, 0);
@@ -216,8 +237,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         accessEncoder = new EncodedValue("access car", shift, 3, 1, 1, 4, true);
         shift += accessEncoder.getBits();
 
-        if (spatialRules > 0) {
-            int tmpMax = spatialRules + 1;
+        if (spatialRuleLookup.size() - 1 > 0) {
+            int tmpMax = spatialRuleLookup.size();
             int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
             spatialEncoder = new EncodedValue("spatial_location", shift, bits, 1, 1, tmpMax, true);
             shift += spatialEncoder.getBits();
@@ -272,7 +293,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             }
         }
 
-        if (spatialRuleLookupEnabled() && accessValue == 0) {
+        if (accessValue == 0) {
             // TODO Fix transportation mode when adding other forms of transportation
             switch (getSpatialRule(way).getAccessValue(way.getTag("highway", ""), TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE)){
                 case ACCESSIBLE:
@@ -324,7 +345,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             // MAXSPEED
             double maxSpeed = parseSpeed(way.getTag("maxspeed"));
-            if (spatialRuleLookupEnabled() && maxSpeed < 0) {
+            if (maxSpeed < 0) {
                 // TODO What if no maxspeed is set, but only forward and backward, and both are higher than the usually allowed?
                 maxSpeed = getSpatialRule(way).getMaxSpeed(way.getTag("highway", ""), maxSpeed);
             }
@@ -411,13 +432,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             flags = accessEncoder.setValue(flags, getAccessValue(way));
 
-
-            if(spatialRuleLookupEnabled()){
-                GHPoint estimatedCenter = way.getTag("estimated_center", null);
-                if (estimatedCenter != null) {
-                    SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
-                    flags = spatialEncoder.setValue(flags, spatialRuleLookup.getSpatialId(rule));
-                }
+            GHPoint estimatedCenter = way.getTag("estimated_center", null);
+            if (estimatedCenter != null) {
+                SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
+                flags = spatialEncoder.setValue(flags, spatialRuleLookup.getSpatialId(rule));
             }
 
             return flags;
@@ -427,14 +445,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     public boolean spatialRuleLookupEnabled(){
-        if (spatialRules > 0) {
-            if (spatialRuleLookup == null)
-                throw new IllegalStateException("This encoder was asked to store spatial IDs for every edge, " +
-                        "but no spatial lookup was specified");
-
-            return true;
-        }
-        return false;
+        return true;
     }
 
     private SpatialRule getSpatialRule(ReaderWay way) {
@@ -828,10 +839,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
 
     public DataFlagEncoder setSpatialRuleLookup(SpatialRuleLookup spatialRuleLookup) {
-        if (spatialRuleLookup.size() != spatialRules)
-            throw new IllegalArgumentException("You have to configure the encoder to accept the identical amount of rules " +
-                    "that the spatial rule lookup has (" + spatialRuleLookup.size() + ") but it was " + spatialRules);
-
         this.spatialRuleLookup = spatialRuleLookup;
         return this;
     }
@@ -841,8 +848,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return super.getPropertiesString() +
                 "|store_height=" + storeHeight +
                 "|store_weight=" + storeWeight +
-                "|store_width=" + storeWidth +
-                "|spatial_rules=" + spatialRules;
+                "|store_width=" + storeWidth;
     }
 
     @Override

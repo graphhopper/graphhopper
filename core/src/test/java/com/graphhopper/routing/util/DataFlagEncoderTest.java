@@ -343,7 +343,7 @@ public class DataFlagEncoderTest {
                     }
                 },
                 jsonFeatures, 1, false);
-        DataFlagEncoder encoder = new DataFlagEncoder(new PMap().put("spatial_rules", index.size() - 1));
+        DataFlagEncoder encoder = new DataFlagEncoder(new PMap());
         encoder.setSpatialRuleLookup(index);
         EncodingManager em = new EncodingManager(encoder);
 

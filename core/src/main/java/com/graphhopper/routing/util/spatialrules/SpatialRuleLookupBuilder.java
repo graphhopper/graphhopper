@@ -131,9 +131,6 @@ public class SpatialRuleLookupBuilder {
             }
         }
 
-        if (rules.isEmpty())
-            return null;
-
         if (!polygonBounds.isValid()) {
             throw new IllegalStateException("No associated polygons found in JsonFeatureCollection for rules " + rules);
         }

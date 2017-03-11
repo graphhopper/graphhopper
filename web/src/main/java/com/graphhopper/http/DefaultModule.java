@@ -105,23 +105,18 @@ public class DefaultModule extends AbstractModule {
             try {
                 String ruleFQN = args.get("spatial_rules.fqn", "");
                 final SpatialRuleLookup index = buildIndex(new FileReader(spatialRuleLocation), ruleFQN);
-                if (index != null) {
-                    logger.info("Set spatial rule lookup with " + index.size() + " rules and the following Rules " + ruleFQN);
-                    final FlagEncoderFactory oldFEF = tmp.getFlagEncoderFactory();
-                    tmp.setFlagEncoderFactory(new FlagEncoderFactory() {
-                        @Override
-                        public FlagEncoder createFlagEncoder(String name, PMap configuration) {
-                            if (name.equals(GENERIC)) {
-                                configuration.put("spatial_rules", index.size()-1);
-                                return new DataFlagEncoder(configuration).setSpatialRuleLookup(index);
-                            }
-
-                            return oldFEF.createFlagEncoder(name, configuration);
+                logger.info("Set spatial rule lookup with " + index.size() + " rules and the following Rules " + ruleFQN);
+                final FlagEncoderFactory oldFEF = tmp.getFlagEncoderFactory();
+                tmp.setFlagEncoderFactory(new FlagEncoderFactory() {
+                    @Override
+                    public FlagEncoder createFlagEncoder(String name, PMap configuration) {
+                        if (name.equals(GENERIC)) {
+                            return new DataFlagEncoder(configuration).setSpatialRuleLookup(index);
                         }
-                    });
-                } else {
-                    throw new IllegalArgumentException("Even though you enabled the SpatialRuleLookup the result is null");
-                }
+
+                        return oldFEF.createFlagEncoder(name, configuration);
+                    }
+                });
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
