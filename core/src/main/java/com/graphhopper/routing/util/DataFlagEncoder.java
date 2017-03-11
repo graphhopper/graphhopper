@@ -106,7 +106,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         this.setStoreHeight(properties.getBool("store_height", false));
         this.setStoreWeight(properties.getBool("store_weight", false));
         this.setStoreWidth(properties.getBool("store_width", false));
-        this.setSpatialRules(properties.getInt("spatial_rules", 0));
     }
 
     public DataFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
@@ -827,15 +826,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return storeWidth;
     }
 
-
-    public DataFlagEncoder setSpatialRules(int rules) {
-        if(rules > 0){
-            // Add +1 for the Empty rule
-            rules++;
-        }
-        this.spatialRules = rules;
-        return this;
-    }
 
     public DataFlagEncoder setSpatialRuleLookup(SpatialRuleLookup spatialRuleLookup) {
         if (spatialRuleLookup.size() != spatialRules)
