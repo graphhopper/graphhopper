@@ -27,15 +27,13 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
-import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,7 +87,21 @@ public class DefaultModule extends AbstractModule {
                                 new SpatialRuleLookupBuilder.SpatialRuleDefaultFactory(), jsonFeatureCollection,
                                 0.1, true);
                         for (PrepareLandmarks prep : getLMFactoryDecorator().getPreparations()) {
-                            prep.setSpatialRuleLookup(ruleLookup);
+                            // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
+                            if (ruleLookup != null && ruleLookup.size() > 0) {
+                                prep.setCutEdges(new EdgeFilter() {
+                                    @Override
+                                    public boolean accept(EdgeIteratorState edgeState) {
+                                        int adjNode = edgeState.getAdjNode();
+                                        SpatialRule ruleAdj = ruleLookup.lookupRule(getGraphHopperStorage().getNodeAccess().getLatitude(adjNode), getGraphHopperStorage().getNodeAccess().getLongitude(adjNode));
+
+                                        int baseNode = edgeState.getBaseNode();
+                                        SpatialRule ruleBase = ruleLookup.lookupRule(getGraphHopperStorage().getNodeAccess().getLatitude(baseNode), getGraphHopperStorage().getNodeAccess().getLongitude(baseNode));
+
+                                        return edgeState.isForward(prep.getWeighting().getFlagEncoder()) && ruleAdj == ruleBase;
+                                    }
+                                });
+                            }
                         }
                     }
                 } catch (IOException ex) {

@@ -19,9 +19,8 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.util.spatialrules.Polygon;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
@@ -34,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * This class does the preprocessing for the ALT algorithm (A* , landmark, triangle inequality).
@@ -71,14 +69,6 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     }
 
     /**
-     * @see LandmarkStorage#setSpatialRuleLookup(SpatialRuleLookup)
-     */
-    public PrepareLandmarks setSpatialRuleLookup(SpatialRuleLookup ruleLookup) {
-        lms.setSpatialRuleLookup(ruleLookup);
-        return this;
-    }
-
-    /**
      * @see LandmarkStorage#setMaximumWeight(double)
      */
     public PrepareLandmarks setMaximumWeight(double maximumWeight) {
@@ -101,6 +91,10 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
             throw new IllegalArgumentException("minimum node count must be at least 2");
 
         lms.setMinimumNodes(nodes);
+    }
+
+    public void setCutEdges(EdgeFilter cutEdges) {
+        lms.setCutEdges(cutEdges);
     }
 
     LandmarkStorage getLandmarkStorage() {
