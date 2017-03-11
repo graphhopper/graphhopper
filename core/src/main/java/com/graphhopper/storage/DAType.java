@@ -74,7 +74,9 @@ public class DAType {
     public static DAType fromString(String dataAccess) {
         dataAccess = dataAccess.toUpperCase();
         DAType type;
-        if (dataAccess.contains("MMAP"))
+        if (dataAccess.contains("SYNC"))
+            throw new IllegalArgumentException("SYNC option is no longer supported, see #982");
+        else if (dataAccess.contains("MMAP"))
             type = DAType.MMAP;
         else if (dataAccess.contains("UNSAFE"))
             type = DAType.UNSAFE_STORE;
