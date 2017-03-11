@@ -55,11 +55,6 @@ public interface SpatialRuleLookup {
     int getSpatialId(SpatialRule rule);
 
     /**
-     * Returns the outer bounds of the spatial lookup.
-     */
-    BBox getBounds();
-
-    /**
      * @return the number of rules added to this lookup.
      */
     int size();

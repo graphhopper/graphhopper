@@ -85,9 +85,9 @@ public class SpatialRuleLookupBuilder {
         }
     }
 
-    public SpatialRuleLookup build(SpatialRuleFactory ruleFactory, JsonFeatureCollection jsonFeatureCollection, BBox bounds,
+    public SpatialRuleLookup build(SpatialRuleFactory ruleFactory, JsonFeatureCollection jsonFeatureCollection,
                                    double resolution, boolean exact) {
-        return build("ISO_A3", ruleFactory, jsonFeatureCollection, bounds, resolution, exact);
+        return build("ISO_A3", ruleFactory, jsonFeatureCollection, resolution, exact);
     }
 
     /**
@@ -97,8 +97,7 @@ public class SpatialRuleLookupBuilder {
      * @param jsonProperty the key that should be used to fetch the ID that is passed to SpatialRuleFactory#createSpatialRule
      * @return the index or null if the specified bounds does not intersect with the calculated ones from the rules.
      */
-    public SpatialRuleLookup build(String jsonProperty, SpatialRuleFactory ruleFactory, JsonFeatureCollection jsonFeatureCollection,
-                                   BBox bounds, double resolution, boolean exact) {
+    public SpatialRuleLookup build(String jsonProperty, SpatialRuleFactory ruleFactory, JsonFeatureCollection jsonFeatureCollection, double resolution, boolean exact) {
 
         BBox polygonBounds = BBox.createInverse(false);
         List<SpatialRule> rules = new ArrayList<>();
@@ -139,17 +138,12 @@ public class SpatialRuleLookupBuilder {
             throw new IllegalStateException("No associated polygons found in JsonFeatureCollection for rules " + rules);
         }
 
-        // Only create a SpatialRuleLookup if there are rules defined in the given bounds
-        BBox calculatedBounds = polygonBounds.calculateIntersection(bounds);
-        if (calculatedBounds == null)
-            return null;
-
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(calculatedBounds, resolution, exact);
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(polygonBounds, resolution, exact);
         for (SpatialRule spatialRule : rules) {
             spatialRuleLookup.addRule(spatialRule);
         }
 
-        logger.info("Created the SpatialRuleLookup with " + rules.size() + " rules and a BBox of " + calculatedBounds +
+        logger.info("Created the SpatialRuleLookup with " + rules.size() + " rules and a BBox of " + polygonBounds +
                 " and the following rules: " + Arrays.toString(rules.toArray()));
 
         return spatialRuleLookup;

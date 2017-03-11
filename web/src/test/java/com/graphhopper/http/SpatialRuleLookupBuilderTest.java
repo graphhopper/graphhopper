@@ -55,31 +55,4 @@ public class SpatialRuleLookupBuilderTest {
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccessValue("living_street", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
     }
 
-    @Test
-    public void testBounds() {
-        Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
-        SpatialRuleLookup spatialRuleLookup = DefaultModule.buildIndex(reader, countries);
-        BBox almostWorldWide = new BBox(-179, 179, -89, 89);
-
-        // Might fail if a polygon is defined outside the above coordinates
-        assertTrue("BBox seems to be not contracted", almostWorldWide.contains(spatialRuleLookup.getBounds()));
-    }
-
-    @Test
-    public void testIntersection() {
-        /*
-            We are creating a BBox smaller than Germany. We have the German Spatial rule activated by default.
-            So the BBox should not contain a Point lying somewhere close in Germany.
-         */
-        Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
-        SpatialRuleLookup spatialRuleLookup = DefaultModule.buildIndex(reader, countries, new BBox(9, 10, 51, 52));
-        assertFalse("BBox seems to be incorrectly contracted", spatialRuleLookup.getBounds().contains(49.9, 8.9));
-    }
-
-    @Test
-    public void testNoIntersection() {
-        Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
-        SpatialRuleLookup spatialRuleLookup = DefaultModule.buildIndex(reader, countries, new BBox(-180, -179, -90, -89));
-        assertNull(spatialRuleLookup);
-    }
 }

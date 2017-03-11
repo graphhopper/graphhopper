@@ -257,8 +257,4 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
         return singleRules.size();
     }
 
-    @Override
-    public BBox getBounds() {
-        return bounds;
-    }
 }

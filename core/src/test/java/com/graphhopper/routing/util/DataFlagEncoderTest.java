@@ -7,9 +7,7 @@ import com.graphhopper.json.geo.Geometry;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
-import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.util.PMap;
-import org.junit.Ignore;
 import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.util.shapes.BBox;
@@ -344,7 +342,7 @@ public class DataFlagEncoderTest {
                         return SpatialRule.EMPTY;
                     }
                 },
-                jsonFeatures, bbox, 1, false);
+                jsonFeatures, 1, false);
         DataFlagEncoder encoder = new DataFlagEncoder(new PMap().put("spatial_rules", index.size() - 1));
         encoder.setSpatialRuleLookup(index);
         EncodingManager em = new EncodingManager(encoder);

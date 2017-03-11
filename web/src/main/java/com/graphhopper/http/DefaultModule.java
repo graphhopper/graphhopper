@@ -32,13 +32,10 @@ import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
-import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
-import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TranslationMap;
-import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,7 +43,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -69,14 +65,9 @@ public class DefaultModule extends AbstractModule {
     }
 
     static SpatialRuleLookup buildIndex(Reader reader, String rules) {
-        // The world-wide BBox will be automatically shrinked to fit the defined rules
-        return buildIndex(reader, rules, new BBox(-180, 180, -90, 90));
-    }
-
-    static SpatialRuleLookup buildIndex(Reader reader, String rules, BBox bbox) {
         GHJson ghJson = new GHJsonBuilder().create();
         JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(reader, JsonFeatureCollection.class);
-        return new SpatialRuleLookupBuilder().build(new SpatialRuleListReflectionFactory(rules), jsonFeatureCollection, bbox, 1, true);
+        return new SpatialRuleLookupBuilder().build(new SpatialRuleListReflectionFactory(rules), jsonFeatureCollection, 1, true);
     }
 
     /**
@@ -96,7 +87,7 @@ public class DefaultModule extends AbstractModule {
                     if (!jsonFeatureCollection.getFeatures().isEmpty()) {
                         SpatialRuleLookup ruleLookup = new SpatialRuleLookupBuilder().build("country",
                                 new SpatialRuleLookupBuilder.SpatialRuleDefaultFactory(), jsonFeatureCollection,
-                                getGraphHopperStorage().getBounds(), 0.1, true);
+                                0.1, true);
                         for (PrepareLandmarks prep : getLMFactoryDecorator().getPreparations()) {
                             prep.setSpatialRuleLookup(ruleLookup);
                         }

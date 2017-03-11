@@ -216,11 +216,6 @@ public class LandmarkStorageTest {
             }
 
             @Override
-            public BBox getBounds() {
-                throw new IllegalStateException();
-            }
-
-            @Override
             public int size() {
                 return 2;
             }
