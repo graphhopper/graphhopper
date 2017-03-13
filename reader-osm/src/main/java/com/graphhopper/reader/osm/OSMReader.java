@@ -92,7 +92,7 @@ public class OSMReader implements DataReader {
     protected PillarInfo pillarInfo;
     private long locations;
     private long skippedLocations;
-    private EncodingManager encodingManager = null;
+    private final EncodingManager encodingManager;
     private int workerThreads = 2;
     // Using the correct Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
     //
@@ -122,6 +122,7 @@ public class OSMReader implements DataReader {
         this.ghStorage = ghStorage;
         this.graph = ghStorage;
         this.nodeAccess = graph.getNodeAccess();
+        this.encodingManager = ghStorage.getEncodingManager();
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
         osmNodeIdToNodeFlagsMap = new GHLongLongHashMap(200, .5f);
@@ -874,15 +875,6 @@ public class OSMReader implements DataReader {
 
     GHLongLongHashMap getRelFlagsMap() {
         return osmWayIdToRouteWeightMap;
-    }
-
-    /**
-     * Specify the type of the path calculation (car, bike, ...).
-     */
-    @Override
-    public OSMReader setEncodingManager(EncodingManager em) {
-        this.encodingManager = em;
-        return this;
     }
 
     @Override

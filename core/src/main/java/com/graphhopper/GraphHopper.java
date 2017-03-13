@@ -684,7 +684,6 @@ public class GraphHopper implements GraphHopperAPI {
         return reader.setFile(new File(dataReaderFile)).
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
-                setEncodingManager(encodingManager).
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance);
     }
 
