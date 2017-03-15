@@ -28,7 +28,7 @@ import java.util.*;
  */
 class SpatialRuleContainer {
 
-    protected final Set<SpatialRule> rules = new LinkedHashSet<>();
+    final Set<SpatialRule> rules = new LinkedHashSet<>();
 
     public SpatialRuleContainer addRule(SpatialRule spatialRule) {
         rules.add(spatialRule);
@@ -40,7 +40,7 @@ class SpatialRuleContainer {
         return this;
     }
 
-    public Collection<SpatialRule> getRules() {
+    Collection<SpatialRule> getRules() {
         return rules;
     }
 

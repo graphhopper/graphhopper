@@ -19,17 +19,14 @@ package com.graphhopper.countries;
 
 import com.graphhopper.routing.util.spatialrules.AccessValue;
 import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
-import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
-
-import java.util.List;
 
 /**
  * Defines the default rules for Austria roads
  *
  * @author Robin Boldt
  */
-public class AustriaSpatialRule extends DefaultSpatialRule {
+class AustriaSpatialRule extends DefaultSpatialRule {
 
     @Override
     public double getMaxSpeed(String highwayTag, double _default) {

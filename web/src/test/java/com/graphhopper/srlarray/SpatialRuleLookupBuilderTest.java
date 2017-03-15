@@ -15,32 +15,30 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.countries;
+package com.graphhopper.srlarray;
 
+import com.graphhopper.countries.CountriesSpatialRuleFactory;
 import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import org.junit.Test;
 
-import java.io.*;
+import java.io.InputStreamReader;
+import java.io.Reader;
 
-import static junit.framework.TestCase.assertFalse;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Robin Boldt
  */
-public class CountriesTest {
-
-    // Test class name only and fqn
-    private final String countries = "GermanySpatialRule,com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule";
+public class SpatialRuleLookupBuilderTest {
 
     @Test
     public void testIndex() {
-        Reader reader = new InputStreamReader(CountriesTest.class.getResourceAsStream("countries.geo.json"));
-        SpatialRuleLookup spatialRuleLookup = Countries.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class));
+        Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory());
 
         // Berlin
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccessValue("track", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));

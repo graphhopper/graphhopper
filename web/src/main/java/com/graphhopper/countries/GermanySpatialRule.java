@@ -26,7 +26,7 @@ import com.graphhopper.routing.util.spatialrules.TransportationMode;
  *
  * @author Robin Boldt
  */
-public class GermanySpatialRule extends DefaultSpatialRule {
+class GermanySpatialRule extends DefaultSpatialRule {
 
     /**
      * Germany contains roads with no speed limit. For these roads, this method will return Integer.MAX_VALUE.

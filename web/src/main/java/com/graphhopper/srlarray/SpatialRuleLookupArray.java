@@ -31,7 +31,7 @@ import java.util.*;
  *
  * @author Robin Boldt
  */
-public class SpatialRuleLookupArray implements SpatialRuleLookup {
+class SpatialRuleLookupArray implements SpatialRuleLookup {
 
     // resolution in full decimal degrees
     private final double resolution;
@@ -53,7 +53,7 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
      * @param exact      if exact it will also perform a polygon contains for border tiles, might fail for small holes
      *                   in the Polygon that are not represented in the tile array.
      */
-    public SpatialRuleLookupArray(List<SpatialRule> spatialRules, double resolution, boolean exact) {
+    SpatialRuleLookupArray(List<SpatialRule> spatialRules, double resolution, boolean exact) {
         bounds = BBox.createInverse(false);
         for (SpatialRule spatialRule : spatialRules) {
             for (Polygon polygon : spatialRule.getBorders()) {
@@ -131,7 +131,7 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
         return SpatialRule.EMPTY;
     }
 
-    protected int getRuleContainerIndex(int xIndex, int yIndex) {
+    private int getRuleContainerIndex(int xIndex, int yIndex) {
         if (xIndex < 0 || xIndex >= lookupArray.length) {
             return EMPTY_RULE_INDEX;
         }
@@ -144,7 +144,7 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
     /**
      * Might fail for small holes that do not occur in the array
      */
-    protected boolean isBorderTile(int xIndex, int yIndex, int ruleIndex) {
+    private boolean isBorderTile(int xIndex, int yIndex, int ruleIndex) {
         for (int i = -1; i < 2; i++) {
             for (int j = -1; j < 2; j++) {
                 if (i != xIndex && j != yIndex)
@@ -221,7 +221,7 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
         singleRules.add(rule);
     }
 
-    public SpatialRule getSpatialRule(int id) {
+    SpatialRule getSpatialRule(int id) {
         if (id < 0 || id >= ruleContainers.size())
             throw new IllegalArgumentException("SpatialRuleId " + id + " is illegal");
 
@@ -234,7 +234,7 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
     /**
      * This method adds the container if no such rule container exists in this lookup and returns the index otherwise.
      */
-    int addRuleContainer(SpatialRuleContainer container) {
+    private int addRuleContainer(SpatialRuleContainer container) {
         int newIndex = this.ruleContainers.indexOf(container);
         if (newIndex >= 0)
             return newIndex;
