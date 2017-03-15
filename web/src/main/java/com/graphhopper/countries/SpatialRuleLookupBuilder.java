@@ -37,7 +37,7 @@ import java.util.*;
  */
 public class SpatialRuleLookupBuilder {
 
-    private final Logger logger = LoggerFactory.getLogger(getClass());
+    private static final Logger logger = LoggerFactory.getLogger(SpatialRuleLookupBuilder.class);
 
     public interface SpatialRuleFactory {
         /**
@@ -88,7 +88,7 @@ public class SpatialRuleLookupBuilder {
         }
     }
 
-    public SpatialRuleLookup build(SpatialRuleFactory ruleFactory, JsonFeatureCollection jsonFeatureCollection,
+    public static SpatialRuleLookup build(SpatialRuleFactory ruleFactory, JsonFeatureCollection jsonFeatureCollection,
                                    double resolution, boolean exact) {
         return build("ISO_A3", ruleFactory, jsonFeatureCollection, resolution, exact);
     }
@@ -100,7 +100,7 @@ public class SpatialRuleLookupBuilder {
      * @param jsonProperty the key that should be used to fetch the ID that is passed to SpatialRuleFactory#createSpatialRule
      * @return the index or null if the specified bounds does not intersect with the calculated ones from the rules.
      */
-    public SpatialRuleLookup build(String jsonProperty, SpatialRuleFactory ruleFactory, JsonFeatureCollection jsonFeatureCollection, double resolution, boolean exact) {
+    public static SpatialRuleLookup build(String jsonProperty, SpatialRuleFactory ruleFactory, JsonFeatureCollection jsonFeatureCollection, double resolution, boolean exact) {
 
         List<SpatialRule> rules = new ArrayList<>();
         Set<String> ids = new HashSet<>();

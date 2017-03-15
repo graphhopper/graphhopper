@@ -46,7 +46,7 @@ public class Countries {
             }
         }
 
-        return new SpatialRuleLookupBuilder().build(new SpatialRuleLookupBuilder.SpatialRuleListFactory(spatialRules), jsonFeatureCollection, 1, true);
+        return SpatialRuleLookupBuilder.build(new SpatialRuleLookupBuilder.SpatialRuleListFactory(spatialRules), jsonFeatureCollection, 1, true);
     }
 
 }
