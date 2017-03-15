@@ -141,7 +141,7 @@ public class SpatialRuleLookupArrayTest {
     }
 
     private SpatialRule getSpatialRule(Polygon p, final String name) {
-        SpatialRule rule = new AbstractSpatialRule() {
+        AbstractSpatialRule rule = new AbstractSpatialRule() {
             @Override
             public double getMaxSpeed(String highwayTag, double _default) {
                 return _default;

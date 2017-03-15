@@ -327,7 +327,6 @@ public class DataFlagEncoderTest {
             }
 
             @Override
-
             public SpatialRule lookupRule(GHPoint point) {
                 return lookupRule(point.lat, point.lon);
             }

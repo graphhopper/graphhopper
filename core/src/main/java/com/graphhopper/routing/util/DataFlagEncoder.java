@@ -106,7 +106,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
         @Override
         public int size() {
-            return 0;
+            return 1;
         }
     };
 
@@ -232,12 +232,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         accessEncoder = new EncodedValue("access car", shift, 3, 1, 1, 4, true);
         shift += accessEncoder.getBits();
 
-        if (spatialRuleLookup.size() - 1 > 0) {
-            int tmpMax = spatialRuleLookup.size();
-            int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
-            spatialEncoder = new EncodedValue("spatial_location", shift, bits, 1, 1, tmpMax, true);
-            shift += spatialEncoder.getBits();
-        }
+        int tmpMax = spatialRuleLookup.size()-1;
+        int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
+        spatialEncoder = new EncodedValue("spatial_location", shift, bits, 1, 0, tmpMax, true);
+        shift += spatialEncoder.getBits();
 
         return shift;
     }

@@ -37,7 +37,7 @@ public class SpatialRuleLookupBuilderTest {
 
     @Test
     public void testIndex() {
-        Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
+        Reader reader = new InputStreamReader(CountriesSpatialRuleFactory.class.getResourceAsStream("countries.geo.json"));
         SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory());
 
         // Berlin
