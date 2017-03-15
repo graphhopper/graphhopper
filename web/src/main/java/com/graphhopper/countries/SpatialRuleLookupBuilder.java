@@ -25,7 +25,6 @@ import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.countries.DefaultSpatialRule;
 import com.graphhopper.srlarray.SpatialRuleLookupArray;
-import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,7 +102,6 @@ public class SpatialRuleLookupBuilder {
      */
     public SpatialRuleLookup build(String jsonProperty, SpatialRuleFactory ruleFactory, JsonFeatureCollection jsonFeatureCollection, double resolution, boolean exact) {
 
-        BBox polygonBounds = BBox.createInverse(false);
         List<SpatialRule> rules = new ArrayList<>();
         Set<String> ids = new HashSet<>();
         int unknownCounter = 0;
@@ -129,23 +127,11 @@ public class SpatialRuleLookupBuilder {
 
             rules.add(spatialRule);
 
-            for (Polygon polygon : borders) {
-                polygonBounds.update(polygon.getMinLat(), polygon.getMinLon());
-                polygonBounds.update(polygon.getMaxLat(), polygon.getMaxLon());
-            }
         }
 
-        if (!polygonBounds.isValid()) {
-            throw new IllegalStateException("No associated polygons found in JsonFeatureCollection for rules " + rules);
-        }
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(rules, resolution, exact);
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(polygonBounds, resolution, exact);
-        for (SpatialRule spatialRule : rules) {
-            spatialRuleLookup.addRule(spatialRule);
-        }
-
-        logger.info("Created the SpatialRuleLookup with " + rules.size() + " rules and a BBox of " + polygonBounds +
-                " and the following rules: " + Arrays.toString(rules.toArray()));
+        logger.info("Created the SpatialRuleLookup with the following rules: " + Arrays.toString(rules.toArray()));
 
         return spatialRuleLookup;
     }

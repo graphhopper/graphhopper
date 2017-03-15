@@ -47,19 +47,28 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
     private final List<SpatialRule> singleRules = new ArrayList<>();
 
     /**
-     * @param bounds     the outer bounds for the Lookup
+     * @param spatialRules     the spatial rules
      * @param resolution of the array in decimal degrees, see: https://en.wikipedia.org/wiki/Decimal_degrees
      *                   The downside of using decimal degrees is that this is not fixed to a certain m range as
      * @param exact      if exact it will also perform a polygon contains for border tiles, might fail for small holes
      *                   in the Polygon that are not represented in the tile array.
      */
-    public SpatialRuleLookupArray(BBox bounds, double resolution, boolean exact) {
-        if (bounds == null)
-            throw new IllegalArgumentException("BBox cannot be null");
+    public SpatialRuleLookupArray(List<SpatialRule> spatialRules, double resolution, boolean exact) {
+        bounds = BBox.createInverse(false);
+        for (SpatialRule spatialRule : spatialRules) {
+            for (Polygon polygon : spatialRule.getBorders()) {
+                bounds.update(polygon.getMinLat(), polygon.getMinLon());
+                bounds.update(polygon.getMaxLat(), polygon.getMaxLon());
+            }
+        }
+
+        if (!bounds.isValid()) {
+            throw new IllegalStateException("No associated polygons.");
+        }
+
         if (resolution < 1e-100)
             throw new IllegalArgumentException("resolution cannot be that high " + resolution);
 
-        this.bounds = bounds;
         this.resolution = resolution;
         this.checkDiff = (resolution / 2) - (resolution / 10);
         this.exact = exact;
@@ -81,6 +90,10 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
                 throw new IllegalArgumentException("Cannot add to empty rule container");
             }
         });
+
+        for (SpatialRule spatialRule : spatialRules) {
+            addRuleInternal(spatialRule);
+        }
     }
 
     private int getNumberOfYGrids() {
@@ -157,6 +170,10 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
 
     @Override
     public void addRule(SpatialRule rule) {
+        throw new UnsupportedOperationException("This SpatialRuleLookup is immutable.");
+    }
+
+    private void addRuleInternal(SpatialRule rule) {
         if (rule == null)
             throw new IllegalArgumentException("rule cannot be null");
 

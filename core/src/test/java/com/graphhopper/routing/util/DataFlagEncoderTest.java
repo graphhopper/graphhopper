@@ -318,31 +318,46 @@ public class DataFlagEncoderTest {
 
     @Test
     public void testSpatialId() {
-        List<SpatialRule> rules = Collections.<SpatialRule>singletonList(new GermanySpatialRule());
-        final BBox bbox = new BBox(0, 1, 0, 1);
-        JsonFeatureCollection jsonFeatures = new JsonFeatureCollection() {
+        final GermanySpatialRule germany = new GermanySpatialRule();
+        germany.setBorders(Collections.singletonList(new Polygon(new double[]{0, 0, 1, 1}, new double[]{0, 1, 1, 0})));
+
+        SpatialRuleLookup index = new SpatialRuleLookup() {
             @Override
-            public List<JsonFeature> getFeatures() {
-                Geometry geometry = new GeoJsonPolygon().addPolygon(new Polygon(new double[]{0, 0, 1, 1}, new double[]{0, 1, 1, 0}));
-                Map<String, Object> properties = new HashMap<>();
-                properties.put("ISO_A3", "DEU");
-                return Collections.singletonList(new JsonFeature("x", "Polygon", bbox, geometry, properties));
+            public SpatialRule lookupRule(double lat, double lon) {
+                for (Polygon polygon : germany.getBorders()) {
+                    if (polygon.contains(lat, lon)) {
+                        return germany;
+                    }
+                }
+                return SpatialRule.EMPTY;
+            }
+
+            @Override
+
+            public SpatialRule lookupRule(GHPoint point) {
+                return lookupRule(point.lat, point.lon);
+            }
+
+            @Override
+            public void addRule(SpatialRule rule) {
+
+            }
+
+            @Override
+            public int getSpatialId(SpatialRule rule) {
+                if (germany.equals(rule)) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+
+            @Override
+            public int size() {
+                return 2;
             }
         };
 
-        SpatialRuleLookup index = new SpatialRuleLookupBuilder().build(
-                new SpatialRuleLookupBuilder.SpatialRuleFactory() {
-                    @Override
-                    public SpatialRule createSpatialRule(String id, List<Polygon> polygons) {
-                        if (id.equals("DEU")) {
-                            SpatialRule rule = new GermanySpatialRule();
-                            rule.setBorders(polygons);
-                            return rule;
-                        }
-                        return SpatialRule.EMPTY;
-                    }
-                },
-                jsonFeatures, 1, false);
         DataFlagEncoder encoder = new DataFlagEncoder(new PMap());
         encoder.setSpatialRuleLookup(index);
         EncodingManager em = new EncodingManager(encoder);
