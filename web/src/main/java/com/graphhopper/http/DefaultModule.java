@@ -20,6 +20,7 @@ package com.graphhopper.http;
 import com.google.inject.AbstractModule;
 import com.google.inject.name.Names;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.countries.Countries;
 import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.json.geo.JsonFeatureCollection;
@@ -41,7 +42,6 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.HashMap;
 
 /**
  * @author Peter Karich
@@ -62,12 +62,6 @@ public class DefaultModule extends AbstractModule {
         return graphHopper;
     }
 
-    static SpatialRuleLookup buildIndex(Reader reader, String rules) {
-        GHJson ghJson = new GHJsonBuilder().create();
-        JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(reader, JsonFeatureCollection.class);
-        return new SpatialRuleLookupBuilder().build(new SpatialRuleListReflectionFactory(rules), jsonFeatureCollection, 1, true);
-    }
-
     /**
      * @return an initialized GraphHopper instance
      */
@@ -75,40 +69,40 @@ public class DefaultModule extends AbstractModule {
         GraphHopper tmp = new GraphHopperOSM() {
             @Override
             protected void loadOrPrepareLM() {
-                if (!getLMFactoryDecorator().isEnabled() || getLMFactoryDecorator().getPreparations().isEmpty())
-                    return;
-
-                try {
-                    String location = args.get(Parameters.Landmark.PREPARE + "split_area_location", "");
-                    Reader reader = location.isEmpty() ? new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream()) : new FileReader(location);
-                    JsonFeatureCollection jsonFeatureCollection = new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class);
-                    if (!jsonFeatureCollection.getFeatures().isEmpty()) {
-                        SpatialRuleLookup ruleLookup = new SpatialRuleLookupBuilder().build("country",
-                                new SpatialRuleLookupBuilder.SpatialRuleDefaultFactory(), jsonFeatureCollection,
-                                0.1, true);
-                        for (PrepareLandmarks prep : getLMFactoryDecorator().getPreparations()) {
-                            // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-                            if (ruleLookup != null && ruleLookup.size() > 0) {
-                                prep.setCutEdges(new EdgeFilter() {
-                                    @Override
-                                    public boolean accept(EdgeIteratorState edgeState) {
-                                        int adjNode = edgeState.getAdjNode();
-                                        SpatialRule ruleAdj = ruleLookup.lookupRule(getGraphHopperStorage().getNodeAccess().getLatitude(adjNode), getGraphHopperStorage().getNodeAccess().getLongitude(adjNode));
-
-                                        int baseNode = edgeState.getBaseNode();
-                                        SpatialRule ruleBase = ruleLookup.lookupRule(getGraphHopperStorage().getNodeAccess().getLatitude(baseNode), getGraphHopperStorage().getNodeAccess().getLongitude(baseNode));
-
-                                        return edgeState.isForward(prep.getWeighting().getFlagEncoder()) && ruleAdj == ruleBase;
-                                    }
-                                });
-                            }
-                        }
-                    }
-                } catch (IOException ex) {
-                    logger.error("Problem while reading border map GeoJSON. Skipping this.", ex);
-                }
-
-                super.loadOrPrepareLM();
+//                if (!getLMFactoryDecorator().isEnabled() || getLMFactoryDecorator().getPreparations().isEmpty())
+//                    return;
+//
+//                try {
+//                    String location = args.get(Parameters.Landmark.PREPARE + "split_area_location", "");
+//                    Reader reader = location.isEmpty() ? new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream()) : new FileReader(location);
+//                    JsonFeatureCollection jsonFeatureCollection = new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class);
+//                    if (!jsonFeatureCollection.getFeatures().isEmpty()) {
+//                        SpatialRuleLookup ruleLookup = new SpatialRuleLookupBuilder().build("country",
+//                                new SpatialRuleLookupBuilder.SpatialRuleDefaultFactory(), jsonFeatureCollection,
+//                                0.1, true);
+//                        for (PrepareLandmarks prep : getLMFactoryDecorator().getPreparations()) {
+//                            // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
+//                            if (ruleLookup != null && ruleLookup.size() > 0) {
+//                                prep.setCutEdges(new EdgeFilter() {
+//                                    @Override
+//                                    public boolean accept(EdgeIteratorState edgeState) {
+//                                        int adjNode = edgeState.getAdjNode();
+//                                        SpatialRule ruleAdj = ruleLookup.lookupRule(getGraphHopperStorage().getNodeAccess().getLatitude(adjNode), getGraphHopperStorage().getNodeAccess().getLongitude(adjNode));
+//
+//                                        int baseNode = edgeState.getBaseNode();
+//                                        SpatialRule ruleBase = ruleLookup.lookupRule(getGraphHopperStorage().getNodeAccess().getLatitude(baseNode), getGraphHopperStorage().getNodeAccess().getLongitude(baseNode));
+//
+//                                        return edgeState.isForward(prep.getWeighting().getFlagEncoder()) && ruleAdj == ruleBase;
+//                                    }
+//                                });
+//                            }
+//                        }
+//                    }
+//                } catch (IOException ex) {
+//                    logger.error("Problem while reading border map GeoJSON. Skipping this.", ex);
+//                }
+//
+//                super.loadOrPrepareLM();
             }
         }.forServer();
 
@@ -116,7 +110,7 @@ public class DefaultModule extends AbstractModule {
         if (!spatialRuleLocation.isEmpty()) {
             try {
                 String ruleFQN = args.get("spatial_rules.fqn", "");
-                final SpatialRuleLookup index = buildIndex(new FileReader(spatialRuleLocation), ruleFQN);
+                final SpatialRuleLookup index = Countries.buildIndex(new FileReader(spatialRuleLocation), ruleFQN);
                 logger.info("Set spatial rule lookup with " + index.size() + " rules and the following Rules " + ruleFQN);
                 final FlagEncoderFactory oldFEF = tmp.getFlagEncoderFactory();
                 tmp.setFlagEncoderFactory(new FlagEncoderFactory() {
@@ -168,37 +162,4 @@ public class DefaultModule extends AbstractModule {
         }
     }
 
-    public static class SpatialRuleListReflectionFactory extends SpatialRuleLookupBuilder.SpatialRuleListFactory {
-        public SpatialRuleListReflectionFactory(String rules) {
-            this(rules.split(","));
-        }
-
-        public SpatialRuleListReflectionFactory(String... rules) {
-            if (rules.length == 0) {
-                throw new IllegalStateException("You have to pass at least one rule");
-            }
-            ruleMap = new HashMap<>(rules.length);
-            for (String rule : rules) {
-                try {
-                    // Makes it easy to define a rule as CountrySpatialRule and skip the fqn
-                    if (!rule.contains(".")) {
-                        rule = "com.graphhopper.routing.util.spatialrules.countries." + rule;
-                    }
-                    Object o = Class.forName(rule).newInstance();
-                    if (SpatialRule.class.isAssignableFrom(o.getClass())) {
-                        ruleMap.put(((SpatialRule) o).getId(), (SpatialRule) o);
-                    } else {
-                        String ex = "Cannot find SpatialRule for rule " + rule + " but found " + o.getClass();
-                        logger.error(ex);
-                        throw new IllegalArgumentException(ex);
-                    }
-                } catch (ReflectiveOperationException e) {
-                    String ex = "Cannot find SpatialRule for rule " + rule;
-                    logger.error(ex);
-                    throw new IllegalArgumentException(ex, e);
-                }
-            }
-        }
-
-    }
 }

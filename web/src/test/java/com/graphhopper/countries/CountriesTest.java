@@ -15,10 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.http;
+package com.graphhopper.countries;
 
 import com.graphhopper.routing.util.spatialrules.*;
-import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
 
 import java.io.*;
@@ -31,15 +30,15 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author Robin Boldt
  */
-public class SpatialRuleLookupBuilderTest {
+public class CountriesTest {
 
     // Test class name only and fqn
     private final String countries = "GermanySpatialRule,com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule";
 
     @Test
     public void testIndex() {
-        Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
-        SpatialRuleLookup spatialRuleLookup = DefaultModule.buildIndex(reader, countries);
+        Reader reader = new InputStreamReader(CountriesTest.class.getResourceAsStream("countries.geo.json"));
+        SpatialRuleLookup spatialRuleLookup = Countries.buildIndex(reader, countries);
 
         // Berlin
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccessValue("track", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
