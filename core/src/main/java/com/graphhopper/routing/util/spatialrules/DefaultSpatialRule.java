@@ -17,10 +17,6 @@
  */
 package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.AccessValue;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
-
 /**
  * Default implementation for the SpatialRule that contains the current default values
  */
