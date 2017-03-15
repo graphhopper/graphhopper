@@ -15,27 +15,35 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules.countries;
+package com.graphhopper.countries;
 
 import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
 /**
- * Defines the default rules for Austria roads
+ * Defines the default rules for German roads
  *
  * @author Robin Boldt
  */
-public class AustriaSpatialRule extends DefaultSpatialRule {
+public class GermanySpatialRule extends DefaultSpatialRule {
 
+    /**
+     * Germany contains roads with no speed limit. For these roads, this method will return Integer.MAX_VALUE.
+     * Your implementation should be able to handle these cases.
+     */
     @Override
     public double getMaxSpeed(String highwayTag, double _default) {
-
         // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
         switch (highwayTag) {
+            case "motorway":
+                return Integer.MAX_VALUE;
             case "trunk":
-                return 100;
+                return Integer.MAX_VALUE;
             case "residential":
-                return 50;
+                return 100;
+            case "living_street":
+                return 4;
             default:
                 return super.getMaxSpeed(highwayTag, _default);
         }
@@ -44,7 +52,7 @@ public class AustriaSpatialRule extends DefaultSpatialRule {
     @Override
     public AccessValue getAccessValue(String highwayTag, TransportationMode transportationMode, AccessValue _default) {
         if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
-            if (highwayTag.equals("living_street"))
+            if (highwayTag.equals("track"))
                 return AccessValue.EVENTUALLY_ACCESSIBLE;
         }
 
@@ -53,6 +61,6 @@ public class AustriaSpatialRule extends DefaultSpatialRule {
 
     @Override
     public String getId() {
-        return "AUT";
+        return "DEU";
     }
 }

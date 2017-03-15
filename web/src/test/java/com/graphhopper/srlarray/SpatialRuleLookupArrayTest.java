@@ -1,9 +1,8 @@
 package com.graphhopper.srlarray;
 
 import com.graphhopper.routing.util.spatialrules.*;
-import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
-import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
-import com.graphhopper.util.shapes.BBox;
+import com.graphhopper.countries.AustriaSpatialRule;
+import com.graphhopper.countries.GermanySpatialRule;
 import org.junit.Assert;
 import org.junit.Test;
 

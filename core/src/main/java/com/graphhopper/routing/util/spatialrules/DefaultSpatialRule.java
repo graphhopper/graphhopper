@@ -15,51 +15,64 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules.countries;
+package com.graphhopper.routing.util.spatialrules;
 
+import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
 import com.graphhopper.routing.util.spatialrules.AccessValue;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
 /**
- * Defines the default rules for German roads
- *
- * @author Robin Boldt
+ * Default implementation for the SpatialRule that contains the current default values
  */
-public class GermanySpatialRule extends DefaultSpatialRule {
+public class DefaultSpatialRule extends AbstractSpatialRule {
 
-    /**
-     * Germany contains roads with no speed limit. For these roads, this method will return Integer.MAX_VALUE.
-     * Your implementation should be able to handle these cases.
-     */
     @Override
     public double getMaxSpeed(String highwayTag, double _default) {
-        // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
+        // We tried to estimate reasonable values: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
+        // We did not always used the highest value available, but we used a high value
         switch (highwayTag) {
             case "motorway":
-                return Integer.MAX_VALUE;
+                return 130;
             case "trunk":
-                return Integer.MAX_VALUE;
-            case "residential":
+                return 130;
+            case "primary":
                 return 100;
+            case "secondary":
+                return 100;
+            case "tertiary":
+                return 100;
+            case "unclassified":
+                return 100;
+            case "residential":
+                return 90;
             case "living_street":
-                return 4;
+                return 20;
             default:
-                return super.getMaxSpeed(highwayTag, _default);
+                return _default;
         }
     }
 
     @Override
     public AccessValue getAccessValue(String highwayTag, TransportationMode transportationMode, AccessValue _default) {
+        // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restriction
+        // We tried to find generally forbidden tags
         if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
-            if (highwayTag.equals("track"))
-                return AccessValue.EVENTUALLY_ACCESSIBLE;
+            switch (highwayTag) {
+                case "path":
+                case "bridleway":
+                case "cycleway":
+                case "footway":
+                case "pedestrian":
+                    return AccessValue.NOT_ACCESSIBLE;
+                default:
+                    return _default;
+            }
         }
-
-        return super.getAccessValue(highwayTag, transportationMode, _default);
+        return _default;
     }
 
     @Override
     public String getId() {
-        return "DEU";
+        throw new UnsupportedOperationException("No id for the DefaultSpatialRule");
     }
 }

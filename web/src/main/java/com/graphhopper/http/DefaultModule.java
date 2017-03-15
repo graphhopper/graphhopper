@@ -23,6 +23,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.countries.Countries;
 import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonBuilder;
+import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -102,7 +103,8 @@ public class DefaultModule extends AbstractModule {
         if (!spatialRuleLocation.isEmpty()) {
             try {
                 String ruleFQN = args.get("spatial_rules.fqn", "");
-                final SpatialRuleLookup index = Countries.buildIndex(new FileReader(spatialRuleLocation), ruleFQN);
+                final FileReader reader = new FileReader(spatialRuleLocation);
+                final SpatialRuleLookup index = Countries.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class));
                 logger.info("Set spatial rule lookup with " + index.size() + " rules and the following Rules " + ruleFQN);
                 final FlagEncoderFactory oldFEF = tmp.getFlagEncoderFactory();
                 tmp.setFlagEncoderFactory(new FlagEncoderFactory() {

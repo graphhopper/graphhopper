@@ -17,6 +17,8 @@
  */
 package com.graphhopper.countries;
 
+import com.graphhopper.json.GHJsonBuilder;
+import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.util.spatialrules.*;
 import org.junit.Test;
 
@@ -38,7 +40,7 @@ public class CountriesTest {
     @Test
     public void testIndex() {
         Reader reader = new InputStreamReader(CountriesTest.class.getResourceAsStream("countries.geo.json"));
-        SpatialRuleLookup spatialRuleLookup = Countries.buildIndex(reader, countries);
+        SpatialRuleLookup spatialRuleLookup = Countries.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class));
 
         // Berlin
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccessValue("track", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
