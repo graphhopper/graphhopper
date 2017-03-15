@@ -23,25 +23,17 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.countries.Countries;
 import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonBuilder;
-import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoderFactory;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
 
 /**
  * @author Peter Karich

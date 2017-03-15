@@ -5,7 +5,6 @@ import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 
 import java.io.Reader;
 import java.util.HashMap;

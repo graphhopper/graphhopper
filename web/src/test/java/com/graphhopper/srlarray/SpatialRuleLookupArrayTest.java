@@ -1,8 +1,10 @@
-package com.graphhopper.routing.util.spatialrules;
+package com.graphhopper.srlarray;
 
+import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.util.shapes.BBox;
+import org.junit.Assert;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -35,7 +37,7 @@ public class SpatialRuleLookupArrayTest {
         SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(bounds, 1, false);
         spatialRuleLookup.addRule(getSpatialRule(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1}), "1"));
         spatialRuleLookup.addRule(getSpatialRule(new Polygon(new double[]{1, 1, 3.6, 3.6}, new double[]{3, 4, 4, 3}), "2"));
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 1.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
+        Assert.assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 1.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 3.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
         // Not in the second Polygon anymore, but due to the resolution of 1, this should be still match the rule
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(3.9, 3.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));

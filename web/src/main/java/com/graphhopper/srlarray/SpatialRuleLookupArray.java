@@ -15,8 +15,11 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules;
+package com.graphhopper.srlarray;
 
+import com.graphhopper.routing.util.spatialrules.Polygon;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -28,7 +31,7 @@ import java.util.*;
  *
  * @author Robin Boldt
  */
-class SpatialRuleLookupArray implements SpatialRuleLookup {
+public class SpatialRuleLookupArray implements SpatialRuleLookup {
 
     // resolution in full decimal degrees
     private final double resolution;
@@ -50,7 +53,7 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
      * @param exact      if exact it will also perform a polygon contains for border tiles, might fail for small holes
      *                   in the Polygon that are not represented in the tile array.
      */
-    SpatialRuleLookupArray(BBox bounds, double resolution, boolean exact) {
+    public SpatialRuleLookupArray(BBox bounds, double resolution, boolean exact) {
         if (bounds == null)
             throw new IllegalArgumentException("BBox cannot be null");
         if (resolution < 1e-100)
