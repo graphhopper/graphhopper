@@ -333,11 +333,6 @@ public class DataFlagEncoderTest {
             }
 
             @Override
-            public void addRule(SpatialRule rule) {
-
-            }
-
-            @Override
             public int getSpatialId(SpatialRule rule) {
                 if (germany.equals(rule)) {
                     return 1;

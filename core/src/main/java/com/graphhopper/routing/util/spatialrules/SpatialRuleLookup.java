@@ -44,13 +44,8 @@ public interface SpatialRuleLookup {
     SpatialRule lookupRule(GHPoint point);
 
     /**
-     * Add a rule to the lookup.
-     */
-    void addRule(SpatialRule rule);
-
-    /**
      * This method returns an identification number from 0 to size (exclusive) for the specified rule.
-     * The id is fix for a given set of SpatialRules. When the set of rules is modified, the id might change.
+     * The id is fix for a given set of SpatialRules.
      */
     int getSpatialId(SpatialRule rule);
 

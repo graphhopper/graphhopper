@@ -100,11 +100,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
 
         @Override
-        public void addRule(SpatialRule rule) {
-
-        }
-
-        @Override
         public int getSpatialId(SpatialRule rule) {
             return 0;
         }

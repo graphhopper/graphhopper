@@ -168,11 +168,6 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
         return (int) Math.floor(Math.abs(lat - bounds.minLat) / resolution);
     }
 
-    @Override
-    public void addRule(SpatialRule rule) {
-        throw new UnsupportedOperationException("This SpatialRuleLookup is immutable.");
-    }
-
     private void addRuleInternal(SpatialRule rule) {
         if (rule == null)
             throw new IllegalArgumentException("rule cannot be null");
