@@ -65,7 +65,7 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
 
 module.exports.create = function (mapLayer, path, urlForHistory, request) {
     var instructionsElement = $("<table class='instructions'>");
-    var debugInstructions = request.api_params.debugInstructions;
+    var debugInstructions = request.api_params.debug_instructions;
 
     var partialInstr = path.instructions.length > 100;
     var len = Math.min(path.instructions.length, 100);
