@@ -120,10 +120,9 @@ public class DefaultModule extends AbstractModule {
         String spatialRuleLocation = args.get("spatial_rules.location", "");
         if (!spatialRuleLocation.isEmpty()) {
             try {
-                String ruleFQN = args.get("spatial_rules.fqn", "");
                 final FileReader reader = new FileReader(spatialRuleLocation);
                 final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory());
-                logger.info("Set spatial rule lookup with " + index.size() + " rules and the following Rules " + ruleFQN);
+                logger.info("Set spatial rule lookup with " + index.size() + " rules");
                 final FlagEncoderFactory oldFEF = tmp.getFlagEncoderFactory();
                 tmp.setFlagEncoderFactory(new FlagEncoderFactory() {
                     @Override
