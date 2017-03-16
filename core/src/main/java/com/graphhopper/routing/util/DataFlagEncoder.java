@@ -437,10 +437,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         }
     }
 
-    public boolean spatialRuleLookupEnabled(){
-        return true;
-    }
-
     private SpatialRule getSpatialRule(ReaderWay way) {
         GHPoint estmCentre = way.getTag("estimated_center", null);
         if (estmCentre != null) {
