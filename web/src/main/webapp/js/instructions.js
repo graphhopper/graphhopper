@@ -3,7 +3,7 @@ var messages = require('./messages.js');
 
 var routeSegmentPopup = null;
 
-function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles) {
+function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, debugInstructions) {
     var sign = instr.sign;
     if (instrIndex === 0)
         sign = "marker-icon-green";
@@ -49,23 +49,30 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles) {
 
         });
 
-        // Debug Turn Instructions more easily
-        L.marker([lngLat[1], lngLat[0]], {
-            draggable: true
-        }).addTo(mapLayer.getRoutingLayer()).bindPopup(title);
+        if(debugInstructions){
+            // Debug Turn Instructions more easily
+            L.marker([lngLat[1], lngLat[0]], {
+                icon: L.icon({
+                    iconUrl: './img/marker-small-blue.png',
+                    iconSize: [15, 15]
+                }),
+                draggable: true
+            }).addTo(mapLayer.getRoutingLayer()).bindPopup(title);
+        }
     }
     main.append(instructionDiv);
 }
 
 module.exports.create = function (mapLayer, path, urlForHistory, request) {
     var instructionsElement = $("<table class='instructions'>");
+    var debugInstructions = request.api_params.debugInstructions;
 
     var partialInstr = path.instructions.length > 100;
     var len = Math.min(path.instructions.length, 100);
     for (var m = 0; m < len; m++) {
         var instr = path.instructions[m];
         var lngLat = path.points.coordinates[instr.interval[0]];
-        addInstruction(mapLayer, instructionsElement, instr, m, lngLat, request.useMiles);
+        addInstruction(mapLayer, instructionsElement, instr, m, lngLat, request.useMiles, debugInstructions);
     }
     var infoDiv = $("<div class='instructions_info'>");
     infoDiv.append(instructionsElement);
