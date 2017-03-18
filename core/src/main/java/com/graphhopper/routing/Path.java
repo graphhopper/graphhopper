@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
+import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
@@ -703,7 +704,16 @@ public class Path {
                 double maxSurroundingSpeed = -1;
                 double tmpSpeed;
                 while (edgeIter.next()) {
-                    tmpSpeed = encoder.getSpeed(edgeIter.getFlags());
+                    if (encoder instanceof DataFlagEncoder) {
+                        tmpSpeed = ((DataFlagEncoder) encoder).getMaxspeed(edgeIter, 0, false);
+                        // If one of the edges has no SpeedLimit set, we are not sure
+                        // TODO we should calculate the true speed limits here
+                        if(tmpSpeed < 1)
+                            return false;
+                    } else {
+                        tmpSpeed = encoder.getSpeed(edgeIter.getFlags());
+                    }
+
                     if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
                         if (tmpSpeed > maxSurroundingSpeed)
                             maxSurroundingSpeed = tmpSpeed;
