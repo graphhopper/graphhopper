@@ -138,7 +138,7 @@ class GtfsReader {
                             arrivalNode = i++;
                             nodeAccess.setNode(arrivalNode, stop.stop_lat, stop.stop_lon);
                             nodeAccess.setAdditionalNodeField(arrivalNode, NodeType.INTERNAL_PT.ordinal());
-                            times.put(arrivalNode, stopTime.arrival_time + time - frequency.start_time);
+                            times.put(arrivalNode, stopTime.arrival_time + time);
                             arrivals.put(stopTime.stop_id, arrivalNode);
                             if (prev != null) {
                                 Stop fromStop = feed.stops.get(prev.stop_id);
@@ -159,12 +159,12 @@ class GtfsReader {
                             }
                             nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
                             nodeAccess.setAdditionalNodeField(i - 1, NodeType.INTERNAL_PT.ordinal());
-                            times.put(i - 1, stopTime.departure_time + time - frequency.start_time);
+                            times.put(i - 1, stopTime.departure_time + time);
                             stops.put(stopTime.stop_id, i - 1);
                             departureNode = i++;
                             nodeAccess.setNode(departureNode, stop.stop_lat, stop.stop_lon);
                             nodeAccess.setAdditionalNodeField(departureNode, NodeType.INTERNAL_PT.ordinal());
-                            times.put(departureNode, stopTime.departure_time + time - frequency.start_time);
+                            times.put(departureNode, stopTime.departure_time + time);
                             EdgeIteratorState edge = graph.edge(
                                     i - 2,
                                     departureNode,

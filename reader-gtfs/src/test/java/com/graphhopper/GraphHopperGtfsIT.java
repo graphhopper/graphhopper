@@ -3,18 +3,23 @@ package com.graphhopper;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
+import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import static com.graphhopper.reader.gtfs.GtfsHelper.time;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static com.graphhopper.reader.gtfs.GtfsHelper.time;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 
 public class GraphHopperGtfsIT {
 
@@ -80,11 +85,16 @@ public class GraphHopperGtfsIT {
         ghRequest.getHints().put(GraphHopperGtfs.RANGE_QUERY_END_TIME, LocalDateTime.of(2007,1,1,13,0));
         ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, "true");
 
-        GHResponse route = graphHopper.route(ghRequest);
-
-        assertFalse(route.hasErrors());
-        assertEquals(24, route.getAll().size());
-        assertEquals("Expected travel time == scheduled arrival time", time(6, 49), route.getBest().getTime(), 0.1);
+        GHResponse response = graphHopper.route(ghRequest);
+        List<LocalTime> actualDepartureTimes = response.getAll().stream()
+                .map(path -> LocalTime.from(((Trip.PtLeg) path.getLegs().get(1)).departureTime.toInstant().atZone(ZoneId.systemDefault())))
+                .collect(Collectors.toList());
+        List<LocalTime> expectedDepartureTimes = Stream.of(
+                "06:44", "07:14", "07:44", "08:14", "08:44", "08:54", "09:04", "09:14", "09:24", "09:34", "09:44", "09:54",
+                "10:04", "10:14", "10:24", "10:34", "10:44", "11:14", "11:44", "12:14", "12:44")
+                .map(LocalTime::parse)
+                .collect(Collectors.toList());
+        assertEquals(actualDepartureTimes, expectedDepartureTimes);
     }
 
     @Test
