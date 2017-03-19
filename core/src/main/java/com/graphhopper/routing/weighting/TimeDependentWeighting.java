@@ -4,10 +4,11 @@ import com.graphhopper.util.EdgeIteratorState;
 
 public interface TimeDependentWeighting {
 
-	double calcWeight(EdgeIteratorState edgeState, double earliestStartTime);
+	double calcWeight(EdgeIteratorState edge, double earliestStartTime);
 
-	long calcTravelTimeSeconds(EdgeIteratorState edgeState, long earliestStartTime);
+	long calcTravelTimeSeconds(EdgeIteratorState edge, long earliestStartTime);
 
-	int calcNTransfers(EdgeIteratorState edgeState);
+	int calcNTransfers(EdgeIteratorState edge);
 
+    double getDistance(EdgeIteratorState edge);
 }

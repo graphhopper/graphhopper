@@ -43,41 +43,23 @@ class MultiCriteriaLabelSetting {
     private final PriorityQueue<Label> fromHeap;
     private final int maxVisitedNodes;
     private final boolean reverse;
+    private final double maxWalkDistancePerLeg;
     private long rangeQueryEndTime;
     private int visitedNodes;
     private final GraphExplorer explorer;
 
-    MultiCriteriaLabelSetting(Graph graph, Weighting weighting, int maxVisitedNodes, GraphExplorer explorer, boolean reverse) {
+    MultiCriteriaLabelSetting(Graph graph, Weighting weighting, int maxVisitedNodes, GraphExplorer explorer, boolean reverse, double maxWalkDistancePerLeg) {
         this.weighting = weighting;
         this.flagEncoder = (PtFlagEncoder) weighting.getFlagEncoder();
         this.maxVisitedNodes = maxVisitedNodes;
         this.explorer = explorer;
         this.reverse = reverse;
+        this.maxWalkDistancePerLeg = maxWalkDistancePerLeg;
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
         fromHeap = new PriorityQueue<>(size, new Comparator<Label>() {
             @Override
             public int compare(Label o1, Label o) {
-                if (!reverse && o1.currentTime < o.currentTime)
-                    return -1;
-                else if(reverse && o1.currentTime > o.currentTime)
-                    return -1;
-                else if (!reverse && o1.currentTime > o.currentTime)
-                    return 1;
-                else if (reverse && o1.currentTime < o.currentTime)
-                    return 1;
-                else if (o1.nTransfers < o.nTransfers)
-                    return -1;
-                else if (o1.nTransfers > o.nTransfers)
-                    return 1;
-                else if (!reverse && o1.firstPtDepartureTime < o.firstPtDepartureTime)
-                    return -1;
-                else if (reverse && o1.firstPtDepartureTime > o.firstPtDepartureTime)
-                    return -1;
-                else if (!reverse && o1.firstPtDepartureTime > o.firstPtDepartureTime)
-                    return 1;
-                else if (reverse && o1.firstPtDepartureTime < o.firstPtDepartureTime)
-                    return 1;
-                return 0;
+                return Long.compare(currentTimeCriterion(o1), currentTimeCriterion(o));
             }
 
             @Override
@@ -91,7 +73,7 @@ class MultiCriteriaLabelSetting {
     Set<Label> calcPaths(int from, Set<Integer> to, long startTime, long rangeQueryEndTime) {
         this.rangeQueryEndTime = rangeQueryEndTime;
         Set<Label> targetLabels = new HashSet<>();
-        Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, Long.MAX_VALUE, null);
+        Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, Long.MAX_VALUE, null);
         fromMap.put(from, label);
         if (to.contains(from)) {
             targetLabels.add(label);
@@ -103,30 +85,32 @@ class MultiCriteriaLabelSetting {
 
             for (EdgeIteratorState edge : explorer.exploreEdgesAround(label)) {
                 GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
-                int tmpNTransfers = label.nTransfers;
-                long tmpFirstPtDepartureTime = label.firstPtDepartureTime;
                 long nextTime;
                 if (reverse) {
                     nextTime = label.currentTime - ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edge, label.currentTime);
                 } else {
                     nextTime = label.currentTime + ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edge, label.currentTime);
                 }
-                tmpNTransfers += ((TimeDependentWeighting) weighting).calcNTransfers(edge);
-                if (!reverse && edgeType == GtfsStorage.EdgeType.BOARD && tmpFirstPtDepartureTime == Long.MAX_VALUE) {
-                    tmpFirstPtDepartureTime = nextTime;
+                int nTransfers = label.nTransfers + ((TimeDependentWeighting) weighting).calcNTransfers(edge);
+                long firstPtDepartureTime = label.firstPtDepartureTime;
+                if (!reverse && edgeType == GtfsStorage.EdgeType.BOARD && firstPtDepartureTime == Long.MAX_VALUE) {
+                    firstPtDepartureTime = nextTime;
                 }
-                if (reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && tmpFirstPtDepartureTime == Long.MAX_VALUE) {
-                    tmpFirstPtDepartureTime = nextTime;
+                if (reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && firstPtDepartureTime == Long.MAX_VALUE) {
+                    firstPtDepartureTime = nextTime;
                 }
+                double walkDistanceOnCurrentLeg = (edgeType == GtfsStorage.EdgeType.BOARD) ? 0 : (label.walkDistanceOnCurrentLeg + ((edgeType == GtfsStorage.EdgeType.UNSPECIFIED) ? edge.getDistance() : 0));
+                int nWalkDistanceConstraintViolations = Math.min(1, label.nWalkDistanceConstraintViolations + (label.walkDistanceOnCurrentLeg <= maxWalkDistancePerLeg && walkDistanceOnCurrentLeg > maxWalkDistancePerLeg ? 1 : 0));
 
                 Set<Label> sptEntries = fromMap.get(edge.getAdjNode());
-                Label nEdge = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), tmpNTransfers, tmpFirstPtDepartureTime, label);
-                if (improves(nEdge, sptEntries) && improvesTarget(nEdge, targetLabels)) {
+                Label nEdge = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, nWalkDistanceConstraintViolations, walkDistanceOnCurrentLeg, firstPtDepartureTime, label);
+                if (isNotEqualToAnyOf(nEdge, sptEntries) && isNotDominatedByAnyOf(nEdge, sptEntries) && isNotDominatedWithoutTieBreaksByAnyOf(nEdge, targetLabels)) {
                     removeDominated(nEdge, sptEntries);
                     if (to.contains(edge.getAdjNode())) {
                         removeDominated(nEdge, targetLabels);
                     }
                     fromMap.put(edge.getAdjNode(), nEdge);
+//                    System.out.printf("%d %d\n", edge.getAdjNode(), fromMap.get(edge.getAdjNode()).size());
                     if (to.contains(edge.getAdjNode())) {
                         targetLabels.add(nEdge);
                     }
@@ -141,37 +125,82 @@ class MultiCriteriaLabelSetting {
             if (label == null)
                 throw new AssertionError("Empty edge cannot happen");
         }
-        return targetLabels;
+        return filterTargetLabels(targetLabels);
     }
 
-    private boolean improves(Label me, Set<Label> sptEntries) {
+    private boolean isNotEqualToAnyOf(Label me, Set<Label> sptEntries) {
         for (Label they : sptEntries) {
-            if (they.nTransfers <= me.nTransfers &&
-                    (reverse ? they.currentTime >= me.currentTime : they.currentTime <= me.currentTime) &&
-                    (me.firstPtDepartureTime == Long.MAX_VALUE || they.firstPtDepartureTime == Long.MAX_VALUE ||  (reverse ? (they.firstPtDepartureTime <= me.firstPtDepartureTime || me.firstPtDepartureTime < rangeQueryEndTime): (they.firstPtDepartureTime >= me.firstPtDepartureTime ||  me.firstPtDepartureTime > rangeQueryEndTime)))
-                    ) {
+            if (me.currentTime == they.currentTime && me.nTransfers == they.nTransfers && me.nWalkDistanceConstraintViolations == they.nWalkDistanceConstraintViolations && me.firstPtDepartureTime == they.firstPtDepartureTime) {
                 return false;
             }
         }
         return true;
     }
 
-    private boolean improvesTarget(Label me, Set<Label> sptEntries) {
+    private Set<Label> filterTargetLabels(Set<Label> targetLabels) {
+        HashSet<Label> filteredLabels = new HashSet<>(targetLabels);
+        for (Label me : new ArrayList<>(filteredLabels)) {
+            Iterator<Label> iterator = filteredLabels.iterator();
+            while (iterator.hasNext()) {
+                Label they = iterator.next();
+                if (dominatesForFiltering(me, they)) {
+                    iterator.remove();
+                }
+            }
+        }
+        return filteredLabels;
+    }
+
+    private boolean dominatesForFiltering(Label me, Label they) {
+        if (me.nWalkDistanceConstraintViolations < they.nWalkDistanceConstraintViolations) {
+            return true;
+        }
+        if (currentTimeCriterion(me) > currentTimeCriterion(they)) {
+            return false;
+        }
+        if (me.nTransfers > they.nTransfers) {
+            return false;
+        }
+        if (me.firstPtDepartureTime != Long.MAX_VALUE && they.firstPtDepartureTime != Long.MAX_VALUE
+                && firstPtDepartureTimeCriterion(me) < firstPtDepartureTimeCriterion(they)) {
+            return false;
+        }
+        if (currentTimeCriterion(me) < currentTimeCriterion(they)) {
+            return true;
+        }
+        if (me.nTransfers < they.nTransfers) {
+            return true;
+        }
+        if (me.firstPtDepartureTime != Long.MAX_VALUE && they.firstPtDepartureTime != Long.MAX_VALUE
+                && firstPtDepartureTimeCriterion(me) > firstPtDepartureTimeCriterion(they)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isNotDominatedByAnyOf(Label me, Set<Label> sptEntries) {
         for (Label they : sptEntries) {
-            if (they.nTransfers <= me.nTransfers &&
-                    (reverse ? they.currentTime >= me.currentTime : they.currentTime <= me.currentTime) &&
-                    (reverse ? (they.firstPtDepartureTime <= me.firstPtDepartureTime || me.firstPtDepartureTime < rangeQueryEndTime): (they.firstPtDepartureTime >= me.firstPtDepartureTime ||  me.firstPtDepartureTime != Long.MAX_VALUE && me.firstPtDepartureTime > rangeQueryEndTime))
-                    ) {
+            if (dominates(they, me)) {
                 return false;
             }
         }
         return true;
     }
+
+    private boolean isNotDominatedWithoutTieBreaksByAnyOf(Label me, Set<Label> sptEntries) {
+        for (Label they : sptEntries) {
+            if (dominatesWithoutTieBreaks(they, me)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
 
     private void removeDominated(Label me, Set<Label> sptEntries) {
         for (Iterator<Label> iterator = sptEntries.iterator(); iterator.hasNext();) {
             Label sptEntry = iterator.next();
-            if (dominates(me, sptEntry)) {
+            if (dominatesWithoutTieBreaks(me, sptEntry)) {
                 fromHeap.remove(sptEntry);
                 iterator.remove();
             }
@@ -179,49 +208,77 @@ class MultiCriteriaLabelSetting {
     }
 
     private boolean dominates(Label me, Label they) {
-        if (reverse) {
-            if (me.currentTime < they.currentTime) {
-                return false;
-            }
-        } else {
-            if (me.currentTime > they.currentTime) {
-                return false;
-            }
-        }
-        if (me.nTransfers > they.nTransfers) {
+        if (currentTimeCriterion(me) + currentTimeSlack(me, they) > currentTimeCriterion(they))
             return false;
-        }
-        if (reverse) {
-            if (me.firstPtDepartureTime != Long.MAX_VALUE && they.firstPtDepartureTime != Long.MAX_VALUE && me.firstPtDepartureTime > they.firstPtDepartureTime) {
-                return false;
-            }
-        } else {
-            if (me.firstPtDepartureTime != Long.MAX_VALUE && they.firstPtDepartureTime != Long.MAX_VALUE && me.firstPtDepartureTime < they.firstPtDepartureTime) {
-                return false;
-            }
-        }
-        if (reverse) {
-            if (me.currentTime > they.currentTime) {
-                return true;
-            }
-        } else {
-            if (me.currentTime < they.currentTime) {
-                return true;
-            }
-        }
-        if (me.nTransfers < they.nTransfers) {
+        if (me.nTransfers + nTransfersSlack(me, they) > they.nTransfers)
+            return false;
+        if (me.nWalkDistanceConstraintViolations + nWalkDistanceConstraintViolationsSlack(me, they) > they.nWalkDistanceConstraintViolations)
+            return false;
+        if (currentTimeCriterion(me) + currentTimeSlack(me, they) < currentTimeCriterion(they))
             return true;
-        }
-        if (reverse) {
-            if (me.firstPtDepartureTime == Long.MAX_VALUE || they.firstPtDepartureTime == Long.MAX_VALUE  || me.firstPtDepartureTime < they.firstPtDepartureTime) {
-                return true;
-            }
-        } else {
-            if (me.firstPtDepartureTime == Long.MAX_VALUE || they.firstPtDepartureTime == Long.MAX_VALUE || me.firstPtDepartureTime > they.firstPtDepartureTime) {
+        if (me.nTransfers + nTransfersSlack(me, they) < they.nTransfers)
+            return true;
+        if (me.nWalkDistanceConstraintViolations + nWalkDistanceConstraintViolationsSlack(me, they) < they.nWalkDistanceConstraintViolations)
+            return true;
+        if (!reverse) {
+            // Break ties: Leaving later / arriving earlier is better
+            if (firstPtDepartureTimeCriterion(me) != Long.MAX_VALUE
+                    && firstPtDepartureTimeCriterion(they) != Long.MAX_VALUE
+                    && firstPtDepartureTimeCriterion(me) > firstPtDepartureTimeCriterion(they)) {
                 return true;
             }
         }
         return false;
+    }
+
+    private boolean dominatesWithoutTieBreaks(Label me, Label they) {
+        if (currentTimeCriterion(me) + currentTimeSlack(me, they) > currentTimeCriterion(they))
+            return false;
+        if (me.nTransfers + nTransfersSlack(me, they) > they.nTransfers)
+            return false;
+        if (me.nWalkDistanceConstraintViolations + nWalkDistanceConstraintViolationsSlack(me, they) > they.nWalkDistanceConstraintViolations)
+            return false;
+        if (currentTimeCriterion(me) + currentTimeSlack(me, they) < currentTimeCriterion(they))
+            return true;
+        if (me.nTransfers + nTransfersSlack(me, they) < they.nTransfers)
+            return true;
+        if (me.nWalkDistanceConstraintViolations + nWalkDistanceConstraintViolationsSlack(me, they) < they.nWalkDistanceConstraintViolations)
+            return true;
+        return false;
+    }
+
+    private long currentTimeCriterion(Label label) {
+        return reverse ? -label.currentTime : label.currentTime;
+    }
+
+    private double nWalkDistanceConstraintViolationsSlack(Label me, Label they) {
+        return profileQuerySlackComponent(me, they);
+    }
+
+    private double profileQuerySlackComponent(Label me, Label they) {
+        if (((firstPtDepartureTimeCriterion(they) != Long.MAX_VALUE) != (firstPtDepartureTimeCriterion(me) != Long.MAX_VALUE)) ||
+                firstPtDepartureTimeCriterion(they) > firstPtDepartureTimeCriterion(me) &&
+                firstPtDepartureTimeCriterion(they) <= rangeQueryEndTimeConstraint()) {
+            return Double.POSITIVE_INFINITY;
+        } else {
+            return 0;
+        }
+    }
+
+    private long rangeQueryEndTimeConstraint() {
+        return reverse ? -rangeQueryEndTime : rangeQueryEndTime;
+    }
+
+    private long firstPtDepartureTimeCriterion(Label label) {
+        return reverse ? -label.firstPtDepartureTime : label.firstPtDepartureTime;
+    }
+
+    private double nTransfersSlack(Label me, Label they) {
+        return profileQuerySlackComponent(me, they);
+    }
+
+    private double currentTimeSlack(Label me, Label they) {
+        return profileQuerySlackComponent(me, they);
     }
 
     int getVisitedNodes() {

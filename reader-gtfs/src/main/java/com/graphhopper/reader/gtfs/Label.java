@@ -17,12 +17,24 @@
  */
 package com.graphhopper.reader.gtfs;
 
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Iterator;
 
 class Label {
+
+    static class Transition {
+        final Label label;
+        final EdgeIteratorState edge;
+
+        Transition(Label label, EdgeIteratorState edge) {
+            this.label = label;
+            this.edge = edge;
+        }
+    }
 
     final long currentTime;
 
@@ -30,14 +42,20 @@ class Label {
     final int adjNode;
 
     final int nTransfers;
+    final int nWalkDistanceConstraintViolations;
+
+    final double walkDistanceOnCurrentLeg;
     final long firstPtDepartureTime;
+
     final Label parent;
 
-    Label(long currentTime, int edgeId, int adjNode, int nTransfers, long firstPtDepartureTime, Label parent) {
+    Label(long currentTime, int edgeId, int adjNode, int nTransfers, int nWalkDistanceConstraintViolations, double walkDistance, long firstPtDepartureTime, Label parent) {
         this.currentTime = currentTime;
         this.edge = edgeId;
         this.adjNode = adjNode;
         this.nTransfers = nTransfers;
+        this.nWalkDistanceConstraintViolations = nWalkDistanceConstraintViolations;
+        this.walkDistanceOnCurrentLeg = walkDistance;
         this.firstPtDepartureTime = firstPtDepartureTime;
         this.parent = parent;
     }
@@ -47,11 +65,11 @@ class Label {
         return adjNode + " (" + edge + ") time: " + currentTime;
     }
 
-    static Iterable<EdgeIteratorState> reverseEdges(Label leaf, Graph graph) {
-        return new Iterable<EdgeIteratorState>() {
+    static Iterable<Transition> reverseEdges(Label leaf, Graph graph, boolean reverseEdgeFlags) {
+        return new Iterable<Transition>() {
             @Override
-            public Iterator<EdgeIteratorState> iterator() {
-                return new Iterator<EdgeIteratorState>() {
+            public Iterator<Transition> iterator() {
+                return new Iterator<Transition>() {
                     Label label = leaf;
                     @Override
                     public boolean hasNext() {
@@ -59,10 +77,12 @@ class Label {
                     }
 
                     @Override
-                    public EdgeIteratorState next() {
-                        EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(label.edge, label.parent.adjNode);
+                    public Transition next() {
+                        EdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(label.edge, label.parent.adjNode)
+                                .detach(reverseEdgeFlags);
+                        Transition transition = new Transition(label, edgeIteratorState);
                         label = label.parent;
-                        return edgeIteratorState;
+                        return transition;
                     }
                 };
             }

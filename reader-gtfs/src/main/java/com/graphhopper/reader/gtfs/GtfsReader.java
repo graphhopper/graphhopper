@@ -260,7 +260,7 @@ class GtfsReader {
             if (!timeNode.isEmpty()) {
                 EdgeIteratorState edge = graph.edge(timeNode.last().b, timeNode.first().b, 0.0, false);
                 int rolloverTime = 24 * 60 * 60 - timeNode.last().a + timeNode.first().a;
-                setEdgeType(edge, GtfsStorage.EdgeType.TIME_PASSES);
+                setEdgeType(edge, GtfsStorage.EdgeType.OVERNIGHT);
                 edge.setName(stop.stop_name);
                 edge.setFlags(encoder.setTime(edge.getFlags(), rolloverTime));
             }

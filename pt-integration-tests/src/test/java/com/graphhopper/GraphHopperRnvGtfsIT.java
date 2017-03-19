@@ -101,10 +101,13 @@ public class GraphHopperRnvGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, earliestDepartureTime.toString());
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, earliestDepartureTime);
+        ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, true);
+
         GHResponse route = graphHopper.route(ghRequest);
         assertFalse(route.hasErrors());
         assertEquals(GTFS_START_DATE.atTime(20, 16,33), earliestDepartureTime.plus(route.getBest().getTime(), ChronoUnit.MILLIS));
+        assertEquals("Single criterion. Should have only one result -- earliest arrival time.", 1, route.getAll().size());
     }
 
     @Test
@@ -136,6 +139,7 @@ public class GraphHopperRnvGtfsIT {
         GHRequest request = new GHRequest(FROM_LAT, FROM_LON, TO_LAT, TO_LON);
         request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, startTime.toString());
         request.getHints().put(GraphHopperGtfs.RANGE_QUERY_END_TIME, rangeEndTime.toString());
+        request.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, Double.MAX_VALUE);
         GHResponse response = graphHopper.route(request);
         assertFalse(response.hasErrors());
 
