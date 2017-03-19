@@ -231,7 +231,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         LOGGER.info("init landmarks for subnetworks with node count greater than " + minimumNodes + " with factor:" + factor + additionalInfo);
 
-        // special subnetwork 0
         int[] empty = new int[landmarks];
         Arrays.fill(empty, UNSET_SUBNETWORK);
         landmarkIDs.add(empty);
@@ -531,7 +530,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         int subnetworkFrom = subnetworkStorage.getSubnetwork(fromNode);
         int subnetworkTo = subnetworkStorage.getSubnetwork(toNode);
-        if (subnetworkFrom == UNCLEAR_SUBNETWORK || subnetworkTo == UNCLEAR_SUBNETWORK)
+        if (subnetworkFrom <= UNCLEAR_SUBNETWORK || subnetworkTo <= UNCLEAR_SUBNETWORK)
             return false;
         if (subnetworkFrom != subnetworkTo) {
             throw new ConnectionNotFoundException("Connection between locations not found. Different subnetworks " + subnetworkFrom + " vs. " + subnetworkTo, new HashMap<String, Object>());

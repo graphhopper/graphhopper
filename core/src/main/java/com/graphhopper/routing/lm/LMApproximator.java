@@ -49,7 +49,9 @@ public class LMApproximator implements WeightApproximator {
     private int[] activeFromIntWeights;
     private int[] activeToIntWeights;
     private double epsilon = 1;
-    private int to = -1, counter;
+    private int to = -1;
+    // do activate landmark recalculation
+    private boolean doALMRecalc = true;
     private final double factor;
     private final boolean reverse;
     private final int maxBaseNodes;
@@ -57,7 +59,6 @@ public class LMApproximator implements WeightApproximator {
     private final WeightApproximator fallBackApproximation;
     private boolean fallback = false;
     private final GHIntObjectHashMap<VirtEntry> virtNodeMap;
-    private boolean changeActiveLandmarks = true;
 
     public LMApproximator(Graph graph, int maxBaseNodes, LandmarkStorage lms, int activeCount,
                           double factor, boolean reverse) {
@@ -115,7 +116,7 @@ public class LMApproximator implements WeightApproximator {
 
     @Override
     public double approximate(final int queryNode) {
-        if (fallback || lms.isEmpty())
+        if (!doALMRecalc && fallback || lms.isEmpty())
             return fallBackApproximation.approximate(queryNode);
 
         int node = queryNode;
@@ -130,19 +131,16 @@ public class LMApproximator implements WeightApproximator {
         if (node == to)
             return 0;
 
-        if (changeActiveLandmarks) {
-            // select better active landmarks, LATER: use 'success' statistics about last active landmark
-            // we have to update the priority queues and the maps if done in the middle of the search http://cstheory.stackexchange.com/q/36355/13229
-            if (counter == 0) {
-                boolean res = lms.initActiveLandmarks(node, to, activeLandmarks, activeFromIntWeights, activeToIntWeights, reverse);
-                if (!res) {
-                    // note: fallback==true means forever true!
-                    fallback = true;
-                    return fallBackApproximation.approximate(queryNode);
-                }
+        // select better active landmarks, LATER: use 'success' statistics about last active landmark
+        // we have to update the priority queues and the maps if done in the middle of the search http://cstheory.stackexchange.com/q/36355/13229
+        if (doALMRecalc) {
+            doALMRecalc = false;
+            boolean res = lms.initActiveLandmarks(node, to, activeLandmarks, activeFromIntWeights, activeToIntWeights, reverse);
+            if (!res) {
+                // note: fallback==true means forever true!
+                fallback = true;
+                return fallBackApproximation.approximate(queryNode);
             }
-
-            counter++;
         }
 
         int maxWeightInt = getMaxWeight(node, virtEdgeWeightInt, activeLandmarks, activeFromIntWeights, activeToIntWeights);
@@ -208,6 +206,13 @@ public class LMApproximator implements WeightApproximator {
     @Override
     public WeightApproximator reverse() {
         return new LMApproximator(graph, maxBaseNodes, lms, activeLandmarks.length, factor, !reverse);
+    }
+
+    /**
+     * This method forces a lazy recalculation of the active landmark set e.g. necessary after the 'to' node changed.
+     */
+    public void triggerActiveLandmarkRecalculation() {
+        doALMRecalc = true;
     }
 
     @Override
