@@ -50,6 +50,7 @@ roundabout_exit=Nella rotatoria, prendere l'uscita %1$s
 roundabout_exit_onto=Nella rotatoria, prendere l'uscita %1$s su %2$s
 total_ascend=%1$s di dislivello positivo
 total_descend=%1$s di dislivello negativo
+way_contains_ford=
 web.start_label=Partenza
 web.intermediate_label=Punto intermedio
 web.end_label=Arrivo

@@ -50,6 +50,7 @@ roundabout_exit=Na rotonda tome a saída %1$s
 roundabout_exit_onto=Na rotonda, tome a saída %1$s cara %2$s
 total_ascend=
 total_descend=
+way_contains_ford=
 web.start_label=
 web.intermediate_label=
 web.end_label=

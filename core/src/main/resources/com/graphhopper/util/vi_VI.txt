@@ -50,6 +50,7 @@ roundabout_exit=Tại vòng xoay, rẽ lối rẽ %1$s
 roundabout_exit_onto=Tại vòng xoay, rẽ lối rẽ %1$s vào đường %2$s
 total_ascend=Đi tiếp %1$s nữa
 total_descend=
+way_contains_ford=
 web.start_label=
 web.intermediate_label=
 web.end_label=

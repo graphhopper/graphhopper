@@ -50,6 +50,7 @@ roundabout_exit=На кільці використовуйте з’їзд %1$s
 roundabout_exit_onto=На кільці використовуйте з’їзд %1$s на %2$s
 total_ascend=%1$s загалом підйому
 total_descend=%1$s загалом спуску
+way_contains_ford=
 web.start_label=Початок
 web.intermediate_label=Проміжна точка
 web.end_label=Кінець

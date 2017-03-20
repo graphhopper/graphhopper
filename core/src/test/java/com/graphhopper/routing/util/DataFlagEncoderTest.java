@@ -5,6 +5,7 @@ import java.util.*;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.util.PMap;
 import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
@@ -12,9 +13,6 @@ import org.junit.Test;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
 
 import static org.junit.Assert.*;
 
@@ -128,6 +126,18 @@ public class DataFlagEncoderTest {
         assertEquals("bridge", encoder.getTransportModeAsString(edge));
         assertFalse(encoder.isTransportModeTunnel(edge));
         assertTrue(encoder.isTransportModeBridge(edge));
+    }
+
+    @Test
+    public void testFord() {
+        ReaderWay osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "unclassified");
+        osmWay.setTag("ford", "yes");
+        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertEquals("ford", encoder.getTransportModeAsString(edge));
+        assertTrue(encoder.isTransportModeFord(edge.getFlags()));
+        assertTrue(encoder.getAnnotation(edge.getFlags(), TranslationMapTest.SINGLETON.get("en")).getMessage().contains("ford"));
     }
 
     @Test

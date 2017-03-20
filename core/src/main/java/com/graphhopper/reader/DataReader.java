@@ -34,8 +34,6 @@ public interface DataReader {
 
     DataReader setWorkerThreads(int workerThreads);
 
-    DataReader setEncodingManager(EncodingManager em);
-
     DataReader setWayPointMaxDistance(double wayPointMaxDistance);
 
     /**
