@@ -300,7 +300,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                         throw ex;
                     }
                 }
-            }, true);
+            }, name);
 
         }
 
