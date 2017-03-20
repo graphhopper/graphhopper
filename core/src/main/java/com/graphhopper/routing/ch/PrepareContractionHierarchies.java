@@ -237,6 +237,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         StopWatch neighborSW = new StopWatch();
         while (!sortedNodes.isEmpty()) {
+
             // periodically update priorities of ALL nodes
             if (periodicUpdate && counter > 0 && counter % periodicUpdatesCount == 0) {
                 periodSW.start();
@@ -304,6 +305,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             CHEdgeIterator iter = vehicleAllExplorer.setBaseNode(polledNode);
             while (iter.next()) {
+
+                if(Thread.currentThread().isInterrupted()){
+                    throw new RuntimeException("Thread was interrupted");
+                }
+
                 int nn = iter.getAdjNode();
                 if (prepareGraph.getLevel(nn) != maxLevel)
                     continue;
@@ -319,10 +325,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 }
 
                 prepareGraph.disconnect(vehicleAllTmpExplorer, iter);
-            }
-
-            if(Thread.currentThread().isInterrupted()){
-                throw new RuntimeException("Thread was interrupted");
             }
         }
 
