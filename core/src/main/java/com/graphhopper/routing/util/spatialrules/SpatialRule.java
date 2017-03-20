@@ -69,9 +69,10 @@ public interface SpatialRule {
             return AccessValue.ACCESSIBLE;
         }
 
+        // TODO: Should we change this to "SpatialRule.EMPTY"?
         @Override
         public String getId() {
-            return "SpatialRule.EMPTY";
+            return "";
         }
 
         @Override
