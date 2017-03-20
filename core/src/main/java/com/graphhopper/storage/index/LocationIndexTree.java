@@ -37,6 +37,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -71,6 +73,12 @@ public class LocationIndexTree implements LocationIndex {
     private double deltaLon;
     private int initSizeLeafEntries = 4;
     private boolean initialized = false;
+    private static final Comparator<QueryResult> QR_COMPARATOR = new Comparator<QueryResult>() {
+        @Override
+        public int compare(QueryResult o1, QueryResult o2) {
+            return Double.compare(o1.getQueryDistance(), o2.getQueryDistance());
+        }
+    };
     /**
      * If normed distance is smaller than this value the node or edge is 'identical' and the
      * algorithm can stop search.
@@ -564,6 +572,133 @@ public class LocationIndexTree implements LocationIndex {
         return closestMatch;
     }
 
+    /**
+     * Returns all edges that are within the specified radius around the queried position.
+     *
+     * @param queryLat latitude to search from
+     * @param queryLon longitude to search from
+     * @param edgeFilter only include edges from edgeFilter
+     * @param radius include all results within this radius (in meters) - assuming it's not
+     *        bounded by maxIterations.
+     * @param maxIterations if not null, search only a square of (2 * maxIterations - 1) tiles
+     *        wide/high (with center tile containing (queryLat, queryLon)). Note that it is
+     *        possible that the search radius exceeds this square - in this case, an exception
+     *        will be thrown.
+     */
+    public List<QueryResult> findWithinRadius(final double queryLat, final double queryLon,
+            final EdgeFilter edgeFilter, final double radius, final Integer maxIterations) {
+
+        // check the max iterations:
+        int requiredIterationsForThisRadius = (int) Math.ceil(radius / this.minResolutionInMeter)
+                + 1; // note that this is a conservative upper bound
+        int _maxIterations;
+        if (maxIterations == null) {
+            // used the maximum iterations required:
+            _maxIterations = requiredIterationsForThisRadius;
+        } else {
+            // check the provided maxIterations will include this radius:
+            if (maxIterations < requiredIterationsForThisRadius)
+                throw new IllegalArgumentException("A minimum of " + requiredIterationsForThisRadius
+                        + " iterations are required for a radius of " + radius + "m, but a "
+                        + "maxIterations of " + maxIterations + " was provided. Behaviour is "
+                        + "undefined in this case, so please either decrease maxIterations to "
+                         + requiredIterationsForThisRadius + ", or decrease the radius.");
+            _maxIterations = maxIterations;
+        }
+        
+        final double returnAllResultsWithin = distCalc.calcNormalizedDist(radius);
+        // implement a cheap priority queue via List, sublist and Collections.sort
+        final List<QueryResult> queryResults = new ArrayList<QueryResult>();
+        GHIntHashSet set = new GHIntHashSet();
+
+        for (int iteration = 0; iteration < _maxIterations; iteration++) {
+            // TODO: should we use the return value of earlyFinish?
+            findNetworkEntries(queryLat, queryLon, set, iteration);
+            final GHBitSet exploredNodes = new GHTBitSet(new GHIntHashSet(set));
+            final EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
+            set.forEach(new IntPredicate() {
+                @Override
+                public boolean apply(int node) {
+                    new XFirstSearchCheck(queryLat, queryLon, exploredNodes, edgeFilter) {
+                        @Override
+                        protected double getQueryDistance() {
+                            // do not skip search if distance is 0 or near zero (equalNormedDelta)
+                            return Double.MAX_VALUE;
+                        }
+
+                        @Override
+                        protected boolean check(int node, double normedDist, int wayIndex,
+                                EdgeIteratorState edge, QueryResult.Position pos) {
+                            if (normedDist < returnAllResultsWithin || queryResults.isEmpty()
+                                    || queryResults.get(0).getQueryDistance() > normedDist) {
+                                // TODO: refactor below:
+                                // - should only add edges within search radius (below allows the
+                                // returning of a candidate outside search radius if it's the only
+                                // one). Removing this test would simplify it a lot and probably
+                                // match the expected behaviour (see method description)
+                                // - create QueryResult first and the add/set as required - clean up
+                                // the index tracking business.
+                                int index = -1;
+                                for (int qrIndex = 0; qrIndex < queryResults.size(); qrIndex++) {
+                                    QueryResult qr = queryResults.get(qrIndex);
+                                    // overwrite older queryResults which are potentially more far
+                                    // away than returnAllResultsWithin
+                                    if (qr.getQueryDistance() > returnAllResultsWithin) {
+                                        index = qrIndex;
+                                        break;
+                                    }
+
+                                    // avoid duplicate edges
+                                    if (qr.getClosestEdge().getEdge() == edge.getEdge()) {
+                                        if (qr.getQueryDistance() < normedDist) {
+                                            // do not add current edge
+                                            return true;
+                                        } else {
+                                            // overwrite old edge with current
+                                            index = qrIndex;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                QueryResult qr = new QueryResult(queryLat, queryLon);
+                                qr.setQueryDistance(normedDist);
+                                qr.setClosestNode(node);
+                                qr.setClosestEdge(edge.detach(false));
+                                qr.setWayIndex(wayIndex);
+                                qr.setSnappedPosition(pos);
+
+                                if (index < 0) {
+                                    queryResults.add(qr);
+                                } else {
+                                    queryResults.set(index, qr);
+                                }
+                            }
+                            return true;
+                        }
+                    }.start(explorer, node);
+                    return true;
+                }
+            });
+        }
+
+        // TODO: pass boolean argument for whether or not to sort?
+        Collections.sort(queryResults, QR_COMPARATOR);
+
+        for (QueryResult qr : queryResults) {
+            if (qr.isValid()) {
+                // denormalize distance
+                qr.setQueryDistance(distCalc.calcDenormalizedDist(qr.getQueryDistance()));
+                qr.calcSnappedPoint(distCalc);
+            } else {
+                throw new IllegalStateException(
+                        "Invalid QueryResult should not happen here: " + qr);
+            }
+        }
+
+        return queryResults;
+    }
+    
     // make entries static as otherwise we get an additional reference to this class (memory waste)
     interface InMemEntry {
         boolean isLeaf();
