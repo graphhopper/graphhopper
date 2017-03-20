@@ -3,6 +3,7 @@ package com.graphhopper.routing.util;
 import java.util.*;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
+import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.util.PMap;
 import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.util.*;
@@ -323,7 +324,7 @@ public class DataFlagEncoderTest {
 
     @Test
     public void testSpatialId() {
-        final TestRule germany = new TestRule();
+        final GermanySpatialRule germany = new GermanySpatialRule();
         germany.setBorders(Collections.singletonList(new Polygon(new double[]{0, 0, 1, 1}, new double[]{0, 1, 1, 0})));
 
         SpatialRuleLookup index = new SpatialRuleLookup() {
@@ -398,7 +399,7 @@ public class DataFlagEncoderTest {
         e3.setFlags(encoder.handleWayTags(livingStreet, 1, 0));
         e4.setFlags(encoder.handleWayTags(livingStreet2, 1, 0));
 
-        assertEquals(index.getSpatialId(new TestRule()), encoder.getSpatialId(e1.getFlags()));
+        assertEquals(index.getSpatialId(new GermanySpatialRule()), encoder.getSpatialId(e1.getFlags()));
         assertEquals(index.getSpatialId(SpatialRule.EMPTY), encoder.getSpatialId(e2.getFlags()));
 
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, encoder.getAccessValue(e1.getFlags()));
@@ -408,47 +409,4 @@ public class DataFlagEncoderTest {
         assertEquals(-1, encoder.getMaxspeed(e4, -1, false), .1);
     }
 
-    /**
-     * Defines the default rules for German roads
-     *
-     * @author Robin Boldt
-     */
-    private static class TestRule extends DefaultSpatialRule {
-
-        /**
-         * Germany contains roads with no speed limit. For these roads, this method will return Integer.MAX_VALUE.
-         * Your implementation should be able to handle these cases.
-         */
-        @Override
-        public double getMaxSpeed(String highwayTag, double _default) {
-            // As defined in: https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar
-            switch (highwayTag) {
-                case "motorway":
-                    return Integer.MAX_VALUE;
-                case "trunk":
-                    return Integer.MAX_VALUE;
-                case "residential":
-                    return 100;
-                case "living_street":
-                    return 4;
-                default:
-                    return super.getMaxSpeed(highwayTag, _default);
-            }
-        }
-
-        @Override
-        public AccessValue getAccessValue(String highwayTag, TransportationMode transportationMode, AccessValue _default) {
-            if (transportationMode == TransportationMode.MOTOR_VEHICLE) {
-                if (highwayTag.equals("track"))
-                    return AccessValue.EVENTUALLY_ACCESSIBLE;
-            }
-
-            return super.getAccessValue(highwayTag, transportationMode, _default);
-        }
-
-        @Override
-        public String getId() {
-            return "DEU";
-        }
-    }
 }
