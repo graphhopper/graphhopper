@@ -237,7 +237,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         StopWatch neighborSW = new StopWatch();
         while (!sortedNodes.isEmpty()) {
-
             // periodically update priorities of ALL nodes
             if (periodicUpdate && counter > 0 && counter % periodicUpdatesCount == 0) {
                 periodSW.start();
