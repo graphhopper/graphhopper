@@ -5,6 +5,7 @@ import java.util.*;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.util.PMap;
 import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
@@ -343,6 +344,11 @@ public class DataFlagEncoderTest {
             @Override
             public int size() {
                 return 2;
+            }
+
+            @Override
+            public BBox getBounds() {
+                return new BBox(-180, 180, -90, 90);
             }
         };
 

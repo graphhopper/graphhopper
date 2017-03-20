@@ -71,7 +71,7 @@ public interface SpatialRule {
 
         @Override
         public String getId() {
-            return "";
+            return "SpatialRule.EMPTY";
         }
 
         @Override

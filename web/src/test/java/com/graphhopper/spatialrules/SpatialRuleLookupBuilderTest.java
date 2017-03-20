@@ -22,12 +22,16 @@ import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.util.spatialrules.AccessValue;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
+import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
 
 import java.io.InputStreamReader;
 import java.io.Reader;
 
+import static junit.framework.TestCase.assertFalse;
+import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 /**
  * @author Robin Boldt
@@ -52,5 +56,34 @@ public class SpatialRuleLookupBuilderTest {
         assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccessValue("primary", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(48.210033, 16.363449).getAccessValue("living_street", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
     }
+
+    @Test
+    public void testBounds() {
+        Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), new BBox(-180, 180, -90, 90));
+        BBox almostWorldWide = new BBox(-179, 179, -89, 89);
+
+        // Might fail if a polygon is defined outside the above coordinates
+        assertTrue("BBox seems to be not contracted", almostWorldWide.contains(spatialRuleLookup.getBounds()));
+    }
+
+    @Test
+    public void testIntersection() {
+                /*
+             We are creating a BBox smaller than Germany. We have the German Spatial rule activated by default.
+             So the BBox should not contain a Point lying somewhere close in Germany.
+          */
+        Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), new BBox(9, 10, 51, 52));
+        assertFalse("BBox seems to be incorrectly contracted", spatialRuleLookup.getBounds().contains(49.9, 8.9));
+    }
+
+    @Test
+    public void testNoIntersection() {
+        Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), new BBox(-180, -179, -90, -89));
+        assertEquals(SpatialRuleLookup.EMPTY, spatialRuleLookup);
+    }
+
 
 }

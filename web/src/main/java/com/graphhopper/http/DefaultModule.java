@@ -36,6 +36,7 @@ import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,8 +109,9 @@ public class DefaultModule extends AbstractModule {
         String spatialRuleLocation = args.get("spatial_rules.location", "");
         if (!spatialRuleLocation.isEmpty()) {
             try {
+                final BBox maxBounds = BBox.parseBBoxString(args.get("spatial_rules.max_bbox", "-180, 180, -90, 90"));
                 final FileReader reader = new FileReader(spatialRuleLocation);
-                final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory());
+                final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), maxBounds);
                 logger.info("Set spatial rule lookup with " + index.size() + " rules");
                 final FlagEncoderFactory oldFEF = tmp.getFlagEncoderFactory();
                 tmp.setFlagEncoderFactory(new FlagEncoderFactory() {

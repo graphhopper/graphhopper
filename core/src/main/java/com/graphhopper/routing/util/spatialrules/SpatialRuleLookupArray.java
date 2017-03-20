@@ -49,19 +49,14 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
      *                   The downside of using decimal degrees is that this is not fixed to a certain m range as
      * @param exact      if exact it will also perform a polygon contains for border tiles, might fail for small holes
      *                   in the Polygon that are not represented in the tile array.
+     * @param bounds create the SpatialRuleLookup for the given BBox
      */
-    public SpatialRuleLookupArray(List<SpatialRule> spatialRules, double resolution, boolean exact) {
-        bounds = BBox.createInverse(false);
-        for (SpatialRule spatialRule : spatialRules) {
-            for (Polygon polygon : spatialRule.getBorders()) {
-                bounds.update(polygon.getMinLat(), polygon.getMinLon());
-                bounds.update(polygon.getMaxLat(), polygon.getMaxLon());
-            }
-        }
+    public SpatialRuleLookupArray(List<SpatialRule> spatialRules, double resolution, boolean exact, BBox bounds) {
 
-        if (!bounds.isValid()) {
-            throw new IllegalStateException("No associated polygons.");
-        }
+        if(!bounds.isValid())
+            throw new IllegalStateException("Bounds are not valid: "+bounds);
+
+        this.bounds = bounds;
 
         if (resolution < 1e-100)
             throw new IllegalArgumentException("resolution cannot be that high " + resolution);
@@ -158,10 +153,14 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
     }
 
     private int getXIndexForLon(double lon) {
+        if(lon < bounds.minLon)
+            return 0;
         return (int) Math.floor(Math.abs(lon - bounds.minLon) / resolution);
     }
 
     private int getYIndexForLat(double lat) {
+        if(lat < bounds.minLat)
+            return 0;
         return (int) Math.floor(Math.abs(lat - bounds.minLat) / resolution);
     }
 
@@ -267,6 +266,11 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
     @Override
     public int size() {
         return singleRules.size();
+    }
+
+    @Override
+    public BBox getBounds() {
+        return bounds;
     }
 
 }

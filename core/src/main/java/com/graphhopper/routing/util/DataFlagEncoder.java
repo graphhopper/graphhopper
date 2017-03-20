@@ -88,27 +88,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private boolean storeWeight = false;
     private boolean storeWidth = false;
     private EncodedValue spatialEncoder;
-    private SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookup() {
-        @Override
-        public SpatialRule lookupRule(double lat, double lon) {
-            return SpatialRule.EMPTY;
-        }
-
-        @Override
-        public SpatialRule lookupRule(GHPoint point) {
-            return SpatialRule.EMPTY;
-        }
-
-        @Override
-        public int getSpatialId(SpatialRule rule) {
-            return 0;
-        }
-
-        @Override
-        public int size() {
-            return 1;
-        }
-    };
+    private SpatialRuleLookup spatialRuleLookup = SpatialRuleLookup.EMPTY;
 
     public DataFlagEncoder() {
         this(5, 5, 0);

@@ -53,4 +53,36 @@ public interface SpatialRuleLookup {
      * @return the number of rules added to this lookup.
      */
     int size();
+
+    /**
+     * @return the bounds of the SpatialRuleLookup
+     */
+    BBox getBounds();
+
+    SpatialRuleLookup EMPTY = new SpatialRuleLookup() {
+        @Override
+        public SpatialRule lookupRule(double lat, double lon) {
+            return SpatialRule.EMPTY;
+        }
+
+        @Override
+        public SpatialRule lookupRule(GHPoint point) {
+            return SpatialRule.EMPTY;
+        }
+
+        @Override
+        public int getSpatialId(SpatialRule rule) {
+            return 0;
+        }
+
+        @Override
+        public int size() {
+            return 1;
+        }
+
+        @Override
+        public BBox getBounds() {
+            return new BBox(-180, 180, -90, 90);
+        }
+    };
 }

@@ -1,5 +1,6 @@
 package com.graphhopper.routing.util.spatialrules;
 
+import com.graphhopper.util.shapes.BBox;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -32,7 +33,7 @@ public class SpatialRuleLookupArrayTest {
         }.addBorder(new Polygon(new double[]{5, 5, 6, 6}, new double[]{5, 6, 6, 5}));
         spatialRules.add(austria);
 
-        SpatialRuleLookupArray lookup = new SpatialRuleLookupArray(spatialRules, 1, false);
+        SpatialRuleLookupArray lookup = new SpatialRuleLookupArray(spatialRules, 1, false, new BBox(1, 2, 1, 2));
 
         SpatialRule rule = lookup.lookupRule(1.5, 1.5);
         assertEquals(germany, rule);
@@ -48,7 +49,7 @@ public class SpatialRuleLookupArrayTest {
         spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1}), "1"));
         spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 3.6, 3.6}, new double[]{3, 4, 4, 3}), "2"));
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, false);
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, false, new BBox(1, 4, 1, 4));
 
         Assert.assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 1.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 3.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
@@ -61,7 +62,7 @@ public class SpatialRuleLookupArrayTest {
         spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1}), "1"));
         spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 3.6, 3.6}, new double[]{3, 4, 4, 3}), "2"));
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, true);
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, true, new BBox(1, 4, 1, 4));
 
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 1.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 3.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
@@ -84,7 +85,7 @@ public class SpatialRuleLookupArrayTest {
                 return "DEU";
             }
         }.addBorder(germanPolygon));
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, .1, true);
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, .1, true, new BBox(-180, 180, -90, 90));
 
 
         // Far from the border of Germany, in Germany
@@ -117,10 +118,18 @@ public class SpatialRuleLookupArrayTest {
         spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 1.5, 1.5}, new double[]{1, 2, 2, 1}), "top"));
         spatialRules.add(getSpatialRule(new Polygon(new double[]{1.5, 1.5, 2, 2}, new double[]{1, 2, 2, 1}), "bottom"));
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, true);
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, true, new BBox(1, 4, 1, 4));
 
         assertEquals("top", spatialRuleLookup.lookupRule(1.4, 1.5).getId());
         assertEquals("bottom", spatialRuleLookup.lookupRule(1.6, 1.5).getId());
+    }
+
+    @Test
+    public void testSmallBoundsBigPolygon() {
+        List<SpatialRule> spatialRules = new ArrayList<>();
+        spatialRules.add(getSpatialRule(new Polygon(new double[]{-100, -100, 100, 100}, new double[]{-100, 100, 100, -100}), "big"));
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, true, new BBox(1, 2, 1, 2));
+        assertEquals("big", spatialRuleLookup.lookupRule(1.5, 1.5).getId());
     }
 
     private Polygon parsePolygonString(String polygonString) {

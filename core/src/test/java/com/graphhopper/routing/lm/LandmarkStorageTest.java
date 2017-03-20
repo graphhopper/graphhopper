@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
 import org.junit.Before;
@@ -213,6 +214,11 @@ public class LandmarkStorageTest {
             @Override
             public int size() {
                 return 2;
+            }
+
+            @Override
+            public BBox getBounds() {
+                return new BBox(-180,180,-90,90);
             }
         };
 
