@@ -297,7 +297,6 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                         return null;
                     } catch (Exception ex) {
                         LOGGER.error("Problem while CH preparation " + name, ex);
-                        properties.put(errorKey, ex.getMessage());
                         throw ex;
                     }
                 }
