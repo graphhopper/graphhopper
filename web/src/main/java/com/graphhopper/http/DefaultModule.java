@@ -94,18 +94,7 @@ public class DefaultModule extends AbstractModule {
                         for (PrepareLandmarks prep : getLMFactoryDecorator().getPreparations()) {
                             // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
                             if (ruleLookup != null && ruleLookup.size() > 0) {
-                                prep.setCutEdges(new EdgeFilter() {
-                                    @Override
-                                    public boolean accept(EdgeIteratorState edgeState) {
-                                        int adjNode = edgeState.getAdjNode();
-                                        SpatialRule ruleAdj = ruleLookup.lookupRule(getGraphHopperStorage().getNodeAccess().getLatitude(adjNode), getGraphHopperStorage().getNodeAccess().getLongitude(adjNode));
-
-                                        int baseNode = edgeState.getBaseNode();
-                                        SpatialRule ruleBase = ruleLookup.lookupRule(getGraphHopperStorage().getNodeAccess().getLatitude(baseNode), getGraphHopperStorage().getNodeAccess().getLongitude(baseNode));
-
-                                        return edgeState.isForward(prep.getWeighting().getFlagEncoder()) && ruleAdj == ruleBase;
-                                    }
-                                });
+                                prep.setSpatialRuleLookup(ruleLookup);
                             }
                         }
                     }
