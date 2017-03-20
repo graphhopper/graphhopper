@@ -122,6 +122,7 @@ class MultiCriteriaLabelSetting {
 //                    System.out.printf("%d %d\n", edge.getAdjNode(), fromMap.get(edge.getAdjNode()).size());
                     if (to.contains(edge.getAdjNode())) {
                         targetLabels.add(nEdge);
+//                        System.out.printf("%d %d\n",targetLabels.size(), visitedNodes);
                     }
                     fromHeap.add(nEdge);
                 }
@@ -134,6 +135,7 @@ class MultiCriteriaLabelSetting {
             if (label == null)
                 throw new AssertionError("Empty edge cannot happen");
         }
+//        System.out.println(visitedNodes);
         return filterTargetLabels(targetLabels);
     }
 
@@ -279,9 +281,10 @@ class MultiCriteriaLabelSetting {
     }
 
     private double profileQuerySlackComponent(Label me, Label they) {
-        if (((firstPtDepartureTimeCriterion(they) != Long.MAX_VALUE) != (firstPtDepartureTimeCriterion(me) != Long.MAX_VALUE)) ||
+        if ((they.firstPtDepartureTime == Long.MAX_VALUE && me.firstPtDepartureTime != Long.MAX_VALUE && currentTimeCriterion(they) <= rangeQueryEndTimeConstraint()) ||
+                (they.firstPtDepartureTime != Long.MAX_VALUE && me.firstPtDepartureTime != Long.MAX_VALUE &&
                 firstPtDepartureTimeCriterion(they) > firstPtDepartureTimeCriterion(me) &&
-                firstPtDepartureTimeCriterion(they) <= rangeQueryEndTimeConstraint()) {
+                firstPtDepartureTimeCriterion(they) <= rangeQueryEndTimeConstraint())) {
             return Double.POSITIVE_INFINITY;
         } else {
             return 0;
