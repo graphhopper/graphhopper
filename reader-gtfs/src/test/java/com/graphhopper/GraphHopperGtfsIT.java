@@ -158,27 +158,6 @@ public class GraphHopperGtfsIT {
     }
 
     @Test
-    public void testRoute1ProfileLatestDeparture() {
-        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
-        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
-        GHRequest ghRequest = new GHRequest(
-                FROM_LAT, FROM_LON,
-                TO_LAT, TO_LON
-        );
-        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,59));
-        ghRequest.getHints().put(GraphHopperGtfs.ARRIVE_BY, "true");
-//        ghRequest.getHints().put(GraphHopperGtfs.RANGE_QUERY_END_TIME, LocalDateTime.of(2007,1,1,11,0));
-        ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, "true");
-
-        GHResponse route = graphHopper.route(ghRequest);
-
-        assertFalse(route.hasErrors());
-        assertEquals(1, route.getAll().size());
-        assertEquals("Scheduled travel time", time(0, 15), route.getBest().getTime(), 0.1);
-    }
-
-
-    @Test
     public void testRoute2() {
         final double FROM_LAT = 36.914894, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.909489, TO_LON = -116.768242; // DADAN stop

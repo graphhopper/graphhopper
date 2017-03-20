@@ -38,23 +38,27 @@ import java.util.*;
 class MultiCriteriaLabelSetting {
 
     private final PtFlagEncoder flagEncoder;
-    private final Weighting weighting;
+    private final PtTravelTimeWeighting weighting;
     private final SetMultimap<Integer, Label> fromMap;
     private final PriorityQueue<Label> fromHeap;
     private final int maxVisitedNodes;
     private final boolean reverse;
     private final double maxWalkDistancePerLeg;
+    private final double maxTransferDistancePerLeg;
+    private final boolean mindTransfers;
     private long rangeQueryEndTime;
     private int visitedNodes;
     private final GraphExplorer explorer;
 
-    MultiCriteriaLabelSetting(Graph graph, Weighting weighting, int maxVisitedNodes, GraphExplorer explorer, boolean reverse, double maxWalkDistancePerLeg) {
-        this.weighting = weighting;
+    MultiCriteriaLabelSetting(Graph graph, Weighting weighting, int maxVisitedNodes, GraphExplorer explorer, boolean reverse, double maxWalkDistancePerLeg, double maxTransferDistancePerLeg, boolean mindTransfers) {
+        this.weighting = (PtTravelTimeWeighting) weighting;
         this.flagEncoder = (PtFlagEncoder) weighting.getFlagEncoder();
         this.maxVisitedNodes = maxVisitedNodes;
         this.explorer = explorer;
         this.reverse = reverse;
         this.maxWalkDistancePerLeg = maxWalkDistancePerLeg;
+        this.maxTransferDistancePerLeg = maxTransferDistancePerLeg;
+        this.mindTransfers = mindTransfers;
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
         fromHeap = new PriorityQueue<>(size, new Comparator<Label>() {
             @Override
@@ -85,6 +89,9 @@ class MultiCriteriaLabelSetting {
 
             for (EdgeIteratorState edge : explorer.exploreEdgesAround(label)) {
                 GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
+//                if (edgeType == GtfsStorage.EdgeType.ENTER_PT && label.nTransfers > 0) {
+//                    continue;
+//                }
                 long nextTime;
                 if (reverse) {
                     nextTime = label.currentTime - ((TimeDependentWeighting) weighting).calcTravelTimeSeconds(edge, label.currentTime);
@@ -99,9 +106,11 @@ class MultiCriteriaLabelSetting {
                 if (reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && firstPtDepartureTime == Long.MAX_VALUE) {
                     firstPtDepartureTime = nextTime;
                 }
-                double walkDistanceOnCurrentLeg = (edgeType == GtfsStorage.EdgeType.BOARD) ? 0 : (label.walkDistanceOnCurrentLeg + ((edgeType == GtfsStorage.EdgeType.UNSPECIFIED) ? edge.getDistance() : 0));
-                int nWalkDistanceConstraintViolations = Math.min(1, label.nWalkDistanceConstraintViolations + (label.walkDistanceOnCurrentLeg <= maxWalkDistancePerLeg && walkDistanceOnCurrentLeg > maxWalkDistancePerLeg ? 1 : 0));
-
+                double walkDistanceOnCurrentLeg = (edgeType == GtfsStorage.EdgeType.BOARD) ? 0 : (label.walkDistanceOnCurrentLeg + weighting.getWalkDistance(edge));
+                boolean isTryingToReEnterPtAfterTransferWalking = edgeType == GtfsStorage.EdgeType.ENTER_PT && label.nTransfers > 0 && label.walkDistanceOnCurrentLeg > maxTransferDistancePerLeg;
+                int nWalkDistanceConstraintViolations = Math.min(1, label.nWalkDistanceConstraintViolations + (
+                        isTryingToReEnterPtAfterTransferWalking ? 1 : (label.walkDistanceOnCurrentLeg <= maxWalkDistancePerLeg && walkDistanceOnCurrentLeg > maxWalkDistancePerLeg ? 1 : 0)));
+//                int nWalkDistanceConstraintViolations = 0;
                 Set<Label> sptEntries = fromMap.get(edge.getAdjNode());
                 Label nEdge = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, nWalkDistanceConstraintViolations, walkDistanceOnCurrentLeg, firstPtDepartureTime, label);
                 if (isNotEqualToAnyOf(nEdge, sptEntries) && isNotDominatedByAnyOf(nEdge, sptEntries) && isNotDominatedWithoutTieBreaksByAnyOf(nEdge, targetLabels)) {
@@ -140,29 +149,26 @@ class MultiCriteriaLabelSetting {
     private Set<Label> filterTargetLabels(Set<Label> targetLabels) {
         HashSet<Label> filteredLabels = new HashSet<>(targetLabels);
         for (Label me : new ArrayList<>(filteredLabels)) {
-            Iterator<Label> iterator = filteredLabels.iterator();
-            while (iterator.hasNext()) {
-                Label they = iterator.next();
-                if (dominatesForFiltering(me, they)) {
-                    iterator.remove();
-                }
-            }
+            filteredLabels.removeIf(they -> dominatesForFiltering(me, they));
         }
+        filteredLabels.removeIf(they -> they.nWalkDistanceConstraintViolations > 0);
         return filteredLabels;
     }
 
     private boolean dominatesForFiltering(Label me, Label they) {
-        if (me.nWalkDistanceConstraintViolations < they.nWalkDistanceConstraintViolations) {
-            return true;
-        }
         if (currentTimeCriterion(me) > currentTimeCriterion(they)) {
             return false;
         }
-        if (me.nTransfers > they.nTransfers) {
-            return false;
+        if (mindTransfers) {
+            if (me.nTransfers > they.nTransfers) {
+                return false;
+            }
         }
         if (me.firstPtDepartureTime != Long.MAX_VALUE && they.firstPtDepartureTime != Long.MAX_VALUE
                 && firstPtDepartureTimeCriterion(me) < firstPtDepartureTimeCriterion(they)) {
+            return false;
+        }
+        if (me.nWalkDistanceConstraintViolations > they.nWalkDistanceConstraintViolations) {
             return false;
         }
         if (currentTimeCriterion(me) < currentTimeCriterion(they)) {
@@ -173,6 +179,9 @@ class MultiCriteriaLabelSetting {
         }
         if (me.firstPtDepartureTime != Long.MAX_VALUE && they.firstPtDepartureTime != Long.MAX_VALUE
                 && firstPtDepartureTimeCriterion(me) > firstPtDepartureTimeCriterion(they)) {
+            return true;
+        }
+        if (me.nWalkDistanceConstraintViolations > they.nWalkDistanceConstraintViolations) {
             return true;
         }
         return false;
@@ -210,18 +219,28 @@ class MultiCriteriaLabelSetting {
     private boolean dominates(Label me, Label they) {
         if (currentTimeCriterion(me) + currentTimeSlack(me, they) > currentTimeCriterion(they))
             return false;
-        if (me.nTransfers + nTransfersSlack(me, they) > they.nTransfers)
-            return false;
+        if (mindTransfers) {
+            if (me.nTransfers + nTransfersSlack(me, they) > they.nTransfers)
+                return false;
+        }
         if (me.nWalkDistanceConstraintViolations + nWalkDistanceConstraintViolationsSlack(me, they) > they.nWalkDistanceConstraintViolations)
             return false;
         if (currentTimeCriterion(me) + currentTimeSlack(me, they) < currentTimeCriterion(they))
             return true;
-        if (me.nTransfers + nTransfersSlack(me, they) < they.nTransfers)
-            return true;
+        if (mindTransfers) {
+            if (me.nTransfers + nTransfersSlack(me, they) < they.nTransfers)
+                return true;
+        }
         if (me.nWalkDistanceConstraintViolations + nWalkDistanceConstraintViolationsSlack(me, they) < they.nWalkDistanceConstraintViolations)
             return true;
+
         if (!reverse) {
-            // Break ties: Leaving later / arriving earlier is better
+            // Break ties: Fewer transfers is better
+            if (me.nTransfers < they.nTransfers) {
+                return true;
+            }
+
+//            Break ties: Leaving later / arriving earlier is better
             if (firstPtDepartureTimeCriterion(me) != Long.MAX_VALUE
                     && firstPtDepartureTimeCriterion(they) != Long.MAX_VALUE
                     && firstPtDepartureTimeCriterion(me) > firstPtDepartureTimeCriterion(they)) {
@@ -234,14 +253,18 @@ class MultiCriteriaLabelSetting {
     private boolean dominatesWithoutTieBreaks(Label me, Label they) {
         if (currentTimeCriterion(me) + currentTimeSlack(me, they) > currentTimeCriterion(they))
             return false;
-        if (me.nTransfers + nTransfersSlack(me, they) > they.nTransfers)
-            return false;
+        if (mindTransfers) {
+            if (me.nTransfers + nTransfersSlack(me, they) > they.nTransfers)
+                return false;
+        }
         if (me.nWalkDistanceConstraintViolations + nWalkDistanceConstraintViolationsSlack(me, they) > they.nWalkDistanceConstraintViolations)
             return false;
         if (currentTimeCriterion(me) + currentTimeSlack(me, they) < currentTimeCriterion(they))
             return true;
-        if (me.nTransfers + nTransfersSlack(me, they) < they.nTransfers)
-            return true;
+        if (mindTransfers) {
+            if (me.nTransfers + nTransfersSlack(me, they) < they.nTransfers)
+                return true;
+        }
         if (me.nWalkDistanceConstraintViolations + nWalkDistanceConstraintViolationsSlack(me, they) < they.nWalkDistanceConstraintViolations)
             return true;
         return false;

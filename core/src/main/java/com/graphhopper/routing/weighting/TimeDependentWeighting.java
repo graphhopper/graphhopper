@@ -10,5 +10,4 @@ public interface TimeDependentWeighting {
 
 	int calcNTransfers(EdgeIteratorState edge);
 
-    double getDistance(EdgeIteratorState edge);
 }

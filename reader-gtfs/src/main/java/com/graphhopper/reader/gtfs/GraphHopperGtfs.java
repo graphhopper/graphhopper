@@ -47,6 +47,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     public static final String IGNORE_TRANSFERS = "ignoreTransfers";
     public static final String WALK_SPEED_KM_H = "walkSpeedKmH";
     public static final String MAX_WALK_DISTANCE_PER_LEG = "maxWalkDistancePerLeg";
+    public static final String MAX_TRANSFER_DISTANCE_PER_LEG = "maxTransferDistancePerLeg";
 
     private final TranslationMap translationMap;
     private final EncodingManager encodingManager;
@@ -177,6 +178,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         final boolean ignoreTransfers = request.getHints().getBool(IGNORE_TRANSFERS, false);
         final double walkSpeedKmH = request.getHints().getDouble(WALK_SPEED_KM_H, 5.0);
         final double maxWalkDistancePerLeg = request.getHints().getDouble(MAX_WALK_DISTANCE_PER_LEG, Double.MAX_VALUE);
+        final double maxTransferDistancePerLeg = request.getHints().getDouble(MAX_TRANSFER_DISTANCE_PER_LEG, Double.MAX_VALUE);
 
         GHResponse response = new GHResponse();
 
@@ -252,9 +254,9 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         MultiCriteriaLabelSetting router;
         if (arriveBy) {
-           router = new MultiCriteriaLabelSetting(queryGraph, weighting, maxVisitedNodesForRequest, explorer, true, maxWalkDistancePerLeg);
+           router = new MultiCriteriaLabelSetting(queryGraph, weighting, maxVisitedNodesForRequest, explorer, true, maxWalkDistancePerLeg, maxTransferDistancePerLeg, !ignoreTransfers);
         } else {
-           router = new MultiCriteriaLabelSetting(queryGraph, weighting, maxVisitedNodesForRequest, explorer, false, maxWalkDistancePerLeg);
+           router = new MultiCriteriaLabelSetting(queryGraph, weighting, maxVisitedNodesForRequest, explorer, false, maxWalkDistancePerLeg, maxTransferDistancePerLeg, !ignoreTransfers);
         }
 
         String debug = ", algoInit:" + stopWatch.stop().getSeconds() + "s";
@@ -382,9 +384,9 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         if (arriveBy) {
             weighting = weighting.reverse();
         }
-        if (ignoreTransfers) {
-            weighting = weighting.ignoringNumberOfTransfers();
-        }
+//        if (ignoreTransfers) {
+//            weighting = weighting.ignoringNumberOfTransfers();
+//        }
         return weighting;
     }
 

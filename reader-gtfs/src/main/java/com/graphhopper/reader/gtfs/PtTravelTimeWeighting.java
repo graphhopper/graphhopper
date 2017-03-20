@@ -50,7 +50,7 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
         GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edge.getFlags());
         switch (edgeType) {
             case UNSPECIFIED:
-                return (long) (edge.getDistance() * 3.6 / walkSpeedKmH) ;
+                return (long) (getWalkDistance(edge) * 3.6 / walkSpeedKmH) ;
             case ENTER_TIME_EXPANDED_NETWORK:
                 if (reverse) {
                     return 0;
@@ -73,10 +73,17 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
         return transferFactor * ((PtFlagEncoder) getFlagEncoder()).getTransfers(edge.getFlags());
 	}
 
-    @Override
-    public double getDistance(EdgeIteratorState edge) {
+    public double getWalkDistance(EdgeIteratorState edge) {
         GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edge.getFlags());
-        return edgeType == GtfsStorage.EdgeType.UNSPECIFIED ? edge.getDistance() : 0;
+        switch (edgeType) {
+            case UNSPECIFIED:
+                return edge.getDistance();
+            case ENTER_PT:
+            case EXIT_PT:
+                return 10.0;
+            default:
+                return 0.0;
+        }
     }
 
     @Override
