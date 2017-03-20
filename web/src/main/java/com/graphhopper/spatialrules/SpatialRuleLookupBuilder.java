@@ -1,10 +1,11 @@
-package com.graphhopper.srlarray;
+package com.graphhopper.spatialrules;
 
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupArray;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -1,6 +1,5 @@
-package com.graphhopper.srlarray;
+package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.routing.util.spatialrules.*;
 import org.junit.Assert;
 import org.junit.Test;
 

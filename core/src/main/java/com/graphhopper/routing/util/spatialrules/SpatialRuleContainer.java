@@ -15,9 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.srlarray;
-
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
+package com.graphhopper.routing.util.spatialrules;
 
 import java.util.*;
 

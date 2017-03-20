@@ -15,9 +15,8 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.srlarray;
+package com.graphhopper.spatialrules;
 
-import com.graphhopper.countries.CountriesSpatialRuleFactory;
 import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.util.spatialrules.AccessValue;
