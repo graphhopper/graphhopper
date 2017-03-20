@@ -69,21 +69,26 @@ public class PathBidirRef extends Path {
             sptEntry = edgeTo;
             edgeTo = ee;
         }
-
-        int prevEdge = EdgeIterator.NO_EDGE;
         SPTEntry currEdge = sptEntry;
-        while (EdgeIterator.Edge.isValid(currEdge.edge)) {
-            processEdge(currEdge.edge, currEdge.adjNode, prevEdge);
-            prevEdge = currEdge.edge;
+        boolean nextEdgeValid = EdgeIterator.Edge.isValid(currEdge.edge);
+        int nextEdge;
+        while (nextEdgeValid) {
+            // the reverse search needs the next edge
+            nextEdgeValid = EdgeIterator.Edge.isValid(currEdge.parent.edge);
+            nextEdge = nextEdgeValid ? currEdge.parent.edge : EdgeIterator.NO_EDGE;
+            processEdge(currEdge.edge, currEdge.adjNode, nextEdge);
             currEdge = currEdge.parent;
         }
+
         setFromNode(currEdge.adjNode);
         reverseOrder();
         currEdge = edgeTo;
+        int prevEdge = nextEdgeValid ? sptEntry.edge : EdgeIterator.NO_EDGE;
         int tmpEdge = currEdge.edge;
         while (EdgeIterator.Edge.isValid(tmpEdge)) {
             currEdge = currEdge.parent;
-            processEdge(tmpEdge, currEdge.adjNode, currEdge.edge);
+            processEdge(tmpEdge, currEdge.adjNode, prevEdge);
+            prevEdge = tmpEdge;
             tmpEdge = currEdge.edge;
         }
         setEndNode(currEdge.adjNode);
