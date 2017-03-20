@@ -372,6 +372,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             // 1b) we have one landmark, now determine the other landmarks
             tmpLandmarkNodeIds[0] = explorer.getLastNode();
             for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length - 1; lmIdx++) {
+                if(Thread.currentThread().isInterrupted()){
+                    throw new RuntimeException("Thread was interrupted");
+                }
                 explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode);
                 explorer.setFilter(blockedEdges, true, true);
                 // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
@@ -389,6 +392,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         // 2) calculate weights for all landmarks -> 'from' and 'to' weight
         for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
+            if(Thread.currentThread().isInterrupted()){
+                throw new RuntimeException("Thread was interrupted");
+            }
             int lmNodeId = tmpLandmarkNodeIds[lmIdx];
             LandmarkExplorer explorer = new LandmarkExplorer(graph, this, weighting, traversalMode);
             explorer.initFrom(lmNodeId, 0);
