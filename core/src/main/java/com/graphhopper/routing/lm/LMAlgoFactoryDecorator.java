@@ -327,7 +327,8 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         for (Weighting weighting : getWeightings()) {
             Double maximumWeight = maximumWeights.get(weighting.getName());
             if (maximumWeight == null)
-                throw new IllegalStateException("maximumWeight cannot be null. Default should be just negative");
+                throw new IllegalStateException("maximumWeight cannot be null. Default should be just negative. " +
+                        "Couldn't find " + weighting.getName() + " in " + maximumWeights);
 
             PrepareLandmarks tmpPrepareLM = new PrepareLandmarks(ghStorage.getDirectory(), ghStorage,
                     weighting, traversalMode, landmarkCount, activeLandmarkCount).

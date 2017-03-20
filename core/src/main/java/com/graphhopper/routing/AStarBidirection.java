@@ -31,6 +31,8 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.PriorityQueue;
 
 /**
@@ -67,10 +69,11 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
     protected IntObjectMap<AStarEntry> bestWeightMapTo;
     private IntObjectMap<AStarEntry> bestWeightMapOther;
     private ConsistentWeightApproximator weightApprox;
-    private PriorityQueue<AStarEntry> prioQueueOpenSetFrom;
-    private PriorityQueue<AStarEntry> prioQueueOpenSetTo;
-    private final IntHashSet ignoreExplorationFrom = new IntHashSet();
-    private final IntHashSet ignoreExplorationTo = new IntHashSet();
+    private PriorityQueue<AStarEntry> pqOpenSetFrom;
+    private PriorityQueue<AStarEntry> pqOpenSetTo;
+    private IntHashSet ignoreExplorationFrom = new IntHashSet();
+    private IntHashSet ignoreExplorationTo = new IntHashSet();
+    private boolean updateBestPath = true;
 
     public AStarBidirection(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
@@ -82,10 +85,10 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
     }
 
     protected void initCollections(int size) {
-        prioQueueOpenSetFrom = new PriorityQueue<AStarEntry>(size);
+        pqOpenSetFrom = new PriorityQueue<AStarEntry>(size);
         bestWeightMapFrom = new GHIntObjectHashMap<AStarEntry>(size);
 
-        prioQueueOpenSetTo = new PriorityQueue<AStarEntry>(size);
+        pqOpenSetTo = new PriorityQueue<AStarEntry>(size);
         bestWeightMapTo = new GHIntObjectHashMap<AStarEntry>(size);
     }
 
@@ -110,7 +113,7 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
     public void initFrom(int from, double weight) {
         currFrom = new AStarEntry(EdgeIterator.NO_EDGE, from, weight, weight);
         weightApprox.setFrom(from);
-        prioQueueOpenSetFrom.add(currFrom);
+        pqOpenSetFrom.add(currFrom);
 
         if (currTo != null) {
             currFrom.weight += weightApprox.approximate(currFrom.adjNode, false);
@@ -136,7 +139,7 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
     public void initTo(int to, double weight) {
         currTo = new AStarEntry(EdgeIterator.NO_EDGE, to, weight, weight);
         weightApprox.setTo(to);
-        prioQueueOpenSetTo.add(currTo);
+        pqOpenSetTo.add(currTo);
 
         if (currFrom != null) {
             currFrom.weight += weightApprox.approximate(currFrom.adjNode, false);
@@ -193,24 +196,24 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
 
     @Override
     boolean fillEdgesFrom() {
-        if (prioQueueOpenSetFrom.isEmpty())
+        if (pqOpenSetFrom.isEmpty())
             return false;
 
-        currFrom = prioQueueOpenSetFrom.poll();
+        currFrom = pqOpenSetFrom.poll();
         bestWeightMapOther = bestWeightMapTo;
-        fillEdges(currFrom, prioQueueOpenSetFrom, bestWeightMapFrom, ignoreExplorationFrom, outEdgeExplorer, false);
+        fillEdges(currFrom, pqOpenSetFrom, bestWeightMapFrom, ignoreExplorationFrom, outEdgeExplorer, false);
         visitedCountFrom++;
         return true;
     }
 
     @Override
     boolean fillEdgesTo() {
-        if (prioQueueOpenSetTo.isEmpty())
+        if (pqOpenSetTo.isEmpty())
             return false;
 
-        currTo = prioQueueOpenSetTo.poll();
+        currTo = pqOpenSetTo.poll();
         bestWeightMapOther = bestWeightMapFrom;
-        fillEdges(currTo, prioQueueOpenSetTo, bestWeightMapTo, ignoreExplorationTo, inEdgeExplorer, true);
+        fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, ignoreExplorationTo, inEdgeExplorer, true);
         visitedCountTo++;
         return true;
     }
@@ -256,7 +259,9 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
 
                 ase.parent = currEdge;
                 prioQueueOpenSet.add(ase);
-                updateBestPath(iter, ase, traversalId);
+
+                if (updateBestPath)
+                    updateBestPath(iter, ase, traversalId);
             }
         }
     }
@@ -290,42 +295,69 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
         }
     }
 
+    IntObjectMap<AStarEntry> getBestFromMap() {
+        return bestWeightMapFrom;
+    }
+
+    IntObjectMap<AStarEntry> getBestToMap() {
+        return bestWeightMapTo;
+    }
+
+    void setBestOtherMap(IntObjectMap<AStarEntry> other) {
+        bestWeightMapOther = other;
+    }
+
+    void setFromDataStructures(AStarBidirection astar) {
+        pqOpenSetFrom = astar.pqOpenSetFrom;
+        bestWeightMapFrom = astar.bestWeightMapFrom;
+        finishedFrom = astar.finishedFrom;
+        currFrom = astar.currFrom;
+        visitedCountFrom = astar.visitedCountFrom;
+        ignoreExplorationFrom = astar.ignoreExplorationFrom;
+        weightApprox.setFrom(astar.currFrom.adjNode);
+        // outEdgeExplorer
+    }
+
+    void setToDataStructures(AStarBidirection astar) {
+        pqOpenSetTo = astar.pqOpenSetTo;
+        bestWeightMapTo = astar.bestWeightMapTo;
+        finishedTo = astar.finishedTo;
+        currTo = astar.currTo;
+        visitedCountTo = astar.visitedCountTo;
+        ignoreExplorationTo = astar.ignoreExplorationTo;
+        weightApprox.setTo(astar.currTo.adjNode);
+        // inEdgeExplorer
+    }
+
     @Override
     public void afterHeuristicChange(boolean forward, boolean backward) {
         if (forward) {
-            ignoreExplorationFrom.ensureCapacity(bestWeightMapFrom.size());
-            bestWeightMapFrom.forEach(new IntObjectPredicate<AStarEntry>() {
-                @Override
-                public boolean apply(int key, AStarEntry value) {
-                    value.weight = value.weightOfVisitedPath + weightApprox.approximate(value.adjNode, false);
-                    ignoreExplorationFrom.add(key);
-                    return true;
-                }
-            });
 
-            // update PQ with new entries
-            if (!prioQueueOpenSetFrom.isEmpty()) {
-                final PriorityQueue<AStarEntry> tmpFrom = new PriorityQueue<>(prioQueueOpenSetFrom.size());
-                tmpFrom.addAll(prioQueueOpenSetFrom);
-                prioQueueOpenSetFrom = tmpFrom;
+            // update PQ due to heuristic change (i.e. weight changed)
+            if (!pqOpenSetFrom.isEmpty()) {
+                // copy into temporary array to avoid pointer change of PQ
+                AStarEntry[] entries = pqOpenSetFrom.toArray(new AStarEntry[pqOpenSetFrom.size()]);
+                pqOpenSetFrom.clear();
+                for (AStarEntry value : entries) {
+                    value.weight = value.weightOfVisitedPath + weightApprox.approximate(value.adjNode, false);
+                    // does not work for edge based
+                    // ignoreExplorationFrom.add(value.adjNode);
+
+                    pqOpenSetFrom.add(value);
+                }
             }
         }
 
         if (backward) {
-            ignoreExplorationTo.ensureCapacity(bestWeightMapTo.size());
-            bestWeightMapTo.forEach(new IntObjectPredicate<AStarEntry>() {
-                @Override
-                public boolean apply(int key, AStarEntry value) {
+            if (!pqOpenSetTo.isEmpty()) {
+                AStarEntry[] entries = pqOpenSetTo.toArray(new AStarEntry[pqOpenSetTo.size()]);
+                pqOpenSetTo.clear();
+                for (AStarEntry value : entries) {
                     value.weight = value.weightOfVisitedPath + weightApprox.approximate(value.adjNode, true);
-                    ignoreExplorationTo.add(key);
-                    return true;
-                }
-            });
+                    // ignoreExplorationTo.add(value.adjNode);
 
-            if (!prioQueueOpenSetTo.isEmpty()) {
-                final PriorityQueue<AStarEntry> tmpTo = new PriorityQueue<>(prioQueueOpenSetTo.size());
-                tmpTo.addAll(prioQueueOpenSetTo);
-                prioQueueOpenSetTo = tmpTo;
+                    pqOpenSetTo.add(value);
+                }
             }
         }
     }

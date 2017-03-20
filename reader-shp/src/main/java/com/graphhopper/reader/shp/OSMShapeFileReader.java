@@ -102,13 +102,11 @@ public class OSMShapeFileReader extends ShapeFileReader {
                     for (int i = 0; i < points.length; i++) {
                         Coordinate c = points[i];
 
-                        // don't add the same coord twice for the same edge
-                        // - happens with bad geometry, i.e.
-                        // duplicate coords or a road which forms a circle
-                        // (e.g. roundabout)
-                        if (tmpSet.contains(c)) {
+                        // don't add the same coord twice for the same edge - happens with bad geometry, i.e.
+                        // duplicate coords or a road which forms a circle (e.g. roundabout)
+                        if (tmpSet.contains(c))
                             continue;
-                        }
+
                         tmpSet.add(c);
 
                         // skip if its already a node

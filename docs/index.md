@@ -8,20 +8,21 @@ Try out our live demo called [GraphHopper Maps](https://graphhopper.com/maps)
 
 [The Readme](../README.md#features) lists all features or [this list of slides](https://graphhopper.com/public/slides/).
 
-See [more users of GraphHopper](https://graphhopper.com/#usecases) or [Android apps](./android/index.md#apps) and let us know your application!
+See [more users of GraphHopper](https://www.graphhopper.com/showcases/) or [Android apps](./android/index.md#apps) and let us know your application!
+
+Try the web demo 'GraphHopper Maps' with [this user guide](./web/quickstart.md) on your machine
+or the [Android demo](https://graphhopper.com/public/releases/graphhopper-android-0.8.2.apk).
+
+Other links:
+
+ * [Add GraphHopper Maps to your Browser](./web/open-search.md): Instructions how to setup GraphHopper as the standard search enginge in your browser.
+ * [Embed GraphHopper on your website](https://github.com/karussell/graphhopper-embed-form): A small code snippet on how to integrate GraphHopper Maps in your web site like a contact form
 
 ## Contact
 
 For all questions regarding the GraphHopper routing engine please use [our forum](https://discuss.graphhopper.com). 
 
 For bugs see our contribute section below.
-
-## User
-
-[The user guide](./web/quickstart.md) is the HowTo for users. Other links:
-
- * [Add GraphHopper Maps to your Browser](./web/open-search.md): Instructions how to setup GraphHopper as the standard search enginge in your browser.
- * [Embed GraphHopper on your website](https://github.com/karussell/graphhopper-embed-form): A small code snippet on how to integrate GraphHopper Maps in your web site like a contact form
 
 ## Web
 

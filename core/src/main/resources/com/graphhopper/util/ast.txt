@@ -50,6 +50,7 @@ roundabout_exit=Na rotonda, toma la salida %1$s
 roundabout_exit_onto=Na rotonda, toma la salida %1$s haza %2$s
 total_ascend=%1$s d'ascensu total
 total_descend=%1$s de descensu total
+way_contains_ford=
 web.start_label=Principiu
 web.intermediate_label=Intermediu
 web.end_label=Final

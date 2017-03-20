@@ -50,6 +50,7 @@ roundabout_exit=V krožišču izberite izhod %1$s
 roundabout_exit_onto=V krožišču izberite izhod %1$s na %2$s
 total_ascend=Skupni vzpon: %1$s
 total_descend=Skupni spust: %1$s
+way_contains_ford=
 web.start_label=Začetna točka
 web.intermediate_label=Vmesna točka
 web.end_label=Končna točka

@@ -50,6 +50,7 @@ roundabout_exit=Žiede išvažiuokite %1$s išvažiavime
 roundabout_exit_onto=Žiede išvažiuokite %1$s išvažiavime į  %2$s
 total_ascend=
 total_descend=
+way_contains_ford=
 web.start_label=
 web.intermediate_label=
 web.end_label=

@@ -684,7 +684,6 @@ public class GraphHopper implements GraphHopperAPI {
         return reader.setFile(new File(dataReaderFile)).
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
-                setEncodingManager(encodingManager).
                 setWayPointMaxDistance(dataReaderWayPointMaxDistance);
     }
 
@@ -1160,9 +1159,6 @@ public class GraphHopper implements GraphHopperAPI {
         boolean tmpPrepare = chFactoryDecorator.isEnabled();
         if (tmpPrepare) {
             ensureWriteAccess();
-
-            if (chFactoryDecorator.getPreparationThreads() > 1 && dataAccessType.isMMap() && !dataAccessType.isSynched())
-                throw new IllegalStateException("You cannot execute CH preparation in parallel for MMAP without synching! Specify MMAP_SYNC or use 1 thread only");
 
             ghStorage.freeze();
             chFactoryDecorator.prepare(ghStorage.getProperties());

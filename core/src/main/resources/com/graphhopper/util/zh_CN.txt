@@ -50,6 +50,7 @@ roundabout_exit=在环岛内，使用%1$s出口出环岛
 roundabout_exit_onto=在环岛内，使用%1$s出口出环岛，进入%2$s
 total_ascend=
 total_descend=
+way_contains_ford=
 web.start_label=
 web.intermediate_label=
 web.end_label=

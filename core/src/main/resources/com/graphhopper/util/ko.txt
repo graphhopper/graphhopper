@@ -50,6 +50,7 @@ roundabout_exit=로터리에서 %1$s 진출
 roundabout_exit_onto=로터리에서 %1$s 진출 후 %2$s 이동
 total_ascend=%1$s 오르막길
 total_descend=%1$s 내리막길
+way_contains_ford=
 web.start_label=출발
 web.intermediate_label=경유
 web.end_label=도착

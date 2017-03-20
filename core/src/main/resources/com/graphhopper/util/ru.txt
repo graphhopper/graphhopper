@@ -50,6 +50,7 @@ roundabout_exit=У кольца используйте съезд %1$s
 roundabout_exit_onto=У кольца используйте съезд %1$s на %2$s
 total_ascend=подъём на %1$s
 total_descend=спуск на %1$s
+way_contains_ford=
 web.start_label=Начало
 web.intermediate_label=Промежуточная точка
 web.end_label=Конец

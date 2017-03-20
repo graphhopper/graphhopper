@@ -190,16 +190,19 @@ public class Path {
             throw new IllegalStateException("Extract can only be called once");
 
         extractSW.start();
-        SPTEntry goalEdge = sptEntry;
-        int prevEdge = EdgeIterator.NO_EDGE;
-        setEndNode(goalEdge.adjNode);
-        while (EdgeIterator.Edge.isValid(goalEdge.edge)) {
-            processEdge(goalEdge.edge, goalEdge.adjNode, prevEdge);
-            prevEdge = goalEdge.edge;
-            goalEdge = goalEdge.parent;
+        SPTEntry currEdge = sptEntry;
+        setEndNode(currEdge.adjNode);
+        boolean nextEdgeValid = EdgeIterator.Edge.isValid(currEdge.edge);
+        int nextEdge;
+        while (nextEdgeValid) {
+            // the reverse search needs the next edge
+            nextEdgeValid = EdgeIterator.Edge.isValid(currEdge.parent.edge);
+            nextEdge = nextEdgeValid ? currEdge.parent.edge : EdgeIterator.NO_EDGE;
+            processEdge(currEdge.edge, currEdge.adjNode, nextEdge);
+            currEdge = currEdge.parent;
         }
 
-        setFromNode(goalEdge.adjNode);
+        setFromNode(currEdge.adjNode);
         reverseOrder();
         extractSW.stop();
         return setFound(true);
@@ -224,7 +227,10 @@ public class Path {
     }
 
     /**
-     * Calls getDistance and adds the edgeId.
+     * Calculates the distance and time of the specified edgeId. Also it adds the edgeId to the path list.
+     *
+     * @param prevEdgeId here the edge that comes before edgeId is necessary. I.e. for the reverse search we need the
+     *                   next edge.
      */
     protected void processEdge(int edgeId, int adjNode, int prevEdgeId) {
         EdgeIteratorState iter = graph.getEdgeIteratorState(edgeId, adjNode);
