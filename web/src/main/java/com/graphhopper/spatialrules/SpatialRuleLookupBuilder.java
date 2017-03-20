@@ -60,7 +60,7 @@ public class SpatialRuleLookupBuilder {
         if (calculatedBounds == null)
             return SpatialRuleLookup.EMPTY;
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1.0, true, calculatedBounds);
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 0.1, true, calculatedBounds);
 
         logger.info("Created the SpatialRuleLookup with the following rules: " + Arrays.toString(spatialRules.toArray()));
 
