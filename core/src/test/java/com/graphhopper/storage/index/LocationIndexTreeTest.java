@@ -560,7 +560,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         index.prepareIndex();
 
         // query node 4 => get at least 4-5, 4-7
-        List<QueryResult> result = index.findWithinRadius(0.0004, 0.0006, EdgeFilter.ALL_EDGES, 15, 2);
+        List<QueryResult> result = index.findNClosest(0.0004, 0.0006, EdgeFilter.ALL_EDGES, 15);
         List<Integer> ids = new ArrayList<Integer>();
         for (QueryResult qr : result) {
             ids.add(qr.getClosestEdge().getEdge());
@@ -568,13 +568,6 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         Collections.sort(ids);
         assertEquals("edge ids do not match",
                 Arrays.asList(edge4_5.getEdge(), edge4_7.getEdge()), ids);
-        
-        // check fails if maxIterations bounds radius:
-        try {
-            index.findWithinRadius(0.0004, 0.0006, EdgeFilter.ALL_EDGES, 2000, 2);
-        } catch (IllegalArgumentException e) {
-            assertTrue(e.getMessage().indexOf("maxIterations") >= 0);
-        }
     }
 
 }

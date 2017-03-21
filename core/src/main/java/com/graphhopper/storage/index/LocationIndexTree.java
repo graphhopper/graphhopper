@@ -571,51 +571,39 @@ public class LocationIndexTree implements LocationIndex {
 
         return closestMatch;
     }
-
+    
     /**
      * Returns all edges that are within the specified radius around the queried position.
+     * Searches at most 9 cells to avoid performance problems. Hence, if the radius is larger than
+     * the cell width then not all edges might be returned.
+     * 
+     * TODO: either clarify the method name and description (to only search e.g. 9 tiles) or 
+     * refactor so it can handle a radius larger than 9 tiles. Also remove reference to 'NClosest',
+     * which is misleading, and don't always return at least one value. See map-matching #65.
+     * TODO: tidy up logic - see comments in graphhopper #994.
      *
-     * @param queryLat latitude to search from
-     * @param queryLon longitude to search from
-     * @param edgeFilter only include edges from edgeFilter
-     * @param radius include all results within this radius (in meters)
-     * @param maxIterations if not null, search only a square of (2 * maxIterations - 1) tiles
-     *        wide/high (with center tile containing (queryLat, queryLon)). Note that it is
-     *        possible that the search radius exceeds this square - in this case, an exception
-     *        will be thrown.
+     * @param radius in meters
      */
-    public List<QueryResult> findWithinRadius(final double queryLat, final double queryLon,
-            final EdgeFilter edgeFilter, final double radius, final Integer maxIterations) {
-
-        // check the max iterations:
-        int requiredIterationsForThisRadius = (int) Math.ceil(radius / this.minResolutionInMeter)
-                + 1; // note that this is a conservative upper bound
-        int _maxIterations;
-        if (maxIterations == null) {
-            // used the maximum iterations required:
-            _maxIterations = requiredIterationsForThisRadius;
-        } else {
-            // check the provided maxIterations will include this radius:
-            if (maxIterations < requiredIterationsForThisRadius)
-                throw new IllegalArgumentException("A minimum of " + requiredIterationsForThisRadius
-                        + " iterations are required for a radius of " + radius + "m, but a "
-                        + "maxIterations of " + maxIterations + " was provided. Behaviour is "
-                        + "undefined in this case, so please either decrease maxIterations to "
-                         + requiredIterationsForThisRadius + ", or decrease the radius.");
-            _maxIterations = maxIterations;
-        }
-        
+    public List<QueryResult> findNClosest(final double queryLat, final double queryLon,
+            final EdgeFilter edgeFilter, double radius) {
+        // Return ALL results which are very close and e.g. within the GPS signal accuracy.
+        // Also important to get all edges if GPS point is close to a junction.
         final double returnAllResultsWithin = distCalc.calcNormalizedDist(radius);
+
         // implement a cheap priority queue via List, sublist and Collections.sort
         final List<QueryResult> queryResults = new ArrayList<QueryResult>();
         GHIntHashSet set = new GHIntHashSet();
 
-        for (int iteration = 0; iteration < _maxIterations; iteration++) {
-            // TODO: should we use the return value of earlyFinish?
+        // Doing 2 iterations means searching 9 tiles.
+        for (int iteration = 0; iteration < 2; iteration++) {
+            // should we use the return value of earlyFinish?
             findNetworkEntries(queryLat, queryLon, set, iteration);
+
             final GHBitSet exploredNodes = new GHTBitSet(new GHIntHashSet(set));
             final EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
+
             set.forEach(new IntPredicate() {
+
                 @Override
                 public boolean apply(int node) {
                     new XFirstSearchCheck(queryLat, queryLon, exploredNodes, edgeFilter) {
@@ -626,9 +614,9 @@ public class LocationIndexTree implements LocationIndex {
                         }
 
                         @Override
-                        protected boolean check(int node, double normedDist, int wayIndex,
-                                EdgeIteratorState edge, QueryResult.Position pos) {
-                            if (normedDist < returnAllResultsWithin || queryResults.isEmpty()
+                        protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos) {
+                            if (normedDist < returnAllResultsWithin
+                                    || queryResults.isEmpty()
                                     || queryResults.get(0).getQueryDistance() > normedDist) {
                                 // TODO: refactor below:
                                 // - should only add edges within search radius (below allows the
@@ -637,11 +625,11 @@ public class LocationIndexTree implements LocationIndex {
                                 // match the expected behaviour (see method description)
                                 // - create QueryResult first and the add/set as required - clean up
                                 // the index tracking business.
+
                                 int index = -1;
                                 for (int qrIndex = 0; qrIndex < queryResults.size(); qrIndex++) {
                                     QueryResult qr = queryResults.get(qrIndex);
-                                    // overwrite older queryResults which are potentially more far
-                                    // away than returnAllResultsWithin
+                                    // overwrite older queryResults which are potentially more far away than returnAllResultsWithin
                                     if (qr.getQueryDistance() > returnAllResultsWithin) {
                                         index = qrIndex;
                                         break;
@@ -681,7 +669,7 @@ public class LocationIndexTree implements LocationIndex {
             });
         }
 
-        // TODO: pass boolean argument for whether or not to sort?
+        // TODO: pass boolean argument for whether or not to sort? Can be expensive if not required.
         Collections.sort(queryResults, QR_COMPARATOR);
 
         for (QueryResult qr : queryResults) {
@@ -690,8 +678,7 @@ public class LocationIndexTree implements LocationIndex {
                 qr.setQueryDistance(distCalc.calcDenormalizedDist(qr.getQueryDistance()));
                 qr.calcSnappedPoint(distCalc);
             } else {
-                throw new IllegalStateException(
-                        "Invalid QueryResult should not happen here: " + qr);
+                throw new IllegalStateException("Invalid QueryResult should not happen here: " + qr);
             }
         }
 
