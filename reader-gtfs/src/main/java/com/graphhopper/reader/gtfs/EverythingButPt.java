@@ -13,6 +13,6 @@ class EverythingButPt implements EdgeFilter {
 
     @Override
     public boolean accept(EdgeIteratorState edgeState) {
-        return encoder.getEdgeType(edgeState.getFlags()) == GtfsStorage.EdgeType.UNSPECIFIED;
+        return encoder.getEdgeType(edgeState.getFlags()) == GtfsStorage.EdgeType.HIGHWAY;
     }
 }

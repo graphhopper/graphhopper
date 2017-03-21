@@ -44,7 +44,7 @@ public class GtfsStorage implements GraphExtension {
 	private Map<String, Fare> fares;
 
 	enum EdgeType {
-        UNSPECIFIED, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, OVERNIGHT, TRANSFER, WAIT_IN_STATION_EDGE, TIME_PASSES
+		HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, OVERNIGHT, TRANSFER, WAIT
     }
 
 	private DB data;
@@ -66,7 +66,7 @@ public class GtfsStorage implements GraphExtension {
 
 	@Override
 	public int getDefaultEdgeFieldValue() {
-		return EdgeType.UNSPECIFIED.ordinal();
+		return EdgeType.HIGHWAY.ordinal();
 	}
 
 	@Override

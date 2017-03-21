@@ -49,7 +49,7 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
 	public long calcTravelTimeSeconds(EdgeIteratorState edge, long earliestStartTime) {
         GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edge.getFlags());
         switch (edgeType) {
-            case UNSPECIFIED:
+            case HIGHWAY:
                 return (long) (getWalkDistance(edge) * 3.6 / walkSpeedKmH) ;
             case ENTER_TIME_EXPANDED_NETWORK:
                 if (reverse) {
@@ -76,7 +76,7 @@ class PtTravelTimeWeighting extends AbstractWeighting implements TimeDependentWe
     public double getWalkDistance(EdgeIteratorState edge) {
         GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edge.getFlags());
         switch (edgeType) {
-            case UNSPECIFIED:
+            case HIGHWAY:
                 return edge.getDistance();
             case ENTER_PT:
             case EXIT_PT:

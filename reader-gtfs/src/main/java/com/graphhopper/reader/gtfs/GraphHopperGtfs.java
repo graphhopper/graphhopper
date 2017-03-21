@@ -32,7 +32,6 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import java.util.zip.ZipFile;
@@ -438,9 +437,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                             Duration.between(boardTime, time).toMillis(),
                             lineString));
                     partition = null;
-                }
-                if (EnumSet.of(GtfsStorage.EdgeType.TRANSFER, GtfsStorage.EdgeType.HOP, GtfsStorage.EdgeType.TIME_PASSES, GtfsStorage.EdgeType.DWELL).contains(edgeType)) {
-                    time = time.plusSeconds(encoder.getTime(edge.getFlags()));
                 }
             }
             return result;
