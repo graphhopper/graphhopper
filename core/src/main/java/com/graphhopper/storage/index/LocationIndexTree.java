@@ -578,8 +578,7 @@ public class LocationIndexTree implements LocationIndex {
      * @param queryLat latitude to search from
      * @param queryLon longitude to search from
      * @param edgeFilter only include edges from edgeFilter
-     * @param radius include all results within this radius (in meters) - assuming it's not
-     *        bounded by maxIterations.
+     * @param radius include all results within this radius (in meters)
      * @param maxIterations if not null, search only a square of (2 * maxIterations - 1) tiles
      *        wide/high (with center tile containing (queryLat, queryLon)). Note that it is
      *        possible that the search radius exceeds this square - in this case, an exception
