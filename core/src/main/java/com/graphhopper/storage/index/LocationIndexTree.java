@@ -37,6 +37,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 
@@ -71,6 +73,12 @@ public class LocationIndexTree implements LocationIndex {
     private double deltaLon;
     private int initSizeLeafEntries = 4;
     private boolean initialized = false;
+    private static final Comparator<QueryResult> QR_COMPARATOR = new Comparator<QueryResult>() {
+        @Override
+        public int compare(QueryResult o1, QueryResult o2) {
+            return Double.compare(o1.getQueryDistance(), o2.getQueryDistance());
+        }
+    };
     /**
      * If normed distance is smaller than this value the node or edge is 'identical' and the
      * algorithm can stop search.
@@ -563,7 +571,120 @@ public class LocationIndexTree implements LocationIndex {
 
         return closestMatch;
     }
+    
+    /**
+     * Returns all edges that are within the specified radius around the queried position.
+     * Searches at most 9 cells to avoid performance problems. Hence, if the radius is larger than
+     * the cell width then not all edges might be returned.
+     * 
+     * TODO: either clarify the method name and description (to only search e.g. 9 tiles) or 
+     * refactor so it can handle a radius larger than 9 tiles. Also remove reference to 'NClosest',
+     * which is misleading, and don't always return at least one value. See map-matching #65.
+     * TODO: tidy up logic - see comments in graphhopper #994.
+     *
+     * @param radius in meters
+     */
+    public List<QueryResult> findNClosest(final double queryLat, final double queryLon,
+            final EdgeFilter edgeFilter, double radius) {
+        // Return ALL results which are very close and e.g. within the GPS signal accuracy.
+        // Also important to get all edges if GPS point is close to a junction.
+        final double returnAllResultsWithin = distCalc.calcNormalizedDist(radius);
 
+        // implement a cheap priority queue via List, sublist and Collections.sort
+        final List<QueryResult> queryResults = new ArrayList<QueryResult>();
+        GHIntHashSet set = new GHIntHashSet();
+
+        // Doing 2 iterations means searching 9 tiles.
+        for (int iteration = 0; iteration < 2; iteration++) {
+            // should we use the return value of earlyFinish?
+            findNetworkEntries(queryLat, queryLon, set, iteration);
+
+            final GHBitSet exploredNodes = new GHTBitSet(new GHIntHashSet(set));
+            final EdgeExplorer explorer = graph.createEdgeExplorer(edgeFilter);
+
+            set.forEach(new IntPredicate() {
+
+                @Override
+                public boolean apply(int node) {
+                    new XFirstSearchCheck(queryLat, queryLon, exploredNodes, edgeFilter) {
+                        @Override
+                        protected double getQueryDistance() {
+                            // do not skip search if distance is 0 or near zero (equalNormedDelta)
+                            return Double.MAX_VALUE;
+                        }
+
+                        @Override
+                        protected boolean check(int node, double normedDist, int wayIndex, EdgeIteratorState edge, QueryResult.Position pos) {
+                            if (normedDist < returnAllResultsWithin
+                                    || queryResults.isEmpty()
+                                    || queryResults.get(0).getQueryDistance() > normedDist) {
+                                // TODO: refactor below:
+                                // - should only add edges within search radius (below allows the
+                                // returning of a candidate outside search radius if it's the only
+                                // one). Removing this test would simplify it a lot and probably
+                                // match the expected behaviour (see method description)
+                                // - create QueryResult first and the add/set as required - clean up
+                                // the index tracking business.
+
+                                int index = -1;
+                                for (int qrIndex = 0; qrIndex < queryResults.size(); qrIndex++) {
+                                    QueryResult qr = queryResults.get(qrIndex);
+                                    // overwrite older queryResults which are potentially more far away than returnAllResultsWithin
+                                    if (qr.getQueryDistance() > returnAllResultsWithin) {
+                                        index = qrIndex;
+                                        break;
+                                    }
+
+                                    // avoid duplicate edges
+                                    if (qr.getClosestEdge().getEdge() == edge.getEdge()) {
+                                        if (qr.getQueryDistance() < normedDist) {
+                                            // do not add current edge
+                                            return true;
+                                        } else {
+                                            // overwrite old edge with current
+                                            index = qrIndex;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                QueryResult qr = new QueryResult(queryLat, queryLon);
+                                qr.setQueryDistance(normedDist);
+                                qr.setClosestNode(node);
+                                qr.setClosestEdge(edge.detach(false));
+                                qr.setWayIndex(wayIndex);
+                                qr.setSnappedPosition(pos);
+
+                                if (index < 0) {
+                                    queryResults.add(qr);
+                                } else {
+                                    queryResults.set(index, qr);
+                                }
+                            }
+                            return true;
+                        }
+                    }.start(explorer, node);
+                    return true;
+                }
+            });
+        }
+
+        // TODO: pass boolean argument for whether or not to sort? Can be expensive if not required.
+        Collections.sort(queryResults, QR_COMPARATOR);
+
+        for (QueryResult qr : queryResults) {
+            if (qr.isValid()) {
+                // denormalize distance
+                qr.setQueryDistance(distCalc.calcDenormalizedDist(qr.getQueryDistance()));
+                qr.calcSnappedPoint(distCalc);
+            } else {
+                throw new IllegalStateException("Invalid QueryResult should not happen here: " + qr);
+            }
+        }
+
+        return queryResults;
+    }
+    
     // make entries static as otherwise we get an additional reference to this class (memory waste)
     interface InMemEntry {
         boolean isLeaf();
