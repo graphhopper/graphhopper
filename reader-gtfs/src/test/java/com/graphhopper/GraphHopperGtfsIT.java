@@ -256,6 +256,71 @@ public class GraphHopperGtfsIT {
         assertEquals("...and one alighting instruction", 1, route.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_END_TRIP).count());
     }
 
+    @Test
+    public void testTransferRules() {
+        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
+        final double VIA_LAT = 36.868446, VIA_LON = -116.784582; // BEATTY_AIRPORT stop
+        final double TO1_LAT = 36.641496, TO1_LON = -116.40094; // AMV stop
+        final double TO2_LAT = 36.88108, TO2_LON = -116.81797; // BULLFROG stop
+
+        GHRequest request = new GHRequest(
+                FROM_LAT, FROM_LON,
+                VIA_LAT, VIA_LON
+        );
+        request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,6,7,30));
+        GHResponse response = graphHopper.route(request);
+        System.out.println(response);
+
+        request = new GHRequest(
+                VIA_LAT, VIA_LON,
+                TO1_LAT, TO1_LON
+        );
+        request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,6,0,0));
+
+        response = graphHopper.route(request);
+        System.out.println(response);
+
+
+        request = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO1_LAT, TO1_LON
+        );
+        request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,6,7,30));
+
+        response = graphHopper.route(request);
+        assertEquals("Ignoring transfer rules (free walking): Will be there at 9.", time(1, 30), response.getBest().getTime());
+
+        request = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO1_LAT, TO1_LON
+        );
+        request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,6,7,30));
+        request.getHints().put(GraphHopperGtfs.MAX_TRANSFER_DISTANCE_PER_LEG, 0.0);
+
+        response = graphHopper.route(request);
+        assertEquals("Transfer rule: 11 minutes. Will miss connection, and be there at 14.", time(6, 30), response.getBest().getTime());
+
+        request = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO2_LAT, TO2_LON
+        );
+        request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,6,7,30));
+
+        response = graphHopper.route(request);
+        assertEquals("Ignoring transfer rules (free walking): Will be there at 8:10.", time(0, 40), response.getBest().getTime());
+
+        request = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO2_LAT, TO2_LON
+        );
+        request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,6,7,30));
+        request.getHints().put(GraphHopperGtfs.MAX_TRANSFER_DISTANCE_PER_LEG, 0.0);
+
+        response = graphHopper.route(request);
+        assertEquals("Will still be there at 8:10 because there is a route-specific exception for this route.", time(0, 40), response.getBest().getTime());
+    }
+
+
     private void assertTravelTimeIs(GraphHopperGtfs graphHopper, double from_lat, double from_lon, LocalDateTime earliestDepartureTime, double to_lat, double to_lon, int expectedTravelTime) {
         GHRequest ghRequest = new GHRequest(
                 from_lat, from_lon,

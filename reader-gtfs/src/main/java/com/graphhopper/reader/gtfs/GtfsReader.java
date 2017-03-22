@@ -61,7 +61,7 @@ class GtfsReader {
     private final GtfsStorage gtfsStorage;
 
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
-    private final Map<String, Transfer> explicitWithinStationMinimumTransfers = new HashMap<>();
+    private Transfers transfers;
     private final NodeAccess nodeAccess;
     private final String id;
     private int i;
@@ -70,7 +70,6 @@ class GtfsReader {
     private SetMultimap<String, TimelineNodeIdWithTripId> stopTimelineNodes;
     private Collection<EnterAndExitNodeIdWithStopId> stopEnterAndExitNodes = new ArrayList<>();
     private SetMultimap<String, Integer> arrivals;
-    private SetMultimap<String, Transfer> betweenStationTransfers;
     private final PtFlagEncoder encoder;
 
     GtfsReader(String id, GraphHopperStorage ghStorage, LocationIndex walkNetworkIndex) {
@@ -79,11 +78,12 @@ class GtfsReader {
         this.gtfsStorage = (GtfsStorage) ghStorage.getExtension();
         this.nodeAccess = ghStorage.getNodeAccess();
         this.walkNetworkIndex = walkNetworkIndex;
-        encoder = (PtFlagEncoder) graph.getEncodingManager().getEncoder("pt");
+        this.encoder = (PtFlagEncoder) graph.getEncodingManager().getEncoder("pt");
     }
 
     public void readGraph() {
         feed = this.gtfsStorage.getGtfsFeeds().get(id);
+        transfers = new Transfers(feed.transfers.values());
         gtfsStorage.getFares().putAll(feed.fares);
         i = graph.getNodes();
         buildPtNetwork();
@@ -113,15 +113,7 @@ class GtfsReader {
     private void buildPtNetwork() {
         stopTimelineNodes = HashMultimap.create();
         arrivals = HashMultimap.create();
-        betweenStationTransfers = HashMultimap.create();
         times = new TIntIntHashMap();
-        for (Transfer transfer : feed.transfers.values()) {
-            if (transfer.transfer_type == 2 && !transfer.from_stop_id.equals(transfer.to_stop_id)) {
-                betweenStationTransfers.put(transfer.to_stop_id, transfer);
-            } else if (transfer.transfer_type == 2 && transfer.from_stop_id.equals(transfer.to_stop_id)) {
-                explicitWithinStationMinimumTransfers.put(transfer.to_stop_id, transfer);
-            }
-        }
         LocalDate startDate = feed.calculateStats().getStartDate();
         gtfsStorage.setStartDate(startDate);
         LocalDate endDate = feed.calculateStats().getEndDate();
@@ -243,23 +235,22 @@ class GtfsReader {
                 final Map<String, List<TimelineNodeIdWithTripId>> timelineNodesByRoute = stopTimelineNodes.get(stop.stop_id).stream().collect(Collectors.groupingBy(t -> feed.trips.get(t.tripId).route_id));
 
                 List<Integer> stopEnterNodeIds = new ArrayList<>();
-                for (List<TimelineNodeIdWithTripId> timelineNodeIdWithTripIds : timelineNodesByRoute.values()) {
+                timelineNodesByRoute.forEach((routeId, timelineNodesWithTripId) -> {
                     nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
                     int stopEnterNode = i-1;
                     nodeAccess.setAdditionalNodeField(stopEnterNode, NodeType.STOP_ENTER_NODE.ordinal());
                     stopEnterNodeIds.add(stopEnterNode);
                     NavigableSet<Fun.Tuple2<Integer, Integer>> timeNodes = new TreeSet<>();
-                    timelineNodeIdWithTripIds.stream().map(t -> t.timelineNodeId)
+                    timelineNodesWithTripId.stream().map(t -> t.timelineNodeId)
                             .forEach(nodeId -> timeNodes.add(new Fun.Tuple2<>(times.get(nodeId) % (24*60*60), nodeId)));
-                    wireUpAndAndConnectTimeline(stop, stopEnterNode, timeNodes);
-                }
-
+                    wireUpAndAndConnectTimeline(stop, routeId,stopEnterNode, timeNodes);
+                });
                 stopEnterAndExitNodes.add(new EnterAndExitNodeIdWithStopId(stopEnterNodeIds, stop.stop_id, stopExitNode));
             }
         }
     }
 
-    private void wireUpAndAndConnectTimeline(Stop stop, int stopEnterNode, NavigableSet<Fun.Tuple2<Integer, Integer>> timeNodes) {
+    private void wireUpAndAndConnectTimeline(Stop stop, String routeId, int stopEnterNode, NavigableSet<Fun.Tuple2<Integer, Integer>> timeNodes) {
         int time = 0;
         int prev = -1;
         for (Fun.Tuple2<Integer, Integer> e : timeNodes.descendingSet()) {
@@ -284,11 +275,11 @@ class GtfsReader {
             edge.setName(stop.stop_name);
             edge.setFlags(encoder.setTime(edge.getFlags(), rolloverTime));
         }
-        Transfer withinStationTransfer = explicitWithinStationMinimumTransfers.get(stop.stop_id);
-        insertInboundTransfers(stop.stop_id, withinStationTransfer != null ? withinStationTransfer.min_transfer_time : 0, timeNodes);
-        for (Transfer transfer : betweenStationTransfers.get(stop.stop_id)) {
+        final Optional<Transfer> withinStationTransfer = transfers.getTransfersToStop(stop, routeId).filter(t -> t.from_stop_id.equals(stop.stop_id)).filter(t -> t.transfer_type == 2).findAny();
+        insertInboundTransfers(stop.stop_id, withinStationTransfer.isPresent() ? withinStationTransfer.get().min_transfer_time : 0, timeNodes);
+        transfers.getTransfersToStop(stop, routeId).filter(t -> !t.from_stop_id.equals(stop.stop_id)).filter(t -> t.transfer_type == 2).forEach(transfer -> {
             insertInboundTransfers(transfer.from_stop_id, transfer.min_transfer_time, timeNodes);
-        }
+        });
     }
 
     private void insertInboundBlockTransfers(List<Integer> arrivalNodes, Trip trip, int departureNode, StopTime stopTime, Stop stop, int validityId) {
