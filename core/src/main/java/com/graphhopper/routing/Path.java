@@ -29,6 +29,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
+import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -486,7 +487,7 @@ public class Path {
                     prevAnnotation = annotation;
 
                 } else {
-                    int sign = getTurn(latitude, longitude, baseNode, prevNode, adjNode);
+                    int sign = getTurn(edge, baseNode, prevNode, adjNode);
 
                     if (sign != Instruction.IGNORE) {
                         prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
@@ -528,7 +529,10 @@ public class Path {
                 }
             }
 
-            private int getTurn(double lat, double lon, int baseNode, int prevNode, int adjNode) {
+            private int getTurn(EdgeIteratorState edge, int baseNode, int prevNode, int adjNode) {
+                GHPoint point = getPointForOrientationCalculation(edge);
+                double lat = point.getLat();
+                double lon = point.getLon();
                 int sign = calculateSign(lat, lon);
 
                 // TODO Assume that if the annotation changes, but only if the current instruction is not empty
@@ -565,21 +569,17 @@ public class Path {
                      */
 
                 int prevEdge = -1;
-                int edge = -1;
                 EdgeIterator flagIter = crossingExplorer.setBaseNode(baseNode);
                 while (flagIter.next()) {
                     if (flagIter.getAdjNode() == prevNode || flagIter.getBaseNode() == prevNode)
                         prevEdge = flagIter.getEdge();
 
-                    if (flagIter.getAdjNode() == adjNode || flagIter.getBaseNode() == adjNode)
-                        edge = flagIter.getEdge();
-
                 }
-                if (prevEdge == -1 || edge == -1) {
+                if (prevEdge == -1) {
                     throw new IllegalStateException("Couldn't find the edges for " + prevNode + "-" + baseNode + "-" + adjNode);
                 }
 
-                long flag = graph.getEdgeIteratorState(edge, adjNode).getFlags();
+                long flag = edge.getFlags();
                 long prevFlag = graph.getEdgeIteratorState(prevEdge, baseNode).getFlags();
 
                 boolean leavingCurrentStreet = isLeavingCurrentStreet(flag, prevFlag, baseNode, prevNode, adjNode);
@@ -601,19 +601,13 @@ public class Path {
                             || prevFlag != flag
                             || prevFlag == otherContinue.getFlags()
                             || !surroundingStreetsAreSlower) {
-                        // Evidence shows that this might need an instruction
-                        double tmpLat;
-                        double tmpLon;
-                        PointList tmpWayGeo = otherContinue.fetchWayGeometry(3);
-                        if (tmpWayGeo.getSize() <= 2) {
-                            tmpLat = nodeAccess.getLatitude(otherContinue.getAdjNode());
-                            tmpLon = nodeAccess.getLongitude(otherContinue.getAdjNode());
-                        } else {
-                            tmpLat = tmpWayGeo.getLatitude(1);
-                            tmpLon = tmpWayGeo.getLongitude(1);
-                        }
-                        double otherDelta = calculateOrientationDelta(tmpLat, tmpLon);
+                        GHPoint tmpPoint = getPointForOrientationCalculation(otherContinue);
+                        double otherDelta = calculateOrientationDelta(tmpPoint.getLat(), tmpPoint.getLon());
                         double delta = calculateOrientationDelta(lat, lon);
+
+                        if (Math.abs(delta) < .1 && Math.abs(otherDelta) > .2 && isNameSimilar(name, prevName)) {
+                            return Instruction.CONTINUE_ON_STREET;
+                        }
 
                         if (otherDelta < delta) {
                             return Instruction.KEEP_LEFT;
@@ -632,6 +626,20 @@ public class Path {
                 }
 
                 return Instruction.IGNORE;
+            }
+
+            private GHPoint getPointForOrientationCalculation(EdgeIteratorState edgeIteratorState) {
+                double tmpLat;
+                double tmpLon;
+                PointList tmpWayGeo = edgeIteratorState.fetchWayGeometry(3);
+                if (tmpWayGeo.getSize() <= 2) {
+                    tmpLat = nodeAccess.getLatitude(edgeIteratorState.getAdjNode());
+                    tmpLon = nodeAccess.getLongitude(edgeIteratorState.getAdjNode());
+                } else {
+                    tmpLat = tmpWayGeo.getLatitude(1);
+                    tmpLon = tmpWayGeo.getLongitude(1);
+                }
+                return new GHPoint(tmpLat, tmpLon);
             }
 
             /**
@@ -675,17 +683,8 @@ public class Path {
                 int tmpSign;
                 while (edgeIter.next()) {
                     if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
-                        double tmpLat;
-                        double tmpLon;
-                        PointList tmpWayGeo = edgeIter.fetchWayGeometry(3);
-                        if (tmpWayGeo.getSize() <= 2) {
-                            tmpLat = nodeAccess.getLatitude(edgeIter.getAdjNode());
-                            tmpLon = nodeAccess.getLongitude(edgeIter.getAdjNode());
-                        } else {
-                            tmpLat = tmpWayGeo.getLatitude(1);
-                            tmpLon = tmpWayGeo.getLongitude(1);
-                        }
-                        tmpSign = calculateSign(tmpLat, tmpLon);
+                        GHPoint point = getPointForOrientationCalculation(edgeIter);
+                        tmpSign = calculateSign(point.getLat(), point.getLon());
                         if (Math.abs(tmpSign) <= 1) {
                             return edgeIter;
                         }
@@ -708,7 +707,7 @@ public class Path {
                         tmpSpeed = ((DataFlagEncoder) encoder).getMaxspeed(edgeIter, 0, false);
                         // If one of the edges has no SpeedLimit set, we are not sure
                         // TODO we should calculate the true speed limits here
-                        if(tmpSpeed < 1)
+                        if (tmpSpeed < 1)
                             return false;
                     } else {
                         tmpSpeed = encoder.getSpeed(edgeIter.getFlags());
