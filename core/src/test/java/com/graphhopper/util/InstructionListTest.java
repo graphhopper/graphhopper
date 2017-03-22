@@ -111,14 +111,12 @@ public class InstructionListTest {
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(0, 10);
         InstructionList wayList = p.calcInstructions(usTR);
         List<String> tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
-                "Turn left onto 7-8", "Continue onto 8-9", "Turn right", "Finish!"),
+        assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Turn left onto 7-8", "Finish!"),
                 tmpList);
 
         wayList = p.calcInstructions(trMap.getWithFallBack(Locale.GERMAN));
         tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Geradeaus auf 4-7",
-                "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen", "Ziel erreicht!"),
+        assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Links abbiegen auf 7-8", "Ziel erreicht!"),
                 tmpList);
 
         assertEquals(70000.0, sumDistances(wayList), 1e-1);
@@ -236,6 +234,7 @@ public class InstructionListTest {
                 tmpList);
     }
 
+    // TODO is this problem fixed with the new instructions?
     // problem: we normally don't want instructions if streetname stays but here it is suboptimal:
     @Test
     public void testNoInstructionIfSameStreet() {
@@ -263,7 +262,7 @@ public class InstructionListTest {
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(2, 3);
         InstructionList wayList = p.calcInstructions(usTR);
         List<String> tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto street", "Finish!"), tmpList);
+        assertEquals(Arrays.asList("Continue onto street", "Turn right onto street", "Finish!"), tmpList);
     }
 
     @Test
@@ -472,7 +471,7 @@ public class InstructionListTest {
         Graph g = new GraphBuilder(carManager).create();
         //   n-4-5   (n: pillar node)
         //   |
-        //   3-2
+        // 7-3-2-6
         //     |
         //     1
         NodeAccess na = g.getNodeAccess();
@@ -483,10 +482,14 @@ public class InstructionListTest {
         waypoint.add(15.2, 9.9);
         na.setNode(4, 15.2, 10);
         na.setNode(5, 15.2, 10.1);
+        na.setNode(6, 15.1, 10.1);
+        na.setNode(7, 15.1, 9.8);
 
         g.edge(1, 2, 10000, true).setName("1-2");
         g.edge(2, 3, 10000, true).setName("2-3");
+        g.edge(2, 6, 10000, true).setName("2-6");
         g.edge(3, 4, 10000, true).setName("3-4").setWayGeometry(waypoint);
+        g.edge(3, 7, 10000, true).setName("3-7");
         g.edge(4, 5, 10000, true).setName("4-5");
 
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(1, 5);
@@ -500,9 +503,6 @@ public class InstructionListTest {
 
         // query south-west of node 3, get instruction for third edge
         assertEquals("3-4", wayList.find(15.099, 9.9, 1000).getName());
-
-        // query north-west of pillar node n , get instruction for fourth edge
-        assertEquals("4-5", wayList.find(15.21, 9.85, 100000).getName());
     }
 
     @Test
