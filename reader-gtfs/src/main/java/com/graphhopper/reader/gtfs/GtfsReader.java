@@ -89,7 +89,7 @@ class GtfsReader {
         buildPtNetwork();
         EdgeFilter filter = new EverythingButPt(encoder);
         for (EnterAndExitNodeIdWithStopId entry : stopEnterAndExitNodes) {
-            QueryResult source = walkNetworkIndex.findClosest(nodeAccess.getLat(entry.enterNodeIds.iterator().next()), nodeAccess.getLon(entry.enterNodeIds.iterator().next()), filter);
+            QueryResult source = walkNetworkIndex.findClosest(nodeAccess.getLat(entry.exitNodeId), nodeAccess.getLon(entry.exitNodeId), filter);
             Stop stop = feed.stops.get(entry.stopId);
             int streetNode;
             if (!source.isValid()) {
