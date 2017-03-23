@@ -15,6 +15,8 @@ module.exports.extractMetaVersionInfo = function (json) {
 };
 
 module.exports.getSignName = function (sign) {
+    if (sign === -7)
+        return "keep_left";
     if (sign === -3)
         return "sharp_left";
     else if (sign === -2)
@@ -35,6 +37,8 @@ module.exports.getSignName = function (sign) {
         return "marker-icon-blue";
     else if (sign === 6)
         return "roundabout";
+    else if (sign === 7)
+        return "keep_right";
     else
         throw "did not find sign " + sign;
 };
