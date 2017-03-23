@@ -132,8 +132,7 @@ public class InstructionListTest {
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
 
-        compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1),
-                asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
+        compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.0, 1.1), asL(1.1, 1.4)),
                 wayList.createStartPoints());
 
         p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(6, 2);
@@ -142,10 +141,10 @@ public class InstructionListTest {
 
         wayList = p.calcInstructions(usTR);
         tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2", "Finish!"),
+        assertEquals(Arrays.asList("Continue onto 6-7", "Turn left onto 5-8", "Finish!"),
                 tmpList);
 
-        compare(Arrays.asList(asL(1d, 1d), asL(1d, 1.1), asL(1d, 1.2), asL(1.1, 1.2), asL(1.2, 1.2)),
+        compare(Arrays.asList(asL(1d, 1d), asL(1d, 1.2), asL(1.2, 1.2)),
                 wayList.createStartPoints());
 
         // special case of identical start and end
@@ -175,12 +174,15 @@ public class InstructionListTest {
         return list;
     }
 
-    void compare(List<List<Double>> expected, List<List<Double>> was) {
+    void compare(List<List<Double>> expected, List<List<Double>> actual) {
         for (int i = 0; i < expected.size(); i++) {
             List<Double> e = expected.get(i);
-            List<Double> wasE = was.get(i);
+            List<Double> wasE = actual.get(i);
             for (int j = 0; j < e.size(); j++) {
-                assertEquals("at " + j + " value " + e + " vs " + wasE, e.get(j), wasE.get(j), 1e-5d);
+                assertEquals("at index " + i + " value index " + j + " and value " + e + " vs " + wasE + "\n" + "Expected: " + expected + "\n" + "Actual: " + actual
+                        , e.get(j),
+                        wasE.get(j),
+                        1e-5d);
             }
         }
     }
@@ -230,7 +232,7 @@ public class InstructionListTest {
         p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(3, 5);
         wayList = p.calcInstructions(usTR);
         tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto 3-4", "Continue onto 4-5", "Finish!"),
+        assertEquals(Arrays.asList("Continue onto 3-4", "Turn slight right onto 4-5", "Finish!"),
                 tmpList);
     }
 
@@ -268,9 +270,9 @@ public class InstructionListTest {
     @Test
     public void testInstructionsWithTimeAndPlace() {
         Graph g = new GraphBuilder(carManager).create();
-        //   4-5
+        //   n-4-5   (n: pillar node)
         //   |
-        //   3-2
+        // 7-3-2-6
         //     |
         //     1
         NodeAccess na = g.getNodeAccess();
@@ -279,15 +281,19 @@ public class InstructionListTest {
         na.setNode(3, 15.1, 9.9);
         na.setNode(4, 15.2, 9.9);
         na.setNode(5, 15.2, 10);
+        na.setNode(6, 15.1, 10.1);
+        na.setNode(7, 15.1, 9.8);
 
         g.edge(1, 2, 7000, true).setName("1-2").setFlags(flagsForSpeed(carManager, 70));
         g.edge(2, 3, 8000, true).setName("2-3").setFlags(flagsForSpeed(carManager, 80));
+        g.edge(2, 6, 10000, true).setName("2-6").setFlags(flagsForSpeed(carManager, 10));
         g.edge(3, 4, 9000, true).setName("3-4").setFlags(flagsForSpeed(carManager, 90));
+        g.edge(3, 7, 10000, true).setName("3-7").setFlags(flagsForSpeed(carManager, 10));
         g.edge(4, 5, 10000, true).setName("4-5").setFlags(flagsForSpeed(carManager, 100));
 
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(1, 5);
         InstructionList wayList = p.calcInstructions(usTR);
-        assertEquals(5, wayList.size());
+        assertEquals(4, wayList.size());
 
         List<GPXEntry> gpxList = wayList.createGPXList();
         assertEquals(34000, p.getDistance(), 1e-1);
@@ -307,10 +313,6 @@ public class InstructionListTest {
         assertEquals(Instruction.TURN_RIGHT, wayList.get(2).getSign());
         assertEquals(15.1, wayList.get(2).getFirstLat(), 1e-3);
         assertEquals(9.9, wayList.get(2).getFirstLon(), 1e-3);
-
-        assertEquals(Instruction.TURN_RIGHT, wayList.get(3).getSign());
-        assertEquals(15.2, wayList.get(3).getFirstLat(), 1e-3);
-        assertEquals(9.9, wayList.get(3).getFirstLon(), 1e-3);
 
         String gpxStr = wayList.createGPX("test", 0);
         verifyGPX(gpxStr);

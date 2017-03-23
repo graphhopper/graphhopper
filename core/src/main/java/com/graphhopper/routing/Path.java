@@ -378,7 +378,6 @@ public class Path {
             private InstructionAnnotation annotation, prevAnnotation;
             private EdgeExplorer outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
             private EdgeExplorer crossingExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, true));
-            private final JaroWinkler jaroWinkler = new JaroWinkler();
 
             @Override
             public void next(EdgeIteratorState edge, int index) {
@@ -535,8 +534,6 @@ public class Path {
                 double lon = point.getLon();
                 int sign = calculateSign(lat, lon);
 
-                // TODO Assume that if the annotation changes, but only if the current instruction is not empty
-                // For example, get of bike
                 if (!annotation.equals(prevAnnotation) && !annotation.isEmpty()) {
                     return sign;
                 }
@@ -561,12 +558,12 @@ public class Path {
                     return sign;
                 }
 
-                    /*
-                    The current state is a bit uncertain. So we are going more or less straight sign < 2
-                    So it really depends on the surrounding street if we need a turn instruction or not
-                    In most cases this will be a simple follow the current street and we don't necessarily
-                    need a turn instruction
-                     */
+                /*
+                The current state is a bit uncertain. So we are going more or less straight sign < 2
+                So it really depends on the surrounding street if we need a turn instruction or not
+                In most cases this will be a simple follow the current street and we don't necessarily
+                need a turn instruction
+                 */
 
                 int prevEdge = -1;
                 EdgeIterator flagIter = crossingExplorer.setBaseNode(baseNode);
@@ -582,14 +579,15 @@ public class Path {
                 long flag = edge.getFlags();
                 long prevFlag = graph.getEdgeIteratorState(prevEdge, baseNode).getFlags();
 
-                boolean leavingCurrentStreet = isLeavingCurrentStreet(flag, prevFlag, baseNode, prevNode, adjNode);
-
                 boolean surroundingStreetsAreSlower = surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 1);
 
                 // There is at least one other possibility to turn, and we are almost going straight
                 // Check the other turns if one of them is also going almost straight
                 // If not, we don't need a turn instruction
                 EdgeIteratorState otherContinue = getOtherContinue(baseNode, prevNode, adjNode);
+
+                // Signs provide too less detail, so we use the delta for a precise comparision
+                double delta = calculateOrientationDelta(lat, lon);
 
                 // This state is bad! Two streets are going more or less straight
                 // Happens a lot for trunk_links
@@ -603,26 +601,32 @@ public class Path {
                             || !surroundingStreetsAreSlower) {
                         GHPoint tmpPoint = getPointForOrientationCalculation(otherContinue);
                         double otherDelta = calculateOrientationDelta(tmpPoint.getLat(), tmpPoint.getLon());
-                        double delta = calculateOrientationDelta(lat, lon);
 
-                        if (Math.abs(delta) < .1 && Math.abs(otherDelta) > .2 && isNameSimilar(name, prevName)) {
+                        if (Math.abs(delta) < .1 && Math.abs(otherDelta) > .15 && isNameSimilar(name, prevName)) {
                             return Instruction.CONTINUE_ON_STREET;
                         }
 
                         if (otherDelta < delta) {
-                            return Instruction.KEEP_LEFT;
+                            // TODO Use keeps once we have a robust client
+                            //return Instruction.KEEP_LEFT;
+                            return Instruction.TURN_SLIGHT_LEFT;
                         } else {
-                            return Instruction.KEEP_RIGHT;
+                            // TODO Use keeps once we have a robust client
+                            //return Instruction.KEEP_RIGHT;
+                            return Instruction.TURN_SLIGHT_RIGHT;
                         }
 
 
                     }
                 }
 
-                // Leave the current road -> create instruction
-                if (leavingCurrentStreet
-                        && !surroundingStreetsAreSlower) {
-                    return sign;
+                if (!surroundingStreetsAreSlower) {
+                    if (Math.abs(delta) > .4
+                            || isLeavingCurrentStreet(flag, prevFlag, baseNode, prevNode, adjNode)) {
+                        // Leave the current road -> create instruction
+                        return sign;
+
+                    }
                 }
 
                 return Instruction.IGNORE;

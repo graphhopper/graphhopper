@@ -91,38 +91,38 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(3437.6, arsp.getDistance(), .1);
-        assertEquals(89, arsp.getPoints().getSize());
+        assertEquals(95, arsp.getPoints().getSize());
 
         assertEquals(43.7276852, arsp.getWaypoints().getLat(0), 1e-7);
         assertEquals(43.7495432, arsp.getWaypoints().getLat(1), 1e-7);
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(13, il.size());
+        assertEquals(21, il.size());
 
         List<Map<String, Object>> resultJson = il.createJson();
         // TODO roundabout fine tuning -> enter + leave roundabout (+ two rounabouts -> is it necessary if we do not leave the street?)
         assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
         assertEquals("Continue onto Avenue des Papalins", resultJson.get(1).get("text"));
-        assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(2).get("text"));
-        assertEquals("Turn left", resultJson.get(3).get("text"));
-        assertEquals("Turn right onto Avenue Albert II", resultJson.get(4).get("text"));
+        assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(4).get("text"));
+        assertEquals("Turn left", resultJson.get(5).get("text"));
+        assertEquals("Turn right onto Avenue Albert II", resultJson.get(6).get("text"));
 
         assertEquals(11, (Double) resultJson.get(0).get("distance"), 1);
-        assertEquals(289, (Double) resultJson.get(1).get("distance"), 1);
-        assertEquals(10, (Double) resultJson.get(2).get("distance"), 1);
-        assertEquals(43, (Double) resultJson.get(3).get("distance"), 1);
-        assertEquals(122, (Double) resultJson.get(4).get("distance"), 1);
-        assertEquals(447, (Double) resultJson.get(5).get("distance"), 1);
+        assertEquals(96, (Double) resultJson.get(1).get("distance"), 1);
+        assertEquals(178, (Double) resultJson.get(2).get("distance"), 1);
+        assertEquals(13, (Double) resultJson.get(3).get("distance"), 1);
+        assertEquals(10, (Double) resultJson.get(4).get("distance"), 1);
+        assertEquals(42, (Double) resultJson.get(5).get("distance"), 1);
 
         assertEquals(7, (Long) resultJson.get(0).get("time") / 1000);
-        assertEquals(207, (Long) resultJson.get(1).get("time") / 1000);
-        assertEquals(7, (Long) resultJson.get(2).get("time") / 1000);
-        assertEquals(30, (Long) resultJson.get(3).get("time") / 1000);
-        assertEquals(87, (Long) resultJson.get(4).get("time") / 1000);
-        assertEquals(321, (Long) resultJson.get(5).get("time") / 1000);
+        assertEquals(69, (Long) resultJson.get(1).get("time") / 1000);
+        assertEquals(128, (Long) resultJson.get(2).get("time") / 1000);
+        assertEquals(9, (Long) resultJson.get(3).get("time") / 1000);
+        assertEquals(7, (Long) resultJson.get(4).get("time") / 1000);
+        assertEquals(30, (Long) resultJson.get(5).get("time") / 1000);
 
         List<GPXEntry> list = arsp.getInstructions().createGPXList();
-        assertEquals(89, list.size());
+        assertEquals(95, list.size());
         final long lastEntryMillis = list.get(list.size() - 1).getTime();
         final long totalResponseMillis = arsp.getTime();
         assertEquals(totalResponseMillis, lastEntryMillis);
@@ -313,39 +313,39 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(6875.2, arsp.getDistance(), .1);
-        assertEquals(179, arsp.getPoints().getSize());
+        assertEquals(190, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(26, il.size());
+        assertEquals(38, il.size());
         List<Map<String, Object>> resultJson = il.createJson();
         assertEquals("Continue onto Avenue des Guelfes", resultJson.get(0).get("text"));
         assertEquals("Continue onto Avenue des Papalins", resultJson.get(1).get("text"));
-        assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(2).get("text"));
-        assertEquals("Turn left", resultJson.get(3).get("text"));
-        assertEquals("Turn right onto Avenue Albert II", resultJson.get(4).get("text"));
+        assertEquals("Turn sharp right onto Quai Jean-Charles Rey", resultJson.get(4).get("text"));
+        assertEquals("Turn left", resultJson.get(5).get("text"));
+        assertEquals("Turn right onto Avenue Albert II", resultJson.get(6).get("text"));
 
-        assertEquals("Stopover 1", resultJson.get(12).get("text"));
+        assertEquals("Stopover 1", resultJson.get(20).get("text"));
 
-        assertEquals("Continue onto Avenue Albert II", resultJson.get(20).get("text"));
-        assertEquals("Turn left", resultJson.get(21).get("text"));
-        assertEquals("Turn right onto Quai Jean-Charles Rey", resultJson.get(22).get("text"));
-        assertEquals("Turn sharp left onto Avenue des Papalins", resultJson.get(23).get("text"));
-        assertEquals("Continue onto Avenue des Guelfes", resultJson.get(24).get("text"));
-        assertEquals("Finish!", resultJson.get(25).get("text"));
+        assertEquals("Continue onto Avenue Albert II", resultJson.get(31).get("text"));
+        assertEquals("Turn left", resultJson.get(32).get("text"));
+        assertEquals("Turn right onto Quai Jean-Charles Rey", resultJson.get(33).get("text"));
+        assertEquals("Turn sharp left onto Avenue des Papalins", resultJson.get(34).get("text"));
+        assertEquals("Continue onto Avenue des Guelfes", resultJson.get(36).get("text"));
+        assertEquals("Finish!", resultJson.get(37).get("text"));
 
         assertEquals(11, (Double) resultJson.get(0).get("distance"), 1);
-        assertEquals(289, (Double) resultJson.get(1).get("distance"), 1);
-        assertEquals(10, (Double) resultJson.get(2).get("distance"), 1);
-        assertEquals(43, (Double) resultJson.get(3).get("distance"), 1);
-        assertEquals(122, (Double) resultJson.get(4).get("distance"), 1);
-        assertEquals(447, (Double) resultJson.get(5).get("distance"), 1);
+        assertEquals(97, (Double) resultJson.get(1).get("distance"), 1);
+        assertEquals(178, (Double) resultJson.get(2).get("distance"), 1);
+        assertEquals(13, (Double) resultJson.get(3).get("distance"), 1);
+        assertEquals(10, (Double) resultJson.get(4).get("distance"), 1);
+        assertEquals(42, (Double) resultJson.get(5).get("distance"), 1);
 
         assertEquals(7, (Long) resultJson.get(0).get("time") / 1000);
-        assertEquals(207, (Long) resultJson.get(1).get("time") / 1000);
-        assertEquals(7, (Long) resultJson.get(2).get("time") / 1000);
-        assertEquals(30, (Long) resultJson.get(3).get("time") / 1000);
-        assertEquals(87, (Long) resultJson.get(4).get("time") / 1000);
-        assertEquals(321, (Long) resultJson.get(5).get("time") / 1000);
+        assertEquals(69, (Long) resultJson.get(1).get("time") / 1000);
+        assertEquals(128, (Long) resultJson.get(2).get("time") / 1000);
+        assertEquals(9, (Long) resultJson.get(3).get("time") / 1000);
+        assertEquals(7, (Long) resultJson.get(4).get("time") / 1000);
+        assertEquals(30, (Long) resultJson.get(5).get("time") / 1000);
 
         // special case of identical start and end point
         rsp = hopper.route(new GHRequest().
@@ -474,7 +474,7 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(297, arsp.getDistance(), 5.);
-        assertEquals(27, arsp.getPoints().getSize());
+        assertEquals(26, arsp.getPoints().getSize());
 
         // test if start and first point are identical leading to an empty path, #788
         rq = new GHRequest().
@@ -504,11 +504,11 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(1626.8, arsp.getDistance(), .1);
-        assertEquals(60, arsp.getPoints().getSize());
+        assertEquals(61, arsp.getPoints().getSize());
         assertTrue(arsp.getPoints().is3D());
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(10, il.size());
+        assertEquals(13, il.size());
         assertTrue(il.get(0).getPoints().is3D());
 
         String str = arsp.getPoints().toString();
@@ -523,15 +523,14 @@ public class GraphHopperIT {
                         + "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,52.0)",
                 str.substring(0, 662));
 
-        assertEquals("(43.727778875703635,7.418772930326453,11.0), (43.72768239068275,7.419007064826944,11.0), "
-                        + "(43.727680946587874,7.419198768422206,11.0)",
-                str.substring(str.length() - 132));
+        assertEquals("(43.72771927105753,7.418905923193081,11.0), (43.72768239068275,7.419007064826944,11.0), (43.727680946587874,7.419198768422206,11.0)",
+                str.substring(str.length() - 131));
 
         assertEquals(84, arsp.getAscend(), 1e-1);
         assertEquals(135, arsp.getDescend(), 1e-1);
 
         List<GPXEntry> list = arsp.getInstructions().createGPXList();
-        assertEquals(60, list.size());
+        assertEquals(61, list.size());
         final long lastEntryMillis = list.get(list.size() - 1).getTime();
         assertEquals(new GPXEntry(43.73068455771767, 7.421283689825812, 62.0, 0), list.get(0));
         assertEquals(new GPXEntry(43.727680946587874, 7.4191987684222065, 11.0, lastEntryMillis), list.get(list.size() - 1));
@@ -614,10 +613,10 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(6932.2, arsp.getDistance(), .1);
-        assertEquals(110, arsp.getPoints().getSize());
+        assertEquals(114, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(19, il.size());
+        assertEquals(24, il.size());
         List<Map<String, Object>> resultJson = il.createJson();
 
         assertEquals("Continue onto Obere Landstraße", resultJson.get(0).get("text"));
@@ -627,16 +626,15 @@ public class GraphHopperIT {
 
         assertEquals("Turn right onto Pfarrplatz", resultJson.get(2).get("text"));
         assertEquals("Turn right onto Margarethenstraße", resultJson.get(3).get("text"));
-        assertEquals("Turn slight left onto Hoher Markt", resultJson.get(4).get("text"));
-        assertEquals("Turn right onto Wegscheid", resultJson.get(5).get("text"));
-        assertEquals("Turn slight left onto Untere Landstraße", resultJson.get(6).get("text"));
-        assertEquals("Turn right onto Ringstraße, L73", resultJson.get(7).get("text"));
-        assertEquals("Continue onto Eyblparkstraße", resultJson.get(8).get("text"));
-        assertEquals("Turn slight left onto Austraße", resultJson.get(9).get("text"));
-        assertEquals("Turn slight left onto Rechte Kremszeile", resultJson.get(10).get("text"));
+        assertEquals("Turn slight left onto Hoher Markt", resultJson.get(5).get("text"));
+        assertEquals("Turn right onto Wegscheid", resultJson.get(7).get("text"));
+        assertEquals("Turn right onto Ringstraße, L73", resultJson.get(9).get("text"));
+        assertEquals("Turn slight left onto Eyblparkstraße", resultJson.get(10).get("text"));
+        assertEquals("Turn slight left onto Austraße", resultJson.get(11).get("text"));
+        assertEquals("Turn slight left onto Rechte Kremszeile", resultJson.get(12).get("text"));
         //..
-        assertEquals("Turn right onto Treppelweg", resultJson.get(15).get("text"));
-        assertEquals("cycleway", resultJson.get(15).get("annotation_text"));
+        assertEquals("Turn right onto Treppelweg", resultJson.get(19).get("text"));
+        assertEquals("cycleway", resultJson.get(19).get("annotation_text"));
     }
 
     @Test
@@ -765,7 +763,7 @@ public class GraphHopperIT {
         assertNotEquals(sum, 0);
         assertTrue("Too many nodes visited " + sum, sum < 120);
         assertEquals(3437.6, bestPath.getDistance(), .1);
-        assertEquals(89, bestPath.getPoints().getSize());
+        assertEquals(95, bestPath.getPoints().getSize());
 
         tmpHopper.close();
     }
@@ -786,7 +784,7 @@ public class GraphHopperIT {
         PathWrapper pw = rsp.getBest();
         assertEquals(1.45, rsp.getBest().getDistance() / 1000f, .01);
         assertEquals(17, rsp.getBest().getTime() / 1000f / 60, 1);
-        assertEquals(65, pw.getPoints().size());
+        assertEquals(66, pw.getPoints().size());
     }
 
     @Test
@@ -819,7 +817,7 @@ public class GraphHopperIT {
         assertTrue("Too many visited nodes for ch mode " + chSum, chSum < 60);
         PathWrapper bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(92, bestPath.getPoints().getSize());
+        assertEquals(90, bestPath.getPoints().getSize());
 
         // request flex mode
         req.setAlgorithm(Parameters.Algorithms.ASTAR_BI);
@@ -831,7 +829,7 @@ public class GraphHopperIT {
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(92, bestPath.getPoints().getSize());
+        assertEquals(90, bestPath.getPoints().getSize());
 
         // request hybrid mode
         req.getHints().put(Landmark.DISABLE, false);
@@ -845,7 +843,7 @@ public class GraphHopperIT {
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(92, bestPath.getPoints().getSize());
+        assertEquals(90, bestPath.getPoints().getSize());
 
         // speed² mode is currently less optimal than CH so just check different nodes and correctness
         req.getHints().put(Landmark.DISABLE, false);
@@ -858,7 +856,7 @@ public class GraphHopperIT {
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(92, bestPath.getPoints().getSize());
+        assertEquals(90, bestPath.getPoints().getSize());
     }
 
     @Test

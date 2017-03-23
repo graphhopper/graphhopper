@@ -437,10 +437,8 @@ public class PathTest {
         InstructionList wayList = p.calcInstructions(tr);
 
         assertEquals(3, wayList.size());
-        assertEquals(-7, wayList.get(1).getSign());
+        assertEquals(-1, wayList.get(1).getSign());
     }
-
-
 
     @Test
     public void testCalcInstructionContinueLeavingStreet() {
@@ -466,7 +464,36 @@ public class PathTest {
         InstructionList wayList = p.calcInstructions(tr);
 
         assertEquals(3, wayList.size());
-        assertEquals(-7, wayList.get(1).getSign());
+        assertEquals(-1, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testCalcInstructionSlightTurn() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Real Situation: point=48.411927%2C15.599197&point=48.412094%2C15.598816
+        // When reaching this Crossing, you cannot know if you should turn left or right
+        // Google Maps and Bing show a turn, OSRM does not
+        //  1 ---2--- 3
+        //       \
+        //        4
+        na.setNode(1, 48.412094,15.598816);
+        na.setNode(2, 48.412055,15.599068);
+        na.setNode(3, 48.412034,15.599411);
+        na.setNode(4, 48.411927,15.599197);
+
+        g.edge(1, 2, 5, true).setName("Stöhrgasse");
+        g.edge(2, 3, 5, true);
+        g.edge(2, 4, 5, true).setName("Stöhrgasse");
+
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(4, 1);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        assertEquals(3, wayList.size());
+        assertEquals(-1, wayList.get(1).getSign());
     }
 
     @Test
@@ -518,7 +545,7 @@ public class PathTest {
         // Contain start, turn, and finish instruction
         assertEquals(3, wayList.size());
         // Assert turn right
-        assertEquals(7, wayList.get(1).getSign());
+        assertEquals(1, wayList.get(1).getSign());
     }
 
     @Test
