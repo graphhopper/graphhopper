@@ -540,15 +540,17 @@ public class Path {
                 double lon = point.getLon();
                 int sign = calculateSign(lat, lon);
 
+                boolean forceInstruction = false;
+
                 if (!annotation.equals(prevAnnotation) && !annotation.isEmpty()) {
-                    return sign;
+                    forceInstruction = true;
                 }
 
                 int nrOfPossibleTurns = nrOfPossibleTurns(baseNode, prevNode, adjNode);
 
                 // there is no other turn possible
                 if (nrOfPossibleTurns <= 1) {
-                    return Instruction.IGNORE;
+                    return returnForcedInstructionOrIgnore(forceInstruction, sign);
                 }
 
                 // Very certain, this is a turn
@@ -558,7 +560,7 @@ public class Path {
                          * bending. We should only do this, if following the street is the obvious choice.
                          */
                     if (isNameSimilar(name, prevName) && surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 2)) {
-                        return Instruction.IGNORE;
+                        return returnForcedInstructionOrIgnore(forceInstruction, sign);
                     }
 
                     return sign;
@@ -635,7 +637,7 @@ public class Path {
                     }
                 }
 
-                return Instruction.IGNORE;
+                return returnForcedInstructionOrIgnore(forceInstruction, sign);
             }
 
             private GHPoint getPointForOrientationCalculation(EdgeIteratorState edgeIteratorState) {
@@ -650,6 +652,12 @@ public class Path {
                     tmpLon = tmpWayGeo.getLongitude(1);
                 }
                 return new GHPoint(tmpLat, tmpLon);
+            }
+
+            private int returnForcedInstructionOrIgnore(boolean forceInstruction, int sign){
+                if(forceInstruction)
+                    return sign;
+                return Instruction.IGNORE;
             }
 
             /**
