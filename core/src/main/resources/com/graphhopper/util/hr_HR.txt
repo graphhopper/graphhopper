@@ -50,6 +50,7 @@ roundabout_exit=Sa kružnog toka izađite na izlaz %1$s
 roundabout_exit_onto=Sa kružnog toka izađite na izlaz %1$s na %2$s
 total_ascend=%1$s ukupni uspon
 total_descend=
+way_contains_ford=
 web.start_label=Početak
 web.intermediate_label=Posrednik
 web.end_label=Kraj

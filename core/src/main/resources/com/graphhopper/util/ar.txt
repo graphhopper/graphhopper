@@ -50,6 +50,7 @@ roundabout_exit=في الدوران ، أتخذ مخرج   %1$s
 roundabout_exit_onto=في الدوران ، أتخذ مخرج   %1$s من خلال %2$s
 total_ascend=
 total_descend=
+way_contains_ford=
 web.start_label=
 web.intermediate_label=
 web.end_label=

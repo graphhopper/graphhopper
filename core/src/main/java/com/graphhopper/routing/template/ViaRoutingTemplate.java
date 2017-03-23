@@ -117,12 +117,14 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             if (tmpPathList.isEmpty())
                 throw new IllegalStateException("At least one path has to be returned for " + fromQResult + " -> " + toQResult);
 
+            int idx = 0;
             for (Path path : tmpPathList) {
                 if (path.getTime() < 0)
-                    throw new RuntimeException("Time was negative. Please report as bug and include:" + ghRequest);
+                    throw new RuntimeException("Time was negative " + path.getTime() + " for index " + idx + ". Please report as bug and include:" + ghRequest);
 
                 pathList.add(path);
                 debug += ", " + path.getDebugInfo();
+                idx++;
             }
 
             altResponse.addDebugInfo(debug);

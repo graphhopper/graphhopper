@@ -170,7 +170,7 @@ public class OSMReaderTest {
                     public boolean isInBounds(ReaderNode node) {
                         return node.getLat() > 49 && node.getLon() > 8;
                     }
-                }.setEncodingManager(getEncodingManager());
+                };
             }
         };
 
@@ -419,8 +419,7 @@ public class OSMReaderTest {
     public void testRelation() {
         EncodingManager manager = new EncodingManager("bike");
         GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false, new GraphExtension.NoOpExtension());
-        OSMReader reader = new OSMReader(ghStorage).
-                setEncodingManager(manager);
+        OSMReader reader = new OSMReader(ghStorage);
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
@@ -601,7 +600,7 @@ public class OSMReaderTest {
                 return Collections.emptyList();
             }
         };
-        osmreader.setEncodingManager(manager);
+
         // save some node tags for first node
         ReaderNode osmNode = new ReaderNode(1, 1.1d, 1.0d);
         osmNode.setTag("test", "now");
@@ -698,7 +697,7 @@ public class OSMReaderTest {
                     throw new IllegalArgumentException("illegal encoder " + encoder.toString());
                 }
             }
-        }.setEncodingManager(manager);
+        };
 
         // turn cost entries for car and foot are for the same relations (same viaNode, edgeFrom and edgeTo),
         // turn cost entry for bike is for another relation (different viaNode)

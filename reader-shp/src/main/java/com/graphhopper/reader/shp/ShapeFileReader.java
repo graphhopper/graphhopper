@@ -55,6 +55,7 @@ public abstract class ShapeFileReader implements DataReader {
         this.graphStorage = ghStorage;
         this.graph = ghStorage;
         this.nodeAccess = graph.getNodeAccess();
+        this.encodingManager = ghStorage.getEncodingManager();
     }
 
     @Override
@@ -116,11 +117,5 @@ public abstract class ShapeFileReader implements DataReader {
 
     protected void saveTowerPosition(int nodeId, Coordinate point) {
         nodeAccess.setNode(nodeId, lat(point), lng(point));
-    }
-
-    @Override
-    public ShapeFileReader setEncodingManager(EncodingManager encodingManager) {
-        this.encodingManager = encodingManager;
-        return this;
     }
 }

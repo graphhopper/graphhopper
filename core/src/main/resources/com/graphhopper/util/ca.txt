@@ -50,6 +50,7 @@ roundabout_exit=A la rotonda, agafa la %1$s sortida
 roundabout_exit_onto=A la rotonda, agafa la sortida %1$s cap a %2$s
 total_ascend=%1$s pujada total
 total_descend=%1$s baixada total
+way_contains_ford=
 web.start_label=Punt d'inici
 web.intermediate_label=Punt intermig
 web.end_label=Punt final

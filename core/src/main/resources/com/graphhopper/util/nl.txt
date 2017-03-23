@@ -50,6 +50,7 @@ roundabout_exit=neem afslag %1$s op de rotonde
 roundabout_exit_onto=neem afslag %1$s naar %2$s op de rotonde 
 total_ascend=
 total_descend=
+way_contains_ford=
 web.start_label=
 web.intermediate_label=
 web.end_label=

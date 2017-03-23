@@ -50,6 +50,7 @@ roundabout_exit=I rundkørslen, tag udkørsel %1$s
 roundabout_exit_onto=I rundskørslen, ta udkørsel %1$s ind på %2$s
 total_ascend=
 total_descend=
+way_contains_ford=
 web.start_label=
 web.intermediate_label=
 web.end_label=

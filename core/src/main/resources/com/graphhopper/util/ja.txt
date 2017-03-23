@@ -50,6 +50,7 @@ roundabout_exit=円形交差点の出口%1$sへ
 roundabout_exit_onto=円形交差点の出口%1$sから%2$sへ
 total_ascend=
 total_descend=
+way_contains_ford=
 web.start_label=
 web.intermediate_label=
 web.end_label=
