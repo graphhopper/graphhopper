@@ -63,7 +63,7 @@ class MultiCriteriaLabelSetting {
         fromHeap = new PriorityQueue<>(size, new Comparator<Label>() {
             @Override
             public int compare(Label o1, Label o) {
-                return Long.compare(currentTimeCriterion(o1), currentTimeCriterion(o));
+                return Long.compare(queueCriterion(o1), queueCriterion(o));
             }
 
             @Override
@@ -72,6 +72,10 @@ class MultiCriteriaLabelSetting {
             }
         });
         fromMap = HashMultimap.create();
+    }
+
+    private long queueCriterion(Label o1) {
+        return currentTimeCriterion(o1) + o1.nTransfers + o1.nWalkDistanceConstraintViolations;
     }
 
     Set<Label> calcPaths(int from, Set<Integer> to, long startTime, long rangeQueryEndTime) {
