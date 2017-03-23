@@ -142,7 +142,7 @@ public class GraphicsWrapper {
         g2.fillOval((int) x, (int) y, width, width);
     }
 
-    void scale(int x, int y, boolean zoomIn) {
+    public void scale(int x, int y, boolean zoomIn) {
         double tmpFactor = 0.5f;
         if (!zoomIn) {
             tmpFactor = 2;
