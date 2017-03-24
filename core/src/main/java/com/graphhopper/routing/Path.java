@@ -676,18 +676,25 @@ public class Path {
                 EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
                 while (edgeIter.next()) {
                     if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
-                        String edgename = edgeIter.getName();
-                        long edgeflag = edgeIter.getFlags();
+                        String edgeName = edgeIter.getName();
+                        long edgeFlag = edgeIter.getFlags();
                         // leave the current street || enter a different street
-                        if (isNameSimilar(prevName, edgename) || isNameSimilar(name, edgename)) {
-                            if (checkFlag) {
-                                // leave the current street || enter a different street
-                                if (prevFlag == edgeflag || flag == edgeflag)
-                                    return true;
-                            } else {
-                                return true;
-                            }
+                        if(isTheSameStreet(prevName, prevFlag, edgeName, edgeFlag, checkFlag)
+                                ||isTheSameStreet(name, flag, edgeName, edgeFlag, checkFlag)){
+                            return true;
                         }
+                    }
+                }
+                return false;
+            }
+
+            private boolean isTheSameStreet(String name1, long flags1, String name2, long flags2, boolean checkFlag){
+                if (isNameSimilar(name1, name2)) {
+                    if (checkFlag) {
+                        if (flags1 == flags2)
+                            return true;
+                    } else {
+                        return true;
                     }
                 }
                 return false;
