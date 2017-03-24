@@ -266,6 +266,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     public boolean loadOrDoWork(final StorableProperties properties) {
         ExecutorCompletionService completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
+        int submittedPreparations = 0;
         boolean prepared = false;
         for (final PrepareLandmarks plm : preparations) {
             counter++;
@@ -291,11 +292,12 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                     }
                 }
             }, name);
+            submittedPreparations++;
         }
 
         threadPool.shutdown();
         try {
-            for(int i = 0; i < getPreparations().size(); i++){
+            for (int i = 0; i < submittedPreparations; i++) {
                 completionService.take().get();
             }
         } catch (Exception e) {
