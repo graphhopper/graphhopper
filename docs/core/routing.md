@@ -1,7 +1,7 @@
 # Routing via Java API
 
 To use the following examples you need to specify the dependency in
-your [Maven config](/README.md#Maven) correctly.
+your [Maven config](/README.md#maven) correctly.
 
 To do routing in your Java code you'll need just a few lines of code:
 
