@@ -1,5 +1,21 @@
 # Routing via Java API
 
+Add GraphHopper Core and OSM Reader as dependencies to your pom.xml:
+
+```xml
+<dependency>
+    <groupId>com.graphhopper</groupId>
+    <artifactId>graphhopper-core</artifactId>
+    <version>0.8.2</version>
+</dependency>
+<dependency>
+    <groupId>com.graphhopper</groupId>
+    <artifactId>graphhopper-reader-osm</artifactId>
+    <version>0.8.2</version>
+</dependency>
+```
+
+
 To do routing in your Java code you'll need just a few lines of code:
 
 ```java
