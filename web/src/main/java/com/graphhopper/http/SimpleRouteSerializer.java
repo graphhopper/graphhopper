@@ -63,7 +63,7 @@ public class SimpleRouteSerializer implements RouteSerializer {
                         try {
                             super.serializeAsField(bean, gen, prov);
                         } catch (Exception e) {
-                            System.out.println(String.format("ignoring %s for field '%s' of %s instance", e.getClass().getName(), this.getName(), bean.getClass().getName()));
+                            // Ignoring expected exception, see above.
                         }
                     }
                 }).collect(Collectors.toList());
