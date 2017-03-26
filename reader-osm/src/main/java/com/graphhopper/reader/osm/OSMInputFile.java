@@ -39,7 +39,7 @@ import java.util.zip.ZipInputStream;
  *
  * @author Nop
  */
-public class OSMInputFile implements Sink, Closeable {
+public class OSMInputFile implements Sink, OSMInput {
     private final InputStream bis;
     private final BlockingQueue<ReaderElement> itemQueue;
     Thread pbfReaderThread;
@@ -156,6 +156,7 @@ public class OSMInputFile implements Sink, Closeable {
         eof = false;
     }
 
+    @Override
     public ReaderElement getNext() throws XMLStreamException {
         if (eof)
             throw new IllegalStateException("EOF reached");
