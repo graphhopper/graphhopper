@@ -40,7 +40,7 @@ class PtFlagEncoder extends AbstractFlagEncoder {
 		shift += time.getBits();
 		transfers = new EncodedValue("transfers", shift, 1, 1.0, 0, 1);
 		shift += transfers.getBits();
-		validityId = new EncodedValue("validityId", shift, 11, 1.0, 0, 2047);
+		validityId = new EncodedValue("validityId", shift, 20, 1.0, 0, 1048575);
 		shift += validityId.getBits();
 		GtfsStorage.EdgeType[] edgeTypes = GtfsStorage.EdgeType.values();
 		type = new EncodedValue("type", shift, 6, 1.0, GtfsStorage.EdgeType.HIGHWAY.ordinal(), edgeTypes[edgeTypes.length-1].ordinal());
