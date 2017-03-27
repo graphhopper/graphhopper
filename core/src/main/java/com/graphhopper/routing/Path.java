@@ -654,8 +654,8 @@ public class Path {
                 return new GHPoint(tmpLat, tmpLon);
             }
 
-            private int returnForcedInstructionOrIgnore(boolean forceInstruction, int sign){
-                if(forceInstruction)
+            private int returnForcedInstructionOrIgnore(boolean forceInstruction, int sign) {
+                if (forceInstruction)
                     return sign;
                 return Instruction.IGNORE;
             }
@@ -679,8 +679,8 @@ public class Path {
                         String edgeName = edgeIter.getName();
                         long edgeFlag = edgeIter.getFlags();
                         // leave the current street || enter a different street
-                        if(isTheSameStreet(prevName, prevFlag, edgeName, edgeFlag, checkFlag)
-                                ||isTheSameStreet(name, flag, edgeName, edgeFlag, checkFlag)){
+                        if (isTheSameStreet(prevName, prevFlag, edgeName, edgeFlag, checkFlag)
+                                || isTheSameStreet(name, flag, edgeName, edgeFlag, checkFlag)) {
                             return true;
                         }
                     }
@@ -688,12 +688,9 @@ public class Path {
                 return false;
             }
 
-            private boolean isTheSameStreet(String name1, long flags1, String name2, long flags2, boolean checkFlag){
+            private boolean isTheSameStreet(String name1, long flags1, String name2, long flags2, boolean checkFlag) {
                 if (isNameSimilar(name1, name2)) {
-                    if (checkFlag) {
-                        if (flags1 == flags2)
-                            return true;
-                    } else {
+                    if (!checkFlag || flags1 == flags2) {
                         return true;
                     }
                 }
