@@ -574,14 +574,14 @@ public class Path {
                  */
 
                 int prevEdge = -1;
-                EdgeIterator flagIter = crossingExplorer.setBaseNode(baseNode);
+                EdgeIterator flagIter = outEdgeExplorer.setBaseNode(prevNode);
                 while (flagIter.next()) {
-                    if (flagIter.getAdjNode() == prevNode || flagIter.getBaseNode() == prevNode)
+                    if (flagIter.getAdjNode() == baseNode || flagIter.getBaseNode() == baseNode)
                         prevEdge = flagIter.getEdge();
 
                 }
                 if (prevEdge == -1) {
-                    throw new IllegalStateException("Couldn't find the edges for " + prevNode + "-" + baseNode + "-" + adjNode);
+                    throw new IllegalStateException("Couldn't find the previous edge for " + prevNode + "-" + baseNode + "-" + adjNode);
                 }
 
                 long flag = edge.getFlags();
