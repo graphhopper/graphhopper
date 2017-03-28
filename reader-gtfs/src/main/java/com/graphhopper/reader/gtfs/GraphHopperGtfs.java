@@ -363,7 +363,10 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                         path.getLegs().stream()
                                 .filter(leg -> leg instanceof Trip.PtLeg)
                                 .map(leg -> (Trip.PtLeg) leg)
-                                .map(ptLeg -> new com.graphhopper.gtfs.fare.Trip.Segment(gtfsStorage.getGtfsFeeds().get(ptLeg.feedId).trips.get(ptLeg.tripId).route_id, Duration.between(firstPtDepartureTime, GtfsHelper.localDateTimeFromDate(ptLeg.departureTime)).getSeconds(), ptLeg.boardStop.name, ptLeg.stops.get(ptLeg.stops.size()-1).name, Collections.emptySet()))
+                                .map(ptLeg -> {
+                                    final GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(ptLeg.feedId);
+                                    return new com.graphhopper.gtfs.fare.Trip.Segment(gtfsFeed.trips.get(ptLeg.tripId).route_id, Duration.between(firstPtDepartureTime, GtfsHelper.localDateTimeFromDate(ptLeg.departureTime)).getSeconds(), gtfsFeed.stops.get(ptLeg.boardStop.stop_id).zone_id, gtfsFeed.stops.get(ptLeg.stops.get(ptLeg.stops.size() - 1).stop_id).zone_id, ptLeg.stops.stream().map(s -> gtfsFeed.stops.get(s.stop_id).zone_id).collect(Collectors.toSet()));
+                                })
                                 .forEach(faresTrip.segments::add);
                         Fares.cheapestFare(gtfsStorage.getFares(), faresTrip)
                                 .ifPresent(amount -> path.setFare(amount.getAmount()));
@@ -398,6 +401,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         GeometryFactory geometryFactory = new GeometryFactory();
         if (GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK == encoder.getEdgeType(path.get(0).edge.getFlags())) {
             String feedId = gtfsStorage.getExtraStrings().get(path.get(0).edge.getEdge());
+            final GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
             List<Trip.Leg> result = new ArrayList<>();
             LocalDateTime boardTime = null;
             List<EdgeIteratorState> partition = null;
@@ -423,7 +427,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     List<Trip.Stop> stops = edges.stream()
                             .map(e -> stopFromHopEdge(geometryFactory, feedId, tripId, gtfsStorage.getStopSequences().get(e.getEdge())))
                             .collect(Collectors.toList());
-                    com.conveyal.gtfs.model.Trip trip = gtfsStorage.getGtfsFeeds().get(feedId).trips.get(tripId);
+                    com.conveyal.gtfs.model.Trip trip = gtfsFeed.trips.get(tripId);
                     result.add(new Trip.PtLeg(
                             feedId,
                             encoder.getTransfers(partition.get(0).getFlags()) == 0,
@@ -472,7 +476,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         GTFSFeed gtfsFeed = gtfsStorage.getGtfsFeeds().get(feedId);
         StopTime stopTime = gtfsFeed.stop_times.get(new Fun.Tuple2<>(tripId, stopSequence));
         Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-        return new Trip.Stop(stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)));
+        return new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)));
     }
 
 }

@@ -31,10 +31,12 @@ public class Trip {
     }
 
     public static class Stop {
+        public final String stop_id;
         public final String name;
         public final Point geometry;
 
-        public Stop(String name, Point geometry) {
+        public Stop(String stop_id, String name, Point geometry) {
+            this.stop_id = stop_id;
             this.name = name;
             this.geometry = geometry;
         }
