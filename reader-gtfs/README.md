@@ -33,7 +33,7 @@ you are put on the correct node in the timeline when searching forward and backw
 and STOP_EXIT nodes are regular, spatial nodes which can be connected to the road network.
 
 The BOARD edge checks if the trip is valid on the requested day: Our graph is "modulo operating day", but
-a pure time expanded graph whic is fully unrolled is also possible. Then that check could go away. It also
+a pure time expanded graph which is fully unrolled is also possible. Then that check could go away. It also
 counts the number of boardings.
 
 The TRANSFER edge ensures that the third departure is only reachable from the first arrival but not from the second one.
