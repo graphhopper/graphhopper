@@ -1,6 +1,7 @@
 # GraphHopper GTFS
 
-Here is a screenshot of one public transport route incl. walking legs with 4 alternatives:
+Here is a screenshot of a public transport query. The route with the earliest arrival time is highlighted in green. The three 
+non-highlighted alternatives have fewer transfers. They include a walk-only suggestion (no vehicle boardings at all).
 
 ![gtfs preview](https://www.graphhopper.com/wp-content/uploads/2017/01/gtfs-preview.png)
 
