@@ -24,7 +24,6 @@ import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.*;
@@ -55,8 +54,7 @@ public class PathTest {
         g.close();
     }
 
-    // TODO fix
-    @Ignore
+    @Test
     public void testWayList() {
         GraphHopperStorage g = new GraphBuilder(carManager).create();
         NodeAccess na = g.getNodeAccess();
@@ -95,6 +93,9 @@ public class PathTest {
 
         // force minor change for instructions
         edge2.setName("2");
+        na.setNode(3, 1.0, 1.0);
+        EdgeIteratorState edge3 = g.edge(1, 3).setDistance(1000).setFlags(encoder.setProperties(10, true, true));
+
         path = new Path(g, new FastestWeighting(encoder));
         e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
@@ -145,8 +146,7 @@ public class PathTest {
         assertEquals(path.calcPoints().size() - 1, lastIndex);
     }
 
-    // TODO
-    @Ignore
+    @Test
     public void testFindInstruction() {
         Graph g = new GraphBuilder(carManager).create();
         NodeAccess na = g.getNodeAccess();
@@ -155,6 +155,8 @@ public class PathTest {
         na.setNode(2, 5.0, 0.5);
         na.setNode(3, 10.0, 0.5);
         na.setNode(4, 7.5, 0.25);
+        na.setNode(5, 5.0, 1.0);
+
 
         EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).setFlags(encoder.setProperties(50, true, true));
         edge1.setWayGeometry(Helper.createPointList());
@@ -168,6 +170,10 @@ public class PathTest {
         EdgeIteratorState edge4 = g.edge(3, 4).setDistance(500).setFlags(encoder.setProperties(50, true, true));
         edge4.setWayGeometry(Helper.createPointList());
         edge4.setName("Street 4");
+
+        g.edge(1, 5).setDistance(10000).setFlags(encoder.setProperties(50, true, true));
+        g.edge(2, 5).setDistance(10000).setFlags(encoder.setProperties(50, true, true));
+        g.edge(3, 5).setDistance(100000).setFlags(encoder.setProperties(50, true, true));
 
         Path path = new Path(g, new FastestWeighting(encoder));
         SPTEntry e1 = new SPTEntry(edge4.getEdge(), 4, 1);

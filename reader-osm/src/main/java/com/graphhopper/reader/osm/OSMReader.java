@@ -159,10 +159,7 @@ public class OSMReader implements DataReader {
      * compact graph data structure.
      */
     void preProcess(File osmFile) {
-        OSMInputFile in = null;
-        try {
-            in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
-
+        try (OSMInput in = openOsmInputFile(osmFile)) {
             long tmpWayCounter = 1;
             long tmpRelationCounter = 1;
             ReaderElement item;
@@ -202,8 +199,6 @@ public class OSMReader implements DataReader {
             }
         } catch (Exception ex) {
             throw new RuntimeException("Problem while parsing file", ex);
-        } finally {
-            Helper.close(in);
         }
     }
 
@@ -258,9 +253,7 @@ public class OSMReader implements DataReader {
         long wayStart = -1;
         long relationStart = -1;
         long counter = 1;
-        OSMInputFile in = null;
-        try {
-            in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
+        try (OSMInput in = openOsmInputFile(osmFile)) {
             LongIntMap nodeFilter = getNodeMap();
 
             ReaderElement item;
@@ -302,13 +295,15 @@ public class OSMReader implements DataReader {
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
         } catch (Exception ex) {
             throw new RuntimeException("Couldn't process file " + osmFile + ", error: " + ex.getMessage(), ex);
-        } finally {
-            Helper.close(in);
         }
 
         finishedReading();
         if (graph.getNodes() == 0)
             throw new RuntimeException("Graph after reading OSM must not be empty. Read " + counter + " items and " + locations + " locations");
+    }
+
+    protected OSMInput openOsmInputFile(File osmFile) throws XMLStreamException, IOException {
+        return new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
     }
 
     /**
