@@ -36,6 +36,9 @@ public class Instruction {
     public static final int IGNORE = Integer.MIN_VALUE;
     public static final int KEEP_LEFT = -7;
     public static final int KEEP_RIGHT = 7;
+    public static final int PT_START_TRIP = 101;
+    public static final int PT_TRANSFER = 102;
+    public static final int PT_END_TRIP = 103;
     private static final AngleCalc AC = Helper.ANGLE_CALC;
     protected final PointList points;
     protected final InstructionAnnotation annotation;
@@ -104,7 +107,7 @@ public class Instruction {
     }
 
     /**
-     * Time in time until no new instruction
+     * Duration until the next instruction, in milliseconds
      */
     public long getTime() {
         return time;
@@ -237,6 +240,12 @@ public class Instruction {
         int indi = getSign();
         if (indi == Instruction.CONTINUE_ON_STREET) {
             str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
+        } else if (indi == Instruction.PT_START_TRIP) {
+            str = tr.tr("pt_start_trip", streetName);
+        } else if (indi == Instruction.PT_TRANSFER) {
+            str = tr.tr("pt_transfer_to", streetName);
+        } else if (indi == Instruction.PT_END_TRIP) {
+            str = tr.tr("pt_end_trip", streetName);
         } else {
             String dir = null;
             switch (indi) {
