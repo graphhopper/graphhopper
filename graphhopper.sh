@@ -111,17 +111,10 @@ function execMvn {
 }
 
 function packageCoreJar {
-  if [ ! -d "./target" ]; then
-    echo "## building parent"
-    execMvn --non-recursive install
-  fi
-  
   if [ ! -f "$JAR" ]; then
     echo "## building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
-    
-    execMvn --projects tools,reader-gtfs -am -DskipTests=true install
-    execMvn --projects tools -DskipTests=true install assembly:single
+    execMvn --projects tools -am -DskipTests=true package
   else
     echo "## existing jar found $JAR"
   fi
@@ -145,9 +138,7 @@ elif [ "$ACTION" = "build" ]; then
  exit  
  
 elif [ "$ACTION" = "buildweb" ]; then
- packageCoreJar
- execMvn --projects web -am -DskipTests=true install
- execMvn --projects web -DskipTests=true install assembly:single
+ execMvn --projects web -am -DskipTests=true package
  exit
 
 elif [ "$ACTION" = "extract" ]; then
@@ -158,8 +149,7 @@ elif [ "$ACTION" = "extract" ]; then
  exit
  
 elif [ "$ACTION" = "android" ]; then
- packageCoreJar
- execMvn -P include-android --projects android/app install android:deploy android:run
+ execMvn -P include-android --projects android/app -am package android:deploy android:run
  exit
 fi
 
@@ -225,8 +215,7 @@ if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
   fi
   WEB_JAR="$GH_HOME/web/target/graphhopper-web-$VERSION-with-dep.jar"
   if [ ! -s "$WEB_JAR" ]; then
-    execMvn --projects web -am -DskipTests=true install
-    execMvn --projects web -DskipTests=true install assembly:single
+    execMvn --projects web -am -DskipTests=true package
   fi
 
   RC_BASE=./web/src/main/webapp
@@ -256,7 +245,7 @@ elif [ "$ACTION" = "torture" ]; then
 
 
 elif [ "$ACTION" = "miniui" ]; then
- execMvn --projects tools -DskipTests clean install assembly:single
+ execMvn --projects tools -am -DskipTests clean package
  JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI datareader.file="$OSM_FILE" config=$CONFIG \
               graph.location="$GRAPH"
@@ -272,8 +261,7 @@ elif [ "$ACTION" = "measurement" ]; then
  # IMPORT_TIME=$(($END - $START))
 
  function startMeasurement {
-    execMvn --projects core -DskipTests clean install
-    execMvn --projects tools -DskipTests install assembly:single
+    execMvn --projects tools -am -DskipTests clean package
     COUNT=5000
     commit_info=$(git log -n 1 --pretty=oneline)
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
