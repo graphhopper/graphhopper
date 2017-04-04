@@ -22,6 +22,8 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.google.inject.servlet.GuiceFilter;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.util.CmdArgs;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -115,8 +117,11 @@ public class GHServer {
             @Override
             protected void configure() {
                 binder().requireExplicitBindings();
-
-                install(new DefaultModule(args));
+                if (args.has("gtfs.file")) {  // switch to different API implementation when using Pt
+                    install(new PtModule(args));
+                } else {
+                    install(new DefaultModule(args));
+                }
                 install(new GHServletModule(args));
 
                 bind(GuiceFilter.class);
