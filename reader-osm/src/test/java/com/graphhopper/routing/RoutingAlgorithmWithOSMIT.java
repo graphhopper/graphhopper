@@ -304,6 +304,20 @@ public class RoutingAlgorithmWithOSMIT {
     }
 
     @Test
+    public void testBug1014() {
+        List<OneRun> list = new ArrayList<>();
+        OneRun run = new OneRun();
+        run.add(50.016923, 11.514187, 0, 0);
+        run.add(50.019129, 11.500325, 0, 0);
+        run.add(50.023623, 11.56929, 7340, 98);
+        list.add(run);
+
+        runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
+                list, "bike", true, "bike", "fastest", false);
+        assertEquals(testCollector.toString(), 0, testCollector.errors.size());
+    }
+
+    @Test
     public void testMonacoBike() {
         List<OneRun> list = new ArrayList<OneRun>();
         list.add(new OneRun(43.730864, 7.420771, 43.727687, 7.418737, 1642, 87));
