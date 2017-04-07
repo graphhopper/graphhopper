@@ -49,7 +49,7 @@ class MultiCriteriaLabelSetting {
     private int visitedNodes;
     private final GraphExplorer explorer;
 
-    MultiCriteriaLabelSetting(Graph graph, Weighting weighting, int maxVisitedNodes, GraphExplorer explorer, boolean reverse, double maxWalkDistancePerLeg, double maxTransferDistancePerLeg, boolean mindTransfers) {
+    MultiCriteriaLabelSetting(GraphExplorer explorer, Weighting weighting, boolean reverse, double maxWalkDistancePerLeg, double maxTransferDistancePerLeg, boolean mindTransfers, int maxVisitedNodes) {
         this.weighting = (PtTravelTimeWeighting) weighting;
         this.flagEncoder = (PtFlagEncoder) weighting.getFlagEncoder();
         this.maxVisitedNodes = maxVisitedNodes;
@@ -58,8 +58,7 @@ class MultiCriteriaLabelSetting {
         this.maxWalkDistancePerLeg = maxWalkDistancePerLeg;
         this.maxTransferDistancePerLeg = maxTransferDistancePerLeg;
         this.mindTransfers = mindTransfers;
-        int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
-        fromHeap = new PriorityQueue<>(size, new Comparator<Label>() {
+        fromHeap = new PriorityQueue<>(new Comparator<Label>() {
             @Override
             public int compare(Label o1, Label o) {
                 return Long.compare(queueCriterion(o1), queueCriterion(o));

@@ -29,7 +29,7 @@ public class GraphHopperGtfsIT {
     @BeforeClass
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
-        graphHopper = GraphHopperGtfs.createGraphHopperGtfs(GRAPH_LOC, "files/sample-feed.zip", true);
+        graphHopper = GraphHopperGtfs.create(GRAPH_LOC, "files/sample-feed.zip", true);
     }
 
     @AfterClass

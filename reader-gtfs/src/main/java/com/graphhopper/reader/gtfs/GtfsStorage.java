@@ -2,12 +2,14 @@ package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
+import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
 import org.mapdb.*;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -42,6 +44,8 @@ public class GtfsStorage implements GraphExtension {
 	private Map<Integer, String> extra;
 	private Map<Integer, Integer> stopSequences;
 	private Map<String, Fare> fares;
+	private Map<GtfsRealtime.TripDescriptor, int[]> boardEdgesForTrip;
+	private Map<GtfsRealtime.TripDescriptor, int[]> leaveEdgesForTrip;
 
 	enum EdgeType {
 		HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, ALIGHT, OVERNIGHT, TRANSFER, WAIT
@@ -120,6 +124,8 @@ public class GtfsStorage implements GraphExtension {
 		this.extra = data.getTreeMap("extra");
 		this.stopSequences = data.getTreeMap("stopSequences");
 		this.fares = data.getTreeMap("fares");
+		this.boardEdgesForTrip = data.getHashMap("boardEdgesForTrip");
+		this.leaveEdgesForTrip = data.getHashMap("leaveEdgesForTrip");
 	}
 
 	void loadGtfsFromFile(String id, ZipFile zip) {
@@ -178,6 +184,14 @@ public class GtfsStorage implements GraphExtension {
 
 	Map<Integer, Integer> getStopSequences() {
 		return stopSequences;
+	}
+
+	Map<GtfsRealtime.TripDescriptor, int[]> getBoardEdgesForTrip() {
+		return boardEdgesForTrip;
+	}
+
+	Map<GtfsRealtime.TripDescriptor, int[]> getAlightEdgesForTrip() {
+		return leaveEdgesForTrip;
 	}
 
 	Map<String, Fare> getFares() {

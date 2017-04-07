@@ -3,13 +3,13 @@ package com.graphhopper.reader.gtfs;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Stop;
 import com.conveyal.gtfs.model.StopTime;
+import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.*;
 import com.graphhopper.Trip;
 import com.graphhopper.gtfs.fare.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.QueryGraph;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
@@ -40,6 +40,34 @@ import static com.graphhopper.reader.gtfs.Label.reverseEdges;
 
 public final class GraphHopperGtfs implements GraphHopperAPI {
 
+    public static class Factory {
+        private final TranslationMap translationMap;
+        private final EncodingManager encodingManager;
+        private final GraphHopperStorage graphHopperStorage;
+        private final LocationIndex locationIndex;
+        private final GtfsStorage gtfsStorage;
+
+        private Factory(EncodingManager encodingManager, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+            this.encodingManager = encodingManager;
+            this.translationMap = translationMap;
+            this.graphHopperStorage = graphHopperStorage;
+            this.locationIndex = locationIndex;
+            this.gtfsStorage = gtfsStorage;
+        }
+
+        public GraphHopperGtfs createWith(GtfsRealtime.FeedMessage realtimeFeed) {
+            return new GraphHopperGtfs(encodingManager, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(gtfsStorage, realtimeFeed));
+        }
+
+        public GraphHopperGtfs createWithoutRealtimeFeed() {
+            return new GraphHopperGtfs(encodingManager, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty());
+        }
+    }
+
+    public static Factory createFactory(EncodingManager encodingManager, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        return new Factory(encodingManager, translationMap, graphHopperStorage, locationIndex, gtfsStorage);
+    }
+
     public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliestDepartureTime";
     public static final String RANGE_QUERY_END_TIME = "rangeQueryEndTime";
     public static final String ARRIVE_BY = "arriveBy";
@@ -50,51 +78,28 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
     private final TranslationMap translationMap;
     private final EncodingManager encodingManager;
+    private final GraphHopperStorage graphHopperStorage;
+    private final LocationIndex locationIndex;
+    private final GtfsStorage gtfsStorage;
+    private final RealtimeFeed realtimeFeed;
 
-    private GraphHopperStorage graphHopperStorage;
-    private LocationIndex locationIndex;
-    private GtfsStorage gtfsStorage;
-
-    public GraphHopperGtfs(EncodingManager encodingManager, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+    public GraphHopperGtfs(EncodingManager encodingManager, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
         this.encodingManager = encodingManager;
         this.translationMap = translationMap;
         this.graphHopperStorage = graphHopperStorage;
         this.locationIndex = locationIndex;
         this.gtfsStorage = gtfsStorage;
+        this.realtimeFeed = realtimeFeed;
     }
 
-    public static GraphHopperGtfs createGraphHopperGtfs(String graphHopperFolder, String gtfsFile, boolean createWalkNetwork) {
+    public static GraphHopperGtfs create(String graphHopperFolder, String gtfsFile, boolean createWalkNetwork) {
         EncodingManager encodingManager = createEncodingManager();
-
-        if (Helper.isEmpty(graphHopperFolder))
-            throw new IllegalStateException("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before");
-
-        if (graphHopperFolder.endsWith("-gh")) {
-            // do nothing
-        } else if (graphHopperFolder.endsWith(".osm") || graphHopperFolder.endsWith(".xml")) {
-            throw new IllegalArgumentException("GraphHopperLocation cannot be the OSM file. Instead you need to use importOrLoad");
-        } else if (!graphHopperFolder.contains(".")) {
-            if (new File(graphHopperFolder + "-gh").exists())
-                graphHopperFolder += "-gh";
-        } else {
-            File compressed = new File(graphHopperFolder + ".ghz");
-            if (compressed.exists() && !compressed.isDirectory()) {
-                try {
-                    new Unzipper().unzip(compressed.getAbsolutePath(), graphHopperFolder, false);
-                } catch (IOException ex) {
-                    throw new RuntimeException("Couldn't extract file " + compressed.getAbsolutePath()
-                            + " to " + graphHopperFolder, ex);
-                }
-            }
-        }
-
         GtfsStorage gtfsStorage = createGtfsStorage();
-
         GHDirectory directory = createGHDirectory(graphHopperFolder);
         GraphHopperStorage graphHopperStorage = createOrLoad(directory, encodingManager, gtfsStorage, createWalkNetwork, Collections.singleton(gtfsFile), Collections.emptyList());
         LocationIndex locationIndex = createOrLoadIndex(directory, graphHopperStorage);
-
-        return new GraphHopperGtfs(encodingManager, createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);
+        return createFactory(encodingManager, createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
+                .createWithoutRealtimeFeed();
     }
 
     public static GtfsStorage createGtfsStorage() {
@@ -119,7 +124,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             graphHopperStorage.create(1000);
             for (String osmFile : osmFiles) {
                 OSMReader osmReader = new OSMReader(graphHopperStorage);
-//                osmReader.setEncodingManager(encodingManager);
                 osmReader.setFile(new File(osmFile));
                 osmReader.setDontCreateStorage(true);
                 try {
@@ -244,19 +248,9 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         PtTravelTimeWeighting weighting = createPtTravelTimeWeighting(encoder, arriveBy, ignoreTransfers, walkSpeedKmH);
 
-        GraphExplorer explorer;
-        if (arriveBy) {
-            explorer = new GraphExplorer(queryGraph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false)), encoder, gtfsStorage, true);
-        } else {
-            explorer = new GraphExplorer(queryGraph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true)), encoder, gtfsStorage, false);
-        }
+        GraphExplorer graphExplorer = new GraphExplorer(queryGraph, encoder, gtfsStorage, realtimeFeed, arriveBy);
 
-        MultiCriteriaLabelSetting router;
-        if (arriveBy) {
-           router = new MultiCriteriaLabelSetting(queryGraph, weighting, maxVisitedNodesForRequest, explorer, true, maxWalkDistancePerLeg, maxTransferDistancePerLeg, !ignoreTransfers);
-        } else {
-           router = new MultiCriteriaLabelSetting(queryGraph, weighting, maxVisitedNodesForRequest, explorer, false, maxWalkDistancePerLeg, maxTransferDistancePerLeg, !ignoreTransfers);
-        }
+        MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, weighting, arriveBy, maxWalkDistancePerLeg, maxTransferDistancePerLeg, !ignoreTransfers, maxVisitedNodesForRequest);
 
         String debug = ", algoInit:" + stopWatch.stop().getSeconds() + "s";
 

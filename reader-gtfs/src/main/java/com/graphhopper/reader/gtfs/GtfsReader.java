@@ -1,9 +1,11 @@
 package com.graphhopper.reader.gtfs;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.*;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
+import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
@@ -70,7 +72,6 @@ class GtfsReader {
     private final SetMultimap<String, TimelineNodeIdWithTripId> departureTimelineNodes = HashMultimap.create();
     private final SetMultimap<String, TimelineNodeIdWithTripId> arrivalTimelineNodes = HashMultimap.create();
     private Collection<EnterAndExitNodeIdWithStopId> stopEnterAndExitNodes = new ArrayList<>();
-    private final SetMultimap<String, Integer> arrivals = HashMultimap.create();
     private final PtFlagEncoder encoder;
 
     GtfsReader(String id, GraphHopperStorage ghStorage, LocationIndex walkNetworkIndex) {
@@ -142,6 +143,8 @@ class GtfsReader {
             for (Frequency frequency : (frequencies.isEmpty() ? Collections.singletonList(SINGLE_FREQUENCY) : frequencies)) {
                 for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
                     List<Integer> arrivalNodes = new ArrayList<>();
+                    IntArrayList boardEdges = new IntArrayList();
+                    IntArrayList alightEdges = new IntArrayList();
                     for (Trip trip : trips) {
                         Service service = feed.services.get(trip.service_id);
                         BitSet validOnDay = new BitSet((int) DAYS.between(startDate, endDate));
@@ -159,7 +162,6 @@ class GtfsReader {
                             nodeAccess.setNode(arrivalNode, stop.stop_lat, stop.stop_lon);
                             nodeAccess.setAdditionalNodeField(arrivalNode, NodeType.INTERNAL_PT.ordinal());
                             times.put(arrivalNode, stopTime.arrival_time + time);
-                            arrivals.put(stopTime.stop_id, arrivalNode);
                             if (prev != null) {
                                 Stop fromStop = feed.stops.get(prev.stop_id);
                                 double distance = distCalc.calcDist(
@@ -208,6 +210,7 @@ class GtfsReader {
                                     false);
                             boardEdge.setName(getRouteName(feed, trip));
                             setEdgeType(boardEdge, GtfsStorage.EdgeType.BOARD);
+                            boardEdges.add(boardEdge.getEdge());
                             gtfsStorage.getStopSequences().put(boardEdge.getEdge(), stopTime.stop_sequence);
                             gtfsStorage.getExtraStrings().put(boardEdge.getEdge(), trip.trip_id);
                             boardEdge.setFlags(encoder.setValidityId(boardEdge.getFlags(), validityId));
@@ -220,6 +223,7 @@ class GtfsReader {
                                     false);
                             alightEdge.setName(getRouteName(feed, trip));
                             setEdgeType(alightEdge, GtfsStorage.EdgeType.ALIGHT);
+                            alightEdges.add(alightEdge.getEdge());
                             gtfsStorage.getStopSequences().put(alightEdge.getEdge(), stopTime.stop_sequence);
                             gtfsStorage.getExtraStrings().put(alightEdge.getEdge(), trip.trip_id);
                             alightEdge.setFlags(encoder.setValidityId(alightEdge.getFlags(), validityId));
@@ -239,6 +243,9 @@ class GtfsReader {
                             }
                             prev = stopTime;
                         }
+                        final GtfsRealtime.TripDescriptor tripDescriptor = GtfsRealtime.TripDescriptor.newBuilder().setTripId(trip.trip_id).setStartTime(Entity.Writer.convertToGtfsTime(time)).build();
+                        gtfsStorage.getBoardEdgesForTrip().put(tripDescriptor, boardEdges.toArray());
+                        gtfsStorage.getAlightEdgesForTrip().put(tripDescriptor, alightEdges.toArray());
                         arrivalNodes.add(arrivalNode);
                     }
                 }
@@ -360,12 +367,12 @@ class GtfsReader {
     }
 
     private void insertInboundTransfers(String fromStopId, int minimumTransferTime, SortedSet<Fun.Tuple2<Integer, Integer>> toStopTimelineNode) {
-        for (Integer arrivalNodeId : arrivals.get(fromStopId)) {
-            int arrivalTime = times.get(arrivalNodeId);
+        for (TimelineNodeIdWithTripId entry : arrivalTimelineNodes.get(fromStopId)) {
+            int arrivalTime = times.get(entry.timelineNodeId);
             SortedSet<Fun.Tuple2<Integer, Integer>> tailSet = toStopTimelineNode.tailSet(new Fun.Tuple2<>(arrivalTime + minimumTransferTime, -1));
             if (!tailSet.isEmpty()) {
                 Fun.Tuple2<Integer, Integer> e = tailSet.first();
-                EdgeIteratorState edge = graph.edge(arrivalNodeId, e.b, 0.0, false);
+                EdgeIteratorState edge = graph.edge(entry.timelineNodeId, e.b, 0.0, false);
                 setEdgeType(edge, GtfsStorage.EdgeType.TRANSFER);
                 edge.setFlags(encoder.setTime(edge.getFlags(), e.a-arrivalTime));
             }
