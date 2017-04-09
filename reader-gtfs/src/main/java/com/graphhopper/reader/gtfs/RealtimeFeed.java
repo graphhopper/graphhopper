@@ -5,18 +5,18 @@ import com.google.transit.realtime.GtfsRealtime;
 
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SKIPPED;
 
-class RealtimeFeed {
+public class RealtimeFeed {
     private final IntHashSet blockedEdges;
 
     private RealtimeFeed(IntHashSet blockedEdges) {
         this.blockedEdges = blockedEdges;
     }
 
-    static RealtimeFeed empty() {
+    public static RealtimeFeed empty() {
         return new RealtimeFeed(new IntHashSet());
     }
 
-    static RealtimeFeed fromProtobuf(GtfsStorage staticGtfs, GtfsRealtime.FeedMessage feedMessage) {
+    public static RealtimeFeed fromProtobuf(GtfsStorage staticGtfs, GtfsRealtime.FeedMessage feedMessage) {
         final IntHashSet blockedEdges = new IntHashSet();
         feedMessage.getEntityList().stream()
             .filter(GtfsRealtime.FeedEntity::hasTripUpdate)

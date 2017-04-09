@@ -7,6 +7,7 @@ import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
+import com.graphhopper.reader.gtfs.RealtimeFeed;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -36,7 +37,7 @@ public final class PtModule extends AbstractModule {
     @Provides
     @Singleton
     GraphHopperAPI createGraphHopper(EncodingManager encodingManager, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-        return new GraphHopperGtfs(encodingManager, translationMap, graphHopperStorage, locationIndex, gtfsStorage);
+        return new GraphHopperGtfs(encodingManager, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty());
     }
 
     @Provides

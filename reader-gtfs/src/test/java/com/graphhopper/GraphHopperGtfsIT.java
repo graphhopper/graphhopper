@@ -204,7 +204,7 @@ public class GraphHopperGtfsIT {
 
     @Test
     public void testRoute6() {
-        final double FROM_LAT = 36.88108, FROM_LON = -116.81797; // BULLFROG stop
+        final double FROM_LAT = 36.7, FROM_LON = -116.5; // HASNOROUTES stop
         final double TO_LAT = 36.914894, TO_LON = -116.76821; // NADAV stop
         assertNoRoute(graphHopper, FROM_LAT, FROM_LON, TO_LAT, TO_LON);
     }
@@ -275,29 +275,11 @@ public class GraphHopperGtfsIT {
 
         GHRequest request = new GHRequest(
                 FROM_LAT, FROM_LON,
-                VIA_LAT, VIA_LON
+                TO1_LAT, TO1_LON
         );
         request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,6,7,30));
+
         GHResponse response = graphHopper.route(request);
-        System.out.println(response);
-
-        request = new GHRequest(
-                VIA_LAT, VIA_LON,
-                TO1_LAT, TO1_LON
-        );
-        request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,6,0,0));
-
-        response = graphHopper.route(request);
-        System.out.println(response);
-
-
-        request = new GHRequest(
-                FROM_LAT, FROM_LON,
-                TO1_LAT, TO1_LON
-        );
-        request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,6,7,30));
-
-        response = graphHopper.route(request);
         assertEquals("Ignoring transfer rules (free walking): Will be there at 9.", time(1, 30), response.getBest().getTime());
 
         request = new GHRequest(
@@ -328,6 +310,17 @@ public class GraphHopperGtfsIT {
 
         response = graphHopper.route(request);
         assertEquals("Will still be there at 8:10 because there is a route-specific exception for this route.", time(0, 40), response.getBest().getTime());
+
+        request = new GHRequest(
+                TO2_LAT, TO2_LON,
+                FROM_LAT, FROM_LON
+        );
+        request.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,6,12,05));
+        request.getHints().put(GraphHopperGtfs.MAX_TRANSFER_DISTANCE_PER_LEG, 0.0);
+
+        response = graphHopper.route(request);
+        assertEquals("Will take 1:15 because of a 'from route' exception with a longer transfer time.", time(1, 15), response.getBest().getTime());
+
     }
 
 
