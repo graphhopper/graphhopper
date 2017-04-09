@@ -29,7 +29,7 @@ public class GraphHopperGtfsIT {
     @BeforeClass
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
-        graphHopper = GraphHopperGtfs.createGraphHopperGtfs(GRAPH_LOC, "files/sample-feed.zip", false);
+        graphHopper = GraphHopperGtfs.createGraphHopperGtfs(GRAPH_LOC, "files/sample-feed.zip", true);
     }
 
     @AfterClass
@@ -47,6 +47,7 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,0,0).toString());
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());
@@ -63,6 +64,7 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,54).toString());
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());
@@ -99,6 +101,7 @@ public class GraphHopperGtfsIT {
         );
         ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6, 49));
         ghRequest.getHints().put(GraphHopperGtfs.ARRIVE_BY, true);
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         GHResponse route = graphHopper.route(ghRequest);
 
@@ -119,6 +122,7 @@ public class GraphHopperGtfsIT {
         ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,0,0));
         ghRequest.getHints().put(GraphHopperGtfs.RANGE_QUERY_END_TIME, LocalDateTime.of(2007,1,1,13,0));
         ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, "true");
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         GHResponse response = graphHopper.route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()
@@ -145,6 +149,7 @@ public class GraphHopperGtfsIT {
         ghRequest.getHints().put(GraphHopperGtfs.RANGE_QUERY_END_TIME, LocalDateTime.of(2007,1,2,11,0));
         // TODO: Find the problem with 1.1.2007
         ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, "true");
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         GHResponse response = graphHopper.route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()
@@ -187,6 +192,7 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,0,0));
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());
@@ -220,6 +226,8 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,0,0)); // Monday morning
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
+
 
         GHResponse route = graphHopper.route(ghRequest);
         Assert.assertTrue(route.getAll().isEmpty()); // No service on monday morning, and we cannot spend the night at stations yet
@@ -229,6 +237,7 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest1.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,6,0,0));
+        ghRequest1.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
         GHResponse route1 = graphHopper.route(ghRequest1);
 
         assertFalse(route1.hasErrors());
@@ -248,6 +257,7 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,8,0));
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
         GHResponse route = graphHopper.route(ghRequest);
         assertEquals("Only find one solution. If blocks wouldn't work, there would be two. (There is a slower alternative without transfer.)", 1, route.getAll().size());
         assertEquals("Expected travel time == scheduled travel time", time(1,20), route.getBest().getTime());
@@ -327,6 +337,7 @@ public class GraphHopperGtfsIT {
                 to_lat, to_lon
         );
         ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, earliestDepartureTime);
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());
@@ -344,6 +355,7 @@ public class GraphHopperGtfsIT {
                 to_lat, to_lon
         );
         ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,0,0).toString());
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         GHResponse route = graphHopper.route(ghRequest);
         Assert.assertTrue(route.getAll().isEmpty());
