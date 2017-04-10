@@ -10,11 +10,15 @@ import java.util.stream.Collectors;
 class Transfers {
 
     private final Map<String, List<Transfer>> transfers;
+    private final Map<String, Set<String>> routesByStop;
     private final GTFSFeed feed;
 
     Transfers(GTFSFeed feed) {
         this.feed = feed;
         this.transfers = feed.transfers.values().stream().collect(Collectors.groupingBy(t -> t.to_stop_id));
+        this.routesByStop = feed.stop_times.values().stream()
+                .collect(Collectors.groupingBy(stopTime -> stopTime.stop_id,
+                        Collectors.mapping(stopTime -> feed.trips.get(stopTime.trip_id).route_id, Collectors.toSet())));
     }
 
     // Starts implementing the proposed GTFS extension for route and trip specific transfer rules.
@@ -27,7 +31,7 @@ class Transfers {
                 .collect(Collectors.groupingBy(t -> t.from_stop_id));
         final List<Transfer> result = new ArrayList<>();
         byFromStop.forEach((fromStop, transfers) -> {
-            feed.getDistinctTripsForStop(fromStop).stream().map(trip -> trip.route_id).distinct().forEach(fromRoute -> {
+            routesByStop.getOrDefault(fromStop, Collections.emptySet()).forEach(fromRoute -> {
                 final Transfer mostSpecificRule = findMostSpecificRule(transfers, fromRoute, toRouteId);
                 final Transfer myRule = new Transfer();
                 myRule.to_route_id = toRouteId;
