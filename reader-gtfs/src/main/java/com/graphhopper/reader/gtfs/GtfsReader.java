@@ -89,33 +89,29 @@ class GtfsReader {
         gtfsStorage.getFares().putAll(feed.fares);
         i = graph.getNodes();
         buildPtNetwork();
+        EdgeFilter filter = new EverythingButPt(encoder);
         for (EnterAndExitNodeIdWithStopId entry : stopEnterAndExitNodes) {
             Stop stop = feed.stops.get(entry.stopId);
+            QueryResult locationQueryResult = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
+            int streetNode;
+            if (!locationQueryResult.isValid()) {
+                streetNode = i;
+                nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
+                graph.edge(streetNode, streetNode, 0.0, false);
+            } else {
+                streetNode = locationQueryResult.getClosestNode();
+            }
             for (Integer enterNodeId : entry.enterNodeIds) {
-                int streetNode = findStreetNodeForPlatformNode(enterNodeId);
                 EdgeIteratorState entryEdge = graph.edge(streetNode, enterNodeId, 0.0, false);
                 setEdgeType(entryEdge, GtfsStorage.EdgeType.ENTER_PT);
                 entryEdge.setName(stop.stop_name);
             }
             for (Integer exitNodeId : entry.exitNodeIds) {
-                int streetNode = findStreetNodeForPlatformNode(exitNodeId);
                 EdgeIteratorState exitEdge = graph.edge(exitNodeId, streetNode, 0.0, false);
                 setEdgeType(exitEdge, GtfsStorage.EdgeType.EXIT_PT);
                 exitEdge.setName(stop.stop_name);
             }
         }
-    }
-
-    private int findStreetNodeForPlatformNode(int platformNodeId) {
-        int streetNode;
-        EdgeFilter filter = new EverythingButPt(encoder);
-        QueryResult source = walkNetworkIndex.findClosest(nodeAccess.getLat(platformNodeId), nodeAccess.getLon(platformNodeId), filter);
-        if (!source.isValid()) {
-            throw new RuntimeException("Can't find street node for a platform. Did you import OSM data (or create a fake walk network)?");
-        } else {
-            streetNode = source.getClosestNode();
-        }
-        return streetNode;
     }
 
     private void buildPtNetwork() {
