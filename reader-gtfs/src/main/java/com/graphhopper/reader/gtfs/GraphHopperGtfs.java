@@ -67,14 +67,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         return new Factory(encodingManager, translationMap, graphHopperStorage, locationIndex, gtfsStorage);
     }
 
-    public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliestDepartureTime";
-    public static final String RANGE_QUERY_END_TIME = "rangeQueryEndTime";
-    public static final String ARRIVE_BY = "arriveBy";
-    public static final String IGNORE_TRANSFERS = "ignoreTransfers";
-    public static final String WALK_SPEED_KM_H = "walkSpeedKmH";
-    public static final String MAX_WALK_DISTANCE_PER_LEG = "maxWalkDistancePerLeg";
-    public static final String MAX_TRANSFER_DISTANCE_PER_LEG = "maxTransferDistancePerLeg";
-
     private final TranslationMap translationMap;
     private final PtFlagEncoder flagEncoder;
     private final GraphHopperStorage graphHopperStorage;
@@ -101,13 +93,13 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         RequestHandler(GHRequest request) {
             maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
-            initialTime = Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(request.getHints().get(EARLIEST_DEPARTURE_TIME_HINT, "earliestDepartureTime is a required parameter"))).getSeconds();
-            rangeQueryEndTime = request.getHints().has(RANGE_QUERY_END_TIME) ? Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(request.getHints().get(RANGE_QUERY_END_TIME, ""))).getSeconds() : initialTime;
-            arriveBy = request.getHints().getBool(ARRIVE_BY, false);
-            ignoreTransfers = request.getHints().getBool(IGNORE_TRANSFERS, false);
-            walkSpeedKmH = request.getHints().getDouble(WALK_SPEED_KM_H, 5.0);
-            maxWalkDistancePerLeg = request.getHints().getDouble(MAX_WALK_DISTANCE_PER_LEG, Double.MAX_VALUE);
-            maxTransferDistancePerLeg = request.getHints().getDouble(MAX_TRANSFER_DISTANCE_PER_LEG, Double.MAX_VALUE);
+            initialTime = Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(request.getHints().get(Parameters.PT.EARLIEST_DEPARTURE_TIME_HINT, Parameters.PT.EARLIEST_DEPARTURE_TIME_HINT+ " is a required parameter"))).getSeconds();
+            rangeQueryEndTime = request.getHints().has(Parameters.PT.RANGE_QUERY_END_TIME) ? Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(request.getHints().get(Parameters.PT.RANGE_QUERY_END_TIME, ""))).getSeconds() : initialTime;
+            arriveBy = request.getHints().getBool(Parameters.PT.ARRIVE_BY, false);
+            ignoreTransfers = request.getHints().getBool(Parameters.PT.IGNORE_TRANSFERS, false);
+            walkSpeedKmH = request.getHints().getDouble(Parameters.PT.WALK_SPEED, 5.0);
+            maxWalkDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, Double.MAX_VALUE);
+            maxTransferDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_WALK_DISTANCE_PER_TRANSFER_LEG, Double.MAX_VALUE);
             weighting = createPtTravelTimeWeighting(flagEncoder, arriveBy, walkSpeedKmH);
             translation = translationMap.getWithFallBack(request.getLocale());
             if (request.getPoints().size() != 2) {
