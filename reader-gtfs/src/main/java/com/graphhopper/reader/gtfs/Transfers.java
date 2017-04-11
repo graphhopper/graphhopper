@@ -11,10 +11,8 @@ class Transfers {
 
     private final Map<String, List<Transfer>> transfers;
     private final Map<String, Set<String>> routesByStop;
-    private final GTFSFeed feed;
 
     Transfers(GTFSFeed feed) {
-        this.feed = feed;
         this.transfers = feed.transfers.values().stream().collect(Collectors.groupingBy(t -> t.to_stop_id));
         this.routesByStop = feed.stop_times.values().stream()
                 .collect(Collectors.groupingBy(stopTime -> stopTime.stop_id,

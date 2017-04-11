@@ -91,9 +91,6 @@ class MultiCriteriaLabelSetting {
 
             for (EdgeIteratorState edge : explorer.exploreEdgesAround(label)) {
                 GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
-//                if (edgeType == GtfsStorage.EdgeType.ENTER_PT && label.nTransfers > 0) {
-//                    continue;
-//                }
                 long nextTime;
                 if (reverse) {
                     nextTime = label.currentTime - weighting.calcTravelTimeSeconds(edge, label.currentTime);
@@ -112,7 +109,6 @@ class MultiCriteriaLabelSetting {
                 boolean isTryingToReEnterPtAfterTransferWalking = edgeType == GtfsStorage.EdgeType.ENTER_PT && label.nTransfers > 0 && label.walkDistanceOnCurrentLeg > maxTransferDistancePerLeg;
                 int nWalkDistanceConstraintViolations = Math.min(1, label.nWalkDistanceConstraintViolations + (
                         isTryingToReEnterPtAfterTransferWalking ? 1 : (label.walkDistanceOnCurrentLeg <= maxWalkDistancePerLeg && walkDistanceOnCurrentLeg > maxWalkDistancePerLeg ? 1 : 0)));
-//                int nWalkDistanceConstraintViolations = 0;
                 Set<Label> sptEntries = fromMap.get(edge.getAdjNode());
                 Label nEdge = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, nWalkDistanceConstraintViolations, walkDistanceOnCurrentLeg, firstPtDepartureTime, label);
                 if (isNotEqualToAnyOf(nEdge, sptEntries) && isNotDominatedByAnyOf(nEdge, sptEntries) && isNotDominatedWithoutTieBreaksByAnyOf(nEdge, targetLabels)) {
@@ -121,10 +117,8 @@ class MultiCriteriaLabelSetting {
                         removeDominated(nEdge, targetLabels);
                     }
                     fromMap.put(edge.getAdjNode(), nEdge);
-//                    System.out.printf("%d %d\n", edge.getAdjNode(), fromMap.get(edge.getAdjNode()).size());
                     if (to.contains(edge.getAdjNode())) {
                         targetLabels.add(nEdge);
-//                        System.out.printf("%d %d\n",targetLabels.size(), visitedNodes);
                     }
                     fromHeap.add(nEdge);
                 }
@@ -134,10 +128,7 @@ class MultiCriteriaLabelSetting {
                 break;
 
             label = fromHeap.poll();
-            if (label == null)
-                throw new AssertionError("Empty edge cannot happen");
         }
-//        System.out.println(visitedNodes);
         return filterTargetLabels(targetLabels);
     }
 

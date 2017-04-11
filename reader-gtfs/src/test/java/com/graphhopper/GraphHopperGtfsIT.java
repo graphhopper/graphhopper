@@ -33,12 +33,6 @@ public class GraphHopperGtfsIT {
         graphHopper = GraphHopperGtfs.create(GRAPH_LOC, "files/sample-feed.zip", true);
     }
 
-    @AfterClass
-    public static void tearDown() {
-//        if (graphHopper != null)
-//            graphHopper.close();
-    }
-
     @Test
     public void testRoute1() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
