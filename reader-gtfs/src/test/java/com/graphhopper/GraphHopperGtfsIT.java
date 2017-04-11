@@ -24,7 +24,7 @@ import static org.junit.Assert.assertFalse;
 
 public class GraphHopperGtfsIT {
 
-    private static final String GRAPH_LOC = "target/graphhopperIT-gtfs";
+    private static final String GRAPH_LOC = "target/GraphHopperGtfsIT";
     private static GraphHopperGtfs graphHopper;
 
     @BeforeClass

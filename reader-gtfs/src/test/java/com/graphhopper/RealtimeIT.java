@@ -23,7 +23,7 @@ import static org.junit.Assert.assertEquals;
 
 public class RealtimeIT {
 
-    private static final String GRAPH_LOC = "target/graphhopperIT-gtfs";
+    private static final String GRAPH_LOC = "target/RealtimeIT";
     private static GraphHopperGtfs.Factory graphHopperFactory;
 
     @BeforeClass
