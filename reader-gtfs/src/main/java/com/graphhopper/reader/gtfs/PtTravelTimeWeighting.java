@@ -6,6 +6,24 @@ import com.graphhopper.util.EdgeIteratorState;
 
 class PtTravelTimeWeighting extends AbstractWeighting {
 
+    private static long travelTime(int edgeTimeValue, long earliestStartTime) {
+        int timeOfDay = (int) (earliestStartTime % (24 * 60 * 60));
+        if (timeOfDay <= edgeTimeValue) {
+            return (edgeTimeValue - timeOfDay);
+        } else {
+            throw new RuntimeException();
+        }
+    }
+
+    private static long travelTimeReverse(int edgeTimeValue, long latestExitTime) {
+        int timeOfDay = (int) (latestExitTime % (24 * 60 * 60));
+        if (timeOfDay >= edgeTimeValue) {
+            return (timeOfDay - edgeTimeValue);
+        } else {
+            throw new RuntimeException();
+        }
+    }
+
     private final boolean reverse;
     private final double walkSpeedKmH;
     private final int transferFactor;
@@ -23,10 +41,6 @@ class PtTravelTimeWeighting extends AbstractWeighting {
 
     PtTravelTimeWeighting reverse() {
         return new PtTravelTimeWeighting(flagEncoder, !reverse, walkSpeedKmH, transferFactor);
-    }
-
-    PtTravelTimeWeighting ignoringNumberOfTransfers() {
-        return new PtTravelTimeWeighting(flagEncoder, reverse, walkSpeedKmH, 0);
     }
 
     @Override
@@ -53,7 +67,7 @@ class PtTravelTimeWeighting extends AbstractWeighting {
         }
     }
 
-    public long calcTravelTimeSeconds(EdgeIteratorState edge, long earliestStartTime) {
+    long calcTravelTimeSeconds(EdgeIteratorState edge, long earliestStartTime) {
         GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edge.getFlags());
         switch (edgeType) {
             case HIGHWAY:
@@ -62,11 +76,11 @@ class PtTravelTimeWeighting extends AbstractWeighting {
                 if (reverse) {
                     return 0;
                 } else {
-                    return GtfsStorage.traveltime((int) ((PtFlagEncoder) getFlagEncoder()).getTime(edge.getFlags()), (long) earliestStartTime);
+                    return travelTime((int) ((PtFlagEncoder) getFlagEncoder()).getTime(edge.getFlags()), earliestStartTime);
                 }
             case LEAVE_TIME_EXPANDED_NETWORK:
                 if (reverse) {
-                    return GtfsStorage.traveltimeReverse((int) ((PtFlagEncoder) getFlagEncoder()).getTime(edge.getFlags()), (long) earliestStartTime);
+                    return travelTimeReverse((int) ((PtFlagEncoder) getFlagEncoder()).getTime(edge.getFlags()), earliestStartTime);
                 } else {
                     return 0;
                 }
@@ -75,11 +89,11 @@ class PtTravelTimeWeighting extends AbstractWeighting {
         }
 	}
 
-	public int calcNTransfers(EdgeIteratorState edge) {
+	int calcNTransfers(EdgeIteratorState edge) {
         return transferFactor * ((PtFlagEncoder) getFlagEncoder()).getTransfers(edge.getFlags());
 	}
 
-    public double getWalkDistance(EdgeIteratorState edge) {
+    double getWalkDistance(EdgeIteratorState edge) {
         GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edge.getFlags());
         switch (edgeType) {
             case HIGHWAY:

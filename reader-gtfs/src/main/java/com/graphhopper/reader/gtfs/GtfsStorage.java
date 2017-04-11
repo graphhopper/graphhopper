@@ -17,25 +17,7 @@ import java.util.zip.ZipFile;
 
 public class GtfsStorage implements GraphExtension {
 
-	static long traveltime(int edgeTimeValue, long earliestStartTime) {
-        int timeOfDay = (int) (earliestStartTime % (24*60*60));
-        if (timeOfDay <= edgeTimeValue) {
-            return (edgeTimeValue - timeOfDay);
-        } else {
-            throw new RuntimeException();
-        }
-    }
-
-	static long traveltimeReverse(int edgeTimeValue, long latestExitTime) {
-		int timeOfDay = (int) (latestExitTime % (24*60*60));
-		if (timeOfDay >= edgeTimeValue) {
-			return (timeOfDay - edgeTimeValue);
-		} else {
-			throw new RuntimeException();
-		}
-	}
-
-    private Directory dir;
+	private Directory dir;
 	private Set<String> gtfsFeedIds;
 	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
 	private HTreeMap<BitSet, Integer> operatingDayPatterns;
