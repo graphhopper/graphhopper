@@ -7,8 +7,10 @@ import com.graphhopper.reader.gtfs.PtFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -25,18 +27,26 @@ public class RealtimeIT {
 
     private static final String GRAPH_LOC = "target/RealtimeIT";
     private static GraphHopperGtfs.Factory graphHopperFactory;
+    private static GraphHopperStorage graphHopperStorage;
+    private static LocationIndex locationIndex;
 
     @BeforeClass
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
         EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
-        GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
-        GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, true, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
-        graphHopperFactory = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage), gtfsStorage);
+        GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, true, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
+        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
+        graphHopperFactory = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);
     }
 
+    @AfterClass
+    public static void close() {
+        graphHopperStorage.close();
+        locationIndex.close();
+    }
 
     @Test
     public void testSkipDepartureStop() {

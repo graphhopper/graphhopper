@@ -17,6 +17,11 @@ import java.util.zip.ZipFile;
 
 public class GtfsStorage implements GraphExtension {
 
+	public GtfsStorage() {
+		Runtime.getRuntime().addShutdownHook(new Thread(this::close));
+	}
+
+	private volatile boolean isClosed = false;
 	private Directory dir;
 	private Set<String> gtfsFeedIds;
 	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
@@ -28,7 +33,6 @@ public class GtfsStorage implements GraphExtension {
 	private Map<String, Fare> fares;
 	private Map<GtfsRealtime.TripDescriptor, int[]> boardEdgesForTrip;
 	private Map<GtfsRealtime.TripDescriptor, int[]> leaveEdgesForTrip;
-	private Map<String, List<String>> routesForStop;
 
 	enum EdgeType {
 		HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, ALIGHT, OVERNIGHT, TRANSFER, WAIT
@@ -78,7 +82,6 @@ public class GtfsStorage implements GraphExtension {
 		for (String gtfsFeedId : this.gtfsFeedIds) {
 			try {
 				GTFSFeed feed = new GTFSFeed(dir.getLocation() + "/" + gtfsFeedId);
-				Runtime.getRuntime().addShutdownHook(new Thread(feed::close));
 				this.gtfsFeeds.put(gtfsFeedId, feed);
 			} catch (IOException | ExecutionException e) {
 				throw new RuntimeException(e);
@@ -109,13 +112,11 @@ public class GtfsStorage implements GraphExtension {
 		this.fares = data.getTreeMap("fares");
 		this.boardEdgesForTrip = data.getHashMap("boardEdgesForTrip");
 		this.leaveEdgesForTrip = data.getHashMap("leaveEdgesForTrip");
-		this.routesForStop = data.getHashMap("routesForStop");
 	}
 
 	void loadGtfsFromFile(String id, ZipFile zip) {
 		try {
 			GTFSFeed feed = new GTFSFeed(dir.getLocation() + "/" + id);
-			Runtime.getRuntime().addShutdownHook(new Thread(feed::close));
 			feed.loadFromFile(zip);
 			this.gtfsFeeds.put(id, feed);
 		} catch (Exception e) {
@@ -130,15 +131,18 @@ public class GtfsStorage implements GraphExtension {
 
 	@Override
 	public void close() {
-		data.close();
-		for (GTFSFeed feed : gtfsFeeds.values()) {
-			feed.close();
+		if (!isClosed) {
+			isClosed = true;
+			data.close();
+			for (GTFSFeed feed : gtfsFeeds.values()) {
+				feed.close();
+			}
 		}
 	}
 
 	@Override
 	public boolean isClosed() {
-		return data.isClosed();
+		return isClosed;
 	}
 
 	@Override

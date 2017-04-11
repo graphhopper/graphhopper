@@ -1,6 +1,12 @@
 package com.graphhopper;
 
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
+import com.graphhopper.reader.gtfs.GtfsStorage;
+import com.graphhopper.reader.gtfs.PtFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.GHDirectory;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.Parameters;
@@ -14,6 +20,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -26,11 +34,26 @@ public class GraphHopperGtfsIT {
 
     private static final String GRAPH_LOC = "target/GraphHopperGtfsIT";
     private static GraphHopperGtfs graphHopper;
+    private static GraphHopperStorage graphHopperStorage;
+    private static LocationIndex locationIndex;
 
     @BeforeClass
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
-        graphHopper = GraphHopperGtfs.create(GRAPH_LOC, "files/sample-feed.zip", true);
+        final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
+        EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
+        GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
+        GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, true, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
+        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
+        graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
+                .createWithoutRealtimeFeed();
+    }
+
+    @AfterClass
+    public static void close() {
+        graphHopperStorage.close();
+        locationIndex.close();
     }
 
     @Test

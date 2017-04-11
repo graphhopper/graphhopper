@@ -176,17 +176,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         this.realtimeFeed = realtimeFeed;
     }
 
-    public static GraphHopperGtfs create(String graphHopperFolder, String gtfsFile, boolean createWalkNetwork) {
-        final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
-        GtfsStorage gtfsStorage = createGtfsStorage();
-        GHDirectory directory = createGHDirectory(graphHopperFolder);
-        GraphHopperStorage graphHopperStorage = createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, createWalkNetwork, Collections.singleton(gtfsFile), Collections.emptyList());
-        LocationIndex locationIndex = createOrLoadIndex(directory, graphHopperStorage);
-        return createFactory(ptFlagEncoder, createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
-                .createWithoutRealtimeFeed();
-    }
-
     public static GtfsStorage createGtfsStorage() {
         return new GtfsStorage();
     }
