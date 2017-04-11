@@ -41,13 +41,13 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
     public static class Factory {
         private final TranslationMap translationMap;
-        private final EncodingManager encodingManager;
+        private final PtFlagEncoder flagEncoder;
         private final GraphHopperStorage graphHopperStorage;
         private final LocationIndex locationIndex;
         private final GtfsStorage gtfsStorage;
 
-        private Factory(EncodingManager encodingManager, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-            this.encodingManager = encodingManager;
+        private Factory(PtFlagEncoder flagEncoder, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+            this.flagEncoder = flagEncoder;
             this.translationMap = translationMap;
             this.graphHopperStorage = graphHopperStorage;
             this.locationIndex = locationIndex;
@@ -55,16 +55,16 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         }
 
         public GraphHopperGtfs createWith(GtfsRealtime.FeedMessage realtimeFeed) {
-            return new GraphHopperGtfs(encodingManager, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(gtfsStorage, realtimeFeed));
+            return new GraphHopperGtfs(flagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(gtfsStorage, realtimeFeed));
         }
 
         public GraphHopperGtfs createWithoutRealtimeFeed() {
-            return new GraphHopperGtfs(encodingManager, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty());
+            return new GraphHopperGtfs(flagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty());
         }
     }
 
-    public static Factory createFactory(EncodingManager encodingManager, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-        return new Factory(encodingManager, translationMap, graphHopperStorage, locationIndex, gtfsStorage);
+    public static Factory createFactory(PtFlagEncoder flagEncoder, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        return new Factory(flagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage);
     }
 
     private final TranslationMap translationMap;
@@ -167,8 +167,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
     }
 
-    public GraphHopperGtfs(EncodingManager encodingManager, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
-        this.flagEncoder = (PtFlagEncoder) encodingManager.getEncoder("pt");
+    public GraphHopperGtfs(PtFlagEncoder flagEncoder, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
+        this.flagEncoder = flagEncoder;
         this.translationMap = translationMap;
         this.graphHopperStorage = graphHopperStorage;
         this.locationIndex = locationIndex;
@@ -177,12 +177,13 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     }
 
     public static GraphHopperGtfs create(String graphHopperFolder, String gtfsFile, boolean createWalkNetwork) {
-        EncodingManager encodingManager = createEncodingManager();
+        final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
+        EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
         GtfsStorage gtfsStorage = createGtfsStorage();
         GHDirectory directory = createGHDirectory(graphHopperFolder);
-        GraphHopperStorage graphHopperStorage = createOrLoad(directory, encodingManager, gtfsStorage, createWalkNetwork, Collections.singleton(gtfsFile), Collections.emptyList());
+        GraphHopperStorage graphHopperStorage = createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, createWalkNetwork, Collections.singleton(gtfsFile), Collections.emptyList());
         LocationIndex locationIndex = createOrLoadIndex(directory, graphHopperStorage);
-        return createFactory(encodingManager, createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
+        return createFactory(ptFlagEncoder, createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
     }
 
@@ -198,11 +199,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         return new TranslationMap().doImport();
     }
 
-    public static EncodingManager createEncodingManager() {
-        return new EncodingManager(Arrays.asList(new PtFlagEncoder()), 8);
-    }
-
-    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage, boolean createWalkNetwork, Collection<String> gtfsFiles, Collection<String> osmFiles) {
+    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage, boolean createWalkNetwork, Collection<String> gtfsFiles, Collection<String> osmFiles) {
         GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, gtfsStorage);
         if (!new File(directory.getLocation()).exists()) {
             graphHopperStorage.create(1000);
@@ -225,7 +222,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 }
             }
             if (createWalkNetwork) {
-                FakeWalkNetworkBuilder.buildWalkNetwork(((GtfsStorage) graphHopperStorage.getExtension()).getGtfsFeeds().values(), graphHopperStorage, (PtFlagEncoder) encodingManager.getEncoder("pt"), Helper.DIST_EARTH);
+                FakeWalkNetworkBuilder.buildWalkNetwork(((GtfsStorage) graphHopperStorage.getExtension()).getGtfsFeeds().values(), graphHopperStorage, ptFlagEncoder, Helper.DIST_EARTH);
             }
             LocationIndex walkNetworkIndex;
             if (graphHopperStorage.getNodes() > 0 ) {

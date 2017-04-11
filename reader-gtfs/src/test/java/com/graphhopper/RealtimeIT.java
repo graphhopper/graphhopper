@@ -3,6 +3,7 @@ package com.graphhopper;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
+import com.graphhopper.reader.gtfs.PtFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -13,6 +14,7 @@ import org.junit.Test;
 
 import java.io.File;
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SKIPPED;
@@ -27,11 +29,12 @@ public class RealtimeIT {
     @BeforeClass
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
-        EncodingManager encodingManager = GraphHopperGtfs.createEncodingManager();
+        final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
+        EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
-        GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage, true, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
-        graphHopperFactory = GraphHopperGtfs.createFactory(encodingManager, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage), gtfsStorage);
+        GraphHopperStorage graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, true, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
+        graphHopperFactory = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage), gtfsStorage);
     }
 
 

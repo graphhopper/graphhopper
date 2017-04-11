@@ -7,6 +7,7 @@ import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
+import com.graphhopper.reader.gtfs.PtFlagEncoder;
 import com.graphhopper.reader.gtfs.RealtimeFeed;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GHDirectory;
@@ -36,8 +37,8 @@ public final class PtModule extends AbstractModule {
 
     @Provides
     @Singleton
-    GraphHopperAPI createGraphHopper(EncodingManager encodingManager, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
-        return new GraphHopperGtfs(encodingManager, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty());
+    GraphHopperAPI createGraphHopper(PtFlagEncoder flagEncoder, TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage) {
+        return new GraphHopperGtfs(flagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.empty());
     }
 
     @Provides
@@ -48,8 +49,8 @@ public final class PtModule extends AbstractModule {
 
     @Provides
     @Singleton
-    GraphHopperStorage createGraphHopperStorage(CmdArgs args, GHDirectory directory, EncodingManager encodingManager, GtfsStorage gtfsStorage) {
-        return GraphHopperGtfs.createOrLoad(directory, encodingManager, gtfsStorage,
+    GraphHopperStorage createGraphHopperStorage(CmdArgs args, GHDirectory directory, EncodingManager encodingManager, PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage) {
+        return GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage,
                 args.getBool("gtfs.createwalknetwork", false),
                 args.has("gtfs.file") ? Arrays.asList(args.get("gtfs.file", "").split(",")) : Collections.emptyList(),
                 args.has("datareader.file") ? Arrays.asList(args.get("datareader.file", "").split(",")) : Collections.emptyList());
@@ -76,8 +77,14 @@ public final class PtModule extends AbstractModule {
 
     @Provides
     @Singleton
-    EncodingManager createEncodingManager() {
-        return GraphHopperGtfs.createEncodingManager();
+    EncodingManager createEncodingManager(PtFlagEncoder ptFlagEncoder) {
+        return new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
+    }
+
+    @Provides
+    @Singleton
+    PtFlagEncoder createPtFlagEncoder() {
+        return new PtFlagEncoder();
     }
 
     @Provides

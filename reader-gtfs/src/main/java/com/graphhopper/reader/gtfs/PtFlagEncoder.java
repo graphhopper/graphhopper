@@ -7,7 +7,7 @@ import com.graphhopper.routing.util.EncodedDoubleValue;
 import com.graphhopper.routing.util.EncodedValue;
 import com.graphhopper.routing.util.FootFlagEncoder;
 
-class PtFlagEncoder extends AbstractFlagEncoder {
+public class PtFlagEncoder extends AbstractFlagEncoder {
 
 	private final FootFlagEncoder footFlagEncoder;
 	private EncodedValue time;
@@ -15,7 +15,7 @@ class PtFlagEncoder extends AbstractFlagEncoder {
 	private EncodedValue validityId;
 	private EncodedValue type;
 
-	PtFlagEncoder() {
+	public PtFlagEncoder() {
 		super(0, 1, 0);
 
 		// I use the foot flag encoder only as a delegate to filter by OSM tags,
