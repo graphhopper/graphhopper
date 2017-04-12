@@ -17,18 +17,10 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphEdgeIdFinder;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.shapes.Shape;
-
-import java.util.Collections;
-import java.util.List;
 
 /**
  * Calculates the best route according to a configurable weighting.
@@ -56,10 +48,6 @@ public class GenericWeighting extends AbstractWeighting {
     protected final double weight;
     protected final double width;
 
-    private final GHIntHashSet blockedEdges;
-    private final List<Shape> blockedShapes;
-    private NodeAccess na;
-
     public GenericWeighting(DataFlagEncoder encoder, ConfigMap cMap) {
         super(encoder);
         gEncoder = encoder;
@@ -77,8 +65,6 @@ public class GenericWeighting extends AbstractWeighting {
 
         maxSpeed = tmpSpeed / SPEED_CONV;
         accessType = gEncoder.getAccessType("motor_vehicle");
-        blockedEdges = cMap.get(GraphEdgeIdFinder.BLOCKED_EDGES, new GHIntHashSet(0));
-        blockedShapes = cMap.get(GraphEdgeIdFinder.BLOCKED_SHAPES, Collections.EMPTY_LIST);
         height = cMap.getDouble(HEIGHT_LIMIT, 0d);
         weight = cMap.getDouble(WEIGHT_LIMIT, 0d);
         width = cMap.getDouble(WIDTH_LIMIT, 0d);
@@ -102,18 +88,6 @@ public class GenericWeighting extends AbstractWeighting {
                 (gEncoder.isStoreWeight() && overLimit(weight, gEncoder.getWeight(edgeState))) ||
                 (gEncoder.isStoreWidth() && overLimit(width, gEncoder.getWidth(edgeState))))
             return Double.POSITIVE_INFINITY;
-
-        if (!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())) {
-            return Double.POSITIVE_INFINITY;
-        }
-
-        if (!blockedShapes.isEmpty() && na != null) {
-            for (Shape shape : blockedShapes) {
-                if (shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()))) {
-                    return Double.POSITIVE_INFINITY;
-                }
-            }
-        }
 
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
         if (time == Long.MAX_VALUE)
@@ -175,13 +149,5 @@ public class GenericWeighting extends AbstractWeighting {
     @Override
     public String getName() {
         return "generic";
-    }
-
-    /**
-     * Use this method to associate a graph with this weighting to calculate e.g. node locations too.
-     */
-    public void setGraph(Graph graph) {
-        if (graph != null)
-            this.na = graph.getNodeAccess();
     }
 }

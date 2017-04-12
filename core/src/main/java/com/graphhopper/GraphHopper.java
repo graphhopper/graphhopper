@@ -898,8 +898,9 @@ public class GraphHopper implements GraphHopperAPI {
 
             cMap = new GraphEdgeIdFinder(graph, locationIndex).parseStringHints(cMap, hintsMap, new DefaultEdgeFilter(encoder));
             GenericWeighting genericWeighting = new GenericWeighting(dataEncoder, cMap);
-            genericWeighting.setGraph(graph);
-            return genericWeighting;
+            BlockedWeighting blockedWeighting = new BlockedWeighting(genericWeighting, cMap);
+            blockedWeighting.setGraph(graph);
+            return blockedWeighting;
         } else if ("shortest".equalsIgnoreCase(weighting)) {
             return new ShortestWeighting(encoder);
         } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty()) {
