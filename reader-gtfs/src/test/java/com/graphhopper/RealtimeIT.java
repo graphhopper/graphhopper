@@ -9,7 +9,6 @@ import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -58,9 +57,9 @@ public class RealtimeIT {
         );
 
         // I want to go at 6:44
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,44).toString());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, "true");
-        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,44).toString());
+        ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, "true");
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         // But the 6:00 departure of my line is going to skip my departure stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -89,9 +88,9 @@ public class RealtimeIT {
         );
 
         // I want to go at 6:44
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,44).toString());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, "true");
-        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,44).toString());
+        ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, "true");
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         // But the 6:00 departure of my line is going to skip my arrival stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -120,9 +119,9 @@ public class RealtimeIT {
         );
 
         // I want to go at 6:44
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,44).toString());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, "true");
-        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,44).toString());
+        ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, "true");
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         // But the 6:00 departure of my line is going to skip my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
@@ -149,9 +148,9 @@ public class RealtimeIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,8,0));
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, "true");
-        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,8,0));
+        ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, "true");
+        ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         // My line does not stop at Bullfrog today. If this was a real transfer, I would not be
         // able to change lines there. But it is not a real transfer, so I can go on as planned.
