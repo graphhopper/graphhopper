@@ -11,6 +11,7 @@ import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -29,6 +30,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -67,13 +69,13 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         return new Factory(flagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage);
     }
 
-    public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliestDepartureTime";
-    public static final String RANGE_QUERY_END_TIME = "rangeQueryEndTime";
-    public static final String ARRIVE_BY = "arriveBy";
-    public static final String IGNORE_TRANSFERS = "ignoreTransfers";
-    public static final String WALK_SPEED_KM_H = "walkSpeedKmH";
-    public static final String MAX_WALK_DISTANCE_PER_LEG = "maxWalkDistancePerLeg";
-    public static final String MAX_TRANSFER_DISTANCE_PER_LEG = "maxTransferDistancePerLeg";
+    public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliest_departure_time";
+    public static final String RANGE_QUERY_END_TIME = "range_query_end_time";
+    public static final String ARRIVE_BY = "arrive_by";
+    public static final String IGNORE_TRANSFERS = "ignore_transfers";
+    public static final String WALK_SPEED_KM_H = "walk_speed";
+    public static final String MAX_WALK_DISTANCE_PER_LEG = "max_walk_distance_per_leg";
+    public static final String MAX_TRANSFER_DISTANCE_PER_LEG = "max_transfer_distance_per_leg";
 
     private final TranslationMap translationMap;
     private final PtFlagEncoder flagEncoder;
@@ -101,7 +103,13 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         RequestHandler(GHRequest request) {
             maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
-            initialTime = Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(request.getHints().get(EARLIEST_DEPARTURE_TIME_HINT, "earliestDepartureTime is a required parameter"))).getSeconds();
+            final String departureTimeString = request.getHints().get(EARLIEST_DEPARTURE_TIME_HINT, "");
+            try {
+                final LocalDateTime earliestDepartureTime = LocalDateTime.parse(departureTimeString);
+                initialTime = Duration.between(gtfsStorage.getStartDate().atStartOfDay(), earliestDepartureTime).getSeconds();
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException(String.format("Illegal value for required parameter %s: [%s]", EARLIEST_DEPARTURE_TIME_HINT, departureTimeString));
+            }
             rangeQueryEndTime = request.getHints().has(RANGE_QUERY_END_TIME) ? Duration.between(gtfsStorage.getStartDate().atStartOfDay(), LocalDateTime.parse(request.getHints().get(RANGE_QUERY_END_TIME, ""))).getSeconds() : initialTime;
             arriveBy = request.getHints().getBool(ARRIVE_BY, false);
             ignoreTransfers = request.getHints().getBool(IGNORE_TRANSFERS, false);
