@@ -15,7 +15,7 @@ describe("GHRequest", function () {
     });
 
     it("features should work", function () {
-        var ghRequest = new GHRequest("http://test.de");
+        var ghRequest = new GHRequest("http://test.de?vehicle=car");
         var params = {};
         params.elevation = true;
         ghRequest.features = {"car": {}};
@@ -54,22 +54,6 @@ describe("GHRequest", function () {
         // include all other parameters
         expect(ghRequest.api_params.test).toEqual("x");
         expect(ghRequest.api_params.test_array).toEqual([1, 2]);
-    });
-
-    it("create URL from object 'dot' notation should work", function () {
-        var ghRequest = new GHRequest("http://test.de?");
-        var params = { pt: { earliest_departure_time : 123}};
-        ghRequest.init(params);
-        expect(ghRequest.api_params.pt).toBeDefined();
-        expect(ghRequest.api_params.pt.earliest_departure_time).toEqual(123);
-    });
-
-    it("createPath should work", function () {
-        var ghRequest = new GHRequest("http://test.de?");
-        var params = { pt: { earliest_departure_time : 123}, key: "" };
-        ghRequest.init(params);
-        expect(ghRequest.createPath("")).toEqual("&locale=en&vehicle=car&weighting=fastest&elevation=false&key="
-                    +"&pt.earliest_departure_time=123");
     });
 });
 

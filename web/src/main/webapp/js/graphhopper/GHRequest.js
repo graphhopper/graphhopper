@@ -40,8 +40,7 @@ var GHRequest = function (host, api_key) {
     this.useMiles = false;
     // use jsonp here if host allows CORS
     this.dataType = "json";
-    this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest",
-                       "elevation": false, "key": api_key, "pt": {}};
+    this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "elevation": false, "key": api_key};
 
     // register events
     this.route.addListener('route.add', function (evt) {
@@ -122,12 +121,12 @@ GHRequest.prototype.init = function (params) {
 };
 
 GHRequest.prototype.setEarliestDepartureTime = function (localdatetime) {
-    this.api_params.pt.earliest_departure_time = localdatetime;
+    this.api_params.earliestDepartureTime = localdatetime;
 };
 
 GHRequest.prototype.getEarliestDepartureTime = function () {
-    if (this.api_params.pt.earliest_departure_time)
-        return this.api_params.pt.earliest_departure_time;
+    if (this.api_params.earliestDepartureTime)
+        return this.api_params.earliestDepartureTime;
     return undefined;
 };
 
@@ -202,22 +201,10 @@ GHRequest.prototype.createPath = function (url, skipParameters) {
         if(skipParameters && skipParameters[key])
             continue;
 
-        if(typeof val === 'object') {
-            if (GHRoute.isArray(val)) {
-                var arr = val;
-                for (var keyIndex in arr) {
-                    var objKey = arr[keyIndex];
-                    url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(objKey);
-                }
-            } else {
-                // currently on one depth supported
-                var arr = Object.keys(val);
-                for (var keyIndex in arr) {
-                    var objKey = arr[keyIndex];
-                    url += "&" + encodeURIComponent(key) + "." + encodeURIComponent(objKey) + "=" + val[objKey];
-                }
+        if (GHRoute.isArray(val)) {
+            for (var keyIndex in val) {
+                url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val[keyIndex]);
             }
-
         } else {
             url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val);
         }
