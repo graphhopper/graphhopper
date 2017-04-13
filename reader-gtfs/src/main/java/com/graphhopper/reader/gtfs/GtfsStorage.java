@@ -17,11 +17,7 @@ import java.util.zip.ZipFile;
 
 public class GtfsStorage implements GraphExtension {
 
-	public GtfsStorage() {
-		Runtime.getRuntime().addShutdownHook(new Thread(this::close));
-	}
-
-	private volatile boolean isClosed = false;
+	private boolean isClosed = false;
 	private Directory dir;
 	private Set<String> gtfsFeedIds;
 	private Map<String, GTFSFeed> gtfsFeeds = new HashMap<>();
