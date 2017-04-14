@@ -17,7 +17,7 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.GraphHopper;
+import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
@@ -26,6 +26,7 @@ import com.graphhopper.util.shapes.BBox;
 import org.json.JSONObject;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -38,12 +39,16 @@ import java.util.List;
  */
 public class InfoServlet extends GHBaseServlet {
     @Inject
-    private GraphHopper hopper;
+    private GraphHopperStorage storage;
+    @Inject
+    @Named("hasElevation")
+    private boolean hasElevation;
+
 
     @Override
     public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        BBox bb = hopper.getGraphHopperStorage().getBounds();
-        List<Double> list = new ArrayList<Double>(4);
+        BBox bb = storage.getBounds();
+        List<Double> list = new ArrayList<>(4);
         list.add(bb.minLon);
         list.add(bb.minLat);
         list.add(bb.maxLon);
@@ -52,12 +57,12 @@ public class InfoServlet extends GHBaseServlet {
         JSONObject json = new JSONObject();
         json.put("bbox", list);
 
-        String[] vehicles = hopper.getGraphHopperStorage().getEncodingManager().toString().split(",");
+        String[] vehicles = storage.getEncodingManager().toString().split(",");
         json.put("supported_vehicles", vehicles);
         JSONObject features = new JSONObject();
         for (String v : vehicles) {
             JSONObject perVehicleJson = new JSONObject();
-            perVehicleJson.put("elevation", hopper.hasElevation());
+            perVehicleJson.put("elevation", hasElevation);
             features.put(v, perVehicleJson);
         }
         json.put("features", features);
@@ -65,7 +70,7 @@ public class InfoServlet extends GHBaseServlet {
         json.put("version", Constants.VERSION);
         json.put("build_date", Constants.BUILD_DATE);
 
-        StorableProperties props = hopper.getGraphHopperStorage().getProperties();
+        StorableProperties props = storage.getProperties();
         json.put("import_date", props.get("datareader.import.date"));
 
         if (!Helper.isEmpty(props.get("datareader.data.date")))

@@ -117,6 +117,7 @@ public class OSMReader implements DataReader {
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private File osmFile;
     private Date osmDataDate;
+    private boolean dontCreateStorage = false;
 
     public OSMReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
@@ -249,7 +250,9 @@ public class OSMReader implements DataReader {
     private void writeOsm2Graph(File osmFile) {
         int tmp = (int) Math.max(getNodeMap().getSize() / 50, 100);
         LOGGER.info("creating graph. Found nodes (pillar+tower):" + nf(getNodeMap().getSize()) + ", " + Helper.getMemInfo());
-        ghStorage.create(tmp);
+        if (!dontCreateStorage) {
+            ghStorage.create(tmp);
+        }
         long wayStart = -1;
         long relationStart = -1;
         long counter = 1;
@@ -914,6 +917,10 @@ public class OSMReader implements DataReader {
     @Override
     public Date getDataDate() {
         return osmDataDate;
+    }
+
+    public void setDontCreateStorage(boolean dontCreateStorage) {
+        this.dontCreateStorage = dontCreateStorage;
     }
 
     @Override
