@@ -60,6 +60,7 @@ public class OSMShapeFileReader extends ShapeFileReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(OSMShapeFileReader.class);
     private final HashSet<EdgeAddedListener> edgeAddedListeners = new HashSet<>();
     private int nextNodeId = FIRST_NODE_ID;
+    private final String encoding= "utf8";
 
     public OSMShapeFileReader(GraphHopperStorage ghStorage) {
         super(ghStorage);
@@ -90,7 +91,7 @@ public class OSMShapeFileReader extends ShapeFileReader {
         FeatureIterator<SimpleFeature> roads = null;
 
         try {
-            dataStore = openShapefileDataStore(roadsFile);
+            dataStore = openShapefileDataStore(roadsFile, encoding);
             roads = getFeatureIterator(dataStore);
 
             HashSet<Coordinate> tmpSet = new HashSet<>();
@@ -152,7 +153,7 @@ public class OSMShapeFileReader extends ShapeFileReader {
         FeatureIterator<SimpleFeature> roads = null;
 
         try {
-            dataStore = openShapefileDataStore(roadsFile);
+            dataStore = openShapefileDataStore(roadsFile, encoding);
             roads = getFeatureIterator(dataStore);
 
             while (roads.hasNext()) {

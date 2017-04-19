@@ -18,8 +18,9 @@
 package com.graphhopper.http;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.name.Names;
+import com.google.inject.Provides;
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.json.geo.JsonFeatureCollection;
@@ -27,10 +28,13 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TranslationMap;
@@ -38,43 +42,33 @@ import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 
-/**
- * @author Peter Karich
- */
 public class DefaultModule extends AbstractModule {
     protected final CmdArgs args;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private GraphHopper graphHopper;
 
     public DefaultModule(CmdArgs args) {
         this.args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
     }
 
-    public GraphHopper getGraphHopper() {
-        if (graphHopper == null)
-            throw new IllegalStateException("createGraphHopper not called");
-
-        return graphHopper;
+    @Override
+    protected void configure() {
+        install(new CmdArgsModule(args));
+        bind(GHJson.class).toInstance(new GHJsonBuilder().create());
+        bind(GraphHopperAPI.class).to(GraphHopper.class);
     }
 
-    static SpatialRuleLookup buildIndex(Reader reader, BBox graphBBox) {
-        GHJson ghJson = new GHJsonBuilder().create();
-        JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(reader, JsonFeatureCollection.class);
-        return new SpatialRuleLookupBuilder().build(Arrays.asList(new GermanySpatialRule(), new AustriaSpatialRule()),
-                jsonFeatureCollection, graphBBox, 1, true);
-    }
-
-    /**
-     * @return an initialized GraphHopper instance
-     */
-    protected GraphHopper createGraphHopper(CmdArgs args) {
-        GraphHopper tmp = new GraphHopperOSM() {
+    @Provides
+    @Singleton
+    GraphHopper createGraphHopper(CmdArgs args) {
+        GraphHopper graphHopper = new GraphHopperOSM() {
             @Override
             protected void loadOrPrepareLM() {
                 if (!getLMFactoryDecorator().isEnabled() || getLMFactoryDecorator().getPreparations().isEmpty())
@@ -102,46 +96,67 @@ public class DefaultModule extends AbstractModule {
 
         String location = args.get("spatial_rules.location", "");
         if (!location.isEmpty()) {
-            if (!tmp.getEncodingManager().supports(("generic"))) {
+            if (!graphHopper.getEncodingManager().supports(("generic"))) {
                 logger.warn("spatial_rules.location was specified but 'generic' encoder is missing to utilize the index");
             } else
                 try {
-                    SpatialRuleLookup index = buildIndex(new FileReader(location), tmp.getGraphHopperStorage().getBounds());
-                    if (index != null) {
-                        logger.info("Set spatial rule lookup with " + index.size() + " rules");
-                        ((DataFlagEncoder) tmp.getEncodingManager().getEncoder("generic")).setSpatialRuleLookup(index);
-                    }
+                    SpatialRuleLookup spatialRuleLookup = buildSpatialRuleLookup(new FileReader(location), graphHopper.getGraphHopperStorage().getBounds());
+                    logger.info("Set spatial rule lookup with " + spatialRuleLookup.size() + " rules");
+                    ((DataFlagEncoder) graphHopper.getEncodingManager().getEncoder("generic")).setSpatialRuleLookup(spatialRuleLookup);
                 } catch (IOException ex) {
                     throw new RuntimeException(ex);
                 }
         }
-        tmp.importOrLoad();
-        logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
-                + ", data_reader_file:" + tmp.getDataReaderFile()
-                + ", flag_encoders:" + tmp.getEncodingManager()
-                + ", " + tmp.getGraphHopperStorage().toDetailsString());
-        return tmp;
+        graphHopper.importOrLoad();
+        logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
+                + ", data_reader_file:" + graphHopper.getDataReaderFile()
+                + ", flag_encoders:" + graphHopper.getEncodingManager()
+                + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
+        return graphHopper;
     }
 
-    @Override
-    protected void configure() {
-        try {
-            graphHopper = createGraphHopper(args);
-            bind(GraphHopper.class).toInstance(graphHopper);
-            bind(TranslationMap.class).toInstance(graphHopper.getTranslationMap());
-
-            long timeout = args.getLong("web.timeout", 3000);
-            bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);
-            boolean jsonpAllowed = args.getBool("web.jsonp_allowed", false);
-
-            bind(Boolean.class).annotatedWith(Names.named("jsonp_allowed")).toInstance(jsonpAllowed);
-
-            bind(RouteSerializer.class).toInstance(new SimpleRouteSerializer(graphHopper.getGraphHopperStorage().getBounds()));
-
-            // should be thread safe
-            bind(GHJson.class).toInstance(new GHJsonBuilder().create());
-        } catch (Exception ex) {
-            throw new IllegalStateException("Couldn't load graph", ex);
-        }
+    static SpatialRuleLookup buildSpatialRuleLookup(Reader reader, BBox graphBBox) {
+        GHJson ghJson = new GHJsonBuilder().create();
+        JsonFeatureCollection jsonFeatureCollection = ghJson.fromJson(reader, JsonFeatureCollection.class);
+        return new SpatialRuleLookupBuilder().build(Arrays.asList(new GermanySpatialRule(), new AustriaSpatialRule()),
+                jsonFeatureCollection, graphBBox, 1, true);
     }
+
+    @Provides
+    @Singleton
+    TranslationMap getTranslationMap(GraphHopper graphHopper) {
+        return graphHopper.getTranslationMap();
+    }
+
+    @Provides
+    @Singleton
+    RouteSerializer getRouteSerializer(GraphHopper graphHopper) {
+        return new SimpleRouteSerializer(graphHopper.getGraphHopperStorage().getBounds());
+    }
+
+    @Provides
+    @Singleton
+    GraphHopperStorage getGraphHopperStorage(GraphHopper graphHopper) {
+        return graphHopper.getGraphHopperStorage();
+    }
+
+    @Provides
+    @Singleton
+    EncodingManager getEncodingManager(GraphHopper graphHopper) {
+        return graphHopper.getEncodingManager();
+    }
+
+    @Provides
+    @Singleton
+    LocationIndex getLocationIndex(GraphHopper graphHopper) {
+        return graphHopper.getLocationIndex();
+    }
+
+    @Provides
+    @Singleton
+    @Named("hasElevation")
+    boolean hasElevation(GraphHopper graphHopper) {
+        return graphHopper.hasElevation();
+    }
+
 }

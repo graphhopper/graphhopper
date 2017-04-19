@@ -17,11 +17,14 @@
  */
 package com.graphhopper.http;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
+import com.google.inject.*;
 import com.google.inject.servlet.GuiceFilter;
+import com.google.inject.servlet.ServletModule;
+import com.graphhopper.GraphHopper;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonBuilder;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -36,7 +39,8 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.DispatcherType;
+import javax.servlet.*;
+import java.io.IOException;
 import java.util.EnumSet;
 
 /**
@@ -106,6 +110,7 @@ public class GHServer {
         gzipHandler.setHandler(handlers);
 
         server.setHandler(gzipHandler);
+        server.setStopAtShutdown(true);
         server.start();
         logger.info("Started server at HTTP " + host + ":" + httpPort);
     }
@@ -115,8 +120,51 @@ public class GHServer {
             @Override
             protected void configure() {
                 binder().requireExplicitBindings();
-
-                install(new DefaultModule(args));
+                if (args.has("gtfs.file")) {  // switch to different API implementation when using Pt
+                    install(new PtModule(args));
+                    // Close resources on exit. Ugly, but neither guice nor guice-servlet have a lifecycle API,
+                    // so I have to abuse a Filter for that.
+                    install(new ServletModule() {
+                        @Override
+                        protected void configureServlets() {
+                            final Provider<GraphHopperStorage> graphHopperStorage = getProvider(GraphHopperStorage.class);
+                            final Provider<LocationIndex> locationIndex = getProvider(LocationIndex.class);
+                            filter("*").through(new Filter() {
+                                @Override
+                                public void init(FilterConfig filterConfig) throws ServletException {}
+                                @Override
+                                public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+                                    chain.doFilter(request, response);
+                                }
+                                @Override
+                                public void destroy() {
+                                    graphHopperStorage.get().close();
+                                    locationIndex.get().close();
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    install(new DefaultModule(args));
+                    install(new ServletModule() {
+                        @Override
+                        protected void configureServlets() {
+                            final Provider<GraphHopper> graphHopper = getProvider(GraphHopper.class);
+                            filter("*").through(new Filter() {
+                                @Override
+                                public void init(FilterConfig filterConfig) throws ServletException {}
+                                @Override
+                                public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
+                                    chain.doFilter(request, response);
+                                }
+                                @Override
+                                public void destroy() {
+                                    graphHopper.get().close();
+                                }
+                            });
+                        }
+                    });
+                }
                 install(new GHServletModule(args));
 
                 bind(GuiceFilter.class);

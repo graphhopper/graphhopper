@@ -25,8 +25,9 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
         var indiPic = "<img class='pic' style='vertical-align: middle' src='" +
                 dirname + "/img/" + sign + ".png'/>";
         instructionDiv.append("<td class='instr_pic'>" + indiPic + "</td>");
-    } else
+    } else {
         instructionDiv.append("<td class='instr_pic'/>");
+    }
 
     var tdVar = $("<td class='instr_title'>");
     tdVar.text(title);

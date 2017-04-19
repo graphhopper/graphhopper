@@ -18,6 +18,7 @@
 package com.graphhopper.http;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.storage.change.ChangeGraphResponse;
 import com.graphhopper.util.Helper;
@@ -41,7 +42,8 @@ import com.graphhopper.json.GHJson;
 public class ChangeGraphServlet extends GHBaseServlet {
 
     @Inject
-    private GraphHopper hopper;
+    private GraphHopperAPI graphHopper;
+
     @Inject
     private GHJson gson;
 
@@ -52,8 +54,12 @@ public class ChangeGraphServlet extends GHBaseServlet {
         StopWatch sw = new StopWatch().start();
         try {
             JsonFeatureCollection collection = gson.fromJson(new InputStreamReader(httpReq.getInputStream(), Helper.UTF_CS), JsonFeatureCollection.class);
+            // TODO put changeGraph on GraphHopperAPI interface and remove cast (or some other solution)
+            if (!(graphHopper instanceof GraphHopper)) {
+                throw new IllegalStateException("Graph change API not supported with public transit.");
+            }
             // TODO make asynchronous!
-            ChangeGraphResponse rsp = hopper.changeGraph(collection.getFeatures());
+            ChangeGraphResponse rsp = ((GraphHopper) graphHopper).changeGraph(collection.getFeatures());
             JSONObject resObject = new JSONObject();
             resObject.put("updates", rsp.getUpdateCount());
             // prepare the consumer to get some changes not immediately when returning after POST
