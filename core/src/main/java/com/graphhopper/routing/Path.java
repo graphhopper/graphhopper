@@ -381,6 +381,7 @@ public class Path {
             private Instruction prevInstruction;
             private boolean prevInRoundabout = false;
             private String name, prevName = null;
+            private EdgeIteratorState prevEdge = null;
             private InstructionAnnotation annotation, prevAnnotation;
             private EdgeExplorer outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
             private EdgeExplorer crossingExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, true));
@@ -417,6 +418,7 @@ public class Path {
                     prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
                     ways.add(prevInstruction);
                     prevName = name;
+                    prevEdge = edge;
                     prevAnnotation = annotation;
 
                 } else if (isRoundabout) {
@@ -451,6 +453,7 @@ public class Path {
                         {
                             prevOrientation = AC.calcOrientation(prevLat, prevLon, latitude, longitude);
                             prevName = name;
+                            prevEdge = edge;
                             prevAnnotation = annotation;
                         }
                         prevInstruction = roundaboutInstruction;
@@ -489,6 +492,7 @@ public class Path {
                             .setExited();
 
                     prevName = name;
+                    prevEdge = edge;
                     prevAnnotation = annotation;
 
                 } else {
@@ -502,6 +506,7 @@ public class Path {
                     // Updated the prevName, since we don't always create an instruction on name changes the previous
                     // name can be an old name. This leads to incorrect turn instructions due to name changes
                     prevName = name;
+                    prevEdge = edge;
                 }
 
                 updatePointsAndInstruction(edge, wayGeo);
@@ -573,19 +578,13 @@ public class Path {
                 need a turn instruction
                  */
 
-                int prevEdge = -1;
-                EdgeIterator flagIter = outEdgeExplorer.setBaseNode(prevNode);
-                while (flagIter.next()) {
-                    if (flagIter.getAdjNode() == baseNode || flagIter.getBaseNode() == baseNode)
-                        prevEdge = flagIter.getEdge();
-
-                }
-                if (prevEdge == -1) {
-                    throw new IllegalStateException("Couldn't find the previous edge for " + prevNode + "-" + baseNode + "-" + adjNode);
+                if(prevEdge == null){
+                    logger.warn("Previous edge was null");
+                    return sign;
                 }
 
                 long flag = edge.getFlags();
-                long prevFlag = graph.getEdgeIteratorState(prevEdge, baseNode).getFlags();
+                long prevFlag = prevEdge.getFlags();
 
                 boolean surroundingStreetsAreSlower = surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 1);
 

@@ -309,7 +309,7 @@ public class RoutingAlgorithmWithOSMIT {
         OneRun run = new OneRun();
         run.add(50.016923, 11.514187, 0, 0);
         run.add(50.019129, 11.500325, 0, 0);
-        run.add(50.023623, 11.56929, 7340, 98);
+        run.add(50.023623, 11.56929, 7069, 180);
         list.add(run);
 
         runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
