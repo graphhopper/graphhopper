@@ -85,9 +85,11 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private EncodedValue highwayEncoder;
     private EncodedValue transportModeEncoder;
     private EncodedValue accessEncoder;
+    private EncodedValue tollEncoder;
     private boolean storeHeight = false;
     private boolean storeWeight = false;
     private boolean storeWidth = false;
+    private boolean storeToll = false;
     private EncodedValue spatialEncoder;
     private int spatialRules = 0;
     private SpatialRuleLookup spatialRuleLookup;
@@ -104,6 +106,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         this.setStoreHeight(properties.getBool("store_height", false));
         this.setStoreWeight(properties.getBool("store_weight", false));
         this.setStoreWidth(properties.getBool("store_width", false));
+        this.setStoreToll(properties.getBool("store_toll", false));
         this.setSpatialRules(properties.getInt("spatial_rules", 0));
     }
 
@@ -202,6 +205,11 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         if (isStoreWidth()) {
             widthEncoder = new EncodedDoubleValue("width restriction", shift, 6, 0.1, 0, 6, true);
             shift += widthEncoder.getBits();
+        }
+
+        if (isStoreToll()) {
+            tollEncoder = new EncodedValue("toll", shift, 1, 1, 0, 1, true);
+            shift += tollEncoder.getBits();
         }
 
         highwayEncoder = new EncodedValue("highway", shift, 5, 1, 0, highwayMap.size(), true);
@@ -364,6 +372,12 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             if (isStoreWidth()) {
                 List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical");
                 flags = extractMeter(way, flags, widthEncoder, widthTags);
+            }
+
+            if (isStoreToll()) {
+                if (way.hasTag("toll", "yes")) {
+                    flags = tollEncoder.setValue(flags, 1);
+                }
             }
 
             // SURFACE
@@ -727,6 +741,13 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return widthEncoder.getDoubleValue(flags);
     }
 
+    public boolean isTollRoad(EdgeIteratorState edge) {
+        if (!isStoreToll())
+            return false;
+        long flags = edge.getFlags();
+        return tollEncoder.getValue(flags) == 1;
+    }
+
     @Override
     public long flagsDefault(boolean forward, boolean backward) {
         // just pick car mode to set access values?
@@ -861,6 +882,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
                 "|store_height=" + storeHeight +
                 "|store_weight=" + storeWeight +
                 "|store_width=" + storeWidth +
+                "|store_toll=" + storeToll +
                 "|spatial_rules=" + spatialRules;
     }
 
@@ -897,5 +919,14 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private void cloneDoubleAttribute(PMap weightingMap, ConfigMap cMap, String key, double _default) {
         if (weightingMap.has(key))
             cMap.put(key, weightingMap.getDouble(key, _default));
+    }
+
+    public boolean isStoreToll() {
+        return storeToll;
+    }
+
+    public DataFlagEncoder setStoreToll(boolean storeToll) {
+        this.storeToll = storeToll;
+        return this;
     }
 }
