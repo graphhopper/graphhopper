@@ -256,19 +256,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 need a turn instruction
                  */
 
-        int prevEdge = -1;
-        EdgeIterator flagIter = crossingExplorer.setBaseNode(baseNode);
-        while (flagIter.next()) {
-            if (flagIter.getAdjNode() == prevNode || flagIter.getBaseNode() == prevNode)
-                prevEdge = flagIter.getEdge();
-
-        }
-        if (prevEdge == -1) {
-            throw new IllegalStateException("Couldn't find the edges for " + prevNode + "-" + baseNode + "-" + adjNode);
+        if (prevEdge == null) {
+            // TODO Should we log this case?
+            return sign;
         }
 
         long flag = edge.getFlags();
-        long prevFlag = graph.getEdgeIteratorState(prevEdge, baseNode).getFlags();
+        long prevFlag = prevEdge.getFlags();
 
         boolean surroundingStreetsAreSlower = surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 1);
 
