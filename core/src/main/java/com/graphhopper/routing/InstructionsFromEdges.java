@@ -224,6 +224,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         GHPoint point = getPointForOrientationCalculation(edge);
         double lat = point.getLat();
         double lon = point.getLon();
+        prevOrientation = Helper.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
         int sign = calculateSign(lat, lon);
 
         boolean forceInstruction = false;
@@ -358,9 +359,19 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         return false;
     }
 
+    private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl) {
+        // skip adjNode
+        int len = pl.size() - 1;
+        for (int i = 0; i < len; i++) {
+            prevInstruction.getPoints().add(pl, i);
+        }
+        double newDist = edge.getDistance();
+        prevInstruction.setDistance(newDist + prevInstruction.getDistance());
+        prevInstruction.setTime(weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE)
+                + prevInstruction.getTime());
+    }
 
     private double calculateOrientationDelta(double latitude, double longitude) {
-        prevOrientation = Helper.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
         double orientation = Helper.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
         orientation = Helper.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
         return orientation - prevOrientation;
@@ -395,18 +406,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             return Instruction.TURN_SHARP_LEFT;
         else
             return Instruction.TURN_SHARP_RIGHT;
-    }
-
-    private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl) {
-        // skip adjNode
-        int len = pl.size() - 1;
-        for (int i = 0; i < len; i++) {
-            prevInstruction.getPoints().add(pl, i);
-        }
-        double newDist = edge.getDistance();
-        prevInstruction.setDistance(newDist + prevInstruction.getDistance());
-        prevInstruction.setTime(weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE)
-                + prevInstruction.getTime());
     }
 
     class SurroundingEdges {
