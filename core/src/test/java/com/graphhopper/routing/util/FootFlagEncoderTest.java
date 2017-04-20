@@ -93,6 +93,12 @@ public class FootFlagEncoderTest {
 
         way.setTag("sidewalk", "none");
         assertFalse(footEncoder.acceptWay(way) > 0);
+
+        way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("sidewalk", "left");
+        way.setTag("access", "private");
+        assertFalse(footEncoder.acceptWay(way) > 0);
         way.clearTags();
 
         way.setTag("highway", "pedestrian");
