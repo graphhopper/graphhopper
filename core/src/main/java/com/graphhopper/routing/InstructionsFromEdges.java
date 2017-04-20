@@ -9,6 +9,9 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final Graph graph;
     private final Weighting weighting;
@@ -229,7 +232,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             forceInstruction = true;
         }
 
-        int nrOfPossibleTurns = nrOfPossibleTurns(baseNode, prevNode, adjNode);
+        SurroundingEdges surroundingEdges = new SurroundingEdges(prevEdge, edge, encoder, prevNode, baseNode, adjNode);
+        int nrOfPossibleTurns = surroundingEdges.nrOfPossibleTurns();
 
         // there is no other turn possible
         if (nrOfPossibleTurns <= 1) {
@@ -242,20 +246,19 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                          * Don't show an instruction if the user is following a street, even though the street is
                          * bending. We should only do this, if following the street is the obvious choice.
                          */
-            if (isNameSimilar(name, prevName) && surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 2)) {
+            if (isNameSimilar(name, prevName) && surroundingEdges.surroundingStreetsAreSlowerByFactor(2)) {
                 return returnForcedInstructionOrIgnore(forceInstruction, sign);
             }
 
             return sign;
         }
 
-                /*
-                The current state is a bit uncertain. So we are going more or less straight sign < 2
-                So it really depends on the surrounding street if we need a turn instruction or not
-                In most cases this will be a simple follow the current street and we don't necessarily
-                need a turn instruction
-                 */
-
+        /*
+        The current state is a bit uncertain. So we are going more or less straight sign < 2
+        So it really depends on the surrounding street if we need a turn instruction or not
+        In most cases this will be a simple follow the current street and we don't necessarily
+        need a turn instruction
+         */
         int prevEdge = -1;
         EdgeIterator flagIter = crossingExplorer.setBaseNode(baseNode);
         while (flagIter.next()) {
@@ -270,12 +273,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         long flag = edge.getFlags();
         long prevFlag = graph.getEdgeIteratorState(prevEdge, baseNode).getFlags();
 
-        boolean surroundingStreetsAreSlower = surroundingStreetsAreSlowerByFactor(baseNode, prevNode, adjNode, 1);
+        boolean surroundingStreetsAreSlower = surroundingEdges.surroundingStreetsAreSlowerByFactor(1);
 
         // There is at least one other possibility to turn, and we are almost going straight
         // Check the other turns if one of them is also going almost straight
         // If not, we don't need a turn instruction
-        EdgeIteratorState otherContinue = getOtherContinue(baseNode, prevNode, adjNode);
+        EdgeIteratorState otherContinue = surroundingEdges.getOtherContinue();
 
         // Signs provide too less detail, so we use the delta for a precise comparision
         double delta = calculateOrientationDelta(lat, lon);
@@ -313,7 +316,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         if (!surroundingStreetsAreSlower) {
             if (Math.abs(delta) > .4
-                    || isLeavingCurrentStreet(flag, prevFlag, baseNode, prevNode, adjNode, name)) {
+                    || surroundingEdges.isLeavingCurrentStreet(name)) {
                 // Leave the current road -> create instruction
                 return sign;
 
@@ -341,114 +344,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         if (forceInstruction)
             return sign;
         return Instruction.IGNORE;
-    }
-
-    /**
-     * If the name and prevName changes this method checks if either the current street is continued on a
-     * different edge or if the edge we are turning onto is continued on a different edge.
-     * If either of these properties is true, we can be quite certain that a turn instruction should be provided.
-     */
-    private boolean isLeavingCurrentStreet(long flag, long prevFlag, int baseNode, int prevNode, int adjNode, String name) {
-        if (isNameSimilar(name, prevName)) {
-            return false;
-        }
-
-        // If flags are changing, there might be a chance we find these flags on a different edge
-        boolean checkFlag = flag != prevFlag;
-
-        EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
-        while (edgeIter.next()) {
-            if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
-                String edgeName = edgeIter.getName();
-                long edgeFlag = edgeIter.getFlags();
-                // leave the current street || enter a different street
-                if (isTheSameStreet(prevName, prevFlag, edgeName, edgeFlag, checkFlag)
-                        || isTheSameStreet(name, flag, edgeName, edgeFlag, checkFlag)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean isTheSameStreet(String name1, long flags1, String name2, long flags2, boolean checkFlag) {
-        if (isNameSimilar(name1, name2)) {
-            if (!checkFlag || flags1 == flags2) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Checks the other crossings for a street that is going more or less straight
-     */
-    private EdgeIteratorState getOtherContinue(int baseNode, int prevNode, int adjNode) {
-        EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
-        int tmpSign;
-        while (edgeIter.next()) {
-            if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
-                GHPoint point = getPointForOrientationCalculation(edgeIter);
-                tmpSign = calculateSign(point.getLat(), point.getLon());
-                if (Math.abs(tmpSign) <= 1) {
-                    return edgeIter;
-                }
-            }
-        }
-        return null;
-    }
-
-    /**
-     * Checks if the surrounding streets are slower. If they are, this indicates, that we are staying
-     * on the prominent street that one would follow anyway.
-     */
-    private boolean surroundingStreetsAreSlowerByFactor(int baseNode, int prevNode, int adjNode, double factor) {
-        EdgeIterator edgeIter = crossingExplorer.setBaseNode(baseNode);
-        double pathSpeed = -1;
-        double maxSurroundingSpeed = -1;
-        double tmpSpeed;
-        while (edgeIter.next()) {
-            if (encoder instanceof DataFlagEncoder) {
-                tmpSpeed = ((DataFlagEncoder) encoder).getMaxspeed(edgeIter, 0, false);
-                // If one of the edges has no SpeedLimit set, we are not sure
-                // TODO we should calculate the true speed limits here
-                if (tmpSpeed < 1)
-                    return false;
-            } else {
-                tmpSpeed = encoder.getSpeed(edgeIter.getFlags());
-            }
-
-            if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
-                if (tmpSpeed > maxSurroundingSpeed)
-                    maxSurroundingSpeed = tmpSpeed;
-            } else {
-                if (pathSpeed < 0) {
-                    pathSpeed = tmpSpeed;
-                } else {
-                    // Speed-Change on the path indicates, that we change road types, show instruction
-                    if (tmpSpeed != pathSpeed) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        // Surrounding streets need to be slower by a factor
-        return maxSurroundingSpeed * factor < pathSpeed;
-    }
-
-    /**
-     * This method calculates the number of possible turns.
-     * The edge we are comming from and the edge we are going to is ignored.
-     */
-    private int nrOfPossibleTurns(int baseNode, int prevNode, int adjNode) {
-        EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
-        int count = 1;
-        while (edgeIter.next()) {
-            if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode)
-                count++;
-        }
-        return count;
     }
 
     private boolean isNameSimilar(String name1, String name2) {
@@ -512,5 +407,137 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevInstruction.setDistance(newDist + prevInstruction.getDistance());
         prevInstruction.setTime(weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE)
                 + prevInstruction.getTime());
+    }
+
+    class SurroundingEdges {
+
+        final EdgeIteratorState prevEdge;
+        final EdgeIteratorState currentEdge;
+
+        // Streets that are alternative turns, excluding oneways in the wrong direction
+        final List<EdgeIteratorState> reachableEdges;
+
+        // All Streets surrounding the turn, including oneways in the wrong direction
+        final List<EdgeIteratorState> surroundingEdges;
+
+        final FlagEncoder encoder;
+
+        SurroundingEdges(EdgeIteratorState prevEdge, EdgeIteratorState currentEdge, FlagEncoder encoder, int prevNode, int baseNode, int adjNode) {
+            this.prevEdge = prevEdge;
+            this.currentEdge = currentEdge;
+            this.encoder = encoder;
+
+            EdgeIteratorState tmpEdge;
+
+            surroundingEdges = new ArrayList<>();
+            reachableEdges = new ArrayList<>();
+            EdgeIterator edgeIter = crossingExplorer.setBaseNode(baseNode);
+            while (edgeIter.next()) {
+                if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
+                    tmpEdge = edgeIter.detach(false);
+                    surroundingEdges.add(tmpEdge);
+                    if (encoder.isForward(tmpEdge.getFlags())) {
+                        reachableEdges.add(tmpEdge);
+                    }
+                }
+            }
+        }
+
+        /**
+         * Calculates the Number of possible turns, including the current turn.
+         * If there is only one turn possible, e.g. continue straight on the road is a turn,
+         * the method will return 1.
+         */
+        int nrOfPossibleTurns() {
+            return 1 + reachableEdges.size();
+        }
+
+        /**
+         * Checks if the surrounding streets are slower. If they are, this indicates, that we are staying
+         * on the prominent street that one would follow anyway.
+         */
+        boolean surroundingStreetsAreSlowerByFactor(double factor) {
+            double tmpSpeed = getSpeed(currentEdge);
+            double pathSpeed = getSpeed(prevEdge);
+
+            // Speed-Change on the path indicates, that we change road types, show instruction
+            if (pathSpeed != tmpSpeed || pathSpeed < 1) {
+                return false;
+            }
+
+            double maxSurroundingSpeed = -1;
+
+            for (EdgeIteratorState edge : surroundingEdges) {
+                tmpSpeed = getSpeed(edge);
+                if (tmpSpeed < 1) {
+                    // This might happen for the DataFlagEncoder, might create unnecessary turn instructions
+                    return false;
+                }
+                if (tmpSpeed > maxSurroundingSpeed) {
+                    maxSurroundingSpeed = tmpSpeed;
+                }
+            }
+
+            // Surrounding streets need to be slower by a factor
+            return maxSurroundingSpeed * factor < pathSpeed;
+        }
+
+        private double getSpeed(EdgeIteratorState edge) {
+            if (encoder instanceof DataFlagEncoder) {
+                return ((DataFlagEncoder) encoder).getMaxspeed(edge, 0, false);
+            } else {
+                return encoder.getSpeed(edge.getFlags());
+            }
+        }
+
+        /**
+         * Returns an edge that is going into more or less straight compared to the prevEdge.
+         * If there is none, return null.
+         */
+        private EdgeIteratorState getOtherContinue() {
+            int tmpSign;
+            for (EdgeIteratorState edge : reachableEdges) {
+                GHPoint point = getPointForOrientationCalculation(edge);
+                tmpSign = calculateSign(point.getLat(), point.getLon());
+                if (Math.abs(tmpSign) <= 1) {
+                    return edge;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * If the name and prevName changes this method checks if either the current street is continued on a
+         * different edge or if the edge we are turning onto is continued on a different edge.
+         * If either of these properties is true, we can be quite certain that a turn instruction should be provided.
+         */
+        private boolean isLeavingCurrentStreet(String name) {
+            if (isNameSimilar(name, prevName)) {
+                return false;
+            }
+
+            // If flags are changing, there might be a chance we find these flags on a different edge
+            boolean checkFlag = currentEdge.getFlags() != prevEdge.getFlags();
+            for (EdgeIteratorState edge : reachableEdges) {
+                String edgeName = edge.getName();
+                long edgeFlag = edge.getFlags();
+                // leave the current street || enter a different street
+                if (isTheSameStreet(prevName, prevEdge.getFlags(), edgeName, edgeFlag, checkFlag)
+                        || isTheSameStreet(name, currentEdge.getFlags(), edgeName, edgeFlag, checkFlag)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        private boolean isTheSameStreet(String name1, long flags1, String name2, long flags2, boolean checkFlag) {
+            if (isNameSimilar(name1, name2)) {
+                if (!checkFlag || flags1 == flags2) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
     }
 }
