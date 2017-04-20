@@ -1187,7 +1187,6 @@ public class GraphHopper implements GraphHopperAPI {
         PrepareRoutingSubnetworks preparation = new PrepareRoutingSubnetworks(ghStorage, encodingManager.fetchEdgeEncoders());
         preparation.setMinNetworkSize(minNetworkSize);
         preparation.setMinOneWayNetworkSize(minOneWayNetworkSize);
-        logger.info("start finding subnetworks, " + Helper.getMemInfo());
         preparation.doWork();
         int currNodeCount = ghStorage.getNodes();
         logger.info("edges: " + ghStorage.getAllEdges().getMaxId() + ", nodes " + currNodeCount

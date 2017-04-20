@@ -71,6 +71,7 @@ public class PrepareRoutingSubnetworks {
         if (minNetworkSize <= 0 && minOneWayNetworkSize <= 0)
             return;
 
+        logger.info("start finding subnetworks (min:" + minNetworkSize + ", min one way:" + minOneWayNetworkSize + ") " + Helper.getMemInfo());
         int unvisitedDeadEnds = 0;
         for (FlagEncoder encoder : encoders) {
             // mark edges for one vehicle as inaccessible

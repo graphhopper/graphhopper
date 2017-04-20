@@ -51,7 +51,7 @@ public class GraphHopperWebTest {
         PathWrapper arsp = rsp.getBest();
         assertEquals(2138.3, arsp.getDistance(), 1e-1);
         assertEquals(17, arsp.getPoints().getSize());
-        assertEquals(5, arsp.getInstructions().getSize());
+        assertEquals(5, arsp.getInstructions().size());
         assertEquals("(0,Geradeaus auf A 100,1268.519329705091,65237)", arsp.getInstructions().get(0).toString());
         assertEquals(11, arsp.getInstructions().get(0).getPoints().size());
 
