@@ -28,6 +28,8 @@ import com.graphhopper.storage.BaseGraph.CommonEdgeIterator;
 import com.graphhopper.storage.BaseGraph.EdgeIterable;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import static com.graphhopper.util.Helper.nf;
 
@@ -39,10 +41,12 @@ import static com.graphhopper.util.Helper.nf;
  * @author Peter Karich
  */
 public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CHGraphImpl.class);
     private static final double WEIGHT_FACTOR = 1000f;
     // 2 bits for access, for now only 32bit => not Long.MAX
     private static final long MAX_WEIGHT_LONG = (Integer.MAX_VALUE >> 2) << 2;
     private static final double MAX_WEIGHT = (Integer.MAX_VALUE >> 2) / WEIGHT_FACTOR;
+    private static final double MIN_WEIGHT = 1 / WEIGHT_FACTOR;
     final DataAccess shortcuts;
     final DataAccess nodesCH;
     final long scDirMask = PrepareEncoder.getScDirMask();
@@ -283,6 +287,11 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             throw new IllegalArgumentException("weight cannot be negative but was " + weight);
 
         long weightLong;
+
+        if (weight < MIN_WEIGHT) {
+            LOGGER.warn("Setting weights smaller than " + MIN_WEIGHT + " is not allowed in CHGraphImpl#setWeight. You passed: " + weight);
+            weight = MIN_WEIGHT;
+        }
         if (weight > MAX_WEIGHT)
             weightLong = MAX_WEIGHT_LONG;
         else
