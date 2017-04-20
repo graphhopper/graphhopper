@@ -1,6 +1,22 @@
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
@@ -9,9 +25,13 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
-import java.util.ArrayList;
-import java.util.List;
-
+/**
+ * This class calculates instructions from the edges in a Path.
+ *
+ * @author Peter Karich
+ * @author Robin Boldt
+ * @author jan soe
+ */
 public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final Graph graph;
     private final Weighting weighting;
@@ -221,11 +241,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     }
 
     private int getTurn(EdgeIteratorState edge, int baseNode, int prevNode, int adjNode, InstructionAnnotation annotation, String name) {
-        GHPoint point = getPointForOrientationCalculation(edge);
+        GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
         double lat = point.getLat();
         double lon = point.getLon();
         prevOrientation = Helper.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
-        int sign = calculateSign(lat, lon);
+        int sign = InstructionsHelper.calculateSign(prevLat, prevLon, lat, lon, prevOrientation);
 
         boolean forceInstruction = false;
 
@@ -233,7 +253,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             forceInstruction = true;
         }
 
-        SurroundingEdges surroundingEdges = new SurroundingEdges(prevEdge, edge, encoder, prevNode, baseNode, adjNode);
+        InstructionsSurroundingEdges surroundingEdges = new InstructionsSurroundingEdges(prevEdge, edge, encoder, crossingExplorer, nodeAccess, prevNode, baseNode, adjNode);
         int nrOfPossibleTurns = surroundingEdges.nrOfPossibleTurns();
 
         // there is no other turn possible
@@ -247,7 +267,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                          * Don't show an instruction if the user is following a street, even though the street is
                          * bending. We should only do this, if following the street is the obvious choice.
                          */
-            if (isNameSimilar(name, prevName) && surroundingEdges.surroundingStreetsAreSlowerByFactor(2)) {
+            if (InstructionsHelper.isNameSimilar(name, prevName) && surroundingEdges.surroundingStreetsAreSlowerByFactor(2)) {
                 return returnForcedInstructionOrIgnore(forceInstruction, sign);
             }
 
@@ -279,25 +299,25 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // There is at least one other possibility to turn, and we are almost going straight
         // Check the other turns if one of them is also going almost straight
         // If not, we don't need a turn instruction
-        EdgeIteratorState otherContinue = surroundingEdges.getOtherContinue();
+        EdgeIteratorState otherContinue = surroundingEdges.getOtherContinue(prevLat, prevLon, prevOrientation);
 
         // Signs provide too less detail, so we use the delta for a precise comparision
-        double delta = calculateOrientationDelta(lat, lon);
+        double delta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, lat, lon, prevOrientation);
 
         // This state is bad! Two streets are going more or less straight
         // Happens a lot for trunk_links
         // For _links, comparing flags works quite good, as links usually have different speeds => different flags
         if (otherContinue != null) {
             //We are at a fork
-            if (!isNameSimilar(name, prevName)
-                    || isNameSimilar(otherContinue.getName(), prevName)
+            if (!InstructionsHelper.isNameSimilar(name, prevName)
+                    || InstructionsHelper.isNameSimilar(otherContinue.getName(), prevName)
                     || prevFlag != flag
                     || prevFlag == otherContinue.getFlags()
                     || !surroundingStreetsAreSlower) {
-                GHPoint tmpPoint = getPointForOrientationCalculation(otherContinue);
-                double otherDelta = calculateOrientationDelta(tmpPoint.getLat(), tmpPoint.getLon());
+                GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue, nodeAccess);
+                double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);
 
-                if (Math.abs(delta) < .1 && Math.abs(otherDelta) > .15 && isNameSimilar(name, prevName)) {
+                if (Math.abs(delta) < .1 && Math.abs(otherDelta) > .15 && InstructionsHelper.isNameSimilar(name, prevName)) {
                     return Instruction.CONTINUE_ON_STREET;
                 }
 
@@ -317,7 +337,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         if (!surroundingStreetsAreSlower) {
             if (Math.abs(delta) > .4
-                    || surroundingEdges.isLeavingCurrentStreet(name)) {
+                    || surroundingEdges.isLeavingCurrentStreet(prevName, name)) {
                 // Leave the current road -> create instruction
                 return sign;
 
@@ -327,36 +347,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         return returnForcedInstructionOrIgnore(forceInstruction, sign);
     }
 
-    private GHPoint getPointForOrientationCalculation(EdgeIteratorState edgeIteratorState) {
-        double tmpLat;
-        double tmpLon;
-        PointList tmpWayGeo = edgeIteratorState.fetchWayGeometry(3);
-        if (tmpWayGeo.getSize() <= 2) {
-            tmpLat = nodeAccess.getLatitude(edgeIteratorState.getAdjNode());
-            tmpLon = nodeAccess.getLongitude(edgeIteratorState.getAdjNode());
-        } else {
-            tmpLat = tmpWayGeo.getLatitude(1);
-            tmpLon = tmpWayGeo.getLongitude(1);
-        }
-        return new GHPoint(tmpLat, tmpLon);
-    }
-
     private int returnForcedInstructionOrIgnore(boolean forceInstruction, int sign) {
         if (forceInstruction)
             return sign;
         return Instruction.IGNORE;
-    }
-
-    private boolean isNameSimilar(String name1, String name2) {
-        // We don't want two empty names to be similar
-        // The idea is, if there are only a random tracks, they usually don't have names
-        if (name1.isEmpty() && name2.isEmpty()) {
-            return false;
-        }
-        if (name1.equals(name2)) {
-            return true;
-        }
-        return false;
     }
 
     private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl) {
@@ -371,172 +365,4 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 + prevInstruction.getTime());
     }
 
-    private double calculateOrientationDelta(double latitude, double longitude) {
-        double orientation = Helper.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
-        orientation = Helper.ANGLE_CALC.alignOrientation(prevOrientation, orientation);
-        return orientation - prevOrientation;
-    }
-
-    private int calculateSign(double latitude, double longitude) {
-        double delta = calculateOrientationDelta(latitude, longitude);
-        double absDelta = Math.abs(delta);
-
-        // TODO not only calculate the mathematical orientation, but also compare to other streets
-        // TODO If there is one street turning slight right and one right, but no straight street
-        // TODO We can assume the slight right street would be a continue
-        if (absDelta < 0.2) {
-            // 0.2 ~= 11°
-            return Instruction.CONTINUE_ON_STREET;
-
-        } else if (absDelta < 0.8) {
-            // 0.8 ~= 40°
-            if (delta > 0)
-                return Instruction.TURN_SLIGHT_LEFT;
-            else
-                return Instruction.TURN_SLIGHT_RIGHT;
-
-        } else if (absDelta < 1.8) {
-            // 1.8 ~= 103°
-            if (delta > 0)
-                return Instruction.TURN_LEFT;
-            else
-                return Instruction.TURN_RIGHT;
-
-        } else if (delta > 0)
-            return Instruction.TURN_SHARP_LEFT;
-        else
-            return Instruction.TURN_SHARP_RIGHT;
-    }
-
-    class SurroundingEdges {
-
-        final EdgeIteratorState prevEdge;
-        final EdgeIteratorState currentEdge;
-
-        // Streets that are alternative turns, excluding oneways in the wrong direction
-        final List<EdgeIteratorState> reachableEdges;
-
-        // All Streets surrounding the turn, including oneways in the wrong direction
-        final List<EdgeIteratorState> surroundingEdges;
-
-        final FlagEncoder encoder;
-
-        SurroundingEdges(EdgeIteratorState prevEdge, EdgeIteratorState currentEdge, FlagEncoder encoder, int prevNode, int baseNode, int adjNode) {
-            this.prevEdge = prevEdge;
-            this.currentEdge = currentEdge;
-            this.encoder = encoder;
-
-            EdgeIteratorState tmpEdge;
-
-            surroundingEdges = new ArrayList<>();
-            reachableEdges = new ArrayList<>();
-            EdgeIterator edgeIter = crossingExplorer.setBaseNode(baseNode);
-            while (edgeIter.next()) {
-                if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
-                    tmpEdge = edgeIter.detach(false);
-                    surroundingEdges.add(tmpEdge);
-                    if (encoder.isForward(tmpEdge.getFlags())) {
-                        reachableEdges.add(tmpEdge);
-                    }
-                }
-            }
-        }
-
-        /**
-         * Calculates the Number of possible turns, including the current turn.
-         * If there is only one turn possible, e.g. continue straight on the road is a turn,
-         * the method will return 1.
-         */
-        int nrOfPossibleTurns() {
-            return 1 + reachableEdges.size();
-        }
-
-        /**
-         * Checks if the surrounding streets are slower. If they are, this indicates, that we are staying
-         * on the prominent street that one would follow anyway.
-         */
-        boolean surroundingStreetsAreSlowerByFactor(double factor) {
-            double tmpSpeed = getSpeed(currentEdge);
-            double pathSpeed = getSpeed(prevEdge);
-
-            // Speed-Change on the path indicates, that we change road types, show instruction
-            if (pathSpeed != tmpSpeed || pathSpeed < 1) {
-                return false;
-            }
-
-            double maxSurroundingSpeed = -1;
-
-            for (EdgeIteratorState edge : surroundingEdges) {
-                tmpSpeed = getSpeed(edge);
-                if (tmpSpeed < 1) {
-                    // This might happen for the DataFlagEncoder, might create unnecessary turn instructions
-                    return false;
-                }
-                if (tmpSpeed > maxSurroundingSpeed) {
-                    maxSurroundingSpeed = tmpSpeed;
-                }
-            }
-
-            // Surrounding streets need to be slower by a factor
-            return maxSurroundingSpeed * factor < pathSpeed;
-        }
-
-        private double getSpeed(EdgeIteratorState edge) {
-            if (encoder instanceof DataFlagEncoder) {
-                return ((DataFlagEncoder) encoder).getMaxspeed(edge, 0, false);
-            } else {
-                return encoder.getSpeed(edge.getFlags());
-            }
-        }
-
-        /**
-         * Returns an edge that is going into more or less straight compared to the prevEdge.
-         * If there is none, return null.
-         */
-        private EdgeIteratorState getOtherContinue() {
-            int tmpSign;
-            for (EdgeIteratorState edge : reachableEdges) {
-                GHPoint point = getPointForOrientationCalculation(edge);
-                tmpSign = calculateSign(point.getLat(), point.getLon());
-                if (Math.abs(tmpSign) <= 1) {
-                    return edge;
-                }
-            }
-            return null;
-        }
-
-        /**
-         * If the name and prevName changes this method checks if either the current street is continued on a
-         * different edge or if the edge we are turning onto is continued on a different edge.
-         * If either of these properties is true, we can be quite certain that a turn instruction should be provided.
-         */
-        private boolean isLeavingCurrentStreet(String name) {
-            if (isNameSimilar(name, prevName)) {
-                return false;
-            }
-
-            // If flags are changing, there might be a chance we find these flags on a different edge
-            boolean checkFlag = currentEdge.getFlags() != prevEdge.getFlags();
-            for (EdgeIteratorState edge : reachableEdges) {
-                String edgeName = edge.getName();
-                long edgeFlag = edge.getFlags();
-                // leave the current street || enter a different street
-                if (isTheSameStreet(prevName, prevEdge.getFlags(), edgeName, edgeFlag, checkFlag)
-                        || isTheSameStreet(name, currentEdge.getFlags(), edgeName, edgeFlag, checkFlag)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-        private boolean isTheSameStreet(String name1, long flags1, String name2, long flags2, boolean checkFlag) {
-            if (isNameSimilar(name1, name2)) {
-                if (!checkFlag || flags1 == flags2) {
-                    return true;
-                }
-            }
-            return false;
-        }
-
-    }
 }
