@@ -224,7 +224,9 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
     public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage, boolean createWalkNetwork, Collection<String> gtfsFiles, Collection<String> osmFiles) {
         GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, gtfsStorage);
-        if (!new File(directory.getLocation()).exists()) {
+        if (graphHopperStorage.loadExisting()) {
+            return graphHopperStorage;
+        } else {
             graphHopperStorage.create(1000);
             for (String osmFile : osmFiles) {
                 OSMReader osmReader = new OSMReader(graphHopperStorage);
@@ -257,10 +259,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 new GtfsReader("gtfs_" + i, graphHopperStorage, walkNetworkIndex).readGraph();
             }
             graphHopperStorage.flush();
-        } else {
-            graphHopperStorage.loadExisting();
+            return graphHopperStorage;
         }
-        return graphHopperStorage;
     }
 
 
