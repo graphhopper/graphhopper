@@ -52,6 +52,7 @@ public class GenericWeightingTest {
         properties.put("store_height", true);
         properties.put("store_weight", true);
         properties.put("store_width", true);
+        properties.put("store_toll", true);
         encoder = new DataFlagEncoder(properties);
         em = new EncodingManager(Arrays.asList(encoder), 8);
     }
@@ -114,6 +115,25 @@ public class GenericWeightingTest {
         GenericWeighting weighting = new GenericWeighting(encoder, cMap);
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
         assertEquals(edgeWeight, weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE), .1);
+    }
+
+    @Test
+    public void testToll() {
+        ConfigMap cMap = encoder.readStringMap(new PMap("avoid_toll=true"));
+        GenericWeighting weighting = new GenericWeighting(encoder, cMap);
+
+        ReaderWay way = new ReaderWay(28l);
+        way.setTag("highway", "primary");
+        way.setTag("maxspeed", "10");
+        way.setTag("toll", "yes");
+
+        graph.edge(0, 2, 1, true);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
+        AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, 0.01, 0.01);
+        graph.getEdgeIteratorState(1, 2).setFlags(encoder.handleWayTags(way, 1, 0));
+
+        EdgeIteratorState edge = graph.getEdgeIteratorState(1, 2);
+        assertEquals(Double.POSITIVE_INFINITY, weighting.calcWeight(edge, false, EdgeIterator.NO_EDGE), .1);
     }
 
     @Test

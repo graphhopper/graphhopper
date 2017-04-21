@@ -913,6 +913,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.WEIGHT_LIMIT, 0d);
         cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.WIDTH_LIMIT, 0d);
 
+        if(weightingMap.has(GenericWeighting.AVOID_TOLL)){
+            cMap.put(GenericWeighting.AVOID_TOLL, weightingMap.getBool(GenericWeighting.AVOID_TOLL, false));
+        }
+
         return cMap;
     }
 
