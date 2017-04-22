@@ -85,6 +85,9 @@ public class GraphHopperServlet extends GHBaseServlet {
 
         if (!ghRsp.hasErrors()) {
             try {
+                if(requestPoints.isEmpty()){
+                    throw new IllegalArgumentException("You have to pass at least one point");
+                }
                 List<Double> favoredHeadings = Collections.EMPTY_LIST;
                 try {
                     favoredHeadings = getDoubleParamList(httpReq, "heading");
