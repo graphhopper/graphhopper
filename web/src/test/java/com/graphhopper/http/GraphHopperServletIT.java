@@ -216,4 +216,12 @@ public class GraphHopperServletIT extends BaseServletTester {
         assertTrue("Expected error but was: " + str, str.contains("<message>At least 2 points have to be specified, but was:1</message>"));
         assertTrue("Expected error but was: " + str, str.contains("<hints><error details=\"java"));
     }
+
+    @Test
+    public void testUndefinedPointHeading() throws Exception {
+        JSONObject json = query("point=undefined&heading=0", 400);
+        assertEquals("You have to pass at least one point", json.get("message"));
+        json = query("point=42.554851,1.536198&point=undefined&heading=0&heading=0", 400);
+        assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message"));
+    }
 }
