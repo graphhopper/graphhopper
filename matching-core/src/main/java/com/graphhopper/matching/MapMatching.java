@@ -48,7 +48,7 @@ import java.util.Map.Entry;
  * sequence of map matching candidates. The Viterbi algorithm takes into account
  * the distance between GPX entries and map matching candidates as well as the
  * routing distances between consecutive map matching candidates.
- *
+ * <p>
  * <p>
  * See http://en.wikipedia.org/wiki/Map_matching and Newson, Paul, and John
  * Krumm. "Hidden Markov map matching through noise and sparseness." Proceedings
@@ -68,6 +68,7 @@ public class MapMatching {
     // subsequent candidates.
     private double uTurnDistancePenalty;
 
+    private final Graph graph;
     private final Graph routingGraph;
     private final LocationIndexMatch locationIndex;
     private double measurementErrorSigma = 50.0;
@@ -117,7 +118,7 @@ public class MapMatching {
 
         algoFactory = hopper.getAlgorithmFactory(hints);
 
-        Weighting weighting = null;
+        Weighting weighting;
         CHAlgoFactoryDecorator chFactoryDecorator = hopper.getCHFactoryDecorator();
         boolean forceFlexibleMode = hints.getBool(Parameters.CH.DISABLE, false);
         if (chFactoryDecorator.isEnabled() && !forceFlexibleMode) {
@@ -136,6 +137,7 @@ public class MapMatching {
             this.routingGraph = hopper.getGraphHopperStorage();
         }
 
+        this.graph = hopper.getGraphHopperStorage();
         this.algoOptions = AlgorithmOptions.start(algoOptions).weighting(weighting).build();
         this.nodeCount = routingGraph.getNodes();
     }
@@ -163,6 +165,7 @@ public class MapMatching {
     /**
      * This method does the actual map matching.
      * <p>
+     *
      * @param gpxList the input list with GPX points which should match to edges
      *                of the graph specified in the constructor
      */
@@ -190,7 +193,7 @@ public class MapMatching {
         // by virtual nodes.
         final QueryGraph queryGraph = new QueryGraph(routingGraph).setUseEdgeExplorerCache(true);
         List<QueryResult> allQueryResults = new ArrayList<>();
-        for (Collection<QueryResult> qrs: queriesPerEntry)
+        for (Collection<QueryResult> qrs : queriesPerEntry)
             allQueryResults.addAll(qrs);
         queryGraph.lookup(allQueryResults);
 
@@ -201,7 +204,7 @@ public class MapMatching {
         // most one QueryResult per edge and virtual nodes are inserted into the middle of an edge.
         // Reducing the number of QueryResults improves performance since less shortest/fastest
         // routes need to be computed.
-        queriesPerEntry = dedupeQueryResultsByClosestNode(queriesPerEntry);
+        queriesPerEntry = deduplicateQueryResultsByClosestNode(queriesPerEntry);
 
         logger.debug("================= Query results =================");
         int i = 1;
@@ -209,7 +212,7 @@ public class MapMatching {
             logger.debug("Query results for GPX entry {}", i++);
             for (QueryResult qr : entries) {
                 logger.debug("Node id: {}, virtual: {}, snapped on: {}, pos: {},{}, "
-                        + "query distance: {}", qr.getClosestNode(),
+                                + "query distance: {}", qr.getClosestNode(),
                         isVirtualNode(qr.getClosestNode()), qr.getSnappedPosition(),
                         qr.getSnappedPoint().getLat(), qr.getSnappedPoint().getLon(),
                         qr.getQueryDistance());
@@ -256,7 +259,7 @@ public class MapMatching {
 
         return matchResult;
     }
-    
+
     /**
      * Filters GPX entries to only those which will be used for map matching (i.e. those which
      * are separated by at least 2 * measurementErrorSigman
@@ -283,7 +286,7 @@ public class MapMatching {
      * Find the possible locations (edges) of each GPXEntry in the graph.
      */
     private List<Collection<QueryResult>> lookupGPXEntries(List<GPXEntry> gpxList,
-                                                     EdgeFilter edgeFilter) {
+                                                           EdgeFilter edgeFilter) {
 
         final List<Collection<QueryResult>> gpxEntryLocations = new ArrayList<>();
         for (GPXEntry gpxEntry : gpxList) {
@@ -294,7 +297,7 @@ public class MapMatching {
         return gpxEntryLocations;
     }
 
-    private List<Collection<QueryResult>> dedupeQueryResultsByClosestNode(
+    private List<Collection<QueryResult>> deduplicateQueryResultsByClosestNode(
             List<Collection<QueryResult>> queriesPerEntry) {
         final List<Collection<QueryResult>> result = new ArrayList<>(queriesPerEntry.size());
 
@@ -329,7 +332,7 @@ public class MapMatching {
             final Collection<QueryResult> queryResults = queriesPerEntry.get(i);
 
             List<GPXExtension> candidates = new ArrayList<>();
-            for (QueryResult qr: queryResults) {
+            for (QueryResult qr : queryResults) {
                 int closestNode = qr.getClosestNode();
                 if (queryGraph.isVirtualNode(closestNode)) {
                     // get virtual edges:
@@ -343,7 +346,7 @@ public class MapMatching {
                         virtualEdges.add((VirtualEdgeIteratorState)
                                 queryGraph.getEdgeIteratorState(iter.getEdge(), iter.getAdjNode()));
                     }
-                    if( virtualEdges.size() != 2) {
+                    if (virtualEdges.size() != 2) {
                         throw new RuntimeException("Each virtual node must have exactly 2 "
                                 + "virtual edges (reverse virtual edges are not returned by the "
                                 + "EdgeIterator");
@@ -383,7 +386,7 @@ public class MapMatching {
                     candidates.add(candidate);
                 }
             }
-                
+
             final TimeStep<GPXExtension, GPXEntry, Path> timeStep = new TimeStep<>(gpxEntry, candidates);
             timeSteps.add(timeStep);
         }
@@ -430,7 +433,7 @@ public class MapMatching {
                     }
                 }
 
-                throw new RuntimeException("Sequence is broken for submitted track at time step "
+                throw new IllegalArgumentException("Sequence is broken for submitted track at time step "
                         + timeStepCounter + " (" + originalGpxEntriesCount + " points). "
                         + likelyReasonStr + "observation:" + timeStep.observation + ", "
                         + timeStep.candidates.size() + " candidates: "
@@ -581,8 +584,7 @@ public class MapMatching {
             gpxExtensions.add(queryResult);
         }
         if (edgeMatches.isEmpty()) {
-            throw new IllegalStateException(
-                    "No edge matches found for path. Too short? Sequence size " + seq.size());
+            throw new IllegalArgumentException("No edge matches found for submitted track. Too short? Sequence size " + seq.size());
         }
         EdgeMatch lastEdgeMatch = edgeMatches.get(edgeMatches.size() - 1);
         if (!gpxExtensions.isEmpty() && !equalEdges(currentEdge, lastEdgeMatch.getEdgeState())) {
@@ -640,8 +642,8 @@ public class MapMatching {
             List<Collection<QueryResult>> queriesPerEntry, EdgeExplorer explorer) {
         // TODO For map key, use the traversal key instead of string!
         Map<String, EdgeIteratorState> virtualEdgesMap = new HashMap<>();
-        for (Collection<QueryResult> queryResults: queriesPerEntry) {
-            for (QueryResult qr: queryResults) {
+        for (Collection<QueryResult> queryResults : queriesPerEntry) {
+            for (QueryResult qr : queryResults) {
                 if (isVirtualNode(qr.getClosestNode())) {
                     EdgeIterator iter = explorer.setBaseNode(qr.getClosestNode());
                     while (iter.next()) {
@@ -746,7 +748,7 @@ public class MapMatching {
     }
 
     public Path calcPath(MatchResult mr) {
-        MapMatchedPath p = new MapMatchedPath(routingGraph, algoOptions.getWeighting());
+        MapMatchedPath p = new MapMatchedPath(graph, algoOptions.getWeighting());
         if (!mr.getEdgeMatches().isEmpty()) {
             int prevEdge = EdgeIterator.NO_EDGE;
             p.setFromNode(mr.getEdgeMatches().get(0).getEdgeState().getBaseNode());
