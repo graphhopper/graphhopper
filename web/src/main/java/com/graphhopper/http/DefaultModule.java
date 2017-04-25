@@ -67,7 +67,7 @@ public class DefaultModule extends AbstractModule {
 
     @Provides
     @Singleton
-    GraphHopper createGraphHopper(CmdArgs args) {
+    protected GraphHopper createGraphHopper(CmdArgs args) {
         GraphHopper graphHopper = new GraphHopperOSM() {
             @Override
             protected void loadOrPrepareLM() {
@@ -107,11 +107,7 @@ public class DefaultModule extends AbstractModule {
                     throw new RuntimeException(ex);
                 }
         }
-        graphHopper.importOrLoad();
-        logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
-                + ", data_reader_file:" + graphHopper.getDataReaderFile()
-                + ", flag_encoders:" + graphHopper.getEncodingManager()
-                + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
+
         return graphHopper;
     }
 
