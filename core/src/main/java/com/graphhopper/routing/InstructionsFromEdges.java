@@ -33,7 +33,7 @@ import com.graphhopper.util.shapes.GHPoint;
  * @author jan soe
  */
 public class InstructionsFromEdges implements Path.EdgeVisitor {
-    private final Graph graph;
+
     private final Weighting weighting;
     private final FlagEncoder encoder;
     private final NodeAccess nodeAccess;
@@ -74,7 +74,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private EdgeExplorer crossingExplorer;
 
     public InstructionsFromEdges(int tmpNode, Graph graph, Weighting weighting, FlagEncoder encoder, NodeAccess nodeAccess, Translation tr, InstructionList ways) {
-        this.graph = graph;
         this.weighting = weighting;
         this.encoder = encoder;
         this.nodeAccess = nodeAccess;
