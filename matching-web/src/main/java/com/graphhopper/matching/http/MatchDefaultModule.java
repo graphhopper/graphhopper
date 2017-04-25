@@ -17,14 +17,17 @@
  */
 package com.graphhopper.matching.http;
 
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
+import com.graphhopper.GraphHopper;
 import com.graphhopper.http.DefaultModule;
 import com.graphhopper.matching.LocationIndexMatch;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.CmdArgs;
 
 /**
- *
  * @author Peter Karich
  */
 public class MatchDefaultModule extends DefaultModule {
@@ -33,15 +36,17 @@ public class MatchDefaultModule extends DefaultModule {
         super(args);
     }
 
-    @Override
-    protected void configure() {
-        super.configure();
+    @Provides
+    @Singleton
+    LocationIndexMatch createLocationIndexMatch(GraphHopper hopper) {
+        return new LocationIndexMatch(hopper.getGraphHopperStorage(),
+                (LocationIndexTree) hopper.getLocationIndex());
+    }
 
-        LocationIndexMatch locationMatch = new LocationIndexMatch(getGraphHopper().getGraphHopperStorage(),
-                (LocationIndexTree) getGraphHopper().getLocationIndex());
-        bind(LocationIndexMatch.class).toInstance(locationMatch);
-
-        Double timeout = args.getDouble("web.gps.max_accuracy", 100);
-        bind(Double.class).annotatedWith(Names.named("gps.max_accuracy")).toInstance(timeout);
+    @Provides
+    @Singleton
+    @Named("gps.max_accuracy")
+    double getMaxGPSAccuracy() {
+        return args.getDouble("web.gps.max_accuracy", 100);
     }
 }
