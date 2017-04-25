@@ -21,10 +21,11 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Module;
 import com.google.inject.servlet.GuiceFilter;
 import com.graphhopper.http.GHServer;
+import com.graphhopper.http.GraphHopperModule;
+import com.graphhopper.http.GraphHopperServletModule;
 import com.graphhopper.util.CmdArgs;
 
 /**
- *
  * @author Peter Karich
  */
 public class MatchServer extends GHServer {
@@ -34,6 +35,7 @@ public class MatchServer extends GHServer {
         args.put("prepare.ch.weightings", "no");
         new MatchServer(args).start();
     }
+
     private final CmdArgs args;
 
     public MatchServer(CmdArgs args) {
@@ -48,8 +50,11 @@ public class MatchServer extends GHServer {
             protected void configure() {
                 binder().requireExplicitBindings();
 
-                install(new MatchDefaultModule(args));
-                install(new MatchServletModule(args));
+                install(new GraphHopperModule(args));
+                install(new GraphHopperServletModule(args));
+
+                install(new MapMatchingModule(args));
+                install(new MapMatchingServletModule(args));
 
                 bind(GuiceFilter.class);
             }

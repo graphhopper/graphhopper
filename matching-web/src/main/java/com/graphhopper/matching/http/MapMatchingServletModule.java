@@ -17,18 +17,17 @@
  */
 package com.graphhopper.matching.http;
 
-import com.graphhopper.http.GHServletModule;
+import com.google.inject.servlet.ServletModule;
 import com.graphhopper.util.CmdArgs;
+
 import javax.inject.Singleton;
 
 /**
- *
  * @author Peter Karich
  */
-public class MatchServletModule extends GHServletModule {
+public class MapMatchingServletModule extends ServletModule {
 
-    public MatchServletModule(CmdArgs args) {
-        super(args);
+    public MapMatchingServletModule(CmdArgs args) {
     }
 
     @Override

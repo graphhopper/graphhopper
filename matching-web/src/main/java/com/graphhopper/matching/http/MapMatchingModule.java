@@ -17,30 +17,33 @@
  */
 package com.graphhopper.matching.http;
 
+import com.google.inject.AbstractModule;
+
 import com.google.inject.Provides;
-import com.google.inject.Singleton;
-import com.google.inject.name.Named;
-import com.google.inject.name.Names;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.http.DefaultModule;
 import com.graphhopper.matching.LocationIndexMatch;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.util.CmdArgs;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 /**
  * @author Peter Karich
  */
-public class MatchDefaultModule extends DefaultModule {
+public class MapMatchingModule extends AbstractModule {
 
-    public MatchDefaultModule(CmdArgs args) {
-        super(args);
+    private final CmdArgs args;
+
+    public MapMatchingModule(CmdArgs args) {
+        this.args = args;
     }
 
     @Provides
     @Singleton
-    LocationIndexMatch createLocationIndexMatch(GraphHopper hopper) {
-        return new LocationIndexMatch(hopper.getGraphHopperStorage(),
-                (LocationIndexTree) hopper.getLocationIndex());
+    LocationIndexMatch createLocationIndexMatch(GraphHopper hopper, LocationIndex index) {
+        return new LocationIndexMatch(hopper.getGraphHopperStorage(), (LocationIndexTree) index);
     }
 
     @Provides
@@ -48,5 +51,9 @@ public class MatchDefaultModule extends DefaultModule {
     @Named("gps.max_accuracy")
     double getMaxGPSAccuracy() {
         return args.getDouble("web.gps.max_accuracy", 100);
+    }
+
+    @Override
+    protected void configure() {
     }
 }

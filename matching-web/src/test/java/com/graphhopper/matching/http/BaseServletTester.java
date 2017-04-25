@@ -69,7 +69,7 @@ public class BaseServletTester {
         server = new MatchServer(args);
 
         if (injector == null) {
-            setUpGuice(new MatchDefaultModule(args), new MatchServletModule(args));
+            setUpGuice(server.createModule());
         }
 
         for (int i = 0; i < retryCount; i++) {
