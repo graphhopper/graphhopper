@@ -28,6 +28,7 @@ import org.mapdb.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -106,7 +107,13 @@ public class GtfsStorage implements GraphExtension {
 
 	@Override
 	public GraphExtension create(long byteCount) {
-		this.data = DBMaker.newFileDB(new File(dir.getLocation() + "/transit_schedule")).transactionDisable().mmapFileEnable().asyncWriteEnable().make();
+		final File file = new File(dir.getLocation() + "/transit_schedule");
+		try {
+			Files.deleteIfExists(file.toPath());
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		this.data = DBMaker.newFileDB(file).transactionDisable().mmapFileEnable().asyncWriteEnable().make();
 		init();
 		return this;
 	}
