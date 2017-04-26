@@ -19,10 +19,7 @@ package com.graphhopper.http;
 
 import com.google.inject.*;
 import com.google.inject.servlet.GuiceFilter;
-import com.google.inject.servlet.ServletModule;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.json.GHJson;
-import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
@@ -40,8 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.*;
-import java.io.Closeable;
-import java.io.IOException;
 import java.util.EnumSet;
 
 /**
@@ -137,10 +132,10 @@ public class GHServer {
                     });
 
                 } else {
-                    install(new DefaultModule(args));
+                    install(new GraphHopperModule(args));
                     createCallOnDestroyModule("GraphHopper", () -> getProvider(GraphHopper.class).get());
                 }
-                install(new GHServletModule(args));
+                install(new GraphHopperServletModule(args));
 
                 bind(GuiceFilter.class);
             }

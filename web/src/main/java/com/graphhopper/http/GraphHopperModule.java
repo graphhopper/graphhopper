@@ -50,11 +50,11 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 
-public class DefaultModule extends AbstractModule {
+public class GraphHopperModule extends AbstractModule {
     protected final CmdArgs args;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public DefaultModule(CmdArgs args) {
+    public GraphHopperModule(CmdArgs args) {
         this.args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
     }
 

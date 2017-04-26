@@ -48,10 +48,10 @@ public class GuiceServletConfig extends GuiceServletContextListener {
     }
 
     protected Module createDefaultModule() {
-        return new DefaultModule(args);
+        return new GraphHopperModule(args);
     }
 
     protected Module createServletModule() {
-        return new GHServletModule(args);
+        return new GraphHopperServletModule(args);
     }
 }
