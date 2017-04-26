@@ -87,7 +87,7 @@ public class BaseServletTester {
         server = new GHServer(args);
 
         if (injector == null)
-            setUpGuice(new GraphHopperModule(args), new GraphHopperServletModule(args));
+            setUpGuice(server.createModule());
 
         for (int i = 0; i < retryCount; i++) {
             port = 18080 + i;

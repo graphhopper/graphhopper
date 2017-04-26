@@ -126,14 +126,17 @@ public class GHServer {
                 if (args.has("gtfs.file")) {
                     // switch to different API implementation when using Pt
                     install(new PtModule(args));
-                    createCallOnDestroyModule("GraphHopper storage and location index", () -> {
-                        getProvider(GraphHopperStorage.class).get().close();
-                        getProvider(LocationIndex.class).get().close();
+                    Provider<GraphHopperStorage> storage = getProvider(GraphHopperStorage.class);
+                    Provider<LocationIndex> locationIndex = getProvider(LocationIndex.class);
+                    createCallOnDestroyModule("AutoCloseable for GraphHopper storage and location index", () -> {
+                        storage.get().close();
+                        locationIndex.get().close();
                     });
 
                 } else {
                     install(new GraphHopperModule(args));
-                    createCallOnDestroyModule("GraphHopper", () -> getProvider(GraphHopper.class).get());
+                    Provider<GraphHopper> graphHopper = getProvider(GraphHopper.class);
+                    createCallOnDestroyModule("AutoCloseable for GraphHopper", () -> graphHopper.get().close());
                 }
                 install(new GraphHopperServletModule(args));
 
@@ -154,7 +157,7 @@ public class GHServer {
                 if (logger != null)
                     logger.error("Cannot close " + name + " (" + closeable + ")", ex);
             }
-        }));
+        }, name));
     }
 
     public void stop() {

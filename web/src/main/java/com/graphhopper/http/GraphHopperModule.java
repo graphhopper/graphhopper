@@ -67,7 +67,7 @@ public class GraphHopperModule extends AbstractModule {
 
     @Provides
     @Singleton
-    protected GraphHopper createGraphHopper(CmdArgs args) {
+    GraphHopper createGraphHopper(CmdArgs args) {
         GraphHopper graphHopper = new GraphHopperOSM() {
             @Override
             protected void loadOrPrepareLM() {
