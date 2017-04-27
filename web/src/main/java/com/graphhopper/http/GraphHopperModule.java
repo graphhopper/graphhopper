@@ -50,11 +50,11 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.Arrays;
 
-public class DefaultModule extends AbstractModule {
+public class GraphHopperModule extends AbstractModule {
     protected final CmdArgs args;
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
-    public DefaultModule(CmdArgs args) {
+    public GraphHopperModule(CmdArgs args) {
         this.args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
     }
 
@@ -107,11 +107,7 @@ public class DefaultModule extends AbstractModule {
                     throw new RuntimeException(ex);
                 }
         }
-        graphHopper.importOrLoad();
-        logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
-                + ", data_reader_file:" + graphHopper.getDataReaderFile()
-                + ", flag_encoders:" + graphHopper.getEncodingManager()
-                + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
+
         return graphHopper;
     }
 

@@ -19,10 +19,7 @@ package com.graphhopper.http;
 
 import com.google.inject.*;
 import com.google.inject.servlet.GuiceFilter;
-import com.google.inject.servlet.ServletModule;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.json.GHJson;
-import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
@@ -40,7 +37,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.*;
-import java.io.IOException;
 import java.util.EnumSet;
 
 /**
@@ -109,6 +105,13 @@ public class GHServer {
         // gzipHandler.setIncludedMimeTypes();
         gzipHandler.setHandler(handlers);
 
+        GraphHopper graphHopper = injector.getInstance(GraphHopper.class);
+        graphHopper.importOrLoad();
+        logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
+                + ", data_reader_file:" + graphHopper.getDataReaderFile()
+                + ", flag_encoders:" + graphHopper.getEncodingManager()
+                + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
+
         server.setHandler(gzipHandler);
         server.setStopAtShutdown(true);
         server.start();
@@ -120,56 +123,41 @@ public class GHServer {
             @Override
             protected void configure() {
                 binder().requireExplicitBindings();
-                if (args.has("gtfs.file")) {  // switch to different API implementation when using Pt
+                if (args.has("gtfs.file")) {
+                    // switch to different API implementation when using Pt
                     install(new PtModule(args));
-                    // Close resources on exit. Ugly, but neither guice nor guice-servlet have a lifecycle API,
-                    // so I have to abuse a Filter for that.
-                    install(new ServletModule() {
-                        @Override
-                        protected void configureServlets() {
-                            final Provider<GraphHopperStorage> graphHopperStorage = getProvider(GraphHopperStorage.class);
-                            final Provider<LocationIndex> locationIndex = getProvider(LocationIndex.class);
-                            filter("*").through(new Filter() {
-                                @Override
-                                public void init(FilterConfig filterConfig) throws ServletException {}
-                                @Override
-                                public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-                                    chain.doFilter(request, response);
-                                }
-                                @Override
-                                public void destroy() {
-                                    graphHopperStorage.get().close();
-                                    locationIndex.get().close();
-                                }
-                            });
-                        }
+                    Provider<GraphHopperStorage> storage = getProvider(GraphHopperStorage.class);
+                    Provider<LocationIndex> locationIndex = getProvider(LocationIndex.class);
+                    createCallOnDestroyModule("AutoCloseable for GraphHopper storage and location index", () -> {
+                        storage.get().close();
+                        locationIndex.get().close();
                     });
+
                 } else {
-                    install(new DefaultModule(args));
-                    install(new ServletModule() {
-                        @Override
-                        protected void configureServlets() {
-                            final Provider<GraphHopper> graphHopper = getProvider(GraphHopper.class);
-                            filter("*").through(new Filter() {
-                                @Override
-                                public void init(FilterConfig filterConfig) throws ServletException {}
-                                @Override
-                                public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-                                    chain.doFilter(request, response);
-                                }
-                                @Override
-                                public void destroy() {
-                                    graphHopper.get().close();
-                                }
-                            });
-                        }
-                    });
+                    install(new GraphHopperModule(args));
+                    Provider<GraphHopper> graphHopper = getProvider(GraphHopper.class);
+                    createCallOnDestroyModule("AutoCloseable for GraphHopper", () -> graphHopper.get().close());
                 }
-                install(new GHServletModule(args));
+                install(new GraphHopperServletModule(args));
 
                 bind(GuiceFilter.class);
             }
         };
+    }
+
+    /**
+     * Close resources on exit
+     */
+    public final void createCallOnDestroyModule(String name, final AutoCloseable closeable) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                if (closeable != null)
+                    closeable.close();
+            } catch (Exception ex) {
+                if (logger != null)
+                    logger.error("Cannot close " + name + " (" + closeable + ")", ex);
+            }
+        }, name));
     }
 
     public void stop() {

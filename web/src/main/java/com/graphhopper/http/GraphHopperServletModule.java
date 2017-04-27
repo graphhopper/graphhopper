@@ -27,11 +27,11 @@ import java.util.Map;
 /**
  * @author Peter Karich
  */
-public class GHServletModule extends ServletModule {
+public class GraphHopperServletModule extends ServletModule {
     protected final CmdArgs args;
     protected Map<String, String> params = new HashMap<String, String>();
 
-    public GHServletModule(CmdArgs args) {
+    public GraphHopperServletModule(CmdArgs args) {
         this.args = args;
         params.put("mimeTypes", "text/html,"
                 + "text/plain,"
