@@ -15,7 +15,7 @@
  */
 package com.graphhopper.http;
 
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -25,7 +25,7 @@ import java.io.IOException;
 public class InvalidRequestServlet extends GHBaseServlet {
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        JSONObject json = new JSONObject();
+        ObjectNode json = jsonNodeFactory.objectNode();
         json.put("message", "Not found");
         writeJsonError(res, HttpServletResponse.SC_NOT_FOUND, json);
     }

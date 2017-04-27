@@ -17,13 +17,14 @@
  */
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -44,7 +45,6 @@ public class InfoServlet extends GHBaseServlet {
     @Named("hasElevation")
     private boolean hasElevation;
 
-
     @Override
     public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
         BBox bb = storage.getBounds();
@@ -54,18 +54,17 @@ public class InfoServlet extends GHBaseServlet {
         list.add(bb.maxLon);
         list.add(bb.maxLat);
 
-        JSONObject json = new JSONObject();
-        json.put("bbox", list);
+        final JsonNodeFactory jsonNodeFactory = new JsonNodeFactory(false);
+        final ObjectNode json = jsonNodeFactory.objectNode();
+        json.putPOJO("bbox", list);
 
         String[] vehicles = storage.getEncodingManager().toString().split(",");
-        json.put("supported_vehicles", vehicles);
-        JSONObject features = new JSONObject();
+        json.putPOJO("supported_vehicles", vehicles);
+        ObjectNode features = json.putObject("features");
         for (String v : vehicles) {
-            JSONObject perVehicleJson = new JSONObject();
+            ObjectNode perVehicleJson = features.putObject(v);
             perVehicleJson.put("elevation", hasElevation);
-            features.put(v, perVehicleJson);
         }
-        json.put("features", features);
 
         json.put("version", Constants.VERSION);
         json.put("build_date", Constants.BUILD_DATE);

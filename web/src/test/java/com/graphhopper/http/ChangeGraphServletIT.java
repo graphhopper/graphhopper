@@ -17,10 +17,11 @@
  */
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,12 +54,13 @@ public class ChangeGraphServletIT extends BaseServletTester {
 
     @Test
     public void testBlockAccessViaPoint() throws Exception {
-        JSONObject json = query("point=42.531453,1.518946&point=42.511178,1.54006", 200);
-        JSONObject infoJson = json.getJSONObject("info");
+        final ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode json = query("point=42.531453,1.518946&point=42.511178,1.54006", 200);
+        JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
-        JSONObject path = json.getJSONArray("paths").getJSONObject(0);
+        JsonNode path = json.get("paths").get(0);
         // System.out.println("\n\n1\n" + path);
-        double distance = path.getDouble("distance");
+        double distance = path.get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 3000);
         assertTrue("distance wasn't correct:" + distance, distance < 3500);
 
@@ -76,18 +78,18 @@ public class ChangeGraphServletIT extends BaseServletTester {
                 + "    'access': false"
                 + "  }}]}".replaceAll("'", "\"");
         String res = post("/change", 200, geoJson);
-        JSONObject jsonObj = new JSONObject(res);
-        assertEquals(1, jsonObj.getInt("updates"));
+        JsonNode jsonObj = objectMapper.readTree(res);
+        assertEquals(1, jsonObj.get("updates").asInt());
 
         // route around blocked road => longer
         json = query("point=42.531453,1.518946&point=42.511178,1.54006", 200);
-        infoJson = json.getJSONObject("info");
+        infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
-        path = json.getJSONArray("paths").getJSONObject(0);
+        path = json.get("paths").get(0);
 
         // System.out.println("\n\n2\n" + path);
 
-        distance = path.getDouble("distance");
+        distance = path.get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 5300);
         assertTrue("distance wasn't correct:" + distance, distance < 5800);
     }

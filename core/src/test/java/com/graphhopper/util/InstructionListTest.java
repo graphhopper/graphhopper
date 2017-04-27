@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
@@ -28,7 +30,6 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
@@ -352,7 +353,15 @@ public class InstructionListTest {
         assertEquals(-1, (Double) json.get("turn_angle"), 0.01);
         assertEquals("2", json.get("exit_number").toString());
         // assert that a valid JSON object can be written
-        assertNotNull(new JSONObject(json).toString());
+        assertNotNull(write(json));
+    }
+
+    private String write(Map<String, Object> json) {
+        try {
+            return new ObjectMapper().writeValueAsString(json);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // Roundabout with unknown dir of rotation
@@ -375,7 +384,7 @@ public class InstructionListTest {
         assertEquals("At roundabout, take exit 2 onto streetname", json.get("text").toString());
         assertNull(json.get("turn_angle"));
         // assert that a valid JSON object can be written
-        assertNotNull(new JSONObject(json).toString());
+        assertNotNull(write(json));
     }
 
     @Test
