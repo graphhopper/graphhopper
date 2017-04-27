@@ -60,7 +60,7 @@ public class AngleCalc {
      */
     public double calcOrientation(double lat1, double lon1, double lat2, double lon2) {
         double shrinkFactor = cos(toRadians((lat1 + lat2) / 2));
-        return Math.atan2(lat2 - lat1, shrinkFactor * (lon2 - lon1));
+        return atan2(lat2 - lat1, shrinkFactor * (lon2 - lon1));
     }
 
     /**
@@ -107,7 +107,7 @@ public class AngleCalc {
         if (orientation < 0)
             orientation += 2 * Math.PI;
 
-        return Math.toDegrees(Helper.round4(orientation));
+        return Math.toDegrees(Helper.round4(orientation))%360;
     }
 
     String azimuth2compassPoint(double azimuth) {
