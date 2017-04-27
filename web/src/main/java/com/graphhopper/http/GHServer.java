@@ -105,12 +105,9 @@ public class GHServer {
         // gzipHandler.setIncludedMimeTypes();
         gzipHandler.setHandler(handlers);
 
-        GraphHopper graphHopper = injector.getInstance(GraphHopper.class);
-        graphHopper.importOrLoad();
-        logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
-                + ", data_reader_file:" + graphHopper.getDataReaderFile()
-                + ", flag_encoders:" + graphHopper.getEncodingManager()
-                + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
+        GraphHopperService graphHopper = injector.getInstance(GraphHopperService.class);
+        graphHopper.start();
+        createCallOnDestroyModule("AutoCloseable for GraphHopper", graphHopper);
 
         server.setHandler(gzipHandler);
         server.setStopAtShutdown(true);
@@ -126,17 +123,8 @@ public class GHServer {
                 if (args.has("gtfs.file")) {
                     // switch to different API implementation when using Pt
                     install(new PtModule(args));
-                    Provider<GraphHopperStorage> storage = getProvider(GraphHopperStorage.class);
-                    Provider<LocationIndex> locationIndex = getProvider(LocationIndex.class);
-                    createCallOnDestroyModule("AutoCloseable for GraphHopper storage and location index", () -> {
-                        storage.get().close();
-                        locationIndex.get().close();
-                    });
-
                 } else {
                     install(new GraphHopperModule(args));
-                    Provider<GraphHopper> graphHopper = getProvider(GraphHopper.class);
-                    createCallOnDestroyModule("AutoCloseable for GraphHopper", () -> graphHopper.get().close());
                 }
                 install(new GraphHopperServletModule(args));
 

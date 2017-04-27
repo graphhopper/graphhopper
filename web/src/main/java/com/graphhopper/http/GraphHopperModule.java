@@ -155,4 +155,24 @@ public class GraphHopperModule extends AbstractModule {
         return graphHopper.hasElevation();
     }
 
+    @Provides
+    GraphHopperService getGraphHopperService(GraphHopper graphHopper) {
+        return new GraphHopperService() {
+            @Override
+            public void start() {
+                graphHopper.importOrLoad();
+                logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
+                        + ", data_reader_file:" + graphHopper.getDataReaderFile()
+                        + ", flag_encoders:" + graphHopper.getEncodingManager()
+                        + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
+
+            }
+
+            @Override
+            public void close() throws Exception {
+                graphHopper.close();
+            }
+        };
+    }
+
 }
