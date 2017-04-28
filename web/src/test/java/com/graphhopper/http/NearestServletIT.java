@@ -17,10 +17,10 @@
  */
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -53,12 +53,12 @@ public class NearestServletIT extends BaseServletTester {
 
     @Test
     public void testBasicNearestQuery() throws Exception {
-        JSONObject json = nearestQuery("point=42.554851,1.536198");
+        JsonNode json = nearestQuery("point=42.554851,1.536198");
         assertFalse(json.has("error"));
-        JSONArray point = json.getJSONArray("coordinates");
-        assertTrue("returned point is not 2D: " + point, point.length() == 2);
-        double lon = point.getDouble(0);
-        double lat = point.getDouble(1);
+        ArrayNode point = (ArrayNode) json.get("coordinates");
+        assertTrue("returned point is not 2D: " + point, point.size() == 2);
+        double lon = point.get(0).asDouble();
+        double lat = point.get(1).asDouble();
         assertTrue("nearest point wasn't correct: lat=" + lat + ", lon=" + lon, lat == 42.55483907636756 && lon == 1.5363742288086868);
     }
 }

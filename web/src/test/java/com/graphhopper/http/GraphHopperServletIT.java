@@ -17,23 +17,21 @@
  */
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
-import org.json.JSONObject;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import static org.junit.Assert.*;
@@ -61,11 +59,11 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testBasicQuery() throws Exception {
-        JSONObject json = query("point=42.554851,1.536198&point=42.510071,1.548128", 200);
-        JSONObject infoJson = json.getJSONObject("info");
+        JsonNode json = query("point=42.554851,1.536198&point=42.510071,1.548128", 200);
+        JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
-        JSONObject path = json.getJSONArray("paths").getJSONObject(0);
-        double distance = path.getDouble("distance");
+        JsonNode path = json.get("paths").get(0);
+        double distance = path.get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 9000);
         assertTrue("distance wasn't correct:" + distance, distance < 9500);
     }
@@ -73,11 +71,11 @@ public class GraphHopperServletIT extends BaseServletTester {
     @Test
     public void testQueryWithDirections() throws Exception {
         // Note, in general specifying directions does not work with CH, but this is an example where it works
-        JSONObject json = query("point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240&ch.force_heading=true", 200);
-        JSONObject infoJson = json.getJSONObject("info");
+        JsonNode json = query("point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240&ch.force_heading=true", 200);
+        JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
-        JSONObject path = json.getJSONArray("paths").getJSONObject(0);
-        double distance = path.getDouble("distance");
+        JsonNode path = json.get("paths").get(0);
+        double distance = path.get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 960);
         assertTrue("distance wasn't correct:" + distance, distance < 970);
     }
@@ -85,29 +83,29 @@ public class GraphHopperServletIT extends BaseServletTester {
     @Test
     public void testQueryWithStraightVia() throws Exception {
         // Note, in general specifying straightvia does not work with CH, but this is an example where it works
-        JSONObject json = query(
+        JsonNode json = query(
                 "point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true", 200);
-        JSONObject infoJson = json.getJSONObject("info");
+        JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
-        JSONObject path = json.getJSONArray("paths").getJSONObject(0);
-        double distance = path.getDouble("distance");
+        JsonNode path = json.get("paths").get(0);
+        double distance = path.get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 320);
         assertTrue("distance wasn't correct:" + distance, distance < 325);
     }
 
     @Test
     public void testJsonRounding() throws Exception {
-        JSONObject json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false", 200);
-        JSONObject cson = json.getJSONArray("paths").getJSONObject(0).getJSONObject("points");
+        JsonNode json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false", 200);
+        JsonNode cson = json.get("paths").get(0).get("points");
         assertTrue("unexpected precision!", cson.toString().contains("[1.536374,42.554839]"));
     }
 
     @Test
     public void testFailIfElevationRequestedButNotIncluded() throws Exception {
-        JSONObject json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true", 400);
+        JsonNode json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true", 400);
         assertTrue(json.has("message"));
-        assertEquals("Elevation not supported!", json.get("message"));
-        assertEquals("Elevation not supported!", json.getJSONArray("hints").getJSONObject(0).getString("message"));
+        assertEquals("Elevation not supported!", json.get("message").asText());
+        assertEquals("Elevation not supported!", json.get("hints").get(0).get("message").asText());
     }
 
     @Test
@@ -219,9 +217,9 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testUndefinedPointHeading() throws Exception {
-        JSONObject json = query("point=undefined&heading=0", 400);
-        assertEquals("You have to pass at least one point", json.get("message"));
+        JsonNode json = query("point=undefined&heading=0", 400);
+        assertEquals("You have to pass at least one point", json.get("message").asText());
         json = query("point=42.554851,1.536198&point=undefined&heading=0&heading=0", 400);
-        assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message"));
+        assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message").asText());
     }
 }

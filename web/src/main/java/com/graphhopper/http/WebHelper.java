@@ -18,9 +18,6 @@
 package com.graphhopper.http;
 
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
-import org.json.JSONArray;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -151,11 +148,4 @@ public class WebHelper {
         }
     }
 
-    public static GHPoint toGHPoint(JSONArray point) {
-        if (point.length() == 3 && !Double.isNaN(point.getDouble(2))) {
-            return new GHPoint3D(point.getDouble(1), point.getDouble(0), point.getDouble(2));
-        }
-
-        return new GHPoint(point.getDouble(1), point.getDouble(0));
-    }
 }
