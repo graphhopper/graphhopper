@@ -20,10 +20,10 @@ package com.graphhopper.reader.gtfs;
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
+import java.time.Instant;
 import java.util.*;
 
 /**
@@ -76,10 +76,10 @@ class MultiCriteriaLabelSetting {
         return currentTimeCriterion(o1) + o1.nTransfers + o1.nWalkDistanceConstraintViolations;
     }
 
-    Set<Label> calcPaths(int from, Set<Integer> to, long startTime, long rangeQueryEndTime) {
-        this.rangeQueryEndTime = rangeQueryEndTime;
+    Set<Label> calcPaths(int from, Set<Integer> to, Instant startTime, Instant rangeQueryEndTime) {
+        this.rangeQueryEndTime = rangeQueryEndTime.toEpochMilli();
         Set<Label> targetLabels = new HashSet<>();
-        Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, Long.MAX_VALUE, null);
+        Label label = new Label(startTime.toEpochMilli(), EdgeIterator.NO_EDGE, from, 0, 0, 0.0, Long.MAX_VALUE, null);
         fromMap.put(from, label);
         if (to.contains(from)) {
             targetLabels.add(label);
@@ -93,20 +93,20 @@ class MultiCriteriaLabelSetting {
                 GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
                 long nextTime;
                 if (reverse) {
-                    nextTime = label.currentTime - weighting.calcTravelTimeSeconds(edge, label.currentTime);
+                    nextTime = label.currentTime - explorer.calcTravelTimeMillis(edge, label.currentTime);
                 } else {
-                    nextTime = label.currentTime + weighting.calcTravelTimeSeconds(edge, label.currentTime);
+                    nextTime = label.currentTime + explorer.calcTravelTimeMillis(edge, label.currentTime);
                 }
                 int nTransfers = label.nTransfers + weighting.calcNTransfers(edge);
                 long firstPtDepartureTime = label.firstPtDepartureTime;
                 if (!reverse && edgeType == GtfsStorage.EdgeType.BOARD && firstPtDepartureTime == Long.MAX_VALUE) {
                     firstPtDepartureTime = nextTime;
                 }
-                if (reverse && edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && firstPtDepartureTime == Long.MAX_VALUE) {
+                if (reverse && edgeType == GtfsStorage.EdgeType.ALIGHT && firstPtDepartureTime == Long.MAX_VALUE) {
                     firstPtDepartureTime = nextTime;
                 }
-                double walkDistanceOnCurrentLeg = (edgeType == GtfsStorage.EdgeType.BOARD) ? 0 : (label.walkDistanceOnCurrentLeg + weighting.getWalkDistance(edge));
-                boolean isTryingToReEnterPtAfterTransferWalking = edgeType == GtfsStorage.EdgeType.ENTER_PT && label.nTransfers > 0 && label.walkDistanceOnCurrentLeg > maxTransferDistancePerLeg;
+                double walkDistanceOnCurrentLeg = (!reverse && edgeType == GtfsStorage.EdgeType.BOARD || reverse && edgeType == GtfsStorage.EdgeType.ALIGHT) ? 0 : (label.walkDistanceOnCurrentLeg + weighting.getWalkDistance(edge));
+                boolean isTryingToReEnterPtAfterTransferWalking = (!reverse && edgeType == GtfsStorage.EdgeType.ENTER_PT || reverse && edgeType == GtfsStorage.EdgeType.EXIT_PT) && label.nTransfers > 0 && label.walkDistanceOnCurrentLeg > maxTransferDistancePerLeg;
                 int nWalkDistanceConstraintViolations = Math.min(1, label.nWalkDistanceConstraintViolations + (
                         isTryingToReEnterPtAfterTransferWalking ? 1 : (label.walkDistanceOnCurrentLeg <= maxWalkDistancePerLeg && walkDistanceOnCurrentLeg > maxWalkDistancePerLeg ? 1 : 0)));
                 Set<Label> sptEntries = fromMap.get(edge.getAdjNode());

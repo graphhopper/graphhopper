@@ -17,9 +17,7 @@
  */
 package com.graphhopper.reader.gtfs;
 
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Iterator;

@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -134,11 +135,7 @@ class GtfsReader {
 
     private void buildPtNetwork() {
         LocalDate startDate = feed.calculateStats().getStartDate();
-        gtfsStorage.setStartDate(startDate);
         LocalDate endDate = feed.calculateStats().getEndDate();
-        BitSet alwaysValid = new BitSet((int) DAYS.between(startDate, endDate));
-        alwaysValid.set(0, alwaysValid.size());
-        gtfsStorage.getOperatingDayPatterns().put(alwaysValid, 0);
         HashMultimap<String, Trip> blockTrips = HashMultimap.create();
         for (Trip trip : feed.trips.values()) {
             if (trip.block_id != null) {
@@ -167,6 +164,7 @@ class GtfsReader {
                                 validOnDay.set((int) DAYS.between(startDate, date));
                             }
                         }
+                        ZoneId zoneId = ZoneId.of(feed.agency.get(feed.routes.get(trip.route_id).agency_id).agency_timezone);
                         StopTime prev = null;
                         int arrivalNode = -1;
                         int departureNode = -1;
@@ -208,7 +206,7 @@ class GtfsReader {
                             nodeAccess.setAdditionalNodeField(departureNode, NodeType.INTERNAL_PT.ordinal());
                             times.put(departureNode, stopTime.departure_time + time);
                             int dayShift = stopTime.departure_time / (24 * 60 * 60);
-                            BitSet validOn = getValidOn(validOnDay, dayShift);
+                            GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(validOnDay, dayShift), zoneId, startDate);
                             int validityId;
                             if (gtfsStorage.getOperatingDayPatterns().containsKey(validOn)) {
                                 validityId = gtfsStorage.getOperatingDayPatterns().get(validOn);
@@ -303,15 +301,29 @@ class GtfsReader {
     }
 
     private void wireUpAndAndConnectArrivalTimeline(Stop stop, String routeId, int stopExitNode, NavigableSet<Fun.Tuple2<Integer, Integer>> timeNodes) {
+        ZoneId zoneId = ZoneId.of(feed.agency.get(feed.routes.get(routeId).agency_id).agency_timezone);
         for (Fun.Tuple2<Integer, Integer> e : timeNodes.descendingSet()) {
             EdgeIteratorState leaveTimeExpandedNetworkEdge = graph.edge(e.b, stopExitNode, 0.0, false);
             setEdgeType(leaveTimeExpandedNetworkEdge, GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK);
             int arrivalTime = e.a;
             leaveTimeExpandedNetworkEdge.setFlags(encoder.setTime(leaveTimeExpandedNetworkEdge.getFlags(), arrivalTime));
+            setFeedIdWithTimezone(leaveTimeExpandedNetworkEdge, new GtfsStorage.FeedIdWithTimezone(id, zoneId));
         }
     }
 
+    private void setFeedIdWithTimezone(EdgeIteratorState leaveTimeExpandedNetworkEdge, GtfsStorage.FeedIdWithTimezone validOn) {
+        int validityId;
+        if (gtfsStorage.getWritableTimeZones().containsKey(validOn)) {
+            validityId = gtfsStorage.getWritableTimeZones().get(validOn);
+        } else {
+            validityId = gtfsStorage.getWritableTimeZones().size();
+            gtfsStorage.getWritableTimeZones().put(validOn, validityId);
+        }
+        leaveTimeExpandedNetworkEdge.setFlags(encoder.setValidityId(leaveTimeExpandedNetworkEdge.getFlags(), validityId));
+    }
+
     private void wireUpAndAndConnectDepartureTimeline(Stop toStop, String toRouteId, int stopEnterNode, NavigableSet<Fun.Tuple2<Integer, Integer>> timeNodes) {
+        ZoneId zoneId = ZoneId.of(feed.agency.get(feed.routes.get(toRouteId).agency_id).agency_timezone);
         int time = 0;
         int prev = -1;
         for (Fun.Tuple2<Integer, Integer> e : timeNodes.descendingSet()) {
@@ -319,7 +331,7 @@ class GtfsReader {
             enterTimeExpandedNetworkEdge.setName(toStop.stop_name);
             setEdgeType(enterTimeExpandedNetworkEdge, GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK);
             enterTimeExpandedNetworkEdge.setFlags(encoder.setTime(enterTimeExpandedNetworkEdge.getFlags(), e.a));
-            gtfsStorage.getExtraStrings().put(enterTimeExpandedNetworkEdge.getEdge(), id);
+            setFeedIdWithTimezone(enterTimeExpandedNetworkEdge, new GtfsStorage.FeedIdWithTimezone(id, zoneId));
             if (prev != -1) {
                 EdgeIteratorState edge = graph.edge(e.b, prev, 0.0, false);
                 setEdgeType(edge, GtfsStorage.EdgeType.WAIT);
