@@ -19,6 +19,8 @@ package com.graphhopper.http;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.routing.util.HintsMap;
@@ -56,31 +58,23 @@ public class GHBaseServlet extends HttpServlet {
     protected void writeJson(HttpServletRequest req, HttpServletResponse res, JsonNode json) throws IOException {
         String type = getParam(req, "type", "json");
         res.setCharacterEncoding("UTF-8");
-        boolean debug = getBooleanParam(req, "debug", false) || getBooleanParam(req, "pretty", false);
+        final boolean indent = getBooleanParam(req, "debug", false) || getBooleanParam(req, "pretty", false);
+        ObjectWriter objectWriter = indent ? objectMapper.writer().with(SerializationFeature.INDENT_OUTPUT) : objectMapper.writer();
         if ("jsonp".equals(type)) {
             res.setContentType("application/javascript");
             if (!jsonpAllowed) {
                 writeError(res, SC_BAD_REQUEST, "Server is not configured to allow jsonp!");
                 return;
             }
-
             String callbackName = getParam(req, "callback", null);
             if (callbackName == null) {
                 writeError(res, SC_BAD_REQUEST, "No callback provided, necessary if type=jsonp");
                 return;
             }
-
-            if (debug)
-                writeResponse(res, callbackName + "(" + objectMapper.writeValueAsString(json) /*.toString(2)*/ + ")");
-            else
-                writeResponse(res, callbackName + "(" + objectMapper.writeValueAsString(json) /*.toString(0)*/ + ")");
-
+            writeResponse(res, callbackName + "(" + objectWriter.writeValueAsString(json) + ")");
         } else {
             res.setContentType("application/json");
-            if (debug)
-                writeResponse(res, objectMapper.writeValueAsString(json) /*.toString(2)*/);
-            else
-                writeResponse(res, objectMapper.writeValueAsString(json) /*.toString(0)*/);
+            writeResponse(res, objectWriter.writeValueAsString(json));
         }
     }
 
@@ -97,7 +91,7 @@ public class GHBaseServlet extends HttpServlet {
             res.setContentType("application/json");
             res.setCharacterEncoding("UTF-8");
             res.setStatus(code);
-            res.getWriter().append(objectMapper.writeValueAsString(json) /*.toString(2)*/);
+            res.getWriter().append(objectMapper.writer().with(SerializationFeature.INDENT_OUTPUT).writeValueAsString(json));
         } catch (IOException ex) {
             throw new RuntimeException("Cannot write JSON Error " + code, ex);
         }
