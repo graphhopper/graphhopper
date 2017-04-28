@@ -36,6 +36,7 @@ public class DataFlagEncoderTest {
         properties.put("store_height", true);
         properties.put("store_weight", true);
         properties.put("store_width", true);
+        properties.put("store_toll", true);
         encoder = new DataFlagEncoder(properties);
         encodingManager = new EncodingManager(Arrays.asList(encoder), 8);
 
@@ -270,6 +271,21 @@ public class DataFlagEncoderTest {
         // important to filter out illegal highways to reduce the number of edges before adding them to the graph
         osmWay.setTag("highway", "building");
         assertTrue(encoder.acceptWay(osmWay) == 0);
+    }
+
+    @Test
+    public void testToll() {
+        ReaderWay osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "primary");
+        osmWay.setTag("toll", "no");
+        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertFalse(encoder.isTollRoad(edge));
+
+        osmWay.setTag("toll", "yes");
+        flags = encoder.handleWayTags(osmWay, 1, 0);
+        edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertTrue(encoder.isTollRoad(edge));
     }
 
     @Test

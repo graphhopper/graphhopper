@@ -40,6 +40,7 @@ public class GenericWeighting extends AbstractWeighting {
     public static final String HEIGHT_LIMIT = "height";
     public static final String WEIGHT_LIMIT = "weight";
     public static final String WIDTH_LIMIT = "width";
+    public static final String AVOID_TOLL = "avoid_toll";
     /**
      * Convert to milliseconds for correct calcMillis.
      */
@@ -55,6 +56,7 @@ public class GenericWeighting extends AbstractWeighting {
     protected final double height;
     protected final double weight;
     protected final double width;
+    protected final boolean avoidtoll;
 
     private final GHIntHashSet blockedEdges;
     private final List<Shape> blockedShapes;
@@ -82,6 +84,7 @@ public class GenericWeighting extends AbstractWeighting {
         height = cMap.getDouble(HEIGHT_LIMIT, 0d);
         weight = cMap.getDouble(WEIGHT_LIMIT, 0d);
         width = cMap.getDouble(WIDTH_LIMIT, 0d);
+        avoidtoll = cMap.getBool(AVOID_TOLL, false);
     }
 
     @Override
@@ -101,6 +104,9 @@ public class GenericWeighting extends AbstractWeighting {
         if ((gEncoder.isStoreHeight() && overLimit(height, gEncoder.getHeight(edgeState))) ||
                 (gEncoder.isStoreWeight() && overLimit(weight, gEncoder.getWeight(edgeState))) ||
                 (gEncoder.isStoreWidth() && overLimit(width, gEncoder.getWidth(edgeState))))
+            return Double.POSITIVE_INFINITY;
+
+        if(avoidtoll && gEncoder.isStoreToll() && gEncoder.isTollRoad(edgeState))
             return Double.POSITIVE_INFINITY;
 
         if (!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())) {
