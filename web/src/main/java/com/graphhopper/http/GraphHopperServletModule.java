@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
+import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.google.inject.Provides;
 import com.google.inject.servlet.ServletModule;
 import com.graphhopper.util.CmdArgs;
@@ -89,7 +90,7 @@ public class GraphHopperServletModule extends ServletModule {
     @Singleton
     ObjectMapper createObjectMapper() {
         ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setDateFormat(new SimpleDateFormat("YYYY-MM-dd'T'HH:mm")); // ISO8601 without time zone
+        objectMapper.setDateFormat(new ISO8601DateFormat());
         objectMapper.registerModule(new JtsModule());
 
         // Because VirtualEdgeIteratorState has getters which throw Exceptions.

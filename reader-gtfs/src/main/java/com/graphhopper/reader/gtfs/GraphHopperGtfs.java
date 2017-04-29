@@ -46,7 +46,6 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -457,12 +456,12 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             final Instant arrivalTime = Instant.ofEpochMilli(path.get(path.size()-1).label.currentTime);
             return Collections.singletonList(new Trip.WalkLeg(
                     "Walk",
-                    Date.from(departureTime.atZone(ZoneId.systemDefault()).toInstant()),
+                    Date.from(departureTime),
                     path.stream().map(t -> t.edge).collect(Collectors.toList()),
                     lineStringFromEdges(path),
                     path.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
                     instructions.stream().collect(Collectors.toCollection(() -> new InstructionList(tr))),
-                    Date.from(arrivalTime.atZone(ZoneId.systemDefault()).toInstant())));
+                    Date.from(arrivalTime)));
         }
     }
 
@@ -494,7 +493,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 case BOARD:
                     stop = findStop(t);
                     departureTime = t.label.currentTime;
-                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), null, Date.from(Instant.ofEpochMilli(departureTime).atZone(ZoneId.systemDefault()).toInstant())));
+                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), null, Date.from(Instant.ofEpochMilli(departureTime))));
                 break;
                 case HOP:
                     stop = findStop(t);
@@ -502,7 +501,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 break;
                 case DWELL:
                     departureTime = t.label.currentTime;
-                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(Instant.ofEpochMilli(arrivalTimeFromHopEdge).atZone(ZoneId.systemDefault()).toInstant()), Date.from(Instant.ofEpochMilli(departureTime).atZone(ZoneId.systemDefault()).toInstant())));
+                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(Instant.ofEpochMilli(arrivalTimeFromHopEdge)), Date.from(Instant.ofEpochMilli(departureTime))));
                 break;
                 default:
                     throw new RuntimeException();
@@ -516,7 +515,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         }
 
         void finish() {
-            stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(Instant.ofEpochMilli(arrivalTimeFromHopEdge).atZone(ZoneId.systemDefault()).toInstant()), null));
+            stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(Instant.ofEpochMilli(arrivalTimeFromHopEdge)), null));
         }
 
     }
