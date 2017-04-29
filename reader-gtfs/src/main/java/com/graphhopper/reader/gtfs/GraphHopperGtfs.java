@@ -403,12 +403,10 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             List<Label.Transition> partition = null;
             for (int i=1; i<path.size(); i++) {
                 Label.Transition transition = path.get(i);
-                long time = transition.label.currentTime;
-
                 EdgeIteratorState edge = path.get(i).edge;
                 GtfsStorage.EdgeType edgeType = encoder.getEdgeType(edge.getFlags());
                 if (edgeType == GtfsStorage.EdgeType.BOARD) {
-                    boardTime = time;
+                    boardTime = transition.label.currentTime;
                     partition = new ArrayList<>();
                 }
                 if (partition != null) {
@@ -435,8 +433,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                             new Date(boardTime),
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
-                            time - boardTime,
-                            new Date(time),
+                            path.get(i-1).label.currentTime - boardTime,
+                            new Date(path.get(i-1).label.currentTime),
                             lineString));
                     partition = null;
                 }
