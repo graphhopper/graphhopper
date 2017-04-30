@@ -52,7 +52,6 @@ public class SpatialRuleLookupBuilder {
         }
 
         if (!polygonBounds.isValid()) {
-            // TODO Changed this from Exception to the Empty SpatialRuleLookup, is this ok @michaz?
             return SpatialRuleLookup.EMPTY;
         }
 
