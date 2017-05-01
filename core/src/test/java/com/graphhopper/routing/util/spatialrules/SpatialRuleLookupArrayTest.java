@@ -94,9 +94,9 @@ public class SpatialRuleLookupArrayTest {
         assertEquals("DEU", spatialRuleLookup.lookupRule(50.636710, 12.514561).getId());
 
         // Far from the border of Germany, not in Germany
-        assertEquals("", spatialRuleLookup.lookupRule(48.029533, 7.250122).getId());
-        assertEquals("", spatialRuleLookup.lookupRule(51.694467, 15.209218).getId());
-        assertEquals("", spatialRuleLookup.lookupRule(47.283669, 11.167381).getId());
+        assertEquals("SpatialRule.EMPTY", spatialRuleLookup.lookupRule(48.029533, 7.250122).getId());
+        assertEquals("SpatialRule.EMPTY", spatialRuleLookup.lookupRule(51.694467, 15.209218).getId());
+        assertEquals("SpatialRule.EMPTY", spatialRuleLookup.lookupRule(47.283669, 11.167381).getId());
 
         // Close to the border of Germany, in Germany - Whereas the borders are defined by the GeoJson above and do not strictly follow the acutal border
         assertEquals("DEU", spatialRuleLookup.lookupRule(50.017714, 12.356129).getId());
@@ -106,9 +106,9 @@ public class SpatialRuleLookupArrayTest {
         assertEquals("DEU", spatialRuleLookup.lookupRule(47.557166, 9.738343).getId());
 
         // Close to the border of Germany, not in Germany
-        assertEquals("", spatialRuleLookup.lookupRule(50.025342, 12.386262).getId());
-        assertEquals("", spatialRuleLookup.lookupRule(49.932900, 6.174023).getId());
-        assertEquals("", spatialRuleLookup.lookupRule(47.547463, 9.741948).getId());
+        assertEquals("SpatialRule.EMPTY", spatialRuleLookup.lookupRule(50.025342, 12.386262).getId());
+        assertEquals("SpatialRule.EMPTY", spatialRuleLookup.lookupRule(49.932900, 6.174023).getId());
+        assertEquals("SpatialRule.EMPTY", spatialRuleLookup.lookupRule(47.547463, 9.741948).getId());
     }
 
     @Test
