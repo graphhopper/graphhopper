@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
@@ -28,7 +30,6 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
-import org.json.JSONObject;
 import org.junit.Before;
 import org.junit.Test;
 import org.xml.sax.SAXException;
@@ -111,14 +112,12 @@ public class InstructionListTest {
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(0, 10);
         InstructionList wayList = p.calcInstructions(usTR);
         List<String> tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Continue onto 4-7",
-                "Turn left onto 7-8", "Continue onto 8-9", "Turn right", "Finish!"),
+        assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Turn left onto 7-8", "Finish!"),
                 tmpList);
 
         wayList = p.calcInstructions(trMap.getWithFallBack(Locale.GERMAN));
         tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Geradeaus auf 4-7",
-                "Links abbiegen auf 7-8", "Geradeaus auf 8-9", "Rechts abbiegen", "Ziel erreicht!"),
+        assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Links abbiegen auf 7-8", "Ziel erreicht!"),
                 tmpList);
 
         assertEquals(70000.0, sumDistances(wayList), 1e-1);
@@ -134,8 +133,7 @@ public class InstructionListTest {
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
         assertEquals(1.16, gpxes.get(5).getLon(), 1e-6);
 
-        compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.1d, 1.1), asL(1.0, 1.1),
-                asL(1.0, 1.2), asL(1.1, 1.3), asL(1.1, 1.4)),
+        compare(Arrays.asList(asL(1.2d, 1.0d), asL(1.2d, 1.1), asL(1.0, 1.1), asL(1.1, 1.4)),
                 wayList.createStartPoints());
 
         p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(6, 2);
@@ -144,10 +142,10 @@ public class InstructionListTest {
 
         wayList = p.calcInstructions(usTR);
         tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto 6-7", "Continue onto 7-8", "Turn left onto 5-8", "Continue onto 5-2", "Finish!"),
+        assertEquals(Arrays.asList("Continue onto 6-7", "Turn left onto 5-8", "Finish!"),
                 tmpList);
 
-        compare(Arrays.asList(asL(1d, 1d), asL(1d, 1.1), asL(1d, 1.2), asL(1.1, 1.2), asL(1.2, 1.2)),
+        compare(Arrays.asList(asL(1d, 1d), asL(1d, 1.2), asL(1.2, 1.2)),
                 wayList.createStartPoints());
 
         // special case of identical start and end
@@ -177,12 +175,15 @@ public class InstructionListTest {
         return list;
     }
 
-    void compare(List<List<Double>> expected, List<List<Double>> was) {
+    void compare(List<List<Double>> expected, List<List<Double>> actual) {
         for (int i = 0; i < expected.size(); i++) {
             List<Double> e = expected.get(i);
-            List<Double> wasE = was.get(i);
+            List<Double> wasE = actual.get(i);
             for (int j = 0; j < e.size(); j++) {
-                assertEquals("at " + j + " value " + e + " vs " + wasE, e.get(j), wasE.get(j), 1e-5d);
+                assertEquals("at index " + i + " value index " + j + " and value " + e + " vs " + wasE + "\n" + "Expected: " + expected + "\n" + "Actual: " + actual
+                        , e.get(j),
+                        wasE.get(j),
+                        1e-5d);
             }
         }
     }
@@ -232,10 +233,11 @@ public class InstructionListTest {
         p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(3, 5);
         wayList = p.calcInstructions(usTR);
         tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto 3-4", "Continue onto 4-5", "Finish!"),
+        assertEquals(Arrays.asList("Continue onto 3-4", "Turn slight right onto 4-5", "Finish!"),
                 tmpList);
     }
 
+    // TODO is this problem fixed with the new instructions?
     // problem: we normally don't want instructions if streetname stays but here it is suboptimal:
     @Test
     public void testNoInstructionIfSameStreet() {
@@ -263,15 +265,15 @@ public class InstructionListTest {
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(2, 3);
         InstructionList wayList = p.calcInstructions(usTR);
         List<String> tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto street", "Finish!"), tmpList);
+        assertEquals(Arrays.asList("Continue onto street", "Turn right onto street", "Finish!"), tmpList);
     }
 
     @Test
     public void testInstructionsWithTimeAndPlace() {
         Graph g = new GraphBuilder(carManager).create();
-        //   4-5
+        //   n-4-5   (n: pillar node)
         //   |
-        //   3-2
+        // 7-3-2-6
         //     |
         //     1
         NodeAccess na = g.getNodeAccess();
@@ -280,15 +282,19 @@ public class InstructionListTest {
         na.setNode(3, 15.1, 9.9);
         na.setNode(4, 15.2, 9.9);
         na.setNode(5, 15.2, 10);
+        na.setNode(6, 15.1, 10.1);
+        na.setNode(7, 15.1, 9.8);
 
         g.edge(1, 2, 7000, true).setName("1-2").setFlags(flagsForSpeed(carManager, 70));
         g.edge(2, 3, 8000, true).setName("2-3").setFlags(flagsForSpeed(carManager, 80));
+        g.edge(2, 6, 10000, true).setName("2-6").setFlags(flagsForSpeed(carManager, 10));
         g.edge(3, 4, 9000, true).setName("3-4").setFlags(flagsForSpeed(carManager, 90));
+        g.edge(3, 7, 10000, true).setName("3-7").setFlags(flagsForSpeed(carManager, 10));
         g.edge(4, 5, 10000, true).setName("4-5").setFlags(flagsForSpeed(carManager, 100));
 
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(1, 5);
         InstructionList wayList = p.calcInstructions(usTR);
-        assertEquals(5, wayList.size());
+        assertEquals(4, wayList.size());
 
         List<GPXEntry> gpxList = wayList.createGPXList();
         assertEquals(34000, p.getDistance(), 1e-1);
@@ -308,10 +314,6 @@ public class InstructionListTest {
         assertEquals(Instruction.TURN_RIGHT, wayList.get(2).getSign());
         assertEquals(15.1, wayList.get(2).getFirstLat(), 1e-3);
         assertEquals(9.9, wayList.get(2).getFirstLon(), 1e-3);
-
-        assertEquals(Instruction.TURN_RIGHT, wayList.get(3).getSign());
-        assertEquals(15.2, wayList.get(3).getFirstLat(), 1e-3);
-        assertEquals(9.9, wayList.get(3).getFirstLon(), 1e-3);
 
         String gpxStr = wayList.createGPX("test", 0);
         verifyGPX(gpxStr);
@@ -351,7 +353,15 @@ public class InstructionListTest {
         assertEquals(-1, (Double) json.get("turn_angle"), 0.01);
         assertEquals("2", json.get("exit_number").toString());
         // assert that a valid JSON object can be written
-        assertNotNull(new JSONObject(json).toString());
+        assertNotNull(write(json));
+    }
+
+    private String write(Map<String, Object> json) {
+        try {
+            return new ObjectMapper().writeValueAsString(json);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     // Roundabout with unknown dir of rotation
@@ -374,7 +384,7 @@ public class InstructionListTest {
         assertEquals("At roundabout, take exit 2 onto streetname", json.get("text").toString());
         assertNull(json.get("turn_angle"));
         // assert that a valid JSON object can be written
-        assertNotNull(new JSONObject(json).toString());
+        assertNotNull(write(json));
     }
 
     @Test
@@ -472,7 +482,7 @@ public class InstructionListTest {
         Graph g = new GraphBuilder(carManager).create();
         //   n-4-5   (n: pillar node)
         //   |
-        //   3-2
+        // 7-3-2-6
         //     |
         //     1
         NodeAccess na = g.getNodeAccess();
@@ -483,10 +493,14 @@ public class InstructionListTest {
         waypoint.add(15.2, 9.9);
         na.setNode(4, 15.2, 10);
         na.setNode(5, 15.2, 10.1);
+        na.setNode(6, 15.1, 10.1);
+        na.setNode(7, 15.1, 9.8);
 
         g.edge(1, 2, 10000, true).setName("1-2");
         g.edge(2, 3, 10000, true).setName("2-3");
+        g.edge(2, 6, 10000, true).setName("2-6");
         g.edge(3, 4, 10000, true).setName("3-4").setWayGeometry(waypoint);
+        g.edge(3, 7, 10000, true).setName("3-7");
         g.edge(4, 5, 10000, true).setName("4-5");
 
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(1, 5);
@@ -500,9 +514,6 @@ public class InstructionListTest {
 
         // query south-west of node 3, get instruction for third edge
         assertEquals("3-4", wayList.find(15.099, 9.9, 1000).getName());
-
-        // query north-west of pillar node n , get instruction for fourth edge
-        assertEquals("4-5", wayList.find(15.21, 9.85, 100000).getName());
     }
 
     @Test

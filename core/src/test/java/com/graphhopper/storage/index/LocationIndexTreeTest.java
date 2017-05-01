@@ -27,7 +27,10 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -515,4 +518,56 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
             assertEquals(i, qr.getClosestNode());
         }
     }
+
+    // 0---1---2
+    // |   |   |
+    // |10 |   |
+    // | | |   |
+    // 3-9-4---5
+    // |   |   |
+    // 6---7---8
+    @Test
+    public void testFindNClosest() {
+        Graph graph = createGHStorage(new RAMDirectory(), encodingManager, false);
+        NodeAccess na = graph.getNodeAccess();
+        na.setNode(0, 0.0010, 0.0000);
+        na.setNode(1, 0.0010, 0.0005);
+        na.setNode(2, 0.0010, 0.0010);
+        na.setNode(3, 0.0005, 0.0000);
+        na.setNode(4, 0.0005, 0.0005);
+        na.setNode(5, 0.0005, 0.0010);
+        na.setNode(6, 0.0000, 0.0000);
+        na.setNode(7, 0.0000, 0.0005);
+        na.setNode(8, 0.0000, 0.0010);
+        na.setNode(9, 0.0005, 0.0002);
+        na.setNode(10, 0.0007, 0.0002);
+        graph.edge(0, 1);
+        graph.edge(1, 2);
+        graph.edge(0, 3);
+        graph.edge(1, 4);
+        graph.edge(2, 5);
+        graph.edge(3, 9);
+        graph.edge(9, 4);
+        EdgeIteratorState edge4_5 = graph.edge(4, 5);
+        graph.edge(10, 9);
+        graph.edge(3, 6);
+        EdgeIteratorState edge4_7 = graph.edge(4, 7);
+        graph.edge(5, 8);
+        graph.edge(6, 7);
+        graph.edge(7, 8);
+
+        LocationIndexTree index = createIndexNoPrepare(graph, 500);
+        index.prepareIndex();
+
+        // query node 4 => get at least 4-5, 4-7
+        List<QueryResult> result = index.findNClosest(0.0004, 0.0006, EdgeFilter.ALL_EDGES, 15);
+        List<Integer> ids = new ArrayList<Integer>();
+        for (QueryResult qr : result) {
+            ids.add(qr.getClosestEdge().getEdge());
+        }
+        Collections.sort(ids);
+        assertEquals("edge ids do not match",
+                Arrays.asList(edge4_5.getEdge(), edge4_7.getEdge()), ids);
+    }
+
 }

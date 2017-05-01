@@ -17,11 +17,11 @@
  */
 package com.graphhopper.http;
 
-import com.google.inject.AbstractModule;
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import com.google.inject.Module;
+import com.google.inject.*;
 import com.google.inject.servlet.GuiceFilter;
+import com.graphhopper.GraphHopper;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConnectionFactory;
@@ -36,7 +36,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.DispatcherType;
+import javax.servlet.*;
 import java.util.EnumSet;
 
 /**
@@ -105,7 +105,12 @@ public class GHServer {
         // gzipHandler.setIncludedMimeTypes();
         gzipHandler.setHandler(handlers);
 
+        GraphHopperService graphHopper = injector.getInstance(GraphHopperService.class);
+        graphHopper.start();
+        createCallOnDestroyModule("AutoCloseable for GraphHopper", graphHopper);
+
         server.setHandler(gzipHandler);
+        server.setStopAtShutdown(true);
         server.start();
         logger.info("Started server at HTTP " + host + ":" + httpPort);
     }
@@ -115,13 +120,32 @@ public class GHServer {
             @Override
             protected void configure() {
                 binder().requireExplicitBindings();
-
-                install(new DefaultModule(args));
-                install(new GHServletModule(args));
+                if (args.has("gtfs.file")) {
+                    // switch to different API implementation when using Pt
+                    install(new PtModule(args));
+                } else {
+                    install(new GraphHopperModule(args));
+                }
+                install(new GraphHopperServletModule(args));
 
                 bind(GuiceFilter.class);
             }
         };
+    }
+
+    /**
+     * Close resources on exit
+     */
+    public final void createCallOnDestroyModule(String name, final AutoCloseable closeable) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                if (closeable != null)
+                    closeable.close();
+            } catch (Exception ex) {
+                if (logger != null)
+                    logger.error("Cannot close " + name + " (" + closeable + ")", ex);
+            }
+        }, name));
     }
 
     public void stop() {

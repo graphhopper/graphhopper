@@ -87,10 +87,11 @@ public abstract class ShapeFileReader implements DataReader {
         }
     }
 
-    protected DataStore openShapefileDataStore(File file) {
+    protected DataStore openShapefileDataStore(File file, String encoding) {
         try {
             Map<String, Object> map = new HashMap<String, Object>();
             map.put("url", file.toURI().toURL());
+            map.put("charset", encoding);
             DataStore ds = DataStoreFinder.getDataStore(map);
             if (ds == null)
                 throw new IllegalArgumentException("Cannot find DataStore at " + file);

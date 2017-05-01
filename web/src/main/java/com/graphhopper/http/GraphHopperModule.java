@@ -18,10 +18,11 @@
 package com.graphhopper.http;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.name.Names;
+import com.google.inject.Provides;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.spatialrules.CountriesSpatialRuleFactory;
+import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonBuilder;
 import com.graphhopper.json.geo.JsonFeatureCollection;
@@ -29,47 +30,50 @@ import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.util.*;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters;
+import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Named;
+import javax.inject.Singleton;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.List;
 
-/**
- * @author Peter Karich
- */
-public class DefaultModule extends AbstractModule {
+public class GraphHopperModule extends AbstractModule {
     protected final CmdArgs args;
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private GraphHopper graphHopper;
 
-    public DefaultModule(CmdArgs args) {
+    public GraphHopperModule(CmdArgs args) {
         this.args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
     }
 
-    public GraphHopper getGraphHopper() {
-        if (graphHopper == null)
-            throw new IllegalStateException("createGraphHopper not called");
-
-        return graphHopper;
+    @Override
+    protected void configure() {
+        install(new CmdArgsModule(args));
+        bind(GHJson.class).toInstance(new GHJsonBuilder().create());
+        bind(GraphHopperAPI.class).to(GraphHopper.class);
     }
 
-    /**
-     * @return an initialized GraphHopper instance
-     */
-    protected GraphHopper createGraphHopper(CmdArgs args) {
-        GraphHopper tmp = new GraphHopperOSM() {
+    @Provides
+    @Singleton
+    GraphHopper createGraphHopper(CmdArgs args) {
+        GraphHopper graphHopper = new GraphHopperOSM() {
             @Override
             protected void loadOrPrepareLM() {
                 if (!getLMFactoryDecorator().isEnabled() || getLMFactoryDecorator().getPreparations().isEmpty())
@@ -113,8 +117,8 @@ public class DefaultModule extends AbstractModule {
                 final FileReader reader = new FileReader(spatialRuleLocation);
                 final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), maxBounds);
                 logger.info("Set spatial rule lookup with " + index.size() + " rules");
-                final FlagEncoderFactory oldFEF = tmp.getFlagEncoderFactory();
-                tmp.setFlagEncoderFactory(new FlagEncoderFactory() {
+                final FlagEncoderFactory oldFEF = graphHopper.getFlagEncoderFactory();
+                graphHopper.setFlagEncoderFactory(new FlagEncoderFactory() {
                     @Override
                     public FlagEncoder createFlagEncoder(String name, PMap configuration) {
                         if (name.equals(GENERIC)) {
@@ -129,38 +133,65 @@ public class DefaultModule extends AbstractModule {
             }
         }
 
-
-        tmp.init(args);
-
-
-        tmp.importOrLoad();
-        logger.info("loaded graph at:" + tmp.getGraphHopperLocation()
-                + ", data_reader_file:" + tmp.getDataReaderFile()
-                + ", flag_encoders:" + tmp.getEncodingManager()
-                + ", " + tmp.getGraphHopperStorage().toDetailsString());
-        return tmp;
+        graphHopper.init(args);
+        return graphHopper;
     }
 
-    @Override
-    protected void configure() {
-        try {
-            graphHopper = createGraphHopper(args);
-            bind(GraphHopper.class).toInstance(graphHopper);
-            bind(TranslationMap.class).toInstance(graphHopper.getTranslationMap());
+    @Provides
+    @Singleton
+    TranslationMap getTranslationMap(GraphHopper graphHopper) {
+        return graphHopper.getTranslationMap();
+    }
 
-            long timeout = args.getLong("web.timeout", 3000);
-            bind(Long.class).annotatedWith(Names.named("timeout")).toInstance(timeout);
-            boolean jsonpAllowed = args.getBool("web.jsonp_allowed", false);
+    @Provides
+    @Singleton
+    RouteSerializer getRouteSerializer(GraphHopper graphHopper) {
+        return new SimpleRouteSerializer(graphHopper.getGraphHopperStorage().getBounds());
+    }
 
-            bind(Boolean.class).annotatedWith(Names.named("jsonp_allowed")).toInstance(jsonpAllowed);
+    @Provides
+    @Singleton
+    GraphHopperStorage getGraphHopperStorage(GraphHopper graphHopper) {
+        return graphHopper.getGraphHopperStorage();
+    }
 
-            bind(RouteSerializer.class).toInstance(new SimpleRouteSerializer(graphHopper.getGraphHopperStorage().getBounds()));
+    @Provides
+    @Singleton
+    EncodingManager getEncodingManager(GraphHopper graphHopper) {
+        return graphHopper.getEncodingManager();
+    }
 
-            // should be thread safe
-            bind(GHJson.class).toInstance(new GHJsonBuilder().create());
-        } catch (Exception ex) {
-            throw new IllegalStateException("Couldn't load graph", ex);
-        }
+    @Provides
+    @Singleton
+    LocationIndex getLocationIndex(GraphHopper graphHopper) {
+        return graphHopper.getLocationIndex();
+    }
+
+    @Provides
+    @Singleton
+    @Named("hasElevation")
+    boolean hasElevation(GraphHopper graphHopper) {
+        return graphHopper.hasElevation();
+    }
+
+    @Provides
+    GraphHopperService getGraphHopperService(GraphHopper graphHopper) {
+        return new GraphHopperService() {
+            @Override
+            public void start() {
+                graphHopper.importOrLoad();
+                logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
+                        + ", data_reader_file:" + graphHopper.getDataReaderFile()
+                        + ", flag_encoders:" + graphHopper.getEncodingManager()
+                        + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
+
+            }
+
+            @Override
+            public void close() throws Exception {
+                graphHopper.close();
+            }
+        };
     }
 
 }

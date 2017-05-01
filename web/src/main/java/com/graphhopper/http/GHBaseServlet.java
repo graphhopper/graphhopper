@@ -17,10 +17,13 @@
  */
 package com.graphhopper.http;
 
-import com.graphhopper.GHRequest;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.routing.util.HintsMap;
-import org.json.JSONException;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,55 +46,52 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
  */
 public class GHBaseServlet extends HttpServlet {
     protected static final Logger logger = LoggerFactory.getLogger(GHBaseServlet.class);
+    protected final JsonNodeFactory jsonNodeFactory = new JsonNodeFactory(false);
+
+    @Inject
+    protected ObjectMapper objectMapper;
+
     @Inject
     @Named("jsonp_allowed")
     private boolean jsonpAllowed;
 
-    protected void writeJson(HttpServletRequest req, HttpServletResponse res, JSONObject json) throws JSONException, IOException {
+    protected void writeJson(HttpServletRequest req, HttpServletResponse res, JsonNode json) throws IOException {
         String type = getParam(req, "type", "json");
         res.setCharacterEncoding("UTF-8");
-        boolean debug = getBooleanParam(req, "debug", false) || getBooleanParam(req, "pretty", false);
+        final boolean indent = getBooleanParam(req, "debug", false) || getBooleanParam(req, "pretty", false);
+        ObjectWriter objectWriter = indent ? objectMapper.writer().with(SerializationFeature.INDENT_OUTPUT) : objectMapper.writer();
         if ("jsonp".equals(type)) {
             res.setContentType("application/javascript");
             if (!jsonpAllowed) {
                 writeError(res, SC_BAD_REQUEST, "Server is not configured to allow jsonp!");
                 return;
             }
-
             String callbackName = getParam(req, "callback", null);
             if (callbackName == null) {
                 writeError(res, SC_BAD_REQUEST, "No callback provided, necessary if type=jsonp");
                 return;
             }
-
-            if (debug)
-                writeResponse(res, callbackName + "(" + json.toString(2) + ")");
-            else
-                writeResponse(res, callbackName + "(" + json.toString(0) + ")");
-
+            writeResponse(res, callbackName + "(" + objectWriter.writeValueAsString(json) + ")");
         } else {
             res.setContentType("application/json");
-            if (debug)
-                writeResponse(res, json.toString(2));
-            else
-                writeResponse(res, json.toString(0));
+            writeResponse(res, objectWriter.writeValueAsString(json));
         }
     }
 
     protected void writeError(HttpServletResponse res, int code, String message) {
-        JSONObject json = new JSONObject();
+        ObjectNode json = jsonNodeFactory.objectNode();
         json.put("message", message);
         writeJsonError(res, code, json);
     }
 
-    protected void writeJsonError(HttpServletResponse res, int code, JSONObject json) {
+    protected void writeJsonError(HttpServletResponse res, int code, JsonNode json) {
         try {
             // no type parameter check here as jsonp does not work if an error
             // also no debug parameter yet
             res.setContentType("application/json");
             res.setCharacterEncoding("UTF-8");
             res.setStatus(code);
-            res.getWriter().append(json.toString(2));
+            res.getWriter().append(objectMapper.writer().with(SerializationFeature.INDENT_OUTPUT).writeValueAsString(json));
         } catch (IOException ex) {
             throw new RuntimeException("Cannot write JSON Error " + code, ex);
         }

@@ -43,3 +43,4 @@ local.properties
 /reader-overlay-data/nbproject/
 !malta-latest.osm.pbf
 /reader-json/nbproject/
+/graph-cache

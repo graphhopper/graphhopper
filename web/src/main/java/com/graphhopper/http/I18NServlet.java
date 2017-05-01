@@ -17,10 +17,10 @@
  */
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Translation;
 import com.graphhopper.util.TranslationMap;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
@@ -51,12 +51,12 @@ public class I18NServlet extends GHBaseServlet {
         }
 
         Translation tr = map.get(locale);
-        JSONObject json = new JSONObject();
+        ObjectNode json = jsonNodeFactory.objectNode();
         if (tr != null && !Locale.US.equals(tr.getLocale()))
-            json.put("default", tr.asMap());
+            json.putPOJO("default", tr.asMap());
 
-        json.put("locale", locale.toString());
-        json.put("en", map.get("en").asMap());
+        json.put("locale", locale);
+        json.putPOJO("en", map.get("en").asMap());
         writeJson(req, res, json);
     }
 }

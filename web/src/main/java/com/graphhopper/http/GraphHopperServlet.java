@@ -19,16 +19,17 @@ package com.graphhopper.http;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopper;
+import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
-import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -54,10 +55,16 @@ import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
  * @author Peter Karich
  */
 public class GraphHopperServlet extends GHBaseServlet {
+
     @Inject
-    private GraphHopper hopper;
+    private GraphHopperAPI graphHopper;
+    @Inject
+    private EncodingManager encodingManager;
     @Inject
     private RouteSerializer routeSerializer;
+    @Inject
+    @Named("hasElevation")
+    private boolean hasElevation;
 
     @Override
     public void doGet(HttpServletRequest httpReq, HttpServletResponse httpRes) throws ServletException, IOException {
@@ -80,6 +87,9 @@ public class GraphHopperServlet extends GHBaseServlet {
 
         if (!ghRsp.hasErrors()) {
             try {
+                if(requestPoints.isEmpty()){
+                    throw new IllegalArgumentException("You have to pass at least one point");
+                }
                 List<Double> favoredHeadings = Collections.EMPTY_LIST;
                 try {
                     favoredHeadings = getDoubleParamList(httpReq, "heading");
@@ -88,9 +98,9 @@ public class GraphHopperServlet extends GHBaseServlet {
                     throw new IllegalArgumentException("heading list in wrong format: " + e.getMessage());
                 }
 
-                if (!hopper.getEncodingManager().supports(vehicleStr)) {
+                if (!encodingManager.supports(vehicleStr)) {
                     throw new IllegalArgumentException("Vehicle not supported: " + vehicleStr);
-                } else if (enableElevation && !hopper.hasElevation()) {
+                } else if (enableElevation && !hasElevation) {
                     throw new IllegalArgumentException("Elevation not supported!");
                 } else if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size()) {
                     throw new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
@@ -102,7 +112,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                     throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored");
                 }
 
-                FlagEncoder algoVehicle = hopper.getEncodingManager().getEncoder(vehicleStr);
+                FlagEncoder algoVehicle = encodingManager.getEncoder(vehicleStr);
                 GHRequest request;
                 if (favoredHeadings.size() > 0) {
                     // if only one favored heading is specified take as start heading
@@ -129,7 +139,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                         put(INSTRUCTIONS, enableInstructions).
                         put(WAY_POINT_MAX_DISTANCE, minPathPrecision);
 
-                ghRsp = hopper.route(request);
+                ghRsp = graphHopper.route(request);
             } catch (IllegalArgumentException ex) {
                 ghRsp.addError(ex);
             }
@@ -174,9 +184,9 @@ public class GraphHopperServlet extends GHBaseServlet {
                 ((Map) infoMap).put("took", Math.round(took * 1000));
 
             if (ghRsp.hasErrors())
-                writeJsonError(httpRes, SC_BAD_REQUEST, new JSONObject(map));
+                writeJsonError(httpRes, SC_BAD_REQUEST, jsonNodeFactory.pojoNode(map));
             else {
-                writeJson(httpReq, httpRes, new JSONObject(map));
+                writeJson(httpReq, httpRes, jsonNodeFactory.pojoNode(map));
             }
         }
     }

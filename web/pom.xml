@@ -16,7 +16,7 @@
         <version>0.9-SNAPSHOT</version>
     </parent>
     <properties>
-        <jetty.version>9.3.8.v20160314</jetty.version>
+        <jetty.version>9.3.16.v20170120</jetty.version>
     </properties>
 
     <dependencies>
@@ -30,24 +30,35 @@
             <artifactId>graphhopper-reader-json</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        
         <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>${json.org.version}</version>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-reader-gtfs</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
+
+
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.bedatadriven</groupId>
+            <artifactId>jackson-datatype-jts</artifactId>
+            <version>2.4</version>
         </dependency>
 
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
-            <version>4.0</version>
+            <version>4.1.0</version>
         </dependency>
 
         <!-- necessary to use guice ('@Inject') in servlets -->
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-servlet</artifactId>
-            <version>4.0</version>
+            <version>4.1.0</version>
         </dependency>
 
         <dependency>

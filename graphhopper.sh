@@ -120,7 +120,7 @@ function packageCoreJar {
     echo "## building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
     
-    execMvn --projects tools -am -DskipTests=true install
+    execMvn --projects tools,reader-gtfs -am -DskipTests=true install
     execMvn --projects tools -DskipTests=true install assembly:single
   else
     echo "## existing jar found $JAR"

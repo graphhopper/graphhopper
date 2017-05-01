@@ -41,8 +41,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
 
 import static com.graphhopper.util.Parameters.Landmark.DISABLE;
 
@@ -264,7 +264,9 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * @see com.graphhopper.routing.ch.CHAlgoFactoryDecorator#prepare(StorableProperties) for a very similar method
      */
     public boolean loadOrDoWork(final StorableProperties properties) {
+        ExecutorCompletionService completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
+        int submittedPreparations = 0;
         boolean prepared = false;
         for (final PrepareLandmarks plm : preparations) {
             counter++;
@@ -274,7 +276,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             prepared = true;
             LOGGER.info(counter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
             final String name = AbstractWeighting.weightingToFileName(plm.getWeighting());
-            threadPool.execute(new Runnable() {
+            completionService.submit(new Runnable() {
                 @Override
                 public void run() {
                     String errorKey = Landmark.PREPARE + "error." + name;
@@ -289,17 +291,18 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                         properties.put(errorKey, ex.getMessage());
                     }
                 }
-            });
+            }, name);
+            submittedPreparations++;
         }
 
         threadPool.shutdown();
         try {
-            if (!threadPool.awaitTermination(Integer.MAX_VALUE, TimeUnit.DAYS))
-                threadPool.shutdownNow();
-
-        } catch (InterruptedException ie) {
+            for (int i = 0; i < submittedPreparations; i++) {
+                completionService.take().get();
+            }
+        } catch (Exception e) {
             threadPool.shutdownNow();
-            throw new RuntimeException(ie);
+            throw new RuntimeException(e);
         }
         return prepared;
     }
@@ -327,7 +330,8 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         for (Weighting weighting : getWeightings()) {
             Double maximumWeight = maximumWeights.get(weighting.getName());
             if (maximumWeight == null)
-                throw new IllegalStateException("maximumWeight cannot be null. Default should be just negative");
+                throw new IllegalStateException("maximumWeight cannot be null. Default should be just negative. " +
+                        "Couldn't find " + weighting.getName() + " in " + maximumWeights);
 
             PrepareLandmarks tmpPrepareLM = new PrepareLandmarks(ghStorage.getDirectory(), ghStorage,
                     weighting, traversalMode, landmarkCount, activeLandmarkCount).

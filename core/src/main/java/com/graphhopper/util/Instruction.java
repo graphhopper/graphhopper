@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Instruction {
+    public static final int UNKNOWN = -99;
     public static final int LEAVE_ROUNDABOUT = -6; // for future use
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
@@ -33,6 +34,12 @@ public class Instruction {
     public static final int FINISH = 4;
     public static final int REACHED_VIA = 5;
     public static final int USE_ROUNDABOUT = 6;
+    public static final int IGNORE = Integer.MIN_VALUE;
+    public static final int KEEP_LEFT = -7;
+    public static final int KEEP_RIGHT = 7;
+    public static final int PT_START_TRIP = 101;
+    public static final int PT_TRANSFER = 102;
+    public static final int PT_END_TRIP = 103;
     private static final AngleCalc AC = Helper.ANGLE_CALC;
     protected final PointList points;
     protected final InstructionAnnotation annotation;
@@ -101,7 +108,7 @@ public class Instruction {
     }
 
     /**
-     * Time in time until no new instruction
+     * Duration until the next instruction, in milliseconds
      */
     public long getTime() {
         return time;
@@ -234,9 +241,18 @@ public class Instruction {
         int indi = getSign();
         if (indi == Instruction.CONTINUE_ON_STREET) {
             str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
+        } else if (indi == Instruction.PT_START_TRIP) {
+            str = tr.tr("pt_start_trip", streetName);
+        } else if (indi == Instruction.PT_TRANSFER) {
+            str = tr.tr("pt_transfer_to", streetName);
+        } else if (indi == Instruction.PT_END_TRIP) {
+            str = tr.tr("pt_end_trip", streetName);
         } else {
             String dir = null;
             switch (indi) {
+                case Instruction.KEEP_LEFT:
+                    dir = tr.tr("keep_left");
+                    break;
                 case Instruction.TURN_SHARP_LEFT:
                     dir = tr.tr("turn_sharp_left");
                     break;
@@ -255,11 +271,14 @@ public class Instruction {
                 case Instruction.TURN_SHARP_RIGHT:
                     dir = tr.tr("turn_sharp_right");
                     break;
+                case Instruction.KEEP_RIGHT:
+                    dir = tr.tr("keep_right");
+                    break;
             }
             if (dir == null)
-                throw new IllegalStateException("Turn indication not found " + indi);
-
-            str = Helper.isEmpty(streetName) ? dir : tr.tr("turn_onto", dir, streetName);
+                str = tr.tr("unknown", indi);
+            else
+                str = Helper.isEmpty(streetName) ? dir : tr.tr("turn_onto", dir, streetName);
         }
         return str;
     }

@@ -117,6 +117,7 @@ public class OSMReader implements DataReader {
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private File osmFile;
     private Date osmDataDate;
+    private boolean dontCreateStorage = false;
 
     public OSMReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
@@ -159,10 +160,7 @@ public class OSMReader implements DataReader {
      * compact graph data structure.
      */
     void preProcess(File osmFile) {
-        OSMInputFile in = null;
-        try {
-            in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
-
+        try (OSMInput in = openOsmInputFile(osmFile)) {
             long tmpWayCounter = 1;
             long tmpRelationCounter = 1;
             ReaderElement item;
@@ -202,8 +200,6 @@ public class OSMReader implements DataReader {
             }
         } catch (Exception ex) {
             throw new RuntimeException("Problem while parsing file", ex);
-        } finally {
-            Helper.close(in);
         }
     }
 
@@ -254,13 +250,13 @@ public class OSMReader implements DataReader {
     private void writeOsm2Graph(File osmFile) {
         int tmp = (int) Math.max(getNodeMap().getSize() / 50, 100);
         LOGGER.info("creating graph. Found nodes (pillar+tower):" + nf(getNodeMap().getSize()) + ", " + Helper.getMemInfo());
-        ghStorage.create(tmp);
+        if (!dontCreateStorage) {
+            ghStorage.create(tmp);
+        }
         long wayStart = -1;
         long relationStart = -1;
         long counter = 1;
-        OSMInputFile in = null;
-        try {
-            in = new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
+        try (OSMInput in = openOsmInputFile(osmFile)) {
             LongIntMap nodeFilter = getNodeMap();
 
             ReaderElement item;
@@ -302,13 +298,15 @@ public class OSMReader implements DataReader {
             // logger.info("storage nodes:" + storage.nodes() + " vs. graph nodes:" + storage.getGraph().nodes());
         } catch (Exception ex) {
             throw new RuntimeException("Couldn't process file " + osmFile + ", error: " + ex.getMessage(), ex);
-        } finally {
-            Helper.close(in);
         }
 
         finishedReading();
         if (graph.getNodes() == 0)
             throw new RuntimeException("Graph after reading OSM must not be empty. Read " + counter + " items and " + locations + " locations");
+    }
+
+    protected OSMInput openOsmInputFile(File osmFile) throws XMLStreamException, IOException {
+        return new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
     }
 
     /**
@@ -919,6 +917,10 @@ public class OSMReader implements DataReader {
     @Override
     public Date getDataDate() {
         return osmDataDate;
+    }
+
+    public void setDontCreateStorage(boolean dontCreateStorage) {
+        this.dontCreateStorage = dontCreateStorage;
     }
 
     @Override

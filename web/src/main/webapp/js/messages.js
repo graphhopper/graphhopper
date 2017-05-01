@@ -15,6 +15,8 @@ module.exports.extractMetaVersionInfo = function (json) {
 };
 
 module.exports.getSignName = function (sign) {
+    if (sign === -7)
+        return "keep_left";
     if (sign === -3)
         return "sharp_left";
     else if (sign === -2)
@@ -35,8 +37,17 @@ module.exports.getSignName = function (sign) {
         return "marker-icon-blue";
     else if (sign === 6)
         return "roundabout";
+    else if (sign === 7)
+        return "keep_right";
+    else if (sign === 101)
+        return "pt_start_trip";
+    else if (sign === 102)
+        return "pt_transfer_to";
+    else if (sign === 103)
+        return "pt_end_trip";
     else
-        throw "did not find sign " + sign;
+        // throw "did not find sign " + sign;
+        return "unknown";
 };
 
 module.exports.browserTitle = "GraphHopper Maps - Driving Directions";
