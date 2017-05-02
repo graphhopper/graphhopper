@@ -28,7 +28,7 @@ import java.util.*;
  *
  * @author Robin Boldt
  */
-class SpatialRuleLookupArray implements SpatialRuleLookup {
+public class SpatialRuleLookupArray implements SpatialRuleLookup {
 
     // resolution in full decimal degrees
     private final double resolution;
@@ -44,19 +44,23 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
     private final List<SpatialRule> singleRules = new ArrayList<>();
 
     /**
-     * @param bounds     the outer bounds for the Lookup
+     * @param spatialRules     the spatial rules
      * @param resolution of the array in decimal degrees, see: https://en.wikipedia.org/wiki/Decimal_degrees
      *                   The downside of using decimal degrees is that this is not fixed to a certain m range as
      * @param exact      if exact it will also perform a polygon contains for border tiles, might fail for small holes
      *                   in the Polygon that are not represented in the tile array.
+     * @param bounds create the SpatialRuleLookup for the given BBox
      */
-    SpatialRuleLookupArray(BBox bounds, double resolution, boolean exact) {
-        if (bounds == null)
-            throw new IllegalArgumentException("BBox cannot be null");
+    public SpatialRuleLookupArray(List<SpatialRule> spatialRules, double resolution, boolean exact, BBox bounds) {
+
+        if(!bounds.isValid())
+            throw new IllegalStateException("Bounds are not valid: "+bounds);
+
+        this.bounds = bounds;
+
         if (resolution < 1e-100)
             throw new IllegalArgumentException("resolution cannot be that high " + resolution);
 
-        this.bounds = bounds;
         this.resolution = resolution;
         this.checkDiff = (resolution / 2) - (resolution / 10);
         this.exact = exact;
@@ -78,6 +82,10 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
                 throw new IllegalArgumentException("Cannot add to empty rule container");
             }
         });
+
+        for (SpatialRule spatialRule : spatialRules) {
+            addRuleInternal(spatialRule);
+        }
     }
 
     private int getNumberOfYGrids() {
@@ -115,7 +123,7 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
         return SpatialRule.EMPTY;
     }
 
-    protected int getRuleContainerIndex(int xIndex, int yIndex) {
+    private int getRuleContainerIndex(int xIndex, int yIndex) {
         if (xIndex < 0 || xIndex >= lookupArray.length) {
             return EMPTY_RULE_INDEX;
         }
@@ -128,7 +136,7 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
     /**
      * Might fail for small holes that do not occur in the array
      */
-    protected boolean isBorderTile(int xIndex, int yIndex, int ruleIndex) {
+    private boolean isBorderTile(int xIndex, int yIndex, int ruleIndex) {
         for (int i = -1; i < 2; i++) {
             for (int j = -1; j < 2; j++) {
                 if (i != xIndex && j != yIndex)
@@ -145,15 +153,18 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
     }
 
     private int getXIndexForLon(double lon) {
+        if(lon < bounds.minLon)
+            return 0;
         return (int) Math.floor(Math.abs(lon - bounds.minLon) / resolution);
     }
 
     private int getYIndexForLat(double lat) {
+        if(lat < bounds.minLat)
+            return 0;
         return (int) Math.floor(Math.abs(lat - bounds.minLat) / resolution);
     }
 
-    @Override
-    public void addRule(SpatialRule rule) {
+    private void addRuleInternal(SpatialRule rule) {
         if (rule == null)
             throw new IllegalArgumentException("rule cannot be null");
 
@@ -201,7 +212,7 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
         singleRules.add(rule);
     }
 
-    public SpatialRule getSpatialRule(int id) {
+    SpatialRule getSpatialRule(int id) {
         if (id < 0 || id >= ruleContainers.size())
             throw new IllegalArgumentException("SpatialRuleId " + id + " is illegal");
 
@@ -214,7 +225,7 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
     /**
      * This method adds the container if no such rule container exists in this lookup and returns the index otherwise.
      */
-    int addRuleContainer(SpatialRuleContainer container) {
+    private int addRuleContainer(SpatialRuleContainer container) {
         int newIndex = this.ruleContainers.indexOf(container);
         if (newIndex >= 0)
             return newIndex;
@@ -261,4 +272,5 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
     public BBox getBounds() {
         return bounds;
     }
+
 }

@@ -97,6 +97,12 @@ public class BBoxTest {
         //No intersection
         b2 = new BBox(100, 200, 100, 200);
         assertNull(b1.calculateIntersection(b2));
+
+        //Real Example
+        b1 = new BBox(8.8591,9.9111,48.3145,48.8518);
+        b2 = new BBox(5.8524,17.1483,46.3786,55.0653);
+
+        assertEquals(b1, b1.calculateIntersection(b2));
     }
 
     @Test
@@ -145,5 +151,10 @@ public class BBoxTest {
         assertEquals(new BBox(2, 4, 1, 3), BBox.parseTwoPoints("1,2,3,4"));
         // stable parsing, i.e. if first point is in north or south it does not matter:
         assertEquals(new BBox(2, 4, 1, 3), BBox.parseTwoPoints("3,2,1,4"));
+    }
+
+    @Test
+    public void testParseBBoxString() {
+        assertEquals(new BBox(2, 4, 1, 3), BBox.parseBBoxString("2,4,1,3"));
     }
 }
