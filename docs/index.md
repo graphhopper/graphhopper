@@ -78,4 +78,5 @@ Documentation about how to get an GraphHopper instance running on windows via cy
 
 ### Eclipse
 
-[Set up GraphHopper in Eclipse](./core/eclipse-setup.md) with maven and [tomcat](./core/eclipse-tomcat-setup.md).
+Setup in IntelliJ and NetBeans is just via open project. See[this document](./core/eclipse-setup.md) 
+to set up GraphHopper in Eclipse with maven.
