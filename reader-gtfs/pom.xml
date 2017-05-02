@@ -15,13 +15,6 @@
         <version>0.9-SNAPSHOT</version>
     </parent>
 
-    <repositories>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
-        </repository>
-    </repositories>
-
     <dependencies>
         <dependency>
             <groupId>com.graphhopper</groupId>
