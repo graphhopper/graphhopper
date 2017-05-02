@@ -34,9 +34,9 @@
             <version>${project.parent.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.github.graphhopper</groupId>
+            <groupId>com.conveyal</groupId>
             <artifactId>gtfs-lib</artifactId>
-            <version>f955eec</version>
+            <version>2.1.0</version>
             <exclusions>
                 <exclusion> 
                     <groupId>org.slf4j</groupId>

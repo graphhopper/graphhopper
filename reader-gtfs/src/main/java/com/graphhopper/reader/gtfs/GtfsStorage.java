@@ -20,7 +20,9 @@ package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.Fare;
+import com.conveyal.gtfs.model.FareRule;
 import com.google.transit.realtime.GtfsRealtime;
+import com.graphhopper.gtfs.fare.FixedFareAttributeLoader;
 import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
@@ -193,11 +195,24 @@ public class GtfsStorage implements GraphExtension {
 		try {
 			GTFSFeed feed = new GTFSFeed(dir.getLocation() + "/" + id);
 			feed.loadFromFile(zip);
+			fixFares(feed, zip);
 			this.gtfsFeeds.put(id, feed);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 		this.gtfsFeedIds.add(id);
+	}
+
+	private void fixFares(GTFSFeed feed, ZipFile zip) {
+		feed.fares.clear();
+		Map<String, Fare> fares = new HashMap<>();
+		try {
+			new FixedFareAttributeLoader(feed, fares).loadTable(zip);
+			new FareRule.Loader(feed, fares).loadTable(zip);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+		feed.fares.putAll(fares);
 	}
 
 	@Override
