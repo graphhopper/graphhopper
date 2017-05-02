@@ -32,7 +32,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -43,6 +45,7 @@ import static org.junit.Assert.assertEquals;
 public class RealtimeIT {
 
     private static final String GRAPH_LOC = "target/RealtimeIT";
+    private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopperGtfs.Factory graphHopperFactory;
     private static GraphHopperStorage graphHopperStorage;
     private static LocationIndex locationIndex;
@@ -75,7 +78,7 @@ public class RealtimeIT {
         );
 
         // I want to go at 6:44
-        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,44).toString());
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
         ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, "true");
         ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
 
@@ -106,7 +109,7 @@ public class RealtimeIT {
         );
 
         // I want to go at 6:44
-        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,44).toString());
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
         ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, "true");
         ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
 
@@ -137,7 +140,7 @@ public class RealtimeIT {
         );
 
         // I want to go at 6:44
-        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,44).toString());
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
         ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, "true");
         ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
 
@@ -166,7 +169,7 @@ public class RealtimeIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,8,0));
+        ghRequest.getHints().put(GraphHopperGtfs.EARLIEST_DEPARTURE_TIME_HINT, LocalDateTime.of(2007,1,1,8,0).atZone(zoneId).toInstant());
         ghRequest.getHints().put(GraphHopperGtfs.IGNORE_TRANSFERS, "true");
         ghRequest.getHints().put(GraphHopperGtfs.MAX_WALK_DISTANCE_PER_LEG, 30);
 
