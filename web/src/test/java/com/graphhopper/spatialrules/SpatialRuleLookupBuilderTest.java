@@ -17,7 +17,7 @@
  */
 package com.graphhopper.spatialrules;
 
-import com.graphhopper.json.GHJsonBuilder;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.util.spatialrules.AccessValue;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
@@ -41,7 +41,7 @@ public class SpatialRuleLookupBuilderTest {
     @Test
     public void testIndex() {
         Reader reader = new InputStreamReader(CountriesSpatialRuleFactory.class.getResourceAsStream("countries.geo.json"));
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory());
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(new GHJsonFactory().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory());
 
         // Berlin
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(52.5243700, 13.4105300).getAccessValue("track", TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
@@ -60,7 +60,7 @@ public class SpatialRuleLookupBuilderTest {
     @Test
     public void testBounds() {
         Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), new BBox(-180, 180, -90, 90));
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(new GHJsonFactory().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), new BBox(-180, 180, -90, 90));
         BBox almostWorldWide = new BBox(-179, 179, -89, 89);
 
         // Might fail if a polygon is defined outside the above coordinates
@@ -74,14 +74,14 @@ public class SpatialRuleLookupBuilderTest {
              So the BBox should not contain a Point lying somewhere close in Germany.
           */
         Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), new BBox(9, 10, 51, 52));
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(new GHJsonFactory().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), new BBox(9, 10, 51, 52));
         assertFalse("BBox seems to be incorrectly contracted", spatialRuleLookup.getBounds().contains(49.9, 8.9));
     }
 
     @Test
     public void testNoIntersection() {
         Reader reader = new InputStreamReader(SpatialRuleLookupBuilderTest.class.getResourceAsStream("countries.geo.json"));
-        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), new BBox(-180, -179, -90, -89));
+        SpatialRuleLookup spatialRuleLookup = SpatialRuleLookupBuilder.buildIndex(new GHJsonFactory().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), new BBox(-180, -179, -90, -89));
         assertEquals(SpatialRuleLookup.EMPTY, spatialRuleLookup);
     }
 

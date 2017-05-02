@@ -24,7 +24,7 @@ import com.graphhopper.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.spatialrules.CountriesSpatialRuleFactory;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.json.GHJson;
-import com.graphhopper.json.GHJsonBuilder;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.lm.LandmarkStorage;
@@ -66,7 +66,7 @@ public class GraphHopperModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new CmdArgsModule(args));
-        bind(GHJson.class).toInstance(new GHJsonBuilder().create());
+        bind(GHJson.class).toInstance(new GHJsonFactory().create());
         bind(GraphHopperAPI.class).to(GraphHopper.class);
     }
 
@@ -82,7 +82,7 @@ public class GraphHopperModule extends AbstractModule {
                 try {
                     String location = args.get(Parameters.Landmark.PREPARE + "split_area_location", "");
                     Reader reader = location.isEmpty() ? new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream()) : new FileReader(location);
-                    JsonFeatureCollection jsonFeatureCollection = new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class);
+                    JsonFeatureCollection jsonFeatureCollection = new GHJsonFactory().create().fromJson(reader, JsonFeatureCollection.class);
                     if (!jsonFeatureCollection.getFeatures().isEmpty()) {
                         SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollection, "country", new SpatialRuleLookupBuilder.SpatialRuleFactory() {
                             @Override
@@ -115,7 +115,7 @@ public class GraphHopperModule extends AbstractModule {
             try {
                 final BBox maxBounds = BBox.parseBBoxString(args.get("spatial_rules.max_bbox", "-180, 180, -90, 90"));
                 final FileReader reader = new FileReader(spatialRuleLocation);
-                final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(new GHJsonBuilder().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), maxBounds);
+                final SpatialRuleLookup index = SpatialRuleLookupBuilder.buildIndex(new GHJsonFactory().create().fromJson(reader, JsonFeatureCollection.class), "ISO_A3", new CountriesSpatialRuleFactory(), maxBounds);
                 logger.info("Set spatial rule lookup with " + index.size() + " rules");
                 final FlagEncoderFactory oldFEF = graphHopper.getFlagEncoderFactory();
                 graphHopper.setFlagEncoderFactory(new FlagEncoderFactory() {
