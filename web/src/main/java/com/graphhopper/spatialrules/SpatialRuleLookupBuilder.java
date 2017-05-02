@@ -40,7 +40,10 @@ public class SpatialRuleLookupBuilder {
         List<SpatialRule> spatialRules = new ArrayList<>();
         for (JsonFeature jsonFeature : jsonFeatureCollection.getFeatures()) {
             String id = (String) jsonFeature.getProperty(jsonIdField);
-            List<Polygon> borders = jsonFeature.getGeometry().asPolygon().getPolygons();
+            List<Polygon> borders = new ArrayList<>();
+            for (int i=0; i<jsonFeature.getGeometry().getNumGeometries(); i++) {
+                borders.add(ghPolygonFromJTS((com.vividsolutions.jts.geom.Polygon) jsonFeature.getGeometry().getGeometryN(i)));
+            }
             SpatialRule spatialRule = spatialRuleFactory.createSpatialRule(id, borders);
             if (spatialRule != SpatialRule.EMPTY) {
                 spatialRules.add(spatialRule);
@@ -72,6 +75,16 @@ public class SpatialRuleLookupBuilder {
      */
     public static SpatialRuleLookup buildIndex(JsonFeatureCollection jsonFeatureCollection, String jsonIdField, SpatialRuleFactory spatialRuleFactory) {
         return buildIndex(jsonFeatureCollection, jsonIdField, spatialRuleFactory, new BBox(-180, 180, -90, 90));
+    }
+
+    private static Polygon ghPolygonFromJTS(com.vividsolutions.jts.geom.Polygon polygon) {
+        double[] lats = new double[polygon.getNumPoints()];
+        double[] lons = new double[polygon.getNumPoints()];
+        for (int i=0; i<polygon.getNumPoints(); i++) {
+            lats[i] = polygon.getCoordinates()[i].y;
+            lons[i] = polygon.getCoordinates()[i].x;
+        }
+        return new Polygon(lats, lons);
     }
 
 }

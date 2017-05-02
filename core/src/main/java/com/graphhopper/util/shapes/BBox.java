@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util.shapes;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
 
@@ -44,6 +45,11 @@ public class BBox implements Shape, Cloneable {
     public double maxLat;
     public double minEle;
     public double maxEle;
+
+    @JsonCreator
+    public BBox(double[] coords) {
+        this(coords[0],coords[2],coords[1],coords[3]);
+    }
 
     public BBox(double minLon, double maxLon, double minLat, double maxLat) {
         this(minLon, maxLon, minLat, maxLat, Double.NaN, Double.NaN, false);

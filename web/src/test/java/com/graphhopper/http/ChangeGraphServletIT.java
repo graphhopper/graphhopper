@@ -66,17 +66,17 @@ public class ChangeGraphServletIT extends BaseServletTester {
 
         // block road
         String geoJson = "{"
-                + "'type': 'FeatureCollection',"
-                + "'features': [{"
-                + "  'type': 'Feature',"
-                + "  'geometry': {"
-                + "    'type': 'Point',"
-                + "    'coordinates': [1.521692, 42.522969]"
+                + "\"type\": \"FeatureCollection\","
+                + "\"features\": [{"
+                + "  \"type\": \"Feature\","
+                + "  \"geometry\": {"
+                + "    \"type\": \"Point\","
+                + "    \"coordinates\": [1.521692, 42.522969]"
                 + "  },"
-                + "  'properties': {"
-                + "    'vehicles': ['car'],"
-                + "    'access': false"
-                + "  }}]}".replaceAll("'", "\"");
+                + "  \"properties\": {"
+                + "    \"vehicles\": [\"car\"],"
+                + "    \"access\": false"
+                + "  }}]}";
         String res = post("/change", 200, geoJson);
         JsonNode jsonObj = objectMapper.readTree(res);
         assertEquals(1, jsonObj.get("updates").asInt());

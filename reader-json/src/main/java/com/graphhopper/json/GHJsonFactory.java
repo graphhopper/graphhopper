@@ -15,29 +15,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.json.geo;
+package com.graphhopper.json;
 
-import com.graphhopper.routing.util.spatialrules.Polygon;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.shapes.GHPoint;
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * This interface is used to define an area or location in geojson format.
+ * This class wraps the creation of the specific GHJson implementation.
  *
  * @author Peter Karich
  */
-public interface Geometry {
-    String getType();
-
-    boolean isPoint();
-
-    GHPoint asPoint();
-
-    boolean isPointList();
-
-    PointList asPointList();
-
-    boolean isPolygon();
-
-    GeoJsonPolygon asPolygon();
+public class GHJsonFactory {
+    public GHJson create() {
+        ObjectMapper gson = new ObjectMapper();
+        gson.registerModule(new JtsModule());
+        return new GHJsonJackson(gson);
+    }
 }
