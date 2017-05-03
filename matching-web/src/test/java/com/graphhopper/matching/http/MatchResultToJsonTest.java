@@ -17,14 +17,9 @@
  */
 package com.graphhopper.matching.http;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
-import org.junit.Assert;
-import org.junit.Test;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.GPXExtension;
 import com.graphhopper.matching.MatchResult;
@@ -34,17 +29,22 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GPXEntry;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.GHPoint3D;
+import org.junit.Assert;
+import org.junit.Test;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class MatchResultToJsonTest {
 
-    protected List<EdgeMatch> getEdgeMatch() {
-        List<EdgeMatch> list = new ArrayList<EdgeMatch>();
+    private List<EdgeMatch> getEdgeMatch() {
+        List<EdgeMatch> list = new ArrayList<>();
         list.add(new EdgeMatch(getEdgeInterator(), getGpxExtension()));
         return list;
     }
 
     private List<GPXExtension> getGpxExtension() {
-        List<GPXExtension> list = new ArrayList<GPXExtension>();
+        List<GPXExtension> list = new ArrayList<>();
         QueryResult queryResult1 = new QueryResult(-3.4445, -38.9990) {
             @Override
             public GHPoint3D getSnappedPoint() {
@@ -67,44 +67,27 @@ public class MatchResultToJsonTest {
         PointList pointList = new PointList();
         pointList.add(-3.4445, -38.9990);
         pointList.add(-3.5550, -38.7990);
-        VirtualEdgeIteratorState iterator = new VirtualEdgeIteratorState(0, 0, 0, 1, 10, 0, "test of iterator", pointList);
-        return iterator;
+        return new VirtualEdgeIteratorState(0, 0, 0, 1, 10, 0, "test of iterator", pointList);
     }
 
     @Test
-    public void shouldCreateBasicStructure() {
-        MatchResultToJson jsonResult = new MatchResultToJson(new MatchResult(getEdgeMatch()));
-        JSONObject jsonObject = jsonResult.exportTo();
+    public void shouldCreateBasicStructure() throws JsonProcessingException {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        JsonNode jsonObject = MatchResultToJson.convertToTree(new MatchResult(getEdgeMatch()), objectMapper);
+        ;
+        jsonObject = objectMapper.convertValue(jsonObject, JsonNode.class);
+        JsonNode route = jsonObject.get("diary").get("entries").get(0);
+        JsonNode link = route.get("links").get(0);
+        JsonNode geometry = link.get("geometry");
+        Assert.assertEquals("geometry should have type", "LineString", geometry.get("type").asText());
+        Assert.assertEquals("geometry should have coordinates", "[[-38.999,-3.4445],[-38.799,-3.555]]", objectMapper.writeValueAsString(geometry.get("coordinates")));
 
-        Assert.assertTrue("root should have diary object", jsonObject.has("diary"));
-        Assert.assertTrue("diary should be JSONObject", jsonObject.get("diary") instanceof JSONObject);
-        Assert.assertTrue("diary should have entries a JSONArray", jsonObject.getJSONObject("diary").get("entries") instanceof JSONArray);
-        Assert.assertTrue("Entry should br a JSONObject", jsonObject.getJSONObject("diary").getJSONArray("entries").get(0) instanceof JSONObject);
+        Assert.assertEquals("wpts[0].timestamp should exists", 100000l, link.get("wpts").get(0).get("timestamp").asLong());
+        Assert.assertEquals("wpts[0].y should exists", "-3.4446", link.get("wpts").get(0).get("y").asText());
+        Assert.assertEquals("wpts[0].x should exists", "-38.9996", link.get("wpts").get(0).get("x").asText());
 
-        JSONObject route = (JSONObject) jsonObject.getJSONObject("diary").getJSONArray("entries").get(0);
-
-        Assert.assertTrue("route should have links array", route.get("links") instanceof JSONArray);
-
-        JSONObject link = (JSONObject) route.getJSONArray("links").get(0);
-
-        JSONObject geometry = new JSONObject(link.getString("geometry"));
-
-        Assert.assertEquals("geometry should have type", "LineString", geometry.get("type"));
-        Assert.assertEquals("geometry should have coordinates [[-38.999,-3.4445],[-38.799,-3.555]]", -38.999, geometry.getJSONArray("coordinates").getJSONArray(0).get(0));
-        Assert.assertEquals("geometry should have coordinates [[-38.999,-3.4445],[-38.799,-3.555]]", -3.4445, geometry.getJSONArray("coordinates").getJSONArray(0).get(1));
-
-        Assert.assertEquals("geometry should have coordinates [[-38.999,-3.4445],[-38.799,-3.555]]", -38.799, geometry.getJSONArray("coordinates").getJSONArray(1).get(0));
-        Assert.assertEquals("geometry should have coordinates [[-38.999,-3.4445],[-38.799,-3.555]]", -3.555, geometry.getJSONArray("coordinates").getJSONArray(1).get(1));
-
-        Assert.assertTrue("link should have wpts array", link.get("wpts") instanceof JSONArray);
-
-        Assert.assertEquals("wpts[0].timestamp should exists", 100000l, link.getJSONArray("wpts").getJSONObject(0).get("timestamp"));
-        Assert.assertEquals("wpts[0].y should exists", -3.4446, link.getJSONArray("wpts").getJSONObject(0).get("y"));
-        Assert.assertEquals("wpts[0].x should exists", -38.9996, link.getJSONArray("wpts").getJSONObject(0).get("x"));
-
-        Assert.assertEquals("wpts[1].timestamp should exists", 100001l, link.getJSONArray("wpts").getJSONObject(1).get("timestamp"));
-        Assert.assertEquals("wpts[1].y should exists", -3.4449, link.getJSONArray("wpts").getJSONObject(1).get("y"));
-        Assert.assertEquals("wpts[1].x should exists", -38.9999, link.getJSONArray("wpts").getJSONObject(1).get("x"));
-
+        Assert.assertEquals("wpts[1].timestamp should exists", 100001l, link.get("wpts").get(1).get("timestamp").asLong());
+        Assert.assertEquals("wpts[1].y should exists", "-3.4449", link.get("wpts").get(1).get("y").asText());
+        Assert.assertEquals("wpts[1].x should exists", "-38.9999", link.get("wpts").get(1).get("x").asText());
     }
 }

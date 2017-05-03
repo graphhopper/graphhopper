@@ -30,13 +30,7 @@
             <artifactId>graphhopper-web</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-        
-        <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>            
-            <version>${json.org.version}</version>
-        </dependency>    
-        
+
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
@@ -111,14 +105,6 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-            <!-- create a jar file too, so others can use it more easily -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>                
-                <configuration>
-                    <attachClasses>true</attachClasses>
-                </configuration>
-            </plugin>            
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>

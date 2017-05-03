@@ -17,77 +17,50 @@
  */
 package com.graphhopper.matching.http;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.matching.EdgeMatch;
 import com.graphhopper.matching.GPXExtension;
 import com.graphhopper.matching.MatchResult;
 import com.graphhopper.util.PointList;
 
-/**
- * Transform MatchResult in Json Object with fallow structure:
- * <pre>
- * { "diary": {
- *   "routes": [
- *     { "links": [
- *        { "geometry": String,
- *          "wpts": [{ "x": Number, "y": Number, "timestamp": Number }]
- *        }]
- *     }]
- * }}
- * </pre>
- */
-public class MatchResultToJson {
+class MatchResultToJson {
 
-    protected MatchResult result;
-
-    public MatchResultToJson(MatchResult result) {
-        this.result = result;
-    }
-
-    public JSONObject exportTo() {
-        JSONObject root = new JSONObject();
-        JSONObject diary = new JSONObject();
-        JSONArray entries = new JSONArray();
-        JSONObject route = new JSONObject();
-        JSONArray links = new JSONArray();
+    static JsonNode convertToTree(MatchResult result, ObjectMapper objectMapper) {
+        ObjectNode root = objectMapper.createObjectNode();
+        ObjectNode diary = root.putObject("diary");
+        ArrayNode entries = diary.putArray("entries");
+        ObjectNode route = entries.addObject();
+        ArrayNode links = route.putArray("links");
         for (int emIndex = 0; emIndex < result.getEdgeMatches().size(); emIndex++) {
-            JSONObject link = new JSONObject();
-            JSONObject geometry = new JSONObject();
-
+            ObjectNode link = links.addObject();
             EdgeMatch edgeMatch = result.getEdgeMatches().get(emIndex);
             PointList pointList = edgeMatch.getEdgeState().fetchWayGeometry(emIndex == 0 ? 3 : 2);
-
+            final ObjectNode geometry = link.putObject("geometry");
             if (pointList.size() < 2) {
-                geometry.put("coordinates", pointList.toGeoJson().get(0));
+                geometry.putArray("coordinates").add(objectMapper.convertValue(pointList.toGeoJson().get(0), JsonNode.class));
                 geometry.put("type", "Point");
             } else {
-                geometry.put("coordinates", pointList.toGeoJson());
+                geometry.putArray("coordinates").addAll(objectMapper.convertValue(pointList.toGeoJson(), ArrayNode.class));
                 geometry.put("type", "LineString");
             }
-
             link.put("id", edgeMatch.getEdgeState().getEdge());
-            link.put("geometry", geometry.toString());
-
-            JSONArray wpts = new JSONArray();
-            link.put("wpts", wpts);
-
+            ArrayNode wpts = link.putArray("wpts");
             for (GPXExtension extension : edgeMatch.getGpxExtensions()) {
-                JSONObject wpt = new JSONObject();
+                ObjectNode wpt = wpts.addObject();
                 wpt.put("x", extension.getQueryResult().getSnappedPoint().lon);
                 wpt.put("y", extension.getQueryResult().getSnappedPoint().lat);
                 wpt.put("timestamp", extension.getEntry().getTime());
-                wpts.put(wpt);
             }
-
-            links.put(link);
         }
-
-        route.put("links", links);
-        entries.put(route);
-        diary.put("entries", entries);
-        root.put("diary", diary);
+        try {
+            System.out.println(objectMapper.writeValueAsString(root));
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
         return root;
     }
 }

@@ -17,27 +17,29 @@
  */
 package com.graphhopper.matching.http;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.http.GraphHopperServlet;
 import com.graphhopper.http.RouteSerializer;
-import com.graphhopper.matching.*;
+import com.graphhopper.matching.EdgeMatch;
+import com.graphhopper.matching.GPXFile;
+import com.graphhopper.matching.MapMatching;
+import com.graphhopper.matching.MatchResult;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
-import javax.inject.Named;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 
@@ -80,17 +82,8 @@ public class MatchServlet extends GraphHopperServlet {
             try {
                 gpxFile = parseGPX(httpReq);
             } catch (Exception ex) {
-                // logger.warn("Cannot parse XML for " + httpReq.getQueryString() + " - " + ex.getMessage() + ", " + infoStr);
                 matchGHRsp.addError(ex);
             }
-//        } else if (type.equals("json")) {
-//            try {
-//                gpxFile = parseJSON(httpReq);
-//            } catch (Exception ex) {
-//                logger.warn("Cannot parse JSON for " + httpReq.getQueryString() + " - " + ex.getMessage() + ", " + infoStr);
-//                httpRes.setStatus(SC_BAD_REQUEST);
-//                httpRes.getWriter().append(errorsToXML(Collections.<Throwable>singletonList(ex)));
-//            }
         } else {
             matchGHRsp.addError(new IllegalArgumentException("Input type not supported " + inType + ", Content-Type:" + contentType));
         }
@@ -143,9 +136,9 @@ public class MatchServlet extends GraphHopperServlet {
         if (EXTENDED_JSON_FORMAT.equals(outType)) {
             if (matchGHRsp.hasErrors()) {
                 httpRes.setStatus(SC_BAD_REQUEST);
-                httpRes.getWriter().append(new JSONArray(matchGHRsp.getErrors()).toString());
+                objectMapper.writeValue(httpRes.getWriter(), matchGHRsp.getErrors());
             } else {
-                httpRes.getWriter().write(new MatchResultToJson(matchRsp).exportTo().toString());
+                httpRes.getWriter().write(objectMapper.writeValueAsString(MatchResultToJson.convertToTree(matchRsp, objectMapper)));
             }
 
         } else if (GPX_FORMAT.equals(outType)) {
@@ -163,7 +156,7 @@ public class MatchServlet extends GraphHopperServlet {
                     enableElevation, enableInstructions);
 
             if (rsp.hasErrors()) {
-                writeJsonError(httpRes, SC_BAD_REQUEST, new JSONObject(map));
+                writeJsonError(httpRes, SC_BAD_REQUEST, objectMapper.convertValue(map, JsonNode.class));
             } else {
                 if (matchRsp == null) {
                     throw new IllegalStateException("match response has to be none-null if no error happened");
@@ -187,7 +180,7 @@ public class MatchServlet extends GraphHopperServlet {
                     map.put("traversal_keys", traversalKeylist);
                 }
 
-                writeJson(httpReq, httpRes, new JSONObject(map));
+                writeJson(httpReq, httpRes, objectMapper.convertValue(map, JsonNode.class));
             }
         }
 
@@ -201,19 +194,6 @@ public class MatchServlet extends GraphHopperServlet {
         } else {
             logger.info(str);
         }
-    }
-
-    private GPXFile parseJSON(HttpServletRequest httpReq) throws IOException {
-        JSONObject json = new JSONObject(Helper.isToString(httpReq.getInputStream()));
-        // TODO think about format first:
-        // vehicle/profile: bike
-        // locale:de/en/...
-        // points_encoded:true/false
-        // elevation:true/false
-        // time:true/false
-        // points: lat,lon[,ele,millis] -> millis is also interesting for output!
-        GPXFile file = new GPXFile();
-        throw new IllegalStateException("json input not yet supported");
     }
 
     private GPXFile parseGPX(HttpServletRequest httpReq) throws IOException {
