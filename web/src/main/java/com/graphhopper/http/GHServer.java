@@ -74,8 +74,6 @@ public class GHServer {
         servHandler.setErrorHandler(new GHErrorHandler());
         servHandler.setContextPath("/");
 
-        servHandler.addServlet(new ServletHolder(new InvalidRequestServlet()), "/*");
-
         FilterHolder guiceFilter = new FilterHolder(injector.getInstance(GuiceFilter.class));
         servHandler.addFilter(guiceFilter, "/*", EnumSet.allOf(DispatcherType.class));
 

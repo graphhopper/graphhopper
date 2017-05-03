@@ -46,7 +46,6 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
  */
 public class GHBaseServlet extends HttpServlet {
     protected static final Logger logger = LoggerFactory.getLogger(GHBaseServlet.class);
-    protected final JsonNodeFactory jsonNodeFactory = new JsonNodeFactory(false);
 
     @Inject
     protected ObjectMapper objectMapper;
@@ -79,7 +78,7 @@ public class GHBaseServlet extends HttpServlet {
     }
 
     protected void writeError(HttpServletResponse res, int code, String message) {
-        ObjectNode json = jsonNodeFactory.objectNode();
+        ObjectNode json = objectMapper.createObjectNode();
         json.put("message", message);
         writeJsonError(res, code, json);
     }

@@ -25,7 +25,7 @@ import java.io.IOException;
 public class InvalidRequestServlet extends GHBaseServlet {
     @Override
     protected void service(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        ObjectNode json = jsonNodeFactory.objectNode();
+        ObjectNode json = objectMapper.createObjectNode();
         json.put("message", "Not found");
         writeJsonError(res, HttpServletResponse.SC_NOT_FOUND, json);
     }

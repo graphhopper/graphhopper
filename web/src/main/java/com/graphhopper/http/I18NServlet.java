@@ -51,7 +51,7 @@ public class I18NServlet extends GHBaseServlet {
         }
 
         Translation tr = map.get(locale);
-        ObjectNode json = jsonNodeFactory.objectNode();
+        ObjectNode json = objectMapper.createObjectNode();
         if (tr != null && !Locale.US.equals(tr.getLocale()))
             json.putPOJO("default", tr.asMap());
 

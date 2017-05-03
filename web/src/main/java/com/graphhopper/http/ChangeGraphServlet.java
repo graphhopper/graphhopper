@@ -59,7 +59,7 @@ public class ChangeGraphServlet extends GHBaseServlet {
             }
             // TODO make asynchronous!
             ChangeGraphResponse rsp = ((GraphHopper) graphHopper).changeGraph(collection.getFeatures());
-            ObjectNode resObject = jsonNodeFactory.objectNode();
+            ObjectNode resObject = objectMapper.createObjectNode();
             resObject.put("updates", rsp.getUpdateCount());
             // prepare the consumer to get some changes not immediately when returning after POST
             resObject.put("scheduled_updates", 0);

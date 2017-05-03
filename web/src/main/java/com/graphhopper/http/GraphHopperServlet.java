@@ -184,9 +184,9 @@ public class GraphHopperServlet extends GHBaseServlet {
                 ((Map) infoMap).put("took", Math.round(took * 1000));
 
             if (ghRsp.hasErrors())
-                writeJsonError(httpRes, SC_BAD_REQUEST, jsonNodeFactory.pojoNode(map));
+                writeJsonError(httpRes, SC_BAD_REQUEST, objectMapper.getNodeFactory().pojoNode(map));
             else {
-                writeJson(httpReq, httpRes, jsonNodeFactory.pojoNode(map));
+                writeJson(httpReq, httpRes, objectMapper.getNodeFactory().pojoNode(map));
             }
         }
     }

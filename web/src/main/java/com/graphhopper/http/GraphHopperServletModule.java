@@ -84,6 +84,9 @@ public class GraphHopperServletModule extends ServletModule {
 
         serve("/change*").with(ChangeGraphServlet.class);
         bind(ChangeGraphServlet.class).in(Singleton.class);
+
+        serve("/*").with(InvalidRequestServlet.class);
+        bind(InvalidRequestServlet.class).in(Singleton.class);
     }
 
     @Provides

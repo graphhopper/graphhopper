@@ -50,7 +50,7 @@ public class NearestServlet extends GHBaseServlet {
         String pointStr = getParam(httpReq, "point", null);
         boolean enabledElevation = getBooleanParam(httpReq, "elevation", false);
 
-        ObjectNode result = jsonNodeFactory.objectNode();
+        ObjectNode result = objectMapper.createObjectNode();
         if (pointStr != null && !pointStr.equalsIgnoreCase("")) {
             GHPoint place = GHPoint.parse(pointStr);
             QueryResult qr = index.findClosest(place.lat, place.lon, EdgeFilter.ALL_EDGES);
