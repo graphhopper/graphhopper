@@ -74,8 +74,7 @@ public class GHServer {
         servHandler.setErrorHandler(new GHErrorHandler());
         servHandler.setContextPath("/");
 
-        FilterHolder guiceFilter = new FilterHolder(injector.getInstance(GuiceFilter.class));
-        servHandler.addFilter(guiceFilter, "/*", EnumSet.allOf(DispatcherType.class));
+        servHandler.addFilter(new FilterHolder(new GuiceFilter()), "/*", EnumSet.allOf(DispatcherType.class));
 
         ServerConnector connector0 = new ServerConnector(server);
         int httpPort = args.getInt("jetty.port", 8989);
@@ -125,8 +124,6 @@ public class GHServer {
                     install(new GraphHopperModule(args));
                 }
                 install(new GraphHopperServletModule(args));
-
-                bind(GuiceFilter.class);
             }
         };
     }
