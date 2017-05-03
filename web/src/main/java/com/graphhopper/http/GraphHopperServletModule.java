@@ -85,7 +85,10 @@ public class GraphHopperServletModule extends ServletModule {
         serve("/change*").with(ChangeGraphServlet.class);
         bind(ChangeGraphServlet.class).in(Singleton.class);
 
-        serve("/*").with(InvalidRequestServlet.class);
+        // Can't do this because otherwise we can't add more paths _after_ this module.
+        // Instead, put this route explicitly into Jetty.
+        // (We really need a web service framework.)
+        // serve("/*").with(InvalidRequestServlet.class);
         bind(InvalidRequestServlet.class).in(Singleton.class);
     }
 

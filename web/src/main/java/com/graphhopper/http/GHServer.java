@@ -74,6 +74,11 @@ public class GHServer {
         servHandler.setErrorHandler(new GHErrorHandler());
         servHandler.setContextPath("/");
 
+        // Putting this here (and not in the guice servlet module) because it should take precedence
+        // over more specific routes. And guice, strangely, is order-dependent (even though, except in the servlet
+        // extension, modules are _not_ supposed to be ordered).
+        servHandler.addServlet(new ServletHolder(injector.getInstance(InvalidRequestServlet.class)), "/*");
+
         servHandler.addFilter(new FilterHolder(new GuiceFilter()), "/*", EnumSet.allOf(DispatcherType.class));
 
         ServerConnector connector0 = new ServerConnector(server);
