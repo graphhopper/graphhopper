@@ -27,12 +27,14 @@ import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +68,12 @@ public class GHServer {
         resHandler.setWelcomeFiles(new String[]{
                 "index.html"
         });
-        resHandler.setResourceBase(args.get("jetty.resourcebase", "./web/src/main/webapp"));
+        resHandler.setRedirectWelcome(false);
+
+        ContextHandler contextHandler = new ContextHandler();
+        contextHandler.setContextPath("/");
+        contextHandler.setBaseResource(Resource.newResource(args.get("jetty.resourcebase", "./web/src/main/webapp")));
+        contextHandler.setHandler(resHandler);
 
         server = new Server();
         // getSessionHandler and getSecurityHandler should always return null
@@ -97,7 +104,7 @@ public class GHServer {
 
         HandlerList handlers = new HandlerList();
         handlers.setHandlers(new Handler[]{
-                resHandler, servHandler
+                contextHandler, servHandler
         });
 
         GzipHandler gzipHandler = new GzipHandler();
