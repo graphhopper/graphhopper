@@ -18,5 +18,5 @@ that.
 
 Writing your own rules is simple. If you write a rule for a country that is not provided in GraphHopper yet, we'd love
 if you would contribute your rules. You can have a look at the [GermanySpatialRule](https://github.com/graphhopper/graphhopper/blob/master/core/src/main/java/com/graphhopper/routing/util/spatialrules/countries/GermanySpatialRule.java).
-Create something similar for your contry. After that you have to extend the [CountriesSpatialRuleFactory](https://github.com/graphhopper/graphhopper/blob/master/web/src/main/java/com/graphhopper/spatialrules/CountriesSpatialRuleFactory.java) 
+Create something similar for your country. After that you have to extend the [CountriesSpatialRuleFactory](https://github.com/graphhopper/graphhopper/blob/master/web/src/main/java/com/graphhopper/spatialrules/CountriesSpatialRuleFactory.java) 
 to match your country code. 
