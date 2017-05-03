@@ -1,14 +1,14 @@
 # Spatial Rules
 
 Spatial rules allow you to create rules for certain areas. One famous example is that `highway=track` should be accessible 
-in Austria, whereas it should be marked as `access=destination`. Other examples are different max speeds for different
-countries. More information on different road rules can be found in the OSM wiki. The article about different 
-[accessibilities](https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restrictions) and about different 
+in Austria, whereas it should be marked as `access=destination` in Germany. Other examples are different max speeds for different
+countries. More information on different road rules can be found in the OSM wiki, different 
+[accessibilities](https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restrictions) and different 
 [speeds](https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar).
 
 ## Enabling Rules
 
-I you have a working GraphHopper setup it is easy to enable Spatial Rules, **but they only work the DataFlagEncoder**.
+I you have a working GraphHopper setup it is easy to enable Spatial Rules, **but they only work with the DataFlagEncoder**.
 We provide a set of approximate country borders, within the GraphHopper repository. If you need exact borders you can
 get the exact borders from [here](https://github.com/datasets/geo-countries). Go to your `config.properties` and
 uncommend the line: `spatial_rules.location` and point it to where your rules are. You need to re-import your graph after 

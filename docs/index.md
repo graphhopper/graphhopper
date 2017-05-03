@@ -61,6 +61,7 @@ Various topics are explained in more detail separately:
  * [Speed Mode](./core/ch.md): Details about speeding up the route calculations via [Contraction Hierarchies](http://en.wikipedia.org/wiki/Contraction_hierarchies).
  * [Low level API](./core/low-level-api.md): Instructions how to use GraphHopper as a Java library.
  * [Create new FlagEncoder](./core/create-new-flagencoder.md): Documentation to create new routing profiles to influence which ways to favor and how the track-time is calculated.
+ * [Spatial Rules](./core/spatial-rules.md): Instruction on how to use and create new SpatialRules. SpatialRules are used to enforce country-specific routing rules.
 
 ### Android
 
