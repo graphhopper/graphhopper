@@ -1,10 +1,10 @@
 # Spatial Rules
 
-Spatial rules allow you to create rules for certain areas. One famous example is that `highway=track` should be accessible 
-in Austria, whereas it should be marked as `access=destination` in Germany. Other examples are different max speeds for different
-countries. More information on different road rules can be found in the OSM wiki, different 
-[accessibilities](https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restrictions) and different 
-[speeds](https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar).
+Spatial rules allow you to create rules for certain areas. One example is that the default accessibility for 
+`highway=track` in Austria is `access=yes`, whereas the default accessibility is `access=destination` in Germany. Other 
+examples are different max speeds for different countries. More information on different road rules can be found in the 
+OSM wiki, different [accessibilities](https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Access-Restrictions) and 
+different [speeds](https://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed#Motorcar).
 
 ## Enabling Rules
 
