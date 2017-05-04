@@ -82,8 +82,10 @@ public class GraphHopperServletModule extends ServletModule {
         serve("/nearest*").with(NearestServlet.class);
         bind(NearestServlet.class).in(Singleton.class);
 
-        serve("/change*").with(ChangeGraphServlet.class);
-        bind(ChangeGraphServlet.class).in(Singleton.class);
+        if (args.getBool("web.change_graph.enabled", false)) {
+            serve("/change*").with(ChangeGraphServlet.class);
+            bind(ChangeGraphServlet.class).in(Singleton.class);
+        }
 
         // Can't do this because otherwise we can't add more paths _after_ this module.
         // Instead, put this route explicitly into Jetty.

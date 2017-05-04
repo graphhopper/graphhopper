@@ -47,6 +47,7 @@ public class ChangeGraphServletIT extends BaseServletTester {
         CmdArgs args = new CmdArgs().
                 put(Parameters.CH.PREPARE + "weightings", "no").
                 put("graph.flag_encoders", "car").
+                put("web.change_graph.enabled", "true").
                 put("graph.location", DIR).
                 put("datareader.file", "../core/files/andorra.osm.pbf");
         setUpJetty(args);
