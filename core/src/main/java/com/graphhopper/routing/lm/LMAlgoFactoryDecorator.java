@@ -216,8 +216,8 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     @Override
     public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map) {
-        boolean forceFlexMode = map.getBool(DISABLE, false);
-        if (!isEnabled() || disablingAllowed && forceFlexMode)
+        boolean disableLM = map.getBool(DISABLE, false);
+        if (!isEnabled() || disablingAllowed && disableLM)
             return defaultAlgoFactory;
 
         if (preparations.isEmpty())

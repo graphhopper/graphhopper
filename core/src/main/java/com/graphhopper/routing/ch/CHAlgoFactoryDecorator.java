@@ -243,8 +243,8 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     @Override
     public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map) {
-        boolean forceFlexMode = map.getBool(DISABLE, false);
-        if (!isEnabled() || forceFlexMode)
+        boolean disableCH = map.getBool(DISABLE, false);
+        if (!isEnabled() || disablingAllowed && disableCH)
             return defaultAlgoFactory;
 
         if (preparations.isEmpty())

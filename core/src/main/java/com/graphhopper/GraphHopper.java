@@ -971,13 +971,18 @@ public class GraphHopper implements GraphHopperAPI {
 
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
 
-            boolean forceFlexibleMode = hints.getBool(CH.DISABLE, false);
-            if (!chFactoryDecorator.isDisablingAllowed() && forceFlexibleMode)
-                throw new IllegalArgumentException("Flexible mode not enabled on the server-side");
+            boolean disableCH = hints.getBool(CH.DISABLE, false);
+            if (!chFactoryDecorator.isDisablingAllowed() && disableCH)
+                throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
+
+            boolean disableLM = hints.getBool(Landmark.DISABLE, false);
+            if (!lmFactoryDecorator.isDisablingAllowed() && disableLM)
+                throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
+
             String algoStr = request.getAlgorithm();
             if (algoStr.isEmpty())
-                algoStr = chFactoryDecorator.isEnabled() && !forceFlexibleMode &&
-                        !(lmFactoryDecorator.isEnabled() && !hints.getBool(Landmark.DISABLE, false)) ? DIJKSTRA_BI : ASTAR_BI;
+                algoStr = chFactoryDecorator.isEnabled() && !disableCH &&
+                        !(lmFactoryDecorator.isEnabled() && !disableLM) ? DIJKSTRA_BI : ASTAR_BI;
 
             List<GHPoint> points = request.getPoints();
             // TODO Maybe we should think about a isRequestValid method that checks all that stuff that we could do to fail fast
@@ -1007,7 +1012,7 @@ public class GraphHopper implements GraphHopperAPI {
                 Weighting weighting;
                 QueryGraph queryGraph;
 
-                if (chFactoryDecorator.isEnabled() && !forceFlexibleMode) {
+                if (chFactoryDecorator.isEnabled() && !disableCH) {
                     boolean forceCHHeading = hints.getBool(CH.FORCE_HEADING, false);
                     if (!forceCHHeading && request.hasFavoredHeading(0))
                         throw new IllegalArgumentException("Heading is not (fully) supported for CHGraph. See issue #483");
