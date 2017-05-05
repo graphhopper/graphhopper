@@ -32,8 +32,6 @@ public class MapMatchingServletModule extends ServletModule {
 
     @Override
     protected void configureServlets() {
-        super.configureServlets();
-
         serve("/match*").with(MatchServlet.class);
         bind(MatchServlet.class).in(Singleton.class);
     }

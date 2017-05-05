@@ -119,12 +119,4 @@ public class BaseServletTester {
                 HttpStatus.getMessage(expectedStatusCode), HttpStatus.getMessage(rsp.code()));
         return rsp.body().string();
     }
-
-    protected String getResponse(String path, int expectedStatusCode) throws IOException {
-        String url = getTestAPIUrl(path);
-        Response rsp = client.newCall(new Request.Builder().url(url).build()).execute();
-        assertEquals(url + ", http status was:" + rsp.code(),
-                HttpStatus.getMessage(expectedStatusCode), HttpStatus.getMessage(rsp.code()));
-        return rsp.body().string();
-    }
 }
