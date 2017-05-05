@@ -185,4 +185,14 @@ public class Parameters {
          */
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
     }
+
+    public static final class PT {
+        public static final String EARLIEST_DEPARTURE_TIME = "pt.earliest_departure_time";
+        public static final String RANGE_QUERY_END_TIME = "pt.range_query_end_time";
+        public static final String ARRIVE_BY = "pt.arrive_by";
+        public static final String IGNORE_TRANSFERS = "pt.ignore_transfers";
+        public static final String WALK_SPEED = "pt.walk_speed";
+        public static final String MAX_WALK_DISTANCE_PER_LEG = "pt.max_walk_distance_per_leg";
+        public static final String MAX_TRANSFER_DISTANCE_PER_LEG = "pt.max_transfer_distance_per_leg";
+    }
 }

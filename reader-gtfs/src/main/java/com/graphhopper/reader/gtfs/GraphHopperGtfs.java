@@ -53,6 +53,7 @@ import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
 import static com.graphhopper.reader.gtfs.Label.reverseEdges;
+import static com.graphhopper.util.Parameters.PT.RANGE_QUERY_END_TIME;
 
 public final class GraphHopperGtfs implements GraphHopperAPI {
 
@@ -84,14 +85,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         return new Factory(flagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage);
     }
 
-    public static final String EARLIEST_DEPARTURE_TIME_HINT = "earliest_departure_time";
-    public static final String RANGE_QUERY_END_TIME = "range_query_end_time";
-    public static final String ARRIVE_BY = "arrive_by";
-    public static final String IGNORE_TRANSFERS = "ignore_transfers";
-    public static final String WALK_SPEED_KM_H = "walk_speed";
-    public static final String MAX_WALK_DISTANCE_PER_LEG = "max_walk_distance_per_leg";
-    public static final String MAX_TRANSFER_DISTANCE_PER_LEG = "max_transfer_distance_per_leg";
-
     private final TranslationMap translationMap;
     private final PtFlagEncoder flagEncoder;
     private final GraphHopperStorage graphHopperStorage;
@@ -119,18 +112,18 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         RequestHandler(GHRequest request) {
             maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
-            final String departureTimeString = request.getHints().get(EARLIEST_DEPARTURE_TIME_HINT, "");
+            final String departureTimeString = request.getHints().get(Parameters.PT.EARLIEST_DEPARTURE_TIME, "");
             try {
                 initialTime = Instant.parse(departureTimeString);
             } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException(String.format("Illegal value for required parameter %s: [%s]", EARLIEST_DEPARTURE_TIME_HINT, departureTimeString));
+                throw new IllegalArgumentException(String.format("Illegal value for required parameter %s: [%s]", Parameters.PT.EARLIEST_DEPARTURE_TIME, departureTimeString));
             }
-            rangeQueryEndTime = request.getHints().has(RANGE_QUERY_END_TIME) ? Instant.parse(request.getHints().get(RANGE_QUERY_END_TIME, "")) : initialTime;
-            arriveBy = request.getHints().getBool(ARRIVE_BY, false);
-            ignoreTransfers = request.getHints().getBool(IGNORE_TRANSFERS, false);
-            walkSpeedKmH = request.getHints().getDouble(WALK_SPEED_KM_H, 5.0);
-            maxWalkDistancePerLeg = request.getHints().getDouble(MAX_WALK_DISTANCE_PER_LEG, Double.MAX_VALUE);
-            maxTransferDistancePerLeg = request.getHints().getDouble(MAX_TRANSFER_DISTANCE_PER_LEG, Double.MAX_VALUE);
+            rangeQueryEndTime = request.getHints().has(Parameters.PT.RANGE_QUERY_END_TIME) ? Instant.parse(request.getHints().get(RANGE_QUERY_END_TIME, "")) : initialTime;
+            arriveBy = request.getHints().getBool(Parameters.PT.ARRIVE_BY, false);
+            ignoreTransfers = request.getHints().getBool(Parameters.PT.IGNORE_TRANSFERS, false);
+            walkSpeedKmH = request.getHints().getDouble(Parameters.PT.WALK_SPEED, 5.0);
+            maxWalkDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, Double.MAX_VALUE);
+            maxTransferDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, Double.MAX_VALUE);
             weighting = createPtTravelTimeWeighting(flagEncoder, arriveBy, walkSpeedKmH);
             translation = translationMap.getWithFallBack(request.getLocale());
             if (request.getPoints().size() != 2) {
@@ -247,12 +240,12 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 FakeWalkNetworkBuilder.buildWalkNetwork(((GtfsStorage) graphHopperStorage.getExtension()).getGtfsFeeds().values(), graphHopperStorage, ptFlagEncoder, Helper.DIST_EARTH);
             }
             LocationIndex walkNetworkIndex;
-            if (graphHopperStorage.getNodes() > 0 ) {
+            if (graphHopperStorage.getNodes() > 0) {
                 walkNetworkIndex = new LocationIndexTree(graphHopperStorage, new RAMDirectory()).prepareIndex();
             } else {
                 walkNetworkIndex = new EmptyLocationIndex();
             }
-            for (int i=0;i<id;i++) {
+            for (int i = 0; i < id; i++) {
                 new GtfsReader("gtfs_" + i, graphHopperStorage, walkNetworkIndex).readGraph();
             }
             graphHopperStorage.flush();
@@ -303,16 +296,16 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         List<List<Label.Transition>> partitions = new ArrayList<>();
         for (Label.Transition transition : transitions) {
-            if (partitions.isEmpty() || encoder.getEdgeType(transition.edge.getFlags()) == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK || encoder.getEdgeType(partitions.get(partitions.size()-1).get(partitions.get(partitions.size()-1).size()-1).edge.getFlags()) == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK) {
+            if (partitions.isEmpty() || encoder.getEdgeType(transition.edge.getFlags()) == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK || encoder.getEdgeType(partitions.get(partitions.size() - 1).get(partitions.get(partitions.size() - 1).size() - 1).edge.getFlags()) == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK) {
                 partitions.add(new ArrayList<>());
             }
-            partitions.get(partitions.size()-1).add(transition);
+            partitions.get(partitions.size() - 1).add(transition);
         }
 
         path.getLegs().addAll(partitions.stream().flatMap(partition -> parsePathIntoLegs(partition, queryGraph, encoder, weighting, tr).stream()).collect(Collectors.toList()));
 
         final InstructionList instructions = new InstructionList(tr);
-        for (int i=0; i<path.getLegs().size(); ++i) {
+        for (int i = 0; i < path.getLegs().size(); ++i) {
             Trip.Leg leg = path.getLegs().get(i);
             if (leg instanceof Trip.WalkLeg) {
                 final Trip.WalkLeg walkLeg = ((Trip.WalkLeg) leg);
@@ -327,14 +320,14 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     departureInstruction.setTime(ptLeg.travelTime);
                     instructions.add(departureInstruction);
                 } else {
-                    pl = instructions.get(instructions.size()-2).getPoints();
+                    pl = instructions.get(instructions.size() - 2).getPoints();
                 }
                 pl.add(ptLeg.boardStop.geometry.getY(), ptLeg.boardStop.geometry.getX());
-                for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size()-1)) {
+                for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size() - 1)) {
                     pl.add(stop.geometry.getY(), stop.geometry.getX());
                 }
                 final PointList arrivalPointList = new PointList();
-                final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size()-1);
+                final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size() - 1);
                 arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
                 Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.name, InstructionAnnotation.EMPTY, arrivalPointList);
                 if (ptLeg.isInSameVehicleAsPrevious) {
@@ -358,7 +351,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             path.setFirstPtLegDeparture(solution.firstPtDepartureTime);
         }
         path.setNumChanges((int) path.getLegs().stream()
-                .filter(l->l instanceof Trip.PtLeg)
+                .filter(l -> l instanceof Trip.PtLeg)
                 .filter(l -> !((Trip.PtLeg) l).isInSameVehicleAsPrevious)
                 .count() - 1);
         com.graphhopper.gtfs.fare.Trip faresTrip = new com.graphhopper.gtfs.fare.Trip();
@@ -401,7 +394,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             List<Trip.Leg> result = new ArrayList<>();
             long boardTime = -1;
             List<Label.Transition> partition = null;
-            for (int i=1; i<path.size(); i++) {
+            for (int i = 1; i < path.size(); i++) {
                 Label.Transition transition = path.get(i);
                 EdgeIteratorState edge = path.get(i).edge;
                 GtfsStorage.EdgeType edgeType = encoder.getEdgeType(edge.getFlags());
@@ -433,8 +426,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                             new Date(boardTime),
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.getDistance()).sum(),
-                            path.get(i-1).label.currentTime - boardTime,
-                            new Date(path.get(i-1).label.currentTime),
+                            path.get(i - 1).label.currentTime - boardTime,
+                            new Date(path.get(i - 1).label.currentTime),
                             lineString));
                     partition = null;
                 }
@@ -444,14 +437,14 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             InstructionList instructions = new InstructionList(tr);
             InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(path.get(0).edge.getBaseNode(), graph, weighting, weighting.getFlagEncoder(), graph.getNodeAccess(), tr, instructions);
             int prevEdgeId = -1;
-            for (int i=0; i<path.size(); i++) {
+            for (int i = 0; i < path.size(); i++) {
                 EdgeIteratorState edge = path.get(i).edge;
                 instructionsFromEdges.next(edge, i, prevEdgeId);
                 prevEdgeId = edge.getEdge();
             }
             instructionsFromEdges.finish();
             final Instant departureTime = Instant.ofEpochMilli(path.get(0).label.currentTime);
-            final Instant arrivalTime = Instant.ofEpochMilli(path.get(path.size()-1).label.currentTime);
+            final Instant arrivalTime = Instant.ofEpochMilli(path.get(path.size() - 1).label.currentTime);
             return Collections.singletonList(new Trip.WalkLeg(
                     "Walk",
                     Date.from(departureTime),
@@ -467,9 +460,9 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         return Stream.concat(Stream.of(transitions.get(0).edge.fetchWayGeometry(3)),
                 transitions.stream().map(t -> t.edge.fetchWayGeometry(2)))
                 .flatMap(pointList -> pointList.toGeoJson().stream())
-                    .map(doubles -> new Coordinate(doubles[0], doubles[1]))
-                    .collect(Collectors.collectingAndThen(Collectors.toList(),
-                            coords -> geometryFactory.createLineString(coords.toArray(new Coordinate[]{}))));
+                .map(doubles -> new Coordinate(doubles[0], doubles[1]))
+                .collect(Collectors.collectingAndThen(Collectors.toList(),
+                        coords -> geometryFactory.createLineString(coords.toArray(new Coordinate[]{}))));
     }
 
     private class StopsFromBoardHopDwellEdges {
@@ -492,15 +485,15 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     stop = findStop(t);
                     departureTime = t.label.currentTime;
                     stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), null, Date.from(Instant.ofEpochMilli(departureTime))));
-                break;
+                    break;
                 case HOP:
                     stop = findStop(t);
                     arrivalTimeFromHopEdge = t.label.currentTime;
-                break;
+                    break;
                 case DWELL:
                     departureTime = t.label.currentTime;
                     stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(Instant.ofEpochMilli(arrivalTimeFromHopEdge)), Date.from(Instant.ofEpochMilli(departureTime))));
-                break;
+                    break;
                 default:
                     throw new RuntimeException();
             }

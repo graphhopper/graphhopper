@@ -27,20 +27,19 @@ if (!Function.prototype.bind) {
     };
 }
 
-
 var GHRequest = function (host, api_key) {
     this.host = host;
     this.route = new GHRoute(new GHInput(), new GHInput());
     this.from = this.route.first();
     this.to = this.route.last();
-
     this.features = {};
 
     this.do_zoom = true;
     this.useMiles = false;
     // use jsonp here if host allows CORS
     this.dataType = "json";
-    this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "elevation": false, "key": api_key};
+    this.api_params = {"locale": "en", "vehicle": "car", "weighting": "fastest", "elevation": false,
+        "key": api_key, "pt": {}};
 
     // register events
     this.route.addListener('route.add', function (evt) {
@@ -62,16 +61,15 @@ var GHRequest = function (host, api_key) {
 };
 
 GHRequest.prototype.init = function (params) {
-
     for (var key in params) {
+        if (key === "point" || key === "mathRandom" || key === "do_zoom" || key === "layer" || key === "use_miles")
+            continue;
+
         var val = params[key];
         if (val === "false")
             val = false;
         else if (val === "true")
             val = true;
-
-        if (key === "point" || key === "mathRandom" || key === "do_zoom" || key === "layer" || key === "use_miles")
-            continue;
 
         this.api_params[key] = val;
     }
@@ -121,12 +119,12 @@ GHRequest.prototype.init = function (params) {
 };
 
 GHRequest.prototype.setEarliestDepartureTime = function (localdatetime) {
-    this.api_params.earliestDepartureTime = localdatetime;
+    this.api_params.pt.earliest_departure_time = localdatetime;
 };
 
 GHRequest.prototype.getEarliestDepartureTime = function () {
-    if (this.api_params.earliestDepartureTime)
-        return this.api_params.earliestDepartureTime;
+    if (this.api_params.pt.earliest_departure_time)
+        return this.api_params.pt.earliest_departure_time;
     return undefined;
 };
 
@@ -197,20 +195,38 @@ GHRequest.prototype.createPointParams = function (useRawInput) {
 
 GHRequest.prototype.createPath = function (url, skipParameters) {
     for (var key in this.api_params) {
-        var val = this.api_params[key];
         if(skipParameters && skipParameters[key])
             continue;
 
-        if (GHRoute.isArray(val)) {
-            for (var keyIndex in val) {
-                url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val[keyIndex]);
-            }
-        } else {
-            url += "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val);
-        }
+        var val = this.api_params[key];
+        url += this.flatParameter(key, val);
     }
     return url;
 };
+
+GHRequest.prototype.flatParameter = function (key, val) {
+
+    if(GHRoute.isObject(val)) {
+        var url = "";
+        var arr = Object.keys(val);
+        for (var keyIndex in arr) {
+           var objKey = arr[keyIndex];
+           url += this.flatParameter(key + "." + objKey, val[objKey]);
+        }
+        return url;
+
+    } else  if (GHRoute.isArray(val)) {
+        var url = "";
+        var arr = val;
+        for (var keyIndex in arr) {
+            var objKey = arr[keyIndex];
+            url += this.flatParameter(key + "."+ objKey, val);
+        }
+        return url;
+    }
+
+    return "&" + encodeURIComponent(key) + "=" + encodeURIComponent(val);
+}
 
 GHRequest.prototype.doRequest = function (url, callback) {
     var that = this;
