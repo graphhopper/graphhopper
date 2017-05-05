@@ -175,7 +175,6 @@ public class MapMatchingTest {
      */
     @Test
     public void testDistantPoints() {
-
         // OK with 1000 visited nodes:
         MapMatching mapMatching = new MapMatching(hopper, algoOptions);
         List<GPXEntry> inputGPXEntries = createRandomGPXEntries(
@@ -354,6 +353,10 @@ public class MapMatchingTest {
     // use a workaround to get access to paths
     static class TestGraphHopper extends GraphHopperOSM {
 
+        TestGraphHopper() {
+            super();
+            getCHFactoryDecorator().setDisablingAllowed(true);
+        }
         private List<Path> paths;
 
         List<GPXEntry> getEdges(int index) {

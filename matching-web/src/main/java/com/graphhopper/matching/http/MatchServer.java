@@ -55,8 +55,6 @@ public class MatchServer extends GHServer {
 
                 install(new MapMatchingModule(args));
                 install(new MapMatchingServletModule(args));
-
-                bind(GuiceFilter.class);
             }
         };
     }

@@ -97,6 +97,9 @@ public class MapMatching {
         // default is non-CH
         if (!hints.has(Parameters.CH.DISABLE)) {
             hints.put(Parameters.CH.DISABLE, true);
+
+            if (!hopper.getCHFactoryDecorator().isDisablingAllowed())
+                throw new IllegalArgumentException("Cannot disable CH. Not allowed on server side");
         }
 
         // TODO ugly workaround, duplicate data: hints can have 'vehicle' but algoOptions.weighting too!?

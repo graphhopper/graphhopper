@@ -16,7 +16,7 @@
         <version>0.9-SNAPSHOT</version>
     </parent>
     <properties>
-        <jetty.version>9.3.16.v20170120</jetty.version>
+        <jetty.version>9.4.2.v20170220</jetty.version>
     </properties>
     
     <dependencies>
@@ -29,18 +29,6 @@
             <groupId>com.graphhopper</groupId>
             <artifactId>graphhopper-web</artifactId>
             <version>${project.parent.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.inject</groupId>
-            <artifactId>guice</artifactId>
-            <version>4.1.0</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.inject.extensions</groupId>
-            <artifactId>guice-servlet</artifactId>
-            <version>4.1.0</version>
         </dependency>
 
         <dependency>
@@ -62,23 +50,6 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlets</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-server</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.jetty</groupId>
-            <artifactId>jetty-servlet</artifactId>
-            <version>${jetty.version}</version>
-        </dependency>
-        
         <!-- for integration tests of service --> 
         <dependency>
             <groupId>com.squareup.okhttp3</groupId>
