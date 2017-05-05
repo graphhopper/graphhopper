@@ -13,8 +13,7 @@ cd graphhopper
 # download GTFS from Berlin & Brandenburg in Germany (VBB) and the 'surrounding' OpenStreetMap data for the walk network
 wget -O gtfs-vbb.zip http://transitfeeds.com/p/verkehrsverbund-berlin-brandenburg/213/latest/download
 wget http://download.geofabrik.de/europe/germany/brandenburg-latest.osm.pbf
-mvn install -DskipTests
-mvn --projects web install -DskipTests assembly:single
+./graphhopper.sh buildweb
 # The following process will take roughly 5 minutes on a modern laptop when it is executed for the first time.
 # It imports the previously downloaded OSM data of the Brandenburg area as well as the GTFS.
 java -Xmx5g -Xms5g -jar web/target/graphhopper-web-*-with-dep.jar datareader.file=brandenburg-latest.osm.pbf gtfs.file=gtfs-vbb.zip jetty.port=8989 jetty.resourcebase=./web/src/main/webapp graph.flag_encoders=pt prepare.ch.weightings=no graph.location=./graph-cache
