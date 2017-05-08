@@ -189,4 +189,17 @@ public class GraphHopperAPITest {
 
         assertEquals(2, checkPointCounter.get());
     }
+
+    @Test
+    public void testWarmUp() {
+        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        initGraph(graph);
+
+        GraphHopper instance = new GraphHopper().
+                setStoreOnFlush(false).
+                setEncodingManager(encodingManager).setCHEnabled(false).
+                loadGraph(graph);
+
+        instance.warmUp(1.0);
+    }
 }
