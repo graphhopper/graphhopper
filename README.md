@@ -152,12 +152,13 @@ Here is a list of the more detailed features including a link to the documentati
  * Displays and takes into account [elevation data](./docs/core/elevation.md) (per default disabled)
  * Can apply [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexible and hybrid mode only)
  * Customize vehicle profiles per request (flexible and hybrid mode only)
- * Possibility to specify a '[heading parameter](./docs/core/routing.md)' for start, end and via points for navigation applications via `pass_through` or `heading` parameters (flexible and hybrid mode only)
+ * Possibility to specify a [heading parameter](./docs/core/routing.md) of the vehicle for start, end and via points for navigation applications via `pass_through` or `heading` parameters (flexible and hybrid mode only)
  * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424) (flexible and hybrid mode only)
  * [Turn costs and restrictions](https://github.com/graphhopper/graphhopper/pull/55#issuecomment-31089096) (flexible and hybrid mode only)
+ * Country specific routing via SpatialRules
  * Multiple profiles and weightings
  * Several pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle, ...
- * The core uses only a few dependencies (hppc and slf4j)
+ * The core uses only a few dependencies (hppc, jts and slf4j)
  * Scales from small indoor-sized to world-wide-sized graphs
  * Find nearest point on street e.g. to get elevation or 'snapp to road'
  * Do [map matching](https://github.com/graphhopper/map-matching) with GraphHopper
