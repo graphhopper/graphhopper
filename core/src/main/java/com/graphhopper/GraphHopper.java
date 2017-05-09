@@ -237,27 +237,6 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * 'Warm up' virtual machine so initial route calculation is not slower than consequent. To be used
-     * on a less powerful machine like Android or Raspberry Pi.
-     */
-    public void warmUp(double intensity) {
-        if (ghStorage == null || !fullyLoaded)
-            throw new IllegalStateException("Do a successful call to load or importOrLoad before routing");
-
-        if (ghStorage.isClosed())
-            throw new IllegalStateException("You need to create a new GraphHopper instance as it is already closed");
-
-        double latitude = ghStorage.getNodeAccess().getLatitude(0);
-        double longitude = ghStorage.getNodeAccess().getLongitude(0);
-
-        final Random rand = new Random();
-        double coordOffset = rand.nextDouble() * intensity;
-
-        GHRequest request = new GHRequest(latitude, longitude, latitude + coordOffset, longitude + coordOffset);
-        this.route(request);
-    }
-
-    /**
      * Precise location resolution index means also more space (disc/RAM) could be consumed and
      * probably slower query times, which would be e.g. not suitable for Android. The resolution
      * specifies the tile width (in meter).
