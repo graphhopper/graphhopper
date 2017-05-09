@@ -468,7 +468,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      * @return the weight from the landmark to the specified node. Where the landmark integer is not
      * a node ID but the internal index of the landmark array.
      */
-    public int getFromWeight(int landmarkIndex, int node) {
+    int getFromWeight(int landmarkIndex, int node) {
         int res = (int) landmarkWeightDA.getShort((long) node * LM_ROW_LENGTH + landmarkIndex * 4 + FROM_OFFSET)
                 & 0x0000FFFF;
         assert res >= 0 : "Negative to weight " + res + ", landmark index:" + landmarkIndex + ", node:" + node;
@@ -484,9 +484,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     }
 
     /**
-     * @return the weight from the specified node to the landmark (*as index*)
+     * @return the weight from the specified node to the landmark (specified *as index*)
      */
-    public int getToWeight(int landmarkIndex, int node) {
+    int getToWeight(int landmarkIndex, int node) {
         int res = (int) landmarkWeightDA.getShort((long) node * LM_ROW_LENGTH + landmarkIndex * 4 + TO_OFFSET)
                 & 0x0000FFFF;
         assert res >= 0 : "Negative to weight " + res + ", landmark index:" + landmarkIndex + ", node:" + node;
