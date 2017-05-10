@@ -5,7 +5,6 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.storage.GraphHopperStorage;
 import java.util.Random;
 
-
 public class EngineWarmUp {
     /**
      * 'Warm up' virtual machine so initial route calculation is not slower than consequent. To be used
@@ -25,39 +24,60 @@ public class EngineWarmUp {
     }
 
     private static void warmUpCHSubNetwork(GraphHopper graphHopper, int iterations) {
-        GraphHopperStorage ghStorage = graphHopper.getGraphHopperStorage();
-        Random rand = new Random();
+        int retryCount = 0;
+        int maxRetries = 10;
+        while (true) {
+            try {
+                GraphHopperStorage ghStorage = graphHopper.getGraphHopperStorage();
+                Random rand = new Random();
 
-        for (int i = 0; i < iterations; i++) {
-            int startNode = rand.nextInt(graphHopper.getMaxVisitedNodes() + 1);
-            int endNode = rand.nextInt(graphHopper.getMaxVisitedNodes() + 1);
+                for (int i = 0; i < iterations; i++) {
+                    int startNode = rand.nextInt(graphHopper.getMaxVisitedNodes() + 1);
+                    int endNode = rand.nextInt(graphHopper.getMaxVisitedNodes() + 1);
 
-            double fromLatitude = ghStorage.getNodeAccess().getLatitude(startNode);
-            double fromLongitude = ghStorage.getNodeAccess().getLongitude(startNode);
-            double toLatitude = ghStorage.getNodeAccess().getLatitude(endNode);
-            double toLongitude = ghStorage.getNodeAccess().getLongitude(endNode);
+                    double fromLatitude = ghStorage.getNodeAccess().getLatitude(startNode);
+                    double fromLongitude = ghStorage.getNodeAccess().getLongitude(startNode);
+                    double toLatitude = ghStorage.getNodeAccess().getLatitude(endNode);
+                    double toLongitude = ghStorage.getNodeAccess().getLongitude(endNode);
 
-            GHRequest request = new GHRequest(fromLatitude, fromLongitude, toLatitude, toLongitude);
-            graphHopper.route(request);
+                    GHRequest request = new GHRequest(fromLatitude, fromLongitude, toLatitude, toLongitude);
+                    graphHopper.route(request);
+                }
+                break;
+            } catch (Exception ex) {
+                if (++retryCount == maxRetries)
+                    throw ex;
+            }
         }
     }
 
     private static void warmUpNonCHSubNetwork(final GraphHopper graphHopper, int iterations) {
-        GraphHopperStorage ghStorage = graphHopper.getGraphHopperStorage();
-        Random rand = new Random();
-        EdgeExplorer explorer = ghStorage.getBaseGraph().createEdgeExplorer();
+        int retryCount = 0;
+        int maxRetries = 10;
+        while (true) {
+            try {
+                GraphHopperStorage ghStorage = graphHopper.getGraphHopperStorage();
+                Random rand = new Random();
+                EdgeExplorer explorer = ghStorage.getBaseGraph().createEdgeExplorer();
 
-        for (int i = 0; i < iterations; i++) {
-            BreadthFirstSearch bfs = new BreadthFirstSearch() {
-                int counter = 0;
-                @Override
-                public boolean goFurther(int nodeId) {
-                    counter++;
-                    return counter < graphHopper.getMaxVisitedNodes();
+                for (int i = 0; i < iterations; i++) {
+                    BreadthFirstSearch bfs = new BreadthFirstSearch() {
+                        int counter = 0;
+
+                        @Override
+                        public boolean goFurther(int nodeId) {
+                            counter++;
+                            return counter < graphHopper.getMaxVisitedNodes();
+                        }
+                    };
+                    int startNode = rand.nextInt(ghStorage.getBaseGraph().getNodes() + 1);
+                    bfs.start(explorer, startNode);
                 }
-            };
-            int startNode = rand.nextInt(ghStorage.getBaseGraph().getNodes() + 1);
-            bfs.start(explorer, startNode);
+                break;
+            } catch (Exception ex) {
+                if (++retryCount == maxRetries)
+                    throw ex;
+            }
         }
     }
 }
