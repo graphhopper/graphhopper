@@ -3,7 +3,8 @@ package com.graphhopper.util;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.storage.GraphHopperStorage;
-import java.util.concurrent.ThreadLocalRandom;
+import java.util.Random;
+
 
 public class EngineWarmUp {
     /**
@@ -25,10 +26,11 @@ public class EngineWarmUp {
 
     private static void warmUpCHSubNetwork(GraphHopper graphHopper, int iterations) {
         GraphHopperStorage ghStorage = graphHopper.getGraphHopperStorage();
+        Random rand = new Random();
 
         for (int i = 0; i < iterations; i++) {
-            int startNode = ThreadLocalRandom.current().nextInt(0, graphHopper.getMaxVisitedNodes() + 1);
-            int endNode = ThreadLocalRandom.current().nextInt(0, graphHopper.getMaxVisitedNodes() + 1);
+            int startNode = rand.nextInt(graphHopper.getMaxVisitedNodes() + 1);
+            int endNode = rand.nextInt(graphHopper.getMaxVisitedNodes() + 1);
 
             double fromLatitude = ghStorage.getNodeAccess().getLatitude(startNode);
             double fromLongitude = ghStorage.getNodeAccess().getLongitude(startNode);
@@ -40,13 +42,22 @@ public class EngineWarmUp {
         }
     }
 
-    private static void warmUpNonCHSubNetwork(GraphHopper graphHopper, int iterations) {
+    private static void warmUpNonCHSubNetwork(final GraphHopper graphHopper, int iterations) {
         GraphHopperStorage ghStorage = graphHopper.getGraphHopperStorage();
+        Random rand = new Random();
+        EdgeExplorer explorer = ghStorage.getBaseGraph().createEdgeExplorer();
 
-        BreadthFirstSearch bfs = new BreadthFirstSearch();
         for (int i = 0; i < iterations; i++) {
-            int startNode = ThreadLocalRandom.current().nextInt(0, graphHopper.getMaxVisitedNodes() + 1);
-            bfs.start(ghStorage.getBaseGraph().createEdgeExplorer(), startNode);
+            BreadthFirstSearch bfs = new BreadthFirstSearch() {
+                int counter = 0;
+                @Override
+                public boolean goFurther(int nodeId) {
+                    counter++;
+                    return counter < graphHopper.getMaxVisitedNodes();
+                }
+            };
+            int startNode = rand.nextInt(ghStorage.getBaseGraph().getNodes() + 1);
+            bfs.start(explorer, startNode);
         }
     }
 }
