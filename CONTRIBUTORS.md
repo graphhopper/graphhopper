@@ -7,7 +7,7 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
  * andreaswolf, flag encoder versioning and more
  * agouge, discussion and API refactoring
  * b3nn0, Android improvements
- * boldtrn, motorcycle and improvements like conditional tag parsing, round trips and a lot more
+ * boldtrn, motorcycle knowledge and many improvements like conditional tag parsing, round trips, ...
  * cgarreau, increase of routing success rate via subnetwork cleanup
  * ChristianSeitzer, motorcycle improvements
  * daisy1754, fixed usage of graphhopper.sh script
@@ -19,13 +19,13 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
  * dos65, bug fixes in routing algo
  * drnextgis, ru translation and JS fixes
  * duongnt, fixes in storage
- * fbonzon, UI improvements like #615
+ * fbonzon, several UI improvements like #615
  * florent-morel, improvements regarding fords, #320
  * fredao, translations 
  * HarelM, improvements regarding elevation
  * HelgeKrueger, modularization of javascript, #590
  * henningvs, doc improvements
- * highsource, more efficient geometry update, ui fixes
+ * highsource, more efficient geometry update, UI fixes
  * IsNull, improvements like #708
  * jansoe, many improvements regarding A* algorithm, forcing direction, roundabouts etc
  * jansonhanson, general host config
@@ -33,14 +33,14 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
  * karussell, one of the core developers
  * khuebner, initial turn costs support
  * lmar, improved instructions
- * michaz, public transport
+ * michaz, one of the core developers
  * mprins, improvements for travis CI and regarding JDK9 #806
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
  * ocampana, initial implementation for instructions
  * PGWelch, shapefile reader #874
  * ratrun, route relations, GPX information, bike handling etc
  * rajanski, script to do routing via PostGIS
- * rodneyodonnell, improved dead end removal and fords
+ * rodneyodonnell, improved dead end removal (PrepareRoutingSubnetworks) and fords
  * rodo, more descriptions
  * seeebiii, motorcycle improvements
  * stefanholder, Stefan Holder, BMW AG, refactored unfavoring of virtual edges #885

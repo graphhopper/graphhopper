@@ -187,7 +187,7 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
-        assertEquals("I can still use the AB1 trip", "AB1", (((Trip.PtLeg) response.getBest().getLegs().get(1)).tripId));
+        assertEquals("I can still use the AB1 trip", "AB1", (((Trip.PtLeg) response.getBest().getLegs().get(0)).tripId));
         assertEquals("It takes", time(1,20), response.getBest().getTime());
     }
 

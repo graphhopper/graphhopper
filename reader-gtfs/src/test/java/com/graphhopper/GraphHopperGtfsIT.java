@@ -64,7 +64,7 @@ public class GraphHopperGtfsIT {
         EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, true, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, false, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
         graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
@@ -85,7 +85,6 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0,0).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());
@@ -102,7 +101,6 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,54).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());
@@ -139,7 +137,6 @@ public class GraphHopperGtfsIT {
         );
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6, 49).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.ARRIVE_BY, true);
-        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         GHResponse route = graphHopper.route(ghRequest);
 
@@ -160,11 +157,10 @@ public class GraphHopperGtfsIT {
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.RANGE_QUERY_END_TIME, LocalDateTime.of(2007,1,1,13,0).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, "true");
-        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         GHResponse response = graphHopper.route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()
-                .map(path -> LocalTime.from(((Trip.PtLeg) path.getLegs().get(1)).departureTime.toInstant().atZone(zoneId)))
+                .map(path -> LocalTime.from(((Trip.PtLeg) path.getLegs().get(0)).departureTime.toInstant().atZone(zoneId)))
                 .collect(Collectors.toList());
         List<LocalTime> expectedDepartureTimes = Stream.of(
                 "06:44", "07:14", "07:44", "08:14", "08:44", "08:54", "09:04", "09:14", "09:24", "09:34", "09:44", "09:54",
@@ -187,11 +183,10 @@ public class GraphHopperGtfsIT {
         ghRequest.getHints().put(Parameters.PT.RANGE_QUERY_END_TIME, LocalDateTime.of(2007,1,2,11,0).atZone(zoneId).toInstant());
         // TODO: Find the problem with 1.1.2007
         ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, "true");
-        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         GHResponse response = graphHopper.route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()
-                .map(path -> LocalTime.from(((Trip.PtLeg) path.getLegs().get(1)).departureTime.toInstant().atZone(zoneId)))
+                .map(path -> LocalTime.from(((Trip.PtLeg) path.getLegs().get(0)).departureTime.toInstant().atZone(zoneId)))
                 .collect(Collectors.toList());
         List<LocalTime> expectedDepartureTimes = Stream.of(
                 "12:44", "12:14", "11:44", "11:14", "10:44")
@@ -230,13 +225,13 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());
         assertFalse(route.getAll().isEmpty());
         assertEquals("Expected travel time == scheduled travel time", time(8, 10), route.getBest().getTime(), 0.1);
-        assertEquals("Using expected route", "STBA", (((Trip.PtLeg) route.getBest().getLegs().get(1)).tripId));
+        assertEquals("Using expected route", "STBA", (((Trip.PtLeg) route.getBest().getLegs().get(0)).tripId));
+        assertEquals("Using expected route", "AB1", (((Trip.PtLeg) route.getBest().getLegs().get(1)).tripId));
         assertEquals("Paid expected fare", 250, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue()); // Two legs, no transfers allowed. Need two 'p' tickets costing 125 cents each.
     }
 
@@ -264,7 +259,6 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant()); // Monday morning
-        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
 
         GHResponse route = graphHopper.route(ghRequest);
@@ -275,13 +269,12 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest1.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,0,0).atZone(zoneId).toInstant());
-        ghRequest1.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
         GHResponse route1 = graphHopper.route(ghRequest1);
 
         assertFalse(route1.hasErrors());
         assertFalse(route1.getAll().isEmpty());
         assertEquals("Expected travel time == scheduled travel time", time(9, 0), route1.getBest().getTime());
-        assertEquals("Using expected trip", "AAMV1", (((Trip.PtLeg) route1.getBest().getLegs().get(1)).tripId));
+        assertEquals("Using expected trip", "AAMV1", (((Trip.PtLeg) route1.getBest().getLegs().get(0)).tripId));
         assertEquals("Paid expected fare", 525, route1.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue());
 
     }
@@ -295,11 +288,10 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,8,0).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
         GHResponse response = graphHopper.route(ghRequest);
         assertEquals("Only find one solution. If blocks wouldn't work, there would be two. (There is a slower alternative without transfer.)", 1, response.getAll().size());
         assertEquals("Expected travel time == scheduled travel time", time(1,20), response.getBest().getTime());
-        assertEquals("Four legs: walk, pt, pt, walk, but the two pt legs are in one vehicle, so...", 4, response.getBest().getLegs().size());
+        assertEquals("Two legs: pt, pt, but the two pt legs are in one vehicle, so...", 2, response.getBest().getLegs().size());
         assertEquals("...one boarding instruction", 1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_START_TRIP).count());
         assertEquals("...and one alighting instruction", 1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_END_TRIP).count());
     }
