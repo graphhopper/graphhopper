@@ -7,8 +7,10 @@ body {
     min-width: 700px;
 }
 #map {
-    /* set size via JS */
+    /* Size and position ("relative" or "absolute") set via JS. */
     cursor: default;
+    float: right;
+    right: 0;
 }
 
 #input {
@@ -266,8 +268,8 @@ td img.pic {
     padding: 0;
     width: 32px;
     height: 32px;
-    -moz-border-radius: 0px;
-    -webkit-border-radius: 0px;
+    -moz-border-radius: 0;
+    -webkit-border-radius: 0;
     background-image: linear-gradient(to bottom, white, #e7e7e7);
 }
 
@@ -279,8 +281,8 @@ td img.pic {
 
 .selectvehicle {
     background-color: #bbb;
-    -moz-border-radius: 0px;
-    -webkit-border-radius: 0px;
+    -moz-border-radius: 0;
+    -webkit-border-radius: 0;
     background-image: linear-gradient(to bottom, #9f9f9f, #e7e7e7);
 }
 

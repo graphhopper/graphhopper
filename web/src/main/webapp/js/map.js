@@ -18,9 +18,9 @@ function adjustMapSize() {
     var width = $(window).width() - 280;
     if (width < 400) {
         width = 400;
-        mapDiv.attr("style", "position: relative; float: right;");
+        mapDiv.attr("style", "position: relative;");
     } else {
-        mapDiv.attr("style", "position: absolute; right: 0;");
+        mapDiv.attr("style", "position: absolute;");
     }
     var height = $(window).height();
     if (height < 500)
