@@ -195,6 +195,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
         setCyclingNetworkPreference("deprecated", AVOID_AT_ALL_COSTS.getValue());
 
         setAvoidSpeedLimit(71);
+        
+        init();
     }
 
     @Override
