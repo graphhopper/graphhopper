@@ -338,6 +338,13 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
         assertTrue(encoder.isForward(flags));
         assertFalse(encoder.isBackward(flags));
         way.clearTags();
+        way.setTag("highway", "tertiary");
+        way.setTag("oneway", "yes");
+        way.setTag("oneway:bicycle", "no");
+        flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        way.clearTags();
 
         way.setTag("highway", "tertiary");
         flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
