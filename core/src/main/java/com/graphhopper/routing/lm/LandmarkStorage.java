@@ -78,6 +78,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private final SubnetworkStorage subnetworkStorage;
     private List<LandmarkSuggestion> landmarkSuggestions = Collections.emptyList();
     private SpatialRuleLookup ruleLookup;
+    private boolean logDetails = false;
     /**
      * 'to' and 'from' fit into 32 bit => 16 bit for each of them => 65536
      */
@@ -138,6 +139,13 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 throw new IllegalStateException("Illegal factor " + factor + " calculated from maximum weight " + maxWeight);
         }
         return this;
+    }
+
+    /**
+     * By default do not log many details.
+     */
+    public void setLogDetails(boolean logDetails) {
+        this.logDetails = logDetails;
     }
 
     /**
@@ -229,7 +237,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             additionalInfo = ", maxWeight:" + maxWeight + ", from max distance:" + distanceInMeter / 1000f + "km";
         }
 
-        LOGGER.info("init landmarks for subnetworks with node count greater than " + minimumNodes + " with factor:" + factor + additionalInfo);
+        if (logDetails)
+            LOGGER.info("init landmarks for subnetworks with node count greater than " + minimumNodes + " with factor:" + factor + additionalInfo);
 
         int[] empty = new int[landmarks];
         Arrays.fill(empty, UNSET_SUBNETWORK);
@@ -245,7 +254,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             StopWatch sw = new StopWatch().start();
             blockedEdges = findBorderEdgeIds(ruleLookup);
             tarjanFilter = new BlockedEdgesFilter(encoder, false, true, blockedEdges);
-            LOGGER.info("Made " + blockedEdges.size() + " edges inaccessible. Calculated country cut in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
+            if (logDetails)
+                LOGGER.info("Made " + blockedEdges.size() + " edges inaccessible. Calculated country cut in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
         }
 
         StopWatch sw = new StopWatch().start();
@@ -254,7 +264,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         // also calculating subnetworks from scratch makes bigger problems when working with many oneways
         TarjansSCCAlgorithm tarjanAlgo = new TarjansSCCAlgorithm(graph, tarjanFilter, true);
         List<IntArrayList> graphComponents = tarjanAlgo.findComponents();
-        LOGGER.info("Calculated tarjan subnetworks in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
+        if (logDetails)
+            LOGGER.info("Calculated tarjan subnetworks in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
 
         EdgeExplorer tmpExplorer = graph.createEdgeExplorer(new RequireBothDirectionsEdgeFilter(encoder));
 
@@ -272,8 +283,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                         && GHUtility.count(tmpExplorer.setBaseNode(nextStartNode)) > 0) {
 
                     GHPoint p = createPoint(graph, nextStartNode);
-                    LOGGER.info("start node: " + nextStartNode + " (" + p + ") subnetwork size: " + subnetworkIds.size()
-                            + ", " + Helper.getMemInfo() + ((ruleLookup == null) ? "" : " area:" + ruleLookup.lookupRule(p).getId()));
+                    if (logDetails)
+                        LOGGER.info("start node: " + nextStartNode + " (" + p + ") subnetwork size: " + subnetworkIds.size()
+                                + ", " + Helper.getMemInfo() + ((ruleLookup == null) ? "" : " area:" + ruleLookup.lookupRule(p).getId()));
 
                     if (createLandmarksForSubnetwork(nextStartNode, subnetworks, blockedEdges))
                         break;
@@ -309,7 +321,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             subnetworkStorage.setSubnetwork(nodeId, subnetworks[nodeId]);
         }
 
-        LOGGER.info("Finished landmark creation. Subnetwork node count sum " + nodes + " vs. nodes " + graph.getNodes());
+        if (logDetails)
+            LOGGER.info("Finished landmark creation. Subnetwork node count sum " + nodes + " vs. nodes " + graph.getNodes());
         initialized = true;
     }
 
@@ -320,7 +333,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      */
     private boolean createLandmarksForSubnetwork(final int startNode, final byte[] subnetworks, IntHashSet blockedEdges) {
         final int subnetworkId = landmarkIDs.size();
-        boolean random = false;
         int[] tmpLandmarkNodeIds = new int[landmarks];
         int logOffset = Math.max(1, tmpLandmarkNodeIds.length / 2);
         boolean pickedPrecalculatedLandmarks = false;
@@ -346,11 +358,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                     tmpLandmarkNodeIds[i] = lmNodeId;
                 }
             }
-//            Random randomInst = new Random();
-//            for (int i = 0; i < tmpLandmarkNodeIds.length; i++) {
-//                int index = randomInst.nextInt(subnetworkIds.size());
-//                tmpLandmarkNodeIds[i] = subnetworkIds.get(index);
-//            }
         }
 
         if (pickedPrecalculatedLandmarks) {
@@ -372,7 +379,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             // 1b) we have one landmark, now determine the other landmarks
             tmpLandmarkNodeIds[0] = explorer.getLastNode();
             for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length - 1; lmIdx++) {
-                if(Thread.currentThread().isInterrupted()){
+                if (Thread.currentThread().isInterrupted()) {
                     throw new RuntimeException("Thread was interrupted");
                 }
                 explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode);
@@ -383,16 +390,18 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 }
                 explorer.runAlgo(true);
                 tmpLandmarkNodeIds[lmIdx + 1] = explorer.getLastNode();
-                if (lmIdx % logOffset == 0)
+                if (logDetails && lmIdx % logOffset == 0)
                     LOGGER.info("Finding landmarks [" + weighting + "] in network [" + explorer.getVisitedNodes() + "]. "
                             + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%, " + Helper.getMemInfo());
             }
-            LOGGER.info("Finished searching landmarks for subnetwork " + subnetworkId + " of size " + explorer.getVisitedNodes());
+
+            if (logDetails)
+                LOGGER.info("Finished searching landmarks for subnetwork " + subnetworkId + " of size " + explorer.getVisitedNodes());
         }
 
         // 2) calculate weights for all landmarks -> 'from' and 'to' weight
         for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
-            if(Thread.currentThread().isInterrupted()){
+            if (Thread.currentThread().isInterrupted()) {
                 throw new RuntimeException("Thread was interrupted");
             }
             int lmNodeId = tmpLandmarkNodeIds[lmIdx];
@@ -419,7 +428,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                     return false;
             }
 
-            if (lmIdx % logOffset == 0)
+            if (logDetails && lmIdx % logOffset == 0)
                 LOGGER.info("Set landmarks weights [" + weighting + "]. "
                         + "Progress " + (int) (100.0 * lmIdx / tmpLandmarkNodeIds.length) + "%");
         }

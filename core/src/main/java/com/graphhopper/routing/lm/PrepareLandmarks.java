@@ -103,6 +103,11 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         lms.setMinimumNodes(nodes);
     }
 
+    public PrepareLandmarks setLogDetails(boolean logDetails) {
+        lms.setLogDetails(logDetails);
+        return this;
+    }
+
     LandmarkStorage getLandmarkStorage() {
         return lms;
     }

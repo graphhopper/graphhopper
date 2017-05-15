@@ -67,6 +67,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private final List<String> lmSuggestionsLocations = new ArrayList<>(5);
     private int preparationThreads;
     private ExecutorService threadPool;
+    private boolean logDetails = false;
 
     public LMAlgoFactoryDecorator() {
         setPreparationThreads(1);
@@ -78,6 +79,8 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
         landmarkCount = args.getInt(Parameters.Landmark.COUNT, landmarkCount);
         activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, landmarkCount));
+        logDetails = args.getBool(Landmark.PREPARE + "log_details", false);
+
         for (String loc : args.get("prepare.lm.suggestions_location", "").split(",")) {
             if (!loc.trim().isEmpty())
                 lmSuggestionsLocations.add(loc.trim());
@@ -329,7 +332,8 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             PrepareLandmarks tmpPrepareLM = new PrepareLandmarks(ghStorage.getDirectory(), ghStorage,
                     weighting, traversalMode, landmarkCount, activeLandmarkCount).
                     setLandmarkSuggestions(lmSuggestions).
-                    setMaximumWeight(maximumWeight);
+                    setMaximumWeight(maximumWeight).
+                    setLogDetails(logDetails);
 
             addPreparation(tmpPrepareLM);
         }
