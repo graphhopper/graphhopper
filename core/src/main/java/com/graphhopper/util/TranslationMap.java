@@ -33,7 +33,7 @@ public class TranslationMap {
     private static final List<String> LOCALES = Arrays.asList("ar", "ast", "bg", "ca",
             "cs_CZ", "da_DK", "de_DE", "el", "en_US", "es", "fa", "fil", "fi",
             "fr_FR", "fr_CH", "gl", "he", "hr_HR", "hsb", "hu_HU", "it", "ja", "ko", "lt_LT", "ne",
-            "nl", "pl_PL", "pt_BR", "pt_PT", "ro", "ru", "si", "sk", "sv_SE", "tr", "uk",
+            "nl", "pl_PL", "pt_BR", "pt_PT", "ro", "ru", "sl_SI", "sk", "sv_SE", "tr", "uk",
             "vi_VI", "zh_CN", "zh_HK");
     private final Map<String, Translation> translations = new HashMap<String, Translation>();
 
@@ -94,7 +94,7 @@ public class TranslationMap {
     }
 
     /**
-     * Returns the Translation object for the specified locale and falls back to english if the
+     * Returns the Translation object for the specified locale and falls back to English if the
      * locale was not found.
      */
     public Translation getWithFallBack(Locale locale) {

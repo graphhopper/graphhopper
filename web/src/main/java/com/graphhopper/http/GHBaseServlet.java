@@ -17,8 +17,13 @@
  */
 package com.graphhopper.http;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.graphhopper.routing.util.HintsMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +36,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 import static javax.servlet.http.HttpServletResponse.SC_OK;
@@ -40,55 +46,51 @@ import static javax.servlet.http.HttpServletResponse.SC_OK;
  */
 public class GHBaseServlet extends HttpServlet {
     protected static final Logger logger = LoggerFactory.getLogger(GHBaseServlet.class);
+
+    @Inject
+    protected ObjectMapper objectMapper;
+
     @Inject
     @Named("jsonp_allowed")
     private boolean jsonpAllowed;
 
-    protected void writeJson(HttpServletRequest req, HttpServletResponse res, JSONObject json) throws JSONException, IOException {
+    protected void writeJson(HttpServletRequest req, HttpServletResponse res, JsonNode json) throws IOException {
         String type = getParam(req, "type", "json");
         res.setCharacterEncoding("UTF-8");
-        boolean debug = getBooleanParam(req, "debug", false) || getBooleanParam(req, "pretty", false);
+        final boolean indent = getBooleanParam(req, "debug", false) || getBooleanParam(req, "pretty", false);
+        ObjectWriter objectWriter = indent ? objectMapper.writer().with(SerializationFeature.INDENT_OUTPUT) : objectMapper.writer();
         if ("jsonp".equals(type)) {
             res.setContentType("application/javascript");
             if (!jsonpAllowed) {
                 writeError(res, SC_BAD_REQUEST, "Server is not configured to allow jsonp!");
                 return;
             }
-
             String callbackName = getParam(req, "callback", null);
             if (callbackName == null) {
                 writeError(res, SC_BAD_REQUEST, "No callback provided, necessary if type=jsonp");
                 return;
             }
-
-            if (debug)
-                writeResponse(res, callbackName + "(" + json.toString(2) + ")");
-            else
-                writeResponse(res, callbackName + "(" + json.toString(0) + ")");
-
+            writeResponse(res, callbackName + "(" + objectWriter.writeValueAsString(json) + ")");
         } else {
             res.setContentType("application/json");
-            if (debug)
-                writeResponse(res, json.toString(2));
-            else
-                writeResponse(res, json.toString(0));
+            writeResponse(res, objectWriter.writeValueAsString(json));
         }
     }
 
     protected void writeError(HttpServletResponse res, int code, String message) {
-        JSONObject json = new JSONObject();
+        ObjectNode json = objectMapper.createObjectNode();
         json.put("message", message);
         writeJsonError(res, code, json);
     }
 
-    protected void writeJsonError(HttpServletResponse res, int code, JSONObject json) {
+    protected void writeJsonError(HttpServletResponse res, int code, JsonNode json) {
         try {
             // no type parameter check here as jsonp does not work if an error
             // also no debug parameter yet
             res.setContentType("application/json");
             res.setCharacterEncoding("UTF-8");
             res.setStatus(code);
-            res.getWriter().append(json.toString(2));
+            res.getWriter().append(objectMapper.writer().with(SerializationFeature.INDENT_OUTPUT).writeValueAsString(json));
         } catch (IOException ex) {
             throw new RuntimeException("Cannot write JSON Error " + code, ex);
         }
@@ -160,6 +162,13 @@ public class GHBaseServlet extends HttpServlet {
             res.getWriter().append(str);
         } catch (IOException ex) {
             logger.error("Cannot write message:" + str, ex);
+        }
+    }
+
+    protected void initHints(HintsMap m, Map<String, String[]> parameterMap) {
+        for (Map.Entry<String, String[]> e : parameterMap.entrySet()) {
+            if (e.getValue().length == 1)
+                m.put(e.getKey(), e.getValue()[0]);
         }
     }
 }

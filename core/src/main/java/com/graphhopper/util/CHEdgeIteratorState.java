@@ -45,11 +45,10 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
 
     /**
      * This method is only used on preparation.
-     * <p>
      *
-     * @see PrepareEncoder#canBeOverwritten(long, long)
+     * @see PrepareEncoder#getScMergeStatus(long, long)
      */
-    boolean canBeOverwritten(long flags);
+    int getMergeStatus(long flags);
 
     /**
      * Returns the weight of this shortcut.

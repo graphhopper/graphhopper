@@ -64,6 +64,7 @@ public class OSMReaderTest {
     private final String fileNegIds = "test-osm-negative-ids.xml";
     private final String fileBarriers = "test-barriers.xml";
     private final String fileTurnRestrictions = "test-restrictions.xml";
+    private final String fileRoadAttributes = "test-road-attributes.xml";
     private final String dir = "./target/tmp/test-db";
     private CarFlagEncoder carEncoder;
     private BikeFlagEncoder bikeEncoder;
@@ -169,7 +170,7 @@ public class OSMReaderTest {
                     public boolean isInBounds(ReaderNode node) {
                         return node.getLat() > 49 && node.getLon() > 8;
                     }
-                }.setEncodingManager(getEncodingManager());
+                };
             }
         };
 
@@ -418,8 +419,7 @@ public class OSMReaderTest {
     public void testRelation() {
         EncodingManager manager = new EncodingManager("bike");
         GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false, new GraphExtension.NoOpExtension());
-        OSMReader reader = new OSMReader(ghStorage).
-                setEncodingManager(manager);
+        OSMReader reader = new OSMReader(ghStorage);
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 2, ""));
@@ -512,6 +512,49 @@ public class OSMReaderTest {
     }
 
     @Test
+    public void testRoadAttributes() {
+        GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
+        DataFlagEncoder dataFlagEncoder = (new DataFlagEncoder()).setStoreHeight(true).setStoreWeight(true).setStoreWidth(true);
+        hopper.setEncodingManager(new EncodingManager(Arrays.asList(dataFlagEncoder), 8));
+        hopper.importOrLoad();
+
+        Graph graph = hopper.getGraphHopperStorage();
+        DataFlagEncoder encoder = (DataFlagEncoder) hopper.getEncodingManager().getEncoder("generic");
+        assertEquals(5, graph.getNodes());
+
+        int na = AbstractGraphStorageTester.getIdOf(graph, 11.1, 50);
+        int nb = AbstractGraphStorageTester.getIdOf(graph, 12, 51);
+        int nc = AbstractGraphStorageTester.getIdOf(graph, 11.2, 52);
+        int nd = AbstractGraphStorageTester.getIdOf(graph, 11.3, 51);
+        int ne = AbstractGraphStorageTester.getIdOf( graph, 10, 51 );
+
+        EdgeIteratorState edge_ab = GHUtility.getEdge(graph, na, nb);
+        EdgeIteratorState edge_ad = GHUtility.getEdge(graph, na, nd);
+        EdgeIteratorState edge_ae = GHUtility.getEdge(graph, na, ne);
+        EdgeIteratorState edge_bc = GHUtility.getEdge(graph, nb, nc);
+        EdgeIteratorState edge_bd = GHUtility.getEdge(graph, nb, nd);
+        EdgeIteratorState edge_cd = GHUtility.getEdge(graph, nc, nd);
+        EdgeIteratorState edge_ce = GHUtility.getEdge(graph, nc, ne);
+        EdgeIteratorState edge_de = GHUtility.getEdge(graph, nd, ne);
+
+        assertEquals(4.0, encoder.getHeight(edge_ab), 1e-5);
+        assertEquals(2.5, encoder.getWidth(edge_ab), 1e-5);
+        assertEquals(4.4, encoder.getWeight(edge_ab), 1e-5);
+
+        assertEquals(4.0, encoder.getHeight(edge_bc), 1e-5);
+        assertEquals(2.5, encoder.getWidth(edge_bc), 1e-5);
+        assertEquals(4.4, encoder.getWeight(edge_bc), 1e-5);
+
+        assertEquals(4.4, encoder.getHeight(edge_ad), 1e-5);
+        assertEquals(3.5, encoder.getWidth(edge_ad), 1e-5);
+        assertEquals(17.5, encoder.getWeight(edge_ad), 1e-5);
+
+        assertEquals(4.4, encoder.getHeight(edge_cd), 1e-5);
+        assertEquals(3.5, encoder.getWidth(edge_cd), 1e-5);
+        assertEquals(17.5, encoder.getWeight(edge_cd), 1e-5);
+    }
+
+    @Test
     public void testEstimatedCenter() {
         final CarFlagEncoder encoder = new CarFlagEncoder() {
             private EncodedValue objectEncoder;
@@ -557,7 +600,7 @@ public class OSMReaderTest {
                 return Collections.emptyList();
             }
         };
-        osmreader.setEncodingManager(manager);
+
         // save some node tags for first node
         ReaderNode osmNode = new ReaderNode(1, 1.1d, 1.0d);
         osmNode.setTag("test", "now");
@@ -654,7 +697,7 @@ public class OSMReaderTest {
                     throw new IllegalArgumentException("illegal encoder " + encoder.toString());
                 }
             }
-        }.setEncodingManager(manager);
+        };
 
         // turn cost entries for car and foot are for the same relations (same viaNode, edgeFrom and edgeTo),
         // turn cost entry for bike is for another relation (different viaNode)

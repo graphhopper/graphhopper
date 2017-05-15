@@ -16,13 +16,14 @@
 package com.graphhopper.apache.commons.collections;
 
 import com.graphhopper.coll.BinHeapWrapper;
+
 import java.util.Arrays;
 import java.util.NoSuchElementException;
 
 /**
  * This class is a partial copy of the class org.apache.commons.collections.BinaryHeap for
  * just the min heap and primitive, sorted double keys and associated int elements.
- *
+ * <p>
  * The library can be found here: https://commons.apache.org/proper/commons-collections/
  */
 public class IntDoubleBinaryHeap implements BinHeapWrapper<Number, Integer> {
@@ -162,7 +163,7 @@ public class IntDoubleBinaryHeap implements BinHeapWrapper<Number, Integer> {
         elements[hole] = element;
         keys[hole] = key;
     }
-    
+
     final void percolateUpMinHeap(final int index) {
         int hole = index;
         int element = elements[hole];

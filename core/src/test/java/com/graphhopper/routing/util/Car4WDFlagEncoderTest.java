@@ -57,7 +57,7 @@ public class Car4WDFlagEncoderTest extends CarFlagEncoderTest {
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade2");
         assertTrue(encoder.acceptWay(way) > 0);
-	// This is the only difference from a "car"
+        // This is the only difference from a "car"
         way.setTag("tracktype", "grade4");
         assertTrue(encoder.acceptWay(way) > 0);
 

@@ -28,11 +28,18 @@ public class HintsMap extends PMap {
 
     /**
      * Convenient constructor if only one parameter is provided
-     * <p>
      */
     public HintsMap(String weighting) {
         super(5);
         setWeighting(weighting);
+    }
+
+    public HintsMap(PMap map) {
+        super(map);
+    }
+
+    public HintsMap(HintsMap map) {
+        super(map.toMap());
     }
 
     @Override

@@ -20,7 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.coll.GHBitSet;
 
 /**
- * Implementattion of breadth first search (BFS)
+ * Implementation of breadth first search (BFS)
  * <p>
  *
  * @author Peter Karich

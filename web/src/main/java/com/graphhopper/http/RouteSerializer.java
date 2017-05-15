@@ -23,7 +23,7 @@ import com.graphhopper.util.PointList;
 import java.util.Map;
 
 /**
- * This interface speficies how the route should be transformed into JSON.
+ * This interface specifies how the route should be transformed into JSON.
  * <p>
  *
  * @author Peter Karich

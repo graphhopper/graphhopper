@@ -19,6 +19,8 @@ package com.graphhopper.util;
 
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.LineString;
 
 import java.util.*;
 
@@ -371,12 +373,12 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         for (int i = 0; i < size; i++) {
             if (includeElevation)
                 points.add(new Double[]{
-                    Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i)),
-                    Helper.round2(getElevation(i))
+                        Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i)),
+                        Helper.round2(getElevation(i))
                 });
             else
                 points.add(new Double[]{
-                    Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i))
+                        Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i))
                 });
         }
         return points;
@@ -521,5 +523,13 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
                 throw new UnsupportedOperationException("Not supported.");
             }
         };
+    }
+
+    public static PointList from(LineString lineString) {
+        final PointList pointList = new PointList();
+        for (Coordinate coordinate : lineString.getCoordinates()) {
+            pointList.add(new GHPoint(coordinate.y, coordinate.x));
+        }
+        return pointList;
     }
 }

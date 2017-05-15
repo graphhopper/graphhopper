@@ -18,6 +18,7 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHIntHashSet;
+
 import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
@@ -51,7 +52,7 @@ public class BridgeElevationInterpolatorTest extends AbstractEdgeElevationInterp
 
         // @formatter:off
         /*
-		 * Graph structure:
+         * Graph structure:
 		 * 0-----1-----2-----3-----4
 		 *        \    |    /
 		 *         \   |   /

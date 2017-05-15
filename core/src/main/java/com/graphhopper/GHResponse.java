@@ -88,7 +88,7 @@ public class GHResponse {
 
     /**
      * This method returns true if one of the paths has an error or if the response itself is
-     * errornous.
+     * erroneous.
      */
     public boolean hasErrors() {
         if (!errors.isEmpty())
@@ -103,7 +103,7 @@ public class GHResponse {
     }
 
     /**
-     * This method returns all the explicitely added errors and the errors of all paths.
+     * This method returns all the explicitly added errors and the errors of all paths.
      */
     public List<Throwable> getErrors() {
         List<Throwable> list = new ArrayList<Throwable>();

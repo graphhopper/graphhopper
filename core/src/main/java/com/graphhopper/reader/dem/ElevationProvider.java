@@ -56,7 +56,7 @@ public interface ElevationProvider {
     };
 
     /**
-     * @return returns the hight in meter or Double.NaN if invalid
+     * @return returns the height in meters or Double.NaN if invalid
      */
     double getEle(double lat, double lon);
 

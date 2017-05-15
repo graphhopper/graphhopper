@@ -40,6 +40,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     private String name;
     // indication if edges are dispreferred as start/stop edge 
     private boolean unfavored;
+    private EdgeIteratorState reverseEdge;
 
     public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList) {
         this.originalTraversalKey = originalTraversalKey;
@@ -177,7 +178,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public boolean canBeOverwritten(long flags) {
+    public int getMergeStatus(long flags) {
         throw new UnsupportedOperationException("Not supported.");
     }
 
@@ -198,7 +199,11 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
 
     @Override
     public EdgeIteratorState detach(boolean reverse) {
-        throw new UnsupportedOperationException("Not supported.");
+        if (reverse) {
+            return reverseEdge;
+        } else {
+            return this;
+        }
     }
 
     @Override
@@ -219,6 +224,10 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     @Override
     public double getWeight() {
         throw new UnsupportedOperationException("Not supported.");
+    }
+
+    void setReverseEdge(EdgeIteratorState reverseEdge) {
+        this.reverseEdge = reverseEdge;
     }
 
 }

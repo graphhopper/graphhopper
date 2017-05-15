@@ -17,6 +17,7 @@
  */
 package com.graphhopper.ui;
 
+import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.AStarBidirection;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
@@ -44,10 +45,20 @@ public class DebugAStarBi extends AStarBidirection implements DebugAlgo {
     }
 
     @Override
-    public void updateBestPath(EdgeIteratorState es, SPTEntry bestEE, int currLoc) {
+    public void updateBestPath(EdgeIteratorState edgeState, AStar.AStarEntry entryCurrent, int currLoc) {
         if (g2 != null) {
             mg.plotNode(g2, currLoc, Color.YELLOW);
         }
-        super.updateBestPath(es, bestEE, currLoc);
+        super.updateBestPath(edgeState, entryCurrent, currLoc);
+    }
+
+    @Override
+    public void updateBestPath(EdgeIteratorState es, SPTEntry bestEE, int currLoc) {
+        throw new IllegalStateException("cannot happen");
+    }
+
+    @Override
+    public String toString() {
+        return "debugui|" + super.toString();
     }
 }

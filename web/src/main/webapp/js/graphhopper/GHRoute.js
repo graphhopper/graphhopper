@@ -27,6 +27,11 @@ GHroute.isArray = function (value) {
     return (stringValue.toLowerCase() === "[object array]");
 };
 
+GHroute.isObject = function (value) {
+    var stringValue = Object.prototype.toString.call(value);
+    return (stringValue.toLowerCase() === "[object object]");
+};
+
 GHroute.prototype = {
     first: function () {
         return this.getIndex(0);

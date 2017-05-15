@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.json.geo.Geometry;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.index.LocationIndex;
@@ -34,6 +33,7 @@ import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.Shape;
+import com.vividsolutions.jts.geom.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -110,23 +110,21 @@ public class GraphEdgeIdFinder {
      * This method fills the edgeIds hash with edgeIds found inside the specified geometry
      */
     public void fillEdgeIDs(GHIntHashSet edgeIds, Geometry geometry, EdgeFilter filter) {
-        if (geometry.isPoint()) {
-            GHPoint point = geometry.asPoint();
+        if (geometry instanceof Point) {
+            GHPoint point = GHPoint.from((Point) geometry);
             findClosestEdgeToPoint(edgeIds, point, filter);
-        } else if (geometry.isPointList()) {
-            PointList pl = geometry.asPointList();
-            if (geometry.getType().equals("LineString")) {
-                // TODO do map matching or routing
-                int lastIdx = pl.size() - 1;
-                if (pl.size() >= 2) {
-                    double meanLat = (pl.getLatitude(0) + pl.getLatitude(lastIdx)) / 2;
-                    double meanLon = (pl.getLongitude(0) + pl.getLongitude(lastIdx)) / 2;
-                    findClosestEdge(edgeIds, meanLat, meanLon, filter);
-                }
-            } else {
-                for (int i = 0; i < pl.size(); i++) {
-                    findClosestEdge(edgeIds, pl.getLatitude(i), pl.getLongitude(i), filter);
-                }
+        } else if (geometry instanceof LineString) {
+            PointList pl = PointList.from((LineString) geometry);
+            // TODO do map matching or routing
+            int lastIdx = pl.size() - 1;
+            if (pl.size() >= 2) {
+                double meanLat = (pl.getLatitude(0) + pl.getLatitude(lastIdx)) / 2;
+                double meanLon = (pl.getLongitude(0) + pl.getLongitude(lastIdx)) / 2;
+                findClosestEdge(edgeIds, meanLat, meanLon, filter);
+            }
+        } else if (geometry instanceof MultiPoint) {
+            for (Coordinate coordinate : geometry.getCoordinates()) {
+                findClosestEdge(edgeIds, coordinate.y, coordinate.x, filter);
             }
         }
     }

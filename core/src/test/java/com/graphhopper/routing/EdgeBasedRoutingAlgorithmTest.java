@@ -38,6 +38,7 @@ import java.util.Collection;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 /**
  * @author Peter Karich
@@ -54,11 +55,11 @@ public class EdgeBasedRoutingAlgorithmTest {
     @Parameters(name = "{0}")
     public static Collection<Object[]> configs() {
         return Arrays.asList(new Object[][]{
-            {DIJKSTRA},
-            {DIJKSTRA_BI},
-            {ASTAR},
-            {ASTAR_BI}
-        // TODO { AlgorithmOptions.DIJKSTRA_ONE_TO_MANY }
+                {DIJKSTRA},
+                {DIJKSTRA_BI},
+                {ASTAR},
+                {ASTAR_BI}
+                // TODO { AlgorithmOptions.DIJKSTRA_ONE_TO_MANY }
         });
     }
 
@@ -125,8 +126,8 @@ public class EdgeBasedRoutingAlgorithmTest {
         tcs.addTurnInfo(getEdge(g, 3, 6).getEdge(), 6, getEdge(g, 6, 3).getEdge(), tflags);
     }
 
-    Weighting createWeighting(FlagEncoder encoder, TurnCostExtension tcs, double turnCosts) {
-        return new TurnWeighting(new FastestWeighting(encoder), tcs).setDefaultUTurnCost(turnCosts);
+    Weighting createWeighting(FlagEncoder encoder, TurnCostExtension tcs, double uTurnCosts) {
+        return new TurnWeighting(new FastestWeighting(encoder), tcs).setDefaultUTurnCost(uTurnCosts);
     }
 
     @Test
@@ -212,5 +213,36 @@ public class EdgeBasedRoutingAlgorithmTest {
                 traversalMode(TraversalMode.EDGE_BASED_1DIR).build()).
                 calcPath(5, 1);
         assertEquals(Helper.createTList(5, 6, 3, 1), p.calcNodes());
+    }
+
+    @Test
+    public void testTurnCostsBug_991() {
+        final GraphHopperStorage g = createStorage(createEncodingManager(false));
+        initGraph(g);
+        TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
+
+        long tflags = carEncoder.getTurnFlags(false, 2);
+        tcs.addTurnInfo(getEdge(g, 5, 2).getEdge(), 2, getEdge(g, 2, 3).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 2, 0).getEdge(), 0, getEdge(g, 0, 1).getEdge(), tflags);
+        tcs.addTurnInfo(getEdge(g, 5, 6).getEdge(), 6, getEdge(g, 6, 3).getEdge(), tflags);
+
+        tflags = carEncoder.getTurnFlags(false, 1);
+        tcs.addTurnInfo(getEdge(g, 6, 7).getEdge(), 7, getEdge(g, 7, 4).getEdge(), tflags);
+
+        Path p = createAlgo(g, AlgorithmOptions.start().
+                weighting(new TurnWeighting(new FastestWeighting(carEncoder), tcs) {
+                    @Override
+                    public double calcTurnWeight(int edgeFrom, int nodeVia, int edgeTo) {
+                        if (edgeFrom >= 0)
+                            assertNotNull("edge " + edgeFrom + " to " + nodeVia + " does not exist", g.getEdgeIteratorState(edgeFrom, nodeVia));
+                        if (edgeTo >= 0)
+                            assertNotNull("edge " + edgeTo + " to " + nodeVia + " does not exist", g.getEdgeIteratorState(edgeTo, nodeVia));
+                        return super.calcTurnWeight(edgeFrom, nodeVia, edgeTo);
+                    }
+                }.setDefaultUTurnCost(40)).
+                traversalMode(TraversalMode.EDGE_BASED_2DIR).build()).
+                calcPath(5, 1);
+        assertEquals(Helper.createTList(5, 6, 7, 4, 3, 1), p.calcNodes());
+        assertEquals(301, p.getTime(), .1);
     }
 }

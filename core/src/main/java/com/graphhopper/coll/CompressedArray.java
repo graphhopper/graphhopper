@@ -30,7 +30,7 @@ import java.util.zip.Deflater;
 import java.util.zip.Inflater;
 
 /**
- * Stores the entries in compressed segments. The methods de(compress) are taken from lucene
+ * Stores the entries in compressed segments. The methods de(compress) are taken from Lucene
  * CompressionTools. Before accessing the stored values be sure you called flush.
  * <p>
  *
@@ -52,7 +52,7 @@ public class CompressedArray {
     /**
      * @param _segments           initialize with this number of segments
      * @param entriesPerSeg       a static number which sets the entries per segment
-     * @param approxBytesPerEntry an *approximative* number (as entries can have different lengths)
+     * @param approxBytesPerEntry an *approximate* number (as entries can have different lengths)
      */
     public CompressedArray(int _segments, int entriesPerSeg, int approxBytesPerEntry) {
         if (entriesPerSeg < 1) {

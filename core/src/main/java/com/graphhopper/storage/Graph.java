@@ -70,7 +70,6 @@ public interface Graph {
 
     /**
      * Returns a wrapper over the specified edgeId.
-     * <p>
      *
      * @param adjNode is the node that will be returned via adjNode(). If adjNode is
      *                Integer.MIN_VALUE then the edge with uncertain values for adjNode and baseNode (two

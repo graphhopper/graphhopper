@@ -24,6 +24,7 @@ import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AStar.AStarEntry;
 import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
@@ -41,7 +42,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class implements the alternative paths search using the "plateau" and partially the
- * "penalty" method discribed in the following papers.
+ * "penalty" method described in the following papers.
  * <p>
  * <ul>
  * <li>Choice Routing Explanation - Camvit 2009:
@@ -78,11 +79,19 @@ public class AlternativeRoute implements RoutingAlgorithm {
     private double maxShareFactor = 0.6;
     private double minPlateauFactor = 0.2;
     private int maxPaths = 2;
+    private WeightApproximator weightApproximator;
 
     public AlternativeRoute(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         this.graph = graph;
         this.weighting = weighting;
         this.traversalMode = traversalMode;
+    }
+
+    /**
+     * This method sets the approximation used for the internal bidirectional A*.
+     */
+    public void setApproximation(WeightApproximator weightApproximator) {
+        this.weightApproximator = weightApproximator;
     }
 
     static List<String> getAltNames(Graph graph, SPTEntry ee) {
@@ -136,10 +145,9 @@ public class AlternativeRoute implements RoutingAlgorithm {
     }
 
     /**
-     * This method sets the graph exploration percentage for alternative paths. Default is 1 (100%).
-     * Specify a higher value to get more alternatives (especially if maxWeightFactor is higher than
-     * 1.5) and a lower value to improve query time but reduces the possibility to find
-     * alternatives.
+     * This method sets the graph exploration percentage for alternative paths. Default for bidirectional A*
+     * is 0.8 (80%). Specify a higher value to get more alternatives (especially if maxWeightFactor is higher than
+     * 1.5) and a lower value to improve query time but reduces the possibility to find alternatives.
      */
     public void setMaxExplorationFactor(double explorationFactor) {
         this.maxExplorationFactor = explorationFactor;
@@ -163,6 +171,10 @@ public class AlternativeRoute implements RoutingAlgorithm {
         AlternativeBidirSearch altBidirDijktra = new AlternativeBidirSearch(
                 graph, weighting, traversalMode, maxExplorationFactor * 2);
         altBidirDijktra.setMaxVisitedNodes(maxVisitedNodes);
+        if (weightApproximator != null) {
+            altBidirDijktra.setApproximation(weightApproximator);
+        }
+
         altBidirDijktra.searchBest(from, to);
         visitedNodes = altBidirDijktra.getVisitedNodes();
 
@@ -334,8 +346,8 @@ public class AlternativeRoute implements RoutingAlgorithm {
                         // TODO else if fromSPTEntry.parent != null fromSPTEntry = fromSPTEntry.parent;
 
                     } else // The alternative path is suboptimal when both entries are parallel
-                    if (fromSPTEntry.edge == toSPTEntry.edge)
-                        return true;
+                        if (fromSPTEntry.edge == toSPTEntry.edge)
+                            return true;
 
                     // (1) skip too long paths
                     final double weight = fromSPTEntry.getWeightOfVisitedPath() + toSPTEntry.getWeightOfVisitedPath();

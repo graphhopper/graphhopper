@@ -367,6 +367,10 @@ public class QueryGraph implements Graph {
         return baseGraph;
     }
 
+    public EdgeIteratorState getOriginalEdgeFromVirtNode(int nodeId) {
+        return queryResults.get(nodeId - mainNodes).getClosestEdge();
+    }
+
     public boolean isVirtualEdge(int edgeId) {
         return edgeId >= mainEdges;
     }
@@ -411,7 +415,8 @@ public class QueryGraph implements Graph {
                 virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge.getName(), basePoints);
         VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevTraversalKey,
                 virtEdgeId, nodeId, prevNodeId, baseDistance, reverseFlags, closestEdge.getName(), baseReversePoints);
-
+        baseEdge.setReverseEdge(baseReverseEdge);
+        baseReverseEdge.setReverseEdge(baseEdge);
         virtualEdges.add(baseEdge);
         virtualEdges.add(baseReverseEdge);
     }

@@ -118,7 +118,7 @@ class Location2IDQuadtree implements LocationIndex {
 
     /**
      * Fill quadtree which will span a raster over the entire specified graph g. But do this in a
-     * pre-defined resolution which is controlled via capacity. This datastructure then uses approx.
+     * pre-defined resolution which is controlled via capacity. This data structure then uses approx.
      * capacity * 4 bytes. So maximum capacity is 2^30 where the quadtree would cover the world
      * boundaries every 1.3km - IMO enough for EU or US networks.
      */
@@ -274,14 +274,6 @@ class Location2IDQuadtree implements LocationIndex {
         int dx = (toX - fromX);
         int dy = (toY - fromY);
         return dx * dx + dy * dy;
-    }
-
-    /**
-     * @return the node id (corresponding to a coordinate) closest to the specified lat,lon.
-     */
-    @Override
-    public int findID(final double lat, final double lon) {
-        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
     }
 
     @Override

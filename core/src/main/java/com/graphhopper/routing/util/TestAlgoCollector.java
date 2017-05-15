@@ -47,18 +47,29 @@ public class TestAlgoCollector {
 
     public TestAlgoCollector assertDistance(AlgoHelperEntry algoEntry, List<QueryResult> queryList,
                                             OneRun oneRun) {
-        List<Path> altPaths = new ArrayList<Path>();
-        QueryGraph queryGraph = new QueryGraph(algoEntry.getQueryGraph());
+        List<Path> altPaths = new ArrayList<>();
+        QueryGraph queryGraph = new QueryGraph(algoEntry.getForQueryGraph());
         queryGraph.lookup(queryList);
-        AlgorithmOptions opts = algoEntry.opts;
+        AlgorithmOptions opts = algoEntry.getAlgorithmOptions();
         FlagEncoder encoder = opts.getWeighting().getFlagEncoder();
-        if (encoder.supports(TurnWeighting.class))
+        if (encoder.supports(TurnWeighting.class)) {
+            if (!opts.getTraversalMode().isEdgeBased()) {
+                errors.add("Cannot use TurnWeighting with a node based traversal");
+                return this;
+            }
             algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(new TurnWeighting(opts.getWeighting(), (TurnCostExtension) queryGraph.getExtension())).build());
+        }
 
+        RoutingAlgorithmFactory factory = algoEntry.createRoutingFactory();
         for (int i = 0; i < queryList.size() - 1; i++) {
-            RoutingAlgorithm algo = algoEntry.createAlgo(queryGraph);
+            RoutingAlgorithm algo = factory.createAlgo(queryGraph, algoEntry.getAlgorithmOptions());
+
+//            if (!algoEntry.getExpectedAlgo().equals(algo.toString())) {
+//                errors.add("Algorithm expected " + algoEntry.getExpectedAlgo() + " but was " + algo.toString());
+//                return this;
+//            }
+
             Path path = algo.calcPath(queryList.get(i).getClosestNode(), queryList.get(i + 1).getClosestNode());
-            // System.out.println(path.calcInstructions().createGPX("temp", 0, "GMT"));
             altPaths.add(path);
         }
 
@@ -70,7 +81,7 @@ public class TestAlgoCollector {
         pathMerger.doWork(rsp, altPaths, trMap.getWithFallBack(Locale.US));
 
         if (rsp.hasErrors()) {
-            errors.add(algoEntry + " response contains errors. Expected distance: " + rsp.getDistance()
+            errors.add("response for " + algoEntry + " contains errors. Expected distance: " + oneRun.getDistance()
                     + ", expected points: " + oneRun + ". " + queryList + ", errors:" + rsp.getErrors());
             return this;
         }
@@ -134,45 +145,51 @@ public class TestAlgoCollector {
     }
 
     public static class AlgoHelperEntry {
-        private final Graph baseGraph;
         private final LocationIndex idx;
-        private Graph queryGraph;
+        private Graph forQueryGraph;
+        private String expectedAlgo;
         private AlgorithmOptions opts;
 
-        public AlgoHelperEntry(Graph g, Graph baseGraph, AlgorithmOptions opts, LocationIndex idx) {
-            this.queryGraph = g;
-            this.baseGraph = baseGraph;
+        public AlgoHelperEntry(Graph g, AlgorithmOptions opts, LocationIndex idx, String expectedAlgo) {
+            this.forQueryGraph = g;
             this.opts = opts;
             this.idx = idx;
+            this.expectedAlgo = expectedAlgo;
         }
 
-        public Graph getQueryGraph() {
-            return queryGraph;
-        }
-
-        public void setQueryGraph(Graph queryGraph) {
-            this.queryGraph = queryGraph;
-        }
-
-        public Graph getBaseGraph() {
-            return baseGraph;
+        public Graph getForQueryGraph() {
+            return forQueryGraph;
         }
 
         public void setAlgorithmOptions(AlgorithmOptions opts) {
             this.opts = opts;
         }
 
+        public RoutingAlgorithmFactory createRoutingFactory() {
+            return new RoutingAlgorithmFactorySimple();
+        }
+
+        public AlgorithmOptions getAlgorithmOptions() {
+            return opts;
+        }
+
         public LocationIndex getIdx() {
             return idx;
         }
 
-        public RoutingAlgorithm createAlgo(Graph qGraph) {
-            return new RoutingAlgorithmFactorySimple().createAlgo(qGraph, opts);
+        public String getExpectedAlgo() {
+            return expectedAlgo;
         }
 
         @Override
         public String toString() {
-            return opts.getAlgorithm() + (queryGraph instanceof CHGraph ? "CH" : "");
+            String algo = opts.getAlgorithm();
+            if (getExpectedAlgo().contains("landmarks"))
+                algo += "|landmarks";
+            if (forQueryGraph instanceof CHGraph)
+                algo += "|ch";
+
+            return "algoEntry(" + algo + ")";
         }
     }
 

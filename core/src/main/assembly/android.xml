@@ -11,9 +11,6 @@
             <unpack>true</unpack>
             <scope>runtime</scope>
             <excludes>
-                <!-- <exclude>org.slf4j:slf4j-api</exclude>-->                
-                <exclude>com.google.protobuf:protobuf-java</exclude>
-                <exclude>org.openstreetmap.osmosis:osmosis-osm-binary</exclude>
                 <exclude>org.apache.xmlgraphics:xmlgraphics-commons</exclude>
             </excludes>
         </dependencySet>

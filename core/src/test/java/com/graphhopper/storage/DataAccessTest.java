@@ -336,10 +336,17 @@ public abstract class DataAccessTest {
         DataAccess da = createDataAccess(name);
         da.create(300);
         da.setShort(6, (short) (Short.MAX_VALUE / 5));
-        assertEquals(Short.MAX_VALUE / 5, da.getShort(6));
-
         da.setShort(8, (short) (Short.MAX_VALUE / 7));
+        da.setShort(10, (short) (Short.MAX_VALUE / 9));
+        da.setShort(14, (short) (Short.MAX_VALUE / 10));
+        int unsignedShort = (int) Short.MAX_VALUE + 5;
+        da.setShort(12, (short) unsignedShort);
+
+        assertEquals(Short.MAX_VALUE / 5, da.getShort(6));
         assertEquals(Short.MAX_VALUE / 7, da.getShort(8));
+        assertEquals(Short.MAX_VALUE / 9, da.getShort(10));
+        assertEquals(Short.MAX_VALUE / 10, da.getShort(14));
+        assertEquals(unsignedShort, (int) da.getShort(12) & 0x0000FFFF);
 
         // currently RAMIntDA does not support arbitrary byte positions
         if (!(da instanceof RAMIntDataAccess)) {

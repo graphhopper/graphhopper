@@ -135,7 +135,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
     @Override
@@ -221,11 +221,15 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
                 return 0;
         }
 
-        if (way.hasTag("sidewalk", sidewalkValues))
-            return acceptBit;
-
         // no need to evaluate ferries or fords - already included here
         if (way.hasTag("foot", intendedValues))
+            return acceptBit;
+        
+        // check access restrictions
+        if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
+            return 0;
+
+        if (way.hasTag("sidewalk", sidewalkValues))
             return acceptBit;
 
         if (!allowedHighwayTags.contains(highwayValue))
@@ -238,14 +242,10 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         if (isBlockFords() && (way.hasTag("highway", "ford") || way.hasTag("ford")))
             return 0;
 
-        // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-            return 0;
-
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
             return 0;
-        else
-            return acceptBit;
+
+        return acceptBit;
     }
 
     @Override

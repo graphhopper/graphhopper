@@ -17,8 +17,10 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
+import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
@@ -34,7 +36,9 @@ import static org.junit.Assert.*;
  */
 public class PathTest {
     private final FlagEncoder encoder = new CarFlagEncoder();
+    private final DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
     private final EncodingManager carManager = new EncodingManager(encoder);
+    private final EncodingManager dataFlagManager = new EncodingManager(dataFlagEncoder);
     private final EncodingManager mixedEncoders = new EncodingManager(new CarFlagEncoder());
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
@@ -47,20 +51,6 @@ public class PathTest {
         assertFalse(p.isFound());
         assertEquals(0, p.getDistance(), 1e-7);
         assertEquals(0, p.calcNodes().size());
-        g.close();
-    }
-
-    @Test
-    public void testTime() {
-        FlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
-        GraphHopperStorage g = new GraphBuilder(new EncodingManager(tmpEnc)).create();
-        Path p = new Path(g, new FastestWeighting(tmpEnc));
-        long flags = tmpEnc.setSpeed(tmpEnc.setReverseSpeed(tmpEnc.setAccess(0, true, true), 10), 15);
-        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(100000, flags);
-                
-        assertEquals(375 * 60 * 1000, p.calcMillis(edge, false));
-        assertEquals(600 * 60 * 1000, p.calcMillis(edge, true));
-
         g.close();
     }
 
@@ -103,6 +93,9 @@ public class PathTest {
 
         // force minor change for instructions
         edge2.setName("2");
+        na.setNode(3, 1.0, 1.0);
+        EdgeIteratorState edge3 = g.edge(1, 3).setDistance(1000).setFlags(encoder.setProperties(10, true, true));
+
         path = new Path(g, new FastestWeighting(encoder));
         e1 = new SPTEntry(edge2.getEdge(), 2, 1);
         e1.parent = new SPTEntry(edge1.getEdge(), 1, 1);
@@ -162,6 +155,8 @@ public class PathTest {
         na.setNode(2, 5.0, 0.5);
         na.setNode(3, 10.0, 0.5);
         na.setNode(4, 7.5, 0.25);
+        na.setNode(5, 5.0, 1.0);
+
 
         EdgeIteratorState edge1 = g.edge(0, 1).setDistance(1000).setFlags(encoder.setProperties(50, true, true));
         edge1.setWayGeometry(Helper.createPointList());
@@ -175,6 +170,10 @@ public class PathTest {
         EdgeIteratorState edge4 = g.edge(3, 4).setDistance(500).setFlags(encoder.setProperties(50, true, true));
         edge4.setWayGeometry(Helper.createPointList());
         edge4.setName("Street 4");
+
+        g.edge(1, 5).setDistance(10000).setFlags(encoder.setProperties(50, true, true));
+        g.edge(2, 5).setDistance(10000).setFlags(encoder.setProperties(50, true, true));
+        g.edge(3, 5).setDistance(100000).setFlags(encoder.setProperties(50, true, true));
 
         Path path = new Path(g, new FastestWeighting(encoder));
         SPTEntry e1 = new SPTEntry(edge4.getEdge(), 4, 1);
@@ -392,6 +391,209 @@ public class PathTest {
         return list;
     }
 
+    @Test
+    public void testCalcInstructionsIgnoreContinue() {
+        // Follow a couple of straight edges, including a name change
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(4, 11);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        // Contain only start and finish instruction, no CONTINUE
+        assertEquals(2, wayList.size());
+    }
+
+    @Test
+    public void testCalcInstructionsIgnoreTurnIfNoAlternative() {
+        // The street turns left, but there is not turn
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(10, 12);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        // Contain only start and finish instruction
+        assertEquals(2, wayList.size());
+    }
+
+    @Test
+    public void testCalcInstructionForForkWithSameName() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Actual example: point=48.982618%2C13.122021&point=48.982336%2C13.121002
+        // 1-2 & 2-4 have the same Street name, but other from that, it would be hard to see the difference
+        // We have to enforce a turn instruction here
+        //      3
+        //        \
+        //          2   --  1
+        //        /
+        //      4
+        na.setNode(1, 48.982618, 13.122021);
+        na.setNode(2, 48.982565, 13.121597);
+        na.setNode(3, 48.982611, 13.121012);
+        na.setNode(4, 48.982336, 13.121002);
+
+        g.edge(1, 2, 5, true).setName("Regener Weg");
+        g.edge(2, 4, 5, true).setName("Regener Weg");
+        g.edge(2, 3, 5, true);
+
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(1, 4);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        assertEquals(3, wayList.size());
+        assertEquals(-1, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testCalcInstructionContinueLeavingStreet() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // When leaving the current street via a Continue, we should show it
+        //       3
+        //        \
+        //     4 - 2   --  1
+        na.setNode(1, 48.982618, 13.122021);
+        na.setNode(2, 48.982565, 13.121597);
+        na.setNode(3, 48.982611, 13.121012);
+        na.setNode(4, 48.982565, 13.121002);
+
+        g.edge(1, 2, 5, true).setName("Regener Weg");
+        g.edge(2, 4, 5, true);
+        g.edge(2, 3, 5, true).setName("Regener Weg");
+
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(1, 4);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        assertEquals(3, wayList.size());
+        assertEquals(-1, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testCalcInstructionSlightTurn() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Real Situation: point=48.411927%2C15.599197&point=48.412094%2C15.598816
+        // When reaching this Crossing, you cannot know if you should turn left or right
+        // Google Maps and Bing show a turn, OSRM does not
+        //  1 ---2--- 3
+        //       \
+        //        4
+        na.setNode(1, 48.412094,15.598816);
+        na.setNode(2, 48.412055,15.599068);
+        na.setNode(3, 48.412034,15.599411);
+        na.setNode(4, 48.411927,15.599197);
+
+        g.edge(1, 2, 5, true).setName("Stöhrgasse");
+        g.edge(2, 3, 5, true);
+        g.edge(2, 4, 5, true).setName("Stöhrgasse");
+
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(4, 1);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        assertEquals(3, wayList.size());
+        assertEquals(-1, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testCalcInstructionsForTurn() {
+        // The street turns left, but there is not turn
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(11, 13);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        // Contain start, turn, and finish instruction
+        assertEquals(3, wayList.size());
+        // Assert turn right
+        assertEquals(2, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testCalcInstructionsForDataFlagEncoder() {
+        final Graph g = new GraphBuilder(dataFlagManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        na.setNode(1, 48.982618, 13.122021);
+        na.setNode(2, 48.982565, 13.121597);
+        na.setNode(3, 48.982611, 13.121012);
+        na.setNode(4, 48.982336, 13.121002);
+
+        ReaderWay w = new ReaderWay(1);
+        w.setTag("highway", "tertiary");
+
+        g.edge(1, 2, 5, true).setFlags(dataFlagEncoder.handleWayTags(w,1,0));
+        g.edge(2, 4, 5, true).setFlags(dataFlagEncoder.handleWayTags(w,1,0));
+        g.edge(2, 3, 5, true).setFlags(dataFlagEncoder.handleWayTags(w,1,0));
+
+        ConfigMap cMap = dataFlagEncoder.readStringMap(new PMap());
+        Path p = new Dijkstra(g, new GenericWeighting(dataFlagEncoder, cMap), TraversalMode.NODE_BASED).calcPath(1, 3);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+        assertEquals(3, wayList.size());
+    }
+
+    @Test
+    public void testCalcInstructionsForSlightTurnWithOtherSlightTurn() {
+        // Test for a fork with two sligh turns. Since there are two sligh turns, show the turn instruction
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(12, 16);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        // Contain start, turn, and finish instruction
+        assertEquals(3, wayList.size());
+        // Assert turn right
+        assertEquals(1, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testCalcInstructionsForSlightTurnOntoDifferentStreet() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Actual example: point=48.76445%2C8.679054&point=48.764152%2C8.678722
+        //      1
+        //     /
+        // 2 - 3 - 4
+        //
+        na.setNode(1, 48.76423, 8.679103);
+        na.setNode(2, 48.76417, 8.678647);
+        na.setNode(3, 48.764149, 8.678926);
+        na.setNode(4, 48.764085, 8.679183);
+
+        g.edge(1, 3, 5, true).setName("Talstraße, K 4313");
+        g.edge(2, 3, 5, true).setName("Calmbacher Straße, K 4312");
+        g.edge(3, 4, 5, true).setName("Calmbacher Straße, K 4312");
+
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(1, 2);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        assertEquals(3, wayList.size());
+        assertEquals(Instruction.TURN_SLIGHT_RIGHT, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testIgnoreInstructionsForSlightTurnWithOtherTurn() {
+        // Test for a fork with one sligh turn and one actual turn. We are going along the slight turn. No turn instruction needed in this case
+        Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(16, 19);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        // Contain start, and finish instruction
+        assertEquals(2, wayList.size());
+    }
+
     private class RoundaboutGraph {
         final public Graph g = new GraphBuilder(mixedEncoders).create();
         final public NodeAccess na = g.getNodeAccess();
@@ -400,12 +602,12 @@ public class PathTest {
         List<EdgeIteratorState> roundaboutEdges = new LinkedList<EdgeIteratorState>();
 
         private RoundaboutGraph() {
-            //
-            //      8
-            //       \
-            //         5
-            //       /  \
-            //  1 - 2    4 - 7
+            //                                       18
+            //      8                 14              |
+            //       \                 |      / 16 - 17
+            //         5              12 - 13          \-- 19
+            //       /  \              |      \ 15
+            //  1 - 2    4 - 7 - 10 - 11
             //       \  /
             //        3
             //        | \
@@ -420,6 +622,16 @@ public class PathTest {
             na.setNode(7, 52.514, 13.352);
             na.setNode(8, 52.515, 13.351);
             na.setNode(9, 52.513, 13.351);
+            na.setNode(10, 52.514, 13.353);
+            na.setNode(11, 52.514, 13.354);
+            na.setNode(12, 52.515, 13.354);
+            na.setNode(13, 52.515, 13.355);
+            na.setNode(14, 52.516, 13.354);
+            na.setNode(15, 52.516, 13.360);
+            na.setNode(16, 52.514, 13.360);
+            na.setNode(17, 52.514, 13.361);
+            na.setNode(18, 52.513, 13.361);
+            na.setNode(19, 52.515, 13.368);
 
             g.edge(1, 2, 5, true).setName("MainStreet 1 2");
 
@@ -434,6 +646,19 @@ public class PathTest {
 
             edge3to6 = g.edge(3, 6, 5, true).setName("3-6");
             edge3to9 = g.edge(3, 9, 5, false).setName("3-9");
+
+            // Don't set names
+            g.edge(7, 10, 5, true);
+            g.edge(10, 11, 5, true);
+            g.edge(11, 12, 5, true);
+            g.edge(12, 13, 5, true);
+            g.edge(12, 14, 5, true);
+            g.edge(13, 15, 5, true);
+            g.edge(13, 16, 5, true);
+            g.edge(16, 17, 5, true);
+            g.edge(17, 18, 5, true);
+            g.edge(17, 19, 5, true);
+
 
             setRoundabout(clockwise);
             inverse3to9();

@@ -20,6 +20,7 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
 
 /**
  * Specifies how the best route is calculated. E.g. the fastest or shortest route.
@@ -29,10 +30,10 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public interface Weighting {
     /**
-     * Used only for the heuristic estimation in A
-     * <p>
+     * Used only for the heuristic estimation in A*
      *
-     * @return minimal weight. E.g. if you calculate the fastest way it is distance/maxVelocity
+     * @return minimal weight for the specified distance in meter. E.g. if you calculate the fastest
+     * way the return value is 'distance/max_velocity'
      */
     double getMinWeight(double distance);
 
@@ -55,7 +56,7 @@ public interface Weighting {
     /**
      * This method calculates the time taken (in milli seconds) for the specified edgeState and
      * optionally include the turn costs (in seconds) of the previous (or next) edgeId via
-     * prevOrNextEdgeId. Typically used for post-processing and on only a few thausend edges.
+     * prevOrNextEdgeId. Typically used for post-processing and on only a few thousand edges.
      */
     long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
 

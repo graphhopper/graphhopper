@@ -28,7 +28,6 @@ import java.util.Locale;
 
 /**
  * GraphHopper request wrapper to simplify requesting GraphHopper.
- * <p>
  *
  * @author Peter Karich
  * @author ratrun
@@ -100,6 +99,7 @@ public class GHRequest {
     /**
      * Set routing request
      * <p>
+     *
      * @param points          List of stopover points in order: start, 1st stop, 2nd stop, ..., end
      * @param favoredHeadings List of favored headings for starting (start point) and arrival (via
      *                        and end points) Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal
@@ -229,7 +229,7 @@ public class GHRequest {
     }
 
     /**
-     * Specifiy car, bike or foot. Or specify empty to use default.
+     * Specify car, bike or foot. Or specify empty to use default.
      */
     public GHRequest setVehicle(String vehicle) {
         hints.setVehicle(vehicle);

@@ -80,7 +80,7 @@ public class AngleCalc {
 
     /**
      * Change the representation of an orientation, so the difference to the given baseOrientation
-     * will be smaller or equal to PI (180 degree). This is achieved by adding or substracting a
+     * will be smaller or equal to PI (180 degree). This is achieved by adding or subtracting a
      * 2*PI, so the direction of the orientation will not be changed
      */
     public double alignOrientation(double baseOrientation, double orientation) {

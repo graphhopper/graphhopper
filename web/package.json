@@ -22,18 +22,20 @@
     }
   },
   "dependencies": {
-    "browserify": "13.1.1",
+    "browserify": "14.0.0",
     "browserify-swap": "0.2.2",
     "d3": "3.5.17",
     "jquery": "3.1.1",
-    "leaflet": "1.0.2",
-    "leaflet-contextmenu": "1.1.1",
-    "leaflet-loading": "0.1.23",
-    "uglifyify": "3.0.4"
+    "leaflet": "1.0.3",
+    "leaflet-contextmenu": "1.2.1",
+    "leaflet-loading": "0.1.24",
+    "moment": "2.17.1",
+    "uglifyify": "3.0.4",
+    "flatpickr": "2.3.5"
   },
   "devDependencies": {
-    "jasmine": "2.5.2",
+    "jasmine": "2.5.3",
     "jshint": "2.9.4",
-    "watchify": "3.7.0"
+    "watchify": "3.9.0"
   }
 }

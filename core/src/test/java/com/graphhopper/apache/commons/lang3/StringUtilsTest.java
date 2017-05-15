@@ -24,12 +24,12 @@ import static org.junit.Assert.assertEquals;
 /**
  * This class is a partial Copy of the org.apache.commons.lang3.StringUtils
  * that can be found here: https://github.com/apache/commons-lang/blob/master/src/test/java/org/apache/commons/lang3/StringUtilsTest.java
- *
+ * <p>
  * The library can be found here: https://commons.apache.org/proper/commons-lang/
  *
  * @author Robin Boldt
  */
-public class StringUtilsTest{
+public class StringUtilsTest {
 
     @Test
     public void testGetLevenshteinDistance_StringString() {

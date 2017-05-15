@@ -32,22 +32,29 @@ import java.util.List;
 
 /**
  * Calculates the best route according to a configurable weighting.
- * <p>
  *
  * @author Peter Karich
  */
 public class GenericWeighting extends AbstractWeighting {
+
+    public static final String HEIGHT_LIMIT = "height";
+    public static final String WEIGHT_LIMIT = "weight";
+    public static final String WIDTH_LIMIT = "width";
     /**
      * Convert to milliseconds for correct calcMillis.
      */
-    private final static double SPEED_CONV = 3600;
-    private final double headingPenalty;
-    private final long headingPenaltyMillis;
-    private final double maxSpeed;
-    private final DataFlagEncoder gEncoder;
-    private final double[] speedArray;
-    private final int accessType;
-    private final int eventuallAccessiblePenalty = 10;
+    protected final static double SPEED_CONV = 3600;
+    protected final double headingPenalty;
+    protected final long headingPenaltyMillis;
+    protected final double maxSpeed;
+    protected final DataFlagEncoder gEncoder;
+    protected final double[] speedArray;
+    protected final int accessType;
+    protected final int eventuallAccessiblePenalty = 10;
+
+    protected final double height;
+    protected final double weight;
+    protected final double width;
 
     private final GHIntHashSet blockedEdges;
     private final List<Shape> blockedShapes;
@@ -72,6 +79,9 @@ public class GenericWeighting extends AbstractWeighting {
         accessType = gEncoder.getAccessType("motor_vehicle");
         blockedEdges = cMap.get(GraphEdgeIdFinder.BLOCKED_EDGES, new GHIntHashSet(0));
         blockedShapes = cMap.get(GraphEdgeIdFinder.BLOCKED_SHAPES, Collections.EMPTY_LIST);
+        height = cMap.getDouble(HEIGHT_LIMIT, 0d);
+        weight = cMap.getDouble(WEIGHT_LIMIT, 0d);
+        width = cMap.getDouble(WIDTH_LIMIT, 0d);
     }
 
     @Override
@@ -88,30 +98,39 @@ public class GenericWeighting extends AbstractWeighting {
         } else if (!gEncoder.isForward(edgeState, accessType))
             return Double.POSITIVE_INFINITY;
 
+        if ((gEncoder.isStoreHeight() && overLimit(height, gEncoder.getHeight(edgeState))) ||
+                (gEncoder.isStoreWeight() && overLimit(weight, gEncoder.getWeight(edgeState))) ||
+                (gEncoder.isStoreWidth() && overLimit(width, gEncoder.getWidth(edgeState))))
+            return Double.POSITIVE_INFINITY;
+
+        if (!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        if (!blockedShapes.isEmpty() && na != null) {
+            for (Shape shape : blockedShapes) {
+                if (shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()))) {
+                    return Double.POSITIVE_INFINITY;
+                }
+            }
+        }
+
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 
-        switch (gEncoder.getEdgeAccessValue(edgeState.getFlags())){
+        switch (gEncoder.getAccessValue(edgeState.getFlags())) {
             case NOT_ACCESSIBLE:
                 return Double.POSITIVE_INFINITY;
             case EVENTUALLY_ACCESSIBLE:
                 time = time * eventuallAccessiblePenalty;
         }
 
-        if(!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())){
-            return Double.POSITIVE_INFINITY;
-        }
-
-        if(!blockedShapes.isEmpty() && na != null){
-            for (Shape shape: blockedShapes) {
-                if(shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode()))){
-                    return Double.POSITIVE_INFINITY;
-                }
-            }
-        }
-
         return time;
+    }
+
+    private boolean overLimit(double height, double heightLimit) {
+        return height > 0 && heightLimit > 0 && height >= heightLimit;
     }
 
     @Override
@@ -162,8 +181,7 @@ public class GenericWeighting extends AbstractWeighting {
      * Use this method to associate a graph with this weighting to calculate e.g. node locations too.
      */
     public void setGraph(Graph graph) {
-        if(graph == null)
-            return;
-        this.na = graph.getNodeAccess();
+        if (graph != null)
+            this.na = graph.getNodeAccess();
     }
 }

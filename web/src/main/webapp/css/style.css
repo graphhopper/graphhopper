@@ -38,6 +38,7 @@ body {
 
 .instructions_info {
     overflow: auto;
+    width: 100%;
 }
 
 .route_description {
@@ -75,6 +76,17 @@ body {
     padding-bottom: 4px;
     width: 100%;
     text-align: right;
+}
+
+.time_input {
+    float: right;
+    padding-right: 20px;
+}
+
+.time_input input {
+    float: left;
+    margin-left: 10px;
+    width: 220px;
 }
 
 .boxSizingBorder {
@@ -339,8 +351,8 @@ td img.pic {
 }
 
 .ui-dialog {
-  /* Must be > 700, the z-index of .leaflet-popup-pane */
-  z-index: 1000;
+    /* Must be > 700, the z-index of .leaflet-popup-pane */
+    z-index: 1000;
 }
 
 .ui-dialog > .ui-widget-header {

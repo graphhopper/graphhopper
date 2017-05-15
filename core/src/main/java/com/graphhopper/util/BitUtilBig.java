@@ -18,7 +18,7 @@
 package com.graphhopper.util;
 
 /**
- * Conversion between "the memory" (integer/long/float/double/string) to bytes via BIG endianess.
+ * Conversion between "the memory" (integer/long/float/double/string) to bytes via BIG endianness.
  * <p>
  *
  * @author Peter Karich

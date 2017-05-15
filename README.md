@@ -2,8 +2,8 @@
 
 [![Build Status](https://secure.travis-ci.org/graphhopper/graphhopper.png?branch=master)](http://travis-ci.org/graphhopper/graphhopper)
 
-GraphHopper is a fast and memory efficient Java road routing engine released under Apache License 2.0.
-Per default it uses OpenStreetMap data but can import other data sources.
+GraphHopper is a fast and memory efficient Java routing engine released under Apache License 2.0.
+Per default it uses OpenStreetMap and GTFS data but can import other data sources.
 
 # Community
 
@@ -47,16 +47,21 @@ GraphHopper supports several routing algorithms like
 <a href="https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm">Dijkstra</a> and 
 <a href="https://en.wikipedia.org/wiki/A*_search_algorithm">A</a>`*` and its bidirectional variants. 
 Furthermore it allows you to use 
-<a href="https://en.wikipedia.org/wiki/Contraction_hierarchies">Contraction Hierarchies</a> (CH) very easily, we call this 
-**speed mode** and in contrast to the speed mode we call everything without CH the
-**flexibility mode**. BTW: This does not mean that the flexibility mode is *slow*.
+<a href="https://en.wikipedia.org/wiki/Contraction_hierarchies">Contraction Hierarchies</a> (CH) 
+very easily, we call this **speed mode** and without this CH preparation we call it **flexible mode**.
 
-The speed mode comes with much faster and lightweight (less RAM) responses and that although it does not use heuristics in its default settings. 
-The downsides are that the speed mode allows only pre-defined vehicle profiles (multiple possible in GraphHopper) 
+The speed mode comes with very fast and lightweight (less RAM) responses and that although it does not use heuristics 
+in its default settings. The downsides are that the speed mode allows only pre-defined vehicle profiles (multiple possible in GraphHopper) 
 and requires a time consuming and resource intense preparation. And implementing certain features are not possible 
-or very complex compared to the flexibility mode. 
+or very complex compared to the flexible mode. 
 
-You can use both modes at the same time.
+The [master branch contains](https://github.com/graphhopper/graphhopper/pull/780)
+a **hybrid mode** based on A* using so called landmarks, which still requires preparation time and memory
+but is much more flexible regarding changing properties per request or e.g. integrating traffic data and more. 
+Furthermore this hybrid mode is slower than the speed mode (depends on the number of landmarks) but it is an 
+order of magnitude faster than the flexible mode and uses also less RAM for one request.
+
+You can switch between all modes at request time.
 
 ## License
 
@@ -78,8 +83,18 @@ Windows, BSD, Solaris, Raspberry Pi, Android, Blackberry and even iOS.
 
 ### Maven
 
-Embed the core of GraphHopper into your Java application via the following
-snippet
+Embed GraphHopper with OpenStreetMap support into your Java application via the following snippet
+
+```xml
+<dependency>
+    <groupId>com.graphhopper</groupId>
+    <artifactId>graphhopper-reader-osm</artifactId>
+    <version>0.8.2</version>
+</dependency>
+```
+
+If you want to customize the import process or you don't need OSM import like
+on [Android](./docs/android/index.md), then use:
 
 ```xml
 <dependency>
@@ -132,16 +147,18 @@ Here is a list of the more detailed features including a link to the documentati
  * GraphHopper is fast. And with the so called "Contraction Hierarchies" it can be even faster (enabled by default).
  * Memory efficient data structures, algorithms and [the low and high level API](./docs/core/low-level-api.md) is tuned towards ease of use and efficiency
  * Provides a simple [web API](./docs/web/api-doc.md) including JavaScript and Java clients
+ * Multiple weightings (fastest/shortest/...) and pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle, ...
  * Offers turn instructions in more than 35 languages, contribute or improve [here](./docs/core/translations.md)
  * Displays and takes into account [elevation data](./docs/core/elevation.md) (per default disabled)
- * Can apply [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexibility only)
- * Customize vehicle profiles per request (flexibility only)
- * Possibility to specify a '[heading parameter](./docs/core/routing.md)' for start, end and via points for navigation applications via `pass_through` or `heading` parameters (flexibility only)
- * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424) (flexibility only)
- * [Turn costs and restrictions](https://github.com/graphhopper/graphhopper/pull/55#issuecomment-31089096) (flexibility only)
- * Multiple profiles and weightings (flexibility and speed mode)
+ * Can apply [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexible and hybrid mode only)
+ * Customize vehicle profiles per request (flexible and hybrid mode only)
+ * Possibility to specify a [heading parameter](./docs/core/routing.md) of the vehicle for start, end and via points for navigation applications via `pass_through` or `heading` parameters (flexible and hybrid mode only)
+ * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424) (flexible and hybrid mode only)
+ * [Turn costs and restrictions](https://github.com/graphhopper/graphhopper/pull/55#issuecomment-31089096) (flexible and hybrid mode only)
+ * Country specific routing via SpatialRules
+ * Multiple profiles and weightings
  * Several pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle, ...
- * The core uses only a few dependencies (trove4j and slf4j)
+ * The core uses only a few dependencies (hppc, jts and slf4j)
  * Scales from small indoor-sized to world-wide-sized graphs
  * Find nearest point on street e.g. to get elevation or 'snapp to road'
- * Do [map matching](https://github.com/graphhopper/map-matching) with GraphHopper (flexibility only)
+ * Do [map matching](https://github.com/graphhopper/map-matching) with GraphHopper

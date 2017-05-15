@@ -1,11 +1,14 @@
 # Routing via Java API
 
+To use the following examples you need to specify the dependency in
+your [Maven config](/README.md#maven) correctly.
+
 To do routing in your Java code you'll need just a few lines of code:
 
 ```java
 // create one GraphHopper instance
 GraphHopper hopper = new GraphHopperOSM().forServer();
-hopper.setOSMFile(osmFile);
+hopper.setDataReaderFile(osmFile);
 // where to store graphhopper files?
 hopper.setGraphHopperLocation(graphFolder);
 hopper.setEncodingManager(new EncodingManager("car"));

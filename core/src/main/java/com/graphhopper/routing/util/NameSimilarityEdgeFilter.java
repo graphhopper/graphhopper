@@ -29,14 +29,14 @@ import java.util.regex.Pattern;
  * The typical use-case is to match not the nearest edge in
  * {@link com.graphhopper.storage.index.LocationIndex#findClosest(double, double, EdgeFilter)}
  * but the match the edge which name is closest to the pointHint
- *
+ * <p>
  * Names that are similar to each other are (n1 name1, n2 name2):
  * <ul>
- *     <li>n1 == n2</li>
- *     <li>n1 is significant substring of n2, e.g: n1="Main Road", n2="Main Road, New York"</li>
- *     <li>n1 and n2 contain a reasonable longest common substring, e.g.: n1="Cape Point / Cape of Good Hope", n2="Cape Point Rd, Cape Peninsula, Cape Town, 8001, Afrique du Sud"</li>
+ * <li>n1 == n2</li>
+ * <li>n1 is significant substring of n2, e.g: n1="Main Road", n2="Main Road, New York"</li>
+ * <li>n1 and n2 contain a reasonable longest common substring, e.g.: n1="Cape Point / Cape of Good Hope", n2="Cape Point Rd, Cape Peninsula, Cape Town, 8001, Afrique du Sud"</li>
  * </ul>
- *
+ * <p>
  * We aim for allowing slight typos/differences of the substrings, without having too much false positives.
  *
  * @author Robin Boldt
@@ -69,7 +69,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         for (int i = 0; i < arr.length; i++) {
             tmp = NON_WORD_CHAR.matcher(arr[i].toLowerCase()).replaceAll("");
             // Ignore matching short frases like, de, rue, st, etc.
-            if(!tmp.isEmpty() && tmp.length() > 3){
+            if (!tmp.isEmpty() && tmp.length() > 3) {
                 list.add(tmp);
             }
         }
@@ -110,14 +110,13 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         return jwSimilarity > JARO_WINKLER_ACCEPT_FACTOR;
     }
 
-    private final String listToString(List<String> list){
+    private final String listToString(List<String> list) {
         StringBuilder b = new StringBuilder();
-        for (int i = 0; i<list.size(); i++) {
+        for (int i = 0; i < list.size(); i++) {
             b.append(list.get(i));
         }
         return b.toString();
     }
-
 
     private boolean isLevenshteinSimilar(String hint, String name) {
         // too big length difference
@@ -131,5 +130,4 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         // System.out.println(hint + " vs. edge:" + name + ", " + levDistance + " <= " + factor);
         return levDistance <= factor;
     }
-
 }

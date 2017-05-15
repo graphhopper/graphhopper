@@ -17,9 +17,10 @@
  */
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
-import org.json.JSONObject;
+import com.graphhopper.util.Parameters;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,7 +46,7 @@ public class GraphHopperServletWithEleIT extends BaseServletTester {
         CmdArgs args = new CmdArgs().
                 put("graph.elevation.provider", "srtm").
                 put("graph.elevation.cachedir", "../core/files/").
-                put("prepare.ch.weightings", "no").
+                put(Parameters.CH.PREPARE + "weightings", "no").
                 put("prepare.min_one_way_network_size", "0").
                 put("config", "../config-example.properties").
                 put("datareader.file", "../core/files/monaco.osm.gz").
@@ -55,41 +56,41 @@ public class GraphHopperServletWithEleIT extends BaseServletTester {
 
     @Test
     public void testElevation() throws Exception {
-        JSONObject json = query("point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true", 200);
-        JSONObject infoJson = json.getJSONObject("info");
+        JsonNode json = query("point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true", 200);
+        JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
-        JSONObject path = json.getJSONArray("paths").getJSONObject(0);
-        double distance = path.getDouble("distance");
+        JsonNode path = json.get("paths").get(0);
+        double distance = path.get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 2500);
         assertTrue("distance wasn't correct:" + distance, distance < 2700);
 
-        JSONObject cson = path.getJSONObject("points");
-        assertTrue("no elevation?", cson.toString().contains("[7.421392,43.7307,66]"));
+        JsonNode cson = path.get("points");
+        assertTrue("no elevation?", cson.toString().contains("[7.421392,43.7307,66.0]"));
 
         // Although we include elevation DO NOT include it in the bbox as bbox.toGeoJSON messes up when reading
         // or reading with and without elevation would be too complex for the client with no real use
-        assertEquals(4, path.getJSONArray("bbox").length());
+        assertEquals(4, path.get("bbox").size());
     }
 
     @Test
     public void testNoElevation() throws Exception {
         // default is elevation=false
-        JSONObject json = query("point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false", 200);
-        JSONObject infoJson = json.getJSONObject("info");
+        JsonNode json = query("point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false", 200);
+        JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
-        JSONObject path = json.getJSONArray("paths").getJSONObject(0);
-        double distance = path.getDouble("distance");
+        JsonNode path = json.get("paths").get(0);
+        double distance = path.get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 2500);
         assertTrue("distance wasn't correct:" + distance, distance < 2700);
-        JSONObject cson = path.getJSONObject("points");
+        JsonNode cson = path.get("points");
         assertTrue("Elevation should not be included!", cson.toString().contains("[7.421392,43.7307]"));
 
         // disable elevation
         json = query("point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false", 200);
-        infoJson = json.getJSONObject("info");
+        infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
-        path = json.getJSONArray("paths").getJSONObject(0);
-        cson = path.getJSONObject("points");
+        path = json.get("paths").get(0);
+        cson = path.get("points");
         assertTrue("Elevation should not be included!", cson.toString().contains("[7.421392,43.7307]"));
     }
 }

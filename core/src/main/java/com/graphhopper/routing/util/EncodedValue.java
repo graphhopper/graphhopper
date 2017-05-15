@@ -59,6 +59,11 @@ public class EncodedValue {
         if (maxValue > this.maxValue)
             throw new IllegalStateException(name + " -> maxValue " + maxValue + " is too large for " + bits + " bits");
 
+        double factorDivision = maxValue / factor;
+        if (factorDivision != (int) factorDivision) {
+            throw new IllegalStateException("MaxValue needs to be divisible by factor without remainder");
+        }
+
         mask = tmpMask << shift;
         this.allowZero = allowZero;
     }
@@ -73,9 +78,9 @@ public class EncodedValue {
     }
 
     public long setValue(long flags, long value) {
-        checkValue(value);
         // scale value
-        value /= factor;
+        value = Math.round(value / factor);
+        checkValue((long) (value * factor));
         value <<= shift;
 
         // clear value bits
@@ -83,6 +88,10 @@ public class EncodedValue {
 
         // set value
         return flags | value;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public long getValue(long flags) {
@@ -94,6 +103,10 @@ public class EncodedValue {
 
     public int getBits() {
         return bits;
+    }
+
+    public double getFactor() {
+        return factor;
     }
 
     public long setDefaultValue(long flags) {

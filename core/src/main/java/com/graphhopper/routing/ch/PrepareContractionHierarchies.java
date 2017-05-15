@@ -27,10 +27,7 @@ import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
@@ -281,6 +278,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             counter++;
             int polledNode = sortedNodes.pollKey();
+
             if (!sortedNodes.isEmpty() && sortedNodes.getSize() < lastNodesLazyUpdates) {
                 lazySW.start();
                 int priority = oldPriorities[polledNode] = calculatePriority(polledNode);
@@ -293,8 +291,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 lazySW.stop();
             }
 
-            // contract!
-            newShortcuts += addShortcuts(polledNode);
+            // contract node v!
+            shortcuts.clear();
+            findShortcuts(addScHandler.setNode(polledNode));
+            newShortcuts += addShortcuts(shortcuts.keySet());
             prepareGraph.setLevel(polledNode, level);
             level++;
 
@@ -304,6 +304,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             CHEdgeIterator iter = vehicleAllExplorer.setBaseNode(polledNode);
             while (iter.next()) {
+
+                if(Thread.currentThread().isInterrupted()){
+                    throw new RuntimeException("Thread was interrupted");
+                }
+
                 int nn = iter.getAdjNode();
                 if (prepareGraph.getLevel(nn) != maxLevel)
                     continue;
@@ -505,19 +510,27 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     /**
      * Introduces the necessary shortcuts for adjNode v in the graph.
      */
-    int addShortcuts(int v) {
-        shortcuts.clear();
-        findShortcuts(addScHandler.setNode(v));
+    int addShortcuts(Collection<Shortcut> tmpShortcuts) {
         int tmpNewShortcuts = 0;
         NEXT_SC:
-        for (Shortcut sc : shortcuts.keySet()) {
+        for (Shortcut sc : tmpShortcuts) {
             boolean updatedInGraph = false;
             // check if we need to update some existing shortcut in the graph
             CHEdgeIterator iter = vehicleOutExplorer.setBaseNode(sc.from);
             while (iter.next()) {
-                if (iter.isShortcut() && iter.getAdjNode() == sc.to && iter.canBeOverwritten(sc.flags)) {
-                    if (sc.weight >= prepareWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE))
+                if (iter.isShortcut() && iter.getAdjNode() == sc.to) {
+                    int status = iter.getMergeStatus(sc.flags);
+                    if (status == 0)
+                        continue;
+
+                    if (sc.weight >= prepareWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE)) {
+                        // special case if a bidirectional shortcut has worse weight and still has to be added as otherwise the opposite direction would be missing
+                        // see testShortcutMergeBug
+                        if (status == 2)
+                            break;
+
                         continue NEXT_SC;
+                    }
 
                     if (iter.getEdge() == sc.skippedEdge1 || iter.getEdge() == sc.skippedEdge2) {
                         throw new IllegalStateException("Shortcut cannot update itself! " + iter.getEdge()
@@ -631,12 +644,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
         AbstractBidirAlgo algo;
         if (ASTAR_BI.equals(opts.getAlgorithm())) {
-            AStarBidirection tmpAlgo = createAStarBidirection(graph);
+            AStarBidirection tmpAlgo = new AStarBidirectionCH(graph, prepareWeighting, traversalMode);
             tmpAlgo.setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
             algo = tmpAlgo;
 
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
-            algo = createDijkstraBidirection(graph);
+            algo = new DijkstraBidirectionCH(graph, prepareWeighting, traversalMode);
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");
         }
@@ -646,80 +659,83 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return algo;
     }
 
-    private AStarBidirection createAStarBidirection(final Graph graph) {
-        return new AStarBidirection(graph, prepareWeighting, traversalMode) {
-            @Override
-            protected void initCollections(int size) {
-                super.initCollections(Math.min(size, 2000));
-            }
+    public static class AStarBidirectionCH extends AStarBidirection {
+        public AStarBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
+            super(graph, weighting, traversalMode);
+        }
 
-            @Override
-            protected boolean finished() {
-                // we need to finish BOTH searches for CH!
-                if (finishedFrom && finishedTo)
-                    return true;
+        @Override
+        protected void initCollections(int size) {
+            super.initCollections(Math.min(size, 2000));
+        }
 
-                // changed finish condition for CH
-                return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
-            }
+        @Override
+        protected boolean finished() {
+            // we need to finish BOTH searches for CH!
+            if (finishedFrom && finishedTo)
+                return true;
 
-            @Override
-            protected Path createAndInitPath() {
-                bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
-                return bestPath;
-            }
+            // changed finish condition for CH
+            return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
+        }
 
-            @Override
-            public String getName() {
-                return "astarbiCH";
-            }
+        @Override
+        protected Path createAndInitPath() {
+            bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
+            return bestPath;
+        }
 
-            @Override
+        @Override
+        public String getName() {
+            return "astarbi|ch";
+        }
 
-            public String toString() {
-                return getName() + "|" + prepareWeighting;
-            }
-        };
+        @Override
+        public String toString() {
+            return getName() + "|" + weighting;
+        }
     }
 
-    private AbstractBidirAlgo createDijkstraBidirection(final Graph graph) {
-        return new DijkstraBidirectionRef(graph, prepareWeighting, traversalMode) {
-            @Override
-            protected void initCollections(int size) {
-                super.initCollections(Math.min(size, 2000));
-            }
+    public static class DijkstraBidirectionCH extends DijkstraBidirectionRef {
+        public DijkstraBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
+            super(graph, weighting, traversalMode);
+        }
 
-            @Override
-            public boolean finished() {
-                // we need to finish BOTH searches for CH!
-                if (finishedFrom && finishedTo)
-                    return true;
+        @Override
+        protected void initCollections(int size) {
+            super.initCollections(Math.min(size, 2000));
+        }
 
-                // changed also the final finish condition for CH
-                return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
-            }
+        @Override
+        public boolean finished() {
+            // we need to finish BOTH searches for CH!
+            if (finishedFrom && finishedTo)
+                return true;
 
-            @Override
-            protected Path createAndInitPath() {
-                bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
-                return bestPath;
-            }
+            // changed also the final finish condition for CH
+            return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
+        }
 
-            @Override
-            public String getName() {
-                return "dijkstrabiCH";
-            }
+        @Override
+        protected Path createAndInitPath() {
+            bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
+            return bestPath;
+        }
 
-            @Override
-            public String toString() {
-                return getName() + "|" + prepareWeighting;
-            }
-        };
+        @Override
+        public String getName() {
+            return "dijkstrabi|ch";
+        }
+
+        @Override
+        public String toString() {
+            return getName() + "|" + weighting;
+        }
     }
 
     @Override
     public String toString() {
-        return "prepare|CH|dijkstrabi";
+        return "prepare|dijkstrabi|ch";
     }
 
     interface ShortcutHandler {
@@ -872,7 +888,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 }
             }
 
-            shortcuts.put(sc, sc);
+            Shortcut old = shortcuts.put(sc, sc);
+            if (old != null)
+                throw new IllegalStateException("Shortcut did not exist (" + sc + ") but was overwriting another one? " + old);
+
             sc.skippedEdge1 = skippedEdge1;
             sc.skippedEdge2 = outgoingEdges.getEdge();
             sc.originalEdges = incomingEdgeOrigCount + getOrigEdgeCount(outgoingEdges.getEdge());

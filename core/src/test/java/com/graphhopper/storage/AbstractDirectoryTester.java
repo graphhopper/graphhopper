@@ -25,6 +25,7 @@ import org.junit.Test;
 import java.io.File;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -46,26 +47,6 @@ public abstract class AbstractDirectoryTester {
     @Before
     public void setUp() {
         Helper.removeDir(new File(location));
-    }
-
-    @Test
-    public void testRequestedDataAccessHasToBeTheIdenticalType() {
-        Directory dir = createDir();
-        da = dir.find("testing", new DAType(DAType.MemRef.HEAP, false, false, false, false));
-        try {
-            dir.find("testing", new DAType(DAType.MemRef.HEAP, false, false, false, true));
-            assertFalse(true);
-        } catch (Exception ex) {
-        }
-    }
-
-    @Test
-    public void testSynched() {
-        Directory dir = createDir();
-        DataAccess da1 = dir.find("testing", new DAType(DAType.MemRef.HEAP, false, false, true, false));
-        da = dir.find("testing_synched", new DAType(DAType.MemRef.HEAP, false, false, true, true));
-        assertFalse(da.getClass() == da1.getClass());
-        da1.close();
     }
 
     @Test

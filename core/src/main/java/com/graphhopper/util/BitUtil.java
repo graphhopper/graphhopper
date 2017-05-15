@@ -20,13 +20,12 @@ package com.graphhopper.util;
 import java.nio.ByteOrder;
 
 /**
- * Examples for BIG endianess (default for Java and computer network).
+ * Examples for BIG endianness (default for Java and computer network).
  * <pre>
  * 0=&gt;0100 0001
  * 1=&gt;1110 1011
  * 2=&gt;...
- * </pre> LITTLE endianess is default for GraphHopper and most microprocessors.
- *
+ * </pre> LITTLE endianness is default for GraphHopper and most microprocessors.
  *
  * @author Peter Karich
  */
@@ -36,7 +35,7 @@ public abstract class BitUtil {
      */
     public static final BitUtil LITTLE = new BitUtilLittle();
     /**
-     * BIG endianess. Little is the default for GraphHopper.
+     * BIG endianness. Little is the default for GraphHopper.
      */
     public static final BitUtil BIG = new BitUtilBig();
 
@@ -149,7 +148,7 @@ public abstract class BitUtil {
 
     /**
      * The only purpose of this method is to test 'reverse'. toBitString is the reverse and both are
-     * indepentent of the endianness.
+     * independent of the endianness.
      */
     public final long fromBitString2Long(String str) {
         if (str.length() > 64)

@@ -32,7 +32,7 @@ public interface EdgeIteratorState {
 
     /**
      * @return the edge id of the current edge. Do not make any assumptions about the concrete
-     * values, except that for an implemention it is recommended that they'll be contiguous.
+     * values, except that for an implementation it is recommended that they'll be contiguous.
      */
     int getEdge();
 

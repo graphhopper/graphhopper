@@ -23,7 +23,7 @@ import com.graphhopper.util.PointList;
 
 /**
  * Interpolates elevations of inner nodes based on elevations of outer nodes.
- * 
+ *
  * @author Alexey Valikov
  */
 public class NodeElevationInterpolator {
@@ -43,17 +43,17 @@ public class NodeElevationInterpolator {
             interpolateElevationsOfInnerNodesForOneOuterNode(outerNodeIds[0], innerNodeIds);
         } else if (numberOfOuterNodes == 2) {
             interpolateElevationsOfInnerNodesForTwoOuterNodes(outerNodeIds[0], outerNodeIds[1],
-                            innerNodeIds);
+                    innerNodeIds);
         } else if (numberOfOuterNodes == 3) {
             interpolateElevationsOfInnerNodesForThreeOuterNodes(outerNodeIds[0], outerNodeIds[1],
-                            outerNodeIds[2], innerNodeIds);
+                    outerNodeIds[2], innerNodeIds);
         } else if (numberOfOuterNodes > 3) {
             interpolateElevationsOfInnerNodesForNOuterNodes(outerNodeIds, innerNodeIds);
         }
     }
 
     private void interpolateElevationsOfInnerNodesForOneOuterNode(int outerNodeId,
-                    int[] innerNodeIds) {
+                                                                  int[] innerNodeIds) {
         NodeAccess nodeAccess = storage.getNodeAccess();
         double ele = nodeAccess.getEle(outerNodeId);
         for (int innerNodeId : innerNodeIds) {
@@ -64,7 +64,7 @@ public class NodeElevationInterpolator {
     }
 
     private void interpolateElevationsOfInnerNodesForTwoOuterNodes(int firstOuterNodeId,
-                    int secondOuterNodeId, int[] innerNodeIds) {
+                                                                   int secondOuterNodeId, int[] innerNodeIds) {
         final NodeAccess nodeAccess = storage.getNodeAccess();
         double lat0 = nodeAccess.getLat(firstOuterNodeId);
         double lon0 = nodeAccess.getLon(firstOuterNodeId);
@@ -78,13 +78,13 @@ public class NodeElevationInterpolator {
             double lat = nodeAccess.getLat(innerNodeId);
             double lon = nodeAccess.getLon(innerNodeId);
             double ele = elevationInterpolator.calculateElevationBasedOnTwoPoints(lat, lon, lat0,
-                            lon0, ele0, lat1, lon1, ele1);
+                    lon0, ele0, lat1, lon1, ele1);
             nodeAccess.setNode(innerNodeId, lat, lon, ele);
         }
     }
 
     private void interpolateElevationsOfInnerNodesForThreeOuterNodes(int firstOuterNodeId,
-                    int secondOuterNodeId, int thirdOuterNodeId, int[] innerNodeIds) {
+                                                                     int secondOuterNodeId, int thirdOuterNodeId, int[] innerNodeIds) {
         NodeAccess nodeAccess = storage.getNodeAccess();
         double lat0 = nodeAccess.getLat(firstOuterNodeId);
         double lon0 = nodeAccess.getLon(firstOuterNodeId);
@@ -102,24 +102,24 @@ public class NodeElevationInterpolator {
             double lat = nodeAccess.getLat(innerNodeId);
             double lon = nodeAccess.getLon(innerNodeId);
             double ele = elevationInterpolator.calculateElevationBasedOnThreePoints(lat, lon, lat0,
-                            lon0, ele0, lat1, lon1, ele1, lat2, lon2, ele2);
+                    lon0, ele0, lat1, lon1, ele1, lat2, lon2, ele2);
             nodeAccess.setNode(innerNodeId, lat, lon, ele);
         }
     }
 
     private void interpolateElevationsOfInnerNodesForNOuterNodes(int[] outerNodeIds,
-                    int[] innerNodeIds) {
+                                                                 int[] innerNodeIds) {
         NodeAccess nodeAccess = storage.getNodeAccess();
         PointList pointList = new PointList(outerNodeIds.length, true);
         for (int outerNodeId : outerNodeIds) {
             pointList.add(nodeAccess.getLat(outerNodeId), nodeAccess.getLon(outerNodeId),
-                            nodeAccess.getEle(outerNodeId));
+                    nodeAccess.getEle(outerNodeId));
         }
         for (int innerNodeId : innerNodeIds) {
             double lat = nodeAccess.getLat(innerNodeId);
             double lon = nodeAccess.getLon(innerNodeId);
             double ele = elevationInterpolator.calculateElevationBasedOnPointList(lat, lon,
-                            pointList);
+                    pointList);
             nodeAccess.setNode(innerNodeId, lat, lon, ele);
         }
     }

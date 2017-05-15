@@ -1,5 +1,13 @@
 0.9
-    
+    remove war bundling support #297
+    rename of DefaultModule to GraphHopperModule and GHServletModule to GraphHopperServletModule
+    EncodedValue uses Math.round(value/factor). This can change the retrieved values for EncodedValues #954
+    EncodedDoubleValue and EncodedValue requires maxValue/factor to be a natural number #954
+    default base algorithm for all modes is bidirectional A* (except speed mode)
+    introduced landmarks based hybrid mode, #780
+    moving all prepare.xy configs to prepare.ch.xy and e.g. disallow the old
+    removed deprecated methods in GraphHopper (setCHWeighting, setCHWeightings, getCHWeightings, setCHWeightings, getCHPrepareThreads, setCHPrepareThreads), Path.calcMillis, findID of LocationIndex and all implementations
+
 0.8
     refactoring to Weighting class, see #807
     removed FlagEncoder from parameters as weighting.getFlagEncoder can and is used
@@ -10,6 +18,7 @@
     moved subnetwork code into own package com.graphhopper.routing.subnetwork
     moved weighting code into own package com.graphhopper.routing.weighting
     code format has changed, so it is important to change your PRs too before you merge master, see discussion #770
+
 0.7        
     added snapped points to output JSON for every path
     the foot routing is now much smoother and only considers safe paths, to use beautiful roads (i.e. prefer hiking routes etc) use the new 'hike' profiles, see #633

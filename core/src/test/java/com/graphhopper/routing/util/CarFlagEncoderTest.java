@@ -198,7 +198,7 @@ public class CarFlagEncoderTest {
         assertEquals(60, encoder.getSpeed(way), 1e-1);
 
         way.setTag("vehicle", "destination");
-        long flags = encoder.handleWayTags(way, encoder.acceptWay(way),0);
+        long flags = encoder.handleWayTags(way, encoder.acceptWay(way), 0);
         assertEquals(5, encoder.getSpeed(flags), 1e-1);
     }
 
@@ -296,6 +296,27 @@ public class CarFlagEncoderTest {
         allowed = encoder.acceptWay(way);
         encoded = encoder.handleWayTags(way, allowed, 0);
         assertEquals(30, encoder.getSpeed(encoded), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "secondary");
+        way.setTag("motorroad", "yes");
+        allowed = encoder.acceptWay(way);
+        encoded = encoder.handleWayTags(way, allowed, 0);
+        assertEquals(90, encoder.getSpeed(encoded), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "motorway");
+        way.setTag("motorroad", "yes"); // this tag should be ignored
+        allowed = encoder.acceptWay(way);
+        encoded = encoder.handleWayTags(way, allowed, 0);
+        assertEquals(100, encoder.getSpeed(encoded), 1e-1);
+
+        way.clearTags();
+        way.setTag("highway", "motorway_link");
+        way.setTag("motorroad", "yes"); // this tag should be ignored
+        allowed = encoder.acceptWay(way);
+        encoded = encoder.handleWayTags(way, allowed, 0);
+        assertEquals(70, encoder.getSpeed(encoded), 1e-1);
 
         try {
             encoder.setSpeed(0, -1);
@@ -574,6 +595,7 @@ public class CarFlagEncoderTest {
         assertTrue(em.getEncoder("bike").isBackward(edgeFlags));
         assertTrue(em.getEncoder("bike").isForward(edgeFlags));
     }
+
     @Test
     public void testApplyBadSurfaceSpeed() {
         ReaderWay way = new ReaderWay(1);

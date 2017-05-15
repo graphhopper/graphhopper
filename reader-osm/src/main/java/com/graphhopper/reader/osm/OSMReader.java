@@ -60,12 +60,12 @@ import static com.graphhopper.util.Helper.nf;
  * of the relation.
  * <p>
  * 2.a) Reads nodes from OSM file and stores lat+lon information either into the intermediate
- * datastructure for the pillar nodes (pillarLats/pillarLons) or, if a tower node, directly into the
+ * data structure for the pillar nodes (pillarLats/pillarLons) or, if a tower node, directly into the
  * graphStorage via setLatitude/setLongitude. It can also happen that a pillar node needs to be
  * transformed into a tower node e.g. via barriers or different speed values for one way.
  * <p>
  * 2.b) Reads ways OSM file and creates edges while calculating the speed etc from the OSM tags.
- * When creating an edge the pillar node information from the intermediate datastructure will be
+ * When creating an edge the pillar node information from the intermediate data structure will be
  * stored in the way geometry of that edge.
  * <p>
  *
@@ -92,7 +92,7 @@ public class OSMReader implements DataReader {
     protected PillarInfo pillarInfo;
     private long locations;
     private long skippedLocations;
-    private EncodingManager encodingManager = null;
+    private final EncodingManager encodingManager;
     private int workerThreads = 2;
     // Using the correct Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
     //
@@ -117,11 +117,13 @@ public class OSMReader implements DataReader {
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private File osmFile;
     private Date osmDataDate;
+    private boolean dontCreateStorage = false;
 
     public OSMReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
         this.graph = ghStorage;
         this.nodeAccess = graph.getNodeAccess();
+        this.encodingManager = ghStorage.getEncodingManager();
 
         osmNodeIdToInternalNodeMap = new GHLongIntBTree(200);
         osmNodeIdToNodeFlagsMap = new GHLongLongHashMap(200, .5f);
@@ -209,6 +211,10 @@ public class OSMReader implements DataReader {
 
     }
 
+    protected OSMInput openOsmInputFile(File osmFile) throws XMLStreamException, IOException {
+        return new OSMInputFile(osmFile).setWorkerThreads(workerThreads).open();
+    }
+
     /**
      * Process properties, encode flags and create edges for the way.
      */
@@ -278,7 +284,7 @@ public class OSMReader implements DataReader {
                         if (lastBarrier < 0)
                             lastBarrier = 0;
 
-                        // add way up to barrier shadow node
+                        // add way up to barrier shadow node                        
                         int length = i - lastBarrier + 1;
                         LongArrayList partNodeIds = new LongArrayList();
                         partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
@@ -775,15 +781,6 @@ public class OSMReader implements DataReader {
         return osmWayIdToRouteWeightMap;
     }
 
-    /**
-     * Specify the type of the path calculation (car, bike, ...).
-     */
-    @Override
-    public OSMReader setEncodingManager(EncodingManager em) {
-        this.encodingManager = em;
-        return this;
-    }
-
     @Override
     public OSMReader setWayPointMaxDistance(double maxDist) {
         doSimplify = maxDist > 0;
@@ -826,6 +823,10 @@ public class OSMReader implements DataReader {
     @Override
     public Date getDataDate() {
         return osmDataDate;
+    }
+
+    public void setDontCreateStorage(boolean dontCreateStorage) {
+        this.dontCreateStorage = dontCreateStorage;
     }
 
     @Override

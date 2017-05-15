@@ -67,11 +67,6 @@ public class Location2IDFullWithEdgesIndex implements LocationIndex {
     }
 
     @Override
-    public int findID(double lat, double lon) {
-        return findClosest(lat, lon, EdgeFilter.ALL_EDGES).getClosestNode();
-    }
-
-    @Override
     public QueryResult findClosest(double queryLat, double queryLon, EdgeFilter filter) {
         if (isClosed())
             throw new IllegalStateException("You need to create a new LocationIndex instance as it is already closed");
