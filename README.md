@@ -56,9 +56,9 @@ and requires a time consuming and resource intense preparation. And implementing
 or very complex compared to the flexible mode. 
 
 The [master branch contains](https://github.com/graphhopper/graphhopper/pull/780)
-a **hybrid mode** based on A* using so called landmarks, which still requires preparation time and memory
+a **hybrid mode** that still requires preparation time and memory,
 but is much more flexible regarding changing properties per request or e.g. integrating traffic data and more. 
-Furthermore this hybrid mode is slower than the speed mode (depends on the number of landmarks) but it is an 
+Furthermore this hybrid mode is slower than the speed mode but it is an 
 order of magnitude faster than the flexible mode and uses also less RAM for one request.
 
 You can switch between all modes at request time.
