@@ -25,7 +25,7 @@ import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -124,7 +124,7 @@ public class EncodingManager {
                 entryVal = entry;
                 entry = entry.split("\\|")[0];
             }
-            PMap configuration = new PMap(entryVal);
+            StringConfigMap configuration = StringConfigMap.create(entryVal);
 
             FlagEncoder fe = factory.createFlagEncoder(entry, configuration);
 

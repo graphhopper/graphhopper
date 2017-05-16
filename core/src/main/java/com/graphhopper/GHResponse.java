@@ -17,7 +17,7 @@
  */
 package com.graphhopper;
 
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +30,7 @@ import java.util.List;
  */
 public class GHResponse {
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
-    private final PMap hintsMap = new PMap();
+    private final StringConfigMap hintsMap = new StringConfigMap();
     private final List<PathWrapper> pathWrappers = new ArrayList<PathWrapper>(5);
     private String debugInfo = "";
 
@@ -140,7 +140,7 @@ public class GHResponse {
         return str;
     }
 
-    public PMap getHints() {
+    public StringConfigMap getHints() {
         return hintsMap;
     }
 }

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 
 /**
  * This class creates FlagEncoders that are already included in the GraphHopper distribution.
@@ -26,7 +26,7 @@ import com.graphhopper.util.PMap;
  */
 public class DefaultFlagEncoderFactory implements FlagEncoderFactory {
     @Override
-    public FlagEncoder createFlagEncoder(String name, PMap configuration) {
+    public FlagEncoder createFlagEncoder(String name, StringConfigMap configuration) {
         if (name.equals(GENERIC))
             return new DataFlagEncoder(configuration);
 

@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 
 /**
  * Specifies the settings for cycletouring/trekking
@@ -33,10 +33,10 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     public BikeFlagEncoder(String propertiesString) {
-        this(new PMap(propertiesString));
+        this(StringConfigMap.create(propertiesString));
     }
 
-    public BikeFlagEncoder(PMap properties) {
+    public BikeFlagEncoder(StringConfigMap properties) {
         this((int) properties.getLong("speed_bits", 4),
                 properties.getLong("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);

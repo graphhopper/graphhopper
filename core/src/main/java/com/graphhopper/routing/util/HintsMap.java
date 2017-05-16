@@ -17,12 +17,12 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 
 /**
  * @author Peter Karich
  */
-public class HintsMap extends PMap {
+public class HintsMap extends StringConfigMap {
     public HintsMap() {
     }
 
@@ -34,7 +34,7 @@ public class HintsMap extends PMap {
         setWeighting(weighting);
     }
 
-    public HintsMap(PMap map) {
+    public HintsMap(StringConfigMap map) {
         super(map);
     }
 

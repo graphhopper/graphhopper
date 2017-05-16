@@ -66,7 +66,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     // bit to signal that way is accepted
     protected long acceptBit;
     protected long ferryBit;
-    protected PMap properties;
+    protected StringConfigMap properties;
     // This value determines the maximal possible speed of any road regardless the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected int maxPossibleSpeed;
@@ -85,12 +85,12 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
 
     private ConditionalTagInspector conditionalTagInspector;
 
-    public AbstractFlagEncoder(PMap properties) {
+    public AbstractFlagEncoder(StringConfigMap properties) {
         throw new RuntimeException("This method must be overridden in derived classes");
     }
 
     public AbstractFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
+        this(StringConfigMap.create(propertiesStr));
     }
 
     /**

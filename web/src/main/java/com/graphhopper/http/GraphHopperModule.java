@@ -40,7 +40,7 @@ import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TranslationMap;
 import com.graphhopper.util.shapes.BBox;
@@ -120,7 +120,7 @@ public class GraphHopperModule extends AbstractModule {
                 final FlagEncoderFactory oldFEF = graphHopper.getFlagEncoderFactory();
                 graphHopper.setFlagEncoderFactory(new FlagEncoderFactory() {
                     @Override
-                    public FlagEncoder createFlagEncoder(String name, PMap configuration) {
+                    public FlagEncoder createFlagEncoder(String name, StringConfigMap configuration) {
                         if (name.equals(GENERIC)) {
                             return new DataFlagEncoder(configuration).setSpatialRuleLookup(index);
                         }

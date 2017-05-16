@@ -19,8 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.StringConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.PointList;
 
 import static com.graphhopper.util.Helper.keepIn;
@@ -39,10 +39,10 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
     }
 
     public Bike2WeightFlagEncoder(String propertiesStr) {
-        super(new PMap(propertiesStr));
+        super(StringConfigMap.create(propertiesStr));
     }
 
-    public Bike2WeightFlagEncoder(PMap properties) {
+    public Bike2WeightFlagEncoder(StringConfigMap properties) {
         super(properties);
     }
 

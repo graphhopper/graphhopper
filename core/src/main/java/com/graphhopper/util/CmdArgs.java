@@ -32,7 +32,7 @@ import java.util.Properties;
  *
  * @author Peter Karich
  */
-public class CmdArgs extends PMap {
+public class CmdArgs extends StringConfigMap {
 
     public CmdArgs() {
     }
@@ -57,7 +57,7 @@ public class CmdArgs extends PMap {
         Helper.loadProperties(map, new InputStreamReader(new FileInputStream(
                 new File(configLocation).getAbsoluteFile()), Helper.UTF_CS));
         CmdArgs args = new CmdArgs();
-        args.merge(map);
+        args.putAll(map);
 
         // overwrite with system settings
         Properties props = System.getProperties();

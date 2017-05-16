@@ -19,7 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 
 /**
  * Special weighting for (motor)bike
@@ -35,10 +35,10 @@ public class PriorityWeighting extends FastestWeighting {
     private final double minFactor;
 
     public PriorityWeighting(FlagEncoder encoder) {
-        this(encoder, new PMap(0));
+        this(encoder, new StringConfigMap(0));
     }
 
-    public PriorityWeighting(FlagEncoder encoder, PMap pMap) {
+    public PriorityWeighting(FlagEncoder encoder, StringConfigMap pMap) {
         super(encoder, pMap);
         double maxPriority = 1; // BEST / BEST
         minFactor = 1 / (0.5 + maxPriority);

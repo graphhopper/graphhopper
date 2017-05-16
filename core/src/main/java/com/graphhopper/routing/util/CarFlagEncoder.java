@@ -20,7 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 
 import java.util.*;
 
@@ -51,7 +51,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         this(5, 5, 0);
     }
 
-    public CarFlagEncoder(PMap properties) {
+    public CarFlagEncoder(StringConfigMap properties) {
         this((int) properties.getLong("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
@@ -61,7 +61,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     public CarFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
+        this(StringConfigMap.create(propertiesStr));
     }
 
     public CarFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 
 /**
  * @author Peter Karich
@@ -35,5 +35,5 @@ public interface FlagEncoderFactory {
     final String GENERIC = "generic";
     final FlagEncoderFactory DEFAULT = new DefaultFlagEncoderFactory();
 
-    FlagEncoder createFlagEncoder(String name, PMap configuration);
+    FlagEncoder createFlagEncoder(String name, StringConfigMap configuration);
 }

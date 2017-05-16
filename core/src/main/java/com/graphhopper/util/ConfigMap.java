@@ -22,14 +22,13 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * A properties map (String to Object) with convenient accessors
- * <p>
+ * A properties map (String to Object) with convenient accessors.
  *
  * @author Peter Karich
- * @see PMap
+ * @see StringConfigMap
  */
 public class ConfigMap {
-    private final Map<String, Object> map;
+    final Map<String, Object> map;
 
     public ConfigMap() {
         this(5);
@@ -40,7 +39,11 @@ public class ConfigMap {
     }
 
     public ConfigMap(Map<String, Object> map) {
-        this.map = map;
+        this.map = new HashMap<>(map);
+    }
+
+    public ConfigMap(ConfigMap map) {
+        this.map = new HashMap<>(map.map);
     }
 
     public ConfigMap put(ConfigMap map) {
@@ -120,6 +123,10 @@ public class ConfigMap {
 
     public <T> List<T> getList(String key, Class<T> embed) {
         return (List<T>) map.get(checkKey(key));
+    }
+
+    public boolean isEmpty() {
+        return map.isEmpty();
     }
 
     @Override

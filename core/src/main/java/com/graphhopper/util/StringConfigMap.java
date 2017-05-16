@@ -21,34 +21,35 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A properties map (String to String) with convenient accessors
- * <p>
+ * A String,String ConfigMap e.g. read from URL parameters, which also converts keys from camelCase to under_score.
  *
  * @author Peter Karich
- * @see ConfigMap
  */
-public class PMap {
-    private final Map<String, String> map;
+public class StringConfigMap extends ConfigMap {
 
-    public PMap() {
-        this(5);
+    public StringConfigMap() {
+        super(5);
     }
 
-    public PMap(int capacity) {
-        this(new HashMap<String, String>(capacity));
+    public StringConfigMap(int capacity) {
+        super(capacity);
     }
 
-    public PMap(Map<String, String> map) {
-        this.map = new HashMap<>(map);
+    public StringConfigMap(Map<String, String> map) {
+        super(map.size());
+        putAll(map);
     }
 
-    public PMap(PMap map) {
-        this.map = new HashMap<>(map.map);
+    public StringConfigMap(StringConfigMap map) {
+        super(map.map);
     }
 
-    public PMap(String propertiesString) {
+    /**
+     * This method creates a StringConfigMap out of a properties string ala a=value1|b=value2|c=value3|...
+     */
+    public static StringConfigMap create(String propertiesString) {
         // five chosen as arbitrary initial capacity
-        this.map = new HashMap<>(5);
+        StringConfigMap map = new StringConfigMap(5);
 
         for (String s : propertiesString.split("\\|")) {
             s = s.trim();
@@ -56,35 +57,43 @@ public class PMap {
             if (index < 0)
                 continue;
 
-            put(s.substring(0, index), s.substring(index + 1));
+            map.put(s.substring(0, index), s.substring(index + 1));
         }
+        return map;
     }
 
-    public PMap put(PMap map) {
-        this.map.putAll(map.map);
+    /**
+     * This method sets the associated object of the key and calls obj.toString to be used as the String-value.
+     */
+    @Override
+    public StringConfigMap put(String key, Object obj) {
+        put(map, key, obj);
         return this;
     }
 
-    public PMap put(String key, Object str) {
-        if (str == null)
-            throw new NullPointerException("Value cannot be null. Use remove instead.");
+    @SuppressWarnings("unchecked")
+    private static void put(Map map, String key, Object obj) {
+        if (obj == null)
+            throw new NullPointerException("Value cannot be null. Use remove(key) instead.");
 
         // store in under_score
-        map.put(Helper.camelCaseToUnderScore(key), str.toString());
-        return this;
+        map.put(Helper.camelCaseToUnderScore(key), obj.toString());
     }
 
-    public PMap remove(String key) {
+    @Override
+    public StringConfigMap remove(String key) {
         // query accepts camelCase and under_score
         map.remove(Helper.camelCaseToUnderScore(key));
         return this;
     }
 
+    @Override
     public boolean has(String key) {
         // query accepts camelCase and under_score
         return map.containsKey(Helper.camelCaseToUnderScore(key));
     }
 
+    @Override
     public long getLong(String key, long _default) {
         String str = get(key);
         if (!Helper.isEmpty(str)) {
@@ -96,6 +105,7 @@ public class PMap {
         return _default;
     }
 
+    @Override
     public int getInt(String key, int _default) {
         String str = get(key);
         if (!Helper.isEmpty(str)) {
@@ -107,6 +117,7 @@ public class PMap {
         return _default;
     }
 
+    @Override
     public boolean getBool(String key, boolean _default) {
         String str = get(key);
         if (!Helper.isEmpty(str)) {
@@ -118,6 +129,7 @@ public class PMap {
         return _default;
     }
 
+    @Override
     public double getDouble(String key, double _default) {
         String str = get(key);
         if (!Helper.isEmpty(str)) {
@@ -142,29 +154,25 @@ public class PMap {
             return "";
 
         // query accepts camelCase and under_score
-        String val = map.get(Helper.camelCaseToUnderScore(key));
-        if (val == null)
-            return "";
-
-        return val;
+        return super.get(Helper.camelCaseToUnderScore(key), "");
     }
 
     /**
      * This method copies the underlying structure into a new Map object
      */
     public Map<String, String> toMap() {
-        return new HashMap<>(map);
+        Map<String, String> tmpMap = new HashMap<>(map.size());
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            put(tmpMap, entry.getKey(), entry.getValue());
+        }
+        return tmpMap;
     }
 
-    private Map<String, String> getMap() {
-        return map;
+    public StringConfigMap merge(StringConfigMap read) {
+        return putAll(read.toMap());
     }
 
-    public PMap merge(PMap read) {
-        return merge(read.getMap());
-    }
-
-    PMap merge(Map<String, String> map) {
+    StringConfigMap putAll(Map<String, String> map) {
         for (Map.Entry<String, String> e : map.entrySet()) {
             if (Helper.isEmpty(e.getKey()))
                 continue;
@@ -172,14 +180,5 @@ public class PMap {
             put(e.getKey(), e.getValue());
         }
         return this;
-    }
-
-    public boolean isEmpty() {
-        return map.isEmpty();
-    }
-
-    @Override
-    public String toString() {
-        return getMap().toString();
     }
 }
