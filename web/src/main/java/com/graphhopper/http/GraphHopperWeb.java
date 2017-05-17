@@ -175,8 +175,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
         JsonNode errorJson;
 
         if (json.has("message")) {
-            if (json.has("configMap")) {
-                errorJson = json.get("configMap");
+            if (json.has("hints")) {
+                errorJson = json.get("hints");
             } else {
                 // should not happen
                 errors.add(new RuntimeException(json.get("message").asText()));

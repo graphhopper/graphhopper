@@ -117,7 +117,7 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,7,44).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, "true");
+        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
 
         GHResponse response = graphHopper.route(ghRequest);
 
@@ -179,10 +179,10 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,2,13,0).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.ARRIVE_BY, "true");
+        ghRequest.getHints().put(Parameters.PT.ARRIVE_BY, true);
         ghRequest.getHints().put(Parameters.PT.RANGE_QUERY_END_TIME, LocalDateTime.of(2007,1,2,11,0).atZone(zoneId).toInstant());
         // TODO: Find the problem with 1.1.2007
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, "true");
+        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
 
         GHResponse response = graphHopper.route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()

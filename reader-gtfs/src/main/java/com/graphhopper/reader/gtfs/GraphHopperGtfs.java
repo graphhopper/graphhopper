@@ -112,13 +112,11 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         RequestHandler(GHRequest request) {
             maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
-            final String departureTimeString = request.getHints().get(Parameters.PT.EARLIEST_DEPARTURE_TIME, "");
-            try {
-                initialTime = Instant.parse(departureTimeString);
-            } catch (DateTimeParseException e) {
-                throw new IllegalArgumentException(String.format("Illegal value for required parameter %s: [%s]", Parameters.PT.EARLIEST_DEPARTURE_TIME, departureTimeString));
-            }
-            rangeQueryEndTime = request.getHints().has(Parameters.PT.RANGE_QUERY_END_TIME) ? Instant.parse(request.getHints().get(RANGE_QUERY_END_TIME, "")) : initialTime;
+            initialTime = request.getHints().get(Parameters.PT.EARLIEST_DEPARTURE_TIME, null);
+            if (initialTime == null)
+                throw new IllegalArgumentException(String.format("Required parameter %s cannot be null", Parameters.PT.EARLIEST_DEPARTURE_TIME));
+
+            rangeQueryEndTime = request.getHints().get(RANGE_QUERY_END_TIME, initialTime);
             arriveBy = request.getHints().getBool(Parameters.PT.ARRIVE_BY, false);
             ignoreTransfers = request.getHints().getBool(Parameters.PT.IGNORE_TRANSFERS, false);
             walkSpeedKmH = request.getHints().getDouble(Parameters.PT.WALK_SPEED, 5.0);
@@ -341,16 +339,16 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         List<List<Label.Transition>> partitions = new ArrayList<>();
         partitions.add(new ArrayList<>());
         final Iterator<Label.Transition> iterator = transitions.iterator();
-        partitions.get(partitions.size()-1).add(iterator.next());
+        partitions.get(partitions.size() - 1).add(iterator.next());
         iterator.forEachRemaining(transition -> {
             final List<Label.Transition> previous = partitions.get(partitions.size() - 1);
             final Label.EdgeLabel previousEdge = previous.get(previous.size() - 1).edge;
             if (previousEdge != null && (transition.edge.edgeType == GtfsStorage.EdgeType.ENTER_PT || previousEdge.edgeType == GtfsStorage.EdgeType.EXIT_PT)) {
                 final ArrayList<Label.Transition> p = new ArrayList<>();
-                p.add(new Label.Transition(previous.get(previous.size()-1).label, null));
+                p.add(new Label.Transition(previous.get(previous.size() - 1).label, null));
                 partitions.add(p);
             }
-            partitions.get(partitions.size()-1).add(transition);
+            partitions.get(partitions.size() - 1).add(transition);
         });
         return partitions;
     }
@@ -361,7 +359,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
     private InstructionList getInstructions(Translation tr, List<Trip.Leg> legs) {
         final InstructionList instructions = new InstructionList(tr);
-        for (int i = 0; i< legs.size(); ++i) {
+        for (int i = 0; i < legs.size(); ++i) {
             Trip.Leg leg = legs.get(i);
             if (leg instanceof Trip.WalkLeg) {
                 final Trip.WalkLeg walkLeg = ((Trip.WalkLeg) leg);
@@ -376,14 +374,14 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     departureInstruction.setTime(ptLeg.travelTime);
                     instructions.add(departureInstruction);
                 } else {
-                    pl = instructions.get(instructions.size()-2).getPoints();
+                    pl = instructions.get(instructions.size() - 2).getPoints();
                 }
                 pl.add(ptLeg.boardStop.geometry.getY(), ptLeg.boardStop.geometry.getX());
-                for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size()-1)) {
+                for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size() - 1)) {
                     pl.add(stop.geometry.getY(), stop.geometry.getX());
                 }
                 final PointList arrivalPointList = new PointList();
-                final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size()-1);
+                final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size() - 1);
                 arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
                 Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.name, InstructionAnnotation.EMPTY, arrivalPointList);
                 if (ptLeg.isInSameVehicleAsPrevious) {
@@ -437,7 +435,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
                     com.conveyal.gtfs.model.Trip trip = gtfsFeed.trips.get(tripId);
                     result.add(new Trip.PtLeg(
-                            feedIdWithTimezone.feedId,partition.get(0).edge.nTransfers == 0,
+                            feedIdWithTimezone.feedId, partition.get(0).edge.nTransfers == 0,
                             stops.get(0),
                             tripId,
                             trip.route_id,
@@ -445,8 +443,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                             new Date(boardTime),
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.distance).sum(),
-                            path.get(i-1).label.currentTime - boardTime,
-                            new Date(path.get(i-1).label.currentTime),
+                            path.get(i - 1).label.currentTime - boardTime,
+                            new Date(path.get(i - 1).label.currentTime),
                             lineString));
                     partition = null;
                 }
@@ -456,7 +454,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             InstructionList instructions = new InstructionList(tr);
             InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(path.get(1).edge.edgeIteratorState.getBaseNode(), graph, weighting, weighting.getFlagEncoder(), graph.getNodeAccess(), tr, instructions);
             int prevEdgeId = -1;
-            for (int i=1; i<path.size(); i++) {
+            for (int i = 1; i < path.size(); i++) {
                 EdgeIteratorState edge = path.get(i).edge.edgeIteratorState;
                 instructionsFromEdges.next(edge, i, prevEdgeId);
                 prevEdgeId = edge.getEdge();
@@ -493,7 +491,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
     public static List<Coordinate> toCoordinateArray(PointList pointList) {
         List<Coordinate> coordinates = new ArrayList<>(pointList.size());
-        for (int i=0; i<pointList.size(); i++) {
+        for (int i = 0; i < pointList.size(); i++) {
             coordinates.add(pointList.getDimension() == 3 ?
                     new Coordinate(pointList.getLon(i), pointList.getLat(i)) :
                     new Coordinate(pointList.getLon(i), pointList.getLat(i), pointList.getEle(i)));

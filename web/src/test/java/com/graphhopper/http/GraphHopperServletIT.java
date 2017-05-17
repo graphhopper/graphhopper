@@ -105,7 +105,7 @@ public class GraphHopperServletIT extends BaseServletTester {
         JsonNode json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true", 400);
         assertTrue(json.has("message"));
         assertEquals("Elevation not supported!", json.get("message").asText());
-        assertEquals("Elevation not supported!", json.get("configMap").get(0).get("message").asText());
+        assertEquals("Elevation not supported!", json.get("hints").get(0).get("message").asText());
     }
 
     @Test
@@ -212,7 +212,7 @@ public class GraphHopperServletIT extends BaseServletTester {
         assertFalse(str, str.contains("<html>"));
         assertFalse(str, str.contains("{"));
         assertTrue("Expected error but was: " + str, str.contains("<message>At least 2 points have to be specified, but was:1</message>"));
-        assertTrue("Expected error but was: " + str, str.contains("<configMap><error details=\"java"));
+        assertTrue("Expected error but was: " + str, str.contains("<hints><error details=\"java"));
     }
 
     @Test

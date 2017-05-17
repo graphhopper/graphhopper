@@ -887,7 +887,7 @@ public class GraphHopper implements GraphHopperAPI {
     public Weighting createWeighting(ConfigMap cMap, FlagEncoder encoder, Graph graph) {
         String weighting = cMap.get("weighting", "").toLowerCase();
         // TODO move URL parameter deserialization into a different place
-        cMap.put(BlockAreaWeighting.createConfigMap(blockedRectangularAreas));
+        // cMap.put(BlockAreaWeighting.createConfigMap(blockedRectangularAreas));
         cMap.put(new GraphEdgeIdFinder(graph, locationIndex).parseStringHints(cMap, new DefaultEdgeFilter(encoder)));
 
         if (encoder.supports(GenericWeighting.class)) {

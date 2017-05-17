@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.PMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +35,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -172,6 +174,38 @@ public class GHBaseServlet extends HttpServlet {
             if (e.getValue().length == 1)
                 pMap.put(e.getKey(), e.getValue()[0]);
         }
-        m.put(pMap.toConfigMap());
+        m.put(toConfigMap(pMap));
+    }
+
+    /**
+     * This method converts all string values into Boolean or Number values where possible.
+     */
+    public ConfigMap toConfigMap(PMap map) {
+        ConfigMap configMap = new ConfigMap();
+
+        for (Map.Entry<String, String> entry : map.toMap().entrySet()) {
+            String valueStr = entry.getValue();
+            Object value = valueStr;
+            // more specific value than String possible?
+            try {
+                value = Boolean.parseBoolean(valueStr);
+            } catch (Exception exB) {
+                try {
+                    value = Long.parseLong(valueStr);
+                } catch (Exception exL) {
+                    try {
+                        value = Double.parseDouble(valueStr);
+                    } catch (Exception exD) {
+                        try {
+                            value = Instant.parse(valueStr);
+                        } catch (Exception exDt) {
+                        }
+                    }
+                }
+            }
+            configMap.put(entry.getKey(), value);
+        }
+
+        return configMap;
     }
 }
