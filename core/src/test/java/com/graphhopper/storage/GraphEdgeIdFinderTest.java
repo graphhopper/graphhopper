@@ -72,9 +72,8 @@ public class GraphEdgeIdFinderTest {
         HintsMap hints = new HintsMap();
         hints.put(Parameters.Routing.BLOCK_AREA, "0.01,0.005,1");
 
-        ConfigMap cMap = new ConfigMap();
         GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        ConfigMap result = graphFinder.parseStringHints(cMap, hints, new DefaultEdgeFilter(encoder));
+        ConfigMap result = graphFinder.parseStringHints(hints, new DefaultEdgeFilter(encoder));
 
         GHIntHashSet blockedEdges = new GHIntHashSet();
         blockedEdges.add(0);
@@ -84,7 +83,7 @@ public class GraphEdgeIdFinderTest {
 
         // big area converts into shapes
         hints.put(Parameters.Routing.BLOCK_AREA, "0,0,1000");
-        result = graphFinder.parseStringHints(cMap, hints, new DefaultEdgeFilter(encoder));
+        result.put(graphFinder.parseStringHints(hints, new DefaultEdgeFilter(encoder)));
         blockedEdges.clear();
         assertEquals(blockedEdges, result.get(BLOCKED_EDGES, new GHIntHashSet()));
         blockedShapes.add(new Circle(0, 0, 1000));

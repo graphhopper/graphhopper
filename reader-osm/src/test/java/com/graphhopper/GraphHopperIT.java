@@ -87,7 +87,7 @@ public class GraphHopperIT {
                 setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(698, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(698, rsp.getConfigMap().getLong("visited_nodes.sum", 0));
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(3437.6, arsp.getDistance(), .1);
@@ -140,8 +140,8 @@ public class GraphHopperIT {
         assertEquals(1310, rsp.getAll().get(0).getTime() / 1000);
         assertEquals(1356, rsp.getAll().get(1).getTime() / 1000);
 
-        req.getHints().put("alternative_route.max_paths", "3");
-        req.getHints().put("alternative_route.min_plateau_factor", "0.1");
+        req.getHints().put("alternative_route.max_paths", 3);
+        req.getHints().put("alternative_route.min_plateau_factor", 0.1);
         rsp = hopper.route(req);
         assertFalse(rsp.hasErrors());
         assertEquals(3, rsp.getAll().size());
@@ -162,7 +162,7 @@ public class GraphHopperIT {
 
         GHRequest req = new GHRequest(50.028917, 11.496506, 49.985228, 11.600876).
                 setAlgorithm(ALT_ROUTE).setVehicle("bike").setWeighting("fastest");
-        req.getHints().put("alternative_route.max_paths", "3");
+        req.getHints().put("alternative_route.max_paths", 3);
         GHResponse rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
 
@@ -176,7 +176,7 @@ public class GraphHopperIT {
 
         req = new GHRequest(50.023513, 11.548862, 49.969441, 11.537876).
                 setAlgorithm(ALT_ROUTE).setVehicle("car").setWeighting("fastest");
-        req.getHints().put("alternative_route.max_paths", "3");
+        req.getHints().put("alternative_route.max_paths", 3);
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
 
@@ -382,7 +382,7 @@ public class GraphHopperIT {
                 addPoint(new GHPoint(43.741069, 7.426854), 0.).
                 addPoint(new GHPoint(43.744445, 7.429483), 190.).
                 setVehicle(vehicle).setWeighting("fastest");
-        req.getHints().put(Routing.HEADING_PENALTY, "300");
+        req.getHints().put(Routing.HEADING_PENALTY, 300);
         GHResponse rsp = hopper.route(req);
 
         PathWrapper arsp = rsp.getBest();
@@ -759,7 +759,7 @@ public class GraphHopperIT {
 
         PathWrapper bestPath = rsp.getBest();
         // identify the number of counts to compare with none-CH foot route which had nearly 700 counts
-        long sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        long sum = rsp.getConfigMap().getLong("visited_nodes.sum", 0);
         assertNotEquals(sum, 0);
         assertTrue("Too many nodes visited " + sum, sum < 120);
         assertEquals(3437.6, bestPath.getDistance(), .1);
@@ -813,7 +813,7 @@ public class GraphHopperIT {
         req.getHints().put(CH.DISABLE, false);
 
         GHResponse rsp = tmpHopper.route(req);
-        long chSum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        long chSum = rsp.getConfigMap().getLong("visited_nodes.sum", 0);
         assertTrue("Too many visited nodes for ch mode " + chSum, chSum < 60);
         PathWrapper bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
@@ -824,7 +824,7 @@ public class GraphHopperIT {
         req.getHints().put(Landmark.DISABLE, true);
         req.getHints().put(CH.DISABLE, true);
         rsp = tmpHopper.route(req);
-        long flexSum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        long flexSum = rsp.getConfigMap().getLong("visited_nodes.sum", 0);
         assertTrue("Too few visited nodes for flex mode " + flexSum, flexSum > 60);
 
         bestPath = rsp.getBest();
@@ -836,7 +836,7 @@ public class GraphHopperIT {
         req.getHints().put(CH.DISABLE, true);
         rsp = tmpHopper.route(req);
 
-        long hSum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        long hSum = rsp.getConfigMap().getLong("visited_nodes.sum", 0);
         // hybrid is better than CH: 40 vs. 42 !
         assertTrue("Visited nodes for hybrid mode should be different to CH but " + hSum + "==" + chSum, hSum != chSum);
         assertTrue("Too many visited nodes for hybrid mode " + hSum + ">=" + flexSum, hSum < flexSum);
@@ -850,7 +850,7 @@ public class GraphHopperIT {
         req.getHints().put(CH.DISABLE, false);
         rsp = tmpHopper.route(req);
 
-        long speed2Sum = rsp.getHints().getLong("visited_nodes.sum", 0);
+        long speed2Sum = rsp.getConfigMap().getLong("visited_nodes.sum", 0);
         assertTrue("Visited nodes for speed² mode should be different but " + speed2Sum + " == " + chSum, speed2Sum != chSum);
         assertTrue("Visited nodes for speed² mode should be different but " + speed2Sum + " == " + flexSum, speed2Sum != flexSum);
 
@@ -875,12 +875,12 @@ public class GraphHopperIT {
         assertEquals(1044, rsp.getBest().getDistance(), 1);
 
         // without turn costs
-        req.getHints().put(Routing.EDGE_BASED, "false");
+        req.getHints().put(Routing.EDGE_BASED, false);
         rsp = tmpHopper.route(req);
         assertEquals(400, rsp.getBest().getDistance(), 1);
 
         // with turn costs
-        req.getHints().put(Routing.EDGE_BASED, "true");
+        req.getHints().put(Routing.EDGE_BASED, true);
         rsp = tmpHopper.route(req);
         assertEquals(1044, rsp.getBest().getDistance(), 1);
     }
@@ -902,8 +902,8 @@ public class GraphHopperIT {
         assertEquals(400, rsp.getBest().getDistance(), 1);
 
         // with turn costs                
-        req.getHints().put(CH.DISABLE, "true");
-        req.getHints().put(Routing.EDGE_BASED, "true");
+        req.getHints().put(CH.DISABLE, true);
+        req.getHints().put(Routing.EDGE_BASED, true);
         rsp = tmpHopper.route(req);
         assertEquals(1044, rsp.getBest().getDistance(), 1);
     }

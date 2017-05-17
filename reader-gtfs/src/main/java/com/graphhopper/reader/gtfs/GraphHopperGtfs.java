@@ -181,8 +181,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             if (router.getVisitedNodes() >= maxVisitedNodesForRequest) {
                 throw new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest);
             }
-            response.getHints().put("visited_nodes.sum", router.getVisitedNodes());
-            response.getHints().put("visited_nodes.average", router.getVisitedNodes());
+            response.getConfigMap().put("visited_nodes.sum", router.getVisitedNodes());
+            response.getConfigMap().put("visited_nodes.average", router.getVisitedNodes());
             if (solutions.isEmpty()) {
                 response.addError(new RuntimeException("No route found"));
             }

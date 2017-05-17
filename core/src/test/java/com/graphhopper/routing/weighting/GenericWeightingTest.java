@@ -20,20 +20,25 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.*;
-
-import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_EDGES;
-import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_SHAPES;
-
-import com.graphhopper.util.*;
+import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.util.ConfigMap;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
 import com.graphhopper.util.shapes.Circle;
 import com.graphhopper.util.shapes.Shape;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
+import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_EDGES;
+import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_SHAPES;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -74,7 +79,7 @@ public class GenericWeightingTest {
     @Test
     public void testBlockedById() {
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = encoder.readStringMap(new PMap());
+        ConfigMap cMap = encoder.setAndConvertToInternalValues(new ConfigMap());
         Weighting instance = new GenericWeighting(encoder, cMap);
         assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
 
@@ -88,7 +93,7 @@ public class GenericWeightingTest {
     @Test
     public void testBlockedByShape() {
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = encoder.readStringMap(new PMap());
+        ConfigMap cMap = encoder.setAndConvertToInternalValues(new ConfigMap());
         GenericWeighting instance = new GenericWeighting(encoder, cMap);
         assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
 
@@ -110,7 +115,7 @@ public class GenericWeightingTest {
 
     @Test
     public void testCalcTime() {
-        ConfigMap cMap = encoder.readStringMap(new PMap());
+        ConfigMap cMap = encoder.setAndConvertToInternalValues(new ConfigMap());
         GenericWeighting weighting = new GenericWeighting(encoder, cMap);
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
         assertEquals(edgeWeight, weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE), .1);
@@ -118,7 +123,7 @@ public class GenericWeightingTest {
 
     @Test
     public void testNullGraph() {
-        ConfigMap cMap = encoder.readStringMap(new PMap());
+        ConfigMap cMap = encoder.setAndConvertToInternalValues(new ConfigMap());
         GenericWeighting weighting = new GenericWeighting(encoder, cMap);
         weighting.setGraph(null);
     }
@@ -126,7 +131,7 @@ public class GenericWeightingTest {
     @Test
     public void testRoadAttributeRestriction() {
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = encoder.readStringMap(new PMap());
+        ConfigMap cMap = encoder.setAndConvertToInternalValues(new ConfigMap());
         cMap.put(GenericWeighting.HEIGHT_LIMIT, 4.0);
         Weighting instance = new GenericWeighting(encoder, cMap);
         assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
@@ -154,7 +159,7 @@ public class GenericWeightingTest {
         simpleGraph.getEdgeIteratorState(0, 1).setFlags(simpleEncoder.handleWayTags(way, 1, 0));
 
         EdgeIteratorState edge = simpleGraph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = simpleEncoder.readStringMap(new PMap());
+        ConfigMap cMap = simpleEncoder.setAndConvertToInternalValues(new ConfigMap());
         cMap.put(GenericWeighting.HEIGHT_LIMIT, 5.0);
         Weighting instance = new GenericWeighting(simpleEncoder, cMap);
 

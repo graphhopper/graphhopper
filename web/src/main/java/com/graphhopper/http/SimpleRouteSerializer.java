@@ -63,11 +63,11 @@ public class SimpleRouteSerializer implements RouteSerializer {
                 }
                 errorHintList.add(map);
             }
-            json.put("hints", errorHintList);
+            json.put("configMap", errorHintList);
         } else {
             Map<String, Object> jsonInfo = new HashMap<String, Object>();
             json.put("info", jsonInfo);
-            json.put("hints", rsp.getHints().toMap());
+            json.put("configMap", rsp.getConfigMap().toMap());
             // If you replace GraphHopper with your own brand name, this is fine. 
             // Still it would be highly appreciated if you mention us in your about page!
             jsonInfo.put("copyrights", Arrays.asList("GraphHopper", "OpenStreetMap contributors"));

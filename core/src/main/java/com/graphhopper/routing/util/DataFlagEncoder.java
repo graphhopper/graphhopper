@@ -211,7 +211,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         accessEncoder = new EncodedValue("access car", shift, 3, 1, 1, 4, true);
         shift += accessEncoder.getBits();
 
-        int tmpMax = spatialRuleLookup.size()-1;
+        int tmpMax = spatialRuleLookup.size() - 1;
         int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
         spatialEncoder = new EncodedValue("spatial_location", shift, bits, 1, 0, tmpMax, true);
         shift += spatialEncoder.getBits();
@@ -844,27 +844,16 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     /**
-     * This method creates a Config map out of the PMap. Later on this conversion should not be
-     * necessary when we read JSON.
+     * This method converts a some external parameters like country code into internal parameters
+     * like integer values. Currently only used for the GenericWeighting but is applicable to others too.
      */
-    public ConfigMap readStringMap(PMap weightingMap) {
+    public ConfigMap setAndConvertToInternalValues(ConfigMap cMap) {
         Map<String, Double> map = new HashMap<>();
         for (Entry<String, Double> e : DEFAULT_SPEEDS.entrySet()) {
-            map.put(e.getKey(), weightingMap.getDouble("highways." + e.getKey(), e.getValue()));
+            map.put(e.getKey(), cMap.getDouble("highways." + e.getKey(), e.getValue()));
         }
 
-        ConfigMap cMap = new ConfigMap();
         cMap.put("highways", map);
-
-        cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.HEIGHT_LIMIT, 0d);
-        cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.WEIGHT_LIMIT, 0d);
-        cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.WIDTH_LIMIT, 0d);
-
         return cMap;
-    }
-
-    private void cloneDoubleAttribute(PMap weightingMap, ConfigMap cMap, String key, double _default) {
-        if (weightingMap.has(key))
-            cMap.put(key, weightingMap.getDouble(key, _default));
     }
 }

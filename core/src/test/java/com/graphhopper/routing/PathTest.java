@@ -484,10 +484,10 @@ public class PathTest {
         //  1 ---2--- 3
         //       \
         //        4
-        na.setNode(1, 48.412094,15.598816);
-        na.setNode(2, 48.412055,15.599068);
-        na.setNode(3, 48.412034,15.599411);
-        na.setNode(4, 48.411927,15.599197);
+        na.setNode(1, 48.412094, 15.598816);
+        na.setNode(2, 48.412055, 15.599068);
+        na.setNode(3, 48.412034, 15.599411);
+        na.setNode(4, 48.411927, 15.599197);
 
         g.edge(1, 2, 5, true).setName("Stöhrgasse");
         g.edge(2, 3, 5, true);
@@ -529,11 +529,11 @@ public class PathTest {
         ReaderWay w = new ReaderWay(1);
         w.setTag("highway", "tertiary");
 
-        g.edge(1, 2, 5, true).setFlags(dataFlagEncoder.handleWayTags(w,1,0));
-        g.edge(2, 4, 5, true).setFlags(dataFlagEncoder.handleWayTags(w,1,0));
-        g.edge(2, 3, 5, true).setFlags(dataFlagEncoder.handleWayTags(w,1,0));
+        g.edge(1, 2, 5, true).setFlags(dataFlagEncoder.handleWayTags(w, 1, 0));
+        g.edge(2, 4, 5, true).setFlags(dataFlagEncoder.handleWayTags(w, 1, 0));
+        g.edge(2, 3, 5, true).setFlags(dataFlagEncoder.handleWayTags(w, 1, 0));
 
-        ConfigMap cMap = dataFlagEncoder.readStringMap(new PMap());
+        ConfigMap cMap = dataFlagEncoder.setAndConvertToInternalValues(new ConfigMap());
         Path p = new Dijkstra(g, new GenericWeighting(dataFlagEncoder, cMap), TraversalMode.NODE_BASED).calcPath(1, 3);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);

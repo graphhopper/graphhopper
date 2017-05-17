@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.ConfigMap;
 
 /**
  * @author Peter Karich

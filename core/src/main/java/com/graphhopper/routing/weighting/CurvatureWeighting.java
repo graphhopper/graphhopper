@@ -19,6 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.MotorcycleFlagEncoder;
+import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
@@ -28,7 +29,7 @@ import com.graphhopper.util.PMap;
 public class CurvatureWeighting extends PriorityWeighting {
     private final double minFactor;
 
-    public CurvatureWeighting(FlagEncoder flagEncoder, PMap pMap) {
+    public CurvatureWeighting(FlagEncoder flagEncoder, ConfigMap pMap) {
         super(flagEncoder, pMap);
 
         double minBendiness = 1; // see correctErrors

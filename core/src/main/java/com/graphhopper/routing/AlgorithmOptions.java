@@ -19,7 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.Parameters;
 
 /**
@@ -35,7 +35,7 @@ import com.graphhopper.util.Parameters;
  * @author Peter Karich
  */
 public class AlgorithmOptions {
-    private final PMap hints = new PMap(5);
+    private final ConfigMap configMap = new ConfigMap(5);
     private String algorithm = Parameters.Algorithms.DIJKSTRA_BI;
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
@@ -79,8 +79,8 @@ public class AlgorithmOptions {
             b.weighting(opts.getWeighting());
         if (opts.maxVisitedNodes >= 0)
             b.maxVisitedNodes(opts.maxVisitedNodes);
-        if (!opts.hints.isEmpty())
-            b.hints(opts.hints);
+        if (!opts.configMap.isEmpty())
+            b.configMap(opts.configMap);
 
         return b;
     }
@@ -110,8 +110,8 @@ public class AlgorithmOptions {
         return maxVisitedNodes;
     }
 
-    public PMap getHints() {
-        return hints;
+    public ConfigMap getConfigMap() {
+        return configMap;
     }
 
     private void assertNotNull(Object optionValue, String optionName) {
@@ -154,8 +154,8 @@ public class AlgorithmOptions {
             return this;
         }
 
-        public Builder hints(PMap hints) {
-            this.opts.hints.put(hints);
+        public Builder configMap(ConfigMap hints) {
+            this.opts.configMap.put(hints);
             return this;
         }
 

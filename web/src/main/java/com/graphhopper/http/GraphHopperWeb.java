@@ -49,7 +49,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private boolean elevation = false;
 
     public GraphHopperWeb() {
-        // some parameters are supported directly via Java API so ignore them when writing the getHints map
+        // some parameters are supported directly via Java API so ignore them when writing the getConfigMap map
         ignoreSet = new HashSet<>();
         ignoreSet.add("calc_points");
         ignoreSet.add("calcpoints");
@@ -71,8 +71,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
     }
 
     private PathWrapper createPathWrapper(JsonNode path,
-                                                 boolean tmpCalcPoints, boolean tmpInstructions,
-                                                 boolean tmpElevation, boolean turnDescription) {
+                                          boolean tmpCalcPoints, boolean tmpInstructions,
+                                          boolean tmpElevation, boolean turnDescription) {
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.addErrors(readErrors(path));
         if (pathWrapper.hasErrors())
@@ -148,7 +148,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                     // instead of creating a combination with sign and name etc.
                     // This is called the turn description.
                     // This can be changed by passing <code>turn_description=false</code>.
-                    if(turnDescription)
+                    if (turnDescription)
                         instr.setUseRawName();
 
                     instr.setDistance(instDist).setTime(instTime);
@@ -166,7 +166,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
     // Credits to: http://stackoverflow.com/a/24012023/194609
     private Map<String, Object> toMap(JsonNode object) {
-        return objectMapper.convertValue(object, new TypeReference<Map<String, Object>>() {});
+        return objectMapper.convertValue(object, new TypeReference<Map<String, Object>>() {
+        });
     }
 
     public List<Throwable> readErrors(JsonNode json) {
@@ -174,8 +175,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
         JsonNode errorJson;
 
         if (json.has("message")) {
-            if (json.has("hints")) {
-                errorJson = json.get("hints");
+            if (json.has("configMap")) {
+                errorJson = json.get("configMap");
             } else {
                 // should not happen
                 errors.add(new RuntimeException(json.get("message").asText()));
@@ -288,15 +289,17 @@ public class GraphHopperWeb implements GraphHopperAPI {
             if (!key.isEmpty())
                 url += "&key=" + key;
 
-            for (Entry<String, String> entry : request.getHints().toMap().entrySet()) {
+            Map<String, Object> tmpMap = request.getHints().toMap();
+            for (Entry<String, Object> entry : tmpMap.entrySet()) {
                 String urlKey = entry.getKey();
-                String urlValue = entry.getValue();
+                Object urlValueObj = tmpMap.get(urlKey);
 
                 // use lower case conversion for check only!
-                if (ignoreSet.contains(urlKey.toLowerCase()))
+                if (ignoreSet.contains(urlKey.toLowerCase()) || urlValueObj == null)
                     continue;
 
-                if (urlValue != null && !urlValue.isEmpty())
+                String urlValue = urlValueObj.toString();
+                if (!urlValue.isEmpty())
                     url += "&" + WebHelper.encodeURL(urlKey) + "=" + WebHelper.encodeURL(urlValue);
             }
 

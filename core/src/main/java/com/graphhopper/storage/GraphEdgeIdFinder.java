@@ -45,7 +45,6 @@ import java.util.List;
  */
 public class GraphEdgeIdFinder {
 
-    // internal properties
     public static final String BLOCKED_EDGES = "graph_finder.blocked_edges";
     public static final String BLOCKED_SHAPES = "graph_finder.blocked_shapes";
     private final Graph graph;
@@ -130,10 +129,11 @@ public class GraphEdgeIdFinder {
     }
 
     /**
-     * This method reads string values from the hints about blocked areas and fills the configMap with either the
+     * This method reads string values from the configMap about blocked areas and fills the configMap with either the
      * created shapes or the found edges if area is small enough.
      */
-    public ConfigMap parseStringHints(ConfigMap configMap, HintsMap hints, EdgeFilter filter) {
+    public ConfigMap parseStringHints(ConfigMap hints, EdgeFilter filter) {
+        ConfigMap configMap = new ConfigMap();
         final String objectSeparator = ";";
         final String innerObjSep = ",";
         // use shapes if bigger than 1km^2

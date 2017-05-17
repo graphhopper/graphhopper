@@ -109,7 +109,7 @@ public class GraphHopperServlet extends GHBaseServlet {
 
                 List<String> pointHints = new ArrayList<String>(Arrays.asList(getParams(httpReq, POINT_HINT)));
                 if (pointHints.size() > 0 && pointHints.size() != requestPoints.size()) {
-                    throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored");
+                    throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty configMap will be ignored");
                 }
 
                 FlagEncoder algoVehicle = encodingManager.getEncoder(vehicleStr);
@@ -232,7 +232,7 @@ public class GraphHopperServlet extends GHBaseServlet {
             extensionsElement.appendChild(messageElement);
             messageElement.setTextContent(list.iterator().next().getMessage());
 
-            Element hintsElement = doc.createElement("hints");
+            Element hintsElement = doc.createElement("configMap");
             extensionsElement.appendChild(hintsElement);
 
             for (Throwable t : list) {

@@ -31,6 +31,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
+import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import org.junit.Test;
@@ -65,14 +66,14 @@ public class RoutingAlgorithmIT {
         HintsMap defaultHints = new HintsMap().put(Parameters.CH.DISABLE, true).put(Parameters.Landmark.DISABLE, true)
                 .setVehicle(hints.getVehicle()).setWeighting(hints.getWeighting());
 
-        AlgorithmOptions defaultOpts = AlgorithmOptions.start(new AlgorithmOptions("", weighting, tMode)).hints(defaultHints).build();
+        AlgorithmOptions defaultOpts = AlgorithmOptions.start(new AlgorithmOptions("", weighting, tMode)).configMap(defaultHints).build();
         List<AlgoHelperEntry> prepare = new ArrayList<>();
         prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(ASTAR).build(), idx, "astar|beeline|" + addStr + weighting));
         // later: include dijkstraOneToMany
         prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA).build(), idx, "dijkstra|" + addStr + weighting));
 
         AlgorithmOptions astarbiOpts = AlgorithmOptions.start(defaultOpts).algorithm(ASTAR_BI).build();
-        astarbiOpts.getHints().put(ASTAR_BI + ".approximation", "BeelineSimplification");
+        astarbiOpts.getConfigMap().put(ASTAR_BI + ".approximation", "BeelineSimplification");
         AlgorithmOptions dijkstrabiOpts = AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA_BI).build();
         prepare.add(new AlgoHelperEntry(ghStorage, astarbiOpts, idx, "astarbi|beeline|" + addStr + weighting));
         prepare.add(new AlgoHelperEntry(ghStorage, dijkstrabiOpts, idx, "dijkstrabi|" + addStr + weighting));
@@ -80,7 +81,7 @@ public class RoutingAlgorithmIT {
         // add additional preparations if CH and LM preparation are enabled
         if (hopper.getLMFactoryDecorator().isEnabled()) {
             final HintsMap lmHints = new HintsMap(defaultHints).put(Parameters.Landmark.DISABLE, false);
-            prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
+            prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).configMap(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
                     return hopper.getAlgorithmFactory(lmHints);
@@ -101,7 +102,7 @@ public class RoutingAlgorithmIT {
                 throw new IllegalStateException("Didn't find weighting " + hints.getWeighting() + " in " + hopper.getCHFactoryDecorator().getWeightings());
 
             prepare.add(new AlgoHelperEntry(ghStorage.getGraph(CHGraph.class, pickedWeighting),
-                    AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + hints.getWeighting()) {
+                    AlgorithmOptions.start(dijkstrabiOpts).configMap(chHints).build(), idx, "dijkstrabi|ch|prepare|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
                     return hopper.getAlgorithmFactory(chHints);
@@ -109,7 +110,7 @@ public class RoutingAlgorithmIT {
             });
 
             prepare.add(new AlgoHelperEntry(ghStorage.getGraph(CHGraph.class, pickedWeighting),
-                    AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|prepare|" + hints.getWeighting()) {
+                    AlgorithmOptions.start(astarbiOpts).configMap(chHints).build(), idx, "astarbi|ch|prepare|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
                     return hopper.getAlgorithmFactory(chHints);

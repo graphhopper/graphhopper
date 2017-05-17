@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.PMap;
 
 import java.util.ArrayList;
@@ -24,13 +25,12 @@ import java.util.List;
 
 /**
  * Wrapper containing path and error output of GraphHopper.
- * <p>
  *
  * @author Peter Karich
  */
 public class GHResponse {
     private final List<Throwable> errors = new ArrayList<Throwable>(4);
-    private final PMap hintsMap = new PMap();
+    private final ConfigMap hintsMap = new ConfigMap();
     private final List<PathWrapper> pathWrappers = new ArrayList<PathWrapper>(5);
     private String debugInfo = "";
 
@@ -140,7 +140,7 @@ public class GHResponse {
         return str;
     }
 
-    public PMap getHints() {
+    public ConfigMap getConfigMap() {
         return hintsMap;
     }
 }

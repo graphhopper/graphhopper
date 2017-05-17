@@ -63,6 +63,7 @@ public class GenericWeighting extends AbstractWeighting {
     public GenericWeighting(DataFlagEncoder encoder, ConfigMap cMap) {
         super(encoder);
         gEncoder = encoder;
+        encoder.setAndConvertToInternalValues(cMap);
         headingPenalty = cMap.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);
 

@@ -877,30 +877,21 @@ public class GraphHopper implements GraphHopperAPI {
      * created. Note that all URL parameters are available in the hintsMap as String if
      * you use the web module.
      *
-     * @param hintsMap all parameters influencing the weighting. E.g. parameters coming via
-     *                 GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
-     * @param encoder  the required vehicle
-     * @param graph    The Graph enables the Weighting for NodeAccess and more
+     * @param cMap    all parameters influencing the weighting. E.g. parameters coming via
+     *                GHRequest.getConfigMap or directly via "&amp;api.xy=" from the URL of the web UI
+     * @param encoder the required vehicle
+     * @param graph   The Graph enables the Weighting for NodeAccess and more
      * @return the weighting to be used for route calculation
      * @see HintsMap
      */
-    public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
-        String weighting = hintsMap.getWeighting().toLowerCase();
+    public Weighting createWeighting(ConfigMap cMap, FlagEncoder encoder, Graph graph) {
+        String weighting = cMap.get("weighting", "").toLowerCase();
+        // TODO move URL parameter deserialization into a different place
+        cMap.put(BlockAreaWeighting.createConfigMap(blockedRectangularAreas));
+        cMap.put(new GraphEdgeIdFinder(graph, locationIndex).parseStringHints(cMap, new DefaultEdgeFilter(encoder)));
 
         if (encoder.supports(GenericWeighting.class)) {
             DataFlagEncoder dataEncoder = (DataFlagEncoder) encoder;
-            ConfigMap cMap = dataEncoder.readStringMap(hintsMap);
-
-            // add default blocked rectangular areas from config properties
-            if (!this.blockedRectangularAreas.isEmpty()) {
-                String val = this.blockedRectangularAreas;
-                String blockedAreasFromRequest = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
-                if (!blockedAreasFromRequest.isEmpty())
-                    val += ";" + blockedAreasFromRequest;
-                hintsMap.put(Parameters.Routing.BLOCK_AREA, val);
-            }
-
-            cMap = new GraphEdgeIdFinder(graph, locationIndex).parseStringHints(cMap, hintsMap, new DefaultEdgeFilter(encoder));
             GenericWeighting genericWeighting = new GenericWeighting(dataEncoder, cMap);
             genericWeighting.setGraph(graph);
             return genericWeighting;
@@ -908,15 +899,15 @@ public class GraphHopper implements GraphHopperAPI {
             return new ShortestWeighting(encoder);
         } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty()) {
             if (encoder.supports(PriorityWeighting.class))
-                return new PriorityWeighting(encoder, hintsMap);
+                return new PriorityWeighting(encoder, cMap);
             else
-                return new FastestWeighting(encoder, hintsMap);
+                return new FastestWeighting(encoder, cMap);
         } else if ("curvature".equalsIgnoreCase(weighting)) {
             if (encoder.supports(CurvatureWeighting.class))
-                return new CurvatureWeighting(encoder, hintsMap);
+                return new CurvatureWeighting(encoder, cMap);
 
         } else if ("short_fastest".equalsIgnoreCase(weighting)) {
-            return new ShortFastestWeighting(encoder, hintsMap);
+            return new ShortFastestWeighting(encoder, cMap);
         }
 
         throw new IllegalArgumentException("weighting " + weighting + " not supported");
@@ -1047,7 +1038,7 @@ public class GraphHopper implements GraphHopperAPI {
                 AlgorithmOptions algoOpts = AlgorithmOptions.start().
                         algorithm(algoStr).traversalMode(tMode).weighting(weighting).
                         maxVisitedNodes(maxVisitedNodesForRequest).
-                        hints(hints).
+                        configMap(hints).
                         build();
 
                 altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);

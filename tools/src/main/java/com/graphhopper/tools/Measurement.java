@@ -387,7 +387,7 @@ public class Measurement {
 
                 PathWrapper arsp = rsp.getBest();
                 if (!warmup) {
-                    visitedNodesSum.addAndGet(rsp.getHints().getLong("visited_nodes.sum", 0));
+                    visitedNodesSum.addAndGet(rsp.getConfigMap().getLong("visited_nodes.sum", 0));
                     long dist = (long) arsp.getDistance();
                     distSum.addAndGet(dist);
 

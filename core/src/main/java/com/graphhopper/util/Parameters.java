@@ -88,7 +88,7 @@ public class Parameters {
     }
 
     /**
-     * Parameters that can be passed as hints and influence routing per request.
+     * Parameters that can be passed as configMap and influence routing per request.
      */
     public static final class Routing {
         public static final String EDGE_BASED = "edge_based";

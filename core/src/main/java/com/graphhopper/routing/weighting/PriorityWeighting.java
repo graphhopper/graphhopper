@@ -18,6 +18,7 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
@@ -35,10 +36,10 @@ public class PriorityWeighting extends FastestWeighting {
     private final double minFactor;
 
     public PriorityWeighting(FlagEncoder encoder) {
-        this(encoder, new PMap(0));
+        this(encoder, new ConfigMap(0));
     }
 
-    public PriorityWeighting(FlagEncoder encoder, PMap pMap) {
+    public PriorityWeighting(FlagEncoder encoder, ConfigMap pMap) {
         super(encoder, pMap);
         double maxPriority = 1; // BEST / BEST
         minFactor = 1 / (0.5 + maxPriority);

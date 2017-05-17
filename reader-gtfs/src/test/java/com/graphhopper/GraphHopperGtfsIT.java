@@ -156,7 +156,7 @@ public class GraphHopperGtfsIT {
         );
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.RANGE_QUERY_END_TIME, LocalDateTime.of(2007,1,1,13,0).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, "true");
+        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
 
         GHResponse response = graphHopper.route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()

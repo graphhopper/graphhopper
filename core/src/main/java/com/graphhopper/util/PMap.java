@@ -22,7 +22,6 @@ import java.util.Map;
 
 /**
  * A properties map (String to String) with convenient accessors
- * <p>
  *
  * @author Peter Karich
  * @see ConfigMap
@@ -176,6 +175,34 @@ public class PMap {
 
     public boolean isEmpty() {
         return map.isEmpty();
+    }
+
+    /**
+     * This method converts all string values into Boolean or Number values where possible.
+     */
+    public ConfigMap toConfigMap() {
+        ConfigMap configMap = new ConfigMap();
+
+        for (Map.Entry<String, String> entry : map.entrySet()) {
+            String valueStr = entry.getValue();
+            Object value = valueStr;
+            // more specific value than String possible?
+            try {
+                value = Boolean.parseBoolean(valueStr);
+            } catch (Exception exB) {
+                try {
+                    value = Long.parseLong(valueStr);
+                } catch (Exception exL) {
+                    try {
+                        value = Double.parseDouble(valueStr);
+                    } catch (Exception exD) {
+                    }
+                }
+            }
+            configMap.put(entry.getKey(), value);
+        }
+
+        return configMap;
     }
 
     @Override

@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.util.PMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -166,9 +167,11 @@ public class GHBaseServlet extends HttpServlet {
     }
 
     protected void initHints(HintsMap m, Map<String, String[]> parameterMap) {
+        PMap pMap = new PMap();
         for (Map.Entry<String, String[]> e : parameterMap.entrySet()) {
             if (e.getValue().length == 1)
-                m.put(e.getKey(), e.getValue()[0]);
+                pMap.put(e.getKey(), e.getValue()[0]);
         }
+        m.put(pMap.toConfigMap());
     }
 }

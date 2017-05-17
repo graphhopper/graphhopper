@@ -19,10 +19,10 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.PMap;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -48,7 +48,7 @@ public class ShortFastestWeightingTest {
     @Test
     public void testTooSmall() {
         try {
-            new ShortFastestWeighting(encoder, new PMap("short_fastest.distance_factor=0|short_fastest.time_factor=0"));
+            new ShortFastestWeighting(encoder, new ConfigMap().put("short_fastest.distance_factor", 0).put("short_fastest.time_factor", 0));
             assertTrue(false);
         } catch (Exception ex) {
         }

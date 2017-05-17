@@ -23,7 +23,6 @@ import java.util.Map;
 
 /**
  * A properties map (String to Object) with convenient accessors
- * <p>
  *
  * @author Peter Karich
  * @see PMap
@@ -41,6 +40,11 @@ public class ConfigMap {
 
     public ConfigMap(Map<String, Object> map) {
         this.map = map;
+    }
+
+    public ConfigMap(ConfigMap map) {
+        this(map.map.size());
+        put(map);
     }
 
     public ConfigMap put(ConfigMap map) {
@@ -72,17 +76,17 @@ public class ConfigMap {
     }
 
     public long getLong(String key, long _default) {
-        Long t = (Long) map.get(checkKey(key));
+        Number t = (Number) map.get(checkKey(key));
         if (t == null)
             return _default;
-        return t;
+        return t.longValue();
     }
 
     public int getInt(String key, int _default) {
-        Integer t = (Integer) map.get(checkKey(key));
+        Number t = (Number) map.get(checkKey(key));
         if (t == null)
             return _default;
-        return t;
+        return t.intValue();
     }
 
     public boolean getBool(String key, boolean _default) {
@@ -93,10 +97,10 @@ public class ConfigMap {
     }
 
     public double getDouble(String key, double _default) {
-        Double t = (Double) map.get(checkKey(key));
+        Number t = (Number) map.get(checkKey(key));
         if (t == null)
             return _default;
-        return t;
+        return t.doubleValue();
     }
 
     public <T> T get(String key, T _default) {
@@ -120,6 +124,14 @@ public class ConfigMap {
 
     public <T> List<T> getList(String key, Class<T> embed) {
         return (List<T>) map.get(checkKey(key));
+    }
+
+    public boolean isEmpty() {
+        return map.isEmpty();
+    }
+
+    public Map<String, Object> toMap() {
+        return new HashMap<>(map);
     }
 
     @Override

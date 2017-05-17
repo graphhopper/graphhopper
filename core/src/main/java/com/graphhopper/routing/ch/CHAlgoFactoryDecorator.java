@@ -26,6 +26,7 @@ import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;
@@ -161,7 +162,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     }
 
     /**
-     * This method specifies if it is allowed to disable CH routing at runtime via routing hints.
+     * This method specifies if it is allowed to disable CH routing at runtime via routing configMap.
      */
     public final CHAlgoFactoryDecorator setDisablingAllowed(boolean disablingAllowed) {
         this.disablingAllowed = disablingAllowed;
