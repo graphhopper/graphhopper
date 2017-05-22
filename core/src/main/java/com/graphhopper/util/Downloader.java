@@ -122,6 +122,7 @@ public class Downloader {
                 writer.write(buffer, 0, numRead);
             }
         } finally {
+            Helper.close(iStream);
             Helper.close(writer);
             Helper.close(in);
         }
