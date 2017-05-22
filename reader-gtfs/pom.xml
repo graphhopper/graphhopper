@@ -55,11 +55,6 @@
             <scope>runtime</scope>
         </dependency>
         <dependency>
-            <groupId>com.vividsolutions</groupId>
-            <artifactId>jts</artifactId>
-            <version>1.13</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.transit</groupId>
             <artifactId>gtfs-realtime-bindings</artifactId>
             <version>0.0.4</version>
