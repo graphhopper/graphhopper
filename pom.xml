@@ -135,10 +135,6 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.0.2</version>
             </plugin>
-            <plugin>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.0.0</version>
-            </plugin>
             <!-- example https://github.com/tananaev/traccar/blob/master/checkstyle.xml
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
