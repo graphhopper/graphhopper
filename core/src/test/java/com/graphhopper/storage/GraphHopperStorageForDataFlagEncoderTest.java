@@ -51,7 +51,6 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         Helper.removeDir(new File(locationParent));
     }
 
-
     @Test
     public void testStorageProperties() {
         graph = new GraphBuilder(encodingManager).setStore(true).setLocation(defaultGraphLoc).create();
