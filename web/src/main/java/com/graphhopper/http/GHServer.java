@@ -17,30 +17,28 @@
  */
 package com.graphhopper.http;
 
-import com.google.inject.*;
+import com.google.inject.AbstractModule;
+import com.google.inject.Guice;
+import com.google.inject.Injector;
+import com.google.inject.Module;
 import com.google.inject.servlet.GuiceFilter;
-import com.google.inject.servlet.ServletModule;
-import com.graphhopper.GraphHopper;
-import com.graphhopper.json.GHJson;
-import com.graphhopper.json.GHJsonBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.server.handler.gzip.GzipHandler;
 import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.eclipse.jetty.util.resource.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.*;
-import java.io.IOException;
+import javax.servlet.DispatcherType;
 import java.util.EnumSet;
 
 /**
@@ -70,7 +68,12 @@ public class GHServer {
         resHandler.setWelcomeFiles(new String[]{
                 "index.html"
         });
-        resHandler.setResourceBase(args.get("jetty.resourcebase", "./web/src/main/webapp"));
+        resHandler.setRedirectWelcome(false);
+
+        ContextHandler contextHandler = new ContextHandler();
+        contextHandler.setContextPath("/");
+        contextHandler.setBaseResource(Resource.newResource(args.get("jetty.resourcebase", "./web/src/main/webapp")));
+        contextHandler.setHandler(resHandler);
 
         server = new Server();
         // getSessionHandler and getSecurityHandler should always return null
@@ -78,10 +81,12 @@ public class GHServer {
         servHandler.setErrorHandler(new GHErrorHandler());
         servHandler.setContextPath("/");
 
-        servHandler.addServlet(new ServletHolder(new InvalidRequestServlet()), "/*");
+        // Putting this here (and not in the guice servlet module) because it should take precedence
+        // over more specific routes. And guice, strangely, is order-dependent (even though, except in the servlet
+        // extension, modules are _not_ supposed to be ordered).
+        servHandler.addServlet(new ServletHolder(injector.getInstance(InvalidRequestServlet.class)), "/*");
 
-        FilterHolder guiceFilter = new FilterHolder(injector.getInstance(GuiceFilter.class));
-        servHandler.addFilter(guiceFilter, "/*", EnumSet.allOf(DispatcherType.class));
+        servHandler.addFilter(new FilterHolder(new GuiceFilter()), "/*", EnumSet.allOf(DispatcherType.class));
 
         ServerConnector connector0 = new ServerConnector(server);
         int httpPort = args.getInt("jetty.port", 8989);
@@ -99,7 +104,7 @@ public class GHServer {
 
         HandlerList handlers = new HandlerList();
         handlers.setHandlers(new Handler[]{
-                resHandler, servHandler
+                contextHandler, servHandler
         });
 
         GzipHandler gzipHandler = new GzipHandler();
@@ -108,6 +113,10 @@ public class GHServer {
         // If no mimeTypes are defined the content-type is "not 'application/gzip'", See also https://github.com/graphhopper/directions-api/issues/28 for pitfalls
         // gzipHandler.setIncludedMimeTypes();
         gzipHandler.setHandler(handlers);
+
+        GraphHopperService graphHopper = injector.getInstance(GraphHopperService.class);
+        graphHopper.start();
+        createCallOnDestroyModule("AutoCloseable for GraphHopper", graphHopper);
 
         server.setHandler(gzipHandler);
         server.setStopAtShutdown(true);
@@ -120,56 +129,30 @@ public class GHServer {
             @Override
             protected void configure() {
                 binder().requireExplicitBindings();
-                if (args.has("gtfs.file")) {  // switch to different API implementation when using Pt
+                if (args.has("gtfs.file")) {
+                    // switch to different API implementation when using Pt
                     install(new PtModule(args));
-                    // Close resources on exit. Ugly, but neither guice nor guice-servlet have a lifecycle API,
-                    // so I have to abuse a Filter for that.
-                    install(new ServletModule() {
-                        @Override
-                        protected void configureServlets() {
-                            final Provider<GraphHopperStorage> graphHopperStorage = getProvider(GraphHopperStorage.class);
-                            final Provider<LocationIndex> locationIndex = getProvider(LocationIndex.class);
-                            filter("*").through(new Filter() {
-                                @Override
-                                public void init(FilterConfig filterConfig) throws ServletException {}
-                                @Override
-                                public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-                                    chain.doFilter(request, response);
-                                }
-                                @Override
-                                public void destroy() {
-                                    graphHopperStorage.get().close();
-                                    locationIndex.get().close();
-                                }
-                            });
-                        }
-                    });
                 } else {
-                    install(new DefaultModule(args));
-                    install(new ServletModule() {
-                        @Override
-                        protected void configureServlets() {
-                            final Provider<GraphHopper> graphHopper = getProvider(GraphHopper.class);
-                            filter("*").through(new Filter() {
-                                @Override
-                                public void init(FilterConfig filterConfig) throws ServletException {}
-                                @Override
-                                public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-                                    chain.doFilter(request, response);
-                                }
-                                @Override
-                                public void destroy() {
-                                    graphHopper.get().close();
-                                }
-                            });
-                        }
-                    });
+                    install(new GraphHopperModule(args));
                 }
-                install(new GHServletModule(args));
-
-                bind(GuiceFilter.class);
+                install(new GraphHopperServletModule(args));
             }
         };
+    }
+
+    /**
+     * Close resources on exit
+     */
+    public final void createCallOnDestroyModule(String name, final AutoCloseable closeable) {
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            try {
+                if (closeable != null)
+                    closeable.close();
+            } catch (Exception ex) {
+                if (logger != null)
+                    logger.error("Cannot close " + name + " (" + closeable + ")", ex);
+            }
+        }, name));
     }
 
     public void stop() {

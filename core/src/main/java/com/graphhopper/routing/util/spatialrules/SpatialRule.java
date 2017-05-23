@@ -54,16 +54,6 @@ public interface SpatialRule {
     List<Polygon> getBorders();
 
     /**
-     * Set the borders in which the SpatialRule is valid
-     */
-    SpatialRule setBorders(List<Polygon> borders);
-
-    /**
-     * Add a polygon to the borders in which the SpatialRule is valid
-     */
-    SpatialRule addBorder(Polygon polygon);
-
-    /**
      * Returns the id for this rule, e.g. the ISO name of the country. The id has to be unique.
      */
     String getId();
@@ -81,22 +71,12 @@ public interface SpatialRule {
 
         @Override
         public String getId() {
-            return "";
+            return "SpatialRule.EMPTY";
         }
 
         @Override
         public List<Polygon> getBorders() {
             throw new IllegalArgumentException("Empty rule does not have borders");
-        }
-
-        @Override
-        public SpatialRule setBorders(List<Polygon> borders) {
-            throw new IllegalArgumentException("Empty rule cannot have borders");
-        }
-
-        @Override
-        public SpatialRule addBorder(Polygon polygon) {
-            throw new IllegalArgumentException("Empty rule cannot have borders");
         }
 
         @Override

@@ -24,7 +24,17 @@ function parseUrl(query) {
         var key = vars[i].substring(0, indexPos);
         var value = vars[i].substring(indexPos + 1);
         value = decodeURIComponent(value.replace(/\+/g, ' '));
+        mergeParamIntoObject(res, key, value);
+    }
+    return res;
+}
 
+// the key value parameter is merged into the first object 'res'
+// it is suboptimal that we need two long parameters for two array entries:
+// one.two=1&one.two=2 => one: { two : ["1", "2"] }
+function mergeParamIntoObject(res, key, value) {
+    var objectIndex = key.indexOf(".");
+    if(objectIndex < 0) {
         // force array for heading and point
         if (typeof res[key] === "undefined" && key !== "heading" && key !== "point") {
             if (value === 'true')
@@ -43,9 +53,22 @@ function parseUrl(query) {
                 res[key] = [value];
             }
         }
+        // leaf of recursion reached
+        return res;
     }
+
+    var newKey = key.substring(0, objectIndex);
+    var subKey = key.substring(objectIndex + 1);
+
+    var tmpVal = res[newKey];
+    if(!tmpVal)
+        tmpVal = {};
+
+    // recursion
+    res[newKey] = mergeParamIntoObject(tmpVal, subKey, value);
     return res;
 }
 
 module.exports.parseUrl = parseUrl;
+module.exports.mergeParamIntoObject = mergeParamIntoObject;
 module.exports.parseUrlWithHisto = parseUrlWithHisto;

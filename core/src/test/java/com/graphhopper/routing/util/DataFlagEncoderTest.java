@@ -2,13 +2,10 @@ package com.graphhopper.routing.util;
 
 import java.util.*;
 
-import com.graphhopper.json.geo.GeoJsonPolygon;
-import com.graphhopper.json.geo.Geometry;
-import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
-import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
+import com.graphhopper.util.PMap;
+import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -327,20 +324,46 @@ public class DataFlagEncoderTest {
 
     @Test
     public void testSpatialId() {
-        List<SpatialRule> rules = Collections.<SpatialRule>singletonList(new GermanySpatialRule());
-        final BBox bbox = new BBox(0, 1, 0, 1);
-        JsonFeatureCollection jsonFeatures = new JsonFeatureCollection() {
+        final GermanySpatialRule germany = new GermanySpatialRule();
+        germany.setBorders(Collections.singletonList(new Polygon(new double[]{0, 0, 1, 1}, new double[]{0, 1, 1, 0})));
+
+        SpatialRuleLookup index = new SpatialRuleLookup() {
             @Override
-            public List<JsonFeature> getFeatures() {
-                Geometry geometry = new GeoJsonPolygon().addPolygon(new Polygon(new double[]{0, 0, 1, 1}, new double[]{0, 1, 1, 0}));
-                Map<String, Object> properties = new HashMap<>();
-                properties.put("ISO_A3", "DEU");
-                return Collections.singletonList(new JsonFeature("x", "Polygon", bbox, geometry, properties));
+            public SpatialRule lookupRule(double lat, double lon) {
+                for (Polygon polygon : germany.getBorders()) {
+                    if (polygon.contains(lat, lon)) {
+                        return germany;
+                    }
+                }
+                return SpatialRule.EMPTY;
+            }
+
+            @Override
+            public SpatialRule lookupRule(GHPoint point) {
+                return lookupRule(point.lat, point.lon);
+            }
+
+            @Override
+            public int getSpatialId(SpatialRule rule) {
+                if (germany.equals(rule)) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+
+            @Override
+            public int size() {
+                return 2;
+            }
+
+            @Override
+            public BBox getBounds() {
+                return new BBox(-180, 180, -90, 90);
             }
         };
 
-        SpatialRuleLookup index = new SpatialRuleLookupBuilder().build(rules, jsonFeatures, bbox, 1, false);
-        DataFlagEncoder encoder = new DataFlagEncoder(new PMap().put("spatial_rules", index.size()));
+        DataFlagEncoder encoder = new DataFlagEncoder(new PMap());
         encoder.setSpatialRuleLookup(index);
         EncodingManager em = new EncodingManager(encoder);
 
@@ -385,4 +408,5 @@ public class DataFlagEncoderTest {
         assertEquals(5, encoder.getMaxspeed(e3, -1, false), .1);
         assertEquals(-1, encoder.getMaxspeed(e4, -1, false), .1);
     }
+
 }

@@ -66,6 +66,7 @@ public class PbfBlobDecoder implements Runnable {
             if (!inflater.finished()) {
                 throw new RuntimeException("PBF blob contains incomplete compressed data.");
             }
+            inflater.end();
         } else {
             throw new RuntimeException("PBF blob uses unsupported compression, only raw or zlib may be used.");
         }

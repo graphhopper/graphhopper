@@ -17,28 +17,22 @@
  */
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
-
-import java.io.IOException;
-
-import org.json.JSONObject;
+import okhttp3.*;
+import org.eclipse.jetty.http.HttpStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.util.concurrent.TimeUnit;
-
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.RequestBody;
-import okhttp3.Response;
-import org.eclipse.jetty.http.HttpStatus;
 
 import static org.junit.Assert.assertEquals;
 
@@ -53,6 +47,7 @@ public class BaseServletTester {
     protected static int port;
     private static GHServer server;
     protected Injector injector;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     public static void shutdownJetty(boolean force) {
         // this is too slow so allow force == false. Then on setUpJetty a new server is created on a different port
@@ -87,7 +82,7 @@ public class BaseServletTester {
         server = new GHServer(args);
 
         if (injector == null)
-            setUpGuice(new DefaultModule(args), new GHServletModule(args));
+            setUpGuice(server.createModule());
 
         for (int i = 0; i < retryCount; i++) {
             port = 18080 + i;
@@ -136,11 +131,11 @@ public class BaseServletTester {
         return Helper.isToString(downloader.fetch(conn, true));
     }
 
-    protected JSONObject query(String query, int code) throws Exception {
-        return new JSONObject(queryString(query, code));
+    protected JsonNode query(String query, int code) throws Exception {
+        return objectMapper.readTree(queryString(query, code));
     }
 
-    protected JSONObject nearestQuery(String query) throws Exception {
+    protected JsonNode nearestQuery(String query) throws Exception {
         String resQuery = "";
         for (String q : query.split("\\&")) {
             int index = q.indexOf("=");
@@ -153,7 +148,7 @@ public class BaseServletTester {
         }
         String url = getTestNearestAPIUrl() + "?" + resQuery;
         Downloader downloader = new Downloader("web integration tester");
-        return new JSONObject(downloader.downloadAsString(url, true));
+        return objectMapper.readTree(downloader.downloadAsString(url, true));
     }
 
     protected String post(String path, int expectedStatusCode, String xmlOrJson) throws IOException {

@@ -15,11 +15,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.util.spatialrules.countries;
-
-import com.graphhopper.routing.util.spatialrules.AbstractSpatialRule;
-import com.graphhopper.routing.util.spatialrules.AccessValue;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
+package com.graphhopper.routing.util.spatialrules;
 
 /**
  * Default implementation for the SpatialRule that contains the current default values

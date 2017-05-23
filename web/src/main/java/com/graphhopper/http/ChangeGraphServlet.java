@@ -17,22 +17,21 @@
  */
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
+import com.graphhopper.json.GHJson;
 import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.storage.change.ChangeGraphResponse;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.StopWatch;
 
-import java.io.IOException;
-import java.io.InputStreamReader;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
-import org.json.JSONObject;
-import com.graphhopper.json.GHJson;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 /**
  * This class defines a new endpoint to submit access and speed changes to the graph.
@@ -60,7 +59,7 @@ public class ChangeGraphServlet extends GHBaseServlet {
             }
             // TODO make asynchronous!
             ChangeGraphResponse rsp = ((GraphHopper) graphHopper).changeGraph(collection.getFeatures());
-            JSONObject resObject = new JSONObject();
+            ObjectNode resObject = objectMapper.createObjectNode();
             resObject.put("updates", rsp.getUpdateCount());
             // prepare the consumer to get some changes not immediately when returning after POST
             resObject.put("scheduled_updates", 0);

@@ -26,21 +26,27 @@ var openMapSurfer = L.tileLayer('http://korona.geog.uni-heidelberg.de/tiles/road
 //     attribution: osmAttr + ', <a href="https://www.mapbox.com/about/maps/">&copy; MapBox</a>'
 // });
 
-var sorbianLang = L.tileLayer('http://map.dgpsonline.eu/osmsb/{z}/{x}/{y}.png', {
+var sorbianLang = L.tileLayer('http://a.tile.openstreetmap.de/tiles/osmhrb/{z}/{x}/{y}.png', {
     attribution: osmAttr + ', <a href="http://www.alberding.eu/">&copy; Alberding GmbH, CC-BY-SA</a>'
 });
 
 var thunderTransport = L.tileLayer('https://{s}.tile.thunderforest.com/transport/{z}/{x}/{y}.png' + tfAddition, {
-    attribution: osmAttr + ', <a href="http://www.thunderforest.com/transport/" target="_blank">Thunderforest Transport</a>'
+    attribution: osmAttr + ', <a href="https://www.thunderforest.com/maps/transport/" target="_blank">Thunderforest Transport</a>'
 });
 
 var thunderCycle = L.tileLayer('https://{s}.tile.thunderforest.com/cycle/{z}/{x}/{y}.png' + tfAddition, {
-    attribution: osmAttr + ', <a href="http://www.thunderforest.com/opencyclemap/" target="_blank">Thunderforest Cycle</a>'
+    attribution: osmAttr + ', <a href="https://www.thunderforest.com/maps/opencyclemap/" target="_blank">Thunderforest Cycle</a>'
 });
 
 var thunderOutdoors = L.tileLayer('https://{s}.tile.thunderforest.com/outdoors/{z}/{x}/{y}.png' + tfAddition, {
-    attribution: osmAttr + ', <a href="http://www.thunderforest.com/outdoors/" target="_blank">Thunderforest Outdoors</a>'
+    attribution: osmAttr + ', <a href="https://www.thunderforest.com/maps/outdoors/" target="_blank">Thunderforest Outdoors</a>'
 });
+
+var thunderNeighbourhood = L.tileLayer('https://{s}.tile.thunderforest.com/neighbourhood/{z}/{x}/{y}.png' + tfAddition, {
+    attribution: osmAttr + ', <a href="https://thunderforest.com/maps/neighbourhood/" target="_blank">Thunderforest Neighbourhood</a>'
+});
+
+https://{s}.tile.thunderforest.com/neighbourhood/{z}/{x}/{y}.png?apikey=<insert-your-apikey-here>
 
 var wrk = L.tileLayer('http://{s}.wanderreitkarte.de/topo/{z}/{x}/{y}.png', {
     attribution: osmAttr + ', <a href="http://wanderreitkarte.de" target="_blank">WanderReitKarte</a>',
@@ -69,6 +75,7 @@ var availableTileLayers = {
     "TF Transport": thunderTransport,
     "TF Cycle": thunderCycle,
     "TF Outdoors": thunderOutdoors,
+    "TF Neighbourhood": thunderNeighbourhood,
     "Lyrk": lyrk,
     "WanderReitKarte": wrk,
     "OpenMapSurfer": openMapSurfer,

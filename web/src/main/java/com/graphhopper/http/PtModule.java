@@ -4,7 +4,7 @@ import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.json.GHJson;
-import com.graphhopper.json.GHJsonBuilder;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
@@ -32,7 +32,7 @@ public final class PtModule extends AbstractModule {
     @Override
     protected void configure() {
         install(new CmdArgsModule(args));
-        bind(GHJson.class).toInstance(new GHJsonBuilder().create());
+        bind(GHJson.class).toInstance(new GHJsonFactory().create());
     }
 
     @Provides
@@ -97,6 +97,22 @@ public final class PtModule extends AbstractModule {
     @Singleton
     RouteSerializer getRouteSerializer(GraphHopperStorage storage) {
         return new SimpleRouteSerializer(storage.getBounds());
+    }
+
+    @Provides
+    GraphHopperService getGraphHopperService(GraphHopperStorage storage, LocationIndex locationIndex) {
+        return new GraphHopperService() {
+            @Override
+            public void start() {
+
+            }
+
+            @Override
+            public void close() throws Exception {
+                storage.close();
+                locationIndex.close();
+            }
+        };
     }
 
 }

@@ -84,6 +84,13 @@ public class CarFlagEncoderTest {
         assertFalse(encoder.isFerry(encoder.acceptWay(way)));
 
         way.clearTags();
+        way.setTag("route", "ferry");
+        way.setTag("access", "no");
+        assertFalse(encoder.acceptWay(way) > 0);
+        way.setTag("vehicle", "yes");
+        assertTrue(encoder.acceptWay(way) > 0);
+
+        way.clearTags();
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
         assertFalse(encoder.acceptWay(way) > 0);

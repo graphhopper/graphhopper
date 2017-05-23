@@ -1,7 +1,7 @@
 package com.graphhopper.storage.change;
 
 import com.graphhopper.json.GHJson;
-import com.graphhopper.json.GHJsonBuilder;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.json.JsonFeatureConverter;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -34,7 +34,7 @@ public class ChangeGraphHelperTest {
     public void setUp() {
         encodingManager = new EncodingManager("car");
         graph = new GraphBuilder(encodingManager).create();
-        ghson = new GHJsonBuilder().create();
+        ghson = new GHJsonFactory().create();
     }
 
     @Test

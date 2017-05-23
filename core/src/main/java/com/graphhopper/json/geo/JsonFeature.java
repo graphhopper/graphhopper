@@ -17,7 +17,10 @@
  */
 package com.graphhopper.json.geo;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.util.shapes.BBox;
+import com.vividsolutions.jts.geom.Geometry;
 
 import java.util.Map;
 
@@ -33,7 +36,8 @@ public class JsonFeature {
     final Geometry geometry;
     final Map<String, Object> properties;
 
-    public JsonFeature(String id, String type, BBox bbox, Geometry geometry, Map<String, Object> properties) {
+    @JsonCreator
+    public JsonFeature(@JsonProperty("id") String id, @JsonProperty("type") String type, @JsonProperty("bbox") BBox bbox, @JsonProperty("geometry") Geometry geometry, @JsonProperty("properties") Map<String, Object> properties) {
         this.id = id;
         this.type = type;
         this.bbox = bbox;

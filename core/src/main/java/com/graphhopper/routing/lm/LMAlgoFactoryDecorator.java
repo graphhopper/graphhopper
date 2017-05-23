@@ -67,6 +67,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private final List<String> lmSuggestionsLocations = new ArrayList<>(5);
     private int preparationThreads;
     private ExecutorService threadPool;
+    private boolean logDetails = false;
 
     public LMAlgoFactoryDecorator() {
         setPreparationThreads(1);
@@ -78,6 +79,8 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
         landmarkCount = args.getInt(Parameters.Landmark.COUNT, landmarkCount);
         activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, landmarkCount));
+        logDetails = args.getBool(Landmark.PREPARE + "log_details", false);
+
         for (String loc : args.get("prepare.lm.suggestions_location", "").split(",")) {
             if (!loc.trim().isEmpty())
                 lmSuggestionsLocations.add(loc.trim());
@@ -216,8 +219,8 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     @Override
     public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map) {
-        boolean forceFlexMode = map.getBool(DISABLE, false);
-        if (!isEnabled() || disablingAllowed && forceFlexMode)
+        boolean disableLM = map.getBool(DISABLE, false);
+        if (!isEnabled() || disablingAllowed && disableLM)
             return defaultAlgoFactory;
 
         if (preparations.isEmpty())
@@ -279,23 +282,16 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             completionService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    String errorKey = Landmark.PREPARE + "error." + name;
-                    try {
-                        Thread.currentThread().setName(name);
-                        properties.put(errorKey, "LM preparation incomplete");
-                        plm.doWork();
-                        properties.remove(errorKey);
-                        properties.put(Landmark.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
-                    } catch (Exception ex) {
-                        LOGGER.error("Problem while LM preparation " + name, ex);
-                        properties.put(errorKey, ex.getMessage());
-                    }
+                    Thread.currentThread().setName(name);
+                    plm.doWork();
+                    properties.put(Landmark.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
                 }
             }, name);
             submittedPreparations++;
         }
 
         threadPool.shutdown();
+
         try {
             for (int i = 0; i < submittedPreparations; i++) {
                 completionService.take().get();
@@ -336,7 +332,8 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             PrepareLandmarks tmpPrepareLM = new PrepareLandmarks(ghStorage.getDirectory(), ghStorage,
                     weighting, traversalMode, landmarkCount, activeLandmarkCount).
                     setLandmarkSuggestions(lmSuggestions).
-                    setMaximumWeight(maximumWeight);
+                    setMaximumWeight(maximumWeight).
+                    setLogDetails(logDetails);
 
             addPreparation(tmpPrepareLM);
         }

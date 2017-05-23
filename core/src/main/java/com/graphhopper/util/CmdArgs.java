@@ -72,8 +72,11 @@ public class CmdArgs extends PMap {
         return args;
     }
 
+    /**
+     * This method creates a CmdArgs object from the specified string array (a list of key=value pairs).
+     */
     public static CmdArgs read(String[] args) {
-        Map<String, String> map = new LinkedHashMap<String, String>();
+        Map<String, String> map = new LinkedHashMap<>();
         for (String arg : args) {
             int index = arg.indexOf("=");
             if (index <= 0) {
@@ -90,7 +93,10 @@ public class CmdArgs extends PMap {
             }
 
             String value = arg.substring(index + 1);
-            map.put(key.toLowerCase(), value);
+            String old = map.put(key.toLowerCase(), value);
+            if (old != null)
+                throw new IllegalArgumentException("Pair '" + key.toLowerCase() + "'='" + value + "' not possible to " +
+                        "add to the CmdArgs-object as the key already exists with '" + old + "'");
         }
 
         return new CmdArgs(map);
@@ -98,7 +104,6 @@ public class CmdArgs extends PMap {
 
     /**
      * Command line configuration overwrites the ones in the config file.
-     * <p>
      *
      * @return a new CmdArgs object if necessary.
      */

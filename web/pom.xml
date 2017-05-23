@@ -8,7 +8,7 @@
     <packaging>jar</packaging>
     <version>0.9-SNAPSHOT</version>
     <name>GraphHopper Web</name>
-    <description>Example on how to use GraphHopper in a web-based application</description>
+    <description>Use the GraphHopper routing engine as a web-service</description>
 
     <parent>
         <groupId>com.graphhopper</groupId>
@@ -16,7 +16,7 @@
         <version>0.9-SNAPSHOT</version>
     </parent>
     <properties>
-        <jetty.version>9.3.16.v20170120</jetty.version>
+        <jetty.version>9.4.2.v20170220</jetty.version>
     </properties>
 
     <dependencies>
@@ -36,33 +36,24 @@
             <version>${project.parent.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.json</groupId>
-            <artifactId>json</artifactId>
-            <version>${json.org.version}</version>
-        </dependency>
+
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-        <dependency>
-            <groupId>com.bedatadriven</groupId>
-            <artifactId>jackson-datatype-jts</artifactId>
-            <version>2.4</version>
-        </dependency>
 
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
-            <version>4.0</version>
+            <version>4.1.0</version>
         </dependency>
 
         <!-- necessary to use guice ('@Inject') in servlets -->
         <dependency>
             <groupId>com.google.inject.extensions</groupId>
             <artifactId>guice-servlet</artifactId>
-            <version>4.0</version>
+            <version>4.1.0</version>
         </dependency>
 
         <dependency>
@@ -129,15 +120,6 @@
                     <target>1.8</target>
                 </configuration>
             </plugin>
-            <!-- create a jar file too, so others can use it more easily -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-war-plugin</artifactId>
-                <version>3.0.0</version>
-                <configuration>
-                    <attachClasses>true</attachClasses>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
@@ -166,8 +148,7 @@
                 <executions>
                     <execution>
                         <id>make-assembly</id>
-                        <!-- bind to verify and not package to pass integration tests before creating assemblies -->
-                        <phase>integration-test</phase>
+                        <phase>package</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>

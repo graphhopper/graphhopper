@@ -142,7 +142,7 @@ public class FareTest {
     private static Map<String, Fare> parseFares(String fareAttributes, String fareRules) {
         GTFSFeed feed = new GTFSFeed();
         HashMap<String, Fare> fares = new HashMap<>();
-        new FareAttribute.Loader(feed, fares) {
+        new FixedFareAttributeLoader(feed, fares) {
             void load(String input){
                 reader = new CsvReader(new StringReader(input));
                 reader.setHeaders(new String[]{"fare_id","price","currency_type","payment_method","transfers","transfer_duration"});

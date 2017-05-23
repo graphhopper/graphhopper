@@ -19,9 +19,9 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.countries.DefaultSpatialRule;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
@@ -207,22 +207,18 @@ public class LandmarkStorageTest {
             }
 
             @Override
-            public void addRule(SpatialRule rule) {
-            }
-
-            @Override
             public int getSpatialId(SpatialRule rule) {
-                throw new IllegalStateException();
-            }
-
-            @Override
-            public BBox getBounds() {
                 throw new IllegalStateException();
             }
 
             @Override
             public int size() {
                 return 2;
+            }
+
+            @Override
+            public BBox getBounds() {
+                return new BBox(-180,180,-90,90);
             }
         };
 

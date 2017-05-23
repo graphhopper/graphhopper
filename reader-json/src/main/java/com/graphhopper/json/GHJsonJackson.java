@@ -17,22 +17,24 @@
  */
 package com.graphhopper.json;
 
-import com.google.gson.Gson;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.io.IOException;
 import java.io.Reader;
 
-/**
- * @author Peter Karich
- */
-public class GHJsonGson implements GHJson {
-    private final Gson gson;
+class GHJsonJackson implements GHJson {
+    private final ObjectMapper gson;
 
-    public GHJsonGson(Gson gson) {
+    GHJsonJackson(ObjectMapper gson) {
         this.gson = gson;
     }
 
     @Override
     public <T> T fromJson(Reader source, Class<T> aClass) {
-        return gson.fromJson(source, aClass);
+        try {
+            return gson.readValue(source, aClass);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
