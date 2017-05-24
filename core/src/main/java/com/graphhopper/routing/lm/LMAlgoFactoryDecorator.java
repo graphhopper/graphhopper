@@ -274,8 +274,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         final AtomicBoolean prepared = new AtomicBoolean(false);
         for (final PrepareLandmarks plm : preparations) {
             counter++;
-
-            LOGGER.info(counter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
+            final int tmpCounter = counter;
             final String name = AbstractWeighting.weightingToFileName(plm.getWeighting());
             completionService.submit(new Runnable() {
                 @Override
@@ -283,6 +282,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                     if (plm.loadExisting())
                         return;
 
+                    LOGGER.info(tmpCounter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
                     prepared.set(true);
                     Thread.currentThread().setName(name);
                     plm.doWork();
