@@ -71,8 +71,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
     }
 
     private PathWrapper createPathWrapper(JsonNode path,
-                                                 boolean tmpCalcPoints, boolean tmpInstructions,
-                                                 boolean tmpElevation, boolean turnDescription) {
+                                          boolean tmpCalcPoints, boolean tmpInstructions,
+                                          boolean tmpElevation, boolean turnDescription) {
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.addErrors(readErrors(path));
         if (pathWrapper.hasErrors())
@@ -139,7 +139,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                         viaCount++;
                         instr = tmpInstr;
                     } else if (sign == Instruction.FINISH) {
-                        instr = new FinishInstruction(instPL, 0);
+                        instr = new FinishInstruction(text, instPL, 0);
                     } else {
                         instr = new Instruction(sign, text, ia, instPL);
                     }
@@ -148,7 +148,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                     // instead of creating a combination with sign and name etc.
                     // This is called the turn description.
                     // This can be changed by passing <code>turn_description=false</code>.
-                    if(turnDescription)
+                    if (turnDescription)
                         instr.setUseRawName();
 
                     instr.setDistance(instDist).setTime(instTime);
@@ -166,7 +166,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
     // Credits to: http://stackoverflow.com/a/24012023/194609
     private Map<String, Object> toMap(JsonNode object) {
-        return objectMapper.convertValue(object, new TypeReference<Map<String, Object>>() {});
+        return objectMapper.convertValue(object, new TypeReference<Map<String, Object>>() {
+        });
     }
 
     public List<Throwable> readErrors(JsonNode json) {

@@ -43,6 +43,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.graphhopper.util.Parameters.Landmark.DISABLE;
 
@@ -269,38 +271,37 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     public boolean loadOrDoWork(final StorableProperties properties) {
         ExecutorCompletionService completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
-        int submittedPreparations = 0;
-        boolean prepared = false;
+        final AtomicBoolean prepared = new AtomicBoolean(false);
         for (final PrepareLandmarks plm : preparations) {
             counter++;
-            if (plm.loadExisting())
-                continue;
 
-            prepared = true;
             LOGGER.info(counter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
             final String name = AbstractWeighting.weightingToFileName(plm.getWeighting());
             completionService.submit(new Runnable() {
                 @Override
                 public void run() {
+                    if (plm.loadExisting())
+                        return;
+
+                    prepared.set(true);
                     Thread.currentThread().setName(name);
                     plm.doWork();
                     properties.put(Landmark.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
                 }
             }, name);
-            submittedPreparations++;
         }
 
         threadPool.shutdown();
 
         try {
-            for (int i = 0; i < submittedPreparations; i++) {
+            for (int i = 0; i < preparations.size(); i++) {
                 completionService.take().get();
             }
         } catch (Exception e) {
             threadPool.shutdownNow();
             throw new RuntimeException(e);
         }
-        return prepared;
+        return prepared.get();
     }
 
     /**

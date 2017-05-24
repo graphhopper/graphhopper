@@ -127,7 +127,7 @@ public class ShapeFileReaderTest {
             new File(tempOutputDirFromShp).mkdirs();
             new File(tempOutputDirFromPbf).mkdirs();
 
-            hopperShp = initHopper(new GraphhopperSHP(), shapefile, tempOutputDirFromShp);
+            hopperShp = initHopper(new GraphHopperSHP(), shapefile, tempOutputDirFromShp);
 
             hopperPbf = initHopper(new GraphHopperOSM(), pbf, tempOutputDirFromPbf);
 
