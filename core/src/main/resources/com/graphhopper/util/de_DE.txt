@@ -1,7 +1,7 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-continue=geradeaus
-continue_onto=geradeaus auf %1$s
+continue=dem Straßenverlauf folgen
+continue_onto=dem Straßenverlauf von %1$s folgen
 turn_left=links abbiegen
 turn_right=rechts abbiegen
 turn_slight_left=leicht links abbiegen
@@ -32,7 +32,7 @@ web.truck=LKW
 web.staticlink=Link
 web.motorcycle=Motorrad
 via=über
-finish=Ziel erreicht!
+finish=Ziel erreicht
 hour_abbr=h
 day_abbr=d
 min_abbr=min
