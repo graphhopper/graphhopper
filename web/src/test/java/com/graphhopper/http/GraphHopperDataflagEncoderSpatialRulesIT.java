@@ -55,7 +55,7 @@ public class GraphHopperDataflagEncoderSpatialRulesIT extends BaseServletTester 
     }
 
     @Test
-    public void testBasicQuery() throws Exception {
+    public void testDetourToComplyWithSpatialRule() throws Exception {
         JsonNode json = query("point=49.995933,11.54809&point=50.004871,11.517191&vehicle=generic", 200);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
