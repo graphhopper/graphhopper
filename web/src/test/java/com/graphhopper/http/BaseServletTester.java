@@ -43,7 +43,7 @@ public class BaseServletTester {
     private static final MediaType MT_JSON = MediaType.parse("application/json; charset=utf-8");
     private static final MediaType MT_XML = MediaType.parse("application/gpx+xml; charset=utf-8");
     protected static final Logger LOGGER = LoggerFactory.getLogger(BaseServletTester.class);
-    private final OkHttpClient client = new OkHttpClient.Builder().connectTimeout(60, TimeUnit.SECONDS).readTimeout(60, TimeUnit.SECONDS).build();
+    private final OkHttpClient client = new OkHttpClient.Builder().connectTimeout(30, TimeUnit.SECONDS).readTimeout(30, TimeUnit.SECONDS).build();
     protected static int port;
     private static GHServer server;
     protected Injector injector;
@@ -84,6 +84,8 @@ public class BaseServletTester {
         if (injector == null)
             setUpGuice(server.createModule());
 
+        boolean started = false;
+
         for (int i = 0; i < retryCount; i++) {
             port = 18080 + i;
             args.put("jetty.port", "" + port);
@@ -91,11 +93,16 @@ public class BaseServletTester {
                 LOGGER.info("Trying to start jetty at port " + port);
                 server.start(injector);
 //                server.join();
+                started = true;
                 break;
             } catch (Exception ex) {
                 server = null;
                 LOGGER.error("Cannot start jetty at port " + port + " " + ex.getMessage());
             }
+        }
+
+        if (!started) {
+            throw new IllegalStateException("Unable to start the server");
         }
     }
 
@@ -124,7 +131,7 @@ public class BaseServletTester {
             resQuery += "&";
         }
         String url = getTestRouteAPIUrl() + "?" + resQuery;
-        Downloader downloader = new Downloader("web integration tester").setTimeout(10000);
+        Downloader downloader = new Downloader("web integration tester").setTimeout(2000);
         HttpURLConnection conn = downloader.createConnection(url);
         conn.connect();
         assertEquals(code, conn.getResponseCode());
