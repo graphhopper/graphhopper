@@ -124,7 +124,7 @@ public class BaseServletTester {
             resQuery += "&";
         }
         String url = getTestRouteAPIUrl() + "?" + resQuery;
-        Downloader downloader = new Downloader("web integration tester").setTimeout(2000);
+        Downloader downloader = new Downloader("web integration tester").setTimeout(3000);
         HttpURLConnection conn = downloader.createConnection(url);
         conn.connect();
         assertEquals(code, conn.getResponseCode());
