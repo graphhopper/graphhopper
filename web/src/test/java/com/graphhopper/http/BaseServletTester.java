@@ -72,7 +72,7 @@ public class BaseServletTester {
         if (injector != null)
             throw new UnsupportedOperationException("do not call guice before");
 
-        bootJetty(args, 3);
+        bootJetty(args, 5);
     }
 
     private void bootJetty(CmdArgs args, int retryCount) {
