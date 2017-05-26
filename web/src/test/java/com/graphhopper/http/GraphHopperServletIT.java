@@ -202,7 +202,7 @@ public class GraphHopperServletIT extends BaseServletTester {
     public void testGPXWithTrackAndWaypointsSelection() throws Exception {
         String str = queryString("point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.track=true&gpx.route=false&gpx.waypoints=true", 200);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
-        assertTrue(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));
+        assertTrue(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>arrive at destination</name></wpt>"));
         assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
     }
 
