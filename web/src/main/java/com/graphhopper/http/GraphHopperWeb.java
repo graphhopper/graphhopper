@@ -142,6 +142,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
                         instr = new FinishInstruction(text, instPL, 0);
                     } else {
                         instr = new Instruction(sign, text, ia, instPL);
+                        if(sign == Instruction.CONTINUE_ON_STREET){
+                            if(jsonObj.has("heading")){
+                                instr.setExtraInfo("heading", jsonObj.get("heading").asDouble());
+                            }
+                        }
                     }
 
                     // Usually, the translation is done from the routing service so just use the provided string

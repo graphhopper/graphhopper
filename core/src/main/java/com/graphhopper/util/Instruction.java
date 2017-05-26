@@ -17,12 +17,13 @@
  */
 package com.graphhopper.util;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Instruction {
     public static final int UNKNOWN = -99;
+    public static final int KEEP_LEFT = -7;
     public static final int LEAVE_ROUNDABOUT = -6; // for future use
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
@@ -35,7 +36,6 @@ public class Instruction {
     public static final int REACHED_VIA = 5;
     public static final int USE_ROUNDABOUT = 6;
     public static final int IGNORE = Integer.MIN_VALUE;
-    public static final int KEEP_LEFT = -7;
     public static final int KEEP_RIGHT = 7;
     public static final int PT_START_TRIP = 101;
     public static final int PT_TRANSFER = 102;
@@ -48,6 +48,7 @@ public class Instruction {
     protected String name;
     protected double distance;
     protected long time;
+    protected Map<String, Object> extraInfo = new HashMap<>(3);
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
@@ -88,11 +89,11 @@ public class Instruction {
     }
 
     public Map<String, Object> getExtraInfoJSON() {
-        return Collections.<String, Object>emptyMap();
+        return extraInfo;
     }
 
     public void setExtraInfo(String key, Object value) {
-        throw new IllegalArgumentException("Key" + key + " is not a valid option");
+        extraInfo.put(key, value);
     }
 
     /**

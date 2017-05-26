@@ -119,6 +119,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         {
             int sign = Instruction.CONTINUE_ON_STREET;
             prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+            double startLat = nodeAccess.getLat(baseNode);
+            double startLon = nodeAccess.getLon(baseNode);
+            double heading = Helper.ANGLE_CALC.calcAzimuth(startLat, startLon, latitude, longitude);
+            prevInstruction.setExtraInfo("heading", Helper.round(heading, 2));
             ways.add(prevInstruction);
             prevName = name;
             prevAnnotation = annotation;

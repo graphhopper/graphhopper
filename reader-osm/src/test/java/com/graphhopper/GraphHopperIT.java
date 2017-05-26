@@ -621,6 +621,7 @@ public class GraphHopperIT {
 
         assertEquals("Continue onto Obere Landstraße", resultJson.get(0).get("text"));
         assertEquals("get off the bike", resultJson.get(0).get("annotation_text"));
+        assertEquals(69.28, (Double) resultJson.get(0).get("heading"), .01);
         assertEquals("Turn left onto Kirchengasse", resultJson.get(1).get("text"));
         assertEquals("get off the bike", resultJson.get(1).get("annotation_text"));
 
