@@ -45,11 +45,10 @@ import java.util.List;
  */
 public class GraphEdgeIdFinder {
 
-    // internal properties
-    public static final String BLOCKED_EDGES = "graph_finder.blocked_edges";
-    public static final String BLOCKED_SHAPES = "graph_finder.blocked_shapes";
     private final Graph graph;
     private final LocationIndex locationIndex;
+    private final GHIntHashSet blockedEdges = new GHIntHashSet();
+    private final List<Shape> blockedShapes = new ArrayList<>();
 
     public GraphEdgeIdFinder(Graph graph, LocationIndex locationIndex) {
         this.graph = graph;
@@ -130,22 +129,21 @@ public class GraphEdgeIdFinder {
     }
 
     /**
-     * This method reads string values from the hints about blocked areas and fills the configMap with either the
-     * created shapes or the found edges if area is small enough.
+     * This method reads the blockAreaString and creates a Collection of Shapes or a set of found edges if area is small enough.
      */
-    public ConfigMap parseStringHints(ConfigMap configMap, HintsMap hints, EdgeFilter filter) {
+    public void parseBlockArea(String blockAreaString, EdgeFilter filter) {
+        if (!blockedEdges.isEmpty() || !blockedShapes.isEmpty()) {
+            throw new IllegalStateException("For every parseBlockArea create a new GraphEdgeIdFinder");
+        }
+
         final String objectSeparator = ";";
         final String innerObjSep = ",";
         // use shapes if bigger than 1km^2
         final double shapeArea = 1000 * 1000;
 
-        final GHIntHashSet blockedEdges = new GHIntHashSet();
-        final List<Shape> blockedShapes = new ArrayList<>();
-
         // Add blocked circular areas or points
-        String blockedCircularAreasStr = hints.get(BLOCK_AREA, "");
-        if (!blockedCircularAreasStr.isEmpty()) {
-            String[] blockedCircularAreasArr = blockedCircularAreasStr.split(objectSeparator);
+        if (!blockAreaString.isEmpty()) {
+            String[] blockedCircularAreasArr = blockAreaString.split(objectSeparator);
             for (int i = 0; i < blockedCircularAreasArr.length; i++) {
                 String objectAsString = blockedCircularAreasArr[i];
                 String[] splittedObject = objectAsString.split(innerObjSep);
@@ -175,9 +173,13 @@ public class GraphEdgeIdFinder {
                 }
             }
         }
+    }
 
-        configMap.put(BLOCKED_EDGES, blockedEdges);
-        configMap.put(BLOCKED_SHAPES, blockedShapes);
-        return configMap;
+    public GHIntHashSet getBlockedEdges() {
+        return blockedEdges;
+    }
+
+    public List<Shape> getBlockedShapes() {
+        return blockedShapes;
     }
 }

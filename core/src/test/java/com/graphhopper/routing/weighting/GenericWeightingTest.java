@@ -74,8 +74,7 @@ public class GenericWeightingTest {
     @Test
     public void testBlockedById() {
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = encoder.readStringMap(new PMap());
-        Weighting instance = new GenericWeighting(encoder, cMap);
+        Weighting instance = new GenericWeighting(encoder, new PMap());
         assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
 
         GHIntHashSet blockedEdges = new GHIntHashSet(1);

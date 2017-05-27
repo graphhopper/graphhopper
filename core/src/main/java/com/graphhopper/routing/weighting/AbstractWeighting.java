@@ -17,9 +17,14 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.storage.GraphEdgeIdFinder;
+import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
+
+import java.util.Collections;
 
 /**
  * @author Peter Karich
@@ -27,7 +32,7 @@ import com.graphhopper.util.EdgeIteratorState;
 public abstract class AbstractWeighting implements Weighting {
     protected final FlagEncoder flagEncoder;
 
-    public AbstractWeighting(FlagEncoder encoder) {
+    protected AbstractWeighting(FlagEncoder encoder) {
         this.flagEncoder = encoder;
         if (!flagEncoder.isRegistered())
             throw new IllegalStateException("Make sure you add the FlagEncoder " + flagEncoder + " to an EncodingManager before using it elsewhere");

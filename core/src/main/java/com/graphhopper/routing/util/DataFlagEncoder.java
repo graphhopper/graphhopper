@@ -211,7 +211,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         accessEncoder = new EncodedValue("access car", shift, 3, 1, 1, 4, true);
         shift += accessEncoder.getBits();
 
-        int tmpMax = spatialRuleLookup.size()-1;
+        int tmpMax = spatialRuleLookup.size() - 1;
         int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
         spatialEncoder = new EncodedValue("spatial_location", shift, bits, 1, 0, tmpMax, true);
         shift += spatialEncoder.getBits();
@@ -566,7 +566,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return null;
     }
 
-    public double[] getHighwaySpeedMap(Map<String, Double> map) {
+    double[] getHighwaySpeedMap(Map<String, Double> map) {
         if (map == null)
             throw new IllegalArgumentException("Map cannot be null when calling getHighwaySpeedMap");
 
@@ -847,24 +847,39 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
      * This method creates a Config map out of the PMap. Later on this conversion should not be
      * necessary when we read JSON.
      */
-    public ConfigMap readStringMap(PMap weightingMap) {
-        Map<String, Double> map = new HashMap<>();
+    public Result createResult(PMap pMap) {
+
+        HashMap<String, Double> map = new HashMap<>(DEFAULT_SPEEDS.size());
         for (Entry<String, Double> e : DEFAULT_SPEEDS.entrySet()) {
-            map.put(e.getKey(), weightingMap.getDouble("highways." + e.getKey(), e.getValue()));
+            map.put(e.getKey(), pMap.getDouble(e.getKey(), e.getValue()));
         }
 
-        ConfigMap cMap = new ConfigMap();
-        cMap.put("highways", map);
-
-        cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.HEIGHT_LIMIT, 0d);
-        cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.WEIGHT_LIMIT, 0d);
-        cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.WIDTH_LIMIT, 0d);
-
-        return cMap;
+        Result result = new Result();
+        // create per request object
+        result.speedArray = getHighwaySpeedMap(map);
+        return result;
     }
 
-    private void cloneDoubleAttribute(PMap weightingMap, ConfigMap cMap, String key, double _default) {
-        if (weightingMap.has(key))
-            cMap.put(key, weightingMap.getDouble(key, _default));
+    public class Result {
+        private double[] speedArray;
+
+        public double getSpeed(EdgeIteratorState edgeState) {
+            int highwayKey = getHighway(edgeState);
+            // ensure before (in createResult) that all highways that were specified in the request are known
+            double speed = speedArray[highwayKey];
+            if (speed < 0)
+                throw new IllegalStateException("speed was negative? " + edgeState.getEdge()
+                        + ", highway:" + highwayKey);
+            return speed;
+        }
+
+        public double getMaxspeed() {
+            double tmpSpeed = 0;
+            for (double speed : speedArray) {
+                if (speed > tmpSpeed)
+                    tmpSpeed = speed;
+            }
+            return tmpSpeed;
+        }
     }
 }
