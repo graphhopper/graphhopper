@@ -331,7 +331,7 @@ public class GraphHopperIT {
         assertEquals("Turn right onto Quai Jean-Charles Rey", resultJson.get(33).get("text"));
         assertEquals("Turn sharp left onto Avenue des Papalins", resultJson.get(34).get("text"));
         assertEquals("Continue onto Avenue des Guelfes", resultJson.get(36).get("text"));
-        assertEquals("Finish!", resultJson.get(37).get("text"));
+        assertEquals("Arrive at destination", resultJson.get(37).get("text"));
 
         assertEquals(11, (Double) resultJson.get(0).get("distance"), 1);
         assertEquals(97, (Double) resultJson.get(1).get("distance"), 1);
@@ -358,7 +358,7 @@ public class GraphHopperIT {
         assertEquals(0, arsp.getRouteWeight(), .1);
         assertEquals(1, arsp.getPoints().getSize());
         assertEquals(1, arsp.getInstructions().size());
-        assertEquals("Finish!", arsp.getInstructions().createJson().get(0).get("text"));
+        assertEquals("Arrive at destination", arsp.getInstructions().createJson().get(0).get("text"));
         assertEquals(Instruction.FINISH, arsp.getInstructions().createJson().get(0).get("sign"));
 
         rsp = hopper.route(new GHRequest().
