@@ -33,8 +33,8 @@ public class SpatialRuleLookupArrayTest {
         }.addBorder(new Polygon(new double[]{5, 5, 6, 6}, new double[]{5, 6, 6, 5}));
         spatialRules.add(austria);
 
+        // create lookup with bbox just for DEU (for space reduction)
         SpatialRuleLookupArray lookup = new SpatialRuleLookupArray(spatialRules, 1, false, new BBox(1, 2, 1, 2));
-
         SpatialRule rule = lookup.lookupRule(1.5, 1.5);
         assertEquals(germany, rule);
         assertEquals("DEU", rule.getId());
@@ -149,7 +149,7 @@ public class SpatialRuleLookupArrayTest {
     }
 
     private SpatialRule getSpatialRule(Polygon p, final String name) {
-        AbstractSpatialRule rule = new AbstractSpatialRule() {
+        return new AbstractSpatialRule() {
             @Override
             public double getMaxSpeed(String highwayTag, double _default) {
                 return _default;
@@ -164,8 +164,6 @@ public class SpatialRuleLookupArrayTest {
             public String getId() {
                 return name;
             }
-        };
-        rule.addBorder(p);
-        return rule;
+        }.addBorder(p);
     }
 }
