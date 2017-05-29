@@ -153,7 +153,7 @@ public class PathMerger {
                     instruction.extraInfo.containsKey("heading")) {
 
                 heading = (double) instruction.extraInfo.get("heading");
-                if (Math.abs(heading - favoredHeading) % 180 > 170) {
+                if (Math.abs(heading - favoredHeading) % 360 > 170) {
                     // The requested heading points into the opposite direction of the calculated heading
                     // therefore we change the continue instruction to a u-turn
                     instruction.sign = Instruction.U_TURN;
@@ -174,7 +174,7 @@ public class PathMerger {
                 // Turn around the orientation of the last heading
                 lastHeading = (lastHeading + 180) % 360;
 
-                if (heading - lastHeading < 10) {
+                if (Math.abs(heading - lastHeading) < 1) {
                     nextInstruction.sign = Instruction.U_TURN;
                 }
             }
