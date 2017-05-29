@@ -74,6 +74,16 @@ describe("GHRequest", function () {
         ghRequest.api_params.test = {ab: { xy: "12", z: "3"}};
         expect("&locale=en&vehicle=car&weighting=fastest&elevation=false&key=undefined&test.ab.xy=12&test.ab.z=3").
             toEqual(ghRequest.createPath(""));
+
+        ghRequest = new GHRequest("http://test.de?");
+        ghRequest.api_params.heading = ["1", "2"];
+        expect("&locale=en&vehicle=car&weighting=fastest&elevation=false&key=undefined&heading=1&heading=2").
+            toEqual(ghRequest.createPath(""));
+
+        ghRequest = new GHRequest("http://test.de?");
+        ghRequest.api_params.xy = { ab : ["1", "2"] };
+        expect("&locale=en&vehicle=car&weighting=fastest&elevation=false&key=undefined&xy.ab=1&xy.ab=2").
+            toEqual(ghRequest.createPath(""));
     });
 });
 

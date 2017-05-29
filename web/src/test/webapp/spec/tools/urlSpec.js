@@ -18,6 +18,22 @@ describe('urlTools', function () {
         expect(params.point).toEqual(["", "49.946505,11.571232"]);
     });
 
+    it("should create array out of point", function () {
+        var params = urlTools.parseUrl("point=1&point=2");
+        expect(["1", "2"]).toEqual(params.point);
+
+        params = urlTools.parseUrl("x=1&x=2");
+        expect(["1", "2"]).toEqual(params.x);
+    });
+
+    it("should force array for point", function () {
+        var params = urlTools.mergeParamIntoObject({}, "point", "1");
+        expect(["1"]).toEqual(params.point);
+
+        params = urlTools.mergeParamIntoObject(params, "point", "2");
+        expect(["1", "2"]).toEqual(params.point);
+    })
+
     it("should create object from dotted URL parameter", function () {
         var someObject = urlTools.mergeParamIntoObject({}, "one.two", "12");
         expect("12").toEqual(someObject.one.two);
