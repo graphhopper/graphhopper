@@ -87,7 +87,6 @@ public class SpatialRuleLookupArrayTest {
         }.addBorder(germanPolygon));
         SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, .1, true, new BBox(-180, 180, -90, 90));
 
-
         // Far from the border of Germany, in Germany
         assertEquals("DEU", spatialRuleLookup.lookupRule(48.777106, 9.180769).getId());
         assertEquals("DEU", spatialRuleLookup.lookupRule(51.806281, 7.269380).getId());

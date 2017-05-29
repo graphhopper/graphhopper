@@ -44,17 +44,17 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
     private final List<SpatialRule> singleRules = new ArrayList<>();
 
     /**
-     * @param spatialRules     the spatial rules
-     * @param resolution of the array in decimal degrees, see: https://en.wikipedia.org/wiki/Decimal_degrees
-     *                   The downside of using decimal degrees is that this is not fixed to a certain m range as
-     * @param exact      if exact it will also perform a polygon contains for border tiles, might fail for small holes
-     *                   in the Polygon that are not represented in the tile array.
-     * @param bounds create the SpatialRuleLookup for the given BBox
+     * @param spatialRules the spatial rules
+     * @param resolution   of the array in decimal degrees, see: https://en.wikipedia.org/wiki/Decimal_degrees
+     *                     The downside of using decimal degrees is that this is not fixed to a certain m range as
+     * @param exact        if exact it will also perform a polygon contains for border tiles, might fail for small holes
+     *                     in the Polygon that are not represented in the tile array.
+     * @param bounds       create the SpatialRuleLookup for the given BBox
      */
     public SpatialRuleLookupArray(List<SpatialRule> spatialRules, double resolution, boolean exact, BBox bounds) {
 
-        if(!bounds.isValid())
-            throw new IllegalStateException("Bounds are not valid: "+bounds);
+        if (!bounds.isValid())
+            throw new IllegalStateException("Bounds are not valid: " + bounds);
 
         this.bounds = bounds;
 
@@ -113,6 +113,9 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
         }
 
         for (SpatialRule rule : ruleContainer.getRules()) {
+            if (rule.equals(SpatialRule.EMPTY))
+                continue;
+
             for (Polygon p : rule.getBorders()) {
                 if (p.contains(lat, lon)) {
                     return rule;
@@ -153,13 +156,13 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
     }
 
     private int getXIndexForLon(double lon) {
-        if(lon < bounds.minLon)
+        if (lon < bounds.minLon)
             return 0;
         return (int) Math.floor(Math.abs(lon - bounds.minLon) / resolution);
     }
 
     private int getYIndexForLat(double lat) {
-        if(lat < bounds.minLat)
+        if (lat < bounds.minLat)
             return 0;
         return (int) Math.floor(Math.abs(lat - bounds.minLat) / resolution);
     }

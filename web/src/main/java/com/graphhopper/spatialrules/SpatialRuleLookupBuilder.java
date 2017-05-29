@@ -7,6 +7,7 @@ import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupArray;
 import com.graphhopper.util.shapes.BBox;
+import com.vividsolutions.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -24,25 +25,34 @@ public class SpatialRuleLookupBuilder {
      * Builds a SpatialRuleLookup by passing the provided JSON features into the provided
      * SpatialRuleFactory and collecting all the SpatialRule instances that it returns,
      * ignoring when it returns SpatialRule.EMPTY.
-     *
+     * <p>
      * See {@link SpatialRuleLookup} and {@link SpatialRule}.
      *
      * @param jsonFeatureCollection a feature collection
-     * @param jsonIdField the name of a property in that feature collection which serves as an id
-     * @param spatialRuleFactory a factory which is called with all the (id, geometry) pairs.
-     *                           It should provide a SpatialRule for each id it knows about,
-     *                           and SpatialRule.EMPTY otherwise.
-     * @param maxBBox limit the maximum BBox of the SpatialRuleLookup to the given BBox
+     * @param jsonIdField           the name of a property in that feature collection which serves as an id
+     * @param spatialRuleFactory    a factory which is called with all the (id, geometry) pairs.
+     *                              It should provide a SpatialRule for each id it knows about,
+     *                              and SpatialRule.EMPTY otherwise.
+     * @param maxBBox               limit the maximum BBox of the SpatialRuleLookup to the given BBox
      * @return the fully constructed SpatialRuleLookup.
      */
     public static SpatialRuleLookup buildIndex(JsonFeatureCollection jsonFeatureCollection, String jsonIdField, SpatialRuleFactory spatialRuleFactory, BBox maxBBox) {
         BBox polygonBounds = BBox.createInverse(false);
         List<SpatialRule> spatialRules = new ArrayList<>();
-        for (JsonFeature jsonFeature : jsonFeatureCollection.getFeatures()) {
-            String id = (String) jsonFeature.getProperty(jsonIdField);
+
+        for (int jsonFeatureIdx = 0; jsonFeatureIdx < jsonFeatureCollection.getFeatures().size(); jsonFeatureIdx++) {
+            JsonFeature jsonFeature = jsonFeatureCollection.getFeatures().get(jsonFeatureIdx);
+            String id = jsonIdField.isEmpty() || jsonIdField.toLowerCase().equals("id") ? jsonFeature.getId() : (String) jsonFeature.getProperty(jsonIdField);
+            if (id == null || id.isEmpty())
+                throw new IllegalArgumentException("ID cannot be empty but was for JsonFeature " + jsonFeatureIdx);
+
             List<Polygon> borders = new ArrayList<>();
-            for (int i=0; i<jsonFeature.getGeometry().getNumGeometries(); i++) {
-                borders.add(ghPolygonFromJTS((com.vividsolutions.jts.geom.Polygon) jsonFeature.getGeometry().getGeometryN(i)));
+            for (int i = 0; i < jsonFeature.getGeometry().getNumGeometries(); i++) {
+                Geometry poly = jsonFeature.getGeometry().getGeometryN(i);
+                if (poly instanceof com.vividsolutions.jts.geom.Polygon)
+                    borders.add(ghPolygonFromJTS((com.vividsolutions.jts.geom.Polygon) poly));
+                else
+                    throw new IllegalArgumentException("Geometry for " + id + " (" + i + ") not supported " + poly.getClass().getSimpleName());
             }
             SpatialRule spatialRule = spatialRuleFactory.createSpatialRule(id, borders);
             if (spatialRule != SpatialRule.EMPTY) {
@@ -80,7 +90,7 @@ public class SpatialRuleLookupBuilder {
     private static Polygon ghPolygonFromJTS(com.vividsolutions.jts.geom.Polygon polygon) {
         double[] lats = new double[polygon.getNumPoints()];
         double[] lons = new double[polygon.getNumPoints()];
-        for (int i=0; i<polygon.getNumPoints(); i++) {
+        for (int i = 0; i < polygon.getNumPoints(); i++) {
             lats[i] = polygon.getCoordinates()[i].y;
             lons[i] = polygon.getCoordinates()[i].x;
         }

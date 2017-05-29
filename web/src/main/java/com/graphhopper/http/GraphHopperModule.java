@@ -92,7 +92,7 @@ public class GraphHopperModule extends AbstractModule {
                                     public String getId() {
                                         return id;
                                     }
-                                };
+                                }.setBorders(polygons);
                             }
                         });
                         for (PrepareLandmarks prep : getLMFactoryDecorator().getPreparations()) {
