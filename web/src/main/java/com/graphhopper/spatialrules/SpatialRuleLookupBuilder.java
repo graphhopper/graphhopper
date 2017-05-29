@@ -36,7 +36,8 @@ public class SpatialRuleLookupBuilder {
      * @param maxBBox               limit the maximum BBox of the SpatialRuleLookup to the given BBox
      * @return the fully constructed SpatialRuleLookup.
      */
-    public static SpatialRuleLookup buildIndex(JsonFeatureCollection jsonFeatureCollection, String jsonIdField, SpatialRuleFactory spatialRuleFactory, BBox maxBBox) {
+    public static SpatialRuleLookup buildIndex(JsonFeatureCollection jsonFeatureCollection, String jsonIdField,
+                                               SpatialRuleFactory spatialRuleFactory, double resolution, BBox maxBBox) {
         BBox polygonBounds = BBox.createInverse(false);
         List<SpatialRule> spatialRules = new ArrayList<>();
 
@@ -72,7 +73,7 @@ public class SpatialRuleLookupBuilder {
         if (calculatedBounds == null)
             return SpatialRuleLookup.EMPTY;
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 0.1, true, calculatedBounds);
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, resolution, true, calculatedBounds);
 
         logger.info("Created the SpatialRuleLookup with the following rules: " + Arrays.toString(spatialRules.toArray()));
 
@@ -80,11 +81,11 @@ public class SpatialRuleLookupBuilder {
     }
 
     /**
-     * Wrapper Method for {@link SpatialRuleLookupBuilder#buildIndex(JsonFeatureCollection, String, SpatialRuleFactory, BBox)}.
+     * Wrapper Method for {@link SpatialRuleLookupBuilder#buildIndex(JsonFeatureCollection, String, SpatialRuleFactory, double, BBox)}.
      * This method simply passes a world-wide BBox, this won't limit the SpatialRuleLookup.
      */
     public static SpatialRuleLookup buildIndex(JsonFeatureCollection jsonFeatureCollection, String jsonIdField, SpatialRuleFactory spatialRuleFactory) {
-        return buildIndex(jsonFeatureCollection, jsonIdField, spatialRuleFactory, new BBox(-180, 180, -90, 90));
+        return buildIndex(jsonFeatureCollection, jsonIdField, spatialRuleFactory, .1, new BBox(-180, 180, -90, 90));
     }
 
     private static Polygon ghPolygonFromJTS(com.vividsolutions.jts.geom.Polygon polygon) {
