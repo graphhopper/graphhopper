@@ -17,14 +17,9 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.storage.GraphEdgeIdFinder;
-import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
-
-import java.util.Collections;
 
 /**
  * @author Peter Karich

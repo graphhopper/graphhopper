@@ -912,7 +912,9 @@ public class GraphHopper implements GraphHopperAPI {
             String blockAreaStr = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
             if (!blockAreaDefaults.isEmpty())
                 blockAreaStr = blockAreaDefaults + ";" + blockAreaStr;
-            return new BlockAreaWeighting(weighting).init(graph, blockAreaStr, locationIndex);
+            GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(graph, locationIndex).
+                    parseBlockArea(blockAreaStr, new DefaultEdgeFilter(encoder));
+            return new BlockAreaWeighting(weighting, blockArea);
         }
 
         return weighting;

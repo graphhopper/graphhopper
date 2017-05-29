@@ -848,7 +848,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
      * necessary when we read JSON.
      */
     public Result createResult(PMap pMap) {
-
         HashMap<String, Double> map = new HashMap<>(DEFAULT_SPEEDS.size());
         for (Entry<String, Double> e : DEFAULT_SPEEDS.entrySet()) {
             map.put(e.getKey(), pMap.getDouble(e.getKey(), e.getValue()));
