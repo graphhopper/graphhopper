@@ -38,6 +38,7 @@ public class PathMerger {
     private boolean simplifyResponse = true;
     private DouglasPeucker douglasPeucker = DP;
     private boolean calcPoints = true;
+    private double favoredHeading = Double.MIN_VALUE;
 
     public PathMerger setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
@@ -124,8 +125,10 @@ public class PathMerger {
                 calcAscendDescend(altRsp, fullPoints);
         }
 
-        if (enableInstructions)
+        if (enableInstructions){
+            fullInstructions = updateInstructionsWithContext(fullInstructions);
             altRsp.setInstructions(fullInstructions);
+        }
 
         if (!allFound)
             altRsp.addError(new ConnectionNotFoundException("Connection between locations not found", Collections.<String, Object>emptyMap()));
@@ -135,6 +138,49 @@ public class PathMerger {
                 setRouteWeight(fullWeight).
                 setDistance(fullDistance).
                 setTime(fullTimeInMillis);
+    }
+
+    private InstructionList updateInstructionsWithContext(InstructionList instructions) {
+        Instruction instruction;
+        Instruction nextInstruction;
+        double heading;
+        double lastHeading;
+
+        for (int i = 0; i < instructions.size() - 1; i++) {
+            instruction = instructions.get(i);
+
+            if (i == 0 && favoredHeading > Double.MIN_VALUE &&
+                    instruction.extraInfo.containsKey("heading")) {
+
+                heading = (double) instruction.extraInfo.get("heading");
+                if (Math.abs(heading - favoredHeading) % 180 > 170) {
+                    // The requested heading points into the opposite direction of the calculated heading
+                    // therefore we change the continue instruction to a u-turn
+                    instruction.sign = Instruction.U_TURN;
+                }
+            }
+
+            if (instruction.sign == Instruction.REACHED_VIA) {
+                nextInstruction = instructions.get(i + 1);
+                if (nextInstruction.getSign() != Instruction.CONTINUE_ON_STREET ||
+                        !instruction.extraInfo.containsKey("last_heading") ||
+                        !nextInstruction.extraInfo.containsKey("heading")) {
+                    // TODO throw exception?
+                    continue;
+                }
+                lastHeading = (double) instruction.extraInfo.get("last_heading");
+                heading = (double) nextInstruction.extraInfo.get("heading");
+
+                // Turn around the orientation of the last heading
+                lastHeading = (lastHeading + 180) % 360;
+
+                if (heading - lastHeading < 10) {
+                    nextInstruction.sign = Instruction.U_TURN;
+                }
+            }
+        }
+
+        return instructions;
     }
 
     private void calcAscendDescend(final PathWrapper rsp, final PointList pointList) {
@@ -155,5 +201,9 @@ public class PathMerger {
         }
         rsp.setAscend(ascendMeters);
         rsp.setDescend(descendMeters);
+    }
+
+    public void setFavoredHeading(double favoredHeading) {
+        this.favoredHeading = favoredHeading;
     }
 }

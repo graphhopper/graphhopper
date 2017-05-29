@@ -23,6 +23,7 @@ import java.util.Map;
 
 public class Instruction {
     public static final int UNKNOWN = -99;
+    public static final int U_TURN = -98;
     public static final int KEEP_LEFT = -7;
     public static final int LEAVE_ROUNDABOUT = -6; // for future use
     public static final int TURN_SHARP_LEFT = -3;
@@ -242,6 +243,8 @@ public class Instruction {
         int indi = getSign();
         if (indi == Instruction.CONTINUE_ON_STREET) {
             str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
+        } else if (indi == Instruction.U_TURN) {
+            str = Helper.isEmpty(streetName) ? tr.tr("u_turn") : tr.tr("u_turn_onto", streetName);
         } else if (indi == Instruction.PT_START_TRIP) {
             str = tr.tr("pt_start_trip", streetName);
         } else if (indi == Instruction.PT_TRANSFER) {

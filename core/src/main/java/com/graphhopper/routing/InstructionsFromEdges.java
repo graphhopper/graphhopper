@@ -240,7 +240,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             ((RoundaboutInstruction) prevInstruction).setRadian(delta);
 
         }
-        ways.add(new FinishInstruction(nodeAccess, prevEdge.getAdjNode()));
+
+        Instruction finishInstruction = new FinishInstruction(nodeAccess, prevEdge.getAdjNode());
+        // This is the heading how the edge ended
+        finishInstruction.setExtraInfo("last_heading", Helper.ANGLE_CALC.calcAzimuth(doublePrevLat, doublePrevLon, prevLat, prevLon));
+        ways.add(finishInstruction);
     }
 
     private int getTurn(EdgeIteratorState edge, int baseNode, int prevNode, int adjNode, InstructionAnnotation annotation, String name) {

@@ -1062,6 +1062,9 @@ public class GraphHopper implements GraphHopperAPI {
                         setEnableInstructions(tmpEnableInstructions).
                         setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
 
+                if(request.hasFavoredHeading(0))
+                    pathMerger.setFavoredHeading(request.getFavoredHeading(0));
+
                 if (routingTemplate.isReady(pathMerger, tr))
                     break;
             }
