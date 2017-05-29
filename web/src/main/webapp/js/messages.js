@@ -15,6 +15,8 @@ module.exports.extractMetaVersionInfo = function (json) {
 };
 
 module.exports.getSignName = function (sign) {
+    if (sign === -98)
+        return "u_turn";
     if (sign === -7)
         return "keep_left";
     if (sign === -3)

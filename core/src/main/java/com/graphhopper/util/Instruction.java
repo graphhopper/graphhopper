@@ -243,8 +243,6 @@ public class Instruction {
         int indi = getSign();
         if (indi == Instruction.CONTINUE_ON_STREET) {
             str = Helper.isEmpty(streetName) ? tr.tr("continue") : tr.tr("continue_onto", streetName);
-        } else if (indi == Instruction.U_TURN) {
-            str = Helper.isEmpty(streetName) ? tr.tr("u_turn") : tr.tr("u_turn_onto", streetName);
         } else if (indi == Instruction.PT_START_TRIP) {
             str = tr.tr("pt_start_trip", streetName);
         } else if (indi == Instruction.PT_TRANSFER) {
@@ -254,6 +252,9 @@ public class Instruction {
         } else {
             String dir = null;
             switch (indi) {
+                case Instruction.U_TURN:
+                    dir = tr.tr("u_turn");
+                    break;
                 case Instruction.KEEP_LEFT:
                     dir = tr.tr("keep_left");
                     break;
