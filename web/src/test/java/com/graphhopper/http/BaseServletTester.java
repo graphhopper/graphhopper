@@ -84,6 +84,8 @@ public class BaseServletTester {
         if (injector == null)
             setUpGuice(server.createModule());
 
+        boolean started = false;
+
         for (int i = 0; i < retryCount; i++) {
             port = 18080 + i;
             args.put("jetty.port", "" + port);
@@ -91,11 +93,16 @@ public class BaseServletTester {
                 LOGGER.info("Trying to start jetty at port " + port);
                 server.start(injector);
 //                server.join();
+                started = true;
                 break;
             } catch (Exception ex) {
                 server = null;
                 LOGGER.error("Cannot start jetty at port " + port + " " + ex.getMessage());
             }
+        }
+
+        if (!started) {
+            throw new IllegalStateException("Unable to start the server");
         }
     }
 
