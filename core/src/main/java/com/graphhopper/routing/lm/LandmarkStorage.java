@@ -461,7 +461,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             int baseNode = allEdgesIterator.getBaseNode();
             SpatialRule ruleBase = ruleLookup.lookupRule(nodeAccess.getLatitude(baseNode), nodeAccess.getLongitude(baseNode));
             if (ruleAdj != ruleBase) {
-                System.out.println("disable: " + allEdgesIterator.fetchWayGeometry(3));
                 inaccessible.add(allEdgesIterator.getEdge());
             }
         }
