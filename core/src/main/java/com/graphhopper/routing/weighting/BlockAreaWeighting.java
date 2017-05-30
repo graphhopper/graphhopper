@@ -1,11 +1,6 @@
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
-import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**

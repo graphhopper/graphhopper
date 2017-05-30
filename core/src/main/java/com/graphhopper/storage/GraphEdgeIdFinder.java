@@ -129,7 +129,7 @@ public class GraphEdgeIdFinder {
         final String innerObjSep = ",";
         // use shapes if bigger than 1km^2
         final double shapeArea = 1000 * 1000;
-        BlockArea blockArea = new BlockArea(graph.getNodeAccess());
+        BlockArea blockArea = new BlockArea(graph);
 
         // Add blocked circular areas or points
         if (!blockAreaString.isEmpty()) {
@@ -166,13 +166,16 @@ public class GraphEdgeIdFinder {
         return blockArea;
     }
 
+    /**
+     * This class handles edges and areas where access should be blocked.
+     */
     public static class BlockArea {
         final GHIntHashSet blockedEdges = new GHIntHashSet();
         final List<Shape> blockedShapes = new ArrayList<>();
         private final NodeAccess na;
 
-        public BlockArea(NodeAccess na) {
-            this.na = na;
+        public BlockArea(Graph g) {
+            na = g.getNodeAccess();
         }
 
         public void add(int edgeId) {
@@ -183,6 +186,9 @@ public class GraphEdgeIdFinder {
             blockedShapes.add(shape);
         }
 
+        /**
+         * @return true if the specified edgeState is part of this BlockArea
+         */
         public final boolean contains(EdgeIteratorState edgeState) {
             if (!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())) {
                 return true;
@@ -196,13 +202,5 @@ public class GraphEdgeIdFinder {
             }
             return false;
         }
-
-//        public GHIntHashSet getBlockedEdges() {
-//            return blockedEdges;
-//        }
-//
-//        public List<Shape> getBlockedShapes() {
-//            return blockedShapes;
-//        }
     }
 }

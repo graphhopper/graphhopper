@@ -36,7 +36,7 @@ public class BlockAreaWeightingTest {
 
     @Test
     public void testBlockedById() {
-        GraphEdgeIdFinder.BlockArea bArea = new GraphEdgeIdFinder.BlockArea(graph.getNodeAccess());
+        GraphEdgeIdFinder.BlockArea bArea = new GraphEdgeIdFinder.BlockArea(graph);
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
         BlockAreaWeighting instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
         assertEquals(94.35, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), .01);
@@ -49,14 +49,14 @@ public class BlockAreaWeightingTest {
     @Test
     public void testBlockedByShape() {
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        GraphEdgeIdFinder.BlockArea bArea = new GraphEdgeIdFinder.BlockArea(graph.getNodeAccess());
+        GraphEdgeIdFinder.BlockArea bArea = new GraphEdgeIdFinder.BlockArea(graph);
         BlockAreaWeighting instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
         assertEquals(94.35, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 0.01);
 
         bArea.add(new Circle(0.01, 0.01, 100));
         assertEquals(Double.POSITIVE_INFINITY, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), .01);
 
-        bArea = new GraphEdgeIdFinder.BlockArea(graph.getNodeAccess());
+        bArea = new GraphEdgeIdFinder.BlockArea(graph);
         instance = new BlockAreaWeighting(new FastestWeighting(encoder), bArea);
         // Do not match 1,1 of edge
         bArea.add(new Circle(0.1, 0.1, 100));

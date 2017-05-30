@@ -89,7 +89,6 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
-    private String blockAreaDefaults = "";
 
     private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
     // for index
@@ -599,7 +598,6 @@ public class GraphHopper implements GraphHopperAPI {
         maxVisitedNodes = args.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
         maxRoundTripRetries = args.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
         nonChMaxWaypointDistance = args.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
-        blockAreaDefaults = args.get(Routing.BLOCK_AREA, "");
 
         return this;
     }
@@ -796,6 +794,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (!chFactoryDecorator.hasWeightings()) {
             for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
                 for (String chWeightingStr : chFactoryDecorator.getWeightingsAsStrings()) {
+                    // ghStorage is null at this point
                     Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder, null);
                     chFactoryDecorator.addWeighting(weighting);
                 }
@@ -910,8 +909,6 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (hintsMap.has(Routing.BLOCK_AREA)) {
             String blockAreaStr = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
-            if (!blockAreaDefaults.isEmpty())
-                blockAreaStr = blockAreaDefaults + ";" + blockAreaStr;
             GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(graph, locationIndex).
                     parseBlockArea(blockAreaStr, new DefaultEdgeFilter(encoder));
             return new BlockAreaWeighting(weighting, blockArea);

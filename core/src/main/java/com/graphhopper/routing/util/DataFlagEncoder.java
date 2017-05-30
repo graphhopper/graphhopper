@@ -853,14 +853,15 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             map.put(e.getKey(), pMap.getDouble(e.getKey(), e.getValue()));
         }
 
-        WeightingConfig weightingConfig = new WeightingConfig();
-        // create per request object
-        weightingConfig.speedArray = getHighwaySpeedMap(map);
-        return weightingConfig;
+        return new WeightingConfig(getHighwaySpeedMap(map));
     }
 
     public class WeightingConfig {
-        private double[] speedArray;
+        private final double[] speedArray;
+
+        public WeightingConfig(double[] speedArray) {
+            this.speedArray = speedArray;
+        }
 
         public double getSpeed(EdgeIteratorState edgeState) {
             int highwayKey = getHighway(edgeState);
