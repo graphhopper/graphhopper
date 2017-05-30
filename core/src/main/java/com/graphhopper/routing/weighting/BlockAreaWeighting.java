@@ -11,13 +11,12 @@ import com.graphhopper.util.EdgeIteratorState;
 /**
  * This weighting is a wrapper for every weighting to support block_area
  */
-public class BlockAreaWeighting implements Weighting {
+public class BlockAreaWeighting extends AbstractAdjustedWeighting {
 
-    private final Weighting superWeighting;
     private GraphEdgeIdFinder.BlockArea blockArea;
 
     public BlockAreaWeighting(Weighting superWeighting, GraphEdgeIdFinder.BlockArea blockArea) {
-        this.superWeighting = superWeighting;
+        super(superWeighting);
         this.blockArea = blockArea;
     }
 
@@ -35,22 +34,7 @@ public class BlockAreaWeighting implements Weighting {
     }
 
     @Override
-    public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        return superWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
-    }
-
-    @Override
-    public FlagEncoder getFlagEncoder() {
-        return superWeighting.getFlagEncoder();
-    }
-
-    @Override
     public String getName() {
-        return "block_area|" + superWeighting.getName();
-    }
-
-    @Override
-    public boolean matches(HintsMap map) {
-        return superWeighting.matches(map);
+        return "block_area";
     }
 }

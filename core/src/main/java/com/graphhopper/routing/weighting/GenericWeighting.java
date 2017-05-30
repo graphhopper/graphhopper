@@ -40,9 +40,9 @@ public class GenericWeighting extends AbstractWeighting {
     protected final long headingPenaltyMillis;
     protected final double maxSpeed;
     protected final DataFlagEncoder gEncoder;
-    protected final DataFlagEncoder.Result result;
+    protected final DataFlagEncoder.WeightingConfig weightingConfig;
     protected final int accessType;
-    protected final int eventualAccessiblePenalty = 10;
+    protected final int uncertainAccessiblePenalty = 10;
 
     protected final double height;
     protected final double weight;
@@ -54,12 +54,12 @@ public class GenericWeighting extends AbstractWeighting {
         headingPenalty = hintsMap.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);
 
-        result = encoder.createResult(hintsMap);
-        double biggestSpecifiedSpeed = result.getMaxspeed();
-        if (biggestSpecifiedSpeed > encoder.getMaxPossibleSpeed())
-            throw new IllegalArgumentException("Some specified speed value bigger than maximum possible speed: " + biggestSpecifiedSpeed + " > " + encoder.getMaxPossibleSpeed());
+        weightingConfig = encoder.createWeightingConfig(hintsMap);
+        double maxSpecifiedSpeed = weightingConfig.getMaxSpecifiedSpeed();
+        if (maxSpecifiedSpeed > encoder.getMaxPossibleSpeed())
+            throw new IllegalArgumentException("Some specified speed value bigger than maximum possible speed: " + maxSpecifiedSpeed + " > " + encoder.getMaxPossibleSpeed());
 
-        this.maxSpeed = biggestSpecifiedSpeed / SPEED_CONV;
+        this.maxSpeed = maxSpecifiedSpeed / SPEED_CONV;
         accessType = gEncoder.getAccessType("motor_vehicle");
         height = hintsMap.getDouble(HEIGHT_LIMIT, 0d);
         weight = hintsMap.getDouble(WEIGHT_LIMIT, 0d);
@@ -94,7 +94,7 @@ public class GenericWeighting extends AbstractWeighting {
             case NOT_ACCESSIBLE:
                 return Double.POSITIVE_INFINITY;
             case EVENTUALLY_ACCESSIBLE:
-                time = time * eventualAccessiblePenalty;
+                time = time * uncertainAccessiblePenalty;
         }
 
         return time;
@@ -109,7 +109,7 @@ public class GenericWeighting extends AbstractWeighting {
         // TODO to avoid expensive reverse flags include oneway accessibility
         // but how to include e.g. maxspeed as it depends on direction? Does highway depend on direction?
         // reverse = edge.isReverse()? !reverse : reverse;
-        double speed = result.getSpeed(edgeState);
+        double speed = weightingConfig.getSpeed(edgeState);
         if (speed == 0)
             return Long.MAX_VALUE;
 

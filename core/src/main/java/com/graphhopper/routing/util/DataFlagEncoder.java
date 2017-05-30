@@ -847,19 +847,19 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
      * This method creates a Config map out of the PMap. Later on this conversion should not be
      * necessary when we read JSON.
      */
-    public Result createResult(PMap pMap) {
+    public WeightingConfig createWeightingConfig(PMap pMap) {
         HashMap<String, Double> map = new HashMap<>(DEFAULT_SPEEDS.size());
         for (Entry<String, Double> e : DEFAULT_SPEEDS.entrySet()) {
             map.put(e.getKey(), pMap.getDouble(e.getKey(), e.getValue()));
         }
 
-        Result result = new Result();
+        WeightingConfig weightingConfig = new WeightingConfig();
         // create per request object
-        result.speedArray = getHighwaySpeedMap(map);
-        return result;
+        weightingConfig.speedArray = getHighwaySpeedMap(map);
+        return weightingConfig;
     }
 
-    public class Result {
+    public class WeightingConfig {
         private double[] speedArray;
 
         public double getSpeed(EdgeIteratorState edgeState) {
@@ -872,7 +872,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             return speed;
         }
 
-        public double getMaxspeed() {
+        public double getMaxSpecifiedSpeed() {
             double tmpSpeed = 0;
             for (double speed : speedArray) {
                 if (speed > tmpSpeed)
