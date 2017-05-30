@@ -65,6 +65,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private final List<Weighting> weightings = new ArrayList<>();
     private final Map<String, Double> maximumWeights = new HashMap<>();
     private boolean enabled = false;
+    private int minNodes = -1;
     private boolean disablingAllowed = false;
     private final List<String> lmSuggestionsLocations = new ArrayList<>(5);
     private int preparationThreads;
@@ -82,8 +83,9 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         landmarkCount = args.getInt(Parameters.Landmark.COUNT, landmarkCount);
         activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, landmarkCount));
         logDetails = args.getBool(Landmark.PREPARE + "log_details", false);
+        minNodes = args.getInt(Landmark.PREPARE + "min_network_size", -1);
 
-        for (String loc : args.get("prepare.lm.suggestions_location", "").split(",")) {
+        for (String loc : args.get(Landmark.PREPARE + "suggestions_location", "").split(",")) {
             if (!loc.trim().isEmpty())
                 lmSuggestionsLocations.add(loc.trim());
         }
@@ -307,7 +309,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     /**
      * This method creates the landmark storages ready for landmark creation.
      */
-    public void createPreparations(GraphHopperStorage ghStorage, TraversalMode traversalMode, LocationIndex locationIndex) {
+    public void createPreparations(GraphHopperStorage ghStorage, LocationIndex locationIndex) {
         if (!isEnabled() || !preparations.isEmpty())
             return;
         if (weightings.isEmpty())
@@ -331,11 +333,12 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                         "Couldn't find " + weighting.getName() + " in " + maximumWeights);
 
             PrepareLandmarks tmpPrepareLM = new PrepareLandmarks(ghStorage.getDirectory(), ghStorage,
-                    weighting, traversalMode, landmarkCount, activeLandmarkCount).
+                    weighting, landmarkCount, activeLandmarkCount).
                     setLandmarkSuggestions(lmSuggestions).
                     setMaximumWeight(maximumWeight).
                     setLogDetails(logDetails);
-
+            if (minNodes > 1)
+                tmpPrepareLM.setMinimumNodes(minNodes);
             addPreparation(tmpPrepareLM);
         }
     }
