@@ -18,8 +18,8 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.util.StringConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Routing;
 
 /**
@@ -39,7 +39,7 @@ public class FastestWeighting extends AbstractWeighting {
     private final long headingPenaltyMillis;
     private final double maxSpeed;
 
-    public FastestWeighting(FlagEncoder encoder, PMap pMap) {
+    public FastestWeighting(FlagEncoder encoder, StringConfigMap pMap) {
         super(encoder);
         headingPenalty = pMap.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);
@@ -47,7 +47,7 @@ public class FastestWeighting extends AbstractWeighting {
     }
 
     public FastestWeighting(FlagEncoder encoder) {
-        this(encoder, new PMap(0));
+        this(encoder, new StringConfigMap(0));
     }
 
     @Override

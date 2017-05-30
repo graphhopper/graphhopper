@@ -143,7 +143,7 @@ public class PrepareLandmarksTest
         assertEquals(expectedAlgo.getVisitedNodes(), oneDirAlgoWithLandmarks.getVisitedNodes() + 142);
 
         // landmarks with bidir A*
-        opts.getHints().put("lm.recalc_count", 50);
+        opts.getConfigMap().put("lm.recalc_count", 50);
         RoutingAlgorithm biDirAlgoWithLandmarks = prepare.getDecoratedAlgorithm(graph,
                 new AStarBidirection(graph, weighting, tm), opts);
         path = biDirAlgoWithLandmarks.calcPath(41, 183);

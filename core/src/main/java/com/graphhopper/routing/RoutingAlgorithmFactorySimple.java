@@ -58,11 +58,11 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
 
         } else if (ALT_ROUTE.equalsIgnoreCase(algoStr)) {
             AlternativeRoute altRouteAlgo = new AlternativeRoute(g, opts.getWeighting(), opts.getTraversalMode());
-            altRouteAlgo.setMaxPaths(opts.getHints().getInt(MAX_PATHS, 2));
-            altRouteAlgo.setMaxWeightFactor(opts.getHints().getDouble(MAX_WEIGHT, 1.4));
-            altRouteAlgo.setMaxShareFactor(opts.getHints().getDouble(MAX_SHARE, 0.6));
-            altRouteAlgo.setMinPlateauFactor(opts.getHints().getDouble("alternative_route.min_plateau_factor", 0.2));
-            altRouteAlgo.setMaxExplorationFactor(opts.getHints().getDouble("alternative_route.max_exploration_factor", 1));
+            altRouteAlgo.setMaxPaths(opts.getConfigMap().getInt(MAX_PATHS, 2));
+            altRouteAlgo.setMaxWeightFactor(opts.getConfigMap().getDouble(MAX_WEIGHT, 1.4));
+            altRouteAlgo.setMaxShareFactor(opts.getConfigMap().getDouble(MAX_SHARE, 0.6));
+            altRouteAlgo.setMinPlateauFactor(opts.getConfigMap().getDouble("alternative_route.min_plateau_factor", 0.2));
+            altRouteAlgo.setMaxExplorationFactor(opts.getConfigMap().getDouble("alternative_route.max_exploration_factor", 1));
             ra = altRouteAlgo;
 
         } else {
@@ -74,8 +74,8 @@ public class RoutingAlgorithmFactorySimple implements RoutingAlgorithmFactory {
     }
 
     public static WeightApproximator getApproximation(String prop, AlgorithmOptions opts, NodeAccess na) {
-        String approxAsStr = opts.getHints().get(prop + ".approximation", "BeelineSimplification");
-        double epsilon = opts.getHints().getDouble(prop + ".epsilon", 1);
+        String approxAsStr = opts.getConfigMap().get(prop + ".approximation", "BeelineSimplification");
+        double epsilon = opts.getConfigMap().getDouble(prop + ".epsilon", 1);
 
         BeelineWeightApproximator approx = new BeelineWeightApproximator(na, opts.getWeighting());
         approx.setEpsilon(epsilon);

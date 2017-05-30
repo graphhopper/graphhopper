@@ -57,7 +57,9 @@ public class TestAlgoCollector {
                 errors.add("Cannot use TurnWeighting with a node based traversal");
                 return this;
             }
-            algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).weighting(new TurnWeighting(opts.getWeighting(), (TurnCostExtension) queryGraph.getExtension())).build());
+            algoEntry.setAlgorithmOptions(AlgorithmOptions.start(opts).
+                    weighting(new TurnWeighting(opts.getWeighting(), (TurnCostExtension) queryGraph.getExtension())).
+                    build());
         }
 
         RoutingAlgorithmFactory factory = algoEntry.createRoutingFactory();

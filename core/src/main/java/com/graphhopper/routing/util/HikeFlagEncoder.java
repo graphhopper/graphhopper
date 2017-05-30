@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.weighting.PriorityWeighting;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 
 import java.util.TreeMap;
 
@@ -38,7 +38,7 @@ public class HikeFlagEncoder extends FootFlagEncoder {
         this(4, 1);
     }
 
-    public HikeFlagEncoder(PMap properties) {
+    public HikeFlagEncoder(StringConfigMap properties) {
         this((int) properties.getLong("speedBits", 4),
                 properties.getDouble("speedFactor", 1));
         this.properties = properties;
@@ -46,7 +46,7 @@ public class HikeFlagEncoder extends FootFlagEncoder {
     }
 
     public HikeFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
+        this(StringConfigMap.create(propertiesStr));
     }
 
     public HikeFlagEncoder(int speedBits, double speedFactor) {

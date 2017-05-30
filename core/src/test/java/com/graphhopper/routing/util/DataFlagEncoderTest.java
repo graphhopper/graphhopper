@@ -4,7 +4,7 @@ import java.util.*;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -21,7 +21,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class DataFlagEncoderTest {
-    private final PMap properties;
+    private final StringConfigMap properties;
     private final DataFlagEncoder encoder;
     private final EncodingManager encodingManager;
     private final int motorVehicleInt;
@@ -29,7 +29,7 @@ public class DataFlagEncoderTest {
     private final double DELTA = 0.1;
 
     public DataFlagEncoderTest() {
-        properties = new PMap();
+        properties = new StringConfigMap();
         properties.put("store_height", true);
         properties.put("store_weight", true);
         properties.put("store_width", true);
@@ -363,7 +363,7 @@ public class DataFlagEncoderTest {
             }
         };
 
-        DataFlagEncoder encoder = new DataFlagEncoder(new PMap());
+        DataFlagEncoder encoder = new DataFlagEncoder(new StringConfigMap());
         encoder.setSpatialRuleLookup(index);
         EncodingManager em = new EncodingManager(encoder);
 

@@ -20,7 +20,6 @@ package com.graphhopper.routing.lm;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.AbstractAlgoPreparation;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Directory;
@@ -34,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * This class does the preprocessing for the ALT algorithm (A* , landmark, triangle inequality).
@@ -141,12 +139,12 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     }
 
     public RoutingAlgorithm getDecoratedAlgorithm(Graph qGraph, RoutingAlgorithm algo, AlgorithmOptions opts) {
-        int activeLM = Math.max(1, opts.getHints().getInt(Landmark.ACTIVE_COUNT, defaultActiveLandmarks));
+        int activeLM = Math.max(1, opts.getConfigMap().getInt(Landmark.ACTIVE_COUNT, defaultActiveLandmarks));
         if (algo instanceof AStar) {
             if (!lms.isInitialized())
                 throw new IllegalStateException("Initalize landmark storage before creating algorithms");
 
-            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR + ".epsilon", 1);
+            double epsilon = opts.getConfigMap().getDouble(Parameters.Algorithms.ASTAR + ".epsilon", 1);
             AStar astar = (AStar) algo;
             astar.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
@@ -155,7 +153,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
             if (!lms.isInitialized())
                 throw new IllegalStateException("Initalize landmark storage before creating algorithms");
 
-            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR_BI + ".epsilon", 1);
+            double epsilon = opts.getConfigMap().getDouble(Parameters.Algorithms.ASTAR_BI + ".epsilon", 1);
             AStarBidirection astarbi = (AStarBidirection) algo;
             astarbi.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
@@ -164,7 +162,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
             if (!lms.isInitialized())
                 throw new IllegalStateException("Initalize landmark storage before creating algorithms");
 
-            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR_BI + ".epsilon", 1);
+            double epsilon = opts.getConfigMap().getDouble(Parameters.Algorithms.ASTAR_BI + ".epsilon", 1);
             AlternativeRoute altRoute = (AlternativeRoute) algo;
             altRoute.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));

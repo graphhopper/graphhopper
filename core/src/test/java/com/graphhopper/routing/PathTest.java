@@ -533,7 +533,7 @@ public class PathTest {
         g.edge(2, 4, 5, true).setFlags(dataFlagEncoder.handleWayTags(w,1,0));
         g.edge(2, 3, 5, true).setFlags(dataFlagEncoder.handleWayTags(w,1,0));
 
-        ConfigMap cMap = dataFlagEncoder.readStringMap(new PMap());
+        ConfigMap cMap = dataFlagEncoder.readStringMap(new StringConfigMap());
         Path p = new Dijkstra(g, new GenericWeighting(dataFlagEncoder, cMap), TraversalMode.NODE_BASED).calcPath(1, 3);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);

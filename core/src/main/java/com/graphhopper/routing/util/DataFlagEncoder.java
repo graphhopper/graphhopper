@@ -92,7 +92,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         this(5, 5, 0);
     }
 
-    public DataFlagEncoder(PMap properties) {
+    public DataFlagEncoder(StringConfigMap properties) {
         this((int) properties.getLong("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
@@ -844,10 +844,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     /**
-     * This method creates a Config map out of the PMap. Later on this conversion should not be
+     * This method creates a Config map out of the StringConfigMap. Later on this conversion should not be
      * necessary when we read JSON.
      */
-    public ConfigMap readStringMap(PMap weightingMap) {
+    public ConfigMap readStringMap(StringConfigMap weightingMap) {
         Map<String, Double> map = new HashMap<>();
         for (Entry<String, Double> e : DEFAULT_SPEEDS.entrySet()) {
             map.put(e.getKey(), weightingMap.getDouble("highways." + e.getKey(), e.getValue()));
@@ -863,7 +863,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return cMap;
     }
 
-    private void cloneDoubleAttribute(PMap weightingMap, ConfigMap cMap, String key, double _default) {
+    private void cloneDoubleAttribute(StringConfigMap weightingMap, ConfigMap cMap, String key, double _default) {
         if (weightingMap.has(key))
             cMap.put(key, weightingMap.getDouble(key, _default));
     }

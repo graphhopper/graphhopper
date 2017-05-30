@@ -19,7 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 
 import java.util.TreeMap;
 
@@ -37,7 +37,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
         this(4, 2, 0);
     }
 
-    public MountainBikeFlagEncoder(PMap properties) {
+    public MountainBikeFlagEncoder(StringConfigMap properties) {
         this(
                 (int) properties.getLong("speed_bits", 4),
                 properties.getDouble("speed_factor", 2),
@@ -48,7 +48,7 @@ public class MountainBikeFlagEncoder extends BikeCommonFlagEncoder {
     }
 
     public MountainBikeFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
+        this(StringConfigMap.create(propertiesStr));
     }
 
     public MountainBikeFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {

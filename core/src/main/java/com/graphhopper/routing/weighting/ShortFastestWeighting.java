@@ -19,7 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 
 /**
  * Calculates the fastest route with distance influence controlled by a new parameter.
@@ -35,7 +35,7 @@ public class ShortFastestWeighting extends FastestWeighting {
     private final double distanceFactor;
     private final double timeFactor;
 
-    public ShortFastestWeighting(FlagEncoder encoder, PMap pMap) {
+    public ShortFastestWeighting(FlagEncoder encoder, StringConfigMap pMap) {
         super(encoder);
         timeFactor = checkBounds(TIME_FACTOR, pMap.getDouble(TIME_FACTOR, 1));
 

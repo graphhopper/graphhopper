@@ -6,8 +6,8 @@ import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.util.StringConfigMap;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -27,12 +27,12 @@ public class GraphHopperStorageForDataFlagEncoderTest {
     private String defaultGraphLoc = "./target/graphstorage/default";
     private GraphHopperStorage graph;
 
-    private final PMap properties;
+    private final StringConfigMap properties;
     private final DataFlagEncoder encoder;
     private final EncodingManager encodingManager;
 
     public GraphHopperStorageForDataFlagEncoderTest() {
-        properties = new PMap();
+        properties = new StringConfigMap();
         properties.put("store_height", true);
         properties.put("store_weight", true);
         properties.put("store_width", false);

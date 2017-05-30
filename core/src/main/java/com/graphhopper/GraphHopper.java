@@ -878,7 +878,7 @@ public class GraphHopper implements GraphHopperAPI {
      * you use the web module.
      *
      * @param hintsMap all parameters influencing the weighting. E.g. parameters coming via
-     *                 GHRequest.getHints or directly via "&amp;api.xy=" from the URL of the web UI
+     *                 GHRequest.getConfigMap or directly via "&amp;api.xy=" from the URL of the web UI
      * @param encoder  the required vehicle
      * @param graph    The Graph enables the Weighting for NodeAccess and more
      * @return the weighting to be used for route calculation

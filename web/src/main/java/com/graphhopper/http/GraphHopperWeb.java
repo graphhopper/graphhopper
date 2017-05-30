@@ -49,7 +49,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
     private boolean elevation = false;
 
     public GraphHopperWeb() {
-        // some parameters are supported directly via Java API so ignore them when writing the getHints map
+        // some parameters are supported directly via Java API so ignore them when writing the getConfigMap map
         ignoreSet = new HashSet<>();
         ignoreSet.add("calc_points");
         ignoreSet.add("calcpoints");

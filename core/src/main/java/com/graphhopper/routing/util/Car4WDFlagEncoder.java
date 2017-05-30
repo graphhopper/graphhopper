@@ -18,7 +18,7 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 
 /**
  * Defines bit layout for cars with four wheel drive
@@ -31,12 +31,12 @@ public class Car4WDFlagEncoder extends CarFlagEncoder {
         this(5, 5, 0);
     }
 
-    public Car4WDFlagEncoder(PMap properties) {
+    public Car4WDFlagEncoder(StringConfigMap properties) {
         super(properties);
     }
 
     public Car4WDFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
+        this(StringConfigMap.create(propertiesStr));
     }
 
     public Car4WDFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {

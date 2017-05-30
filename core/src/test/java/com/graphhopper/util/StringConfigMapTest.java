@@ -22,18 +22,18 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 
-public class PMapTest {
+public class StringConfigMapTest {
 
     @Test
     public void singleStringPropertyCanBeRetrieved() {
-        PMap subject = new PMap("foo=bar");
+        StringConfigMap subject = StringConfigMap.create("foo=bar");
 
         Assert.assertEquals("bar", subject.get("foo"));
     }
 
     @Test
     public void propertyFromStringWithMultiplePropertiesCanBeRetrieved() {
-        PMap subject = new PMap("foo=valueA|bar=valueB");
+        StringConfigMap subject = StringConfigMap.create("foo=valueA|bar=valueB");
 
         Assert.assertEquals("valueA", subject.get("foo", ""));
         Assert.assertEquals("valueB", subject.get("bar", ""));
@@ -41,7 +41,7 @@ public class PMapTest {
 
     @Test
     public void keyCannotHaveAnyCasing() {
-        PMap subject = new PMap("foo=valueA|bar=valueB");
+        StringConfigMap subject = StringConfigMap.create("foo=valueA|bar=valueB");
 
         assertEquals("valueA", subject.get("foo", ""));
         assertEquals("", subject.get("Foo", ""));
@@ -49,25 +49,39 @@ public class PMapTest {
 
     @Test
     public void numericPropertyCanBeRetrievedAsLong() {
-        PMap subject = new PMap("foo=1234|bar=5678");
+        StringConfigMap subject = StringConfigMap.create("foo=1234|bar=5678");
 
         assertEquals(1234L, subject.getLong("foo", 0));
     }
 
     @Test
     public void numericPropertyCanBeRetrievedAsDouble() {
-        PMap subject = new PMap("foo=123.45|bar=56.78");
+        StringConfigMap subject = StringConfigMap.create("foo=123.45|bar=56.78");
 
         assertEquals(123.45, subject.getDouble("foo", 0), 1e-4);
     }
 
     @Test
     public void hasReturnsCorrectResult() {
-        PMap subject = new PMap("foo=123.45|bar=56.78");
+        StringConfigMap subject = StringConfigMap.create("foo=123.45|bar=56.78");
 
         assertTrue(subject.has("foo"));
         assertTrue(subject.has("bar"));
         assertFalse(subject.has("baz"));
     }
 
+    @Test
+    public void putAll() {
+        StringConfigMap map1 = StringConfigMap.create("foo=bar");
+        StringConfigMap map2 = new StringConfigMap(map1);
+
+        Assert.assertEquals("bar", map2.get("foo"));
+    }
+
+    @Test
+    public void toMap() {
+        StringConfigMap map1 = StringConfigMap.create("foo=bar");
+
+        Assert.assertEquals("{foo=bar}", map1.toMap().toString());
+    }
 }

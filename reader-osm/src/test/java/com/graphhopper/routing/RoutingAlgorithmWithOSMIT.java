@@ -495,7 +495,7 @@ public class RoutingAlgorithmWithOSMIT {
                   boolean withCH, String vehicle, String weightStr, boolean is3D) {
 
         // for different weightings we need a different storage, otherwise we would need to remove the graph folder
-        // everytime we come with a different weighting
+        // every time we come with a different weighting
         // graphFile += weightStr;
 
         AlgoHelperEntry algoEntry = null;

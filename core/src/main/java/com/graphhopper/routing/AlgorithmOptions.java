@@ -19,7 +19,8 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.ConfigMap;
+import com.graphhopper.util.StringConfigMap;
 import com.graphhopper.util.Parameters;
 
 /**
@@ -35,7 +36,7 @@ import com.graphhopper.util.Parameters;
  * @author Peter Karich
  */
 public class AlgorithmOptions {
-    private final PMap hints = new PMap(5);
+    private final StringConfigMap hints = new StringConfigMap(5);
     private String algorithm = Parameters.Algorithms.DIJKSTRA_BI;
     private Weighting weighting;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
@@ -110,7 +111,7 @@ public class AlgorithmOptions {
         return maxVisitedNodes;
     }
 
-    public PMap getHints() {
+    public ConfigMap getConfigMap() {
         return hints;
     }
 
@@ -154,7 +155,7 @@ public class AlgorithmOptions {
             return this;
         }
 
-        public Builder hints(PMap hints) {
+        public Builder hints(StringConfigMap hints) {
             this.opts.hints.put(hints);
             return this;
         }

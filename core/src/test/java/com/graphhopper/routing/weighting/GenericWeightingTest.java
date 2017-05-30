@@ -40,7 +40,7 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class GenericWeightingTest {
-    private final PMap properties;
+    private final StringConfigMap properties;
     private final DataFlagEncoder encoder;
     private final EncodingManager em;
     private Graph graph;
@@ -48,7 +48,7 @@ public class GenericWeightingTest {
     private final double edgeWeight = 566111;
 
     public GenericWeightingTest() {
-        properties = new PMap();
+        properties = new StringConfigMap();
         properties.put("store_height", true);
         properties.put("store_weight", true);
         properties.put("store_width", true);
@@ -74,7 +74,7 @@ public class GenericWeightingTest {
     @Test
     public void testBlockedById() {
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = encoder.readStringMap(new PMap());
+        ConfigMap cMap = encoder.readStringMap(new StringConfigMap());
         Weighting instance = new GenericWeighting(encoder, cMap);
         assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
 
@@ -88,7 +88,7 @@ public class GenericWeightingTest {
     @Test
     public void testBlockedByShape() {
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = encoder.readStringMap(new PMap());
+        ConfigMap cMap = encoder.readStringMap(new StringConfigMap());
         GenericWeighting instance = new GenericWeighting(encoder, cMap);
         assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
 
@@ -110,7 +110,7 @@ public class GenericWeightingTest {
 
     @Test
     public void testCalcTime() {
-        ConfigMap cMap = encoder.readStringMap(new PMap());
+        ConfigMap cMap = encoder.readStringMap(new StringConfigMap());
         GenericWeighting weighting = new GenericWeighting(encoder, cMap);
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
         assertEquals(edgeWeight, weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE), .1);
@@ -118,7 +118,7 @@ public class GenericWeightingTest {
 
     @Test
     public void testNullGraph() {
-        ConfigMap cMap = encoder.readStringMap(new PMap());
+        ConfigMap cMap = encoder.readStringMap(new StringConfigMap());
         GenericWeighting weighting = new GenericWeighting(encoder, cMap);
         weighting.setGraph(null);
     }
@@ -126,7 +126,7 @@ public class GenericWeightingTest {
     @Test
     public void testRoadAttributeRestriction() {
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = encoder.readStringMap(new PMap());
+        ConfigMap cMap = encoder.readStringMap(new StringConfigMap());
         cMap.put(GenericWeighting.HEIGHT_LIMIT, 4.0);
         Weighting instance = new GenericWeighting(encoder, cMap);
         assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
@@ -154,7 +154,7 @@ public class GenericWeightingTest {
         simpleGraph.getEdgeIteratorState(0, 1).setFlags(simpleEncoder.handleWayTags(way, 1, 0));
 
         EdgeIteratorState edge = simpleGraph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = simpleEncoder.readStringMap(new PMap());
+        ConfigMap cMap = simpleEncoder.readStringMap(new StringConfigMap());
         cMap.put(GenericWeighting.HEIGHT_LIMIT, 5.0);
         Weighting instance = new GenericWeighting(simpleEncoder, cMap);
 

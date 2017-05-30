@@ -21,8 +21,8 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.weighting.CurvatureWeighting;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.util.BitUtil;
+import com.graphhopper.util.StringConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
 
 import java.util.HashSet;
 
@@ -47,7 +47,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         this(5, 5, 0);
     }
 
-    public MotorcycleFlagEncoder(PMap properties) {
+    public MotorcycleFlagEncoder(StringConfigMap properties) {
         this(
                 (int) properties.getLong("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
@@ -58,7 +58,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     }
 
     public MotorcycleFlagEncoder(String propertiesStr) {
-        this(new PMap(propertiesStr));
+        this(StringConfigMap.create(propertiesStr));
     }
 
     public MotorcycleFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {

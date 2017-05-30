@@ -72,7 +72,7 @@ public class RoutingAlgorithmIT {
         prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA).build(), idx, "dijkstra|" + addStr + weighting));
 
         AlgorithmOptions astarbiOpts = AlgorithmOptions.start(defaultOpts).algorithm(ASTAR_BI).build();
-        astarbiOpts.getHints().put(ASTAR_BI + ".approximation", "BeelineSimplification");
+        astarbiOpts.getConfigMap().put(ASTAR_BI + ".approximation", "BeelineSimplification");
         AlgorithmOptions dijkstrabiOpts = AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA_BI).build();
         prepare.add(new AlgoHelperEntry(ghStorage, astarbiOpts, idx, "astarbi|beeline|" + addStr + weighting));
         prepare.add(new AlgoHelperEntry(ghStorage, dijkstrabiOpts, idx, "dijkstrabi|" + addStr + weighting));

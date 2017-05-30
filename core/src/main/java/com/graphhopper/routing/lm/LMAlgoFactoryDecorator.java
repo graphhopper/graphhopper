@@ -33,7 +33,7 @@ import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
+import com.graphhopper.util.StringConfigMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
 import org.slf4j.Logger;
@@ -168,7 +168,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         String str[] = weighting.split("\\|");
         double value = -1;
         if (str.length > 1) {
-            PMap map = new PMap(weighting);
+            StringConfigMap map = StringConfigMap.create(weighting);
             value = map.getDouble("maximum", -1);
         }
 
