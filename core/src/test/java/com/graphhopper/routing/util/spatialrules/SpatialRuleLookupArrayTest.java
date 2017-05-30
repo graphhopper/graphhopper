@@ -61,14 +61,17 @@ public class SpatialRuleLookupArrayTest {
         List<SpatialRule> spatialRules = new ArrayList<>();
         spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1}), "1"));
         spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 3.6, 3.6}, new double[]{3, 4, 4, 3}), "2"));
+        spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 2, 2}, new double[]{-1, 0, 0, -1}), "3"));
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, true, new BBox(1, 4, 1, 4));
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, true, new BBox(-1, 4, 1, 4));
 
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 1.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 3.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
         // Not in the second Polygon anymore
         assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(3.9, 3.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
         assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(2.2, 1.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
+        // Get the EmptySpatialRule in a BorderTile #1077
+        assertEquals(SpatialRule.EMPTY.getId(), spatialRuleLookup.lookupRule(0.9, 0.9).getId());
     }
 
     @Test
