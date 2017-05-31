@@ -22,7 +22,7 @@ import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
-import com.graphhopper.routing.weighting.GenericWeighting;
+import com.graphhopper.routing.weighting.BlockedWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CmdArgs;
@@ -316,8 +316,8 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         traversalMode = getNodeBase();
 
         for (Weighting weighting : getWeightings()) {
-            if (weighting instanceof GenericWeighting) {
-                ((GenericWeighting) weighting).setGraph(ghStorage);
+            if (weighting instanceof BlockedWeighting) {
+                ((BlockedWeighting) weighting).setGraph(ghStorage);
             }
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
                     new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting),

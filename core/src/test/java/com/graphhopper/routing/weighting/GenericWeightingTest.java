@@ -17,22 +17,20 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.*;
-
-import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_EDGES;
-import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_SHAPES;
-
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.Circle;
-import com.graphhopper.util.shapes.Shape;
+import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.util.ConfigMap;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
@@ -40,7 +38,6 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class GenericWeightingTest {
-    private final PMap properties;
     private final DataFlagEncoder encoder;
     private final EncodingManager em;
     private Graph graph;
@@ -48,7 +45,7 @@ public class GenericWeightingTest {
     private final double edgeWeight = 566111;
 
     public GenericWeightingTest() {
-        properties = new PMap();
+        PMap properties = new PMap();
         properties.put("store_height", true);
         properties.put("store_weight", true);
         properties.put("store_width", true);
@@ -58,7 +55,7 @@ public class GenericWeightingTest {
 
     @Before
     public void setUp() {
-        ReaderWay way = new ReaderWay(27l);
+        ReaderWay way = new ReaderWay(27L);
         way.setTag("highway", "primary");
         way.setTag("maxspeed", "10");
         way.setTag("maxheight", "4.4");
@@ -72,55 +69,11 @@ public class GenericWeightingTest {
     }
 
     @Test
-    public void testBlockedById() {
-        EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = encoder.readStringMap(new PMap());
-        Weighting instance = new GenericWeighting(encoder, cMap);
-        assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
-
-        GHIntHashSet blockedEdges = new GHIntHashSet(1);
-        cMap.put(BLOCKED_EDGES, blockedEdges);
-        blockedEdges.add(0);
-        instance = new GenericWeighting(encoder, cMap);
-        assertEquals(Double.POSITIVE_INFINITY, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
-    }
-
-    @Test
-    public void testBlockedByShape() {
-        EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = encoder.readStringMap(new PMap());
-        GenericWeighting instance = new GenericWeighting(encoder, cMap);
-        assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
-
-        List<Shape> shapes = new ArrayList<>(1);
-        shapes.add(new Circle(0.01, 0.01, 100));
-        cMap.put(BLOCKED_SHAPES, shapes);
-        instance = new GenericWeighting(encoder, cMap);
-        instance.setGraph(graph);
-        assertEquals(Double.POSITIVE_INFINITY, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
-
-        shapes.clear();
-        // Do not match 1,1 of edge
-        shapes.add(new Circle(0.1, 0.1, 100));
-        cMap.put(BLOCKED_SHAPES, shapes);
-        instance = new GenericWeighting(encoder, cMap);
-        instance.setGraph(graph);
-        assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
-    }
-
-    @Test
     public void testCalcTime() {
         ConfigMap cMap = encoder.readStringMap(new PMap());
         GenericWeighting weighting = new GenericWeighting(encoder, cMap);
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
         assertEquals(edgeWeight, weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE), .1);
-    }
-
-    @Test
-    public void testNullGraph() {
-        ConfigMap cMap = encoder.readStringMap(new PMap());
-        GenericWeighting weighting = new GenericWeighting(encoder, cMap);
-        weighting.setGraph(null);
     }
 
     @Test
@@ -142,7 +95,7 @@ public class GenericWeightingTest {
         EncodingManager simpleEncodingManager = new EncodingManager(simpleEncoder);
         Graph simpleGraph = new GraphBuilder(simpleEncodingManager).create();
 
-        ReaderWay way = new ReaderWay(27l);
+        ReaderWay way = new ReaderWay(27L);
         way.setTag("highway", "primary");
         way.setTag("maxspeed", "10");
         way.setTag("maxheight", "4.4");
