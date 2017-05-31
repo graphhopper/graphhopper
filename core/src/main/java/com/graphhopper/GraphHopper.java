@@ -847,7 +847,7 @@ public class GraphHopper implements GraphHopperAPI {
             prepareCH();
 
         if (lmFactoryDecorator.isEnabled())
-            lmFactoryDecorator.createPreparations(ghStorage, traversalMode, locationIndex);
+            lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
         loadOrPrepareLM();
     }
 

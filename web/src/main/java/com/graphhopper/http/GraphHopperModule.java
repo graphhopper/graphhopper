@@ -84,7 +84,7 @@ public class GraphHopperModule extends AbstractModule {
                     Reader reader = location.isEmpty() ? new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream()) : new FileReader(location);
                     JsonFeatureCollection jsonFeatureCollection = new GHJsonFactory().create().fromJson(reader, JsonFeatureCollection.class);
                     if (!jsonFeatureCollection.getFeatures().isEmpty()) {
-                        SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollection, "country", new SpatialRuleLookupBuilder.SpatialRuleFactory() {
+                        SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollection, "area", new SpatialRuleLookupBuilder.SpatialRuleFactory() {
                             @Override
                             public SpatialRule createSpatialRule(String id, List<Polygon> polygons) {
                                 return new DefaultSpatialRule() {
@@ -92,7 +92,7 @@ public class GraphHopperModule extends AbstractModule {
                                     public String getId() {
                                         return id;
                                     }
-                                };
+                                }.setBorders(polygons);
                             }
                         });
                         for (PrepareLandmarks prep : getLMFactoryDecorator().getPreparations()) {

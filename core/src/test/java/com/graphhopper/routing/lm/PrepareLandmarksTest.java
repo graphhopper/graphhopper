@@ -21,18 +21,22 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Directory;
+import com.graphhopper.storage.GraphExtension;
+import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
-
-import java.io.File;
-
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -86,7 +90,7 @@ public class PrepareLandmarksTest
 
         int lm = 5, activeLM = 2;
         Weighting weighting = new FastestWeighting(encoder);
-        LandmarkStorage store = new LandmarkStorage(graph, dir, lm, weighting, tm);
+        LandmarkStorage store = new LandmarkStorage(graph, dir, weighting, lm);
         store.setMinimumNodes(2);
         store.createLandmarks();
 
@@ -127,7 +131,7 @@ public class PrepareLandmarksTest
         AlgorithmOptions opts = AlgorithmOptions.start().weighting(weighting).traversalMode(tm).
                 build();
 
-        PrepareLandmarks prepare = new PrepareLandmarks(new RAMDirectory(), graph, weighting, tm, 4, 2);
+        PrepareLandmarks prepare = new PrepareLandmarks(new RAMDirectory(), graph, weighting, 4, 2);
         prepare.setMinimumNodes(2);
         prepare.doWork();
 
@@ -177,7 +181,7 @@ public class PrepareLandmarksTest
 
         Directory dir = new RAMDirectory(fileStr, true).create();
         Weighting weighting = new FastestWeighting(encoder);
-        PrepareLandmarks plm = new PrepareLandmarks(dir, graph, weighting, tm, 2, 2);
+        PrepareLandmarks plm = new PrepareLandmarks(dir, graph, weighting, 2, 2);
         plm.setMinimumNodes(2);
         plm.doWork();
 
@@ -189,7 +193,7 @@ public class PrepareLandmarksTest
         assertEquals(4791, Math.round(plm.getLandmarkStorage().getFromWeight(0, 1) * expectedFactor));
 
         dir = new RAMDirectory(fileStr, true);
-        plm = new PrepareLandmarks(dir, graph, weighting, tm, 2, 2);
+        plm = new PrepareLandmarks(dir, graph, weighting, 2, 2);
         assertTrue(plm.loadExisting());
         assertEquals(expectedFactor, plm.getLandmarkStorage().getFactor(), 1e-6);
         assertEquals(Arrays.toString(new int[]{

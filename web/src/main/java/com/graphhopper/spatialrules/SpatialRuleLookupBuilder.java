@@ -7,6 +7,7 @@ import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupArray;
 import com.graphhopper.util.shapes.BBox;
+import com.vividsolutions.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,11 +40,20 @@ public class SpatialRuleLookupBuilder {
                                                SpatialRuleFactory spatialRuleFactory, double resolution, BBox maxBBox) {
         BBox polygonBounds = BBox.createInverse(false);
         List<SpatialRule> spatialRules = new ArrayList<>();
-        for (JsonFeature jsonFeature : jsonFeatureCollection.getFeatures()) {
-            String id = (String) jsonFeature.getProperty(jsonIdField);
+
+        for (int jsonFeatureIdx = 0; jsonFeatureIdx < jsonFeatureCollection.getFeatures().size(); jsonFeatureIdx++) {
+            JsonFeature jsonFeature = jsonFeatureCollection.getFeatures().get(jsonFeatureIdx);
+            String id = jsonIdField.isEmpty() || jsonIdField.toLowerCase().equals("id") ? jsonFeature.getId() : (String) jsonFeature.getProperty(jsonIdField);
+            if (id == null || id.isEmpty())
+                throw new IllegalArgumentException("ID cannot be empty but was for JsonFeature " + jsonFeatureIdx);
+
             List<Polygon> borders = new ArrayList<>();
             for (int i = 0; i < jsonFeature.getGeometry().getNumGeometries(); i++) {
-                borders.add(ghPolygonFromJTS((com.vividsolutions.jts.geom.Polygon) jsonFeature.getGeometry().getGeometryN(i)));
+                Geometry poly = jsonFeature.getGeometry().getGeometryN(i);
+                if (poly instanceof com.vividsolutions.jts.geom.Polygon)
+                    borders.add(ghPolygonFromJTS((com.vividsolutions.jts.geom.Polygon) poly));
+                else
+                    throw new IllegalArgumentException("Geometry for " + id + " (" + i + ") not supported " + poly.getClass().getSimpleName());
             }
             SpatialRule spatialRule = spatialRuleFactory.createSpatialRule(id, borders);
             if (spatialRule != SpatialRule.EMPTY) {
