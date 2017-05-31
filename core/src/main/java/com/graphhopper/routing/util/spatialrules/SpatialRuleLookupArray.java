@@ -109,6 +109,9 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
         }
 
         for (SpatialRule rule : ruleContainer.getRules()) {
+            if (rule.equals(SpatialRule.EMPTY))
+                continue;
+
             for (Polygon p : rule.getBorders()) {
                 if (p.contains(lat, lon)) {
                     return rule;
