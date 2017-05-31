@@ -26,6 +26,10 @@ public class HintsMap extends PMap {
     public HintsMap() {
     }
 
+    public HintsMap(int capacity) {
+        super(capacity);
+    }
+
     /**
      * Convenient constructor if only one parameter is provided
      */

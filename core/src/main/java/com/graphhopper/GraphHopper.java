@@ -89,7 +89,6 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
-    private String blockedRectangularAreas = "";
 
     private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
     // for index
@@ -599,7 +598,6 @@ public class GraphHopper implements GraphHopperAPI {
         maxVisitedNodes = args.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
         maxRoundTripRetries = args.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
         nonChMaxWaypointDistance = args.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
-        blockedRectangularAreas = args.get(Routing.BLOCK_AREA, "");
 
         return this;
     }
@@ -796,6 +794,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (!chFactoryDecorator.hasWeightings()) {
             for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
                 for (String chWeightingStr : chFactoryDecorator.getWeightingsAsStrings()) {
+                    // ghStorage is null at this point
                     Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder, null);
                     chFactoryDecorator.addWeighting(weighting);
                 }
@@ -885,41 +884,37 @@ public class GraphHopper implements GraphHopperAPI {
      * @see HintsMap
      */
     public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
-        String weighting = hintsMap.getWeighting().toLowerCase();
+        String weightingStr = hintsMap.getWeighting().toLowerCase();
+        Weighting weighting = null;
 
         if (encoder.supports(GenericWeighting.class)) {
-            DataFlagEncoder dataEncoder = (DataFlagEncoder) encoder;
-            ConfigMap cMap = dataEncoder.readStringMap(hintsMap);
-
-            // add default blocked rectangular areas from config properties
-            if (!this.blockedRectangularAreas.isEmpty()) {
-                String val = this.blockedRectangularAreas;
-                String blockedAreasFromRequest = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
-                if (!blockedAreasFromRequest.isEmpty())
-                    val += ";" + blockedAreasFromRequest;
-                hintsMap.put(Parameters.Routing.BLOCK_AREA, val);
-            }
-
-            cMap = new GraphEdgeIdFinder(graph, locationIndex).parseStringHints(cMap, hintsMap, new DefaultEdgeFilter(encoder));
-            GenericWeighting genericWeighting = new GenericWeighting(dataEncoder, cMap);
-            genericWeighting.setGraph(graph);
-            return genericWeighting;
-        } else if ("shortest".equalsIgnoreCase(weighting)) {
-            return new ShortestWeighting(encoder);
-        } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty()) {
+            weighting = new GenericWeighting((DataFlagEncoder) encoder, hintsMap);
+        } else if ("shortest".equalsIgnoreCase(weightingStr)) {
+            weighting = new ShortestWeighting(encoder);
+        } else if ("fastest".equalsIgnoreCase(weightingStr) || weightingStr.isEmpty()) {
             if (encoder.supports(PriorityWeighting.class))
-                return new PriorityWeighting(encoder, hintsMap);
+                weighting = new PriorityWeighting(encoder, hintsMap);
             else
-                return new FastestWeighting(encoder, hintsMap);
-        } else if ("curvature".equalsIgnoreCase(weighting)) {
+                weighting = new FastestWeighting(encoder, hintsMap);
+        } else if ("curvature".equalsIgnoreCase(weightingStr)) {
             if (encoder.supports(CurvatureWeighting.class))
-                return new CurvatureWeighting(encoder, hintsMap);
+                weighting = new CurvatureWeighting(encoder, hintsMap);
 
-        } else if ("short_fastest".equalsIgnoreCase(weighting)) {
-            return new ShortFastestWeighting(encoder, hintsMap);
+        } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
+            weighting = new ShortFastestWeighting(encoder, hintsMap);
         }
 
-        throw new IllegalArgumentException("weighting " + weighting + " not supported");
+        if (weighting == null)
+            throw new IllegalArgumentException("weighting " + weighting + " not supported");
+
+        if (hintsMap.has(Routing.BLOCK_AREA)) {
+            String blockAreaStr = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
+            GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(graph, locationIndex).
+                    parseBlockArea(blockAreaStr, new DefaultEdgeFilter(encoder));
+            return new BlockAreaWeighting(weighting, blockArea);
+        }
+
+        return weighting;
     }
 
     /**

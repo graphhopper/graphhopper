@@ -27,7 +27,7 @@ import com.graphhopper.util.EdgeIteratorState;
 public abstract class AbstractWeighting implements Weighting {
     protected final FlagEncoder flagEncoder;
 
-    public AbstractWeighting(FlagEncoder encoder) {
+    protected AbstractWeighting(FlagEncoder encoder) {
         this.flagEncoder = encoder;
         if (!flagEncoder.isRegistered())
             throw new IllegalStateException("Make sure you add the FlagEncoder " + flagEncoder + " to an EncodingManager before using it elsewhere");

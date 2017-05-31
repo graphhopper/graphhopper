@@ -254,7 +254,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("generic", 8));
+                setEncodingManager(new EncodingManager("generic,car", 8));
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
@@ -275,7 +275,7 @@ public class GraphHopperIT {
 
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(6684, rsp.getBest().getDistance(), 1);
+        assertEquals(6685, rsp.getBest().getDistance(), 1);
 
         // block by area
         String someArea = "49.97986,11.472902,50.003946,11.534357";
@@ -301,6 +301,19 @@ public class GraphHopperIT {
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(6879, rsp.getBest().getDistance(), 1);
+
+        // blocking works for all weightings
+        req = new GHRequest(50.009504, 11.490669, 50.024726, 11.496162).
+                setVehicle("car").setWeighting("fastest");
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(1807, rsp.getBest().getDistance(), 1);
+
+        // block point 49.985759,11.50687
+        req.getHints().put(Routing.BLOCK_AREA, "50.018274,11.492558");
+        rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertEquals(3363, rsp.getBest().getDistance(), 1);
     }
 
     @Test
