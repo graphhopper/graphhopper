@@ -219,8 +219,7 @@ GHRequest.prototype.flatParameter = function (key, val) {
         var url = "";
         var arr = val;
         for (var keyIndex in arr) {
-            var objKey = arr[keyIndex];
-            url += this.flatParameter(key + "."+ objKey, val);
+            url += this.flatParameter(key, arr[keyIndex]);
         }
         return url;
     }

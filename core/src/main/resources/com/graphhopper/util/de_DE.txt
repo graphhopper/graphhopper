@@ -1,14 +1,17 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-continue=geradeaus
-continue_onto=geradeaus auf %1$s
+continue=dem Straßenverlauf folgen
+continue_onto=dem Straßenverlauf von %1$s folgen
 turn_left=links abbiegen
 turn_right=rechts abbiegen
 turn_slight_left=leicht links abbiegen
 turn_slight_right=leicht rechts abbiegen
 turn_sharp_left=scharf links abbiegen
 turn_sharp_right=scharf rechts abbiegen
+keep_left=links halten
+keep_right=rechts halten
 turn_onto=%1$s auf %2$s
+u_turn=wenden
 unknown=unbekanntes Richtungszeichen  '%1$s'
 web.search_button=Suche
 web.from_hint=Von
@@ -32,7 +35,7 @@ web.truck=LKW
 web.staticlink=Link
 web.motorcycle=Motorrad
 via=über
-finish=Ziel erreicht!
+finish=Ziel erreicht
 hour_abbr=h
 day_abbr=d
 min_abbr=min

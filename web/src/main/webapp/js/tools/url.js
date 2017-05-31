@@ -35,7 +35,7 @@ function parseUrl(query) {
 function mergeParamIntoObject(res, key, value) {
     var objectIndex = key.indexOf(".");
     if(objectIndex < 0) {
-        // force array for heading and point
+        // force always array for some keys even if just one parameter
         if (typeof res[key] === "undefined" && key !== "heading" && key !== "point") {
             if (value === 'true')
                 value = true;

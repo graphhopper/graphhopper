@@ -44,7 +44,7 @@ public class ChangeGraphServlet extends GHBaseServlet {
     private GraphHopperAPI graphHopper;
 
     @Inject
-    private GHJson gson;
+    private GHJson ghJson;
 
     @Override
     protected void doPost(HttpServletRequest httpReq, HttpServletResponse httpRes) throws ServletException, IOException {
@@ -52,7 +52,7 @@ public class ChangeGraphServlet extends GHBaseServlet {
         float took = -1;
         StopWatch sw = new StopWatch().start();
         try {
-            JsonFeatureCollection collection = gson.fromJson(new InputStreamReader(httpReq.getInputStream(), Helper.UTF_CS), JsonFeatureCollection.class);
+            JsonFeatureCollection collection = ghJson.fromJson(new InputStreamReader(httpReq.getInputStream(), Helper.UTF_CS), JsonFeatureCollection.class);
             // TODO put changeGraph on GraphHopperAPI interface and remove cast (or some other solution)
             if (!(graphHopper instanceof GraphHopper)) {
                 throw new IllegalStateException("Graph change API not supported with public transit.");

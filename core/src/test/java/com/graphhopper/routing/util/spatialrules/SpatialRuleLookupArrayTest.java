@@ -33,8 +33,8 @@ public class SpatialRuleLookupArrayTest {
         }.addBorder(new Polygon(new double[]{5, 5, 6, 6}, new double[]{5, 6, 6, 5}));
         spatialRules.add(austria);
 
+        // create lookup with bbox just for DEU (for space reduction)
         SpatialRuleLookupArray lookup = new SpatialRuleLookupArray(spatialRules, 1, false, new BBox(1, 2, 1, 2));
-
         SpatialRule rule = lookup.lookupRule(1.5, 1.5);
         assertEquals(germany, rule);
         assertEquals("DEU", rule.getId());
@@ -61,14 +61,17 @@ public class SpatialRuleLookupArrayTest {
         List<SpatialRule> spatialRules = new ArrayList<>();
         spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 2, 2}, new double[]{1, 2, 2, 1}), "1"));
         spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 3.6, 3.6}, new double[]{3, 4, 4, 3}), "2"));
+        spatialRules.add(getSpatialRule(new Polygon(new double[]{1, 1, 2, 2}, new double[]{-1, 0, 0, -1}), "3"));
 
-        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, true, new BBox(1, 4, 1, 4));
+        SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, 1, true, new BBox(-1, 4, 1, 4));
 
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 1.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
         assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, spatialRuleLookup.lookupRule(1.2, 3.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
         // Not in the second Polygon anymore
         assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(3.9, 3.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
         assertEquals(AccessValue.ACCESSIBLE, spatialRuleLookup.lookupRule(2.2, 1.7).getAccessValue(null, TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE));
+        // Get the EmptySpatialRule in a BorderTile #1077
+        assertEquals(SpatialRule.EMPTY.getId(), spatialRuleLookup.lookupRule(0.9, 0.9).getId());
     }
 
     @Test
@@ -86,7 +89,6 @@ public class SpatialRuleLookupArrayTest {
             }
         }.addBorder(germanPolygon));
         SpatialRuleLookup spatialRuleLookup = new SpatialRuleLookupArray(spatialRules, .1, true, new BBox(-180, 180, -90, 90));
-
 
         // Far from the border of Germany, in Germany
         assertEquals("DEU", spatialRuleLookup.lookupRule(48.777106, 9.180769).getId());
@@ -149,7 +151,7 @@ public class SpatialRuleLookupArrayTest {
     }
 
     private SpatialRule getSpatialRule(Polygon p, final String name) {
-        AbstractSpatialRule rule = new AbstractSpatialRule() {
+        return new AbstractSpatialRule() {
             @Override
             public double getMaxSpeed(String highwayTag, double _default) {
                 return _default;
@@ -164,8 +166,6 @@ public class SpatialRuleLookupArrayTest {
             public String getId() {
                 return name;
             }
-        };
-        rule.addBorder(p);
-        return rule;
+        }.addBorder(p);
     }
 }

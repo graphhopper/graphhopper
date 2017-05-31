@@ -52,15 +52,23 @@ public class AngleCalc {
         return angle;
     }
 
+    public double calcOrientation(double lat1, double lon1, double lat2, double lon2) {
+        return calcOrientation(lat1, lon1, lat2, lon2, true);
+    }
+
     /**
      * Return orientation of line relative to east.
      * <p>
      *
+     * @param exact If false the atan gets calculated faster, but it might contain small errors
      * @return Orientation in interval -pi to +pi where 0 is east
      */
-    public double calcOrientation(double lat1, double lon1, double lat2, double lon2) {
+    public double calcOrientation(double lat1, double lon1, double lat2, double lon2, boolean exact) {
         double shrinkFactor = cos(toRadians((lat1 + lat2) / 2));
-        return Math.atan2(lat2 - lat1, shrinkFactor * (lon2 - lon1));
+        if (exact)
+            return Math.atan2(lat2 - lat1, shrinkFactor * (lon2 - lon1));
+        else
+            return atan2(lat2 - lat1, shrinkFactor * (lon2 - lon1));
     }
 
     /**
@@ -107,7 +115,7 @@ public class AngleCalc {
         if (orientation < 0)
             orientation += 2 * Math.PI;
 
-        return Math.toDegrees(Helper.round4(orientation));
+        return Math.toDegrees(Helper.round4(orientation))%360;
     }
 
     String azimuth2compassPoint(double azimuth) {

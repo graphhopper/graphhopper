@@ -32,8 +32,7 @@ public class LMAlgoFactoryDecoratorTest {
         FlagEncoder car = new CarFlagEncoder();
         EncodingManager em = new EncodingManager(car);
         dec.addWeighting(new FastestWeighting(car)).addWeighting(new ShortestWeighting(car));
-        dec.createPreparations(new GraphHopperStorage(new RAMDirectory(), em, false, new GraphExtension.NoOpExtension()),
-                TraversalMode.NODE_BASED, null);
+        dec.createPreparations(new GraphHopperStorage(new RAMDirectory(), em, false, new GraphExtension.NoOpExtension()), null);
         assertEquals(1, dec.getPreparations().get(0).getLandmarkStorage().getFactor(), .1);
         assertEquals(0.3, dec.getPreparations().get(1).getLandmarkStorage().getFactor(), .1);
     }

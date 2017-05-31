@@ -17,22 +17,20 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
-import com.graphhopper.routing.util.*;
-import com.graphhopper.storage.*;
-
-import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_EDGES;
-import static com.graphhopper.storage.GraphEdgeIdFinder.BLOCKED_SHAPES;
-
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.Circle;
-import com.graphhopper.util.shapes.Shape;
+import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PMap;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
@@ -72,67 +70,19 @@ public class GenericWeightingTest {
     }
 
     @Test
-    public void testBlockedById() {
-        EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = encoder.readStringMap(new PMap());
-        Weighting instance = new GenericWeighting(encoder, cMap);
-        assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
-
-        GHIntHashSet blockedEdges = new GHIntHashSet(1);
-        cMap.put(BLOCKED_EDGES, blockedEdges);
-        blockedEdges.add(0);
-        instance = new GenericWeighting(encoder, cMap);
-        assertEquals(Double.POSITIVE_INFINITY, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
-    }
-
-    @Test
-    public void testBlockedByShape() {
-        EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = encoder.readStringMap(new PMap());
-        GenericWeighting instance = new GenericWeighting(encoder, cMap);
-        assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
-
-        List<Shape> shapes = new ArrayList<>(1);
-        shapes.add(new Circle(0.01, 0.01, 100));
-        cMap.put(BLOCKED_SHAPES, shapes);
-        instance = new GenericWeighting(encoder, cMap);
-        instance.setGraph(graph);
-        assertEquals(Double.POSITIVE_INFINITY, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
-
-        shapes.clear();
-        // Do not match 1,1 of edge
-        shapes.add(new Circle(0.1, 0.1, 100));
-        cMap.put(BLOCKED_SHAPES, shapes);
-        instance = new GenericWeighting(encoder, cMap);
-        instance.setGraph(graph);
-        assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
-    }
-
-    @Test
     public void testCalcTime() {
-        ConfigMap cMap = encoder.readStringMap(new PMap());
-        GenericWeighting weighting = new GenericWeighting(encoder, cMap);
+        GenericWeighting weighting = new GenericWeighting(encoder, new HintsMap());
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
         assertEquals(edgeWeight, weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE), .1);
     }
 
     @Test
-    public void testNullGraph() {
-        ConfigMap cMap = encoder.readStringMap(new PMap());
-        GenericWeighting weighting = new GenericWeighting(encoder, cMap);
-        weighting.setGraph(null);
-    }
-
-    @Test
     public void testRoadAttributeRestriction() {
         EdgeIteratorState edge = graph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = encoder.readStringMap(new PMap());
-        cMap.put(GenericWeighting.HEIGHT_LIMIT, 4.0);
-        Weighting instance = new GenericWeighting(encoder, cMap);
+        Weighting instance = new GenericWeighting(encoder, new HintsMap().put(GenericWeighting.HEIGHT_LIMIT, 4.0));
         assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
 
-        cMap.put(GenericWeighting.HEIGHT_LIMIT, 5.0);
-        instance = new GenericWeighting(encoder, cMap);
+        instance = new GenericWeighting(encoder, new HintsMap().put(GenericWeighting.HEIGHT_LIMIT, 5.0));
         assertEquals(Double.POSITIVE_INFINITY, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
     }
 
@@ -153,11 +103,8 @@ public class GenericWeightingTest {
         AbstractRoutingAlgorithmTester.updateDistancesFor(simpleGraph, 1, 0.01, 0.01);
         simpleGraph.getEdgeIteratorState(0, 1).setFlags(simpleEncoder.handleWayTags(way, 1, 0));
 
+        Weighting instance = new GenericWeighting(simpleEncoder, new HintsMap().put(GenericWeighting.HEIGHT_LIMIT, 5.0));
         EdgeIteratorState edge = simpleGraph.getEdgeIteratorState(0, 1);
-        ConfigMap cMap = simpleEncoder.readStringMap(new PMap());
-        cMap.put(GenericWeighting.HEIGHT_LIMIT, 5.0);
-        Weighting instance = new GenericWeighting(simpleEncoder, cMap);
-
         assertEquals(edgeWeight, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
     }
 }
