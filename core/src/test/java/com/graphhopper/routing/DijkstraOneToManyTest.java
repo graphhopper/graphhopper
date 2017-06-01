@@ -171,6 +171,29 @@ public class DijkstraOneToManyTest extends AbstractRoutingAlgorithmTester {
         assertEquals(Helper.createTList(0, 1, 2), p.calcNodes());
     }
 
+    /**
+     * See issue #707
+     */
+    @Test
+    public void testUseCacheZeroPath()
+    {
+        RoutingAlgorithm algo = createAlgo(createTestStorage());
+
+        Path p = algo.calcPath(0, 0);
+        assertEquals(0, p.distance, 0.00000);
+
+        p = algo.calcPath(0, 4);
+        assertEquals(Helper.createTList(0, 4), p.calcNodes());
+
+        // expand SPT
+        p = algo.calcPath(0, 7);
+        assertEquals(Helper.createTList(0, 4, 5, 7), p.calcNodes());
+
+        // use SPT
+        p = algo.calcPath(0, 2);
+        assertEquals(Helper.createTList(0, 1, 2), p.calcNodes());
+    }
+
     @Test
     public void testDifferentEdgeFilter() {
         GraphHopperStorage g = new GraphBuilder(encodingManager).setCHGraph(new FastestWeighting(carEncoder)).create();
