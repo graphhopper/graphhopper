@@ -872,6 +872,8 @@ public class GraphHopperIT {
         assertEquals(90, bestPath.getPoints().getSize());
     }
 
+
+
     @Test
     public void testTurnCostsOnOff() {
         GraphHopper tmpHopper = new GraphHopperOSM().
