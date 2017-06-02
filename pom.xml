@@ -8,7 +8,7 @@
     <name>GraphHopper Map Matching Parent Project</name>
     <version>0.10-SNAPSHOT</version>
     <packaging>pom</packaging> 
-    <url>https://graphhopper.com</url> 
+    <url>https://www.graphhopper.com</url> 
     <inceptionYear>2012</inceptionYear>
     <description>
         Super pom of the GraphHopper Map Matching component
