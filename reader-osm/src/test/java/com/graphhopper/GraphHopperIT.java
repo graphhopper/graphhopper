@@ -858,18 +858,7 @@ public class GraphHopperIT {
         assertEquals(3587, bestPath.getDistance(), 1);
         assertEquals(90, bestPath.getPoints().getSize());
 
-        // speed² mode is currently less optimal than CH so just check different nodes and correctness
-        req.getHints().put(Landmark.DISABLE, false);
-        req.getHints().put(CH.DISABLE, false);
-        rsp = tmpHopper.route(req);
-
-        long speed2Sum = rsp.getHints().getLong("visited_nodes.sum", 0);
-        assertTrue("Visited nodes for speed² mode should be different but " + speed2Sum + " == " + chSum, speed2Sum != chSum);
-        assertTrue("Visited nodes for speed² mode should be different but " + speed2Sum + " == " + flexSum, speed2Sum != flexSum);
-
-        bestPath = rsp.getBest();
-        assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(90, bestPath.getPoints().getSize());
+        // combining hybrid & speed mode is currently not possible and should be avoided: #1082
     }
 
     @Test

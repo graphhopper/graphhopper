@@ -24,7 +24,6 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -44,9 +43,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-
-import static com.graphhopper.util.Parameters.Landmark.DISABLE;
 
 /**
  * This class implements the A*, landmark and triangulation (ALT) decorator.
@@ -223,8 +219,10 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     @Override
     public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map) {
-        boolean disableLM = map.getBool(DISABLE, false);
-        if (!isEnabled() || disablingAllowed && disableLM)
+        // for now do not allow mixing CH&LM #1082
+        boolean disableCH = map.getBool(Parameters.CH.DISABLE, false);
+        boolean disableLM = map.getBool(Parameters.Landmark.DISABLE, false);
+        if (!isEnabled() || disablingAllowed && disableLM || !disableCH)
             return defaultAlgoFactory;
 
         if (preparations.isEmpty())
@@ -235,7 +233,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                 return new LMRAFactory(p, defaultAlgoFactory);
         }
 
-        // if the initial encoder&weighting has certain properies we could cross query it but for now avoid this
+        // if the initial encoder&weighting has certain properties we could cross query it but for now avoid this
         return defaultAlgoFactory;
     }
 
