@@ -24,6 +24,9 @@ import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
+import com.graphhopper.util.details.AverageSpeedDetails;
+import com.graphhopper.util.details.PathDetails;
+import com.graphhopper.util.details.PathDetailsCalculator;
 import org.junit.Test;
 
 import java.util.*;
@@ -273,6 +276,59 @@ public class PathTest {
                 "Arrive at destination"),
                 tmpList);
         roundaboutGraph.inverse3to9();
+    }
+
+    @Test
+    public void testCalcDetails() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        na.setNode(1, 52.514, 13.348);
+        na.setNode(2, 52.514, 13.349);
+        na.setNode(3, 52.514, 13.350);
+        na.setNode(4, 52.515, 13.349);
+        na.setNode(5, 52.516, 13.3452);
+
+        ReaderWay w = new ReaderWay(1);
+        w.setTag("highway", "tertiary");
+        w.setTag("maxspeed", "50");
+
+        EdgeIteratorState tmpEdge;
+        tmpEdge = g.edge(1, 2, 5, true).setName("1-2");
+        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
+        tmpEdge = g.edge(4, 5, 5, true).setName("4-5");
+        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
+
+        w.setTag("maxspeed", "100");
+        tmpEdge = g.edge(2, 3, 5, true).setName("2-3");
+        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
+
+        w.setTag("maxspeed", "10");
+        tmpEdge = g.edge(3, 4, 5, true).setName("3-4");
+        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
+
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
+        assertTrue(p.isFound());
+
+        List<PathDetailsCalculator> calcs = new ArrayList<>();
+        calcs.add(new AverageSpeedDetails(encoder));
+
+        PointList points = p.calcPoints();
+
+        List<PathDetails> details = p.calcDetails(calcs, points);
+        assertTrue(details.size() == 1);
+        Map<Object, List<int[]>> detailsMap = details.get(0).getDetails();
+        assertTrue(detailsMap.keySet().size() == 3);
+        assertTrue(detailsMap.containsKey(10.0));
+        assertTrue(detailsMap.containsKey(45.0));
+        assertTrue(detailsMap.containsKey(90.0));
+        assertTrue(detailsMap.get(45.0).size() == 2);
+        // First Point
+        assertTrue(detailsMap.get(45.0).get(0)[0] == 0);
+        // Second Point
+        assertTrue(detailsMap.get(45.0).get(0)[1] == 1);
+        // Last Point
+        assertTrue(detailsMap.get(45.0).get(1)[1] == 4);
     }
 
     /**

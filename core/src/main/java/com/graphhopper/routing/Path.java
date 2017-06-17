@@ -20,16 +20,15 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHIntArrayList;
-import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
-import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.details.PathDetails;
+import com.graphhopper.util.details.PathDetailsCalculator;
+import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -372,6 +371,21 @@ public class Path {
         return ways;
     }
 
+    /**
+     * @param calculators All calculators to be considered for this route
+     * @param points      The points need to contain all points of the route up to this path including the current path.
+     *                    Be careful with simplification, you should not remove the TowerNodes that are used here.
+     * @return List of PathDetails for this Path
+     */
+    public List<PathDetails> calcDetails(final List<PathDetailsCalculator> calculators, final PointList points) {
+        List<PathDetails> details = new ArrayList<>(calculators.size());
+        for (PathDetailsCalculator calc : calculators) {
+            details.add(new PathDetails(calc.getName()));
+        }
+        forEveryEdge(new PathDetailsFromEdges(details, calculators, points, nodeAccess));
+        return details;
+    }
+
     @Override
     public String toString() {
         return "distance:" + getDistance() + ", edges:" + edgeIds.size();
@@ -393,6 +407,7 @@ public class Path {
      */
     public interface EdgeVisitor {
         void next(EdgeIteratorState edge, int index, int prevEdgeId);
+
         void finish();
     }
 }

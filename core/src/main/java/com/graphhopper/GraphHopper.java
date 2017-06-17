@@ -41,6 +41,8 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.details.AverageSpeedDetails;
+import com.graphhopper.util.details.PathDetailsCalculator;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.BBox;
@@ -1047,14 +1049,22 @@ public class GraphHopper implements GraphHopperAPI {
 
                 altPaths = routingTemplate.calcPaths(queryGraph, tmpAlgoFactory, algoOpts);
 
+                List<PathDetailsCalculator> calculators = new ArrayList<>(1);
+
                 boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, enableInstructions);
                 boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
                 double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
+                boolean addAverageSpeed = hints.getBool(Parameters.DETAILS.AVERAGE_SPEED, false);
+                if(addAverageSpeed){
+                    calculators.add(new AverageSpeedDetails(encoder));
+                    wayPointMaxDistance = 0;
+                }
                 DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
                 PathMerger pathMerger = new PathMerger().
                         setCalcPoints(tmpCalcPoints).
                         setDouglasPeucker(peucker).
                         setEnableInstructions(tmpEnableInstructions).
+                        setPathDetailCalculator(calculators).
                         setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
 
                 if (routingTemplate.isReady(pathMerger, tr))

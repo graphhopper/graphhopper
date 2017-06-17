@@ -19,6 +19,8 @@ package com.graphhopper;
 
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.details.PathDetails;
+import com.graphhopper.util.details.PathDetailsCalculator;
 import com.graphhopper.util.shapes.BBox;
 
 import java.math.BigDecimal;
@@ -47,6 +49,7 @@ public class PathWrapper {
     private int numChanges;
     private long firstPtLegDeparture;
     private final List<Trip.Leg> legs = new ArrayList<>();
+    private List<PathDetails> pathDetails = Collections.EMPTY_LIST;
     private BigDecimal fare;
 
     /**
@@ -241,6 +244,23 @@ public class PathWrapper {
 
     public void setInstructions(InstructionList instructions) {
         this.instructions = instructions;
+    }
+
+    public void addPathDetails(List<PathDetails> details){
+        if(this.pathDetails.isEmpty()){
+            this.pathDetails = details;
+        }else{
+            if(this.pathDetails.size() != details.size()){
+                throw new IllegalStateException("Details have to be the same size");
+            }
+            for (int i = 0; i < details.size(); i++) {
+                this.pathDetails.get(i).merge(details.get(i));
+            }
+        }
+    }
+
+    public List<PathDetails> getPathDetails(){
+        return this.pathDetails;
     }
 
     private void check(String method) {

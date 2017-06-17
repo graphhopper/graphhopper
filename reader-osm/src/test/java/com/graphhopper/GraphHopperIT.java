@@ -24,6 +24,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.details.PathDetails;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.*;
@@ -387,6 +388,23 @@ public class GraphHopperIT {
         assertEquals(2, arsp.getInstructions().size());
         assertEquals(Instruction.REACHED_VIA, arsp.getInstructions().createJson().get(0).get("sign"));
         assertEquals(Instruction.FINISH, arsp.getInstructions().createJson().get(1).get("sign"));
+    }
+
+    @Test
+    public void testMonacoPathDetails() {
+        GHRequest request = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566);
+        request.setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr);
+        request.getHints().put("details.average_speed", true);
+
+        GHResponse rsp = hopper.route(request);
+
+        PathWrapper arsp = rsp.getBest();
+        List<PathDetails> details = arsp.getPathDetails();
+        assertTrue(details.size() == 1);
+        // Foot routing
+        assertTrue(details.get(0).getDetails().get(5.0).size() > 0);
+        // First point
+        assertTrue(details.get(0).getDetails().get(5.0).get(0)[0] == 0);
     }
 
     @Test

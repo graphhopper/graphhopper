@@ -22,6 +22,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.details.PathDetails;
 import com.graphhopper.util.exceptions.GHException;
 import com.graphhopper.util.shapes.BBox;
 
@@ -99,6 +100,16 @@ public class SimpleRouteSerializer implements RouteSerializer {
                     }
 
                     jsonPath.put("legs", ar.getLegs());
+
+                    List<PathDetails> details = ar.getPathDetails();
+                    if (!details.isEmpty()) {
+                        //TODO I don't really like the conversion, should we keep it like that in the PathWrapper?
+                        Map<String, Map<Object, List<int[]>>> pathDetailsMap = new HashMap<>();
+                        for (PathDetails pathDetails : details) {
+                            pathDetailsMap.put(pathDetails.getName(), pathDetails.getDetails());
+                        }
+                        jsonPath.put("details", pathDetailsMap);
+                    }
 
                     jsonPath.put("ascend", ar.getAscend());
                     jsonPath.put("descend", ar.getDescend());
