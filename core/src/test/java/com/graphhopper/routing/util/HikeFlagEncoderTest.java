@@ -20,7 +20,10 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import org.junit.Test;
 
+import java.io.Reader;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 /**
  * @author Peter Karich
@@ -28,6 +31,16 @@ import static org.junit.Assert.assertEquals;
 public class HikeFlagEncoderTest {
     private final EncodingManager encodingManager = new EncodingManager("car,hike");
     private final HikeFlagEncoder hikeEncoder = (HikeFlagEncoder) encodingManager.getEncoder("hike");
+
+    @Test
+    public void testAccess() {
+        ReaderWay way = new ReaderWay(0);
+        way.setTag("highway", "tertiary");
+        way.setTag("access", "no");
+        way.setTag("sidewalk", "both");
+        way.setTag("foot", "no");
+        assertFalse(hikeEncoder.acceptWay(way) > 0);
+    }
 
     @Test
     public void testPriority() {
