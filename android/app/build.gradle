@@ -35,7 +35,7 @@ configurations.all {
  **/
 
 dependencies {
-    compile(group: 'com.graphhopper', name: 'graphhopper-core', version: '0.9-SNAPSHOT') {
+    compile(group: 'com.graphhopper', name: 'graphhopper-core', version: '0.10-SNAPSHOT') {
        exclude group: 'com.google.protobuf', module: 'protobuf-java'
        exclude group: 'org.openstreetmap.osmosis', module: 'osmosis-osm-binary'
        exclude group: 'org.apache.xmlgraphics', module: 'xmlgraphics-commons'
@@ -51,6 +51,6 @@ dependencies {
     compile 'com.caverock:androidsvg:1.2.2-beta-1'
     compile 'com.vividsolutions:jts-core:1.14.0'
 
-    compile 'org.slf4j:slf4j-api:1.7.21'
-    compile 'org.slf4j:slf4j-android:1.7.21'
+    compile 'org.slf4j:slf4j-api:1.7.25'
+    compile 'org.slf4j:slf4j-android:1.7.25'
 }

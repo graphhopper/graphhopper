@@ -35,13 +35,13 @@ public class ShortFastestWeighting extends FastestWeighting {
     private final double distanceFactor;
     private final double timeFactor;
 
-    public ShortFastestWeighting(FlagEncoder encoder, PMap pMap) {
+    public ShortFastestWeighting(FlagEncoder encoder, PMap map) {
         super(encoder);
-        timeFactor = checkBounds(TIME_FACTOR, pMap.getDouble(TIME_FACTOR, 1));
+        timeFactor = checkBounds(TIME_FACTOR, map.getDouble(TIME_FACTOR, 1));
 
         // is it faster to include timeFactor via distanceFactor = tmp / timeFactor?
         // default value derived from the cost for time e.g. 25€/hour and for distance 0.5€/km
-        distanceFactor = checkBounds(DISTANCE_FACTOR, pMap.getDouble(DISTANCE_FACTOR, 0.07));
+        distanceFactor = checkBounds(DISTANCE_FACTOR, map.getDouble(DISTANCE_FACTOR, 0.07));
 
         if (timeFactor < 1e-5 && distanceFactor < 1e-5)
             throw new IllegalArgumentException("[" + NAME + "] one of distance_factor or time_factor has to be non-zero");

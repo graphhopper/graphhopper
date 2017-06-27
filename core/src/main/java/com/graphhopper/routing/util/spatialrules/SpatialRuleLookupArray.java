@@ -44,20 +44,18 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
     private final List<SpatialRule> singleRules = new ArrayList<>();
 
     /**
-     * @param spatialRules     the spatial rules
-     * @param resolution of the array in decimal degrees, see: https://en.wikipedia.org/wiki/Decimal_degrees
-     *                   The downside of using decimal degrees is that this is not fixed to a certain m range as
-     * @param exact      if exact it will also perform a polygon contains for border tiles, might fail for small holes
-     *                   in the Polygon that are not represented in the tile array.
-     * @param bounds create the SpatialRuleLookup for the given BBox
+     * @param spatialRules the spatial rules
+     * @param resolution   of the array in decimal degrees, see: https://en.wikipedia.org/wiki/Decimal_degrees
+     *                     The downside of using decimal degrees is that this is not fixed to a certain m range as
+     * @param exact        if exact it will also perform a polygon contains for border tiles, might fail for small holes
+     *                     in the Polygon that are not represented in the tile array.
+     * @param bounds       create the SpatialRuleLookup for the given BBox
      */
     public SpatialRuleLookupArray(List<SpatialRule> spatialRules, double resolution, boolean exact, BBox bounds) {
-
-        if(!bounds.isValid())
-            throw new IllegalStateException("Bounds are not valid: "+bounds);
+        if (!bounds.isValid())
+            throw new IllegalStateException("Bounds are not valid: " + bounds);
 
         this.bounds = bounds;
-
         if (resolution < 1e-100)
             throw new IllegalArgumentException("resolution cannot be that high " + resolution);
 
@@ -106,13 +104,14 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
         int ruleIndex = getRuleContainerIndex(xIndex, yIndex);
         SpatialRuleContainer ruleContainer = ruleContainers.get(ruleIndex);
         if (ruleContainer.size() == 1) {
-            if (!exact)
-                return ruleContainer.first();
-            if (!isBorderTile(xIndex, yIndex, ruleIndex))
+            if (!exact || !isBorderTile(xIndex, yIndex, ruleIndex))
                 return ruleContainer.first();
         }
 
         for (SpatialRule rule : ruleContainer.getRules()) {
+            if (rule.equals(SpatialRule.EMPTY))
+                continue;
+
             for (Polygon p : rule.getBorders()) {
                 if (p.contains(lat, lon)) {
                     return rule;
@@ -153,13 +152,13 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
     }
 
     private int getXIndexForLon(double lon) {
-        if(lon < bounds.minLon)
+        if (lon < bounds.minLon)
             return 0;
         return (int) Math.floor(Math.abs(lon - bounds.minLon) / resolution);
     }
 
     private int getYIndexForLat(double lat) {
-        if(lat < bounds.minLat)
+        if (lat < bounds.minLat)
             return 0;
         return (int) Math.floor(Math.abs(lat - bounds.minLat) / resolution);
     }
@@ -174,13 +173,13 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
         addSingleRule(rule);
         int ruleContainerIndex = addRuleContainer(new SpatialRuleContainer().addRule(rule));
         for (Polygon polygon : rule.getBorders()) {
-            for (int i = getXIndexForLon(polygon.getMinLon()); i < getXIndexForLon(polygon.getMaxLon()) + 1; i++) {
-                for (int j = getYIndexForLat(polygon.getMinLat()); j < getYIndexForLat(polygon.getMaxLat()) + 1; j++) {
-                    if (i >= lookupArray.length || j >= lookupArray[0].length) {
+            for (int xIdx = getXIndexForLon(polygon.getMinLon()); xIdx < getXIndexForLon(polygon.getMaxLon()) + 1; xIdx++) {
+                for (int yIdx = getYIndexForLat(polygon.getMinLat()); yIdx < getYIndexForLat(polygon.getMaxLat()) + 1; yIdx++) {
+                    if (xIdx >= lookupArray.length || yIdx >= lookupArray[0].length) {
                         continue;
                     }
 
-                    GHPoint center = getCoordinatesForIndex(i, j);
+                    GHPoint center = getCoordinatesForIndex(xIdx, yIdx);
                     // TODO: Consider creating a new method in Polygon that does the 5 checks - p.partOfTile?
                     if (polygon.contains(center) ||
                             polygon.contains(center.getLat() - checkDiff, center.getLon() - checkDiff) ||
@@ -188,14 +187,14 @@ public class SpatialRuleLookupArray implements SpatialRuleLookup {
                             polygon.contains(center.getLat() + checkDiff, center.getLon() - checkDiff) ||
                             polygon.contains(center.getLat() + checkDiff, center.getLon() + checkDiff)) {
 
-                        if (lookupArray[i][j] == EMPTY_RULE_INDEX) {
-                            lookupArray[i][j] = (byte) ruleContainerIndex;
+                        if (lookupArray[xIdx][yIdx] == EMPTY_RULE_INDEX) {
+                            lookupArray[xIdx][yIdx] = (byte) ruleContainerIndex;
                         } else {
                             // Merge Rules
-                            SpatialRuleContainer curContainer = getContainerFor2DIndex(i, j);
+                            SpatialRuleContainer curContainer = getContainerFor2DIndex(xIdx, yIdx);
                             SpatialRuleContainer newContainer = curContainer.copy().addRule(rule);
                             int newRuleContainerIndex = addRuleContainer(newContainer);
-                            lookupArray[i][j] = (byte) newRuleContainerIndex;
+                            lookupArray[xIdx][yIdx] = (byte) newRuleContainerIndex;
                         }
                     }
                 }
