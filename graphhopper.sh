@@ -62,7 +62,7 @@ function ensureOsm {
        wget -S -nv -O "$OSM_FILE" "$LINK"
     elif [ ${OSM_FILE: -4} == ".ghz" ]; then
        wget -S -nv -O "$OSM_FILE" "$LINK"
-       cd DATADIR && unzip "$BASENAME" -d "$NAME-gh"
+       cd $DATADIR && unzip "$BASENAME" -d "$NAME-gh"
     else    
        # make sure aborting download does not result in loading corrupt osm file
        TMP_OSM=temp.osm
@@ -180,7 +180,7 @@ elif [ ${FILE: -3} == "-gh" ]; then
 elif [ ${FILE: -4} == ".ghz" ]; then
    OSM_FILE="$FILE"
    if [[ ! -d "$NAME-gh" ]]; then
-      cd DATADIR && unzip "$BASENAME" -d "$NAME-gh"
+      cd $DATADIR && unzip "$BASENAME" -d "$NAME-gh"
    fi
 else
    # no known end -> no import
