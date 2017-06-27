@@ -23,7 +23,7 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
     var instructionDiv = $("<tr class='instruction'/>");
     if (sign !== "continue") {
         var indiPic = "<img class='pic' style='vertical-align: middle' src='" +
-                dirname + "/img/" + sign + ".png'/>";
+            dirname + "/img/" + sign + ".png'/>";
         instructionDiv.append("<td class='instr_pic'>" + indiPic + "</td>");
     } else {
         instructionDiv.append("<td class='instr_pic'/>");
@@ -43,14 +43,11 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
             if (routeSegmentPopup)
                 mapLayer.removeLayerFromMap(routeSegmentPopup);
 
-            routeSegmentPopup = L.popup().
-                    setLatLng([lngLat[1], lngLat[0]]).
-                    setContent(title).
-                    openOn(mapLayer.getMap());
+            routeSegmentPopup = L.popup().setLatLng([lngLat[1], lngLat[0]]).setContent(title).openOn(mapLayer.getMap());
 
         });
 
-        if(debugInstructions){
+        if (debugInstructions) {
             // Debug Turn Instructions more easily
             L.marker([lngLat[1], lngLat[0]], {
                 icon: L.icon({
@@ -92,27 +89,25 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
         instructionsElement.append(moreDiv);
     }
 
-    if(debugDetails){
-        var averageSpeedObj = path.details['average-speed'];
-        console.log("The path contains "+path.points.coordinates.length+" points");
-
-        for(var k in averageSpeedObj){
-            console.log("Found key "+k);
-            var intervalArr = averageSpeedObj[k];
-            for(var intervalIndex in intervalArr){
-                var interval = intervalArr[intervalIndex];
-                console.log("Interval "+interval);
-                var lngLat = path.points.coordinates[interval[0]];
-                L.marker([lngLat[1], lngLat[0]], {
-                    icon: L.icon({
-                        iconUrl: './img/marker-small-blue.png',
-                        iconSize: [15, 15]
-                    }),
-                    draggable: true
-                }).addTo(mapLayer.getRoutingLayer()).bindPopup(k);
+    if (debugDetails) {
+        var detailObj = path.details;
+        for (var detailKey in detailObj) {
+            var pathDetailObj = detailObj[detailKey];
+            for (var k in pathDetailObj) {
+                var intervalArr = pathDetailObj[k];
+                for (var intervalIndex in intervalArr) {
+                    var interval = intervalArr[intervalIndex];
+                    var lngLat = path.points.coordinates[interval[0]];
+                    L.marker([lngLat[1], lngLat[0]], {
+                        icon: L.icon({
+                            iconUrl: './img/marker-small-blue.png',
+                            iconSize: [15, 15]
+                        }),
+                        draggable: true
+                    }).addTo(mapLayer.getRoutingLayer()).bindPopup(detailKey+":"+k);
+                }
             }
         }
-
     }
 
     var hiddenDiv = $("<div id='routeDetails'/>");
@@ -149,7 +144,7 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
         addToGoogle = "&dirflg=w";
         addToBing = "&mode=W";
     } else if ((request.getVehicle().toUpperCase().indexOf("BIKE") >= 0) ||
-            (request.getVehicle().toUpperCase() === "MTB")) {
+        (request.getVehicle().toUpperCase() === "MTB")) {
         addToGoogle = "&dirflg=b";
         // ? addToBing = "&mode=B";
     }
