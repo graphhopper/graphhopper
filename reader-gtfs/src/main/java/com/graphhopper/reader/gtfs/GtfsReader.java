@@ -114,8 +114,8 @@ class GtfsReader {
             QueryResult locationQueryResult = walkNetworkIndex.findClosest(stop.stop_lat, stop.stop_lon, filter);
             int streetNode;
             if (!locationQueryResult.isValid()) {
-                streetNode = i;
-                nodeAccess.setNode(i++, stop.stop_lat, stop.stop_lon);
+                streetNode = i++;
+                nodeAccess.setNode(streetNode, stop.stop_lat, stop.stop_lon);
                 graph.edge(streetNode, streetNode, 0.0, false);
             } else {
                 streetNode = locationQueryResult.getClosestNode();
@@ -300,14 +300,24 @@ class GtfsReader {
         }
     }
 
-    private void wireUpAndAndConnectArrivalTimeline(Stop stop, String routeId, int stopExitNode, NavigableSet<Fun.Tuple2<Integer, Integer>> timeNodes) {
+    private void wireUpAndAndConnectArrivalTimeline(Stop toStop, String routeId, int stopExitNode, NavigableSet<Fun.Tuple2<Integer, Integer>> timeNodes) {
         ZoneId zoneId = ZoneId.of(feed.agency.get(feed.routes.get(routeId).agency_id).agency_timezone);
+        int time = 0;
+        int prev = -1;
         for (Fun.Tuple2<Integer, Integer> e : timeNodes.descendingSet()) {
             EdgeIteratorState leaveTimeExpandedNetworkEdge = graph.edge(e.b, stopExitNode, 0.0, false);
             setEdgeType(leaveTimeExpandedNetworkEdge, GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK);
             int arrivalTime = e.a;
             leaveTimeExpandedNetworkEdge.setFlags(encoder.setTime(leaveTimeExpandedNetworkEdge.getFlags(), arrivalTime));
             setFeedIdWithTimezone(leaveTimeExpandedNetworkEdge, new GtfsStorage.FeedIdWithTimezone(id, zoneId));
+            if (prev != -1) {
+                EdgeIteratorState edge = graph.edge(e.b, prev, 0.0, false);
+                setEdgeType(edge, GtfsStorage.EdgeType.WAIT_ARRIVAL);
+                edge.setName(toStop.stop_name);
+                edge.setFlags(encoder.setTime(edge.getFlags(), time-e.a));
+            }
+            time = e.a;
+            prev = e.b;
         }
     }
 

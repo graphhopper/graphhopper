@@ -113,7 +113,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
         algoOpts = AlgorithmOptions.start(algoOpts).
                 algorithm(Parameters.Algorithms.ASTAR_BI).
                 weighting(avoidPathWeighting).build();
-        algoOpts.getHints().put(Algorithms.ASTAR_BI + ".epsilon", 2);
+        algoOpts.getHints().put(Algorithms.AStarBi.EPSILON, 2);
 
         long visitedNodesSum = 0L;
         QueryResult start = queryResults.get(0);

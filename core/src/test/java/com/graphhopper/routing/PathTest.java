@@ -86,7 +86,7 @@ public class PathTest {
         tmp = res.get(1);
         assertEquals(0.0, tmp.get("distance"));
         assertEquals(0L, tmp.get("time"));
-        assertEquals("Finish!", tmp.get("text"));
+        assertEquals("Arrive at destination", tmp.get("text"));
         assertEquals("[6, 6]", tmp.get("interval").toString());
         int lastIndex = (Integer) ((List) res.get(res.size() - 1).get("interval")).get(0);
         assertEquals(path.calcPoints().size() - 1, lastIndex);
@@ -219,7 +219,7 @@ public class PathTest {
             List<String> tmpList = pick("text", wayList.createJson());
             assertEquals(Arrays.asList("Continue onto MainStreet 1 2",
                     "At roundabout, take exit 3 onto 5-8",
-                    "Finish!"),
+                    "Arrive at destination"),
                     tmpList);
             // Test Radian
             double delta = roundaboutGraph.getAngle(1, 2, 5, 8);
@@ -233,7 +233,7 @@ public class PathTest {
             tmpList = pick("text", wayList.createJson());
             assertEquals(Arrays.asList("Continue onto MainStreet 1 2",
                     "At roundabout, take exit 2 onto MainStreet 4 7",
-                    "Finish!"),
+                    "Arrive at destination"),
                     tmpList);
             // Test Radian
             delta = roundaboutGraph.getAngle(1, 2, 4, 7);
@@ -253,7 +253,7 @@ public class PathTest {
         InstructionList wayList = p.calcInstructions(tr);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("At roundabout, take exit 3 onto 5-8",
-                "Finish!"),
+                "Arrive at destination"),
                 tmpList);
     }
 
@@ -270,7 +270,7 @@ public class PathTest {
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 3-6",
                 "At roundabout, take exit 3 onto 5-8",
-                "Finish!"),
+                "Arrive at destination"),
                 tmpList);
         roundaboutGraph.inverse3to9();
     }
@@ -288,7 +288,7 @@ public class PathTest {
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto MainStreet 1 2",
                 "At roundabout, take exit 2 onto 5-8",
-                "Finish!"),
+                "Arrive at destination"),
                 tmpList);
         // Test Radian
         double delta = roundaboutGraph.getAngle(1, 2, 5, 8);
@@ -357,7 +357,7 @@ public class PathTest {
         InstructionList wayList = p.calcInstructions(tr);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("At roundabout, take exit 1 onto MainStreet 1 11",
-                "Finish!"),
+                "Arrive at destination"),
                 tmpList);
     }
 
@@ -374,7 +374,7 @@ public class PathTest {
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto MainStreet 1 2",
                 "At roundabout, take exit 1 onto 5-8",
-                "Finish!"),
+                "Arrive at destination"),
                 tmpList);
         // Test Radian
         double delta = roundaboutGraph.getAngle(1, 2, 5, 8);
@@ -533,8 +533,7 @@ public class PathTest {
         g.edge(2, 4, 5, true).setFlags(dataFlagEncoder.handleWayTags(w,1,0));
         g.edge(2, 3, 5, true).setFlags(dataFlagEncoder.handleWayTags(w,1,0));
 
-        ConfigMap cMap = dataFlagEncoder.readStringMap(new PMap());
-        Path p = new Dijkstra(g, new GenericWeighting(dataFlagEncoder, cMap), TraversalMode.NODE_BASED).calcPath(1, 3);
+        Path p = new Dijkstra(g, new GenericWeighting(dataFlagEncoder, new HintsMap()), TraversalMode.NODE_BASED).calcPath(1, 3);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);
         assertEquals(3, wayList.size());

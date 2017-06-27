@@ -112,12 +112,12 @@ public class InstructionListTest {
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(0, 10);
         InstructionList wayList = p.calcInstructions(usTR);
         List<String> tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Turn left onto 7-8", "Finish!"),
+        assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Turn left onto 7-8", "Arrive at destination"),
                 tmpList);
 
         wayList = p.calcInstructions(trMap.getWithFallBack(Locale.GERMAN));
         tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Geradeaus auf 0-1", "Rechts abbiegen auf 1-4", "Links abbiegen auf 7-8", "Ziel erreicht!"),
+        assertEquals(Arrays.asList("Dem Straßenverlauf von 0-1 folgen", "Rechts abbiegen auf 1-4", "Links abbiegen auf 7-8", "Ziel erreicht"),
                 tmpList);
 
         assertEquals(70000.0, sumDistances(wayList), 1e-1);
@@ -142,7 +142,7 @@ public class InstructionListTest {
 
         wayList = p.calcInstructions(usTR);
         tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto 6-7", "Turn left onto 5-8", "Finish!"),
+        assertEquals(Arrays.asList("Continue onto 6-7", "Turn left onto 5-8", "Arrive at destination"),
                 tmpList);
 
         compare(Arrays.asList(asL(1d, 1d), asL(1d, 1.2), asL(1.2, 1.2)),
@@ -152,7 +152,7 @@ public class InstructionListTest {
         p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(0, 0);
         wayList = p.calcInstructions(usTR);
         assertEquals(1, wayList.size());
-        assertEquals("Finish!", wayList.get(0).getTurnDescription(usTR));
+        assertEquals("arrive at destination", wayList.get(0).getTurnDescription(usTR));
     }
 
     List<String> pick(String key, List<Map<String, Object>> instructionJson) {
@@ -227,13 +227,13 @@ public class InstructionListTest {
 
         InstructionList wayList = p.calcInstructions(usTR);
         List<String> tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto 2-4", "Turn slight right onto 3-4", "Finish!"),
+        assertEquals(Arrays.asList("Continue onto 2-4", "Turn slight right onto 3-4", "Arrive at destination"),
                 tmpList);
 
         p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(3, 5);
         wayList = p.calcInstructions(usTR);
         tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto 3-4", "Turn slight right onto 4-5", "Finish!"),
+        assertEquals(Arrays.asList("Continue onto 3-4", "Turn slight right onto 4-5", "Arrive at destination"),
                 tmpList);
     }
 
@@ -265,7 +265,7 @@ public class InstructionListTest {
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(2, 3);
         InstructionList wayList = p.calcInstructions(usTR);
         List<String> tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto street", "Turn right onto street", "Finish!"), tmpList);
+        assertEquals(Arrays.asList("Continue onto street", "Turn right onto street", "Arrive at destination"), tmpList);
     }
 
     @Test
