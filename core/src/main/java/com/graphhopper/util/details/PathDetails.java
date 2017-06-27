@@ -66,7 +66,8 @@ public class PathDetails {
      * @param endRef The point ref of the end
      */
     public void endInterval(int endRef) {
-        if (isOpen) {
+        // We don't want enmpty interfals ,therefore the refs need to be different
+        if (isOpen && startRef != endRef) {
             List<int[]> list;
             if(pathDetails.containsKey(value)){
                 list = pathDetails.get(value);

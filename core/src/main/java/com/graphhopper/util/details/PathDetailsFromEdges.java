@@ -33,20 +33,19 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor{
 
     int i;
     PathDetailsCalculator calc;
-    int pointIndex = 0;
 
     double lat, lng;
     int adjNode;
 
     private final List<PathDetails> details;
     private final List<PathDetailsCalculator> calculators;
-    private final PointList points;
+    private int lastIndex;
     private final NodeAccess nodeAccess;
 
-    public PathDetailsFromEdges(List<PathDetails> details, List<PathDetailsCalculator> calculators, PointList points, NodeAccess nodeAccess){
+    public PathDetailsFromEdges(List<PathDetails> details, List<PathDetailsCalculator> calculators, int lastIndex, NodeAccess nodeAccess){
         this.details = details;
         this.calculators = calculators;
-        this.points = points;
+        this.lastIndex = lastIndex;
         this.nodeAccess = nodeAccess;
     }
 
@@ -55,33 +54,17 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor{
         for (i = 0; i < calculators.size(); i++) {
             calc = calculators.get(i);
             if (calc.edgeIsDifferentToLastEdge(edge)) {
-                // Is currently called for every calc edgeIsDifferentToLastEdge=true, but should be fast
-                pointIndex = findMatchingPointIndex(edge.getBaseNode(), pointIndex);
-
-                details.get(i).endInterval(pointIndex);
-                details.get(i).startInterval(calc.getCurrentValue(), pointIndex);
+                details.get(i).endInterval(lastIndex);
+                details.get(i).startInterval(calc.getCurrentValue(), lastIndex);
             }
         }
-        // We need this in the finish() step
-        adjNode = edge.getAdjNode();
-    }
-
-    private int findMatchingPointIndex(int baseNode, int pointIndex) {
-        lat = nodeAccess.getLat(baseNode);
-        lng = nodeAccess.getLon(baseNode);
-        for (; pointIndex < points.size(); pointIndex++) {
-            if (lat == points.getLat(pointIndex) && lng == points.getLon(pointIndex)) {
-                return pointIndex;
-            }
-        }
-        throw new IllegalStateException("Did not find a matching point, did you simplify the points?");
+        lastIndex += edge.fetchWayGeometry(2).size();
     }
 
     @Override
     public void finish() {
-        pointIndex = findMatchingPointIndex(adjNode, pointIndex);
         for (i = 0; i < details.size(); i++) {
-            details.get(i).endInterval(pointIndex);
+            details.get(i).endInterval(lastIndex);
         }
     }
 

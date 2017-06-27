@@ -315,7 +315,7 @@ public class PathTest {
 
         PointList points = p.calcPoints();
 
-        List<PathDetails> details = p.calcDetails(calcs, points);
+        List<PathDetails> details = p.calcDetails(calcs, 0);
         assertTrue(details.size() == 1);
         Map<Object, List<int[]>> detailsMap = details.get(0).getDetails();
         assertTrue(detailsMap.keySet().size() == 3);

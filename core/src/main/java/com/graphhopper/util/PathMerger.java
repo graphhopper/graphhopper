@@ -69,6 +69,7 @@ public class PathMerger {
 
     public void doWork(PathWrapper altRsp, List<Path> paths, Translation tr) {
         int origPoints = 0;
+        int lastIndex = 0;
         long fullTimeInMillis = 0;
         double fullWeight = 0;
         double fullDistance = 0;
@@ -94,8 +95,8 @@ public class PathMerger {
                     }
 
                     for (Instruction i : il) {
+                        origPoints += i.getPoints().size();
                         if (simplifyResponse) {
-                            origPoints += i.getPoints().size();
                             douglasPeucker.simplify(i.getPoints());
                         }
                         fullInstructions.add(i);
@@ -115,14 +116,15 @@ public class PathMerger {
                 if (fullPoints.isEmpty())
                     fullPoints = new PointList(tmpPoints.size(), tmpPoints.is3D());
 
+                origPoints = tmpPoints.getSize();
                 if (simplifyResponse) {
-                    origPoints = tmpPoints.getSize();
                     douglasPeucker.simplify(tmpPoints);
                 }
                 fullPoints.add(tmpPoints);
             }
             if ((calcPoints || enableInstructions) && !pathDetailCalculators.isEmpty()) {
-                altRsp.addPathDetails(path.calcDetails(pathDetailCalculators, fullPoints));
+                altRsp.addPathDetails(path.calcDetails(pathDetailCalculators, lastIndex));
+                lastIndex += origPoints;
             }
 
             allFound = allFound && path.isFound();

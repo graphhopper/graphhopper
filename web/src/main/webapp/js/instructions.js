@@ -67,6 +67,7 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
 module.exports.create = function (mapLayer, path, urlForHistory, request) {
     var instructionsElement = $("<table class='instructions'>");
     var debugInstructions = request.api_params.debug_instructions;
+    var debugDetails = request.api_params.debug_details;
 
     var partialInstr = path.instructions.length > 100;
     var len = Math.min(path.instructions.length, 100);
@@ -89,6 +90,29 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
             }
         });
         instructionsElement.append(moreDiv);
+    }
+
+    if(debugDetails){
+        var averageSpeedObj = path.details['average-speed'];
+        console.log("The path contains "+path.points.coordinates.length+" points");
+
+        for(var k in averageSpeedObj){
+            console.log("Found key "+k);
+            var intervalArr = averageSpeedObj[k];
+            for(var intervalIndex in intervalArr){
+                var interval = intervalArr[intervalIndex];
+                console.log("Interval "+interval);
+                var lngLat = path.points.coordinates[interval[0]];
+                L.marker([lngLat[1], lngLat[0]], {
+                    icon: L.icon({
+                        iconUrl: './img/marker-small-blue.png',
+                        iconSize: [15, 15]
+                    }),
+                    draggable: true
+                }).addTo(mapLayer.getRoutingLayer()).bindPopup(k);
+            }
+        }
+
     }
 
     var hiddenDiv = $("<div id='routeDetails'/>");

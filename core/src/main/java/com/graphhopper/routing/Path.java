@@ -373,16 +373,15 @@ public class Path {
 
     /**
      * @param calculators All calculators to be considered for this route
-     * @param points      The points need to contain all points of the route up to this path including the current path.
-     *                    Be careful with simplification, you should not remove the TowerNodes that are used here.
+     * @param lastIndex   The index of the last point of the path
      * @return List of PathDetails for this Path
      */
-    public List<PathDetails> calcDetails(final List<PathDetailsCalculator> calculators, final PointList points) {
+    public List<PathDetails> calcDetails(final List<PathDetailsCalculator> calculators, int lastIndex) {
         List<PathDetails> details = new ArrayList<>(calculators.size());
         for (PathDetailsCalculator calc : calculators) {
             details.add(new PathDetails(calc.getName()));
         }
-        forEveryEdge(new PathDetailsFromEdges(details, calculators, points, nodeAccess));
+        forEveryEdge(new PathDetailsFromEdges(details, calculators, lastIndex, nodeAccess));
         return details;
     }
 
