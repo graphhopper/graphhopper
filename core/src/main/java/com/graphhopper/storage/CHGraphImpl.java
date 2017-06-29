@@ -290,10 +290,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         if (weight < MIN_WEIGHT) {
             NodeAccess nodeAccess = getNodeAccess();
-            LOGGER.warn("Setting weights smaller than " + MIN_WEIGHT + " is not allowed in CHGraphImpl#setWeight. " +
+            throw new IllegalStateException("Setting weights smaller than " + MIN_WEIGHT + " is not allowed in CHGraphImpl#setWeight. " +
                     "You passed: " + weight + " for the edge from " + nodeAccess.getLat(edge.getBaseNode()) + "," + nodeAccess.getLon(edge.getBaseNode()) +
                     " to " + nodeAccess.getLat(edge.getAdjNode()) + "," + nodeAccess.getLon(edge.getAdjNode()));
-            weight = MIN_WEIGHT;
         }
         if (weight > MAX_WEIGHT)
             weightLong = MAX_WEIGHT_LONG;
