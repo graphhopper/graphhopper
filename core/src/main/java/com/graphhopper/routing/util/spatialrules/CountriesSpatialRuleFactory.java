@@ -1,10 +1,7 @@
-package com.graphhopper.spatialrules;
+package com.graphhopper.routing.util.spatialrules;
 
-import com.graphhopper.routing.util.spatialrules.Polygon;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.AustriaSpatialRule;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
-import com.graphhopper.spatialrules.SpatialRuleLookupBuilder;
 
 import java.util.List;
 
