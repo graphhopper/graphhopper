@@ -29,7 +29,7 @@ public class AngleCalcTest {
     private final AngleCalc AC = Helper.ANGLE_CALC;
 
     @Test
-    public void testOrientation() {
+    public void testOrientationExact() {
         assertEquals(90.0, Math.toDegrees(AC.calcOrientation(0, 0, 1, 0)), 0.01);
         assertEquals(45.0, Math.toDegrees(AC.calcOrientation(0, 0, 1, 1)), 0.01);
         assertEquals(0.0, Math.toDegrees(AC.calcOrientation(0, 0, 0, 1)), 0.01);
@@ -39,6 +39,19 @@ public class AngleCalcTest {
         // is symetric?
         assertEquals(90 - 32.76, Math.toDegrees(AC.calcOrientation(49.942, 11.580, 49.944, 11.582)), 0.01);
         assertEquals(-90 - 32.76, Math.toDegrees(AC.calcOrientation(49.944, 11.582, 49.942, 11.580)), 0.01);
+    }
+
+    @Test
+    public void testOrientationFast() {
+        assertEquals(90.0, Math.toDegrees(AC.calcOrientation(0, 0, 1, 0, false)), 0.01);
+        assertEquals(45.0, Math.toDegrees(AC.calcOrientation(0, 0, 1, 1, false)), 0.01);
+        assertEquals(0.0, Math.toDegrees(AC.calcOrientation(0, 0, 0, 1, false)), 0.01);
+        assertEquals(-45.0, Math.toDegrees(AC.calcOrientation(0, 0, -1, 1, false)), 0.01);
+        assertEquals(-135.0, Math.toDegrees(AC.calcOrientation(0, 0, -1, -1, false)), 0.01);
+
+        // is symetric?
+        assertEquals(90 - 32.92, Math.toDegrees(AC.calcOrientation(49.942, 11.580, 49.944, 11.582, false)), 0.01);
+        assertEquals(-90 - 32.92, Math.toDegrees(AC.calcOrientation(49.944, 11.582, 49.942, 11.580, false)), 0.01);
     }
 
     @Test

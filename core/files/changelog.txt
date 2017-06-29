@@ -1,4 +1,6 @@
 0.9
+    remove war bundling support #297
+    rename of DefaultModule to GraphHopperModule and GHServletModule to GraphHopperServletModule
     EncodedValue uses Math.round(value/factor). This can change the retrieved values for EncodedValues #954
     EncodedDoubleValue and EncodedValue requires maxValue/factor to be a natural number #954
     default base algorithm for all modes is bidirectional A* (except speed mode)

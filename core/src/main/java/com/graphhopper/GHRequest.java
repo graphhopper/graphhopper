@@ -263,6 +263,9 @@ public class GHRequest {
                 res += "; " + point.toString();
             }
         }
-        return res + "(" + algo + ")";
+        if (!algo.isEmpty())
+            res += " (" + algo + ")";
+
+        return res;
     }
 }

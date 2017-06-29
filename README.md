@@ -2,8 +2,8 @@
 
 [![Build Status](https://secure.travis-ci.org/graphhopper/graphhopper.png?branch=master)](http://travis-ci.org/graphhopper/graphhopper)
 
-GraphHopper is a fast and memory efficient Java road routing engine released under Apache License 2.0.
-Per default it uses OpenStreetMap data but can import other data sources.
+GraphHopper is a fast and memory efficient Java routing engine released under Apache License 2.0.
+Per default it uses OpenStreetMap and GTFS data but can import other data sources.
 
 # Community
 
@@ -11,7 +11,12 @@ We have a prosper community and welcome everyone. Let us know your problems, use
 
 ## Get Started
 
-To get started read through our documentation ([0.8](https://github.com/graphhopper/graphhopper/blob/0.8/docs/index.md), [unstable](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md)). 
+To get started read through our documentation and install the GraphHopper Web Service locally:
+
+ * unstable: [docs](https://github.com/graphhopper/graphhopper/blob/master/docs/index.md), [zip](https://oss.sonatype.org/content/groups/public/com/graphhopper/graphhopper-web/0.10-SNAPSHOT/), [Android APK](https://oss.sonatype.org/content/groups/public/com/graphhopper/graphhopper-android/0.10-SNAPSHOT/)
+ * 0.9.0 latest stable: [announcement](https://www.graphhopper.com/blog/2017/05/31/graphhopper-routing-engine-0-9-released/), [docs](https://github.com/graphhopper/graphhopper/blob/0.9/docs/index.md), [zip](https://graphhopper.com/public/releases/graphhopper-web-0.9.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.9.0.apk)
+ * 0.8.2: [announcement](https://www.graphhopper.com/blog/2016/10/18/graphhopper-routing-engine-0-8-released/), [docs](https://github.com/graphhopper/graphhopper/blob/0.8/docs/index.md), [zip](https://graphhopper.com/public/releases/graphhopper-web-0.8.2-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.8.2.apk)
+ * 0.7.0: [announcement](https://www.graphhopper.com/blog/2016/06/15/graphhopper-routing-engine-0-7-released/), [docs](https://github.com/graphhopper/graphhopper/blob/0.7/docs/index.md), [zip](https://graphhopper.com/public/releases/graphhopper-web-0.7.0-bin.zip), [Android APK](https://graphhopper.com/public/releases/graphhopper-android-0.7.0.apk)
 
 ## Questions
 
@@ -55,10 +60,9 @@ in its default settings. The downsides are that the speed mode allows only pre-d
 and requires a time consuming and resource intense preparation. And implementing certain features are not possible 
 or very complex compared to the flexible mode. 
 
-The [master branch contains](https://github.com/graphhopper/graphhopper/pull/780)
-a **hybrid mode** based on A* using so called landmarks, which still requires preparation time and memory
+The **hybrid mode** also requires preparation time and memory,
 but is much more flexible regarding changing properties per request or e.g. integrating traffic data and more. 
-Furthermore this hybrid mode is slower than the speed mode (depends on the number of landmarks) but it is an 
+Furthermore this hybrid mode is slower than the speed mode but it is an 
 order of magnitude faster than the flexible mode and uses also less RAM for one request.
 
 You can switch between all modes at request time.
@@ -89,18 +93,18 @@ Embed GraphHopper with OpenStreetMap support into your Java application via the 
 <dependency>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-reader-osm</artifactId>
-    <version>0.8.2</version>
+    <version>[LATEST-VERSION]/version>
 </dependency>
 ```
 
-If you want to customize the import process or you don't need OSM import like
+If you want to write your own import procedure or you don't need OSM import like
 on [Android](./docs/android/index.md), then use:
 
 ```xml
 <dependency>
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-core</artifactId>
-    <version>0.8.2</version>
+    <version>[LATEST-VERSION]</version>
 </dependency>
 ```
 
@@ -136,6 +140,12 @@ A fast and production ready map visualization for the Desktop can be easily impl
 ### Docker
 
 Install GraphHopper via [Docker](https://github.com/graphhopper/graphhopper/pull/849).
+You only need to change the docker-compose.yml entrypoint in core/files/ to run whatever map you like.
+Then just type:
+```bash
+cd core/files/
+docker-compose up -d
+```
 
 # Features
 
@@ -152,12 +162,13 @@ Here is a list of the more detailed features including a link to the documentati
  * Displays and takes into account [elevation data](./docs/core/elevation.md) (per default disabled)
  * Can apply [real time changes to edge weights](https://graphhopper.com/blog/2015/04/08/visualize-and-handle-traffic-information-with-graphhopper-in-real-time-for-cologne-germany-koln/) (flexible and hybrid mode only)
  * Customize vehicle profiles per request (flexible and hybrid mode only)
- * Possibility to specify a '[heading parameter](./docs/core/routing.md)' for start, end and via points for navigation applications via `pass_through` or `heading` parameters (flexible and hybrid mode only)
+ * Possibility to specify a [heading parameter](./docs/core/routing.md) of the vehicle for start, end and via points for navigation applications via `pass_through` or `heading` parameters (flexible and hybrid mode only)
  * [Alternative routes](https://discuss.graphhopper.com/t/alternative-routes/424) (flexible and hybrid mode only)
  * [Turn costs and restrictions](https://github.com/graphhopper/graphhopper/pull/55#issuecomment-31089096) (flexible and hybrid mode only)
+ * Country specific routing via SpatialRules
  * Multiple profiles and weightings
  * Several pre-built routing profiles: car, bike, racingbike, mountain bike, foot, motorcycle, ...
- * The core uses only a few dependencies (hppc and slf4j)
+ * The core uses only a few dependencies (hppc, jts and slf4j)
  * Scales from small indoor-sized to world-wide-sized graphs
  * Find nearest point on street e.g. to get elevation or 'snapp to road'
  * Do [map matching](https://github.com/graphhopper/map-matching) with GraphHopper

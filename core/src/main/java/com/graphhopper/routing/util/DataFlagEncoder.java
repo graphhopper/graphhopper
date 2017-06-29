@@ -19,10 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.util.spatialrules.AccessValue;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.routing.util.spatialrules.TransportationMode;
+import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -89,8 +86,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private boolean storeWeight = false;
     private boolean storeWidth = false;
     private EncodedValue spatialEncoder;
-    private int spatialRules = 0;
-    private SpatialRuleLookup spatialRuleLookup;
+    private SpatialRuleLookup spatialRuleLookup = SpatialRuleLookup.EMPTY;
 
     public DataFlagEncoder() {
         this(5, 5, 0);
@@ -104,7 +100,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         this.setStoreHeight(properties.getBool("store_height", false));
         this.setStoreWeight(properties.getBool("store_weight", false));
         this.setStoreWidth(properties.getBool("store_width", false));
-        this.setSpatialRules(properties.getInt("spatial_rules", 0));
     }
 
     public DataFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
@@ -216,12 +211,10 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         accessEncoder = new EncodedValue("access car", shift, 3, 1, 1, 4, true);
         shift += accessEncoder.getBits();
 
-        if (spatialRules > 0) {
-            int tmpMax = spatialRules + 1;
-            int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
-            spatialEncoder = new EncodedValue("spatial_location", shift, bits, 1, 1, tmpMax, true);
-            shift += spatialEncoder.getBits();
-        }
+        int tmpMax = spatialRuleLookup.size() - 1;
+        int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
+        spatialEncoder = new EncodedValue("spatial_location", shift, bits, 1, 0, tmpMax, true);
+        shift += spatialEncoder.getBits();
 
         return shift;
     }
@@ -272,7 +265,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             }
         }
 
-        if (isSpatialRuleLookupEnabled() && accessValue == 0) {
+        if (accessValue == 0) {
             // TODO Fix transportation mode when adding other forms of transportation
             switch (getSpatialRule(way).getAccessValue(way.getTag("highway", ""), TransportationMode.MOTOR_VEHICLE, AccessValue.ACCESSIBLE)) {
                 case ACCESSIBLE:
@@ -324,7 +317,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             // MAXSPEED
             double maxSpeed = parseSpeed(way.getTag("maxspeed"));
-            if (isSpatialRuleLookupEnabled() && maxSpeed < 0) {
+            if (maxSpeed < 0) {
                 // TODO What if no maxspeed is set, but only forward and backward, and both are higher than the usually allowed?
                 maxSpeed = getSpatialRule(way).getMaxSpeed(way.getTag("highway", ""), maxSpeed);
             }
@@ -411,30 +404,16 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             flags = accessEncoder.setValue(flags, getAccessValue(way));
 
-
-            if (isSpatialRuleLookupEnabled()) {
-                GHPoint estimatedCenter = way.getTag("estimated_center", null);
-                if (estimatedCenter != null) {
-                    SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
-                    flags = spatialEncoder.setValue(flags, spatialRuleLookup.getSpatialId(rule));
-                }
+            GHPoint estimatedCenter = way.getTag("estimated_center", null);
+            if (estimatedCenter != null) {
+                SpatialRule rule = spatialRuleLookup.lookupRule(estimatedCenter);
+                flags = spatialEncoder.setValue(flags, spatialRuleLookup.getSpatialId(rule));
             }
 
             return flags;
         } catch (Exception ex) {
             throw new RuntimeException("Error while parsing way " + way.toString(), ex);
         }
-    }
-
-    private boolean isSpatialRuleLookupEnabled() {
-        if (spatialRules > 0) {
-            if (spatialRuleLookup == null)
-                throw new IllegalStateException("This encoder was asked to store spatial IDs for every edge, " +
-                        "but no spatial lookup was specified");
-
-            return true;
-        }
-        return false;
     }
 
     private SpatialRule getSpatialRule(ReaderWay way) {
@@ -587,7 +566,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return null;
     }
 
-    public double[] getHighwaySpeedMap(Map<String, Double> map) {
+    double[] getHighwaySpeedMap(Map<String, Double> map) {
         if (map == null)
             throw new IllegalArgumentException("Map cannot be null when calling getHighwaySpeedMap");
 
@@ -831,16 +810,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
 
-    public DataFlagEncoder setSpatialRules(int rules) {
-        this.spatialRules = rules;
-        return this;
-    }
-
     public DataFlagEncoder setSpatialRuleLookup(SpatialRuleLookup spatialRuleLookup) {
-        if (spatialRuleLookup.size() != spatialRules)
-            throw new IllegalArgumentException("You have to configure the encoder to accept the identical amount of rules " +
-                    "that the spatial rule lookup has (" + spatialRuleLookup.size() + ") but it was " + spatialRules);
-
         this.spatialRuleLookup = spatialRuleLookup;
         return this;
     }
@@ -860,8 +830,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return super.getPropertiesString() +
                 "|store_height=" + storeHeight +
                 "|store_weight=" + storeWeight +
-                "|store_width=" + storeWidth +
-                "|spatial_rules=" + spatialRules;
+                "|store_width=" + storeWidth;
     }
 
     @Override
@@ -878,24 +847,39 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
      * This method creates a Config map out of the PMap. Later on this conversion should not be
      * necessary when we read JSON.
      */
-    public ConfigMap readStringMap(PMap weightingMap) {
-        Map<String, Double> map = new HashMap<>();
+    public WeightingConfig createWeightingConfig(PMap pMap) {
+        HashMap<String, Double> map = new HashMap<>(DEFAULT_SPEEDS.size());
         for (Entry<String, Double> e : DEFAULT_SPEEDS.entrySet()) {
-            map.put(e.getKey(), weightingMap.getDouble("highways." + e.getKey(), e.getValue()));
+            map.put(e.getKey(), pMap.getDouble(e.getKey(), e.getValue()));
         }
 
-        ConfigMap cMap = new ConfigMap();
-        cMap.put("highways", map);
-
-        cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.HEIGHT_LIMIT, 0d);
-        cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.WEIGHT_LIMIT, 0d);
-        cloneDoubleAttribute(weightingMap, cMap, GenericWeighting.WIDTH_LIMIT, 0d);
-
-        return cMap;
+        return new WeightingConfig(getHighwaySpeedMap(map));
     }
 
-    private void cloneDoubleAttribute(PMap weightingMap, ConfigMap cMap, String key, double _default) {
-        if (weightingMap.has(key))
-            cMap.put(key, weightingMap.getDouble(key, _default));
+    public class WeightingConfig {
+        private final double[] speedArray;
+
+        public WeightingConfig(double[] speedArray) {
+            this.speedArray = speedArray;
+        }
+
+        public double getSpeed(EdgeIteratorState edgeState) {
+            int highwayKey = getHighway(edgeState);
+            // ensure before (in createResult) that all highways that were specified in the request are known
+            double speed = speedArray[highwayKey];
+            if (speed < 0)
+                throw new IllegalStateException("speed was negative? " + edgeState.getEdge()
+                        + ", highway:" + highwayKey);
+            return speed;
+        }
+
+        public double getMaxSpecifiedSpeed() {
+            double tmpSpeed = 0;
+            for (double speed : speedArray) {
+                if (speed > tmpSpeed)
+                    tmpSpeed = speed;
+            }
+            return tmpSpeed;
+        }
     }
 }

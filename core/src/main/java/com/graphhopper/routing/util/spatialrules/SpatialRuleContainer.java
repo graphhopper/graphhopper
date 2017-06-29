@@ -26,7 +26,7 @@ import java.util.*;
  */
 class SpatialRuleContainer {
 
-    protected final Set<SpatialRule> rules = new LinkedHashSet<>();
+    final Set<SpatialRule> rules = new LinkedHashSet<>();
 
     public SpatialRuleContainer addRule(SpatialRule spatialRule) {
         rules.add(spatialRule);
@@ -38,7 +38,10 @@ class SpatialRuleContainer {
         return this;
     }
 
-    public Collection<SpatialRule> getRules() {
+    /**
+     * Returns a list of all spatial rules including the EMPTY one.
+     */
+    Collection<SpatialRule> getRules() {
         return rules;
     }
 
@@ -46,7 +49,7 @@ class SpatialRuleContainer {
         return this.rules.size();
     }
 
-    public SpatialRule first() {
+    SpatialRule first() {
         return this.rules.iterator().next();
     }
 

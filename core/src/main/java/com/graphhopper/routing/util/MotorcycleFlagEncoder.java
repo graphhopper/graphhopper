@@ -147,13 +147,14 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     @Override
     public long acceptWay(ReaderWay way) {
         String highwayValue = way.getTag("highway");
+        String firstValue = way.getFirstPriorityTag(restrictions);
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
-                String motorcycleTag = way.getTag("motorcycle");
-                if (motorcycleTag == null)
-                    motorcycleTag = way.getTag("motor_vehicle");
-
-                if (motorcycleTag == null && !way.hasTag("foot") && !way.hasTag("bicycle") || "yes".equals(motorcycleTag))
+                if (restrictedValues.contains(firstValue))
+                    return 0;
+                if (intendedValues.contains(firstValue) ||
+                        // implied default is allowed only if foot and bicycle is not specified:
+                        firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle"))
                     return acceptBit | ferryBit;
             }
             return 0;
@@ -171,7 +172,6 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         if (way.hasTag("impassable", "yes") || way.hasTag("status", "impassable"))
             return 0;
 
-        String firstValue = way.getFirstPriorityTag(restrictions);
         if (!firstValue.isEmpty()) {
             if (restrictedValues.contains(firstValue) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
                 return 0;

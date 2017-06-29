@@ -8,21 +8,17 @@ For simplicity you could just start jetty from maven and schedule it as backgrou
 `export GH_FOREGROUND=false && export JETTY_PORT=11111 && ./graphhopper.sh web europe_germany_berlin.pbf`. 
 Then the service will be accessible on port 11111.
 
-For production usage you can install the latest jetty (at least 9) as a service but we prefer to have it bundled as a 
-simple jar. Tomcat should work too. To create a war file do `mvn clean install war:war` and copy it from the target/ 
-folder to your jetty installation. Then copy web/config.properties also there and change this properties 
-file to point to the required graphhopper folder. Increase the Xmx/Xms values of your jetty server e.g. 
-for world wide coverage with a hierarchical graph do the following in bin/jetty.sh
+For production usage you have a jetty already bundled as a simple jar. Then copy web/config.properties also there and change this properties 
+file to point to the required graphhopper folder. Increase the -Xmx/-Xms values of your server server e.g. 
+for world wide coverage with a hierarchical graph do the following before calling graphhopper.sh:
+
 ```
-bash
-export JAVA=java-home/bin/java
-export JAVA_OPTIONS="-server -Xconcurrentio -Xmx17000m -Xms17000m"
+export JAVA_OPTS="-server -Xconcurrentio -Xmx17000m -Xms17000m"
 ```
 
 Notes:
 
- * jsonp support needs to be enabled in the config.properties
- * none-hierarchical graphs should be limited to a certain distance otherwise you'll require lots of RAM per request! See [#104](https://github.com/graphhopper/graphhopper/issues/734)
+ * none-hierarchical graphs should be limited to a certain distance otherwise you'll require lots of RAM per request! See [#104](https://github.com/graphhopper/graphhopper/issues/734) or use landmarks.
 
 ### API Tokens
 

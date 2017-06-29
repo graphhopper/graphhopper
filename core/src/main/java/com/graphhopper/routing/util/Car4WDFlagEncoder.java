@@ -57,13 +57,14 @@ public class Car4WDFlagEncoder extends CarFlagEncoder {
     public long acceptWay(ReaderWay way) {
         // TODO: Ferries have conditionals, like opening hours or are closed during some time in the year
         String highwayValue = way.getTag("highway");
+        String firstValue = way.getFirstPriorityTag(restrictions);
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
-                String motorcarTag = way.getTag("motorcar");
-                if (motorcarTag == null)
-                    motorcarTag = way.getTag("motor_vehicle");
-
-                if (motorcarTag == null && !way.hasTag("foot") && !way.hasTag("bicycle") || "yes".equals(motorcarTag))
+                if (restrictedValues.contains(firstValue))
+                    return 0;
+                if (intendedValues.contains(firstValue) ||
+                        // implied default is allowed only if foot and bicycle is not specified:
+                        firstValue.isEmpty() && !way.hasTag("foot") && !way.hasTag("bicycle"))
                     return acceptBit | ferryBit;
             }
             return 0;
@@ -76,7 +77,6 @@ public class Car4WDFlagEncoder extends CarFlagEncoder {
             return 0;
 
         // multiple restrictions needs special handling compared to foot and bike, see also motorcycle
-        String firstValue = way.getFirstPriorityTag(restrictions);
         if (!firstValue.isEmpty()) {
             if (restrictedValues.contains(firstValue) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
                 return 0;

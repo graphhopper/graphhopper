@@ -15,24 +15,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.util;
+package com.graphhopper.json;
 
-import org.junit.Test;
-
-import static org.junit.Assert.*;
+import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
+ * This class wraps the creation of the specific GHJson implementation.
+ *
  * @author Peter Karich
  */
-public class ConfigMapTest {
-    @Test
-    public void testPut() {
-        ConfigMap instance = new ConfigMap();
-        instance.put("int_val", 1);
-        instance.put("test_pest", true);
-
-        assertTrue(instance.get("test_pest", false));
-        assertFalse(instance.get("test_pest_", false));
-        assertEquals(1L, instance.getInt("int_val", 0));
+public class GHJsonFactory {
+    public GHJson create() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JtsModule());
+        return new GHJsonJackson(objectMapper);
     }
 }

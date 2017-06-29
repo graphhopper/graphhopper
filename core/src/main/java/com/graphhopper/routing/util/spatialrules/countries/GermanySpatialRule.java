@@ -18,6 +18,7 @@
 package com.graphhopper.routing.util.spatialrules.countries;
 
 import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 import com.graphhopper.routing.util.spatialrules.TransportationMode;
 
 /**

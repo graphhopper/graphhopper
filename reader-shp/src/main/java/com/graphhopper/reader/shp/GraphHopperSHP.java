@@ -30,7 +30,7 @@ import com.graphhopper.storage.GraphHopperStorage;
  *
  * @author Phil
  */
-public class GraphhopperSHP extends GraphHopper {
+public class GraphHopperSHP extends GraphHopper {
     private final HashSet<EdgeAddedListener> edgeAddedListeners = new HashSet<>();
 
     @Override

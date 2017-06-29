@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util.shapes;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.NumHelper;
 
@@ -44,6 +45,11 @@ public class BBox implements Shape, Cloneable {
     public double maxLat;
     public double minEle;
     public double maxEle;
+
+    @JsonCreator
+    public BBox(double[] coords) {
+        this(coords[0],coords[2],coords[1],coords[3]);
+    }
 
     public BBox(double minLon, double maxLon, double minLat, double maxLat) {
         this(minLon, maxLon, minLat, maxLat, Double.NaN, Double.NaN, false);
@@ -122,7 +128,7 @@ public class BBox implements Shape, Cloneable {
             return null;
 
         double minLon = Math.max(this.minLon, bBox.minLon);
-        double maxLon = Math.min(this.maxLat, bBox.maxLat);
+        double maxLon = Math.min(this.maxLon, bBox.maxLon);
         double minLat = Math.max(this.minLat, bBox.minLat);
         double maxLat = Math.min(this.maxLat, bBox.maxLat);
 
@@ -308,4 +314,23 @@ public class BBox implements Shape, Cloneable {
 
         return new BBox(minLon, maxLon, minLat, maxLat);
     }
+
+    /**
+     * This method creates a BBox out of a string in format lon1,lon2,lat1,lat2
+     */
+    public static BBox parseBBoxString(String objectAsString) {
+        String[] splittedObject = objectAsString.split(",");
+
+        if (splittedObject.length != 4)
+            throw new IllegalArgumentException("BBox should have 4 parts but was " + objectAsString);
+
+        double minLon = Double.parseDouble(splittedObject[0]);
+        double maxLon = Double.parseDouble(splittedObject[1]);
+
+        double minLat = Double.parseDouble(splittedObject[2]);
+        double maxLat = Double.parseDouble(splittedObject[3]);
+
+        return new BBox(minLon, maxLon, minLat, maxLat);
+    }
+
 }

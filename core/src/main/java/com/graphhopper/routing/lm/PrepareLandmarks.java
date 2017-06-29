@@ -51,7 +51,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
     private int defaultActiveLandmarks;
 
     public PrepareLandmarks(Directory dir, GraphHopperStorage graph, Weighting weighting,
-                            TraversalMode traversalMode, int landmarks, int activeLandmarks) {
+                            int landmarks, int activeLandmarks) {
         if (activeLandmarks > landmarks)
             throw new IllegalArgumentException("Default value for active landmarks " + activeLandmarks
                     + " should be less or equal to landmark count of " + landmarks);
@@ -59,7 +59,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         this.defaultActiveLandmarks = activeLandmarks;
         this.weighting = weighting;
 
-        lms = new LandmarkStorage(graph, dir, landmarks, weighting, traversalMode);
+        lms = new LandmarkStorage(graph, dir, weighting, landmarks);
     }
 
     /**
@@ -103,6 +103,11 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
         lms.setMinimumNodes(nodes);
     }
 
+    public PrepareLandmarks setLogDetails(boolean logDetails) {
+        lms.setLogDetails(logDetails);
+        return this;
+    }
+
     LandmarkStorage getLandmarkStorage() {
         return lms;
     }
@@ -141,7 +146,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
             if (!lms.isInitialized())
                 throw new IllegalStateException("Initalize landmark storage before creating algorithms");
 
-            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR + ".epsilon", 1);
+            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStar.EPSILON, 1);
             AStar astar = (AStar) algo;
             astar.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
@@ -150,7 +155,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
             if (!lms.isInitialized())
                 throw new IllegalStateException("Initalize landmark storage before creating algorithms");
 
-            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR_BI + ".epsilon", 1);
+            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
             AStarBidirection astarbi = (AStarBidirection) algo;
             astarbi.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));
@@ -159,7 +164,7 @@ public class PrepareLandmarks extends AbstractAlgoPreparation {
             if (!lms.isInitialized())
                 throw new IllegalStateException("Initalize landmark storage before creating algorithms");
 
-            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.ASTAR_BI + ".epsilon", 1);
+            double epsilon = opts.getHints().getDouble(Parameters.Algorithms.AStarBi.EPSILON, 1);
             AlternativeRoute altRoute = (AlternativeRoute) algo;
             altRoute.setApproximation(new LMApproximator(qGraph, this.graph.getNodes(), lms, activeLM, lms.getFactor(), false).
                     setEpsilon(epsilon));

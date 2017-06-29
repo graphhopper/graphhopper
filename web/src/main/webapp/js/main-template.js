@@ -219,19 +219,15 @@ function initFromParams(params, doQuery) {
     ghRequest.init(params);
 
     var flatpickr = new Flatpickr(document.getElementById("input_date_0"), {
-        // utc: true,
         defaultDate: new Date(),
         allowInput: true, /* somehow then does not sync!? */
         minuteIncrement: 15,
         time_24hr: true,
-        enableTime: true,
-        // altInput: true,
-        // altFormat: "F j, H:i"
+        enableTime: true
     });
 
     if (ghRequest.getEarliestDepartureTime()) {
-        var localDate = moment.utc(ghRequest.getEarliestDepartureTime(), 'YYYY-MM-DDTHH:mm').local().format("YYYY-MM-DD HH:mm");
-        flatpickr.setDate(localDate);
+        flatpickr.setDate(ghRequest.getEarliestDepartureTime());
     }
 
     var count = 0;
@@ -468,8 +464,7 @@ function resolveAll() {
 
     if(ghRequest.isPublicTransit())
         ghRequest.setEarliestDepartureTime(
-            moment($("#input_date_0").val(), 'YYYY-MM-DD HH:mm').utc().
-            format("YYYY-MM-DDTHH:mm"));
+            moment($("#input_date_0").val(), 'YYYY-MM-DD HH:mm').toISOString());
 
     return ret;
 }

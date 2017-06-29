@@ -89,7 +89,6 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean simplifyResponse = true;
     private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
-    private String blockedRectangularAreas = "";
 
     private int nonChMaxWaypointDistance = Integer.MAX_VALUE;
     // for index
@@ -497,6 +496,10 @@ public class GraphHopper implements GraphHopperAPI {
         return this;
     }
 
+    public FlagEncoderFactory getFlagEncoderFactory() {
+        return this.flagEncoderFactory;
+    }
+
     /**
      * Reads configuration from a CmdArgs object. Which can be manually filled, or via main(String[]
      * args) ala CmdArgs.read(args) or via configuration file ala
@@ -595,7 +598,6 @@ public class GraphHopper implements GraphHopperAPI {
         maxVisitedNodes = args.getInt(Routing.INIT_MAX_VISITED_NODES, Integer.MAX_VALUE);
         maxRoundTripRetries = args.getInt(RoundTrip.INIT_MAX_RETRIES, maxRoundTripRetries);
         nonChMaxWaypointDistance = args.getInt(Parameters.NON_CH.MAX_NON_CH_POINT_DISTANCE, Integer.MAX_VALUE);
-        blockedRectangularAreas = args.get(Routing.BLOCK_AREA, "");
 
         return this;
     }
@@ -792,6 +794,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (!chFactoryDecorator.hasWeightings()) {
             for (FlagEncoder encoder : encodingManager.fetchEdgeEncoders()) {
                 for (String chWeightingStr : chFactoryDecorator.getWeightingsAsStrings()) {
+                    // ghStorage is null at this point
                     Weighting weighting = createWeighting(new HintsMap(chWeightingStr), encoder, null);
                     chFactoryDecorator.addWeighting(weighting);
                 }
@@ -844,7 +847,7 @@ public class GraphHopper implements GraphHopperAPI {
             prepareCH();
 
         if (lmFactoryDecorator.isEnabled())
-            lmFactoryDecorator.createPreparations(ghStorage, traversalMode, locationIndex);
+            lmFactoryDecorator.createPreparations(ghStorage, locationIndex);
         loadOrPrepareLM();
     }
 
@@ -881,41 +884,37 @@ public class GraphHopper implements GraphHopperAPI {
      * @see HintsMap
      */
     public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
-        String weighting = hintsMap.getWeighting().toLowerCase();
+        String weightingStr = hintsMap.getWeighting().toLowerCase();
+        Weighting weighting = null;
 
         if (encoder.supports(GenericWeighting.class)) {
-            DataFlagEncoder dataEncoder = (DataFlagEncoder) encoder;
-            ConfigMap cMap = dataEncoder.readStringMap(hintsMap);
-
-            // add default blocked rectangular areas from config properties
-            if (!this.blockedRectangularAreas.isEmpty()) {
-                String val = this.blockedRectangularAreas;
-                String blockedAreasFromRequest = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
-                if (!blockedAreasFromRequest.isEmpty())
-                    val += ";" + blockedAreasFromRequest;
-                hintsMap.put(Parameters.Routing.BLOCK_AREA, val);
-            }
-
-            cMap = new GraphEdgeIdFinder(graph, locationIndex).parseStringHints(cMap, hintsMap, new DefaultEdgeFilter(encoder));
-            GenericWeighting genericWeighting = new GenericWeighting(dataEncoder, cMap);
-            genericWeighting.setGraph(graph);
-            return genericWeighting;
-        } else if ("shortest".equalsIgnoreCase(weighting)) {
-            return new ShortestWeighting(encoder);
-        } else if ("fastest".equalsIgnoreCase(weighting) || weighting.isEmpty()) {
+            weighting = new GenericWeighting((DataFlagEncoder) encoder, hintsMap);
+        } else if ("shortest".equalsIgnoreCase(weightingStr)) {
+            weighting = new ShortestWeighting(encoder);
+        } else if ("fastest".equalsIgnoreCase(weightingStr) || weightingStr.isEmpty()) {
             if (encoder.supports(PriorityWeighting.class))
-                return new PriorityWeighting(encoder, hintsMap);
+                weighting = new PriorityWeighting(encoder, hintsMap);
             else
-                return new FastestWeighting(encoder, hintsMap);
-        } else if ("curvature".equalsIgnoreCase(weighting)) {
+                weighting = new FastestWeighting(encoder, hintsMap);
+        } else if ("curvature".equalsIgnoreCase(weightingStr)) {
             if (encoder.supports(CurvatureWeighting.class))
-                return new CurvatureWeighting(encoder, hintsMap);
+                weighting = new CurvatureWeighting(encoder, hintsMap);
 
-        } else if ("short_fastest".equalsIgnoreCase(weighting)) {
-            return new ShortFastestWeighting(encoder, hintsMap);
+        } else if ("short_fastest".equalsIgnoreCase(weightingStr)) {
+            weighting = new ShortFastestWeighting(encoder, hintsMap);
         }
 
-        throw new IllegalArgumentException("weighting " + weighting + " not supported");
+        if (weighting == null)
+            throw new IllegalArgumentException("weighting " + weighting + " not supported");
+
+        if (hintsMap.has(Routing.BLOCK_AREA)) {
+            String blockAreaStr = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
+            GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(graph, locationIndex).
+                    parseBlockArea(blockAreaStr, new DefaultEdgeFilter(encoder));
+            return new BlockAreaWeighting(weighting, blockArea);
+        }
+
+        return weighting;
     }
 
     /**
@@ -967,13 +966,18 @@ public class GraphHopper implements GraphHopperAPI {
 
             FlagEncoder encoder = encodingManager.getEncoder(vehicle);
 
-            boolean forceFlexibleMode = hints.getBool(CH.DISABLE, false);
-            if (!chFactoryDecorator.isDisablingAllowed() && forceFlexibleMode)
-                throw new IllegalArgumentException("Flexible mode not enabled on the server-side");
+            boolean disableCH = hints.getBool(CH.DISABLE, false);
+            if (!chFactoryDecorator.isDisablingAllowed() && disableCH)
+                throw new IllegalArgumentException("Disabling CH not allowed on the server-side");
+
+            boolean disableLM = hints.getBool(Landmark.DISABLE, false);
+            if (!lmFactoryDecorator.isDisablingAllowed() && disableLM)
+                throw new IllegalArgumentException("Disabling LM not allowed on the server-side");
+
             String algoStr = request.getAlgorithm();
             if (algoStr.isEmpty())
-                algoStr = chFactoryDecorator.isEnabled() && !forceFlexibleMode &&
-                        !(lmFactoryDecorator.isEnabled() && !hints.getBool(Landmark.DISABLE, false)) ? DIJKSTRA_BI : ASTAR_BI;
+                algoStr = chFactoryDecorator.isEnabled() && !disableCH &&
+                        !(lmFactoryDecorator.isEnabled() && !disableLM) ? DIJKSTRA_BI : ASTAR_BI;
 
             List<GHPoint> points = request.getPoints();
             // TODO Maybe we should think about a isRequestValid method that checks all that stuff that we could do to fail fast
@@ -1003,7 +1007,7 @@ public class GraphHopper implements GraphHopperAPI {
                 Weighting weighting;
                 QueryGraph queryGraph;
 
-                if (chFactoryDecorator.isEnabled() && !forceFlexibleMode) {
+                if (chFactoryDecorator.isEnabled() && !disableCH) {
                     boolean forceCHHeading = hints.getBool(CH.FORCE_HEADING, false);
                     if (!forceCHHeading && request.hasFavoredHeading(0))
                         throw new IllegalArgumentException("Heading is not (fully) supported for CHGraph. See issue #483");

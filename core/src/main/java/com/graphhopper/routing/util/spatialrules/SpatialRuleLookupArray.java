@@ -28,7 +28,7 @@ import java.util.*;
  *
  * @author Robin Boldt
  */
-class SpatialRuleLookupArray implements SpatialRuleLookup {
+public class SpatialRuleLookupArray implements SpatialRuleLookup {
 
     // resolution in full decimal degrees
     private final double resolution;
@@ -44,19 +44,21 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
     private final List<SpatialRule> singleRules = new ArrayList<>();
 
     /**
-     * @param bounds     the outer bounds for the Lookup
-     * @param resolution of the array in decimal degrees, see: https://en.wikipedia.org/wiki/Decimal_degrees
-     *                   The downside of using decimal degrees is that this is not fixed to a certain m range as
-     * @param exact      if exact it will also perform a polygon contains for border tiles, might fail for small holes
-     *                   in the Polygon that are not represented in the tile array.
+     * @param spatialRules the spatial rules
+     * @param resolution   of the array in decimal degrees, see: https://en.wikipedia.org/wiki/Decimal_degrees
+     *                     The downside of using decimal degrees is that this is not fixed to a certain m range as
+     * @param exact        if exact it will also perform a polygon contains for border tiles, might fail for small holes
+     *                     in the Polygon that are not represented in the tile array.
+     * @param bounds       create the SpatialRuleLookup for the given BBox
      */
-    SpatialRuleLookupArray(BBox bounds, double resolution, boolean exact) {
-        if (bounds == null)
-            throw new IllegalArgumentException("BBox cannot be null");
+    public SpatialRuleLookupArray(List<SpatialRule> spatialRules, double resolution, boolean exact, BBox bounds) {
+        if (!bounds.isValid())
+            throw new IllegalStateException("Bounds are not valid: " + bounds);
+
+        this.bounds = bounds;
         if (resolution < 1e-100)
             throw new IllegalArgumentException("resolution cannot be that high " + resolution);
 
-        this.bounds = bounds;
         this.resolution = resolution;
         this.checkDiff = (resolution / 2) - (resolution / 10);
         this.exact = exact;
@@ -78,6 +80,10 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
                 throw new IllegalArgumentException("Cannot add to empty rule container");
             }
         });
+
+        for (SpatialRule spatialRule : spatialRules) {
+            addRuleInternal(spatialRule);
+        }
     }
 
     private int getNumberOfYGrids() {
@@ -98,13 +104,14 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
         int ruleIndex = getRuleContainerIndex(xIndex, yIndex);
         SpatialRuleContainer ruleContainer = ruleContainers.get(ruleIndex);
         if (ruleContainer.size() == 1) {
-            if (!exact)
-                return ruleContainer.first();
-            if (!isBorderTile(xIndex, yIndex, ruleIndex))
+            if (!exact || !isBorderTile(xIndex, yIndex, ruleIndex))
                 return ruleContainer.first();
         }
 
         for (SpatialRule rule : ruleContainer.getRules()) {
+            if (rule.equals(SpatialRule.EMPTY))
+                continue;
+
             for (Polygon p : rule.getBorders()) {
                 if (p.contains(lat, lon)) {
                     return rule;
@@ -115,7 +122,7 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
         return SpatialRule.EMPTY;
     }
 
-    protected int getRuleContainerIndex(int xIndex, int yIndex) {
+    private int getRuleContainerIndex(int xIndex, int yIndex) {
         if (xIndex < 0 || xIndex >= lookupArray.length) {
             return EMPTY_RULE_INDEX;
         }
@@ -128,7 +135,7 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
     /**
      * Might fail for small holes that do not occur in the array
      */
-    protected boolean isBorderTile(int xIndex, int yIndex, int ruleIndex) {
+    private boolean isBorderTile(int xIndex, int yIndex, int ruleIndex) {
         for (int i = -1; i < 2; i++) {
             for (int j = -1; j < 2; j++) {
                 if (i != xIndex && j != yIndex)
@@ -145,15 +152,18 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
     }
 
     private int getXIndexForLon(double lon) {
+        if (lon < bounds.minLon)
+            return 0;
         return (int) Math.floor(Math.abs(lon - bounds.minLon) / resolution);
     }
 
     private int getYIndexForLat(double lat) {
+        if (lat < bounds.minLat)
+            return 0;
         return (int) Math.floor(Math.abs(lat - bounds.minLat) / resolution);
     }
 
-    @Override
-    public void addRule(SpatialRule rule) {
+    private void addRuleInternal(SpatialRule rule) {
         if (rule == null)
             throw new IllegalArgumentException("rule cannot be null");
 
@@ -163,13 +173,13 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
         addSingleRule(rule);
         int ruleContainerIndex = addRuleContainer(new SpatialRuleContainer().addRule(rule));
         for (Polygon polygon : rule.getBorders()) {
-            for (int i = getXIndexForLon(polygon.getMinLon()); i < getXIndexForLon(polygon.getMaxLon()) + 1; i++) {
-                for (int j = getYIndexForLat(polygon.getMinLat()); j < getYIndexForLat(polygon.getMaxLat()) + 1; j++) {
-                    if (i >= lookupArray.length || j >= lookupArray[0].length) {
+            for (int xIdx = getXIndexForLon(polygon.getMinLon()); xIdx < getXIndexForLon(polygon.getMaxLon()) + 1; xIdx++) {
+                for (int yIdx = getYIndexForLat(polygon.getMinLat()); yIdx < getYIndexForLat(polygon.getMaxLat()) + 1; yIdx++) {
+                    if (xIdx >= lookupArray.length || yIdx >= lookupArray[0].length) {
                         continue;
                     }
 
-                    GHPoint center = getCoordinatesForIndex(i, j);
+                    GHPoint center = getCoordinatesForIndex(xIdx, yIdx);
                     // TODO: Consider creating a new method in Polygon that does the 5 checks - p.partOfTile?
                     if (polygon.contains(center) ||
                             polygon.contains(center.getLat() - checkDiff, center.getLon() - checkDiff) ||
@@ -177,14 +187,14 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
                             polygon.contains(center.getLat() + checkDiff, center.getLon() - checkDiff) ||
                             polygon.contains(center.getLat() + checkDiff, center.getLon() + checkDiff)) {
 
-                        if (lookupArray[i][j] == EMPTY_RULE_INDEX) {
-                            lookupArray[i][j] = (byte) ruleContainerIndex;
+                        if (lookupArray[xIdx][yIdx] == EMPTY_RULE_INDEX) {
+                            lookupArray[xIdx][yIdx] = (byte) ruleContainerIndex;
                         } else {
                             // Merge Rules
-                            SpatialRuleContainer curContainer = getContainerFor2DIndex(i, j);
+                            SpatialRuleContainer curContainer = getContainerFor2DIndex(xIdx, yIdx);
                             SpatialRuleContainer newContainer = curContainer.copy().addRule(rule);
                             int newRuleContainerIndex = addRuleContainer(newContainer);
-                            lookupArray[i][j] = (byte) newRuleContainerIndex;
+                            lookupArray[xIdx][yIdx] = (byte) newRuleContainerIndex;
                         }
                     }
                 }
@@ -201,7 +211,7 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
         singleRules.add(rule);
     }
 
-    public SpatialRule getSpatialRule(int id) {
+    SpatialRule getSpatialRule(int id) {
         if (id < 0 || id >= ruleContainers.size())
             throw new IllegalArgumentException("SpatialRuleId " + id + " is illegal");
 
@@ -214,7 +224,7 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
     /**
      * This method adds the container if no such rule container exists in this lookup and returns the index otherwise.
      */
-    int addRuleContainer(SpatialRuleContainer container) {
+    private int addRuleContainer(SpatialRuleContainer container) {
         int newIndex = this.ruleContainers.indexOf(container);
         if (newIndex >= 0)
             return newIndex;
@@ -261,4 +271,5 @@ class SpatialRuleLookupArray implements SpatialRuleLookup {
     public BBox getBounds() {
         return bounds;
     }
+
 }

@@ -120,8 +120,8 @@ public class Parameters {
         public static final double DEFAULT_HEADING_PENALTY = 300;
         public static final String HEADING_PENALTY = "heading_penalty";
         /**
-         * block road access via a point lat,lon or an area defined from a circle lat,lon,radius or
-         * a rectangular lat1,lon1,lat2,lon2
+         * block road access via a point in the format lat,lon or an area defined by a circle lat,lon,radius or
+         * a rectangle lat1,lon1,lat2,lon2
          */
         public static final String BLOCK_AREA = "block_area";
     }
@@ -184,5 +184,17 @@ public class Parameters {
          * Describes the maximum allowed distance between two consecutive waypoints of a non-CH request. Distance is in meter.
          */
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
+    }
+
+    public static final class PT {
+        public static final String EARLIEST_DEPARTURE_TIME = "pt.earliest_departure_time";
+        public static final String PROFILE_QUERY = "pt.profile";
+        public static final String ARRIVE_BY = "pt.arrive_by";
+        public static final String IGNORE_TRANSFERS = "pt.ignore_transfers";
+        public static final String WALK_SPEED = "pt.walk_speed";
+        public static final String MAX_WALK_DISTANCE_PER_LEG = "pt.max_walk_distance_per_leg";
+        public static final String MAX_TRANSFER_DISTANCE_PER_LEG = "pt.max_transfer_distance_per_leg";
+        public static final String LIMIT_SOLUTIONS = "pt.limit_solutions";
+
     }
 }

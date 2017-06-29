@@ -17,29 +17,19 @@
  */
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.util.*;
-import com.graphhopper.util.exceptions.ConnectionNotFoundException;
-import com.graphhopper.util.exceptions.DetailedIllegalArgumentException;
-import com.graphhopper.util.exceptions.DetailedRuntimeException;
-import com.graphhopper.util.exceptions.PointNotFoundException;
-import com.graphhopper.util.exceptions.PointOutOfBoundsException;
+import com.graphhopper.util.exceptions.*;
 import com.graphhopper.util.shapes.GHPoint;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
-
-import org.json.JSONException;
 
 /**
  * Main wrapper of the GraphHopper Directions API for a simple and efficient usage.
@@ -48,6 +38,7 @@ import org.json.JSONException;
  * @author Peter Karich
  */
 public class GraphHopperWeb implements GraphHopperAPI {
+    private ObjectMapper objectMapper;
     private final Set<String> ignoreSet;
     private Downloader downloader = new Downloader("GraphHopper Java Client");
     private String routeServiceUrl = "https://graphhopper.com/api/1/route";
@@ -59,7 +50,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
     public GraphHopperWeb() {
         // some parameters are supported directly via Java API so ignore them when writing the getHints map
-        ignoreSet = new HashSet<String>();
+        ignoreSet = new HashSet<>();
         ignoreSet.add("calc_points");
         ignoreSet.add("calcpoints");
         ignoreSet.add("instructions");
@@ -76,41 +67,41 @@ public class GraphHopperWeb implements GraphHopperAPI {
         ignoreSet.add("points_encoded");
         ignoreSet.add("pointsencoded");
         ignoreSet.add("type");
+        objectMapper = new ObjectMapper();
     }
 
-    public static PathWrapper createPathWrapper(JSONObject path,
-                                                boolean tmpCalcPoints, boolean tmpInstructions,
-                                                boolean tmpElevation, boolean turnDescription) {
+    private PathWrapper createPathWrapper(JsonNode path,
+                                          boolean tmpCalcPoints, boolean tmpInstructions,
+                                          boolean tmpElevation, boolean turnDescription) {
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.addErrors(readErrors(path));
         if (pathWrapper.hasErrors())
             return pathWrapper;
 
         if (path.has("snapped_waypoints")) {
-            String snappedPointStr = path.getString("snapped_waypoints");
+            String snappedPointStr = path.get("snapped_waypoints").asText();
             PointList snappedPoints = WebHelper.decodePolyline(snappedPointStr, 5, tmpElevation);
             pathWrapper.setWaypoints(snappedPoints);
         }
 
         if (tmpCalcPoints) {
-            String pointStr = path.getString("points");
+            String pointStr = path.get("points").asText();
             PointList pointList = WebHelper.decodePolyline(pointStr, 100, tmpElevation);
             pathWrapper.setPoints(pointList);
 
             if (tmpInstructions) {
-                JSONArray instrArr = path.getJSONArray("instructions");
+                JsonNode instrArr = path.get("instructions");
 
                 InstructionList il = new InstructionList(null);
                 int viaCount = 1;
-                for (int instrIndex = 0; instrIndex < instrArr.length(); instrIndex++) {
-                    JSONObject jsonObj = instrArr.getJSONObject(instrIndex);
-                    double instDist = jsonObj.getDouble("distance");
-                    String text = turnDescription ? jsonObj.getString("text") : jsonObj.getString("street_name");
-                    long instTime = jsonObj.getLong("time");
-                    int sign = jsonObj.getInt("sign");
-                    JSONArray iv = jsonObj.getJSONArray("interval");
-                    int from = iv.getInt(0);
-                    int to = iv.getInt(1);
+                for (JsonNode jsonObj : instrArr) {
+                    double instDist = jsonObj.get("distance").asDouble();
+                    String text = turnDescription ? jsonObj.get("text").asText() : jsonObj.get("street_name").asText();
+                    long instTime = jsonObj.get("time").asLong();
+                    int sign = jsonObj.get("sign").asInt();
+                    JsonNode iv = jsonObj.get("interval");
+                    int from = iv.get(0).asInt();
+                    int to = iv.get(1).asInt();
                     PointList instPL = new PointList(to - from, tmpElevation);
                     for (int j = from; j <= to; j++) {
                         instPL.add(pointList, j);
@@ -118,7 +109,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
                     InstructionAnnotation ia = InstructionAnnotation.EMPTY;
                     if (jsonObj.has("annotation_importance") && jsonObj.has("annotation_text")) {
-                        ia = new InstructionAnnotation(jsonObj.getInt("annotation_importance"), jsonObj.getString("annotation_text"));
+                        ia = new InstructionAnnotation(jsonObj.get("annotation_importance").asInt(), jsonObj.get("annotation_text").asText());
                     }
 
                     Instruction instr;
@@ -126,17 +117,17 @@ public class GraphHopperWeb implements GraphHopperAPI {
                         RoundaboutInstruction ri = new RoundaboutInstruction(sign, text, ia, instPL);
 
                         if (jsonObj.has("exit_number")) {
-                            ri.setExitNumber(jsonObj.getInt("exit_number"));
+                            ri.setExitNumber(jsonObj.get("exit_number").asInt());
                         }
 
                         if (jsonObj.has("exited")) {
-                            if (jsonObj.getBoolean("exited"))
+                            if (jsonObj.get("exited").asBoolean())
                                 ri.setExited();
                         }
 
                         if (jsonObj.has("turn_angle")) {
                             // TODO provide setTurnAngle setter
-                            double angle = jsonObj.getDouble("turn_angle");
+                            double angle = jsonObj.get("turn_angle").asDouble();
                             ri.setDirOfRotation(angle);
                             ri.setRadian((angle < 0 ? -Math.PI : Math.PI) - angle);
                         }
@@ -148,7 +139,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                         viaCount++;
                         instr = tmpInstr;
                     } else if (sign == Instruction.FINISH) {
-                        instr = new FinishInstruction(instPL, 0);
+                        instr = new FinishInstruction(text, instPL, 0);
                     } else {
                         instr = new Instruction(sign, text, ia, instPL);
                     }
@@ -157,7 +148,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                     // instead of creating a combination with sign and name etc.
                     // This is called the turn description.
                     // This can be changed by passing <code>turn_description=false</code>.
-                    if(turnDescription)
+                    if (turnDescription)
                         instr.setUseRawName();
 
                     instr.setDistance(instDist).setTime(instTime);
@@ -167,62 +158,39 @@ public class GraphHopperWeb implements GraphHopperAPI {
             }
         }
 
-        double distance = path.getDouble("distance");
-        long time = path.getLong("time");
+        double distance = path.get("distance").asDouble();
+        long time = path.get("time").asLong();
         pathWrapper.setDistance(distance).setTime(time);
         return pathWrapper;
     }
 
     // Credits to: http://stackoverflow.com/a/24012023/194609
-    private static Map<String, Object> toMap(JSONObject object) throws JSONException {
-        Map<String, Object> map = new HashMap<>(object.keySet().size());
-        for (String key : object.keySet()) {
-            Object value = object.get(key);
-            if (value instanceof JSONArray) {
-                value = toList((JSONArray) value);
-            } else if (value instanceof JSONObject) {
-                value = toMap((JSONObject) value);
-            }
-            map.put(key, value);
-        }
-        return map;
+    private Map<String, Object> toMap(JsonNode object) {
+        return objectMapper.convertValue(object, new TypeReference<Map<String, Object>>() {
+        });
     }
 
-    private static List<Object> toList(JSONArray array) throws JSONException {
-        List<Object> list = new ArrayList<>();
-        for (Object value : array) {
-            if (value instanceof JSONArray) {
-                value = toList((JSONArray) value);
-            } else if (value instanceof JSONObject) {
-                value = toMap((JSONObject) value);
-            }
-            list.add(value);
-        }
-        return list;
-    }
-
-    public static List<Throwable> readErrors(JSONObject json) {
+    public List<Throwable> readErrors(JsonNode json) {
         List<Throwable> errors = new ArrayList<>();
-        JSONArray errorJson;
+        JsonNode errorJson;
 
         if (json.has("message")) {
             if (json.has("hints")) {
-                errorJson = json.getJSONArray("hints");
+                errorJson = json.get("hints");
             } else {
                 // should not happen
-                errors.add(new RuntimeException(json.getString("message")));
+                errors.add(new RuntimeException(json.get("message").asText()));
                 return errors;
             }
         } else
             return errors;
 
-        for (int i = 0; i < errorJson.length(); i++) {
-            JSONObject error = errorJson.getJSONObject(i);
+        for (JsonNode error : errorJson) {
             String exClass = "";
             if (error.has("details"))
-                exClass = error.getString("details");
+                exClass = error.get("details").asText();
 
-            String exMessage = error.getString("message");
+            String exMessage = error.get("message").asText();
 
             if (exClass.equals(UnsupportedOperationException.class.getName()))
                 errors.add(new UnsupportedOperationException(exMessage));
@@ -235,10 +203,10 @@ public class GraphHopperWeb implements GraphHopperAPI {
             else if (exClass.equals(ConnectionNotFoundException.class.getName())) {
                 errors.add(new ConnectionNotFoundException(exMessage, toMap(error)));
             } else if (exClass.equals(PointNotFoundException.class.getName())) {
-                int pointIndex = error.getInt("point_index");
+                int pointIndex = error.get("point_index").asInt();
                 errors.add(new PointNotFoundException(exMessage, pointIndex));
             } else if (exClass.equals(PointOutOfBoundsException.class.getName())) {
-                int pointIndex = error.getInt("point_index");
+                int pointIndex = error.get("point_index").asInt();
                 errors.add(new PointOutOfBoundsException(exMessage, pointIndex));
             } else if (exClass.isEmpty())
                 errors.add(new DetailedRuntimeException(exMessage, toMap(error)));
@@ -247,7 +215,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
         }
 
         if (json.has("message") && errors.isEmpty())
-            errors.add(new RuntimeException(json.getString("message")));
+            errors.add(new RuntimeException(json.get("message").asText()));
 
         return errors;
     }
@@ -334,16 +302,15 @@ public class GraphHopperWeb implements GraphHopperAPI {
             }
 
             String str = downloader.downloadAsString(url, true);
-            JSONObject json = new JSONObject(str);
+            JsonNode json = objectMapper.reader().readTree(str);
 
             GHResponse res = new GHResponse();
             res.addErrors(readErrors(json));
             if (res.hasErrors())
                 return res;
 
-            JSONArray paths = json.getJSONArray("paths");
-            for (int index = 0; index < paths.length(); index++) {
-                JSONObject path = paths.getJSONObject(index);
+            JsonNode paths = json.get("paths");
+            for (JsonNode path : paths) {
                 PathWrapper altRsp = createPathWrapper(path, tmpCalcPoints, tmpInstructions, tmpElevation, tmpTurnDescription);
                 res.add(altRsp);
             }

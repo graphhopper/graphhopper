@@ -22,6 +22,7 @@ import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
+import com.graphhopper.routing.weighting.BlockAreaWeighting;
 import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -243,8 +244,8 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     @Override
     public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map) {
-        boolean forceFlexMode = map.getBool(DISABLE, false);
-        if (!isEnabled() || forceFlexMode)
+        boolean disableCH = map.getBool(DISABLE, false);
+        if (!isEnabled() || disablingAllowed && disableCH)
             return defaultAlgoFactory;
 
         if (preparations.isEmpty())
@@ -286,19 +287,10 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             completionService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    String errorKey = CH.PREPARE + "error." + name;
-                    try {
-                        // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
-                        Thread.currentThread().setName(name);
-                        properties.put(errorKey, "CH preparation incomplete");
-                        prepare.doWork();
-                        properties.remove(errorKey);
-                        properties.put(CH.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
-                    } catch (Exception ex) {
-                        LOGGER.error("Problem while CH preparation " + name, ex);
-                        properties.put(errorKey, ex.getMessage());
-                        throw ex;
-                    }
+                    // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
+                    Thread.currentThread().setName(name);
+                    prepare.doWork();
+                    properties.put(CH.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
                 }
             }, name);
 
@@ -325,9 +317,6 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         traversalMode = getNodeBase();
 
         for (Weighting weighting : getWeightings()) {
-            if (weighting instanceof GenericWeighting) {
-                ((GenericWeighting) weighting).setGraph(ghStorage);
-            }
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
                     new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting),
                     weighting, traversalMode);

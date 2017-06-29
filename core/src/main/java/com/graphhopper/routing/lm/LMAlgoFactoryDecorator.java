@@ -24,7 +24,6 @@ import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -43,8 +42,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
-
-import static com.graphhopper.util.Parameters.Landmark.DISABLE;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * This class implements the A*, landmark and triangulation (ALT) decorator.
@@ -63,10 +61,12 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private final List<Weighting> weightings = new ArrayList<>();
     private final Map<String, Double> maximumWeights = new HashMap<>();
     private boolean enabled = false;
+    private int minNodes = -1;
     private boolean disablingAllowed = false;
     private final List<String> lmSuggestionsLocations = new ArrayList<>(5);
     private int preparationThreads;
     private ExecutorService threadPool;
+    private boolean logDetails = false;
 
     public LMAlgoFactoryDecorator() {
         setPreparationThreads(1);
@@ -78,12 +78,15 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
         landmarkCount = args.getInt(Parameters.Landmark.COUNT, landmarkCount);
         activeLandmarkCount = args.getInt(Landmark.ACTIVE_COUNT_DEFAULT, Math.min(8, landmarkCount));
-        for (String loc : args.get("prepare.lm.suggestions_location", "").split(",")) {
+        logDetails = args.getBool(Landmark.PREPARE + "log_details", false);
+        minNodes = args.getInt(Landmark.PREPARE + "min_network_size", -1);
+
+        for (String loc : args.get(Landmark.PREPARE + "suggestions_location", "").split(",")) {
             if (!loc.trim().isEmpty())
                 lmSuggestionsLocations.add(loc.trim());
         }
         String lmWeightingsStr = args.get(Landmark.PREPARE + "weightings", "");
-        if (!lmWeightingsStr.isEmpty()) {
+        if (!lmWeightingsStr.isEmpty() && !lmWeightingsStr.equalsIgnoreCase("no")) {
             List<String> tmpLMWeightingList = Arrays.asList(lmWeightingsStr.split(","));
             setWeightingsAsStrings(tmpLMWeightingList);
         }
@@ -216,8 +219,10 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
     @Override
     public RoutingAlgorithmFactory getDecoratedAlgorithmFactory(RoutingAlgorithmFactory defaultAlgoFactory, HintsMap map) {
-        boolean forceFlexMode = map.getBool(DISABLE, false);
-        if (!isEnabled() || disablingAllowed && forceFlexMode)
+        // for now do not allow mixing CH&LM #1082
+        boolean disableCH = map.getBool(Parameters.CH.DISABLE, false);
+        boolean disableLM = map.getBool(Parameters.Landmark.DISABLE, false);
+        if (!isEnabled() || disablingAllowed && disableLM || !disableCH)
             return defaultAlgoFactory;
 
         if (preparations.isEmpty())
@@ -228,7 +233,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                 return new LMRAFactory(p, defaultAlgoFactory);
         }
 
-        // if the initial encoder&weighting has certain properies we could cross query it but for now avoid this
+        // if the initial encoder&weighting has certain properties we could cross query it but for now avoid this
         return defaultAlgoFactory;
     }
 
@@ -266,51 +271,43 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     public boolean loadOrDoWork(final StorableProperties properties) {
         ExecutorCompletionService completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
-        int submittedPreparations = 0;
-        boolean prepared = false;
+        final AtomicBoolean prepared = new AtomicBoolean(false);
         for (final PrepareLandmarks plm : preparations) {
             counter++;
-            if (plm.loadExisting())
-                continue;
-
-            prepared = true;
-            LOGGER.info(counter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
+            final int tmpCounter = counter;
             final String name = AbstractWeighting.weightingToFileName(plm.getWeighting());
             completionService.submit(new Runnable() {
                 @Override
                 public void run() {
-                    String errorKey = Landmark.PREPARE + "error." + name;
-                    try {
-                        Thread.currentThread().setName(name);
-                        properties.put(errorKey, "LM preparation incomplete");
-                        plm.doWork();
-                        properties.remove(errorKey);
-                        properties.put(Landmark.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
-                    } catch (Exception ex) {
-                        LOGGER.error("Problem while LM preparation " + name, ex);
-                        properties.put(errorKey, ex.getMessage());
-                    }
+                    if (plm.loadExisting())
+                        return;
+
+                    LOGGER.info(tmpCounter + "/" + getPreparations().size() + " calling LM prepare.doWork for " + plm.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
+                    prepared.set(true);
+                    Thread.currentThread().setName(name);
+                    plm.doWork();
+                    properties.put(Landmark.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
                 }
             }, name);
-            submittedPreparations++;
         }
 
         threadPool.shutdown();
+
         try {
-            for (int i = 0; i < submittedPreparations; i++) {
+            for (int i = 0; i < preparations.size(); i++) {
                 completionService.take().get();
             }
         } catch (Exception e) {
             threadPool.shutdownNow();
             throw new RuntimeException(e);
         }
-        return prepared;
+        return prepared.get();
     }
 
     /**
      * This method creates the landmark storages ready for landmark creation.
      */
-    public void createPreparations(GraphHopperStorage ghStorage, TraversalMode traversalMode, LocationIndex locationIndex) {
+    public void createPreparations(GraphHopperStorage ghStorage, LocationIndex locationIndex) {
         if (!isEnabled() || !preparations.isEmpty())
             return;
         if (weightings.isEmpty())
@@ -334,10 +331,12 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                         "Couldn't find " + weighting.getName() + " in " + maximumWeights);
 
             PrepareLandmarks tmpPrepareLM = new PrepareLandmarks(ghStorage.getDirectory(), ghStorage,
-                    weighting, traversalMode, landmarkCount, activeLandmarkCount).
+                    weighting, landmarkCount, activeLandmarkCount).
                     setLandmarkSuggestions(lmSuggestions).
-                    setMaximumWeight(maximumWeight);
-
+                    setMaximumWeight(maximumWeight).
+                    setLogDetails(logDetails);
+            if (minNodes > 1)
+                tmpPrepareLM.setMinimumNodes(minNodes);
             addPreparation(tmpPrepareLM);
         }
     }

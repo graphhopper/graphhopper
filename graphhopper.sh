@@ -62,7 +62,7 @@ function ensureOsm {
        wget -S -nv -O "$OSM_FILE" "$LINK"
     elif [ ${OSM_FILE: -4} == ".ghz" ]; then
        wget -S -nv -O "$OSM_FILE" "$LINK"
-       unzip "$FILE" -d "$NAME-gh"
+       cd $DATADIR && unzip "$BASENAME" -d "$NAME-gh"
     else    
        # make sure aborting download does not result in loading corrupt osm file
        TMP_OSM=temp.osm
@@ -90,8 +90,8 @@ function ensureMaven {
       if [ ! -f "$MAVEN_HOME/bin/mvn" ]; then
         echo "No Maven found in the PATH. Now downloading+installing it to $MAVEN_HOME"
         cd "$GH_HOME"
-        MVN_PACKAGE=apache-maven-3.3.9
-        wget -O maven.zip http://archive.apache.org/dist/maven/maven-3/3.3.9/binaries/$MVN_PACKAGE-bin.zip
+        MVN_PACKAGE=apache-maven-3.5.0
+        wget -O maven.zip http://archive.apache.org/dist/maven/maven-3/3.5.0/binaries/$MVN_PACKAGE-bin.zip
         unzip maven.zip
         mv $MVN_PACKAGE maven
         rm maven.zip
@@ -111,17 +111,10 @@ function execMvn {
 }
 
 function packageCoreJar {
-  if [ ! -d "./target" ]; then
-    echo "## building parent"
-    execMvn --non-recursive install
-  fi
-  
   if [ ! -f "$JAR" ]; then
     echo "## building graphhopper jar: $JAR"
     echo "## using maven at $MAVEN_HOME"
-    
-    execMvn --projects tools,reader-gtfs -am -DskipTests=true install
-    execMvn --projects tools -DskipTests=true install assembly:single
+    execMvn --projects tools -am -DskipTests=true package
   else
     echo "## existing jar found $JAR"
   fi
@@ -145,9 +138,7 @@ elif [ "$ACTION" = "build" ]; then
  exit  
  
 elif [ "$ACTION" = "buildweb" ]; then
- packageCoreJar
- execMvn --projects web -am -DskipTests=true install
- execMvn --projects web -DskipTests=true install assembly:single
+ execMvn --projects web -am -DskipTests=true package
  exit
 
 elif [ "$ACTION" = "extract" ]; then
@@ -158,8 +149,7 @@ elif [ "$ACTION" = "extract" ]; then
  exit
  
 elif [ "$ACTION" = "android" ]; then
- packageCoreJar
- execMvn -P include-android --projects android/app install android:deploy android:run
+ execMvn -P include-android --projects android/app -am package android:deploy android:run
  exit
 fi
 
@@ -169,8 +159,14 @@ if [ "$FILE" = "" ]; then
   exit
 fi
 
+# DATA_DIR = directories path to the file if any (if current directory, return .)
+DATADIR=$(dirname "${FILE}")
+# create the directories if needed
+mkdir -p $DATADIR
+# BASENAME = filename (file without the directories)
+BASENAME=$(basename "${FILE}")
 # NAME = file without extension if any
-NAME="${FILE%.*}"
+NAME="${BASENAME%.*}"
 
 if [ "$FILE" == "-" ]; then
    OSM_FILE=
@@ -184,14 +180,14 @@ elif [ ${FILE: -3} == "-gh" ]; then
 elif [ ${FILE: -4} == ".ghz" ]; then
    OSM_FILE="$FILE"
    if [[ ! -d "$NAME-gh" ]]; then
-      unzip "$FILE" -d "$NAME-gh"
+      cd $DATADIR && unzip "$BASENAME" -d "$NAME-gh"
    fi
 else
    # no known end -> no import
    OSM_FILE=
 fi
 
-GRAPH=$NAME-gh
+GRAPH=$DATADIR/$NAME-gh
 VERSION=$(grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
 JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
 
@@ -225,8 +221,7 @@ if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
   fi
   WEB_JAR="$GH_HOME/web/target/graphhopper-web-$VERSION-with-dep.jar"
   if [ ! -s "$WEB_JAR" ]; then
-    execMvn --projects web -am -DskipTests=true install
-    execMvn --projects web -DskipTests=true install assembly:single
+    execMvn --projects web -am -DskipTests=true package
   fi
 
   RC_BASE=./web/src/main/webapp
@@ -256,7 +251,7 @@ elif [ "$ACTION" = "torture" ]; then
 
 
 elif [ "$ACTION" = "miniui" ]; then
- execMvn --projects tools -DskipTests clean install assembly:single
+ execMvn --projects tools -am -DskipTests clean package
  JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI datareader.file="$OSM_FILE" config=$CONFIG \
               graph.location="$GRAPH"
@@ -272,8 +267,7 @@ elif [ "$ACTION" = "measurement" ]; then
  # IMPORT_TIME=$(($END - $START))
 
  function startMeasurement {
-    execMvn --projects core -DskipTests clean install
-    execMvn --projects tools -DskipTests install assembly:single
+    execMvn --projects tools -am -DskipTests clean package
     COUNT=5000
     commit_info=$(git log -n 1 --pretty=oneline)
     echo -e "\nperform measurement via jar=> $JAR and ARGS=> $ARGS"
