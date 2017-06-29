@@ -3,8 +3,9 @@ sudo: false
 matrix:
   fast_finish: true
   include:
+    - jdk: oraclejdk8
       # Java 9 needs to be manually installed/upgraded
-      # see: https://github.com/travis-ci/travis-ci/issues/2968#issuecomment-149164058
+      # see: https://github.com/travis-ci/travis-ci/issues/2968#issuecomment-149164058      
     - jdk: oraclejdk9
       env: JVM=latest
       sudo: required
