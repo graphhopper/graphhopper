@@ -113,9 +113,9 @@ with this maven dependency:
 ```xml
 <dependency>
     <groupId>com.graphhopper</groupId>
-    <artifactId>map-matching</artifactId>
-    <!-- or 0.9-SNAPSHOT for the unstable -->
-    <version>0.8.2</version>
+    <artifactId>graphhopper-map-matching-core</artifactId>
+    <!-- or 0.10-SNAPSHOT for the unstable -->
+    <version>0.9.0</version>
 </dependency>
 ```
 
