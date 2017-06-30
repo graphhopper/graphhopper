@@ -99,20 +99,4 @@ public final class PtModule extends AbstractModule {
         return new SimpleRouteSerializer(storage.getBounds());
     }
 
-    @Provides
-    GraphHopperService getGraphHopperService(GraphHopperStorage storage, LocationIndex locationIndex) {
-        return new GraphHopperService() {
-            @Override
-            public void start() {
-
-            }
-
-            @Override
-            public void close() throws Exception {
-                storage.close();
-                locationIndex.close();
-            }
-        };
-    }
-
 }

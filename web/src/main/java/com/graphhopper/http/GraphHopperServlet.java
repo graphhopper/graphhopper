@@ -30,6 +30,7 @@ import org.w3c.dom.Element;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -57,11 +58,11 @@ import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 public class GraphHopperServlet extends GHBaseServlet {
 
     @Inject
-    private GraphHopperAPI graphHopper;
+    private Provider<GraphHopperAPI> graphHopper;
     @Inject
-    private EncodingManager encodingManager;
+    private Provider<EncodingManager> encodingManager;
     @Inject
-    private RouteSerializer routeSerializer;
+    private Provider<RouteSerializer> routeSerializer;
     @Inject
     @Named("hasElevation")
     private boolean hasElevation;
@@ -98,7 +99,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                     throw new IllegalArgumentException("heading list in wrong format: " + e.getMessage());
                 }
 
-                if (!encodingManager.supports(vehicleStr)) {
+                if (!encodingManager.get().supports(vehicleStr)) {
                     throw new IllegalArgumentException("Vehicle not supported: " + vehicleStr);
                 } else if (enableElevation && !hasElevation) {
                     throw new IllegalArgumentException("Elevation not supported!");
@@ -112,7 +113,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                     throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored");
                 }
 
-                FlagEncoder algoVehicle = encodingManager.getEncoder(vehicleStr);
+                FlagEncoder algoVehicle = encodingManager.get().getEncoder(vehicleStr);
                 GHRequest request;
                 if (favoredHeadings.size() > 0) {
                     // if only one favored heading is specified take as start heading
@@ -139,7 +140,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                         put(INSTRUCTIONS, enableInstructions).
                         put(WAY_POINT_MAX_DISTANCE, minPathPrecision);
 
-                ghRsp = graphHopper.route(request);
+                ghRsp = graphHopper.get().route(request);
             } catch (IllegalArgumentException ex) {
                 ghRsp.addError(ex);
             }
@@ -176,7 +177,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                 writeResponse(httpRes, xml);
             }
         } else {
-            Map<String, Object> map = routeSerializer.toJSON(ghRsp, calcPoints, pointsEncoded,
+            Map<String, Object> map = routeSerializer.get().toJSON(ghRsp, calcPoints, pointsEncoded,
                     enableElevation, enableInstructions);
 
             Object infoMap = map.get("info");

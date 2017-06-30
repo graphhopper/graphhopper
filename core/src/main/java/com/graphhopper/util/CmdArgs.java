@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -37,6 +39,7 @@ public class CmdArgs extends PMap {
     public CmdArgs() {
     }
 
+    @JsonCreator
     public CmdArgs(Map<String, String> map) {
         super(map);
     }

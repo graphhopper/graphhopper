@@ -28,6 +28,7 @@ import com.graphhopper.util.shapes.BBox;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,14 +41,14 @@ import java.util.List;
  */
 public class InfoServlet extends GHBaseServlet {
     @Inject
-    private GraphHopperStorage storage;
+    private Provider<GraphHopperStorage> storage;
     @Inject
     @Named("hasElevation")
     private boolean hasElevation;
 
     @Override
     public void doGet(HttpServletRequest req, HttpServletResponse res) throws ServletException, IOException {
-        BBox bb = storage.getBounds();
+        BBox bb = storage.get().getBounds();
         List<Double> list = new ArrayList<>(4);
         list.add(bb.minLon);
         list.add(bb.minLat);
@@ -58,7 +59,7 @@ public class InfoServlet extends GHBaseServlet {
         final ObjectNode json = jsonNodeFactory.objectNode();
         json.putPOJO("bbox", list);
 
-        String[] vehicles = storage.getEncodingManager().toString().split(",");
+        String[] vehicles = storage.get().getEncodingManager().toString().split(",");
         json.putPOJO("supported_vehicles", vehicles);
         ObjectNode features = json.putObject("features");
         for (String v : vehicles) {
@@ -69,7 +70,7 @@ public class InfoServlet extends GHBaseServlet {
         json.put("version", Constants.VERSION);
         json.put("build_date", Constants.BUILD_DATE);
 
-        StorableProperties props = storage.getProperties();
+        StorableProperties props = storage.get().getProperties();
         json.put("import_date", props.get("datareader.import.date"));
 
         if (!Helper.isEmpty(props.get("datareader.data.date")))

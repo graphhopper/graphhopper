@@ -21,8 +21,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
+import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
@@ -32,18 +33,13 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class GraphHopperServletWithEleIT extends BaseServletTester {
+public class GraphHopperServletWithEleIT {
     private static final String dir = "./target/monaco-gh/";
 
-    @AfterClass
-    public static void cleanUp() {
-        Helper.removeDir(new File(dir));
-        shutdownJetty(true);
-    }
+    private static final GraphHopperConfiguration config = new GraphHopperConfiguration();
 
-    @Before
-    public void setUp() {
-        CmdArgs args = new CmdArgs().
+    static {
+        config.cmdArgs = new CmdArgs().
                 put("graph.elevation.provider", "srtm").
                 put("graph.elevation.cachedir", "../core/files/").
                 put(Parameters.CH.PREPARE + "weightings", "no").
@@ -51,12 +47,21 @@ public class GraphHopperServletWithEleIT extends BaseServletTester {
                 put("config", "../config-example.properties").
                 put("datareader.file", "../core/files/monaco.osm.gz").
                 put("graph.location", dir);
-        setUpJetty(args);
+    }
+
+    @ClassRule
+    public static final DropwizardAppRule<GraphHopperConfiguration> app = new DropwizardAppRule(
+            GraphHopperApplication.class, config);
+
+
+    @AfterClass
+    public static void cleanUp() {
+        Helper.removeDir(new File(dir));
     }
 
     @Test
     public void testElevation() throws Exception {
-        JsonNode json = query("point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true", 200);
+        JsonNode json = app.client().target("http://localhost:8080/route?" + "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true").request().buildGet().invoke().readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -75,7 +80,7 @@ public class GraphHopperServletWithEleIT extends BaseServletTester {
     @Test
     public void testNoElevation() throws Exception {
         // default is elevation=false
-        JsonNode json = query("point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false", 200);
+        JsonNode json = app.client().target("http://localhost:8080/route?point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false").request().buildGet().invoke().readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -86,7 +91,7 @@ public class GraphHopperServletWithEleIT extends BaseServletTester {
         assertTrue("Elevation should not be included!", cson.toString().contains("[7.421392,43.7307]"));
 
         // disable elevation
-        json = query("point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false", 200);
+        json = app.client().target("http://localhost:8080/route?point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false").request().buildGet().invoke().readEntity(JsonNode.class);
         infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         path = json.get("paths").get(0);

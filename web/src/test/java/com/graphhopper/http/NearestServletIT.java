@@ -21,8 +21,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
@@ -33,27 +34,31 @@ import static org.junit.Assert.assertTrue;
 /**
  * @author svantulden
  */
-public class NearestServletIT extends BaseServletTester {
+public class NearestServletIT {
     private static final String dir = "./target/andorra-gh/";
+
+    private static final GraphHopperConfiguration config = new GraphHopperConfiguration();
+
+    static {
+        config.cmdArgs = new CmdArgs().
+                put("config", "../config-example.properties").
+                put("datareader.file", "../core/files/andorra.osm.pbf").
+                put("graph.location", dir);
+    }
+
+    @ClassRule
+    public static final DropwizardAppRule<GraphHopperConfiguration> app = new DropwizardAppRule(
+            GraphHopperApplication.class, config);
+
 
     @AfterClass
     public static void cleanUp() {
         Helper.removeDir(new File(dir));
-        shutdownJetty(true);
-    }
-
-    @Before
-    public void setUp() {
-        CmdArgs args = new CmdArgs().
-                put("config", "../config-example.properties").
-                put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", dir);
-        setUpJetty(args);
     }
 
     @Test
     public void testBasicNearestQuery() throws Exception {
-        JsonNode json = nearestQuery("point=42.554851,1.536198");
+        JsonNode json = app.client().target("http://localhost:8080/nearest?point=42.554851,1.536198").request().buildGet().invoke().readEntity(JsonNode.class);
         assertFalse(json.has("error"));
         ArrayNode point = (ArrayNode) json.get("coordinates");
         assertTrue("returned point is not 2D: " + point, point.size() == 2);

@@ -26,8 +26,9 @@ import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
+import io.dropwizard.testing.junit.DropwizardAppRule;
 import org.junit.AfterClass;
-import org.junit.Before;
+import org.junit.ClassRule;
 import org.junit.Test;
 
 import java.io.File;
@@ -39,27 +40,30 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class GraphHopperServletIT extends BaseServletTester {
+public class GraphHopperServletIT {
     private static final String DIR = "./target/andorra-gh/";
+
+    private static final GraphHopperConfiguration config = new GraphHopperConfiguration();
+
+    static {
+        config.cmdArgs = new CmdArgs().
+                put("config", "../config-example.properties").
+                put("datareader.file", "../core/files/andorra.osm.pbf").
+                put("graph.location", DIR);
+    }
+
+    @ClassRule
+    public static final DropwizardAppRule<GraphHopperConfiguration> app = new DropwizardAppRule(
+            GraphHopperApplication.class, config);
 
     @AfterClass
     public static void cleanUp() {
         Helper.removeDir(new File(DIR));
-        shutdownJetty(true);
-    }
-
-    @Before
-    public void setUp() {
-        CmdArgs args = new CmdArgs().
-                put("config", "../config-example.properties").
-                put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR);
-        setUpJetty(args);
     }
 
     @Test
     public void testBasicQuery() throws Exception {
-        JsonNode json = query("point=42.554851,1.536198&point=42.510071,1.548128", 200);
+        JsonNode json = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke().readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -71,7 +75,7 @@ public class GraphHopperServletIT extends BaseServletTester {
     @Test
     public void testQueryWithDirections() throws Exception {
         // Note, in general specifying directions does not work with CH, but this is an example where it works
-        JsonNode json = query("point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240&ch.force_heading=true", 200);
+        JsonNode json = app.client().target("http://localhost:8080/route?" + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240&ch.force_heading=true").request().buildGet().invoke().readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -83,8 +87,7 @@ public class GraphHopperServletIT extends BaseServletTester {
     @Test
     public void testQueryWithStraightVia() throws Exception {
         // Note, in general specifying straightvia does not work with CH, but this is an example where it works
-        JsonNode json = query(
-                "point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true", 200);
+        JsonNode json = app.client().target("http://localhost:8080/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke().readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -95,14 +98,14 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testJsonRounding() throws Exception {
-        JsonNode json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false", 200);
+        JsonNode json = app.client().target("http://localhost:8080/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false").request().buildGet().invoke().readEntity(JsonNode.class);
         JsonNode cson = json.get("paths").get(0).get("points");
         assertTrue("unexpected precision!", cson.toString().contains("[1.536374,42.554839]"));
     }
 
     @Test
     public void testFailIfElevationRequestedButNotIncluded() throws Exception {
-        JsonNode json = query("point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true", 400);
+        JsonNode json = app.client().target("http://localhost:8080/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true").request().buildGet().invoke().readEntity(JsonNode.class);
         assertTrue(json.has("message"));
         assertEquals("Elevation not supported!", json.get("message").asText());
         assertEquals("Elevation not supported!", json.get("hints").get(0).get("message").asText());
@@ -110,8 +113,8 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testGraphHopperWeb() throws Exception {
-        GraphHopperAPI hopper = new GraphHopperWeb();
-        assertTrue(hopper.load(getTestRouteAPIUrl()));
+        GraphHopperWeb hopper = new GraphHopperWeb();
+        assertTrue(hopper.load("http://localhost:8080/route"));
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
@@ -140,7 +143,7 @@ public class GraphHopperServletIT extends BaseServletTester {
     @Test
     public void testInitInstructionsWithTurnDescription() {
         GraphHopperAPI hopper = new GraphHopperWeb();
-        assertTrue(hopper.load(getTestRouteAPIUrl()));
+        assertTrue(hopper.load("http://localhost:8080/route"));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         GHResponse rsp = hopper.route(request);
         assertEquals("Continue onto Carrer Antoni Fiter i Rossell", rsp.getBest().getInstructions().get(3).getName());
@@ -153,7 +156,7 @@ public class GraphHopperServletIT extends BaseServletTester {
     @Test
     public void testGraphHopperWebRealExceptions() {
         GraphHopperAPI hopper = new GraphHopperWeb();
-        assertTrue(hopper.load(getTestRouteAPIUrl()));
+        assertTrue(hopper.load("http://localhost:8080/route"));
 
         // IllegalArgumentException (Wrong Request)
         GHResponse rsp = hopper.route(new GHRequest());
@@ -183,7 +186,7 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testGPX() throws Exception {
-        String str = queryString("point=42.554851,1.536198&point=42.510071,1.548128&type=gpx", 200);
+        String str = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx").request().buildGet().invoke().readEntity(String.class);
         // For backward compatibility we currently export route and track.
         assertTrue(str.contains("<gh:distance>1841.8</gh:distance>"));
         assertFalse(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));
@@ -192,7 +195,7 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testGPXWithExcludedRouteSelection() throws Exception {
-        String str = queryString("point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false", 200);
+        String str = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false").request().buildGet().invoke().readEntity(String.class);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
         assertFalse(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));
         assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
@@ -200,7 +203,7 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testGPXWithTrackAndWaypointsSelection() throws Exception {
-        String str = queryString("point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.track=true&gpx.route=false&gpx.waypoints=true", 200);
+        String str = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.track=true&gpx.route=false&gpx.waypoints=true").request().buildGet().invoke().readEntity(String.class);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
         assertTrue(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>arrive at destination</name></wpt>"));
         assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
@@ -208,7 +211,7 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testGPXWithError() throws Exception {
-        String str = queryString("point=42.554851,1.536198&type=gpx", 400);
+        String str = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&type=gpx").request().buildGet().invoke().readEntity(String.class);
         assertFalse(str, str.contains("<html>"));
         assertFalse(str, str.contains("{"));
         assertTrue("Expected error but was: " + str, str.contains("<message>At least 2 points have to be specified, but was:1</message>"));
@@ -217,9 +220,9 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testUndefinedPointHeading() throws Exception {
-        JsonNode json = query("point=undefined&heading=0", 400);
+        JsonNode json = app.client().target("http://localhost:8080/route?point=undefined&heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
         assertEquals("You have to pass at least one point", json.get("message").asText());
-        json = query("point=42.554851,1.536198&point=undefined&heading=0&heading=0", 400);
+        json = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=undefined&heading=0&heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
         assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message").asText());
     }
 }

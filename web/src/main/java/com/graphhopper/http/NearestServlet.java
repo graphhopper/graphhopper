@@ -29,6 +29,7 @@ import com.graphhopper.util.shapes.GHPoint3D;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.inject.Provider;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,7 +41,7 @@ import java.io.IOException;
 public class NearestServlet extends GHBaseServlet {
     private final DistanceCalc calc = Helper.DIST_EARTH;
     @Inject
-    private LocationIndex index;
+    private Provider<LocationIndex> index;
     @Inject
     @Named("hasElevation")
     private boolean hasElevation;
@@ -53,7 +54,7 @@ public class NearestServlet extends GHBaseServlet {
         ObjectNode result = objectMapper.createObjectNode();
         if (pointStr != null && !pointStr.equalsIgnoreCase("")) {
             GHPoint place = GHPoint.parse(pointStr);
-            QueryResult qr = index.findClosest(place.lat, place.lon, EdgeFilter.ALL_EDGES);
+            QueryResult qr = index.get().findClosest(place.lat, place.lon, EdgeFilter.ALL_EDGES);
 
             if (!qr.isValid()) {
                 result.put("error", "Nearest point cannot be found!");

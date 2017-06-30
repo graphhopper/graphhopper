@@ -93,32 +93,4 @@ public class GraphHopperServletModule extends ServletModule {
         // serve("/*").with(InvalidRequestServlet.class);
         bind(InvalidRequestServlet.class).in(Singleton.class);
     }
-
-    @Provides
-    @Singleton
-    ObjectMapper createObjectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setDateFormat(new ISO8601DateFormat());
-        objectMapper.registerModule(new JtsModule());
-
-        // Because VirtualEdgeIteratorState has getters which throw Exceptions.
-        // http://stackoverflow.com/questions/35359430/how-to-make-jackson-ignore-properties-if-the-getters-throw-exceptions
-        objectMapper.registerModule(new SimpleModule().setSerializerModifier(new BeanSerializerModifier() {
-            @Override
-            public List<BeanPropertyWriter> changeProperties(SerializationConfig config, BeanDescription beanDesc, List<BeanPropertyWriter> beanProperties) {
-                return beanProperties.stream().map(bpw -> new BeanPropertyWriter(bpw) {
-                    @Override
-                    public void serializeAsField(Object bean, JsonGenerator gen, SerializerProvider prov) throws Exception {
-                        try {
-                            super.serializeAsField(bean, gen, prov);
-                        } catch (Exception e) {
-                            // Ignoring expected exception, see above.
-                        }
-                    }
-                }).collect(Collectors.toList());
-            }
-        }));
-        return objectMapper;
-    }
-
 }
