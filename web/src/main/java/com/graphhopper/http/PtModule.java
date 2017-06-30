@@ -58,8 +58,8 @@ public final class PtModule extends AbstractModule {
 
     @Provides
     @Singleton
-    LocationIndex createLocationIndex(GraphHopperStorage graphHopperStorage, GHDirectory directory) {
-        return GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
+    LocationIndex createLocationIndex(GraphHopperStorage graphHopperStorage, GHDirectory directory, PtFlagEncoder ptFlagEncoder) {
+        return GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage, ptFlagEncoder);
     }
 
     @Provides

@@ -244,8 +244,10 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     }
 
 
-    public static LocationIndex createOrLoadIndex(GHDirectory directory, GraphHopperStorage graphHopperStorage) {
-        LocationIndex locationIndex = new LocationIndexTree(graphHopperStorage, directory);
+    public static LocationIndex createOrLoadIndex(GHDirectory directory, GraphHopperStorage graphHopperStorage, PtFlagEncoder flagEncoder) {
+        final EverythingButPt everythingButPt = new EverythingButPt(flagEncoder);
+        Graph walkNetwork = GraphSupport.filteredView(graphHopperStorage, everythingButPt);
+        LocationIndex locationIndex = new LocationIndexTree(walkNetwork, directory);
         if (!locationIndex.loadExisting()) {
             locationIndex.prepareIndex();
         }
