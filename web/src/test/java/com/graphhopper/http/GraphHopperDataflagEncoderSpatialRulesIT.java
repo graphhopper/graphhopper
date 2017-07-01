@@ -48,7 +48,7 @@ public class GraphHopperDataflagEncoderSpatialRulesIT extends BaseServletTester 
                 put("config", "../config-example.properties").
                 put("graph.flag_encoders", "generic").
                 put("prepare.ch.weightings", "no").
-                put("spatial_rules.location", "../web/src/main/resources/com/graphhopper/spatialrules/countries.geo.json").
+                put("spatial_rules.location", "../core/files/spatialrules/countries.geo.json").
                 put("spatial_rules.max_bbox", "11.4,11.7,49.9,50.1").
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
                 put("graph.location", DIR);

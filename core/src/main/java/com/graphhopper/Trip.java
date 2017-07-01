@@ -35,7 +35,7 @@ public class Trip {
 
     public static class Stop {
         public final String stop_id;
-        public final String name;
+        public final String stop_name;
         public final Point geometry;
 
         public final Date arrivalTime;
@@ -43,7 +43,7 @@ public class Trip {
 
         public Stop(String stop_id, String name, Point geometry, Date arrivalTime, Date departureTime) {
             this.stop_id = stop_id;
-            this.name = name;
+            this.stop_name = name;
             this.geometry = geometry;
             this.arrivalTime = arrivalTime;
             this.departureTime = departureTime;
@@ -58,22 +58,20 @@ public class Trip {
         }
     }
     public static class PtLeg extends Leg {
-        public final String feedId;
+        public final String feed_id;
         public final boolean isInSameVehicleAsPrevious;
         public final String trip_headsign;
         public final long travelTime;
         public final List<Stop> stops;
-        public final Stop boardStop;
-        public final String tripId;
-        public final String routeId;
+        public final String trip_id;
+        public final String route_id;
 
-        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, Stop stop, String tripId, String routeId, List<EdgeIteratorState> edges, Date departureTime, List<Stop> stops, double distance, long travelTime, Date arrivalTime, Geometry geometry) {
-            super("pt", stop.name, departureTime, edges, geometry, distance, arrivalTime);
-            this.feedId = feedId;
+        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, List<EdgeIteratorState> edges, Date departureTime, List<Stop> stops, double distance, long travelTime, Date arrivalTime, Geometry geometry) {
+            super("pt", stops.get(0).stop_name, departureTime, edges, geometry, distance, arrivalTime);
+            this.feed_id = feedId;
             this.isInSameVehicleAsPrevious = isInSameVehicleAsPrevious;
-            this.boardStop = stop;
-            this.tripId = tripId;
-            this.routeId = routeId;
+            this.trip_id = tripId;
+            this.route_id = routeId;
             this.trip_headsign = edges.get(0).getName();
             this.travelTime = travelTime;
             this.stops = stops;
