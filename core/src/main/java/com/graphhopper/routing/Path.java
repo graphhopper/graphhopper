@@ -379,6 +379,7 @@ public class Path {
         List<PathDetails> details = new ArrayList<>(calculators.size());
         for (PathDetailsCalculator calc : calculators) {
             details.add(new PathDetails(calc.getName()));
+            calc.reset();
         }
         forEveryEdge(new PathDetailsFromEdges(details, calculators));
         return details;

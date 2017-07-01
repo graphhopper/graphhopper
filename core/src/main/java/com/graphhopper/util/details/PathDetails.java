@@ -79,6 +79,15 @@ public class PathDetails {
             throw new IllegalArgumentException("Only PathDetails with the same name can be merged");
         }
         List<Detail> otherDetails = pD.getDetails();
+
+        // Make sure that pathdetails are merged correctly at waypoints
+        if(!this.pathDetails.isEmpty() && !otherDetails.isEmpty()){
+            Detail lastDetail = pathDetails.get(pathDetails.size()-1);
+            if(lastDetail.value.equals(otherDetails.get(0).value)){
+                lastDetail.numberOfPoints += otherDetails.get(0).numberOfPoints;
+                otherDetails.remove(0);
+            }
+        }
         this.pathDetails.addAll(otherDetails);
     }
 

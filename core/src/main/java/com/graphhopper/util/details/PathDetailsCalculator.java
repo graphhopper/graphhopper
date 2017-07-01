@@ -33,4 +33,6 @@ public interface PathDetailsCalculator {
 
     String getName();
 
+    void reset();
+
 }

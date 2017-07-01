@@ -52,4 +52,9 @@ public class AverageSpeedDetails implements PathDetailsCalculator {
     public String getName() {
         return "average-speed";
     }
+
+    @Override
+    public void reset() {
+        curAvgSpeed = -1;
+    }
 }
