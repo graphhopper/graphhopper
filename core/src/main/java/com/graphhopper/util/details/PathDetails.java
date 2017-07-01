@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util.details;
 
+import com.graphhopper.util.Parameters;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -32,11 +34,8 @@ public class PathDetails {
     private final String name;
     private boolean isOpen = false;
 
-    private int startRef;
-    private Object value;
-
-    //TODO is there a better data structure?
-    private Map<Object, List<int[]>> pathDetails = new HashMap<>();
+    private Detail currentDetail = new Detail();
+    private List<Detail> pathDetails = new ArrayList<>();
 
     public PathDetails(String name) {
         this.name = name;
@@ -46,62 +45,76 @@ public class PathDetails {
      * It is only possible to open one interval at a time.
      *
      * @param value
-     * @param startRef
      */
-    public void startInterval(Object value, int startRef) {
-        if(isOpen){
-            throw new IllegalStateException("Path details is already open with value: "+this.value+" and startRef: "+
-                    this.startRef+ " trying to open a new one with value: "+value+" and startRef: "+startRef);
+    public void startInterval(Object value) {
+        if (isOpen) {
+            throw new IllegalStateException("Path details is already open with value: " + this.currentDetail.value + " trying to open a new one with value: " + value);
         }
-        this.value = value;
-        this.startRef = startRef;
+        this.currentDetail = new Detail(value);
         isOpen = true;
     }
 
     /**
      * Ending intervals multiple times is safe, we only write the interval if it was opened.
-     *
+     * <p>
      * Writes the interval to the pathDetails
      *
-     * @param endRef The point ref of the end
+     * @param numberOfPoints Length of the PathDetail
      */
-    public void endInterval(int endRef) {
-        // We don't want enmpty interfals ,therefore the refs need to be different
-        if (isOpen && startRef != endRef) {
-            List<int[]> list;
-            if(pathDetails.containsKey(value)){
-                list = pathDetails.get(value);
-            }else{
-                list = new ArrayList<>();
-            }
-            list.add(new int[]{startRef, endRef});
-            pathDetails.put(value, list);
+    public void endInterval(int numberOfPoints) {
+        // We don't want PathDetails
+        if (isOpen && numberOfPoints > 0) {
+            this.currentDetail.numberOfPoints = numberOfPoints;
+            pathDetails.add(this.currentDetail);
         }
         isOpen = false;
     }
 
-    public Map<Object, List<int[]>> getDetails(){
+    public List<Detail> getDetails() {
         return pathDetails;
     }
 
-    public void merge(PathDetails pD){
-        if(!this.name.equals(pD.getName())){
+    public void merge(PathDetails pD) {
+        if (!this.name.equals(pD.getName())) {
             throw new IllegalArgumentException("Only PathDetails with the same name can be merged");
         }
-        Map<Object, List<int[]>> otherDetails = pD.getDetails();
-        for (Object object: otherDetails.keySet()) {
-            List<int[]> list;
-            if(this.pathDetails.containsKey(object)){
-                list = this.pathDetails.get(object);
-                list.addAll(otherDetails.get(object));
-            }else {
-                list = otherDetails.get(object);
-            }
-            this.pathDetails.put(object, list);
-        }
+        List<Detail> otherDetails = pD.getDetails();
+        this.pathDetails.addAll(otherDetails);
     }
 
-    public String getName(){
+    public String getName() {
         return this.name;
+    }
+
+    public Map<Object, List<int[]>> getPathDetailsMap(){
+        Map<Object, List<int[]>> detailsMap = new HashMap<>();
+
+        int pointer = 0;
+
+        for (Detail detail: this.pathDetails) {
+            List<int[]> detailIntervals;
+            if(detailsMap.containsKey(detail.value)){
+                 detailIntervals = detailsMap.get(detail.value);
+            }else {
+                detailIntervals = new ArrayList<>();
+            }
+            detailIntervals.add(new int[]{pointer, pointer+detail.numberOfPoints});
+            detailsMap.put(detail.value, detailIntervals);
+            pointer += detail.numberOfPoints;
+        }
+
+        return detailsMap;
+    }
+
+    public class Detail {
+        public Object value;
+        public int numberOfPoints;
+
+        public Detail() {
+        }
+
+        public Detail(Object value) {
+            this.value = value;
+        }
     }
 }

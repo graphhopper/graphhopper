@@ -34,19 +34,13 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor{
     int i;
     PathDetailsCalculator calc;
 
-    double lat, lng;
-    int adjNode;
-
     private final List<PathDetails> details;
     private final List<PathDetailsCalculator> calculators;
-    private int lastIndex;
-    private final NodeAccess nodeAccess;
+    private int numberOfPoints = 0;
 
-    public PathDetailsFromEdges(List<PathDetails> details, List<PathDetailsCalculator> calculators, int lastIndex, NodeAccess nodeAccess){
+    public PathDetailsFromEdges(List<PathDetails> details, List<PathDetailsCalculator> calculators){
         this.details = details;
         this.calculators = calculators;
-        this.lastIndex = lastIndex;
-        this.nodeAccess = nodeAccess;
     }
 
     @Override
@@ -54,17 +48,18 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor{
         for (i = 0; i < calculators.size(); i++) {
             calc = calculators.get(i);
             if (calc.edgeIsDifferentToLastEdge(edge)) {
-                details.get(i).endInterval(lastIndex);
-                details.get(i).startInterval(calc.getCurrentValue(), lastIndex);
+                details.get(i).endInterval(numberOfPoints);
+                details.get(i).startInterval(calc.getCurrentValue());
+                numberOfPoints = 0;
             }
         }
-        lastIndex += edge.fetchWayGeometry(2).size();
+        numberOfPoints += edge.fetchWayGeometry(2).size();
     }
 
     @Override
     public void finish() {
         for (i = 0; i < details.size(); i++) {
-            details.get(i).endInterval(lastIndex);
+            details.get(i).endInterval(numberOfPoints);
         }
     }
 

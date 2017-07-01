@@ -401,10 +401,11 @@ public class GraphHopperIT {
         PathWrapper arsp = rsp.getBest();
         List<PathDetails> details = arsp.getPathDetails();
         assertTrue(details.size() == 1);
+        Map<Object, List<int[]>> detailsMap = details.get(0).getPathDetailsMap();
         // Foot routing
-        assertTrue(details.get(0).getDetails().get(5.0).size() > 0);
+        assertTrue(detailsMap.get(5.0).size() > 0);
         // First point
-        assertTrue(details.get(0).getDetails().get(5.0).get(0)[0] == 0);
+        assertTrue(detailsMap.get(5.0).get(0)[0] == 0);
     }
 
     @Test

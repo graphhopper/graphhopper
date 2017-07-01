@@ -123,7 +123,7 @@ public class PathMerger {
                 fullPoints.add(tmpPoints);
             }
             if ((calcPoints || enableInstructions) && !pathDetailCalculators.isEmpty()) {
-                altRsp.addPathDetails(path.calcDetails(pathDetailCalculators, lastIndex));
+                altRsp.addPathDetails(path.calcDetails(pathDetailCalculators));
                 lastIndex += origPoints;
             }
 

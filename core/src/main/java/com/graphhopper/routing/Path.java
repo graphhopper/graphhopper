@@ -373,15 +373,14 @@ public class Path {
 
     /**
      * @param calculators All calculators to be considered for this route
-     * @param lastIndex   The index of the last point of the path
      * @return List of PathDetails for this Path
      */
-    public List<PathDetails> calcDetails(final List<PathDetailsCalculator> calculators, int lastIndex) {
+    public List<PathDetails> calcDetails(final List<PathDetailsCalculator> calculators) {
         List<PathDetails> details = new ArrayList<>(calculators.size());
         for (PathDetailsCalculator calc : calculators) {
             details.add(new PathDetails(calc.getName()));
         }
-        forEveryEdge(new PathDetailsFromEdges(details, calculators, lastIndex, nodeAccess));
+        forEveryEdge(new PathDetailsFromEdges(details, calculators));
         return details;
     }
 

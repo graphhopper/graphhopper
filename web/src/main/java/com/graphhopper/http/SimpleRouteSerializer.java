@@ -106,7 +106,7 @@ public class SimpleRouteSerializer implements RouteSerializer {
                         //TODO I don't really like the conversion, should we keep it like that in the PathWrapper?
                         Map<String, Map<Object, List<int[]>>> pathDetailsMap = new HashMap<>();
                         for (PathDetails pathDetails : details) {
-                            pathDetailsMap.put(pathDetails.getName(), pathDetails.getDetails());
+                            pathDetailsMap.put(pathDetails.getName(), pathDetails.getPathDetailsMap());
                         }
                         jsonPath.put("details", pathDetailsMap);
                     }
