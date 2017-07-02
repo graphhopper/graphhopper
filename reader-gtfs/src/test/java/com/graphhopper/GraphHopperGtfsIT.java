@@ -64,7 +64,7 @@ public class GraphHopperGtfsIT {
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, false, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
-        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage);
+        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage, ptFlagEncoder);
         graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
     }
@@ -253,8 +253,8 @@ public class GraphHopperGtfsIT {
         assertFalse(route.hasErrors());
         assertFalse(route.getAll().isEmpty());
         assertEquals("Expected travel time == scheduled travel time", time(8, 10), route.getBest().getTime(), 0.1);
-        assertEquals("Using expected route", "STBA", (((Trip.PtLeg) route.getBest().getLegs().get(0)).tripId));
-        assertEquals("Using expected route", "AB1", (((Trip.PtLeg) route.getBest().getLegs().get(1)).tripId));
+        assertEquals("Using expected route", "STBA", (((Trip.PtLeg) route.getBest().getLegs().get(0)).trip_id));
+        assertEquals("Using expected route", "AB1", (((Trip.PtLeg) route.getBest().getLegs().get(1)).trip_id));
         assertEquals("Paid expected fare", 250, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue()); // Two legs, no transfers allowed. Need two 'p' tickets costing 125 cents each.
     }
 
@@ -305,7 +305,7 @@ public class GraphHopperGtfsIT {
         route = graphHopper.route(ghRequest);
         assertFalse(route.getAll().isEmpty());
         assertEquals("Expected travel time == scheduled travel time", time(9, 0), route.getBest().getTime());
-        assertEquals("Using expected trip", "AAMV1", (((Trip.PtLeg) route.getBest().getLegs().get(0)).tripId));
+        assertEquals("Using expected trip", "AAMV1", (((Trip.PtLeg) route.getBest().getLegs().get(0)).trip_id));
         assertEquals("Paid expected fare", 525, route.getBest().getFare().multiply(BigDecimal.valueOf(100)).intValue());
 
     }

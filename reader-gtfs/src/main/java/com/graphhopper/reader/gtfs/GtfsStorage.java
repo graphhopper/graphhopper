@@ -99,6 +99,8 @@ public class GtfsStorage implements GraphExtension {
 	private Map<GtfsRealtime.TripDescriptor, int[]> boardEdgesForTrip;
 	private Map<GtfsRealtime.TripDescriptor, int[]> leaveEdgesForTrip;
 
+	private Map<String, Integer> stationNodes;
+
 	enum EdgeType {
 		HIGHWAY, ENTER_TIME_EXPANDED_NETWORK, LEAVE_TIME_EXPANDED_NETWORK, ENTER_PT, EXIT_PT, HOP, DWELL, BOARD, ALIGHT, OVERNIGHT, TRANSFER, WAIT, WAIT_ARRIVAL
     }
@@ -189,6 +191,7 @@ public class GtfsStorage implements GraphExtension {
 		this.fares = data.getTreeMap("fares");
 		this.boardEdgesForTrip = data.getHashMap("boardEdgesForTrip");
 		this.leaveEdgesForTrip = data.getHashMap("leaveEdgesForTrip");
+		this.stationNodes = data.getHashMap("stationNodes");
 	}
 
 	void loadGtfsFromFile(String id, ZipFile zip) {
@@ -278,6 +281,10 @@ public class GtfsStorage implements GraphExtension {
 
 	Map<String, GTFSFeed> getGtfsFeeds() {
 		return Collections.unmodifiableMap(gtfsFeeds);
+	}
+
+	Map<String, Integer> getStationNodes() {
+		return stationNodes;
 	}
 
 }

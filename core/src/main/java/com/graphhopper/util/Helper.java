@@ -371,7 +371,7 @@ public class Helper {
             AccessController.doPrivileged(new PrivilegedExceptionAction<Object>() {
                 @Override
                 public Object run() throws Exception {
-                    if (Constants.JAVA_VERSION.equals("9-ea")) {
+                    if (Constants.JRE_IS_MINIMUM_JAVA9) {
                         // >=JDK9 class sun.misc.Unsafe { void invokeCleaner(ByteBuffer buf) }
                         final Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
                         // we do not need to check for a specific class, we can call the Unsafe method with any buffer class

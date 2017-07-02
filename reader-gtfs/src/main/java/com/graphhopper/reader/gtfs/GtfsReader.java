@@ -130,6 +130,7 @@ class GtfsReader {
                 setEdgeType(exitEdge, GtfsStorage.EdgeType.EXIT_PT);
                 exitEdge.setName(stop.stop_name);
             }
+            gtfsStorage.getStationNodes().put(entry.stopId, streetNode);
         }
     }
 
