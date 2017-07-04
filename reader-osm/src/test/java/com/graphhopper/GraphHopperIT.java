@@ -392,7 +392,10 @@ public class GraphHopperIT {
 
     @Test
     public void testMonacoPathDetails() {
-        GHRequest request = new GHRequest(43.727687, 7.418737, 43.74958, 7.436566);
+        GHRequest request = new GHRequest();
+        request.addPoint(new GHPoint(43.727687, 7.418737));
+        request.addPoint(new GHPoint(43.74958, 7.436566));
+        request.addPoint(new GHPoint(43.727687, 7.418737));
         request.setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr);
         request.getHints().put("details.average_speed", true);
 
@@ -406,6 +409,8 @@ public class GraphHopperIT {
         assertTrue(detailsMap.get(5.0).size() > 0);
         // First point
         assertTrue(detailsMap.get(5.0).get(0)[0] == 0);
+        // Assert that last index points towards the last point
+        assertTrue(detailsMap.get(5.0).get(0)[1] == arsp.getPoints().size() -1);
     }
 
     @Test

@@ -245,15 +245,15 @@ public class PathWrapper {
     }
 
     public void addPathDetails(List<PathDetails> details) {
-        if (!this.pathDetails.isEmpty() && this.pathDetails.size() != details.size()) {
+        if (!this.pathDetails.isEmpty() && !details.isEmpty() && this.pathDetails.size() != details.size()) {
             throw new IllegalStateException("Details have to be the same size");
         }
         for (int i = 0; i < details.size(); i++) {
             PathDetails pd;
-            if(this.pathDetails.containsKey(details.get(i).getName())){
+            if (this.pathDetails.containsKey(details.get(i).getName())) {
                 pd = this.pathDetails.get(details.get(i).getName());
                 pd.merge(details.get(i));
-            }else{
+            } else {
                 pd = details.get(i);
             }
             this.pathDetails.put(pd.getName(), pd);

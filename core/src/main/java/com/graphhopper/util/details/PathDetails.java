@@ -85,6 +85,8 @@ public class PathDetails {
         // Make sure that pathdetails are merged correctly at waypoints
         if(!this.pathDetails.isEmpty() && !otherDetails.isEmpty()){
             Detail lastDetail = pathDetails.get(pathDetails.size()-1);
+            // Add Via Point
+            lastDetail.numberOfPoints++;
             if(lastDetail.value.equals(otherDetails.get(0).value)){
                 lastDetail.numberOfPoints += otherDetails.get(0).numberOfPoints;
                 otherDetails.remove(0);
@@ -99,19 +101,19 @@ public class PathDetails {
     }
 
     @JsonProperty("details")
-    public Map<Object, List<int[]>> getPathDetailsMap(){
+    public Map<Object, List<int[]>> getPathDetailsMap() {
         Map<Object, List<int[]>> detailsMap = new HashMap<>();
 
         int pointer = 0;
 
-        for (Detail detail: this.pathDetails) {
+        for (Detail detail : this.pathDetails) {
             List<int[]> detailIntervals;
-            if(detailsMap.containsKey(detail.value)){
-                 detailIntervals = detailsMap.get(detail.value);
-            }else {
+            if (detailsMap.containsKey(detail.value)) {
+                detailIntervals = detailsMap.get(detail.value);
+            } else {
                 detailIntervals = new ArrayList<>();
             }
-            detailIntervals.add(new int[]{pointer, pointer+detail.numberOfPoints});
+            detailIntervals.add(new int[]{pointer, pointer + detail.numberOfPoints});
             detailsMap.put(detail.value, detailIntervals);
             pointer += detail.numberOfPoints;
         }

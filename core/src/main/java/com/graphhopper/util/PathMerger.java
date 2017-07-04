@@ -19,7 +19,7 @@ package com.graphhopper.util;
 
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.Path;
-import com.graphhopper.util.details.PathDetailsCalculator;
+import com.graphhopper.util.details.PathDetailsCalculatorFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 
 import java.util.ArrayList;
@@ -40,7 +40,7 @@ public class PathMerger {
     private DouglasPeucker douglasPeucker = DP;
     private boolean calcPoints = true;
 
-    private List<PathDetailsCalculator> pathDetailCalculators = Collections.EMPTY_LIST;
+    private PathDetailsCalculatorFactory calculatorFactory;
 
     public PathMerger setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
@@ -52,8 +52,8 @@ public class PathMerger {
         return this;
     }
 
-    public PathMerger setPathDetailCalculator(List<PathDetailsCalculator> pathDetailsCalculator) {
-        this.pathDetailCalculators = pathDetailsCalculator;
+    public PathMerger setPathDetailCalculatorFactory(PathDetailsCalculatorFactory calculatorFactory) {
+        this.calculatorFactory = calculatorFactory;
         return this;
     }
 
@@ -122,9 +122,8 @@ public class PathMerger {
                 }
                 fullPoints.add(tmpPoints);
             }
-            if ((calcPoints || enableInstructions) && !pathDetailCalculators.isEmpty()) {
-                altRsp.addPathDetails(path.calcDetails(pathDetailCalculators));
-                lastIndex += origPoints;
+            if ((calcPoints || enableInstructions) && calculatorFactory != null) {
+                altRsp.addPathDetails(path.calcDetails(calculatorFactory));
             }
 
             allFound = allFound && path.isFound();

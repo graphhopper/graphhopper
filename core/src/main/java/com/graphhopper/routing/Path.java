@@ -28,6 +28,7 @@ import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetails;
 import com.graphhopper.util.details.PathDetailsCalculator;
+import com.graphhopper.util.details.PathDetailsCalculatorFactory;
 import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -372,10 +373,14 @@ public class Path {
     }
 
     /**
-     * @param calculators All calculators to be considered for this route
+     * @param calculatorFactory Generates all calculators to be considered for this route
      * @return List of PathDetails for this Path
      */
-    public List<PathDetails> calcDetails(final List<PathDetailsCalculator> calculators) {
+    public List<PathDetails> calcDetails(final PathDetailsCalculatorFactory calculatorFactory) {
+        List<PathDetailsCalculator> calculators = calculatorFactory.createPathDetailsCalculator();
+        if(calculators.isEmpty()){
+            return Collections.EMPTY_LIST;
+        }
         List<PathDetails> details = new ArrayList<>(calculators.size());
         for (PathDetailsCalculator calc : calculators) {
             details.add(new PathDetails(calc.getName()));
