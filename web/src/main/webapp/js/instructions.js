@@ -92,7 +92,7 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
     if (debugDetails) {
         var detailObj = path.details;
         for (var detailKey in detailObj) {
-            var pathDetailObj = detailObj[detailKey];
+            var pathDetailObj = detailObj[detailKey]["details"];
             for (var k in pathDetailObj) {
                 var intervalArr = pathDetailObj[k];
                 for (var intervalIndex in intervalArr) {

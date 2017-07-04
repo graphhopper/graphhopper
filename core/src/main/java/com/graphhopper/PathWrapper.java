@@ -24,9 +24,7 @@ import com.graphhopper.util.details.PathDetailsCalculator;
 import com.graphhopper.util.shapes.BBox;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class holds the data like points and instructions of a Path.
@@ -49,7 +47,7 @@ public class PathWrapper {
     private int numChanges;
     private long firstPtLegDeparture;
     private final List<Trip.Leg> legs = new ArrayList<>();
-    private List<PathDetails> pathDetails = Collections.EMPTY_LIST;
+    private Map<String, PathDetails> pathDetails = new HashMap<>();
     private BigDecimal fare;
 
     /**
@@ -246,20 +244,23 @@ public class PathWrapper {
         this.instructions = instructions;
     }
 
-    public void addPathDetails(List<PathDetails> details){
-        if(this.pathDetails.isEmpty()){
-            this.pathDetails = details;
-        }else{
-            if(this.pathDetails.size() != details.size()){
-                throw new IllegalStateException("Details have to be the same size");
+    public void addPathDetails(List<PathDetails> details) {
+        if (!this.pathDetails.isEmpty() && this.pathDetails.size() != details.size()) {
+            throw new IllegalStateException("Details have to be the same size");
+        }
+        for (int i = 0; i < details.size(); i++) {
+            PathDetails pd;
+            if(this.pathDetails.containsKey(details.get(i).getName())){
+                pd = this.pathDetails.get(details.get(i).getName());
+                pd.merge(details.get(i));
+            }else{
+                pd = details.get(i);
             }
-            for (int i = 0; i < details.size(); i++) {
-                this.pathDetails.get(i).merge(details.get(i));
-            }
+            this.pathDetails.put(pd.getName(), pd);
         }
     }
 
-    public List<PathDetails> getPathDetails(){
+    public Map<String, PathDetails> getPathDetails() {
         return this.pathDetails;
     }
 

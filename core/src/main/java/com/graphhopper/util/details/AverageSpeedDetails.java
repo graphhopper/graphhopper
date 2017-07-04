@@ -50,7 +50,7 @@ public class AverageSpeedDetails implements PathDetailsCalculator {
 
     @Override
     public String getName() {
-        return "average-speed";
+        return "average_speed";
     }
 
     @Override

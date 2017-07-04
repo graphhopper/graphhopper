@@ -399,9 +399,9 @@ public class GraphHopperIT {
         GHResponse rsp = hopper.route(request);
 
         PathWrapper arsp = rsp.getBest();
-        List<PathDetails> details = arsp.getPathDetails();
+        Map<String, PathDetails> details = arsp.getPathDetails();
         assertTrue(details.size() == 1);
-        Map<Object, List<int[]>> detailsMap = details.get(0).getPathDetailsMap();
+        Map<Object, List<int[]>> detailsMap = details.get("average_speed").getPathDetailsMap();
         // Foot routing
         assertTrue(detailsMap.get(5.0).size() > 0);
         // First point

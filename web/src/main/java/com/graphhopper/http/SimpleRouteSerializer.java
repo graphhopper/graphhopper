@@ -101,15 +101,7 @@ public class SimpleRouteSerializer implements RouteSerializer {
 
                     jsonPath.put("legs", ar.getLegs());
 
-                    List<PathDetails> details = ar.getPathDetails();
-                    if (!details.isEmpty()) {
-                        //TODO I don't really like the conversion, should we keep it like that in the PathWrapper?
-                        Map<String, Map<Object, List<int[]>>> pathDetailsMap = new HashMap<>();
-                        for (PathDetails pathDetails : details) {
-                            pathDetailsMap.put(pathDetails.getName(), pathDetails.getPathDetailsMap());
-                        }
-                        jsonPath.put("details", pathDetailsMap);
-                    }
+                    jsonPath.put("details", ar.getPathDetails());
 
                     jsonPath.put("ascend", ar.getAscend());
                     jsonPath.put("descend", ar.getDescend());

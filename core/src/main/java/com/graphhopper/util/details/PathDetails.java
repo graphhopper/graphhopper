@@ -17,7 +17,8 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.util.Parameters;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -70,6 +71,7 @@ public class PathDetails {
         isOpen = false;
     }
 
+    @JsonIgnore
     public List<Detail> getDetails() {
         return pathDetails;
     }
@@ -95,6 +97,7 @@ public class PathDetails {
         return this.name;
     }
 
+    @JsonProperty("details")
     public Map<Object, List<int[]>> getPathDetailsMap(){
         Map<Object, List<int[]>> detailsMap = new HashMap<>();
 
