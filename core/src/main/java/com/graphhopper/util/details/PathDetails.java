@@ -90,6 +90,7 @@ public class PathDetails {
                 otherDetails.remove(0);
             }
         }
+
         this.pathDetails.addAll(otherDetails);
     }
 

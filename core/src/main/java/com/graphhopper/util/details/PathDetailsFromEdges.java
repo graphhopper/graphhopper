@@ -31,9 +31,6 @@ import java.util.List;
  */
 public class PathDetailsFromEdges implements Path.EdgeVisitor{
 
-    int i;
-    PathDetailsCalculator calc;
-
     private final List<PathDetails> details;
     private final List<PathDetailsCalculator> calculators;
     private int numberOfPoints = 0;
@@ -45,8 +42,8 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor{
 
     @Override
     public void next(EdgeIteratorState edge, int index, int prevEdgeId) {
-        for (i = 0; i < calculators.size(); i++) {
-            calc = calculators.get(i);
+        for (int i = 0; i < calculators.size(); i++) {
+            PathDetailsCalculator calc = calculators.get(i);
             if (calc.edgeIsDifferentToLastEdge(edge)) {
                 details.get(i).endInterval(numberOfPoints);
                 details.get(i).startInterval(calc.getCurrentValue());
@@ -58,7 +55,7 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor{
 
     @Override
     public void finish() {
-        for (i = 0; i < details.size(); i++) {
+        for (int i = 0; i < details.size(); i++) {
             details.get(i).endInterval(numberOfPoints);
         }
     }
