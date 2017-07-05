@@ -25,15 +25,21 @@ import ru.vyarus.dropwizard.guice.module.installer.bundle.GuiceyBundle;
 
 public class GraphHopperServletBundle implements GuiceyBundle {
     @Override
-    public void initialize(GuiceyBootstrap guiceyBootstrap) {
-        final GraphHopperConfiguration configuration = guiceyBootstrap.configuration();
-        guiceyBootstrap.modules(
+    public void initialize(GuiceyBootstrap bootstrap) {
+        final GraphHopperConfiguration configuration = bootstrap.configuration();
+        bootstrap.modules(
                 new AbstractModule() {
                     @Override
                     protected void configure() {
-                        bind(ObjectMapper.class).toInstance(guiceyBootstrap.environment().getObjectMapper());
+                        bind(ObjectMapper.class).toInstance(bootstrap.environment().getObjectMapper());
                     }
                 },
                 new GraphHopperServletModule(configuration.cmdArgs));
+
+        if (configuration.cmdArgs.getBool("web.change_graph.enabled", false)
+         && !configuration.cmdArgs.has("gtfs.file")) {
+            bootstrap.extensions(ChangeGraph.class);
+        }
+
     }
 }

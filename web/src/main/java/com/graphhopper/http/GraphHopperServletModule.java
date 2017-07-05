@@ -17,26 +17,12 @@
  */
 package com.graphhopper.http;
 
-import com.bedatadriven.jackson.datatype.jts.JtsModule;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationConfig;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
-import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
-import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
-import com.google.inject.Provides;
 import com.google.inject.servlet.ServletModule;
 import com.graphhopper.util.CmdArgs;
 
 import javax.inject.Singleton;
-import java.text.SimpleDateFormat;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * @author Peter Karich
@@ -81,11 +67,6 @@ public class GraphHopperServletModule extends ServletModule {
 
         serve("/nearest*").with(NearestServlet.class);
         bind(NearestServlet.class).in(Singleton.class);
-
-        if (args.getBool("web.change_graph.enabled", false)) {
-            serve("/change*").with(ChangeGraphServlet.class);
-            bind(ChangeGraphServlet.class).in(Singleton.class);
-        }
 
         // Can't do this because otherwise we can't add more paths _after_ this module.
         // Instead, put this route explicitly into Jetty.
