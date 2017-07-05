@@ -24,15 +24,27 @@ import io.dropwizard.server.DefaultServerFactory;
 
 public class GraphHopperConfiguration extends Configuration {
 
+    public static class Web {
+        long timeout = 3000;
+        boolean jsonp_allowed = false;
+
+        public long getTimeout() {
+            return timeout;
+        }
+
+        public boolean isJsonpAllowed() {
+            return jsonp_allowed;
+        }
+    }
+
     public CmdArgs cmdArgs = new CmdArgs();
+    public Web web = new Web();
 
     public GraphHopperConfiguration() {
-        final DefaultServerFactory serverFactory = new DefaultServerFactory();
-        // Move Jersey out of the way -- static assets (the web client)
-        // and the API root cannot _both_ be mapped to "/".
-        // We don't use Jersey services yet (instead: pure Servlets),
-        // but once we do, we have to think of something.
-        serverFactory.setJerseyRootPath("/api/");
-        this.setServerFactory(serverFactory);
+        cmdArgs = CmdArgs.readFromConfigAndMerge(cmdArgs, "config", "graphhopper.config");
+    }
+
+    public Web web() {
+        return web;
     }
 }

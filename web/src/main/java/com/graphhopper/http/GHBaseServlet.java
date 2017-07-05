@@ -21,14 +21,12 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.routing.util.HintsMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -51,8 +49,7 @@ public class GHBaseServlet extends HttpServlet {
     protected ObjectMapper objectMapper;
 
     @Inject
-    @Named("jsonp_allowed")
-    private boolean jsonpAllowed;
+    private GraphHopperConfiguration configuration;
 
     protected void writeJson(HttpServletRequest req, HttpServletResponse res, JsonNode json) throws IOException {
         String type = getParam(req, "type", "json");
@@ -61,7 +58,7 @@ public class GHBaseServlet extends HttpServlet {
         ObjectWriter objectWriter = indent ? objectMapper.writer().with(SerializationFeature.INDENT_OUTPUT) : objectMapper.writer();
         if ("jsonp".equals(type)) {
             res.setContentType("application/javascript");
-            if (!jsonpAllowed) {
+            if (!configuration.web().isJsonpAllowed()) {
                 writeError(res, SC_BAD_REQUEST, "Server is not configured to allow jsonp!");
                 return;
             }

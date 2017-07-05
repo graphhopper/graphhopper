@@ -53,7 +53,7 @@ public class GraphHopperApplication extends Application<GraphHopperConfiguration
                 })
                 .bundles(new GraphHopperBundle(), new GraphHopperServletBundle())
                 .build());
-        bootstrap.addBundle(new AssetsBundle("/assets", "/", "index.html"));
+        bootstrap.addBundle(new AssetsBundle("/assets", "/webapp", "index.html"));
     }
 
     @Override

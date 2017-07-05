@@ -31,7 +31,6 @@ public final class PtModule extends AbstractModule {
 
     @Override
     protected void configure() {
-        install(new CmdArgsModule(args));
         bind(GHJson.class).toInstance(new GHJsonFactory().create());
     }
 

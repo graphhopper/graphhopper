@@ -26,21 +26,14 @@ import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
-import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
 
 import javax.inject.Named;
 
 public class GraphHopperModule extends AbstractModule {
-    private final CmdArgs args;
-
-    public GraphHopperModule(CmdArgs args) {
-        this.args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
-    }
 
     @Override
     protected void configure() {
-        install(new CmdArgsModule(args));
         bind(GHJson.class).toInstance(new GHJsonFactory().create());
         bind(GraphHopper.class).toProvider(GraphHopperService.class);
         bind(GraphHopperAPI.class).to(GraphHopper.class);

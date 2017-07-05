@@ -29,7 +29,7 @@ public class GraphHopperBundle implements GuiceyBundle {
             // switch to different API implementation when using Pt
             bootstrap.modules(new PtModule(configuration.cmdArgs));
         } else {
-            bootstrap.modules(new GraphHopperModule(configuration.cmdArgs));
+            bootstrap.modules(new GraphHopperModule());
             bootstrap.extensions(GraphHopperService.class);
         }
     }
