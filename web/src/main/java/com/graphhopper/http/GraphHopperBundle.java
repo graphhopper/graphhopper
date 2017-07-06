@@ -30,7 +30,7 @@ public class GraphHopperBundle implements GuiceyBundle {
             bootstrap.modules(new PtModule(configuration.cmdArgs));
         } else {
             bootstrap.modules(new GraphHopperModule());
-            bootstrap.extensions(GraphHopperService.class);
+            bootstrap.extensions(GraphHopperService.class, Nearest.class);
         }
     }
 }

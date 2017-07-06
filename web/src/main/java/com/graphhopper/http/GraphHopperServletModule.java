@@ -65,9 +65,6 @@ public class GraphHopperServletModule extends ServletModule {
         serve("/route*").with(GraphHopperServlet.class);
         bind(GraphHopperServlet.class).in(Singleton.class);
 
-        serve("/nearest*").with(NearestServlet.class);
-        bind(NearestServlet.class).in(Singleton.class);
-
         // Can't do this because otherwise we can't add more paths _after_ this module.
         // Instead, put this route explicitly into Jetty.
         // (We really need a web service framework.)

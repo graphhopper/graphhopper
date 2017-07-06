@@ -17,6 +17,8 @@
  */
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -33,12 +35,18 @@ import javax.inject.Provider;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.*;
+import javax.ws.rs.core.MediaType;
+import javax.xml.ws.WebServiceException;
 import java.io.IOException;
 
 /**
  * @author svantulden
+ * @author Michael Zilske
  */
-public class NearestServlet extends GHBaseServlet {
+@Path("nearest")
+@Produces(MediaType.APPLICATION_JSON)
+public class Nearest {
     private final DistanceCalc calc = Helper.DIST_EARTH;
     @Inject
     private Provider<LocationIndex> index;
@@ -46,36 +54,28 @@ public class NearestServlet extends GHBaseServlet {
     @Named("hasElevation")
     private boolean hasElevation;
 
-    @Override
-    public void doGet(HttpServletRequest httpReq, HttpServletResponse httpRes) throws ServletException, IOException {
-        String pointStr = getParam(httpReq, "point", null);
-        boolean enabledElevation = getBooleanParam(httpReq, "elevation", false);
+    public static class Response {
+        public final String type = "Point";
+        public final double[] coordinates;
+        public final double distance; // Distance from input to snapped point in meters
 
-        ObjectNode result = objectMapper.createObjectNode();
-        if (pointStr != null && !pointStr.equalsIgnoreCase("")) {
-            GHPoint place = GHPoint.parse(pointStr);
-            QueryResult qr = index.get().findClosest(place.lat, place.lon, EdgeFilter.ALL_EDGES);
-
-            if (!qr.isValid()) {
-                result.put("error", "Nearest point cannot be found!");
-            } else {
-                GHPoint3D snappedPoint = qr.getSnappedPoint();
-                result.put("type", "Point");
-
-                ArrayNode coord = result.putArray("coordinates");
-                coord.add(snappedPoint.lon);
-                coord.add(snappedPoint.lat);
-
-                if (hasElevation && enabledElevation)
-                    coord.add(snappedPoint.ele);
-
-                // Distance from input to snapped point in meters
-                result.put("distance", calc.calcDist(place.lat, place.lon, snappedPoint.lat, snappedPoint.lon));
-            }
-        } else {
-            result.put("error", "No lat/lon specified!");
+        @JsonCreator
+        public Response(@JsonProperty("coordinates") double[] coordinates, @JsonProperty("distance") double distance) {
+            this.coordinates = coordinates;
+            this.distance = distance;
         }
-
-        writeJson(httpReq, httpRes, result);
     }
+
+    @GET
+    public Response doGet(@QueryParam("point") GHPoint point, @QueryParam("elevation") @DefaultValue("false") boolean elevation) {
+        QueryResult qr = index.get().findClosest(point.lat, point.lon, EdgeFilter.ALL_EDGES);
+        if (qr.isValid()) {
+            GHPoint3D snappedPoint = qr.getSnappedPoint();
+            double[] coordinates = hasElevation && elevation ? new double[]{snappedPoint.lon, snappedPoint.lat, snappedPoint.ele} : new double[]{snappedPoint.lon, snappedPoint.lat};
+            return new Response(coordinates, calc.calcDist(point.lat, point.lon, snappedPoint.lat, snappedPoint.lon));
+        } else {
+            throw new WebServiceException("Nearest point cannot be found!");
+        }
+    }
+
 }

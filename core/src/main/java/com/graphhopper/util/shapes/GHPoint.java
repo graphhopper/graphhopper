@@ -35,15 +35,15 @@ public class GHPoint {
         this.lon = lon;
     }
 
-    public static GHPoint parse(String str) {
-        return parse(str, false);
+    public static GHPoint fromString(String str) {
+        return fromString(str, false);
     }
 
-    public static GHPoint parseLonLat(String str) {
-        return parse(str, true);
+    public static GHPoint fromStringLonLat(String str) {
+        return fromString(str, true);
     }
 
-    private static GHPoint parse(String str, boolean lonLatOrder) {
+    private static GHPoint fromString(String str, boolean lonLatOrder) {
         String[] fromStrs = str.split(",");
         if (fromStrs.length == 2) {
             try {

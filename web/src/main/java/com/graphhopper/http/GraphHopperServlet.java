@@ -258,7 +258,7 @@ public class GraphHopperServlet extends GHBaseServlet {
         for (String str : pointsAsStr) {
             String[] fromStrs = str.split(",");
             if (fromStrs.length == 2) {
-                GHPoint point = GHPoint.parse(str);
+                GHPoint point = GHPoint.fromString(str);
                 if (point != null)
                     infoPoints.add(point);
             }

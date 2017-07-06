@@ -17,8 +17,6 @@
  */
 package com.graphhopper.http;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
@@ -26,15 +24,16 @@ import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import javax.ws.rs.core.Response;
 import java.io.File;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.hamcrest.core.Is.is;
+import static org.junit.Assert.assertThat;
 
 /**
  * @author svantulden
  */
-public class NearestServletIT {
+public class NearestIT {
     private static final String dir = "./target/andorra-gh/";
 
     private static final GraphHopperConfiguration config = new GraphHopperConfiguration();
@@ -58,12 +57,9 @@ public class NearestServletIT {
 
     @Test
     public void testBasicNearestQuery() throws Exception {
-        JsonNode json = app.client().target("http://localhost:8080/nearest?point=42.554851,1.536198").request().buildGet().invoke().readEntity(JsonNode.class);
-        assertFalse(json.has("error"));
-        ArrayNode point = (ArrayNode) json.get("coordinates");
-        assertTrue("returned point is not 2D: " + point, point.size() == 2);
-        double lon = point.get(0).asDouble();
-        double lat = point.get(1).asDouble();
-        assertTrue("nearest point wasn't correct: lat=" + lat + ", lon=" + lon, lat == 42.55483907636756 && lon == 1.5363742288086868);
+        final Response response = app.client().target("http://localhost:8080/nearest?point=42.554851,1.536198").request().buildGet().invoke();
+        assertThat("HTTP status", response.getStatus(), is(200));
+        Nearest.Response json = response.readEntity(Nearest.Response.class);
+        assertThat("nearest point", json.coordinates, is(new double[]{1.5363742288086868, 42.55483907636756}));
     }
 }
