@@ -41,12 +41,12 @@ import javax.ws.rs.core.MediaType;
 @Path("change")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-public class ChangeGraph {
+public class ChangeGraphResource {
 
     private GraphHopper graphHopper;
 
     @Inject
-    ChangeGraph(GraphHopper graphHopper) {
+    ChangeGraphResource(GraphHopper graphHopper) {
         this.graphHopper = graphHopper;
     }
 

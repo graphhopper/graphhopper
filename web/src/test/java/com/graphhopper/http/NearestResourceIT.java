@@ -33,7 +33,7 @@ import static org.junit.Assert.assertThat;
 /**
  * @author svantulden
  */
-public class NearestIT {
+public class NearestResourceIT {
     private static final String dir = "./target/andorra-gh/";
 
     private static final GraphHopperConfiguration config = new GraphHopperConfiguration();
@@ -59,7 +59,7 @@ public class NearestIT {
     public void testBasicNearestQuery() throws Exception {
         final Response response = app.client().target("http://localhost:8080/nearest?point=42.554851,1.536198").request().buildGet().invoke();
         assertThat("HTTP status", response.getStatus(), is(200));
-        Nearest.Response json = response.readEntity(Nearest.Response.class);
+        NearestResource.Response json = response.readEntity(NearestResource.Response.class);
         assertThat("nearest point", json.coordinates, is(new double[]{1.5363742288086868, 42.55483907636756}));
     }
 }

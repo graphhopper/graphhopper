@@ -46,17 +46,16 @@ public class GHPoint {
     private static GHPoint fromString(String str, boolean lonLatOrder) {
         String[] fromStrs = str.split(",");
         if (fromStrs.length == 2) {
-            try {
-                double fromLat = Double.parseDouble(fromStrs[0]);
-                double fromLon = Double.parseDouble(fromStrs[1]);
-                if (lonLatOrder)
-                    return new GHPoint(fromLon, fromLat);
-
+            double fromLat = Double.parseDouble(fromStrs[0]);
+            double fromLon = Double.parseDouble(fromStrs[1]);
+            if (lonLatOrder) {
+                return new GHPoint(fromLon, fromLat);
+            } else {
                 return new GHPoint(fromLat, fromLon);
-            } catch (Exception ex) {
             }
+        } else {
+            throw new IllegalArgumentException(str);
         }
-        return null;
     }
 
     public double getLon() {

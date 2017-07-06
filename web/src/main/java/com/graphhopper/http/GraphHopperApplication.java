@@ -18,6 +18,7 @@
 package com.graphhopper.http;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.BeanDescription;
 import com.fasterxml.jackson.databind.SerializationConfig;
@@ -26,12 +27,10 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
-import com.google.inject.AbstractModule;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
-import ru.vyarus.dropwizard.guice.GuiceBundle;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,23 +43,15 @@ public class GraphHopperApplication extends Application<GraphHopperConfiguration
 
     @Override
     public void initialize(Bootstrap<GraphHopperConfiguration> bootstrap) {
-        bootstrap.addBundle(GuiceBundle.builder()
-                .modules(new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        binder().requireExplicitBindings();
-                    }
-                })
-                .bundles(new GraphHopperBundle(), new GraphHopperServletBundle())
-                .build());
-        bootstrap.addBundle(new AssetsBundle("/assets", "/webapp", "index.html"));
+        bootstrap.addBundle(new GraphHopperBundle());
+        bootstrap.addBundle(new AssetsBundle("/assets", "/webapp/", "index.html"));
     }
 
     @Override
     public void run(GraphHopperConfiguration configuration, Environment environment) throws Exception {
         environment.getObjectMapper().setDateFormat(new ISO8601DateFormat());
         environment.getObjectMapper().registerModule(new JtsModule());
-
+        environment.getObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);
         // Because VirtualEdgeIteratorState has getters which throw Exceptions.
         // http://stackoverflow.com/questions/35359430/how-to-make-jackson-ignore-properties-if-the-getters-throw-exceptions
         environment.getObjectMapper().registerModule(new SimpleModule().setSerializerModifier(new BeanSerializerModifier() {

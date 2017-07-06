@@ -40,7 +40,7 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class GraphHopperServletIT {
+public class RouteResourceIT {
     private static final String DIR = "./target/andorra-gh/";
 
     private static final GraphHopperConfiguration config = new GraphHopperConfiguration();
@@ -108,7 +108,6 @@ public class GraphHopperServletIT {
         JsonNode json = app.client().target("http://localhost:8080/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true").request().buildGet().invoke().readEntity(JsonNode.class);
         assertTrue(json.has("message"));
         assertEquals("Elevation not supported!", json.get("message").asText());
-        assertEquals("Elevation not supported!", json.get("hints").get(0).get("message").asText());
     }
 
     @Test
@@ -219,10 +218,15 @@ public class GraphHopperServletIT {
     }
 
     @Test
-    public void testUndefinedPointHeading() throws Exception {
-        JsonNode json = app.client().target("http://localhost:8080/route?point=undefined&heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
+    public void testNoPoint() {
+        JsonNode json = app.client().target("http://localhost:8080/route?heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
         assertEquals("You have to pass at least one point", json.get("message").asText());
-        json = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=undefined&heading=0&heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
+    }
+
+    @Test
+    public void testTooManyHeadings() {
+        JsonNode json = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&heading=0&heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
         assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message").asText());
     }
+
 }

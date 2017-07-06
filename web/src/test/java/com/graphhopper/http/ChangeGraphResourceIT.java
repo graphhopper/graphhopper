@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
 /**
  * @author Peter Karich
  */
-public class ChangeGraphIT {
+public class ChangeGraphResourceIT {
     private static final String DIR = "./target/andorra-gh/";
 
     private static final GraphHopperConfiguration config = new GraphHopperConfiguration();

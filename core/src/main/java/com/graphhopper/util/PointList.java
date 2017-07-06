@@ -20,9 +20,12 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.GHPoint;
 import com.graphhopper.util.shapes.GHPoint3D;
 import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.LineString;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * Slim list to store several points (without the need for a point object).
@@ -108,7 +111,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
 
         @Override
-        public List<Double[]> toGeoJson() {
+        public LineString toLineString(boolean includeElevation) {
             throw new UnsupportedOperationException("cannot access EMPTY PointList");
         }
 
@@ -360,28 +363,28 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         return sb.toString();
     }
 
-    /**
-     * Attention: geoJson is LON,LAT or LON,LAT,ELE
-     */
-    public List<Double[]> toGeoJson() {
-        return toGeoJson(is3D);
+    public static PointList fromLineString(LineString lineString) {
+        final PointList pointList = new PointList();
+        for (Coordinate coordinate : lineString.getCoordinates()) {
+            pointList.add(new GHPoint(coordinate.y, coordinate.x));
+        }
+        return pointList;
     }
 
-    public List<Double[]> toGeoJson(boolean includeElevation) {
-
-        ArrayList<Double[]> points = new ArrayList<Double[]>(size);
+    public LineString toLineString(boolean includeElevation) {
+        GeometryFactory gf = new GeometryFactory();
+        Coordinate[] coordinates = new Coordinate[size];
         for (int i = 0; i < size; i++) {
-            if (includeElevation)
-                points.add(new Double[]{
-                        Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i)),
-                        Helper.round2(getElevation(i))
-                });
-            else
-                points.add(new Double[]{
-                        Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i))
-                });
+            coordinates[i] = includeElevation ?
+                    new Coordinate(
+                            Helper.round6(getLongitude(i)),
+                            Helper.round6(getLatitude(i)),
+                            Helper.round2(getElevation(i))) :
+                    new Coordinate(
+                            Helper.round6(getLongitude(i)),
+                            Helper.round6(getLatitude(i)));
         }
-        return points;
+        return gf.createLineString(coordinates);
     }
 
     @Override
@@ -525,11 +528,4 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         };
     }
 
-    public static PointList from(LineString lineString) {
-        final PointList pointList = new PointList();
-        for (Coordinate coordinate : lineString.getCoordinates()) {
-            pointList.add(new GHPoint(coordinate.y, coordinate.x));
-        }
-        return pointList;
-    }
 }

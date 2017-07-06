@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
-import javax.inject.Provider;
 import javax.inject.Singleton;
 import java.io.FileReader;
 import java.io.IOException;
@@ -42,13 +41,13 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 @Singleton
-class GraphHopperService implements Provider<GraphHopper>, Managed {
+class GraphHopperManaged implements Managed {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GraphHopper graphHopper;
 
     @Inject
-    GraphHopperService(GraphHopperConfiguration configuration) {
+    GraphHopperManaged(GraphHopperConfiguration configuration) {
         // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
         graphHopper = new GraphHopperOSM() {
             @Override
@@ -81,9 +80,7 @@ class GraphHopperService implements Provider<GraphHopper>, Managed {
                 super.loadOrPrepareLM();
             }
         }.forServer();
-
         SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, configuration.cmdArgs);
-
         graphHopper.init(configuration.cmdArgs);
     }
 
@@ -96,8 +93,7 @@ class GraphHopperService implements Provider<GraphHopper>, Managed {
                 + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
     }
 
-    @Override
-    public GraphHopper get() {
+    GraphHopper getGraphHopper() {
         return graphHopper;
     }
 
@@ -105,5 +101,6 @@ class GraphHopperService implements Provider<GraphHopper>, Managed {
     public void stop() throws Exception {
         graphHopper.close();
     }
+
 
 }
