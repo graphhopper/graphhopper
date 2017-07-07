@@ -41,7 +41,7 @@ import java.util.List;
  */
 public class EncodingManager {
     private static final String ERR = "Encoders are requesting %s bits, more than %s bits of %s flags. ";
-    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via graph.bytes_for_flags=8";
+    private static final String WAY_ERR = "Decrease the number of profiles or increase the flags to take long via graph.bytes_for_flags=8";
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
     private final int bitsForEdgeFlags;
     private final int bitsForTurnFlags = 8 * 4;
@@ -101,7 +101,7 @@ public class EncodingManager {
         }
 
         if (edgeEncoders.isEmpty())
-            throw new IllegalStateException("No vehicles found");
+            throw new IllegalStateException("No profiles found");
     }
 
     static List<FlagEncoder> parseEncoderString(FlagEncoderFactory factory, String encoderList) {

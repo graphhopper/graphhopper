@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.profiles.DoubleProperty;
+import com.graphhopper.routing.profiles.IntProperty;
+import com.graphhopper.routing.profiles.StringProperty;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
@@ -122,6 +125,36 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     @Override
     public boolean getBool(int key, boolean _default) {
         return edges.get(current).getBool(key, _default);
+    }
+
+    @Override
+    public void set(DoubleProperty property, double value) {
+        edges.get(current).set(property, value);
+    }
+
+    @Override
+    public double get(DoubleProperty property) {
+        return edges.get(current).get(property);
+    }
+
+    @Override
+    public void set(StringProperty property, String value) {
+        edges.get(current).set(property, value);
+    }
+
+    @Override
+    public String get(StringProperty property) {
+        return edges.get(current).get(property);
+    }
+
+    @Override
+    public void set(IntProperty property, int value) {
+        edges.get(current).set(property, value);
+    }
+
+    @Override
+    public int get(IntProperty property) {
+        return edges.get(current).get(property);
     }
 
     @Override

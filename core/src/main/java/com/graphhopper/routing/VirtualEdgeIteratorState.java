@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.profiles.DoubleProperty;
+import com.graphhopper.routing.profiles.IntProperty;
+import com.graphhopper.routing.profiles.StringProperty;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
@@ -123,6 +126,39 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     public EdgeIteratorState setFlags(long flags) {
         this.flags = flags;
         return this;
+    }
+
+    @Override
+    public int get(IntProperty property) {
+        // TODO
+        return 0;
+    }
+
+    @Override
+    public void set(IntProperty property, int value) {
+        // TODO
+    }
+
+    @Override
+    public String get(StringProperty property) {
+        // TODO
+        return null;
+    }
+
+    @Override
+    public void set(StringProperty property, String value) {
+        // TODO
+    }
+
+    @Override
+    public double get(DoubleProperty property) {
+        // TODO
+        return 0;
+    }
+
+    @Override
+    public void set(DoubleProperty property, double value) {
+        // TODO
     }
 
     @Override

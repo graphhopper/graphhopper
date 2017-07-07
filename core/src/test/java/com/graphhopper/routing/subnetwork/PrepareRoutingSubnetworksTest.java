@@ -185,7 +185,7 @@ public class PrepareRoutingSubnetworksTest {
         instance.setMinNetworkSize(5);
         instance.doWork();
         g.optimize();
-        // remove nothing because of two vehicles with different subnetworks
+        // remove nothing because of two profiles with different subnetworks
         assertEquals(9, g.getNodes());
 
         EdgeExplorer carExplorer = g.createEdgeExplorer(new DefaultEdgeFilter(carEncoder));

@@ -18,6 +18,9 @@
 
 package com.graphhopper.reader.gtfs;
 
+import com.graphhopper.routing.profiles.DoubleProperty;
+import com.graphhopper.routing.profiles.IntProperty;
+import com.graphhopper.routing.profiles.StringProperty;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -32,17 +35,18 @@ import com.graphhopper.util.shapes.BBox;
 
 class GraphSupport {
 
-    private GraphSupport() {}
+    private GraphSupport() {
+    }
 
 
     /**
      * Creates a read-only view of a Graph, presenting the sub-graph consisting of all the nodes; and those
      * edges accepted by edgeFilter.
-     *
+     * <p>
      * Devised to pass into LocationIndexTree, and works fine there (because LocationIndexTree doesn't index nodes
      * directly, but only goes through the edges). Probably not useful in other contexts.
      *
-     * @param baseGraph The graph to construct a view for.
+     * @param baseGraph  The graph to construct a view for.
      * @param edgeFilter The filter to filter with.
      * @return The filtered view.
      */
@@ -174,6 +178,36 @@ class GraphSupport {
                     @Override
                     public boolean getBool(int key, boolean _default) {
                         return edge.getBool(key, _default);
+                    }
+
+                    @Override
+                    public double get(DoubleProperty property) {
+                        return edge.get(property);
+                    }
+
+                    @Override
+                    public void set(DoubleProperty property, double value) {
+                        edge.set(property, value);
+                    }
+
+                    @Override
+                    public void set(StringProperty property, String value) {
+                        edge.set(property, value);
+                    }
+
+                    @Override
+                    public String get(StringProperty property) {
+                        return edge.get(property);
+                    }
+
+                    @Override
+                    public void set(IntProperty property, int value) {
+                        edge.set(property, value);
+                    }
+
+                    @Override
+                    public int get(IntProperty property) {
+                        return edge.get(property);
                     }
 
                     @Override

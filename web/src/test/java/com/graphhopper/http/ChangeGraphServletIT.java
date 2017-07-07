@@ -75,7 +75,7 @@ public class ChangeGraphServletIT extends BaseServletTester {
                 + "    \"coordinates\": [1.521692, 42.522969]"
                 + "  },"
                 + "  \"properties\": {"
-                + "    \"vehicles\": [\"car\"],"
+                + "    \"profiles\": [\"car\"],"
                 + "    \"access\": false"
                 + "  }}]}";
         String res = post("/change", 200, geoJson);

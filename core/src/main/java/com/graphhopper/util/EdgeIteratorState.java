@@ -17,6 +17,9 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.profiles.DoubleProperty;
+import com.graphhopper.routing.profiles.IntProperty;
+import com.graphhopper.routing.profiles.StringProperty;
 import com.graphhopper.routing.util.FlagEncoder;
 
 /**
@@ -113,6 +116,21 @@ public interface EdgeIteratorState {
      * @param _default default value if key is not found
      */
     boolean getBool(int key, boolean _default);
+
+    int get(IntProperty property);
+
+    void set(IntProperty property, int value);
+
+    double get(DoubleProperty property);
+
+    void set(DoubleProperty property, double value);
+
+    String get(StringProperty property);
+
+    void set(StringProperty property, String value);
+
+    // TODO LATER
+    // int set&getBool(StringProperty property);
 
     String getName();
 

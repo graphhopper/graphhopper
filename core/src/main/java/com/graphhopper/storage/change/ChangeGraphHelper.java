@@ -71,7 +71,7 @@ public class ChangeGraphHelper {
             if (!jsonFeature.hasProperties())
                 throw new IllegalArgumentException("One feature has no properties, please specify properties e.g. speed or access");
 
-            List<String> encodersAsStr = (List) jsonFeature.getProperty("vehicles");
+            List<String> encodersAsStr = (List) jsonFeature.getProperty("profiles");
             if (encodersAsStr == null) {
                 for (FlagEncoder encoder : em.fetchEdgeEncoders()) {
                     updates += applyChange(jsonFeature, encoder);

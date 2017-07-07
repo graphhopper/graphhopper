@@ -32,7 +32,7 @@ abstract class EdgeAccess {
     static double MAX_DIST = (Integer.MAX_VALUE - 1) / INT_DIST_FACTOR;
     final DataAccess edges;
     private final BitUtil bitUtil;
-    int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS;
+    int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS, E_EXT_BYTES_OFFSET;
     private boolean flagsSizeIsLong;
 
     EdgeAccess(DataAccess edges, BitUtil bitUtil) {
@@ -40,7 +40,8 @@ abstract class EdgeAccess {
         this.bitUtil = bitUtil;
     }
 
-    final void init(int E_NODEA, int E_NODEB, int E_LINKA, int E_LINKB, int E_DIST, int E_FLAGS, boolean flagsSizeIsLong) {
+    final void init(int E_NODEA, int E_NODEB, int E_LINKA, int E_LINKB, int extendedBytesOffset,
+                    int E_DIST, int E_FLAGS, boolean flagsSizeIsLong) {
         this.E_NODEA = E_NODEA;
         this.E_NODEB = E_NODEB;
         this.E_LINKA = E_LINKA;
@@ -48,6 +49,7 @@ abstract class EdgeAccess {
         this.E_DIST = E_DIST;
         this.E_FLAGS = E_FLAGS;
         this.flagsSizeIsLong = flagsSizeIsLong;
+        this.E_EXT_BYTES_OFFSET = extendedBytesOffset;
     }
 
     abstract BaseGraph.EdgeIterable createSingleEdge(EdgeFilter edgeFilter);
@@ -92,6 +94,14 @@ abstract class EdgeAccess {
         int val = edges.getInt(pointer + E_DIST);
         // do never return infinity even if INT MAX, see #435
         return val / INT_DIST_FACTOR;
+    }
+
+    int getData(long edgePointer, int offset) {
+        return edges.getInt(edgePointer + E_EXT_BYTES_OFFSET + offset);
+    }
+
+    void setData(long edgePointer, int offset, int value) {
+        edges.setInt(edgePointer + E_EXT_BYTES_OFFSET + offset, value);
     }
 
     final long getFlags_(long edgePointer, boolean reverse) {

@@ -40,7 +40,7 @@ public class LandmarkSuggestion {
      * to specify an explicit bounding box. TODO: support GeoJSON instead.
      */
     public static final LandmarkSuggestion readLandmarks(String file, LocationIndex locationIndex) throws IOException {
-        // landmarks should be suited for all vehicles
+        // landmarks should be suited for all profiles
         EdgeFilter edgeFilter = EdgeFilter.ALL_EDGES;
         List<String> lines = Helper.readFile(file);
         List<Integer> landmarkNodeIds = new ArrayList<>();

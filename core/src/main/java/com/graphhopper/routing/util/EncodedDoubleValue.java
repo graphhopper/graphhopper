@@ -40,7 +40,7 @@ public class EncodedDoubleValue extends EncodedValue {
 
     @Override
     public long getValue(long flags) {
-        throw new IllegalStateException("Use setDoubleValue instead");
+        throw new IllegalStateException("Use getDoubleValue instead");
     }
 
     @Override

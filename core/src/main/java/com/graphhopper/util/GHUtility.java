@@ -18,11 +18,12 @@
 package com.graphhopper.util;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
-import com.carrotsearch.hppc.LongArrayList;
-import com.carrotsearch.hppc.LongIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
+import com.graphhopper.routing.profiles.DoubleProperty;
+import com.graphhopper.routing.profiles.IntProperty;
+import com.graphhopper.routing.profiles.StringProperty;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -432,6 +433,36 @@ public class GHUtility {
 
         @Override
         public boolean getBool(int key, boolean _default) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public int get(IntProperty property) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public void set(IntProperty property, int value) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public String get(StringProperty property) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public void set(StringProperty property, String value) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public double get(DoubleProperty property) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public void set(DoubleProperty property, double value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

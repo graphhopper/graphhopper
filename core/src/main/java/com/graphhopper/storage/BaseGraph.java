@@ -20,6 +20,10 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
+import com.graphhopper.routing.profiles.DoubleProperty;
+import com.graphhopper.routing.profiles.EncodingManager2;
+import com.graphhopper.routing.profiles.IntProperty;
+import com.graphhopper.routing.profiles.StringProperty;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -27,11 +31,10 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.search.NameIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-
-import static com.graphhopper.util.Helper.nf;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.graphhopper.util.Helper.nf;
 
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory
@@ -223,10 +226,17 @@ class BaseGraph implements Graph {
         edgeEntryIndex = 0;
         nodeEntryIndex = 0;
         boolean flagsSizeIsLong = encodingManager.getBytesForFlags() == 8;
+        int extendedDataSizeInBytes = 0;
+        if (encodingManager instanceof EncodingManager2) {
+            extendedDataSizeInBytes = ((EncodingManager2) encodingManager).getExtendedDataSize();
+        }
+
         edgeAccess.init(nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(4),
+                nextEdgeEntryIndex(extendedDataSizeInBytes),
+                /* TODO LATER: deprecate flags and distance */
                 nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(encodingManager.getBytesForFlags()),
                 flagsSizeIsLong);
@@ -1108,6 +1118,40 @@ class BaseGraph implements Graph {
         @Override
         public long getFlags() {
             return getDirectFlags();
+        }
+
+        @Override
+        public int get(IntProperty property) {
+            return property.fromStorageFormatToInt(edgeAccess.getData(edgePointer, property.getOffset()));
+        }
+
+        @Override
+        public void set(IntProperty property, int value) {
+            int flags = edgeAccess.getData(edgePointer, property.getOffset());
+            edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormat(flags, value));
+        }
+
+        @Override
+        public String get(StringProperty property) {
+            return property.fromStorageFormatToString(edgeAccess.getData(edgePointer, property.getOffset()));
+        }
+
+        @Override
+        public void set(StringProperty property, String value) {
+            int flags = edgeAccess.getData(edgePointer, property.getOffset());
+            edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormat(flags, value));
+        }
+
+        @Override
+        public double get(DoubleProperty property) {
+            int flags = edgeAccess.getData(edgePointer, property.getOffset());
+            return property.fromStorageFormatToDouble(flags);
+        }
+
+        @Override
+        public void set(DoubleProperty property, double value) {
+            int flags = edgeAccess.getData(edgePointer, property.getOffset());
+            edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormat(flags, value));
         }
 
         @Override
