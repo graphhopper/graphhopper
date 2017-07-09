@@ -256,7 +256,6 @@ public class EncodingManager {
     /**
      * Processes way properties of different kind to determine speed and direction. Properties are
      * directly encoded in 8 bytes.
-     * <p>
      *
      * @param relationFlags The preprocessed relation flags is used to influence the way properties.
      * @return the encoded flags
@@ -367,6 +366,9 @@ public class EncodingManager {
         return this;
     }
 
+    /**
+     * Method called after edge is created
+     */
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
         // storing the road name does not yet depend on the flagEncoder so manage it directly
         if (enableInstructions) {

@@ -6,11 +6,8 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.util.EdgeIteratorState;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class approaches the storage of edge properties via orchestrating multiple Property-objects like maxspeed and
@@ -37,10 +34,16 @@ public class EncodingManager2 extends EncodingManager {
         this.extendedDataSize = Math.min(1, extendedDataSize / 4) * 4;
     }
 
+    public EncodingManager2 init(Property... properties) {
+        return init(Arrays.asList(properties));
+    }
+
     /**
      * This method freezes the properties and defines their shift, dataIndex etc
+     * <p>
+     * Note, that the order of the collection is not guaranteed being used as storage order and can change to optimize bit usage.
      */
-    public EncodingManager2 init(List<Property> properties) {
+    public EncodingManager2 init(Collection<Property> properties) {
         if (!this.properties.isEmpty())
             throw new IllegalStateException("Cannot call init multiple times");
 
@@ -54,12 +57,43 @@ public class EncodingManager2 extends EncodingManager {
     }
 
     @Override
-    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        parser.parse(way, edge, properties.values());
+    public long handleWayTags(ReaderWay way, long includeWay, long relationFlags) {
     }
 
-    public int getBytesForFlags() {
-        return 4;
+    public EdgeProperties handleWay(ReaderWay way) {
+        // TODO store int array per edge -> different method call in OSMReader necessary
+        return parser.parse(way, edge, properties.values());
+    }
+
+    // TODO parsing and filtering is highly related (e.g. for parsing we detect a tag and if the value is parsable and the same is necessary for filtering)
+    // we should create a streamed approach instead:
+    // property.filter(way).parse() and skip parse
+    private Collection<ReaderWayFilter> filters = new ArrayList<>();
+
+    // TODO per default accept everything with highway
+    {
+        filters.add(new ReaderWayFilter() {
+            @Override
+            public boolean accept(ReaderWay way) {
+                return way.getTag("highway") != null;
+            }
+        });
+    }
+
+    public interface ReaderWayFilter {
+        boolean accept(ReaderWay way);
+    }
+
+    public void addReaderWayFilter(ReaderWayFilter rwf) {
+        filters.add(rwf);
+    }
+
+    public long acceptWay(ReaderWay way) {
+        for (ReaderWayFilter filter : filters) {
+            if (!filter.accept(way))
+                return 0;
+        }
+        return 1;
     }
 
     /**
@@ -69,23 +103,26 @@ public class EncodingManager2 extends EncodingManager {
         return extendedDataSize;
     }
 
+    // TODO should we add convenient getters like getStringProperty etc?
+    public <T> T getProperty(String key, Class<T> clazz) {
+        Property prop = properties.get(key);
+        if (prop == null)
+            throw new IllegalArgumentException("Cannot find property " + key + " in existing: " + properties);
+        return (T) prop;
+    }
+
+    @Override
     public boolean supports(String encoder) {
         throw new IllegalStateException("not implemented");
     }
 
+    @Override
     public FlagEncoder getEncoder(String name) {
         throw new IllegalStateException("not implemented");
     }
 
-    public long acceptWay(ReaderWay way) {
-        throw new IllegalStateException("not implemented");
-    }
-
+    @Override
     public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
-        throw new IllegalStateException("not implemented");
-    }
-
-    public long handleWayTags(ReaderWay way, long includeWay, long relationFlags) {
         throw new IllegalStateException("not implemented");
     }
 
@@ -101,6 +138,7 @@ public class EncodingManager2 extends EncodingManager {
         return str.toString();
     }
 
+    @Override
     public String toDetailsString() {
         String str = "";
         for (Property p : properties.values()) {
@@ -113,13 +151,18 @@ public class EncodingManager2 extends EncodingManager {
     }
 
     public long flagsDefault(boolean forward, boolean backward) {
-        // TODO deprecate flags
+        // TODO deprecate usage of flags
         return 0;
+    }
+
+    public int getBytesForFlags() {
+        return 4;
     }
 
     /**
      * Reverse flags, to do so all encoders are called.
      */
+    @Override
     public long reverseFlags(long flags) {
         throw new IllegalStateException("not implemented");
     }
@@ -137,31 +180,32 @@ public class EncodingManager2 extends EncodingManager {
     /**
      * Analyze tags on osm node. Store node tags (barriers etc) for later usage while parsing way.
      */
+    @Override
     public long handleNodeTags(ReaderNode node) {
-        throw new IllegalStateException("not implemented");
+        // TODO not implemented
+        return 0;
     }
 
+    @Override
     public EncodingManager setEnableInstructions(boolean enableInstructions) {
-        throw new IllegalStateException("not implemented");
+        // TODO not implemented
+        return this;
     }
 
+    @Override
     public EncodingManager setPreferredLanguage(String preferredLanguage) {
-        throw new IllegalStateException("not implemented");
+        // TODO not implemented
+        return this;
     }
 
+    @Override
     public List<FlagEncoder> fetchEdgeEncoders() {
         throw new IllegalStateException("not implemented");
     }
 
+    @Override
     public boolean needsTurnCostsSupport() {
-        // TODO
+        // TODO properties per node
         return false;
-    }
-
-    public <T> T getProperty(String key, Class<T> clazz) {
-        Property prop = properties.get(key);
-        if (prop == null)
-            throw new IllegalArgumentException("Cannot find property " + key + " in existing: " + properties);
-        return (T) prop;
     }
 }

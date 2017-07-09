@@ -28,7 +28,13 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
+import com.graphhopper.routing.profiles.DoubleProperty;
+import com.graphhopper.routing.profiles.EncodingManager2;
+import com.graphhopper.routing.profiles.PropertyParser;
+import com.graphhopper.routing.profiles.PropertyParserOSM;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.weighting.FastestCarWeighting;
+import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -526,7 +532,7 @@ public class OSMReaderTest {
         int nb = AbstractGraphStorageTester.getIdOf(graph, 12, 51);
         int nc = AbstractGraphStorageTester.getIdOf(graph, 11.2, 52);
         int nd = AbstractGraphStorageTester.getIdOf(graph, 11.3, 51);
-        int ne = AbstractGraphStorageTester.getIdOf( graph, 10, 51 );
+        int ne = AbstractGraphStorageTester.getIdOf(graph, 10, 51);
 
         EdgeIteratorState edge_ab = GHUtility.getEdge(graph, na, nb);
         EdgeIteratorState edge_ad = GHUtility.getEdge(graph, na, nd);
@@ -799,6 +805,36 @@ public class OSMReaderTest {
         GHRequest req = new GHRequest(48.977277, 8.256896, 48.978876, 8.254884).
                 setWeighting("curvature").
                 setVehicle("motorcycle");
+
+        GHResponse ghRsp = hopper.route(req);
+        assertFalse(ghRsp.getErrors().toString(), ghRsp.hasErrors());
+    }
+
+    @Test
+    public void testPropertyBasedEncodingManager() {
+        final DoubleProperty maxSpeed = new DoubleProperty("maxspeed", 5, 50d, 5d);
+        DoubleProperty averageSpeed = new DoubleProperty("averagespeed", 5, 50d, 5d) {
+            @Override
+            public Object parse(ReaderWay way) {
+                Number num = (Number) maxSpeed.parse(way);
+                return num.doubleValue() * 0.9;
+            }
+        };
+
+        PropertyParser parser = new PropertyParserOSM();
+        GraphHopper hopper = new GraphHopperOSM() {
+            @Override
+            public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
+                return new FastestCarWeighting((EncodingManager2) getEncodingManager());
+            }
+        }.setDataReaderFile(getClass().getResource(file1).getFile())
+                .setEncodingManager(new EncodingManager2(parser, 4).
+                        init(maxSpeed, averageSpeed))
+                .setGraphHopperLocation(dir);
+        hopper.getCHFactoryDecorator().setEnabled(false);
+        hopper.importOrLoad();
+        GHRequest req = new GHRequest(48.977277, 8.256896, 48.978876, 8.254884).
+                setWeighting("fastest2");
 
         GHResponse ghRsp = hopper.route(req);
         assertFalse(ghRsp.getErrors().toString(), ghRsp.hasErrors());
