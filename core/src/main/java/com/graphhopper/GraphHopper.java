@@ -1055,10 +1055,6 @@ public class GraphHopper implements GraphHopperAPI {
                 double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
                 PathDetailsCalculatorFactory calculatorFactory = new PathDetailsCalculatorFactory(request.getHints(), encoder);
 
-                // FIXME temporary until simplify works
-                if(hints.getBool(Parameters.DETAILS.AVERAGE_SPEED, false))
-                    wayPointMaxDistance = 0;
-
                 DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
                 PathMerger pathMerger = new PathMerger().
                         setCalcPoints(tmpCalcPoints).
