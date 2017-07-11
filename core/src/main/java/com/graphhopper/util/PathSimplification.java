@@ -106,14 +106,19 @@ public class PathSimplification {
 
             if (toSimplifyIndex >= 0 && simplificationPossible) {
                 // Simplify
-                int removed = douglasPeucker.simplify(pointList, nonConflictingStart, nonConflictingEnd);
+                /*
+                int removed = douglasPeucker.subSimplify(pointList, nonConflictingStart, nonConflictingEnd);
                 if (removed > 0) {
                     douglasPeucker.compressNew(pointList, removed);
+                */
+                int removed = douglasPeucker.simplify(pointList, nonConflictingStart, nonConflictingEnd);
 
+                if (removed > 0) {
                     for (int i = 0; i < toSimplify.size(); i++) {
                         reduceNumberOfPoints(toSimplify.get(i), offset[i], removed, startIntervals[i], endIntervals[i] - removed);
                     }
                 }
+
             }
 
             if (toShiftIndex < 0) {

@@ -60,22 +60,28 @@ public class DouglasPeucker {
      * @return removed nodes
      */
     public int simplify(PointList points) {
+        return simplify(points, 0, points.size()-1);
+    }
+
+    public int simplify(PointList points, int fromIndex, int lastIndex) {
         int removed = 0;
-        int size = points.getSize();
+        int size = lastIndex - fromIndex;
         if (approx) {
             int delta = 500;
             int segments = size / delta + 1;
-            int start = 0;
+            int start = fromIndex;
             for (int i = 0; i < segments; i++) {
                 // start of next is end of last segment, except for the last
-                removed += simplify(points, start, Math.min(size - 1, start + delta));
+                removed += subSimplify(points, start, Math.min(lastIndex, start + delta));
                 start += delta;
             }
         } else {
-            removed = simplify(points, 0, size - 1);
+            removed = subSimplify(points, fromIndex, lastIndex);
         }
 
-        compressNew(points, removed);
+        if(removed > 0)
+            compressNew(points, removed);
+
         return removed;
     }
 
@@ -111,7 +117,7 @@ public class DouglasPeucker {
     }
 
     // keep the points of fromIndex and lastIndex
-    int simplify(PointList points, int fromIndex, int lastIndex) {
+    int subSimplify(PointList points, int fromIndex, int lastIndex) {
         if (lastIndex - fromIndex < 2) {
             return 0;
         }
@@ -145,8 +151,8 @@ public class DouglasPeucker {
                 counter++;
             }
         } else {
-            counter = simplify(points, fromIndex, indexWithMaxDist);
-            counter += simplify(points, indexWithMaxDist, lastIndex);
+            counter = subSimplify(points, fromIndex, indexWithMaxDist);
+            counter += subSimplify(points, indexWithMaxDist, lastIndex);
         }
         return counter;
     }
