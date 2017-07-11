@@ -88,6 +88,7 @@ public class PathMerger {
                 InstructionList il = path.calcInstructions(tr);
 
                 if (!il.isEmpty()) {
+                    /*
                     if (fullPoints.isEmpty()) {
                         PointList pl = il.get(0).getPoints();
                         // do a wild guess about the total number of points to avoid reallocation a bit
@@ -102,6 +103,9 @@ public class PathMerger {
                         fullInstructions.add(i);
                         fullPoints.add(i.getPoints());
                     }
+                    */
+
+                    fullInstructions.addAll(il);
 
                     // if not yet reached finish replace with 'reached via'
                     if (pathIndex + 1 < paths.size()) {
@@ -111,15 +115,18 @@ public class PathMerger {
                     }
                 }
 
-            } else if (calcPoints) {
+            }
+            if (calcPoints || enableInstructions) {
                 PointList tmpPoints = path.calcPoints();
                 if (fullPoints.isEmpty())
                     fullPoints = new PointList(tmpPoints.size(), tmpPoints.is3D());
 
+                /*
                 origPoints = tmpPoints.getSize();
                 if (simplifyResponse) {
                     douglasPeucker.simplify(tmpPoints);
                 }
+                */
                 fullPoints.add(tmpPoints);
             }
             if ((calcPoints || enableInstructions) && calculatorFactory != null) {
@@ -139,14 +146,20 @@ public class PathMerger {
         if (enableInstructions)
             altRsp.setInstructions(fullInstructions);
 
-        if (!allFound)
+        if (!allFound) {
             altRsp.addError(new ConnectionNotFoundException("Connection between locations not found", Collections.<String, Object>emptyMap()));
+        }
 
         altRsp.setDescription(description).
                 setPoints(fullPoints).
                 setRouteWeight(fullWeight).
                 setDistance(fullDistance).
                 setTime(fullTimeInMillis);
+
+        if (allFound && simplifyResponse && (calcPoints || enableInstructions)) {
+            PathSimplification ps = new PathSimplification(altRsp, douglasPeucker, enableInstructions);
+            ps.simplify();
+        }
     }
 
     private void calcAscendDescend(final PathWrapper rsp, final PointList pointList) {
