@@ -51,7 +51,7 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
             // Debug Turn Instructions more easily
             L.marker([lngLat[1], lngLat[0]], {
                 icon: L.icon({
-                    iconUrl: './img/marker-small-blue.png',
+                    iconUrl: './img/marker-small-red.png',
                     iconSize: [15, 15]
                 }),
                 draggable: true
