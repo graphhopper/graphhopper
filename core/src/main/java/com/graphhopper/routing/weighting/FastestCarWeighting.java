@@ -16,8 +16,8 @@ public class FastestCarWeighting implements Weighting {
     private final double maxSpeedValue;
 
     public FastestCarWeighting(EncodingManager em, String name) {
-        this.maxSpeed = em.getProperty("maxspeed", DoubleEncodedValue.class);
-        this.averageSpeed = em.getProperty("averagespeed", DoubleEncodedValue.class);
+        this.maxSpeed = em.getEncodedValue("maxspeed", DoubleEncodedValue.class);
+        this.averageSpeed = em.getEncodedValue("averagespeed", DoubleEncodedValue.class);
         // TODO
         // maxSpeedValue = maxSpeed.getMaximum() / SPEED_CONV;
         this.maxSpeedValue = 100 / SPEED_CONV;

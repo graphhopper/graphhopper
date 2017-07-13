@@ -849,9 +849,9 @@ public class OSMReaderTest {
         hopper.getCHFactoryDecorator().setEnabled(false);
         hopper.importOrLoad();
 
-        for (int i = 0; i < hopper.getGraphHopperStorage().getNodes(); i++) {
-            System.out.println(GHUtility.getNodeInfo(hopper.getGraphHopperStorage(), i, EdgeFilter.ALL_EDGES));
-        }
+//        for (int i = 0; i < hopper.getGraphHopperStorage().getNodes(); i++) {
+//            System.out.println(GHUtility.getNodeInfo(hopper.getGraphHopperStorage(), i, EdgeFilter.ALL_EDGES));
+//        }
         GHRequest req = new GHRequest(51.2492152, 9.4317166, 49, 10).
                 setVehicle(EncodingManager.ENCODER_NAME).
                 setWeighting("fastest2");

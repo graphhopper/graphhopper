@@ -11,7 +11,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.util.*;
 
 /**
- * This class approaches the storage of edge properties via orchestrating multiple EncodedValue-objects like maxspeed and
+ * This class approaches the storage of edge encodedValueMap via orchestrating multiple EncodedValue-objects like maxspeed and
  * highway type that can be accessed in a Weighting and will be feeded in the Import (via PropertyParser).
  */
 public class EncodingManager extends EncodingManager08 {
@@ -20,7 +20,7 @@ public class EncodingManager extends EncodingManager08 {
      * for backward compatibility we have to specify an encoder name ("vehicle")
      */
     public static final String ENCODER_NAME = "weighting";
-    private Map<String, EncodedValue> properties = new HashMap<>();
+    private Map<String, EncodedValue> encodedValueMap = new HashMap<>();
     private final PropertyParser parser;
     private final int extendedDataSize;
     private final FlagEncoder mockEncoder;
@@ -46,18 +46,18 @@ public class EncodingManager extends EncodingManager08 {
     }
 
     /**
-     * This method freezes the properties and defines their shift, dataIndex etc
+     * This method freezes the encodedValueMap and defines their shift, dataIndex etc
      * <p>
      * Note, that the order of the collection is not guaranteed being used as storage order and can change to optimize bit usage.
      */
     public EncodingManager init(Collection<EncodedValue> properties) {
-        if (!this.properties.isEmpty())
+        if (!this.encodedValueMap.isEmpty())
             throw new IllegalStateException("Cannot call init multiple times");
 
         EncodedValue.InitializerConfig initializer = new EncodedValue.InitializerConfig();
         for (EncodedValue prop : properties) {
             prop.init(initializer);
-            this.properties.put(prop.getName(), prop);
+            this.encodedValueMap.put(prop.getName(), prop);
         }
 
         return this;
@@ -104,7 +104,7 @@ public class EncodingManager extends EncodingManager08 {
 
     @Override
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        parser.parse(way, edge, properties.values());
+        parser.parse(way, edge, encodedValueMap.values());
     }
 
     /**
@@ -115,10 +115,10 @@ public class EncodingManager extends EncodingManager08 {
     }
 
     // TODO should we add convenient getters like getStringProperty etc?
-    public <T> T getProperty(String key, Class<T> clazz) {
-        EncodedValue prop = properties.get(key);
+    public <T extends EncodedValue> T getEncodedValue(String key, Class<T> clazz) {
+        EncodedValue prop = encodedValueMap.get(key);
         if (prop == null)
-            throw new IllegalArgumentException("Cannot find property " + key + " in existing: " + properties);
+            throw new IllegalArgumentException("Cannot find encoded value " + key + " in existing: " + encodedValueMap);
         return (T) prop;
     }
 
@@ -140,7 +140,7 @@ public class EncodingManager extends EncodingManager08 {
     @Override
     public String toString() {
         String str = "";
-        for (EncodedValue p : properties.values()) {
+        for (EncodedValue p : encodedValueMap.values()) {
             if (str.length() > 0)
                 str += ", ";
             str += p.getName();
@@ -152,7 +152,7 @@ public class EncodingManager extends EncodingManager08 {
     @Override
     public String toDetailsString() {
         String str = "";
-        for (EncodedValue p : properties.values()) {
+        for (EncodedValue p : encodedValueMap.values()) {
             if (str.length() > 0)
                 str += ", ";
             str += p.toString();
@@ -180,7 +180,7 @@ public class EncodingManager extends EncodingManager08 {
 
     @Override
     public int hashCode() {
-        return properties.hashCode();
+        return encodedValueMap.hashCode();
     }
 
     @Override
@@ -216,7 +216,7 @@ public class EncodingManager extends EncodingManager08 {
 
     @Override
     public boolean needsTurnCostsSupport() {
-        // TODO properties per node
+        // TODO encodedValueMap per node
         return false;
     }
 }

@@ -25,6 +25,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.Trip;
 import com.graphhopper.gtfs.fare.Fares;
 import com.graphhopper.routing.InstructionsFromEdges;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
@@ -110,16 +111,16 @@ class TripFromLabel {
         List<List<Label.Transition>> partitions = new ArrayList<>();
         partitions.add(new ArrayList<>());
         final Iterator<Label.Transition> iterator = transitions.iterator();
-        partitions.get(partitions.size()-1).add(iterator.next());
+        partitions.get(partitions.size() - 1).add(iterator.next());
         iterator.forEachRemaining(transition -> {
             final List<Label.Transition> previous = partitions.get(partitions.size() - 1);
             final Label.EdgeLabel previousEdge = previous.get(previous.size() - 1).edge;
             if (previousEdge != null && (transition.edge.edgeType == GtfsStorage.EdgeType.ENTER_PT || previousEdge.edgeType == GtfsStorage.EdgeType.EXIT_PT)) {
                 final ArrayList<Label.Transition> p = new ArrayList<>();
-                p.add(new Label.Transition(previous.get(previous.size()-1).label, null));
+                p.add(new Label.Transition(previous.get(previous.size() - 1).label, null));
                 partitions.add(p);
             }
-            partitions.get(partitions.size()-1).add(transition);
+            partitions.get(partitions.size() - 1).add(transition);
         });
         return partitions;
     }
@@ -130,7 +131,7 @@ class TripFromLabel {
 
     private InstructionList getInstructions(Translation tr, List<Trip.Leg> legs) {
         final InstructionList instructions = new InstructionList(tr);
-        for (int i = 0; i< legs.size(); ++i) {
+        for (int i = 0; i < legs.size(); ++i) {
             Trip.Leg leg = legs.get(i);
             if (leg instanceof Trip.WalkLeg) {
                 final Trip.WalkLeg walkLeg = ((Trip.WalkLeg) leg);
@@ -145,14 +146,14 @@ class TripFromLabel {
                     departureInstruction.setTime(ptLeg.travelTime);
                     instructions.add(departureInstruction);
                 } else {
-                    pl = instructions.get(instructions.size()-2).getPoints();
+                    pl = instructions.get(instructions.size() - 2).getPoints();
                 }
                 pl.add(ptLeg.stops.get(0).geometry.getY(), ptLeg.stops.get(0).geometry.getX());
-                for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size()-1)) {
+                for (Trip.Stop stop : ptLeg.stops.subList(0, ptLeg.stops.size() - 1)) {
                     pl.add(stop.geometry.getY(), stop.geometry.getX());
                 }
                 final PointList arrivalPointList = new PointList();
-                final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size()-1);
+                final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size() - 1);
                 arrivalPointList.add(arrivalStop.geometry.getY(), arrivalStop.geometry.getX());
                 Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, InstructionAnnotation.EMPTY, arrivalPointList);
                 if (ptLeg.isInSameVehicleAsPrevious) {
@@ -256,26 +257,31 @@ class TripFromLabel {
 
                     com.conveyal.gtfs.model.Trip trip = gtfsFeed.trips.get(tripId);
                     result.add(new Trip.PtLeg(
-                            feedIdWithTimezone.feedId,partition.get(0).edge.nTransfers == 0,
+                            feedIdWithTimezone.feedId, partition.get(0).edge.nTransfers == 0,
                             tripId,
                             trip.route_id,
                             edges(partition).map(edgeLabel -> edgeLabel.edgeIteratorState).collect(Collectors.toList()),
                             new Date(boardTime),
                             stops,
                             partition.stream().mapToDouble(t -> t.edge.distance).sum(),
-                            path.get(i-1).label.currentTime - boardTime,
-                            new Date(path.get(i-1).label.currentTime),
+                            path.get(i - 1).label.currentTime - boardTime,
+                            new Date(path.get(i - 1).label.currentTime),
                             lineString));
                     partition = null;
                 }
             }
             return result;
         } else {
+            final FlagEncoder encoder = weighting.getFlagEncoder();
             InstructionList instructions = new InstructionList(tr);
             InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(path.get(1).edge.edgeIteratorState.getBaseNode(),
-                    graph, weighting, weighting.getFlagEncoder(), graph.getNodeAccess(), tr, instructions);
+                    graph, weighting, graph.getNodeAccess(),
+                    edge -> encoder.getAnnotation(edge.getFlags(), tr),
+                    edge -> encoder.getSpeed(edge.getFlags()),
+                    edge -> encoder.isBool(edge.getFlags(), FlagEncoder.K_ROUNDABOUT),
+                    instructions);
             int prevEdgeId = -1;
-            for (int i=1; i<path.size(); i++) {
+            for (int i = 1; i < path.size(); i++) {
                 EdgeIteratorState edge = path.get(i).edge.edgeIteratorState;
                 instructionsFromEdges.next(edge, i, prevEdgeId);
                 prevEdgeId = edge.getEdge();
@@ -310,14 +316,13 @@ class TripFromLabel {
 
     private static List<Coordinate> toCoordinateArray(PointList pointList) {
         List<Coordinate> coordinates = new ArrayList<>(pointList.size());
-        for (int i=0; i<pointList.size(); i++) {
+        for (int i = 0; i < pointList.size(); i++) {
             coordinates.add(pointList.getDimension() == 3 ?
                     new Coordinate(pointList.getLon(i), pointList.getLat(i)) :
                     new Coordinate(pointList.getLon(i), pointList.getLat(i), pointList.getEle(i)));
         }
         return coordinates;
     }
-
 
 
 }

@@ -44,7 +44,7 @@ public class PathExtract {
             };
         } catch (Exception ex) {
             EncodingManager em2 = (EncodingManager) encodingManager;
-            final DoubleEncodedValue maxspeed = em2.getProperty("maxspeed", DoubleEncodedValue.class);
+            final DoubleEncodedValue maxspeed = em2.getEncodedValue("maxspeed", DoubleEncodedValue.class);
             speedAccessor = new SpeedAccessor() {
 
                 @Override
@@ -52,7 +52,7 @@ public class PathExtract {
                     return edge.get(maxspeed);
                 }
             };
-            final BitEncodedValue roundabout = em2.getProperty("roundabout", BitEncodedValue.class);
+            final BitEncodedValue roundabout = em2.getEncodedValue("roundabout", BitEncodedValue.class);
             roundaboutAccess = new BoolAccessor() {
                 @Override
                 public boolean get(EdgeIteratorState edge) {
