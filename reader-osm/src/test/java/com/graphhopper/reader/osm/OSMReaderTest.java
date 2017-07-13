@@ -28,10 +28,7 @@ import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.routing.profiles.DoubleProperty;
-import com.graphhopper.routing.profiles.EncodingManager2;
-import com.graphhopper.routing.profiles.PropertyParser;
-import com.graphhopper.routing.profiles.PropertyParserOSM;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestCarWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -812,28 +809,51 @@ public class OSMReaderTest {
 
     @Test
     public void testPropertyBasedEncodingManager() {
-        final DoubleProperty maxSpeed = new DoubleProperty("maxspeed", 5, 50d, 5d);
-        DoubleProperty averageSpeed = new DoubleProperty("averagespeed", 5, 50d, 5d) {
+        // TODO move out into 'encoded value factory'
+        final DoubleProperty maxSpeed = new DoubleProperty("maxspeed", 5, 50d, 5d) {
             @Override
             public Object parse(ReaderWay way) {
-                Number num = (Number) maxSpeed.parse(way);
-                return num.doubleValue() * 0.9;
+                return AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
             }
         };
 
+        DoubleProperty averageSpeed = new DoubleProperty("averagespeed", 5, 50d, 5d) {
+            @Override
+            public Object parse(ReaderWay way) {
+                double num = (Double) maxSpeed.parse(way);
+                if (num < 0.01)
+                    return 20;
+                return num * 0.9;
+            }
+        };
+        BitProperty roundabout = new BitProperty("roundabout") {
+            @Override
+            public Object parse(ReaderWay way) {
+                return way.hasTag("junction", "roundabout");
+            }
+        };
+        List<Property> carPropertyCollection = Arrays.<Property>asList(maxSpeed, averageSpeed, roundabout);
+
         PropertyParser parser = new PropertyParserOSM();
+        final EncodingManager2 em = new EncodingManager2(parser, 4).init(carPropertyCollection);
         GraphHopper hopper = new GraphHopperOSM() {
             @Override
             public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
-                return new FastestCarWeighting((EncodingManager2) getEncodingManager());
+                return new FastestCarWeighting(em, "fastest2");
             }
         }.setDataReaderFile(getClass().getResource(file1).getFile())
-                .setEncodingManager(new EncodingManager2(parser, 4).
-                        init(maxSpeed, averageSpeed))
-                .setGraphHopperLocation(dir);
+                .setEncodingManager(em)
+                .setGraphHopperLocation(dir)
+                .setMinNetworkSize(0, 0);
+
         hopper.getCHFactoryDecorator().setEnabled(false);
         hopper.importOrLoad();
-        GHRequest req = new GHRequest(48.977277, 8.256896, 48.978876, 8.254884).
+
+        for (int i = 0; i < hopper.getGraphHopperStorage().getNodes(); i++) {
+            System.out.println(GHUtility.getNodeInfo(hopper.getGraphHopperStorage(), i, EdgeFilter.ALL_EDGES));
+        }
+        GHRequest req = new GHRequest(51.2492152, 9.4317166, 49, 10).
+                setVehicle(EncodingManager2.ENCODER_NAME).
                 setWeighting("fastest2");
 
         GHResponse ghRsp = hopper.route(req);

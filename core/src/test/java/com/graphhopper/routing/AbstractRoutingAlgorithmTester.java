@@ -771,6 +771,11 @@ public abstract class AbstractRoutingAlgorithmTester {
             }
 
             @Override
+            public EdgeFilter createEdgeFilter(boolean forward, boolean reverse) {
+                return new DefaultEdgeFilter(getFlagEncoder(), reverse, forward);
+            }
+
+            @Override
             public boolean matches(HintsMap map) {
                 throw new UnsupportedOperationException("Not supported");
             }

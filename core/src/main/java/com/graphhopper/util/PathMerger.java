@@ -19,6 +19,8 @@ package com.graphhopper.util;
 
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.Path;
+import com.graphhopper.routing.PathExtract;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 
 import java.util.ArrayList;
@@ -59,7 +61,7 @@ public class PathMerger {
         return this;
     }
 
-    public void doWork(PathWrapper altRsp, List<Path> paths, Translation tr) {
+    public void doWork(PathWrapper altRsp, List<Path> paths, EncodingManager encodingManager, Translation tr) {
         int origPoints = 0;
         long fullTimeInMillis = 0;
         double fullWeight = 0;
@@ -71,12 +73,13 @@ public class PathMerger {
         List<String> description = new ArrayList<String>();
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++) {
             Path path = paths.get(pathIndex);
+            PathExtract pe = path.createPathExtract(encodingManager, false);
             description.addAll(path.getDescription());
             fullTimeInMillis += path.getTime();
             fullDistance += path.getDistance();
             fullWeight += path.getWeight();
             if (enableInstructions) {
-                InstructionList il = path.calcInstructions(tr);
+                InstructionList il = pe.calcInstructions(tr);
 
                 if (!il.isEmpty()) {
                     if (fullPoints.isEmpty()) {

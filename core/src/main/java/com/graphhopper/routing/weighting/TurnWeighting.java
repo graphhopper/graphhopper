@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TurnCostEncoder;
@@ -111,6 +112,11 @@ public class TurnWeighting implements Weighting {
             return Double.POSITIVE_INFINITY;
 
         return turnCostEncoder.getTurnCost(turnFlags);
+    }
+
+    @Override
+    public EdgeFilter createEdgeFilter(boolean forward, boolean reverse) {
+        return superWeighting.createEdgeFilter(forward, reverse);
     }
 
     @Override

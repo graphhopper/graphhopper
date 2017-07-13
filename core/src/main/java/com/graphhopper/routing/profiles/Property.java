@@ -19,12 +19,6 @@ public interface Property {
      */
     void init(InitializerConfig init);
 
-    /**
-     * There are multiple int values possible per edge. Here we specify the index into this array.
-     */
-    // TODO how can we hide this?
-    int getOffset();
-
     String getName();
 
     /**

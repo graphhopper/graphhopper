@@ -2,6 +2,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.profiles.DoubleProperty;
 import com.graphhopper.routing.profiles.EncodingManager2;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
@@ -9,15 +10,18 @@ import com.graphhopper.util.EdgeIteratorState;
 public class FastestCarWeighting implements Weighting {
 
     private static final double SPEED_CONV = 3.6;
-    private String profile = "car";
+    private final String name;
     private final DoubleProperty maxSpeed;
+    private final DoubleProperty averageSpeed;
     private final double maxSpeedValue;
 
-    public FastestCarWeighting(EncodingManager2 em) {
-        maxSpeed = em.getProperty("maxspeed", DoubleProperty.class);
+    public FastestCarWeighting(EncodingManager2 em, String name) {
+        this.maxSpeed = em.getProperty("maxspeed", DoubleProperty.class);
+        this.averageSpeed = em.getProperty("averagespeed", DoubleProperty.class);
         // TODO
         // maxSpeedValue = maxSpeed.getMaximum() / SPEED_CONV;
-        maxSpeedValue = 100 / SPEED_CONV;
+        this.maxSpeedValue = 100 / SPEED_CONV;
+        this.name = name;
     }
 
     @Override
@@ -27,7 +31,7 @@ public class FastestCarWeighting implements Weighting {
 
     @Override
     public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        double speed = edgeState.get(maxSpeed) * 0.9;
+        double speed = edgeState.get(averageSpeed);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
 
@@ -50,7 +54,7 @@ public class FastestCarWeighting implements Weighting {
 
         // TODO reverse
         // double speed = reverse ? flagEncoder.getReverseSpeed(flags) : flagEncoder.getSpeed(flags);
-        double speed = edgeState.get(maxSpeed) * 0.9;
+        double speed = edgeState.get(averageSpeed) * 0.9;
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid speed stored in edge! " + speed);
         if (speed == 0)
@@ -61,13 +65,18 @@ public class FastestCarWeighting implements Weighting {
 
     @Override
     public boolean matches(HintsMap reqMap) {
-        return getName().equals(reqMap.getWeighting())
-                && profile.equals(reqMap.getVehicle());
+        return getName().equals(reqMap.getWeighting());
     }
 
     @Override
     public FlagEncoder getFlagEncoder() {
         throw new IllegalArgumentException("Cannot access flag encoder for new encoding mechanism");
+    }
+
+    @Override
+    public EdgeFilter createEdgeFilter(boolean forward, boolean reverse) {
+        // TODO fetch access properties instead!
+        return EdgeFilter.ALL_EDGES;
     }
 
     @Override
@@ -89,11 +98,11 @@ public class FastestCarWeighting implements Weighting {
 
     @Override
     public String getName() {
-        return profile;
+        return name;
     }
 
     @Override
     public String toString() {
-        return getName() + "|" + profile;
+        return getName();
     }
 }

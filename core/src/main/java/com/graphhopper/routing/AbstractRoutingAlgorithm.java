@@ -17,9 +17,8 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -38,7 +37,6 @@ import java.util.List;
 public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected final Graph graph;
     protected final Weighting weighting;
-    protected final FlagEncoder flagEncoder;
     protected final TraversalMode traversalMode;
     protected NodeAccess nodeAccess;
     protected EdgeExplorer inEdgeExplorer;
@@ -53,13 +51,13 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
      * @param traversalMode how the graph is traversed e.g. if via nodes or edges.
      */
     public AbstractRoutingAlgorithm(Graph graph, Weighting weighting, TraversalMode traversalMode) {
-        this.weighting = weighting;
-        this.flagEncoder = weighting.getFlagEncoder();
-        this.traversalMode = traversalMode;
         this.graph = graph;
+        this.weighting = weighting;
+        this.traversalMode = traversalMode;
         this.nodeAccess = graph.getNodeAccess();
-        outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
-        inEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
+
+        outEdgeExplorer = graph.createEdgeExplorer(weighting.createEdgeFilter(true, false));
+        inEdgeExplorer = graph.createEdgeExplorer(weighting.createEdgeFilter(false, true));
     }
 
     @Override

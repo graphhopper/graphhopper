@@ -32,6 +32,7 @@ abstract class EdgeAccess {
     static double MAX_DIST = (Integer.MAX_VALUE - 1) / INT_DIST_FACTOR;
     final DataAccess edges;
     private final BitUtil bitUtil;
+    int edgeDataSizeInBytes;
     int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS, E_EXT_BYTES_OFFSET;
     private boolean flagsSizeIsLong;
 
@@ -50,6 +51,7 @@ abstract class EdgeAccess {
         this.E_FLAGS = E_FLAGS;
         this.flagsSizeIsLong = flagsSizeIsLong;
         this.E_EXT_BYTES_OFFSET = extendedBytesOffset;
+        this.edgeDataSizeInBytes = E_DIST - extendedBytesOffset;
     }
 
     abstract BaseGraph.EdgeIterable createSingleEdge(EdgeFilter edgeFilter);
@@ -98,6 +100,16 @@ abstract class EdgeAccess {
 
     int getData(long edgePointer, int offset) {
         return edges.getInt(edgePointer + E_EXT_BYTES_OFFSET + offset);
+    }
+
+    IntsRef getData(long edgePointer) {
+        // TODO PERFORMANCE reuse object similar to what we do with flags#
+        // or even better: use the DataAccess array directly with a different offset!
+        IntsRef ints = new IntsRef(edgeDataSizeInBytes / 4);
+        for (int i = 0; i < ints.length; i++) {
+            ints.ints[i] = edges.getInt(edgePointer + E_EXT_BYTES_OFFSET + i);
+        }
+        return ints;
     }
 
     void setData(long edgePointer, int offset, int value) {

@@ -67,20 +67,25 @@ public class RoutingAlgorithmIT {
 
         AlgorithmOptions defaultOpts = AlgorithmOptions.start(new AlgorithmOptions("", weighting, tMode)).hints(defaultHints).build();
         List<AlgoHelperEntry> prepare = new ArrayList<>();
-        prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(ASTAR).build(), idx, "astar|beeline|" + addStr + weighting));
+        prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(ASTAR).build(),
+                hopper.getEncodingManager(), idx, "astar|beeline|" + addStr + weighting));
         // later: include dijkstraOneToMany
-        prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA).build(), idx, "dijkstra|" + addStr + weighting));
+        prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA).build(),
+                hopper.getEncodingManager(), idx, "dijkstra|" + addStr + weighting));
 
         AlgorithmOptions astarbiOpts = AlgorithmOptions.start(defaultOpts).algorithm(ASTAR_BI).build();
         astarbiOpts.getHints().put(ASTAR_BI + ".approximation", "BeelineSimplification");
         AlgorithmOptions dijkstrabiOpts = AlgorithmOptions.start(defaultOpts).algorithm(DIJKSTRA_BI).build();
-        prepare.add(new AlgoHelperEntry(ghStorage, astarbiOpts, idx, "astarbi|beeline|" + addStr + weighting));
-        prepare.add(new AlgoHelperEntry(ghStorage, dijkstrabiOpts, idx, "dijkstrabi|" + addStr + weighting));
+        prepare.add(new AlgoHelperEntry(ghStorage, astarbiOpts,
+                hopper.getEncodingManager(), idx, "astarbi|beeline|" + addStr + weighting));
+        prepare.add(new AlgoHelperEntry(ghStorage, dijkstrabiOpts,
+                hopper.getEncodingManager(), idx, "dijkstrabi|" + addStr + weighting));
 
         // add additional preparations if CH and LM preparation are enabled
         if (hopper.getLMFactoryDecorator().isEnabled()) {
             final HintsMap lmHints = new HintsMap(defaultHints).put(Parameters.Landmark.DISABLE, false);
-            prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(), idx, "astarbi|landmarks|" + weighting) {
+            prepare.add(new AlgoHelperEntry(ghStorage, AlgorithmOptions.start(astarbiOpts).hints(lmHints).build(),
+                    hopper.getEncodingManager(), idx, "astarbi|landmarks|" + weighting) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
                     return hopper.getAlgorithmFactory(lmHints);
@@ -101,7 +106,8 @@ public class RoutingAlgorithmIT {
                 throw new IllegalStateException("Didn't find weighting " + hints.getWeighting() + " in " + hopper.getCHFactoryDecorator().getWeightings());
 
             prepare.add(new AlgoHelperEntry(ghStorage.getGraph(CHGraph.class, pickedWeighting),
-                    AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(), idx, "dijkstrabi|ch|prepare|" + hints.getWeighting()) {
+                    AlgorithmOptions.start(dijkstrabiOpts).hints(chHints).build(),
+                    hopper.getEncodingManager(), idx, "dijkstrabi|ch|prepare|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
                     return hopper.getAlgorithmFactory(chHints);
@@ -109,7 +115,8 @@ public class RoutingAlgorithmIT {
             });
 
             prepare.add(new AlgoHelperEntry(ghStorage.getGraph(CHGraph.class, pickedWeighting),
-                    AlgorithmOptions.start(astarbiOpts).hints(chHints).build(), idx, "astarbi|ch|prepare|" + hints.getWeighting()) {
+                    AlgorithmOptions.start(astarbiOpts).hints(chHints).build(),
+                    hopper.getEncodingManager(), idx, "astarbi|ch|prepare|" + hints.getWeighting()) {
                 @Override
                 public RoutingAlgorithmFactory createRoutingFactory() {
                     return hopper.getAlgorithmFactory(chHints);

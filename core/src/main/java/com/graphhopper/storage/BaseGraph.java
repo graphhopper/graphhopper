@@ -20,10 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.profiles.DoubleProperty;
-import com.graphhopper.routing.profiles.EncodingManager2;
-import com.graphhopper.routing.profiles.IntProperty;
-import com.graphhopper.routing.profiles.StringProperty;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -1121,6 +1118,22 @@ class BaseGraph implements Graph {
         }
 
         @Override
+        public IntsRef getData() {
+            return edgeAccess.getData(edgePointer);
+        }
+
+        @Override
+        public boolean get(BitProperty property) {
+            return property.fromStorageFormatToBool(edgeAccess.getData(edgePointer, property.getOffset()));
+        }
+
+        @Override
+        public void set(BitProperty property, boolean value) {
+            int flags = edgeAccess.getData(edgePointer, property.getOffset());
+            edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormatFromBool(flags, value));
+        }
+
+        @Override
         public int get(IntProperty property) {
             return property.fromStorageFormatToInt(edgeAccess.getData(edgePointer, property.getOffset()));
         }
@@ -1151,7 +1164,7 @@ class BaseGraph implements Graph {
         @Override
         public void set(DoubleProperty property, double value) {
             int flags = edgeAccess.getData(edgePointer, property.getOffset());
-            edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormat(flags, value));
+            edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormatFromDouble(flags, value));
         }
 
         @Override

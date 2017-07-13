@@ -378,7 +378,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * @return the speed in km/h
      */
-    protected double parseSpeed(String str) {
+    public static double parseSpeed(String str) {
         if (Helper.isEmpty(str))
             return -1;
 

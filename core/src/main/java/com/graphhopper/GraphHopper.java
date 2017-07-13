@@ -24,6 +24,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
+import com.graphhopper.routing.profiles.EncodingManager2;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -921,10 +922,16 @@ public class GraphHopper implements GraphHopperAPI {
      * Potentially wraps the specified weighting into a TurnWeighting instance.
      */
     public Weighting createTurnWeighting(Graph graph, Weighting weighting, TraversalMode tMode) {
-        FlagEncoder encoder = weighting.getFlagEncoder();
-        if (encoder.supports(TurnWeighting.class) && !tMode.equals(TraversalMode.NODE_BASED))
-            return new TurnWeighting(weighting, (TurnCostExtension) graph.getExtension());
-        return weighting;
+        try {
+            FlagEncoder encoder = weighting.getFlagEncoder();
+            if (encoder.supports(TurnWeighting.class) && !tMode.equals(TraversalMode.NODE_BASED))
+                return new TurnWeighting(weighting, (TurnCostExtension) graph.getExtension());
+            return weighting;
+        } catch (Exception ex) {
+            // TODO currently all Weightings via EncodingManager2 throw an exception for getFlagEncoder
+            // we need different turn cost support
+            return weighting;
+        }
     }
 
     @Override
@@ -986,19 +993,22 @@ public class GraphHopper implements GraphHopperAPI {
 
             RoutingTemplate routingTemplate;
             if (ROUND_TRIP.equalsIgnoreCase(algoStr))
-                routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, maxRoundTripRetries);
+                routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, encodingManager, locationIndex, maxRoundTripRetries);
             else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
-                routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex);
+                routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, encodingManager, locationIndex);
             else
-                routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex);
+                routingTemplate = new ViaRoutingTemplate(request, ghRsp, encodingManager, locationIndex);
 
+            // TODO how can we know the weighting (that needs the QueryGraph) before the lookup?
+            // then we can easily call weighting.createEdgeFilter(true, true) instead of:
+            EdgeFilter edgeFilter = vehicle.equals(EncodingManager2.ENCODER_NAME) ? EdgeFilter.ALL_EDGES : new DefaultEdgeFilter(encoder);
             List<Path> altPaths = null;
             int maxRetries = routingTemplate.getMaxRetries();
             Locale locale = request.getLocale();
             Translation tr = trMap.getWithFallBack(locale);
             for (int i = 0; i < maxRetries; i++) {
                 StopWatch sw = new StopWatch().start();
-                List<QueryResult> qResults = routingTemplate.lookup(points, encoder);
+                List<QueryResult> qResults = routingTemplate.lookup(points, edgeFilter);
                 ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
                 if (ghRsp.hasErrors())
                     return Collections.emptyList();

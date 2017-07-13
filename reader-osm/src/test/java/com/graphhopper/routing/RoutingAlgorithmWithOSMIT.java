@@ -594,7 +594,7 @@ public class RoutingAlgorithmWithOSMIT {
                         public void run() {
                             OneRun oneRun = instances.get(instanceIndex);
                             AlgorithmOptions opts = AlgorithmOptions.start().weighting(weighting).algorithm(algoStr).build();
-                            testCollector.assertDistance(new AlgoHelperEntry(g, opts, idx, algoStr + "|" + weighting),
+                            testCollector.assertDistance(new AlgoHelperEntry(g, opts, encodingManager, idx, algoStr + "|" + weighting),
                                     oneRun.getList(idx, filter), oneRun);
                             integ.addAndGet(1);
                         }

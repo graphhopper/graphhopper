@@ -17,10 +17,12 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.bwdcompat.SpeedAccessor;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.GHPoint;
 
 import java.util.ArrayList;
@@ -47,13 +49,13 @@ class InstructionsSurroundingEdges {
 
     // All Streets surrounding the turn, including oneways in the wrong direction
     final List<EdgeIteratorState> surroundingEdges;
-
-    final FlagEncoder encoder;
+    final SpeedAccessor speedAccessor;
     final NodeAccess nodeAccess;
 
     public InstructionsSurroundingEdges(EdgeIteratorState prevEdge,
                                         EdgeIteratorState currentEdge,
-                                        FlagEncoder encoder,
+                                        SpeedAccessor speedAccessor,
+                                        EdgeFilter forwardEdgeFilter,
                                         EdgeExplorer crossingExplorer,
                                         NodeAccess nodeAccess,
                                         int prevNode,
@@ -61,7 +63,7 @@ class InstructionsSurroundingEdges {
                                         int adjNode) {
         this.prevEdge = prevEdge;
         this.currentEdge = currentEdge;
-        this.encoder = encoder;
+        this.speedAccessor = speedAccessor;
         this.nodeAccess = nodeAccess;
 
         EdgeIteratorState tmpEdge;
@@ -73,7 +75,7 @@ class InstructionsSurroundingEdges {
             if (edgeIter.getAdjNode() != prevNode && edgeIter.getAdjNode() != adjNode) {
                 tmpEdge = edgeIter.detach(false);
                 surroundingEdges.add(tmpEdge);
-                if (encoder.isForward(tmpEdge.getFlags())) {
+                if (forwardEdgeFilter.accept(tmpEdge)) {
                     reachableEdges.add(tmpEdge);
                 }
             }
@@ -120,11 +122,7 @@ class InstructionsSurroundingEdges {
     }
 
     private double getSpeed(EdgeIteratorState edge) {
-        if (encoder instanceof DataFlagEncoder) {
-            return ((DataFlagEncoder) encoder).getMaxspeed(edge, 0, false);
-        } else {
-            return encoder.getSpeed(edge.getFlags());
-        }
+        return speedAccessor.getSpeed(edge);
     }
 
     /**

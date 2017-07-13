@@ -17,10 +17,12 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.profiles.BitProperty;
 import com.graphhopper.routing.profiles.DoubleProperty;
 import com.graphhopper.routing.profiles.IntProperty;
 import com.graphhopper.routing.profiles.StringProperty;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -40,17 +42,20 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     private final int originalTraversalKey;
     private double distance;
     private long flags;
+    private IntsRef edgeData;
     private String name;
-    // indication if edges are dispreferred as start/stop edge 
+    // indication if edges are penalized as start/stop edge
     private boolean unfavored;
     private EdgeIteratorState reverseEdge;
 
-    public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList) {
+    public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance,
+                                    long flags, IntsRef edgeData, String name, PointList pointList) {
         this.originalTraversalKey = originalTraversalKey;
         this.edgeId = edgeId;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
         this.distance = distance;
+        this.edgeData = edgeData;
         this.flags = flags;
         this.name = name;
         this.pointList = pointList;
@@ -129,36 +134,52 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
+    public IntsRef getData() {
+        return edgeData;
+    }
+
+    @Override
+    public void set(BitProperty property, boolean value) {
+        int offset = property.getOffset() + edgeData.offset;
+        edgeData.ints[offset] = property.toStorageFormatFromBool(edgeData.ints[offset], value);
+    }
+
+    @Override
+    public boolean get(BitProperty property) {
+        return property.fromStorageFormatToBool(edgeData.ints[property.getOffset() + edgeData.offset]);
+    }
+
+    @Override
     public int get(IntProperty property) {
-        // TODO
-        return 0;
+        return property.fromStorageFormatToInt(edgeData.ints[property.getOffset() + edgeData.offset]);
     }
 
     @Override
     public void set(IntProperty property, int value) {
-        // TODO
+        int offset = property.getOffset() + edgeData.offset;
+        edgeData.ints[offset] = property.toStorageFormat(edgeData.ints[offset], value);
     }
 
     @Override
     public String get(StringProperty property) {
-        // TODO
-        return null;
+        return property.fromStorageFormatToString(edgeData.ints[property.getOffset() + edgeData.offset]);
     }
 
     @Override
     public void set(StringProperty property, String value) {
-        // TODO
+        int offset = property.getOffset() + edgeData.offset;
+        edgeData.ints[offset] = property.toStorageFormat(edgeData.ints[offset], value);
     }
 
     @Override
     public double get(DoubleProperty property) {
-        // TODO
-        return 0;
+        return property.fromStorageFormatToDouble(edgeData.ints[property.getOffset() + edgeData.offset]);
     }
 
     @Override
     public void set(DoubleProperty property, double value) {
-        // TODO
+        int offset = property.getOffset() + edgeData.offset;
+        edgeData.ints[offset] = property.toStorageFormatFromDouble(edgeData.ints[offset], value);
     }
 
     @Override

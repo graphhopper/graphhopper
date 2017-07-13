@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
+import com.graphhopper.routing.profiles.BitProperty;
 import com.graphhopper.routing.profiles.DoubleProperty;
 import com.graphhopper.routing.profiles.IntProperty;
 import com.graphhopper.routing.profiles.StringProperty;
@@ -433,6 +434,21 @@ public class GHUtility {
 
         @Override
         public boolean getBool(int key, boolean _default) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public IntsRef getData() {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public boolean get(BitProperty property) {
+            throw new UnsupportedOperationException("Not supported. Edge is empty.");
+        }
+
+        @Override
+        public void set(BitProperty property, boolean value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

@@ -20,18 +20,15 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHIntArrayList;
-import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
-import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PointList;
+import com.graphhopper.util.StopWatch;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,34 +45,28 @@ import java.util.List;
  * @author jan soe
  */
 public class Path {
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-
     final StopWatch extractSW = new StopWatch("extract");
-    protected Graph graph;
+    Graph graph;
     protected double distance;
     // we go upwards (via SPTEntry.parent) from the goal node to the origin node
     protected boolean reverseOrder = true;
     protected long time;
-    /**
-     * Shortest path tree entry
-     */
+    private double weight;
     protected SPTEntry sptEntry;
-    protected int endNode = -1;
-    private List<String> description;
-    protected Weighting weighting;
-    private FlagEncoder encoder;
     private boolean found;
     private int fromNode = -1;
-    private GHIntArrayList edgeIds;
-    private double weight;
-    private NodeAccess nodeAccess;
+    protected int endNode = -1;
+    protected Weighting weighting;
+    GHIntArrayList edgeIds;
+    // TODO move out of this class, maybe even edgeIds?
+    NodeAccess nodeAccess;
+    private List<String> description;
 
     public Path(Graph graph, Weighting weighting) {
         this.weight = Double.MAX_VALUE;
         this.graph = graph;
         this.nodeAccess = graph.getNodeAccess();
         this.weighting = weighting;
-        this.encoder = weighting.getFlagEncoder();
         this.edgeIds = new GHIntArrayList();
     }
 
@@ -121,7 +112,7 @@ public class Path {
     /**
      * @return the first node of this Path.
      */
-    private int getFromNode() {
+    int getFromNode() {
         if (fromNode < 0)
             throw new IllegalStateException("Call extract() before retrieving fromNode");
 
@@ -189,7 +180,7 @@ public class Path {
     }
 
     /**
-     * Extracts the Path from the shortest-path-tree determined by sptEntry.
+     * Extracts the Path from the shortest-path-tree and initializes path details and instructions.
      */
     public Path extract() {
         if (isFound())
@@ -212,6 +203,17 @@ public class Path {
         reverseOrder();
         extractSW.stop();
         return setFound(true);
+    }
+
+    /**
+     * TODO always call extract but avoid calling extract within RoutingAlgorithm
+     *
+     * @see RoutingAlgorithm#calcPath(int, int)
+     */
+    public PathExtract createPathExtract(EncodingManager encodingManager, boolean callExtract) {
+        if (callExtract)
+            extract();
+        return new PathExtract(this, encodingManager);
     }
 
     /**
@@ -253,7 +255,7 @@ public class Path {
      * @param visitor callback to handle every edge. The edge is decoupled from the iterator and can
      *                be stored.
      */
-    private void forEveryEdge(EdgeVisitor visitor) {
+    void forEveryEdge(EdgeVisitor visitor) {
         int tmpNode = getFromNode();
         int len = edgeIds.size();
         int prevEdgeId = EdgeIterator.NO_EDGE;
@@ -357,21 +359,6 @@ public class Path {
         return points;
     }
 
-    /**
-     * @return the list of instructions for this path.
-     */
-    public InstructionList calcInstructions(final Translation tr) {
-        final InstructionList ways = new InstructionList(edgeIds.size() / 4, tr);
-        if (edgeIds.isEmpty()) {
-            if (isFound()) {
-                ways.add(new FinishInstruction(nodeAccess, endNode));
-            }
-            return ways;
-        }
-        forEveryEdge(new InstructionsFromEdges(getFromNode(), graph, weighting, encoder, nodeAccess, tr, ways));
-        return ways;
-    }
-
     @Override
     public String toString() {
         return "distance:" + getDistance() + ", edges:" + edgeIds.size();
@@ -393,6 +380,7 @@ public class Path {
      */
     public interface EdgeVisitor {
         void next(EdgeIteratorState edge, int index, int prevEdgeId);
+
         void finish();
     }
 }

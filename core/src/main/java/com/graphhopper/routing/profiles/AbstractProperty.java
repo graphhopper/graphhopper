@@ -31,6 +31,8 @@ public abstract class AbstractProperty implements Property {
     }
 
     protected final void checkValue(int value) {
+        if (mask == 0)
+            throw new IllegalStateException("Property " + getName() + " not initialized");
         if (value > maxValue)
             throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
         if (value < 0)
@@ -44,9 +46,22 @@ public abstract class AbstractProperty implements Property {
         return name;
     }
 
-    @Override
+    /**
+     * There are multiple int values possible per edge. Here we specify the index into this array.
+     */
     public int getOffset() {
         assert mask != 0;
         return dataIndex;
+    }
+
+    @Override
+    public int hashCode() {
+        return mask ^ dataIndex;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        AbstractProperty other = (AbstractProperty) obj;
+        return other.mask == mask && other.bits == bits && other.dataIndex == dataIndex && other.name.equals(name);
     }
 }

@@ -6,6 +6,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.*;
 
@@ -15,10 +16,14 @@ import java.util.*;
  */
 public class EncodingManager2 extends EncodingManager {
 
+    /**
+     * for backward compatibility we have to specify an encoder name ("vehicle")
+     */
+    public static final String ENCODER_NAME = "weighting";
     private Map<String, Property> properties = new HashMap<>();
-
     private final PropertyParser parser;
     private final int extendedDataSize;
+    private final FlagEncoder mockEncoder;
 
     public EncodingManager2(PropertyParser parser, int extendedDataSize) {
         // we have to add a fake encoder that uses 0 bits for backward compatibility with EncodingManager
@@ -28,6 +33,8 @@ public class EncodingManager2 extends EncodingManager {
                 return shift;
             }
         });
+        this.mockEncoder = fetchEdgeEncoders().get(0);
+
         this.parser = parser;
         // Everything is int-based: the dataIndex, the Property hierarchy with the 'int'-value and the offset
         // TODO should we use a long or byte-based approach instead?
@@ -56,14 +63,6 @@ public class EncodingManager2 extends EncodingManager {
         return this;
     }
 
-    @Override
-    public long handleWayTags(ReaderWay way, long includeWay, long relationFlags) {
-    }
-
-    public EdgeProperties handleWay(ReaderWay way) {
-        // TODO store int array per edge -> different method call in OSMReader necessary
-        return parser.parse(way, edge, properties.values());
-    }
 
     // TODO parsing and filtering is highly related (e.g. for parsing we detect a tag and if the value is parsable and the same is necessary for filtering)
     // we should create a streamed approach instead:
@@ -96,6 +95,18 @@ public class EncodingManager2 extends EncodingManager {
         return 1;
     }
 
+    @Override
+    public long handleWayTags(ReaderWay way, long includeWay, long relationFlags) {
+        // for backward compatibility return flags=1111...
+        // applyWayTags does the property storage
+        return ~0L;
+    }
+
+    @Override
+    public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
+        parser.parse(way, edge, properties.values());
+    }
+
     /**
      * Size of arbitrary storage per edge and in bytes
      */
@@ -113,12 +124,12 @@ public class EncodingManager2 extends EncodingManager {
 
     @Override
     public boolean supports(String encoder) {
-        throw new IllegalStateException("not implemented");
+        return encoder.equals(ENCODER_NAME);
     }
 
     @Override
     public FlagEncoder getEncoder(String name) {
-        throw new IllegalStateException("not implemented");
+        return mockEncoder;
     }
 
     @Override
@@ -164,12 +175,12 @@ public class EncodingManager2 extends EncodingManager {
      */
     @Override
     public long reverseFlags(long flags) {
-        throw new IllegalStateException("not implemented");
+        return flags;
     }
 
     @Override
     public int hashCode() {
-        throw new IllegalStateException("not implemented");
+        return properties.hashCode();
     }
 
     @Override
@@ -200,7 +211,7 @@ public class EncodingManager2 extends EncodingManager {
 
     @Override
     public List<FlagEncoder> fetchEdgeEncoders() {
-        throw new IllegalStateException("not implemented");
+        return super.fetchEdgeEncoders();
     }
 
     @Override

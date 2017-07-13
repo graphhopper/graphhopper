@@ -10,15 +10,22 @@ public class DoubleProperty extends IntProperty {
 
     public DoubleProperty(String name, int bits, double defaultValue, double factor) {
         super(name, bits);
-        this.defaultValue = toInt(defaultValue);
         this.factor = factor;
+        this.defaultValue = toInt(defaultValue);
+    }
+
+    /**
+     * TODO This method is important to 'spread' a property when a way is splitted due to e.g. a virtual node
+     */
+    public boolean isLengthDependent() {
+        return false;
     }
 
     private int toInt(double val) {
         return (int) Math.round(val / factor);
     }
 
-    public int toStorageFormat(int flags, double val) {
+    public int toStorageFormatFromDouble(int flags, double val) {
         return super.toStorageFormat(flags, toInt(val));
     }
 

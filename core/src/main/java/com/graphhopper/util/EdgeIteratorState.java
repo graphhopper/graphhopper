@@ -17,10 +17,12 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.profiles.BitProperty;
 import com.graphhopper.routing.profiles.DoubleProperty;
 import com.graphhopper.routing.profiles.IntProperty;
 import com.graphhopper.routing.profiles.StringProperty;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
@@ -117,6 +119,14 @@ public interface EdgeIteratorState {
      */
     boolean getBool(int key, boolean _default);
 
+    IntsRef getData();
+
+    // TODO NOW use getData instead of all the followin setter&getter here e.g. would avoid going down to
+    // storage several times for several setter calls
+    boolean get(BitProperty property);
+
+    void set(BitProperty property, boolean value);
+
     int get(IntProperty property);
 
     void set(IntProperty property, int value);
@@ -128,9 +138,6 @@ public interface EdgeIteratorState {
     String get(StringProperty property);
 
     void set(StringProperty property, String value);
-
-    // TODO LATER
-    // int set&getBool(StringProperty property);
 
     String getName();
 

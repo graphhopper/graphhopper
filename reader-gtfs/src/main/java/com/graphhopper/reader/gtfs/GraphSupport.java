@@ -18,16 +18,14 @@
 
 package com.graphhopper.reader.gtfs;
 
+import com.graphhopper.routing.profiles.BitProperty;
 import com.graphhopper.routing.profiles.DoubleProperty;
 import com.graphhopper.routing.profiles.IntProperty;
 import com.graphhopper.routing.profiles.StringProperty;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
@@ -181,6 +179,31 @@ class GraphSupport {
                     }
 
                     @Override
+                    public IntsRef getData() {
+                        return edge.getData();
+                    }
+
+                    @Override
+                    public void set(BitProperty property, boolean value) {
+                        edge.set(property, value);
+                    }
+
+                    @Override
+                    public boolean get(BitProperty property) {
+                        return edge.get(property);
+                    }
+
+                    @Override
+                    public void set(IntProperty property, int value) {
+                        edge.set(property, value);
+                    }
+
+                    @Override
+                    public int get(IntProperty property) {
+                        return edge.get(property);
+                    }
+
+                    @Override
                     public double get(DoubleProperty property) {
                         return edge.get(property);
                     }
@@ -200,15 +223,6 @@ class GraphSupport {
                         return edge.get(property);
                     }
 
-                    @Override
-                    public void set(IntProperty property, int value) {
-                        edge.set(property, value);
-                    }
-
-                    @Override
-                    public int get(IntProperty property) {
-                        return edge.get(property);
-                    }
 
                     @Override
                     public String getName() {

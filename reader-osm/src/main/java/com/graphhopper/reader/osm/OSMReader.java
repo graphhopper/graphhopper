@@ -23,8 +23,6 @@ import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.osm.OSMTurnRelation.TurnCostTableEntry;
-import com.graphhopper.routing.profiles.EdgeProperties;
-import com.graphhopper.routing.profiles.EncodingManager2;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -349,16 +347,6 @@ public class OSMReader implements DataReader {
             }
         }
 
-        if (encodingManager instanceof EncodingManager2) {
-            // TODO use EdgeProperties for backward compatibility and avoid reimplementing everything for now
-            // TODO create just one EdgeProperties object
-            EncodingManager2 em = (EncodingManager2) encodingManager;
-            EdgeProperties edgeProperties = new EdgeProperties(em.getExtendedDataSize());
-            return;
-        }
-
-        // TODO use EdgeProperties to create a compatible addOSMWay
-        // backward compatibility:
         long wayFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
         if (wayFlags == 0)
             return;

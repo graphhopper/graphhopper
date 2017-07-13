@@ -109,7 +109,7 @@ public class EncodingManager2Test {
     @Test
     public void testWeighting() {
         EncodingManager2 encodingManager = createEncodingManager();
-        Weighting weighting = new FastestCarWeighting(encodingManager);
+        Weighting weighting = new FastestCarWeighting(encodingManager, "some_weighting");
         GraphHopperStorage g = new GraphBuilder(encodingManager).create();
         EdgeIteratorState edge = g.edge(0, 1, 10, true);
 
