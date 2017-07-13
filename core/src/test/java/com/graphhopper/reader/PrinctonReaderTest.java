@@ -19,7 +19,7 @@ package com.graphhopper.reader;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.EdgeExplorer;
@@ -35,7 +35,7 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class PrinctonReaderTest {
-    private EncodingManager encodingManager = new EncodingManager("car");
+    private EncodingManager08 encodingManager = new EncodingManager08("car");
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(encodingManager.getEncoder("car"), false, true);
 
     @Test

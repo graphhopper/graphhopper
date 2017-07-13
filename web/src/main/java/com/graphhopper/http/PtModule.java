@@ -9,7 +9,7 @@ import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
 import com.graphhopper.reader.gtfs.RealtimeFeed;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
@@ -49,7 +49,7 @@ public final class PtModule extends AbstractModule {
 
     @Provides
     @Singleton
-    GraphHopperStorage createGraphHopperStorage(CmdArgs args, GHDirectory directory, EncodingManager encodingManager, PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage) {
+    GraphHopperStorage createGraphHopperStorage(CmdArgs args, GHDirectory directory, EncodingManager08 encodingManager, PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage) {
         return GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage,
                 args.getBool("gtfs.createwalknetwork", false),
                 args.has("gtfs.file") ? Arrays.asList(args.get("gtfs.file", "").split(",")) : Collections.emptyList(),
@@ -77,8 +77,8 @@ public final class PtModule extends AbstractModule {
 
     @Provides
     @Singleton
-    EncodingManager createEncodingManager(PtFlagEncoder ptFlagEncoder) {
-        return new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
+    EncodingManager08 createEncodingManager(PtFlagEncoder ptFlagEncoder) {
+        return new EncodingManager08(Arrays.asList(ptFlagEncoder), 8);
     }
 
     @Provides

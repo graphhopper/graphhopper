@@ -22,7 +22,7 @@ import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
@@ -65,7 +65,7 @@ public class ChangeGraphHelper {
      *
      * @return number of successfully applied edge changes
      */
-    public long applyChanges(EncodingManager em, Collection<JsonFeature> features) {
+    public long applyChanges(EncodingManager08 em, Collection<JsonFeature> features) {
         long updates = 0;
         for (JsonFeature jsonFeature : features) {
             if (!jsonFeature.hasProperties())

@@ -22,7 +22,7 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.QueryGraph;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -202,7 +202,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         return new TranslationMap().doImport();
     }
 
-    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage, boolean createWalkNetwork, Collection<String> gtfsFiles, Collection<String> osmFiles) {
+    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager08 encodingManager, PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage, boolean createWalkNetwork, Collection<String> gtfsFiles, Collection<String> osmFiles) {
         GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, gtfsStorage);
         if (graphHopperStorage.loadExisting()) {
             return graphHopperStorage;

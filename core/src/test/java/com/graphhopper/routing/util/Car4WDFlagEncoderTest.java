@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing.util;
 
-import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
@@ -32,7 +31,7 @@ import static org.junit.Assert.*;
  * @author zstadler
  */
 public class Car4WDFlagEncoderTest extends CarFlagEncoderTest {
-    private final EncodingManager em = new EncodingManager("car4wd,bike,foot");
+    private final EncodingManager08 em = new EncodingManager08("car4wd,bike,foot");
     private final Car4WDFlagEncoder encoder = (Car4WDFlagEncoder) em.getEncoder("car4wd");
 
     @Override

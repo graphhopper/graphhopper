@@ -19,7 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.PrinctonReader;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
@@ -133,7 +133,7 @@ public class RoutingAlgorithmIT {
         int noJvmWarming = N / 4;
 
         Random rand = new Random(0);
-        final EncodingManager eManager = new EncodingManager("car");
+        final EncodingManager08 eManager = new EncodingManager08("car");
         final GraphHopperStorage graph = new GraphBuilder(eManager).create();
 
         String bigFile = "10000EWD.txt.gz";

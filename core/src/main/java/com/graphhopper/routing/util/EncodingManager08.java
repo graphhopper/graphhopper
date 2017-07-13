@@ -39,7 +39,7 @@ import java.util.List;
  * @author Peter Karich
  * @author Nop
  */
-public class EncodingManager {
+public class EncodingManager08 {
     private static final String ERR = "Encoders are requesting %s bits, more than %s bits of %s flags. ";
     private static final String WAY_ERR = "Decrease the number of profiles or increase the flags to take long via graph.bytes_for_flags=8";
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
@@ -59,15 +59,15 @@ public class EncodingManager {
      *
      * @param flagEncodersStr comma delimited list of encoders. The order does not matter.
      */
-    public EncodingManager(String flagEncodersStr) {
+    public EncodingManager08(String flagEncodersStr) {
         this(flagEncodersStr, 4);
     }
 
-    public EncodingManager(String flagEncodersStr, int bytesForEdgeFlags) {
+    public EncodingManager08(String flagEncodersStr, int bytesForEdgeFlags) {
         this(FlagEncoderFactory.DEFAULT, flagEncodersStr, bytesForEdgeFlags);
     }
 
-    public EncodingManager(FlagEncoderFactory factory, String flagEncodersStr, int bytesForEdgeFlags) {
+    public EncodingManager08(FlagEncoderFactory factory, String flagEncodersStr, int bytesForEdgeFlags) {
         this(parseEncoderString(factory, flagEncodersStr), bytesForEdgeFlags);
     }
 
@@ -77,7 +77,7 @@ public class EncodingManager {
      *
      * @param flagEncoders comma delimited list of encoders. The order does not matter.
      */
-    public EncodingManager(FlagEncoder... flagEncoders) {
+    public EncodingManager08(FlagEncoder... flagEncoders) {
         this(Arrays.asList(flagEncoders));
     }
 
@@ -87,11 +87,11 @@ public class EncodingManager {
      *
      * @param flagEncoders comma delimited list of encoders. The order does not matter.
      */
-    public EncodingManager(List<? extends FlagEncoder> flagEncoders) {
+    public EncodingManager08(List<? extends FlagEncoder> flagEncoders) {
         this(flagEncoders, 4);
     }
 
-    public EncodingManager(List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags) {
+    public EncodingManager08(List<? extends FlagEncoder> flagEncoders, int bytesForEdgeFlags) {
         if (bytesForEdgeFlags != 4 && bytesForEdgeFlags != 8)
             throw new IllegalStateException("For 'edge flags' currently only 4 or 8 bytes supported");
 
@@ -106,10 +106,10 @@ public class EncodingManager {
 
     static List<FlagEncoder> parseEncoderString(FlagEncoderFactory factory, String encoderList) {
         if (encoderList.contains(":"))
-            throw new IllegalArgumentException("EncodingManager does no longer use reflection instantiate encoders directly.");
+            throw new IllegalArgumentException("EncodingManager08 does no longer use reflection instantiate encoders directly.");
 
         if (!encoderList.equals(encoderList.toLowerCase()))
-            throw new IllegalArgumentException("Since 0.7 EncodingManager does no longer accept upper case profiles: " + encoderList);
+            throw new IllegalArgumentException("Since 0.7 EncodingManager08 does no longer accept upper case profiles: " + encoderList);
 
         String[] entries = encoderList.split(",");
         List<FlagEncoder> resultEncoders = new ArrayList<FlagEncoder>();
@@ -144,14 +144,14 @@ public class EncodingManager {
     }
 
     /**
-     * Create the EncodingManager from the provided GraphHopper location. Throws an
-     * IllegalStateException if it fails. Used if no EncodingManager specified on load.
+     * Create the EncodingManager08 from the provided GraphHopper location. Throws an
+     * IllegalStateException if it fails. Used if no EncodingManager08 specified on load.
      */
-    public static EncodingManager create(FlagEncoderFactory factory, String ghLoc) {
+    public static EncodingManager08 create(FlagEncoderFactory factory, String ghLoc) {
         Directory dir = new RAMDirectory(ghLoc, true);
         StorableProperties properties = new StorableProperties(dir);
         if (!properties.loadExisting())
-            throw new IllegalStateException("Cannot load properties to fetch EncodingManager configuration at: "
+            throw new IllegalStateException("Cannot load properties to fetch EncodingManager08 configuration at: "
                     + dir.getLocation());
 
         // check encoding for compatibility
@@ -159,13 +159,13 @@ public class EncodingManager {
         String acceptStr = properties.get("graph.flag_encoders");
 
         if (acceptStr.isEmpty())
-            throw new IllegalStateException("EncodingManager was not configured. And no one was found in the graph: "
+            throw new IllegalStateException("EncodingManager08 was not configured. And no one was found in the graph: "
                     + dir.getLocation());
 
         int bytesForFlags = 4;
         if ("8".equals(properties.get("graph.bytes_for_flags")))
             bytesForFlags = 8;
-        return new EncodingManager(factory, acceptStr, bytesForFlags);
+        return new EncodingManager08(factory, acceptStr, bytesForFlags);
     }
 
     public int getBytesForFlags() {
@@ -333,7 +333,7 @@ public class EncodingManager {
         if (getClass() != obj.getClass())
             return false;
 
-        final EncodingManager other = (EncodingManager) obj;
+        final EncodingManager08 other = (EncodingManager08) obj;
         if (this.edgeEncoders != other.edgeEncoders
                 && (this.edgeEncoders == null || !this.edgeEncoders.equals(other.edgeEncoders))) {
             return false;
@@ -353,12 +353,12 @@ public class EncodingManager {
         return flags;
     }
 
-    public EncodingManager setEnableInstructions(boolean enableInstructions) {
+    public EncodingManager08 setEnableInstructions(boolean enableInstructions) {
         this.enableInstructions = enableInstructions;
         return this;
     }
 
-    public EncodingManager setPreferredLanguage(String preferredLanguage) {
+    public EncodingManager08 setPreferredLanguage(String preferredLanguage) {
         if (preferredLanguage == null)
             throw new IllegalArgumentException("preferred language cannot be null");
 

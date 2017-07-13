@@ -41,7 +41,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public abstract class AbstractRoutingAlgorithmTester {
-    protected static final EncodingManager encodingManager = new EncodingManager("car,foot");
+    protected static final EncodingManager08 encodingManager = new EncodingManager08("car,foot");
     private static final DistanceCalc distCalc = new DistanceCalcEarth();
     protected FlagEncoder carEncoder;
     protected FlagEncoder footEncoder;
@@ -155,7 +155,7 @@ public abstract class AbstractRoutingAlgorithmTester {
         return ghStorage.getGraph(Graph.class, weighting);
     }
 
-    protected GraphHopperStorage createGHStorage(EncodingManager em, List<? extends Weighting> weightings, boolean is3D) {
+    protected GraphHopperStorage createGHStorage(EncodingManager08 em, List<? extends Weighting> weightings, boolean is3D) {
         return new GraphBuilder(em).set3D(is3D).create();
     }
 
@@ -694,7 +694,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void testTwoWeightsPerEdge() {
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
-        EncodingManager em = new EncodingManager(encoder);
+        EncodingManager08 em = new EncodingManager08(encoder);
         AlgorithmOptions opts = AlgorithmOptions.start().
                 weighting(new FastestWeighting(encoder)).build();
         GraphHopperStorage graph = createGHStorage(em, Arrays.asList(opts.getWeighting()), true);

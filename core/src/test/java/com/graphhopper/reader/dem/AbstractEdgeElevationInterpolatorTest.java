@@ -26,7 +26,7 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -52,7 +52,7 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
     public void setUp() {
         dataFlagEncoder = new DataFlagEncoder();
         graph = new GraphHopperStorage(new RAMDirectory(),
-                new EncodingManager(Arrays.asList(dataFlagEncoder, new FootFlagEncoder()),
+                new EncodingManager08(Arrays.asList(dataFlagEncoder, new FootFlagEncoder()),
                         8),
                 true, new GraphExtension.NoOpExtension()).create(100);
 

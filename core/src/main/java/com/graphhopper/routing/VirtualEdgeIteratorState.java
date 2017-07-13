@@ -17,10 +17,10 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.profiles.BitProperty;
-import com.graphhopper.routing.profiles.DoubleProperty;
-import com.graphhopper.routing.profiles.IntProperty;
-import com.graphhopper.routing.profiles.StringProperty;
+import com.graphhopper.routing.profiles.BitEncodedValue;
+import com.graphhopper.routing.profiles.DoubleEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
@@ -139,45 +139,45 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public void set(BitProperty property, boolean value) {
+    public void set(BitEncodedValue property, boolean value) {
         int offset = property.getOffset() + edgeData.offset;
         edgeData.ints[offset] = property.toStorageFormatFromBool(edgeData.ints[offset], value);
     }
 
     @Override
-    public boolean get(BitProperty property) {
+    public boolean get(BitEncodedValue property) {
         return property.fromStorageFormatToBool(edgeData.ints[property.getOffset() + edgeData.offset]);
     }
 
     @Override
-    public int get(IntProperty property) {
+    public int get(IntEncodedValue property) {
         return property.fromStorageFormatToInt(edgeData.ints[property.getOffset() + edgeData.offset]);
     }
 
     @Override
-    public void set(IntProperty property, int value) {
+    public void set(IntEncodedValue property, int value) {
         int offset = property.getOffset() + edgeData.offset;
         edgeData.ints[offset] = property.toStorageFormat(edgeData.ints[offset], value);
     }
 
     @Override
-    public String get(StringProperty property) {
+    public String get(StringEncodedValue property) {
         return property.fromStorageFormatToString(edgeData.ints[property.getOffset() + edgeData.offset]);
     }
 
     @Override
-    public void set(StringProperty property, String value) {
+    public void set(StringEncodedValue property, String value) {
         int offset = property.getOffset() + edgeData.offset;
         edgeData.ints[offset] = property.toStorageFormat(edgeData.ints[offset], value);
     }
 
     @Override
-    public double get(DoubleProperty property) {
+    public double get(DoubleEncodedValue property) {
         return property.fromStorageFormatToDouble(edgeData.ints[property.getOffset() + edgeData.offset]);
     }
 
     @Override
-    public void set(DoubleProperty property, double value) {
+    public void set(DoubleEncodedValue property, double value) {
         int offset = property.getOffset() + edgeData.offset;
         edgeData.ints[offset] = property.toStorageFormatFromDouble(edgeData.ints[offset], value);
     }

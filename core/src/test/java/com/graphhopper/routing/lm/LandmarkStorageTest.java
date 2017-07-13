@@ -19,7 +19,7 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
@@ -48,7 +48,7 @@ public class LandmarkStorageTest {
     public void setUp() {
         encoder = new CarFlagEncoder();
         ghStorage = new GraphHopperStorage(new RAMDirectory(),
-                new EncodingManager(encoder), false, new GraphExtension.NoOpExtension());
+                new EncodingManager08(encoder), false, new GraphExtension.NoOpExtension());
         ghStorage.create(1000);
     }
 

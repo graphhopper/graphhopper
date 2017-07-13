@@ -19,7 +19,7 @@ package com.graphhopper.storage.index;
 
 import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHIntHashSet;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
@@ -54,7 +54,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
     }
 
     @Override
-    GraphHopperStorage createGHStorage(Directory dir, EncodingManager encodingManager, boolean is3D) {
+    GraphHopperStorage createGHStorage(Directory dir, EncodingManager08 encodingManager, boolean is3D) {
         return new GraphHopperStorage(Arrays.asList(new FastestWeighting(encodingManager.getEncoder("car"))), dir, encodingManager, is3D, new GraphExtension.NoOpExtension()).
                 create(100);
     }

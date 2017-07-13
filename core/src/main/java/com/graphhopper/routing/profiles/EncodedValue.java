@@ -9,10 +9,10 @@ import com.graphhopper.reader.ReaderWay;
  * <p>
  * TODO how to handle properties like 'distance' that needs to be splitted for VirtualEdgeIteratorStates in QueryGraph?
  */
-public interface Property {
+public interface EncodedValue {
 
     /**
-     * This method sets the dataIndex and shift of this Property object and potentially changes the submitted init
+     * This method sets the dataIndex and shift of this EncodedValue object and potentially changes the submitted init
      * object afterwards via calling next
      *
      * @see InitializerConfig#next(int)

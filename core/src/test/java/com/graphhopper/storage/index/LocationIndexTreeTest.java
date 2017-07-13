@@ -39,7 +39,7 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class LocationIndexTreeTest extends AbstractLocationIndexTester {
-    protected final EncodingManager encodingManager = new EncodingManager("car");
+    protected final EncodingManager08 encodingManager = new EncodingManager08("car");
 
     @Override
     public LocationIndexTree createIndex(Graph g, int resolution) {
@@ -65,7 +65,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
     // |1----3-\|
     // |____/   4
     // 2-------/
-    Graph createTestGraph(EncodingManager em) {
+    Graph createTestGraph(EncodingManager08 em) {
         Graph graph = createGHStorage(new RAMDirectory(), em, false);
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 0.5, -0.5);
@@ -220,7 +220,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
 
     @Test
     public void testMoreReal() {
-        Graph graph = createGHStorage(new EncodingManager("car"));
+        Graph graph = createGHStorage(new EncodingManager08("car"));
         NodeAccess na = graph.getNodeAccess();
         na.setNode(1, 51.2492152, 9.4317166);
         na.setNode(0, 52, 9);
@@ -433,7 +433,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
 
-        EncodingManager tmpEM = new EncodingManager(carEncoder, bikeEncoder);
+        EncodingManager08 tmpEM = new EncodingManager08(carEncoder, bikeEncoder);
         Graph graph = createGHStorage(new RAMDirectory(), tmpEM, false);
         NodeAccess na = graph.getNodeAccess();
 

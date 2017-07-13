@@ -5,9 +5,9 @@ import com.graphhopper.reader.ReaderWay;
 /**
  * This class provides easy access to just one bit.
  */
-public class BitProperty extends AbstractProperty {
+public class BitEncodedValue extends AbstractEncodedValue {
 
-    public BitProperty(String name) {
+    public BitEncodedValue(String name) {
         super(name, 1);
     }
 

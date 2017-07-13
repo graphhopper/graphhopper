@@ -3,7 +3,7 @@ package com.graphhopper.routing.profiles;
 /**
  * Base class for a property with name and init method
  */
-public abstract class AbstractProperty implements Property {
+public abstract class AbstractEncodedValue implements EncodedValue {
     protected final String name;
     protected final int bits;
     protected int shift;
@@ -12,10 +12,10 @@ public abstract class AbstractProperty implements Property {
     protected int mask;
     private int maxValue;
 
-    protected AbstractProperty(String name, int bits) {
+    protected AbstractEncodedValue(String name, int bits) {
         this.name = name;
         if (!name.toLowerCase().equals(name))
-            throw new IllegalArgumentException("Property name must be lower case but was " + name);
+            throw new IllegalArgumentException("EncodedValue name must be lower case but was " + name);
 
         this.bits = bits;
         if (bits <= 0)
@@ -23,7 +23,7 @@ public abstract class AbstractProperty implements Property {
     }
 
     @Override
-    public void init(Property.InitializerConfig init) {
+    public void init(EncodedValue.InitializerConfig init) {
         this.shift = init.shift;
         this.dataIndex = init.dataIndex;
         this.mask = init.next(bits);
@@ -32,7 +32,7 @@ public abstract class AbstractProperty implements Property {
 
     protected final void checkValue(int value) {
         if (mask == 0)
-            throw new IllegalStateException("Property " + getName() + " not initialized");
+            throw new IllegalStateException("EncodedValue " + getName() + " not initialized");
         if (value > maxValue)
             throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
         if (value < 0)
@@ -61,7 +61,7 @@ public abstract class AbstractProperty implements Property {
 
     @Override
     public boolean equals(Object obj) {
-        AbstractProperty other = (AbstractProperty) obj;
+        AbstractEncodedValue other = (AbstractEncodedValue) obj;
         return other.mask == mask && other.bits == bits && other.dataIndex == dataIndex && other.name.equals(name);
     }
 }

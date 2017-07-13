@@ -200,7 +200,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     @Test
     public void testGetWeightIfAdvancedEncoder() {
         FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
-        EncodingManager em = new EncodingManager(customEncoder);
+        EncodingManager08 em = new EncodingManager08(customEncoder);
         FastestWeighting weighting = new FastestWeighting(customEncoder);
         GraphHopperStorage ghStorage = new GraphBuilder(em).setCHGraph(weighting).create();
         ghStorage.edge(0, 2);
@@ -343,7 +343,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     public void testShortcutCreationAndAccessForManyVehicles() {
         FlagEncoder tmpCar = new CarFlagEncoder();
         FlagEncoder tmpBike = new Bike2WeightFlagEncoder();
-        EncodingManager em = new EncodingManager(tmpCar, tmpBike);
+        EncodingManager08 em = new EncodingManager08(tmpCar, tmpBike);
         List<Weighting> chWeightings = new ArrayList<Weighting>();
         chWeightings.add(new FastestWeighting(tmpCar));
         chWeightings.add(new FastestWeighting(tmpBike));

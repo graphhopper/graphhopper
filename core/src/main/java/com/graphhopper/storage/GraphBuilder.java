@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.Arrays;
@@ -29,7 +29,7 @@ import java.util.Arrays;
  * @author Peter Karich
  */
 public class GraphBuilder {
-    private final EncodingManager encodingManager;
+    private final EncodingManager08 encodingManager;
     private String location;
     private boolean mmap;
     private boolean store;
@@ -37,7 +37,7 @@ public class GraphBuilder {
     private long byteCapacity = 100;
     private Weighting singleCHWeighting;
 
-    public GraphBuilder(EncodingManager encodingManager) {
+    public GraphBuilder(EncodingManager08 encodingManager) {
         this.encodingManager = encodingManager;
     }
 

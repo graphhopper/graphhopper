@@ -25,26 +25,26 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Peter Karich
  */
-public class EncodedDoubleValueTest {
+public class EncodedDoubleValue08Test {
     @Test
     public void testSetDoubleValue() {
-        EncodedDoubleValue instance = new EncodedDoubleValue("test", 6, 10, 0.01, 5, 10);
+        EncodedDoubleValue08 instance = new EncodedDoubleValue08("test", 6, 10, 0.01, 5, 10);
         assertEquals(10.12, instance.getDoubleValue(instance.setDoubleValue(0, 10.12)), 1e-4);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalFactorMaxValueCombination() {
-        new EncodedDoubleValue("illegalcombination", 6, 2, 2, 0, 3);
+        new EncodedDoubleValue08("illegalcombination", 6, 2, 2, 0, 3);
     }
 
     @Test
     public void testMaxValue() {
-        EncodedDoubleValue instance1 = new EncodedDoubleValue("test1", 0, 8, 0.5, 60, 100);
+        EncodedDoubleValue08 instance1 = new EncodedDoubleValue08("test1", 0, 8, 0.5, 60, 100);
         long flags = instance1.setDoubleValue(0, instance1.getMaxValue());
         assertEquals(100, instance1.getDoubleValue(flags), 1e-1);
 
         CarFlagEncoder carEncoder = new CarFlagEncoder(10, 0.5, 0);
-        new EncodingManager(carEncoder);
+        new EncodingManager08(carEncoder);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "70 mph");
@@ -57,7 +57,7 @@ public class EncodedDoubleValueTest {
 
     @Test
     public void testUnsignedRightShift_issue417() {
-        EncodedDoubleValue speedEncoder = new EncodedDoubleValue("Speed", 56, 8, 1, 30, 255);
+        EncodedDoubleValue08 speedEncoder = new EncodedDoubleValue08("Speed", 56, 8, 1, 30, 255);
         Long flags = -72057594037927936L;
         assertEquals(255, speedEncoder.getDoubleValue(flags), 0.01);
     }

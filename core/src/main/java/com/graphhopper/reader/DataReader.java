@@ -18,7 +18,6 @@
 package com.graphhopper.reader;
 
 import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.routing.util.EncodingManager;
 
 import java.io.File;
 import java.io.IOException;

@@ -22,7 +22,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.NameSimilarityEdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -46,13 +46,13 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     protected final GHRequest ghRequest;
     protected final GHResponse ghResponse;
     protected final PathWrapper altResponse = new PathWrapper();
-    final EncodingManager encodingManager;
+    final EncodingManager08 encodingManager;
     private final LocationIndex locationIndex;
     // result from route
     protected List<Path> pathList;
 
     public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp,
-                              EncodingManager encodingManager, LocationIndex locationIndex) {
+                              EncodingManager08 encodingManager, LocationIndex locationIndex) {
         this.encodingManager = encodingManager;
         this.locationIndex = locationIndex;
         this.ghRequest = ghRequest;

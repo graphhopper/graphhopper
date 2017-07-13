@@ -6,12 +6,12 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertEquals;
 
-public class StringPropertyTest {
+public class StringEncodedValueTest {
 
     @Test
     public void testInit() {
-        StringProperty prop = new StringProperty("highway", Arrays.asList("primary", "secondary"), "secondary");
-        Property.InitializerConfig init = new Property.InitializerConfig();
+        StringEncodedValue prop = new StringEncodedValue("highway", Arrays.asList("primary", "secondary"), "secondary");
+        EncodedValue.InitializerConfig init = new EncodedValue.InitializerConfig();
         prop.init(init);
 
         assertEquals(2, prop.bits);

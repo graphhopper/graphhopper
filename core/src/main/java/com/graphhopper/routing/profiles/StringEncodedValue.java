@@ -9,10 +9,10 @@ import java.util.List;
 /**
  * This property class holds a string array and stores just the index.
  */
-public class StringProperty extends IntProperty {
+public class StringEncodedValue extends IntEncodedValue {
     private final String[] map;
 
-    public StringProperty(String name, List<String> values, String defaultValue) {
+    public StringEncodedValue(String name, List<String> values, String defaultValue) {
         super(name, (int) Long.highestOneBit(values.size()));
 
         // we want to use binarySearch so we need to sort the list

@@ -35,13 +35,13 @@ import java.util.Set;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
- * EncodingManager to be usable. If you want the full long to be stored you need to enable this in
+ * EncodingManager08 to be usable. If you want the full long to be stored you need to enable this in
  * the GraphHopperStorage.
  * <p>
  *
  * @author Peter Karich
  * @author Nop
- * @see EncodingManager
+ * @see EncodingManager08
  */
 public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncoder {
     protected final static int K_FORWARD = 0, K_BACKWARD = 1;
@@ -62,7 +62,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected long backwardBit;
     protected long directionBitMask;
     protected long roundaboutBit;
-    protected EncodedDoubleValue speedEncoder;
+    protected EncodedDoubleValue08 speedEncoder;
     // bit to signal that way is accepted
     protected long acceptBit;
     protected long ferryBit;
@@ -77,7 +77,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     private long nodeBitMask;
     private long wayBitMask;
     private long relBitMask;
-    private EncodedValue turnCostEncoder;
+    private EncodedValue08 turnCostEncoder;
     private long turnRestrictionBit;
     private boolean blockByDefault = true;
     private boolean blockFords = true;
@@ -539,7 +539,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         }
 
         int turnBits = Helper.countBitValue(maxTurnCosts);
-        turnCostEncoder = new EncodedValue("TurnCost", shift, turnBits, 1, 0, maxTurnCosts) {
+        turnCostEncoder = new EncodedValue08("TurnCost", shift, turnBits, 1, 0, maxTurnCosts) {
             // override to avoid expensive Math.round
             @Override
             public final long getValue(long flags) {

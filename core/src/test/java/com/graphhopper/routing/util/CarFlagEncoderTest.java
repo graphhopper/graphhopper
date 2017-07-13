@@ -31,7 +31,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class CarFlagEncoderTest {
-    private final EncodingManager em = new EncodingManager("car,bike,foot");
+    private final EncodingManager08 em = new EncodingManager08("car,bike,foot");
     private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("car");
 
     @Test
@@ -498,7 +498,7 @@ public class CarFlagEncoderTest {
     @Test
     public void testTurnFlagEncoding_noCosts() {
         FlagEncoder tmpEnc = new CarFlagEncoder(8, 5, 0);
-        EncodingManager em = new EncodingManager(tmpEnc);
+        EncodingManager08 em = new EncodingManager08(tmpEnc);
 
         long flags_r0 = tmpEnc.getTurnFlags(true, 0);
         long flags_0 = tmpEnc.getTurnFlags(false, 0);
@@ -522,7 +522,7 @@ public class CarFlagEncoderTest {
     @Test
     public void testTurnFlagEncoding_withCosts() {
         FlagEncoder tmpEncoder = new CarFlagEncoder(8, 5, 127);
-        EncodingManager em = new EncodingManager(tmpEncoder);
+        EncodingManager08 em = new EncodingManager08(tmpEncoder);
 
         long flags_r0 = tmpEncoder.getTurnFlags(true, 0);
         long flags_0 = tmpEncoder.getTurnFlags(false, 0);
@@ -551,7 +551,7 @@ public class CarFlagEncoderTest {
     @Test
     public void testMaxValue() {
         CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
-        EncodingManager em = new EncodingManager(instance);
+        EncodingManager08 em = new EncodingManager08(instance);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "60 mph");
@@ -574,9 +574,9 @@ public class CarFlagEncoderTest {
     @Test
     public void testRegisterOnlyOnceAllowed() {
         CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
-        EncodingManager tmpEM = new EncodingManager(instance);
+        EncodingManager08 tmpEM = new EncodingManager08(instance);
         try {
-            tmpEM = new EncodingManager(instance);
+            tmpEM = new EncodingManager08(instance);
             assertTrue(false);
         } catch (IllegalStateException ex) {
         }

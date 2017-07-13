@@ -3,11 +3,11 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.bwdcompat.AnnotationAccessor;
 import com.graphhopper.routing.bwdcompat.BoolAccessor;
 import com.graphhopper.routing.bwdcompat.SpeedAccessor;
-import com.graphhopper.routing.profiles.BitProperty;
-import com.graphhopper.routing.profiles.DoubleProperty;
-import com.graphhopper.routing.profiles.EncodingManager2;
+import com.graphhopper.routing.profiles.BitEncodedValue;
+import com.graphhopper.routing.profiles.DoubleEncodedValue;
+import com.graphhopper.routing.profiles.EncodingManager;
 import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.*;
 
@@ -16,7 +16,7 @@ public class PathExtract {
     private SpeedAccessor speedAccessor;
     private BoolAccessor roundaboutAccess;
 
-    PathExtract(Path path, EncodingManager encodingManager) {
+    PathExtract(Path path, EncodingManager08 encodingManager) {
         this.path = path;
 
         try {
@@ -43,8 +43,8 @@ public class PathExtract {
                 }
             };
         } catch (Exception ex) {
-            EncodingManager2 em2 = (EncodingManager2) encodingManager;
-            final DoubleProperty maxspeed = em2.getProperty("maxspeed", DoubleProperty.class);
+            EncodingManager em2 = (EncodingManager) encodingManager;
+            final DoubleEncodedValue maxspeed = em2.getProperty("maxspeed", DoubleEncodedValue.class);
             speedAccessor = new SpeedAccessor() {
 
                 @Override
@@ -52,7 +52,7 @@ public class PathExtract {
                     return edge.get(maxspeed);
                 }
             };
-            final BitProperty roundabout = em2.getProperty("roundabout", BitProperty.class);
+            final BitEncodedValue roundabout = em2.getProperty("roundabout", BitEncodedValue.class);
             roundaboutAccess = new BoolAccessor() {
                 @Override
                 public boolean get(EdgeIteratorState edge) {
@@ -63,7 +63,7 @@ public class PathExtract {
     }
 
     AnnotationAccessor createAnnotationAccessor(final Translation tr) {
-        // TODO ugly hack to support instructions for EncodingManager2 where no FlagEncoders exist
+        // TODO ugly hack to support instructions for EncodingManager where no FlagEncoders exist
         try {
             final FlagEncoder encoder = path.weighting.getFlagEncoder();
             return new AnnotationAccessor() {

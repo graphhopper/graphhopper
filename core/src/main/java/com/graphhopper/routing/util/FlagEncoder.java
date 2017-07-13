@@ -135,7 +135,7 @@ public interface FlagEncoder extends TurnCostEncoder {
     InstructionAnnotation getAnnotation(long flags, Translation tr);
 
     /**
-     * @return true if already registered in an EncodingManager
+     * @return true if already registered in an EncodingManager08
      */
     boolean isRegistered();
 }

@@ -5,10 +5,10 @@ import com.graphhopper.reader.ReaderWay;
 /**
  * This stores an int and converts to a double via a fixed factor.
  */
-public class DoubleProperty extends IntProperty {
+public class DoubleEncodedValue extends IntEncodedValue {
     private final double factor;
 
-    public DoubleProperty(String name, int bits, double defaultValue, double factor) {
+    public DoubleEncodedValue(String name, int bits, double defaultValue, double factor) {
         super(name, bits);
         this.factor = factor;
         this.defaultValue = toInt(defaultValue);

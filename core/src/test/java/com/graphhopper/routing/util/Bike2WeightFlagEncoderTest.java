@@ -28,7 +28,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
-    private final EncodingManager em = new EncodingManager("bike,bike2");
+    private final EncodingManager08 em = new EncodingManager08("bike,bike2");
 
     @Override
     protected BikeCommonFlagEncoder createBikeEncoder() {

@@ -32,7 +32,7 @@ public abstract class AbstractWeighting implements Weighting {
     protected AbstractWeighting(FlagEncoder encoder) {
         this.flagEncoder = encoder;
         if (!flagEncoder.isRegistered())
-            throw new IllegalStateException("Make sure you add the FlagEncoder " + flagEncoder + " to an EncodingManager before using it elsewhere");
+            throw new IllegalStateException("Make sure you add the FlagEncoder " + flagEncoder + " to an EncodingManager08 before using it elsewhere");
         if (!isValidName(getName()))
             throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
     }

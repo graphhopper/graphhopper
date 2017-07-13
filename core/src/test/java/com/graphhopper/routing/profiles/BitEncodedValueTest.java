@@ -6,15 +6,15 @@ import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertFalse;
 
 
-public class BitPropertyTest {
+public class BitEncodedValueTest {
 
     @Test
     public void testBit() {
-        Property.InitializerConfig config = new Property.InitializerConfig();
-        IntProperty intProp = new IntProperty("somevalue", 5);
+        EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
+        IntEncodedValue intProp = new IntEncodedValue("somevalue", 5);
         intProp.init(config);
 
-        BitProperty bool = new BitProperty("access");
+        BitEncodedValue bool = new BitEncodedValue("access");
         bool.init(config);
         assertFalse(bool.fromStorageFormatToBool(bool.toStorageFormatFromBool(0, false)));
         assertTrue(bool.fromStorageFormatToBool(bool.toStorageFormatFromBool(0, true)));

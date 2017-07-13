@@ -30,7 +30,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 
 import static com.graphhopper.storage.index.QueryResult.Position.*;
@@ -40,14 +39,14 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class QueryGraphTest {
-    private EncodingManager encodingManager;
+    private EncodingManager08 encodingManager;
     private FlagEncoder carEncoder;
     private GraphHopperStorage g;
 
     @Before
     public void setUp() {
         carEncoder = new CarFlagEncoder();
-        encodingManager = new EncodingManager(carEncoder);
+        encodingManager = new EncodingManager08(carEncoder);
         g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension()).create(100);
     }
 
@@ -492,7 +491,7 @@ public class QueryGraphTest {
         FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
 
         GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(),
-                new EncodingManager(encoder), false, turnExt).
+                new EncodingManager08(encoder), false, turnExt).
                 create(100);
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
         na.setNode(0, .00, .00);

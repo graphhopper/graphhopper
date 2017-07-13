@@ -8,26 +8,26 @@ import java.util.Collection;
 public class PropertyParserOSM implements PropertyParser {
 
     @Override
-    public void parse(ReaderWay way, EdgeIteratorState edgeState, Collection<Property> properties) {
-        // TODO Should we better decouple OSM from Property via a separate class like HighwayProperty that uses a StringProperty?
-        // especially ugly is that the order is important as e.g. DoubleProperty extends IntProperty
+    public void parse(ReaderWay way, EdgeIteratorState edgeState, Collection<EncodedValue> properties) {
+        // TODO Should we better decouple OSM from EncodedValue via a separate class like HighwayProperty that uses a StringEncodedValue?
+        // especially ugly is that the order is important as e.g. DoubleEncodedValue extends IntEncodedValue
         // TODO how can we avoid parsing for all properties under certain circumstances like highway=rail -> build a pipe or a filtering system somehow?
-        for (Property property : properties) {
+        for (EncodedValue encodedValue : properties) {
             // TODO how can we avoid the if-instanceof stuff?
-            Object value = property.parse(way);
+            Object value = encodedValue.parse(way);
             if (value == null)
                 continue;
 
-            if (property instanceof StringProperty) {
-                edgeState.set((StringProperty) property, (String) value);
-            } else if (property instanceof DoubleProperty) {
-                edgeState.set((DoubleProperty) property, ((Number) value).doubleValue());
-            } else if (property instanceof IntProperty) {
-                edgeState.set((IntProperty) property, ((Number) value).intValue());
-            } else if (property instanceof BitProperty) {
-                edgeState.set((BitProperty) property, (Boolean) value);
+            if (encodedValue instanceof StringEncodedValue) {
+                edgeState.set((StringEncodedValue) encodedValue, (String) value);
+            } else if (encodedValue instanceof DoubleEncodedValue) {
+                edgeState.set((DoubleEncodedValue) encodedValue, ((Number) value).doubleValue());
+            } else if (encodedValue instanceof IntEncodedValue) {
+                edgeState.set((IntEncodedValue) encodedValue, ((Number) value).intValue());
+            } else if (encodedValue instanceof BitEncodedValue) {
+                edgeState.set((BitEncodedValue) encodedValue, (Boolean) value);
             } else {
-                throw new IllegalArgumentException("property " + property.getClass() + " not supported: " + property);
+                throw new IllegalArgumentException("encodedValue " + encodedValue.getClass() + " not supported: " + encodedValue);
             }
         }
     }

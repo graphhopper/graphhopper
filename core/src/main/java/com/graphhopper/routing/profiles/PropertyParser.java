@@ -7,5 +7,5 @@ import java.util.Collection;
 
 public interface PropertyParser {
 
-    void parse(ReaderWay way, EdgeIteratorState edge, Collection<Property> properties);
+    void parse(ReaderWay way, EdgeIteratorState edge, Collection<EncodedValue> properties);
 }

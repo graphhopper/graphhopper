@@ -21,10 +21,9 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
-import com.graphhopper.routing.profiles.BitProperty;
-import com.graphhopper.routing.profiles.DoubleProperty;
-import com.graphhopper.routing.profiles.IntProperty;
-import com.graphhopper.routing.profiles.StringProperty;
+import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BitEncodedValue;
+import com.graphhopper.routing.profiles.DoubleEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -443,42 +442,42 @@ public class GHUtility {
         }
 
         @Override
-        public boolean get(BitProperty property) {
+        public boolean get(BitEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public void set(BitProperty property, boolean value) {
+        public void set(BitEncodedValue property, boolean value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public int get(IntProperty property) {
+        public int get(IntEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public void set(IntProperty property, int value) {
+        public void set(IntEncodedValue property, int value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public String get(StringProperty property) {
+        public String get(StringEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public void set(StringProperty property, String value) {
+        public void set(StringEncodedValue property, String value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public double get(DoubleProperty property) {
+        public double get(DoubleEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public void set(DoubleProperty property, double value) {
+        public void set(DoubleEncodedValue property, double value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

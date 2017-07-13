@@ -32,7 +32,7 @@ import static org.junit.Assert.assertTrue;
 public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     @Override
     protected BikeCommonFlagEncoder createBikeEncoder() {
-        return (BikeCommonFlagEncoder) new EncodingManager("bike,racingbike").getEncoder("racingbike");
+        return (BikeCommonFlagEncoder) new EncodingManager08("bike,racingbike").getEncoder("racingbike");
     }
 
     @Test

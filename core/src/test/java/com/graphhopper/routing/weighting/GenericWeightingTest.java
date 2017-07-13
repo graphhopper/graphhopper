@@ -20,7 +20,7 @@ package com.graphhopper.routing.weighting;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -40,7 +40,7 @@ import static org.junit.Assert.assertEquals;
 public class GenericWeightingTest {
     private final PMap properties;
     private final DataFlagEncoder encoder;
-    private final EncodingManager em;
+    private final EncodingManager08 em;
     private Graph graph;
 
     private final double edgeWeight = 566111;
@@ -51,7 +51,7 @@ public class GenericWeightingTest {
         properties.put("store_weight", true);
         properties.put("store_width", true);
         encoder = new DataFlagEncoder(properties);
-        em = new EncodingManager(Arrays.asList(encoder), 8);
+        em = new EncodingManager08(Arrays.asList(encoder), 8);
     }
 
     @Before
@@ -89,7 +89,7 @@ public class GenericWeightingTest {
     @Test
     public void testDisabledRoadAttributes() {
         DataFlagEncoder simpleEncoder = new DataFlagEncoder();
-        EncodingManager simpleEncodingManager = new EncodingManager(simpleEncoder);
+        EncodingManager08 simpleEncodingManager = new EncodingManager08(simpleEncoder);
         Graph simpleGraph = new GraphBuilder(simpleEncodingManager).create();
 
         ReaderWay way = new ReaderWay(27l);

@@ -4,7 +4,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -29,7 +29,7 @@ public class GraphHopperStorageForDataFlagEncoderTest {
 
     private final PMap properties;
     private final DataFlagEncoder encoder;
-    private final EncodingManager encodingManager;
+    private final EncodingManager08 encodingManager;
 
     public GraphHopperStorageForDataFlagEncoderTest() {
         properties = new PMap();
@@ -37,7 +37,7 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         properties.put("store_weight", true);
         properties.put("store_width", false);
         encoder = new DataFlagEncoder(properties);
-        encodingManager = new EncodingManager(Arrays.asList(encoder), 8);
+        encodingManager = new EncodingManager08(Arrays.asList(encoder), 8);
     }
 
     @Before
@@ -86,7 +86,7 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         graph.close();
 
         GraphHopper hopper = new GraphHopper().setGraphHopperLocation(defaultGraphLoc).setCHEnabled(false).importOrLoad();
-        EncodingManager em = hopper.getEncodingManager();
+        EncodingManager08 em = hopper.getEncodingManager();
         assertNotNull(em);
         assertEquals(1, em.fetchEdgeEncoders().size());
 

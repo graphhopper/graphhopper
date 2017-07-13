@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -32,7 +32,7 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class ShortFastestWeightingTest {
-    private final FlagEncoder encoder = new EncodingManager("car").getEncoder("car");
+    private final FlagEncoder encoder = new EncodingManager08("car").getEncoder("car");
 
     @Test
     public void testShort() {

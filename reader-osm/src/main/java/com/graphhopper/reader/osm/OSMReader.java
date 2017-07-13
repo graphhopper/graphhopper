@@ -24,7 +24,7 @@ import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.osm.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.*;
@@ -85,7 +85,7 @@ public class OSMReader implements DataReader {
     protected PillarInfo pillarInfo;
     private long locations;
     private long skippedLocations;
-    private final EncodingManager encodingManager;
+    private final EncodingManager08 encodingManager;
     private int workerThreads = 2;
     // Using the correct Map<Long, Integer> is hard. We need a memory efficient and fast solution for big data sets!
     //

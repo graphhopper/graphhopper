@@ -54,10 +54,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     private final Map<String, Integer> highwaySpeeds = new HashMap<String, Integer>();
     // convert network tag of bicycle routes into a way route code
     private final Map<String, Integer> bikeNetworkToCode = new HashMap<String, Integer>();
-    protected EncodedValue relationCodeEncoder;
-    EncodedValue priorityWayEncoder;
+    protected EncodedValue08 relationCodeEncoder;
+    EncodedValue08 priorityWayEncoder;
     private long unpavedBit = 0;
-    private EncodedValue wayTypeEncoder;
+    private EncodedValue08 wayTypeEncoder;
     // Car speed limit which switches the preference from UNCHANGED to AVOID_IF_POSSIBLE
     private int avoidSpeedLimit;
 
@@ -206,16 +206,16 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     public int defineWayBits(int index, int shift) {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, highwaySpeeds.get("cycleway"),
+        speedEncoder = new EncodedDoubleValue08("Speed", shift, speedBits, speedFactor, highwaySpeeds.get("cycleway"),
                 maxPossibleSpeed);
         shift += speedEncoder.getBits();
 
         unpavedBit = 1L << shift++;
         // 2 bits
-        wayTypeEncoder = new EncodedValue("WayType", shift, 2, 1, 0, 3, true);
+        wayTypeEncoder = new EncodedValue08("WayType", shift, 2, 1, 0, 3, true);
         shift += wayTypeEncoder.getBits();
 
-        priorityWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 0, 7);
+        priorityWayEncoder = new EncodedValue08("PreferWay", shift, 3, 1, 0, 7);
         shift += priorityWayEncoder.getBits();
 
         return shift;
@@ -223,7 +223,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int defineRelationBits(int index, int shift) {
-        relationCodeEncoder = new EncodedValue("RelationCode", shift, 3, 1, 0, 7);
+        relationCodeEncoder = new EncodedValue08("RelationCode", shift, 3, 1, 0, 7);
         return shift + relationCodeEncoder.getBits();
     }
 

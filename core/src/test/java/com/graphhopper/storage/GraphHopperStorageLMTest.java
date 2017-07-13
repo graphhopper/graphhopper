@@ -4,7 +4,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
 
@@ -20,7 +20,7 @@ public class GraphHopperStorageLMTest {
         String defaultGraphLoc = "./target/ghstorage_lm";
         Helper.removeDir(new File(defaultGraphLoc));
         CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager(carFlagEncoder);
+        EncodingManager08 encodingManager = new EncodingManager08(carFlagEncoder);
         GraphHopperStorage graph = new GraphBuilder(encodingManager).setStore(true).
                 setLocation(defaultGraphLoc).create();
 
@@ -50,7 +50,7 @@ public class GraphHopperStorageLMTest {
         hopper.getLMFactoryDecorator().setEnabled(true).setWeightingsAsStrings(Arrays.asList("fastest"));
         // does lm preparation
         hopper.importOrLoad();
-        EncodingManager em = hopper.getEncodingManager();
+        EncodingManager08 em = hopper.getEncodingManager();
         assertNotNull(em);
         assertEquals(1, em.fetchEdgeEncoders().size());
         assertEquals(16, hopper.getLMFactoryDecorator().getLandmarks());

@@ -31,7 +31,7 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.filter.Filter;
 
 import com.graphhopper.reader.DataReader;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.GraphStorage;
@@ -49,7 +49,7 @@ public abstract class ShapeFileReader implements DataReader {
     private final GraphStorage graphStorage;
     private final NodeAccess nodeAccess;
     protected final Graph graph;
-    protected EncodingManager encodingManager;
+    protected EncodingManager08 encodingManager;
 
     public ShapeFileReader(GraphHopperStorage ghStorage) {
         this.graphStorage = ghStorage;

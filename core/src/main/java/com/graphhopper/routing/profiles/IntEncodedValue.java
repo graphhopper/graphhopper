@@ -3,18 +3,18 @@ package com.graphhopper.routing.profiles;
 import com.graphhopper.reader.ReaderWay;
 
 /**
- * TODO add description, similar to EncodedValue
+ * TODO add description, similar to EncodedValue08
  */
-public class IntProperty extends AbstractProperty {
+public class IntEncodedValue extends AbstractEncodedValue {
 
     // TODO allowZero and min value?
     protected int defaultValue;
 
-    public IntProperty(String name, int bits) {
+    public IntEncodedValue(String name, int bits) {
         this(name, bits, 0);
     }
 
-    public IntProperty(String name, int bits, int defaultValue) {
+    public IntEncodedValue(String name, int bits, int defaultValue) {
         super(name, bits);
         this.defaultValue = defaultValue;
     }

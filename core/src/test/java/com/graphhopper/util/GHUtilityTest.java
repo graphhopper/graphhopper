@@ -17,10 +17,9 @@
  */
 package com.graphhopper.util;
 
-import com.carrotsearch.hppc.LongArrayList;
 import com.graphhopper.coll.GHIntLongHashMap;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
@@ -33,7 +32,7 @@ import static org.junit.Assert.*;
  */
 public class GHUtilityTest {
     private final FlagEncoder carEncoder = new CarFlagEncoder();
-    private final EncodingManager encodingManager = new EncodingManager(carEncoder);
+    private final EncodingManager08 encodingManager = new EncodingManager08(carEncoder);
 
     Graph createGraph() {
         return new GraphBuilder(encodingManager).create();

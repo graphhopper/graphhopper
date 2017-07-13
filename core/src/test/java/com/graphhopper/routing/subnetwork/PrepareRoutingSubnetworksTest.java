@@ -39,9 +39,9 @@ import static org.junit.Assert.*;
  */
 public class PrepareRoutingSubnetworksTest {
     private final FlagEncoder carFlagEncoder = new CarFlagEncoder();
-    private final EncodingManager em = new EncodingManager(carFlagEncoder);
+    private final EncodingManager08 em = new EncodingManager08(carFlagEncoder);
 
-    GraphHopperStorage createStorage(EncodingManager eman) {
+    GraphHopperStorage createStorage(EncodingManager08 eman) {
         return new GraphBuilder(eman).create();
     }
 
@@ -72,7 +72,7 @@ public class PrepareRoutingSubnetworksTest {
         return g;
     }
 
-    GraphHopperStorage createSubnetworkTestStorage2(EncodingManager em) {
+    GraphHopperStorage createSubnetworkTestStorage2(EncodingManager08 em) {
         GraphHopperStorage g = createStorage(em);
         // large network
         g.edge(0, 1, 1, true);
@@ -152,7 +152,7 @@ public class PrepareRoutingSubnetworksTest {
     public void testRemoveNode() {
         FlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
-        EncodingManager em2 = new EncodingManager(carEncoder, bikeEncoder);
+        EncodingManager08 em2 = new EncodingManager08(carEncoder, bikeEncoder);
         GraphHopperStorage g = createSubnetworkTestStorage2(em2);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em2.fetchEdgeEncoders());
 
@@ -177,7 +177,7 @@ public class PrepareRoutingSubnetworksTest {
     public void testRemoveSubnetworkWhenMultipleVehicles() {
         FlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
-        EncodingManager em2 = new EncodingManager(carEncoder, bikeEncoder);
+        EncodingManager08 em2 = new EncodingManager08(carEncoder, bikeEncoder);
         GraphHopperStorage g = createSubnetworkTestStorage2(em2);
         GHUtility.getEdge(g, 3, 4).setFlags(carEncoder.setProperties(10, false, false)
                 | bikeEncoder.setProperties(5, true, true));
@@ -201,7 +201,7 @@ public class PrepareRoutingSubnetworksTest {
         assertEquals(6, g.getNodes());
     }
 
-    GraphHopperStorage createDeadEndUnvisitedNetworkStorage(EncodingManager em) {
+    GraphHopperStorage createDeadEndUnvisitedNetworkStorage(EncodingManager08 em) {
         GraphHopperStorage g = createStorage(em);
         // 0 <-> 1 <-> 2 <-> 3 <-> 4 <- 5 <-> 6
         g.edge(0, 1, 1, true);

@@ -156,7 +156,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     public int defineWayBits(int index, int shift) {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"),
+        speedEncoder = new EncodedDoubleValue08("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"),
                 maxPossibleSpeed);
         return shift + speedEncoder.getBits();
     }

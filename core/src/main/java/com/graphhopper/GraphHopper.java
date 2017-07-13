@@ -24,7 +24,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
-import com.graphhopper.routing.profiles.EncodingManager2;
+import com.graphhopper.routing.profiles.EncodingManager;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -75,7 +75,7 @@ public class GraphHopper implements GraphHopperAPI {
     boolean enableInstructions = true;
     // for graph:
     private GraphHopperStorage ghStorage;
-    private EncodingManager encodingManager;
+    private EncodingManager08 encodingManager;
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
     private DAType dataAccessType = DAType.RAM_STORE;
@@ -144,7 +144,7 @@ public class GraphHopper implements GraphHopperAPI {
         return encodingManager.fetchEdgeEncoders().get(0);
     }
 
-    public EncodingManager getEncodingManager() {
+    public EncodingManager08 getEncodingManager() {
         return encodingManager;
     }
 
@@ -152,7 +152,7 @@ public class GraphHopper implements GraphHopperAPI {
      * Specify which profiles can be read by this GraphHopper instance. An encoding manager defines
      * how data from every vehicle is written (und read) into edges of the graph.
      */
-    public GraphHopper setEncodingManager(EncodingManager em) {
+    public GraphHopper setEncodingManager(EncodingManager08 em) {
         ensureNotLoaded();
         this.encodingManager = em;
         if (em.needsTurnCostsSupport())
@@ -535,7 +535,7 @@ public class GraphHopper implements GraphHopperAPI {
         int bytesForFlags = args.getInt("graph.bytes_for_flags", 4);
         String flagEncodersStr = args.get("graph.flag_encoders", "");
         if (!flagEncodersStr.isEmpty())
-            setEncodingManager(new EncodingManager(flagEncoderFactory, flagEncodersStr, bytesForFlags));
+            setEncodingManager(new EncodingManager08(flagEncoderFactory, flagEncodersStr, bytesForFlags));
 
         if (args.get("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -723,7 +723,7 @@ public class GraphHopper implements GraphHopperAPI {
         setGraphHopperLocation(graphHopperFolder);
 
         if (encodingManager == null)
-            setEncodingManager(EncodingManager.create(flagEncoderFactory, ghLocation));
+            setEncodingManager(EncodingManager08.create(flagEncoderFactory, ghLocation));
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
@@ -928,7 +928,7 @@ public class GraphHopper implements GraphHopperAPI {
                 return new TurnWeighting(weighting, (TurnCostExtension) graph.getExtension());
             return weighting;
         } catch (Exception ex) {
-            // TODO currently all Weightings via EncodingManager2 throw an exception for getFlagEncoder
+            // TODO currently all Weightings via EncodingManager throw an exception for getFlagEncoder
             // we need different turn cost support
             return weighting;
         }
@@ -1001,7 +1001,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             // TODO how can we know the weighting (that needs the QueryGraph) before the lookup?
             // then we can easily call weighting.createEdgeFilter(true, true) instead of:
-            EdgeFilter edgeFilter = vehicle.equals(EncodingManager2.ENCODER_NAME) ? EdgeFilter.ALL_EDGES : new DefaultEdgeFilter(encoder);
+            EdgeFilter edgeFilter = vehicle.equals(EncodingManager.ENCODER_NAME) ? EdgeFilter.ALL_EDGES : new DefaultEdgeFilter(encoder);
             List<Path> altPaths = null;
             int maxRetries = routingTemplate.getMaxRetries();
             Locale locale = request.getLocale();

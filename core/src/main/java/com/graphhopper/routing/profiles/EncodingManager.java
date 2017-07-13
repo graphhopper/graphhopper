@@ -4,29 +4,29 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.*;
 
 /**
- * This class approaches the storage of edge properties via orchestrating multiple Property-objects like maxspeed and
+ * This class approaches the storage of edge properties via orchestrating multiple EncodedValue-objects like maxspeed and
  * highway type that can be accessed in a Weighting and will be feeded in the Import (via PropertyParser).
  */
-public class EncodingManager2 extends EncodingManager {
+public class EncodingManager extends EncodingManager08 {
 
     /**
      * for backward compatibility we have to specify an encoder name ("vehicle")
      */
     public static final String ENCODER_NAME = "weighting";
-    private Map<String, Property> properties = new HashMap<>();
+    private Map<String, EncodedValue> properties = new HashMap<>();
     private final PropertyParser parser;
     private final int extendedDataSize;
     private final FlagEncoder mockEncoder;
 
-    public EncodingManager2(PropertyParser parser, int extendedDataSize) {
-        // we have to add a fake encoder that uses 0 bits for backward compatibility with EncodingManager
+    public EncodingManager(PropertyParser parser, int extendedDataSize) {
+        // we have to add a fake encoder that uses 0 bits for backward compatibility with EncodingManager08
         super(new CarFlagEncoder(0, 1, 0) {
             @Override
             public int defineWayBits(int index, int shift) {
@@ -36,12 +36,12 @@ public class EncodingManager2 extends EncodingManager {
         this.mockEncoder = fetchEdgeEncoders().get(0);
 
         this.parser = parser;
-        // Everything is int-based: the dataIndex, the Property hierarchy with the 'int'-value and the offset
+        // Everything is int-based: the dataIndex, the EncodedValue hierarchy with the 'int'-value and the offset
         // TODO should we use a long or byte-based approach instead?
         this.extendedDataSize = Math.min(1, extendedDataSize / 4) * 4;
     }
 
-    public EncodingManager2 init(Property... properties) {
+    public EncodingManager init(EncodedValue... properties) {
         return init(Arrays.asList(properties));
     }
 
@@ -50,12 +50,12 @@ public class EncodingManager2 extends EncodingManager {
      * <p>
      * Note, that the order of the collection is not guaranteed being used as storage order and can change to optimize bit usage.
      */
-    public EncodingManager2 init(Collection<Property> properties) {
+    public EncodingManager init(Collection<EncodedValue> properties) {
         if (!this.properties.isEmpty())
             throw new IllegalStateException("Cannot call init multiple times");
 
-        Property.InitializerConfig initializer = new Property.InitializerConfig();
-        for (Property prop : properties) {
+        EncodedValue.InitializerConfig initializer = new EncodedValue.InitializerConfig();
+        for (EncodedValue prop : properties) {
             prop.init(initializer);
             this.properties.put(prop.getName(), prop);
         }
@@ -116,7 +116,7 @@ public class EncodingManager2 extends EncodingManager {
 
     // TODO should we add convenient getters like getStringProperty etc?
     public <T> T getProperty(String key, Class<T> clazz) {
-        Property prop = properties.get(key);
+        EncodedValue prop = properties.get(key);
         if (prop == null)
             throw new IllegalArgumentException("Cannot find property " + key + " in existing: " + properties);
         return (T) prop;
@@ -140,7 +140,7 @@ public class EncodingManager2 extends EncodingManager {
     @Override
     public String toString() {
         String str = "";
-        for (Property p : properties.values()) {
+        for (EncodedValue p : properties.values()) {
             if (str.length() > 0)
                 str += ", ";
             str += p.getName();
@@ -152,7 +152,7 @@ public class EncodingManager2 extends EncodingManager {
     @Override
     public String toDetailsString() {
         String str = "";
-        for (Property p : properties.values()) {
+        for (EncodedValue p : properties.values()) {
             if (str.length() > 0)
                 str += ", ";
             str += p.toString();
@@ -198,13 +198,13 @@ public class EncodingManager2 extends EncodingManager {
     }
 
     @Override
-    public EncodingManager setEnableInstructions(boolean enableInstructions) {
+    public EncodingManager08 setEnableInstructions(boolean enableInstructions) {
         // TODO not implemented
         return this;
     }
 
     @Override
-    public EncodingManager setPreferredLanguage(String preferredLanguage) {
+    public EncodingManager08 setPreferredLanguage(String preferredLanguage) {
         // TODO not implemented
         return this;
     }

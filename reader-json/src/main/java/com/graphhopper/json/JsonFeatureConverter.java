@@ -18,7 +18,7 @@
 package com.graphhopper.json;
 
 import com.graphhopper.json.geo.JsonFeatureCollection;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.storage.change.ChangeGraphHelper;
 
 import java.io.File;
@@ -36,9 +36,9 @@ import java.io.Reader;
 public class JsonFeatureConverter {
     private final ChangeGraphHelper changeGraphHelper;
     private final GHJson ghson;
-    private final EncodingManager encodingManager;
+    private final EncodingManager08 encodingManager;
 
-    public JsonFeatureConverter(GHJson ghson, ChangeGraphHelper changeGraphHelper, EncodingManager encodingManager) {
+    public JsonFeatureConverter(GHJson ghson, ChangeGraphHelper changeGraphHelper, EncodingManager08 encodingManager) {
         this.ghson = ghson;
         this.changeGraphHelper = changeGraphHelper;
         this.encodingManager = encodingManager;

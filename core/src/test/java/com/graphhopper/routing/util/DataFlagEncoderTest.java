@@ -23,7 +23,7 @@ import static org.junit.Assert.*;
 public class DataFlagEncoderTest {
     private final PMap properties;
     private final DataFlagEncoder encoder;
-    private final EncodingManager encodingManager;
+    private final EncodingManager08 encodingManager;
     private final int motorVehicleInt;
 
     private final double DELTA = 0.1;
@@ -34,21 +34,21 @@ public class DataFlagEncoderTest {
         properties.put("store_weight", true);
         properties.put("store_width", true);
         encoder = new DataFlagEncoder(properties);
-        encodingManager = new EncodingManager(Arrays.asList(encoder), 8);
+        encodingManager = new EncodingManager08(Arrays.asList(encoder), 8);
 
         motorVehicleInt = encoder.getAccessType("motor_vehicle");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testInsufficientEncoderBitLength() {
-        EncodingManager em = new EncodingManager(Arrays.asList(new DataFlagEncoder(properties)));
+        EncodingManager08 em = new EncodingManager08(Arrays.asList(new DataFlagEncoder(properties)));
     }
 
     @Test
     public void testSufficientEncoderBitLength() {
         try {
-            EncodingManager em = new EncodingManager(Arrays.asList(new DataFlagEncoder(properties)), 8);
-            EncodingManager em1 = new EncodingManager(Arrays.asList(new DataFlagEncoder()));
+            EncodingManager08 em = new EncodingManager08(Arrays.asList(new DataFlagEncoder(properties)), 8);
+            EncodingManager08 em1 = new EncodingManager08(Arrays.asList(new DataFlagEncoder()));
         } catch (Throwable t) {
             fail();
         }
@@ -365,7 +365,7 @@ public class DataFlagEncoderTest {
 
         DataFlagEncoder encoder = new DataFlagEncoder(new PMap());
         encoder.setSpatialRuleLookup(index);
-        EncodingManager em = new EncodingManager(encoder);
+        EncodingManager08 em = new EncodingManager08(encoder);
 
         ReaderWay way = new ReaderWay(27l);
         way.setTag("highway", "track");

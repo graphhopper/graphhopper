@@ -145,13 +145,13 @@ public class TestAlgoCollector {
     }
 
     public static class AlgoHelperEntry {
-        private final EncodingManager encodingManager;
+        private final EncodingManager08 encodingManager;
         private final LocationIndex idx;
         private Graph forQueryGraph;
         private String expectedAlgo;
         private AlgorithmOptions opts;
 
-        public AlgoHelperEntry(Graph g, AlgorithmOptions opts, EncodingManager encodingManager,
+        public AlgoHelperEntry(Graph g, AlgorithmOptions opts, EncodingManager08 encodingManager,
                                LocationIndex idx, String expectedAlgo) {
             this.forQueryGraph = g;
             this.opts = opts;

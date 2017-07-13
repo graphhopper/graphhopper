@@ -22,7 +22,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -45,7 +45,7 @@ import static org.junit.Assert.*;
  */
 public class PrepareContractionHierarchiesTest {
     private final CarFlagEncoder carEncoder = new CarFlagEncoder();
-    private final EncodingManager encodingManager = new EncodingManager(carEncoder);
+    private final EncodingManager08 encodingManager = new EncodingManager08(carEncoder);
     private final Weighting weighting = new ShortestWeighting(carEncoder);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private Directory dir;
@@ -596,7 +596,7 @@ public class PrepareContractionHierarchiesTest {
     public void testMultiplePreparationsIdenticalView() {
         CarFlagEncoder tmpCarEncoder = new CarFlagEncoder();
         BikeFlagEncoder tmpBikeEncoder = new BikeFlagEncoder();
-        EncodingManager tmpEncodingManager = new EncodingManager(tmpCarEncoder, tmpBikeEncoder);
+        EncodingManager08 tmpEncodingManager = new EncodingManager08(tmpCarEncoder, tmpBikeEncoder);
 
         // FastestWeighting would lead to different shortcuts due to different default speeds for bike and car
         Weighting carWeighting = new ShortestWeighting(tmpCarEncoder);
@@ -617,7 +617,7 @@ public class PrepareContractionHierarchiesTest {
     public void testMultiplePreparationsDifferentView() {
         CarFlagEncoder tmpCarEncoder = new CarFlagEncoder();
         BikeFlagEncoder tmpBikeEncoder = new BikeFlagEncoder();
-        EncodingManager tmpEncodingManager = new EncodingManager(tmpCarEncoder, tmpBikeEncoder);
+        EncodingManager08 tmpEncodingManager = new EncodingManager08(tmpCarEncoder, tmpBikeEncoder);
 
         Weighting carWeighting = new FastestWeighting(tmpCarEncoder);
         Weighting bikeWeighting = new FastestWeighting(tmpBikeEncoder);

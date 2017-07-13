@@ -23,7 +23,7 @@ import com.graphhopper.coll.SparseIntIntArray;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.EncodingManager08;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.search.NameIndex;
 import com.graphhopper.util.*;
@@ -52,7 +52,7 @@ class BaseGraph implements Graph {
     final GraphExtension extStorage;
     final NameIndex nameIndex;
     final BitUtil bitUtil;
-    final EncodingManager encodingManager;
+    final EncodingManager08 encodingManager;
     final EdgeAccess edgeAccess;
     // length | nodeA | nextNode | ... | nodeB
     // as we use integer index in 'egdes' area => 'geometry' area is limited to 4GB (we use pos&neg values!)
@@ -86,7 +86,7 @@ class BaseGraph implements Graph {
     private long maxGeoRef;
     private boolean frozen = false;
 
-    public BaseGraph(Directory dir, final EncodingManager encodingManager, boolean withElevation,
+    public BaseGraph(Directory dir, final EncodingManager08 encodingManager, boolean withElevation,
                      InternalGraphEventListener listener, GraphExtension extendedStorage) {
         this.dir = dir;
         this.encodingManager = encodingManager;
@@ -224,8 +224,8 @@ class BaseGraph implements Graph {
         nodeEntryIndex = 0;
         boolean flagsSizeIsLong = encodingManager.getBytesForFlags() == 8;
         int extendedDataSizeInBytes = 0;
-        if (encodingManager instanceof EncodingManager2) {
-            extendedDataSizeInBytes = ((EncodingManager2) encodingManager).getExtendedDataSize();
+        if (encodingManager instanceof EncodingManager) {
+            extendedDataSizeInBytes = ((EncodingManager) encodingManager).getExtendedDataSize();
         }
 
         edgeAccess.init(nextEdgeEntryIndex(4),
@@ -1123,46 +1123,46 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public boolean get(BitProperty property) {
+        public boolean get(BitEncodedValue property) {
             return property.fromStorageFormatToBool(edgeAccess.getData(edgePointer, property.getOffset()));
         }
 
         @Override
-        public void set(BitProperty property, boolean value) {
+        public void set(BitEncodedValue property, boolean value) {
             int flags = edgeAccess.getData(edgePointer, property.getOffset());
             edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormatFromBool(flags, value));
         }
 
         @Override
-        public int get(IntProperty property) {
+        public int get(IntEncodedValue property) {
             return property.fromStorageFormatToInt(edgeAccess.getData(edgePointer, property.getOffset()));
         }
 
         @Override
-        public void set(IntProperty property, int value) {
+        public void set(IntEncodedValue property, int value) {
             int flags = edgeAccess.getData(edgePointer, property.getOffset());
             edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormat(flags, value));
         }
 
         @Override
-        public String get(StringProperty property) {
+        public String get(StringEncodedValue property) {
             return property.fromStorageFormatToString(edgeAccess.getData(edgePointer, property.getOffset()));
         }
 
         @Override
-        public void set(StringProperty property, String value) {
+        public void set(StringEncodedValue property, String value) {
             int flags = edgeAccess.getData(edgePointer, property.getOffset());
             edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormat(flags, value));
         }
 
         @Override
-        public double get(DoubleProperty property) {
+        public double get(DoubleEncodedValue property) {
             int flags = edgeAccess.getData(edgePointer, property.getOffset());
             return property.fromStorageFormatToDouble(flags);
         }
 
         @Override
-        public void set(DoubleProperty property, double value) {
+        public void set(DoubleEncodedValue property, double value) {
             int flags = edgeAccess.getData(edgePointer, property.getOffset());
             edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormatFromDouble(flags, value));
         }

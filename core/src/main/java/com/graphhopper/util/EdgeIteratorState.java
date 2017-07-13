@@ -17,10 +17,9 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.profiles.BitProperty;
-import com.graphhopper.routing.profiles.DoubleProperty;
-import com.graphhopper.routing.profiles.IntProperty;
-import com.graphhopper.routing.profiles.StringProperty;
+import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BitEncodedValue;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
 
@@ -123,21 +122,21 @@ public interface EdgeIteratorState {
 
     // TODO NOW use getData instead of all the followin setter&getter here e.g. would avoid going down to
     // storage several times for several setter calls
-    boolean get(BitProperty property);
+    boolean get(BitEncodedValue property);
 
-    void set(BitProperty property, boolean value);
+    void set(BitEncodedValue property, boolean value);
 
-    int get(IntProperty property);
+    int get(IntEncodedValue property);
 
-    void set(IntProperty property, int value);
+    void set(IntEncodedValue property, int value);
 
-    double get(DoubleProperty property);
+    double get(DoubleEncodedValue property);
 
-    void set(DoubleProperty property, double value);
+    void set(DoubleEncodedValue property, double value);
 
-    String get(StringProperty property);
+    String get(StringEncodedValue property);
 
-    void set(StringProperty property, String value);
+    void set(StringEncodedValue property, String value);
 
     String getName();
 

@@ -18,10 +18,9 @@
 
 package com.graphhopper.reader.gtfs;
 
-import com.graphhopper.routing.profiles.BitProperty;
-import com.graphhopper.routing.profiles.DoubleProperty;
-import com.graphhopper.routing.profiles.IntProperty;
-import com.graphhopper.routing.profiles.StringProperty;
+import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BitEncodedValue;
+import com.graphhopper.routing.profiles.DoubleEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -184,42 +183,42 @@ class GraphSupport {
                     }
 
                     @Override
-                    public void set(BitProperty property, boolean value) {
+                    public void set(BitEncodedValue property, boolean value) {
                         edge.set(property, value);
                     }
 
                     @Override
-                    public boolean get(BitProperty property) {
+                    public boolean get(BitEncodedValue property) {
                         return edge.get(property);
                     }
 
                     @Override
-                    public void set(IntProperty property, int value) {
+                    public void set(IntEncodedValue property, int value) {
                         edge.set(property, value);
                     }
 
                     @Override
-                    public int get(IntProperty property) {
+                    public int get(IntEncodedValue property) {
                         return edge.get(property);
                     }
 
                     @Override
-                    public double get(DoubleProperty property) {
+                    public double get(DoubleEncodedValue property) {
                         return edge.get(property);
                     }
 
                     @Override
-                    public void set(DoubleProperty property, double value) {
+                    public void set(DoubleEncodedValue property, double value) {
                         edge.set(property, value);
                     }
 
                     @Override
-                    public void set(StringProperty property, String value) {
+                    public void set(StringEncodedValue property, String value) {
                         edge.set(property, value);
                     }
 
                     @Override
-                    public String get(StringProperty property) {
+                    public String get(StringEncodedValue property) {
                         return edge.get(property);
                     }
 

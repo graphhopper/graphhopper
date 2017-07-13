@@ -24,7 +24,7 @@ import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.carrotsearch.hppc.procedures.IntObjectProcedure;
 import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.DijkstraBidirectionRef;
-import com.graphhopper.routing.profiles.EncodingManager2;
+import com.graphhopper.routing.profiles.EncodingManager;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjansSCCAlgorithm;
 import com.graphhopper.routing.util.AllEdgesIterator;
@@ -115,7 +115,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             };
         } catch (Exception ex) {
             // allowing arbitrary weighting is too dangerous
-            this.lmSelectionWeighting = new FastestCarWeighting((EncodingManager2) graph.getEncodingManager(), "car") {
+            this.lmSelectionWeighting = new FastestCarWeighting((EncodingManager) graph.getEncodingManager(), "car") {
                 @Override
                 public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
                     // make accessibility of shortest identical to the provided weighting to avoid problems like shown in testWeightingConsistence
