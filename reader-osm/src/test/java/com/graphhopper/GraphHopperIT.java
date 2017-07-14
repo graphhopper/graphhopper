@@ -563,8 +563,8 @@ public class GraphHopperIT {
         assertEquals("(43.72771927105753,7.418905923193081,11.0), (43.72768239068275,7.419007064826944,11.0), (43.727680946587874,7.419198768422206,11.0)",
                 str.substring(str.length() - 131));
 
-        assertEquals(84, arsp.getAscend(), 1e-1);
-        assertEquals(135, arsp.getDescend(), 1e-1);
+        assertEquals(99, arsp.getAscend(), 1e-1);
+        assertEquals(150, arsp.getDescend(), 1e-1);
 
         List<GPXEntry> list = arsp.getInstructions().createGPXList();
         assertEquals(61, list.size());

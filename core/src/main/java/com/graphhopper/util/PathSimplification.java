@@ -96,7 +96,7 @@ public class PathSimplification {
                 if (endIntervals[i] < nonConflictingEnd) {
                     toSimplifyIndex = -1;
                     nonConflictingEnd = endIntervals[i];
-                    // Remember the lowest endInterval, in case we have to shift the offset
+                    // Remember the lowest endInterval
                     toShiftIndex = i;
                 }
                 if (startIntervals[i] >= nonConflictingStart && endIntervals[i] <= nonConflictingEnd) {
@@ -105,20 +105,16 @@ public class PathSimplification {
             }
 
             if (toSimplifyIndex >= 0 && simplificationPossible) {
-                // Simplify
-                /*
-                int removed = douglasPeucker.subSimplify(pointList, nonConflictingStart, nonConflictingEnd);
-                if (removed > 0) {
-                    douglasPeucker.compressNew(pointList, removed);
-                */
-                int removed = douglasPeucker.simplify(pointList, nonConflictingStart, nonConflictingEnd);
-
-                if (removed > 0) {
-                    for (int i = 0; i < toSimplify.size(); i++) {
-                        reduceNumberOfPoints(toSimplify.get(i), offset[i], removed, startIntervals[i], endIntervals[i] - removed);
+                // Only simplify if there is more than one point
+                if(nonConflictingEnd - nonConflictingStart > 1){
+                    // Simplify
+                    int removed = douglasPeucker.simplify(pointList, nonConflictingStart, nonConflictingEnd -1 );
+                    if (removed > 0) {
+                        for (int i = 0; i < toSimplify.size(); i++) {
+                            reduceNumberOfPoints(toSimplify.get(i), offset[i], removed, startIntervals[i], endIntervals[i] - removed);
+                        }
                     }
                 }
-
             }
 
             if (toShiftIndex < 0) {
