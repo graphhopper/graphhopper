@@ -1,6 +1,6 @@
 package com.graphhopper.routing.weighting;
 
-import com.graphhopper.routing.profiles.DoubleEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodingManager;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -11,13 +11,13 @@ public class FastestCarWeighting implements Weighting {
 
     private static final double SPEED_CONV = 3.6;
     private final String name;
-    private final DoubleEncodedValue maxSpeed;
-    private final DoubleEncodedValue averageSpeed;
+    private final DecimalEncodedValue maxSpeed;
+    private final DecimalEncodedValue averageSpeed;
     private final double maxSpeedValue;
 
     public FastestCarWeighting(EncodingManager em, String name) {
-        this.maxSpeed = em.getEncodedValue("maxspeed", DoubleEncodedValue.class);
-        this.averageSpeed = em.getEncodedValue("averagespeed", DoubleEncodedValue.class);
+        this.maxSpeed = em.getEncodedValue("maxspeed", DecimalEncodedValue.class);
+        this.averageSpeed = em.getEncodedValue("averagespeed", DecimalEncodedValue.class);
         // TODO
         // maxSpeedValue = maxSpeed.getMaximum() / SPEED_CONV;
         this.maxSpeedValue = 100 / SPEED_CONV;

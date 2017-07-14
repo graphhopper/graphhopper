@@ -1156,13 +1156,13 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public double get(DoubleEncodedValue property) {
+        public double get(DecimalEncodedValue property) {
             int flags = edgeAccess.getData(edgePointer, property.getOffset());
             return property.fromStorageFormatToDouble(flags);
         }
 
         @Override
-        public void set(DoubleEncodedValue property, double value) {
+        public void set(DecimalEncodedValue property, double value) {
             int flags = edgeAccess.getData(edgePointer, property.getOffset());
             edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormatFromDouble(flags, value));
         }

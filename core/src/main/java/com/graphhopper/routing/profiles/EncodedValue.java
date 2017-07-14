@@ -1,13 +1,7 @@
 package com.graphhopper.routing.profiles;
 
-import com.graphhopper.reader.ReaderWay;
-
 /**
  * This class defines how to store and read values from an edge.
- * <p>
- * TODO better move parsing code fully into PropertyParserOSM?
- * <p>
- * TODO how to handle properties like 'distance' that needs to be splitted for VirtualEdgeIteratorStates in QueryGraph?
  */
 public interface EncodedValue {
 
@@ -20,12 +14,6 @@ public interface EncodedValue {
     void init(InitializerConfig init);
 
     String getName();
-
-    /**
-     * This method picks and transform its necessary values from specified way to create a result that
-     * can be stored in the associated edge.
-     */
-    Object parse(ReaderWay way);
 
     class InitializerConfig {
         int dataIndex = 0;

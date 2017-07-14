@@ -809,33 +809,16 @@ public class OSMReaderTest {
 
     @Test
     public void testPropertyBasedEncodingManager() {
-        // TODO move out into 'encoded value factory'
-        final DoubleEncodedValue maxSpeed = new DoubleEncodedValue("maxspeed", 5, 50d, 5d) {
-            @Override
-            public Object parse(ReaderWay way) {
-                return AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
-            }
-        };
+        TagParser maxSpeed = TagParserFactory.Car.createMaxSpeed();
+        TagParser averageSpeed = TagParserFactory.Car.createAverageSpeed();
+        TagParser roundabout = TagParserFactory.createRoundabout();
 
-        DoubleEncodedValue averageSpeed = new DoubleEncodedValue("averagespeed", 5, 50d, 5d) {
-            @Override
-            public Object parse(ReaderWay way) {
-                double num = (Double) maxSpeed.parse(way);
-                if (num < 0.01)
-                    return 20;
-                return num * 0.9;
-            }
-        };
-        BitEncodedValue roundabout = new BitEncodedValue("roundabout") {
-            @Override
-            public Object parse(ReaderWay way) {
-                return way.hasTag("junction", "roundabout");
-            }
-        };
-        List<EncodedValue> carEncodedValueCollection = Arrays.<EncodedValue>asList(maxSpeed, averageSpeed, roundabout);
-
-        PropertyParser parser = new PropertyParserOSM();
-        final EncodingManager em = new EncodingManager(parser, 4).init(carEncodedValueCollection);
+        TagsParser parser = new TagsParserOSM();
+        final EncodingManager em = new EncodingManager(parser, 4).
+                add(maxSpeed, new DecimalEncodedValue(maxSpeed.getName(), 5, 0, 5)).
+                add(averageSpeed, new DecimalEncodedValue(averageSpeed.getName(), 5, 0, 5)).
+                add(roundabout, new BitEncodedValue(roundabout.getName())).
+                init();
         GraphHopper hopper = new GraphHopperOSM() {
             @Override
             public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {

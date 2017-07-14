@@ -1,15 +1,14 @@
 package com.graphhopper.routing.profiles;
 
-import com.graphhopper.reader.ReaderWay;
-
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * This property class holds a string array and stores just the index.
+ * This class holds a string array and stores only a number (typically the array index via IntEncodedValue)
+ * to restore this information.
  */
-public class StringEncodedValue extends IntEncodedValue {
+public final class StringEncodedValue extends IntEncodedValue {
     private final String[] map;
 
     public StringEncodedValue(String name, List<String> values, String defaultValue) {
@@ -22,12 +21,6 @@ public class StringEncodedValue extends IntEncodedValue {
         this.defaultValue = Arrays.binarySearch(map, defaultValue);
         if (this.defaultValue < 0)
             throw new IllegalArgumentException("default value " + defaultValue + " not found");
-    }
-
-    @Override
-    public Object parse(ReaderWay way) {
-        String res = way.getTag(name);
-        return map[getIndex(res)];
     }
 
     private int getIndex(String value) {

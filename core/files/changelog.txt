@@ -88,13 +88,13 @@
     encoder.supportTurnCost is replaced by encoder.supports(TurnWeighting.class)
     CmdArgs is now a Map<String, String> instead Map<String, Object>. The value will be parsed up on every getXY call, makes storing string vs. object less error-prone
     removed GHRequest.getHint, instead use the provided methods in GHRequest.getHints().getXY and GHRequest.getHints().put
-    important graph incompatibility as properties cannot be loaded. renamed osmreader.bytesForFlags to graph.bytesForFlags, renamed config encodedValue osmreader.acceptWay to graph.flagEncoders
+    important graph incompatibility as properties cannot be loaded. renamed osmreader.bytesForFlags to graph.bytesForFlags, renamed config property osmreader.acceptWay to graph.flagEncoders
     default weighting is now fastest, fixing #261
     moved method GraphHopper.main into tools module and class com.graphhopper.tools.Import, see #250
     refactored GraphHopper.createWeighting to accept more than one configuration option, see #237
     refactored GraphHopper.disableCHShortcuts to setCHEnable(boolean)
     moving the boolean parameter of GraphHopper.setInMemory into a separate method setStoreOnFlush
-    renaming of GraphHopper.setCHShortcuts to setCHWeighting, as well as the encodedValue prepare.chShortcuts to prepare.chWeighting
+    renaming of GraphHopper.setCHShortcuts to setCHWeighting, as well as the property prepare.chShortcuts to prepare.chWeighting
     jsonp is disabled by default. You need to enable it in the config.properties, see the config-example.properties
     EncodingManager cannot be null in GraphHopperStorage. If you need to parse EncodingManager configuration from existing graph use EncodingManager.create
     no reflection done in EncodingManager which improves portability and makes configuration of encoders possible before adding to manager

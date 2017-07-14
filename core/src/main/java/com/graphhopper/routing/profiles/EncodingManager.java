@@ -11,8 +11,8 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.util.*;
 
 /**
- * This class approaches the storage of edge encodedValueMap via orchestrating multiple EncodedValue-objects like maxspeed and
- * highway type that can be accessed in a Weighting and will be feeded in the Import (via PropertyParser).
+ * This class approaches the storage of edge parserToValueMap via orchestrating multiple EncodedValue-objects like maxspeed and
+ * highway type that can be accessed in a Weighting and will be feeded in the Import (via TagsParser).
  */
 public class EncodingManager extends EncodingManager08 {
 
@@ -20,12 +20,14 @@ public class EncodingManager extends EncodingManager08 {
      * for backward compatibility we have to specify an encoder name ("vehicle")
      */
     public static final String ENCODER_NAME = "weighting";
-    private Map<String, EncodedValue> encodedValueMap = new HashMap<>();
-    private final PropertyParser parser;
+    private Map<String, EncodedValue> encodedValues = new HashMap<>();
+    private Map<TagParser, EncodedValue> parsers = new HashMap<>();
+    private final TagsParser parser;
     private final int extendedDataSize;
+    private boolean initialized = false;
     private final FlagEncoder mockEncoder;
 
-    public EncodingManager(PropertyParser parser, int extendedDataSize) {
+    public EncodingManager(TagsParser parser, int extendedDataSize) {
         // we have to add a fake encoder that uses 0 bits for backward compatibility with EncodingManager08
         super(new CarFlagEncoder(0, 1, 0) {
             @Override
@@ -41,23 +43,28 @@ public class EncodingManager extends EncodingManager08 {
         this.extendedDataSize = Math.min(1, extendedDataSize / 4) * 4;
     }
 
-    public EncodingManager init(EncodedValue... properties) {
-        return init(Arrays.asList(properties));
+    public EncodingManager add(TagParser parser, EncodedValue ev) {
+        if (!parser.getName().equals(ev.getName()))
+            throw new IllegalArgumentException("TagParser and EncodedValue must have the same name but was " + parser.getName() + " vs. " + ev.getName());
+
+        this.encodedValues.put(ev.getName(), ev);
+        this.parsers.put(parser, ev);
+        return this;
     }
 
     /**
-     * This method freezes the encodedValueMap and defines their shift, dataIndex etc
+     * This method freezes the parserToValueMap and defines their shift, dataIndex etc
      * <p>
      * Note, that the order of the collection is not guaranteed being used as storage order and can change to optimize bit usage.
      */
-    public EncodingManager init(Collection<EncodedValue> properties) {
-        if (!this.encodedValueMap.isEmpty())
+    public EncodingManager init() {
+        if (initialized)
             throw new IllegalStateException("Cannot call init multiple times");
 
+        initialized = true;
         EncodedValue.InitializerConfig initializer = new EncodedValue.InitializerConfig();
-        for (EncodedValue prop : properties) {
-            prop.init(initializer);
-            this.encodedValueMap.put(prop.getName(), prop);
+        for (EncodedValue ev : parsers.values()) {
+            ev.init(initializer);
         }
 
         return this;
@@ -104,7 +111,7 @@ public class EncodingManager extends EncodingManager08 {
 
     @Override
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        parser.parse(way, edge, encodedValueMap.values());
+        parser.parse(way, edge, parsers);
     }
 
     /**
@@ -116,9 +123,9 @@ public class EncodingManager extends EncodingManager08 {
 
     // TODO should we add convenient getters like getStringProperty etc?
     public <T extends EncodedValue> T getEncodedValue(String key, Class<T> clazz) {
-        EncodedValue prop = encodedValueMap.get(key);
+        EncodedValue prop = encodedValues.get(key);
         if (prop == null)
-            throw new IllegalArgumentException("Cannot find encoded value " + key + " in existing: " + encodedValueMap);
+            throw new IllegalArgumentException("Cannot find encoded value " + key + " in existing: " + encodedValues);
         return (T) prop;
     }
 
@@ -140,7 +147,7 @@ public class EncodingManager extends EncodingManager08 {
     @Override
     public String toString() {
         String str = "";
-        for (EncodedValue p : encodedValueMap.values()) {
+        for (EncodedValue p : encodedValues.values()) {
             if (str.length() > 0)
                 str += ", ";
             str += p.getName();
@@ -152,7 +159,7 @@ public class EncodingManager extends EncodingManager08 {
     @Override
     public String toDetailsString() {
         String str = "";
-        for (EncodedValue p : encodedValueMap.values()) {
+        for (EncodedValue p : encodedValues.values()) {
             if (str.length() > 0)
                 str += ", ";
             str += p.toString();
@@ -180,7 +187,7 @@ public class EncodingManager extends EncodingManager08 {
 
     @Override
     public int hashCode() {
-        return encodedValueMap.hashCode();
+        return encodedValues.hashCode();
     }
 
     @Override
@@ -216,7 +223,7 @@ public class EncodingManager extends EncodingManager08 {
 
     @Override
     public boolean needsTurnCostsSupport() {
-        // TODO encodedValueMap per node
+        // TODO parserToValueMap per node
         return false;
     }
 }

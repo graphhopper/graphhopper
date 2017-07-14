@@ -1,7 +1,6 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.weighting.FastestCarWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphBuilder;
@@ -17,27 +16,19 @@ import static org.junit.Assert.assertTrue;
 public class EncodingManagerTest {
 
     private EncodingManager createEncodingManager() {
-        final EncodedValue maxSpeed = new DoubleEncodedValue("maxspeed", 5, 0, 2) {
-            @Override
-            public Object parse(ReaderWay way) {
-                return AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
-            }
-        };
-        final EncodedValue averageSpeed = new DoubleEncodedValue("averagespeed", 5, 0, 2) {
-            @Override
-            public Object parse(ReaderWay way) {
-                return (Double) maxSpeed.parse(way) * 0.9;
-            }
-        };
-        EncodedValue weight = new IntEncodedValue("weight", 5, 5);
-        StringEncodedValue highway = new StringEncodedValue("highway", Arrays.asList("primary", "secondary", "tertiary"), "tertiary");
-        // TODO MappedDoubleProperty (0->0,1->5,2->20,...)
-        // TODO BitEncodedValue, IntPairProperty, DoublePairProperty
+        TagParser highway = TagParserFactory.createHighway();
+        TagParser maxSpeed = TagParserFactory.Car.createMaxSpeed();
+        TagParser averageSpeed = TagParserFactory.Car.createAverageSpeed();
+        TagParser weight = TagParserFactory.Truck.createWeight();
 
         // do not add surface property to test exception below
-        PropertyParserOSM parser = new PropertyParserOSM();
+        TagsParserOSM parser = new TagsParserOSM();
         return new EncodingManager(parser, 4).
-                init(Arrays.asList(averageSpeed, maxSpeed, weight, highway));
+                add(averageSpeed, new DecimalEncodedValue(averageSpeed.getName(), 5, 0, 5)).
+                add(maxSpeed, new DecimalEncodedValue(maxSpeed.getName(), 5, 120, 5)).
+                add(weight, new IntEncodedValue("weight", 5, 5)).
+                add(highway, new StringEncodedValue(highway.getName(), Arrays.asList("primary", "secondary", "tertiary"), "tertiary")).
+                init();
     }
 
     @Test
@@ -55,8 +46,7 @@ public class EncodingManagerTest {
 
         encodingManager.applyWayTags(readerWay, edge);
 
-        // TODO avoid cast somehow
-        DoubleEncodedValue maxSpeed = encodingManager.getEncodedValue("maxspeed", DoubleEncodedValue.class);
+        DecimalEncodedValue maxSpeed = encodingManager.getEncodedValue("maxspeed", DecimalEncodedValue.class);
         IntEncodedValue weight = encodingManager.getEncodedValue("weight", IntEncodedValue.class);
         StringEncodedValue highway = encodingManager.getEncodedValue("highway", StringEncodedValue.class);
         assertEquals(30d, edge.get(maxSpeed), 1d);
@@ -76,7 +66,6 @@ public class EncodingManagerTest {
     public void testDefaultValue() {
         ReaderWay readerWay = new ReaderWay(0);
         readerWay.setTag("highway", "tertiary");
-        // interesting: we could move distance into a separate EncodedValue!!
 
         EncodingManager encodingManager = createEncodingManager();
         GraphHopperStorage g = new GraphBuilder(encodingManager).create();
@@ -86,12 +75,14 @@ public class EncodingManagerTest {
 
         IntEncodedValue weight = encodingManager.getEncodedValue("weight", IntEncodedValue.class);
         assertEquals(5, edge.get(weight));
+        DecimalEncodedValue speed = encodingManager.getEncodedValue("maxspeed", DecimalEncodedValue.class);
+        assertEquals(120, edge.get(speed), .1);
     }
 
     @Test
-    public void testMaxValueCheck() {
+    public void testValueBoundaryCheck() {
         ReaderWay readerWay = new ReaderWay(0);
-        readerWay.setTag("maxspeed", "80");
+        readerWay.setTag("maxspeed", "180");
 
         EncodingManager encodingManager = createEncodingManager();
         GraphHopperStorage g = new GraphBuilder(encodingManager).create();
@@ -124,10 +115,10 @@ public class EncodingManagerTest {
         GraphHopperStorage g = new GraphBuilder(encodingManager).create();
         EdgeIteratorState edge = g.edge(0, 1, 10, true);
 
-        DoubleEncodedValue maxSpeed = encodingManager.getEncodedValue("averagespeed", DoubleEncodedValue.class);
+        DecimalEncodedValue maxSpeed = encodingManager.getEncodedValue("averagespeed", DecimalEncodedValue.class);
         edge.set(maxSpeed, 26d);
 
-        assertEquals(10 / (26 * 0.9) * 3600, weighting.calcMillis(edge, false, -1), 1);
+        assertEquals(10 / ((26 / 5 * 5) * 0.9) * 3600, weighting.calcMillis(edge, false, -1), 1);
     }
 
     @Test
@@ -137,7 +128,7 @@ public class EncodingManagerTest {
     }
 
     @Test
-    public void testPropertySplittingAtVirtualEdges() {
+    public void testSplittingAtVirtualEdges() {
         // TODO
     }
 

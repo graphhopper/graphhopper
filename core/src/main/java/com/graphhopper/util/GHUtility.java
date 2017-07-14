@@ -23,7 +23,7 @@ import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.profiles.BitEncodedValue;
-import com.graphhopper.routing.profiles.DoubleEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -472,12 +472,12 @@ public class GHUtility {
         }
 
         @Override
-        public double get(DoubleEncodedValue property) {
+        public double get(DecimalEncodedValue property) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
         @Override
-        public void set(DoubleEncodedValue property, double value) {
+        public void set(DecimalEncodedValue property, double value) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 

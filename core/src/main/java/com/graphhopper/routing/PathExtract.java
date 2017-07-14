@@ -4,7 +4,7 @@ import com.graphhopper.routing.bwdcompat.AnnotationAccessor;
 import com.graphhopper.routing.bwdcompat.BoolAccessor;
 import com.graphhopper.routing.bwdcompat.SpeedAccessor;
 import com.graphhopper.routing.profiles.BitEncodedValue;
-import com.graphhopper.routing.profiles.DoubleEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodingManager;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager08;
@@ -44,7 +44,7 @@ public class PathExtract {
             };
         } catch (Exception ex) {
             EncodingManager em2 = (EncodingManager) encodingManager;
-            final DoubleEncodedValue maxspeed = em2.getEncodedValue("maxspeed", DoubleEncodedValue.class);
+            final DecimalEncodedValue maxspeed = em2.getEncodedValue("maxspeed", DecimalEncodedValue.class);
             speedAccessor = new SpeedAccessor() {
 
                 @Override

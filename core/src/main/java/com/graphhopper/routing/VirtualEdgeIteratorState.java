@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.profiles.BitEncodedValue;
-import com.graphhopper.routing.profiles.DoubleEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -172,12 +172,12 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public double get(DoubleEncodedValue property) {
+    public double get(DecimalEncodedValue property) {
         return property.fromStorageFormatToDouble(edgeData.ints[property.getOffset() + edgeData.offset]);
     }
 
     @Override
-    public void set(DoubleEncodedValue property, double value) {
+    public void set(DecimalEncodedValue property, double value) {
         int offset = property.getOffset() + edgeData.offset;
         edgeData.ints[offset] = property.toStorageFormatFromDouble(edgeData.ints[offset], value);
     }

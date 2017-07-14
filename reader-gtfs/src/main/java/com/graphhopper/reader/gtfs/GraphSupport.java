@@ -20,7 +20,7 @@ package com.graphhopper.reader.gtfs;
 
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.profiles.BitEncodedValue;
-import com.graphhopper.routing.profiles.DoubleEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -203,12 +203,12 @@ class GraphSupport {
                     }
 
                     @Override
-                    public double get(DoubleEncodedValue property) {
+                    public double get(DecimalEncodedValue property) {
                         return edge.get(property);
                     }
 
                     @Override
-                    public void set(DoubleEncodedValue property, double value) {
+                    public void set(DecimalEncodedValue property, double value) {
                         edge.set(property, value);
                     }
 

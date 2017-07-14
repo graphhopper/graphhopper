@@ -130,9 +130,9 @@ public interface EdgeIteratorState {
 
     void set(IntEncodedValue property, int value);
 
-    double get(DoubleEncodedValue property);
+    double get(DecimalEncodedValue property);
 
-    void set(DoubleEncodedValue property, double value);
+    void set(DecimalEncodedValue property, double value);
 
     String get(StringEncodedValue property);
 
