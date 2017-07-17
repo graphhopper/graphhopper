@@ -272,7 +272,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         for (String restriction : restrictions) {
             if (way.hasTag(restriction, "destination")) {
                 // This is problematic as Speed != Time
-                flags = this.speedEncoder.setDoubleValue(flags, destinationSpeed);
+                flags = setSpeed(flags, destinationSpeed);
             }
         }
 
