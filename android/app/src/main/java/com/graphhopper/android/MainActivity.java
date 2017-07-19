@@ -407,6 +407,7 @@ public class MainActivity extends Activity {
 
     private PathLayer createPathLayer(PathWrapper response) {
         Style style = Style.builder()
+                .fixed(true)
                 .generalization(Style.GENERALIZATION_SMALL)
                 .strokeColor(0x9900cc33)
                 .strokeWidth(4 * getResources().getDisplayMetrics().density)
