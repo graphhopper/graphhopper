@@ -1,6 +1,7 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.util.AbstractFlagEncoder;
 import com.graphhopper.routing.weighting.FastestCarWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.GraphBuilder;
@@ -10,24 +11,19 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class EncodingManagerTest {
 
     private EncodingManager createEncodingManager() {
-        TagParser highway = TagParserFactory.createHighway();
-        TagParser maxSpeed = TagParserFactory.Car.createMaxSpeed();
-        TagParser averageSpeed = TagParserFactory.Car.createAverageSpeed();
-        TagParser weight = TagParserFactory.Truck.createWeight();
-
         // do not add surface property to test exception below
         TagsParserOSM parser = new TagsParserOSM();
         return new EncodingManager(parser, 4).
-                add(averageSpeed, new DecimalEncodedValue(averageSpeed.getName(), 5, 0, 5)).
-                add(maxSpeed, new DecimalEncodedValue(maxSpeed.getName(), 5, 120, 5)).
-                add(weight, new IntEncodedValue("weight", 5, 5)).
-                add(highway, new StringEncodedValue(highway.getName(), Arrays.asList("primary", "secondary", "tertiary"), "tertiary")).
+                add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("averagespeed", 5, 0, 5, false))).
+                add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("maxspeed", 5, 120, 5, false))).
+                add(TagParserFactory.Truck.createWeight(new DecimalEncodedValue("weight", 5, 5, 1, false))).
+                add(TagParserFactory.createHighway(new StringEncodedValue("highway",
+                        Arrays.asList("primary", "secondary", "tertiary"), "tertiary"))).
                 init();
     }
 
@@ -122,6 +118,78 @@ public class EncodingManagerTest {
     }
 
     @Test
+    public void testDirectionDependentBit() {
+        final BitEncodedValue access = new BitEncodedValue("access", true);
+        TagParser directionParser = TagParserFactory.Car.createAccess(access);
+        TagsParserOSM parser = new TagsParserOSM();
+        EncodingManager encodingManager = new EncodingManager(parser, 4).
+                add(directionParser).
+                init();
+
+        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
+        EdgeIteratorState edge = g.edge(0, 1, 10, true);
+
+        ReaderWay readerWay = new ReaderWay(0);
+        readerWay.setTag("maxspeed", "30");
+        readerWay.setTag("highway", "tertiary");
+        readerWay.setTag("oneway", "yes");
+        encodingManager.applyWayTags(readerWay, edge);
+
+        assertTrue(edge.get(access));
+
+        EdgeIteratorState reverseEdge = edge.detach(true);
+        assertFalse(reverseEdge.get(access));
+    }
+
+    @Test
+    public void testDirectionDependentDecimal() {
+        final DecimalEncodedValue directed = new DecimalEncodedValue("directedspeed", 10, 0, 1, true);
+
+        TagParser directedSpeedParser = new TagParser() {
+
+            @Override
+            public String getName() {
+                return "directedspeed";
+            }
+
+            @Override
+            public void parse(EdgeSetter setter, ReaderWay way, EdgeIteratorState edgeState) {
+                final double speed = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
+                final double speedFW = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed:forward"));
+                setter.set(edgeState, directed, speedFW > 0 ? speedFW : speed);
+                // TODO NOW make this more efficient
+                setter.set(edgeState.detach(true), directed, speed);
+            }
+
+            @Override
+            public EncodedValue getEncodedValue() {
+                return directed;
+            }
+        };
+
+        TagsParserOSM parser = new TagsParserOSM();
+        EncodingManager encodingManager = new EncodingManager(parser, 4).
+                add(directedSpeedParser).
+                init();
+
+        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
+        EdgeIteratorState edge = g.edge(0, 1, 10, true);
+
+        ReaderWay readerWay = new ReaderWay(0);
+        readerWay.setTag("maxspeed", "30");
+        readerWay.setTag("maxspeed:forward", "50");
+        readerWay.setTag("highway", "tertiary");
+        encodingManager.applyWayTags(readerWay, edge);
+
+        assertEquals(50, edge.get(directed), .1);
+
+        EdgeIteratorState reverseEdge = edge.detach(true);
+        assertEquals(30, reverseEdge.get(directed), .1);
+
+        assertEquals(50, edge.get(directed), .1);
+    }
+
+    @Test
     public void testMoreThan4Bytes() {
         // TODO
         // return new EncodingManager(parser, 8).init(Arrays.asList(maxSpeed, weight, highway));
@@ -130,11 +198,6 @@ public class EncodingManagerTest {
     @Test
     public void testSplittingAtVirtualEdges() {
         // TODO
-    }
-
-    @Test
-    public void testReversePropertyPair() {
-        // TODO we should add special pair support to make the case "two-weights per edges" easier, e.g. forward and backward maxspeed
     }
 
     @Test

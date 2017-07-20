@@ -32,13 +32,13 @@ public final class StringEncodedValue extends IntEncodedValue {
         return res;
     }
 
-    public final int toStorageFormat(int flags, String value) {
+    public final int toStorageFormat(boolean reverse, int flags, String value) {
         int intValue = getIndex(value);
-        return super.toStorageFormat(flags, intValue);
+        return super.toStorageFormat(reverse, flags, intValue);
     }
 
-    public final String fromStorageFormatToString(int flags) {
-        int value = super.fromStorageFormatToInt(flags);
+    public final String fromStorageFormatToString(boolean reverse, int flags) {
+        int value = super.fromStorageFormatToInt(reverse, flags);
         if (value < 0 || value >= map.length)
             return map[defaultValue];
         return map[value];

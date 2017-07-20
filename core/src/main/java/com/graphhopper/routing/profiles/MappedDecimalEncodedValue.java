@@ -12,8 +12,8 @@ public class MappedDecimalEncodedValue extends IntEncodedValue {
     /**
      * TODO should we really use precision here or use something like the already used 'factor'?
      */
-    public MappedDecimalEncodedValue(String name, List<Double> values, double precision, Double defaultValue) {
-        super(name, (int) Long.highestOneBit(values.size()), -1);
+    public MappedDecimalEncodedValue(String name, List<Double> values, double precision, Double defaultValue, boolean store2DirectedValues) {
+        super(name, (int) Long.highestOneBit(values.size()), -1, store2DirectedValues);
 
         this.precision = precision;
         // store int-int mapping
@@ -38,17 +38,16 @@ public class MappedDecimalEncodedValue extends IntEncodedValue {
         return (int) Math.round(val / precision);
     }
 
-    public final int toStorageFormatFromDouble(int flags, double value) {
+    public final int toStorageFormatFromDouble(boolean reverse, int flags, double value) {
         int storageInt = toStorageMap.getOrDefault(toInt(value), -1);
         if (storageInt < 0)
             throw new IllegalArgumentException("Cannot find value " + value + " (" + toInt(value) + ") in map to store it");
 
-        return super.uncheckToStorageFormat(flags, storageInt);
+        return super.uncheckToStorageFormat(reverse, flags, storageInt);
     }
 
-
-    public final double fromStorageFormatToDouble(int flags) {
-        int value = fromStorageFormatToInt(flags);
+    public final double fromStorageFormatToDouble(boolean reverse, int flags) {
+        int value = fromStorageFormatToInt(reverse, flags);
         return toValueMap[value] * precision;
     }
 }

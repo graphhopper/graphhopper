@@ -18,6 +18,6 @@ public class StringEncodedValueTest {
         assertEquals(0, init.dataIndex);
         assertEquals(2, init.shift);
         assertEquals(1, init.propertyIndex);
-        assertEquals("secondary", prop.fromStorageFormatToString(-1));
+        assertEquals("secondary", prop.fromStorageFormatToString(false, -1));
     }
 }

@@ -23,18 +23,21 @@ public class IntEncodedValue implements EncodedValue {
 
     final int bits;
     int maxValue;
-    int shift;
-    int mask;
+    int fwdShift;
+    int bwdShift;
+    int fwdMask;
+    int bwdMask;
     int defaultValue;
+    boolean store2DirectedValues;
 
     public IntEncodedValue(String name, int bits) {
-        this(name, bits, 0);
+        this(name, bits, 0, false);
     }
 
     /**
-     * @param defaultValue this parameter defines which value to return if the 'raw' integer value is 0.
+     * @param defaultValue defines which value to return if the 'raw' integer value is 0.
      */
-    public IntEncodedValue(String name, int bits, int defaultValue) {
+    public IntEncodedValue(String name, int bits, int defaultValue, boolean store2DirectedValues) {
         this.name = name;
         if (!name.toLowerCase().equals(name))
             throw new IllegalArgumentException("EncodedValue name must be lower case but was " + name);
@@ -43,18 +46,25 @@ public class IntEncodedValue implements EncodedValue {
         if (bits <= 0)
             throw new IllegalArgumentException("bits cannot be 0 or negative");
         this.defaultValue = defaultValue;
+        this.store2DirectedValues = store2DirectedValues;
     }
 
     @Override
     public final void init(EncodedValue.InitializerConfig init) {
-        this.shift = init.shift;
         this.dataIndex = init.dataIndex;
-        this.mask = init.next(bits);
+
+        this.fwdShift = init.shift;
+        this.fwdMask = init.next(bits);
+        if (store2DirectedValues) {
+            this.bwdShift = init.shift;
+            this.bwdMask = init.next(bits);
+        }
+
         this.maxValue = (1 << bits) - 1;
     }
 
     private void checkValue(int value) {
-        if (mask == 0)
+        if (fwdMask == 0)
             throw new IllegalStateException("EncodedValue " + getName() + " not initialized");
         if (value > maxValue)
             throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
@@ -68,16 +78,21 @@ public class IntEncodedValue implements EncodedValue {
      *
      * @return the storable format that can be read via fromStorageFormatToInt
      */
-    public final int toStorageFormat(int flags, int value) {
+    public final int toStorageFormat(boolean reverse, int flags, int value) {
         checkValue(value);
-        return uncheckToStorageFormat(flags, value);
+        return uncheckToStorageFormat(reverse, flags, value);
     }
 
-    int uncheckToStorageFormat(int flags, int value) {
-        value <<= shift;
-
-        // clear value bits
-        flags &= ~mask;
+    final int uncheckToStorageFormat(boolean reverse, int flags, int value) {
+        if (store2DirectedValues && reverse) {
+            value <<= bwdShift;
+            // clear value bits
+            flags &= ~bwdMask;
+        } else {
+            value <<= fwdShift;
+            // clear value bits
+            flags &= ~fwdMask;
+        }
 
         // set value
         return flags | value;
@@ -86,13 +101,14 @@ public class IntEncodedValue implements EncodedValue {
     /**
      * This method restores the integer value from the specified 'flags' taken from the storage.
      */
-    public final int fromStorageFormatToInt(int flags) {
-        return uncheckFromStorageFormatToInt(flags);
-    }
-
-    int uncheckFromStorageFormatToInt(int flags) {
-        flags &= mask;
-        flags >>>= shift;
+    public final int fromStorageFormatToInt(boolean reverse, int flags) {
+        if (reverse && store2DirectedValues) {
+            flags &= bwdMask;
+            flags >>>= bwdShift;
+        } else {
+            flags &= fwdMask;
+            flags >>>= fwdShift;
+        }
         // return the integer value
         if (flags == 0)
             return defaultValue;
@@ -103,20 +119,21 @@ public class IntEncodedValue implements EncodedValue {
      * There are multiple int values possible per edge. Here we specify the index into this integer array.
      */
     public final int getOffset() {
-        assert mask != 0;
+        assert fwdMask != 0;
         return dataIndex;
     }
 
     @Override
     public final int hashCode() {
-        return mask ^ dataIndex;
+        return (bwdMask | fwdMask) ^ dataIndex;
     }
 
 
     @Override
     public final boolean equals(Object obj) {
         IntEncodedValue other = (IntEncodedValue) obj;
-        return other.mask == mask && other.bits == bits && other.dataIndex == dataIndex && other.name.equals(name);
+        return other.fwdMask == fwdMask && other.bwdMask == bwdMask && other.bits == bits
+                && other.dataIndex == dataIndex && other.name.equals(name);
     }
 
     @Override

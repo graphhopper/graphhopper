@@ -11,7 +11,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.util.*;
 
 /**
- * This class approaches the storage of edge parserToValueMap via orchestrating multiple EncodedValue-objects like maxspeed and
+ * This class approaches the storage of edge properties via orchestrating multiple EncodedValue-objects like maxspeed and
  * highway type that can be accessed in a Weighting and will be feeded in the Import (via TagsParser).
  */
 public class EncodingManager extends EncodingManager08 {
@@ -20,8 +20,8 @@ public class EncodingManager extends EncodingManager08 {
      * for backward compatibility we have to specify an encoder name ("vehicle")
      */
     public static final String ENCODER_NAME = "weighting";
-    private Map<String, EncodedValue> encodedValues = new HashMap<>();
-    private Map<TagParser, EncodedValue> parsers = new HashMap<>();
+    private Map<String, TagParser> parsers = new HashMap<>();
+
     private final TagsParser parser;
     private final int extendedDataSize;
     private boolean initialized = false;
@@ -43,17 +43,17 @@ public class EncodingManager extends EncodingManager08 {
         this.extendedDataSize = Math.min(1, extendedDataSize / 4) * 4;
     }
 
-    public EncodingManager add(TagParser parser, EncodedValue ev) {
-        if (!parser.getName().equals(ev.getName()))
-            throw new IllegalArgumentException("TagParser and EncodedValue must have the same name but was " + parser.getName() + " vs. " + ev.getName());
+    public EncodingManager add(TagParser parser) {
+        TagParser old = parsers.get(parser.getName());
+        if (old != null)
+            throw new IllegalArgumentException("Already existing parser " + parser.getName() + ": " + old);
 
-        this.encodedValues.put(ev.getName(), ev);
-        this.parsers.put(parser, ev);
+        this.parsers.put(parser.getName(), parser);
         return this;
     }
 
     /**
-     * This method freezes the parserToValueMap and defines their shift, dataIndex etc
+     * This method freezes the encoded values and defines their shift, dataIndex etc
      * <p>
      * Note, that the order of the collection is not guaranteed being used as storage order and can change to optimize bit usage.
      */
@@ -63,8 +63,8 @@ public class EncodingManager extends EncodingManager08 {
 
         initialized = true;
         EncodedValue.InitializerConfig initializer = new EncodedValue.InitializerConfig();
-        for (EncodedValue ev : parsers.values()) {
-            ev.init(initializer);
+        for (TagParser tp : parsers.values()) {
+            tp.getEncodedValue().init(initializer);
         }
 
         return this;
@@ -111,7 +111,7 @@ public class EncodingManager extends EncodingManager08 {
 
     @Override
     public void applyWayTags(ReaderWay way, EdgeIteratorState edge) {
-        parser.parse(way, edge, parsers);
+        parser.parse(way, edge, parsers.values());
     }
 
     /**
@@ -123,10 +123,10 @@ public class EncodingManager extends EncodingManager08 {
 
     // TODO should we add convenient getters like getStringProperty etc?
     public <T extends EncodedValue> T getEncodedValue(String key, Class<T> clazz) {
-        EncodedValue prop = encodedValues.get(key);
+        TagParser prop = parsers.get(key);
         if (prop == null)
-            throw new IllegalArgumentException("Cannot find encoded value " + key + " in existing: " + encodedValues);
-        return (T) prop;
+            throw new IllegalArgumentException("Cannot find parser " + key + " for encoded value in existing collection: " + parsers);
+        return (T) prop.getEncodedValue();
     }
 
     @Override
@@ -147,7 +147,7 @@ public class EncodingManager extends EncodingManager08 {
     @Override
     public String toString() {
         String str = "";
-        for (EncodedValue p : encodedValues.values()) {
+        for (TagParser p : parsers.values()) {
             if (str.length() > 0)
                 str += ", ";
             str += p.getName();
@@ -159,10 +159,10 @@ public class EncodingManager extends EncodingManager08 {
     @Override
     public String toDetailsString() {
         String str = "";
-        for (EncodedValue p : encodedValues.values()) {
+        for (TagParser p : parsers.values()) {
             if (str.length() > 0)
                 str += ", ";
-            str += p.toString();
+            str += p.getName();
         }
 
         return str.toString();
@@ -187,7 +187,7 @@ public class EncodingManager extends EncodingManager08 {
 
     @Override
     public int hashCode() {
-        return encodedValues.hashCode();
+        return parsers.hashCode();
     }
 
     @Override
@@ -223,7 +223,7 @@ public class EncodingManager extends EncodingManager08 {
 
     @Override
     public boolean needsTurnCostsSupport() {
-        // TODO parserToValueMap per node
+        // TODO encoded values per node
         return false;
     }
 }

@@ -9,17 +9,17 @@ public class DecimalEncodedValueTest {
 
     @Test
     public void testInit() {
-        DecimalEncodedValue prop = new DecimalEncodedValue("test", 10, 50, 2);
+        DecimalEncodedValue prop = new DecimalEncodedValue("test", 10, 50, 2, false);
         prop.init(new EncodedValue.InitializerConfig());
-        assertEquals(10d, prop.fromStorageFormatToDouble(prop.toStorageFormatFromDouble(0, 10d)), 0.1);
+        assertEquals(10d, prop.fromStorageFormatToDouble(false, prop.toStorageFormatFromDouble(false, 0, 10d)), 0.1);
     }
 
     @Test
     public void testNegativeBounds() {
-        DecimalEncodedValue prop = new DecimalEncodedValue("test", 10, 50, 5);
+        DecimalEncodedValue prop = new DecimalEncodedValue("test", 10, 50, 5, false);
         prop.init(new EncodedValue.InitializerConfig());
         try {
-            prop.fromStorageFormatToDouble(prop.toStorageFormatFromDouble(0, -1));
+            prop.toStorageFormatFromDouble(false, 0, -1);
             assertTrue(false);
         } catch (Exception ex) {
         }

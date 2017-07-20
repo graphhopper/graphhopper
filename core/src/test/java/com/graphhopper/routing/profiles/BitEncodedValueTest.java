@@ -16,7 +16,7 @@ public class BitEncodedValueTest {
 
         BitEncodedValue bool = new BitEncodedValue("access");
         bool.init(config);
-        assertFalse(bool.fromStorageFormatToBool(bool.toStorageFormatFromBool(0, false)));
-        assertTrue(bool.fromStorageFormatToBool(bool.toStorageFormatFromBool(0, true)));
+        assertFalse(bool.fromStorageFormatToBool(false, bool.toStorageFormatFromBool(false, 0, false)));
+        assertTrue(bool.fromStorageFormatToBool(false, bool.toStorageFormatFromBool(false, 0, true)));
     }
 }

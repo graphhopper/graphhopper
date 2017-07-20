@@ -16,19 +16,19 @@ public class MappedDecimalEncodedValueTest {
     @Before
     public void setup() {
         List<Double> list = Arrays.asList(1d, 2d, 4.5, 6d);
-        maxweight = new MappedDecimalEncodedValue("maxweight", list, 0.1, 6d);
+        maxweight = new MappedDecimalEncodedValue("maxweight", list, 0.1, 6d, false);
         maxweight.init(new EncodedValue.InitializerConfig());
     }
 
     @Test
     public void testMapping() {
-        assertEquals(4.5, maxweight.fromStorageFormatToDouble(maxweight.toStorageFormatFromDouble(0, 4.5)), 0.01);
+        assertEquals(4.5, maxweight.fromStorageFormatToDouble(false, maxweight.toStorageFormatFromDouble(false, 0, 4.5)), 0.01);
     }
 
     @Test
     public void testMappingError() {
         try {
-            maxweight.toStorageFormatFromDouble(0, 4);
+            maxweight.toStorageFormatFromDouble(false, 0, 4);
             assertTrue(false);
         } catch (Exception ex) {
         }
