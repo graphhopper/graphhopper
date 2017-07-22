@@ -1,5 +1,7 @@
 package com.graphhopper.routing.profiles;
 
+import com.graphhopper.storage.IntsRef;
+
 /**
  * This class holds a decimal value and stores it as an integer value via a fixed factor and a maximum number
  * of bits.
@@ -24,17 +26,17 @@ public class DecimalEncodedValue extends IntEncodedValue {
         return (int) Math.round(val / factor);
     }
 
-    public final int toStorageFormatFromDouble(boolean reverse, int flags, double value) {
+    public final void setDecimal(boolean reverse, IntsRef ref, double value) {
         if (value > maxValue * factor)
             throw new IllegalArgumentException(getName() + " value too large for encoding: " + value + ", maxValue:" + maxValue);
         if (value < 0)
             throw new IllegalArgumentException("negative value for " + getName() + " not allowed! " + value);
 
-        return super.uncheckToStorageFormat(reverse, flags, toInt(value));
+        super.setInt(reverse, ref, toInt(value));
     }
 
-    public final double fromStorageFormatToDouble(boolean reverse, int flags) {
-        int value = fromStorageFormatToInt(reverse, flags);
+    public final double getDecimal(boolean reverse, IntsRef ref) {
+        int value = getInt(reverse, ref);
         return value * factor;
     }
 }

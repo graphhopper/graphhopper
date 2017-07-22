@@ -18,7 +18,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.profiles.BitEncodedValue;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
@@ -122,9 +122,9 @@ public interface EdgeIteratorState {
 
     // TODO NOW use getData instead of all the followin setter&getter here e.g. would avoid going down to
     // storage several times for several setter calls
-    boolean get(BitEncodedValue property);
+    boolean get(BooleanEncodedValue property);
 
-    void set(BitEncodedValue property, boolean value);
+    void set(BooleanEncodedValue property, boolean value);
 
     int get(IntEncodedValue property);
 

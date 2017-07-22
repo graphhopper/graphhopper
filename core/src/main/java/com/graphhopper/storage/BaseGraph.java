@@ -971,7 +971,7 @@ class BaseGraph implements Graph {
                 reverse = baseNode > adjNode;
                 freshFlags = false;
 
-                // position to next edge                
+                // position to next edge
                 nextEdgeId = edgeAccess.getEdgeRef(baseNode, adjNode, edgePointer);
                 assert nextEdgeId != edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
                         + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
@@ -1073,9 +1073,12 @@ class BaseGraph implements Graph {
         protected EdgeAccess edgeAccess;
         // we need reverse if detach is called
         boolean reverse = false;
-        boolean freshFlags;
         int edgeId = -1;
         private long cachedFlags;
+        boolean freshFlags;
+        private IntsRef edgeRowCache;
+        // avoid calling setData multiple times instead 'flush' on 'next' and use
+        // private boolean edgeRowCacheChanged;
 
         public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
             this.edgePointer = edgePointer;
@@ -1118,53 +1121,55 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public IntsRef getData() {
-            return edgeAccess.getData(edgePointer);
+        public final IntsRef getData() {
+            if (edgeRowCache == null)
+                edgeRowCache = edgeAccess.getData(edgePointer);
+
+            return edgeRowCache;
         }
 
         @Override
-        public boolean get(BitEncodedValue property) {
-            return property.fromStorageFormatToBool(reverse, edgeAccess.getData(edgePointer, property.getOffset()));
+        public boolean get(BooleanEncodedValue property) {
+            return property.getBool(reverse, getData());
         }
 
         @Override
-        public void set(BitEncodedValue property, boolean value) {
-            int flags = edgeAccess.getData(edgePointer, property.getOffset());
-            edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormatFromBool(reverse, flags, value));
+        public void set(BooleanEncodedValue property, boolean value) {
+            property.setBool(reverse, getData(), value);
+            edgeAccess.setData(edgePointer, getData());
         }
 
         @Override
         public int get(IntEncodedValue property) {
-            return property.fromStorageFormatToInt(reverse, edgeAccess.getData(edgePointer, property.getOffset()));
+            return property.getInt(reverse, getData());
         }
 
         @Override
         public void set(IntEncodedValue property, int value) {
-            int flags = edgeAccess.getData(edgePointer, property.getOffset());
-            edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormat(reverse, flags, value));
+            property.setInt(reverse, getData(), value);
+            edgeAccess.setData(edgePointer, getData());
         }
 
         @Override
         public String get(StringEncodedValue property) {
-            return property.fromStorageFormatToString(reverse, edgeAccess.getData(edgePointer, property.getOffset()));
+            return property.getString(reverse, getData());
         }
 
         @Override
         public void set(StringEncodedValue property, String value) {
-            int flags = edgeAccess.getData(edgePointer, property.getOffset());
-            edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormat(reverse, flags, value));
+            property.setString(reverse, getData(), value);
+            edgeAccess.setData(edgePointer, getData());
         }
 
         @Override
         public double get(DecimalEncodedValue property) {
-            int flags = edgeAccess.getData(edgePointer, property.getOffset());
-            return property.fromStorageFormatToDouble(reverse, flags);
+            return property.getDecimal(reverse, getData());
         }
 
         @Override
         public void set(DecimalEncodedValue property, double value) {
-            int flags = edgeAccess.getData(edgePointer, property.getOffset());
-            edgeAccess.setData(edgePointer, property.getOffset(), property.toStorageFormatFromDouble(reverse, flags, value));
+            property.setDecimal(reverse, getData(), value);
+            edgeAccess.setData(edgePointer, getData());
         }
 
         @Override

@@ -7,7 +7,6 @@ public interface TagParser {
 
     String getName();
 
-    // TODO Every tag parser has an EncodedValue associated but except for convenient usage in EncodingManager we currently do not need this method
     EncodedValue getEncodedValue();
 
     /**

@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.profiles.BitEncodedValue;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.profiles.StringEncodedValue;
@@ -139,47 +139,43 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public void set(BitEncodedValue property, boolean value) {
-        int offset = property.getOffset() + edgeData.offset;
-        edgeData.ints[offset] = property.toStorageFormatFromBool(false, edgeData.ints[offset], value);
+    public void set(BooleanEncodedValue property, boolean value) {
+        property.setBool(false, edgeData, value);
     }
 
     @Override
-    public boolean get(BitEncodedValue property) {
-        return property.fromStorageFormatToBool(false, edgeData.ints[property.getOffset() + edgeData.offset]);
+    public boolean get(BooleanEncodedValue property) {
+        return property.getBool(false, edgeData);
     }
 
     @Override
     public int get(IntEncodedValue property) {
-        return property.fromStorageFormatToInt(false, edgeData.ints[property.getOffset() + edgeData.offset]);
+        return property.getInt(false, edgeData);
     }
 
     @Override
     public void set(IntEncodedValue property, int value) {
-        int offset = property.getOffset() + edgeData.offset;
-        edgeData.ints[offset] = property.toStorageFormat(false, edgeData.ints[offset], value);
+        property.setInt(false, edgeData, value);
     }
 
     @Override
     public String get(StringEncodedValue property) {
-        return property.fromStorageFormatToString(false, edgeData.ints[property.getOffset() + edgeData.offset]);
+        return property.getString(false, edgeData);
     }
 
     @Override
     public void set(StringEncodedValue property, String value) {
-        int offset = property.getOffset() + edgeData.offset;
-        edgeData.ints[offset] = property.toStorageFormat(false, edgeData.ints[offset], value);
+        property.setString(false, edgeData, value);
     }
 
     @Override
     public double get(DecimalEncodedValue property) {
-        return property.fromStorageFormatToDouble(false, edgeData.ints[property.getOffset() + edgeData.offset]);
+        return property.getDecimal(false, edgeData);
     }
 
     @Override
     public void set(DecimalEncodedValue property, double value) {
-        int offset = property.getOffset() + edgeData.offset;
-        edgeData.ints[offset] = property.toStorageFormatFromDouble(false, edgeData.ints[offset], value);
+        property.setDecimal(false, edgeData, value);
     }
 
     @Override

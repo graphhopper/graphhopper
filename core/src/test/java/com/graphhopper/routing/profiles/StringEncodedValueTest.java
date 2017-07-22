@@ -1,5 +1,6 @@
 package com.graphhopper.routing.profiles;
 
+import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -18,6 +19,9 @@ public class StringEncodedValueTest {
         assertEquals(0, init.dataIndex);
         assertEquals(2, init.shift);
         assertEquals(1, init.propertyIndex);
-        assertEquals("secondary", prop.fromStorageFormatToString(false, -1));
+        IntsRef ref = new IntsRef(1);
+        // some invalid value should force default?
+        ref.ints[0] = -1;
+        assertEquals("secondary", prop.getString(false, ref));
     }
 }

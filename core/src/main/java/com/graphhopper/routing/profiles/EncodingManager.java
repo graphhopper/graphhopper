@@ -44,6 +44,9 @@ public class EncodingManager extends EncodingManager08 {
     }
 
     public EncodingManager add(TagParser parser) {
+        if (initialized)
+            throw new IllegalStateException("Cannot call add after init");
+
         TagParser old = parsers.get(parser.getName());
         if (old != null)
             throw new IllegalArgumentException("Already existing parser " + parser.getName() + ": " + old);
@@ -121,7 +124,22 @@ public class EncodingManager extends EncodingManager08 {
         return extendedDataSize;
     }
 
-    // TODO should we add convenient getters like getStringProperty etc?
+    public StringEncodedValue getEncodedValueString(String key) {
+        return getEncodedValue(key, StringEncodedValue.class);
+    }
+
+    public BooleanEncodedValue getBooleanEncodedValue(String key) {
+        return getEncodedValue(key, BooleanEncodedValue.class);
+    }
+
+    public IntEncodedValue getIntEncodedValue(String key) {
+        return getEncodedValue(key, IntEncodedValue.class);
+    }
+
+    public DecimalEncodedValue getDecimalEncodedValue(String key) {
+        return getEncodedValue(key, DecimalEncodedValue.class);
+    }
+
     public <T extends EncodedValue> T getEncodedValue(String key, Class<T> clazz) {
         TagParser prop = parsers.get(key);
         if (prop == null)

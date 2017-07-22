@@ -1,5 +1,6 @@
 package com.graphhopper.routing.profiles;
 
+import com.graphhopper.storage.IntsRef;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -22,13 +23,15 @@ public class MappedDecimalEncodedValueTest {
 
     @Test
     public void testMapping() {
-        assertEquals(4.5, maxweight.fromStorageFormatToDouble(false, maxweight.toStorageFormatFromDouble(false, 0, 4.5)), 0.01);
+        IntsRef ref = new IntsRef(1);
+        maxweight.setDecimal(false, ref, 4.5);
+        assertEquals(4.5, maxweight.getDecimal(false, ref), 0.01);
     }
 
     @Test
     public void testMappingError() {
         try {
-            maxweight.toStorageFormatFromDouble(false, 0, 4);
+            maxweight.setDecimal(false, new IntsRef(0), 4);
             assertTrue(false);
         } catch (Exception ex) {
         }

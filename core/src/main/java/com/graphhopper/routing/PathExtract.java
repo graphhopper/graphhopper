@@ -3,7 +3,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.bwdcompat.AnnotationAccessor;
 import com.graphhopper.routing.bwdcompat.BoolAccessor;
 import com.graphhopper.routing.bwdcompat.SpeedAccessor;
-import com.graphhopper.routing.profiles.BitEncodedValue;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodingManager;
 import com.graphhopper.routing.util.DataFlagEncoder;
@@ -52,7 +52,7 @@ public class PathExtract {
                     return edge.get(maxspeed);
                 }
             };
-            final BitEncodedValue roundabout = em2.getEncodedValue("roundabout", BitEncodedValue.class);
+            final BooleanEncodedValue roundabout = em2.getEncodedValue("roundabout", BooleanEncodedValue.class);
             roundaboutAccess = new BoolAccessor() {
                 @Override
                 public boolean get(EdgeIteratorState edge) {

@@ -1,7 +1,6 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.util.Collection;
@@ -22,8 +21,8 @@ public class TagsParserOSM implements TagsParser {
                 edgeState.set((StringEncodedValue) encodedValue, (String) value);
             } else if (encodedValue instanceof DecimalEncodedValue) {
                 edgeState.set((DecimalEncodedValue) encodedValue, ((Number) value).doubleValue());
-            } else if (encodedValue instanceof BitEncodedValue) {
-                edgeState.set((BitEncodedValue) encodedValue, (Boolean) value);
+            } else if (encodedValue instanceof BooleanEncodedValue) {
+                edgeState.set((BooleanEncodedValue) encodedValue, (Boolean) value);
             } else if (encodedValue instanceof IntEncodedValue) {
                 edgeState.set((IntEncodedValue) encodedValue, ((Number) value).intValue());
             } else {

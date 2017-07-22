@@ -98,22 +98,26 @@ abstract class EdgeAccess {
         return val / INT_DIST_FACTOR;
     }
 
-    int getData(long edgePointer, int offset) {
-        return edges.getInt(edgePointer + E_EXT_BYTES_OFFSET + offset);
-    }
-
     IntsRef getData(long edgePointer) {
-        // TODO PERFORMANCE reuse object similar to what we do with flags#
-        // or even better: use the DataAccess array directly with a different offset!
-        IntsRef ints = new IntsRef(edgeDataSizeInBytes / 4);
+        // TODO PERFORMANCE use the DataAccess array directly with a different offset
+        IntsRef ints;
+        if (edgeDataSizeInBytes < 4)
+            ints = IntsRef.EMPTY;
+            // we cannot throw an exception here as otherwise QueryGraph cannot call getData to copy it into the virtual edges -> TODO?
+            // throw new IllegalArgumentException("To use encoded values you have to set extendedDataSize at least to 4");
+        else
+            ints = new IntsRef(edgeDataSizeInBytes / 4);
+        
         for (int i = 0; i < ints.length; i++) {
             ints.ints[i] = edges.getInt(edgePointer + E_EXT_BYTES_OFFSET + i);
         }
         return ints;
     }
 
-    void setData(long edgePointer, int offset, int value) {
-        edges.setInt(edgePointer + E_EXT_BYTES_OFFSET + offset, value);
+    void setData(long edgePointer, IntsRef ref) {
+        for (int i = 0; i < ref.ints.length; i++) {
+            edges.setInt(edgePointer + E_EXT_BYTES_OFFSET + i, ref.ints[i]);
+        }
     }
 
     final long getFlags_(long edgePointer, boolean reverse) {

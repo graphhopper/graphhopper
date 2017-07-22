@@ -1,22 +1,25 @@
 package com.graphhopper.routing.profiles;
 
+import com.graphhopper.storage.IntsRef;
+
 /**
  * This class provides easy access to just one bit.
  */
-public final class BitEncodedValue extends IntEncodedValue {
+public final class BooleanEncodedValue extends IntEncodedValue {
 
     /**
      * The default value is false.
      */
-    public BitEncodedValue(String name) {
+    public BooleanEncodedValue(String name) {
         super(name, 1);
     }
 
-    public BitEncodedValue(String name, boolean store2DirectedValues) {
+    public BooleanEncodedValue(String name, boolean store2DirectedValues) {
         super(name, 1, 0, store2DirectedValues);
     }
 
-    public final int toStorageFormatFromBool(boolean reverse, int flags, boolean value) {
+    public final void setBool(boolean reverse, IntsRef ref, boolean value) {
+        int flags = ref.ints[getDataIndex() + ref.offset];
         // clear value bits
         flags &= ~fwdMask;
         if (store2DirectedValues && reverse) {
@@ -26,22 +29,22 @@ public final class BitEncodedValue extends IntEncodedValue {
                 int intValue = 1;
                 intValue <<= bwdShift;
                 // set value
-                return flags | intValue;
+                flags = flags | intValue;
             }
-            return flags;
+        } else {
+            if (value) {
+                int intValue = 1;
+                intValue <<= fwdShift;
+                // set value
+                flags = flags | intValue;
+            }
         }
 
-        if (value) {
-            int intValue = 1;
-            intValue <<= fwdShift;
-            // set value
-            return flags | intValue;
-        }
-
-        return flags;
+        ref.ints[getDataIndex()] = flags;
     }
 
-    public final boolean fromStorageFormatToBool(boolean reverse, int flags) {
+    public final boolean getBool(boolean reverse, IntsRef ref) {
+        int flags = ref.ints[getDataIndex() + ref.offset];
         if (store2DirectedValues && reverse) {
             flags &= bwdMask;
             flags >>>= bwdMask;

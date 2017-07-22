@@ -19,7 +19,7 @@
 package com.graphhopper.reader.gtfs;
 
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.profiles.BitEncodedValue;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -183,12 +183,12 @@ class GraphSupport {
                     }
 
                     @Override
-                    public void set(BitEncodedValue property, boolean value) {
+                    public void set(BooleanEncodedValue property, boolean value) {
                         edge.set(property, value);
                     }
 
                     @Override
-                    public boolean get(BitEncodedValue property) {
+                    public boolean get(BooleanEncodedValue property) {
                         return edge.get(property);
                     }
 

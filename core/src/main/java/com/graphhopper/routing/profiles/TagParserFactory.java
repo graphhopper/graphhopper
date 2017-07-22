@@ -6,7 +6,7 @@ import com.graphhopper.util.EdgeIteratorState;
 
 public class TagParserFactory {
 
-    public static TagParser createRoundabout(final BitEncodedValue ev) {
+    public static TagParser createRoundabout(final BooleanEncodedValue ev) {
         return new TagParser() {
             @Override
             public void parse(EdgeSetter setter, ReaderWay way, EdgeIteratorState edgeState) {
@@ -88,7 +88,7 @@ public class TagParserFactory {
             };
         }
 
-        public static TagParser createAccess(final BitEncodedValue access) {
+        public static TagParser createAccess(final BooleanEncodedValue access) {
             return new TagParser() {
 
                 @Override

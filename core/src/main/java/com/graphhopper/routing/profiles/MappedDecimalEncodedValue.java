@@ -1,8 +1,10 @@
 package com.graphhopper.routing.profiles;
 
+import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntIntHashMap;
+import com.graphhopper.storage.IntsRef;
 
-import java.util.List;
+import java.util.Collection;
 
 public class MappedDecimalEncodedValue extends IntEncodedValue {
     private final int toValueMap[];
@@ -10,9 +12,10 @@ public class MappedDecimalEncodedValue extends IntEncodedValue {
     private final double precision;
 
     /**
-     * TODO should we really use precision here or use something like the already used 'factor'?
+     * This class allows to store a value efficiently if it can take only a few decimal values that are not necessarily
+     * consecutive.
      */
-    public MappedDecimalEncodedValue(String name, List<Double> values, double precision, Double defaultValue, boolean store2DirectedValues) {
+    public MappedDecimalEncodedValue(String name, Collection<Double> values, double precision, Double defaultValue, boolean store2DirectedValues) {
         super(name, (int) Long.highestOneBit(values.size()), -1, store2DirectedValues);
 
         this.precision = precision;
@@ -21,8 +24,12 @@ public class MappedDecimalEncodedValue extends IntEncodedValue {
         toStorageMap = new IntIntHashMap(values.size());
 
         int index = 0;
+        IntHashSet dupCheck = new IntHashSet();
         for (double val : values) {
             int intVal = toInt(val);
+            if (!dupCheck.add(intVal)) {
+                throw new IllegalArgumentException("The value " + val + " was converted to " + intVal + " but this already exists. Remove it to improve efficiency.");
+            }
             toValueMap[index] = intVal;
             toStorageMap.put(intVal, index);
             if (val == defaultValue)
@@ -38,16 +45,16 @@ public class MappedDecimalEncodedValue extends IntEncodedValue {
         return (int) Math.round(val / precision);
     }
 
-    public final int toStorageFormatFromDouble(boolean reverse, int flags, double value) {
+    public final void setDecimal(boolean reverse, IntsRef ref, double value) {
         int storageInt = toStorageMap.getOrDefault(toInt(value), -1);
         if (storageInt < 0)
             throw new IllegalArgumentException("Cannot find value " + value + " (" + toInt(value) + ") in map to store it");
 
-        return super.uncheckToStorageFormat(reverse, flags, storageInt);
+        super.setInt(reverse, ref, storageInt);
     }
 
-    public final double fromStorageFormatToDouble(boolean reverse, int flags) {
-        int value = fromStorageFormatToInt(reverse, flags);
+    public final double getDecimal(boolean reverse, IntsRef ref) {
+        int value = getInt(reverse, ref);
         return toValueMap[value] * precision;
     }
 }

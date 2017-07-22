@@ -1,5 +1,7 @@
 package com.graphhopper.routing.profiles;
 
+import com.graphhopper.storage.IntsRef;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -32,13 +34,13 @@ public final class StringEncodedValue extends IntEncodedValue {
         return res;
     }
 
-    public final int toStorageFormat(boolean reverse, int flags, String value) {
+    public final void setString(boolean reverse, IntsRef ref, String value) {
         int intValue = getIndex(value);
-        return super.toStorageFormat(reverse, flags, intValue);
+        super.setInt(reverse, ref, intValue);
     }
 
-    public final String fromStorageFormatToString(boolean reverse, int flags) {
-        int value = super.fromStorageFormatToInt(reverse, flags);
+    public final String getString(boolean reverse, IntsRef ref) {
+        int value = super.getInt(reverse, ref);
         if (value < 0 || value >= map.length)
             return map[defaultValue];
         return map[value];

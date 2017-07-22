@@ -26,7 +26,8 @@ public final class IntsRef implements Comparable<IntsRef>, Cloneable {
     /**
      * An IntsRef with an array of size 0.
      */
-    public static final IntsRef EMPTY = new IntsRef(0);
+    public static final IntsRef EMPTY = new IntsRef(0, false);
+
     /**
      * The contents of the IntsRef. Cannot be {@code null}.
      */
@@ -45,6 +46,12 @@ public final class IntsRef implements Comparable<IntsRef>, Cloneable {
      * Offset will be zero and length will be the capacity.
      */
     public IntsRef(int capacity) {
+        this(capacity, true);
+    }
+
+    private IntsRef(int capacity, boolean checked) {
+        if (checked && capacity == 0)
+            throw new IllegalArgumentException("Use instance EMPTY instead of capacity 0");
         ints = new int[capacity];
         length = capacity;
         offset = 0;

@@ -1,5 +1,7 @@
 package com.graphhopper.routing.profiles;
 
+import com.graphhopper.storage.IntsRef;
+
 /**
  * This class defines where to store an integer. It is important to note that 1. the range of the integer is
  * highly limited (unlike the Java 32bit integer values) so that the storeable part of it fits into the
@@ -78,12 +80,13 @@ public class IntEncodedValue implements EncodedValue {
      *
      * @return the storable format that can be read via fromStorageFormatToInt
      */
-    public final int toStorageFormat(boolean reverse, int flags, int value) {
+    public final void setInt(boolean reverse, IntsRef ref, int value) {
         checkValue(value);
-        return uncheckToStorageFormat(reverse, flags, value);
+        uncheckedSet(reverse, ref, value);
     }
 
-    final int uncheckToStorageFormat(boolean reverse, int flags, int value) {
+    final void uncheckedSet(boolean reverse, IntsRef ref, int value) {
+        int flags = ref.ints[getDataIndex() + ref.offset];
         if (store2DirectedValues && reverse) {
             value <<= bwdShift;
             // clear value bits
@@ -93,15 +96,15 @@ public class IntEncodedValue implements EncodedValue {
             // clear value bits
             flags &= ~fwdMask;
         }
-
         // set value
-        return flags | value;
+        ref.ints[getDataIndex()] = flags | value;
     }
 
     /**
      * This method restores the integer value from the specified 'flags' taken from the storage.
      */
-    public final int fromStorageFormatToInt(boolean reverse, int flags) {
+    public final int getInt(boolean reverse, IntsRef ref) {
+        int flags = ref.ints[getDataIndex() + ref.offset];
         if (reverse && store2DirectedValues) {
             flags &= bwdMask;
             flags >>>= bwdShift;
@@ -118,7 +121,7 @@ public class IntEncodedValue implements EncodedValue {
     /**
      * There are multiple int values possible per edge. Here we specify the index into this integer array.
      */
-    public final int getOffset() {
+    final int getDataIndex() {
         assert fwdMask != 0;
         return dataIndex;
     }

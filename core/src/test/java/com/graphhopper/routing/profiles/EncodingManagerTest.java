@@ -119,7 +119,7 @@ public class EncodingManagerTest {
 
     @Test
     public void testDirectionDependentBit() {
-        final BitEncodedValue access = new BitEncodedValue("access", true);
+        final BooleanEncodedValue access = new BooleanEncodedValue("access", true);
         TagParser directionParser = TagParserFactory.Car.createAccess(access);
         TagsParserOSM parser = new TagsParserOSM();
         EncodingManager encodingManager = new EncodingManager(parser, 4).

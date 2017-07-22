@@ -813,7 +813,7 @@ public class OSMReaderTest {
         final EncodingManager em = new EncodingManager(parser, 4).
                 add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("maxspeed", 5, 0, 5, false))).
                 add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("averagespeed", 5, 0, 5, false))).
-                add(TagParserFactory.createRoundabout(new BitEncodedValue("roundabout"))).
+                add(TagParserFactory.createRoundabout(new BooleanEncodedValue("roundabout"))).
                 init();
         GraphHopper hopper = new GraphHopperOSM() {
             @Override

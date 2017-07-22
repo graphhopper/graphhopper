@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.profiles.BitEncodedValue;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
@@ -134,12 +134,12 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
-    public void set(BitEncodedValue property, boolean value) {
+    public void set(BooleanEncodedValue property, boolean value) {
         edges.get(current).set(property, value);
     }
 
     @Override
-    public boolean get(BitEncodedValue property) {
+    public boolean get(BooleanEncodedValue property) {
         return edges.get(current).get(property);
     }
 
