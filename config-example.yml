@@ -128,3 +128,13 @@ graphhopper:
   # You might want to do this if you are only importing a small area and don't need rules for other countries.
   # Having less rules, might result in a smaller graph. The line below contains the world-wide bounding box, uncomment and adapt to your need.
   # spatial_rules.max_bbox: -180,180,-90,90
+
+
+# Dropwizard server configuration
+server:
+  applicationConnectors:
+  - type: http
+    port: 8989
+  adminConnectors:
+  - type: http
+    port: 8990
