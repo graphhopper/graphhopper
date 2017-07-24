@@ -46,7 +46,7 @@ public class NearestResourceWithEleIT {
                 put("graph.elevation.cachedir", "../core/files/").
                 put(Parameters.CH.PREPARE + "weightings", "no").
                 put("prepare.min_one_way_network_size", "0").
-                put("config", "../config-example.properties").
+                put("graph.flag_encoders", "car").
                 put("datareader.file", "../core/files/monaco.osm.gz").
                 put("graph.location", dir));
     }

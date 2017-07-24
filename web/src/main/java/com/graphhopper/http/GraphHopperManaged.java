@@ -42,13 +42,13 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 
 @Singleton
-class GraphHopperManaged implements Managed {
+public class GraphHopperManaged implements Managed {
 
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GraphHopper graphHopper;
 
     @Inject
-    GraphHopperManaged(CmdArgs configuration) {
+    public GraphHopperManaged(CmdArgs configuration) {
         // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
         graphHopper = new GraphHopperOSM() {
             @Override

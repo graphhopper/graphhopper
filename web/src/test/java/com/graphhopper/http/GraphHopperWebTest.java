@@ -20,6 +20,7 @@ package com.graphhopper.http;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.http.client.GraphHopperWeb;
 import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
 import org.junit.Test;

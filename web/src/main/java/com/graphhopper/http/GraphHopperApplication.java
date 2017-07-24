@@ -27,6 +27,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
+import com.graphhopper.http.cli.ImportCommand;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
@@ -45,6 +46,7 @@ public class GraphHopperApplication extends Application<GraphHopperServerConfigu
     public void initialize(Bootstrap<GraphHopperServerConfiguration> bootstrap) {
         bootstrap.addBundle(new GraphHopperBundle());
         bootstrap.addBundle(new AssetsBundle("/assets", "/webapp/", "index.html"));
+        bootstrap.addCommand(new ImportCommand());
     }
 
     @Override

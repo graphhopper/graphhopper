@@ -17,6 +17,7 @@
  */
 package com.graphhopper.http;
 
+import com.graphhopper.http.resources.NearestResource;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import io.dropwizard.testing.junit.DropwizardAppRule;
@@ -40,7 +41,8 @@ public class NearestResourceIT {
 
     static {
         config.graphhopper.merge(new CmdArgs().
-                put("config", "../config-example.properties").
+                put("graph.flag_encoders", "car").
+                put("prepare.ch.weightings", "fastest").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.location", dir));
     }

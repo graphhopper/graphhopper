@@ -42,7 +42,7 @@ public class GraphHopperLandmarksIT {
 
     static {
         config.graphhopper.merge(new CmdArgs().
-                put("config", "../config-example.properties").
+                put("graph.flag_encoders", "car").
                 put("prepare.ch.weightings", "fastest").
                 put("prepare.lm.weightings", "fastest").
                 put("datareader.file", "../core/files/belarus-east.osm.gz").

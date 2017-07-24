@@ -41,7 +41,6 @@ public class GraphHopperDataflagEncoderSpatialRulesIT {
 
     static {
         config.graphhopper.merge(new CmdArgs().
-                put("config", "../config-example.properties").
                 put("graph.flag_encoders", "generic").
                 put("prepare.ch.weightings", "no").
                 put("spatial_rules.location", "../core/files/spatialrules/countries.geo.json").

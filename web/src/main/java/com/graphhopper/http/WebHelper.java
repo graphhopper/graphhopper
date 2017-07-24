@@ -33,7 +33,7 @@ import java.net.URLEncoder;
  * @author Peter Karich
  */
 public class WebHelper {
-    static String encodeURL(String str) {
+    public static String encodeURL(String str) {
         try {
             return URLEncoder.encode(str, "UTF-8");
         } catch (UnsupportedEncodingException e) {
