@@ -1,4 +1,8 @@
 graphhopper:
+
+  # OpenStreetMap input file
+  datareader.file: core/files/monaco.osm.gz
+
   ##### Vehicles #####
 
 
