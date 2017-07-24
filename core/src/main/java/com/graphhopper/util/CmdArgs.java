@@ -44,35 +44,30 @@ public class CmdArgs extends PMap {
         super(map);
     }
 
-    /**
-     * @param fileStr        the file name of config.properties
-     * @param systemProperty the property name of the configuration. E.g. -Dgraphhopper.config
-     */
-    public static CmdArgs readFromConfig(String fileStr, String systemProperty) throws IOException {
-        if (systemProperty.startsWith("-D"))
-            systemProperty = systemProperty.substring(2);
+    private static CmdArgs argsFromPropertiesFile(String configLocation) {
+        CmdArgs cmdArgs = new CmdArgs();
+        Map<String, String> map = new LinkedHashMap<>();
+        try (InputStreamReader reader = new InputStreamReader(new FileInputStream(
+                new File(configLocation).getAbsoluteFile()), Helper.UTF_CS)) {
+            Helper.loadProperties(map, reader);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        cmdArgs.merge(map);
+        return cmdArgs;
+    }
 
-        String configLocation = System.getProperty(systemProperty);
-        if (Helper.isEmpty(configLocation))
-            configLocation = fileStr;
-
-        Map<String, String> map = new LinkedHashMap<String, String>();
-        Helper.loadProperties(map, new InputStreamReader(new FileInputStream(
-                new File(configLocation).getAbsoluteFile()), Helper.UTF_CS));
-        CmdArgs args = new CmdArgs();
-        args.merge(map);
-
-        // overwrite with system settings
-        Properties props = System.getProperties();
-        for (Entry<Object, Object> e : props.entrySet()) {
+    private static CmdArgs argsFromSystemProperties() {
+        CmdArgs cmdArgs = new CmdArgs();
+        for (Entry<Object, Object> e : System.getProperties().entrySet()) {
             String k = ((String) e.getKey());
             String v = ((String) e.getValue());
             if (k.startsWith("graphhopper.")) {
                 k = k.substring("graphhopper.".length());
-                args.put(k, v);
+                cmdArgs.put(k, v);
             }
         }
-        return args;
+        return cmdArgs;
     }
 
     /**
@@ -105,21 +100,15 @@ public class CmdArgs extends PMap {
         return new CmdArgs(map);
     }
 
-    /**
-     * Command line configuration overwrites the ones in the config file.
-     *
-     * @return a new CmdArgs object if necessary.
-     */
-    public static CmdArgs readFromConfigAndMerge(CmdArgs args, String configKey, String configSysAttr) {
-        String configVal = args.get(configKey, "");
-        if (!Helper.isEmpty(configVal)) {
-            try {
-                CmdArgs tmp = CmdArgs.readFromConfig(configVal, configSysAttr);
-                tmp.merge(args);
-                return tmp;
-            } catch (Exception ex) {
-                throw new RuntimeException(ex);
-            }
+    public static CmdArgs readFromConfigAndMerge(CmdArgs args) {
+        final CmdArgs argsFromSystemProperties = argsFromSystemProperties();
+        args.merge(argsFromSystemProperties);
+
+        String propertiesFile = args.get("config", "");
+        if (!Helper.isEmpty(propertiesFile)) {
+            final CmdArgs argsFromPropertiesFile = argsFromPropertiesFile(propertiesFile);
+            argsFromPropertiesFile.merge(args);
+            return argsFromPropertiesFile;
         }
         return args;
     }

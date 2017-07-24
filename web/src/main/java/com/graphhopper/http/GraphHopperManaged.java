@@ -28,6 +28,7 @@ import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.spatialrules.SpatialRuleLookupHelper;
+import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Parameters;
 import io.dropwizard.lifecycle.Managed;
 import org.slf4j.Logger;
@@ -47,7 +48,7 @@ class GraphHopperManaged implements Managed {
     private final GraphHopper graphHopper;
 
     @Inject
-    GraphHopperManaged(GraphHopperConfiguration configuration) {
+    GraphHopperManaged(CmdArgs configuration) {
         // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
         graphHopper = new GraphHopperOSM() {
             @Override
@@ -56,7 +57,7 @@ class GraphHopperManaged implements Managed {
                     return;
 
                 try {
-                    String location = configuration.cmdArgs.get(Parameters.Landmark.PREPARE + "split_area_location", "");
+                    String location = configuration.get(Parameters.Landmark.PREPARE + "split_area_location", "");
                     Reader reader = location.isEmpty() ? new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream()) : new FileReader(location);
                     JsonFeatureCollection jsonFeatureCollection = new GHJsonFactory().create().fromJson(reader, JsonFeatureCollection.class);
                     if (!jsonFeatureCollection.getFeatures().isEmpty()) {
@@ -80,8 +81,8 @@ class GraphHopperManaged implements Managed {
                 super.loadOrPrepareLM();
             }
         }.forServer();
-        SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, configuration.cmdArgs);
-        graphHopper.init(configuration.cmdArgs);
+        SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, configuration);
+        graphHopper.init(configuration);
     }
 
     @Override

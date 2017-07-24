@@ -35,20 +35,20 @@ import io.dropwizard.setup.Environment;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class GraphHopperApplication extends Application<GraphHopperConfiguration> {
+public class GraphHopperApplication extends Application<GraphHopperServerConfiguration> {
 
     public static void main(String[] args) throws Exception {
         new GraphHopperApplication().run(args);
     }
 
     @Override
-    public void initialize(Bootstrap<GraphHopperConfiguration> bootstrap) {
+    public void initialize(Bootstrap<GraphHopperServerConfiguration> bootstrap) {
         bootstrap.addBundle(new GraphHopperBundle());
         bootstrap.addBundle(new AssetsBundle("/assets", "/webapp/", "index.html"));
     }
 
     @Override
-    public void run(GraphHopperConfiguration configuration, Environment environment) throws Exception {
+    public void run(GraphHopperServerConfiguration configuration, Environment environment) throws Exception {
         environment.getObjectMapper().setDateFormat(new ISO8601DateFormat());
         environment.getObjectMapper().registerModule(new JtsModule());
         environment.getObjectMapper().setSerializationInclusion(JsonInclude.Include.NON_NULL);

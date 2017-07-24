@@ -37,19 +37,19 @@ import static org.junit.Assert.*;
 public class ChangeGraphResourceIT {
     private static final String DIR = "./target/andorra-gh/";
 
-    private static final GraphHopperConfiguration config = new GraphHopperConfiguration();
+    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.cmdArgs = new CmdArgs().
+        config.graphhopper.merge(new CmdArgs().
                 put(Parameters.CH.PREPARE + "weightings", "no").
                 put("graph.flag_encoders", "car").
                 put("web.change_graph.enabled", "true").
                 put("graph.location", DIR).
-                put("datareader.file", "../core/files/andorra.osm.pbf");
+                put("datareader.file", "../core/files/andorra.osm.pbf"));
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
 

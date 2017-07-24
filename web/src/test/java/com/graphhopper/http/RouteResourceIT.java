@@ -43,17 +43,17 @@ import static org.junit.Assert.*;
 public class RouteResourceIT {
     private static final String DIR = "./target/andorra-gh/";
 
-    private static final GraphHopperConfiguration config = new GraphHopperConfiguration();
+    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.cmdArgs = new CmdArgs().
+        config.graphhopper.merge(new CmdArgs().
                 put("config", "../config-example.properties").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
-                put("graph.location", DIR);
+                put("graph.location", DIR));
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
     @AfterClass

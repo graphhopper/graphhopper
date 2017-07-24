@@ -28,7 +28,7 @@ import com.graphhopper.util.CmdArgs;
 public class Import {
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
-        args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
+        args = CmdArgs.readFromConfigAndMerge(args);
         GraphHopper hopper = new GraphHopperOSM();
         SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(hopper, args);
         hopper.init(args);

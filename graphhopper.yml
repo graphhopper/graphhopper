@@ -1,4 +1,0 @@
-cmdArgs:
-  graph.location: vbb
-  gtfs.file: /Users/michaelzilske/wurst/vbb/1190951.zip
-  datareader.file: /Users/michaelzilske/wurst/brandenburg-latest.osm.pbf

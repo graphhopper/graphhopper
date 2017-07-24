@@ -37,21 +37,21 @@ import static org.junit.Assert.*;
 public class GraphHopperDataflagEncoderSpatialRulesIT {
     private static final String DIR = "./target/north-bayreuth-gh/";
 
-    private static final GraphHopperConfiguration config = new GraphHopperConfiguration();
+    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.cmdArgs = new CmdArgs().
+        config.graphhopper.merge(new CmdArgs().
                 put("config", "../config-example.properties").
                 put("graph.flag_encoders", "generic").
                 put("prepare.ch.weightings", "no").
                 put("spatial_rules.location", "../core/files/spatialrules/countries.geo.json").
                 put("spatial_rules.max_bbox", "11.4,11.7,49.9,50.1").
                 put("datareader.file", "../core/files/north-bayreuth.osm.gz").
-                put("graph.location", DIR);
+                put("graph.location", DIR));
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
 

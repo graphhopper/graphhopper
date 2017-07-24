@@ -36,21 +36,21 @@ import static org.junit.Assert.*;
 public class RouteResourceWithEleIT {
     private static final String dir = "./target/monaco-gh/";
 
-    private static final GraphHopperConfiguration config = new GraphHopperConfiguration();
+    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.cmdArgs = new CmdArgs().
+        config.graphhopper.merge(new CmdArgs().
                 put("graph.elevation.provider", "srtm").
                 put("graph.elevation.cachedir", "../core/files/").
                 put(Parameters.CH.PREPARE + "weightings", "no").
                 put("prepare.min_one_way_network_size", "0").
                 put("config", "../config-example.properties").
                 put("datareader.file", "../core/files/monaco.osm.gz").
-                put("graph.location", dir);
+                put("graph.location", dir));
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
 

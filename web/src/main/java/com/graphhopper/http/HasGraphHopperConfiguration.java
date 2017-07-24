@@ -19,32 +19,9 @@
 package com.graphhopper.http;
 
 import com.graphhopper.util.CmdArgs;
-import io.dropwizard.Configuration;
-import io.dropwizard.server.DefaultServerFactory;
 
-public class GraphHopperConfiguration extends Configuration {
+public interface HasGraphHopperConfiguration {
 
-    public static class Web {
-        long timeout = 3000;
-        boolean jsonp_allowed = false;
+    CmdArgs graphhopper();
 
-        public long getTimeout() {
-            return timeout;
-        }
-
-        public boolean isJsonpAllowed() {
-            return jsonp_allowed;
-        }
-    }
-
-    public CmdArgs cmdArgs = new CmdArgs();
-    public Web web = new Web();
-
-    public GraphHopperConfiguration() {
-        cmdArgs = CmdArgs.readFromConfigAndMerge(cmdArgs, "config", "graphhopper.config");
-    }
-
-    public Web web() {
-        return web;
-    }
 }

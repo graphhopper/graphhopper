@@ -38,10 +38,10 @@ import static org.junit.Assert.assertTrue;
 public class GraphHopperLandmarksIT {
     private static final String DIR = "./target/landmark-test-gh/";
 
-    private static final GraphHopperConfiguration config = new GraphHopperConfiguration();
+    private static final GraphHopperServerConfiguration config = new GraphHopperServerConfiguration();
 
     static {
-        config.cmdArgs = new CmdArgs().
+        config.graphhopper.merge(new CmdArgs().
                 put("config", "../config-example.properties").
                 put("prepare.ch.weightings", "fastest").
                 put("prepare.lm.weightings", "fastest").
@@ -51,11 +51,11 @@ public class GraphHopperLandmarksIT {
                 put("routing.ch.disabling_allowed", true).
                 put("routing.lm.disabling_allowed", true).
                 put("graph.location", DIR).
-                put("prepare.lm.min_network_size", 2); // force landmark creation even for tiny networks
+                put("prepare.lm.min_network_size", 2)); // force landmark creation even for tiny networks
     }
 
     @ClassRule
-    public static final DropwizardAppRule<GraphHopperConfiguration> app = new DropwizardAppRule(
+    public static final DropwizardAppRule<GraphHopperServerConfiguration> app = new DropwizardAppRule(
             GraphHopperApplication.class, config);
 
     @AfterClass
