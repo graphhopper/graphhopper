@@ -11,7 +11,7 @@ public final class BooleanEncodedValue extends IntEncodedValue {
      * The default value is false.
      */
     public BooleanEncodedValue(String name) {
-        super(name, 1);
+        this(name, false);
     }
 
     public BooleanEncodedValue(String name, boolean store2DirectedValues) {
@@ -19,39 +19,29 @@ public final class BooleanEncodedValue extends IntEncodedValue {
     }
 
     public final void setBool(boolean reverse, IntsRef ref, boolean value) {
-        int flags = ref.ints[getDataIndex() + ref.offset];
-        // clear value bits
-        flags &= ~fwdMask;
+        int flags = ref.ints[dataIndex + ref.offset];
         if (store2DirectedValues && reverse) {
             flags &= ~bwdMask;
+            // set value
+            if (value)
+                flags = flags | (1 << bwdShift);
 
-            if (value) {
-                int intValue = 1;
-                intValue <<= bwdShift;
-                // set value
-                flags = flags | intValue;
-            }
         } else {
-            if (value) {
-                int intValue = 1;
-                intValue <<= fwdShift;
-                // set value
-                flags = flags | intValue;
-            }
+            // clear value bits
+            flags &= ~fwdMask;
+            // set value
+            if (value)
+                flags = flags | (1 << fwdShift);
         }
 
-        ref.ints[getDataIndex()] = flags;
+        ref.ints[dataIndex + ref.offset] = flags;
     }
 
     public final boolean getBool(boolean reverse, IntsRef ref) {
-        int flags = ref.ints[getDataIndex() + ref.offset];
-        if (store2DirectedValues && reverse) {
-            flags &= bwdMask;
-            flags >>>= bwdMask;
-        } else {
-            flags &= fwdMask;
-            flags >>>= fwdShift;
-        }
-        return (flags & 1) == 1;
+        int flags = ref.ints[dataIndex + ref.offset];
+        if (store2DirectedValues && reverse)
+            return (((flags & bwdMask) >>> bwdShift) & 0x1) == 0x1;
+
+        return (((flags & fwdMask) >>> fwdShift) & 0x1) == 0x1;
     }
 }

@@ -792,7 +792,7 @@ class BaseGraph implements Graph {
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
         int len = pillarNodes.getSize();
         int dim = nodeAccess.getDimension();
-        long geoRefPosition = (long) geoRef * 4;
+        long geoRefPosition = geoRef * 4;
         int totalLen = len * dim * 4 + 4;
         ensureGeometry(geoRefPosition, totalLen);
         byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
@@ -970,6 +970,7 @@ class BaseGraph implements Graph {
                 adjNode = edgeAccess.getOtherNode(baseNode, edgePointer);
                 reverse = baseNode > adjNode;
                 freshFlags = false;
+                edgeRowCache = null;
 
                 // position to next edge
                 nextEdgeId = edgeAccess.getEdgeRef(baseNode, adjNode, edgePointer);
@@ -987,6 +988,9 @@ class BaseGraph implements Graph {
                 throw new IllegalStateException("call next before detaching or setEdgeId (edgeId:" + edgeId + " vs. next " + nextEdgeId + ")");
 
             EdgeIterable iter = edgeAccess.createSingleEdge(filter);
+            // TODO this saves a bit RAM and saves us from trouble that writes to the edgeRowCache do not force a re-read for other edge instances like the detached ones.
+            // Alternatives?
+            iter.edgeRowCache = edgeRowCache;
             boolean ret;
             if (reverseArg) {
                 ret = iter.init(edgeId, baseNode);
@@ -1076,7 +1080,7 @@ class BaseGraph implements Graph {
         int edgeId = -1;
         private long cachedFlags;
         boolean freshFlags;
-        private IntsRef edgeRowCache;
+        IntsRef edgeRowCache;
         // avoid calling setData multiple times instead 'flush' on 'next' and use
         // private boolean edgeRowCacheChanged;
 
@@ -1122,6 +1126,7 @@ class BaseGraph implements Graph {
 
         @Override
         public final IntsRef getData() {
+            // TODO include reverse
             if (edgeRowCache == null)
                 edgeRowCache = edgeAccess.getData(edgePointer);
 

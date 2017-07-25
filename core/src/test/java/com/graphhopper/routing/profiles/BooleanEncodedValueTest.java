@@ -7,7 +7,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertFalse;
 
 
-public class BitEncodedValueTest {
+public class BooleanEncodedValueTest {
 
     @Test
     public void testBit() {
@@ -22,5 +22,18 @@ public class BitEncodedValueTest {
         assertFalse(bool.getBool(false, ref));
         bool.setBool(false, ref, true);
         assertTrue(bool.getBool(false, ref));
+    }
+
+    @Test
+    public void testBitDirected() {
+        EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
+        BooleanEncodedValue bool = new BooleanEncodedValue("access", true);
+        bool.init(config);
+        IntsRef ref = new IntsRef(1);
+        bool.setBool(false, ref, false);
+        bool.setBool(true, ref, true);
+
+        assertFalse(bool.getBool(false, ref));
+        assertTrue(bool.getBool(true, ref));
     }
 }

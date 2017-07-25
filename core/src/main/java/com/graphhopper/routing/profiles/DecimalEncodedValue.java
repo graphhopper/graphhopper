@@ -28,7 +28,7 @@ public class DecimalEncodedValue extends IntEncodedValue {
 
     public final void setDecimal(boolean reverse, IntsRef ref, double value) {
         if (value > maxValue * factor)
-            throw new IllegalArgumentException(getName() + " value too large for encoding: " + value + ", maxValue:" + maxValue);
+            throw new IllegalArgumentException(getName() + " value too large for encoding: " + value + ", maxValue:" + maxValue * factor);
         if (value < 0)
             throw new IllegalArgumentException("negative value for " + getName() + " not allowed! " + value);
 

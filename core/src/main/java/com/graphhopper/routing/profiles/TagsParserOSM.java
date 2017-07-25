@@ -2,6 +2,8 @@ package com.graphhopper.routing.profiles;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.EdgeIteratorState;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
@@ -32,6 +34,7 @@ public class TagsParserOSM implements TagsParser {
     }
 
     private OSMSetter osmSetter;
+    private static Logger LOGGER = LoggerFactory.getLogger(TagsParserOSM.class);
 
     public TagsParserOSM() {
         this.osmSetter = new OSMSetter();
@@ -42,9 +45,14 @@ public class TagsParserOSM implements TagsParser {
         // TODO modify raw data instead of calling edge?
         // IntsRef ints = edgeState.getData()
 
-        for (TagParser tagParser : parsers) {
-            // parsing should allow to call edgeState.set multiple times (e.g. for composed values) without reimplementing this set method
-            tagParser.parse(osmSetter, way, edgeState);
+        try {
+            for (TagParser tagParser : parsers) {
+                // parsing should allow to call edgeState.set multiple times (e.g. for composed values) without reimplementing this set method
+                tagParser.parse(osmSetter, way, edgeState);
+            }
+        } catch (Exception ex) {
+            // TODO for now do not stop when there are errors
+            LOGGER.error("Cannot parse way to modify edge " + edgeState.getEdge() + ". Way: " + way, ex);
         }
     }
 }

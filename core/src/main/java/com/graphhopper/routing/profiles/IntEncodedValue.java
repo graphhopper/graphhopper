@@ -20,8 +20,10 @@ import com.graphhopper.storage.IntsRef;
 public class IntEncodedValue implements EncodedValue {
 
     private final String name;
-    // we do not have just one or two int values like with flags, we can have much more:
-    private int dataIndex;
+    /**
+     * There are multiple int values possible per edge. Here we specify the index into this integer array.
+     */
+    protected int dataIndex;
 
     final int bits;
     int maxValue;
@@ -53,6 +55,9 @@ public class IntEncodedValue implements EncodedValue {
 
     @Override
     public final void init(EncodedValue.InitializerConfig init) {
+        if (isInitialized())
+            throw new IllegalStateException("Cannot call init multiple times");
+
         this.dataIndex = init.dataIndex;
 
         this.fwdShift = init.shift;
@@ -65,8 +70,12 @@ public class IntEncodedValue implements EncodedValue {
         this.maxValue = (1 << bits) - 1;
     }
 
+    private boolean isInitialized() {
+        return fwdMask != 0;
+    }
+
     private void checkValue(int value) {
-        if (fwdMask == 0)
+        if (!isInitialized())
             throw new IllegalStateException("EncodedValue " + getName() + " not initialized");
         if (value > maxValue)
             throw new IllegalArgumentException(name + " value too large for encoding: " + value + ", maxValue:" + maxValue);
@@ -77,8 +86,6 @@ public class IntEncodedValue implements EncodedValue {
     /**
      * This method 'merges' the specified integer value with the specified 'flags' to return a value that can
      * be stored.
-     *
-     * @return the storable format that can be read via fromStorageFormatToInt
      */
     public final void setInt(boolean reverse, IntsRef ref, int value) {
         checkValue(value);
@@ -86,25 +93,25 @@ public class IntEncodedValue implements EncodedValue {
     }
 
     final void uncheckedSet(boolean reverse, IntsRef ref, int value) {
-        int flags = ref.ints[getDataIndex() + ref.offset];
+        int flags = ref.ints[dataIndex + ref.offset];
         if (store2DirectedValues && reverse) {
-            value <<= bwdShift;
             // clear value bits
             flags &= ~bwdMask;
+            value <<= bwdShift;
         } else {
-            value <<= fwdShift;
             // clear value bits
             flags &= ~fwdMask;
+            value <<= fwdShift;
         }
         // set value
-        ref.ints[getDataIndex()] = flags | value;
+        ref.ints[dataIndex + ref.offset] = flags | value;
     }
 
     /**
      * This method restores the integer value from the specified 'flags' taken from the storage.
      */
     public final int getInt(boolean reverse, IntsRef ref) {
-        int flags = ref.ints[getDataIndex() + ref.offset];
+        int flags = ref.ints[dataIndex + ref.offset];
         if (reverse && store2DirectedValues) {
             flags &= bwdMask;
             flags >>>= bwdShift;
@@ -116,14 +123,6 @@ public class IntEncodedValue implements EncodedValue {
         if (flags == 0)
             return defaultValue;
         return flags;
-    }
-
-    /**
-     * There are multiple int values possible per edge. Here we specify the index into this integer array.
-     */
-    final int getDataIndex() {
-        assert fwdMask != 0;
-        return dataIndex;
     }
 
     @Override

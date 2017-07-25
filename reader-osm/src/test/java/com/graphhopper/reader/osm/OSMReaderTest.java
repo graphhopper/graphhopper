@@ -808,11 +808,12 @@ public class OSMReaderTest {
     }
 
     @Test
-    public void testPropertyBasedEncodingManager() {
+    public void testEncodedValueBasedEncodingManager() {
         TagsParser parser = new TagsParserOSM();
         final EncodingManager em = new EncodingManager(parser, 4).
                 add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("maxspeed", 5, 0, 5, false))).
                 add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("averagespeed", 5, 0, 5, false))).
+                add(TagParserFactory.Car.createAccess(new BooleanEncodedValue("access", true))).
                 add(TagParserFactory.createRoundabout(new BooleanEncodedValue("roundabout"))).
                 init();
         GraphHopper hopper = new GraphHopperOSM() {
@@ -833,7 +834,8 @@ public class OSMReaderTest {
 //        }
         GHRequest req = new GHRequest(51.2492152, 9.4317166, 49, 10).
                 setVehicle(EncodingManager.ENCODER_NAME).
-                setWeighting("fastest2");
+                setWeighting("fastest2").
+                setAlgorithm("dijkstra");
 
         GHResponse ghRsp = hopper.route(req);
         assertFalse(ghRsp.getErrors().toString(), ghRsp.hasErrors());

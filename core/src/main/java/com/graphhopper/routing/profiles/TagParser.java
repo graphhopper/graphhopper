@@ -10,6 +10,11 @@ public interface TagParser {
     EncodedValue getEncodedValue();
 
     /**
+     * Filter out ways before they reach the parse method.
+     */
+    ReaderWayFilter getReadWayFilter();
+
+    /**
      * This method picks and transform its necessary values from specified way to create a result that
      * can be stored in the associated edge.
      */

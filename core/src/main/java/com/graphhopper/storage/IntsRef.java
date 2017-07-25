@@ -19,7 +19,10 @@ package com.graphhopper.storage;
 import java.util.Arrays;
 
 /**
- * Code and idea from Lucene but conceptionally different as it is immutable.
+ * Idea and most of the code is from Lucene. But the variables are final, except for the array content.
+ * <p>
+ * TODO should all variables of this class really be final? Then we could not implement a IntsRef-cache over multiple
+ * edges that is reused after edgeIterator.next() as the offset cannot be changed.
  */
 public final class IntsRef implements Comparable<IntsRef>, Cloneable {
 
@@ -146,21 +149,6 @@ public final class IntsRef implements Comparable<IntsRef>, Cloneable {
         return this.length - other.length;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append('[');
-        final int end = offset + length;
-        for (int i = offset; i < end; i++) {
-            if (i > offset) {
-                sb.append(' ');
-            }
-            sb.append(Integer.toHexString(ints[i]));
-        }
-        sb.append(']');
-        return sb.toString();
-    }
-
     /**
      * Creates a new IntsRef that points to a copy of the ints from
      * <code>other</code>
@@ -199,5 +187,20 @@ public final class IntsRef implements Comparable<IntsRef>, Cloneable {
             throw new IllegalStateException("offset+length out of bounds: offset=" + offset + ",length=" + length + ",ints.length=" + ints.length);
         }
         return true;
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append('[');
+        final int end = offset + length;
+        for (int i = offset; i < end; i++) {
+            if (i > offset) {
+                sb.append(' ');
+            }
+            sb.append(Integer.toHexString(ints[i]));
+        }
+        sb.append(']');
+        return sb.toString();
     }
 }

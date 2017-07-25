@@ -1,5 +1,6 @@
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodingManager;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -14,12 +15,12 @@ public class FastestCarWeighting implements Weighting {
     private final DecimalEncodedValue maxSpeed;
     private final DecimalEncodedValue averageSpeed;
     private final double maxSpeedValue;
+    private final BooleanEncodedValue access;
 
     public FastestCarWeighting(EncodingManager em, String name) {
         this.maxSpeed = em.getEncodedValue("maxspeed", DecimalEncodedValue.class);
         this.averageSpeed = em.getEncodedValue("averagespeed", DecimalEncodedValue.class);
-        // TODO
-        // maxSpeedValue = maxSpeed.getMaximum() / SPEED_CONV;
+        this.access = em.getEncodedValue("access", BooleanEncodedValue.class);
         this.maxSpeedValue = 100 / SPEED_CONV;
         this.name = name;
     }
@@ -31,6 +32,14 @@ public class FastestCarWeighting implements Weighting {
 
     @Override
     public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        // TODO consider reverse parameter of calcWeight method too or remove the need of it
+        // until then bidirectional algorithms won't work
+        if (reverse) {
+            throw new IllegalArgumentException("Bidirectional algorithms currently not supported");
+        } else if (!edgeState.get(access)) {
+            return Double.POSITIVE_INFINITY;
+        }
+
         double speed = edgeState.get(averageSpeed);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;

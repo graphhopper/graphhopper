@@ -100,6 +100,7 @@ abstract class EdgeAccess {
 
     IntsRef getData(long edgePointer) {
         // TODO PERFORMANCE use the DataAccess array directly with a different offset
+        // TODO Everything is int-based: the dataIndex, the offset and the EncodedValue hierarchy with the 'int'-value as base
         IntsRef ints;
         if (edgeDataSizeInBytes < 4)
             ints = IntsRef.EMPTY;
@@ -107,16 +108,16 @@ abstract class EdgeAccess {
             // throw new IllegalArgumentException("To use encoded values you have to set extendedDataSize at least to 4");
         else
             ints = new IntsRef(edgeDataSizeInBytes / 4);
-        
+
         for (int i = 0; i < ints.length; i++) {
-            ints.ints[i] = edges.getInt(edgePointer + E_EXT_BYTES_OFFSET + i);
+            ints.ints[i] = edges.getInt(edgePointer + E_EXT_BYTES_OFFSET + i * 4);
         }
         return ints;
     }
 
     void setData(long edgePointer, IntsRef ref) {
         for (int i = 0; i < ref.ints.length; i++) {
-            edges.setInt(edgePointer + E_EXT_BYTES_OFFSET + i, ref.ints[i]);
+            edges.setInt(edgePointer + E_EXT_BYTES_OFFSET + i * 4, ref.ints[i]);
         }
     }
 

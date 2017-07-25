@@ -21,12 +21,15 @@ public class EncodingManager extends EncodingManager08 {
      */
     public static final String ENCODER_NAME = "weighting";
     private Map<String, TagParser> parsers = new HashMap<>();
-
+    private Collection<ReaderWayFilter> filters = new HashSet<>();
     private final TagsParser parser;
     private final int extendedDataSize;
     private boolean initialized = false;
     private final FlagEncoder mockEncoder;
 
+    /**
+     * @param extendedDataSize in bytes
+     */
     public EncodingManager(TagsParser parser, int extendedDataSize) {
         // we have to add a fake encoder that uses 0 bits for backward compatibility with EncodingManager08
         super(new CarFlagEncoder(0, 1, 0) {
@@ -34,12 +37,15 @@ public class EncodingManager extends EncodingManager08 {
             public int defineWayBits(int index, int shift) {
                 return shift;
             }
+
+            @Override
+            public String toString() {
+                return ENCODER_NAME;
+            }
         });
         this.mockEncoder = fetchEdgeEncoders().get(0);
 
         this.parser = parser;
-        // Everything is int-based: the dataIndex, the EncodedValue hierarchy with the 'int'-value and the offset
-        // TODO should we use a long or byte-based approach instead?
         this.extendedDataSize = Math.min(1, extendedDataSize / 4) * 4;
     }
 
@@ -52,6 +58,7 @@ public class EncodingManager extends EncodingManager08 {
             throw new IllegalArgumentException("Already existing parser " + parser.getName() + ": " + old);
 
         this.parsers.put(parser.getName(), parser);
+        this.filters.add(parser.getReadWayFilter());
         return this;
     }
 
@@ -73,31 +80,8 @@ public class EncodingManager extends EncodingManager08 {
         return this;
     }
 
-
-    // TODO parsing and filtering is highly related (e.g. for parsing we detect a tag and if the value is parsable and the same is necessary for filtering)
-    // we should create a streamed approach instead:
-    // property.filter(way).parse() and skip parse
-    private Collection<ReaderWayFilter> filters = new ArrayList<>();
-
-    // TODO per default accept everything with highway
-    {
-        filters.add(new ReaderWayFilter() {
-            @Override
-            public boolean accept(ReaderWay way) {
-                return way.getTag("highway") != null;
-            }
-        });
-    }
-
-    public interface ReaderWayFilter {
-        boolean accept(ReaderWay way);
-    }
-
-    public void addReaderWayFilter(ReaderWayFilter rwf) {
-        filters.add(rwf);
-    }
-
     public long acceptWay(ReaderWay way) {
+        // TODO is this correct? if one way is rejected from one EncodedValue then it won't be parsed at all
         for (ReaderWayFilter filter : filters) {
             if (!filter.accept(way))
                 return 0;
@@ -159,7 +143,8 @@ public class EncodingManager extends EncodingManager08 {
 
     @Override
     public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
-        throw new IllegalStateException("not implemented");
+        // TODO
+        return oldRelationFlags;
     }
 
     @Override

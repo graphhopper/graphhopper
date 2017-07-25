@@ -24,7 +24,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
-import com.graphhopper.routing.profiles.EncodingManager;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -534,8 +534,21 @@ public class GraphHopper implements GraphHopperAPI {
         removeZipped = args.getBool("graph.remove_zipped", removeZipped);
         int bytesForFlags = args.getInt("graph.bytes_for_flags", 4);
         String flagEncodersStr = args.get("graph.flag_encoders", "");
-        if (!flagEncodersStr.isEmpty())
-            setEncodingManager(new EncodingManager08(flagEncoderFactory, flagEncodersStr, bytesForFlags));
+        if (!flagEncodersStr.isEmpty()) {
+            if (bytesForFlags > 8) {
+                setEncodingManager(new EncodingManager(new TagsParserOSM(), bytesForFlags).
+                        add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("maxspeed", 5, 0, 5, false))).
+                        add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("averagespeed", 5, 0, 5, false))).
+                        add(TagParserFactory.createRoundabout(new BooleanEncodedValue("roundabout"))).
+                        add(TagParserFactory.Car.createAccess(new BooleanEncodedValue("access", true))).
+                        add(TagParserFactory.createHighway(new StringEncodedValue("highway",
+                                Arrays.asList("primary", "secondary", "tertiary", "motorway", "motorway_link",
+                                        "motorroad", "residential", "trunk"), "tertiary"))).
+                        init());
+            } else {
+                setEncodingManager(new EncodingManager08(flagEncoderFactory, flagEncodersStr, bytesForFlags));
+            }
+        }
 
         if (args.get("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -888,7 +901,9 @@ public class GraphHopper implements GraphHopperAPI {
         String weightingStr = hintsMap.getWeighting().toLowerCase();
         Weighting weighting = null;
 
-        if (encoder.supports(GenericWeighting.class)) {
+        if (weightingStr.equals("fastest2")) {
+            weighting = new FastestCarWeighting((EncodingManager) encodingManager, "fastest2");
+        } else if (encoder.supports(GenericWeighting.class)) {
             weighting = new GenericWeighting((DataFlagEncoder) encoder, hintsMap);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(encoder);
