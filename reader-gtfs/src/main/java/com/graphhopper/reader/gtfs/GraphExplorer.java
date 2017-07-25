@@ -124,12 +124,17 @@ final class GraphExplorer {
     }
 
     private long waitingTime(EdgeIteratorState edge, long earliestStartTime) {
-        return (flagEncoder.getTime(edge.getFlags()) - secondsOnTrafficDay(edge, earliestStartTime)) * 1000;
+        return flagEncoder.getTime(edge.getFlags()) * 1000 - millisOnTravelDay(edge, earliestStartTime);
     }
 
     private int secondsOnTrafficDay(EdgeIteratorState edge, long instant) {
         final ZoneId zoneId = gtfsStorage.getTimeZones().get(flagEncoder.getValidityId(edge.getFlags())).zoneId;
         return Instant.ofEpochMilli(instant).atZone(zoneId).toLocalTime().toSecondOfDay();
+    }
+
+    private long millisOnTravelDay(EdgeIteratorState edge, long instant) {
+        final ZoneId zoneId = gtfsStorage.getTimeZones().get(flagEncoder.getValidityId(edge.getFlags())).zoneId;
+        return Instant.ofEpochMilli(instant).atZone(zoneId).toLocalTime().toNanoOfDay() / 1000000L;
     }
 
     private boolean isValidOn(EdgeIteratorState edge, long instant) {

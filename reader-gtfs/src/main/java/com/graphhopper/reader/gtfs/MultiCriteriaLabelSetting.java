@@ -69,21 +69,11 @@ class MultiCriteriaLabelSetting {
                 .thenComparing(Comparator.comparingLong(l1 -> l1.nTransfers))
                 .thenComparing(Comparator.comparingLong(l1 -> l1.nWalkDistanceConstraintViolations))
                 .thenComparing(Comparator.comparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0));
-        fromHeap = new PriorityQueue<>(new Comparator<Label>() {
-            @Override
-            public int compare(Label o1, Label o) {
-                return queueComparator.compare(o1, o);
-            }
-
-            @Override
-            public boolean equals(Object obj) {
-                return false;
-            }
-        });
+        fromHeap = new PriorityQueue<>(queueComparator);
         fromMap = HashMultimap.create();
     }
 
-    Stream<Label> calcPaths(int from, Set<Integer> to, Instant startTime) {
+    Stream<Label> calcPaths(int from, int to, Instant startTime) {
         this.startTime = startTime.toEpochMilli();
         final Stream<Label> labels = StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false)
                 .limit(maxVisitedNodes)
@@ -95,7 +85,7 @@ class MultiCriteriaLabelSetting {
             @Override
             public boolean tryAdvance(Consumer<? super Label> action) {
                 while (spliterator.tryAdvance(label -> current = label)) {
-                    if (to.contains(current.adjNode)) {
+                    if (to == current.adjNode) {
                         action.accept(current);
                         solutions.add(current);
                         return true;
@@ -109,17 +99,17 @@ class MultiCriteriaLabelSetting {
 
     private class MultiCriteriaLabelSettingSpliterator extends Spliterators.AbstractSpliterator<Label> {
 
-        private final Set<Integer> to;
+        private final int to;
         private final Set<Label> targetLabels;
 
-        MultiCriteriaLabelSettingSpliterator(int from, Set<Integer> to) {
+        MultiCriteriaLabelSettingSpliterator(int from, int to) {
             super(0, 0);
             this.to = to;
             targetLabels = new HashSet<>();
             Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, null, 0, null);
             fromMap.put(from, label);
             fromHeap.add(label);
-            if (to.contains(from)) {
+            if (to == from) {
                 targetLabels.add(label);
             }
         }
@@ -159,11 +149,11 @@ class MultiCriteriaLabelSetting {
                     Label nEdge = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, nWalkDistanceConstraintViolations, walkDistanceOnCurrentLeg, firstPtDepartureTime, walkTime, label);
                     if (isNotDominatedByAnyOf(nEdge, sptEntries) && isNotDominatedByAnyOf(nEdge, targetLabels)) {
                         removeDominated(nEdge, sptEntries);
-                        if (to.contains(edge.getAdjNode())) {
+                        if (to == edge.getAdjNode()) {
                             removeDominated(nEdge, targetLabels);
                         }
                         fromMap.put(edge.getAdjNode(), nEdge);
-                        if (to.contains(edge.getAdjNode())) {
+                        if (to == edge.getAdjNode()) {
                             targetLabels.add(nEdge);
                         }
                         fromHeap.add(nEdge);
