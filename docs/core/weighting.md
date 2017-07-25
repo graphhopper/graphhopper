@@ -18,7 +18,7 @@ class MyGraphHopper extends GraphHopper {
     }
 
     @Override
-    public Weighting createWeighting( WeightingMap wMap, FlagEncoder encoder )
+    public Weighting createWeighting( HintsMap wMap, FlagEncoder encoder )
     {
         String weighting = wMap.getWeighting();
         if ("BLOCKING".equalsIgnoreCase(weighting)) 
