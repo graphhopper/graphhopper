@@ -1126,7 +1126,6 @@ class BaseGraph implements Graph {
 
         @Override
         public final IntsRef getData() {
-            // TODO include reverse
             if (edgeRowCache == null)
                 edgeRowCache = edgeAccess.getData(edgePointer);
 
