@@ -268,7 +268,7 @@ public class MiniGraphUI {
                     g2.setColor(color);
                     boolean fwd = encoder.isForward(edge.getFlags());
                     boolean bwd = encoder.isBackward(edge.getFlags());
-                    float width = 1.2f;
+                    float width = speed > 90? 1f : 0.8f;
                     if (fwd && !bwd) {
                         mg.plotDirectedEdge(g2, lat, lon, lat2, lon2, width);
                     } else {
@@ -317,6 +317,12 @@ public class MiniGraphUI {
 //                    mg.plotText(g2, lat, lon, nodeId + ": " + dist);
 //                    mg.plotNode(g2, nodeId, Color.red);
 //                }
+                Color red = Color.red.brighter();
+                g2.setColor(red);
+                mg.plotNode(g2, qGraph.getNodeAccess(), fromRes.getClosestNode(), red, 10, "");
+                mg.plotNode(g2, qGraph.getNodeAccess(), toRes.getClosestNode(), red, 10, "");
+
+                g2.setColor(Color.blue.brighter().brighter());
                 path = algo.calcPath(fromRes.getClosestNode(), toRes.getClosestNode());
                 sw.stop();
 
@@ -329,8 +335,8 @@ public class MiniGraphUI {
                 logger.info("found path in " + sw.getSeconds() + "s with nodes:"
                         + path.calcNodes().size() + ", millis: " + path.getTime()
                         + ", visited nodes:" + algo.getVisitedNodes());
-                g2.setColor(Color.BLUE.brighter().brighter());
-                plotPath(path, g2, 2);
+                g2.setColor(red);
+                plotPath(path, g2, 4);
             }
         });
 

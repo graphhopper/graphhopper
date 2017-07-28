@@ -84,7 +84,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
      */
     static final long PRECISION = 1 << 16;
 
-    public LandmarkStorage(GraphHopperStorage graph, Directory dir, int landmarks, final Weighting weighting, TraversalMode traversalMode) {
+    public LandmarkStorage(GraphHopperStorage graph, Directory dir, final Weighting weighting, int landmarks) {
         this.graph = graph;
         this.minimumNodes = Math.min(graph.getNodes() / 2, 500_000);
         this.encoder = weighting.getFlagEncoder();
@@ -108,8 +108,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             }
         };
 
-        // later make edge base working! Not really necessary as when adding turn costs while routing we can still
-        // use the node based traversal as this is a smaller weight approximation
+        // Edge based is not really necessary because when adding turn costs while routing we can still
+        // use the node based traversal as this is a smaller weight approximation and will still produce correct results
         this.traversalMode = TraversalMode.NODE_BASED;
         final String name = AbstractWeighting.weightingToFileName(weighting);
         this.landmarkWeightDA = dir.find("landmarks_" + name);
@@ -265,7 +265,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         TarjansSCCAlgorithm tarjanAlgo = new TarjansSCCAlgorithm(graph, tarjanFilter, true);
         List<IntArrayList> graphComponents = tarjanAlgo.findComponents();
         if (logDetails)
-            LOGGER.info("Calculated tarjan subnetworks in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
+            LOGGER.info("Calculated " + graphComponents.size() + " subnetworks via tarjan in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
 
         EdgeExplorer tmpExplorer = graph.createEdgeExplorer(new RequireBothDirectionsEdgeFilter(encoder));
 
@@ -460,8 +460,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
             int baseNode = allEdgesIterator.getBaseNode();
             SpatialRule ruleBase = ruleLookup.lookupRule(nodeAccess.getLatitude(baseNode), nodeAccess.getLongitude(baseNode));
-            if (ruleAdj != ruleBase)
+            if (ruleAdj != ruleBase) {
                 inaccessible.add(allEdgesIterator.getEdge());
+            }
         }
         return inaccessible;
     }

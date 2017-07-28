@@ -38,6 +38,9 @@ class SpatialRuleContainer {
         return this;
     }
 
+    /**
+     * Returns a list of all spatial rules including the EMPTY one.
+     */
     Collection<SpatialRule> getRules() {
         return rules;
     }
@@ -46,7 +49,7 @@ class SpatialRuleContainer {
         return this.rules.size();
     }
 
-    public SpatialRule first() {
+    SpatialRule first() {
         return this.rules.iterator().next();
     }
 

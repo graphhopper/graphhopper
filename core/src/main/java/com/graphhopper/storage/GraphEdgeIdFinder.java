@@ -19,15 +19,10 @@ package com.graphhopper.storage;
 
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.BreadthFirstSearch;
-import com.graphhopper.util.ConfigMap;
 import com.graphhopper.util.EdgeIteratorState;
-
-import static com.graphhopper.util.Parameters.Routing.*;
-
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.Circle;
@@ -45,9 +40,6 @@ import java.util.List;
  */
 public class GraphEdgeIdFinder {
 
-    // internal properties
-    public static final String BLOCKED_EDGES = "graph_finder.blocked_edges";
-    public static final String BLOCKED_SHAPES = "graph_finder.blocked_shapes";
     private final Graph graph;
     private final LocationIndex locationIndex;
 
@@ -130,54 +122,85 @@ public class GraphEdgeIdFinder {
     }
 
     /**
-     * This method reads string values from the hints about blocked areas and fills the configMap with either the
-     * created shapes or the found edges if area is small enough.
+     * This method reads the blockAreaString and creates a Collection of Shapes or a set of found edges if area is small enough.
      */
-    public ConfigMap parseStringHints(ConfigMap configMap, HintsMap hints, EdgeFilter filter) {
+    public BlockArea parseBlockArea(String blockAreaString, EdgeFilter filter) {
         final String objectSeparator = ";";
         final String innerObjSep = ",";
         // use shapes if bigger than 1km^2
         final double shapeArea = 1000 * 1000;
-
-        final GHIntHashSet blockedEdges = new GHIntHashSet();
-        final List<Shape> blockedShapes = new ArrayList<>();
+        BlockArea blockArea = new BlockArea(graph);
 
         // Add blocked circular areas or points
-        String blockedCircularAreasStr = hints.get(BLOCK_AREA, "");
-        if (!blockedCircularAreasStr.isEmpty()) {
-            String[] blockedCircularAreasArr = blockedCircularAreasStr.split(objectSeparator);
+        if (!blockAreaString.isEmpty()) {
+            String[] blockedCircularAreasArr = blockAreaString.split(objectSeparator);
             for (int i = 0; i < blockedCircularAreasArr.length; i++) {
                 String objectAsString = blockedCircularAreasArr[i];
                 String[] splittedObject = objectAsString.split(innerObjSep);
                 if (splittedObject.length == 4) {
                     final BBox bbox = BBox.parseTwoPoints(objectAsString);
                     if (bbox.calculateArea() > shapeArea)
-                        blockedShapes.add(bbox);
+                        blockArea.add(bbox);
                     else
-                        findEdgesInShape(blockedEdges, bbox, filter);
+                        findEdgesInShape(blockArea.blockedEdges, bbox, filter);
                 } else if (splittedObject.length == 3) {
                     double lat = Double.parseDouble(splittedObject[0]);
                     double lon = Double.parseDouble(splittedObject[1]);
                     int radius = Integer.parseInt(splittedObject[2]);
                     Circle circle = new Circle(lat, lon, radius);
                     if (circle.calculateArea() > shapeArea) {
-                        blockedShapes.add(circle);
+                        blockArea.add(circle);
                     } else {
-                        findEdgesInShape(blockedEdges, circle, filter);
+                        findEdgesInShape(blockArea.blockedEdges, circle, filter);
                     }
                 } else if (splittedObject.length == 2) {
                     double lat = Double.parseDouble(splittedObject[0]);
                     double lon = Double.parseDouble(splittedObject[1]);
-                    findClosestEdge(blockedEdges, lat, lon, filter);
+                    findClosestEdge(blockArea.blockedEdges, lat, lon, filter);
                 } else {
                     throw new IllegalArgumentException(objectAsString + " at index " + i + " need to be defined as lat,lon "
                             + "or as a circle lat,lon,radius or rectangular lat1,lon1,lat2,lon2");
                 }
             }
         }
+        return blockArea;
+    }
 
-        configMap.put(BLOCKED_EDGES, blockedEdges);
-        configMap.put(BLOCKED_SHAPES, blockedShapes);
-        return configMap;
+    /**
+     * This class handles edges and areas where access should be blocked.
+     */
+    public static class BlockArea {
+        final GHIntHashSet blockedEdges = new GHIntHashSet();
+        final List<Shape> blockedShapes = new ArrayList<>();
+        private final NodeAccess na;
+
+        public BlockArea(Graph g) {
+            na = g.getNodeAccess();
+        }
+
+        public void add(int edgeId) {
+            blockedEdges.addAll(edgeId);
+        }
+
+        public void add(Shape shape) {
+            blockedShapes.add(shape);
+        }
+
+        /**
+         * @return true if the specified edgeState is part of this BlockArea
+         */
+        public final boolean contains(EdgeIteratorState edgeState) {
+            if (!blockedEdges.isEmpty() && blockedEdges.contains(edgeState.getEdge())) {
+                return true;
+            }
+
+            if (!blockedShapes.isEmpty() && na != null) {
+                for (Shape shape : blockedShapes) {
+                    if (shape.contains(na.getLatitude(edgeState.getAdjNode()), na.getLongitude(edgeState.getAdjNode())))
+                        return true;
+                }
+            }
+            return false;
+        }
     }
 }

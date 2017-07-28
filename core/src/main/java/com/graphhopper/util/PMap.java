@@ -25,7 +25,6 @@ import java.util.Map;
  * <p>
  *
  * @author Peter Karich
- * @see ConfigMap
  */
 public class PMap {
     private final Map<String, String> map;

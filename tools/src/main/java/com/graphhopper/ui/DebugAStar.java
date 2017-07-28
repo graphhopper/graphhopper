@@ -21,6 +21,7 @@ import com.graphhopper.routing.AStar;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -32,10 +33,12 @@ import java.awt.*;
 public class DebugAStar extends AStar implements DebugAlgo {
     private final GraphicsWrapper mg;
     private Graphics2D g2;
+    private NodeAccess na;
 
     public DebugAStar(Graph graph, Weighting type, TraversalMode tMode, GraphicsWrapper mg) {
         super(graph, type, tMode);
         this.mg = mg;
+        na = graph.getNodeAccess();
     }
 
     @Override
@@ -46,7 +49,7 @@ public class DebugAStar extends AStar implements DebugAlgo {
     @Override
     public void updateBestPath(EdgeIteratorState es, SPTEntry bestEE, int currLoc) {
         if (g2 != null) {
-            mg.plotNode(g2, currLoc, Color.YELLOW);
+            mg.plotEdge(g2, na.getLat(bestEE.parent.adjNode), na.getLon(bestEE.parent.adjNode), na.getLat(currLoc), na.getLon(currLoc), .8f);
         }
         super.updateBestPath(es, bestEE, currLoc);
     }

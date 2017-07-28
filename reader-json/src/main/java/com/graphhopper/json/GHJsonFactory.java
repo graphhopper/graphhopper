@@ -27,8 +27,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class GHJsonFactory {
     public GHJson create() {
-        ObjectMapper gson = new ObjectMapper();
-        gson.registerModule(new JtsModule());
-        return new GHJsonJackson(gson);
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JtsModule());
+        return new GHJsonJackson(objectMapper);
     }
 }
