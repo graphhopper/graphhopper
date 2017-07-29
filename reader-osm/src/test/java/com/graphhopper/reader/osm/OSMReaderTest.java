@@ -810,12 +810,12 @@ public class OSMReaderTest {
     @Test
     public void testEncodedValueBasedEncodingManager() {
         TagsParser parser = new TagsParserOSM();
-        final EncodingManager em = new EncodingManager(parser, 4).
+        final EncodingManager em = new EncodingManager.Builder(parser, 4).
                 add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("maxspeed", 5, 0, 5, false))).
                 add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("averagespeed", 5, 0, 5, false))).
                 add(TagParserFactory.Car.createAccess(new BooleanEncodedValue("access", true))).
                 add(TagParserFactory.createRoundabout(new BooleanEncodedValue("roundabout"))).
-                init();
+                build();
         GraphHopper hopper = new GraphHopperOSM() {
             @Override
             public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {

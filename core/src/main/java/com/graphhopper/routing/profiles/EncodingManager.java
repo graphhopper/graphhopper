@@ -20,17 +20,16 @@ public class EncodingManager extends EncodingManager08 {
      * for backward compatibility we have to specify an encoder name ("vehicle")
      */
     public static final String ENCODER_NAME = "weighting";
-    private Map<String, TagParser> parsers = new HashMap<>();
-    private Collection<ReaderWayFilter> filters = new HashSet<>();
+    private final Map<String, TagParser> parsers = new HashMap<>();
+    private final Collection<ReaderWayFilter> filters = new HashSet<>();
     private final TagsParser parser;
     private final int extendedDataSize;
-    private boolean initialized = false;
     private final FlagEncoder mockEncoder;
 
     /**
      * @param extendedDataSize in bytes
      */
-    public EncodingManager(TagsParser parser, int extendedDataSize) {
+    private EncodingManager(TagsParser parser, int extendedDataSize) {
         // we have to add a fake encoder that uses 0 bits for backward compatibility with EncodingManager08
         super(new CarFlagEncoder(0, 1, 0) {
             @Override
@@ -49,35 +48,40 @@ public class EncodingManager extends EncodingManager08 {
         this.extendedDataSize = Math.min(1, extendedDataSize / 4) * 4;
     }
 
-    public EncodingManager add(TagParser parser) {
-        if (initialized)
-            throw new IllegalStateException("Cannot call add after init");
+    public static class Builder {
+        private boolean buildCalled;
+        private final EncodingManager em;
 
-        TagParser old = parsers.get(parser.getName());
-        if (old != null)
-            throw new IllegalArgumentException("Already existing parser " + parser.getName() + ": " + old);
-
-        this.parsers.put(parser.getName(), parser);
-        this.filters.add(parser.getReadWayFilter());
-        return this;
-    }
-
-    /**
-     * This method freezes the encoded values and defines their shift, dataIndex etc
-     * <p>
-     * Note, that the order of the collection is not guaranteed being used as storage order and can change to optimize bit usage.
-     */
-    public EncodingManager init() {
-        if (initialized)
-            throw new IllegalStateException("Cannot call init multiple times");
-
-        initialized = true;
-        EncodedValue.InitializerConfig initializer = new EncodedValue.InitializerConfig();
-        for (TagParser tp : parsers.values()) {
-            tp.getEncodedValue().init(initializer);
+        public Builder(TagsParser parser, int extendedDataSize) {
+            this.em = new EncodingManager(parser, extendedDataSize);
         }
 
-        return this;
+        public Builder add(TagParser parser) {
+            check();
+            TagParser old = em.parsers.get(parser.getName());
+            if (old != null)
+                throw new IllegalArgumentException("Already existing parser " + parser.getName() + ": " + old);
+
+            em.parsers.put(parser.getName(), parser);
+            em.filters.add(parser.getReadWayFilter());
+            return this;
+        }
+
+        public EncodingManager build() {
+            check();
+
+            buildCalled = true;
+            EncodedValue.InitializerConfig initializer = new EncodedValue.InitializerConfig();
+            for (TagParser tp : em.parsers.values()) {
+                tp.getEncodedValue().init(initializer);
+            }
+            return em;
+        }
+
+        private void check() {
+            if (buildCalled)
+                throw new IllegalStateException("EncodingManager.Builder.build() already called");
+        }
     }
 
     public long acceptWay(ReaderWay way) {
@@ -186,16 +190,6 @@ public class EncodingManager extends EncodingManager08 {
     @Override
     public long reverseFlags(long flags) {
         return flags;
-    }
-
-    @Override
-    public int hashCode() {
-        return parsers.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        throw new IllegalStateException("not implemented");
     }
 
     /**

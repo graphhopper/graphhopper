@@ -536,7 +536,7 @@ public class GraphHopper implements GraphHopperAPI {
         String flagEncodersStr = args.get("graph.flag_encoders", "");
         if (!flagEncodersStr.isEmpty()) {
             if (bytesForFlags > 8) {
-                setEncodingManager(new EncodingManager(new TagsParserOSM(), bytesForFlags).
+                setEncodingManager(new EncodingManager.Builder(new TagsParserOSM(), bytesForFlags).
                         add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("maxspeed", 5, 0, 5, false))).
                         add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("averagespeed", 5, 0, 5, false))).
                         add(TagParserFactory.createRoundabout(new BooleanEncodedValue("roundabout"))).
@@ -544,7 +544,7 @@ public class GraphHopper implements GraphHopperAPI {
                         add(TagParserFactory.createHighway(new StringEncodedValue("highway",
                                 Arrays.asList("primary", "secondary", "tertiary", "motorway", "motorway_link",
                                         "motorroad", "residential", "trunk"), "tertiary"))).
-                        init());
+                        build());
             } else {
                 setEncodingManager(new EncodingManager08(flagEncoderFactory, flagEncodersStr, bytesForFlags));
             }

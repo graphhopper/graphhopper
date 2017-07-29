@@ -66,14 +66,9 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     // bit to signal that way is accepted
     protected long acceptBit;
     protected long ferryBit;
-    protected PMap properties;
     // This value determines the maximal possible speed of any road regardless the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected int maxPossibleSpeed;
-    /* processing properties (to be initialized lazy when needed) */
-    protected EdgeExplorer edgeOutExplorer;
-    protected EdgeExplorer edgeInExplorer;
-    /* Edge Flag Encoder fields */
     private long nodeBitMask;
     private long wayBitMask;
     private long relBitMask;

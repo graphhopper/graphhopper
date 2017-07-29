@@ -39,9 +39,8 @@ public class HikeFlagEncoder extends FootFlagEncoder {
     }
 
     public HikeFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speedBits", 4),
+        this(properties.getInt("speedBits", 4),
                 properties.getDouble("speedFactor", 1));
-        this.properties = properties;
         this.setBlockFords(properties.getBool("block_fords", false));
     }
 

@@ -19,7 +19,10 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -93,10 +96,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     public DataFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 5),
+        this(properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
-        this.properties = properties;
         this.setStoreHeight(properties.getBool("store_height", false));
         this.setStoreWeight(properties.getBool("store_weight", false));
         this.setStoreWidth(properties.getBool("store_width", false));

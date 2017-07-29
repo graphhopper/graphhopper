@@ -58,9 +58,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     public FootFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speedBits", 4),
+        this(properties.getInt("speedBits", 4),
                 properties.getDouble("speedFactor", 1));
-        this.properties = properties;
         this.setBlockFords(properties.getBool("block_fords", true));
     }
 
@@ -224,7 +223,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // no need to evaluate ferries or fords - already included here
         if (way.hasTag("foot", intendedValues))
             return acceptBit;
-        
+
         // check access restrictions
         if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
             return 0;

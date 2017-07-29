@@ -21,14 +21,14 @@ public class EncodingManagerTest {
     private EncodingManager createEncodingManager() {
         // do not add surface property to test exception below
         TagsParserOSM parser = new TagsParserOSM();
-        return new EncodingManager(parser, 4).
+        return new EncodingManager.Builder(parser, 4).
                 add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("averagespeed", 5, 0, 5, true))).
                 add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("maxspeed", 5, 50, 5, false))).
                 add(TagParserFactory.Car.createAccess(new BooleanEncodedValue("access", true))).
                 add(TagParserFactory.Truck.createWeight(new DecimalEncodedValue("weight", 5, 5, 1, false))).
                 add(TagParserFactory.createHighway(new StringEncodedValue("highway",
                         Arrays.asList("primary", "secondary", "tertiary"), "tertiary"))).
-                init();
+                build();
     }
 
     @Test
@@ -194,9 +194,9 @@ public class EncodingManagerTest {
         };
 
         TagsParserOSM parser = new TagsParserOSM();
-        EncodingManager encodingManager = new EncodingManager(parser, 4).
+        EncodingManager encodingManager = new EncodingManager.Builder(parser, 4).
                 add(directedSpeedParser).
-                init();
+                build();
 
         GraphHopperStorage g = new GraphBuilder(encodingManager).create();
         EdgeIteratorState edge = g.edge(0, 1, 10, true);

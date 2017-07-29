@@ -36,20 +36,21 @@ import com.graphhopper.util.Parameters;
  */
 public class AlgorithmOptions {
     private final PMap hints = new PMap(5);
-    private String algorithm = Parameters.Algorithms.DIJKSTRA_BI;
+    private String algorithm;
+    private TraversalMode traversalMode;
     private Weighting weighting;
-    private TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private int maxVisitedNodes = Integer.MAX_VALUE;
 
     private AlgorithmOptions() {
+        algorithm = Parameters.Algorithms.DIJKSTRA_BI;
+        traversalMode = TraversalMode.NODE_BASED;
     }
 
     /**
      * Default traversal mode NODE_BASED is used.
      */
     public AlgorithmOptions(String algorithm, Weighting weighting) {
-        this.algorithm = algorithm;
-        this.weighting = weighting;
+        this(algorithm, weighting, TraversalMode.NODE_BASED);
     }
 
     public AlgorithmOptions(String algorithm, Weighting weighting, TraversalMode tMode) {
@@ -129,6 +130,7 @@ public class AlgorithmOptions {
         private boolean buildCalled;
 
         public Builder traversalMode(TraversalMode traversalMode) {
+            check();
             if (traversalMode == null)
                 throw new IllegalArgumentException("null as traversal mode is not allowed");
 
@@ -137,6 +139,7 @@ public class AlgorithmOptions {
         }
 
         public Builder weighting(Weighting weighting) {
+            check();
             this.opts.weighting = weighting;
             return this;
         }
@@ -145,24 +148,30 @@ public class AlgorithmOptions {
          * For possible values see Parameters.Algorithms
          */
         public Builder algorithm(String algorithm) {
+            check();
             this.opts.algorithm = algorithm;
             return this;
         }
 
         public Builder maxVisitedNodes(int maxVisitedNodes) {
+            check();
             this.opts.maxVisitedNodes = maxVisitedNodes;
             return this;
         }
 
         public Builder hints(PMap hints) {
+            check();
             this.opts.hints.put(hints);
             return this;
         }
 
-        public AlgorithmOptions build() {
+        private void check() {
             if (buildCalled)
-                throw new IllegalStateException("Cannot call AlgorithmOptions.Builder.build() twice");
+                throw new IllegalStateException("AlgorithmOptions.build() was already called");
+        }
 
+        public AlgorithmOptions build() {
+            check();
             buildCalled = true;
             return opts;
         }
