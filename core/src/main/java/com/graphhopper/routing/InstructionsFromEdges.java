@@ -75,7 +75,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private EdgeExplorer outEdgeExplorer;
     private EdgeExplorer crossingExplorer;
 
-    private final int MAX_U_TURN_DISTANCE = 20;
+    private final int MAX_U_TURN_DISTANCE = 35;
 
     public InstructionsFromEdges(int tmpNode, Graph graph, Weighting weighting, FlagEncoder encoder, NodeAccess nodeAccess, Translation tr, InstructionList ways) {
         this.weighting = weighting;
@@ -219,7 +219,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     ---<--
                     Note: The current approach only works if the short connector is only 1 edge, as we check the orientation,
                     and name of the edge before the current edge. Could be extended to a second edge, however I haven't
-                    any example where we would have needed 2 edges.
+                    many examples where we would have needed 2 edges.
+                    Example 1: point=49.498577%2C8.489041&point=49.498932%2C8.490103 (actually I am not sure if we would even want a u-turn here)
+
                   */
                 if (prevInstruction.getDistance() < MAX_U_TURN_DISTANCE && (sign < 0) == (prevInstruction.getSign() < 0) &&
                         (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT) &&
