@@ -81,6 +81,10 @@ public class Instruction {
         return sign;
     }
 
+    public void setSign(int sign) {
+        this.sign = sign;
+    }
+
     public String getName() {
         return name;
     }

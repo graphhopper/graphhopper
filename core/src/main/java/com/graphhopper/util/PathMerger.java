@@ -125,7 +125,7 @@ public class PathMerger {
                 calcAscendDescend(altRsp, fullPoints);
         }
 
-        if (enableInstructions){
+        if (enableInstructions) {
             fullInstructions = updateInstructionsWithContext(fullInstructions);
             altRsp.setInstructions(fullInstructions);
         }
@@ -153,7 +153,8 @@ public class PathMerger {
                     instruction.extraInfo.containsKey("heading")) {
 
                 heading = (double) instruction.extraInfo.get("heading");
-                if (Math.abs(heading - favoredHeading) % 180 > 170) {
+                if (Math.abs(heading - favoredHeading) % 360 > 170 &&
+                        Math.abs(heading - favoredHeading) % 360 < 190) {
                     // The requested heading points into the opposite direction of the calculated heading
                     // therefore we change the continue instruction to a u-turn
                     instruction.sign = Instruction.U_TURN;
