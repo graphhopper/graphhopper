@@ -210,6 +210,9 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             if (way.hasTag("railway", "platform"))
                 return acceptBit;
 
+            if (way.hasTag("man_made", "pier"))
+                return acceptBit;
+
             return 0;
         }
 
@@ -224,7 +227,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // no need to evaluate ferries or fords - already included here
         if (way.hasTag("foot", intendedValues))
             return acceptBit;
-        
+
         // check access restrictions
         if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
             return 0;
