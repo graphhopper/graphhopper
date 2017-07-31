@@ -217,9 +217,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     --->--
                           |    <-- This is the short connector
                     ---<--
-                    Note: The current approach only works if the short connector is only 1 edge, as we check the orientation,
+                    Note: The current approach only works if the short connector is only 1 edge, as we check the orientation
                     and name of the edge before the current edge. Could be extended to a second edge, however I haven't
-                    many examples where we would have needed 2 edges.
+                    seen many cases where we would have needed 2 edges.
                     Example 1: point=49.498577%2C8.489041&point=49.498932%2C8.490103 (actually I am not sure if we would even want a u-turn here)
 
                   */
