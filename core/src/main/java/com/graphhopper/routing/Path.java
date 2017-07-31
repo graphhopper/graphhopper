@@ -378,16 +378,17 @@ public class Path {
      */
     public List<PathDetails> calcDetails(final PathDetailsCalculatorFactory calculatorFactory) {
         List<PathDetailsCalculator> calculators = calculatorFactory.createPathDetailsCalculator();
-        if(calculators.isEmpty()){
+        if (calculators.isEmpty()) {
             return Collections.EMPTY_LIST;
         }
-        List<PathDetails> details = new ArrayList<>(calculators.size());
+        forEveryEdge(new PathDetailsFromEdges(calculators));
+
+        List<PathDetails> pathDetails = new ArrayList<>(calculators.size());
         for (PathDetailsCalculator calc : calculators) {
-            details.add(new PathDetails(calc.getName()));
-            calc.reset();
+            pathDetails.add(calc.getPathDetails());
         }
-        forEveryEdge(new PathDetailsFromEdges(details, calculators));
-        return details;
+
+        return pathDetails;
     }
 
     @Override

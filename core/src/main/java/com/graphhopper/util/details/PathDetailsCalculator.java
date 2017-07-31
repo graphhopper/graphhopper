@@ -27,12 +27,12 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public interface PathDetailsCalculator {
 
-    boolean edgeIsDifferentToLastEdge(EdgeIteratorState edge);
+    boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge);
+
+    PathDetails getPathDetails();
 
     Object getCurrentValue();
 
     String getName();
-
-    void reset();
 
 }

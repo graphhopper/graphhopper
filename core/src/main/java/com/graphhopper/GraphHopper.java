@@ -41,8 +41,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.details.AverageSpeedDetails;
-import com.graphhopper.util.details.PathDetailsCalculator;
 import com.graphhopper.util.details.PathDetailsCalculatorFactory;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
@@ -1060,7 +1058,7 @@ public class GraphHopper implements GraphHopperAPI {
                         setCalcPoints(tmpCalcPoints).
                         setDouglasPeucker(peucker).
                         setEnableInstructions(tmpEnableInstructions).
-                        setPathDetailCalculatorFactory(calculatorFactory).
+                        setPathDetailsCalculatorFactory(calculatorFactory).
                         setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
 
                 if (routingTemplate.isReady(pathMerger, tr))

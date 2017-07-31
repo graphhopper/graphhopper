@@ -61,29 +61,21 @@ public class PathSimplification {
 
         boolean endReached = false;
 
-        // The index of each toSimplify
-        int[] index = new int[toSimplify.size()];
         // The offset of already included points
         int[] offset = new int[toSimplify.size()];
         int[] endIntervals = new int[toSimplify.size()];
         // All start at 0
         int[] startIntervals = new int[toSimplify.size()];
 
-        int nonConflictingStart;
-        int nonConflictingEnd;
-        int toSimplifyIndex;
-        int toShiftIndex;
-
-        boolean simplificationPossible;
-
         while (!endReached) {
+
             endIntervals = calculateEndIntervals(endIntervals, startIntervals, offset, toSimplify);
 
-            simplificationPossible = true;
-            nonConflictingStart = 0;
-            nonConflictingEnd = Integer.MAX_VALUE;
-            toSimplifyIndex = -1;
-            toShiftIndex = -1;
+            boolean simplificationPossible = true;
+            int nonConflictingStart = 0;
+            int nonConflictingEnd = Integer.MAX_VALUE;
+            int toSimplifyIndex = -1;
+            int toShiftIndex = -1;
 
             for (int i = 0; i < toSimplify.size(); i++) {
                 if (startIntervals[i] >= nonConflictingEnd || endIntervals[i] <= nonConflictingStart) {

@@ -18,9 +18,7 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.routing.Path;
-import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PointList;
 
 import java.util.List;
 
@@ -29,24 +27,21 @@ import java.util.List;
  *
  * @author Robin Boldt
  */
-public class PathDetailsFromEdges implements Path.EdgeVisitor{
+public class PathDetailsFromEdges implements Path.EdgeVisitor {
 
-    private final List<PathDetails> details;
     private final List<PathDetailsCalculator> calculators;
     private int numberOfPoints = 0;
 
-    public PathDetailsFromEdges(List<PathDetails> details, List<PathDetailsCalculator> calculators){
-        this.details = details;
+    public PathDetailsFromEdges(List<PathDetailsCalculator> calculators) {
         this.calculators = calculators;
     }
 
     @Override
     public void next(EdgeIteratorState edge, int index, int prevEdgeId) {
-        for (int i = 0; i < calculators.size(); i++) {
-            PathDetailsCalculator calc = calculators.get(i);
-            if (calc.edgeIsDifferentToLastEdge(edge)) {
-                details.get(i).endInterval(numberOfPoints);
-                details.get(i).startInterval(calc.getCurrentValue());
+        for (PathDetailsCalculator calc : calculators) {
+            if (calc.isEdgeDifferentToLastEdge(edge)) {
+                calc.getPathDetails().endInterval(numberOfPoints);
+                calc.getPathDetails().startInterval(calc.getCurrentValue());
                 numberOfPoints = 0;
             }
         }
@@ -55,9 +50,8 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor{
 
     @Override
     public void finish() {
-        for (int i = 0; i < details.size(); i++) {
-            details.get(i).endInterval(numberOfPoints);
+        for (PathDetailsCalculator calc : calculators) {
+            calc.getPathDetails().endInterval(numberOfPoints);
         }
     }
-
 }

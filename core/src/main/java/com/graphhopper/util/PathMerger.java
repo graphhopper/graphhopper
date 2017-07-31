@@ -52,7 +52,7 @@ public class PathMerger {
         return this;
     }
 
-    public PathMerger setPathDetailCalculatorFactory(PathDetailsCalculatorFactory calculatorFactory) {
+    public PathMerger setPathDetailsCalculatorFactory(PathDetailsCalculatorFactory calculatorFactory) {
         this.calculatorFactory = calculatorFactory;
         return this;
     }
@@ -88,23 +88,6 @@ public class PathMerger {
                 InstructionList il = path.calcInstructions(tr);
 
                 if (!il.isEmpty()) {
-                    /*
-                    if (fullPoints.isEmpty()) {
-                        PointList pl = il.get(0).getPoints();
-                        // do a wild guess about the total number of points to avoid reallocation a bit
-                        fullPoints = new PointList(il.size() * Math.min(10, pl.size()), pl.is3D());
-                    }
-
-                    for (Instruction i : il) {
-                        origPoints += i.getPoints().size();
-                        if (simplifyResponse) {
-                            douglasPeucker.simplify(i.getPoints());
-                        }
-                        fullInstructions.add(i);
-                        fullPoints.add(i.getPoints());
-                    }
-                    */
-
                     fullInstructions.addAll(il);
 
                     // if not yet reached finish replace with 'reached via'
@@ -121,12 +104,6 @@ public class PathMerger {
                 if (fullPoints.isEmpty())
                     fullPoints = new PointList(tmpPoints.size(), tmpPoints.is3D());
 
-                /*
-                origPoints = tmpPoints.getSize();
-                if (simplifyResponse) {
-                    douglasPeucker.simplify(tmpPoints);
-                }
-                */
                 fullPoints.add(tmpPoints);
             }
             if ((calcPoints || enableInstructions) && calculatorFactory != null) {

@@ -28,24 +28,31 @@ import com.graphhopper.util.EdgeIteratorState;
 public class AverageSpeedDetails implements PathDetailsCalculator {
 
     private final FlagEncoder encoder;
+    private final PathDetails pathDetails;
     private double curAvgSpeed = -1;
 
     public AverageSpeedDetails(FlagEncoder encoder) {
         this.encoder = encoder;
+        this.pathDetails = new PathDetails(this.getName());
     }
 
     @Override
-    public boolean edgeIsDifferentToLastEdge(EdgeIteratorState edge) {
-        if(encoder.getSpeed(edge.getFlags()) != curAvgSpeed){
-            curAvgSpeed = encoder.getSpeed(edge.getFlags());
+    public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
+        if (encoder.getSpeed(edge.getFlags()) != curAvgSpeed) {
+            this.curAvgSpeed = this.encoder.getSpeed(edge.getFlags());
             return true;
         }
         return false;
     }
 
     @Override
+    public PathDetails getPathDetails() {
+        return this.pathDetails;
+    }
+
+    @Override
     public Object getCurrentValue() {
-        return curAvgSpeed;
+        return this.curAvgSpeed;
     }
 
     @Override
@@ -53,8 +60,4 @@ public class AverageSpeedDetails implements PathDetailsCalculator {
         return "average_speed";
     }
 
-    @Override
-    public void reset() {
-        curAvgSpeed = -1;
-    }
 }

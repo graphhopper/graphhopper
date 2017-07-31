@@ -112,9 +112,9 @@ public class PathDetails {
                 detailIntervals = detailsMap.get(detail.value);
             } else {
                 detailIntervals = new ArrayList<>();
+                detailsMap.put(detail.value, detailIntervals);
             }
             detailIntervals.add(new int[]{pointer, pointer + detail.numberOfPoints});
-            detailsMap.put(detail.value, detailIntervals);
             pointer += detail.numberOfPoints;
         }
 
