@@ -100,7 +100,7 @@ public class PathSimplification {
                 // Only simplify if there is more than one point
                 if(nonConflictingEnd - nonConflictingStart > 1){
                     // Simplify
-                    int removed = douglasPeucker.simplify(pointList, nonConflictingStart, nonConflictingEnd -1 );
+                    int removed = douglasPeucker.simplify(pointList, nonConflictingStart, nonConflictingEnd);
                     if (removed > 0) {
                         for (int i = 0; i < toSimplify.size(); i++) {
                             reduceNumberOfPoints(toSimplify.get(i), offset[i], removed, startIntervals[i], endIntervals[i] - removed);
