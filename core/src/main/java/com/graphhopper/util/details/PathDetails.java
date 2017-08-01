@@ -48,11 +48,11 @@ public class PathDetails {
      * @param value
      */
     public void startInterval(Object value) {
-        if (isOpen) {
+        if (this.isOpen) {
             throw new IllegalStateException("Path details is already open with value: " + this.currentDetail.value + " trying to open a new one with value: " + value);
         }
         this.currentDetail = new Detail(value);
-        isOpen = true;
+        this.isOpen = true;
     }
 
     /**
@@ -64,16 +64,16 @@ public class PathDetails {
      */
     public void endInterval(int numberOfPoints) {
         // We don't want PathDetails
-        if (isOpen && numberOfPoints > 0) {
+        if (this.isOpen && numberOfPoints > 0) {
             this.currentDetail.numberOfPoints = numberOfPoints;
-            pathDetails.add(this.currentDetail);
+            this.pathDetails.add(this.currentDetail);
         }
-        isOpen = false;
+        this.isOpen = false;
     }
 
     @JsonIgnore
     public List<Detail> getDetails() {
-        return pathDetails;
+        return this.pathDetails;
     }
 
     public void merge(PathDetails pD) {
@@ -83,11 +83,11 @@ public class PathDetails {
         List<Detail> otherDetails = pD.getDetails();
 
         // Make sure that pathdetails are merged correctly at waypoints
-        if(!this.pathDetails.isEmpty() && !otherDetails.isEmpty()){
-            Detail lastDetail = pathDetails.get(pathDetails.size()-1);
+        if (!this.pathDetails.isEmpty() && !otherDetails.isEmpty()) {
+            Detail lastDetail = this.pathDetails.get(this.pathDetails.size() - 1);
             // Add Via Point
             lastDetail.numberOfPoints++;
-            if(lastDetail.value.equals(otherDetails.get(0).value)){
+            if (lastDetail.value.equals(otherDetails.get(0).value)) {
                 lastDetail.numberOfPoints += otherDetails.get(0).numberOfPoints;
                 otherDetails.remove(0);
             }
