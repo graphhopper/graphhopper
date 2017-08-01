@@ -227,7 +227,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT) &&
                         (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT) &&
                         InstructionsHelper.isNameSimilar(doublePrevName, name) &&
-                        // We only divide by 1.9 instead of 2, since the orientation calculation is not very exact
                         (Math.abs(doublePrevOrientation - prevOrientation) % Math.PI > (Math.PI / 2) * .9) &&
                         (Math.abs(doublePrevOrientation - prevOrientation) % Math.PI < (Math.PI / 2) * 1.1)
                         ) {
