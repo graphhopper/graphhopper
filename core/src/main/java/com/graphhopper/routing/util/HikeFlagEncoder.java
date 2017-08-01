@@ -79,6 +79,9 @@ public class HikeFlagEncoder extends FootFlagEncoder {
             if (way.hasTag("railway", "platform"))
                 return acceptBit;
 
+            if (way.hasTag("man_made", "pier"))
+                return acceptBit;
+
             return 0;
         }
 

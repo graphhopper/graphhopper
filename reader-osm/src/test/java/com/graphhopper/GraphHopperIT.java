@@ -88,7 +88,7 @@ public class GraphHopperIT {
                 setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr));
 
         // identify the number of counts to compare with CH foot route
-        assertEquals(698, rsp.getHints().getLong("visited_nodes.sum", 0));
+        assertEquals(699, rsp.getHints().getLong("visited_nodes.sum", 0));
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(3437.6, arsp.getDistance(), .1);
