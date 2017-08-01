@@ -242,6 +242,9 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             if (way.hasTag("railway", "platform"))
                 return acceptBit;
 
+            if (way.hasTag("man_made", "pier"))
+                return acceptBit;
+
             return 0;
         }
 

@@ -202,6 +202,14 @@ public class FootFlagEncoderTest {
     }
 
     @Test
+    public void testPier() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("man_made", "pier");
+        long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
+        assertNotEquals(0, flags);
+    }
+
+    @Test
     public void testMixSpeedAndSafe() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");

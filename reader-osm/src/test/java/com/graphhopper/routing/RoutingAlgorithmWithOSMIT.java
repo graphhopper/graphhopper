@@ -242,12 +242,12 @@ public class RoutingAlgorithmWithOSMIT {
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
 
         // see testMonaco for a similar ID test
-        assertEquals(GHUtility.asSet(2, 908, 570), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
-        assertEquals(GHUtility.asSet(443, 954, 739), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(440)));
-        assertEquals(GHUtility.asSet(910, 403, 122, 913), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(911)));
+        assertEquals(GHUtility.asSet(2, 909, 571), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(10)));
+        assertEquals(GHUtility.asSet(444, 956, 740), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(441)));
+        assertEquals(GHUtility.asSet(911, 404, 122, 914), GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(912)));
 
         assertEquals(43.743705, g.getNodeAccess().getLat(100), 1e-6);
-        assertEquals(7.426362, g.getNodeAccess().getLon(701), 1e-6);
+        assertEquals(7.426362, g.getNodeAccess().getLon(702), 1e-6);
     }
 
     @Test
