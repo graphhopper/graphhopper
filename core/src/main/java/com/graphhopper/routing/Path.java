@@ -335,6 +335,17 @@ public class Path {
         return points;
     }
 
+    protected boolean canEnableAutonomy(EdgeIteratorState edge, FlagEncoder encoder) {
+        long flags = edge.getFlags();
+        double speed = encoder.getSpeed(flags);
+
+        if (speed >= 72.0) {// 45 mph
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
     /**
      * @return the list of instructions for this path.
      */
@@ -516,7 +527,15 @@ public class Path {
                         sign = Instruction.TURN_SHARP_LEFT;
                     else
                         sign = Instruction.TURN_SHARP_RIGHT;
-                    prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+
+                    if (canEnableAutonomy(edge, encoder)) {
+                        InstructionAV instructionAV = new InstructionAV(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                        instructionAV.setEnableAutonomy(true);
+                        prevInstruction = instructionAV;
+                    }
+                    else {
+                        prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                    }
                     ways.add(prevInstruction);
                     prevName = name;
                     prevAnnotation = annotation;
