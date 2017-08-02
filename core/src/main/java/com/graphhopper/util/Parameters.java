@@ -191,9 +191,9 @@ public class Parameters {
      */
     public static final class DETAILS {
 
-        private static final String DETAILS_PREFIX = "details.";
+        public static final String PATH_DETAILS = "path_details";
 
-        public static final String AVERAGE_SPEED = DETAILS_PREFIX + "average_speed";
+        public static final String AVERAGE_SPEED = "average_speed";
 
     }
 

@@ -18,31 +18,30 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Generates PathDetailsCalculators from a GHRequest
+ * Generates PathDetailsCalculators from a List of PathDetailNames
  *
  * @author Robin Boldt
  */
 public class PathDetailsCalculatorFactory {
 
-    private final PMap hints;
+    private final List<String> requestedPathDetails;
     private final FlagEncoder encoder;
 
-    public PathDetailsCalculatorFactory(PMap hints, FlagEncoder encoder) {
-        this.hints = hints;
+    public PathDetailsCalculatorFactory(List<String> requestedPathDetails, FlagEncoder encoder) {
+        this.requestedPathDetails = requestedPathDetails;
         this.encoder = encoder;
     }
 
     public List<PathDetailsCalculator> createPathDetailsCalculator() {
         List<PathDetailsCalculator> calculators = new ArrayList<>();
 
-        if(hints.getBool(Parameters.DETAILS.AVERAGE_SPEED, false))
+        if (this.requestedPathDetails.contains(Parameters.DETAILS.AVERAGE_SPEED))
             calculators.add(new AverageSpeedDetails(encoder));
 
         return calculators;

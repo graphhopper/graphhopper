@@ -17,8 +17,6 @@
  */
 package com.graphhopper.util;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
@@ -35,15 +33,7 @@ import com.graphhopper.util.details.PathDetails;
 import com.graphhopper.util.details.PathDetailsCalculatorFactory;
 import org.junit.Before;
 import org.junit.Test;
-import org.xml.sax.SAXException;
 
-import javax.xml.XMLConstants;
-import javax.xml.transform.Source;
-import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.Schema;
-import javax.xml.validation.SchemaFactory;
-import javax.xml.validation.Validator;
-import java.io.StringReader;
 import java.util.*;
 
 import static org.junit.Assert.*;
@@ -142,7 +132,7 @@ public class PathSimplificationTest {
         // Path is: [0 0-1, 3 1-4, 6 4-7, 9 7-8, 11 8-9, 10 9-10]
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(0, 10);
         InstructionList wayList = p.calcInstructions(usTR);
-        List<PathDetails> details = p.calcDetails(new PathDetailsCalculatorFactory(new PMap(Parameters.DETAILS.AVERAGE_SPEED + "=true"), carEncoder));
+        List<PathDetails> details = p.calcDetails(new PathDetailsCalculatorFactory(Arrays.asList(new String[]{Parameters.DETAILS.AVERAGE_SPEED}), carEncoder));
 
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.setInstructions(wayList);

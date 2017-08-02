@@ -43,6 +43,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
 
+import static com.graphhopper.util.Parameters.DETAILS.PATH_DETAILS;
 import static com.graphhopper.util.Parameters.Routing.*;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 
@@ -112,6 +113,8 @@ public class GraphHopperServlet extends GHBaseServlet {
                     throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored");
                 }
 
+                List<String> pathDetails = new ArrayList<String>(Arrays.asList(getParams(httpReq, PATH_DETAILS)));
+
                 FlagEncoder algoVehicle = encodingManager.getEncoder(vehicleStr);
                 GHRequest request;
                 if (favoredHeadings.size() > 0) {
@@ -134,6 +137,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                         setAlgorithm(algoStr).
                         setLocale(localeStr).
                         setPointHints(pointHints).
+                        setPathDetails(pathDetails).
                         getHints().
                         put(CALC_POINTS, calcPoints).
                         put(INSTRUCTIONS, enableInstructions).

@@ -24,9 +24,7 @@ import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
-import com.graphhopper.util.details.AverageSpeedDetails;
 import com.graphhopper.util.details.PathDetails;
-import com.graphhopper.util.details.PathDetailsCalculator;
 import com.graphhopper.util.details.PathDetailsCalculatorFactory;
 import org.junit.Test;
 
@@ -313,7 +311,7 @@ public class PathTest {
 
         PointList points = p.calcPoints();
 
-        List<PathDetails> details = p.calcDetails(new PathDetailsCalculatorFactory(new PMap(Parameters.DETAILS.AVERAGE_SPEED + "=true"), encoder));
+        List<PathDetails> details = p.calcDetails(new PathDetailsCalculatorFactory(Arrays.asList(new String[]{Parameters.DETAILS.AVERAGE_SPEED}), encoder));
         assertTrue(details.size() == 1);
         Map<Object, List<int[]>> detailsMap = details.get(0).getPathDetailsMap();
         assertTrue(detailsMap.keySet().size() == 3);
