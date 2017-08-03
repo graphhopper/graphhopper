@@ -92,9 +92,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         this.graph = graph;
         this.minimumNodes = Math.min(graph.getNodes() / 2, 500_000);
         this.weighting = weighting;
-        // TODO ugly hack
-        try {
-            final FlagEncoder encoder = weighting.getFlagEncoder();
+        final FlagEncoder encoder = weighting.getFlagEncoder();
+        if (encoder != null) {
             // allowing arbitrary weighting is too dangerous
             this.lmSelectionWeighting = new ShortestWeighting(encoder) {
                 @Override
@@ -113,7 +112,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                     return "LM_BFS|" + encoder;
                 }
             };
-        } catch (Exception ex) {
+        } else {
             // allowing arbitrary weighting is too dangerous
             this.lmSelectionWeighting = new FastestCarWeighting((EncodingManager) graph.getEncodingManager(), "car") {
                 @Override

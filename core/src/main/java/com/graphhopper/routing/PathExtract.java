@@ -35,9 +35,8 @@ public class PathExtract {
 
     PathExtract(Path path, EncodingManager08 encodingManager) {
         this.path = path;
-
-        try {
-            final FlagEncoder encoder = path.weighting.getFlagEncoder();
+        final FlagEncoder encoder = path.weighting.getFlagEncoder();
+        if (encoder != null) {
             if (encoder instanceof DataFlagEncoder) {
                 final DataFlagEncoder dataFlagEncoder = (DataFlagEncoder) encoder;
                 speedAccessor = new SpeedAccessor() {
@@ -59,7 +58,7 @@ public class PathExtract {
                     return encoder.isBool(edge.getFlags(), FlagEncoder.K_ROUNDABOUT);
                 }
             };
-        } catch (Exception ex) {
+        } else {
             EncodingManager em2 = (EncodingManager) encodingManager;
             final DecimalEncodedValue maxspeed = em2.getEncodedValue("maxspeed", DecimalEncodedValue.class);
             speedAccessor = new SpeedAccessor() {
@@ -80,23 +79,21 @@ public class PathExtract {
     }
 
     AnnotationAccessor createAnnotationAccessor(final Translation tr) {
-        // TODO ugly hack to support instructions for EncodingManager where no FlagEncoders exist
-        try {
-            final FlagEncoder encoder = path.weighting.getFlagEncoder();
-            return new AnnotationAccessor() {
-                @Override
-                public InstructionAnnotation get(EdgeIteratorState edge) {
-                    return encoder.getAnnotation(edge.getFlags(), tr);
-                }
-            };
-        } catch (Exception ex) {
+        final FlagEncoder encoder = path.weighting.getFlagEncoder();
+        if (encoder == null)
             return new AnnotationAccessor() {
                 @Override
                 public InstructionAnnotation get(EdgeIteratorState edge) {
                     return InstructionAnnotation.EMPTY;
                 }
             };
-        }
+
+        return new AnnotationAccessor() {
+            @Override
+            public InstructionAnnotation get(EdgeIteratorState edge) {
+                return encoder.getAnnotation(edge.getFlags(), tr);
+            }
+        };
     }
 
     /**

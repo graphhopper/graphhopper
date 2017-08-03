@@ -34,6 +34,9 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
     public AbstractAdjustedWeighting(Weighting superWeighting) {
         if (superWeighting == null)
             throw new IllegalArgumentException("No super weighting set");
+        if (superWeighting.getFlagEncoder() == null)
+            throw new IllegalArgumentException("Weighting has to support getFlagEncoder");
+
         this.superWeighting = superWeighting;
     }
 
@@ -43,7 +46,7 @@ public abstract class AbstractAdjustedWeighting implements Weighting {
     }
 
     /**
-     * Returns the flagEncoder of the superWeighting. Usually we do not have a FlagEncoder here.
+     * Returns the flagEncoder of the superWeighting.
      */
     @Override
     public FlagEncoder getFlagEncoder() {

@@ -936,16 +936,14 @@ public class GraphHopper implements GraphHopperAPI {
      * Potentially wraps the specified weighting into a TurnWeighting instance.
      */
     public Weighting createTurnWeighting(Graph graph, Weighting weighting, TraversalMode tMode) {
-        try {
-            FlagEncoder encoder = weighting.getFlagEncoder();
-            if (encoder.supports(TurnWeighting.class) && !tMode.equals(TraversalMode.NODE_BASED))
-                return new TurnWeighting(weighting, (TurnCostExtension) graph.getExtension());
+        FlagEncoder encoder = weighting.getFlagEncoder();
+        // TODO For new 1112 encoding approach we need different turn cost support
+        if (encoder == null)
             return weighting;
-        } catch (Exception ex) {
-            // TODO currently all Weightings via EncodingManager throw an exception for getFlagEncoder
-            // we need different turn cost support
-            return weighting;
-        }
+
+        if (encoder.supports(TurnWeighting.class) && !tMode.equals(TraversalMode.NODE_BASED))
+            return new TurnWeighting(weighting, (TurnCostExtension) graph.getExtension());
+        return weighting;
     }
 
     @Override

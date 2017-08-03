@@ -61,6 +61,9 @@ public interface Weighting {
     long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
 
     /**
+     * This method returns the associated FlagEncoder for this weighting and null for the new EncodedValue mechanism (#1112).
+     * TODO: remove FlagEncoder usage to avoid this ugliness.
+     *
      * @deprecated with 0.10
      */
     @Deprecated

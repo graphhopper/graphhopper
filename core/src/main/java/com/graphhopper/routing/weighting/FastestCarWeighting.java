@@ -94,9 +94,9 @@ public class FastestCarWeighting implements Weighting {
         return getName().equals(reqMap.getWeighting());
     }
 
-    @Override
     public FlagEncoder getFlagEncoder() {
-        throw new IllegalArgumentException("Cannot access flag encoder for new encoding mechanism");
+        // Cannot access flag encoder for new encoding mechanism
+        return null;
     }
 
     @Override
