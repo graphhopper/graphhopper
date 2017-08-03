@@ -218,7 +218,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
             if (acceptPotentially != 0) {
                 if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
                     return 0;
-                return acceptBit;
+                return acceptPotentially;
             }
 
             return 0;
