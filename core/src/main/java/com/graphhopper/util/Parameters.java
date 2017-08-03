@@ -191,7 +191,7 @@ public class Parameters {
      */
     public static final class DETAILS {
 
-        public static final String PATH_DETAILS = "path_details";
+        public static final String PATH_DETAILS = "details";
 
         public static final String AVERAGE_SPEED = "average_speed";
 

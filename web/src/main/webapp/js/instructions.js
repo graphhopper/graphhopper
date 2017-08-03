@@ -3,7 +3,7 @@ var messages = require('./messages.js');
 
 var routeSegmentPopup = null;
 
-function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, debugInstructions) {
+function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, debug) {
     var sign = instr.sign;
     if (instrIndex === 0)
         sign = "marker-icon-green";
@@ -47,12 +47,13 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
 
         });
 
-        if (debugInstructions) {
+        if (debug) {
             // Debug Turn Instructions more easily
             L.marker([lngLat[1], lngLat[0]], {
                 icon: L.icon({
                     iconUrl: './img/marker-small-red.png',
-                    iconSize: [15, 15]
+                    // Mad the instructions icon a bit bigger, as they are placed before the path_details
+                    iconSize: [16, 16]
                 }),
                 draggable: true
             }).addTo(mapLayer.getRoutingLayer()).bindPopup(title);
@@ -63,15 +64,14 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
 
 module.exports.create = function (mapLayer, path, urlForHistory, request) {
     var instructionsElement = $("<table class='instructions'>");
-    var debugInstructions = request.api_params.debug_instructions;
-    var debugDetails = request.api_params.debug_details;
+    var debug = request.api_params.debug;
 
     var partialInstr = path.instructions.length > 100;
     var len = Math.min(path.instructions.length, 100);
     for (var m = 0; m < len; m++) {
         var instr = path.instructions[m];
         var lngLat = path.points.coordinates[instr.interval[0]];
-        addInstruction(mapLayer, instructionsElement, instr, m, lngLat, request.useMiles, debugInstructions);
+        addInstruction(mapLayer, instructionsElement, instr, m, lngLat, request.useMiles, debug);
     }
     var infoDiv = $("<div class='instructions_info'>");
     infoDiv.append(instructionsElement);
@@ -89,7 +89,7 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
         instructionsElement.append(moreDiv);
     }
 
-    if (debugDetails) {
+    if (debug) {
         var detailObj = path.details;
         for (var detailKey in detailObj) {
             var pathDetailObj = detailObj[detailKey]["details"];
