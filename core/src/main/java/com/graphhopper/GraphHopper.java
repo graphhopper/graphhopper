@@ -149,8 +149,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Specify which profiles can be read by this GraphHopper instance. An encoding manager defines
-     * how data from every vehicle is written (und read) into edges of the graph.
+     * Specify which data can be read by this GraphHopper instance.
      */
     public GraphHopper setEncodingManager(EncodingManager08 em) {
         ensureNotLoaded();
