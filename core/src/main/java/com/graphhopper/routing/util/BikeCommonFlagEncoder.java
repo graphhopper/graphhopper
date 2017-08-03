@@ -351,10 +351,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             }
 
         } else {
-            double ferrySpeed = getFerrySpeed(way,
-                    highwaySpeeds.get("living_street"),
-                    highwaySpeeds.get("track"),
-                    highwaySpeeds.get("primary"));
+            double ferrySpeed = getFerrySpeed(way);
             flags = handleSpeed(way, ferrySpeed, flags);
             flags |= directionBitMask;
         }

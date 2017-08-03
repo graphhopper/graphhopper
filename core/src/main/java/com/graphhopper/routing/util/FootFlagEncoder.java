@@ -293,7 +293,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
                 flags = setBool(flags, K_ROUNDABOUT, true);
 
         } else {
-            double ferrySpeed = getFerrySpeed(way, SLOW_SPEED, MEAN_SPEED, FERRY_SPEED);
+            double ferrySpeed = getFerrySpeed(way);
             flags = setSpeed(flags, ferrySpeed);
             flags |= directionBitMask;
         }
