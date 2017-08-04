@@ -41,7 +41,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.details.PathDetailsCalculatorFactory;
+import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.BBox;
@@ -1051,7 +1051,7 @@ public class GraphHopper implements GraphHopperAPI {
                 boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, enableInstructions);
                 boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
                 double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
-                PathDetailsCalculatorFactory calculatorFactory = new PathDetailsCalculatorFactory(request.getPathDetails(), encoder);
+                PathDetailsBuilderFactory calculatorFactory = new PathDetailsBuilderFactory(request.getPathDetails(), encoder);
 
                 DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
                 PathMerger pathMerger = new PathMerger().

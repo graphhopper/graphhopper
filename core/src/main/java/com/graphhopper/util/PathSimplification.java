@@ -18,7 +18,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.PathWrapper;
-import com.graphhopper.util.details.PathDetails;
+import com.graphhopper.util.details.PathDetail;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +36,8 @@ import java.util.Map;
 public class PathSimplification {
 
     private PointList pointList;
-    private Map<String, PathDetails> pathDetails;
-    private List<Object> toSimplify;
+    private Map<String, List<PathDetail>> pathDetails;
+    private List<List> toSimplify;
     private DouglasPeucker douglasPeucker;
 
     public PathSimplification(PathWrapper pathWrapper, DouglasPeucker douglasPeucker, boolean enableInstructions) {
@@ -114,45 +114,27 @@ public class PathSimplification {
             int length = getNumberOfPoints(toSimplify.get(toShiftIndex), offset[toShiftIndex]);
             startIntervals[toShiftIndex] += length;
             offset[toShiftIndex]++;
-            if (offset[toShiftIndex] >= getLength(toSimplify.get(toShiftIndex))) {
+            if (offset[toShiftIndex] >= toSimplify.get(toShiftIndex).size()) {
                 endReached = true;
             }
         }
         return pointList;
     }
 
-    private int getLengthIL(InstructionList il) {
-        return il.size();
-    }
-
-    private int getLengthPD(PathDetails pd) {
-        return pd.getDetails().size();
-    }
-
-    private int getLength(Object o) {
-        if (o instanceof InstructionList) {
-            return getLengthIL((InstructionList) o);
-        }
-        if (o instanceof PathDetails) {
-            return getLengthPD((PathDetails) o);
-        }
-        throw new IllegalStateException("We can only handle PathDetails or InstructionList in PathSimplification");
-    }
-
     private int getNumberOfPointsIL(InstructionList il, int index) {
         return il.get(index).getPoints().size();
     }
 
-    private int getNumberOfPointsPD(PathDetails pd, int index) {
-        return pd.getDetails().get(index).numberOfPoints;
+    private int getNumberOfPointsPD(List<PathDetail> pd, int index) {
+        return pd.get(index).numberOfPoints;
     }
 
     private int getNumberOfPoints(Object o, int index) {
         if (o instanceof InstructionList) {
             return getNumberOfPointsIL((InstructionList) o, index);
         }
-        if (o instanceof PathDetails) {
-            return getNumberOfPointsPD((PathDetails) o, index);
+        if (o instanceof List) {
+            return getNumberOfPointsPD((List<PathDetail>) o, index);
         }
         throw new IllegalStateException("We can only handle PathDetails or InstructionList in PathSimplification");
     }
@@ -162,21 +144,21 @@ public class PathSimplification {
 
     }
 
-    private void reduceNumberOfPointsPD(PathDetails pd, int index, int reduceBy) {
-        pd.getDetails().get(index).numberOfPoints -= reduceBy;
+    private void reduceNumberOfPointsPD(List<PathDetail> pd, int index, int reduceBy) {
+        pd.get(index).numberOfPoints -= reduceBy;
     }
 
     private void reduceNumberOfPoints(Object o, int index, int reduceBy, int startIndex, int newEndIndex) {
         if (o instanceof InstructionList) {
             reduceNumberOfPointsIl((InstructionList) o, index, startIndex, newEndIndex);
-        } else if (o instanceof PathDetails) {
-            reduceNumberOfPointsPD((PathDetails) o, index, reduceBy);
+        } else if (o instanceof List) {
+            reduceNumberOfPointsPD((List) o, index, reduceBy);
         } else {
             throw new IllegalStateException("We can only handle PathDetails or InstructionList in PathSimplification");
         }
     }
 
-    private int[] calculateEndIntervals(int[] endIntervals, int[] startIntervals, int[] offset, List<Object> toSimplify) {
+    private int[] calculateEndIntervals(int[] endIntervals, int[] startIntervals, int[] offset, List<List> toSimplify) {
         for (int i = 0; i < toSimplify.size(); i++) {
             endIntervals[i] = startIntervals[i] + getNumberOfPoints(toSimplify.get(i), offset[i]);
         }

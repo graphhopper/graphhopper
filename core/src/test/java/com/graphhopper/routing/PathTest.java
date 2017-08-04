@@ -24,9 +24,9 @@ import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
-import com.graphhopper.util.details.PathDetails;
-import com.graphhopper.util.details.PathDetailsBuilder;
-import com.graphhopper.util.details.PathDetailsCalculatorFactory;
+import com.graphhopper.util.details.AbstractPathDetailsBuilder;
+import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import org.junit.Test;
 
 import java.util.*;
@@ -310,11 +310,9 @@ public class PathTest {
         Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        PointList points = p.calcPoints();
-
-        List<PathDetails> details = p.calcDetails(new PathDetailsCalculatorFactory(Arrays.asList(new String[]{Parameters.DETAILS.AVERAGE_SPEED}), encoder));
+        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{Parameters.DETAILS.AVERAGE_SPEED}), encoder));
         assertTrue(details.size() == 1);
-        Map<Object, List<int[]>> detailsMap = details.get(0).getPathDetailsMap();
+        Map<Object, List<int[]>> detailsMap = AbstractPathDetailsBuilder.toJson(details.get(Parameters.DETAILS.AVERAGE_SPEED));
         assertTrue(detailsMap.keySet().size() == 3);
         assertTrue(detailsMap.containsKey(10.0));
         assertTrue(detailsMap.containsKey(45.0));

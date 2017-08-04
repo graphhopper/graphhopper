@@ -17,60 +17,27 @@
  */
 package com.graphhopper.util.details;
 
-import java.util.ArrayList;
+import com.graphhopper.util.EdgeIteratorState;
+
 import java.util.List;
+import java.util.Map;
 
 /**
- * Builds PathDetails, from values and intervals of a Path.
+ * Calculate details for a path and keeps the AbstractPathDetailsBuilder corresponding to this detail.
+ * Every PathDetailCalculator is responsible for a set of values, for example the Speed.
+ * On request it can provide the current value as well as a check if the value is different to the last.
  *
  * @author Robin Boldt
  */
-public class PathDetailsBuilder {
+public interface PathDetailsBuilder {
 
-    private final String name;
-    private boolean isOpen = false;
+    boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge);
 
-    private PathDetail currentDetail = new PathDetail();
-    private List<PathDetail> pathDetails = new ArrayList<>();
+    Map.Entry<String, List<PathDetail>> build();
 
-    public PathDetailsBuilder(String name) {
-        this.name = name;
-    }
+    void startInterval();
 
-    /**
-     * It is only possible to open one interval at a time. Calling <code>startInterval</code> when
-     * the interval is already open results in an Exception.
-     *
-     * @param value The value of the Path at this moment, that should be stored in the PathDetail
-     */
-    public void startInterval(Object value) {
-        if (this.isOpen) {
-            throw new IllegalStateException("Path details is already open with value: " + this.currentDetail.value + " trying to open a new one with value: " + value);
-        }
-        this.currentDetail = new PathDetail(value);
-        this.isOpen = true;
-    }
+    void endInterval(int numberOfPoints);
 
-    /**
-     * Ending intervals multiple times is safe, we only write the interval if it was open and not empty.
-     * Writes the interval to the pathDetails
-     *
-     * @param numberOfPoints Length of the PathDetail
-     */
-    public void endInterval(int numberOfPoints) {
-        // We don't want PathDetails
-        if (this.isOpen && numberOfPoints > 0) {
-            this.currentDetail.numberOfPoints = numberOfPoints;
-            this.pathDetails.add(this.currentDetail);
-        }
-        this.isOpen = false;
-    }
-
-    public PathDetails buildPathDetails() {
-        return new PathDetails(this.getName(), this.pathDetails);
-    }
-
-    public String getName() {
-        return this.name;
-    }
+    String getName();
 }

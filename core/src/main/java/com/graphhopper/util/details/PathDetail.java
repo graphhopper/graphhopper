@@ -1,16 +1,13 @@
 package com.graphhopper.util.details;
 
 /**
- * A detail of a Path
+ * A detail information of a Path
  *
  * @author Robin Boldt
  */
 public class PathDetail {
-    public Object value;
+    public final Object value;
     public int numberOfPoints;
-
-    public PathDetail() {
-    }
 
     public PathDetail(Object value) {
         this.value = value;

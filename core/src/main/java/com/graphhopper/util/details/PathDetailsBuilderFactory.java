@@ -17,23 +17,33 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.util.Parameters;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Calculate details for a path and keeps the PathDetailsBuilder corresponding to this detail.
- * Every PathDetailCalculator is responsible for a set of values, for example the Speed.
- * On request it can provide the current value as well as a check if the value is different to the last.
+ * Generates a PathDetailsBuilder:s from a List of PathDetail names
  *
  * @author Robin Boldt
  */
-public interface PathDetailsCalculator {
+public class PathDetailsBuilderFactory {
 
-    boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge);
+    private final List<String> requestedPathDetails;
+    private final FlagEncoder encoder;
 
-    PathDetailsBuilder getPathDetailsBuilder();
+    public PathDetailsBuilderFactory(List<String> requestedPathDetails, FlagEncoder encoder) {
+        this.requestedPathDetails = requestedPathDetails;
+        this.encoder = encoder;
+    }
 
-    Object getCurrentValue();
+    public List<PathDetailsBuilder> createPathDetailsCalculator() {
+        List<PathDetailsBuilder> calculators = new ArrayList<>();
 
-    String getName();
+        if (this.requestedPathDetails.contains(Parameters.DETAILS.AVERAGE_SPEED))
+            calculators.add(new AverageSpeedDetails(encoder));
 
+        return calculators;
+    }
 }

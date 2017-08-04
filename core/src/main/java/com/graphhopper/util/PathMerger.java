@@ -19,7 +19,8 @@ package com.graphhopper.util;
 
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.Path;
-import com.graphhopper.util.details.PathDetailsCalculatorFactory;
+import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 
 import java.util.ArrayList;
@@ -46,7 +47,7 @@ public class PathMerger {
     private DouglasPeucker douglasPeucker = DP;
     private boolean calcPoints = true;
 
-    private PathDetailsCalculatorFactory calculatorFactory;
+    private PathDetailsBuilderFactory calculatorFactory;
 
     public PathMerger setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
@@ -58,7 +59,7 @@ public class PathMerger {
         return this;
     }
 
-    public PathMerger setPathDetailsCalculatorFactory(PathDetailsCalculatorFactory calculatorFactory) {
+    public PathMerger setPathDetailsCalculatorFactory(PathDetailsBuilderFactory calculatorFactory) {
         this.calculatorFactory = calculatorFactory;
         return this;
     }
@@ -140,6 +141,29 @@ public class PathMerger {
             PathSimplification ps = new PathSimplification(altRsp, douglasPeucker, enableInstructions);
             ps.simplify();
         }
+    }
+
+    /**
+     * Merges <code>otherDetails</code> into the <code>pathDetails</code>.
+     * <p>
+     * This method makes sure that PathDetails around waypoints are merged correctly, by adding an
+     * additional point for the ViaInstruction. See #1091 and the misplaced PathDetails after waypoints.
+     *
+     * @param pathDetails The PathDetails to be merged into this object.
+     */
+    public static void merge(List<PathDetail> pathDetails, List<PathDetail> otherDetails) {
+        // Make sure that PathDetails are merged correctly at waypoints
+        if (!pathDetails.isEmpty() && !otherDetails.isEmpty()) {
+            PathDetail lastDetail = pathDetails.get(pathDetails.size() - 1);
+            // Add Via Point
+            lastDetail.numberOfPoints++;
+            if (lastDetail.value.equals(otherDetails.get(0).value)) {
+                lastDetail.numberOfPoints += otherDetails.get(0).numberOfPoints;
+                otherDetails.remove(0);
+            }
+        }
+
+        pathDetails.addAll(otherDetails);
     }
 
     private void calcAscendDescend(final PathWrapper rsp, final PointList pointList) {

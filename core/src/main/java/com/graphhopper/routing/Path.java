@@ -26,13 +26,14 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
-import com.graphhopper.util.details.*;
+import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.details.PathDetailsBuilder;
+import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
@@ -375,18 +376,21 @@ public class Path {
      * @param calculatorFactory Generates the relevant calculators, accepts null inputs
      * @return List of PathDetails for this Path
      */
-    public List<PathDetails> calcDetails(final PathDetailsCalculatorFactory calculatorFactory) {
-        if(calculatorFactory == null)
-            return Collections.EMPTY_LIST;
-        List<PathDetailsCalculator> calculators = calculatorFactory.createPathDetailsCalculator();
+    public Map<String, List<PathDetail>> calcDetails(final PathDetailsBuilderFactory calculatorFactory) {
+        if (calculatorFactory == null)
+            return Collections.EMPTY_MAP;
+        List<PathDetailsBuilder> calculators = calculatorFactory.createPathDetailsCalculator();
         if (calculators.isEmpty())
-            return Collections.EMPTY_LIST;
+            return Collections.EMPTY_MAP;
 
         forEveryEdge(new PathDetailsFromEdges(calculators));
 
-        List<PathDetails> pathDetails = new ArrayList<>(calculators.size());
-        for (PathDetailsCalculator calc : calculators) {
-            pathDetails.add(calc.getPathDetailsBuilder().buildPathDetails());
+        Map<String, List<PathDetail>> pathDetails = new HashMap<>(calculators.size());
+        for (PathDetailsBuilder calc : calculators) {
+            Map.Entry<String, List<PathDetail>> entry = calc.build();
+            List<PathDetail> existing = pathDetails.put(entry.getKey(), entry.getValue());
+            if (existing != null)
+                throw new IllegalStateException("Some PathDetailsBuilders use duplicate key: " + entry.getKey());
         }
 
         return pathDetails;

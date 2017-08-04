@@ -24,8 +24,8 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.details.PathDetails;
-import com.graphhopper.util.details.PathDetailsBuilder;
+import com.graphhopper.util.details.AbstractPathDetailsBuilder;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.*;
@@ -403,9 +403,9 @@ public class GraphHopperIT {
         GHResponse rsp = hopper.route(request);
 
         PathWrapper arsp = rsp.getBest();
-        Map<String, PathDetails> details = arsp.getPathDetails();
+        Map<String, List<PathDetail>> details = arsp.getPathDetails();
         assertTrue(details.size() == 1);
-        Map<Object, List<int[]>> detailsMap = details.get("average_speed").getPathDetailsMap();
+        Map<Object, List<int[]>> detailsMap = AbstractPathDetailsBuilder.toJson(details.get("average_speed"));
         // Foot routing
         assertTrue(detailsMap.get(5.0).size() > 0);
         // First point

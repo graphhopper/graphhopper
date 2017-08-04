@@ -23,29 +23,30 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.util.List;
 
 /**
- * This class calculates the {@link PathDetails} in a similar fashion to the instruction calculation,
+ * This class calculates a List of PathDetail in a similar fashion to the instruction calculation,
  * also see {@link com.graphhopper.routing.InstructionsFromEdges}.
  * <p>
- * This class uses the {@link PathDetailsCalculator}. We server every edge into the calculator to see
- * if the calculator value changes, if yes, we create a new interval of {@link PathDetails}.
+ * This class uses the {@link PathDetailsBuilder}. We provide every edge to the calculator to see
+ * if the calculator value changes, if yes, we create a new interval, ie. a new PathDetail in the List.
  *
  * @author Robin Boldt
+ * @see PathDetail
  */
 public class PathDetailsFromEdges implements Path.EdgeVisitor {
 
-    private final List<PathDetailsCalculator> calculators;
+    private final List<PathDetailsBuilder> calculators;
     private int numberOfPoints = 0;
 
-    public PathDetailsFromEdges(List<PathDetailsCalculator> calculators) {
+    public PathDetailsFromEdges(List<PathDetailsBuilder> calculators) {
         this.calculators = calculators;
     }
 
     @Override
     public void next(EdgeIteratorState edge, int index, int prevEdgeId) {
-        for (PathDetailsCalculator calc : calculators) {
+        for (PathDetailsBuilder calc : calculators) {
             if (calc.isEdgeDifferentToLastEdge(edge)) {
-                calc.getPathDetailsBuilder().endInterval(numberOfPoints);
-                calc.getPathDetailsBuilder().startInterval(calc.getCurrentValue());
+                calc.endInterval(numberOfPoints);
+                calc.startInterval();
                 numberOfPoints = 0;
             }
         }
@@ -54,8 +55,8 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
 
     @Override
     public void finish() {
-        for (PathDetailsCalculator calc : calculators) {
-            calc.getPathDetailsBuilder().endInterval(numberOfPoints);
+        for (PathDetailsBuilder calc : calculators) {
+            calc.endInterval(numberOfPoints);
         }
     }
 }

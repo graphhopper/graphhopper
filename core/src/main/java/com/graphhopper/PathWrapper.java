@@ -18,8 +18,9 @@
 package com.graphhopper;
 
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.details.PathDetails;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.BBox;
 
 import java.math.BigDecimal;
@@ -46,7 +47,7 @@ public class PathWrapper {
     private int numChanges;
     private long firstPtLegDeparture;
     private final List<Trip.Leg> legs = new ArrayList<>();
-    private Map<String, PathDetails> pathDetails = new HashMap<>();
+    private Map<String, List<PathDetail>> pathDetails = new HashMap<>();
     private BigDecimal fare;
 
     /**
@@ -249,21 +250,21 @@ public class PathWrapper {
      *
      * @param details The PathDetails to add
      */
-    public void addPathDetails(List<PathDetails> details) {
+    public void addPathDetails(Map<String, List<PathDetail>> details) {
         if (!this.pathDetails.isEmpty() && !details.isEmpty() && this.pathDetails.size() != details.size()) {
             throw new IllegalStateException("Details have to be the same size");
         }
-        for (int i = 0; i < details.size(); i++) {
-            if (this.pathDetails.containsKey(details.get(i).getName())) {
-                PathDetails pd = this.pathDetails.get(details.get(i).getName());
-                pd.merge(details.get(i));
+        for (Map.Entry<String, List<PathDetail>> detailEntry : details.entrySet()) {
+            if (this.pathDetails.containsKey(detailEntry.getKey())) {
+                List<PathDetail> pd = this.pathDetails.get(detailEntry.getKey());
+                PathMerger.merge(pd, detailEntry.getValue());
             } else {
-                this.pathDetails.put(details.get(i).getName(), details.get(i));
+                this.pathDetails.put(detailEntry.getKey(), detailEntry.getValue());
             }
         }
     }
 
-    public Map<String, PathDetails> getPathDetails() {
+    public Map<String, List<PathDetail>> getPathDetails() {
         return this.pathDetails;
     }
 
