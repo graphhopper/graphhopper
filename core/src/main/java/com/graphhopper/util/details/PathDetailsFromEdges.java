@@ -23,7 +23,11 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.util.List;
 
 /**
- * This class calculates the PathDetails, similar to the instruction calculation
+ * This class calculates the {@link PathDetails} in a similar fashion to the instruction calculation,
+ * also see {@link com.graphhopper.routing.InstructionsFromEdges}.
+ * <p>
+ * This class uses the {@link PathDetailsCalculator}. We server every edge into the calculator to see
+ * if the calculator value changes, if yes, we create a new interval of {@link PathDetails}.
  *
  * @author Robin Boldt
  */

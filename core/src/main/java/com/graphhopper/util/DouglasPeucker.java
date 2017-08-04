@@ -54,15 +54,25 @@ public class DouglasPeucker {
     }
 
     /**
-     * This method removes points which are close to the line (defined by maxDist).
+     * Simplifies the <code>points</code>, from index 0 to size-1.
      * <p>
+     * It is a wrapper method for {@link DouglasPeucker#simplify(PointList, int, int)}.
      *
-     * @return removed nodes
+     * @return The number removed points
      */
     public int simplify(PointList points) {
-        return simplify(points, 0, points.size()-1);
+        return simplify(points, 0, points.size() - 1);
     }
 
+    /**
+     * Simplifies a part of the <code>points</code>. The <code>fromIndex</code> and <code>lastIndex</code>
+     * are guaranteed to be kept.
+     *
+     * @param points    The PointList to simplify
+     * @param fromIndex Start index to simplify, should be >= <code>lastIndex</code>
+     * @param lastIndex Simplify up to this index
+     * @return The number of removed points
+     */
     public int simplify(PointList points, int fromIndex, int lastIndex) {
         int removed = 0;
         int size = lastIndex - fromIndex;
@@ -79,7 +89,7 @@ public class DouglasPeucker {
             removed = subSimplify(points, fromIndex, lastIndex);
         }
 
-        if(removed > 0)
+        if (removed > 0)
             compressNew(points, removed);
 
         return removed;

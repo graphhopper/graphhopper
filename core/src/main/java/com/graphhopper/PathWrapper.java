@@ -243,6 +243,12 @@ public class PathWrapper {
         this.instructions = instructions;
     }
 
+    /**
+     * Adds the given PathDetails to the existing ones. If there are already PathDetails set, the number
+     * details has to be equal to <code>details</code>.
+     *
+     * @param details The PathDetails to add
+     */
     public void addPathDetails(List<PathDetails> details) {
         if (!this.pathDetails.isEmpty() && !details.isEmpty() && this.pathDetails.size() != details.size()) {
             throw new IllegalStateException("Details have to be the same size");

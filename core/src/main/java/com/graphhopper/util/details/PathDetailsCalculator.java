@@ -20,7 +20,9 @@ package com.graphhopper.util.details;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Calculate details for a path
+ * Calculate details for a path and keeps the PathDetailsBuilder corresponding to this detail.
+ * Every PathDetailCalculator is responsible for a set of values, for example the Speed.
+ * On request it can provide the current value as well as a check if the value is different to the last.
  *
  * @author Robin Boldt
  */
@@ -29,8 +31,6 @@ public interface PathDetailsCalculator {
     boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge);
 
     PathDetailsBuilder getPathDetailsBuilder();
-
-    PathDetails getPathDetails();
 
     Object getCurrentValue();
 

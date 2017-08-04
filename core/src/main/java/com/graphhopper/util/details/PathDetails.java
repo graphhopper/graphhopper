@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Holds the details for a path
+ * Stores the details for one or multiple path objects.
  *
  * @author Robin Boldt
  */
@@ -45,13 +45,22 @@ public class PathDetails {
         return this.pathDetails;
     }
 
-    public void merge(PathDetails pD) {
-        if (!this.name.equals(pD.getName())) {
+    /**
+     * Merges the provided <code>pathDetails</code> into this object. Only pathDetails with the same
+     * name can be merged.
+     * <p>
+     * This method makes sure that PathDetails around waypoints are merged correctly, by adding an
+     * additional point for the ViaInstruction. See #1091 and the misplaced PathDetails after waypoints.
+     *
+     * @param pathDetails The PathDetails to be merged into this object.
+     */
+    public void merge(PathDetails pathDetails) {
+        if (!this.name.equals(pathDetails.getName())) {
             throw new IllegalArgumentException("Only PathDetails with the same name can be merged");
         }
-        List<PathDetail> otherDetails = pD.getDetails();
+        List<PathDetail> otherDetails = pathDetails.getDetails();
 
-        // Make sure that pathdetails are merged correctly at waypoints
+        // Make sure that PathDetails are merged correctly at waypoints
         if (!this.pathDetails.isEmpty() && !otherDetails.isEmpty()) {
             PathDetail lastDetail = this.pathDetails.get(this.pathDetails.size() - 1);
             // Add Via Point
@@ -69,6 +78,9 @@ public class PathDetails {
         return this.name;
     }
 
+    /**
+     * This method is used to serialize the PathDetails into JSON using jackson.
+     */
     @JsonProperty("details")
     public Map<Object, List<int[]>> getPathDetailsMap() {
         Map<Object, List<int[]>> detailsMap = new HashMap<>();

@@ -21,7 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Builds PathDetails, from intervals.
+ * Builds PathDetails, from values and intervals of a Path.
  *
  * @author Robin Boldt
  */
@@ -38,9 +38,10 @@ public class PathDetailsBuilder {
     }
 
     /**
-     * It is only possible to open one interval at a time.
+     * It is only possible to open one interval at a time. Calling <code>startInterval</code> when
+     * the interval is already open results in an Exception.
      *
-     * @param value
+     * @param value The value of the Path at this moment, that should be stored in the PathDetail
      */
     public void startInterval(Object value) {
         if (this.isOpen) {
@@ -51,8 +52,7 @@ public class PathDetailsBuilder {
     }
 
     /**
-     * Ending intervals multiple times is safe, we only write the interval if it was opened.
-     * <p>
+     * Ending intervals multiple times is safe, we only write the interval if it was open and not empty.
      * Writes the interval to the pathDetails
      *
      * @param numberOfPoints Length of the PathDetail
@@ -66,8 +66,8 @@ public class PathDetailsBuilder {
         this.isOpen = false;
     }
 
-    public List<PathDetail> buildPathDetails() {
-        return this.pathDetails;
+    public PathDetails buildPathDetails() {
+        return new PathDetails(this.getName(), this.pathDetails);
     }
 
     public String getName() {

@@ -25,12 +25,11 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class simplifies the path.
- * <p>
- * The tricky part about this is that if we have Instructions and PathDetails, we can only simplify the parts of the
- * route as we need to keep the reference points in the points array. We are looking for non-conflicting Instructions or
- * PathDetails and simplify them.
- * <p>
+ * This class simplifies the path, using {@link DouglasPeucker} and by considering the intervals
+ * specified by <code>toSimplify</code>. We have to reference the points specified by the objects
+ * in <code>toSimplify</code>. Therefore, we can only simplify in between these intervals, without
+ * simplifying over one the points, as one of the points might be lost during the simplification
+ * and we could not reference this point anymore.
  *
  * @author Robin Boldt
  */
@@ -68,15 +67,15 @@ public class PathSimplification {
         int[] startIntervals = new int[toSimplify.size()];
 
         while (!endReached) {
-
-            endIntervals = calculateEndIntervals(endIntervals, startIntervals, offset, toSimplify);
-
             boolean simplificationPossible = true;
             int nonConflictingStart = 0;
             int nonConflictingEnd = Integer.MAX_VALUE;
             int toSimplifyIndex = -1;
             int toShiftIndex = -1;
 
+            endIntervals = calculateEndIntervals(endIntervals, startIntervals, offset, toSimplify);
+
+            // Find the intervals to run a simplification, if possible, and where to shift
             for (int i = 0; i < toSimplify.size(); i++) {
                 if (startIntervals[i] >= nonConflictingEnd || endIntervals[i] <= nonConflictingStart) {
                     simplificationPossible = false;
@@ -98,7 +97,7 @@ public class PathSimplification {
 
             if (toSimplifyIndex >= 0 && simplificationPossible) {
                 // Only simplify if there is more than one point
-                if(nonConflictingEnd - nonConflictingStart > 1){
+                if (nonConflictingEnd - nonConflictingStart > 1) {
                     // Simplify
                     int removed = douglasPeucker.simplify(pointList, nonConflictingStart, nonConflictingEnd);
                     if (removed > 0) {

@@ -27,11 +27,17 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This class merges a list of points into one point recognizing the specified places.
+ * This class merges multiple {@link Path} objects into one continues object that
+ * can be used in the {@link PathWrapper}. There will be a Path between every waypoint.
+ * So for two waypoints there will be only one Path object. For three waypoints there will be
+ * two Path objects.
  * <p>
+ * The instructions are generated per Path object and are merged into one continues InstructionList.
+ * The PointList per Path object are merged and optionally simplified.
  *
  * @author Peter Karich
  * @author ratrun
+ * @author Robin Boldt
  */
 public class PathMerger {
     private static final DouglasPeucker DP = new DouglasPeucker();
@@ -69,7 +75,6 @@ public class PathMerger {
 
     public void doWork(PathWrapper altRsp, List<Path> paths, Translation tr) {
         int origPoints = 0;
-        int lastIndex = 0;
         long fullTimeInMillis = 0;
         double fullWeight = 0;
         double fullDistance = 0;
@@ -90,7 +95,7 @@ public class PathMerger {
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);
 
-                    // if not yet reached finish replace with 'reached via'
+                    // if not yet reached finish replace the FinishInstruction with a ViaInstructionn
                     if (pathIndex + 1 < paths.size()) {
                         ViaInstruction newInstr = new ViaInstruction(fullInstructions.get(fullInstructions.size() - 1));
                         newInstr.setViaCount(pathIndex + 1);
@@ -105,8 +110,6 @@ public class PathMerger {
                     fullPoints = new PointList(tmpPoints.size(), tmpPoints.is3D());
 
                 fullPoints.add(tmpPoints);
-            }
-            if ((calcPoints || enableInstructions) && calculatorFactory != null) {
                 altRsp.addPathDetails(path.calcDetails(calculatorFactory));
             }
 

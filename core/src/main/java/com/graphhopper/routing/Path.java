@@ -370,19 +370,23 @@ public class Path {
     }
 
     /**
-     * @param calculatorFactory Generates all calculators to be considered for this route
+     * Calculates the PathDetails for this Path. This method will return fast, if there are no calculators.
+     *
+     * @param calculatorFactory Generates the relevant calculators, accepts null inputs
      * @return List of PathDetails for this Path
      */
     public List<PathDetails> calcDetails(final PathDetailsCalculatorFactory calculatorFactory) {
-        List<PathDetailsCalculator> calculators = calculatorFactory.createPathDetailsCalculator();
-        if (calculators.isEmpty()) {
+        if(calculatorFactory == null)
             return Collections.EMPTY_LIST;
-        }
+        List<PathDetailsCalculator> calculators = calculatorFactory.createPathDetailsCalculator();
+        if (calculators.isEmpty())
+            return Collections.EMPTY_LIST;
+
         forEveryEdge(new PathDetailsFromEdges(calculators));
 
         List<PathDetails> pathDetails = new ArrayList<>(calculators.size());
         for (PathDetailsCalculator calc : calculators) {
-            pathDetails.add(calc.getPathDetails());
+            pathDetails.add(calc.getPathDetailsBuilder().buildPathDetails());
         }
 
         return pathDetails;
