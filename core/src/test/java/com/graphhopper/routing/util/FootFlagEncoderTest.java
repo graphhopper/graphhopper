@@ -216,7 +216,8 @@ public class FootFlagEncoderTest {
         // a bit longer than an hour
         way.setTag("duration:seconds", "4000");
         long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
-        assertEquals(10, footEncoder.getSpeed(flags), .1);
+        assertTrue(footEncoder.getSpeed(flags) > footEncoder.getMaxSpeed());
+        assertEquals(20, footEncoder.getSpeed(flags), .1);
     }
 
     @Test

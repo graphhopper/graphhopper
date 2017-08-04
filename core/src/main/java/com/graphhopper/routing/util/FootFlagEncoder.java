@@ -39,6 +39,7 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 public class FootFlagEncoder extends AbstractFlagEncoder {
     static final int SLOW_SPEED = 2;
     static final int MEAN_SPEED = 5;
+    static final int FERRY_SPEED = 15;
     final Set<String> safeHighwayTags = new HashSet<String>();
     final Set<String> allowedHighwayTags = new HashSet<String>();
     final Set<String> avoidHighwayTags = new HashSet<String>();
@@ -48,8 +49,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     protected HashSet<String> sidewalksNoValues = new HashSet<String>(5);
     private EncodedValue priorityWayEncoder;
     private EncodedValue relationCodeEncoder;
-
-    private static final int FERRY_SPEED = 15;
 
     /**
      * Should be only instantiated via EncodingManager
