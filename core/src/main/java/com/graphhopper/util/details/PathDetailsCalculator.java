@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.routing.Path;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -28,6 +27,8 @@ import com.graphhopper.util.EdgeIteratorState;
 public interface PathDetailsCalculator {
 
     boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge);
+
+    PathDetailsBuilder getPathDetailsBuilder();
 
     PathDetails getPathDetails();
 

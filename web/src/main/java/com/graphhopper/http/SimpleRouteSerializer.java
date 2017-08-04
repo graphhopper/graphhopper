@@ -22,7 +22,6 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
-import com.graphhopper.util.details.PathDetails;
 import com.graphhopper.util.exceptions.GHException;
 import com.graphhopper.util.shapes.BBox;
 

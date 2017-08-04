@@ -30,6 +30,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.details.PathDetails;
+import com.graphhopper.util.details.PathDetailsBuilder;
 import com.graphhopper.util.details.PathDetailsCalculatorFactory;
 import org.junit.Before;
 import org.junit.Test;

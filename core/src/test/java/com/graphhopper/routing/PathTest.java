@@ -25,6 +25,7 @@ import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.details.PathDetails;
+import com.graphhopper.util.details.PathDetailsBuilder;
 import com.graphhopper.util.details.PathDetailsCalculatorFactory;
 import org.junit.Test;
 

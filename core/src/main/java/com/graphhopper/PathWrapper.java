@@ -20,7 +20,6 @@ package com.graphhopper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.details.PathDetails;
-import com.graphhopper.util.details.PathDetailsCalculator;
 import com.graphhopper.util.shapes.BBox;
 
 import java.math.BigDecimal;

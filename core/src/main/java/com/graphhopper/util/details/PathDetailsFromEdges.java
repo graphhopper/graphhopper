@@ -40,8 +40,8 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
     public void next(EdgeIteratorState edge, int index, int prevEdgeId) {
         for (PathDetailsCalculator calc : calculators) {
             if (calc.isEdgeDifferentToLastEdge(edge)) {
-                calc.getPathDetails().endInterval(numberOfPoints);
-                calc.getPathDetails().startInterval(calc.getCurrentValue());
+                calc.getPathDetailsBuilder().endInterval(numberOfPoints);
+                calc.getPathDetailsBuilder().startInterval(calc.getCurrentValue());
                 numberOfPoints = 0;
             }
         }
@@ -51,7 +51,7 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
     @Override
     public void finish() {
         for (PathDetailsCalculator calc : calculators) {
-            calc.getPathDetails().endInterval(numberOfPoints);
+            calc.getPathDetailsBuilder().endInterval(numberOfPoints);
         }
     }
 }

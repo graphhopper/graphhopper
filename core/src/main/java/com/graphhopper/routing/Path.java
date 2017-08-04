@@ -26,10 +26,7 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
-import com.graphhopper.util.details.PathDetails;
-import com.graphhopper.util.details.PathDetailsCalculator;
-import com.graphhopper.util.details.PathDetailsCalculatorFactory;
-import com.graphhopper.util.details.PathDetailsFromEdges;
+import com.graphhopper.util.details.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

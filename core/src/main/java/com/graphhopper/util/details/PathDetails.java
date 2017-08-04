@@ -33,46 +33,15 @@ import java.util.Map;
 public class PathDetails {
 
     private final String name;
-    private boolean isOpen = false;
+    private List<PathDetail> pathDetails;
 
-    private Detail currentDetail = new Detail();
-    private List<Detail> pathDetails = new ArrayList<>();
-
-    public PathDetails(String name) {
+    public PathDetails(String name, List<PathDetail> pathDetails) {
         this.name = name;
-    }
-
-    /**
-     * It is only possible to open one interval at a time.
-     *
-     * @param value
-     */
-    public void startInterval(Object value) {
-        if (this.isOpen) {
-            throw new IllegalStateException("Path details is already open with value: " + this.currentDetail.value + " trying to open a new one with value: " + value);
-        }
-        this.currentDetail = new Detail(value);
-        this.isOpen = true;
-    }
-
-    /**
-     * Ending intervals multiple times is safe, we only write the interval if it was opened.
-     * <p>
-     * Writes the interval to the pathDetails
-     *
-     * @param numberOfPoints Length of the PathDetail
-     */
-    public void endInterval(int numberOfPoints) {
-        // We don't want PathDetails
-        if (this.isOpen && numberOfPoints > 0) {
-            this.currentDetail.numberOfPoints = numberOfPoints;
-            this.pathDetails.add(this.currentDetail);
-        }
-        this.isOpen = false;
+        this.pathDetails = pathDetails;
     }
 
     @JsonIgnore
-    public List<Detail> getDetails() {
+    public List<PathDetail> getDetails() {
         return this.pathDetails;
     }
 
@@ -80,11 +49,11 @@ public class PathDetails {
         if (!this.name.equals(pD.getName())) {
             throw new IllegalArgumentException("Only PathDetails with the same name can be merged");
         }
-        List<Detail> otherDetails = pD.getDetails();
+        List<PathDetail> otherDetails = pD.getDetails();
 
         // Make sure that pathdetails are merged correctly at waypoints
         if (!this.pathDetails.isEmpty() && !otherDetails.isEmpty()) {
-            Detail lastDetail = this.pathDetails.get(this.pathDetails.size() - 1);
+            PathDetail lastDetail = this.pathDetails.get(this.pathDetails.size() - 1);
             // Add Via Point
             lastDetail.numberOfPoints++;
             if (lastDetail.value.equals(otherDetails.get(0).value)) {
@@ -106,7 +75,7 @@ public class PathDetails {
 
         int pointer = 0;
 
-        for (Detail detail : this.pathDetails) {
+        for (PathDetail detail : this.pathDetails) {
             List<int[]> detailIntervals;
             if (detailsMap.containsKey(detail.value)) {
                 detailIntervals = detailsMap.get(detail.value);
@@ -121,15 +90,4 @@ public class PathDetails {
         return detailsMap;
     }
 
-    public class Detail {
-        public Object value;
-        public int numberOfPoints;
-
-        public Detail() {
-        }
-
-        public Detail(Object value) {
-            this.value = value;
-        }
-    }
 }
