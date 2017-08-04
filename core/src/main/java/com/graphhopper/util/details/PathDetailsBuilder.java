@@ -17,8 +17,6 @@
  */
 package com.graphhopper.util.details;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -68,8 +66,7 @@ public class PathDetailsBuilder {
         this.isOpen = false;
     }
 
-    @JsonIgnore
-    public List<PathDetail> getDetails() {
+    public List<PathDetail> buildPathDetails() {
         return this.pathDetails;
     }
 

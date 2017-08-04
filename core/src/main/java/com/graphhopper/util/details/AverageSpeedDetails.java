@@ -52,7 +52,7 @@ public class AverageSpeedDetails implements PathDetailsCalculator {
 
     @Override
     public PathDetails getPathDetails() {
-        return new PathDetails(this.getName(), this.pathDetailsBuilder.getDetails());
+        return new PathDetails(this.getName(), this.pathDetailsBuilder.buildPathDetails());
     }
 
     @Override
