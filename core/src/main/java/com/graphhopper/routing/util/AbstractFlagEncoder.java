@@ -469,8 +469,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                             return getMaxSpeed();
                         }
                         // If the speed is lower than the speed we can store, we have to set it to the minSpeed, but > 0
-                        if (Math.round(calculatedTripSpeed) < speedEncoder.factor) {
-                            return speedEncoder.factor;
+                        if (Math.round(calculatedTripSpeed) < speedEncoder.factor / 2) {
+                            return speedEncoder.factor / 2;
                         }
 
                         return Math.round(calculatedTripSpeed);
