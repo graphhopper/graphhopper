@@ -39,7 +39,6 @@ import static com.graphhopper.routing.util.PriorityCode.*;
 public class FootFlagEncoder extends AbstractFlagEncoder {
     static final int SLOW_SPEED = 2;
     static final int MEAN_SPEED = 5;
-    static final int FERRY_SPEED = 10;
     final Set<String> safeHighwayTags = new HashSet<String>();
     final Set<String> allowedHighwayTags = new HashSet<String>();
     final Set<String> avoidHighwayTags = new HashSet<String>();
@@ -49,6 +48,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     protected HashSet<String> sidewalksNoValues = new HashSet<String>(5);
     private EncodedValue priorityWayEncoder;
     private EncodedValue relationCodeEncoder;
+
+    private static final int FERRY_SPEED = 15;
 
     /**
      * Should be only instantiated via EncodingManager
@@ -135,7 +136,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 3;
+        return 4;
     }
 
     @Override
@@ -367,5 +368,18 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     @Override
     public String toString() {
         return "foot";
+    }
+
+    /*
+     * This method is a current hack, to allow ferries to be actually faster than our current storable maxSpeed.
+     */
+    @Override
+    public double getSpeed(long flags) {
+        double speed = super.getSpeed(flags);
+        if (speed == getMaxSpeed()) {
+            // We cannot be sure if it was a long or a short trip
+            return SHORT_TRIP_FERRY_SPEED;
+        }
+        return speed;
     }
 }
