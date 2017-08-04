@@ -339,7 +339,9 @@ public class Path {
         long flags = edge.getFlags();
         double speed = encoder.getSpeed(flags);
 
-        if (speed >= 72.0) {// 45 mph
+        System.out.println(edge.getName() + " speed: " + speed + " reverse: " + encoder.getReverseSpeed(flags));
+
+        if (speed >= 50) {// kph
             return true;
         }
         else {
