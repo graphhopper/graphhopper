@@ -392,6 +392,7 @@ public class Path {
             private String name, prevName = null;
             private InstructionAnnotation annotation, prevAnnotation;
             private EdgeExplorer outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+            private double currentSpeed = 0, prevSpeed = 0;
 
             @Override
             public void next(EdgeIteratorState edge, int index) {
@@ -550,6 +551,18 @@ public class Path {
                     ways.add(prevInstruction);
                     prevName = name;
                     prevAnnotation = annotation;
+                }
+                else if (currentSpeed != prevSpeed) {
+                    if (canEnableAutonomy(edge, encoder)) {
+                        int sign = Instruction.CONTINUE_ON_STREET;
+
+                        InstructionAV instructionAV = new InstructionAV(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                        instructionAV.setEnableAutonomy(true);
+                        prevInstruction = instructionAV;
+                        ways.add(prevInstruction);
+
+                        prevSpeed = currentSpeed;
+                    }
                 }
 
                 updatePointsAndInstruction(edge, wayGeo);
