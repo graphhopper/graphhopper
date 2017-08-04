@@ -264,7 +264,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 flags |= directionBitMask;
 
         } else {
-            double ferrySpeed = getFerrySpeed(way, defaultSpeedMap.get("living_street"), defaultSpeedMap.get("service"), defaultSpeedMap.get("residential"));
+            double ferrySpeed = getFerrySpeed(way);
             flags = setSpeed(flags, ferrySpeed);
             flags |= directionBitMask;
         }
