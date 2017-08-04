@@ -418,11 +418,20 @@ public class Path {
 
                 name = edge.getName();
                 annotation = encoder.getAnnotation(flags, tr);
+                currentSpeed = encoder.getSpeed(flags);
 
                 if ((prevName == null) && (!isRoundabout)) // very first instruction (if not in Roundabout)
                 {
                     int sign = Instruction.CONTINUE_ON_STREET;
-                    prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+
+                    if (canEnableAutonomy(edge, encoder)) {
+                        InstructionAV instructionAV = new InstructionAV(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                        instructionAV.setEnableAutonomy(true);
+                        prevInstruction = instructionAV;
+                    }
+                    else {
+                        prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                    }
                     ways.add(prevInstruction);
                     prevName = name;
                     prevAnnotation = annotation;
