@@ -61,9 +61,6 @@ class TripFromLabel {
         path.setPoints(pointsList);
         path.setDistance(path.getLegs().stream().mapToDouble(Trip.Leg::getDistance).sum());
         path.setTime((solution.currentTime - initialTime.toEpochMilli()) * (arriveBy ? -1 : 1));
-        if (solution.departureTime != null) {
-            path.setFirstPtLegDeparture(solution.departureTime);
-        }
         path.setNumChanges((int) path.getLegs().stream()
                 .filter(l -> l instanceof Trip.PtLeg)
                 .filter(l -> !((Trip.PtLeg) l).isInSameVehicleAsPrevious)
