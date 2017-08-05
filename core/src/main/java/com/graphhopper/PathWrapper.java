@@ -45,7 +45,6 @@ public class PathWrapper {
     private PointList waypointList = PointList.EMPTY;
     private PointList pointList = PointList.EMPTY;
     private int numChanges;
-    private long firstPtLegDeparture;
     private final List<Trip.Leg> legs = new ArrayList<>();
     private Map<String, List<PathDetail>> pathDetails = new HashMap<>();
     private BigDecimal fare;
@@ -302,10 +301,6 @@ public class PathWrapper {
 
     public int getNumChanges() {
         return numChanges;
-    }
-
-    public void setFirstPtLegDeparture(long firstPtLegDeparture) {
-        this.firstPtLegDeparture = firstPtLegDeparture;
     }
 
     public List<Trip.Leg> getLegs() {
