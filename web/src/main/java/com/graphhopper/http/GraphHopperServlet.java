@@ -108,7 +108,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                             + "or equal to the number of points (" + requestPoints.size() + ")");
                 }
 
-                List<String> pointHints = new ArrayList<String>(Arrays.asList(getParams(httpReq, POINT_HINT)));
+                List<String> pointHints = Arrays.asList(getParams(httpReq, POINT_HINT));
                 if (pointHints.size() > 0 && pointHints.size() != requestPoints.size()) {
                     throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored");
                 }

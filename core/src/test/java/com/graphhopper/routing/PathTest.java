@@ -312,18 +312,17 @@ public class PathTest {
 
         Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{Parameters.DETAILS.AVERAGE_SPEED}), encoder));
         assertTrue(details.size() == 1);
-        Map<Object, List<int[]>> detailsMap = AbstractPathDetailsBuilder.toJson(details.get(Parameters.DETAILS.AVERAGE_SPEED));
-        assertTrue(detailsMap.keySet().size() == 3);
-        assertTrue(detailsMap.containsKey(10.0));
-        assertTrue(detailsMap.containsKey(45.0));
-        assertTrue(detailsMap.containsKey(90.0));
-        assertTrue(detailsMap.get(45.0).size() == 2);
-        // First Point
-        assertTrue(detailsMap.get(45.0).get(0)[0] == 0);
-        // Second Point
-        assertTrue(detailsMap.get(45.0).get(0)[1] == 1);
-        // Last Point
-        assertTrue(detailsMap.get(45.0).get(1)[1] == 4);
+        List<PathDetail> detailList = details.get(Parameters.DETAILS.AVERAGE_SPEED);
+        assertEquals(4, detailList.size());
+        assertEquals(45.0, detailList.get(0).value);
+        assertEquals(90.0, detailList.get(1).value);
+        assertEquals(10.0, detailList.get(2).value);
+        assertEquals(45.0, detailList.get(3).value);
+
+        assertEquals(1, detailList.get(0).numberOfPoints);
+        assertEquals(1, detailList.get(1).numberOfPoints);
+        assertEquals(1, detailList.get(2).numberOfPoints);
+        assertEquals(1, detailList.get(3).numberOfPoints);
     }
 
     /**

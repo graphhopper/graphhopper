@@ -82,22 +82,4 @@ public abstract class AbstractPathDetailsBuilder implements PathDetailsBuilder {
     public String getName() {
         return this.name;
     }
-
-    public static Map<Object, List<int[]>> toJson(List<PathDetail> pathDetails) {
-        Map<Object, List<int[]>> detailsMap = new HashMap<>();
-        int pointer = 0;
-        for (PathDetail detail : pathDetails) {
-            List<int[]> detailIntervals;
-            if (detailsMap.containsKey(detail.value)) {
-                detailIntervals = detailsMap.get(detail.value);
-            } else {
-                detailIntervals = new ArrayList<>();
-                detailsMap.put(detail.value, detailIntervals);
-            }
-            detailIntervals.add(new int[]{pointer, pointer + detail.numberOfPoints});
-            pointer += detail.numberOfPoints;
-        }
-
-        return detailsMap;
-    }
 }

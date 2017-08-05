@@ -405,13 +405,11 @@ public class GraphHopperIT {
         PathWrapper arsp = rsp.getBest();
         Map<String, List<PathDetail>> details = arsp.getPathDetails();
         assertTrue(details.size() == 1);
-        Map<Object, List<int[]>> detailsMap = AbstractPathDetailsBuilder.toJson(details.get("average_speed"));
-        // Foot routing
-        assertTrue(detailsMap.get(5.0).size() > 0);
-        // First point
-        assertTrue(detailsMap.get(5.0).get(0)[0] == 0);
-        // Assert that last index points towards the last point
-        assertTrue(detailsMap.get(5.0).get(0)[1] == arsp.getPoints().size() - 1);
+        List<PathDetail> detailList = details.get(Parameters.DETAILS.AVERAGE_SPEED);
+        assertEquals(1, detailList.size());
+        assertEquals(5.0, detailList.get(0).value);
+        // -1 since it is not inclusive
+        assertEquals(arsp.getPoints().size() - 1, detailList.get(0).numberOfPoints);
     }
 
     @Test

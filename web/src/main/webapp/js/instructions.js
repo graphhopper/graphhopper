@@ -52,7 +52,7 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
             L.marker([lngLat[1], lngLat[0]], {
                 icon: L.icon({
                     iconUrl: './img/marker-small-red.png',
-                    // Mad the instructions icon a bit bigger, as they are placed before the path_details
+                    // Made the instructions icon a bit bigger, as they are placed before the path_details
                     iconSize: [16, 16]
                 }),
                 draggable: true
@@ -92,7 +92,7 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
     if (debug) {
         var detailObj = path.details;
         for (var detailKey in detailObj) {
-            var pathDetailObj = detailObj[detailKey]["details"];
+            var pathDetailObj = detailObj[detailKey];
             for (var k in pathDetailObj) {
                 var intervalArr = pathDetailObj[k];
                 for (var intervalIndex in intervalArr) {

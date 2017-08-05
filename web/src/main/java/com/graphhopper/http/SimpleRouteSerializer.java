@@ -22,6 +22,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.GHException;
 import com.graphhopper.util.shapes.BBox;
 
@@ -100,7 +101,7 @@ public class SimpleRouteSerializer implements RouteSerializer {
 
                     jsonPath.put("legs", ar.getLegs());
 
-                    jsonPath.put("details", ar.getPathDetails());
+                    jsonPath.put("details", pathDetailsToJson(ar.getPathDetails()));
 
                     jsonPath.put("ascend", ar.getAscend());
                     jsonPath.put("descend", ar.getDescend());
@@ -127,5 +128,27 @@ public class SimpleRouteSerializer implements RouteSerializer {
         jsonPoints.put("type", "LineString");
         jsonPoints.put("coordinates", points.toGeoJson(includeElevation));
         return jsonPoints;
+    }
+
+    private Map<String, Map<Object, List<int[]>>> pathDetailsToJson(Map<String, List<PathDetail>> inputMap) {
+        Map<String, Map<Object, List<int[]>>> detailsMap = new HashMap<>();
+        for(String key: inputMap.keySet()){
+            int pointer = 0;
+            Map<Object, List<int[]>> oneDetailMap = new HashMap<>();
+            for (PathDetail detail : inputMap.get(key)) {
+                List<int[]> detailIntervals;
+                if (oneDetailMap.containsKey(detail.value)) {
+                    detailIntervals = oneDetailMap.get(detail.value);
+                } else {
+                    detailIntervals = new ArrayList<>();
+                    oneDetailMap.put(detail.value, detailIntervals);
+                }
+                detailIntervals.add(new int[]{pointer, pointer + detail.numberOfPoints});
+                pointer += detail.numberOfPoints;
+            }
+            detailsMap.put(key, oneDetailMap);
+        }
+
+        return detailsMap;
     }
 }
