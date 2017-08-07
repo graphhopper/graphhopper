@@ -60,7 +60,7 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
 
         }
     }
-    static class GraphHopperStorageProvider implements Factory<GraphHopperStorage> {
+    static class GraphHopperStorageFactory implements Factory<GraphHopperStorage> {
 
         @Inject GraphHopper graphHopper;
 
@@ -75,7 +75,7 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
         }
     }
 
-    static class EncodingManagerProvider implements Factory<EncodingManager> {
+    static class EncodingManagerFactory implements Factory<EncodingManager> {
 
         @Inject GraphHopper graphHopper;
 
@@ -90,7 +90,7 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
         }
     }
 
-    static class LocationIndexProvider implements Factory<LocationIndex> {
+    static class LocationIndexFactory implements Factory<LocationIndex> {
 
         @Inject GraphHopper graphHopper;
 
@@ -193,10 +193,10 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
                 bind(graphHopperManaged.getGraphHopper()).to(GraphHopperAPI.class);
 
                 bindFactory(HasElevation.class).to(Boolean.class).named("hasElevation");
-                bindFactory(LocationIndexProvider.class).to(LocationIndex.class);
+                bindFactory(LocationIndexFactory.class).to(LocationIndex.class);
                 bindFactory(TranslationMapFactory.class).to(TranslationMap.class);
-                bindFactory(EncodingManagerProvider.class).to(EncodingManager.class);
-                bindFactory(GraphHopperStorageProvider.class).to(GraphHopperStorage.class);
+                bindFactory(EncodingManagerFactory.class).to(EncodingManager.class);
+                bindFactory(GraphHopperStorageFactory.class).to(GraphHopperStorage.class);
             }
         });
 
