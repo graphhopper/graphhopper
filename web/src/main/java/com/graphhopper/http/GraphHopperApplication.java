@@ -28,6 +28,7 @@ import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.graphhopper.http.cli.ImportCommand;
+import com.graphhopper.http.resources.RootResource;
 import io.dropwizard.Application;
 import io.dropwizard.assets.AssetsBundle;
 import io.dropwizard.setup.Bootstrap;
@@ -71,5 +72,7 @@ public class GraphHopperApplication extends Application<GraphHopperServerConfigu
                 }).collect(Collectors.toList());
             }
         }));
+
+        environment.jersey().register(new RootResource());
     }
 }
