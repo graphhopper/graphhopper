@@ -9,7 +9,24 @@ public class PathDetail {
     public final Object value;
     public int numberOfPoints;
 
-    public PathDetail(Object value) {
+    // unprotected constructor used only in AbstractPathDetailsBuilder
+    PathDetail(Object value) {
+        this.value = value;
+    }
+
+    public PathDetail(long value) {
+        this.value = value;
+    }
+
+    public PathDetail(double value) {
+        this.value = value;
+    }
+
+    public PathDetail(boolean value) {
+        this.value = value;
+    }
+
+    public PathDetail(String value) {
         this.value = value;
     }
 }

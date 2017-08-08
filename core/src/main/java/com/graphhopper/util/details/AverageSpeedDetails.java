@@ -20,6 +20,8 @@ package com.graphhopper.util.details;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 
+import static com.graphhopper.util.Parameters.DETAILS.AVERAGE_SPEED;
+
 /**
  * Calculate the average speed segments for a Path
  *
@@ -31,7 +33,7 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
     private double curAvgSpeed = -1;
 
     public AverageSpeedDetails(FlagEncoder encoder) {
-        super("average_speed");
+        super(AVERAGE_SPEED);
         this.encoder = encoder;
     }
 

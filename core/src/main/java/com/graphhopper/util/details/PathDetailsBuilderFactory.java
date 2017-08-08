@@ -41,8 +41,13 @@ public class PathDetailsBuilderFactory {
     public List<PathDetailsBuilder> createPathDetailsCalculator() {
         List<PathDetailsBuilder> calculators = new ArrayList<>();
 
-        if (this.requestedPathDetails.contains(Parameters.DETAILS.AVERAGE_SPEED))
+        if (requestedPathDetails.isEmpty())
+            throw new IllegalArgumentException(Parameters.DETAILS.PATH_DETAILS + " parameter cannot be empty");
+
+        if (requestedPathDetails.contains(Parameters.DETAILS.AVERAGE_SPEED))
             calculators.add(new AverageSpeedDetails(encoder));
+        else
+            throw new IllegalArgumentException("Cannot find details " + requestedPathDetails);
 
         return calculators;
     }
