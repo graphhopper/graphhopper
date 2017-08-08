@@ -341,7 +341,7 @@ public class Path {
 
         System.out.println(edge.getName() + " speed: " + speed + " reverse: " + encoder.getReverseSpeed(flags));
 
-        if (speed >= 50) {// kph
+        if (speed >= 75) {// kph
             return true;
         }
         else {
