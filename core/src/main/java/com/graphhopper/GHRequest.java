@@ -39,6 +39,7 @@ public class GHRequest {
     // Headings are north based azimuth (clockwise) in (0, 360) or NaN for equal preference
     private final List<Double> favoredHeadings;
     private List<String> pointHints = new ArrayList<>();
+    private List<String> pathDetails = new ArrayList<>();
     private String algo = "";
     private boolean possibleToAdd = false;
     private Locale locale = Locale.US;
@@ -251,6 +252,15 @@ public class GHRequest {
 
     public boolean hasPointHints() {
         return pointHints.size() == points.size();
+    }
+
+    public GHRequest setPathDetails(List<String> pathDetails) {
+        this.pathDetails = pathDetails;
+        return this;
+    }
+
+    public List<String> getPathDetails() {
+        return this.pathDetails;
     }
 
     @Override

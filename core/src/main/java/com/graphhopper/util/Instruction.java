@@ -41,7 +41,7 @@ public class Instruction {
     public static final int PT_TRANSFER = 102;
     public static final int PT_END_TRIP = 103;
     private static final AngleCalc AC = Helper.ANGLE_CALC;
-    protected final PointList points;
+    protected PointList points;
     protected final InstructionAnnotation annotation;
     protected boolean rawName;
     protected int sign;
@@ -139,6 +139,10 @@ public class Instruction {
 
     public PointList getPoints() {
         return points;
+    }
+
+    public void setPoints(PointList points) {
+        this.points = points;
     }
 
     /**

@@ -18,11 +18,8 @@
 package com.graphhopper.http;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.BeanDescription;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationConfig;
-import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
 import com.fasterxml.jackson.databind.ser.BeanSerializerModifier;
@@ -30,9 +27,10 @@ import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 import com.google.inject.Provides;
 import com.google.inject.servlet.ServletModule;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.details.PathDetail;
 
 import javax.inject.Singleton;
-import java.text.SimpleDateFormat;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -101,6 +99,11 @@ public class GraphHopperServletModule extends ServletModule {
         objectMapper.setDateFormat(new ISO8601DateFormat());
         objectMapper.registerModule(new JtsModule());
 
+        SimpleModule pathDetailModule = new SimpleModule();
+        pathDetailModule.addSerializer(PathDetail.class, new PathDetailSerializer());
+        pathDetailModule.addDeserializer(PathDetail.class, new PathDetailDeserializer());
+        objectMapper.registerModule(pathDetailModule);
+
         // Because VirtualEdgeIteratorState has getters which throw Exceptions.
         // http://stackoverflow.com/questions/35359430/how-to-make-jackson-ignore-properties-if-the-getters-throw-exceptions
         objectMapper.registerModule(new SimpleModule().setSerializerModifier(new BeanSerializerModifier() {
@@ -119,6 +122,57 @@ public class GraphHopperServletModule extends ServletModule {
             }
         }));
         return objectMapper;
+    }
+
+    public static class PathDetailSerializer extends JsonSerializer<PathDetail> {
+
+        @Override
+        public void serialize(PathDetail value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeStartArray();
+
+            if (value.value instanceof Double)
+                gen.writeNumber((Double) value.value);
+            else if (value.value instanceof Long)
+                gen.writeNumber((Long) value.value);
+            else if (value.value instanceof Boolean)
+                gen.writeBoolean((Boolean) value.value);
+            else if (value.value instanceof String)
+                gen.writeString((String) value.value);
+            else
+                throw new JsonGenerationException("Unsupported type for PathDetail.value" + value.value.getClass(), gen);
+
+            gen.writeNumber(value.numberOfPoints);
+            gen.writeEndArray();
+        }
+    }
+
+    public static class PathDetailDeserializer extends JsonDeserializer<PathDetail> {
+
+        @Override
+        public PathDetail deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
+
+            JsonNode node = jp.readValueAsTree();
+            if (node.size() != 2)
+                throw new JsonParseException(jp, "PathDetail array must have exactly two entries but was " + node.size());
+
+            JsonNode val = node.get(0);
+            JsonNode num = node.get(1);
+            PathDetail pd;
+
+            if (val.isBoolean())
+                pd = new PathDetail(val.asBoolean());
+            else if (val.isLong())
+                pd = new PathDetail(val.asLong());
+            else if (val.isDouble())
+                pd = new PathDetail(val.asDouble());
+            else if (val.isTextual())
+                pd = new PathDetail(val.asText());
+            else
+                throw new JsonParseException(jp, "Unsupported type of PathDetail value " + node.getNodeType().name());
+
+            pd.numberOfPoints = num.asInt();
+            return pd;
+        }
     }
 
 }
