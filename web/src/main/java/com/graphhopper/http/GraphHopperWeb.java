@@ -160,12 +160,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
             }
 
             if (tmpCalcDetails) {
-                GraphHopperServletModule.PathDetailDeserializer deserializer = new GraphHopperServletModule.PathDetailDeserializer();
                 JsonNode details = path.get("details");
                 Map<String, List<PathDetail>> pathDetails = new HashMap<>(details.size());
                 Iterator<Entry<String, JsonNode>> detailIterator = details.fields();
                 while (detailIterator.hasNext()) {
-                    Map.Entry<String, JsonNode> detailEntry = (Map.Entry<String, JsonNode>) detailIterator.next();
+                    Map.Entry<String, JsonNode> detailEntry = detailIterator.next();
                     List<PathDetail> pathDetailList = new ArrayList<>();
                     for (JsonNode pathDetail : detailEntry.getValue()) {
                         if (pathDetail.size() != 2)
