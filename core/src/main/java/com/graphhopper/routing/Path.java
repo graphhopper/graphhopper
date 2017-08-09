@@ -373,21 +373,21 @@ public class Path {
     /**
      * Calculates the PathDetails for this Path. This method will return fast, if there are no calculators.
      *
-     * @param calculatorFactory Generates the relevant calculators, accepts null inputs
+     * @param pathBuilderFactory Generates the relevant PathBuilders, accepts null inputs
      * @return List of PathDetails for this Path
      */
-    public Map<String, List<PathDetail>> calcDetails(final PathDetailsBuilderFactory calculatorFactory) {
-        if (calculatorFactory == null)
+    public Map<String, List<PathDetail>> calcDetails(final PathDetailsBuilderFactory pathBuilderFactory) {
+        if (pathBuilderFactory == null)
             return Collections.EMPTY_MAP;
-        List<PathDetailsBuilder> calculators = calculatorFactory.createPathDetailsCalculator();
-        if (calculators.isEmpty())
+        List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders();
+        if (pathBuilders.isEmpty())
             return Collections.EMPTY_MAP;
 
-        forEveryEdge(new PathDetailsFromEdges(calculators));
+        forEveryEdge(new PathDetailsFromEdges(pathBuilders));
 
-        Map<String, List<PathDetail>> pathDetails = new HashMap<>(calculators.size());
-        for (PathDetailsBuilder calc : calculators) {
-            Map.Entry<String, List<PathDetail>> entry = calc.build();
+        Map<String, List<PathDetail>> pathDetails = new HashMap<>(pathBuilders.size());
+        for (PathDetailsBuilder builder : pathBuilders) {
+            Map.Entry<String, List<PathDetail>> entry = builder.build();
             List<PathDetail> existing = pathDetails.put(entry.getKey(), entry.getValue());
             if (existing != null)
                 throw new IllegalStateException("Some PathDetailsBuilders use duplicate key: " + entry.getKey());

@@ -38,17 +38,16 @@ public class PathDetailsBuilderFactory {
         this.encoder = encoder;
     }
 
-    public List<PathDetailsBuilder> createPathDetailsCalculator() {
-        List<PathDetailsBuilder> calculators = new ArrayList<>();
-
-        if (requestedPathDetails.isEmpty())
-            throw new IllegalArgumentException(Parameters.DETAILS.PATH_DETAILS + " parameter cannot be empty");
+    public List<PathDetailsBuilder> createPathDetailsBuilders() {
+        List<PathDetailsBuilder> builders = new ArrayList<>();
 
         if (requestedPathDetails.contains(Parameters.DETAILS.AVERAGE_SPEED))
-            calculators.add(new AverageSpeedDetails(encoder));
-        else
-            throw new IllegalArgumentException("Cannot find details " + requestedPathDetails);
+            builders.add(new AverageSpeedDetails(encoder));
 
-        return calculators;
+        if (requestedPathDetails.size() != builders.size()) {
+            throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we couldn only find " + builders);
+        }
+
+        return builders;
     }
 }

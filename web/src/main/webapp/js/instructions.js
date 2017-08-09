@@ -91,21 +91,24 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
 
     if (debug) {
         var detailObj = path.details;
+        // detailKey, would be for example average_speed
         for (var detailKey in detailObj) {
-            var pathDetailObj = detailObj[detailKey];
-            for (var k in pathDetailObj) {
-                var intervalArr = pathDetailObj[k];
-                for (var intervalIndex in intervalArr) {
-                    var interval = intervalArr[intervalIndex];
-                    var lngLat = path.points.coordinates[interval[0]];
-                    L.marker([lngLat[1], lngLat[0]], {
-                        icon: L.icon({
-                            iconUrl: './img/marker-small-blue.png',
-                            iconSize: [15, 15]
-                        }),
-                        draggable: true
-                    }).addTo(mapLayer.getRoutingLayer()).bindPopup(detailKey+":"+k);
-                }
+            var pathDetailsArr = detailObj[detailKey];
+            var reference = 0;
+            for (var i = 0; i < pathDetailsArr.length; i++) {
+                var pathDetailObj = pathDetailsArr[i];
+                var value = pathDetailObj[0];
+                var numberOfPoints = pathDetailObj[1];
+                var lngLat = path.points.coordinates[reference];
+                L.marker([lngLat[1], lngLat[0]], {
+                    icon: L.icon({
+                        iconUrl: './img/marker-small-blue.png',
+                        iconSize: [15, 15]
+                    }),
+                    draggable: true
+                }).addTo(mapLayer.getRoutingLayer()).bindPopup(detailKey + ":" + value);
+
+                reference += numberOfPoints;
             }
         }
     }

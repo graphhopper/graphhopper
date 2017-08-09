@@ -40,4 +40,5 @@ public interface PathDetailsBuilder {
     void endInterval(int numberOfPoints);
 
     String getName();
+
 }
