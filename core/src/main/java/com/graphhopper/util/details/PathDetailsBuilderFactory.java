@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Generates a PathDetailsBuilder:s from a List of PathDetail names
+ * Generates a list of PathDetailsBuilder from a List of PathDetail names
  *
  * @author Robin Boldt
  */
