@@ -23,6 +23,8 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
 import org.json.JSONObject;
@@ -60,6 +62,10 @@ public class GraphHopperServlet extends GHBaseServlet {
     @Inject
     private RouteSerializer routeSerializer;
 
+    public enum RerouteResult {
+        NONE, TRAFFIC, CLOSURE
+    }
+
     @Override
     public void doGet(HttpServletRequest httpReq, HttpServletResponse httpRes) throws ServletException, IOException {
         List<GHPoint> requestPoints = getPoints(httpReq, "point");
@@ -73,12 +79,20 @@ public class GraphHopperServlet extends GHBaseServlet {
         boolean enableElevation = getBooleanParam(httpReq, "elevation", false);
         boolean pointsEncoded = getBooleanParam(httpReq, "points_encoded", true);
 
+        PointList currentRoutePoints = getCurrentRoutePoints(httpReq, "current_route_points", null);
+        boolean rerouteRequested = currentRoutePoints != null;
+
         String vehicleStr = getParam(httpReq, "vehicle", "car");
         String weighting = getParam(httpReq, "weighting", "fastest");
         String algoStr = getParam(httpReq, "algorithm", "");
         String localeStr = getParam(httpReq, "locale", "en");
 
         StopWatch sw = new StopWatch().start();
+
+        if (rerouteRequested && requestPoints.size() > 2) {
+            ghRsp.addError(new IllegalArgumentException("Rerouting with multiple waypoints is currently not yet supported"));
+        }
+
 
         if (!ghRsp.hasErrors()) {
             try {
@@ -141,6 +155,10 @@ public class GraphHopperServlet extends GHBaseServlet {
         if (writeGPX && alternatives > 1)
             ghRsp.addError(new IllegalArgumentException("Alternatives are currently not yet supported for GPX"));
 
+        if (rerouteRequested && alternatives > 1) {
+            ghRsp.addError(new IllegalArgumentException("Alternatives and rerouting is currently not yet supported"));
+        }
+
         if (ghRsp.hasErrors()) {
             logger.error(logStr + ", errors:" + ghRsp.getErrors());
         } else {
@@ -152,7 +170,19 @@ public class GraphHopperServlet extends GHBaseServlet {
                     + ", debugInfo: " + ghRsp.getDebugInfo());
         }
 
+        RerouteResult rerouteResult = RerouteResult.NONE;
+
+
+        // TODO: clip the current route against the origin (so it doesn't include already traversed portion ot the route)
+        if (rerouteRequested &&  Math.abs(ghRsp.getBest().getPoints().calcDistance(Helper.DIST_EARTH) - currentRoutePoints.calcDistance(Helper.DIST_EARTH)) > 50) { // meters
+            logger.info("Rerouting due to distance threshold");
+
+            // TODO: need to walk currentRoute and see if it goes over any construction events so that this reason is legit
+            rerouteResult = RerouteResult.CLOSURE;
+        }
+
         if (writeGPX) {
+            logger.warn("exporting GPX per request, limited functionality (e.g. no rerouting support)");
             if (ghRsp.hasErrors()) {
                 httpRes.setStatus(SC_BAD_REQUEST);
                 httpRes.getWriter().append(errorsToXML(ghRsp.getErrors()));
@@ -165,6 +195,10 @@ public class GraphHopperServlet extends GHBaseServlet {
             Map<String, Object> map = routeSerializer.toJSON(ghRsp, calcPoints, pointsEncoded,
                     enableElevation, enableInstructions);
 
+            if (rerouteRequested) {
+                map.put("reroute_result", rerouteResult);
+            }
+         
             Object infoMap = map.get("info");
             if (infoMap != null)
                 ((Map) infoMap).put("took", Math.round(took * 1000));
@@ -250,6 +284,15 @@ public class GraphHopperServlet extends GHBaseServlet {
         }
 
         return infoPoints;
+    }
+
+    protected PointList getCurrentRoutePoints(HttpServletRequest req, String key, PointList defaultValue) {
+        String encodedRoutePoints = getParam(req, "current_route_points", null);
+        if(encodedRoutePoints == null) {
+            return defaultValue;
+        }
+
+        return WebHelper.decodePolyline(encodedRoutePoints, 100, false);
     }
 
     protected void initHints(GHRequest request, Map<String, String[]> parameterMap) {
