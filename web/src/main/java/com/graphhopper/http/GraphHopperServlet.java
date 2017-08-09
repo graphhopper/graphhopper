@@ -113,7 +113,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                     throw new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored");
                 }
 
-                List<String> pathDetails = new ArrayList<String>(Arrays.asList(getParams(httpReq, PATH_DETAILS)));
+                List<String> pathDetails = Arrays.asList(getParams(httpReq, PATH_DETAILS));
 
                 FlagEncoder algoVehicle = encodingManager.getEncoder(vehicleStr);
                 GHRequest request;
