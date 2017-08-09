@@ -24,6 +24,7 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.AfterClass;
@@ -31,8 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -135,6 +135,42 @@ public class GraphHopperServletIT extends BaseServletTester {
         assertEquals("At roundabout, take exit 2", instructions.get(4).get("text"));
         assertEquals(true, instructions.get(4).get("exited"));
         assertEquals(false, instructions.get(24).get("exited"));
+    }
+
+    @Test
+    public void testPathDetails() throws Exception {
+        GraphHopperAPI hopper = new GraphHopperWeb();
+        assertTrue(hopper.load(getTestRouteAPIUrl()));
+        GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        request.setPathDetails(Collections.singletonList("average_speed"));
+        GHResponse rsp = hopper.route(request);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
+        Map<String, List<PathDetail>> pathDetails = rsp.getBest().getPathDetails();
+        assertFalse(pathDetails.isEmpty());
+        assertTrue(pathDetails.containsKey("average_speed"));
+        List<PathDetail> averageSpeed = pathDetails.get("average_speed");
+        assertEquals(30.0, averageSpeed.get(0).value);
+        assertEquals(14, averageSpeed.get(0).numberOfPoints);
+        assertEquals(60.0, averageSpeed.get(1).value);
+        assertEquals(5, averageSpeed.get(1).numberOfPoints);
+    }
+
+
+    @Test
+    public void testPathDetailsWithGraphHopperWeb() throws Exception {
+        JsonNode json = query("point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed", 200);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode path = json.get("paths").get(0);
+        assertTrue(path.has("details"));
+        JsonNode details = path.get("details");
+        assertTrue(details.has("average_speed"));
+        JsonNode averageSpeed = details.get("average_speed");
+        assertEquals(30.0, averageSpeed.get(0).get(0).asDouble(), .01);
+        assertEquals(14, averageSpeed.get(0).get(1).asInt());
+        assertEquals(60.0, averageSpeed.get(1).get(0).asDouble(), .01);
+        assertEquals(5, averageSpeed.get(1).get(1).asInt());
     }
 
     @Test

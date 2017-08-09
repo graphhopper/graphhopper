@@ -25,6 +25,7 @@ import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.util.*;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.*;
 import com.graphhopper.util.shapes.GHPoint;
 
@@ -72,7 +73,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
     private PathWrapper createPathWrapper(JsonNode path,
                                           boolean tmpCalcPoints, boolean tmpInstructions,
-                                          boolean tmpElevation, boolean turnDescription) {
+                                          boolean tmpElevation, boolean turnDescription,
+                                          boolean tmpCalcDetails) {
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.addErrors(readErrors(path));
         if (pathWrapper.hasErrors())
@@ -155,6 +157,41 @@ public class GraphHopperWeb implements GraphHopperAPI {
                     il.add(instr);
                 }
                 pathWrapper.setInstructions(il);
+            }
+
+            if (tmpCalcDetails) {
+                GraphHopperServletModule.PathDetailDeserializer deserializer = new GraphHopperServletModule.PathDetailDeserializer();
+                JsonNode details = path.get("details");
+                Map<String, List<PathDetail>> pathDetails = new HashMap<>(details.size());
+                Iterator<Entry<String, JsonNode>> detailIterator = details.fields();
+                while (detailIterator.hasNext()) {
+                    Map.Entry<String, JsonNode> detailEntry = (Map.Entry<String, JsonNode>) detailIterator.next();
+                    List<PathDetail> pathDetailList = new ArrayList<>();
+                    for (JsonNode pathDetail : detailEntry.getValue()) {
+                        if (pathDetail.size() != 2)
+                            throw new IllegalStateException("PathDetail array must have exactly two entries but was " + pathDetail.size());
+
+                        JsonNode val = pathDetail.get(0);
+                        JsonNode num = pathDetail.get(1);
+                        PathDetail pd;
+
+                        if (val.isBoolean())
+                            pd = new PathDetail(val.asBoolean());
+                        else if (val.isLong())
+                            pd = new PathDetail(val.asLong());
+                        else if (val.isDouble())
+                            pd = new PathDetail(val.asDouble());
+                        else if (val.isTextual())
+                            pd = new PathDetail(val.asText());
+                        else
+                            throw new IllegalStateException("Unsupported type of PathDetail value " + pathDetail.getNodeType().name());
+
+                        pd.numberOfPoints = num.asInt();
+                        pathDetailList.add(pd);
+                    }
+                    pathDetails.put(detailEntry.getKey(), pathDetailList);
+                }
+                pathWrapper.addPathDetails(pathDetails);
             }
         }
 
@@ -286,6 +323,10 @@ public class GraphHopperWeb implements GraphHopperAPI {
             if (!request.getVehicle().isEmpty())
                 url += "&vehicle=" + request.getVehicle();
 
+            for (String details : request.getPathDetails()) {
+                url += "&" + Parameters.DETAILS.PATH_DETAILS + "=" + details;
+            }
+
             if (!key.isEmpty())
                 url += "&key=" + key;
 
@@ -311,7 +352,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
             JsonNode paths = json.get("paths");
             for (JsonNode path : paths) {
-                PathWrapper altRsp = createPathWrapper(path, tmpCalcPoints, tmpInstructions, tmpElevation, tmpTurnDescription);
+                PathWrapper altRsp = createPathWrapper(path, tmpCalcPoints, tmpInstructions, tmpElevation, tmpTurnDescription, !request.getPathDetails().isEmpty());
                 res.add(altRsp);
             }
 
