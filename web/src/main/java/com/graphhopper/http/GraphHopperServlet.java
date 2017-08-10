@@ -251,7 +251,8 @@ public class GraphHopperServlet extends GHBaseServlet {
                     enableElevation, enableInstructions);
 
             if (rerouteRequested) {
-                map.put("reroute_result", rerouteResult);
+                ArrayList<Map<String, Object>> pathsArr = (ArrayList<Map<String, Object>>)map.get("paths");
+                pathsArr.get(0).put("reroute_result", rerouteResult);
             }
          
             Object infoMap = map.get("info");
