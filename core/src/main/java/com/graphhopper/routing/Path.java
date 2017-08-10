@@ -338,9 +338,7 @@ public class Path {
     protected boolean canEnableAutonomy(EdgeIteratorState edge, FlagEncoder encoder) {
         long flags = edge.getFlags();
         double speed = encoder.getSpeed(flags);
-
-        System.out.println(edge.getName() + " speed: " + speed + " reverse: " + encoder.getReverseSpeed(flags));
-
+        
         if (speed >= 75) {// kph
             return true;
         }
