@@ -23,10 +23,12 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.shapes.GHPoint3D;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -41,11 +43,15 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
+import java.awt.*;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.List;
 import java.util.Map.Entry;
 
+import static java.lang.Math.asin;
+import static java.lang.Math.sqrt;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 
 /**
@@ -173,12 +179,61 @@ public class GraphHopperServlet extends GHBaseServlet {
         RerouteResult rerouteResult = RerouteResult.NONE;
 
 
-        // TODO: clip the current route against the origin (so it doesn't include already traversed portion ot the route)
-        if (rerouteRequested &&  Math.abs(ghRsp.getBest().getPoints().calcDistance(Helper.DIST_EARTH) - currentRoutePoints.calcDistance(Helper.DIST_EARTH)) > 50) { // meters
-            logger.info("Rerouting due to distance threshold");
+        // clip the current route against the origin (so it doesn't include already traversed portion of the route)
+        if (rerouteRequested) {
+            DistanceCalc distCalc = Helper.DIST_EARTH;
+            GHPoint origin = ghRsp.getBest().getWaypoints().toGHPoint(0);
+            int minIndex = -1;
+            double minDist = Double.MAX_VALUE;
 
-            // TODO: need to walk currentRoute and see if it goes over any construction events so that this reason is legit
-            rerouteResult = RerouteResult.CLOSURE;
+            for (int i = 1; i < currentRoutePoints.size(); ++i) {
+                GHPoint3D prevPoint = currentRoutePoints.toGHPoint(i - 1);
+                GHPoint3D currPoint = currentRoutePoints.toGHPoint(i);
+
+                double dist = Double.MAX_VALUE;
+                int index = i;
+                // calculate distance from origin to each segment of the current route
+                if (distCalc.validEdgeDistance(origin.getLat(), origin.getLon(), currPoint.getLat(), currPoint.getLon(), prevPoint.getLat(), prevPoint.getLon())) {
+                    dist = distCalc.calcDenormalizedDist(distCalc.calcNormalizedEdgeDistance(origin.getLat(), origin.getLon(), currPoint.getLat(), currPoint.getLon(), prevPoint.getLat(), prevPoint.getLon()));
+                } else {
+                    double dist1 = distCalc.calcDist(origin.getLat(), origin.getLon(), prevPoint.getLat(), prevPoint.getLon());
+                    double dist2 = distCalc.calcDist(origin.getLat(), origin.getLon(), currPoint.getLat(), currPoint.getLon());
+
+                    // origin is closer to the prevPoint
+                    if (dist1 < dist2) {
+                        dist = dist1;
+                        index = i;
+                    }
+                    else { // origin is closer to currPoint
+                        dist = dist2;
+                        index = i + 1;
+                    }
+                }
+                if (dist < minDist) {
+                    minIndex = i - 1;
+                    minDist = dist;
+                }
+
+            }
+            
+            if (minIndex == -1) {
+                ghRsp.addError(new IllegalArgumentException("Rerouting: origin point is not on route"));
+            } else {
+                PointList trimmedCurrentRoutePoints = new PointList(currentRoutePoints.size(), currentRoutePoints.is3D());
+                trimmedCurrentRoutePoints.add(origin.getLat(), origin.getLon());
+                for (int i = minIndex + 1; i < currentRoutePoints.size(); ++i) {
+                    trimmedCurrentRoutePoints.add(currentRoutePoints.toGHPoint(i));
+                }
+
+                double newRouteDist = ghRsp.getBest().getPoints().calcDistance(Helper.DIST_EARTH);
+                double trimmedCurrentRouteDist = trimmedCurrentRoutePoints.calcDistance(Helper.DIST_EARTH);
+
+                if (Math.abs(newRouteDist - trimmedCurrentRouteDist) > 50) { // meters
+                    logger.info("Rerouting due to distance threshold");
+                    // TODO: need to walk currentRoute and see if it goes over any construction events so that this reason is legit
+                    rerouteResult = RerouteResult.CLOSURE;
+                }
+            }
         }
 
         if (writeGPX) {
