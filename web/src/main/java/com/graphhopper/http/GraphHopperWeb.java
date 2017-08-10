@@ -166,6 +166,9 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 while (detailIterator.hasNext()) {
                     Map.Entry<String, JsonNode> detailEntry = detailIterator.next();
                     List<PathDetail> pathDetailList = new ArrayList<>();
+
+                    // TODO duplicate deserialization code for PathDetail, @see GraphHopperServletModule.PathDetailDeserializer
+                    // see issue #1137
                     for (JsonNode pathDetail : detailEntry.getValue()) {
                         if (pathDetail.size() != 2)
                             throw new IllegalStateException("PathDetail array must have exactly two entries but was " + pathDetail.size());

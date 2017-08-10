@@ -149,8 +149,7 @@ public class GraphHopperServletModule extends ServletModule {
     public static class PathDetailDeserializer extends JsonDeserializer<PathDetail> {
 
         @Override
-        public PathDetail deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException, JsonProcessingException {
-
+        public PathDetail deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
             JsonNode node = jp.readValueAsTree();
             if (node.size() != 2)
                 throw new JsonParseException(jp, "PathDetail array must have exactly two entries but was " + node.size());

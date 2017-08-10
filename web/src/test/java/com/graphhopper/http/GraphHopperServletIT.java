@@ -156,9 +156,8 @@ public class GraphHopperServletIT extends BaseServletTester {
         assertEquals(5, averageSpeed.get(1).numberOfPoints);
     }
 
-
     @Test
-    public void testPathDetailsWithGraphHopperWeb() throws Exception {
+    public void testPathDetailsWithoutGraphHopperWeb() throws Exception {
         JsonNode json = query("point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed", 200);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
