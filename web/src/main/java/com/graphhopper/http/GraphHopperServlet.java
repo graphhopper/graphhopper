@@ -225,10 +225,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                     trimmedCurrentRoutePoints.add(currentRoutePoints.toGHPoint(i));
                 }
 
-                double newRouteDist = ghRsp.getBest().getPoints().calcDistance(Helper.DIST_EARTH);
-                double trimmedCurrentRouteDist = trimmedCurrentRoutePoints.calcDistance(Helper.DIST_EARTH);
-
-                if (Math.abs(newRouteDist - trimmedCurrentRouteDist) > 50) { // meters
+                if (hausdorffDistance(ghRsp.getBest().getPoints(), trimmedCurrentRoutePoints) > 50) { // meters
                     logger.info("Rerouting due to distance threshold");
                     // TODO: need to walk currentRoute and see if it goes over any construction events so that this reason is legit
                     rerouteResult = RerouteResult.CLOSURE;
@@ -265,6 +262,32 @@ public class GraphHopperServlet extends GHBaseServlet {
                 writeJson(httpReq, httpRes, new JSONObject(map));
             }
         }
+    }
+
+    /**
+     * Computes the Hausdorff distance between two polylines. O(N^2) complexity!!
+     * https://en.wikipedia.org/wiki/Hausdorff_distance
+     * @param poly1 - polyline 1
+     * @param poly2 - polyline 2
+     * @return Hausdorff distance
+     */
+    private double hausdorffDistance(PointList poly1, PointList poly2) {
+        DistanceCalc distCalc = Helper.DIST_EARTH;
+
+        double longestShortestDistance = 0;
+        for (GHPoint3D p1 : poly1) {
+            double shortestP1DistanceOverPoly2 = Double.MAX_VALUE;
+            for (GHPoint3D p2 : poly2) {
+                double dist = distCalc.calcDist(p1.getLat(), p1.getLon(), p2.getLat(), p2.getLon());
+                if (dist < shortestP1DistanceOverPoly2) {
+                    shortestP1DistanceOverPoly2 = dist;
+                }
+            }
+            if (shortestP1DistanceOverPoly2 > longestShortestDistance) {
+                longestShortestDistance = shortestP1DistanceOverPoly2;
+            }
+        }
+        return longestShortestDistance;
     }
 
     protected String createGPXString(HttpServletRequest req, HttpServletResponse res, PathWrapper rsp) {
