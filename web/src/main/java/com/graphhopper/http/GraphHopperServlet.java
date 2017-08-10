@@ -288,7 +288,7 @@ public class GraphHopperServlet extends GHBaseServlet {
 
     protected PointList getCurrentRoutePoints(HttpServletRequest req, String key, PointList defaultValue) {
         String encodedRoutePoints = getParam(req, "current_route_points", null);
-        if(encodedRoutePoints == null) {
+        if(encodedRoutePoints == null || encodedRoutePoints.isEmpty()) {
             return defaultValue;
         }
 
