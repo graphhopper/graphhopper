@@ -43,15 +43,18 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-import java.awt.*;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
+import java.util.Base64;
 import java.util.List;
 import java.util.Map.Entry;
 
-import static java.lang.Math.asin;
-import static java.lang.Math.sqrt;
+// for testing
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.BufferedInputStream;
+
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 
 /**
@@ -72,6 +75,9 @@ public class GraphHopperServlet extends GHBaseServlet {
         NONE, TRAFFIC, CLOSURE
     }
 
+    // test image
+    private static String testClosureBase64;
+
     @Override
     public void doGet(HttpServletRequest httpReq, HttpServletResponse httpRes) throws ServletException, IOException {
         List<GHPoint> requestPoints = getPoints(httpReq, "point");
@@ -88,6 +94,8 @@ public class GraphHopperServlet extends GHBaseServlet {
         PointList currentRoutePoints = getCurrentRoutePoints(httpReq, "current_route_points", null);
         boolean rerouteRequested = currentRoutePoints != null;
 
+        boolean eventImageRequested = getBooleanParam(httpReq, "event_image", false);
+
         String vehicleStr = getParam(httpReq, "vehicle", "car");
         String weighting = getParam(httpReq, "weighting", "fastest");
         String algoStr = getParam(httpReq, "algorithm", "");
@@ -95,10 +103,18 @@ public class GraphHopperServlet extends GHBaseServlet {
 
         StopWatch sw = new StopWatch().start();
 
+        if (this.testClosureBase64 == null) {
+            try {
+                this.testClosureBase64 = Base64.getEncoder().encodeToString(loadFileAsBytesArray("../graphhopper/test_closure_image.jpg"));
+            }
+            catch (Exception e) {
+                logger.error(e.getMessage());
+            }
+        }
+
         if (rerouteRequested && requestPoints.size() > 2) {
             ghRsp.addError(new IllegalArgumentException("Rerouting with multiple waypoints is currently not yet supported"));
         }
-
 
         if (!ghRsp.hasErrors()) {
             try {
@@ -249,7 +265,13 @@ public class GraphHopperServlet extends GHBaseServlet {
 
             if (rerouteRequested) {
                 ArrayList<Map<String, Object>> pathsArr = (ArrayList<Map<String, Object>>)map.get("paths");
-                pathsArr.get(0).put("reroute_result", rerouteResult);
+                Map<String, Object> path = pathsArr.get(0);
+                path.put("reroute_result", rerouteResult);
+
+                if (eventImageRequested && rerouteResult != RerouteResult.NONE) {
+                    // use test closure base64 image for now
+                    path.put("event_image", this.testClosureBase64);
+                }
             }
          
             Object infoMap = map.get("info");
@@ -380,5 +402,17 @@ public class GraphHopperServlet extends GHBaseServlet {
             if (e.getValue().length == 1)
                 m.put(e.getKey(), e.getValue()[0]);
         }
+    }
+
+    public static byte[] loadFileAsBytesArray(String fileName) throws Exception {
+
+        File file = new File(fileName);
+        int length = (int) file.length();
+        BufferedInputStream reader = new BufferedInputStream(new FileInputStream(file));
+        byte[] bytes = new byte[length];
+        reader.read(bytes, 0, length);
+        reader.close();
+        return bytes;
+
     }
 }
