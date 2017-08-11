@@ -37,9 +37,9 @@ import static org.junit.Assert.*;
 public class PathTest {
     private final FlagEncoder encoder = new CarFlagEncoder();
     private final DataFlagEncoder dataFlagEncoder = new DataFlagEncoder();
-    private final EncodingManager08 carManager = new EncodingManager08(encoder);
-    private final EncodingManager08 dataFlagManager = new EncodingManager08(dataFlagEncoder);
-    private final EncodingManager08 mixedEncoders = new EncodingManager08(new CarFlagEncoder());
+    private final EncodingManager carManager = new EncodingManager.Builder().addAll(encoder).build();
+    private final EncodingManager dataFlagManager = new EncodingManager.Builder().addAll(dataFlagEncoder).build();
+    private final EncodingManager mixedEncoders = new EncodingManager.Builder().addAll(new CarFlagEncoder()).build();
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
     private final RoundaboutGraph roundaboutGraph = new RoundaboutGraph();

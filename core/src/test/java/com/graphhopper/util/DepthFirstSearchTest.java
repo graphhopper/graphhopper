@@ -20,7 +20,7 @@ package com.graphhopper.util;
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -57,7 +57,7 @@ public class DepthFirstSearchTest {
             }
         };
 
-        EncodingManager08 em = new EncodingManager08("car");
+        EncodingManager em = new EncodingManager.Builder().addAllFlagEncoders("car").build();
         FlagEncoder fe = em.getEncoder("car");
         Graph g = new GraphBuilder(em).create();
         g.edge(1, 2, 1, false);
@@ -87,7 +87,7 @@ public class DepthFirstSearchTest {
             }
         };
 
-        EncodingManager08 em = new EncodingManager08("car");
+        EncodingManager em = new EncodingManager.Builder().addAllFlagEncoders("car").build();
         FlagEncoder fe = em.getEncoder("car");
         Graph g = new GraphBuilder(em).create();
         g.edge(1, 2, 1, false);

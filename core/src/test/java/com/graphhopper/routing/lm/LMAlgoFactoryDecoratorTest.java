@@ -1,7 +1,7 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -34,7 +34,7 @@ public class LMAlgoFactoryDecoratorTest {
         assertEquals(Arrays.asList("fastest", "shortest"), dec.getWeightingsAsStrings());
 
         FlagEncoder car = new CarFlagEncoder();
-        EncodingManager08 em = new EncodingManager08(car);
+        EncodingManager em = new EncodingManager.Builder().addAll(car).build();
         dec.addWeighting(new FastestWeighting(car)).addWeighting(new ShortestWeighting(car));
         dec.createPreparations(new GraphHopperStorage(new RAMDirectory(), em, false, new GraphExtension.NoOpExtension()), null);
         assertEquals(1, dec.getPreparations().get(0).getLandmarkStorage().getFactor(), .1);

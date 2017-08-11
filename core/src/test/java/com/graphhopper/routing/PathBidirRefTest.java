@@ -19,7 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.Graph;
@@ -36,7 +36,7 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class PathBidirRefTest {
-    private final EncodingManager08 encodingManager = new EncodingManager08("car");
+    private final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
     private FlagEncoder carEncoder = encodingManager.getEncoder("car");
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
 

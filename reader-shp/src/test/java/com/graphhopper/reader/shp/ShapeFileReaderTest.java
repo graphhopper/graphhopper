@@ -38,7 +38,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
@@ -113,7 +113,7 @@ public class ShapeFileReaderTest {
         gh.setWayPointMaxDistance(0);
         return gh.setStoreOnFlush(false).setDataReaderFile(inputFile)
                 .setGraphHopperLocation(new File(outDir).getAbsolutePath())
-                .setEncodingManager(new EncodingManager08(new CarFlagEncoder()))
+                .setEncodingManager(new EncodingManager.Builder().addAll(new CarFlagEncoder()).build())
                 .setCHEnabled(false).importOrLoad();
 
     }

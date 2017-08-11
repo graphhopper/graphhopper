@@ -18,7 +18,7 @@
 package com.graphhopper;
 
 import com.graphhopper.json.geo.JsonFeature;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -42,7 +42,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class GraphHopperAPITest {
-    final EncodingManager08 encodingManager = new EncodingManager08("car");
+    final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
 
     void initGraph(GraphHopperStorage graph) {
         NodeAccess na = graph.getNodeAccess();
@@ -141,7 +141,7 @@ public class GraphHopperAPITest {
             protected ChangeGraphHelper createChangeGraphHelper(Graph graph, LocationIndex locationIndex) {
                 return new ChangeGraphHelper(graph, locationIndex) {
                     @Override
-                    public long applyChanges(EncodingManager08 em, Collection<JsonFeature> features) {
+                    public long applyChanges(EncodingManager em, Collection<JsonFeature> features) {
                         // force sleep inside the lock and let the main thread run until the lock barrier
                         latch.countDown();
                         try {

@@ -20,7 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
@@ -36,7 +36,7 @@ public class CHEdgeIteratorTest {
     @Test
     public void testUpdateFlags() {
         CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
-        EncodingManager08 encodingManager = new EncodingManager08(carFlagEncoder);
+        EncodingManager encodingManager = new EncodingManager.Builder().addAll(carFlagEncoder).build();
         FastestWeighting weighting = new FastestWeighting(carFlagEncoder);
         EdgeFilter carOutFilter = new DefaultEdgeFilter(carFlagEncoder, false, true);
         GraphHopperStorage ghStorage = new GraphBuilder(encodingManager).setCHGraph(weighting).create();

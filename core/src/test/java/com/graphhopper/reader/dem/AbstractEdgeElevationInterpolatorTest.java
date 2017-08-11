@@ -17,22 +17,21 @@
  */
 package com.graphhopper.reader.dem;
 
-import java.util.Arrays;
-
-import org.junit.After;
-import org.junit.Before;
-
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
+import org.junit.After;
+import org.junit.Before;
+
+import java.util.Arrays;
 
 /**
  * @author Alexey Valikov
@@ -52,8 +51,7 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
     public void setUp() {
         dataFlagEncoder = new DataFlagEncoder();
         graph = new GraphHopperStorage(new RAMDirectory(),
-                new EncodingManager08(Arrays.asList(dataFlagEncoder, new FootFlagEncoder()),
-                        8),
+                new EncodingManager.Builder().addAll(Arrays.asList(dataFlagEncoder, new FootFlagEncoder()), 8).build(),
                 true, new GraphExtension.NoOpExtension()).create(100);
 
         edgeElevationInterpolator = createEdgeElevationInterpolator();

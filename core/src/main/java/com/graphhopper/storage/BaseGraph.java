@@ -20,10 +20,13 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.search.NameIndex;
 import com.graphhopper.util.*;
@@ -52,7 +55,7 @@ class BaseGraph implements Graph {
     final GraphExtension extStorage;
     final NameIndex nameIndex;
     final BitUtil bitUtil;
-    final EncodingManager08 encodingManager;
+    final EncodingManager encodingManager;
     final EdgeAccess edgeAccess;
     // length | nodeA | nextNode | ... | nodeB
     // as we use integer index in 'egdes' area => 'geometry' area is limited to 4GB (we use pos&neg values!)
@@ -86,7 +89,7 @@ class BaseGraph implements Graph {
     private long maxGeoRef;
     private boolean frozen = false;
 
-    public BaseGraph(Directory dir, final EncodingManager08 encodingManager, boolean withElevation,
+    public BaseGraph(Directory dir, final EncodingManager encodingManager, boolean withElevation,
                      InternalGraphEventListener listener, GraphExtension extendedStorage) {
         this.dir = dir;
         this.encodingManager = encodingManager;
@@ -223,10 +226,7 @@ class BaseGraph implements Graph {
         edgeEntryIndex = 0;
         nodeEntryIndex = 0;
         boolean flagsSizeIsLong = encodingManager.getBytesForFlags() == 8;
-        int extendedDataSizeInBytes = 0;
-        if (encodingManager instanceof EncodingManager) {
-            extendedDataSizeInBytes = ((EncodingManager) encodingManager).getExtendedDataSize();
-        }
+        int extendedDataSizeInBytes = encodingManager.getExtendedDataSize();
 
         edgeAccess.init(nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(4),

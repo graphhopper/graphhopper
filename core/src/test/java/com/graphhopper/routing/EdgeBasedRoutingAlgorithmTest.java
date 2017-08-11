@@ -81,13 +81,13 @@ public class EdgeBasedRoutingAlgorithmTest {
         g.edge(6, 7, 1, true);
     }
 
-    EncodingManager08 createEncodingManager(boolean restrictedOnly) {
+    EncodingManager createEncodingManager(boolean restrictedOnly) {
         if (restrictedOnly)
             carEncoder = new CarFlagEncoder(5, 5, 1);
         else
             // allow for basic costs too
             carEncoder = new CarFlagEncoder(5, 5, 3);
-        return new EncodingManager08(carEncoder);
+        return new EncodingManager.Builder().addAll(carEncoder).build();
     }
 
     public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
@@ -95,7 +95,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         return new RoutingAlgorithmFactorySimple().createAlgo(g, opts);
     }
 
-    protected GraphHopperStorage createStorage(EncodingManager08 em) {
+    protected GraphHopperStorage createStorage(EncodingManager em) {
         return new GraphBuilder(em).create();
     }
 

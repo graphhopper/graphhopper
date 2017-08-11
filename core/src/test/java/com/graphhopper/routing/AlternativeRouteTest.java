@@ -19,7 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.AlternativeRoute.AlternativeBidirSearch;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -43,7 +43,7 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class AlternativeRouteTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
-    private final EncodingManager08 em = new EncodingManager08(carFE);
+    private final EncodingManager em = new EncodingManager.Builder().addAll(carFE).build();
     private final TraversalMode traversalMode;
 
     public AlternativeRouteTest(TraversalMode tMode) {
@@ -61,7 +61,7 @@ public class AlternativeRouteTest {
         });
     }
 
-    public GraphHopperStorage createTestGraph(boolean fullGraph, EncodingManager08 tmpEM) {
+    public GraphHopperStorage createTestGraph(boolean fullGraph, EncodingManager tmpEM) {
         GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false, new GraphExtension.NoOpExtension());
         graph.create(1000);
 

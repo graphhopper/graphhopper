@@ -85,7 +85,7 @@ public class OSMReaderTest {
         Helper.removeDir(new File(dir));
     }
 
-    GraphHopperStorage newGraph(String directory, EncodingManager08 encodingManager, boolean is3D, boolean turnRestrictionsImport) {
+    GraphHopperStorage newGraph(String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport) {
         return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D,
                 turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoOpExtension());
     }
@@ -420,7 +420,7 @@ public class OSMReaderTest {
 
     @Test
     public void testRelation() {
-        EncodingManager08 manager = new EncodingManager08("bike");
+        EncodingManager manager = new EncodingManager.Builder().addAllFlagEncoders("bike").build();
         GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false, new GraphExtension.NoOpExtension());
         OSMReader reader = new OSMReader(ghStorage);
         ReaderRelation osmRel = new ReaderRelation(1);
@@ -518,7 +518,7 @@ public class OSMReaderTest {
     public void testRoadAttributes() {
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
         DataFlagEncoder dataFlagEncoder = (new DataFlagEncoder()).setStoreHeight(true).setStoreWeight(true).setStoreWidth(true);
-        hopper.setEncodingManager(new EncodingManager08(Arrays.asList(dataFlagEncoder), 8));
+        hopper.setEncodingManager(new EncodingManager.Builder().addAll(Arrays.asList(dataFlagEncoder), 8).build());
         hopper.importOrLoad();
 
         Graph graph = hopper.getGraphHopperStorage();
@@ -576,7 +576,7 @@ public class OSMReaderTest {
                 return 0;
             }
         };
-        EncodingManager08 manager = new EncodingManager08(encoder);
+        EncodingManager manager = new EncodingManager.Builder().addAll(encoder).build();
         GraphHopperStorage ghStorage = newGraph(dir, manager, false, false);
         final Map<Integer, Double> latMap = new HashMap<Integer, Double>();
         final Map<Integer, Double> lonMap = new HashMap<Integer, Double>();
@@ -681,7 +681,7 @@ public class OSMReaderTest {
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
         FootFlagEncoder foot = new FootFlagEncoder();
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
-        EncodingManager08 manager = new EncodingManager08(Arrays.asList(bike, foot, car), 4);
+        EncodingManager manager = new EncodingManager.Builder().addAll(Arrays.asList(bike, foot, car), 4).build();
 
         GraphHopperStorage ghStorage = new GraphBuilder(manager).create();
         OSMReader reader = new OSMReader(ghStorage) {
@@ -795,7 +795,7 @@ public class OSMReaderTest {
     public void testRoutingRequestFails_issue665() {
         GraphHopper hopper = new GraphHopperOSM()
                 .setDataReaderFile(getClass().getResource(file7).getFile())
-                .setEncodingManager(new EncodingManager08("car,motorcycle"))
+                .setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car,motorcycle").build())
                 .setGraphHopperLocation(dir);
         hopper.getCHFactoryDecorator().setEnabled(false);
         hopper.importOrLoad();
@@ -850,7 +850,7 @@ public class OSMReaderTest {
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);
-            setEncodingManager(new EncodingManager08("car,foot"));
+            setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car,foot").build());
             setCHEnabled(false);
 
             if (turnCosts) {
@@ -863,7 +863,7 @@ public class OSMReaderTest {
 
             footEncoder = new FootFlagEncoder();
 
-            setEncodingManager(new EncodingManager08(footEncoder, carEncoder, bikeEncoder));
+            setEncodingManager(new EncodingManager.Builder().addAll(footEncoder, carEncoder, bikeEncoder).build());
         }
 
         @Override

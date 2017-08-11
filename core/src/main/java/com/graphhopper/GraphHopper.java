@@ -75,7 +75,7 @@ public class GraphHopper implements GraphHopperAPI {
     boolean enableInstructions = true;
     // for graph:
     private GraphHopperStorage ghStorage;
-    private EncodingManager08 encodingManager;
+    private EncodingManager encodingManager;
     private int defaultSegmentSize = -1;
     private String ghLocation = "";
     private DAType dataAccessType = DAType.RAM_STORE;
@@ -144,14 +144,14 @@ public class GraphHopper implements GraphHopperAPI {
         return encodingManager.fetchEdgeEncoders().get(0);
     }
 
-    public EncodingManager08 getEncodingManager() {
+    public EncodingManager getEncodingManager() {
         return encodingManager;
     }
 
     /**
      * Specify which data can be read by this GraphHopper instance.
      */
-    public GraphHopper setEncodingManager(EncodingManager08 em) {
+    public GraphHopper setEncodingManager(EncodingManager em) {
         ensureNotLoaded();
         this.encodingManager = em;
         if (em.needsTurnCostsSupport())
@@ -545,7 +545,7 @@ public class GraphHopper implements GraphHopperAPI {
                                         "motorroad", "residential", "trunk"), "tertiary"))).
                         build());
             } else {
-                setEncodingManager(new EncodingManager08(flagEncoderFactory, flagEncodersStr, bytesForFlags));
+                setEncodingManager(new EncodingManager.Builder().addAll(flagEncoderFactory, flagEncodersStr, bytesForFlags).build());
             }
         }
 
@@ -735,7 +735,7 @@ public class GraphHopper implements GraphHopperAPI {
         setGraphHopperLocation(graphHopperFolder);
 
         if (encodingManager == null)
-            setEncodingManager(EncodingManager08.create(flagEncoderFactory, ghLocation));
+            setEncodingManager(EncodingManager.create(flagEncoderFactory, ghLocation));
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
@@ -901,7 +901,7 @@ public class GraphHopper implements GraphHopperAPI {
         Weighting weighting = null;
 
         if (weightingStr.equals("fastest2")) {
-            weighting = new FastestCarWeighting((EncodingManager) encodingManager, "fastest2");
+            weighting = new FastestCarWeighting(encodingManager, "fastest2");
         } else if (encoder.supports(GenericWeighting.class)) {
             weighting = new GenericWeighting((DataFlagEncoder) encoder, hintsMap);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {

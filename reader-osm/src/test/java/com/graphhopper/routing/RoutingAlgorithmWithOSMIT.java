@@ -507,7 +507,7 @@ public class RoutingAlgorithmWithOSMIT {
                     setCHEnabled(false).
                     setDataReaderFile(osmFile).
                     setGraphHopperLocation(graphFile).
-                    setEncodingManager(new EncodingManager08(importVehicles));
+                    setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders(importVehicles).build());
 
             // avoid that path.getDistance is too different to path.getPoint.calcDistance
             hopper.setWayPointMaxDistance(0);
@@ -560,7 +560,7 @@ public class RoutingAlgorithmWithOSMIT {
         System.out.println("testMonacoParallel takes a bit time...");
         String graphFile = "target/monaco-gh";
         Helper.removeDir(new File(graphFile));
-        final EncodingManager08 encodingManager = new EncodingManager08("car");
+        final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
         final GraphHopper hopper = new GraphHopperOSM().
                 setStoreOnFlush(true).
                 setEncodingManager(encodingManager).setCHEnabled(false).

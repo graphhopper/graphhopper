@@ -35,13 +35,13 @@ import java.util.Set;
 
 /**
  * Abstract class which handles flag decoding and encoding. Every encoder should be registered to a
- * EncodingManager08 to be usable. If you want the full long to be stored you need to enable this in
+ * EncodingManager to be usable. If you want the full long to be stored you need to enable this in
  * the GraphHopperStorage.
  * <p>
  *
  * @author Peter Karich
  * @author Nop
- * @see EncodingManager08
+ * @see EncodingManager
  */
 public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncoder {
     protected final static int K_FORWARD = 0, K_BACKWARD = 1;

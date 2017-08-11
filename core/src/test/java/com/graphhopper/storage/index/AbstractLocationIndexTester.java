@@ -43,11 +43,11 @@ public abstract class AbstractLocationIndexTester {
 
     public abstract LocationIndex createIndex(Graph g, int resolution);
 
-    GraphHopperStorage createGHStorage(EncodingManager08 encodingManager) {
+    GraphHopperStorage createGHStorage(EncodingManager encodingManager) {
         return AbstractLocationIndexTester.this.createGHStorage(new RAMDirectory(), encodingManager, false);
     }
 
-    GraphHopperStorage createGHStorage(Directory dir, EncodingManager08 encodingManager, boolean is3D) {
+    GraphHopperStorage createGHStorage(Directory dir, EncodingManager encodingManager, boolean is3D) {
         return new GraphHopperStorage(dir, encodingManager, is3D, new GraphExtension.NoOpExtension()).create(100);
     }
 
@@ -73,7 +73,7 @@ public abstract class AbstractLocationIndexTester {
 
     @Test
     public void testSimpleGraph() {
-        Graph g = AbstractLocationIndexTester.this.createGHStorage(new EncodingManager08("car"));
+        Graph g = AbstractLocationIndexTester.this.createGHStorage(new EncodingManager.Builder().addAllFlagEncoders("car").build());
         initSimpleGraph(g);
 
         idx = createIndex(g, -1);
@@ -123,7 +123,7 @@ public abstract class AbstractLocationIndexTester {
 
     @Test
     public void testSimpleGraph2() {
-        Graph g = AbstractLocationIndexTester.this.createGHStorage(new EncodingManager08("car"));
+        Graph g = AbstractLocationIndexTester.this.createGHStorage(new EncodingManager.Builder().addAllFlagEncoders("car").build());
         initSimpleGraph(g);
 
         idx = createIndex(g, -1);
@@ -145,7 +145,7 @@ public abstract class AbstractLocationIndexTester {
 
     @Test
     public void testGrid() {
-        Graph g = createSampleGraph(new EncodingManager08("car"));
+        Graph g = createSampleGraph(new EncodingManager.Builder().addAllFlagEncoders("car").build());
         int locs = g.getNodes();
 
         idx = createIndex(g, -1);
@@ -200,7 +200,7 @@ public abstract class AbstractLocationIndexTester {
 
     @Test
     public void testSinglePoints120() {
-        Graph g = createSampleGraph(new EncodingManager08("car"));
+        Graph g = createSampleGraph(new EncodingManager.Builder().addAllFlagEncoders("car").build());
         idx = createIndex(g, -1);
 
         assertEquals(1, findID(idx, 1.637, 2.23));
@@ -215,7 +215,7 @@ public abstract class AbstractLocationIndexTester {
 
     @Test
     public void testSinglePoints32() {
-        Graph g = createSampleGraph(new EncodingManager08("car"));
+        Graph g = createSampleGraph(new EncodingManager.Builder().addAllFlagEncoders("car").build());
         idx = createIndex(g, -1);
 
         // 10 or 6
@@ -232,7 +232,7 @@ public abstract class AbstractLocationIndexTester {
 
     @Test
     public void testNoErrorOnEdgeCase_lastIndex() {
-        final EncodingManager08 encodingManager = new EncodingManager08("car");
+        final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
         int locs = 10000;
         Graph g = AbstractLocationIndexTester.this.createGHStorage(new MMapDirectory(location), encodingManager, false);
         NodeAccess na = g.getNodeAccess();
@@ -244,7 +244,7 @@ public abstract class AbstractLocationIndexTester {
         Helper.close((Closeable) g);
     }
 
-    public Graph createSampleGraph(EncodingManager08 encodingManager) {
+    public Graph createSampleGraph(EncodingManager encodingManager) {
         Graph graph = AbstractLocationIndexTester.this.createGHStorage(encodingManager);
         // length does not matter here but lat,lon and outgoing edges do!
 
@@ -325,7 +325,7 @@ public abstract class AbstractLocationIndexTester {
 
     @Test
     public void testDifferentVehicles() {
-        final EncodingManager08 encodingManager = new EncodingManager08("car,foot");
+        final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car,foot").build();
         Graph g = AbstractLocationIndexTester.this.createGHStorage(encodingManager);
         initSimpleGraph(g);
         idx = createIndex(g, -1);

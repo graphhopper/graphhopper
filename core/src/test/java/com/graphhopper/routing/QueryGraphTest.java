@@ -39,14 +39,14 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class QueryGraphTest {
-    private EncodingManager08 encodingManager;
+    private EncodingManager encodingManager;
     private FlagEncoder carEncoder;
     private GraphHopperStorage g;
 
     @Before
     public void setUp() {
         carEncoder = new CarFlagEncoder();
-        encodingManager = new EncodingManager08(carEncoder);
+        encodingManager = new EncodingManager.Builder().addAll(carEncoder).build();
         g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension()).create(100);
     }
 
@@ -491,7 +491,7 @@ public class QueryGraphTest {
         FlagEncoder encoder = new CarFlagEncoder(5, 5, 15);
 
         GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(),
-                new EncodingManager08(encoder), false, turnExt).
+                new EncodingManager.Builder().addAll(encoder).build(), false, turnExt).
                 create(100);
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
         na.setNode(0, .00, .00);

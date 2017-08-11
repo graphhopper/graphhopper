@@ -2,7 +2,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -20,13 +20,13 @@ import static org.junit.Assert.assertEquals;
 public class BlockAreaWeightingTest {
 
     private FlagEncoder encoder = new CarFlagEncoder();
-    private EncodingManager08 em;
+    private EncodingManager em;
     private Graph graph;
 
     @Before
     public void setUp() {
         encoder = new CarFlagEncoder();
-        em = new EncodingManager08(Arrays.asList(encoder), 8);
+        em = new EncodingManager.Builder().addAll(Arrays.asList(encoder), 8).build();
         graph = new GraphBuilder(em).create();
         // 0-1
         graph.edge(0, 1, 1, true);

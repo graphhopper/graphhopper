@@ -20,7 +20,7 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHIntArrayList;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
@@ -210,7 +210,7 @@ public class Path {
      *
      * @see RoutingAlgorithm#calcPath(int, int)
      */
-    public PathExtract createPathExtract(EncodingManager08 encodingManager, boolean callExtract) {
+    public PathExtract createPathExtract(EncodingManager encodingManager, boolean callExtract) {
         if (callExtract)
             extract();
         return new PathExtract(this, encodingManager);

@@ -19,7 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.Bike2WeightFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -35,7 +35,7 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class FastestWeightingTest {
-    private final FlagEncoder encoder = new EncodingManager08("car").getEncoder("car");
+    private final FlagEncoder encoder = new EncodingManager.Builder().addAllFlagEncoders("car").build().getEncoder("car");
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
@@ -81,7 +81,7 @@ public class FastestWeightingTest {
     @Test
     public void testTime() {
         FlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
-        GraphHopperStorage g = new GraphBuilder(new EncodingManager08(tmpEnc)).create();
+        GraphHopperStorage g = new GraphBuilder(new EncodingManager.Builder().addAll(tmpEnc).build()).create();
         Weighting w = new FastestWeighting(tmpEnc);
 
         long flags = tmpEnc.setSpeed(tmpEnc.setReverseSpeed(tmpEnc.setAccess(0, true, true), 10), 15);

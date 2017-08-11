@@ -31,7 +31,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class CarFlagEncoderTest {
-    private final EncodingManager08 em = new EncodingManager08("car,bike,foot");
+    private final EncodingManager em = new EncodingManager.Builder().addAllFlagEncoders("car,bike,foot").build();
     private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("car");
 
     @Test
@@ -498,7 +498,7 @@ public class CarFlagEncoderTest {
     @Test
     public void testTurnFlagEncoding_noCosts() {
         FlagEncoder tmpEnc = new CarFlagEncoder(8, 5, 0);
-        EncodingManager08 em = new EncodingManager08(tmpEnc);
+        EncodingManager em = new EncodingManager.Builder().addAll(tmpEnc).build();
 
         long flags_r0 = tmpEnc.getTurnFlags(true, 0);
         long flags_0 = tmpEnc.getTurnFlags(false, 0);
@@ -522,7 +522,7 @@ public class CarFlagEncoderTest {
     @Test
     public void testTurnFlagEncoding_withCosts() {
         FlagEncoder tmpEncoder = new CarFlagEncoder(8, 5, 127);
-        EncodingManager08 em = new EncodingManager08(tmpEncoder);
+        EncodingManager em = new EncodingManager.Builder().addAll(tmpEncoder).build();
 
         long flags_r0 = tmpEncoder.getTurnFlags(true, 0);
         long flags_0 = tmpEncoder.getTurnFlags(false, 0);
@@ -551,7 +551,7 @@ public class CarFlagEncoderTest {
     @Test
     public void testMaxValue() {
         CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
-        EncodingManager08 em = new EncodingManager08(instance);
+        EncodingManager em = new EncodingManager.Builder().addAll(instance).build();
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "60 mph");
@@ -574,9 +574,9 @@ public class CarFlagEncoderTest {
     @Test
     public void testRegisterOnlyOnceAllowed() {
         CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
-        EncodingManager08 tmpEM = new EncodingManager08(instance);
+        EncodingManager tmpEM = new EncodingManager.Builder().addAll(instance).build();
         try {
-            tmpEM = new EncodingManager08(instance);
+            tmpEM = new EncodingManager.Builder().addAll(instance).build();
             assertTrue(false);
         } catch (IllegalStateException ex) {
         }

@@ -42,7 +42,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class RoundTripRoutingTemplateTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
-    private final EncodingManager08 em = new EncodingManager08(carFE);
+    private final EncodingManager em = new EncodingManager.Builder().addAll(carFE).build();
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED_2DIR;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
 

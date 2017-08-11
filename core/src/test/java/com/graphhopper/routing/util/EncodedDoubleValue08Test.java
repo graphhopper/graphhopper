@@ -44,7 +44,7 @@ public class EncodedDoubleValue08Test {
         assertEquals(100, instance1.getDoubleValue(flags), 1e-1);
 
         CarFlagEncoder carEncoder = new CarFlagEncoder(10, 0.5, 0);
-        new EncodingManager08(carEncoder);
+        new EncodingManager.Builder().addAll(carEncoder).build();
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "70 mph");

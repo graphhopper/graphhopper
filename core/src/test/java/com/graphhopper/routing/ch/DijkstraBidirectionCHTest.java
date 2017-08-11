@@ -48,7 +48,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     }
 
     @Override
-    protected GraphHopperStorage createGHStorage(EncodingManager08 em,
+    protected GraphHopperStorage createGHStorage(EncodingManager em,
                                                  List<? extends Weighting> weightings, boolean is3D) {
         return new GraphHopperStorage(weightings, new RAMDirectory(),
                 em, is3D, new GraphExtension.NoOpExtension()).
@@ -68,7 +68,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     public void testPathRecursiveUnpacking() {
         // use an encoder where it is possible to store 2 weights per edge        
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
-        EncodingManager08 em = new EncodingManager08(encoder);
+        EncodingManager em = new EncodingManager.Builder().addAll(encoder).build();
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         GraphHopperStorage ghStorage = createGHStorage(em, Arrays.asList(weighting), false);
         CHGraphImpl g2 = (CHGraphImpl) ghStorage.getGraph(CHGraph.class, weighting);
@@ -117,7 +117,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     @Test
     public void testBaseGraph() {
         CarFlagEncoder carFE = new CarFlagEncoder();
-        EncodingManager08 em = new EncodingManager08(carFE);
+        EncodingManager em = new EncodingManager.Builder().addAll(carFE).build();
         AlgorithmOptions opts = AlgorithmOptions.start().
                 weighting(new ShortestWeighting(carFE)).build();
         GraphHopperStorage ghStorage = createGHStorage(em,

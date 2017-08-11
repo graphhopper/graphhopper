@@ -19,7 +19,7 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
@@ -43,23 +43,23 @@ import java.util.List;
  */
 public final class GraphHopperStorage implements GraphStorage, Graph {
     private final Directory dir;
-    private final EncodingManager08 encodingManager;
+    private final EncodingManager encodingManager;
     private final StorableProperties properties;
     private final BaseGraph baseGraph;
     // same flush order etc
     private final Collection<CHGraphImpl> chGraphs = new ArrayList<CHGraphImpl>(5);
 
-    public GraphHopperStorage(Directory dir, EncodingManager08 encodingManager, boolean withElevation, GraphExtension extendedStorage) {
+    public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
         this(Collections.<Weighting>emptyList(), dir, encodingManager, withElevation, extendedStorage);
     }
 
-    public GraphHopperStorage(List<? extends Weighting> chWeightings, Directory dir, final EncodingManager08 encodingManager,
+    public GraphHopperStorage(List<? extends Weighting> chWeightings, Directory dir, final EncodingManager encodingManager,
                               boolean withElevation, GraphExtension extendedStorage) {
         if (extendedStorage == null)
             throw new IllegalArgumentException("GraphExtension cannot be null, use NoOpExtension");
 
         if (encodingManager == null)
-            throw new IllegalArgumentException("EncodingManager08 needs to be non-null since 0.7. Create one using new EncodingManager08 or EncodingManager08.create(flagEncoderFactory, ghLocation)");
+            throw new IllegalArgumentException("EncodingManager needs to be non-null since 0.7. Create one using new EncodingManager or EncodingManager.create(flagEncoderFactory, ghLocation)");
 
         this.encodingManager = encodingManager;
         this.dir = dir;
@@ -158,7 +158,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     public GraphHopperStorage create(long byteCount) {
         baseGraph.checkInit();
         if (encodingManager == null)
-            throw new IllegalStateException("EncodingManager08 can only be null if you call loadExisting");
+            throw new IllegalStateException("EncodingManager can only be null if you call loadExisting");
 
         dir.create();
         long initSize = Math.max(byteCount, 100);
@@ -182,7 +182,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     @Override
-    public EncodingManager08 getEncodingManager() {
+    public EncodingManager getEncodingManager() {
         return encodingManager;
     }
 

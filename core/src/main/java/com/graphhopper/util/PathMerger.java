@@ -20,7 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathExtract;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 
 import java.util.ArrayList;
@@ -61,7 +61,7 @@ public class PathMerger {
         return this;
     }
 
-    public void doWork(PathWrapper altRsp, List<Path> paths, EncodingManager08 encodingManager, Translation tr) {
+    public void doWork(PathWrapper altRsp, List<Path> paths, EncodingManager encodingManager, Translation tr) {
         int origPoints = 0;
         long fullTimeInMillis = 0;
         double fullWeight = 0;

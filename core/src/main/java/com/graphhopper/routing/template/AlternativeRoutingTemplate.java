@@ -25,7 +25,7 @@ import com.graphhopper.routing.Path;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Parameters.Routing;
@@ -46,7 +46,7 @@ import static com.graphhopper.util.Parameters.Routing.PASS_THROUGH;
  */
 final public class AlternativeRoutingTemplate extends ViaRoutingTemplate {
     public AlternativeRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp,
-                                      EncodingManager08 encodingManager, LocationIndex locationIndex) {
+                                      EncodingManager encodingManager, LocationIndex locationIndex) {
         super(ghRequest, ghRsp, encodingManager, locationIndex);
     }
 

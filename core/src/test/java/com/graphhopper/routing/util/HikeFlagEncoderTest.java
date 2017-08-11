@@ -27,7 +27,7 @@ import static org.junit.Assert.assertFalse;
  * @author Peter Karich
  */
 public class HikeFlagEncoderTest {
-    private final EncodingManager08 encodingManager = new EncodingManager08("car,hike");
+    private final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car,hike").build();
     private final HikeFlagEncoder hikeEncoder = (HikeFlagEncoder) encodingManager.getEncoder("hike");
 
     @Test

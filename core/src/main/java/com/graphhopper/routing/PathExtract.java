@@ -22,9 +22,8 @@ import com.graphhopper.routing.bwdcompat.BoolAccessor;
 import com.graphhopper.routing.bwdcompat.SpeedAccessor;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.EncodingManager;
 import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.*;
 
@@ -33,7 +32,7 @@ public class PathExtract {
     private SpeedAccessor speedAccessor;
     private BoolAccessor roundaboutAccess;
 
-    PathExtract(Path path, EncodingManager08 encodingManager) {
+    PathExtract(Path path, EncodingManager encodingManager) {
         this.path = path;
         final FlagEncoder encoder = path.weighting.getFlagEncoder();
         if (encoder != null) {
@@ -59,8 +58,7 @@ public class PathExtract {
                 }
             };
         } else {
-            EncodingManager em2 = (EncodingManager) encodingManager;
-            final DecimalEncodedValue maxspeed = em2.getEncodedValue("maxspeed", DecimalEncodedValue.class);
+            final DecimalEncodedValue maxspeed = encodingManager.getEncodedValue("maxspeed", DecimalEncodedValue.class);
             speedAccessor = new SpeedAccessor() {
 
                 @Override
@@ -68,7 +66,7 @@ public class PathExtract {
                     return edge.get(maxspeed);
                 }
             };
-            final BooleanEncodedValue roundabout = em2.getEncodedValue("roundabout", BooleanEncodedValue.class);
+            final BooleanEncodedValue roundabout = encodingManager.getEncodedValue("roundabout", BooleanEncodedValue.class);
             roundaboutAccess = new BoolAccessor() {
                 @Override
                 public boolean get(EdgeIteratorState edge) {

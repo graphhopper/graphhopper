@@ -21,7 +21,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
@@ -59,7 +59,7 @@ public class GraphHopperServlet extends GHBaseServlet {
     @Inject
     private GraphHopperAPI graphHopper;
     @Inject
-    private EncodingManager08 encodingManager;
+    private EncodingManager encodingManager;
     @Inject
     private RouteSerializer routeSerializer;
     @Inject

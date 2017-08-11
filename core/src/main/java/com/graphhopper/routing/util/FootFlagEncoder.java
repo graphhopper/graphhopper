@@ -51,7 +51,7 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     private EncodedValue08 relationCodeEncoder;
 
     /**
-     * Should be only instantiated via EncodingManager08
+     * Should be only instantiated via EncodingManager
      */
     public FootFlagEncoder() {
         this(4, 1);

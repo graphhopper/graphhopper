@@ -20,7 +20,7 @@ package com.graphhopper.http;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.json.GHJson;
@@ -131,7 +131,7 @@ public class GraphHopperModule extends AbstractModule {
 
     @Provides
     @Singleton
-    EncodingManager08 getEncodingManager(GraphHopper graphHopper) {
+    EncodingManager getEncodingManager(GraphHopper graphHopper) {
         return graphHopper.getEncodingManager();
     }
 

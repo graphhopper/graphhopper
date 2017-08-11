@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import org.junit.Test;
 
@@ -44,7 +44,7 @@ public class Location2IDFullWithEdgesIndexTest extends AbstractLocationIndexTest
 
     @Test
     public void testFullIndex() {
-        LocationIndex tmpIdx = new Location2IDFullWithEdgesIndex(createSampleGraph(new EncodingManager08("car")));
+        LocationIndex tmpIdx = new Location2IDFullWithEdgesIndex(createSampleGraph(new EncodingManager.Builder().addAllFlagEncoders("car").build()));
         assertEquals(5, findID(tmpIdx, 2, 3));
         assertEquals(10, findID(tmpIdx, 4, 1));
         // 6, 9 or 10

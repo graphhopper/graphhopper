@@ -21,7 +21,7 @@ import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
@@ -42,7 +42,7 @@ public class GraphEdgeIdFinderTest {
     @Test
     public void testParseStringHints() {
         FlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager08 em = new EncodingManager08(encoder);
+        EncodingManager em = new EncodingManager.Builder().addAll(encoder).build();
         GraphHopperStorage graph = new GraphBuilder(em).create();
         // 0-1-2
         // | |

@@ -24,7 +24,7 @@ import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathExtract;
 import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -53,13 +53,13 @@ public class InstructionListTest {
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation usTR = trMap.getWithFallBack(Locale.US);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
-    private EncodingManager08 carManager;
+    private EncodingManager carManager;
     private FlagEncoder carEncoder;
 
     @Before
     public void setUp() {
         carEncoder = new CarFlagEncoder();
-        carManager = new EncodingManager08(carEncoder);
+        carManager = new EncodingManager.Builder().addAll(carEncoder).build();
     }
 
     @SuppressWarnings("unchecked")
@@ -444,7 +444,7 @@ public class InstructionListTest {
         verifyGPX(instructions.createGPX());
     }
 
-    private long flagsForSpeed(EncodingManager08 encodingManager, int speedKmPerHour) {
+    private long flagsForSpeed(EncodingManager encodingManager, int speedKmPerHour) {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");
         way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));

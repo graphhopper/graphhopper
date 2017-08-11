@@ -17,12 +17,12 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 
 public interface GraphStorage extends Storable<GraphStorage> {
     Directory getDirectory();
 
-    EncodingManager08 getEncodingManager();
+    EncodingManager getEncodingManager();
 
     void setSegmentSize(int bytes);
 

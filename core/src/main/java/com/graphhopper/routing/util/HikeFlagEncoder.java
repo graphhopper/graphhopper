@@ -32,7 +32,7 @@ import static com.graphhopper.routing.util.PriorityCode.*;
  */
 public class HikeFlagEncoder extends FootFlagEncoder {
     /**
-     * Should be only instantiated via EncodingManager08
+     * Should be only instantiated via EncodingManager
      */
     public HikeFlagEncoder() {
         this(4, 1);

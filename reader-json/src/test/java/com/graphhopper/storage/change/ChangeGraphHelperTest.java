@@ -5,7 +5,7 @@ import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.json.JsonFeatureConverter;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -26,13 +26,13 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class ChangeGraphHelperTest {
-    private EncodingManager08 encodingManager;
+    private EncodingManager encodingManager;
     private GraphHopperStorage graph;
     private GHJson ghson;
 
     @Before
     public void setUp() {
-        encodingManager = new EncodingManager08("car");
+        encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
         graph = new GraphBuilder(encodingManager).create();
         ghson = new GHJsonFactory().create();
     }

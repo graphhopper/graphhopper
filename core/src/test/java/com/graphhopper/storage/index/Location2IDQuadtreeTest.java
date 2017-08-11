@@ -17,7 +17,7 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.routing.util.EncodingManager08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.MMapDirectory;
 import com.graphhopper.storage.RAMDirectory;
@@ -39,7 +39,8 @@ public class Location2IDQuadtreeTest extends AbstractLocationIndexTester {
 
     @Test
     public void testNormedDist() {
-        Location2IDQuadtree index = new Location2IDQuadtree(createGHStorage(new EncodingManager08("car")), new RAMDirectory());
+        Location2IDQuadtree index = new Location2IDQuadtree(createGHStorage(new EncodingManager.Builder().addAllFlagEncoders("car").build()),
+                new RAMDirectory());
         index.initAlgo(5, 6);
         assertEquals(1, index.getNormedDist(0, 1), 1e-6);
         assertEquals(2, index.getNormedDist(0, 7), 1e-6);
