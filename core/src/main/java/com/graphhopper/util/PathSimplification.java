@@ -53,12 +53,8 @@ public class PathSimplification {
     }
 
     public PointList simplify() {
-
-        if (toSimplify.isEmpty() || pointList.isEmpty()) {
+        if (toSimplify.isEmpty() || pointList.isEmpty())
             return pointList;
-        }
-
-        boolean endReached = false;
 
         // The offset of already included points
         int[] offset = new int[toSimplify.size()];
@@ -66,7 +62,7 @@ public class PathSimplification {
         // All start at 0
         int[] startIntervals = new int[toSimplify.size()];
 
-        while (!endReached) {
+        while (true) {
             boolean simplificationPossible = true;
             int nonConflictingStart = 0;
             int nonConflictingEnd = Integer.MAX_VALUE;
@@ -98,69 +94,57 @@ public class PathSimplification {
             if (toSimplifyIndex >= 0 && simplificationPossible) {
                 // Only simplify if there is more than one point
                 if (nonConflictingEnd - nonConflictingStart > 1) {
-                    // Simplify
                     int removed = douglasPeucker.simplify(pointList, nonConflictingStart, nonConflictingEnd);
                     if (removed > 0) {
                         for (int i = 0; i < toSimplify.size(); i++) {
-                            reduceNumberOfPoints(toSimplify.get(i), offset[i], removed, startIntervals[i], endIntervals[i] - removed);
+                            reduceLength(toSimplify.get(i), offset[i], startIntervals[i], endIntervals[i] - removed);
                         }
                     }
                 }
             }
 
-            if (toShiftIndex < 0) {
-                throw new IllegalStateException("Shift Index cannot be below 0");
-            }
-            int length = getNumberOfPoints(toSimplify.get(toShiftIndex), offset[toShiftIndex]);
+            if (toShiftIndex < 0)
+                throw new IllegalStateException("toShiftIndex cannot be negative");
+
+            int length = getLength(toSimplify.get(toShiftIndex), offset[toShiftIndex]);
             startIntervals[toShiftIndex] += length;
             offset[toShiftIndex]++;
-            if (offset[toShiftIndex] >= toSimplify.get(toShiftIndex).size()) {
-                endReached = true;
-            }
+            if (offset[toShiftIndex] >= toSimplify.get(toShiftIndex).size())
+                break;
         }
         return pointList;
     }
 
-    private int getNumberOfPointsIL(InstructionList il, int index) {
-        return il.get(index).getPoints().size();
-    }
-
-    private int getNumberOfPointsPD(List<PathDetail> pd, int index) {
-        return pd.get(index).numberOfPoints;
-    }
-
-    private int getNumberOfPoints(Object o, int index) {
+    private int getLength(Object o, int index) {
         if (o instanceof InstructionList) {
-            return getNumberOfPointsIL((InstructionList) o, index);
+            // we do not store the last point of an instruction
+            int size = ((InstructionList) o).get(index).getPoints().size();
+            if (size == 0)
+                throw new IllegalStateException("PointList of instruction should not be empty " + o);
+            // the last point of instruction (i.e. first point of next instruction) is not included
+            return size;
         }
         if (o instanceof List) {
-            return getNumberOfPointsPD((List<PathDetail>) o, index);
+            return ((List<PathDetail>) o).get(index).getLength();
         }
         throw new IllegalStateException("We can only handle PathDetails or InstructionList in PathSimplification");
     }
 
-    private void reduceNumberOfPointsIl(InstructionList il, int index, int startIndex, int newEndIndex) {
-        il.get(index).setPoints(this.pointList.copy(startIndex, newEndIndex));
-
-    }
-
-    private void reduceNumberOfPointsPD(List<PathDetail> pd, int index, int reduceBy) {
-        pd.get(index).numberOfPoints -= reduceBy;
-    }
-
-    private void reduceNumberOfPoints(Object o, int index, int reduceBy, int startIndex, int newEndIndex) {
+    private void reduceLength(Object o, int index, int startIndex, int newEndIndex) {
         if (o instanceof InstructionList) {
-            reduceNumberOfPointsIl((InstructionList) o, index, startIndex, newEndIndex);
+            ((InstructionList) o).get(index).setPoints(this.pointList.copy(startIndex, newEndIndex));
         } else if (o instanceof List) {
-            reduceNumberOfPointsPD((List) o, index, reduceBy);
+            PathDetail pd = ((List<PathDetail>) o).get(index);
+            pd.setFirst(startIndex);
+            pd.setLast(newEndIndex);
         } else {
-            throw new IllegalStateException("We can only handle PathDetails or InstructionList in PathSimplification");
+            throw new IllegalStateException("We can only handle List<PathDetail> or InstructionList");
         }
     }
 
     private int[] calculateEndIntervals(int[] endIntervals, int[] startIntervals, int[] offset, List<List> toSimplify) {
         for (int i = 0; i < toSimplify.size(); i++) {
-            endIntervals[i] = startIntervals[i] + getNumberOfPoints(toSimplify.get(i), offset[i]);
+            endIntervals[i] = startIntervals[i] + getLength(toSimplify.get(i), offset[i]);
         }
         return endIntervals;
     }

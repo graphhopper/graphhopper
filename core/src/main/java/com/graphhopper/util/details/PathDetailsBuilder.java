@@ -24,7 +24,7 @@ import java.util.Map;
 
 /**
  * Calculate details for a path and keeps the AbstractPathDetailsBuilder corresponding to this detail.
- * Every PathDetailCalculator is responsible for a set of values, for example the Speed.
+ * Every PathDetailsBuilder is responsible for a set of values, for example the speed.
  * On request it can provide the current value as well as a check if the value is different to the last.
  *
  * @author Robin Boldt
@@ -35,9 +35,9 @@ public interface PathDetailsBuilder {
 
     Map.Entry<String, List<PathDetail>> build();
 
-    void startInterval();
+    void startInterval(int firstIndex);
 
-    void endInterval(int numberOfPoints);
+    void endInterval(int lastIndex);
 
     String getName();
 

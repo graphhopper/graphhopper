@@ -1058,7 +1058,7 @@ public class GraphHopper implements GraphHopperAPI {
                         setCalcPoints(tmpCalcPoints).
                         setDouglasPeucker(peucker).
                         setEnableInstructions(tmpEnableInstructions).
-                        setPathDetailsCalculatorFactory(calculatorFactory).
+                        setPathDetailsBuilderFactory(calculatorFactory).
                         setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
 
                 if (routingTemplate.isReady(pathMerger, tr))

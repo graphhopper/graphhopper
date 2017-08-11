@@ -18,7 +18,10 @@
 package com.graphhopper.http;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
-import com.fasterxml.jackson.core.*;
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.BeanPropertyWriter;
@@ -130,18 +133,20 @@ public class GraphHopperServletModule extends ServletModule {
         public void serialize(PathDetail value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
             gen.writeStartArray();
 
-            if (value.value instanceof Double)
-                gen.writeNumber((Double) value.value);
-            else if (value.value instanceof Long)
-                gen.writeNumber((Long) value.value);
-            else if (value.value instanceof Boolean)
-                gen.writeBoolean((Boolean) value.value);
-            else if (value.value instanceof String)
-                gen.writeString((String) value.value);
-            else
-                throw new JsonGenerationException("Unsupported type for PathDetail.value" + value.value.getClass(), gen);
+            gen.writeNumber(value.getFirst());
+            gen.writeNumber(value.getLast());
 
-            gen.writeNumber(value.numberOfPoints);
+            if (value.getValue() instanceof Double)
+                gen.writeNumber((Double) value.getValue());
+            else if (value.getValue() instanceof Long)
+                gen.writeNumber((Long) value.getValue());
+            else if (value.getValue() instanceof Boolean)
+                gen.writeBoolean((Boolean) value.getValue());
+            else if (value.getValue() instanceof String)
+                gen.writeString((String) value.getValue());
+            else
+                throw new JsonGenerationException("Unsupported type for PathDetail.value" + value.getValue().getClass(), gen);
+
             gen.writeEndArray();
         }
     }
@@ -150,14 +155,15 @@ public class GraphHopperServletModule extends ServletModule {
 
         @Override
         public PathDetail deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
-            JsonNode node = jp.readValueAsTree();
-            if (node.size() != 2)
-                throw new JsonParseException(jp, "PathDetail array must have exactly two entries but was " + node.size());
+            JsonNode pathDetail = jp.readValueAsTree();
+            if (pathDetail.size() != 3)
+                throw new JsonParseException(jp, "PathDetail array must have exactly 3 entries but was " + pathDetail.size());
 
-            JsonNode val = node.get(0);
-            JsonNode num = node.get(1);
+            JsonNode from = pathDetail.get(0);
+            JsonNode to = pathDetail.get(1);
+            JsonNode val = pathDetail.get(2);
+
             PathDetail pd;
-
             if (val.isBoolean())
                 pd = new PathDetail(val.asBoolean());
             else if (val.isLong())
@@ -167,11 +173,11 @@ public class GraphHopperServletModule extends ServletModule {
             else if (val.isTextual())
                 pd = new PathDetail(val.asText());
             else
-                throw new JsonParseException(jp, "Unsupported type of PathDetail value " + node.getNodeType().name());
+                throw new JsonParseException(jp, "Unsupported type of PathDetail value " + pathDetail.getNodeType().name());
 
-            pd.numberOfPoints = num.asInt();
+            pd.setFirst(from.asInt());
+            pd.setLast(to.asInt());
             return pd;
         }
     }
-
 }

@@ -24,7 +24,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.details.AbstractPathDetailsBuilder;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
@@ -407,9 +406,9 @@ public class GraphHopperIT {
         assertTrue(details.size() == 1);
         List<PathDetail> detailList = details.get(Parameters.DETAILS.AVERAGE_SPEED);
         assertEquals(1, detailList.size());
-        assertEquals(5.0, detailList.get(0).value);
-        // -1 since it is not inclusive
-        assertEquals(arsp.getPoints().size() - 1, detailList.get(0).numberOfPoints);
+        assertEquals(5.0, detailList.get(0).getValue());
+        assertEquals(0, detailList.get(0).getFirst());
+        assertEquals(arsp.getPoints().size(), detailList.get(0).getLast());
     }
 
     @Test

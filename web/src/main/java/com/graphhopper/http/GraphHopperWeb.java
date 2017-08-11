@@ -17,6 +17,7 @@
  */
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,7 +35,6 @@ import java.util.Map.Entry;
 
 /**
  * Main wrapper of the GraphHopper Directions API for a simple and efficient usage.
- * <p>
  *
  * @author Peter Karich
  */
@@ -170,13 +170,14 @@ public class GraphHopperWeb implements GraphHopperAPI {
                     // TODO duplicate deserialization code for PathDetail, @see GraphHopperServletModule.PathDetailDeserializer
                     // see issue #1137
                     for (JsonNode pathDetail : detailEntry.getValue()) {
-                        if (pathDetail.size() != 2)
-                            throw new IllegalStateException("PathDetail array must have exactly two entries but was " + pathDetail.size());
+                        if (pathDetail.size() != 3)
+                            throw new IllegalStateException("PathDetail must have exactly 3 entries but was " + pathDetail.size());
 
-                        JsonNode val = pathDetail.get(0);
-                        JsonNode num = pathDetail.get(1);
+                        JsonNode from = pathDetail.get(0);
+                        JsonNode to = pathDetail.get(1);
+                        JsonNode val = pathDetail.get(2);
+
                         PathDetail pd;
-
                         if (val.isBoolean())
                             pd = new PathDetail(val.asBoolean());
                         else if (val.isLong())
@@ -188,7 +189,8 @@ public class GraphHopperWeb implements GraphHopperAPI {
                         else
                             throw new IllegalStateException("Unsupported type of PathDetail value " + pathDetail.getNodeType().name());
 
-                        pd.numberOfPoints = num.asInt();
+                        pd.setFirst(from.asInt());
+                        pd.setLast(to.asInt());
                         pathDetailList.add(pd);
                     }
                     pathDetails.put(detailEntry.getKey(), pathDetailList);

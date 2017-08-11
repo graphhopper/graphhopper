@@ -45,7 +45,7 @@ public class PathDetailsBuilderFactory {
             builders.add(new AverageSpeedDetails(encoder));
 
         if (requestedPathDetails.size() != builders.size()) {
-            throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we couldn only find " + builders);
+            throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we could only find " + builders);
         }
 
         return builders;

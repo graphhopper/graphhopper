@@ -52,7 +52,7 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
             L.marker([lngLat[1], lngLat[0]], {
                 icon: L.icon({
                     iconUrl: './img/marker-small-red.png',
-                    // Made the instructions icon a bit bigger, as they are placed before the path_details
+                    // Made the instructions icon a bit bigger, as they are placed before the path details
                     iconSize: [16, 16]
                 }),
                 draggable: true
@@ -94,12 +94,11 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
         // detailKey, would be for example average_speed
         for (var detailKey in detailObj) {
             var pathDetailsArr = detailObj[detailKey];
-            var reference = 0;
             for (var i = 0; i < pathDetailsArr.length; i++) {
                 var pathDetailObj = pathDetailsArr[i];
-                var value = pathDetailObj[0];
-                var numberOfPoints = pathDetailObj[1];
-                var lngLat = path.points.coordinates[reference];
+                var firstIndex = pathDetailObj[0];
+                var value = pathDetailObj[2];
+                var lngLat = path.points.coordinates[firstIndex];
                 L.marker([lngLat[1], lngLat[0]], {
                     icon: L.icon({
                         iconUrl: './img/marker-small-blue.png',
@@ -107,8 +106,6 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
                     }),
                     draggable: true
                 }).addTo(mapLayer.getRoutingLayer()).bindPopup(detailKey + ":" + value);
-
-                reference += numberOfPoints;
             }
         }
     }

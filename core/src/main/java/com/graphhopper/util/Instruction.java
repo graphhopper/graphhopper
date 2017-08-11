@@ -137,6 +137,9 @@ public class Instruction {
         return points.getElevation(0);
     }
 
+    /* This method returns the points associated to this instruction. Please note that it will not include the last point,
+     * i.e. the first point of the next instruction object.
+     */
     public PointList getPoints() {
         return points;
     }
@@ -148,7 +151,6 @@ public class Instruction {
     /**
      * This method returns a list of gpx entries where the time (in time) is relative to the first
      * which is 0. It does NOT contain the last point which is the first of the next instruction.
-     * <p>
      *
      * @return the time offset to add for the next instruction
      */

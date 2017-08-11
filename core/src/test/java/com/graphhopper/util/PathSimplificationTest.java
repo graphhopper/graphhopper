@@ -59,7 +59,6 @@ public class PathSimplificationTest {
         carManager = new EncodingManager(carEncoder);
     }
 
-    @SuppressWarnings("unchecked")
     @Test
     public void testScenario() {
         Graph g = new GraphBuilder(carManager).create();

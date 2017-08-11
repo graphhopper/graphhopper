@@ -32,7 +32,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -150,10 +152,10 @@ public class GraphHopperServletIT extends BaseServletTester {
         assertFalse(pathDetails.isEmpty());
         assertTrue(pathDetails.containsKey("average_speed"));
         List<PathDetail> averageSpeed = pathDetails.get("average_speed");
-        assertEquals(30.0, averageSpeed.get(0).value);
-        assertEquals(14, averageSpeed.get(0).numberOfPoints);
-        assertEquals(60.0, averageSpeed.get(1).value);
-        assertEquals(5, averageSpeed.get(1).numberOfPoints);
+        assertEquals(30.0, averageSpeed.get(0).getValue());
+        assertEquals(14, averageSpeed.get(0).getLength());
+        assertEquals(60.0, averageSpeed.get(1).getValue());
+        assertEquals(5, averageSpeed.get(1).getLength());
     }
 
     @Test
@@ -166,10 +168,10 @@ public class GraphHopperServletIT extends BaseServletTester {
         JsonNode details = path.get("details");
         assertTrue(details.has("average_speed"));
         JsonNode averageSpeed = details.get("average_speed");
-        assertEquals(30.0, averageSpeed.get(0).get(0).asDouble(), .01);
+        assertEquals(30.0, averageSpeed.get(0).get(2).asDouble(), .01);
         assertEquals(14, averageSpeed.get(0).get(1).asInt());
-        assertEquals(60.0, averageSpeed.get(1).get(0).asDouble(), .01);
-        assertEquals(5, averageSpeed.get(1).get(1).asInt());
+        assertEquals(60.0, averageSpeed.get(1).get(2).asDouble(), .01);
+        assertEquals(19, averageSpeed.get(1).get(1).asInt());
     }
 
     @Test

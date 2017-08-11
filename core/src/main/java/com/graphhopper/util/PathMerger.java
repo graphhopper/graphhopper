@@ -46,7 +46,6 @@ public class PathMerger {
     private boolean simplifyResponse = true;
     private DouglasPeucker douglasPeucker = DP;
     private boolean calcPoints = true;
-
     private PathDetailsBuilderFactory calculatorFactory;
 
     public PathMerger setCalcPoints(boolean calcPoints) {
@@ -59,7 +58,7 @@ public class PathMerger {
         return this;
     }
 
-    public PathMerger setPathDetailsCalculatorFactory(PathDetailsBuilderFactory calculatorFactory) {
+    public PathMerger setPathDetailsBuilderFactory(PathDetailsBuilderFactory calculatorFactory) {
         this.calculatorFactory = calculatorFactory;
         return this;
     }
@@ -96,7 +95,7 @@ public class PathMerger {
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);
 
-                    // if not yet reached finish replace the FinishInstruction with a ViaInstructionn
+                    // for all paths except the last replace the FinishInstruction with a ViaInstructionn
                     if (pathIndex + 1 < paths.size()) {
                         ViaInstruction newInstr = new ViaInstruction(fullInstructions.get(fullInstructions.size() - 1));
                         newInstr.setViaCount(pathIndex + 1);
@@ -146,19 +145,15 @@ public class PathMerger {
     /**
      * Merges <code>otherDetails</code> into the <code>pathDetails</code>.
      * <p>
-     * This method makes sure that PathDetails around waypoints are merged correctly, by adding an
-     * additional point for the ViaInstruction. See #1091 and the misplaced PathDetails after waypoints.
-     *
-     * @param pathDetails The PathDetails to be merged into this object.
+     * This method makes sure that Entry list around via points are merged correctly.
+     * See #1091 and the misplaced PathDetail after waypoints.
      */
     public static void merge(List<PathDetail> pathDetails, List<PathDetail> otherDetails) {
-        // Make sure that PathDetails are merged correctly at waypoints
+        // Make sure that the PathDetail list is merged correctly at via points
         if (!pathDetails.isEmpty() && !otherDetails.isEmpty()) {
             PathDetail lastDetail = pathDetails.get(pathDetails.size() - 1);
-            // Add Via Point
-            lastDetail.numberOfPoints++;
-            if (lastDetail.value.equals(otherDetails.get(0).value)) {
-                lastDetail.numberOfPoints += otherDetails.get(0).numberOfPoints;
+            if (lastDetail.getValue().equals(otherDetails.get(0).getValue())) {
+                lastDetail.setLast(otherDetails.get(0).getLast());
                 otherDetails.remove(0);
             }
         }

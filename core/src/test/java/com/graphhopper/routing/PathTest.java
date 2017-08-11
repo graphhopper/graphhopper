@@ -24,7 +24,6 @@ import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
-import com.graphhopper.util.details.AbstractPathDetailsBuilder;
 import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import org.junit.Test;
@@ -314,15 +313,16 @@ public class PathTest {
         assertTrue(details.size() == 1);
         List<PathDetail> detailList = details.get(Parameters.DETAILS.AVERAGE_SPEED);
         assertEquals(4, detailList.size());
-        assertEquals(45.0, detailList.get(0).value);
-        assertEquals(90.0, detailList.get(1).value);
-        assertEquals(10.0, detailList.get(2).value);
-        assertEquals(45.0, detailList.get(3).value);
+        assertEquals(45.0, detailList.get(0).getValue());
+        assertEquals(90.0, detailList.get(1).getValue());
+        assertEquals(10.0, detailList.get(2).getValue());
+        assertEquals(45.0, detailList.get(3).getValue());
 
-        assertEquals(1, detailList.get(0).numberOfPoints);
-        assertEquals(1, detailList.get(1).numberOfPoints);
-        assertEquals(1, detailList.get(2).numberOfPoints);
-        assertEquals(1, detailList.get(3).numberOfPoints);
+        assertEquals(0, detailList.get(0).getFirst());
+        assertEquals(1, detailList.get(1).getFirst());
+        assertEquals(2, detailList.get(2).getFirst());
+        assertEquals(3, detailList.get(3).getFirst());
+        assertEquals(4, detailList.get(3).getLast());
     }
 
     /**

@@ -20,12 +20,11 @@ package com.graphhopper.util.details;
 import com.graphhopper.coll.MapEntry;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * Builds PathDetails, from values and intervals of a Path.
+ * Builds a PathDetail list, from values and intervals of a Path.
  *
  * @author Robin Boldt
  */
@@ -33,7 +32,6 @@ public abstract class AbstractPathDetailsBuilder implements PathDetailsBuilder {
 
     private final String name;
     private boolean isOpen = false;
-
     private PathDetail currentDetail;
     private List<PathDetail> pathDetails = new ArrayList<>();
 
@@ -41,18 +39,6 @@ public abstract class AbstractPathDetailsBuilder implements PathDetailsBuilder {
         this.name = name;
     }
 
-    /**
-     * It is only possible to open one interval at a time. Calling <code>startInterval</code> when
-     * the interval is already open results in an Exception.
-     */
-    public void startInterval() {
-        Object value = getCurrentValue();
-        if (this.isOpen)
-            throw new IllegalStateException("PathDetailsBuilder is already in an open state with value: " + this.currentDetail.value + " trying to open a new one with value: " + value);
-
-        this.currentDetail = new PathDetail(value);
-        this.isOpen = true;
-    }
 
     /**
      * The value of the Path at this moment, that should be stored in the PathDetail when calling startInterval
@@ -60,31 +46,47 @@ public abstract class AbstractPathDetailsBuilder implements PathDetailsBuilder {
     protected abstract Object getCurrentValue();
 
     /**
+     * It is only possible to open one interval at a time. Calling <code>startInterval</code> when
+     * the interval is already open results in an Exception.
+     *
+     * @param firstIndex the index the PathDetail starts
+     */
+    public void startInterval(int firstIndex) {
+        Object value = getCurrentValue();
+        if (isOpen)
+            throw new IllegalStateException("PathDetailsBuilder is already in an open state with value: " + currentDetail.getValue()
+                    + " trying to open a new one with value: " + value);
+
+        currentDetail = new PathDetail(value);
+        currentDetail.setFirst(firstIndex);
+        isOpen = true;
+    }
+
+    /**
      * Ending intervals multiple times is safe, we only write the interval if it was open and not empty.
      * Writes the interval to the pathDetails
      *
-     * @param numberOfPoints Length of the PathDetail
+     * @param lastIndex the index the PathDetail ends
      */
-    public void endInterval(int numberOfPoints) {
-        // We don't want PathDetails
-        if (this.isOpen && numberOfPoints > 0) {
-            this.currentDetail.numberOfPoints = numberOfPoints;
-            this.pathDetails.add(this.currentDetail);
+    public void endInterval(int lastIndex) {
+        if (isOpen) {
+            currentDetail.setLast(lastIndex);
+            pathDetails.add(currentDetail);
         }
-        this.isOpen = false;
+        isOpen = false;
     }
 
     public Map.Entry<String, List<PathDetail>> build() {
-        return new MapEntry(this.getName(), this.pathDetails);
+        return new MapEntry(getName(), pathDetails);
     }
 
     @Override
     public String getName() {
-        return this.name;
+        return name;
     }
 
     @Override
-    public String toString(){
-        return this.getName();
+    public String toString() {
+        return getName();
     }
 }

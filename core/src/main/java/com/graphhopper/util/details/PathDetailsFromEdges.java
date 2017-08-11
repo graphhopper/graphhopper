@@ -23,11 +23,11 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.util.List;
 
 /**
- * This class calculates a List of PathDetail in a similar fashion to the instruction calculation,
+ * This class calculates a PathDetail list in a similar fashion to the instruction calculation,
  * also see {@link com.graphhopper.routing.InstructionsFromEdges}.
  * <p>
- * This class uses the {@link PathDetailsBuilder}. We provide every edge to the calculator to see
- * if the calculator value changes, if yes, we create a new interval, ie. a new PathDetail in the List.
+ * This class uses the {@link PathDetailsBuilder}. We provide every edge to the builder
+ * and up to its internals we create a new interval, ie. a new PathDetail in the List.
  *
  * @author Robin Boldt
  * @see PathDetail
@@ -35,7 +35,7 @@ import java.util.List;
 public class PathDetailsFromEdges implements Path.EdgeVisitor {
 
     private final List<PathDetailsBuilder> calculators;
-    private int numberOfPoints = 0;
+    private int lastIndex = 0;
 
     public PathDetailsFromEdges(List<PathDetailsBuilder> calculators) {
         this.calculators = calculators;
@@ -45,18 +45,17 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
     public void next(EdgeIteratorState edge, int index, int prevEdgeId) {
         for (PathDetailsBuilder calc : calculators) {
             if (calc.isEdgeDifferentToLastEdge(edge)) {
-                calc.endInterval(numberOfPoints);
-                calc.startInterval();
-                numberOfPoints = 0;
+                calc.endInterval(lastIndex);
+                calc.startInterval(lastIndex);
             }
         }
-        numberOfPoints += edge.fetchWayGeometry(2).size();
+        lastIndex += edge.fetchWayGeometry(2).size();
     }
 
     @Override
     public void finish() {
         for (PathDetailsBuilder calc : calculators) {
-            calc.endInterval(numberOfPoints);
+            calc.endInterval(lastIndex);
         }
     }
 }
