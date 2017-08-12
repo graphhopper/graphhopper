@@ -23,12 +23,8 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.shapes.GHPoint;
-import com.graphhopper.util.shapes.GHPoint3D;
 import org.json.JSONObject;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -46,14 +42,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.util.*;
-import java.util.Base64;
-import java.util.List;
 import java.util.Map.Entry;
-
-// for testing
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.BufferedInputStream;
 
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 
@@ -71,13 +60,6 @@ public class GraphHopperServlet extends GHBaseServlet {
     @Inject
     private RouteSerializer routeSerializer;
 
-    public enum RerouteResult {
-        NONE, TRAFFIC, CLOSURE
-    }
-
-    // test image
-    private static String testClosureBase64;
-
     @Override
     public void doGet(HttpServletRequest httpReq, HttpServletResponse httpRes) throws ServletException, IOException {
         List<GHPoint> requestPoints = getPoints(httpReq, "point");
@@ -91,30 +73,12 @@ public class GraphHopperServlet extends GHBaseServlet {
         boolean enableElevation = getBooleanParam(httpReq, "elevation", false);
         boolean pointsEncoded = getBooleanParam(httpReq, "points_encoded", true);
 
-        PointList currentRoutePoints = getCurrentRoutePoints(httpReq, "current_route_points", null);
-        boolean rerouteRequested = currentRoutePoints != null;
-
-        boolean eventImageRequested = getBooleanParam(httpReq, "event_image", false);
-
         String vehicleStr = getParam(httpReq, "vehicle", "car");
         String weighting = getParam(httpReq, "weighting", "fastest");
         String algoStr = getParam(httpReq, "algorithm", "");
         String localeStr = getParam(httpReq, "locale", "en");
 
         StopWatch sw = new StopWatch().start();
-
-        if (this.testClosureBase64 == null) {
-            try {
-                this.testClosureBase64 = Base64.getEncoder().encodeToString(loadFileAsBytesArray("../graphhopper/test_closure_image.jpg"));
-            }
-            catch (Exception e) {
-                logger.error(e.getMessage());
-            }
-        }
-
-        if (rerouteRequested && requestPoints.size() > 2) {
-            ghRsp.addError(new IllegalArgumentException("Rerouting with multiple waypoints is currently not yet supported"));
-        }
 
         if (!ghRsp.hasErrors()) {
             try {
@@ -177,10 +141,6 @@ public class GraphHopperServlet extends GHBaseServlet {
         if (writeGPX && alternatives > 1)
             ghRsp.addError(new IllegalArgumentException("Alternatives are currently not yet supported for GPX"));
 
-        if (rerouteRequested && alternatives > 1) {
-            ghRsp.addError(new IllegalArgumentException("Alternatives and rerouting is currently not yet supported"));
-        }
-
         if (ghRsp.hasErrors()) {
             logger.error(logStr + ", errors:" + ghRsp.getErrors());
         } else {
@@ -192,65 +152,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                     + ", debugInfo: " + ghRsp.getDebugInfo());
         }
 
-        RerouteResult rerouteResult = RerouteResult.NONE;
-
-
-        // clip the current route against the origin (so it doesn't include already traversed portion of the route)
-        if (rerouteRequested) {
-            DistanceCalc distCalc = Helper.DIST_EARTH;
-            GHPoint origin = ghRsp.getBest().getWaypoints().toGHPoint(0);
-            int minIndex = -1;
-            double minDist = Double.MAX_VALUE;
-
-            for (int i = 1; i < currentRoutePoints.size(); ++i) {
-                GHPoint3D prevPoint = currentRoutePoints.toGHPoint(i - 1);
-                GHPoint3D currPoint = currentRoutePoints.toGHPoint(i);
-
-                double dist = Double.MAX_VALUE;
-                int index = i;
-                // calculate distance from origin to each segment of the current route
-                if (distCalc.validEdgeDistance(origin.getLat(), origin.getLon(), currPoint.getLat(), currPoint.getLon(), prevPoint.getLat(), prevPoint.getLon())) {
-                    dist = distCalc.calcDenormalizedDist(distCalc.calcNormalizedEdgeDistance(origin.getLat(), origin.getLon(), currPoint.getLat(), currPoint.getLon(), prevPoint.getLat(), prevPoint.getLon()));
-                } else {
-                    double dist1 = distCalc.calcDist(origin.getLat(), origin.getLon(), prevPoint.getLat(), prevPoint.getLon());
-                    double dist2 = distCalc.calcDist(origin.getLat(), origin.getLon(), currPoint.getLat(), currPoint.getLon());
-
-                    // origin is closer to the prevPoint
-                    if (dist1 < dist2) {
-                        dist = dist1;
-                        index = i;
-                    }
-                    else { // origin is closer to currPoint
-                        dist = dist2;
-                        index = i + 1;
-                    }
-                }
-                if (dist < minDist) {
-                    minIndex = i - 1;
-                    minDist = dist;
-                }
-
-            }
-            
-            if (minIndex == -1) {
-                ghRsp.addError(new IllegalArgumentException("Rerouting: origin point is not on route"));
-            } else {
-                PointList trimmedCurrentRoutePoints = new PointList(currentRoutePoints.size(), currentRoutePoints.is3D());
-                trimmedCurrentRoutePoints.add(origin.getLat(), origin.getLon());
-                for (int i = minIndex + 1; i < currentRoutePoints.size(); ++i) {
-                    trimmedCurrentRoutePoints.add(currentRoutePoints.toGHPoint(i));
-                }
-
-                if (hausdorffDistance(ghRsp.getBest().getPoints(), trimmedCurrentRoutePoints) > 50) { // meters
-                    logger.info("Rerouting due to distance threshold");
-                    // TODO: need to walk currentRoute and see if it goes over any construction events so that this reason is legit
-                    rerouteResult = RerouteResult.CLOSURE;
-                }
-            }
-        }
-
         if (writeGPX) {
-            logger.warn("exporting GPX per request, limited functionality (e.g. no rerouting support)");
             if (ghRsp.hasErrors()) {
                 httpRes.setStatus(SC_BAD_REQUEST);
                 httpRes.getWriter().append(errorsToXML(ghRsp.getErrors()));
@@ -263,17 +165,6 @@ public class GraphHopperServlet extends GHBaseServlet {
             Map<String, Object> map = routeSerializer.toJSON(ghRsp, calcPoints, pointsEncoded,
                     enableElevation, enableInstructions);
 
-            if (rerouteRequested) {
-                ArrayList<Map<String, Object>> pathsArr = (ArrayList<Map<String, Object>>)map.get("paths");
-                Map<String, Object> path = pathsArr.get(0);
-                path.put("reroute_result", rerouteResult);
-
-                if (eventImageRequested && rerouteResult != RerouteResult.NONE) {
-                    // use test closure base64 image for now
-                    path.put("event_image", this.testClosureBase64);
-                }
-            }
-         
             Object infoMap = map.get("info");
             if (infoMap != null)
                 ((Map) infoMap).put("took", Math.round(took * 1000));
@@ -284,32 +175,6 @@ public class GraphHopperServlet extends GHBaseServlet {
                 writeJson(httpReq, httpRes, new JSONObject(map));
             }
         }
-    }
-
-    /**
-     * Computes the Hausdorff distance between two polylines. O(N^2) complexity!!
-     * https://en.wikipedia.org/wiki/Hausdorff_distance
-     * @param poly1 - polyline 1
-     * @param poly2 - polyline 2
-     * @return Hausdorff distance
-     */
-    private double hausdorffDistance(PointList poly1, PointList poly2) {
-        DistanceCalc distCalc = Helper.DIST_EARTH;
-
-        double longestShortestDistance = 0;
-        for (GHPoint3D p1 : poly1) {
-            double shortestP1DistanceOverPoly2 = Double.MAX_VALUE;
-            for (GHPoint3D p2 : poly2) {
-                double dist = distCalc.calcDist(p1.getLat(), p1.getLon(), p2.getLat(), p2.getLon());
-                if (dist < shortestP1DistanceOverPoly2) {
-                    shortestP1DistanceOverPoly2 = dist;
-                }
-            }
-            if (shortestP1DistanceOverPoly2 > longestShortestDistance) {
-                longestShortestDistance = shortestP1DistanceOverPoly2;
-            }
-        }
-        return longestShortestDistance;
     }
 
     protected String createGPXString(HttpServletRequest req, HttpServletResponse res, PathWrapper rsp) {
@@ -387,32 +252,11 @@ public class GraphHopperServlet extends GHBaseServlet {
         return infoPoints;
     }
 
-    protected PointList getCurrentRoutePoints(HttpServletRequest req, String key, PointList defaultValue) {
-        String encodedRoutePoints = getParam(req, "current_route_points", null);
-        if(encodedRoutePoints == null || encodedRoutePoints.isEmpty()) {
-            return defaultValue;
-        }
-
-        return WebHelper.decodePolyline(encodedRoutePoints, 100, false);
-    }
-
     protected void initHints(GHRequest request, Map<String, String[]> parameterMap) {
         HintsMap m = request.getHints();
         for (Entry<String, String[]> e : parameterMap.entrySet()) {
             if (e.getValue().length == 1)
                 m.put(e.getKey(), e.getValue()[0]);
         }
-    }
-
-    public static byte[] loadFileAsBytesArray(String fileName) throws Exception {
-
-        File file = new File(fileName);
-        int length = (int) file.length();
-        BufferedInputStream reader = new BufferedInputStream(new FileInputStream(file));
-        byte[] bytes = new byte[length];
-        reader.read(bytes, 0, length);
-        reader.close();
-        return bytes;
-
     }
 }
