@@ -88,6 +88,9 @@ public class InstructionList implements Iterable<Instruction> {
             instrJson.put("time", instruction.getTime());
             instrJson.put("distance", Helper.round(instruction.getDistance(), 3));
             instrJson.put("sign", instruction.getSign());
+            if (instruction.getName() != "") {
+                instrJson.put("name", instruction.getName());
+            }
 
             if (instruction instanceof InstructionAV) {
                 instrJson.put("autonomy_enabled", ((InstructionAV) instruction).getEnableAutonomy());
