@@ -37,8 +37,9 @@ public class PathDetailsFromEdges implements Path.EdgeVisitor {
     private final List<PathDetailsBuilder> calculators;
     private int lastIndex = 0;
 
-    public PathDetailsFromEdges(List<PathDetailsBuilder> calculators) {
+    public PathDetailsFromEdges(List<PathDetailsBuilder> calculators, int previousIndex) {
         this.calculators = calculators;
+        this.lastIndex = previousIndex;
     }
 
     @Override

@@ -408,7 +408,7 @@ public class GraphHopperIT {
         assertEquals(1, detailList.size());
         assertEquals(5.0, detailList.get(0).getValue());
         assertEquals(0, detailList.get(0).getFirst());
-        assertEquals(arsp.getPoints().size(), detailList.get(0).getLast());
+        assertEquals(arsp.getPoints().size()-1, detailList.get(0).getLast());
     }
 
     @Test

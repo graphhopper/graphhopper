@@ -376,14 +376,14 @@ public class Path {
      * @param pathBuilderFactory Generates the relevant PathBuilders, accepts null inputs
      * @return List of PathDetails for this Path
      */
-    public Map<String, List<PathDetail>> calcDetails(final PathDetailsBuilderFactory pathBuilderFactory) {
+    public Map<String, List<PathDetail>> calcDetails(final PathDetailsBuilderFactory pathBuilderFactory, int previousIndex) {
         if (pathBuilderFactory == null)
             return Collections.EMPTY_MAP;
         List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders();
         if (pathBuilders.isEmpty())
             return Collections.EMPTY_MAP;
 
-        forEveryEdge(new PathDetailsFromEdges(pathBuilders));
+        forEveryEdge(new PathDetailsFromEdges(pathBuilders, previousIndex));
 
         Map<String, List<PathDetail>> pathDetails = new HashMap<>(pathBuilders.size());
         for (PathDetailsBuilder builder : pathBuilders) {

@@ -98,6 +98,16 @@ public class PathSimplification {
                     if (removed > 0) {
                         for (int i = 0; i < toSimplify.size(); i++) {
                             reduceLength(toSimplify.get(i), offset[i], startIntervals[i], endIntervals[i] - removed);
+                            /*
+                            // TODO This is not needed, I left it here temporarily, has to be removed before merging
+                            if(toSimplify.get(i).get(0) instanceof PathDetail){
+                                List<PathDetail> pathDetails = toSimplify.get(i);
+                                for (int j = offset[i] + 1; j < pathDetails.size(); j++) {
+                                    PathDetail pd = pathDetails.get(j);
+                                    reduceLength(pathDetails, j, pd.getFirst() - removed, pd.getLast() - removed);
+                                }
+                            }
+                            */
                         }
                     }
                 }

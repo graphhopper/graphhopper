@@ -309,7 +309,7 @@ public class PathTest {
         Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{Parameters.DETAILS.AVERAGE_SPEED}), encoder));
+        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{Parameters.DETAILS.AVERAGE_SPEED}), encoder), 0);
         assertTrue(details.size() == 1);
         List<PathDetail> detailList = details.get(Parameters.DETAILS.AVERAGE_SPEED);
         assertEquals(4, detailList.size());
