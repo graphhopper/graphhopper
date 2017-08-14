@@ -152,6 +152,7 @@ public class GraphHopperServletIT extends BaseServletTester {
         assertFalse(pathDetails.isEmpty());
         assertTrue(pathDetails.containsKey("average_speed"));
         List<PathDetail> averageSpeed = pathDetails.get("average_speed");
+        assertEquals(9, averageSpeed.size());
         assertEquals(30.0, averageSpeed.get(0).getValue());
         assertEquals(14, averageSpeed.get(0).getLength());
         assertEquals(60.0, averageSpeed.get(1).getValue());
