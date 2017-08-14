@@ -360,7 +360,11 @@ public class Measurement {
                 req.getHints().put(CH.DISABLE, !ch).
                         put(Landmark.DISABLE, !lm).
                         put(Landmark.ACTIVE_COUNT, activeLandmarks).
-                        put("instructions", withInstructions);
+                        put("instructions", withInstructions):
+
+                if (withInstructions)
+                    put(Parameters.DETAILS.PATH_DETAILS, "average_speed");
+
                 // put(algo + ".approximation", "BeelineSimplification").
                 // put(algo + ".epsilon", 2);
 

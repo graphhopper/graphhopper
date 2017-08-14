@@ -26,9 +26,9 @@ import java.util.Map;
 
 /**
  * This class simplifies the path, using {@link DouglasPeucker} and by considering the intervals
- * specified by <code>toSimplify</code>. We have to reference the points specified by the objects
- * in <code>toSimplify</code>. Therefore, we can only simplify in between these intervals, without
- * simplifying over one the points, as one of the points might be lost during the simplification
+ * specified by <code>listsToSimplify</code>. We have to reference the points specified by the objects
+ * in <code>listsToSimplify</code>. Therefore, we can only simplify in between these intervals, without
+ * simplifying over one of the points, as it might get lost during the simplification
  * and we could not reference this point anymore.
  *
  * @author Robin Boldt
@@ -37,30 +37,31 @@ public class PathSimplification {
 
     private PointList pointList;
     private Map<String, List<PathDetail>> pathDetails;
-    private List<List> toSimplify;
+    private List<List> listsToSimplify;
     private DouglasPeucker douglasPeucker;
 
     public PathSimplification(PathWrapper pathWrapper, DouglasPeucker douglasPeucker, boolean enableInstructions) {
         this.pointList = pathWrapper.getPoints();
-        pathDetails = pathWrapper.getPathDetails();
-        toSimplify = new ArrayList<>();
+        listsToSimplify = new ArrayList<>();
         if (enableInstructions)
-            toSimplify.add(pathWrapper.getInstructions());
+            listsToSimplify.add(pathWrapper.getInstructions());
+
+        this.pathDetails = pathWrapper.getPathDetails();
         for (String name : pathDetails.keySet()) {
-            toSimplify.add(pathDetails.get(name));
+            listsToSimplify.add(pathDetails.get(name));
         }
         this.douglasPeucker = douglasPeucker;
     }
 
     public PointList simplify() {
-        if (toSimplify.isEmpty() || pointList.isEmpty())
+        if (listsToSimplify.isEmpty() || pointList.isEmpty())
             return pointList;
 
         // The offset of already included points
-        int[] offset = new int[toSimplify.size()];
-        int[] endIntervals = new int[toSimplify.size()];
+        int[] offset = new int[listsToSimplify.size()];
+        int[] endIntervals = new int[listsToSimplify.size()];
         // All start at 0
-        int[] startIntervals = new int[toSimplify.size()];
+        int[] startIntervals = new int[listsToSimplify.size()];
 
         while (true) {
             boolean simplificationPossible = true;
@@ -69,10 +70,10 @@ public class PathSimplification {
             int toSimplifyIndex = -1;
             int toShiftIndex = -1;
 
-            endIntervals = calculateEndIntervals(endIntervals, startIntervals, offset, toSimplify);
+            endIntervals = calculateEndIntervals(endIntervals, startIntervals, offset, listsToSimplify);
 
             // Find the intervals to run a simplification, if possible, and where to shift
-            for (int i = 0; i < toSimplify.size(); i++) {
+            for (int i = 0; i < listsToSimplify.size(); i++) {
                 if (startIntervals[i] >= nonConflictingEnd || endIntervals[i] <= nonConflictingStart) {
                     simplificationPossible = false;
                 }
@@ -96,12 +97,12 @@ public class PathSimplification {
                 if (nonConflictingEnd - nonConflictingStart > 1) {
                     int removed = douglasPeucker.simplify(pointList, nonConflictingStart, nonConflictingEnd);
                     if (removed > 0) {
-                        for (int i = 0; i < toSimplify.size(); i++) {
-                            reduceLength(toSimplify.get(i), offset[i], startIntervals[i], endIntervals[i] - removed);
+                        for (int i = 0; i < listsToSimplify.size(); i++) {
+                            reduceLength(listsToSimplify.get(i), offset[i], startIntervals[i], endIntervals[i] - removed);
                             /*
                             // TODO This is not needed, I left it here temporarily, has to be removed before merging
-                            if(toSimplify.get(i).get(0) instanceof PathDetail){
-                                List<PathDetail> pathDetails = toSimplify.get(i);
+                            if(listsToSimplify.get(i).get(0) instanceof PathDetail){
+                                List<PathDetail> pathDetails = listsToSimplify.get(i);
                                 for (int j = offset[i] + 1; j < pathDetails.size(); j++) {
                                     PathDetail pd = pathDetails.get(j);
                                     reduceLength(pathDetails, j, pd.getFirst() - removed, pd.getLast() - removed);
@@ -116,11 +117,25 @@ public class PathSimplification {
             if (toShiftIndex < 0)
                 throw new IllegalStateException("toShiftIndex cannot be negative");
 
-            int length = getLength(toSimplify.get(toShiftIndex), offset[toShiftIndex]);
+            int length = getLength(listsToSimplify.get(toShiftIndex), offset[toShiftIndex]);
             startIntervals[toShiftIndex] += length;
             offset[toShiftIndex]++;
-            if (offset[toShiftIndex] >= toSimplify.get(toShiftIndex).size())
+            if (offset[toShiftIndex] >= listsToSimplify.get(toShiftIndex).size())
                 break;
+        }
+
+        for (Map.Entry<String, List<PathDetail>> pdEntry : pathDetails.entrySet()) {
+            List<PathDetail> list = pdEntry.getValue();
+            if (list.isEmpty())
+                continue;
+
+            PathDetail prevPD = list.get(0);
+            for (int i = 1; i < list.size(); i++) {
+                if (prevPD.getLast() != list.get(i).getFirst())
+                    throw new IllegalStateException("PathDetail list " + pdEntry.getKey() + " is inconsistent due to entries " + prevPD + " vs. " + list.get(i));
+
+                prevPD = list.get(i);
+            }
         }
         return pointList;
     }

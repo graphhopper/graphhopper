@@ -56,4 +56,9 @@ public class PathDetail {
     public int getLength() {
         return last - first;
     }
+
+    @Override
+    public String toString() {
+        return value + " [" + getFirst() + ", " + getLast() + "]";
+    }
 }
