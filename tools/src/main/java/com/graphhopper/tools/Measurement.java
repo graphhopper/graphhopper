@@ -43,11 +43,8 @@ import org.slf4j.LoggerFactory;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Random;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -100,7 +97,8 @@ public class Measurement {
         };
 
         hopper.init(args).
-                forDesktop();
+                forServer();
+//                forDesktop();
 
         hopper.getCHFactoryDecorator().setDisablingAllowed(true);
         hopper.getLMFactoryDecorator().setDisablingAllowed(true);
@@ -118,29 +116,29 @@ public class Measurement {
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
-            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1);
+//            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1);
 
-            if (hopper.getLMFactoryDecorator().isEnabled()) {
-                System.gc();
-                isLM = true;
-                int activeLMCount = 12;
-                for (; activeLMCount > 3; activeLMCount -= 4) {
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount);
-                }
-
-                // compareRouting(hopper, vehicleStr, count / 5);
-            }
+//            if (hopper.getLMFactoryDecorator().isEnabled()) {
+//                System.gc();
+//                isLM = true;
+//                int activeLMCount = 12;
+//                for (; activeLMCount > 3; activeLMCount -= 4) {
+//                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount);
+//                }
+//
+//                // compareRouting(hopper, vehicleStr, count / 5);
+//            }
 
             if (hopper.getCHFactoryDecorator().isEnabled()) {
                 isCH = true;
 
-                if (hopper.getLMFactoryDecorator().isEnabled()) {
-                    isLM = true;
-                    System.gc();
-                    // try just one constellation, often ~4-6 is best
-                    int lmCount = 5;
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount);
-                }
+//                if (hopper.getLMFactoryDecorator().isEnabled()) {
+//                    isLM = true;
+//                    System.gc();
+//                    // try just one constellation, often ~4-6 is best
+//                    int lmCount = 5;
+//                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount);
+//                }
 
                 isLM = false;
                 System.gc();
@@ -149,7 +147,7 @@ public class Measurement {
                 fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                 printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
                 printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1);
+//                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1);
             }
             logger.info("store into " + propLocation);
         } catch (Exception ex) {
@@ -360,10 +358,10 @@ public class Measurement {
                 req.getHints().put(CH.DISABLE, !ch).
                         put(Landmark.DISABLE, !lm).
                         put(Landmark.ACTIVE_COUNT, activeLandmarks).
-                        put("instructions", withInstructions):
+                        put("instructions", withInstructions);
 
                 if (withInstructions)
-                    put(Parameters.DETAILS.PATH_DETAILS, "average_speed");
+                    req.setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED));
 
                 // put(algo + ".approximation", "BeelineSimplification").
                 // put(algo + ".epsilon", 2);
