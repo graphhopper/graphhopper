@@ -32,7 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -54,6 +54,8 @@ public class GraphHopperServletIT extends BaseServletTester {
     public void setUp() {
         CmdArgs args = new CmdArgs().
                 put("config", "../config-example.properties").
+                put("prepare.min_network_size", "0").
+                put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.location", DIR);
         setUpJetty(args);
@@ -144,19 +146,29 @@ public class GraphHopperServletIT extends BaseServletTester {
         GraphHopperAPI hopper = new GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
-        request.setPathDetails(Collections.singletonList("average_speed"));
+        request.setPathDetails(Arrays.asList("average_speed"));
         GHResponse rsp = hopper.route(request);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
         Map<String, List<PathDetail>> pathDetails = rsp.getBest().getPathDetails();
         assertFalse(pathDetails.isEmpty());
         assertTrue(pathDetails.containsKey("average_speed"));
-        List<PathDetail> averageSpeed = pathDetails.get("average_speed");
-        assertEquals(9, averageSpeed.size());
-        assertEquals(30.0, averageSpeed.get(0).getValue());
-        assertEquals(14, averageSpeed.get(0).getLength());
-        assertEquals(60.0, averageSpeed.get(1).getValue());
-        assertEquals(5, averageSpeed.get(1).getLength());
+        List<PathDetail> averageSpeedList = pathDetails.get("average_speed");
+        assertEquals(9, averageSpeedList.size());
+        assertEquals(30.0, averageSpeedList.get(0).getValue());
+        assertEquals(14, averageSpeedList.get(0).getLength());
+        assertEquals(60.0, averageSpeedList.get(1).getValue());
+        assertEquals(5, averageSpeedList.get(1).getLength());
+    }
+
+    @Test
+    public void testPathDetailsNoConnection() throws Exception {
+        GraphHopperAPI hopper = new GraphHopperWeb();
+        assertTrue(hopper.load(getTestRouteAPIUrl()));
+        GHRequest request = new GHRequest(42.542078, 1.45586, 42.537841, 1.439981);
+        request.setPathDetails(Arrays.asList("average_speed"));
+        GHResponse rsp = hopper.route(request);
+        assertTrue(rsp.getErrors().toString(), rsp.hasErrors());
     }
 
     @Test

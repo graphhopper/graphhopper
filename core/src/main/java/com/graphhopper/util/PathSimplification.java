@@ -58,7 +58,7 @@ public class PathSimplification {
             return pointList;
 
         // The offset of already included points
-        int[] offset = new int[listsToSimplify.size()];
+        int[] offsets = new int[listsToSimplify.size()];
         int[] endIntervals = new int[listsToSimplify.size()];
         // All start at 0
         int[] startIntervals = new int[listsToSimplify.size()];
@@ -67,10 +67,10 @@ public class PathSimplification {
             boolean simplificationPossible = true;
             int nonConflictingStart = 0;
             int nonConflictingEnd = Integer.MAX_VALUE;
-            int toSimplifyIndex = -1;
-            int toShiftIndex = -1;
+            int listIndexToSimplify = -1;
+            int listIndexToShift = -1;
 
-            endIntervals = calculateEndIntervals(endIntervals, startIntervals, offset, listsToSimplify);
+            endIntervals = calculateEndIntervals(endIntervals, startIntervals, offsets, listsToSimplify);
 
             // Find the intervals to run a simplification, if possible, and where to shift
             for (int i = 0; i < listsToSimplify.size(); i++) {
@@ -78,30 +78,31 @@ public class PathSimplification {
                     simplificationPossible = false;
                 }
                 if (startIntervals[i] > nonConflictingStart) {
-                    toSimplifyIndex = -1;
+                    listIndexToSimplify = -1;
                     nonConflictingStart = startIntervals[i];
                 }
                 if (endIntervals[i] < nonConflictingEnd) {
-                    toSimplifyIndex = -1;
+                    listIndexToSimplify = -1;
                     nonConflictingEnd = endIntervals[i];
                     // Remember the lowest endInterval
-                    toShiftIndex = i;
+                    listIndexToShift = i;
                 }
                 if (startIntervals[i] >= nonConflictingStart && endIntervals[i] <= nonConflictingEnd) {
-                    toSimplifyIndex = i;
+                    listIndexToSimplify = i;
                 }
             }
 
-            if (toSimplifyIndex >= 0 && simplificationPossible) {
+            if (listIndexToSimplify >= 0 && simplificationPossible) {
                 // Only simplify if there is more than one point
                 if (nonConflictingEnd - nonConflictingStart > 1) {
                     int removed = douglasPeucker.simplify(pointList, nonConflictingStart, nonConflictingEnd);
                     if (removed > 0) {
                         for (int i = 0; i < listsToSimplify.size(); i++) {
-                            reduceLength(listsToSimplify.get(i), offset[i], startIntervals[i], endIntervals[i] - removed);
-                            if (listsToSimplify.get(i).get(0) instanceof PathDetail) {
-                                List<PathDetail> pathDetails = listsToSimplify.get(i);
-                                for (int j = offset[i] + 1; j < pathDetails.size(); j++) {
+                            List<PathDetail> pathDetails = listsToSimplify.get(i);
+                            reduceLength(pathDetails, offsets[i], startIntervals[i], endIntervals[i] - removed);
+                            // instructions do
+                            if (pathDetails.get(0) instanceof PathDetail) {
+                                for (int j = offsets[i] + 1; j < pathDetails.size(); j++) {
                                     PathDetail pd = pathDetails.get(j);
                                     reduceLength(pathDetails, j, pd.getFirst() - removed, pd.getLast() - removed);
                                 }
@@ -111,13 +112,13 @@ public class PathSimplification {
                 }
             }
 
-            if (toShiftIndex < 0)
+            if (listIndexToShift < 0)
                 throw new IllegalStateException("toShiftIndex cannot be negative");
 
-            int length = getLength(listsToSimplify.get(toShiftIndex), offset[toShiftIndex]);
-            startIntervals[toShiftIndex] += length;
-            offset[toShiftIndex]++;
-            if (offset[toShiftIndex] >= listsToSimplify.get(toShiftIndex).size())
+            int length = getLength(listsToSimplify.get(listIndexToShift), offsets[listIndexToShift]);
+            startIntervals[listIndexToShift] += length;
+            offsets[listIndexToShift]++;
+            if (offsets[listIndexToShift] >= listsToSimplify.get(listIndexToShift).size())
                 break;
         }
 

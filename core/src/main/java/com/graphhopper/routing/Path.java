@@ -377,7 +377,7 @@ public class Path {
      * @return List of PathDetails for this Path
      */
     public Map<String, List<PathDetail>> calcDetails(final PathDetailsBuilderFactory pathBuilderFactory, int previousIndex) {
-        if (!isFound() || edgeIds.isEmpty() || pathBuilderFactory == null)
+        if (!isFound() || pathBuilderFactory == null)
             return Collections.EMPTY_MAP;
         List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders();
         if (pathBuilders.isEmpty())
