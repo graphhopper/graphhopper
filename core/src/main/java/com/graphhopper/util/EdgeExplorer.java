@@ -27,17 +27,11 @@ package com.graphhopper.util;
  */
 public interface EdgeExplorer {
     /**
-     * This method uses reverseProperties=false when calling {@link #setBaseNode(int, boolean)}
+     * This method sets the base node for iteration through neighboring edges (EdgeIteratorStates).
+     *
+     * @return EdgeIterator around the specified baseNode. The resulting iterator can be a new
+     * instance or a reused instance returned in a previous call. Make sure you do not use the same
+     * EdgeExplorer from multiple threads or in a nested loop.
      */
     EdgeIterator setBaseNode(int baseNode);
-
-//    /**
-//     * This method sets the base node for iteration through neighboring edges (EdgeIteratorStates)
-//     * and specifies the direction of reads and writes for all EncodedValues.
-//     *
-//     * @return EdgeIterator around the specified baseNode. The resulting iterator can be a new
-//     * instance or a reused instance returned in a previous call. So be sure you do not use the
-//     * EdgeExplorer from multiple threads or in a nested loop.
-//     */
-//    EdgeIterator setBaseNode(int baseNode, boolean reverseProperties);
 }

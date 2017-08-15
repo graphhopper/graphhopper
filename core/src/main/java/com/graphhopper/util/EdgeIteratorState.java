@@ -120,7 +120,7 @@ public interface EdgeIteratorState {
 
     IntsRef getData();
 
-    // TODO NOW use getData instead of all the followin setter&getter here e.g. would avoid going down to
+    // TODO NOW use getData instead of all the following setter&getter here e.g. would avoid going down to
     // storage several times for several setter calls
     boolean get(BooleanEncodedValue property);
 
