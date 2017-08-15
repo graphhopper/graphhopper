@@ -23,8 +23,8 @@ public class EncodingManagerTest {
         // do not add surface property to test exception below
         TagsParserOSM parser = new TagsParserOSM();
         return new EncodingManager.Builder(parser, 4).
-                add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("averagespeed", 5, 0, 5, true))).
-                add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("maxspeed", 5, 50, 5, false))).
+                add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("average_speed", 5, 0, 5, true))).
+                add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("max_speed", 5, 50, 5, false))).
                 add(TagParserFactory.Car.createAccess(new BooleanEncodedValue("access", true))).
                 add(TagParserFactory.Truck.createWeight(new DecimalEncodedValue("weight", 5, 5, 1, false))).
                 add(TagParserFactory.createHighway(new StringEncodedValue("highway",
@@ -47,7 +47,7 @@ public class EncodingManagerTest {
 
         encodingManager.applyWayTags(readerWay, edge);
 
-        DecimalEncodedValue maxSpeed = encodingManager.getEncodedValue("maxspeed", DecimalEncodedValue.class);
+        DecimalEncodedValue maxSpeed = encodingManager.getEncodedValue("max_speed", DecimalEncodedValue.class);
         IntEncodedValue weight = encodingManager.getEncodedValue("weight", IntEncodedValue.class);
         StringEncodedValue highway = encodingManager.getEncodedValue("highway", StringEncodedValue.class);
         assertEquals(30d, edge.get(maxSpeed), 1d);
@@ -76,7 +76,7 @@ public class EncodingManagerTest {
 
         IntEncodedValue weight = encodingManager.getEncodedValue("weight", IntEncodedValue.class);
         assertEquals(5, edge.get(weight));
-        DecimalEncodedValue speed = encodingManager.getEncodedValue("maxspeed", DecimalEncodedValue.class);
+        DecimalEncodedValue speed = encodingManager.getEncodedValue("max_speed", DecimalEncodedValue.class);
         assertEquals(50, edge.get(speed), .1);
     }
 
@@ -118,7 +118,7 @@ public class EncodingManagerTest {
         GraphHopperStorage g = new GraphBuilder(encodingManager).create();
         EdgeIteratorState edge = g.edge(0, 1, 10, true);
 
-        DecimalEncodedValue maxSpeed = encodingManager.getEncodedValue("averagespeed", DecimalEncodedValue.class);
+        DecimalEncodedValue maxSpeed = encodingManager.getEncodedValue("average_speed", DecimalEncodedValue.class);
         edge.set(maxSpeed, 26d);
 
         assertEquals(10 / ((26 / 5 * 5) * 0.9) * 3600, weighting.calcMillis(edge, false, -1), 1);
@@ -165,13 +165,13 @@ public class EncodingManagerTest {
 
     @Test
     public void testDirectionDependentDecimal() {
-        final DecimalEncodedValue directed = new DecimalEncodedValue("directedspeed", 10, 0, 1, true);
+        final DecimalEncodedValue directed = new DecimalEncodedValue("directed_speed", 10, 0, 1, true);
 
         TagParser directedSpeedParser = new TagParser() {
 
             @Override
             public String getName() {
-                return "directedspeed";
+                return "directed_speed";
             }
 
             @Override

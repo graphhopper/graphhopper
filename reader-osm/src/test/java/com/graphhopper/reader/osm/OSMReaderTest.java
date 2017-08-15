@@ -811,8 +811,8 @@ public class OSMReaderTest {
     public void testEncodedValueBasedEncodingManager() {
         TagsParser parser = new TagsParserOSM();
         final EncodingManager em = new EncodingManager.Builder(parser, 4).
-                add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("maxspeed", 5, 0, 5, false))).
-                add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("averagespeed", 5, 0, 5, false))).
+                add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("max_speed", 5, 0, 5, false))).
+                add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("average_speed", 5, 0, 5, false))).
                 add(TagParserFactory.Car.createAccess(new BooleanEncodedValue("access", true))).
                 add(TagParserFactory.createRoundabout(new BooleanEncodedValue("roundabout"))).
                 build();

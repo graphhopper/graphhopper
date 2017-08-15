@@ -118,7 +118,7 @@ public class TagParserFactory {
 
                 @Override
                 public String getName() {
-                    return "maxspeed";
+                    return "max_speed";
                 }
 
                 @Override
@@ -169,7 +169,7 @@ public class TagParserFactory {
             return new TagParser() {
                 @Override
                 public void parse(EdgeSetter setter, ReaderWay way, EdgeIteratorState edgeState) {
-                    double num = AbstractFlagEncoder.parseSpeed(way.getTag("maxspeed"));
+                    double num = AbstractFlagEncoder.parseSpeed(way.getTag("max_speed"));
                     Double defaultSp = defaultSpeedMap.get(way.getTag("highway"));
                     // TODO should not happen as arranged via access
                     if (defaultSp == null)
@@ -189,7 +189,7 @@ public class TagParserFactory {
 
                 @Override
                 public String getName() {
-                    return "averagespeed";
+                    return "average_speed";
                 }
 
                 @Override

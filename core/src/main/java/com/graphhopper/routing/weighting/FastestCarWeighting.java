@@ -35,8 +35,8 @@ public class FastestCarWeighting implements Weighting {
     private final BooleanEncodedValue access;
 
     public FastestCarWeighting(EncodingManager em, String name) {
-        this.maxSpeed = em.getEncodedValue("maxspeed", DecimalEncodedValue.class);
-        this.averageSpeed = em.getEncodedValue("averagespeed", DecimalEncodedValue.class);
+        this.maxSpeed = em.getEncodedValue("max_speed", DecimalEncodedValue.class);
+        this.averageSpeed = em.getEncodedValue("average_speed", DecimalEncodedValue.class);
         this.access = em.getEncodedValue("access", BooleanEncodedValue.class);
         this.maxSpeedValue = 100 / SPEED_CONV;
         this.name = name;

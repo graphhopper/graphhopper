@@ -58,7 +58,7 @@ public class PathExtract {
                 }
             };
         } else {
-            final DecimalEncodedValue maxspeed = encodingManager.getEncodedValue("maxspeed", DecimalEncodedValue.class);
+            final DecimalEncodedValue maxspeed = encodingManager.getEncodedValue("max_speed", DecimalEncodedValue.class);
             speedAccessor = new SpeedAccessor() {
 
                 @Override

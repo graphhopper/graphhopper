@@ -536,8 +536,8 @@ public class GraphHopper implements GraphHopperAPI {
         if (!flagEncodersStr.isEmpty()) {
             if (bytesForFlags > 8) {
                 setEncodingManager(new EncodingManager.Builder(new TagsParserOSM(), bytesForFlags).
-                        add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("maxspeed", 5, 0, 5, false))).
-                        add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("averagespeed", 5, 0, 5, false))).
+                        add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("max_speed", 5, 0, 5, false))).
+                        add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("average_speed", 5, 0, 5, false))).
                         add(TagParserFactory.createRoundabout(new BooleanEncodedValue("roundabout"))).
                         add(TagParserFactory.Car.createAccess(new BooleanEncodedValue("access", true))).
                         add(TagParserFactory.createHighway(new StringEncodedValue("highway",
