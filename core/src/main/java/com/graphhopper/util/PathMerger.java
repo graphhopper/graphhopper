@@ -111,7 +111,7 @@ public class PathMerger {
 
                 fullPoints.add(tmpPoints);
                 altRsp.addPathDetails(path.calcDetails(calculatorFactory, origPoints));
-                origPoints+=tmpPoints.size();
+                origPoints += tmpPoints.size();
             }
 
             allFound = allFound && path.isFound();

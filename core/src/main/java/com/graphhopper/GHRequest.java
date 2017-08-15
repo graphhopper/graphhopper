@@ -276,6 +276,12 @@ public class GHRequest {
         if (!algo.isEmpty())
             res += " (" + algo + ")";
 
+        if (!pathDetails.isEmpty())
+            res += " (PathDetails: " + pathDetails + ")";
+
+        if (!hints.isEmpty())
+            res += " (Hints:" + hints + ")";
+
         return res;
     }
 }
