@@ -98,12 +98,12 @@ public class PathSimplification {
                     int removed = douglasPeucker.simplify(pointList, nonConflictingStart, nonConflictingEnd);
                     if (removed > 0) {
                         for (int i = 0; i < listsToSimplify.size(); i++) {
-                            List<PathDetail> pathDetails = listsToSimplify.get(i);
+                            List pathDetails = listsToSimplify.get(i);
                             reduceLength(pathDetails, offsets[i], startIntervals[i], endIntervals[i] - removed);
-                            // instructions do
+                            // This is not needed for Instructions, as they don't contain references, but PointLists
                             if (pathDetails.get(0) instanceof PathDetail) {
                                 for (int j = offsets[i] + 1; j < pathDetails.size(); j++) {
-                                    PathDetail pd = pathDetails.get(j);
+                                    PathDetail pd = (PathDetail) pathDetails.get(j);
                                     reduceLength(pathDetails, j, pd.getFirst() - removed, pd.getLast() - removed);
                                 }
                             }
