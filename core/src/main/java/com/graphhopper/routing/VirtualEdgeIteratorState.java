@@ -149,6 +149,16 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
+    public void setReverse(BooleanEncodedValue property, boolean value) {
+        property.setBool(true, edgeData, value);
+    }
+
+    @Override
+    public boolean getReverse(BooleanEncodedValue property) {
+        return property.getBool(true, edgeData);
+    }
+
+    @Override
     public int get(IntEncodedValue property) {
         return property.getInt(false, edgeData);
     }
@@ -156,6 +166,36 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     @Override
     public void set(IntEncodedValue property, int value) {
         property.setInt(false, edgeData, value);
+    }
+
+    @Override
+    public int getReverse(IntEncodedValue property) {
+        return property.getInt(true, edgeData);
+    }
+
+    @Override
+    public void setReverse(IntEncodedValue property, int value) {
+        property.setInt(true, edgeData, value);
+    }
+
+    @Override
+    public double get(DecimalEncodedValue property) {
+        return property.getDecimal(false, edgeData);
+    }
+
+    @Override
+    public void set(DecimalEncodedValue property, double value) {
+        property.setDecimal(false, edgeData, value);
+    }
+
+    @Override
+    public double getReverse(DecimalEncodedValue property) {
+        return property.getDecimal(true, edgeData);
+    }
+
+    @Override
+    public void setReverse(DecimalEncodedValue property, double value) {
+        property.setDecimal(true, edgeData, value);
     }
 
     @Override
@@ -169,13 +209,13 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public double get(DecimalEncodedValue property) {
-        return property.getDecimal(false, edgeData);
+    public String getReverse(StringEncodedValue property) {
+        return property.getString(true, edgeData);
     }
 
     @Override
-    public void set(DecimalEncodedValue property, double value) {
-        property.setDecimal(false, edgeData, value);
+    public void setReverse(StringEncodedValue property, String value) {
+        property.setString(true, edgeData, value);
     }
 
     @Override

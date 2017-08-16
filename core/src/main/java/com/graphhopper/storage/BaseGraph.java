@@ -1144,6 +1144,17 @@ class BaseGraph implements Graph {
         }
 
         @Override
+        public boolean getReverse(BooleanEncodedValue property) {
+            return property.getBool(!reverse, getData());
+        }
+
+        @Override
+        public void setReverse(BooleanEncodedValue property, boolean value) {
+            property.setBool(!reverse, getData(), value);
+            edgeAccess.setData(edgePointer, getData());
+        }
+
+        @Override
         public int get(IntEncodedValue property) {
             return property.getInt(reverse, getData());
         }
@@ -1151,6 +1162,39 @@ class BaseGraph implements Graph {
         @Override
         public void set(IntEncodedValue property, int value) {
             property.setInt(reverse, getData(), value);
+            edgeAccess.setData(edgePointer, getData());
+        }
+
+        @Override
+        public int getReverse(IntEncodedValue property) {
+            return property.getInt(!reverse, getData());
+        }
+
+        @Override
+        public void setReverse(IntEncodedValue property, int value) {
+            property.setInt(!reverse, getData(), value);
+            edgeAccess.setData(edgePointer, getData());
+        }
+
+        @Override
+        public double get(DecimalEncodedValue property) {
+            return property.getDecimal(reverse, getData());
+        }
+
+        @Override
+        public void set(DecimalEncodedValue property, double value) {
+            property.setDecimal(reverse, getData(), value);
+            edgeAccess.setData(edgePointer, getData());
+        }
+
+        @Override
+        public double getReverse(DecimalEncodedValue property) {
+            return property.getDecimal(!reverse, getData());
+        }
+
+        @Override
+        public void setReverse(DecimalEncodedValue property, double value) {
+            property.setDecimal(!reverse, getData(), value);
             edgeAccess.setData(edgePointer, getData());
         }
 
@@ -1166,13 +1210,13 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public double get(DecimalEncodedValue property) {
-            return property.getDecimal(reverse, getData());
+        public String getReverse(StringEncodedValue property) {
+            return property.getString(!reverse, getData());
         }
 
         @Override
-        public void set(DecimalEncodedValue property, double value) {
-            property.setDecimal(reverse, getData(), value);
+        public void setReverse(StringEncodedValue property, String value) {
+            property.setString(!reverse, getData(), value);
             edgeAccess.setData(edgePointer, getData());
         }
 

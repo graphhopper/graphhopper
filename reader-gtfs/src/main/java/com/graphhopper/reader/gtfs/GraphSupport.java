@@ -18,9 +18,10 @@
 
 package com.graphhopper.reader.gtfs;
 
-import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -193,6 +194,16 @@ class GraphSupport {
                     }
 
                     @Override
+                    public void setReverse(BooleanEncodedValue property, boolean value) {
+                        edge.setReverse(property, value);
+                    }
+
+                    @Override
+                    public boolean getReverse(BooleanEncodedValue property) {
+                        return edge.getReverse(property);
+                    }
+
+                    @Override
                     public void set(IntEncodedValue property, int value) {
                         edge.set(property, value);
                     }
@@ -200,6 +211,16 @@ class GraphSupport {
                     @Override
                     public int get(IntEncodedValue property) {
                         return edge.get(property);
+                    }
+
+                    @Override
+                    public void setReverse(IntEncodedValue property, int value) {
+                        edge.setReverse(property, value);
+                    }
+
+                    @Override
+                    public int getReverse(IntEncodedValue property) {
+                        return edge.getReverse(property);
                     }
 
                     @Override
@@ -213,6 +234,16 @@ class GraphSupport {
                     }
 
                     @Override
+                    public double getReverse(DecimalEncodedValue property) {
+                        return edge.getReverse(property);
+                    }
+
+                    @Override
+                    public void setReverse(DecimalEncodedValue property, double value) {
+                        edge.setReverse(property, value);
+                    }
+
+                    @Override
                     public void set(StringEncodedValue property, String value) {
                         edge.set(property, value);
                     }
@@ -222,6 +253,15 @@ class GraphSupport {
                         return edge.get(property);
                     }
 
+                    @Override
+                    public void setReverse(StringEncodedValue property, String value) {
+                        edge.setReverse(property, value);
+                    }
+
+                    @Override
+                    public String getReverse(StringEncodedValue property) {
+                        return edge.getReverse(property);
+                    }
 
                     @Override
                     public String getName() {

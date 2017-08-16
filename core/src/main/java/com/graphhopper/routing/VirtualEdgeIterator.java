@@ -17,9 +17,10 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
@@ -144,6 +145,36 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
+    public void setReverse(BooleanEncodedValue property, boolean value) {
+        edges.get(current).setReverse(property, value);
+    }
+
+    @Override
+    public boolean getReverse(BooleanEncodedValue property) {
+        return edges.get(current).getReverse(property);
+    }
+
+    @Override
+    public void set(IntEncodedValue property, int value) {
+        edges.get(current).set(property, value);
+    }
+
+    @Override
+    public int get(IntEncodedValue property) {
+        return edges.get(current).get(property);
+    }
+
+    @Override
+    public void setReverse(IntEncodedValue property, int value) {
+        edges.get(current).setReverse(property, value);
+    }
+
+    @Override
+    public int getReverse(IntEncodedValue property) {
+        return edges.get(current).getReverse(property);
+    }
+
+    @Override
     public void set(DecimalEncodedValue property, double value) {
         edges.get(current).set(property, value);
     }
@@ -151,6 +182,16 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     @Override
     public double get(DecimalEncodedValue property) {
         return edges.get(current).get(property);
+    }
+
+    @Override
+    public void setReverse(DecimalEncodedValue property, double value) {
+        edges.get(current).setReverse(property, value);
+    }
+
+    @Override
+    public double getReverse(DecimalEncodedValue property) {
+        return edges.get(current).getReverse(property);
     }
 
     @Override
@@ -164,13 +205,13 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
-    public void set(IntEncodedValue property, int value) {
-        edges.get(current).set(property, value);
+    public void setReverse(StringEncodedValue property, String value) {
+        edges.get(current).setReverse(property, value);
     }
 
     @Override
-    public int get(IntEncodedValue property) {
-        return edges.get(current).get(property);
+    public String getReverse(StringEncodedValue property) {
+        return edges.get(current).getReverse(property);
     }
 
     @Override

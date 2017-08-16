@@ -80,7 +80,7 @@ public class EncodingManagerTest {
         assertEquals(50, edge.get(speed), .1);
     }
 
-    // TODO
+    // TODO currently we do not throw an exception in TagsParserOSM.parse
     @Ignore
     @Test
     public void testValueBoundaryCheck() {
@@ -139,6 +139,7 @@ public class EncodingManagerTest {
 
         BooleanEncodedValue access = encodingManager.getEncodedValue("access", BooleanEncodedValue.class);
         assertTrue(edge.get(access));
+        assertFalse(edge.getReverse(access));
         assertFalse(edge.detach(true).get(access));
 
         // add new edge and apply its associated OSM tags
@@ -154,11 +155,13 @@ public class EncodingManagerTest {
         assertEquals(2, iter.getAdjNode());
         assertTrue(iter.get(access));
         assertTrue(iter.detach(true).get(access));
+        assertTrue(iter.getReverse(access));
 
         assertTrue(iter.next());
         assertEquals(1, iter.getAdjNode());
         assertTrue(iter.get(access));
         assertFalse(iter.detach(true).get(access));
+        assertFalse(iter.getReverse(access));
 
         assertFalse(iter.next());
     }

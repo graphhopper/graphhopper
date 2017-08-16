@@ -17,8 +17,9 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
@@ -126,17 +127,33 @@ public interface EdgeIteratorState {
 
     void set(BooleanEncodedValue property, boolean value);
 
+    boolean getReverse(BooleanEncodedValue property);
+
+    void setReverse(BooleanEncodedValue property, boolean value);
+
     int get(IntEncodedValue property);
 
     void set(IntEncodedValue property, int value);
+
+    int getReverse(IntEncodedValue property);
+
+    void setReverse(IntEncodedValue property, int value);
 
     double get(DecimalEncodedValue property);
 
     void set(DecimalEncodedValue property, double value);
 
+    double getReverse(DecimalEncodedValue property);
+
+    void setReverse(DecimalEncodedValue property, double value);
+
     String get(StringEncodedValue property);
 
     void set(StringEncodedValue property, String value);
+
+    String getReverse(StringEncodedValue property);
+
+    void setReverse(StringEncodedValue property, String value);
 
     String getName();
 
