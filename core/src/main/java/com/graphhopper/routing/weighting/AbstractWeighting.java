@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
@@ -56,6 +58,11 @@ public abstract class AbstractWeighting implements Weighting {
     public boolean matches(HintsMap reqMap) {
         return getName().equals(reqMap.getWeighting())
                 && flagEncoder.toString().equals(reqMap.getVehicle());
+    }
+
+    @Override
+    public EdgeFilter createEdgeFilter(boolean forward, boolean reverse) {
+        return new DefaultEdgeFilter(flagEncoder, reverse, forward);
     }
 
     @Override

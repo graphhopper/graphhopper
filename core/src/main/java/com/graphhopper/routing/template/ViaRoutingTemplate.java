@@ -21,7 +21,9 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.NameSimilarityEdgeFilter;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.EdgeIteratorState;
@@ -44,22 +46,24 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
     protected final GHRequest ghRequest;
     protected final GHResponse ghResponse;
     protected final PathWrapper altResponse = new PathWrapper();
+    final EncodingManager encodingManager;
     private final LocationIndex locationIndex;
     // result from route
     protected List<Path> pathList;
 
-    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp, LocationIndex locationIndex) {
+    public ViaRoutingTemplate(GHRequest ghRequest, GHResponse ghRsp,
+                              EncodingManager encodingManager, LocationIndex locationIndex) {
+        this.encodingManager = encodingManager;
         this.locationIndex = locationIndex;
         this.ghRequest = ghRequest;
         this.ghResponse = ghRsp;
     }
 
     @Override
-    public List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder) {
+    public List<QueryResult> lookup(List<GHPoint> points, EdgeFilter edgeFilter) {
         if (points.size() < 2)
             throw new IllegalArgumentException("At least 2 points have to be specified, but was:" + points.size());
 
-        EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
         queryResults = new ArrayList<>(points.size());
         for (int placeIndex = 0; placeIndex < points.size(); placeIndex++) {
             GHPoint point = points.get(placeIndex);
@@ -152,7 +156,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
 
         altResponse.setWaypoints(getWaypoints());
         ghResponse.add(altResponse);
-        pathMerger.doWork(altResponse, pathList, tr);
+        pathMerger.doWork(altResponse, pathList, encodingManager, tr);
         return true;
     }
 

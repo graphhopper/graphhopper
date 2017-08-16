@@ -18,18 +18,17 @@
 package com.graphhopper.routing.util;
 
 /**
- * Encapsulates a bit-encoded value.
- * <p>
+ * Encapsulates a double value.
  *
  * @author Nop
  */
-public class EncodedDoubleValue extends EncodedValue {
+public class EncodedDoubleValue08 extends EncodedValue08 {
 
-    public EncodedDoubleValue(String name, int shift, int bits, double factor, long defaultValue, int maxValue) {
+    public EncodedDoubleValue08(String name, int shift, int bits, double factor, long defaultValue, int maxValue) {
         this(name, shift, bits, factor, defaultValue, maxValue, true);
     }
 
-    public EncodedDoubleValue(String name, int shift, int bits, double factor, long defaultValue, int maxValue, boolean allowZero) {
+    public EncodedDoubleValue08(String name, int shift, int bits, double factor, long defaultValue, int maxValue, boolean allowZero) {
         super(name, shift, bits, factor, defaultValue, maxValue, allowZero);
     }
 
@@ -40,7 +39,7 @@ public class EncodedDoubleValue extends EncodedValue {
 
     @Override
     public long getValue(long flags) {
-        throw new IllegalStateException("Use setDoubleValue instead");
+        throw new IllegalStateException("Use getDoubleValue instead");
     }
 
     @Override

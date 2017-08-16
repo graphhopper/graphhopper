@@ -32,7 +32,7 @@ import static com.graphhopper.util.Helper.keepIn;
  * @author Peter Karich
  */
 public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
-    private EncodedDoubleValue reverseSpeedEncoder;
+    private EncodedDoubleValue08 reverseSpeedEncoder;
 
     public Bike2WeightFlagEncoder() {
         super();
@@ -58,7 +58,7 @@ public class Bike2WeightFlagEncoder extends BikeFlagEncoder {
     @Override
     public int defineWayBits(int index, int shift) {
         shift = super.defineWayBits(index, shift);
-        reverseSpeedEncoder = new EncodedDoubleValue("Reverse Speed", shift, speedBits, speedFactor,
+        reverseSpeedEncoder = new EncodedDoubleValue08("Reverse Speed", shift, speedBits, speedFactor,
                 getHighwaySpeed("cycleway"), maxPossibleSpeed);
         shift += reverseSpeedEncoder.getBits();
         return shift;

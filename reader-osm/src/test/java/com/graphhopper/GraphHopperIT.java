@@ -20,6 +20,7 @@ package com.graphhopper;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.FlagEncoderFactory;
 import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
@@ -62,7 +63,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(graphFileFoot).
-                setEncodingManager(new EncodingManager(importVehicles)).
+                setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders(importVehicles).build()).
                 importOrLoad();
     }
 
@@ -157,7 +158,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("bike, car"));
+                setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("bike, car").build());
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(50.028917, 11.496506, 49.985228, 11.600876).
@@ -195,7 +196,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/Laufamholzstrasse.osm.xml").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build());
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.46553, 11.154669, 49.465244, 11.152577).
@@ -230,7 +231,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car,generic", 8));
+                setEncodingManager(new EncodingManager.Builder().addAll(FlagEncoderFactory.DEFAULT, "car,generic", 8).build());
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
@@ -254,7 +255,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("generic,car", 8));
+                setEncodingManager(new EncodingManager.Builder().addAll(FlagEncoderFactory.DEFAULT, "generic,car", 8).build());
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest(49.985272, 11.506151, 49.986107, 11.507202).
@@ -507,7 +508,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager(importVehicles));
+                setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders(importVehicles).build());
 
         tmpHopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
         tmpHopper.importOrLoad();
@@ -557,7 +558,7 @@ public class GraphHopperIT {
     public void testSRTMWithoutTunnelInterpolation() throws Exception {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                .setEncodingManager(new EncodingManager(importVehicles, 8));
+                .setEncodingManager(new EncodingManager.Builder().addAll(FlagEncoderFactory.DEFAULT, importVehicles, 8).build());
 
         tmpHopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
         tmpHopper.importOrLoad();
@@ -583,7 +584,7 @@ public class GraphHopperIT {
     public void testSRTMWithTunnelInterpolation() throws Exception {
         GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
-                .setEncodingManager(new EncodingManager(genericImportVehicles, 8));
+                .setEncodingManager(new EncodingManager.Builder().addAll(FlagEncoderFactory.DEFAULT, genericImportVehicles, 8).build());
 
         tmpHopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
         tmpHopper.importOrLoad();
@@ -618,7 +619,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager(tmpImportVehicles)).
+                setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders(tmpImportVehicles).build()).
                 importOrLoad();
 
         GHResponse rsp = tmpHopper.route(new GHRequest(48.410987, 15.599492, 48.383419, 15.659294).
@@ -661,7 +662,7 @@ public class GraphHopperIT {
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager(tmpImportVehicles)).
+                setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders(tmpImportVehicles).build()).
                 importOrLoad();
 
         assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle().toString());
@@ -697,7 +698,7 @@ public class GraphHopperIT {
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("bike,car")).
+                setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("bike,car").build()).
                 importOrLoad();
         assertEquals("bike", tmpHopper.getDefaultVehicle().toString());
         checkMultiVehiclesWithCH(tmpHopper);
@@ -709,7 +710,7 @@ public class GraphHopperIT {
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car,bike")).
+                setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car,bike").build()).
                 importOrLoad();
         assertEquals("car", tmpHopper.getDefaultVehicle().toString());
         checkMultiVehiclesWithCH(tmpHopper);
@@ -762,7 +763,7 @@ public class GraphHopperIT {
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager(tmpImportVehicles));
+                setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders(tmpImportVehicles).build());
         tmpHopper.getCHFactoryDecorator().setWeightingsAsStrings(weightCalcStr);
         tmpHopper.importOrLoad();
 
@@ -808,7 +809,7 @@ public class GraphHopperIT {
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car"));
+                setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build());
 
         tmpHopper.getCHFactoryDecorator().setEnabled(true).
                 setWeightingsAsStrings(Arrays.asList("fastest")).
@@ -868,7 +869,7 @@ public class GraphHopperIT {
                 setStoreOnFlush(true).
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car|turn_costs=true"));
+                setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car|turn_costs=true").build());
         tmpHopper.importOrLoad();
 
         // with turn costs (default if none-CH and turn cost enabled)
@@ -893,7 +894,7 @@ public class GraphHopperIT {
                 setOSMFile(DIR + "/moscow.osm.gz").
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
-                setEncodingManager(new EncodingManager("car|turn_costs=true"));
+                setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car|turn_costs=true").build());
         tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
         tmpHopper.importOrLoad();
 

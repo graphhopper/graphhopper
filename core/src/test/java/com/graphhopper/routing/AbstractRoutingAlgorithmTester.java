@@ -41,7 +41,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public abstract class AbstractRoutingAlgorithmTester {
-    protected static final EncodingManager encodingManager = new EncodingManager("car,foot");
+    protected static final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car,foot").build();
     private static final DistanceCalc distCalc = new DistanceCalcEarth();
     protected FlagEncoder carEncoder;
     protected FlagEncoder footEncoder;
@@ -694,7 +694,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void testTwoWeightsPerEdge() {
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
-        EncodingManager em = new EncodingManager(encoder);
+        EncodingManager em = new EncodingManager.Builder().addAll(encoder).build();
         AlgorithmOptions opts = AlgorithmOptions.start().
                 weighting(new FastestWeighting(encoder)).build();
         GraphHopperStorage graph = createGHStorage(em, Arrays.asList(opts.getWeighting()), true);
@@ -768,6 +768,11 @@ public abstract class AbstractRoutingAlgorithmTester {
             @Override
             public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
                 return tmpW.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+            }
+
+            @Override
+            public EdgeFilter createEdgeFilter(boolean forward, boolean reverse) {
+                return new DefaultEdgeFilter(getFlagEncoder(), reverse, forward);
             }
 
             @Override

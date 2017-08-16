@@ -305,7 +305,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             CHEdgeIterator iter = vehicleAllExplorer.setBaseNode(polledNode);
             while (iter.next()) {
 
-                if(Thread.currentThread().isInterrupted()){
+                if (Thread.currentThread().isInterrupted()) {
                     throw new RuntimeException("Thread was interrupted");
                 }
 

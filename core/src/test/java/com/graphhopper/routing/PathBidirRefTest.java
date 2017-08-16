@@ -36,7 +36,7 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class PathBidirRefTest {
-    private final EncodingManager encodingManager = new EncodingManager("car");
+    private final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
     private FlagEncoder carEncoder = encodingManager.getEncoder("car");
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
 

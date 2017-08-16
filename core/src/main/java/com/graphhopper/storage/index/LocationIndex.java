@@ -47,7 +47,7 @@ public interface LocationIndex extends Storable<LocationIndex> {
      * search)
      * <p>
      *
-     * @param edgeFilter if a graph supports multiple vehicles we have to make sure that the entry
+     * @param edgeFilter if a graph supports multiple vehicle profiles we have to make sure that the entry
      *                   node into the graph is accessible from a selected vehicle. E.g. if you have a FOOT-query do:
      *                   <pre>new DefaultEdgeFilter(footFlagEncoder);</pre>
      * @return An object containing the closest node and edge for the specified location. The node id

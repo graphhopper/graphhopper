@@ -43,7 +43,7 @@ import static org.junit.Assert.*;
 @RunWith(Parameterized.class)
 public class AlternativeRouteTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
-    private final EncodingManager em = new EncodingManager(carFE);
+    private final EncodingManager em = new EncodingManager.Builder().addAll(carFE).build();
     private final TraversalMode traversalMode;
 
     public AlternativeRouteTest(TraversalMode tMode) {

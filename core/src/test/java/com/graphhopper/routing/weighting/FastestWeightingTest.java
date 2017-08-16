@@ -23,12 +23,8 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.GHUtility;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PMap;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
 import org.junit.Test;
 
@@ -39,7 +35,7 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class FastestWeightingTest {
-    private final FlagEncoder encoder = new EncodingManager("car").getEncoder("car");
+    private final FlagEncoder encoder = new EncodingManager.Builder().addAllFlagEncoders("car").build().getEncoder("car");
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
@@ -53,7 +49,7 @@ public class FastestWeightingTest {
         Weighting instance = new FastestWeighting(encoder, new PMap().
                 put(Parameters.Routing.HEADING_PENALTY, "100"));
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, 1, 1, 2, 10,
-                encoder.setProperties(10, true, true), "test", Helper.createPointList(51, 0, 51, 1));
+                encoder.setProperties(10, true, true), IntsRef.EMPTY, "test", Helper.createPointList(51, 0, 51, 1));
         double time = instance.calcWeight(virtEdge, false, 0);
 
         virtEdge.setUnfavored(true);
@@ -85,7 +81,7 @@ public class FastestWeightingTest {
     @Test
     public void testTime() {
         FlagEncoder tmpEnc = new Bike2WeightFlagEncoder();
-        GraphHopperStorage g = new GraphBuilder(new EncodingManager(tmpEnc)).create();
+        GraphHopperStorage g = new GraphBuilder(new EncodingManager.Builder().addAll(tmpEnc).build()).create();
         Weighting w = new FastestWeighting(tmpEnc);
 
         long flags = tmpEnc.setSpeed(tmpEnc.setReverseSpeed(tmpEnc.setAccess(0, true, true), 10), 15);

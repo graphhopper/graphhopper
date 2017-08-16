@@ -19,7 +19,6 @@ package com.graphhopper.storage;
 
 /**
  * This class is used to create the shortest-path-tree from linked entities.
- * <p>
  *
  * @author Peter Karich
  */

@@ -21,17 +21,17 @@ package com.graphhopper.reader.gtfs;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
-import com.graphhopper.routing.util.EncodedDoubleValue;
-import com.graphhopper.routing.util.EncodedValue;
+import com.graphhopper.routing.util.EncodedDoubleValue08;
+import com.graphhopper.routing.util.EncodedValue08;
 import com.graphhopper.routing.util.FootFlagEncoder;
 
 public class PtFlagEncoder extends AbstractFlagEncoder {
 
 	private final FootFlagEncoder footFlagEncoder;
-	private EncodedValue time;
-	private EncodedValue transfers;
-	private EncodedValue validityId;
-	private EncodedValue type;
+	private EncodedValue08 time;
+	private EncodedValue08 transfers;
+	private EncodedValue08 validityId;
+	private EncodedValue08 type;
 
 	public PtFlagEncoder() {
 		super(0, 1, 0);
@@ -51,17 +51,17 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
 
 		// I have to set super.speedEncoder even though
 		// super already knows speedBits and speedFactor because they are constructor parameters.
-		speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, 0, 0);
+		speedEncoder = new EncodedDoubleValue08("Speed", shift, speedBits, speedFactor, 0, 0);
 		shift += speedEncoder.getBits();
 
-		time = new EncodedValue("time", shift, 32, 1.0, 0, Integer.MAX_VALUE);
+		time = new EncodedValue08("time", shift, 32, 1.0, 0, Integer.MAX_VALUE);
 		shift += time.getBits();
-		transfers = new EncodedValue("transfers", shift, 1, 1.0, 0, 1);
+		transfers = new EncodedValue08("transfers", shift, 1, 1.0, 0, 1);
 		shift += transfers.getBits();
-		validityId = new EncodedValue("validityId", shift, 20, 1.0, 0, 1048575);
+		validityId = new EncodedValue08("validityId", shift, 20, 1.0, 0, 1048575);
 		shift += validityId.getBits();
 		GtfsStorage.EdgeType[] edgeTypes = GtfsStorage.EdgeType.values();
-		type = new EncodedValue("type", shift, 6, 1.0, GtfsStorage.EdgeType.HIGHWAY.ordinal(), edgeTypes[edgeTypes.length-1].ordinal());
+		type = new EncodedValue08("type", shift, 6, 1.0, GtfsStorage.EdgeType.HIGHWAY.ordinal(), edgeTypes[edgeTypes.length-1].ordinal());
 		shift += type.getBits();
 		return shift;
 	}

@@ -48,7 +48,7 @@ public class OSMTurnRelationTest {
         internalToOSMEdge.put(3, 3L);
         internalToOSMEdge.put(4, 4L);
 
-        GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager(encoder)).create();
+        GraphHopperStorage ghStorage = new GraphBuilder(new EncodingManager.Builder().addAll(encoder).build()).create();
         EdgeBasedRoutingAlgorithmTest.initGraph(ghStorage);
         OSMReader osmReader = new OSMReader(ghStorage) {
 

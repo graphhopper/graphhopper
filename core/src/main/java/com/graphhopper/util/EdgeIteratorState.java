@@ -17,7 +17,11 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
@@ -113,6 +117,26 @@ public interface EdgeIteratorState {
      * @param _default default value if key is not found
      */
     boolean getBool(int key, boolean _default);
+
+    IntsRef getData();
+
+    // TODO NOW use getData instead of all the followin setter&getter here e.g. would avoid going down to
+    // storage several times for several setter calls
+    boolean get(BooleanEncodedValue property);
+
+    void set(BooleanEncodedValue property, boolean value);
+
+    int get(IntEncodedValue property);
+
+    void set(IntEncodedValue property, int value);
+
+    double get(DecimalEncodedValue property);
+
+    void set(DecimalEncodedValue property, double value);
+
+    String get(StringEncodedValue property);
+
+    void set(StringEncodedValue property, String value);
 
     String getName();
 

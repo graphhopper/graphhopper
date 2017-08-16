@@ -20,6 +20,10 @@ package com.graphhopper.storage;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.SparseIntIntArray;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -27,11 +31,10 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.search.NameIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-
-import static com.graphhopper.util.Helper.nf;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import static com.graphhopper.util.Helper.nf;
 
 /**
  * The base graph handles nodes and edges file format. It can be used with different Directory
@@ -223,10 +226,14 @@ class BaseGraph implements Graph {
         edgeEntryIndex = 0;
         nodeEntryIndex = 0;
         boolean flagsSizeIsLong = encodingManager.getBytesForFlags() == 8;
+        int extendedDataSizeInBytes = encodingManager.getExtendedDataSize();
+
         edgeAccess.init(nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(4),
+                nextEdgeEntryIndex(extendedDataSizeInBytes),
+                /* TODO LATER: deprecate flags and distance */
                 nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(encodingManager.getBytesForFlags()),
                 flagsSizeIsLong);
@@ -785,7 +792,7 @@ class BaseGraph implements Graph {
     private void setWayGeometryAtGeoRef(PointList pillarNodes, long edgePointer, boolean reverse, long geoRef) {
         int len = pillarNodes.getSize();
         int dim = nodeAccess.getDimension();
-        long geoRefPosition = (long) geoRef * 4;
+        long geoRefPosition = geoRef * 4;
         int totalLen = len * dim * 4 + 4;
         ensureGeometry(geoRefPosition, totalLen);
         byte[] wayGeometryBytes = createWayGeometryBytes(pillarNodes, reverse);
@@ -963,8 +970,9 @@ class BaseGraph implements Graph {
                 adjNode = edgeAccess.getOtherNode(baseNode, edgePointer);
                 reverse = baseNode > adjNode;
                 freshFlags = false;
+                edgeRowCache = null;
 
-                // position to next edge                
+                // position to next edge
                 nextEdgeId = edgeAccess.getEdgeRef(baseNode, adjNode, edgePointer);
                 assert nextEdgeId != edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
                         + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
@@ -980,6 +988,9 @@ class BaseGraph implements Graph {
                 throw new IllegalStateException("call next before detaching or setEdgeId (edgeId:" + edgeId + " vs. next " + nextEdgeId + ")");
 
             EdgeIterable iter = edgeAccess.createSingleEdge(filter);
+            // TODO this saves a bit RAM and saves us from trouble that writes to the edgeRowCache do not force a re-read for other edge instances like the detached ones.
+            // Alternatives?
+            iter.edgeRowCache = edgeRowCache;
             boolean ret;
             if (reverseArg) {
                 ret = iter.init(edgeId, baseNode);
@@ -1066,9 +1077,12 @@ class BaseGraph implements Graph {
         protected EdgeAccess edgeAccess;
         // we need reverse if detach is called
         boolean reverse = false;
-        boolean freshFlags;
         int edgeId = -1;
         private long cachedFlags;
+        boolean freshFlags;
+        IntsRef edgeRowCache;
+        // avoid calling setData multiple times instead 'flush' on 'next' and use
+        // private boolean edgeRowCacheChanged;
 
         public CommonEdgeIterator(long edgePointer, EdgeAccess edgeAccess, BaseGraph baseGraph) {
             this.edgePointer = edgePointer;
@@ -1108,6 +1122,58 @@ class BaseGraph implements Graph {
         @Override
         public long getFlags() {
             return getDirectFlags();
+        }
+
+        @Override
+        public final IntsRef getData() {
+            if (edgeRowCache == null)
+                edgeRowCache = edgeAccess.getData(edgePointer);
+
+            return edgeRowCache;
+        }
+
+        @Override
+        public boolean get(BooleanEncodedValue property) {
+            return property.getBool(reverse, getData());
+        }
+
+        @Override
+        public void set(BooleanEncodedValue property, boolean value) {
+            property.setBool(reverse, getData(), value);
+            edgeAccess.setData(edgePointer, getData());
+        }
+
+        @Override
+        public int get(IntEncodedValue property) {
+            return property.getInt(reverse, getData());
+        }
+
+        @Override
+        public void set(IntEncodedValue property, int value) {
+            property.setInt(reverse, getData(), value);
+            edgeAccess.setData(edgePointer, getData());
+        }
+
+        @Override
+        public String get(StringEncodedValue property) {
+            return property.getString(reverse, getData());
+        }
+
+        @Override
+        public void set(StringEncodedValue property, String value) {
+            property.setString(reverse, getData(), value);
+            edgeAccess.setData(edgePointer, getData());
+        }
+
+        @Override
+        public double get(DecimalEncodedValue property) {
+            return property.getDecimal(reverse, getData());
+        }
+
+        @Override
+        public void set(DecimalEncodedValue property, double value) {
+            property.setDecimal(reverse, getData(), value);
+            edgeAccess.setData(edgePointer, getData());
         }
 
         @Override

@@ -1,19 +1,23 @@
 package com.graphhopper.routing.util;
 
-import java.util.*;
-
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
+import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.util.spatialrules.Polygon;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
-import com.graphhopper.util.PMap;
-import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
-import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphBuilder;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 import static org.junit.Assert.*;
 
@@ -34,24 +38,20 @@ public class DataFlagEncoderTest {
         properties.put("store_weight", true);
         properties.put("store_width", true);
         encoder = new DataFlagEncoder(properties);
-        encodingManager = new EncodingManager(Arrays.asList(encoder), 8);
+        encodingManager = new EncodingManager.Builder().addAll(Arrays.asList(encoder), 8).build();
 
         motorVehicleInt = encoder.getAccessType("motor_vehicle");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testInsufficientEncoderBitLength() {
-        EncodingManager em = new EncodingManager(Arrays.asList(new DataFlagEncoder(properties)));
+        EncodingManager em = new EncodingManager.Builder().addAll(Arrays.asList(new DataFlagEncoder(properties)), 4).build();
     }
 
     @Test
     public void testSufficientEncoderBitLength() {
-        try {
-            EncodingManager em = new EncodingManager(Arrays.asList(new DataFlagEncoder(properties)), 8);
-            EncodingManager em1 = new EncodingManager(Arrays.asList(new DataFlagEncoder()));
-        } catch (Throwable t) {
-            fail();
-        }
+        EncodingManager em = new EncodingManager.Builder().addAll(Arrays.asList(new DataFlagEncoder(properties)), 8).build();
+        EncodingManager em1 = new EncodingManager.Builder().addAll(Arrays.asList(new DataFlagEncoder()), 4).build();
     }
 
     @Test
@@ -365,7 +365,7 @@ public class DataFlagEncoderTest {
 
         DataFlagEncoder encoder = new DataFlagEncoder(new PMap());
         encoder.setSpatialRuleLookup(index);
-        EncodingManager em = new EncodingManager(encoder);
+        EncodingManager em = new EncodingManager.Builder().addAll(encoder).build();
 
         ReaderWay way = new ReaderWay(27l);
         way.setTag("highway", "track");

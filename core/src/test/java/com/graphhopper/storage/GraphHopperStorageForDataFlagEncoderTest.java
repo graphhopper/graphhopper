@@ -37,7 +37,7 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         properties.put("store_weight", true);
         properties.put("store_width", false);
         encoder = new DataFlagEncoder(properties);
-        encodingManager = new EncodingManager(Arrays.asList(encoder), 8);
+        encodingManager = new EncodingManager.Builder().addAll(Arrays.asList(encoder), 8).build();
     }
 
     @Before

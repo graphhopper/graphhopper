@@ -39,7 +39,7 @@ import static org.junit.Assert.*;
  */
 public class PrepareRoutingSubnetworksTest {
     private final FlagEncoder carFlagEncoder = new CarFlagEncoder();
-    private final EncodingManager em = new EncodingManager(carFlagEncoder);
+    private final EncodingManager em = new EncodingManager.Builder().addAll(carFlagEncoder).build();
 
     GraphHopperStorage createStorage(EncodingManager eman) {
         return new GraphBuilder(eman).create();
@@ -152,7 +152,7 @@ public class PrepareRoutingSubnetworksTest {
     public void testRemoveNode() {
         FlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
-        EncodingManager em2 = new EncodingManager(carEncoder, bikeEncoder);
+        EncodingManager em2 = new EncodingManager.Builder().addAll(carEncoder, bikeEncoder).build();
         GraphHopperStorage g = createSubnetworkTestStorage2(em2);
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em2.fetchEdgeEncoders());
 
@@ -177,7 +177,7 @@ public class PrepareRoutingSubnetworksTest {
     public void testRemoveSubnetworkWhenMultipleVehicles() {
         FlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
-        EncodingManager em2 = new EncodingManager(carEncoder, bikeEncoder);
+        EncodingManager em2 = new EncodingManager.Builder().addAll(carEncoder, bikeEncoder).build();
         GraphHopperStorage g = createSubnetworkTestStorage2(em2);
         GHUtility.getEdge(g, 3, 4).setFlags(carEncoder.setProperties(10, false, false)
                 | bikeEncoder.setProperties(5, true, true));

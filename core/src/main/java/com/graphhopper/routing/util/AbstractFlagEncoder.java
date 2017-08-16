@@ -62,22 +62,17 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected long backwardBit;
     protected long directionBitMask;
     protected long roundaboutBit;
-    protected EncodedDoubleValue speedEncoder;
+    protected EncodedDoubleValue08 speedEncoder;
     // bit to signal that way is accepted
     protected long acceptBit;
     protected long ferryBit;
-    protected PMap properties;
     // This value determines the maximal possible speed of any road regardless the maxspeed value
     // lower values allow more compact representation of the routing graph
     protected int maxPossibleSpeed;
-    /* processing properties (to be initialized lazy when needed) */
-    protected EdgeExplorer edgeOutExplorer;
-    protected EdgeExplorer edgeInExplorer;
-    /* Edge Flag Encoder fields */
     private long nodeBitMask;
     private long wayBitMask;
     private long relBitMask;
-    private EncodedValue turnCostEncoder;
+    private EncodedValue08 turnCostEncoder;
     private long turnRestrictionBit;
     private boolean blockByDefault = true;
     private boolean blockFords = true;
@@ -383,7 +378,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     /**
      * @return the speed in km/h
      */
-    protected double parseSpeed(String str) {
+    public static double parseSpeed(String str) {
         if (Helper.isEmpty(str))
             return -1;
 
@@ -542,7 +537,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         }
 
         int turnBits = Helper.countBitValue(maxTurnCosts);
-        turnCostEncoder = new EncodedValue("TurnCost", shift, turnBits, 1, 0, maxTurnCosts) {
+        turnCostEncoder = new EncodedValue08("TurnCost", shift, turnBits, 1, 0, maxTurnCosts) {
             // override to avoid expensive Math.round
             @Override
             public final long getValue(long flags) {

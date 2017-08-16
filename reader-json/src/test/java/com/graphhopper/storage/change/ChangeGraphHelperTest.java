@@ -32,7 +32,7 @@ public class ChangeGraphHelperTest {
 
     @Before
     public void setUp() {
-        encodingManager = new EncodingManager("car");
+        encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
         graph = new GraphBuilder(encodingManager).create();
         ghson = new GHJsonFactory().create();
     }

@@ -42,7 +42,7 @@ public class GraphEdgeIdFinderTest {
     @Test
     public void testParseStringHints() {
         FlagEncoder encoder = new CarFlagEncoder();
-        EncodingManager em = new EncodingManager(encoder);
+        EncodingManager em = new EncodingManager.Builder().addAll(encoder).build();
         GraphHopperStorage graph = new GraphBuilder(em).create();
         // 0-1-2
         // | |

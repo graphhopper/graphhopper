@@ -60,7 +60,7 @@ public class GraphHopperGtfsIT {
     public static void init() {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
+        EncodingManager encodingManager = new EncodingManager.Builder().addAll(Arrays.asList(ptFlagEncoder), 8).build();
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, false, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());

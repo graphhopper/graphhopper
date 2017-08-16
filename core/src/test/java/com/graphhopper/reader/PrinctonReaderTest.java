@@ -35,7 +35,7 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class PrinctonReaderTest {
-    private EncodingManager encodingManager = new EncodingManager("car");
+    private EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(encodingManager.getEncoder("car"), false, true);
 
     @Test

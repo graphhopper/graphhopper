@@ -24,6 +24,7 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -148,8 +149,7 @@ public class GraphHopper implements GraphHopperAPI {
     }
 
     /**
-     * Specify which vehicles can be read by this GraphHopper instance. An encoding manager defines
-     * how data from every vehicle is written (und read) into edges of the graph.
+     * Specify which data can be read by this GraphHopper instance.
      */
     public GraphHopper setEncodingManager(EncodingManager em) {
         ensureNotLoaded();
@@ -533,8 +533,21 @@ public class GraphHopper implements GraphHopperAPI {
         removeZipped = args.getBool("graph.remove_zipped", removeZipped);
         int bytesForFlags = args.getInt("graph.bytes_for_flags", 4);
         String flagEncodersStr = args.get("graph.flag_encoders", "");
-        if (!flagEncodersStr.isEmpty())
-            setEncodingManager(new EncodingManager(flagEncoderFactory, flagEncodersStr, bytesForFlags));
+        if (!flagEncodersStr.isEmpty()) {
+            if (bytesForFlags > 8) {
+                setEncodingManager(new EncodingManager.Builder(new TagsParserOSM(), bytesForFlags).
+                        add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("maxspeed", 5, 0, 5, false))).
+                        add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("averagespeed", 5, 0, 5, false))).
+                        add(TagParserFactory.createRoundabout(new BooleanEncodedValue("roundabout"))).
+                        add(TagParserFactory.Car.createAccess(new BooleanEncodedValue("access", true))).
+                        add(TagParserFactory.createHighway(new StringEncodedValue("highway",
+                                Arrays.asList("primary", "secondary", "tertiary", "motorway", "motorway_link",
+                                        "motorroad", "residential", "trunk"), "tertiary"))).
+                        build());
+            } else {
+                setEncodingManager(new EncodingManager.Builder().addAll(flagEncoderFactory, flagEncodersStr, bytesForFlags).build());
+            }
+        }
 
         if (args.get("graph.locktype", "native").equals("simple"))
             lockFactory = new SimpleFSLockFactory();
@@ -887,7 +900,9 @@ public class GraphHopper implements GraphHopperAPI {
         String weightingStr = hintsMap.getWeighting().toLowerCase();
         Weighting weighting = null;
 
-        if (encoder.supports(GenericWeighting.class)) {
+        if (weightingStr.equals("fastest2")) {
+            weighting = new FastestCarWeighting(encodingManager, "fastest2");
+        } else if (encoder.supports(GenericWeighting.class)) {
             weighting = new GenericWeighting((DataFlagEncoder) encoder, hintsMap);
         } else if ("shortest".equalsIgnoreCase(weightingStr)) {
             weighting = new ShortestWeighting(encoder);
@@ -922,6 +937,10 @@ public class GraphHopper implements GraphHopperAPI {
      */
     public Weighting createTurnWeighting(Graph graph, Weighting weighting, TraversalMode tMode) {
         FlagEncoder encoder = weighting.getFlagEncoder();
+        // TODO For new 1112 encoding approach we need different turn cost support
+        if (encoder == null)
+            return weighting;
+
         if (encoder.supports(TurnWeighting.class) && !tMode.equals(TraversalMode.NODE_BASED))
             return new TurnWeighting(weighting, (TurnCostExtension) graph.getExtension());
         return weighting;
@@ -986,19 +1005,22 @@ public class GraphHopper implements GraphHopperAPI {
 
             RoutingTemplate routingTemplate;
             if (ROUND_TRIP.equalsIgnoreCase(algoStr))
-                routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, locationIndex, maxRoundTripRetries);
+                routingTemplate = new RoundTripRoutingTemplate(request, ghRsp, encodingManager, locationIndex, maxRoundTripRetries);
             else if (ALT_ROUTE.equalsIgnoreCase(algoStr))
-                routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, locationIndex);
+                routingTemplate = new AlternativeRoutingTemplate(request, ghRsp, encodingManager, locationIndex);
             else
-                routingTemplate = new ViaRoutingTemplate(request, ghRsp, locationIndex);
+                routingTemplate = new ViaRoutingTemplate(request, ghRsp, encodingManager, locationIndex);
 
+            // TODO how can we know the weighting (that needs the QueryGraph) before the lookup?
+            // then we can easily call weighting.createEdgeFilter(true, true) instead of:
+            EdgeFilter edgeFilter = vehicle.equals(EncodingManager.ENCODER_NAME) ? EdgeFilter.ALL_EDGES : new DefaultEdgeFilter(encoder);
             List<Path> altPaths = null;
             int maxRetries = routingTemplate.getMaxRetries();
             Locale locale = request.getLocale();
             Translation tr = trMap.getWithFallBack(locale);
             for (int i = 0; i < maxRetries; i++) {
                 StopWatch sw = new StopWatch().start();
-                List<QueryResult> qResults = routingTemplate.lookup(points, encoder);
+                List<QueryResult> qResults = routingTemplate.lookup(points, edgeFilter);
                 ghRsp.addDebugInfo("idLookup:" + sw.stop().getSeconds() + "s");
                 if (ghRsp.hasErrors())
                     return Collections.emptyList();

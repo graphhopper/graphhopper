@@ -17,15 +17,8 @@
  */
 package com.graphhopper.reader.osm;
 
-import com.carrotsearch.hppc.IntLongMap;
-import com.carrotsearch.hppc.LongArrayList;
-import com.carrotsearch.hppc.LongIndexedContainer;
-import com.carrotsearch.hppc.LongLongMap;
-import com.carrotsearch.hppc.LongSet;
-import com.graphhopper.coll.GHIntLongHashMap;
-import com.graphhopper.coll.GHLongHashSet;
-import com.graphhopper.coll.GHLongIntBTree;
-import com.graphhopper.coll.GHLongLongHashMap;
+import com.carrotsearch.hppc.*;
+import com.graphhopper.coll.*;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
@@ -603,7 +596,7 @@ public class OSMReader implements DataReader {
     /**
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
-    Collection<EdgeIteratorState> addOSMWay(final LongIndexedContainer osmNodeIds, final long flags, final long wayOsmId) {
+    Collection<EdgeIteratorState> addOSMWay(final LongIndexedContainer osmNodeIds, final long wayFlags, final long wayOsmId) {
         PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
         List<EdgeIteratorState> newEdges = new ArrayList<EdgeIteratorState>(5);
         int firstNode = -1;
@@ -631,7 +624,7 @@ public class OSMReader implements DataReader {
                         tmpNode = -tmpNode - 3;
                         if (pointList.getSize() > 1 && firstNode >= 0) {
                             // TOWER node
-                            newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
+                            newEdges.add(addEdge(firstNode, tmpNode, pointList, wayFlags, wayOsmId));
                             pointList.clear();
                             pointList.add(nodeAccess, tmpNode);
                         }
@@ -659,7 +652,7 @@ public class OSMReader implements DataReader {
                     tmpNode = -tmpNode - 3;
                     pointList.add(nodeAccess, tmpNode);
                     if (firstNode >= 0) {
-                        newEdges.add(addEdge(firstNode, tmpNode, pointList, flags, wayOsmId));
+                        newEdges.add(addEdge(firstNode, tmpNode, pointList, wayFlags, wayOsmId));
                         pointList.clear();
                         pointList.add(nodeAccess, tmpNode);
                     }

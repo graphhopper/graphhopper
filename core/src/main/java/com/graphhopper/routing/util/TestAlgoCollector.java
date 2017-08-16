@@ -78,7 +78,7 @@ public class TestAlgoCollector {
                 setSimplifyResponse(false).
                 setEnableInstructions(true);
         PathWrapper rsp = new PathWrapper();
-        pathMerger.doWork(rsp, altPaths, trMap.getWithFallBack(Locale.US));
+        pathMerger.doWork(rsp, altPaths, algoEntry.encodingManager, trMap.getWithFallBack(Locale.US));
 
         if (rsp.hasErrors()) {
             errors.add("response for " + algoEntry + " contains errors. Expected distance: " + oneRun.getDistance()
@@ -145,14 +145,17 @@ public class TestAlgoCollector {
     }
 
     public static class AlgoHelperEntry {
+        private final EncodingManager encodingManager;
         private final LocationIndex idx;
         private Graph forQueryGraph;
         private String expectedAlgo;
         private AlgorithmOptions opts;
 
-        public AlgoHelperEntry(Graph g, AlgorithmOptions opts, LocationIndex idx, String expectedAlgo) {
+        public AlgoHelperEntry(Graph g, AlgorithmOptions opts, EncodingManager encodingManager,
+                               LocationIndex idx, String expectedAlgo) {
             this.forQueryGraph = g;
             this.opts = opts;
+            this.encodingManager = encodingManager;
             this.idx = idx;
             this.expectedAlgo = expectedAlgo;
         }

@@ -19,7 +19,10 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.util.spatialrules.*;
+import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.util.spatialrules.SpatialRule;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
+import com.graphhopper.routing.util.spatialrules.TransportationMode;
 import com.graphhopper.routing.weighting.GenericWeighting;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
@@ -73,19 +76,19 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     private final int transportModeBridgeValue;
     private final int transportModeFordValue;
     private long bit0;
-    private EncodedDoubleValue carFwdMaxspeedEncoder;
-    private EncodedDoubleValue carBwdMaxspeedEncoder;
-    private EncodedDoubleValue heightEncoder;
-    private EncodedDoubleValue weightEncoder;
-    private EncodedDoubleValue widthEncoder;
-    private EncodedValue surfaceEncoder;
-    private EncodedValue highwayEncoder;
-    private EncodedValue transportModeEncoder;
-    private EncodedValue accessEncoder;
+    private EncodedDoubleValue08 carFwdMaxspeedEncoder;
+    private EncodedDoubleValue08 carBwdMaxspeedEncoder;
+    private EncodedDoubleValue08 heightEncoder;
+    private EncodedDoubleValue08 weightEncoder;
+    private EncodedDoubleValue08 widthEncoder;
+    private EncodedValue08 surfaceEncoder;
+    private EncodedValue08 highwayEncoder;
+    private EncodedValue08 transportModeEncoder;
+    private EncodedValue08 accessEncoder;
     private boolean storeHeight = false;
     private boolean storeWeight = false;
     private boolean storeWidth = false;
-    private EncodedValue spatialEncoder;
+    private EncodedValue08 spatialEncoder;
     private SpatialRuleLookup spatialRuleLookup = SpatialRuleLookup.EMPTY;
 
     public DataFlagEncoder() {
@@ -93,10 +96,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     public DataFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speed_bits", 5),
+        this(properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
                 properties.getBool("turn_costs", false) ? 1 : 0);
-        this.properties = properties;
         this.setStoreHeight(properties.getBool("store_height", false));
         this.setStoreWeight(properties.getBool("store_weight", false));
         this.setStoreWidth(properties.getBool("store_width", false));
@@ -175,45 +177,45 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         // TODO support different vehicle types, currently just roundabout and fwd&bwd for one vehicle type
         shift = super.defineWayBits(index, shift);
 
-        carFwdMaxspeedEncoder = new EncodedDoubleValue("car fwd maxspeed", shift, speedBits, speedFactor, 0, maxPossibleSpeed, true);
+        carFwdMaxspeedEncoder = new EncodedDoubleValue08("car fwd maxspeed", shift, speedBits, speedFactor, 0, maxPossibleSpeed, true);
         shift += carFwdMaxspeedEncoder.getBits();
 
-        carBwdMaxspeedEncoder = new EncodedDoubleValue("car bwd maxspeed", shift, speedBits, speedFactor, 0, maxPossibleSpeed, true);
+        carBwdMaxspeedEncoder = new EncodedDoubleValue08("car bwd maxspeed", shift, speedBits, speedFactor, 0, maxPossibleSpeed, true);
         shift += carBwdMaxspeedEncoder.getBits();
 
         /* Value range: [3.0m, 5.4m] */
         if (isStoreHeight()) {
-            heightEncoder = new EncodedDoubleValue("height restriction", shift, 7, 0.1, 0, 12, true);
+            heightEncoder = new EncodedDoubleValue08("height restriction", shift, 7, 0.1, 0, 12, true);
             shift += heightEncoder.getBits();
         }
 
         /* Value range: [1.0t, 59.5t] */
         if (isStoreWeight()) {
-            weightEncoder = new EncodedDoubleValue("weight restriction", shift, 10, 0.1, 0, 100, true);
+            weightEncoder = new EncodedDoubleValue08("weight restriction", shift, 10, 0.1, 0, 100, true);
             shift += weightEncoder.getBits();
         }
 
         /* Value range: [2.5m, 3.5m] */
         if (isStoreWidth()) {
-            widthEncoder = new EncodedDoubleValue("width restriction", shift, 6, 0.1, 0, 6, true);
+            widthEncoder = new EncodedDoubleValue08("width restriction", shift, 6, 0.1, 0, 6, true);
             shift += widthEncoder.getBits();
         }
 
-        highwayEncoder = new EncodedValue("highway", shift, 5, 1, 0, highwayMap.size(), true);
+        highwayEncoder = new EncodedValue08("highway", shift, 5, 1, 0, highwayMap.size(), true);
         shift += highwayEncoder.getBits();
 
-        surfaceEncoder = new EncodedValue("surface", shift, 4, 1, 0, surfaceMap.size(), true);
+        surfaceEncoder = new EncodedValue08("surface", shift, 4, 1, 0, surfaceMap.size(), true);
         shift += surfaceEncoder.getBits();
 
-        transportModeEncoder = new EncodedValue("transport mode", shift, 3, 1, 0, transportModeMap.size(), true);
+        transportModeEncoder = new EncodedValue08("transport mode", shift, 3, 1, 0, transportModeMap.size(), true);
         shift += transportModeEncoder.getBits();
 
-        accessEncoder = new EncodedValue("access car", shift, 3, 1, 1, 4, true);
+        accessEncoder = new EncodedValue08("access car", shift, 3, 1, 1, 4, true);
         shift += accessEncoder.getBits();
 
         int tmpMax = spatialRuleLookup.size() - 1;
         int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
-        spatialEncoder = new EncodedValue("spatial_location", shift, bits, 1, 0, tmpMax, true);
+        spatialEncoder = new EncodedValue08("spatial_location", shift, bits, 1, 0, tmpMax, true);
         shift += spatialEncoder.getBits();
 
         return shift;
@@ -424,7 +426,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return SpatialRule.EMPTY;
     }
 
-    private long extractMeter(ReaderWay way, long flags, EncodedDoubleValue valueEncoder, List<String> keys) {
+    private long extractMeter(ReaderWay way, long flags, EncodedDoubleValue08 valueEncoder, List<String> keys) {
         String value = way.getFirstPriorityTag(keys);
         if (Helper.isEmpty(value)) return flags;
 
@@ -445,7 +447,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return flags;
     }
 
-    private long extractTons(ReaderWay way, long flags, EncodedDoubleValue valueEncoder, List<String> keys) {
+    private long extractTons(ReaderWay way, long flags, EncodedDoubleValue08 valueEncoder, List<String> keys) {
         String value = way.getFirstPriorityTag(keys);
         if (Helper.isEmpty(value)) return flags;
 

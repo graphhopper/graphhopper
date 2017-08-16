@@ -17,7 +17,11 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
@@ -122,6 +126,51 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     @Override
     public boolean getBool(int key, boolean _default) {
         return edges.get(current).getBool(key, _default);
+    }
+
+    @Override
+    public IntsRef getData() {
+        return edges.get(current).getData();
+    }
+
+    @Override
+    public void set(BooleanEncodedValue property, boolean value) {
+        edges.get(current).set(property, value);
+    }
+
+    @Override
+    public boolean get(BooleanEncodedValue property) {
+        return edges.get(current).get(property);
+    }
+
+    @Override
+    public void set(DecimalEncodedValue property, double value) {
+        edges.get(current).set(property, value);
+    }
+
+    @Override
+    public double get(DecimalEncodedValue property) {
+        return edges.get(current).get(property);
+    }
+
+    @Override
+    public void set(StringEncodedValue property, String value) {
+        edges.get(current).set(property, value);
+    }
+
+    @Override
+    public String get(StringEncodedValue property) {
+        return edges.get(current).get(property);
+    }
+
+    @Override
+    public void set(IntEncodedValue property, int value) {
+        edges.get(current).set(property, value);
+    }
+
+    @Override
+    public int get(IntEncodedValue property) {
+        return edges.get(current).get(property);
     }
 
     @Override

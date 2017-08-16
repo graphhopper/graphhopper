@@ -7,7 +7,7 @@ The core module includes the following software:
  * slf4j.org - SLF4J distributed under the MIT license. 
  * com.carrotsearch:hppc (Apache license)
  * SparseArray from the Android project (Apache license)
- * Snippets regarding mmap, vint/vlong and compression from Lucene (Apache license)
+ * Code regarding mmap, IntsRef, vint/vlong and compression from Lucene (Apache license)
  * XMLGraphics-Commons for CGIAR elevation files (Apache License)
  * Apache Commons Lang - we copied the implementation of the Levenshtein Distance (Apache License)
  * Apache Commons Collections - we copied parts of the BinaryHeap (Apache License)

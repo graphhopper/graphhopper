@@ -48,7 +48,7 @@ public class LandmarkStorageTest {
     public void setUp() {
         encoder = new CarFlagEncoder();
         ghStorage = new GraphHopperStorage(new RAMDirectory(),
-                new EncodingManager(encoder), false, new GraphExtension.NoOpExtension());
+                new EncodingManager.Builder().addAll(encoder).build(), false, new GraphExtension.NoOpExtension());
         ghStorage.create(1000);
     }
 

@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.routing.weighting.Weighting;
@@ -55,6 +56,11 @@ public class PreparationWeighting implements Weighting {
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         return userWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
+    }
+
+    @Override
+    public EdgeFilter createEdgeFilter(boolean forward, boolean reverse) {
+        return userWeighting.createEdgeFilter(forward, reverse);
     }
 
     @Override

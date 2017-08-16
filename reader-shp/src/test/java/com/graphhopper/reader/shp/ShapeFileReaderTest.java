@@ -113,7 +113,7 @@ public class ShapeFileReaderTest {
         gh.setWayPointMaxDistance(0);
         return gh.setStoreOnFlush(false).setDataReaderFile(inputFile)
                 .setGraphHopperLocation(new File(outDir).getAbsolutePath())
-                .setEncodingManager(new EncodingManager(new CarFlagEncoder()))
+                .setEncodingManager(new EncodingManager.Builder().addAll(new CarFlagEncoder()).build())
                 .setCHEnabled(false).importOrLoad();
 
     }

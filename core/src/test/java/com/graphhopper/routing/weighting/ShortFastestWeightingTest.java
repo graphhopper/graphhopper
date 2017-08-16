@@ -32,7 +32,7 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class ShortFastestWeightingTest {
-    private final FlagEncoder encoder = new EncodingManager("car").getEncoder("car");
+    private final FlagEncoder encoder = new EncodingManager.Builder().addAllFlagEncoders("car").build().getEncoder("car");
 
     @Test
     public void testShort() {

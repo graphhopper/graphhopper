@@ -45,7 +45,7 @@ public abstract class AbstractGraphStorageTester {
     private final String locationParent = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraphLoc = "./target/graphstorage/default";
-    protected EncodingManager encodingManager = new EncodingManager("car,foot");
+    protected EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car,foot").build();
     protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
     protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
     protected GraphHopperStorage graph;
@@ -973,7 +973,7 @@ public abstract class AbstractGraphStorageTester {
             }
         });
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
-        EncodingManager manager = new EncodingManager(list, 8);
+        EncodingManager manager = new EncodingManager.Builder().addAll(list, 8).build();
         graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);

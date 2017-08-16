@@ -17,7 +17,12 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -37,17 +42,20 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     private final int originalTraversalKey;
     private double distance;
     private long flags;
+    private IntsRef edgeData;
     private String name;
-    // indication if edges are dispreferred as start/stop edge 
+    // indication if edges are penalized as start/stop edge
     private boolean unfavored;
     private EdgeIteratorState reverseEdge;
 
-    public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance, long flags, String name, PointList pointList) {
+    public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance,
+                                    long flags, IntsRef edgeData, String name, PointList pointList) {
         this.originalTraversalKey = originalTraversalKey;
         this.edgeId = edgeId;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
         this.distance = distance;
+        this.edgeData = edgeData;
         this.flags = flags;
         this.name = name;
         this.pointList = pointList;
@@ -123,6 +131,51 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     public EdgeIteratorState setFlags(long flags) {
         this.flags = flags;
         return this;
+    }
+
+    @Override
+    public IntsRef getData() {
+        return edgeData;
+    }
+
+    @Override
+    public void set(BooleanEncodedValue property, boolean value) {
+        property.setBool(false, edgeData, value);
+    }
+
+    @Override
+    public boolean get(BooleanEncodedValue property) {
+        return property.getBool(false, edgeData);
+    }
+
+    @Override
+    public int get(IntEncodedValue property) {
+        return property.getInt(false, edgeData);
+    }
+
+    @Override
+    public void set(IntEncodedValue property, int value) {
+        property.setInt(false, edgeData, value);
+    }
+
+    @Override
+    public String get(StringEncodedValue property) {
+        return property.getString(false, edgeData);
+    }
+
+    @Override
+    public void set(StringEncodedValue property, String value) {
+        property.setString(false, edgeData, value);
+    }
+
+    @Override
+    public double get(DecimalEncodedValue property) {
+        return property.getDecimal(false, edgeData);
+    }
+
+    @Override
+    public void set(DecimalEncodedValue property, double value) {
+        property.setDecimal(false, edgeData, value);
     }
 
     @Override

@@ -20,8 +20,6 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import org.junit.Test;
 
-import java.io.Reader;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 
@@ -29,7 +27,7 @@ import static org.junit.Assert.assertFalse;
  * @author Peter Karich
  */
 public class HikeFlagEncoderTest {
-    private final EncodingManager encodingManager = new EncodingManager("car,hike");
+    private final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car,hike").build();
     private final HikeFlagEncoder hikeEncoder = (HikeFlagEncoder) encodingManager.getEncoder("hike");
 
     @Test

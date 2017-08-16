@@ -39,21 +39,18 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     public static final int CURVATURE_KEY = 112;
     private final HashSet<String> avoidSet = new HashSet<String>();
     private final HashSet<String> preferSet = new HashSet<String>();
-    private EncodedDoubleValue reverseSpeedEncoder;
-    private EncodedValue priorityWayEncoder;
-    private EncodedValue curvatureEncoder;
+    private EncodedDoubleValue08 reverseSpeedEncoder;
+    private EncodedValue08 priorityWayEncoder;
+    private EncodedValue08 curvatureEncoder;
 
     public MotorcycleFlagEncoder() {
         this(5, 5, 0);
     }
 
     public MotorcycleFlagEncoder(PMap properties) {
-        this(
-                (int) properties.getLong("speed_bits", 5),
+        this(properties.getInt("speed_bits", 5),
                 properties.getDouble("speed_factor", 5),
-                properties.getBool("turn_costs", false) ? 1 : 0
-        );
-        this.properties = properties;
+                properties.getBool("turn_costs", false) ? 1 : 0);
         this.setBlockFords(properties.getBool("block_fords", true));
     }
 
@@ -131,14 +128,14 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     public int defineWayBits(int index, int shift) {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
-        reverseSpeedEncoder = new EncodedDoubleValue("Reverse Speed", shift, speedBits, speedFactor,
+        reverseSpeedEncoder = new EncodedDoubleValue08("Reverse Speed", shift, speedBits, speedFactor,
                 defaultSpeedMap.get("secondary"), maxPossibleSpeed);
         shift += reverseSpeedEncoder.getBits();
 
-        priorityWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 3, 7);
+        priorityWayEncoder = new EncodedValue08("PreferWay", shift, 3, 1, 3, 7);
         shift += priorityWayEncoder.getBits();
 
-        curvatureEncoder = new EncodedValue("Curvature", shift, 4, 1, 10, 10);
+        curvatureEncoder = new EncodedValue08("Curvature", shift, 4, 1, 10, 10);
         shift += curvatureEncoder.getBits();
 
         return shift;

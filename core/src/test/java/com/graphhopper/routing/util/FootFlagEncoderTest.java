@@ -35,7 +35,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class FootFlagEncoderTest {
-    private final EncodingManager encodingManager = new EncodingManager("car,bike,foot");
+    private final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car,bike,foot").build();
     private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
 
     @Test

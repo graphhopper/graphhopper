@@ -51,7 +51,7 @@ public class GenericWeightingTest {
         properties.put("store_weight", true);
         properties.put("store_width", true);
         encoder = new DataFlagEncoder(properties);
-        em = new EncodingManager(Arrays.asList(encoder), 8);
+        em = new EncodingManager.Builder().addAll(Arrays.asList(encoder), 8).build();
     }
 
     @Before
@@ -89,7 +89,7 @@ public class GenericWeightingTest {
     @Test
     public void testDisabledRoadAttributes() {
         DataFlagEncoder simpleEncoder = new DataFlagEncoder();
-        EncodingManager simpleEncodingManager = new EncodingManager(simpleEncoder);
+        EncodingManager simpleEncodingManager = new EncodingManager.Builder().addAll(simpleEncoder).build();
         Graph simpleGraph = new GraphBuilder(simpleEncodingManager).create();
 
         ReaderWay way = new ReaderWay(27l);

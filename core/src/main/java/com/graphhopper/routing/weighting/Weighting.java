@@ -17,10 +17,10 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.PMap;
 
 /**
  * Specifies how the best route is calculated. E.g. the fastest or shortest route.
@@ -60,7 +60,22 @@ public interface Weighting {
      */
     long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId);
 
+    /**
+     * This method returns the associated FlagEncoder for this weighting and null for the new EncodedValue mechanism (#1112).
+     * TODO: remove FlagEncoder usage to avoid this ugliness.
+     *
+     * @deprecated with 0.10
+     */
+    @Deprecated
     FlagEncoder getFlagEncoder();
+
+    /**
+     * This method creates a new edge filter that allows access for the specified direction.
+     * TODO the DefaultEdgeFilter constructor has exactly the opposite but unintuitive argument order: encoder, reverse, forward
+     *
+     * @see com.graphhopper.routing.util.DefaultEdgeFilter
+     */
+    EdgeFilter createEdgeFilter(boolean forward, boolean reverse);
 
     String getName();
 

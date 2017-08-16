@@ -78,7 +78,7 @@ public final class PtModule extends AbstractModule {
     @Provides
     @Singleton
     EncodingManager createEncodingManager(PtFlagEncoder ptFlagEncoder) {
-        return new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
+        return new EncodingManager.Builder().addAll(Arrays.asList(ptFlagEncoder), 8).build();
     }
 
     @Provides

@@ -26,10 +26,14 @@ import com.graphhopper.coll.MapEntry;
 import com.graphhopper.routing.DijkstraBidirectionRef;
 import com.graphhopper.routing.subnetwork.SubnetworkStorage;
 import com.graphhopper.routing.subnetwork.TarjansSCCAlgorithm;
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.AllEdgesIterator;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.AbstractWeighting;
+import com.graphhopper.routing.weighting.FastestCarWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -69,7 +73,6 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     private double factor = -1;
     private final static double DOUBLE_MLTPL = 1e6;
     private final GraphHopperStorage graph;
-    private final FlagEncoder encoder;
     private final Weighting weighting;
     private Weighting lmSelectionWeighting;
     private final TraversalMode traversalMode;
@@ -87,27 +90,47 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
     public LandmarkStorage(GraphHopperStorage graph, Directory dir, final Weighting weighting, int landmarks) {
         this.graph = graph;
         this.minimumNodes = Math.min(graph.getNodes() / 2, 500_000);
-        this.encoder = weighting.getFlagEncoder();
         this.weighting = weighting;
-        // allowing arbitrary weighting is too dangerous
-        this.lmSelectionWeighting = new ShortestWeighting(encoder) {
-            @Override
-            public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-                // make accessibility of shortest identical to the provided weighting to avoid problems like shown in testWeightingConsistence
-                double res = weighting.calcWeight(edge, reverse, prevOrNextEdgeId);
-                if (res >= Double.MAX_VALUE)
-                    return Double.POSITIVE_INFINITY;
+        final FlagEncoder encoder = weighting.getFlagEncoder();
+        if (encoder != null) {
+            // allowing arbitrary weighting is too dangerous
+            this.lmSelectionWeighting = new ShortestWeighting(encoder) {
+                @Override
+                public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
+                    // make accessibility of shortest identical to the provided weighting to avoid problems like shown in testWeightingConsistence
+                    double res = weighting.calcWeight(edge, reverse, prevOrNextEdgeId);
+                    if (res >= Double.MAX_VALUE)
+                        return Double.POSITIVE_INFINITY;
 
-                // returning the time or distance leads to strange landmark positions (ferries -> slow&very long) and BFS is more what we want
-                return 1;
-            }
+                    // returning the time or distance leads to strange landmark positions (ferries -> slow&very long) and BFS is more what we want
+                    return 1;
+                }
 
-            @Override
-            public String toString() {
-                return "LM_BFS|" + encoder;
-            }
-        };
+                @Override
+                public String toString() {
+                    return "LM_BFS|" + encoder;
+                }
+            };
+        } else {
+            // allowing arbitrary weighting is too dangerous
+            this.lmSelectionWeighting = new FastestCarWeighting(graph.getEncodingManager(), "car") {
+                @Override
+                public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
+                    // make accessibility of shortest identical to the provided weighting to avoid problems like shown in testWeightingConsistence
+                    double res = weighting.calcWeight(edge, reverse, prevOrNextEdgeId);
+                    if (res >= Double.MAX_VALUE)
+                        return Double.POSITIVE_INFINITY;
 
+                    // returning the time or distance leads to strange landmark positions (ferries -> slow&very long) and BFS is more what we want
+                    return 1;
+                }
+
+                @Override
+                public String toString() {
+                    return "LM_BFS|" + getName();
+                }
+            };
+        }
         // Edge based is not really necessary because when adding turn costs while routing we can still
         // use the node based traversal as this is a smaller weight approximation and will still produce correct results
         this.traversalMode = TraversalMode.NODE_BASED;
@@ -246,14 +269,13 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
         byte[] subnetworks = new byte[graph.getNodes()];
         Arrays.fill(subnetworks, (byte) UNSET_SUBNETWORK);
-        EdgeFilter tarjanFilter = new DefaultEdgeFilter(encoder, false, true);
         IntHashSet blockedEdges = new IntHashSet();
-
+        EdgeFilter tarjanFilter = weighting.createEdgeFilter(true, false);
         // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
         if (ruleLookup != null && ruleLookup.size() > 0) {
             StopWatch sw = new StopWatch().start();
             blockedEdges = findBorderEdgeIds(ruleLookup);
-            tarjanFilter = new BlockedEdgesFilter(encoder, false, true, blockedEdges);
+            tarjanFilter = new BlockedEdgesFilter(tarjanFilter, blockedEdges);
             if (logDetails)
                 LOGGER.info("Made " + blockedEdges.size() + " edges inaccessible. Calculated country cut in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
         }
@@ -267,7 +289,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         if (logDetails)
             LOGGER.info("Calculated " + graphComponents.size() + " subnetworks via tarjan in " + sw.stop().getSeconds() + "s, " + Helper.getMemInfo());
 
-        EdgeExplorer tmpExplorer = graph.createEdgeExplorer(new RequireBothDirectionsEdgeFilter(encoder));
+        EdgeFilter bwdFilter = weighting.createEdgeFilter(false, true);
+        EdgeExplorer tmpExplorer = graph.createEdgeExplorer(new RequireBothDirectionsEdgeFilter(tarjanFilter, bwdFilter));
 
         int nodes = 0;
         for (IntArrayList subnetworkIds : graphComponents) {
@@ -364,10 +387,11 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
             LOGGER.info("Picked " + tmpLandmarkNodeIds.length + " landmark suggestions, skipped expensive landmark determination");
         } else {
             // 1a) pick landmarks via special weighting for a better geographical spreading
+            EdgeFilter filter = weighting.createEdgeFilter(true, true);
             Weighting initWeighting = lmSelectionWeighting;
-            LandmarkExplorer explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode);
+            LandmarkExplorer explorer = new LandmarkExplorer(graph, initWeighting, traversalMode, this);
             explorer.initFrom(startNode, 0);
-            explorer.setFilter(blockedEdges, true, true);
+            explorer.setFilter(blockedEdges, filter);
             explorer.runAlgo(true);
 
             if (explorer.getFromCount() < minimumNodes) {
@@ -382,8 +406,8 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 if (Thread.currentThread().isInterrupted()) {
                     throw new RuntimeException("Thread was interrupted");
                 }
-                explorer = new LandmarkExplorer(graph, this, initWeighting, traversalMode);
-                explorer.setFilter(blockedEdges, true, true);
+                explorer = new LandmarkExplorer(graph, initWeighting, traversalMode, this);
+                explorer.setFilter(blockedEdges, filter);
                 // set all current landmarks as start so that the next getLastNode is hopefully a "far away" node
                 for (int j = 0; j < lmIdx + 1; j++) {
                     explorer.initFrom(tmpLandmarkNodeIds[j], 0);
@@ -399,15 +423,17 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                 LOGGER.info("Finished searching landmarks for subnetwork " + subnetworkId + " of size " + explorer.getVisitedNodes());
         }
 
+        EdgeFilter reverseFilter = weighting.createEdgeFilter(false, true);
+        EdgeFilter forwardFilter = weighting.createEdgeFilter(true, false);
         // 2) calculate weights for all landmarks -> 'from' and 'to' weight
         for (int lmIdx = 0; lmIdx < tmpLandmarkNodeIds.length; lmIdx++) {
             if (Thread.currentThread().isInterrupted()) {
                 throw new RuntimeException("Thread was interrupted");
             }
             int lmNodeId = tmpLandmarkNodeIds[lmIdx];
-            LandmarkExplorer explorer = new LandmarkExplorer(graph, this, weighting, traversalMode);
+            LandmarkExplorer explorer = new LandmarkExplorer(graph, weighting, traversalMode, this);
             explorer.initFrom(lmNodeId, 0);
-            explorer.setFilter(blockedEdges, false, true);
+            explorer.setFilter(blockedEdges, forwardFilter);
             explorer.runAlgo(true);
             explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH, FROM_OFFSET);
 
@@ -417,9 +443,9 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
                     return false;
             }
 
-            explorer = new LandmarkExplorer(graph, this, weighting, traversalMode);
+            explorer = new LandmarkExplorer(graph, weighting, traversalMode, this);
             explorer.initTo(lmNodeId, 0);
-            explorer.setFilter(blockedEdges, true, false);
+            explorer.setFilter(blockedEdges, reverseFilter);
             explorer.runAlgo(false);
             explorer.initLandmarkWeights(lmIdx, lmNodeId, LM_ROW_LENGTH, TO_OFFSET);
 
@@ -722,13 +748,13 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         private boolean from;
         private final LandmarkStorage lms;
 
-        public LandmarkExplorer(Graph g, LandmarkStorage lms, Weighting weighting, TraversalMode tMode) {
+        public LandmarkExplorer(Graph g, Weighting weighting, TraversalMode tMode, LandmarkStorage lms) {
             super(g, weighting, tMode);
             this.lms = lms;
         }
 
-        public void setFilter(IntHashSet set, boolean bwd, boolean fwd) {
-            EdgeFilter ef = new BlockedEdgesFilter(flagEncoder, bwd, fwd, set);
+        public void setFilter(IntHashSet set, EdgeFilter filter) {
+            EdgeFilter ef = new BlockedEdgesFilter(filter, set);
             outEdgeExplorer = graph.createEdgeExplorer(ef);
             inEdgeExplorer = graph.createEdgeExplorer(ef);
         }
@@ -836,48 +862,38 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
 
     final static class RequireBothDirectionsEdgeFilter implements EdgeFilter {
 
-        private FlagEncoder flagEncoder;
+        private final EdgeFilter edgeFilterFwd;
+        private final EdgeFilter edgeFilterBwd;
 
-        public RequireBothDirectionsEdgeFilter(FlagEncoder flagEncoder) {
-            this.flagEncoder = flagEncoder;
+        public RequireBothDirectionsEdgeFilter(EdgeFilter edgeFilterFwd, EdgeFilter edgeFilterBwd) {
+            this.edgeFilterFwd = edgeFilterFwd;
+            this.edgeFilterBwd = edgeFilterBwd;
         }
 
         @Override
         public boolean accept(EdgeIteratorState edgeState) {
-            return flagEncoder.isForward(edgeState.getFlags()) && flagEncoder.isBackward(edgeState.getFlags());
+            return edgeFilterFwd.accept(edgeState) && edgeFilterBwd.accept(edgeState);
         }
     }
 
     private static class BlockedEdgesFilter implements EdgeFilter {
         private final IntHashSet blockedEdges;
-        private final FlagEncoder encoder;
-        private final boolean fwd;
-        private final boolean bwd;
+        private EdgeFilter filter;
 
-        public BlockedEdgesFilter(FlagEncoder encoder, boolean bwd, boolean fwd, IntHashSet blockedEdges) {
-            this.encoder = encoder;
-            this.bwd = bwd;
-            this.fwd = fwd;
+        BlockedEdgesFilter(EdgeFilter filter, IntHashSet blockedEdges) {
+            this.filter = filter;
             this.blockedEdges = blockedEdges;
         }
 
         @Override
         public final boolean accept(EdgeIteratorState iter) {
             boolean blocked = blockedEdges.contains(iter.getEdge());
-            return fwd && iter.isForward(encoder) && !blocked || bwd && iter.isBackward(encoder) && !blocked;
-        }
-
-        public boolean acceptsBackward() {
-            return bwd;
-        }
-
-        public boolean acceptsForward() {
-            return fwd;
+            return !blocked && filter.accept(iter);
         }
 
         @Override
         public String toString() {
-            return encoder.toString() + ", bwd:" + bwd + ", fwd:" + fwd;
+            return filter.toString();
         }
     }
 }

@@ -21,6 +21,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.graphhopper.routing.util.EncodingManager;
 import org.geotools.data.DataStore;
 import org.geotools.data.DataStoreFinder;
 import org.geotools.data.FeatureSource;
@@ -31,7 +32,6 @@ import org.opengis.feature.simple.SimpleFeatureType;
 import org.opengis.filter.Filter;
 
 import com.graphhopper.reader.DataReader;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.GraphStorage;

@@ -60,7 +60,7 @@ public class TarjansSCCAlgorithm {
 
         if (ignoreSingleEntries) {
             // Very important case to boost performance - see #520. Exclude single entry components as we don't need them! 
-            // But they'll be created a lot for multiple vehicles because many nodes e.g. for foot are not accessible at all for car.
+            // But they'll be created a lot for multiple vehicle profiles because many nodes e.g. for foot are not accessible at all for car.
             // We can ignore these single entry components as they are already set 'not accessible'
             EdgeExplorer explorer = ghStorage.createEdgeExplorer(edgeFilter);
             int nodes = ghStorage.getNodes();

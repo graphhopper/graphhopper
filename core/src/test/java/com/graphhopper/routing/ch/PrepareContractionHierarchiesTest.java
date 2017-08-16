@@ -45,7 +45,7 @@ import static org.junit.Assert.*;
  */
 public class PrepareContractionHierarchiesTest {
     private final CarFlagEncoder carEncoder = new CarFlagEncoder();
-    private final EncodingManager encodingManager = new EncodingManager(carEncoder);
+    private final EncodingManager encodingManager = new EncodingManager.Builder().addAll(carEncoder).build();
     private final Weighting weighting = new ShortestWeighting(carEncoder);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private Directory dir;
@@ -596,7 +596,7 @@ public class PrepareContractionHierarchiesTest {
     public void testMultiplePreparationsIdenticalView() {
         CarFlagEncoder tmpCarEncoder = new CarFlagEncoder();
         BikeFlagEncoder tmpBikeEncoder = new BikeFlagEncoder();
-        EncodingManager tmpEncodingManager = new EncodingManager(tmpCarEncoder, tmpBikeEncoder);
+        EncodingManager tmpEncodingManager = new EncodingManager.Builder().addAll(tmpCarEncoder, tmpBikeEncoder).build();
 
         // FastestWeighting would lead to different shortcuts due to different default speeds for bike and car
         Weighting carWeighting = new ShortestWeighting(tmpCarEncoder);
@@ -617,7 +617,7 @@ public class PrepareContractionHierarchiesTest {
     public void testMultiplePreparationsDifferentView() {
         CarFlagEncoder tmpCarEncoder = new CarFlagEncoder();
         BikeFlagEncoder tmpBikeEncoder = new BikeFlagEncoder();
-        EncodingManager tmpEncodingManager = new EncodingManager(tmpCarEncoder, tmpBikeEncoder);
+        EncodingManager tmpEncodingManager = new EncodingManager.Builder().addAll(tmpCarEncoder, tmpBikeEncoder).build();
 
         Weighting carWeighting = new FastestWeighting(tmpCarEncoder);
         Weighting bikeWeighting = new FastestWeighting(tmpBikeEncoder);

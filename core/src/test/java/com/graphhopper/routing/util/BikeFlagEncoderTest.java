@@ -34,7 +34,7 @@ import static org.junit.Assert.*;
 public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     @Override
     protected BikeCommonFlagEncoder createBikeEncoder() {
-        return (BikeCommonFlagEncoder) new EncodingManager("bike,mtb").getEncoder("bike");
+        return (BikeCommonFlagEncoder) new EncodingManager.Builder().addAllFlagEncoders("bike,mtb").build().getEncoder("bike");
     }
 
     @Test
@@ -593,7 +593,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     @Test
     public void testTurnFlagEncoding_withCosts() {
         encoder = new BikeFlagEncoder(4, 2, 127);
-        new EncodingManager(encoder);
+        new EncodingManager.Builder().addAll(encoder).build();
 
         long flags_r0 = encoder.getTurnFlags(true, 0);
         long flags_0 = encoder.getTurnFlags(false, 0);

@@ -42,7 +42,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class GraphHopperAPITest {
-    final EncodingManager encodingManager = new EncodingManager("car");
+    final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
 
     void initGraph(GraphHopperStorage graph) {
         NodeAccess na = graph.getNodeAccess();

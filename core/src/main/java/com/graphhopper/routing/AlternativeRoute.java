@@ -68,6 +68,7 @@ public class AlternativeRoute implements RoutingAlgorithm {
         }
     };
     private final Graph graph;
+
     private final Weighting weighting;
     private final TraversalMode traversalMode;
     private int visitedNodes;

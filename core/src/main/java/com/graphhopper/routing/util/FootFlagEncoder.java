@@ -47,8 +47,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     final Map<String, Integer> hikingNetworkToCode = new HashMap<String, Integer>();
     protected HashSet<String> sidewalkValues = new HashSet<String>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<String>(5);
-    private EncodedValue priorityWayEncoder;
-    private EncodedValue relationCodeEncoder;
+    private EncodedValue08 priorityWayEncoder;
+    private EncodedValue08 relationCodeEncoder;
 
     /**
      * Should be only instantiated via EncodingManager
@@ -58,9 +58,8 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     public FootFlagEncoder(PMap properties) {
-        this((int) properties.getLong("speedBits", 4),
+        this(properties.getInt("speedBits", 4),
                 properties.getDouble("speedFactor", 1));
-        this.properties = properties;
         this.setBlockFords(properties.getBool("block_fords", true));
     }
 
@@ -143,17 +142,17 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         // first two bits are reserved for route handling in superclass
         shift = super.defineWayBits(index, shift);
         // larger value required - ferries are faster than pedestrians
-        speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, MEAN_SPEED, maxPossibleSpeed);
+        speedEncoder = new EncodedDoubleValue08("Speed", shift, speedBits, speedFactor, MEAN_SPEED, maxPossibleSpeed);
         shift += speedEncoder.getBits();
 
-        priorityWayEncoder = new EncodedValue("PreferWay", shift, 3, 1, 0, 7);
+        priorityWayEncoder = new EncodedValue08("PreferWay", shift, 3, 1, 0, 7);
         shift += priorityWayEncoder.getBits();
         return shift;
     }
 
     @Override
     public int defineRelationBits(int index, int shift) {
-        relationCodeEncoder = new EncodedValue("RelationCode", shift, 3, 1, 0, 7);
+        relationCodeEncoder = new EncodedValue08("RelationCode", shift, 3, 1, 0, 7);
         return shift + relationCodeEncoder.getBits();
     }
 

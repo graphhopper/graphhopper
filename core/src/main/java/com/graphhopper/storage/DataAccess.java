@@ -24,7 +24,6 @@ package com.graphhopper.storage;
  * <p>
  * Life cycle: (1) object creation, (2) configuration (e.g. segment size), (3) create or
  * loadExisting, (4) usage and calling ensureCapacity if necessary, (5) close
- * <p>
  *
  * @author Peter Karich
  */
