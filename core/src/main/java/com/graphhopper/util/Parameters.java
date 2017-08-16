@@ -186,6 +186,16 @@ public class Parameters {
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
     }
 
+    /**
+     * Properties for the details response
+     */
+    public static final class DETAILS {
+
+        public static final String PATH_DETAILS = "details";
+
+        public static final String AVERAGE_SPEED = "average_speed";
+    }
+
     public static final class PT {
         public static final String EARLIEST_DEPARTURE_TIME = "pt.earliest_departure_time";
         public static final String PROFILE_QUERY = "pt.profile";

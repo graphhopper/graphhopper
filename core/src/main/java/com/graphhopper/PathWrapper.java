@@ -18,13 +18,13 @@
 package com.graphhopper;
 
 import com.graphhopper.util.InstructionList;
+import com.graphhopper.util.PathMerger;
 import com.graphhopper.util.PointList;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.shapes.BBox;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class holds the data like points and instructions of a Path.
@@ -46,6 +46,7 @@ public class PathWrapper {
     private PointList pointList = PointList.EMPTY;
     private int numChanges;
     private final List<Trip.Leg> legs = new ArrayList<>();
+    private Map<String, List<PathDetail>> pathDetails = new HashMap<>();
     private BigDecimal fare;
 
     /**
@@ -240,6 +241,30 @@ public class PathWrapper {
 
     public void setInstructions(InstructionList instructions) {
         this.instructions = instructions;
+    }
+
+    /**
+     * Adds the given PathDetails to the existing ones. If there are already PathDetails set, the number
+     * details has to be equal to <code>details</code>.
+     *
+     * @param details The PathDetails to add
+     */
+    public void addPathDetails(Map<String, List<PathDetail>> details) {
+        if (!this.pathDetails.isEmpty() && !details.isEmpty() && this.pathDetails.size() != details.size()) {
+            throw new IllegalStateException("Details have to be the same size");
+        }
+        for (Map.Entry<String, List<PathDetail>> detailEntry : details.entrySet()) {
+            if (this.pathDetails.containsKey(detailEntry.getKey())) {
+                List<PathDetail> pd = this.pathDetails.get(detailEntry.getKey());
+                PathMerger.merge(pd, detailEntry.getValue());
+            } else {
+                this.pathDetails.put(detailEntry.getKey(), detailEntry.getValue());
+            }
+        }
+    }
+
+    public Map<String, List<PathDetail>> getPathDetails() {
+        return this.pathDetails;
     }
 
     private void check(String method) {
