@@ -823,6 +823,31 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void testRoundTourPathDetails() {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/north-bayreuth.osm.gz").
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car"));
+        tmpHopper.importOrLoad();
+
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(49.981971,11.479082)).
+                setVehicle("car").setWeighting("fastest").
+                setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED)).
+                setAlgorithm(ROUND_TRIP);
+
+        req.getHints().put(RoundTrip.HEADING, 50);
+        req.getHints().put(RoundTrip.DISTANCE, 10000);
+        req.getHints().put(RoundTrip.SEED, 120);
+        req.getHints().put(Parameters.Algorithms.ROUND_TRIP + ".points", 3);
+
+        GHResponse rsp = tmpHopper.route(req);
+
+        assertTrue(rsp.hasErrors());
+    }
+
+    @Test
     public void testFlexMode_631() {
         String tmpOsmFile = DIR + "/monaco.osm.gz";
 
