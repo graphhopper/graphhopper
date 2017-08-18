@@ -832,9 +832,9 @@ public class GraphHopperIT {
         tmpHopper.importOrLoad();
 
         GHRequest req = new GHRequest().
-                addPoint(new GHPoint(49.981971,11.479082)).
+                addPoint(new GHPoint(49.984352,11.498802)).
                 addPoint(new GHPoint(49.984565,11.499188)).
-                addPoint(new GHPoint(49.974403,11.51637)).
+                addPoint(new GHPoint(49.9847,11.499612)).
                 setVehicle("car").setWeighting("fastest").
                 setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED));
 

@@ -153,6 +153,8 @@ public class PathMerger {
         // Make sure that the PathDetail list is merged correctly at via points
         if (!pathDetails.isEmpty() && !otherDetails.isEmpty()) {
             PathDetail lastDetail = pathDetails.get(pathDetails.size() - 1);
+            // Add +1 for the via point
+            lastDetail.setLast(lastDetail.getLast()+1);
             if (lastDetail.getValue().equals(otherDetails.get(0).getValue())) {
                 lastDetail.setLast(otherDetails.get(0).getLast());
                 otherDetails.remove(0);
