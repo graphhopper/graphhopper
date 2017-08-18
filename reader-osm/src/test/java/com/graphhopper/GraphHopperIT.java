@@ -833,6 +833,7 @@ public class GraphHopperIT {
 
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.984352,11.498802)).
+                // This is exactly between two edges with different speed values
                 addPoint(new GHPoint(49.984565,11.499188)).
                 addPoint(new GHPoint(49.9847,11.499612)).
                 setVehicle("car").setWeighting("fastest").
