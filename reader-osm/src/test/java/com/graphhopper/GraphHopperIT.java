@@ -823,7 +823,7 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testRoundTourPathDetails() {
+    public void testPathDetails1138() {
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
@@ -833,18 +833,14 @@ public class GraphHopperIT {
 
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(49.981971,11.479082)).
+                addPoint(new GHPoint(49.984565,11.499188)).
+                addPoint(new GHPoint(49.974403,11.51637)).
                 setVehicle("car").setWeighting("fastest").
-                setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED)).
-                setAlgorithm(ROUND_TRIP);
-
-        req.getHints().put(RoundTrip.HEADING, 50);
-        req.getHints().put(RoundTrip.DISTANCE, 10000);
-        req.getHints().put(RoundTrip.SEED, 120);
-        req.getHints().put(Parameters.Algorithms.ROUND_TRIP + ".points", 3);
+                setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED));
 
         GHResponse rsp = tmpHopper.route(req);
 
-        assertTrue(rsp.hasErrors());
+        assertFalse(rsp.hasErrors());
     }
 
     @Test
