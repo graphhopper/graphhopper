@@ -98,9 +98,13 @@ class TripFromLabel {
         }
 
 
-        List<List<Label.Transition>> partitions = getPartitions(transitions);
-
-        return getLegs(tr, queryGraph, weighting, partitions);
+        final List<List<Label.Transition>> partitions = getPartitions(transitions);
+        final List<Trip.Leg> legs = getLegs(tr, queryGraph, weighting, partitions);
+        if (legs.size() > 1 && legs.get(0) instanceof Trip.WalkLeg) {
+            final Trip.WalkLeg accessLeg = (Trip.WalkLeg) legs.get(0);
+            legs.set(0, new Trip.WalkLeg(accessLeg.departureLocation, new Date(legs.get(1).departureTime.getTime() - (accessLeg.arrivalTime.getTime() - accessLeg.departureTime.getTime())) , accessLeg.edges, accessLeg.geometry, accessLeg.distance, accessLeg.instructions, legs.get(1).departureTime));
+        }
+        return legs;
     }
 
     private List<List<Label.Transition>> getPartitions(List<Label.Transition> transitions) {

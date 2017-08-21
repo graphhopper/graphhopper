@@ -19,6 +19,8 @@ package com.graphhopper.util;
 
 import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.Path;
+import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 
 import java.util.ArrayList;
@@ -26,11 +28,17 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * This class merges a list of points into one point recognizing the specified places.
+ * This class merges multiple {@link Path} objects into one continues object that
+ * can be used in the {@link PathWrapper}. There will be a Path between every waypoint.
+ * So for two waypoints there will be only one Path object. For three waypoints there will be
+ * two Path objects.
  * <p>
+ * The instructions are generated per Path object and are merged into one continues InstructionList.
+ * The PointList per Path object are merged and optionally simplified.
  *
  * @author Peter Karich
  * @author ratrun
+ * @author Robin Boldt
  */
 public class PathMerger {
     private static final DouglasPeucker DP = new DouglasPeucker();
@@ -38,6 +46,7 @@ public class PathMerger {
     private boolean simplifyResponse = true;
     private DouglasPeucker douglasPeucker = DP;
     private boolean calcPoints = true;
+    private PathDetailsBuilderFactory calculatorFactory;
 
     public PathMerger setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
@@ -46,6 +55,11 @@ public class PathMerger {
 
     public PathMerger setDouglasPeucker(DouglasPeucker douglasPeucker) {
         this.douglasPeucker = douglasPeucker;
+        return this;
+    }
+
+    public PathMerger setPathDetailsBuilderFactory(PathDetailsBuilderFactory calculatorFactory) {
+        this.calculatorFactory = calculatorFactory;
         return this;
     }
 
@@ -79,22 +93,9 @@ public class PathMerger {
                 InstructionList il = path.calcInstructions(tr);
 
                 if (!il.isEmpty()) {
-                    if (fullPoints.isEmpty()) {
-                        PointList pl = il.get(0).getPoints();
-                        // do a wild guess about the total number of points to avoid reallocation a bit
-                        fullPoints = new PointList(il.size() * Math.min(10, pl.size()), pl.is3D());
-                    }
+                    fullInstructions.addAll(il);
 
-                    for (Instruction i : il) {
-                        if (simplifyResponse) {
-                            origPoints += i.getPoints().size();
-                            douglasPeucker.simplify(i.getPoints());
-                        }
-                        fullInstructions.add(i);
-                        fullPoints.add(i.getPoints());
-                    }
-
-                    // if not yet reached finish replace with 'reached via'
+                    // for all paths except the last replace the FinishInstruction with a ViaInstructionn
                     if (pathIndex + 1 < paths.size()) {
                         ViaInstruction newInstr = new ViaInstruction(fullInstructions.get(fullInstructions.size() - 1));
                         newInstr.setViaCount(pathIndex + 1);
@@ -102,16 +103,15 @@ public class PathMerger {
                     }
                 }
 
-            } else if (calcPoints) {
+            }
+            if (calcPoints || enableInstructions) {
                 PointList tmpPoints = path.calcPoints();
                 if (fullPoints.isEmpty())
                     fullPoints = new PointList(tmpPoints.size(), tmpPoints.is3D());
 
-                if (simplifyResponse) {
-                    origPoints = tmpPoints.getSize();
-                    douglasPeucker.simplify(tmpPoints);
-                }
                 fullPoints.add(tmpPoints);
+                altRsp.addPathDetails(path.calcDetails(calculatorFactory, origPoints));
+                origPoints += tmpPoints.size();
             }
 
             allFound = allFound && path.isFound();
@@ -127,14 +127,39 @@ public class PathMerger {
         if (enableInstructions)
             altRsp.setInstructions(fullInstructions);
 
-        if (!allFound)
+        if (!allFound) {
             altRsp.addError(new ConnectionNotFoundException("Connection between locations not found", Collections.<String, Object>emptyMap()));
+        }
 
         altRsp.setDescription(description).
                 setPoints(fullPoints).
                 setRouteWeight(fullWeight).
                 setDistance(fullDistance).
                 setTime(fullTimeInMillis);
+
+        if (allFound && simplifyResponse && (calcPoints || enableInstructions)) {
+            PathSimplification ps = new PathSimplification(altRsp, douglasPeucker, enableInstructions);
+            ps.simplify();
+        }
+    }
+
+    /**
+     * Merges <code>otherDetails</code> into the <code>pathDetails</code>.
+     * <p>
+     * This method makes sure that Entry list around via points are merged correctly.
+     * See #1091 and the misplaced PathDetail after waypoints.
+     */
+    public static void merge(List<PathDetail> pathDetails, List<PathDetail> otherDetails) {
+        // Make sure that the PathDetail list is merged correctly at via points
+        if (!pathDetails.isEmpty() && !otherDetails.isEmpty()) {
+            PathDetail lastDetail = pathDetails.get(pathDetails.size() - 1);
+            if (lastDetail.getValue().equals(otherDetails.get(0).getValue())) {
+                lastDetail.setLast(otherDetails.get(0).getLast());
+                otherDetails.remove(0);
+            }
+        }
+
+        pathDetails.addAll(otherDetails);
     }
 
     private void calcAscendDescend(final PathWrapper rsp, final PointList pointList) {

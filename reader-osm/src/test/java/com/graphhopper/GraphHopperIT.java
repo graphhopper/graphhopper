@@ -24,6 +24,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.*;
@@ -91,7 +92,7 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(3437.6, arsp.getDistance(), .1);
-        assertEquals(95, arsp.getPoints().getSize());
+        assertEquals(87, arsp.getPoints().getSize());
 
         assertEquals(43.7276852, arsp.getWaypoints().getLat(0), 1e-7);
         assertEquals(43.7495432, arsp.getWaypoints().getLat(1), 1e-7);
@@ -122,7 +123,7 @@ public class GraphHopperIT {
         assertEquals(30, (Long) resultJson.get(5).get("time") / 1000);
 
         List<GPXEntry> list = arsp.getInstructions().createGPXList();
-        assertEquals(95, list.size());
+        assertEquals(87, list.size());
         final long lastEntryMillis = list.get(list.size() - 1).getTime();
         final long totalResponseMillis = arsp.getTime();
         assertEquals(totalResponseMillis, lastEntryMillis);
@@ -326,7 +327,7 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(6875.2, arsp.getDistance(), .1);
-        assertEquals(190, arsp.getPoints().getSize());
+        assertEquals(174, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
         assertEquals(38, il.size());
@@ -390,6 +391,27 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void testMonacoPathDetails() {
+        GHRequest request = new GHRequest();
+        request.addPoint(new GHPoint(43.727687, 7.418737));
+        request.addPoint(new GHPoint(43.74958, 7.436566));
+        request.addPoint(new GHPoint(43.727687, 7.418737));
+        request.setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr);
+        request.setPathDetails(Arrays.asList(new String[]{Parameters.DETAILS.AVERAGE_SPEED}));
+
+        GHResponse rsp = hopper.route(request);
+
+        PathWrapper arsp = rsp.getBest();
+        Map<String, List<PathDetail>> details = arsp.getPathDetails();
+        assertTrue(details.size() == 1);
+        List<PathDetail> detailList = details.get(Parameters.DETAILS.AVERAGE_SPEED);
+        assertEquals(1, detailList.size());
+        assertEquals(5.0, detailList.get(0).getValue());
+        assertEquals(0, detailList.get(0).getFirst());
+        assertEquals(arsp.getPoints().size()-1, detailList.get(0).getLast());
+    }
+
+    @Test
     public void testMonacoEnforcedDirection() {
         GHRequest req = new GHRequest().
                 addPoint(new GHPoint(43.741069, 7.426854), 0.).
@@ -400,7 +422,7 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(874., arsp.getDistance(), 10.);
-        assertEquals(33, arsp.getPoints().getSize());
+        assertEquals(31, arsp.getPoints().getSize());
     }
 
     @Test
@@ -487,7 +509,7 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(297, arsp.getDistance(), 5.);
-        assertEquals(26, arsp.getPoints().getSize());
+        assertEquals(24, arsp.getPoints().getSize());
 
         // test if start and first point are identical leading to an empty path, #788
         rq = new GHRequest().
@@ -517,7 +539,7 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(1626.8, arsp.getDistance(), .1);
-        assertEquals(61, arsp.getPoints().getSize());
+        assertEquals(54, arsp.getPoints().getSize());
         assertTrue(arsp.getPoints().is3D());
 
         InstructionList il = arsp.getInstructions();
@@ -526,24 +548,24 @@ public class GraphHopperIT {
 
         String str = arsp.getPoints().toString();
 
-        assertEquals("(43.73068455771767,7.421283689825812,62.0), (43.73067957305937,7.421382123709815,66.0), "
-                        + "(43.73109792316924,7.421546222751131,45.0), (43.73129908884985,7.421589994913116,45.0), "
-                        + "(43.731327028527716,7.421414533736137,45.0), (43.73125047381037,7.421366291225693,45.0), "
-                        + "(43.73125457162979,7.421274090288746,52.0), "
-                        + "(43.73128213877862,7.421115579183003,52.0), (43.731362232521825,7.421145381506057,52.0), "
-                        + "(43.731371359483255,7.421123216028286,52.0), (43.731485725897976,7.42117332118392,52.0), "
-                        + "(43.731575132867135,7.420868778695214,52.0), (43.73160605277731,7.420824820268709,52.0), "
-                        + "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,52.0)",
-                str.substring(0, 662));
+        assertEquals("(43.73068455771767,7.421283689825812,62.0), (43.73067957305937,7.421382123709815,66.0), " +
+                        "(43.73109792316924,7.421546222751131,45.0), (43.73129908884985,7.421589994913116,45.0), " +
+                        "(43.731327028527716,7.421414533736137,45.0), (43.73125047381037,7.421366291225693,45.0), " +
+                        "(43.73128213877862,7.421115579183003,52.0), (43.731362232521825,7.421145381506057,52.0), " +
+                        "(43.731371359483255,7.421123216028286,52.0), (43.731485725897976,7.42117332118392,52.0), " +
+                        "(43.731575132867135,7.420868778695214,52.0), (43.73160605277731,7.420824820268709,52.0), " +
+                        "(43.7316401391843,7.420850152243305,52.0), (43.731674039326776,7.421050014072285,52.0), " +
+                        "(43.731627473197,7.4214635213046565,45.0)",
+                str.substring(0, 661));
 
-        assertEquals("(43.72771927105753,7.418905923193081,11.0), (43.72768239068275,7.419007064826944,11.0), (43.727680946587874,7.419198768422206,11.0)",
-                str.substring(str.length() - 131));
+        assertEquals("(43.727778875703635,7.418772930326453,11.0), (43.72768239068275,7.419007064826944,11.0), (43.727680946587874,7.419198768422206,11.0)",
+                str.substring(str.length() - 132));
 
-        assertEquals(84, arsp.getAscend(), 1e-1);
-        assertEquals(135, arsp.getDescend(), 1e-1);
+        assertEquals(99, arsp.getAscend(), 1e-1);
+        assertEquals(150, arsp.getDescend(), 1e-1);
 
         List<GPXEntry> list = arsp.getInstructions().createGPXList();
-        assertEquals(61, list.size());
+        assertEquals(54, list.size());
         final long lastEntryMillis = list.get(list.size() - 1).getTime();
         assertEquals(new GPXEntry(43.73068455771767, 7.421283689825812, 62.0, 0), list.get(0));
         assertEquals(new GPXEntry(43.727680946587874, 7.4191987684222065, 11.0, lastEntryMillis), list.get(list.size() - 1));
@@ -626,7 +648,7 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(6932.2, arsp.getDistance(), .1);
-        assertEquals(114, arsp.getPoints().getSize());
+        assertEquals(106, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
         assertEquals(24, il.size());
@@ -776,7 +798,7 @@ public class GraphHopperIT {
         assertNotEquals(sum, 0);
         assertTrue("Too many nodes visited " + sum, sum < 120);
         assertEquals(3437.6, bestPath.getDistance(), .1);
-        assertEquals(95, bestPath.getPoints().getSize());
+        assertEquals(87, bestPath.getPoints().getSize());
 
         tmpHopper.close();
     }
@@ -797,7 +819,7 @@ public class GraphHopperIT {
         PathWrapper pw = rsp.getBest();
         assertEquals(1.45, rsp.getBest().getDistance() / 1000f, .01);
         assertEquals(17, rsp.getBest().getTime() / 1000f / 60, 1);
-        assertEquals(66, pw.getPoints().size());
+        assertEquals(64, pw.getPoints().size());
     }
 
     @Test
@@ -830,7 +852,7 @@ public class GraphHopperIT {
         assertTrue("Too many visited nodes for ch mode " + chSum, chSum < 60);
         PathWrapper bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(90, bestPath.getPoints().getSize());
+        assertEquals(89, bestPath.getPoints().getSize());
 
         // request flex mode
         req.setAlgorithm(Parameters.Algorithms.ASTAR_BI);
@@ -842,7 +864,7 @@ public class GraphHopperIT {
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(90, bestPath.getPoints().getSize());
+        assertEquals(89, bestPath.getPoints().getSize());
 
         // request hybrid mode
         req.getHints().put(Landmark.DISABLE, false);
@@ -856,7 +878,7 @@ public class GraphHopperIT {
 
         bestPath = rsp.getBest();
         assertEquals(3587, bestPath.getDistance(), 1);
-        assertEquals(90, bestPath.getPoints().getSize());
+        assertEquals(89, bestPath.getPoints().getSize());
 
         // combining hybrid & speed mode is currently not possible and should be avoided: #1082
     }

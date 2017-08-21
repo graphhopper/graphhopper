@@ -18,6 +18,12 @@
 
 package com.graphhopper.http;
 
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.*;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.http.resources.*;
@@ -31,6 +37,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.TranslationMap;
+import com.graphhopper.util.details.PathDetail;
 import io.dropwizard.ConfiguredBundle;
 import io.dropwizard.lifecycle.Managed;
 import io.dropwizard.setup.Bootstrap;
@@ -40,6 +47,7 @@ import org.glassfish.hk2.utilities.binding.AbstractBinder;
 
 import javax.inject.Inject;
 import javax.servlet.DispatcherType;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -207,6 +215,66 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
         environment.jersey().register(RouteResource.class);
         environment.jersey().register(I18NResource.class);
         environment.jersey().register(InfoResource.class);
+
+        SimpleModule pathDetailModule = new SimpleModule();
+        pathDetailModule.addSerializer(PathDetail.class, new PathDetailSerializer());
+        pathDetailModule.addDeserializer(PathDetail.class, new PathDetailDeserializer());
+        environment.getObjectMapper().registerModule(pathDetailModule);
+
+    }
+
+    public static class PathDetailSerializer extends JsonSerializer<PathDetail> {
+
+        @Override
+        public void serialize(PathDetail value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeStartArray();
+
+            gen.writeNumber(value.getFirst());
+            gen.writeNumber(value.getLast());
+
+            if (value.getValue() instanceof Double)
+                gen.writeNumber((Double) value.getValue());
+            else if (value.getValue() instanceof Long)
+                gen.writeNumber((Long) value.getValue());
+            else if (value.getValue() instanceof Boolean)
+                gen.writeBoolean((Boolean) value.getValue());
+            else if (value.getValue() instanceof String)
+                gen.writeString((String) value.getValue());
+            else
+                throw new JsonGenerationException("Unsupported type for PathDetail.value" + value.getValue().getClass(), gen);
+
+            gen.writeEndArray();
+        }
+    }
+
+    public static class PathDetailDeserializer extends JsonDeserializer<PathDetail> {
+
+        @Override
+        public PathDetail deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
+            JsonNode pathDetail = jp.readValueAsTree();
+            if (pathDetail.size() != 3)
+                throw new JsonParseException(jp, "PathDetail array must have exactly 3 entries but was " + pathDetail.size());
+
+            JsonNode from = pathDetail.get(0);
+            JsonNode to = pathDetail.get(1);
+            JsonNode val = pathDetail.get(2);
+
+            PathDetail pd;
+            if (val.isBoolean())
+                pd = new PathDetail(val.asBoolean());
+            else if (val.isLong())
+                pd = new PathDetail(val.asLong());
+            else if (val.isDouble())
+                pd = new PathDetail(val.asDouble());
+            else if (val.isTextual())
+                pd = new PathDetail(val.asText());
+            else
+                throw new JsonParseException(jp, "Unsupported type of PathDetail value " + pathDetail.getNodeType().name());
+
+            pd.setFirst(from.asInt());
+            pd.setLast(to.asInt());
+            return pd;
+        }
     }
 
 }
