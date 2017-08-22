@@ -146,7 +146,7 @@ public class GraphHopperServletIT extends BaseServletTester {
         GraphHopperAPI hopper = new GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
-        request.setPathDetails(Arrays.asList("average_speed", "edge_id"));
+        request.setPathDetails(Arrays.asList("average_speed", "edge_id", "time"));
         GHResponse rsp = hopper.route(request);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
@@ -154,6 +154,7 @@ public class GraphHopperServletIT extends BaseServletTester {
         assertFalse(pathDetails.isEmpty());
         assertTrue(pathDetails.containsKey("average_speed"));
         assertTrue(pathDetails.containsKey("edge_id"));
+        assertTrue(pathDetails.containsKey("time"));
         List<PathDetail> averageSpeedList = pathDetails.get("average_speed");
         assertEquals(9, averageSpeedList.size());
         assertEquals(30.0, averageSpeedList.get(0).getValue());
@@ -167,6 +168,15 @@ public class GraphHopperServletIT extends BaseServletTester {
         assertEquals(2, edgeIdDetails.get(0).getLength());
         assertEquals(881L, edgeIdDetails.get(1).getValue());
         assertEquals(8, edgeIdDetails.get(1).getLength());
+
+        long expectedTime = rsp.getBest().getTime();
+        long actualTime = 0;
+        List<PathDetail> timeDetails = pathDetails.get("time");
+        for (PathDetail pd: timeDetails) {
+            actualTime += (Long) pd.getValue();
+        }
+
+        assertEquals(expectedTime, actualTime);
     }
 
     @Test

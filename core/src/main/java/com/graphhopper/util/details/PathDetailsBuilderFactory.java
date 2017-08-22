@@ -18,13 +18,12 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.graphhopper.util.Parameters.DETAILS.AVERAGE_SPEED;
-import static com.graphhopper.util.Parameters.DETAILS.EDGE_ID;
-import static com.graphhopper.util.Parameters.DETAILS.STREET_NAME;
+import static com.graphhopper.util.Parameters.DETAILS.*;
 
 /**
  * Generates a list of PathDetailsBuilder from a List of PathDetail names
@@ -35,10 +34,12 @@ public class PathDetailsBuilderFactory {
 
     private final List<String> requestedPathDetails;
     private final FlagEncoder encoder;
+    private final Weighting weighting;
 
-    public PathDetailsBuilderFactory(List<String> requestedPathDetails, FlagEncoder encoder) {
+    public PathDetailsBuilderFactory(List<String> requestedPathDetails, FlagEncoder encoder, Weighting weighting) {
         this.requestedPathDetails = requestedPathDetails;
         this.encoder = encoder;
+        this.weighting = weighting;
     }
 
     public List<PathDetailsBuilder> createPathDetailsBuilders() {
@@ -52,6 +53,9 @@ public class PathDetailsBuilderFactory {
 
         if (requestedPathDetails.contains(EDGE_ID))
             builders.add(new EdgeIdDetails());
+
+        if (requestedPathDetails.contains(TIME))
+            builders.add(new TimeDetails(encoder, weighting));
 
         if (requestedPathDetails.size() != builders.size()) {
             throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we could only find " + builders);

@@ -31,9 +31,7 @@ import org.junit.Test;
 import java.util.*;
 
 import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
-import static com.graphhopper.util.Parameters.DETAILS.AVERAGE_SPEED;
-import static com.graphhopper.util.Parameters.DETAILS.EDGE_ID;
-import static com.graphhopper.util.Parameters.DETAILS.STREET_NAME;
+import static com.graphhopper.util.Parameters.DETAILS.*;
 import static org.junit.Assert.*;
 
 /**
@@ -312,8 +310,8 @@ public class PathTest {
         Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{AVERAGE_SPEED, STREET_NAME, EDGE_ID}), encoder), 0);
-        assertTrue(details.size() == 3);
+        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{AVERAGE_SPEED, STREET_NAME, EDGE_ID, TIME}), encoder, new FastestWeighting(encoder)), 0);
+        assertTrue(details.size() == 4);
         List<PathDetail> averageSpeedDetails = details.get(AVERAGE_SPEED);
         assertEquals(4, averageSpeedDetails.size());
         assertEquals(45.0, averageSpeedDetails.get(0).getValue());
@@ -353,6 +351,19 @@ public class PathTest {
         assertEquals(2, edgeIdDetails.get(2).getFirst());
         assertEquals(3, edgeIdDetails.get(3).getFirst());
         assertEquals(4, edgeIdDetails.get(3).getLast());
+
+        List<PathDetail> timeDetails = details.get(TIME);
+        assertEquals(4, timeDetails.size());
+        assertEquals(400L, timeDetails.get(0).getValue());
+        assertEquals(200L, timeDetails.get(1).getValue());
+        assertEquals(1800L, timeDetails.get(2).getValue());
+        assertEquals(400L, timeDetails.get(3).getValue());
+
+        assertEquals(0, timeDetails.get(0).getFirst());
+        assertEquals(1, timeDetails.get(1).getFirst());
+        assertEquals(2, timeDetails.get(2).getFirst());
+        assertEquals(3, timeDetails.get(3).getFirst());
+        assertEquals(4, timeDetails.get(3).getLast());
     }
 
     /**
