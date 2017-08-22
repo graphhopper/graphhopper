@@ -44,6 +44,9 @@ public class PathDetailsBuilderFactory {
         if (requestedPathDetails.contains(Parameters.DETAILS.AVERAGE_SPEED))
             builders.add(new AverageSpeedDetails(encoder));
 
+        if (requestedPathDetails.contains(Parameters.DETAILS.STREET_NAME))
+            builders.add(new StreetNameDetails());
+
         if (requestedPathDetails.size() != builders.size()) {
             throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we could only find " + builders);
         }

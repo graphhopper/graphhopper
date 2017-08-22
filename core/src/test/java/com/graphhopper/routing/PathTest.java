@@ -31,6 +31,8 @@ import org.junit.Test;
 import java.util.*;
 
 import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
+import static com.graphhopper.util.Parameters.DETAILS.AVERAGE_SPEED;
+import static com.graphhopper.util.Parameters.DETAILS.STREET_NAME;
 import static org.junit.Assert.*;
 
 /**
@@ -309,20 +311,33 @@ public class PathTest {
         Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{Parameters.DETAILS.AVERAGE_SPEED}), encoder), 0);
-        assertTrue(details.size() == 1);
-        List<PathDetail> detailList = details.get(Parameters.DETAILS.AVERAGE_SPEED);
-        assertEquals(4, detailList.size());
-        assertEquals(45.0, detailList.get(0).getValue());
-        assertEquals(90.0, detailList.get(1).getValue());
-        assertEquals(10.0, detailList.get(2).getValue());
-        assertEquals(45.0, detailList.get(3).getValue());
+        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{AVERAGE_SPEED, STREET_NAME}), encoder), 0);
+        assertTrue(details.size() == 2);
+        List<PathDetail> averageSpeedDetails = details.get(AVERAGE_SPEED);
+        assertEquals(4, averageSpeedDetails.size());
+        assertEquals(45.0, averageSpeedDetails.get(0).getValue());
+        assertEquals(90.0, averageSpeedDetails.get(1).getValue());
+        assertEquals(10.0, averageSpeedDetails.get(2).getValue());
+        assertEquals(45.0, averageSpeedDetails.get(3).getValue());
 
-        assertEquals(0, detailList.get(0).getFirst());
-        assertEquals(1, detailList.get(1).getFirst());
-        assertEquals(2, detailList.get(2).getFirst());
-        assertEquals(3, detailList.get(3).getFirst());
-        assertEquals(4, detailList.get(3).getLast());
+        assertEquals(0, averageSpeedDetails.get(0).getFirst());
+        assertEquals(1, averageSpeedDetails.get(1).getFirst());
+        assertEquals(2, averageSpeedDetails.get(2).getFirst());
+        assertEquals(3, averageSpeedDetails.get(3).getFirst());
+        assertEquals(4, averageSpeedDetails.get(3).getLast());
+
+        List<PathDetail> streetNameDetails = details.get(STREET_NAME);
+        assertEquals(4, streetNameDetails.size());
+        assertEquals("1-2", streetNameDetails.get(0).getValue());
+        assertEquals("2-3", streetNameDetails.get(1).getValue());
+        assertEquals("3-4", streetNameDetails.get(2).getValue());
+        assertEquals("4-5", streetNameDetails.get(3).getValue());
+
+        assertEquals(0, streetNameDetails.get(0).getFirst());
+        assertEquals(1, streetNameDetails.get(1).getFirst());
+        assertEquals(2, streetNameDetails.get(2).getFirst());
+        assertEquals(3, streetNameDetails.get(3).getFirst());
+        assertEquals(4, streetNameDetails.get(3).getLast());
     }
 
     /**
