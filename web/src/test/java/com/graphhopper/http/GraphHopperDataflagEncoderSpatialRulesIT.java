@@ -25,6 +25,7 @@ import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import javax.ws.rs.core.Response;
 import java.io.File;
 
 import static org.junit.Assert.*;
@@ -61,9 +62,11 @@ public class GraphHopperDataflagEncoderSpatialRulesIT {
 
     @Test
     public void testDetourToComplyWithSpatialRule() throws Exception {
-        JsonNode response = app.client().target("http://localhost:8080/route?" + "point=49.995933,11.54809&point=50.004871,11.517191&vehicle=generic").request().buildGet().invoke().readEntity(JsonNode.class);
-        assertFalse(response.get("info").has("errors"));
-        double distance = response.get("paths").get(0).get("distance").asDouble();
+        final Response response = app.client().target("http://localhost:8080/route?" + "point=49.995933,11.54809&point=50.004871,11.517191&vehicle=generic").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertFalse(json.get("info").has("errors"));
+        double distance = json.get("paths").get(0).get("distance").asDouble();
         // Makes sure that SpatialRules are enforced. Without SpatialRules we take a shortcut trough the forest
         // so the route would be only 3.31km
         assertTrue("distance wasn't correct:" + distance, distance > 7000);

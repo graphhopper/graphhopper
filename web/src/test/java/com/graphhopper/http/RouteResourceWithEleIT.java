@@ -26,6 +26,7 @@ import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import javax.ws.rs.core.Response;
 import java.io.File;
 
 import static org.junit.Assert.*;
@@ -61,7 +62,9 @@ public class RouteResourceWithEleIT {
 
     @Test
     public void testElevation() throws Exception {
-        JsonNode json = app.client().target("http://localhost:8080/route?" + "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true").request().buildGet().invoke().readEntity(JsonNode.class);
+        final Response response = app.client().target("http://localhost:8080/route?" + "point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=true").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -80,7 +83,9 @@ public class RouteResourceWithEleIT {
     @Test
     public void testNoElevation() throws Exception {
         // default is elevation=false
-        JsonNode json = app.client().target("http://localhost:8080/route?point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false").request().buildGet().invoke().readEntity(JsonNode.class);
+        Response response = app.client().target("http://localhost:8080/route?point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -91,7 +96,9 @@ public class RouteResourceWithEleIT {
         assertTrue("Elevation should not be included!", cson.toString().contains("[7.421392,43.7307]"));
 
         // disable elevation
-        json = app.client().target("http://localhost:8080/route?point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false").request().buildGet().invoke().readEntity(JsonNode.class);
+        response = app.client().target("http://localhost:8080/route?point=43.730864,7.420771&point=43.727687,7.418737&points_encoded=false&elevation=false").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        json = response.readEntity(JsonNode.class);
         infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         path = json.get("paths").get(0);

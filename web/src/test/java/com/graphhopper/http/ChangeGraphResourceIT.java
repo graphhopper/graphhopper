@@ -27,6 +27,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Response;
 import java.io.File;
 
 import static org.junit.Assert.*;
@@ -60,9 +61,11 @@ public class ChangeGraphResourceIT {
 
     @Test
     public void testBlockAccessViaPoint() throws Exception {
-        JsonNode response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke().readEntity(JsonNode.class);
-        assertFalse(response.get("info").has("errors"));
-        double distance = response.get("paths").get(0).get("distance").asDouble();
+        Response response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
+        assertFalse(json.get("info").has("errors"));
+        double distance = json.get("paths").get(0).get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 3000);
         assertTrue("distance wasn't correct:" + distance, distance < 3500);
 
@@ -80,14 +83,18 @@ public class ChangeGraphResourceIT {
                 + "    \"access\": false"
                 + "  }}]}";
 
-        response = app.client().target("http://localhost:8080/change").request().post(Entity.json(geoJson)).readEntity(JsonNode.class);
-        assertEquals(1, response.get("updates").asInt());
+        response = app.client().target("http://localhost:8080/change").request().post(Entity.json(geoJson));
+        assertEquals(200, response.getStatus());
+        json = response.readEntity(JsonNode.class);
+        assertEquals(1, json.get("updates").asInt());
 
         // route around blocked road => longer
-        response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke().readEntity(JsonNode.class);
-        assertFalse(response.get("info").has("errors"));
+        response = app.client().target("http://localhost:8080/route?point=42.531453,1.518946&point=42.511178,1.54006").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        json = response.readEntity(JsonNode.class);
+        assertFalse(json.get("info").has("errors"));
 
-        distance = response.get("paths").get(0).get("distance").asDouble();
+        distance = json.get("paths").get(0).get("distance").asDouble();
         assertTrue("distance wasn't correct:" + distance, distance > 5300);
         assertTrue("distance wasn't correct:" + distance, distance < 5800);
     }

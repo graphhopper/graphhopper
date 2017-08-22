@@ -33,6 +33,7 @@ import org.junit.AfterClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import javax.ws.rs.core.Response;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
@@ -69,7 +70,9 @@ public class RouteResourceIT {
 
     @Test
     public void testBasicQuery() throws Exception {
-        JsonNode json = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke().readEntity(JsonNode.class);
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -81,7 +84,9 @@ public class RouteResourceIT {
     @Test
     public void testQueryWithDirections() throws Exception {
         // Note, in general specifying directions does not work with CH, but this is an example where it works
-        JsonNode json = app.client().target("http://localhost:8080/route?" + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240&ch.force_heading=true").request().buildGet().invoke().readEntity(JsonNode.class);
+        final Response response = app.client().target("http://localhost:8080/route?" + "point=42.496696,1.499323&point=42.497257,1.501501&heading=240&heading=240&ch.force_heading=true").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -93,7 +98,9 @@ public class RouteResourceIT {
     @Test
     public void testQueryWithStraightVia() throws Exception {
         // Note, in general specifying straightvia does not work with CH, but this is an example where it works
-        JsonNode json = app.client().target("http://localhost:8080/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke().readEntity(JsonNode.class);
+        final Response response = app.client().target("http://localhost:8080/route?point=42.534133,1.581473&point=42.534781,1.582149&point=42.535042,1.582514&pass_through=true").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -104,14 +111,18 @@ public class RouteResourceIT {
 
     @Test
     public void testJsonRounding() throws Exception {
-        JsonNode json = app.client().target("http://localhost:8080/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false").request().buildGet().invoke().readEntity(JsonNode.class);
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
         JsonNode cson = json.get("paths").get(0).get("points");
         assertTrue("unexpected precision!", cson.toString().contains("[1.536374,42.554839]"));
     }
 
     @Test
     public void testFailIfElevationRequestedButNotIncluded() throws Exception {
-        JsonNode json = app.client().target("http://localhost:8080/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true").request().buildGet().invoke().readEntity(JsonNode.class);
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851234,1.536198&point=42.510071,1.548128&points_encoded=false&elevation=true").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
         assertTrue(json.has("message"));
         assertEquals("Elevation not supported!", json.get("message").asText());
     }
@@ -177,7 +188,9 @@ public class RouteResourceIT {
 
     @Test
     public void testPathDetailsWithoutGraphHopperWeb() throws Exception {
-        JsonNode json = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed").request().buildGet().invoke().readEntity(JsonNode.class);
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
         JsonNode infoJson = json.get("info");
         assertFalse(infoJson.has("errors"));
         JsonNode path = json.get("paths").get(0);
@@ -237,7 +250,9 @@ public class RouteResourceIT {
 
     @Test
     public void testGPX() throws Exception {
-        String str = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx").request().buildGet().invoke().readEntity(String.class);
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        String str = response.readEntity(String.class);
         // For backward compatibility we currently export route and track.
         assertTrue(str.contains("<gh:distance>1841.8</gh:distance>"));
         assertFalse(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));
@@ -246,7 +261,9 @@ public class RouteResourceIT {
 
     @Test
     public void testGPXWithExcludedRouteSelection() throws Exception {
-        String str = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false").request().buildGet().invoke().readEntity(String.class);
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.route=false&gpx.waypoints=false").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        String str = response.readEntity(String.class);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
         assertFalse(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>Finish!</name></wpt>"));
         assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
@@ -254,7 +271,9 @@ public class RouteResourceIT {
 
     @Test
     public void testGPXWithTrackAndWaypointsSelection() throws Exception {
-        String str = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.track=true&gpx.route=false&gpx.waypoints=true").request().buildGet().invoke().readEntity(String.class);
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.510071,1.548128&type=gpx&gpx.track=true&gpx.route=false&gpx.waypoints=true").request().buildGet().invoke();
+        assertEquals(200, response.getStatus());
+        String str = response.readEntity(String.class);
         assertFalse(str.contains("<gh:distance>115.1</gh:distance>"));
         assertTrue(str.contains("<wpt lat=\"42.51003\" lon=\"1.548188\"> <name>arrive at destination</name></wpt>"));
         assertTrue(str.contains("<trkpt lat=\"42.554839\" lon=\"1.536374\"><time>"));
@@ -262,11 +281,19 @@ public class RouteResourceIT {
 
     @Test
     public void testGPXWithError() throws Exception {
-        String str = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&type=gpx").request().buildGet().invoke().readEntity(String.class);
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&type=gpx").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+        String str = response.readEntity(String.class);
         assertFalse(str, str.contains("<html>"));
         assertFalse(str, str.contains("{"));
         assertTrue("Expected error but was: " + str, str.contains("<message>At least 2 points have to be specified, but was:1</message>"));
         assertTrue("Expected error but was: " + str, str.contains("<hints><error details=\"java"));
+    }
+
+    @Test
+    public void testWithError() throws Exception {
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -277,7 +304,9 @@ public class RouteResourceIT {
 
     @Test
     public void testTooManyHeadings() {
-        JsonNode json = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&heading=0&heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&heading=0&heading=0").request().buildGet().invoke();
+        assertEquals(400, response.getStatus());
+        JsonNode json = response.readEntity(JsonNode.class);
         assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message").asText());
     }
 

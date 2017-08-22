@@ -306,7 +306,7 @@ public class RouteResource {
                 ((GHException) t).getDetails().forEach(error::putPOJO);
             }
         }
-        return Response.serverError().entity(json).build();
+        return Response.status(SC_BAD_REQUEST).entity(json).build();
     }
 
     private String getMessage(Throwable t) {
