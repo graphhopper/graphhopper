@@ -161,7 +161,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         assertEquals(GHUtility.asSet(2, 0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
         // remove edge "1-2" but only from 1 not from 2
         graph.edgeAccess.internalEdgeDisconnect(iter2.getEdge(), -1,
-                iter2.getBaseNode(), iter2.getAdjNode());
+                iter2.getBaseNode());
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));
         assertEquals(GHUtility.asSet(1), GHUtility.getNeighbors(explorer.setBaseNode(2)));
         // let 0 unchanged -> no side effects
@@ -169,7 +169,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         // remove edge "0-1" but only from 0
         graph.edgeAccess.internalEdgeDisconnect(iter0.getEdge(), (long) iter3.getEdge() * graph.edgeEntryBytes,
-                iter0.getBaseNode(), iter0.getAdjNode());
+                iter0.getBaseNode());
         assertEquals(GHUtility.asSet(3), GHUtility.getNeighbors(explorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(3)));
         assertEquals(GHUtility.asSet(0), GHUtility.getNeighbors(explorer.setBaseNode(1)));

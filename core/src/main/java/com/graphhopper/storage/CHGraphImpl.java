@@ -256,7 +256,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
      */
     public void disconnect(CHEdgeExplorer explorer, EdgeIteratorState edgeState) {
         // search edge with opposite direction but we need to know the previousEdge for the internalEdgeDisconnect so we cannot simply do:
-        // EdgeIteratorState tmpIter = getEdgeProps(iter.getEdge(), iter.getBaseNode());
+        // EdgeIteratorState tmpIter = getEdgeIteratorState(iter.getEdge(), iter.getBaseNode());
         CHEdgeIterator tmpIter = explorer.setBaseNode(edgeState.getAdjNode());
         int tmpPrevEdge = EdgeIterator.NO_EDGE;
         while (tmpIter.next()) {
@@ -264,8 +264,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                 // TODO this is ugly, move this somehow into the underlying iteration logic
                 long edgePointer = tmpPrevEdge == EdgeIterator.NO_EDGE ? -1
                         : isShortcut(tmpPrevEdge) ? chEdgeAccess.toPointer(tmpPrevEdge) : baseGraph.edgeAccess.toPointer(tmpPrevEdge);
-                chEdgeAccess.internalEdgeDisconnect(edgeState.getEdge(), edgePointer,
-                        edgeState.getAdjNode(), edgeState.getBaseNode());
+                chEdgeAccess.internalEdgeDisconnect(edgeState.getEdge(), edgePointer, edgeState.getAdjNode());
                 break;
             }
 

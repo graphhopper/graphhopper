@@ -154,7 +154,7 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
         index.findNetworkEntries(0.51, 0.2, set, 0);
         index.findNetworkEntries(0.51, 0.2, set, 1);
         IntSet expectedSet = new GHIntHashSet();
-        expectedSet.add(0);
+        expectedSet.add(1);
         expectedSet.add(2);
         assertEquals(expectedSet, set);
 

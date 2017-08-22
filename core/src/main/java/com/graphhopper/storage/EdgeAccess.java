@@ -26,7 +26,7 @@ import com.graphhopper.util.EdgeIteratorState;
  * @author Peter Karich
  */
 abstract class EdgeAccess {
-    static final int NO_NODE = -1;
+    private static final int NO_NODE = -1;
     // distance of around +-1000 000 meter are ok
     private static final double INT_DIST_FACTOR = 1000d;
     static double MAX_DIST = (Integer.MAX_VALUE - 1) / INT_DIST_FACTOR;
@@ -69,7 +69,11 @@ abstract class EdgeAccess {
     abstract int getEntryBytes();
 
     final void invalidateEdge(long edgePointer) {
-        edges.setInt(edgePointer + E_NODEA, NO_NODE);
+        edges.setInt(edgePointer + E_NODEB, NO_NODE);
+    }
+
+    static final boolean isInvalidNodeB(int node) {
+        return node == EdgeAccess.NO_NODE;
     }
 
     final void setDist(long edgePointer, double distance) {
@@ -149,81 +153,69 @@ abstract class EdgeAccess {
     /**
      * Write new edge between nodes fromNodeId, and toNodeId both to nodes index and edges index
      */
-    final int internalEdgeAdd(int newEdgeId, int fromNodeId, int toNodeId) {
-        writeEdge(newEdgeId, fromNodeId, toNodeId, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
-        connectNewEdge(fromNodeId, newEdgeId);
-        if (fromNodeId != toNodeId)
-            connectNewEdge(toNodeId, newEdgeId);
+    final int internalEdgeAdd(int newEdgeId, int nodeA, int nodeB) {
+        writeEdge(newEdgeId, nodeA, nodeB, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
+        long edgePointer = toPointer(newEdgeId);
+
+        int edge = getEdgeRef(nodeA);
+        if (edge > EdgeIterator.NO_EDGE)
+            edges.setInt(E_LINKA + edgePointer, edge);
+        setEdgeRef(nodeA, newEdgeId);
+
+        if (nodeA != nodeB) {
+            edge = getEdgeRef(nodeB);
+            if (edge > EdgeIterator.NO_EDGE)
+                edges.setInt(E_LINKB + edgePointer, edge);
+            setEdgeRef(nodeB, newEdgeId);
+        }
         return newEdgeId;
     }
 
-    final int getOtherNode(int nodeThis, long edgePointer) {
-        int nodeA = edges.getInt(edgePointer + E_NODEA);
-        if (nodeA == nodeThis)
-            // return b
-            return edges.getInt(edgePointer + E_NODEB);
-        // return a
-        return nodeA;
+    final int getNodeA(long edgePointer) {
+        return edges.getInt(edgePointer + E_NODEA);
     }
 
-    private long _getLinkPosInEdgeArea(int nodeThis, int nodeOther, long edgePointer) {
-        return nodeThis <= nodeOther ? edgePointer + E_LINKA : edgePointer + E_LINKB;
+    final int getNodeB(long edgePointer) {
+        return edges.getInt(edgePointer + E_NODEB);
     }
 
-    final int getEdgeRef(int nodeThis, int nodeOther, long edgePointer) {
-        return edges.getInt(_getLinkPosInEdgeArea(nodeThis, nodeOther, edgePointer));
+    final int getLinkA(long edgePointer) {
+        return edges.getInt(edgePointer + E_LINKA);
     }
 
-    final void connectNewEdge(int fromNode, int newOrExistingEdge) {
-        int edge = getEdgeRef(fromNode);
-        if (edge > EdgeIterator.NO_EDGE) {
-            long edgePointer = toPointer(newOrExistingEdge);
-            int otherNode = getOtherNode(fromNode, edgePointer);
-            long lastLink = _getLinkPosInEdgeArea(fromNode, otherNode, edgePointer);
-            edges.setInt(lastLink, edge);
-        }
-        setEdgeRef(fromNode, newOrExistingEdge);
+    final int getLinkB(long edgePointer) {
+        return edges.getInt(edgePointer + E_LINKB);
     }
 
-    final long writeEdge(int edgeId, int nodeThis, int nodeOther, int nextEdge, int nextEdgeOther) {
-        if (nodeThis > nodeOther) {
-            int tmp = nodeThis;
-            nodeThis = nodeOther;
-            nodeOther = tmp;
-            tmp = nextEdge;
-            nextEdge = nextEdgeOther;
-            nextEdgeOther = tmp;
-        }
+    final long writeEdge(int edgeId, int nodeA, int nodeB, int nextEdgeA, int nextEdgeB) {
         if (edgeId < 0 || edgeId == EdgeIterator.NO_EDGE)
-            throw new IllegalStateException("Cannot write edge with illegal ID:" + edgeId + "; nodeThis:" + nodeThis + ", nodeOther:" + nodeOther);
+            throw new IllegalStateException("Cannot write edge with illegal ID:" + edgeId + "; nodeA:" + nodeA + ", nodeB:" + nodeB);
 
         long edgePointer = toPointer(edgeId);
-        edges.setInt(edgePointer + E_NODEA, nodeThis);
-        edges.setInt(edgePointer + E_NODEB, nodeOther);
-        edges.setInt(edgePointer + E_LINKA, nextEdge);
-        edges.setInt(edgePointer + E_LINKB, nextEdgeOther);
+        edges.setInt(edgePointer + E_NODEA, nodeA);
+        edges.setInt(edgePointer + E_NODEB, nodeB);
+        edges.setInt(edgePointer + E_LINKA, nextEdgeA);
+        edges.setInt(edgePointer + E_LINKB, nextEdgeB);
         return edgePointer;
     }
 
     /**
      * This method disconnects the specified edge from the list of edges of the specified node. It
      * does not release the freed space to be reused.
-     * <p>
      *
      * @param edgeToUpdatePointer if it is negative then the nextEdgeId will be saved to refToEdges
      *                            of nodes
      */
-    final long internalEdgeDisconnect(int edgeToRemove, long edgeToUpdatePointer, int baseNode, int adjNode) {
+    final long internalEdgeDisconnect(int edgeToRemove, long edgeToUpdatePointer, int baseNode) {
         long edgeToRemovePointer = toPointer(edgeToRemove);
         // an edge is shared across the two nodes even if the edge is not in both directions
         // so we need to know two edge-pointers pointing to the edge before edgeToRemovePointer
-        int nextEdgeId = getEdgeRef(baseNode, adjNode, edgeToRemovePointer);
+        int nextEdgeId = getNodeA(edgeToRemovePointer) == baseNode ? getLinkA(edgeToRemovePointer) : getLinkB(edgeToRemovePointer);
         if (edgeToUpdatePointer < 0) {
             setEdgeRef(baseNode, nextEdgeId);
         } else {
             // adjNode is different for the edge we want to update with the new link
-            long link = edges.getInt(edgeToUpdatePointer + E_NODEA) == baseNode
-                    ? edgeToUpdatePointer + E_LINKA : edgeToUpdatePointer + E_LINKB;
+            long link = getNodeA(edgeToUpdatePointer) == baseNode ? edgeToUpdatePointer + E_LINKA : edgeToUpdatePointer + E_LINKB;
             edges.setInt(link, nextEdgeId);
         }
         return edgeToRemovePointer;

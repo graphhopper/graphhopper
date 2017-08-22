@@ -31,8 +31,6 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.search.NameIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import static com.graphhopper.util.Helper.nf;
 
@@ -457,7 +455,6 @@ class BaseGraph implements Graph {
 
     /**
      * Create edge between nodes a and b
-     * <p>
      *
      * @return EdgeIteratorState of newly created edge
      */
@@ -484,7 +481,6 @@ class BaseGraph implements Graph {
 
     /**
      * Determine next free edgeId and ensure byte capacity to store edge
-     * <p>
      *
      * @return next free edgeId
      */
@@ -599,9 +595,8 @@ class BaseGraph implements Graph {
         GHBitSet toRemoveSet = new GHBitSetImpl(removeNodeCount);
         removedNodes.copyTo(toRemoveSet);
 
-        Logger logger = LoggerFactory.getLogger(getClass());
         if (removeNodeCount > getNodes() / 2.0)
-            logger.warn("More than a half of the network should be removed!? "
+            org.slf4j.LoggerFactory.getLogger(getClass()).warn("More than a half of the network should be removed!? "
                     + "Nodes:" + getNodes() + ", remove:" + removeNodeCount);
 
         EdgeExplorer delExplorer = createEdgeExplorer();
@@ -615,6 +610,7 @@ class BaseGraph implements Graph {
             }
 
             toMoveNodes--;
+            // move only nodes that are not removed
             for (; toMoveNodes >= 0; toMoveNodes--) {
                 if (!removedNodes.contains(toMoveNodes))
                     break;
@@ -634,17 +630,17 @@ class BaseGraph implements Graph {
              removeNode = toRemoveSet.next(removeNode + 1)) {
             // remove all edges connected to the deleted nodes
             adjNodesToDelIter.setBaseNode(removeNode);
-            long prev = EdgeIterator.NO_EDGE;
+            long prevPointer = EdgeIterator.NO_EDGE;
             while (adjNodesToDelIter.next()) {
                 int nodeId = adjNodesToDelIter.getAdjNode();
                 // already invalidated
-                if (nodeId != EdgeAccess.NO_NODE && removedNodes.contains(nodeId)) {
+                if (!EdgeAccess.isInvalidNodeB(nodeId) && removedNodes.contains(nodeId)) {
                     int edgeToRemove = adjNodesToDelIter.getEdge();
                     long edgeToRemovePointer = edgeAccess.toPointer(edgeToRemove);
-                    edgeAccess.internalEdgeDisconnect(edgeToRemove, prev, removeNode, nodeId);
+                    edgeAccess.internalEdgeDisconnect(edgeToRemove, prevPointer, removeNode);
                     edgeAccess.invalidateEdge(edgeToRemovePointer);
                 } else {
-                    prev = adjNodesToDelIter.edgePointer;
+                    prevPointer = adjNodesToDelIter.edgePointer;
                 }
             }
         }
@@ -657,11 +653,11 @@ class BaseGraph implements Graph {
             EdgeIterator movedEdgeIter = movedEdgeExplorer.setBaseNode(oldI);
             while (movedEdgeIter.next()) {
                 int nodeId = movedEdgeIter.getAdjNode();
-                if (nodeId == EdgeAccess.NO_NODE)
+                if (EdgeAccess.isInvalidNodeB(nodeId))
                     continue;
 
                 if (removedNodes.contains(nodeId))
-                    throw new IllegalStateException("shouldn't happen the edge to the node "
+                    throw new IllegalStateException("shouldn't happen as the edge to the node "
                             + nodeId + " should be already deleted. " + oldI);
 
                 toMoveSet.add(nodeId);
@@ -701,13 +697,9 @@ class BaseGraph implements Graph {
 
             int edgeId = iter.getEdge();
             long edgePointer = edgeAccess.toPointer(edgeId);
-            int linkA = edgeAccess.getEdgeRef(nodeA, nodeB, edgePointer);
-            int linkB = edgeAccess.getEdgeRef(nodeB, nodeA, edgePointer);
-            long flags = edgeAccess.getFlags_(edgePointer, false);
+            int linkA = edgeAccess.getLinkA(edgePointer);
+            int linkB = edgeAccess.getLinkB(edgePointer);
             edgeAccess.writeEdge(edgeId, updatedA, updatedB, linkA, linkB);
-            edgeAccess.setFlags_(edgePointer, updatedA > updatedB, flags);
-            if (updatedA < updatedB != nodeA < nodeB)
-                setWayGeometry_(fetchWayGeometry_(edgePointer, true, 0, -1, -1), edgePointer, false);
         }
 
         if (removeNodeCount >= nodeCount)
@@ -924,11 +916,11 @@ class BaseGraph implements Graph {
             }
 
             // expect only edgePointer is properly initialized via setEdgeId            
-            baseNode = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEA);
-            if (baseNode == EdgeAccess.NO_NODE)
+            baseNode = edgeAccess.getNodeA(edgePointer);
+            adjNode = edgeAccess.getNodeB(edgePointer);
+            if (EdgeAccess.isInvalidNodeB(adjNode))
                 throw new IllegalStateException("content of edgeId " + edgeId + " is marked as invalid - ie. the edge is already removed!");
 
-            adjNode = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);
             // a next() call should return false
             nextEdgeId = EdgeIterator.NO_EDGE;
             if (expectedAdjNode == adjNode || expectedAdjNode == Integer.MIN_VALUE) {
@@ -967,13 +959,15 @@ class BaseGraph implements Graph {
                 selectEdgeAccess();
                 edgePointer = edgeAccess.toPointer(nextEdgeId);
                 edgeId = nextEdgeId;
-                adjNode = edgeAccess.getOtherNode(baseNode, edgePointer);
-                reverse = baseNode > adjNode;
+                int nodeA = edgeAccess.getNodeA(edgePointer);
+                boolean baseNodeIsNodeA = baseNode == nodeA;
+                adjNode = baseNodeIsNodeA ? edgeAccess.getNodeB(edgePointer) : nodeA;
+                reverse = !baseNodeIsNodeA;
                 freshFlags = false;
                 edgeRowCache = null;
 
                 // position to next edge
-                nextEdgeId = edgeAccess.getEdgeRef(baseNode, adjNode, edgePointer);
+                nextEdgeId = baseNodeIsNodeA ? edgeAccess.getLinkA(edgePointer) : edgeAccess.getLinkB(edgePointer);
                 assert nextEdgeId != edgeId : ("endless loop detected for base node: " + baseNode + ", adj node: " + adjNode
                         + ", edge pointer: " + edgePointer + ", edge: " + edgeId);
 
@@ -1028,14 +1022,13 @@ class BaseGraph implements Graph {
                 if (!checkRange())
                     return false;
 
-                baseNode = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEA);
-                // some edges are deleted and have a negative node
-                if (baseNode == EdgeAccess.NO_NODE)
+                baseNode = edgeAccess.getNodeA(edgePointer);
+                freshFlags = false;
+                adjNode = edgeAccess.getNodeB(edgePointer);
+                // some edges are deleted and are marked via a negative node
+                if (EdgeAccess.isInvalidNodeB(adjNode))
                     continue;
 
-                freshFlags = false;
-                adjNode = edgeAccess.edges.getInt(edgePointer + edgeAccess.E_NODEB);
-                // this is always false because of 'getBaseNode() <= getAdjNode()'
                 reverse = false;
                 return true;
             }

@@ -115,7 +115,6 @@ public class ShapeFileReaderTest {
                 .setGraphHopperLocation(new File(outDir).getAbsolutePath())
                 .setEncodingManager(new EncodingManager.Builder().addAll(new CarFlagEncoder()).build())
                 .setCHEnabled(false).importOrLoad();
-
     }
 
     /**

@@ -903,12 +903,12 @@ public abstract class AbstractGraphStorageTester {
         assertTrue(iter.next());
         int edgeId2 = iter.getEdge();
         assertEquals(1, edgeId2 - edgeId);
-        assertEquals(1, iter.getBaseNode());
-        assertEquals(3, iter.getAdjNode());
+        assertEquals(3, iter.getBaseNode());
+        assertEquals(1, iter.getAdjNode());
 
         assertTrue(iter.next());
-        assertEquals(2, iter.getBaseNode());
-        assertEquals(3, iter.getAdjNode());
+        assertEquals(3, iter.getBaseNode());
+        assertEquals(2, iter.getAdjNode());
 
         assertFalse(iter.next());
     }

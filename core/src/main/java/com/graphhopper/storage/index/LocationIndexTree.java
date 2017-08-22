@@ -343,7 +343,7 @@ public class LocationIndexTree implements LocationIndex {
         return IntArrayList.from(entries);
     }
 
-    // fillIDs according to how they are stored
+    // fill node IDs according to how they are stored
     final void fillIDs(long keyPart, int intIndex, GHIntHashSet set, int depth) {
         long pointer = (long) intIndex << 2;
         if (depth == entries.length) {
