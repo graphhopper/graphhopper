@@ -18,10 +18,13 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.util.Parameters;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.graphhopper.util.Parameters.DETAILS.AVERAGE_SPEED;
+import static com.graphhopper.util.Parameters.DETAILS.EDGE_ID;
+import static com.graphhopper.util.Parameters.DETAILS.STREET_NAME;
 
 /**
  * Generates a list of PathDetailsBuilder from a List of PathDetail names
@@ -41,11 +44,14 @@ public class PathDetailsBuilderFactory {
     public List<PathDetailsBuilder> createPathDetailsBuilders() {
         List<PathDetailsBuilder> builders = new ArrayList<>();
 
-        if (requestedPathDetails.contains(Parameters.DETAILS.AVERAGE_SPEED))
+        if (requestedPathDetails.contains(AVERAGE_SPEED))
             builders.add(new AverageSpeedDetails(encoder));
 
-        if (requestedPathDetails.contains(Parameters.DETAILS.STREET_NAME))
+        if (requestedPathDetails.contains(STREET_NAME))
             builders.add(new StreetNameDetails());
+
+        if (requestedPathDetails.contains(EDGE_ID))
+            builders.add(new EdgeIdDetails());
 
         if (requestedPathDetails.size() != builders.size()) {
             throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we could only find " + builders);

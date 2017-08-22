@@ -32,6 +32,7 @@ import java.util.*;
 
 import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
 import static com.graphhopper.util.Parameters.DETAILS.AVERAGE_SPEED;
+import static com.graphhopper.util.Parameters.DETAILS.EDGE_ID;
 import static com.graphhopper.util.Parameters.DETAILS.STREET_NAME;
 import static org.junit.Assert.*;
 
@@ -311,8 +312,8 @@ public class PathTest {
         Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{AVERAGE_SPEED, STREET_NAME}), encoder), 0);
-        assertTrue(details.size() == 2);
+        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{AVERAGE_SPEED, STREET_NAME, EDGE_ID}), encoder), 0);
+        assertTrue(details.size() == 3);
         List<PathDetail> averageSpeedDetails = details.get(AVERAGE_SPEED);
         assertEquals(4, averageSpeedDetails.size());
         assertEquals(45.0, averageSpeedDetails.get(0).getValue());
@@ -338,6 +339,20 @@ public class PathTest {
         assertEquals(2, streetNameDetails.get(2).getFirst());
         assertEquals(3, streetNameDetails.get(3).getFirst());
         assertEquals(4, streetNameDetails.get(3).getLast());
+
+        List<PathDetail> edgeIdDetails = details.get(EDGE_ID);
+        assertEquals(4, edgeIdDetails.size());
+        assertEquals(0, edgeIdDetails.get(0).getValue());
+        // This is out of order because we don't create the edges in order
+        assertEquals(2, edgeIdDetails.get(1).getValue());
+        assertEquals(3, edgeIdDetails.get(2).getValue());
+        assertEquals(1, edgeIdDetails.get(3).getValue());
+
+        assertEquals(0, edgeIdDetails.get(0).getFirst());
+        assertEquals(1, edgeIdDetails.get(1).getFirst());
+        assertEquals(2, edgeIdDetails.get(2).getFirst());
+        assertEquals(3, edgeIdDetails.get(3).getFirst());
+        assertEquals(4, edgeIdDetails.get(3).getLast());
     }
 
     /**
