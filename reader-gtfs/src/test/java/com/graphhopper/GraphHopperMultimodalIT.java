@@ -41,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class GraphHopperMultimodalIT {
 
-    private static final String GRAPH_LOC = "target/GraphHopperGtfsIT";
+    private static final String GRAPH_LOC = "target/GraphHopperMultimodalIT";
     private static GraphHopperGtfs graphHopper;
     private static final ZoneId zoneId = ZoneId.of("America/Los_Angeles");
     private static GraphHopperStorage graphHopperStorage;
