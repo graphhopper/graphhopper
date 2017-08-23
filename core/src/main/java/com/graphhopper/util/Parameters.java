@@ -194,6 +194,9 @@ public class Parameters {
         public static final String PATH_DETAILS = "details";
 
         public static final String AVERAGE_SPEED = "average_speed";
+        public static final String STREET_NAME = "street_name";
+        public static final String EDGE_ID = "edge_id";
+        public static final String TIME = "time";
     }
 
     public static final class PT {
