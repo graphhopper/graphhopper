@@ -142,8 +142,6 @@ public class GraphHopperServletModule extends ServletModule {
                 gen.writeNumber((Long) value.getValue());
             else if (value.getValue() instanceof Integer)
                 gen.writeNumber((Integer) value.getValue());
-            else if (value.getValue() instanceof Integer)
-                gen.writeNumber((Integer) value.getValue());
             else if (value.getValue() instanceof Boolean)
                 gen.writeBoolean((Boolean) value.getValue());
             else if (value.getValue() instanceof String)
