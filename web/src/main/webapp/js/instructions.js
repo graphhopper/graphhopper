@@ -99,8 +99,6 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
                 var firstIndex = pathDetailObj[0];
                 var value = pathDetailObj[2];
                 var lngLat = path.points.coordinates[firstIndex];
-                if(!lngLat)
-                    console.log("rnd");
                 L.marker([lngLat[1], lngLat[0]], {
                     icon: L.icon({
                         iconUrl: './img/marker-small-blue.png',
