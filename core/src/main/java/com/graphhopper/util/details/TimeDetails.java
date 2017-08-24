@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
