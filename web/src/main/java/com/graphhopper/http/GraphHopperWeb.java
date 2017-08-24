@@ -182,12 +182,14 @@ public class GraphHopperWeb implements GraphHopperAPI {
                             pd = new PathDetail(val.asBoolean());
                         else if (val.isLong())
                             pd = new PathDetail(val.asLong());
+                        else if (val.isInt())
+                            pd = new PathDetail(val.asInt());
                         else if (val.isDouble())
                             pd = new PathDetail(val.asDouble());
                         else if (val.isTextual())
                             pd = new PathDetail(val.asText());
                         else
-                            throw new IllegalStateException("Unsupported type of PathDetail value " + pathDetail.getNodeType().name());
+                            throw new IllegalStateException("Unsupported type of PathDetail value for key " + detailEntry.getKey() + " and value " + val.toString() + "of class " + val.getClass());
 
                         pd.setFirst(from.asInt());
                         pd.setLast(to.asInt());
