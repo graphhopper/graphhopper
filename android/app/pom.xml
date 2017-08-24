@@ -78,6 +78,12 @@
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm-jts</artifactId>
             <version>${vtm.version}</version>
+            <exclusions>
+            	<exclusion>
+            	  <groupId>com.vividsolutions</groupId>            
+  		  <artifactId>jts-core</artifactId>
+            	</exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mapsforge</groupId>            
@@ -88,11 +94,6 @@
             <groupId>com.caverock</groupId>            
             <artifactId>androidsvg</artifactId>
             <version>1.2.2-beta-1</version>
-        </dependency> 
-        <dependency>
-            <groupId>com.vividsolutions</groupId>            
-            <artifactId>jts</artifactId>
-            <version>1.13</version>            
         </dependency> 
         
         <dependency>
