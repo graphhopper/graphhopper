@@ -397,7 +397,7 @@ public class GraphHopperIT {
         request.addPoint(new GHPoint(43.74958, 7.436566));
         request.addPoint(new GHPoint(43.727687, 7.418737));
         request.setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr);
-        request.setPathDetails(Arrays.asList(new String[]{Parameters.DETAILS.AVERAGE_SPEED}));
+        request.setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED));
 
         GHResponse rsp = hopper.route(request);
 
@@ -408,7 +408,7 @@ public class GraphHopperIT {
         assertEquals(1, detailList.size());
         assertEquals(5.0, detailList.get(0).getValue());
         assertEquals(0, detailList.get(0).getFirst());
-        assertEquals(arsp.getPoints().size()-1, detailList.get(0).getLast());
+        assertEquals(arsp.getPoints().size() - 1, detailList.get(0).getLast());
     }
 
     @Test
