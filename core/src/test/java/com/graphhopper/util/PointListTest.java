@@ -84,6 +84,34 @@ public class PointListTest {
     }
 
     @Test
+    public void testAddPartialPL() {
+        PointList instance = new PointList();
+        for (int i = 0; i < 7; i++) {
+            instance.add(0, 0);
+        }
+        assertEquals(7, instance.getSize());
+        assertEquals(10, instance.getCapacity());
+
+        PointList toAdd = new PointList();
+
+        toAdd.add(1, 1);
+        toAdd.add(2, 2);
+        toAdd.add(3, 3);
+        toAdd.add(4, 4);
+        toAdd.add(5, 5);
+        instance.add(toAdd, 2, 3);
+        instance.add(toAdd, 0, 3);
+        instance.add(toAdd, 4, 5);
+
+        assertEquals(12, instance.getSize());
+        assertEquals(toAdd.getLat(2), instance.getLat(7), .1);
+        assertEquals(toAdd.getLat(0), instance.getLat(8), .1);
+        assertEquals(toAdd.getLat(2), instance.getLat(10), .1);
+        assertEquals(toAdd.getLat(4), instance.getLat(11), .1);
+
+    }
+
+    @Test
     public void testIterable() {
         PointList toAdd = new PointList();
         toAdd.add(1, 1);

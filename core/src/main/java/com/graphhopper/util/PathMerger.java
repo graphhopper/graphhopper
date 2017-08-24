@@ -99,6 +99,8 @@ public class PathMerger {
                     if (pathIndex + 1 < paths.size()) {
                         ViaInstruction newInstr = new ViaInstruction(fullInstructions.get(fullInstructions.size() - 1));
                         newInstr.setViaCount(pathIndex + 1);
+                        // Similar to the FinishInstruction, ViaInstructions have lenght=0
+                        newInstr.setPoints(new PointList());
                         fullInstructions.replaceLast(newInstr);
                     }
                 }
@@ -109,9 +111,15 @@ public class PathMerger {
                 if (fullPoints.isEmpty())
                     fullPoints = new PointList(tmpPoints.size(), tmpPoints.is3D());
 
-                fullPoints.add(tmpPoints);
+                if (pathIndex + 1 < paths.size()) {
+                    // Don't add last point for ViaPoint to remove duplicated point
+                    fullPoints.add(tmpPoints, 0, tmpPoints.size() - 1);
+                } else {
+                    fullPoints.add(tmpPoints);
+                }
+
                 altRsp.addPathDetails(path.calcDetails(calculatorFactory, origPoints));
-                origPoints += tmpPoints.size();
+                origPoints = fullPoints.size();
             }
 
             allFound = allFound && path.isFound();
@@ -153,8 +161,6 @@ public class PathMerger {
         // Make sure that the PathDetail list is merged correctly at via points
         if (!pathDetails.isEmpty() && !otherDetails.isEmpty()) {
             PathDetail lastDetail = pathDetails.get(pathDetails.size() - 1);
-            // Add +1 for the via point
-            lastDetail.setLast(lastDetail.getLast()+1);
             if (lastDetail.getValue().equals(otherDetails.get(0).getValue())) {
                 lastDetail.setLast(otherDetails.get(0).getLast());
                 otherDetails.remove(0);
