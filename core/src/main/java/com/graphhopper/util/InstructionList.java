@@ -78,7 +78,8 @@ public class InstructionList extends AbstractList<Instruction> {
         instructions.set(instructions.size() - 1, instr);
     }
 
-    @JsonValue public List<Map<String, Object>> createJson() {
+    @JsonValue
+    public List<Map<String, Object>> createJson() {
         List<Map<String, Object>> instrList = new ArrayList<>(instructions.size());
         int pointsIndex = 0;
         int counter = 0;
@@ -103,8 +104,8 @@ public class InstructionList extends AbstractList<Instruction> {
             instrJson.putAll(instruction.getExtraInfoJSON());
 
             int tmpIndex = pointsIndex + instruction.getPoints().size();
-            // the last instruction should not point to the next instruction
-            if (counter + 1 == instructions.size())
+            // FinishInstructions and ViaInstructions should not point to the next instruction
+            if (instruction instanceof FinishInstruction || instruction instanceof ViaInstruction)
                 tmpIndex--;
 
             instrJson.put("interval", Arrays.asList(pointsIndex, tmpIndex));

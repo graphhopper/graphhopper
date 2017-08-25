@@ -141,7 +141,12 @@ public class PathSimplification {
     private int getLength(Object o, int index) {
         if (o instanceof InstructionList) {
             // we do not store the last point of an instruction
-            int size = ((InstructionList) o).get(index).getPoints().size();
+            Instruction instruction = ((InstructionList) o).get(index);
+            int size;
+            if(instruction instanceof ViaInstruction)
+                size = 0;
+            else
+                size = instruction.getPoints().size();
             // the last point of instruction (i.e. first point of next instruction) is not included
             return size;
         }

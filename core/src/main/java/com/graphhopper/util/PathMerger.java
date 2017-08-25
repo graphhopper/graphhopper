@@ -99,8 +99,6 @@ public class PathMerger {
                     if (pathIndex + 1 < paths.size()) {
                         ViaInstruction newInstr = new ViaInstruction(fullInstructions.get(fullInstructions.size() - 1));
                         newInstr.setViaCount(pathIndex + 1);
-                        // Similar to the FinishInstruction, ViaInstructions have lenght=0
-                        newInstr.setPoints(new PointList());
                         fullInstructions.replaceLast(newInstr);
                     }
                 }
