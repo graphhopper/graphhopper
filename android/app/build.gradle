@@ -46,10 +46,12 @@ dependencies {
     compile 'org.mapsforge:vtm-android:0.8.0:natives-armeabi'
     compile 'org.mapsforge:vtm-android:0.8.0:natives-armeabi-v7a'
     compile 'org.mapsforge:vtm-android:0.8.0:natives-x86'
-    compile 'org.mapsforge:vtm-jts:0.8.0'
+    compile('org.mapsforge:vtm-jts:0.8.0') {
+        exclude group: 'com.vividsolutions', module: 'jts-core'
+    }
     compile 'org.mapsforge:vtm-themes:0.8.0'
     compile 'com.caverock:androidsvg:1.2.2-beta-1'
-    compile 'com.vividsolutions:jts-core:1.14.0'
+//    compile 'com.vividsolutions:jts-core:1.14.0'
 
     compile 'org.slf4j:slf4j-api:1.7.25'
     compile 'org.slf4j:slf4j-android:1.7.25'

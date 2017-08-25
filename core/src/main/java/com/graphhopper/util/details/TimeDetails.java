@@ -17,7 +17,6 @@
  */
 package com.graphhopper.util.details;
 
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -30,15 +29,13 @@ import static com.graphhopper.util.Parameters.DETAILS.TIME;
  */
 public class TimeDetails extends AbstractPathDetailsBuilder {
 
-    private final FlagEncoder encoder;
     private final Weighting weighting;
 
     private int edgeId = -1;
     private long time = 0;
 
-    public TimeDetails(FlagEncoder encoder, Weighting weighting) {
+    public TimeDetails(Weighting weighting) {
         super(TIME);
-        this.encoder = encoder;
         this.weighting = weighting;
     }
 
@@ -46,7 +43,7 @@ public class TimeDetails extends AbstractPathDetailsBuilder {
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
         if (edge.getEdge() != edgeId) {
             edgeId = edge.getEdge();
-            time = weighting.calcMillis(edge, encoder.isBackward(edge.getFlags()), -1);
+            time = weighting.calcMillis(edge, false, -1);
             return true;
         }
         return false;

@@ -397,7 +397,7 @@ public class GraphHopperIT {
         request.addPoint(new GHPoint(43.74958, 7.436566));
         request.addPoint(new GHPoint(43.727687, 7.418737));
         request.setAlgorithm(ASTAR).setVehicle(vehicle).setWeighting(weightCalcStr);
-        request.setPathDetails(Arrays.asList(new String[]{Parameters.DETAILS.AVERAGE_SPEED}));
+        request.setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED));
 
         GHResponse rsp = hopper.route(request);
 

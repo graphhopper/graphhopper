@@ -55,7 +55,7 @@ public class PathDetailsBuilderFactory {
             builders.add(new EdgeIdDetails());
 
         if (requestedPathDetails.contains(TIME))
-            builders.add(new TimeDetails(encoder, weighting));
+            builders.add(new TimeDetails(weighting));
 
         if (requestedPathDetails.size() != builders.size()) {
             throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we could only find " + builders);
