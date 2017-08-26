@@ -21,6 +21,8 @@ package com.graphhopper;
 import javax.validation.ConstraintValidator;
 import javax.validation.ConstraintValidatorContext;
 
+import static com.graphhopper.util.Parameters.Routing.POINT_HINT;
+
 public class GHRequestValidator
         implements ConstraintValidator<ValidGHRequest, GHRequest> {
 
@@ -34,8 +36,19 @@ public class GHRequestValidator
         if (ghRequest == null) {
             return false;
         }
+        if(ghRequest.getPoints().isEmpty()) {
+            context.buildConstraintViolationWithTemplate("You have to pass at least one point")
+                    .addConstraintViolation();
+            return false;
+        }
         if (ghRequest.getPoints().size() != ghRequest.getFavoredHeadings().size()) {
-            context.buildConstraintViolationWithTemplate("The number of 'heading' parameters must be <= 1 or equal to the number of points (${validatedValue.points.size()})").addConstraintViolation();
+            context.buildConstraintViolationWithTemplate("The number of 'heading' parameters must be <= 1 or equal to the number of points (${validatedValue.points.size()})")
+                    .addConstraintViolation();
+            return false;
+        }
+        if (ghRequest.getPointHints().size() > 0 && ghRequest.getPointHints().size() != ghRequest.getPoints().size()) {
+            context.buildConstraintViolationWithTemplate("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored")
+                    .addConstraintViolation();
             return false;
         }
         return true;

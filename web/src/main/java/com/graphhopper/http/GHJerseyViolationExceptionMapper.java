@@ -18,32 +18,22 @@
 
 package com.graphhopper.http;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.graphhopper.http.api.JsonErrorEntity;
 import io.dropwizard.jersey.validation.ConstraintMessage;
 import io.dropwizard.jersey.validation.JerseyViolationException;
-import org.glassfish.jersey.server.model.Invocable;
 
-import javax.validation.ConstraintViolation;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.ext.ExceptionMapper;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 public class GHJerseyViolationExceptionMapper implements ExceptionMapper<JerseyViolationException> {
     @Override
-    public Response toResponse(final JerseyViolationException exception) {
-        final Set<ConstraintViolation<?>> violations = exception.getConstraintViolations();
-        final Invocable invocable = exception.getInvocable();
-
-        final int status = ConstraintMessage.determineStatus(violations, invocable);
-
-        ObjectNode json = JsonNodeFactory.instance.objectNode();
-        json.put("message", violations.iterator().next().getMessage());
-
-        return Response.status(status)
+    public Response toResponse(final JerseyViolationException e) {
+        return Response
+                .status(ConstraintMessage.determineStatus(e.getConstraintViolations(), e.getInvocable()))
                 .type(MediaType.APPLICATION_JSON)
-                .entity(json)
+                .entity(new JsonErrorEntity(e.getConstraintViolations().stream().map(v -> new IllegalArgumentException(v.getMessage())).collect(Collectors.toList())))
                 .build();
     }
 }
