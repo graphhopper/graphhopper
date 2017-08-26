@@ -20,18 +20,12 @@ package com.graphhopper.http.resources;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.PathWrapper;
+import com.graphhopper.*;
 import com.graphhopper.http.WebHelper;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.HintsMap;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Parameters;
 import com.graphhopper.util.StopWatch;
 import com.graphhopper.util.exceptions.GHException;
-import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -41,12 +35,18 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.*;
-import javax.ws.rs.core.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriInfo;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import java.text.NumberFormat;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 
 import static com.graphhopper.util.Parameters.Routing.*;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
@@ -78,82 +78,45 @@ public class RouteResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML, "application/gpx+xml"})
     public Response doGet(
+            @ValidGHRequest @BeanParam GHRequest request,
             @Context HttpServletRequest httpReq,
             @Context UriInfo uriInfo,
-            @QueryParam(WAY_POINT_MAX_DISTANCE) @DefaultValue("1") double minPathPrecision,
-            @QueryParam("point") List<GHPoint> requestPoints,
             @QueryParam("type") @DefaultValue("json") String type,
-            @QueryParam(INSTRUCTIONS) @DefaultValue("true") boolean instructions,
-            @QueryParam(CALC_POINTS) @DefaultValue("true") boolean calcPoints,
             @QueryParam("elevation") @DefaultValue("false") boolean enableElevation,
             @QueryParam("points_encoded") @DefaultValue("true") boolean pointsEncoded,
-            @QueryParam("vehicle") @DefaultValue("car") String vehicleStr,
-            @QueryParam("weighting") @DefaultValue("fastest") String weighting,
-            @QueryParam("algorithm") @DefaultValue("") String algoStr,
-            @QueryParam("locale") @DefaultValue("en") String localeStr,
-            @QueryParam(Parameters.Routing.POINT_HINT) List<String> pointHints,
-            @QueryParam(Parameters.DETAILS.PATH_DETAILS) List<String> pathDetails,
-            @QueryParam("heading") List<Double> favoredHeadings,
             @QueryParam("gpx.route") @DefaultValue("true") boolean withRoute /* default to false for the route part in next API version, see #437 */,
             @QueryParam("gpx.track") @DefaultValue("true") boolean withTrack,
             @QueryParam("gpx.waypoints") @DefaultValue("false") boolean withWayPoints,
             @QueryParam("trackname") @DefaultValue("GraphHopper Track") String trackName,
             @QueryParam("millis") String timeString) {
         boolean writeGPX = "gpx".equalsIgnoreCase(type);
-        instructions = writeGPX || instructions;
+        if (writeGPX) {
+            request.getHints().put(INSTRUCTIONS, true);
+        }
 
         StopWatch sw = new StopWatch().start();
 
-        if(requestPoints.isEmpty()) {
+        if(request.getPoints().isEmpty()) {
             throw new WebApplicationException(errorResponse(new IllegalArgumentException("You have to pass at least one point"), writeGPX));
         }
 
-        if (!encodingManager.supports(vehicleStr)) {
-            throw new WebApplicationException(errorResponse(new IllegalArgumentException("Vehicle not supported: " + vehicleStr), writeGPX));
+        if (!encodingManager.supports(request.getVehicle())) {
+            throw new WebApplicationException(errorResponse(new IllegalArgumentException("Vehicle not supported: " + request.getVehicle()), writeGPX));
         } else if (enableElevation && !hasElevation) {
             throw new WebApplicationException(errorResponse(new IllegalArgumentException("Elevation not supported!"), writeGPX));
-        } else if (favoredHeadings.size() > 1 && favoredHeadings.size() != requestPoints.size()) {
-            throw new WebApplicationException(errorResponse(new IllegalArgumentException("The number of 'heading' parameters must be <= 1 "
-                    + "or equal to the number of points (" + requestPoints.size() + ")"), writeGPX));
         }
 
-        if (pointHints.size() > 0 && pointHints.size() != requestPoints.size()) {
+        if (request.getPointHints().size() > 0 && request.getPointHints().size() != request.getPoints().size()) {
             throw new WebApplicationException(errorResponse(new IllegalArgumentException("If you pass " + POINT_HINT + ", you need to pass a hint for every point, empty hints will be ignored"), writeGPX));
         }
-
-        GHRequest request;
-        if (favoredHeadings.size() > 0) {
-            // if only one favored heading is specified take as start heading
-            if (favoredHeadings.size() == 1) {
-                List<Double> paddedHeadings = new ArrayList<>(Collections.nCopies(requestPoints.size(), Double.NaN));
-                paddedHeadings.set(0, favoredHeadings.get(0));
-                request = new GHRequest(requestPoints, paddedHeadings);
-            } else {
-                request = new GHRequest(requestPoints, favoredHeadings);
-            }
-        } else {
-            request = new GHRequest(requestPoints);
-        }
-
-        initHints(request.getHints(), uriInfo.getQueryParameters());
-        request.setVehicle(encodingManager.getEncoder(vehicleStr).toString()).
-                setWeighting(weighting).
-                setAlgorithm(algoStr).
-                setLocale(localeStr).
-                setPointHints(pointHints).
-                setPathDetails(pathDetails).
-                getHints().
-                put(CALC_POINTS, calcPoints).
-                put(INSTRUCTIONS, instructions).
-                put(WAY_POINT_MAX_DISTANCE, minPathPrecision);
 
         GHResponse ghResponse = graphHopper.route(request);
 
         // TODO: Request logging and timing should perhaps be done somewhere outside
         float took = sw.stop().getSeconds();
         String infoStr = httpReq.getRemoteAddr() + " " + httpReq.getLocale() + " " + httpReq.getHeader("User-Agent");
-        String logStr = httpReq.getQueryString() + " " + infoStr + " " + requestPoints + ", took:"
-                + took + ", " + algoStr + ", " + weighting + ", " + vehicleStr;
+        String logStr = httpReq.getQueryString() + " " + infoStr + " " + request.getPoints() + ", took:"
+                + took + ", " + request.getAlgorithm() + ", " + request.getWeighting() + ", " + request.getVehicle();
 
         if (ghResponse.hasErrors()) {
             logger.error(logStr + ", errors:" + ghResponse.getErrors());
@@ -166,7 +129,7 @@ public class RouteResource {
                     + ", debugInfo: " + ghResponse.getDebugInfo());
             return Response.fromResponse(writeGPX ?
                     gpxSuccessResponse(ghResponse, timeString, trackName, enableElevation, withRoute, withTrack, withWayPoints) :
-                    jsonSuccessResponse(ghResponse, instructions, calcPoints, enableElevation, pointsEncoded, took))
+                    jsonSuccessResponse(ghResponse, request.getHints().getBool(INSTRUCTIONS, true), request.getHints().getBool(CALC_POINTS, true), enableElevation, pointsEncoded, took))
                     .header("X-GH-Took", "" + Math.round(took * 1000))
                     .build();
         }
@@ -216,27 +179,6 @@ public class RouteResource {
             return Response.status(SC_BAD_REQUEST).entity(doc).build();
         } catch (ParserConfigurationException e) {
             throw new RuntimeException(e);
-        }
-    }
-
-    private void initHints(HintsMap m, MultivaluedMap<String, String> parameterMap) {
-        for (Map.Entry<String, List<String>> e : parameterMap.entrySet()) {
-            if (e.getValue().size() == 1) {
-                m.put(e.getKey(), e.getValue().get(0));
-            } else {
-                // Do nothing.
-                // TODO: this is dangerous: I can only silently swallow
-                // the forbidden multiparameter. If I comment-in the line below,
-                // I get an exception, because "point" regularly occurs
-                // multiple times.
-                // I think either unknown parameters (hints) should be allowed
-                // to be multiparameters, too, or we shouldn't use them for
-                // known parameters either, _or_ known parameters
-                // must be filtered before they come to this code point,
-                // _or_ we stop passing unknown parameters alltogether..
-                //
-                // throw new WebApplicationException(String.format("This query parameter (hint) is not allowed to occur multiple times: %s", e.getKey()));
-            }
         }
     }
 

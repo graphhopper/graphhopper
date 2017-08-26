@@ -327,16 +327,16 @@ public class RouteResourceIT {
 
     @Test
     public void testNoPoint() {
-        JsonNode json = app.client().target("http://localhost:8080/route?heading=0").request().buildGet().invoke().readEntity(JsonNode.class);
+        JsonNode json = app.client().target("http://localhost:8080/route").request().buildGet().invoke().readEntity(JsonNode.class);
         assertEquals("You have to pass at least one point", json.get("message").asText());
     }
 
     @Test
     public void testTooManyHeadings() {
-        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&heading=0&heading=0").request().buildGet().invoke();
+        final Response response = app.client().target("http://localhost:8080/route?point=42.554851,1.536198&point=42.554851,1.536198&heading=0&heading=0&heading=0").request().buildGet().invoke();
         assertEquals(400, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
-        assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (1)", json.get("message").asText());
+        assertEquals("The number of 'heading' parameters must be <= 1 or equal to the number of points (2)", json.get("message").asText());
     }
 
 }
