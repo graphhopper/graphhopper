@@ -27,7 +27,9 @@ import com.graphhopper.util.EdgeIteratorState;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
-import java.util.Iterator;
+import java.util.Spliterators;
+import java.util.function.Consumer;
+import java.util.stream.StreamSupport;
 
 final class GraphExplorer {
 
@@ -48,57 +50,49 @@ final class GraphExplorer {
     }
 
     Iterable<EdgeIteratorState> exploreEdgesAround(Label label) {
-        return new Iterable<EdgeIteratorState>() {
+        return StreamSupport.stream(new Spliterators.AbstractSpliterator<EdgeIteratorState>(0, 0) {
+            boolean foundEnteredTimeExpandedNetworkEdge = false;
             EdgeIterator edgeIterator = edgeExplorer.setBaseNode(label.adjNode);
 
             @Override
-            public Iterator<EdgeIteratorState> iterator() {
-                return new Iterator<EdgeIteratorState>() {
-                    boolean foundEnteredTimeExpandedNetworkEdge = false;
-
-                    @Override
-                    public boolean hasNext() {
-                        while(edgeIterator.next()) {
-                            final GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator.getFlags());
-                            if (!isValidOn(edgeIterator, label.currentTime)) {
+            public boolean tryAdvance(Consumer<? super EdgeIteratorState> action) {
+                while (edgeIterator.next()) {
+                    final GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator.getFlags());
+                    if (!isValidOn(edgeIterator, label.currentTime)) {
+                        continue;
+                    }
+                    if (realtimeFeed.isBlocked(edgeIterator.getEdge())) {
+                        continue;
+                    }
+                    if (edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL && !reverse) {
+                        continue;
+                    }
+                    if (edgeType == GtfsStorage.EdgeType.WAIT && reverse) {
+                        continue;
+                    }
+                    if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK && !reverse) {
+                        if (secondsOnTrafficDay(edgeIterator, label.currentTime) > flagEncoder.getTime(edgeIterator.getFlags())) {
+                            continue;
+                        } else {
+                            if (foundEnteredTimeExpandedNetworkEdge) {
                                 continue;
+                            } else {
+                                foundEnteredTimeExpandedNetworkEdge = true;
                             }
-                            if (realtimeFeed.isBlocked(edgeIterator.getEdge())) {
-                                continue;
-                            }
-                            if (edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL && !reverse) {
-                                continue;
-                            }
-                            if (edgeType == GtfsStorage.EdgeType.WAIT && reverse) {
-                                continue;
-                            }
-                            if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK && !reverse) {
-                                if (secondsOnTrafficDay(edgeIterator, label.currentTime) > flagEncoder.getTime(edgeIterator.getFlags())) {
-                                    continue;
-                                } else {
-                                    if (foundEnteredTimeExpandedNetworkEdge) {
-                                        continue;
-                                    } else {
-                                        foundEnteredTimeExpandedNetworkEdge = true;
-                                    }
-                                }
-                            } else if (edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && reverse) {
-                                if (secondsOnTrafficDay(edgeIterator, label.currentTime) < flagEncoder.getTime(edgeIterator.getFlags())) {
-                                    continue;
-                                }
-                            }
-                            return true;
                         }
-                        return false;
+                    } else if (edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && reverse) {
+                        if (secondsOnTrafficDay(edgeIterator, label.currentTime) < flagEncoder.getTime(edgeIterator.getFlags())) {
+                            continue;
+                        }
                     }
-
-                    @Override
-                    public EdgeIteratorState next() {
-                        return edgeIterator;
-                    }
-                };
+                    action.accept(edgeIterator);
+                    return true;
+                }
+                return false;
             }
-        };
+
+
+        }, false)::iterator;
     }
 
     long calcTravelTimeMillis(EdgeIteratorState edge, long earliestStartTime) {
