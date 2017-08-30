@@ -44,7 +44,8 @@ public class GHBaseServlet extends HttpServlet {
     @Named("jsonp_allowed")
     private boolean jsonpAllowed;
 
-    protected void writeJson(HttpServletRequest req, HttpServletResponse res, JSONObject json) throws JSONException, IOException {
+    protected void writeJson(HttpServletRequest req, HttpServletResponse res, JSONObject json)
+            throws JSONException, IOException {
         String type = getParam(req, "type", "json");
         res.setCharacterEncoding("UTF-8");
         boolean debug = getBooleanParam(req, "debug", false) || getBooleanParam(req, "pretty", false);
@@ -75,13 +76,13 @@ public class GHBaseServlet extends HttpServlet {
         }
     }
 
-    protected void writeError(HttpServletResponse res, int code, String message) {
+    protected static void writeError(HttpServletResponse res, int code, String message) {
         JSONObject json = new JSONObject();
         json.put("message", message);
         writeJsonError(res, code, json);
     }
 
-    protected void writeJsonError(HttpServletResponse res, int code, JSONObject json) {
+    protected static void writeJsonError(HttpServletResponse res, int code, JSONObject json) {
         try {
             // no type parameter check here as jsonp does not work if an error
             // also no debug parameter yet
@@ -94,7 +95,7 @@ public class GHBaseServlet extends HttpServlet {
         }
     }
 
-    protected String getParam(HttpServletRequest req, String key, String _default) {
+    protected static String getParam(HttpServletRequest req, String key, String _default) {
         String[] l = req.getParameterMap().get(key);
         if (l != null && l.length > 0)
             return l[0];
@@ -102,7 +103,7 @@ public class GHBaseServlet extends HttpServlet {
         return _default;
     }
 
-    protected String[] getParams(HttpServletRequest req, String key) {
+    protected static String[] getParams(HttpServletRequest req, String key) {
         String[] l = req.getParameterMap().get(key);
         if (l != null && l.length > 0) {
             return l;
@@ -110,7 +111,7 @@ public class GHBaseServlet extends HttpServlet {
         return new String[0];
     }
 
-    protected List<Double> getDoubleParamList(HttpServletRequest req, String key) {
+    protected static List<Double> getDoubleParamList(HttpServletRequest req, String key) {
         String[] l = req.getParameterMap().get(key);
         if (l != null && l.length > 0) {
             ArrayList<Double> doubleList = new ArrayList<Double>(l.length);
@@ -122,7 +123,7 @@ public class GHBaseServlet extends HttpServlet {
         return Collections.emptyList();
     }
 
-    protected long getLongParam(HttpServletRequest req, String key, long _default) {
+    protected static long getLongParam(HttpServletRequest req, String key, long _default) {
         try {
             return Long.parseLong(getParam(req, key, "" + _default));
         } catch (Exception ex) {
@@ -130,7 +131,7 @@ public class GHBaseServlet extends HttpServlet {
         }
     }
 
-    protected int getIntParam(HttpServletRequest req, String key, int _default) {
+    protected static int getIntParam(HttpServletRequest req, String key, int _default) {
         try {
             return Integer.parseInt(getParam(req, key, "" + _default));
         } catch (Exception ex) {
@@ -138,7 +139,7 @@ public class GHBaseServlet extends HttpServlet {
         }
     }
 
-    protected boolean getBooleanParam(HttpServletRequest req, String key, boolean _default) {
+    protected static boolean getBooleanParam(HttpServletRequest req, String key, boolean _default) {
         try {
             return Boolean.parseBoolean(getParam(req, key, "" + _default));
         } catch (Exception ex) {
@@ -146,7 +147,7 @@ public class GHBaseServlet extends HttpServlet {
         }
     }
 
-    protected double getDoubleParam(HttpServletRequest req, String key, double _default) {
+    protected static double getDoubleParam(HttpServletRequest req, String key, double _default) {
         try {
             return Double.parseDouble(getParam(req, key, "" + _default));
         } catch (Exception ex) {
@@ -154,7 +155,7 @@ public class GHBaseServlet extends HttpServlet {
         }
     }
 
-    public void writeResponse(HttpServletResponse res, String str) {
+    public static void writeResponse(HttpServletResponse res, String str) {
         try {
             res.setStatus(SC_OK);
             res.getWriter().append(str);
