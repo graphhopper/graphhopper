@@ -17,6 +17,10 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles) {
             title = title + ", " + instr.annotation_text;
     }
 
+    if (instr.autonomy_enabled) {
+        title = title + "(AUTONOMY ENABLED: " + instr.autonomy_enabled + ")";
+    }
+
     var pathname = window.location.pathname;
     var dirname = pathname.substring(0, pathname.lastIndexOf('/'));
 

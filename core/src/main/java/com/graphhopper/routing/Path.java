@@ -335,6 +335,17 @@ public class Path {
         return points;
     }
 
+    protected boolean canEnableAutonomy(EdgeIteratorState edge, FlagEncoder encoder) {
+        long flags = edge.getFlags();
+        double speed = encoder.getSpeed(flags);
+        
+        if (speed >= 75) {// kph
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
     /**
      * @return the list of instructions for this path.
      */
@@ -379,6 +390,7 @@ public class Path {
             private String name, prevName = null;
             private InstructionAnnotation annotation, prevAnnotation;
             private EdgeExplorer outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+            private double currentSpeed = 0, prevSpeed = 0;
 
             @Override
             public void next(EdgeIteratorState edge, int index) {
@@ -405,11 +417,20 @@ public class Path {
 
                 name = edge.getName();
                 annotation = encoder.getAnnotation(flags, tr);
+                currentSpeed = encoder.getSpeed(flags);
 
                 if ((prevName == null) && (!isRoundabout)) // very first instruction (if not in Roundabout)
                 {
                     int sign = Instruction.CONTINUE_ON_STREET;
-                    prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+
+                    if (canEnableAutonomy(edge, encoder)) {
+                        InstructionAV instructionAV = new InstructionAV(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                        instructionAV.setEnableAutonomy(true);
+                        prevInstruction = instructionAV;
+                    }
+                    else {
+                        prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                    }
                     ways.add(prevInstruction);
                     prevName = name;
                     prevAnnotation = annotation;
@@ -516,10 +537,30 @@ public class Path {
                         sign = Instruction.TURN_SHARP_LEFT;
                     else
                         sign = Instruction.TURN_SHARP_RIGHT;
-                    prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+
+                    if (canEnableAutonomy(edge, encoder)) {
+                        InstructionAV instructionAV = new InstructionAV(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                        instructionAV.setEnableAutonomy(true);
+                        prevInstruction = instructionAV;
+                    }
+                    else {
+                        prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                    }
                     ways.add(prevInstruction);
                     prevName = name;
                     prevAnnotation = annotation;
+                }
+                else if (currentSpeed != prevSpeed) {
+                    if (canEnableAutonomy(edge, encoder)) {
+                        int sign = Instruction.CONTINUE_ON_STREET;
+
+                        InstructionAV instructionAV = new InstructionAV(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                        instructionAV.setEnableAutonomy(true);
+                        prevInstruction = instructionAV;
+                        ways.add(prevInstruction);
+
+                        prevSpeed = currentSpeed;
+                    }
                 }
 
                 updatePointsAndInstruction(edge, wayGeo);
