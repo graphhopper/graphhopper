@@ -21,7 +21,6 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;
 import java.util.*;
@@ -73,28 +72,11 @@ class MultiCriteriaLabelSetting {
         fromMap = HashMultimap.create();
     }
 
-    Stream<Label> calcPaths(int from, int to, Instant startTime) {
+    Stream<Label> calcLabels(int from, int to, Instant startTime) {
         this.startTime = startTime.toEpochMilli();
-        final Stream<Label> labels = StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false)
+        return StreamSupport.stream(new MultiCriteriaLabelSettingSpliterator(from, to), false)
                 .limit(maxVisitedNodes)
                 .peek(label -> visitedNodes++);
-        final Spliterator<Label> spliterator = labels.spliterator();
-        return StreamSupport.stream(new Spliterators.AbstractSpliterator<Label>(0, 0) {
-            Label current = null;
-            List<Label> solutions = new ArrayList<>();
-            @Override
-            public boolean tryAdvance(Consumer<? super Label> action) {
-                while (spliterator.tryAdvance(label -> current = label)) {
-                    if (to == current.adjNode) {
-                        action.accept(current);
-                        solutions.add(current);
-                        return true;
-                    }
-                }
-                return false;
-            }
-        }, false)
-                .filter(me -> me.nWalkDistanceConstraintViolations <= 0);
     }
 
     private class MultiCriteriaLabelSettingSpliterator extends Spliterators.AbstractSpliterator<Label> {
@@ -121,7 +103,7 @@ class MultiCriteriaLabelSetting {
             } else {
                 Label label = fromHeap.poll();
                 action.accept(label);
-                for (EdgeIteratorState edge : explorer.exploreEdgesAround(label)) {
+                explorer.exploreEdgesAround(label).forEach(edge -> {
                     GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
                     long nextTime;
                     if (reverse) {
@@ -158,13 +140,16 @@ class MultiCriteriaLabelSetting {
                         }
                         fromHeap.add(nEdge);
                     }
-                }
+                });
                 return true;
             }
         }
     }
 
     private boolean isNotDominatedByAnyOf(Label me, Set<Label> sptEntries) {
+        if (me.nWalkDistanceConstraintViolations > 0) {
+            return false;
+        }
         for (Label they : sptEntries) {
             if (dominates(they, me)) {
                 return false;

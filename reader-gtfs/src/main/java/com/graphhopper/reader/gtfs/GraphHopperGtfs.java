@@ -22,6 +22,7 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.*;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.QueryGraph;
+import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
@@ -37,6 +38,7 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
 import static com.graphhopper.util.Parameters.PT.PROFILE_QUERY;
@@ -93,14 +95,18 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         private final GHPoint enter;
         private final GHPoint exit;
         private final Translation translation;
+        private final List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>();
+        private final PointList extraNodes = new PointList();
+        private final Map<Integer, PathWrapper> walkPaths = new HashMap<>();
 
         private final GHResponse response = new GHResponse();
         private final QueryGraph queryGraph = new QueryGraph(graphHopperStorage);
+        private GraphExplorer graphExplorer;
 
         RequestHandler(GHRequest request) {
             maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
             profileQuery = request.getHints().getBool(PROFILE_QUERY, false);
-            ignoreTransfers = request.getHints().getBool(Parameters.PT.IGNORE_TRANSFERS, false);
+            ignoreTransfers = request.getHints().getBool(Parameters.PT.IGNORE_TRANSFERS, profileQuery);
             limitSolutions = request.getHints().getInt(Parameters.PT.LIMIT_SOLUTIONS, profileQuery ? 5 : ignoreTransfers ? 1 : Integer.MAX_VALUE);
             final String departureTimeString = request.getHints().get(Parameters.PT.EARLIEST_DEPARTURE_TIME, "");
             try {
@@ -110,8 +116,8 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             }
             arriveBy = request.getHints().getBool(Parameters.PT.ARRIVE_BY, false);
             walkSpeedKmH = request.getHints().getDouble(Parameters.PT.WALK_SPEED, 5.0);
-            maxWalkDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, Double.MAX_VALUE);
-            maxTransferDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, Double.MAX_VALUE);
+            maxWalkDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 1000.0);
+            maxTransferDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, profileQuery ? -1 : Double.MAX_VALUE);
             weighting = createPtTravelTimeWeighting(flagEncoder, arriveBy, walkSpeedKmH);
             translation = translationMap.getWithFallBack(request.getLocale());
             if (request.getPoints().size() != 2) {
@@ -124,25 +130,74 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         GHResponse route() {
             StopWatch stopWatch = new StopWatch().start();
 
+            ArrayList<QueryResult> allQueryResults = new ArrayList<>();
+
             QueryResult source = findClosest(enter, 0);
             QueryResult dest = findClosest(exit, 1);
+            allQueryResults.add(source);
+            allQueryResults.add(dest);
             queryGraph.lookup(Arrays.asList(source, dest)); // modifies queryGraph, source and dest!
 
             PointList startAndEndpoint = pointListFrom(Arrays.asList(source, dest));
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
+            if (profileQuery) {
+                substitutePointWithVirtualNode(0, false, enter, allQueryResults);
+                substitutePointWithVirtualNode(1, true, exit, allQueryResults);
+            }
+
             int startNode;
             int destNode;
             if (arriveBy) {
-                startNode = dest.getClosestNode();
-                destNode = source.getClosestNode();
+                startNode = allQueryResults.get(1).getClosestNode();
+                destNode = allQueryResults.get(0).getClosestNode();
             } else {
-                startNode = source.getClosestNode();
-                destNode = dest.getClosestNode();
+                startNode = allQueryResults.get(0).getClosestNode();
+                destNode = allQueryResults.get(1).getClosestNode();
             }
             List<Label> solutions = findPaths(startNode, destNode);
             parseSolutionsAndAddToResponse(solutions, startAndEndpoint);
             return response;
+        }
+
+        private void substitutePointWithVirtualNode(int index, boolean reverse, GHPoint ghPoint, ArrayList<QueryResult> allQueryResults) {
+            final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, weighting, flagEncoder, gtfsStorage, realtimeFeed, reverse, new PointList(), Collections.emptyList(), true, false);
+
+            extraNodes.add(ghPoint);
+
+            int newNode = graphHopperStorage.getNodes() + 1000 + index;
+            final List<Label> stationNodes = findStationNodes(graphExplorer, allQueryResults.get(index).getClosestNode(), reverse);
+            for (Label stationNode : stationNodes) {
+                final PathWrapper pathWrapper = stationNode.parent.parent != null ?
+                        tripFromLabel.parseSolutionIntoPath(reverse, flagEncoder, translation, graphExplorer, weighting, stationNode.parent, new PointList()) :
+                        new PathWrapper();
+                final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(stationNode.edge,
+                        -1, reverse ? stationNode.adjNode : newNode, reverse ? newNode : stationNode.adjNode, pathWrapper.getDistance(), 0, "", pathWrapper.getPoints());
+                final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(stationNode.edge,
+                        -1, reverse ? newNode : stationNode.adjNode, reverse ? stationNode.adjNode : newNode, pathWrapper.getDistance(), 0, "", pathWrapper.getPoints());
+                newEdge.setFlags(((PtFlagEncoder) weighting.getFlagEncoder()).setEdgeType(newEdge.getFlags(), reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT));
+                final long time = pathWrapper.getTime() / 1000;
+                newEdge.setFlags(((PtFlagEncoder) weighting.getFlagEncoder()).setTime(newEdge.getFlags(), time));
+                reverseNewEdge.setFlags(newEdge.getFlags());
+                newEdge.setReverseEdge(reverseNewEdge);
+                newEdge.setDistance(pathWrapper.getDistance());
+                extraEdges.add(newEdge);
+                walkPaths.put(stationNode.adjNode, pathWrapper);
+            }
+
+            final QueryResult virtualNode = new QueryResult(ghPoint.getLat(), ghPoint.getLon());
+            virtualNode.setClosestNode(newNode);
+            allQueryResults.set(index, virtualNode);
+        }
+
+        private List<Label> findStationNodes(GraphExplorer graphExplorer, int node, boolean reverse) {
+            GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
+            MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, weighting, reverse, maxWalkDistancePerLeg, maxTransferDistancePerLeg, false, false, maxVisitedNodesForRequest);
+            final Stream<Label> labels = router.calcLabels(node, -1, initialTime);
+            return labels
+                    .filter(current -> current.edge != -1 && flagEncoder.getEdgeType(graphExplorer.getEdgeIteratorState(current.edge, current.adjNode).getFlags()) == edgeType)
+//                    .limit(limitSolutions)
+                    .collect(Collectors.toList());
         }
 
         private QueryResult findClosest(GHPoint point, int indexForErrorMessage) {
@@ -155,16 +210,37 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
 
         private void parseSolutionsAndAddToResponse(List<Label> solutions, PointList waypoints) {
             for (Label solution : solutions) {
-                response.add(tripFromLabel.parseSolutionIntoPath(initialTime, arriveBy, flagEncoder, translation, queryGraph, weighting, solution, waypoints));
+                final List<Trip.Leg> legs = tripFromLabel.getTrip(arriveBy, flagEncoder, translation, graphExplorer, weighting, solution);
+                if (profileQuery) {
+                    legs.addAll(0, walkPaths.get(accessNode(solution)).getLegs());
+                    legs.addAll(walkPaths.get(egressNode(solution)).getLegs());
+                }
+                final PathWrapper pathWrapper = tripFromLabel.createPathWrapper(translation, waypoints, legs);
+                // TODO: remove
+                pathWrapper.setTime((solution.currentTime - initialTime.toEpochMilli()) * (arriveBy ? -1 : 1));
+                response.add(pathWrapper);
             }
             response.getAll().sort(Comparator.comparingDouble(PathWrapper::getTime));
         }
 
+        private int accessNode(Label solution) {
+            while(solution.parent.parent != null) {
+                solution = solution.parent;
+            }
+            return solution.adjNode;
+        }
+
+        private int egressNode(Label solution) {
+            return solution.parent.adjNode;
+        }
+
         private List<Label> findPaths(int startNode, int destNode) {
             StopWatch stopWatch = new StopWatch().start();
-            GraphExplorer graphExplorer = new GraphExplorer(queryGraph, weighting, flagEncoder, gtfsStorage, realtimeFeed, arriveBy);
+            graphExplorer = new GraphExplorer(queryGraph, weighting, flagEncoder, gtfsStorage, realtimeFeed, arriveBy, extraNodes, extraEdges, false, profileQuery);
             MultiCriteriaLabelSetting router = new MultiCriteriaLabelSetting(graphExplorer, weighting, arriveBy, maxWalkDistancePerLeg, maxTransferDistancePerLeg, !ignoreTransfers, profileQuery, maxVisitedNodesForRequest);
-            List<Label> solutions = router.calcPaths(startNode, destNode, initialTime)
+            final Stream<Label> labels = router.calcLabels(startNode, destNode, initialTime);
+            List<Label> solutions = labels
+                    .filter(current -> destNode == current.adjNode)
                     .limit(limitSolutions)
                     .collect(Collectors.toList());
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");

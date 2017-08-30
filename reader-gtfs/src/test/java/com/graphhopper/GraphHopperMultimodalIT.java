@@ -76,12 +76,11 @@ public class GraphHopperMultimodalIT {
         ghRequest.getHints().put(Parameters.PT.PROFILE_QUERY, true);
 
         GHResponse response = graphHopper.route(ghRequest);
-        final PathWrapper mixedPath = response.getAll().get(1);
 
-        assertThat(mixedPath.getLegs().get(0).departureTime.toInstant().atZone(zoneId).toLocalTime())
+        assertThat(response.getAll().get(0).getLegs().get(0).departureTime.toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo("06:41:06");
-        assertThat(mixedPath.getLegs().get(0).arrivalTime.toInstant())
-                .isEqualTo(mixedPath.getLegs().get(1).departureTime.toInstant());
+        assertThat(response.getAll().get(0).getLegs().get(0).arrivalTime.toInstant())
+                .isEqualTo(response.getAll().get(0).getLegs().get(1).departureTime.toInstant());
     }
 
 }
