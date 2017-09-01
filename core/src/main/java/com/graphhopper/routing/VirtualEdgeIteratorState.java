@@ -226,7 +226,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         throw new UnsupportedOperationException("Not supported.");
     }
 
-    void setReverseEdge(EdgeIteratorState reverseEdge) {
+    public void setReverseEdge(EdgeIteratorState reverseEdge) {
         this.reverseEdge = reverseEdge;
     }
 
