@@ -114,7 +114,7 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testGraphHopperWeb() throws Exception {
-        GraphHopperAPI hopper = new GraphHopperWeb();
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
@@ -143,7 +143,7 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testPathDetails() throws Exception {
-        GraphHopperAPI hopper = new GraphHopperWeb();
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         request.setPathDetails(Arrays.asList("average_speed", "edge_id", "time"));
@@ -181,7 +181,7 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testPathDetailsNoConnection() throws Exception {
-        GraphHopperAPI hopper = new GraphHopperWeb();
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
         GHRequest request = new GHRequest(42.542078, 1.45586, 42.537841, 1.439981);
         request.setPathDetails(Arrays.asList("average_speed"));
@@ -207,7 +207,7 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testInitInstructionsWithTurnDescription() {
-        GraphHopperAPI hopper = new GraphHopperWeb();
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         GHResponse rsp = hopper.route(request);
@@ -220,7 +220,7 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testGraphHopperWebRealExceptions() {
-        GraphHopperAPI hopper = new GraphHopperWeb();
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
 
         // IllegalArgumentException (Wrong Request)
