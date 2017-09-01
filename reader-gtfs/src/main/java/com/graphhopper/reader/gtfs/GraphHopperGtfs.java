@@ -226,14 +226,25 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         }
 
         private int accessNode(Label solution) {
-            while(solution.parent.parent != null) {
-                solution = solution.parent;
+            if (!arriveBy) {
+                while (solution.parent.parent != null) {
+                    solution = solution.parent;
+                }
+                return solution.adjNode;
+            } else {
+                return solution.parent.adjNode;
             }
-            return solution.adjNode;
         }
 
         private int egressNode(Label solution) {
-            return solution.parent.adjNode;
+            if (!arriveBy) {
+                return solution.parent.adjNode;
+            } else {
+                while(solution.parent.parent != null) {
+                    solution = solution.parent;
+                }
+                return solution.adjNode;
+            }
         }
 
         private List<Label> findPaths(int startNode, int destNode) {
