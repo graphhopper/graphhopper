@@ -31,6 +31,7 @@ import org.junit.Test;
 import java.util.*;
 
 import static com.graphhopper.storage.AbstractGraphStorageTester.assertPList;
+import static com.graphhopper.util.Parameters.DETAILS.*;
 import static org.junit.Assert.*;
 
 /**
@@ -45,6 +46,7 @@ public class PathTest {
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
     private final RoundaboutGraph roundaboutGraph = new RoundaboutGraph();
+    private final Graph pathDetailGraph = generatePathDetailsGraph();
 
     @Test
     public void testFound() {
@@ -278,51 +280,94 @@ public class PathTest {
     }
 
     @Test
-    public void testCalcDetails() {
-        final Graph g = new GraphBuilder(carManager).create();
-        final NodeAccess na = g.getNodeAccess();
-
-        na.setNode(1, 52.514, 13.348);
-        na.setNode(2, 52.514, 13.349);
-        na.setNode(3, 52.514, 13.350);
-        na.setNode(4, 52.515, 13.349);
-        na.setNode(5, 52.516, 13.3452);
-
-        ReaderWay w = new ReaderWay(1);
-        w.setTag("highway", "tertiary");
-        w.setTag("maxspeed", "50");
-
-        EdgeIteratorState tmpEdge;
-        tmpEdge = g.edge(1, 2, 5, true).setName("1-2");
-        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
-        tmpEdge = g.edge(4, 5, 5, true).setName("4-5");
-        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
-
-        w.setTag("maxspeed", "100");
-        tmpEdge = g.edge(2, 3, 5, true).setName("2-3");
-        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
-
-        w.setTag("maxspeed", "10");
-        tmpEdge = g.edge(3, 4, 5, true).setName("3-4");
-        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
-
-        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
+    public void testCalcAverageSpeedDetails() {
+        Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{Parameters.DETAILS.AVERAGE_SPEED}), encoder), 0);
+        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{AVERAGE_SPEED}), encoder, new FastestWeighting(encoder)), 0);
         assertTrue(details.size() == 1);
-        List<PathDetail> detailList = details.get(Parameters.DETAILS.AVERAGE_SPEED);
-        assertEquals(4, detailList.size());
-        assertEquals(45.0, detailList.get(0).getValue());
-        assertEquals(90.0, detailList.get(1).getValue());
-        assertEquals(10.0, detailList.get(2).getValue());
-        assertEquals(45.0, detailList.get(3).getValue());
 
-        assertEquals(0, detailList.get(0).getFirst());
-        assertEquals(1, detailList.get(1).getFirst());
-        assertEquals(2, detailList.get(2).getFirst());
-        assertEquals(3, detailList.get(3).getFirst());
-        assertEquals(4, detailList.get(3).getLast());
+        List<PathDetail> averageSpeedDetails = details.get(AVERAGE_SPEED);
+        assertEquals(4, averageSpeedDetails.size());
+        assertEquals(45.0, averageSpeedDetails.get(0).getValue());
+        assertEquals(90.0, averageSpeedDetails.get(1).getValue());
+        assertEquals(10.0, averageSpeedDetails.get(2).getValue());
+        assertEquals(45.0, averageSpeedDetails.get(3).getValue());
+
+        assertEquals(0, averageSpeedDetails.get(0).getFirst());
+        assertEquals(1, averageSpeedDetails.get(1).getFirst());
+        assertEquals(2, averageSpeedDetails.get(2).getFirst());
+        assertEquals(3, averageSpeedDetails.get(3).getFirst());
+        assertEquals(4, averageSpeedDetails.get(3).getLast());
+    }
+
+    @Test
+    public void testCalcStreetNameDetails() {
+        Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
+        assertTrue(p.isFound());
+
+        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{STREET_NAME}), encoder, new FastestWeighting(encoder)), 0);
+        assertTrue(details.size() == 1);
+
+        List<PathDetail> streetNameDetails = details.get(STREET_NAME);
+        assertTrue(details.size() == 1);
+
+        assertEquals(4, streetNameDetails.size());
+        assertEquals("1-2", streetNameDetails.get(0).getValue());
+        assertEquals("2-3", streetNameDetails.get(1).getValue());
+        assertEquals("3-4", streetNameDetails.get(2).getValue());
+        assertEquals("4-5", streetNameDetails.get(3).getValue());
+
+        assertEquals(0, streetNameDetails.get(0).getFirst());
+        assertEquals(1, streetNameDetails.get(1).getFirst());
+        assertEquals(2, streetNameDetails.get(2).getFirst());
+        assertEquals(3, streetNameDetails.get(3).getFirst());
+        assertEquals(4, streetNameDetails.get(3).getLast());
+    }
+
+    @Test
+    public void testCalcEdgeIdDetails() {
+        Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
+        assertTrue(p.isFound());
+
+        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{EDGE_ID}), encoder, new FastestWeighting(encoder)), 0);
+        assertTrue(details.size() == 1);
+
+        List<PathDetail> edgeIdDetails = details.get(EDGE_ID);
+        assertEquals(4, edgeIdDetails.size());
+        assertEquals(0, edgeIdDetails.get(0).getValue());
+        // This is out of order because we don't create the edges in order
+        assertEquals(2, edgeIdDetails.get(1).getValue());
+        assertEquals(3, edgeIdDetails.get(2).getValue());
+        assertEquals(1, edgeIdDetails.get(3).getValue());
+
+        assertEquals(0, edgeIdDetails.get(0).getFirst());
+        assertEquals(1, edgeIdDetails.get(1).getFirst());
+        assertEquals(2, edgeIdDetails.get(2).getFirst());
+        assertEquals(3, edgeIdDetails.get(3).getFirst());
+        assertEquals(4, edgeIdDetails.get(3).getLast());
+    }
+
+    @Test
+    public void testCalcTimeDetails() {
+        Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
+        assertTrue(p.isFound());
+
+        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{TIME}), encoder, new FastestWeighting(encoder)), 0);
+        assertTrue(details.size() == 1);
+
+        List<PathDetail> timeDetails = details.get(TIME);
+        assertEquals(4, timeDetails.size());
+        assertEquals(400L, timeDetails.get(0).getValue());
+        assertEquals(200L, timeDetails.get(1).getValue());
+        assertEquals(1800L, timeDetails.get(2).getValue());
+        assertEquals(400L, timeDetails.get(3).getValue());
+
+        assertEquals(0, timeDetails.get(0).getFirst());
+        assertEquals(1, timeDetails.get(1).getFirst());
+        assertEquals(2, timeDetails.get(2).getFirst());
+        assertEquals(3, timeDetails.get(3).getFirst());
+        assertEquals(4, timeDetails.get(3).getLast());
     }
 
     /**
@@ -641,6 +686,37 @@ public class PathTest {
 
         // Contain start, and finish instruction
         assertEquals(2, wayList.size());
+    }
+
+    private Graph generatePathDetailsGraph() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        na.setNode(1, 52.514, 13.348);
+        na.setNode(2, 52.514, 13.349);
+        na.setNode(3, 52.514, 13.350);
+        na.setNode(4, 52.515, 13.349);
+        na.setNode(5, 52.516, 13.3452);
+
+        ReaderWay w = new ReaderWay(1);
+        w.setTag("highway", "tertiary");
+        w.setTag("maxspeed", "50");
+
+        EdgeIteratorState tmpEdge;
+        tmpEdge = g.edge(1, 2, 5, true).setName("1-2");
+        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
+        tmpEdge = g.edge(4, 5, 5, true).setName("4-5");
+        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
+
+        w.setTag("maxspeed", "100");
+        tmpEdge = g.edge(2, 3, 5, true).setName("2-3");
+        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
+
+        w.setTag("maxspeed", "10");
+        tmpEdge = g.edge(3, 4, 5, true).setName("3-4");
+        tmpEdge.setFlags(carManager.handleWayTags(w, carManager.acceptWay(w), 0));
+
+        return g;
     }
 
     private class RoundaboutGraph {

@@ -80,6 +80,7 @@
         <module>reader-json</module>
         <module>tools</module>
         <module>web</module>
+        <module>client-hc</module>
     </modules>
     <build>
         <plugins>

@@ -18,10 +18,12 @@
 package com.graphhopper.util.details;
 
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.routing.weighting.Weighting;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.graphhopper.util.Parameters.DETAILS.*;
 
 /**
  * Generates a list of PathDetailsBuilder from a List of PathDetail names
@@ -32,17 +34,28 @@ public class PathDetailsBuilderFactory {
 
     private final List<String> requestedPathDetails;
     private final FlagEncoder encoder;
+    private final Weighting weighting;
 
-    public PathDetailsBuilderFactory(List<String> requestedPathDetails, FlagEncoder encoder) {
+    public PathDetailsBuilderFactory(List<String> requestedPathDetails, FlagEncoder encoder, Weighting weighting) {
         this.requestedPathDetails = requestedPathDetails;
         this.encoder = encoder;
+        this.weighting = weighting;
     }
 
     public List<PathDetailsBuilder> createPathDetailsBuilders() {
         List<PathDetailsBuilder> builders = new ArrayList<>();
 
-        if (requestedPathDetails.contains(Parameters.DETAILS.AVERAGE_SPEED))
+        if (requestedPathDetails.contains(AVERAGE_SPEED))
             builders.add(new AverageSpeedDetails(encoder));
+
+        if (requestedPathDetails.contains(STREET_NAME))
+            builders.add(new StreetNameDetails());
+
+        if (requestedPathDetails.contains(EDGE_ID))
+            builders.add(new EdgeIdDetails());
+
+        if (requestedPathDetails.contains(TIME))
+            builders.add(new TimeDetails(weighting));
 
         if (requestedPathDetails.size() != builders.size()) {
             throw new IllegalArgumentException("You requested the details " + requestedPathDetails + " but we could only find " + builders);

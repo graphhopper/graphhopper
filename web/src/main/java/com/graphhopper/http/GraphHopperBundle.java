@@ -236,6 +236,8 @@ public class GraphHopperBundle implements ConfiguredBundle<HasGraphHopperConfigu
                 gen.writeNumber((Double) value.getValue());
             else if (value.getValue() instanceof Long)
                 gen.writeNumber((Long) value.getValue());
+            else if (value.getValue() instanceof Integer)
+                gen.writeNumber((Integer) value.getValue());
             else if (value.getValue() instanceof Boolean)
                 gen.writeBoolean((Boolean) value.getValue());
             else if (value.getValue() instanceof String)

@@ -56,6 +56,14 @@
             <version>1.1.2</version>
             <scope>test</scope>
         </dependency>
+
+        <!-- for integration tests of service -->
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>directions-api-client-hc</artifactId>
+            <version>0.10-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>

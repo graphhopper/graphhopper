@@ -1051,7 +1051,7 @@ public class GraphHopper implements GraphHopperAPI {
                 boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, enableInstructions);
                 boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
                 double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
-                PathDetailsBuilderFactory calculatorFactory = new PathDetailsBuilderFactory(request.getPathDetails(), encoder);
+                PathDetailsBuilderFactory calculatorFactory = new PathDetailsBuilderFactory(request.getPathDetails(), encoder, weighting);
 
                 DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
                 PathMerger pathMerger = new PathMerger().

@@ -158,27 +158,45 @@ public class RouteResourceIT {
 
     @Test
     public void testPathDetails() throws Exception {
-        GraphHopperAPI hopper = new GraphHopperWeb();
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
-        request.setPathDetails(Arrays.asList("average_speed"));
+        request.setPathDetails(Arrays.asList("average_speed", "edge_id", "time"));
         GHResponse rsp = hopper.route(request);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
         Map<String, List<PathDetail>> pathDetails = rsp.getBest().getPathDetails();
         assertFalse(pathDetails.isEmpty());
         assertTrue(pathDetails.containsKey("average_speed"));
+        assertTrue(pathDetails.containsKey("edge_id"));
+        assertTrue(pathDetails.containsKey("time"));
         List<PathDetail> averageSpeedList = pathDetails.get("average_speed");
         assertEquals(9, averageSpeedList.size());
         assertEquals(30.0, averageSpeedList.get(0).getValue());
         assertEquals(14, averageSpeedList.get(0).getLength());
         assertEquals(60.0, averageSpeedList.get(1).getValue());
         assertEquals(5, averageSpeedList.get(1).getLength());
+
+        List<PathDetail> edgeIdDetails = pathDetails.get("edge_id");
+        assertEquals(77, edgeIdDetails.size());
+        assertEquals(3759L, edgeIdDetails.get(0).getValue());
+        assertEquals(2, edgeIdDetails.get(0).getLength());
+        assertEquals(881L, edgeIdDetails.get(1).getValue());
+        assertEquals(8, edgeIdDetails.get(1).getLength());
+
+        long expectedTime = rsp.getBest().getTime();
+        long actualTime = 0;
+        List<PathDetail> timeDetails = pathDetails.get("time");
+        for (PathDetail pd: timeDetails) {
+            actualTime += (Long) pd.getValue();
+        }
+
+        assertEquals(expectedTime, actualTime);
     }
 
     @Test
     public void testPathDetailsNoConnection() throws Exception {
-        GraphHopperAPI hopper = new GraphHopperWeb();
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
         GHRequest request = new GHRequest(42.542078, 1.45586, 42.537841, 1.439981);
         request.setPathDetails(Arrays.asList("average_speed"));
@@ -206,7 +224,7 @@ public class RouteResourceIT {
 
     @Test
     public void testInitInstructionsWithTurnDescription() {
-        GraphHopperAPI hopper = new GraphHopperWeb();
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         GHResponse rsp = hopper.route(request);
@@ -219,7 +237,7 @@ public class RouteResourceIT {
 
     @Test
     public void testGraphHopperWebRealExceptions() {
-        GraphHopperAPI hopper = new GraphHopperWeb();
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load("http://localhost:8080/route"));
 
         // IllegalArgumentException (Wrong Request)
