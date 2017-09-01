@@ -87,6 +87,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         private final int limitSolutions;
         private final Instant initialTime;
         private final boolean profileQuery;
+        private final boolean separateWalkQuery = true;
         private final boolean arriveBy;
         private final boolean ignoreTransfers;
         private final double walkSpeedKmH;
@@ -118,7 +119,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             arriveBy = request.getHints().getBool(Parameters.PT.ARRIVE_BY, false);
             walkSpeedKmH = request.getHints().getDouble(Parameters.PT.WALK_SPEED, 5.0);
             maxWalkDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 1000.0);
-            maxTransferDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, profileQuery ? -1 : Double.MAX_VALUE);
+            maxTransferDistancePerLeg = request.getHints().getDouble(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, separateWalkQuery ? -1 : Double.MAX_VALUE);
             weighting = createPtTravelTimeWeighting(flagEncoder, arriveBy, walkSpeedKmH);
             translation = translationMap.getWithFallBack(request.getLocale());
             if (request.getPoints().size() != 2) {
@@ -142,7 +143,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             PointList startAndEndpoint = pointListFrom(Arrays.asList(source, dest));
             response.addDebugInfo("idLookup:" + stopWatch.stop().getSeconds() + "s");
 
-            if (profileQuery) {
+            if (separateWalkQuery) {
                 substitutePointWithVirtualNode(0, false, enter, allQueryResults);
                 substitutePointWithVirtualNode(1, true, exit, allQueryResults);
             }
@@ -212,7 +213,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         private void parseSolutionsAndAddToResponse(List<Label> solutions, PointList waypoints) {
             for (Label solution : solutions) {
                 final List<Trip.Leg> legs = tripFromLabel.getTrip(arriveBy, flagEncoder, translation, graphExplorer, weighting, solution);
-                if (profileQuery) {
+                if (separateWalkQuery) {
                     legs.addAll(0, walkPaths.get(accessNode(solution)).getLegs());
                     legs.addAll(walkPaths.get(egressNode(solution)).getLegs());
                 }
