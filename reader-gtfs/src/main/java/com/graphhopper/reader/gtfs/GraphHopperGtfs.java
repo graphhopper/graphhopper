@@ -106,7 +106,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         private GraphExplorer graphExplorer;
 
         RequestHandler(GHRequest request) {
-            maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, Integer.MAX_VALUE);
+            maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, 1_000_000);
             profileQuery = request.getHints().getBool(PROFILE_QUERY, false);
             ignoreTransfers = request.getHints().getBool(Parameters.PT.IGNORE_TRANSFERS, profileQuery);
             limitSolutions = request.getHints().getInt(Parameters.PT.LIMIT_SOLUTIONS, profileQuery ? 5 : ignoreTransfers ? 1 : Integer.MAX_VALUE);
@@ -257,7 +257,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     .limit(limitSolutions)
                     .collect(Collectors.toList());
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
-            if (router.getVisitedNodes() >= maxVisitedNodesForRequest) {
+            if (solutions.isEmpty() && router.getVisitedNodes() >= maxVisitedNodesForRequest) {
                 throw new IllegalArgumentException("No path found - maximum number of nodes exceeded: " + maxVisitedNodesForRequest);
             }
             response.getHints().put("visited_nodes.sum", router.getVisitedNodes());
