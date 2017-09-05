@@ -338,6 +338,7 @@ public class GraphHopperGtfsIT {
                 TO1_LAT, TO1_LON
         );
         request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,7,30).atZone(zoneId).toInstant());
+        request.getHints().put(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, Double.MAX_VALUE);
 
         GHResponse response = graphHopper.route(request);
         assertEquals("Ignoring transfer rules (free walking): Will be there at 9.", time(1, 30), response.getBest().getTime());
@@ -347,7 +348,6 @@ public class GraphHopperGtfsIT {
                 TO1_LAT, TO1_LON
         );
         request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,7,30).atZone(zoneId).toInstant());
-        request.getHints().put(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, 0.0);
 
         response = graphHopper.route(request);
         assertEquals("Transfer rule: 11 minutes. Will miss connection, and be there at 14.", time(6, 30), response.getBest().getTime());
@@ -366,7 +366,6 @@ public class GraphHopperGtfsIT {
                 TO2_LAT, TO2_LON
         );
         request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,7,30).atZone(zoneId).toInstant());
-        request.getHints().put(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, 0.0);
 
         response = graphHopper.route(request);
         assertEquals("Will still be there at 8:10 because there is a route-specific exception for this route.", time(0, 40), response.getBest().getTime());
@@ -376,7 +375,6 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON
         );
         request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,12,5).atZone(zoneId).toInstant());
-        request.getHints().put(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, 0.0);
 
         response = graphHopper.route(request);
         assertEquals("Will take 1:15 because of a 'from route' exception with a longer transfer time.", time(1, 15), response.getBest().getTime());
