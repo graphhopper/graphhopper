@@ -30,8 +30,8 @@ public class RoundaboutInstruction extends Instruction {
     private boolean exited = false;
     private double radian = Double.NaN;
 
-    public RoundaboutInstruction(int sign, String name, InstructionAnnotation ia, PointList pl) {
-        super(sign, name, ia, pl);
+    public RoundaboutInstruction(int sign, String name, InstructionAnnotation ia, int first) {
+        super(sign, name, ia, first);
     }
 
     public RoundaboutInstruction increaseExitNumber() {

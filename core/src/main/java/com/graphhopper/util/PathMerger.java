@@ -90,7 +90,7 @@ public class PathMerger {
             fullDistance += path.getDistance();
             fullWeight += path.getWeight();
             if (enableInstructions) {
-                InstructionList il = path.calcInstructions(tr);
+                InstructionList il = path.calcInstructions(tr, origPoints);
 
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);

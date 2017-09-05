@@ -544,7 +544,7 @@ public class GraphHopperIT {
 
         InstructionList il = arsp.getInstructions();
         assertEquals(13, il.size());
-        assertTrue(il.get(0).getPoints().is3D());
+        assertTrue(il.getPoints().is3D());
 
         String str = arsp.getPoints().toString();
 

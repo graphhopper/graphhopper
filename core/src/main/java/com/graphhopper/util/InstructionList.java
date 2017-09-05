@@ -19,8 +19,10 @@ package com.graphhopper.util;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
+import java.awt.*;
 import java.text.DateFormat;
 import java.util.*;
+import java.util.List;
 
 /**
  * List of instructions.
@@ -35,7 +37,9 @@ public class InstructionList extends AbstractList<Instruction> {
     }
 
     private final List<Instruction> instructions;
+    private PointList points;
     private final Translation tr;
+    private static final AngleCalc AC = Helper.ANGLE_CALC;
 
     public InstructionList(Translation tr) {
         this(10, tr);
@@ -103,13 +107,7 @@ public class InstructionList extends AbstractList<Instruction> {
             instrJson.put("sign", instruction.getSign());
             instrJson.putAll(instruction.getExtraInfoJSON());
 
-            int tmpIndex = pointsIndex + instruction.getPoints().size();
-            // FinishInstructions and ViaInstructions should not point to the next instruction
-            if (instruction instanceof FinishInstruction || instruction instanceof ViaInstruction)
-                tmpIndex--;
-
-            instrJson.put("interval", Arrays.asList(pointsIndex, tmpIndex));
-            pointsIndex = tmpIndex;
+            instrJson.put("interval", Arrays.asList(instruction.getFirst(), instruction.getLast()));
 
             counter++;
         }
@@ -133,16 +131,72 @@ public class InstructionList extends AbstractList<Instruction> {
             Instruction nextInstr = get(i + 1);
             nextInstr.checkOne();
             // current instruction does not contain last point which is equals to first point of next instruction:
-            timeOffset = get(i).fillGPXList(gpxList, timeOffset, prevInstr, nextInstr, instrIsFirst);
+            timeOffset = fillGPXList(gpxList, timeOffset, get(i), nextInstr);
         }
         Instruction lastI = get(size() - 1);
-        if (lastI.points.size() != 1)
-            throw new IllegalStateException("Last instruction must have exactly one point but was " + lastI.points.size());
-        double lastLat = lastI.getFirstLat(), lastLon = lastI.getFirstLon(),
-                lastEle = lastI.getPoints().is3D() ? lastI.getFirstEle() : Double.NaN;
+        if (lastI.getLength() != 0)
+            throw new IllegalStateException("Last instruction must have exactly one point but was " + lastI.getLength());
+        double lastLat = getFirstLat(lastI), lastLon = getFirstLon(lastI),
+                lastEle = getPoints().is3D() ? getFirstEle(lastI) : Double.NaN;
         gpxList.add(new GPXEntry(lastLat, lastLon, lastEle, timeOffset));
         return gpxList;
     }
+
+    /**
+     * Latitude of the location where this instruction should take place.
+     */
+    double getFirstLat(Instruction instruction) {
+        return getPoints(instruction).getLatitude(0);
+    }
+
+    /**
+     * Longitude of the location where this instruction should take place.
+     */
+    double getFirstLon(Instruction instruction) {
+        return getPoints(instruction).getLongitude(0);
+    }
+
+    double getFirstEle(Instruction instruction) {
+        return getPoints(instruction).getElevation(0);
+    }
+
+    /**
+     * This method returns a list of gpx entries where the time (in time) is relative to the first
+     * which is 0. It does NOT contain the last point which is the first of the next instruction.
+     *
+     * @return the time offset to add for the next instruction
+     */
+    long fillGPXList(List<GPXEntry> list, long time, Instruction currentInstruciton, Instruction nextInstr) {
+        currentInstruciton.checkOne();
+        PointList points = getPoints(currentInstruciton);
+        int len = points.size();
+        long prevTime = time;
+        double lat = points.getLatitude(0);
+        double lon = points.getLongitude(0);
+        double ele = Double.NaN;
+        boolean is3D = points.is3D();
+        if (is3D)
+            ele = points.getElevation(0);
+
+        for (int i = 0; i < len; i++) {
+            list.add(new GPXEntry(lat, lon, ele, prevTime));
+
+            boolean last = i + 1 == len;
+            double nextLat = last ? getFirstLat(nextInstr) : points.getLatitude(i + 1);
+            double nextLon = last ? getFirstLon(nextInstr) : points.getLongitude(i + 1);
+            double nextEle = is3D ? (last ? getFirstEle(nextInstr) : points.getElevation(i + 1)) : Double.NaN;
+            if (is3D)
+                prevTime = Math.round(prevTime + currentInstruciton.time * Helper.DIST_3D.calcDist(nextLat, nextLon, nextEle, lat, lon, ele) / currentInstruciton.distance);
+            else
+                prevTime = Math.round(prevTime + currentInstruciton.time * Helper.DIST_3D.calcDist(nextLat, nextLon, lat, lon) / currentInstruciton.distance);
+
+            lat = nextLat;
+            lon = nextLon;
+            ele = nextEle;
+        }
+        return time + currentInstruciton.time;
+    }
+
 
     /**
      * Creates the standard GPX string out of the points according to the schema found here:
@@ -156,14 +210,14 @@ public class InstructionList extends AbstractList<Instruction> {
     }
 
     public String createGPX(String trackName, long startTimeMillis) {
-        boolean includeElevation = size() > 0 && get(0).getPoints().is3D();
+        boolean includeElevation = size() > 0 && getPoints().is3D();
         return createGPX(trackName, startTimeMillis, includeElevation, true, true, true);
     }
 
     private void createWayPointBlock(StringBuilder output, Instruction instruction) {
         output.append("\n<wpt ");
-        output.append("lat=\"").append(Helper.round6(instruction.getFirstLat()));
-        output.append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
+        output.append("lat=\"").append(Helper.round6(getFirstLat(instruction)));
+        output.append("\" lon=\"").append(Helper.round6(getFirstLon(instruction))).append("\">");
         String name;
         if (instruction.getName().isEmpty())
             name = instruction.getTurnDescription(tr);
@@ -237,8 +291,8 @@ public class InstructionList extends AbstractList<Instruction> {
     }
 
     public void createRteptBlock(StringBuilder output, Instruction instruction, Instruction nextI) {
-        output.append("\n<rtept lat=\"").append(Helper.round6(instruction.getFirstLat())).
-                append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
+        output.append("\n<rtept lat=\"").append(Helper.round6(getFirstLat(instruction))).
+                append("\" lon=\"").append(Helper.round6(getFirstLon(instruction))).append("\">");
 
         if (!instruction.getName().isEmpty())
             output.append("<desc>").append(simpleXMLEscape(instruction.getTurnDescription(tr))).append("</desc>");
@@ -247,11 +301,11 @@ public class InstructionList extends AbstractList<Instruction> {
         output.append("<gh:distance>").append(Helper.round(instruction.getDistance(), 1)).append("</gh:distance>");
         output.append("<gh:time>").append(instruction.getTime()).append("</gh:time>");
 
-        String direction = instruction.calcDirection(nextI);
+        String direction = calcDirection(instruction, nextI);
         if (!direction.isEmpty())
             output.append("<gh:direction>").append(direction).append("</gh:direction>");
 
-        double azimuth = instruction.calcAzimuth(nextI);
+        double azimuth = calcAzimuth(instruction, nextI);
         if (!Double.isNaN(azimuth))
             output.append("<gh:azimuth>").append(Helper.round2(azimuth)).append("</gh:azimuth>");
 
@@ -261,12 +315,50 @@ public class InstructionList extends AbstractList<Instruction> {
     }
 
     /**
+     * Return the direction like 'NE' based on the first tracksegment of the instruction. If
+     * Instruction does not contain enough coordinate points, an empty string will be returned.
+     */
+    private String calcDirection(Instruction currentI, Instruction nextI) {
+        double azimuth = calcAzimuth(currentI, nextI);
+        if (Double.isNaN(azimuth))
+            return "";
+
+        return AC.azimuth2compassPoint(azimuth);
+    }
+
+    /**
+     * Return the azimuth in degree based on the first tracksegment of this instruction. If this
+     * instruction contains less than 2 points then NaN will be returned or the specified
+     * instruction will be used if that is the finish instruction.
+     */
+    private double calcAzimuth(Instruction currentI, Instruction nextI) {
+        double nextLat;
+        double nextLon;
+        PointList points = getPoints(currentI);
+        PointList nextPoints = getPoints(nextI);
+
+        if (points.getSize() >= 2) {
+            nextLat = points.getLatitude(1);
+            nextLon = points.getLongitude(1);
+        } else if (nextI != null && points.getSize() == 1) {
+            nextLat = nextPoints.getLatitude(0);
+            nextLon = nextPoints.getLongitude(0);
+        } else {
+            return Double.NaN;
+        }
+
+        double lat = points.getLatitude(0);
+        double lon = points.getLongitude(0);
+        return AC.calcAzimuth(lat, lon, nextLat, nextLon);
+    }
+
+    /**
      * @return list of lat lon
      */
     List<List<Double>> createStartPoints() {
         List<List<Double>> res = new ArrayList<>(instructions.size());
         for (Instruction instruction : instructions) {
-            res.add(Arrays.asList(instruction.getFirstLat(), instruction.getFirstLon()));
+            res.add(Arrays.asList(getFirstLat(instruction), getFirstLon(instruction)));
         }
         return res;
     }
@@ -284,7 +376,7 @@ public class InstructionList extends AbstractList<Instruction> {
         if (size() == 0) {
             return null;
         }
-        PointList points = get(0).getPoints();
+        PointList points = getPoints(get(0));
         double prevLat = points.getLatitude(0);
         double prevLon = points.getLongitude(0);
         DistanceCalc distCalc = Helper.DIST_EARTH;
@@ -293,34 +385,32 @@ public class InstructionList extends AbstractList<Instruction> {
 
         // Search the closest edge to the query point
         if (size() > 1) {
-            for (int instructionIndex = 0; instructionIndex < size(); instructionIndex++) {
-                points = get(instructionIndex).getPoints();
-                for (int pointIndex = 0; pointIndex < points.size(); pointIndex++) {
-                    double currLat = points.getLatitude(pointIndex);
-                    double currLon = points.getLongitude(pointIndex);
+            points = getPoints();
+            for (int pointIndex = 0; pointIndex < points.size(); pointIndex++) {
+                double currLat = points.getLatitude(pointIndex);
+                double currLon = points.getLongitude(pointIndex);
 
-                    if (!(instructionIndex == 0 && pointIndex == 0)) {
-                        // calculate the distance from the point to the edge
-                        double distance;
-                        int index = instructionIndex;
-                        if (distCalc.validEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon)) {
-                            distance = distCalc.calcNormalizedEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon);
-                            if (pointIndex > 0)
-                                index++;
-                        } else {
-                            distance = distCalc.calcNormalizedDist(lat, lon, currLat, currLon);
-                            if (pointIndex > 0)
-                                index++;
-                        }
-
-                        if (distance < foundMinDistance) {
-                            foundMinDistance = distance;
-                            foundInstruction = index;
-                        }
+                if (pointIndex > 0) {
+                    // calculate the distance from the point to the edge
+                    double distance;
+                    int index = instructionIndex;
+                    if (distCalc.validEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon)) {
+                        distance = distCalc.calcNormalizedEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon);
+                        if (pointIndex > 0)
+                            index++;
+                    } else {
+                        distance = distCalc.calcNormalizedDist(lat, lon, currLat, currLon);
+                        if (pointIndex > 0)
+                            index++;
                     }
-                    prevLat = currLat;
-                    prevLon = currLon;
+
+                    if (distance < foundMinDistance) {
+                        foundMinDistance = distance;
+                        foundInstruction = index;
+                    }
                 }
+                prevLat = currLat;
+                prevLon = currLon;
             }
         }
 
@@ -334,4 +424,15 @@ public class InstructionList extends AbstractList<Instruction> {
         return get(foundInstruction);
     }
 
+    public void setPoints(PointList points) {
+        this.points = points;
+    }
+
+    public PointList getPoints(Instruction instruction) {
+        return this.points.copy(instruction.getFirst(), instruction.getLast());
+    }
+
+    public PointList getPoints() {
+        return this.points;
+    }
 }

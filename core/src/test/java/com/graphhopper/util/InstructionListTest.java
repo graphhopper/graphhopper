@@ -110,12 +110,12 @@ public class InstructionListTest {
         iter2.setWayGeometry(list);
 
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(0, 10);
-        InstructionList wayList = p.calcInstructions(usTR);
+        InstructionList wayList = p.calcInstructions(usTR, 0);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 0-1", "Turn right onto 1-4", "Turn left onto 7-8", "Arrive at destination"),
                 tmpList);
 
-        wayList = p.calcInstructions(trMap.getWithFallBack(Locale.GERMAN));
+        wayList = p.calcInstructions(trMap.getWithFallBack(Locale.GERMAN), 0);
         tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Dem Straßenverlauf von 0-1 folgen", "Rechts abbiegen auf 1-4", "Links abbiegen auf 7-8", "Ziel erreicht"),
                 tmpList);
@@ -140,7 +140,7 @@ public class InstructionListTest {
         assertEquals(42000, p.getDistance(), 1e-2);
         assertEquals(Helper.createTList(6, 7, 8, 5, 2), p.calcNodes());
 
-        wayList = p.calcInstructions(usTR);
+        wayList = p.calcInstructions(usTR, 0);
         tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 6-7", "Turn left onto 5-8", "Arrive at destination"),
                 tmpList);
@@ -150,7 +150,7 @@ public class InstructionListTest {
 
         // special case of identical start and end
         p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(0, 0);
-        wayList = p.calcInstructions(usTR);
+        wayList = p.calcInstructions(usTR, 0);
         assertEquals(1, wayList.size());
         assertEquals("arrive at destination", wayList.get(0).getTurnDescription(usTR));
     }
@@ -225,13 +225,13 @@ public class InstructionListTest {
 
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(2, 3);
 
-        InstructionList wayList = p.calcInstructions(usTR);
+        InstructionList wayList = p.calcInstructions(usTR, 0);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 2-4", "Turn slight right onto 3-4", "Arrive at destination"),
                 tmpList);
 
         p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(3, 5);
-        wayList = p.calcInstructions(usTR);
+        wayList = p.calcInstructions(usTR, 0);
         tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto 3-4", "Turn slight right onto 4-5", "Arrive at destination"),
                 tmpList);
@@ -263,7 +263,7 @@ public class InstructionListTest {
         iter.setWayGeometry(list);
 
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(2, 3);
-        InstructionList wayList = p.calcInstructions(usTR);
+        InstructionList wayList = p.calcInstructions(usTR, 0);
         List<String> tmpList = pick("text", wayList.createJson());
         assertEquals(Arrays.asList("Continue onto street", "Turn right onto street", "Arrive at destination"), tmpList);
     }
@@ -293,7 +293,7 @@ public class InstructionListTest {
         g.edge(4, 5, 10000, true).setName("4-5").setFlags(flagsForSpeed(carManager, 100));
 
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(1, 5);
-        InstructionList wayList = p.calcInstructions(usTR);
+        InstructionList wayList = p.calcInstructions(usTR, 0);
         assertEquals(4, wayList.size());
 
         List<GPXEntry> gpxList = wayList.createGPXList();
@@ -304,16 +304,16 @@ public class InstructionListTest {
         assertEquals(1604120, gpxList.get(gpxList.size() - 1).getTime());
 
         assertEquals(Instruction.CONTINUE_ON_STREET, wayList.get(0).getSign());
-        assertEquals(15, wayList.get(0).getFirstLat(), 1e-3);
-        assertEquals(10, wayList.get(0).getFirstLon(), 1e-3);
+        assertEquals(15, wayList.getFirstLat(wayList.get(0)), 1e-3);
+        assertEquals(10, wayList.getFirstLon(wayList.get(0)), 1e-3);
 
         assertEquals(Instruction.TURN_LEFT, wayList.get(1).getSign());
-        assertEquals(15.1, wayList.get(1).getFirstLat(), 1e-3);
-        assertEquals(10, wayList.get(1).getFirstLon(), 1e-3);
+        assertEquals(15.1, wayList.getFirstLat(wayList.get(1)), 1e-3);
+        assertEquals(10, wayList.getFirstLon(wayList.get(1)), 1e-3);
 
         assertEquals(Instruction.TURN_RIGHT, wayList.get(2).getSign());
-        assertEquals(15.1, wayList.get(2).getFirstLat(), 1e-3);
-        assertEquals(9.9, wayList.get(2).getFirstLon(), 1e-3);
+        assertEquals(15.1, wayList.getFirstLat(wayList.get(2)), 1e-3);
+        assertEquals(9.9, wayList.getFirstLon(wayList.get(2)), 1e-3);
 
         String gpxStr = wayList.createGPX("test", 0);
         verifyGPX(gpxStr);
@@ -340,11 +340,12 @@ public class InstructionListTest {
         pl.add(52.5135, 13.35);
         pl.add(52.514, 13.351);
         RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
-                new InstructionAnnotation(0, ""), pl)
+                new InstructionAnnotation(0, ""), 0)
                 .setDirOfRotation(-0.1)
                 .setRadian(-Math.PI + 1)
                 .setExitNumber(2)
                 .setExited();
+        instr.setLast(1);
         il.add(instr);
 
         Map<String, Object> json = il.createJson().get(0);
@@ -374,10 +375,11 @@ public class InstructionListTest {
         pl.add(52.5135, 13.35);
         pl.add(52.514, 13.351);
         RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
-                new InstructionAnnotation(0, ""), pl)
+                new InstructionAnnotation(0, ""), 0)
                 .setRadian(-Math.PI + 1)
                 .setExitNumber(2)
                 .setExited();
+        instr.setLast(1);
         il.add(instr);
 
         Map<String, Object> json = il.createJson().get(0);
@@ -416,19 +418,27 @@ public class InstructionListTest {
     public void testCreateGPX() {
         InstructionAnnotation ea = InstructionAnnotation.EMPTY;
         InstructionList instructions = new InstructionList(usTR);
+        PointList allPoints = new PointList();
+        instructions.setPoints(allPoints);
+
         PointList pl = new PointList();
         pl.add(49.942576, 11.580384);
         pl.add(49.941858, 11.582422);
-        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, pl).setDistance(240).setTime(15000));
+        allPoints.add(pl);
+        instructions.add(new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, 0, 2).setDistance(240).setTime(15000));
 
         pl = new PointList();
         pl.add(49.941575, 11.583501);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl).setDistance(25).setTime(4000));
+        allPoints.add(pl);
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, 2, 3).setDistance(25).setTime(4000));
 
         pl = new PointList();
         pl.add(49.941389, 11.584311);
-        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, pl).setDistance(25).setTime(3000));
-        instructions.add(new FinishInstruction(49.941029, 11.584514, 0));
+        allPoints.add(pl);
+        instructions.add(new Instruction(Instruction.TURN_LEFT, "temp2", ea, 3, 4).setDistance(25).setTime(3000));
+        allPoints.add(49.941029, 11.584514);
+        instructions.add(new FinishInstruction(4));
+
 
         List<GPXEntry> result = instructions.createGPXList();
         assertEquals(5, result.size());
@@ -453,7 +463,7 @@ public class InstructionListTest {
     public void testEmptyList() {
         Graph g = new GraphBuilder(carManager).create();
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(0, 1);
-        InstructionList il = p.calcInstructions(usTR);
+        InstructionList il = p.calcInstructions(usTR, 0);
         assertEquals(0, il.size());
         assertEquals(0, il.createStartPoints().size());
     }
@@ -504,7 +514,7 @@ public class InstructionListTest {
         g.edge(4, 5, 10000, true).setName("4-5");
 
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(1, 5);
-        InstructionList wayList = p.calcInstructions(usTR);
+        InstructionList wayList = p.calcInstructions(usTR, 0);
 
         // query on first edge, get instruction for second edge
         assertEquals("2-3", wayList.find(15.05, 10, 1000).getName());
@@ -521,5 +531,76 @@ public class InstructionListTest {
         assertEquals("_", InstructionList.simpleXMLEscape("<"));
         assertEquals("_blup_", InstructionList.simpleXMLEscape("<blup>"));
         assertEquals("a&amp;b", InstructionList.simpleXMLEscape("a&b"));
+    }
+
+    @Test
+    public void testCalcAzimuthAndGetDirection() {
+        InstructionAnnotation ea = InstructionAnnotation.EMPTY;
+        PointList allPoints = new PointList();
+
+        PointList pl = new PointList();
+        pl.add(49.942, 11.584);
+        allPoints.add(pl);
+
+        PointList nextPl = new PointList();
+        nextPl.add(49.942, 11.582);
+        allPoints.add(nextPl);
+        Instruction currI = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, 0, 1);
+        Instruction nextI = new Instruction(Instruction.CONTINUE_ON_STREET, "next", ea, 1, 2);
+
+        InstructionList il = new InstructionList(usTR);
+        il.setPoints(allPoints);
+        StringBuilder builder = new StringBuilder();
+        il.createRteptBlock(builder, currI, nextI);
+        String out = builder.toString();
+        assertTrue(out.contains("<gh:azimuth>270.0</gh:azimuth>"));
+        assertTrue(out.contains("<gh:direction>W</gh:direction>"));
+
+        PointList p2 = new PointList();
+        p2.add(49.942, 11.580);
+        p2.add(49.944, 11.582);
+        Instruction i2 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, 2, 4);
+        allPoints.add(p2);
+
+        builder = new StringBuilder();
+        il.createRteptBlock(builder, i2, null);
+        out = builder.toString();
+        assertTrue(out.contains("<gh:azimuth>32.76</gh:azimuth>"));
+        assertTrue(out.contains("<gh:direction>NE</gh:direction>"));
+        PointList p3 = new PointList();
+        p3.add(49.942, 11.580);
+        p3.add(49.944, 11.580);
+        allPoints.add(p3);
+        Instruction i3 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, 4, 6);
+
+        builder = new StringBuilder();
+        il.createRteptBlock(builder, i3, null);
+        out = builder.toString();
+        assertTrue(out.contains("<gh:azimuth>0.0</gh:azimuth>"));
+        assertTrue(out.contains("<gh:direction>N</gh:direction>"));
+
+        PointList p4 = new PointList();
+        p4.add(49.940, 11.580);
+        p4.add(49.920, 11.586);
+        allPoints.add(p4);
+        Instruction i4 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, 6, 8);
+
+        builder = new StringBuilder();
+        il.createRteptBlock(builder, i4, null);
+        out = builder.toString();
+        assertTrue(out.contains("<gh:direction>S</gh:direction>"));
+
+
+        PointList p5 = new PointList();
+        p5.add(49.940, 11.580);
+        allPoints.add(p5);
+        Instruction i5 = new Instruction(Instruction.CONTINUE_ON_STREET, "temp", ea, 8, 9);
+
+        builder = new StringBuilder();
+        il.createRteptBlock(builder, i5, null);
+        out = builder.toString();
+        System.out.println(out);
+        assertFalse(out.contains("<gh:azimuth>"));
+        assertFalse(out.contains("<gh:direction>"));
     }
 }
