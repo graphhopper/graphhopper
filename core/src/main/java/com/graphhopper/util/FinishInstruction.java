@@ -21,30 +21,15 @@ package com.graphhopper.util;
  * @author Peter Karich
  */
 public class FinishInstruction extends Instruction {
-    public FinishInstruction(String name, final double lat, final double lon, final double ele) {
-        super(FINISH, name, InstructionAnnotation.EMPTY, new PointList(2, !Double.isNaN(ele)) {
-            {
-                add(lat, lon, ele);
-            }
-        });
+
+    public FinishInstruction(int pointRef) {
+        super(Instruction.FINISH, "", InstructionAnnotation.EMPTY, pointRef);
+        this.setLast(pointRef);
     }
 
-    public FinishInstruction(final double lat, final double lon, final double ele) {
-        super(FINISH, "", InstructionAnnotation.EMPTY, new PointList(2, !Double.isNaN(ele)) {
-            {
-                add(lat, lon, ele);
-            }
-        });
-    }
-
-    public FinishInstruction(String name, PointAccess pointAccess, int node) {
-        this(name, pointAccess.getLatitude(node), pointAccess.getLongitude(node),
-                pointAccess.is3D() ? pointAccess.getElevation(node) : Double.NaN);
-    }
-
-    public FinishInstruction(PointAccess pointAccess, int node) {
-        this(pointAccess.getLatitude(node), pointAccess.getLongitude(node),
-                pointAccess.is3D() ? pointAccess.getElevation(node) : Double.NaN);
+    public FinishInstruction(String name, int pointRef) {
+        super(Instruction.FINISH, name, InstructionAnnotation.EMPTY, pointRef);
+        this.setLast(pointRef);
     }
 
     @Override

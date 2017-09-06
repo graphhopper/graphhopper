@@ -17,7 +17,6 @@
  */
 package com.graphhopper.reader.gtfs;
 
-import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;

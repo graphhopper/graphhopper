@@ -72,8 +72,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private InstructionAnnotation prevAnnotation;
     private EdgeExplorer outEdgeExplorer;
     private EdgeExplorer crossingExplorer;
+    private int lastIndex = 0;
 
-    public InstructionsFromEdges(int tmpNode, Graph graph, Weighting weighting, FlagEncoder encoder, NodeAccess nodeAccess, Translation tr, InstructionList ways) {
+    public InstructionsFromEdges(int tmpNode, Graph graph, Weighting weighting, FlagEncoder encoder, NodeAccess nodeAccess, Translation tr, InstructionList ways, int previousIndex) {
         this.weighting = weighting;
         this.encoder = encoder;
         this.nodeAccess = nodeAccess;
@@ -86,6 +87,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevName = null;
         outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(this.encoder, false, true));
         crossingExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, true));
+        this.lastIndex = previousIndex;
     }
 
 
@@ -118,7 +120,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         if ((prevName == null) && (!isRoundabout)) // very first instruction (if not in Roundabout)
         {
             int sign = Instruction.CONTINUE_ON_STREET;
-            prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+            prevInstruction = new Instruction(sign, name, annotation, lastIndex);
             ways.add(prevInstruction);
             prevName = name;
             prevAnnotation = annotation;
@@ -129,7 +131,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             {
                 int sign = Instruction.USE_ROUNDABOUT;
                 RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(sign, name,
-                        annotation, new PointList(10, nodeAccess.is3D()));
+                        annotation, lastIndex);
                 if (prevName != null) {
                     // check if there is an exit at the same node the roundabout was entered
                     EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
@@ -199,7 +201,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             int sign = getTurn(edge, baseNode, prevNode, adjNode, annotation, name);
 
             if (sign != Instruction.IGNORE) {
-                prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                prevInstruction = new Instruction(sign, name, annotation, lastIndex);
                 ways.add(prevInstruction);
                 prevAnnotation = annotation;
             }
@@ -208,7 +210,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             prevName = name;
         }
 
-        updatePointsAndInstruction(edge, wayGeo);
+        updatePointsAndInstruction(edge);
 
         if (wayGeo.getSize() <= 2) {
             doublePrevLat = prevLat;
@@ -236,7 +238,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             ((RoundaboutInstruction) prevInstruction).setRadian(delta);
 
         }
-        ways.add(new FinishInstruction(nodeAccess, prevEdge.getAdjNode()));
+        ways.add(new FinishInstruction(lastIndex));
     }
 
     private int getTurn(EdgeIteratorState edge, int baseNode, int prevNode, int adjNode, InstructionAnnotation annotation, String name) {
@@ -346,12 +348,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         return Instruction.IGNORE;
     }
 
-    private void updatePointsAndInstruction(EdgeIteratorState edge, PointList pl) {
-        // skip adjNode
-        int len = pl.size() - 1;
-        for (int i = 0; i < len; i++) {
-            prevInstruction.getPoints().add(pl, i);
-        }
+    private void updatePointsAndInstruction(EdgeIteratorState edge) {
+        lastIndex += edge.fetchWayGeometry(2).size();
+        prevInstruction.setLast(lastIndex);
         double newDist = edge.getDistance();
         prevInstruction.setDistance(newDist + prevInstruction.getDistance());
         prevInstruction.setTime(weighting.calcMillis(edge, false, EdgeIterator.NO_EDGE)

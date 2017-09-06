@@ -242,14 +242,23 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public void add(PointList points) {
-        int newSize = size + points.getSize();
+        this.add(points, 0, points.size());
+    }
+
+    public void add(PointList points, int from, int to) {
+        if (from > to)
+            throw new IllegalArgumentException("From " + from + " has to be smaller or equal than to " + to);
+        if (to > points.size())
+            throw new IllegalArgumentException("It's not allowed to pass to arguments larger than the point size");
+
+        int newSize = size + to - from;
         incCap(newSize);
-        for (int i = 0; i < points.getSize(); i++) {
+        for (int i = 0; i < to - from; i++) {
             int tmp = size + i;
-            latitudes[tmp] = points.getLatitude(i);
-            longitudes[tmp] = points.getLongitude(i);
+            latitudes[tmp] = points.getLatitude(from + i);
+            longitudes[tmp] = points.getLongitude(from + i);
             if (is3D)
-                elevations[tmp] = points.getElevation(i);
+                elevations[tmp] = points.getElevation(from + i);
         }
         size = newSize;
     }

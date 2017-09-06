@@ -23,21 +23,15 @@ package com.graphhopper.util;
 public class ViaInstruction extends Instruction {
     private int viaPosition = -1;
 
-    public ViaInstruction(String name, InstructionAnnotation ia, PointList pl) {
-        super(REACHED_VIA, name, ia, pl);
+    public ViaInstruction(String name, InstructionAnnotation ia, int first) {
+        super(REACHED_VIA, name, ia, first);
+        this.setLast(first);
     }
 
     public ViaInstruction(Instruction instr) {
-        this(instr.getName(), instr.getAnnotation(), instr.getPoints());
+        this(instr.getName(), instr.getAnnotation(), instr.getFirst());
         setDistance(instr.getDistance());
         setTime(instr.getTime());
-    }
-
-    public int getViaCount() {
-        if (viaPosition < 0)
-            throw new IllegalStateException("Uninitialized via count in instruction " + getName());
-
-        return viaPosition;
     }
 
     public void setViaCount(int count) {

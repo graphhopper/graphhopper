@@ -98,14 +98,21 @@ public class PathSimplification {
                     int removed = douglasPeucker.simplify(pointList, nonConflictingStart, nonConflictingEnd);
                     if (removed > 0) {
                         for (int i = 0; i < listsToSimplify.size(); i++) {
-                            List pathDetails = listsToSimplify.get(i);
-                            reduceLength(pathDetails, offsets[i], startIntervals[i], endIntervals[i] - removed);
-                            // This is not needed for Instructions, as they don't contain references, but PointLists
-                            if (pathDetails.get(0) instanceof PathDetail) {
-                                for (int j = offsets[i] + 1; j < pathDetails.size(); j++) {
-                                    PathDetail pd = (PathDetail) pathDetails.get(j);
-                                    reduceLength(pathDetails, j, pd.getFirst() - removed, pd.getLast() - removed);
+                            List toSimplify = listsToSimplify.get(i);
+                            reduceLength(toSimplify, offsets[i], startIntervals[i], endIntervals[i] - removed);
+                            for (int j = offsets[i] + 1; j < toSimplify.size(); j++) {
+                                Object o = toSimplify.get(j);
+                                int first = 0;
+                                int last = 0;
+                                if (o instanceof PathDetail) {
+                                    first = ((PathDetail) o).getFirst();
+                                    last = ((PathDetail) o).getLast();
                                 }
+                                if (o instanceof Instruction) {
+                                    first = ((Instruction) o).getFirst();
+                                    last = ((Instruction) o).getLast();
+                                }
+                                reduceLength(toSimplify, j, first - removed, last - removed);
                             }
                         }
                     }
@@ -141,11 +148,8 @@ public class PathSimplification {
     private int getLength(Object o, int index) {
         if (o instanceof InstructionList) {
             // we do not store the last point of an instruction
-            int size = ((InstructionList) o).get(index).getPoints().size();
-            if (size == 0)
-                throw new IllegalStateException("PointList of instruction should not be empty " + o);
-            // the last point of instruction (i.e. first point of next instruction) is not included
-            return size;
+            Instruction instruction = ((InstructionList) o).get(index);
+            return instruction.getLength();
         }
         if (o instanceof List) {
             return ((List<PathDetail>) o).get(index).getLength();
@@ -155,7 +159,9 @@ public class PathSimplification {
 
     private void reduceLength(Object o, int index, int startIndex, int newEndIndex) {
         if (o instanceof InstructionList) {
-            ((InstructionList) o).get(index).setPoints(this.pointList.copy(startIndex, newEndIndex));
+            ((InstructionList) o).setPoints(this.pointList);
+            ((InstructionList) o).get(index).setFirst(startIndex);
+            ((InstructionList) o).get(index).setLast(newEndIndex);
         } else if (o instanceof List) {
             PathDetail pd = ((List<PathDetail>) o).get(index);
             pd.setFirst(startIndex);

@@ -358,15 +358,16 @@ public class Path {
     /**
      * @return the list of instructions for this path.
      */
-    public InstructionList calcInstructions(final Translation tr) {
+    public InstructionList calcInstructions(final Translation tr, int lastIndex) {
         final InstructionList ways = new InstructionList(edgeIds.size() / 4, tr);
+        ways.setPoints(this.calcPoints());
         if (edgeIds.isEmpty()) {
             if (isFound()) {
-                ways.add(new FinishInstruction(nodeAccess, endNode));
+                ways.add(new FinishInstruction(lastIndex));
             }
             return ways;
         }
-        forEveryEdge(new InstructionsFromEdges(getFromNode(), graph, weighting, encoder, nodeAccess, tr, ways));
+        forEveryEdge(new InstructionsFromEdges(getFromNode(), graph, weighting, encoder, nodeAccess, tr, ways, lastIndex));
         return ways;
     }
 

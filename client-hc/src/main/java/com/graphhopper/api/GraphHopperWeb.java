@@ -102,9 +102,9 @@ public class GraphHopperWeb implements GraphHopperAPI {
     }
 
     PathWrapper createPathWrapper(JsonNode path,
-                                          boolean tmpCalcPoints, boolean tmpInstructions,
-                                          boolean tmpElevation, boolean turnDescription,
-                                          boolean tmpCalcDetails) {
+                                  boolean tmpCalcPoints, boolean tmpInstructions,
+                                  boolean tmpElevation, boolean turnDescription,
+                                  boolean tmpCalcDetails) {
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.addErrors(readErrors(path));
         if (pathWrapper.hasErrors())
@@ -125,6 +125,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
                 JsonNode instrArr = path.get("instructions");
 
                 InstructionList il = new InstructionList(null);
+                il.setPoints(pointList);
                 int viaCount = 1;
                 for (JsonNode jsonObj : instrArr) {
                     double instDist = jsonObj.get("distance").asDouble();
@@ -134,10 +135,6 @@ public class GraphHopperWeb implements GraphHopperAPI {
                     JsonNode iv = jsonObj.get("interval");
                     int from = iv.get(0).asInt();
                     int to = iv.get(1).asInt();
-                    PointList instPL = new PointList(to - from, tmpElevation);
-                    for (int j = from; j <= to; j++) {
-                        instPL.add(pointList, j);
-                    }
 
                     InstructionAnnotation ia = InstructionAnnotation.EMPTY;
                     if (jsonObj.has("annotation_importance") && jsonObj.has("annotation_text")) {
@@ -146,7 +143,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
                     Instruction instr;
                     if (sign == Instruction.USE_ROUNDABOUT || sign == Instruction.LEAVE_ROUNDABOUT) {
-                        RoundaboutInstruction ri = new RoundaboutInstruction(sign, text, ia, instPL);
+                        RoundaboutInstruction ri = new RoundaboutInstruction(sign, text, ia, from, to);
 
                         if (jsonObj.has("exit_number")) {
                             ri.setExitNumber(jsonObj.get("exit_number").asInt());
@@ -166,14 +163,14 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
                         instr = ri;
                     } else if (sign == Instruction.REACHED_VIA) {
-                        ViaInstruction tmpInstr = new ViaInstruction(text, ia, instPL);
+                        ViaInstruction tmpInstr = new ViaInstruction(text, ia, from);
                         tmpInstr.setViaCount(viaCount);
                         viaCount++;
                         instr = tmpInstr;
                     } else if (sign == Instruction.FINISH) {
-                        instr = new FinishInstruction(text, instPL, 0);
+                        instr = new FinishInstruction(text, from);
                     } else {
-                        instr = new Instruction(sign, text, ia, instPL);
+                        instr = new Instruction(sign, text, ia, from, to);
                     }
 
                     // Usually, the translation is done from the routing service so just use the provided string
