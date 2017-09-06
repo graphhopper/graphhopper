@@ -34,6 +34,11 @@ public class RoundaboutInstruction extends Instruction {
         super(sign, name, ia, first);
     }
 
+    public RoundaboutInstruction(int sign, String name, InstructionAnnotation ia, int first, int last) {
+        this(sign, name, ia, first);
+        this.last = last;
+    }
+
     public RoundaboutInstruction increaseExitNumber() {
         this.exitNumber += 1;
         return this;

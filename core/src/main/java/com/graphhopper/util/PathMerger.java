@@ -74,7 +74,7 @@ public class PathMerger {
     }
 
     public void doWork(PathWrapper altRsp, List<Path> paths, Translation tr) {
-        int origPoints = 0;
+        int origPointsCount = 0;
         long fullTimeInMillis = 0;
         double fullWeight = 0;
         double fullDistance = 0;
@@ -90,7 +90,7 @@ public class PathMerger {
             fullDistance += path.getDistance();
             fullWeight += path.getWeight();
             if (enableInstructions) {
-                InstructionList il = path.calcInstructions(tr, origPoints);
+                InstructionList il = path.calcInstructions(tr, origPointsCount);
 
                 if (!il.isEmpty()) {
                     fullInstructions.addAll(il);
@@ -116,15 +116,15 @@ public class PathMerger {
                     fullPoints.add(tmpPoints);
                 }
 
-                altRsp.addPathDetails(path.calcDetails(calculatorFactory, origPoints));
-                origPoints = fullPoints.size();
+                altRsp.addPathDetails(path.calcDetails(calculatorFactory, origPointsCount));
+                origPointsCount = fullPoints.size();
             }
 
             allFound = allFound && path.isFound();
         }
 
         if (!fullPoints.isEmpty()) {
-            String debug = altRsp.getDebugInfo() + ", simplify (" + origPoints + "->" + fullPoints.getSize() + ")";
+            String debug = altRsp.getDebugInfo() + ", simplify (" + origPointsCount + "->" + fullPoints.getSize() + ")";
             altRsp.addDebugInfo(debug);
             if (fullPoints.is3D)
                 calcAscendDescend(altRsp, fullPoints);

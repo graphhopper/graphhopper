@@ -373,7 +373,7 @@ public class InstructionList extends AbstractList<Instruction> {
      */
     public Instruction find(double lat, double lon, double maxDistance) {
         // handle special cases
-        if (size() == 0) {
+        if (size() == 0 || getPoints().getSize() == 0) {
             return null;
         }
         PointList points = getPoints(get(0));
@@ -381,33 +381,26 @@ public class InstructionList extends AbstractList<Instruction> {
         double prevLon = points.getLongitude(0);
         DistanceCalc distCalc = Helper.DIST_EARTH;
         double foundMinDistance = distCalc.calcNormalizedDist(lat, lon, prevLat, prevLon);
-        int foundInstruction = 0;
+        int foundPointIndex = 0;
 
         // Search the closest edge to the query point
         if (size() > 1) {
             points = getPoints();
-            for (int pointIndex = 0; pointIndex < points.size(); pointIndex++) {
+            for (int pointIndex = 1; pointIndex < points.size(); pointIndex++) {
                 double currLat = points.getLatitude(pointIndex);
                 double currLon = points.getLongitude(pointIndex);
 
-                if (pointIndex > 0) {
-                    // calculate the distance from the point to the edge
-                    double distance;
-                    int index = instructionIndex;
-                    if (distCalc.validEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon)) {
-                        distance = distCalc.calcNormalizedEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon);
-                        if (pointIndex > 0)
-                            index++;
-                    } else {
-                        distance = distCalc.calcNormalizedDist(lat, lon, currLat, currLon);
-                        if (pointIndex > 0)
-                            index++;
-                    }
+                // calculate the distance from the point to the edge
+                double distance;
+                if (distCalc.validEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon)) {
+                    distance = distCalc.calcNormalizedEdgeDistance(lat, lon, currLat, currLon, prevLat, prevLon);
+                } else {
+                    distance = distCalc.calcNormalizedDist(lat, lon, currLat, currLon);
+                }
 
-                    if (distance < foundMinDistance) {
-                        foundMinDistance = distance;
-                        foundInstruction = index;
-                    }
+                if (distance < foundMinDistance) {
+                    foundMinDistance = distance;
+                    foundPointIndex = pointIndex;
                 }
                 prevLat = currLat;
                 prevLon = currLon;
@@ -417,9 +410,23 @@ public class InstructionList extends AbstractList<Instruction> {
         if (distCalc.calcDenormalizedDist(foundMinDistance) > maxDistance)
             return null;
 
-        // special case finish condition
-        if (foundInstruction == size())
-            foundInstruction--;
+        // Finish Instruction
+        if (foundPointIndex == getPoints().getSize() - 1)
+            return get(size() - 1);
+
+        int foundInstruction = -1;
+
+        for (int instructionIndex = 0; instructionIndex < size(); instructionIndex++) {
+            Instruction instruction = get(instructionIndex);
+            if (instruction.getFirst() <= foundPointIndex && instruction.getLast() > foundPointIndex) {
+                foundInstruction = instructionIndex;
+                break;
+            }
+        }
+
+        if (foundInstruction < 0) {
+            return null;
+        }
 
         return get(foundInstruction);
     }
@@ -429,10 +436,52 @@ public class InstructionList extends AbstractList<Instruction> {
     }
 
     public PointList getPoints(Instruction instruction) {
+        if (instruction == null)
+            return PointList.EMPTY;
+        if (instruction.getLength() == 0)
+            // Copy does not include the last point
+            return this.points.copy(instruction.getFirst(), instruction.getLast() + 1);
         return this.points.copy(instruction.getFirst(), instruction.getLast());
     }
 
     public PointList getPoints() {
         return this.points;
+    }
+
+    /**
+     * Appends the insturctionList to this InstructionList, from instruction index 0 to toIndex
+     */
+    public void append(InstructionList instructionList, int toIndex) {
+        if (toIndex >= instructionList.size())
+            throw new IllegalArgumentException("Not allowed to pass a toIndex that is bigger than the number of instruction in the InstructionList, you passed " + toIndex + " but is only " + instructionList.size());
+
+        checkConsistency(this);
+        checkConsistency(instructionList);
+
+        if (toIndex < instructionList.size() - 1) {
+            int toPointRef = instructionList.get(toIndex).getLast();
+            this.getPoints().add(instructionList.getPoints(), 0, toPointRef);
+        } else {
+            this.getPoints().add(instructionList.getPoints());
+        }
+
+        int pointIndex = get(size() - 1).getLast();
+        for (Instruction instruction : instructionList) {
+            instruction.setFirst(pointIndex);
+            pointIndex += instruction.getLength();
+            instruction.setLast(pointIndex);
+            add(instruction);
+        }
+    }
+
+    private void checkConsistency(InstructionList instructionList) {
+        int lastPointIndex = instructionList.getPoints().size();
+        int lastPointer = instructionList.get(instructionList.size() - 1).getLast();
+        if (lastPointIndex != lastPointer)
+            throw new IllegalStateException("InstructionList is inconsistent, it contains " + lastPointIndex + " points, but the last Instruction points to " + lastPointer);
+    }
+
+    public void append(InstructionList instructionList) {
+        this.append(instructionList, instructionList.size() - 1);
     }
 }

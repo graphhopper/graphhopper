@@ -27,6 +27,11 @@ public class FinishInstruction extends Instruction {
         this.setLast(pointRef);
     }
 
+    public FinishInstruction(String name, int pointRef) {
+        super(Instruction.FINISH, name, InstructionAnnotation.EMPTY, pointRef);
+        this.setLast(pointRef);
+    }
+
     @Override
     public String getTurnDescription(Translation tr) {
         if (rawName)

@@ -46,8 +46,8 @@ public class Instruction {
     protected double distance;
     protected long time;
 
-    private int first;
-    private int last;
+    protected int first;
+    protected int last;
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
@@ -154,8 +154,7 @@ public class Instruction {
     }
 
     public int getLast() {
-        if (last < first)
-            throw new IllegalStateException("last cannot be smaller than first");
+        checkOne();
         return last;
     }
 
