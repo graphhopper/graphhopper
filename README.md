@@ -2,7 +2,8 @@
 
 [![Build Status](https://secure.travis-ci.org/graphhopper/map-matching.png?branch=master)](http://travis-ci.org/graphhopper/map-matching)
 
-This repository will soon move directly to [graphhopper/graphhopper](https://github.com/graphhopper/graphhopper). Give us your star there too!
+This repository is an add-on that will do 'snap to road' using the
+[GraphHopper routing engine](https://github.com/graphhopper/graphhopper). Give us your star there too!
         
 Map matching is the process to match a sequence of real world coordinates into a digital map.
 Read more at [Wikipedia](https://en.wikipedia.org/wiki/Map_matching). It can be used for tracking vehicles' GPS information, important for further digital analysis. Or e.g. attaching turn instructions for any recorded GPX route.
