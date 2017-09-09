@@ -89,27 +89,6 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
         instructionsElement.append(moreDiv);
     }
 
-    if (debug) {
-        var detailObj = path.details;
-        // detailKey, would be for example average_speed
-        for (var detailKey in detailObj) {
-            var pathDetailsArr = detailObj[detailKey];
-            for (var i = 0; i < pathDetailsArr.length; i++) {
-                var pathDetailObj = pathDetailsArr[i];
-                var firstIndex = pathDetailObj[0];
-                var value = pathDetailObj[2];
-                var lngLat = path.points.coordinates[firstIndex];
-                L.marker([lngLat[1], lngLat[0]], {
-                    icon: L.icon({
-                        iconUrl: './img/marker-small-blue.png',
-                        iconSize: [15, 15]
-                    }),
-                    draggable: true
-                }).addTo(mapLayer.getRoutingLayer()).bindPopup(detailKey + ":" + value);
-            }
-        }
-    }
-
     var hiddenDiv = $("<div id='routeDetails'/>");
     hiddenDiv.hide();
 
