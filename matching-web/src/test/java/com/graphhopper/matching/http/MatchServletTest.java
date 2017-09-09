@@ -68,7 +68,7 @@ public class MatchServletTest extends BaseServletTester {
         // }
         JsonNode path = json.get("paths").get(0);
         assertEquals(5, path.get("instructions").size());
-        assertEquals(9, WebHelper.decodePolyline(path.get("points").asText(), 10, false).size());
+        assertEquals(7, WebHelper.decodePolyline(path.get("points").asText(), 10, false).size());
 
         assertEquals(132.9, path.get("time").asLong() / 1000f, 0.1);
         assertEquals(1002, path.get("distance").asDouble(), 1);
