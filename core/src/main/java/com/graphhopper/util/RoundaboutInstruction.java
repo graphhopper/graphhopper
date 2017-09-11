@@ -39,6 +39,14 @@ public class RoundaboutInstruction extends Instruction {
         this.last = last;
     }
 
+    public RoundaboutInstruction(RoundaboutInstruction roundaboutInstruction) {
+        super(roundaboutInstruction);
+        this.exited = roundaboutInstruction.exited;
+        this.radian = roundaboutInstruction.radian;
+        this.clockwise = roundaboutInstruction.clockwise;
+        this.exitNumber = roundaboutInstruction.exitNumber;
+    }
+
     public RoundaboutInstruction increaseExitNumber() {
         this.exitNumber += 1;
         return this;

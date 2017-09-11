@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import com.fasterxml.jackson.annotation.JsonValue;
+import com.graphhopper.routing.InstructionsHelper;
 
 import java.awt.*;
 import java.text.DateFormat;
@@ -449,39 +450,53 @@ public class InstructionList extends AbstractList<Instruction> {
     }
 
     /**
-     * Appends the insturctionList to this InstructionList, from instruction index 0 to toIndex
+     * Appends the insturctionList to this InstructionList, from instruction index fromIndex to instruction toIndex
      */
-    public void append(InstructionList instructionList, int toIndex) {
+    public void append(InstructionList instructionList, int fromIndex, int toIndex) {
+        if (fromIndex < 0 || fromIndex > toIndex)
+            throw new IllegalArgumentException("Fom index cannot be smaller 0 or bigger than the toIndex, but was " + fromIndex);
         if (toIndex >= instructionList.size())
             throw new IllegalArgumentException("Not allowed to pass a toIndex that is bigger than the number of instruction in the InstructionList, you passed " + toIndex + " but is only " + instructionList.size());
 
         checkConsistency(this);
         checkConsistency(instructionList);
 
-        if (toIndex < instructionList.size() - 1) {
-            int toPointRef = instructionList.get(toIndex).getLast();
-            this.getPoints().add(instructionList.getPoints(), 0, toPointRef);
-        } else {
-            this.getPoints().add(instructionList.getPoints());
-        }
+        // Add the points that belong to the Instruction
+        int fromPointRef = instructionList.get(fromIndex).getFirst();
+        int toPointRef = instructionList.get(toIndex).getLast();
+        this.getPoints().add(instructionList.getPoints(), fromPointRef, toPointRef + 1);
 
-        int pointIndex = get(size() - 1).getLast();
-        for (Instruction instruction : instructionList) {
+        int pointIndex;
+        if (this.isEmpty()) {
+            // If this is empty, we could just return the provided InstructionList, but then we migh have issues with the Points?
+            pointIndex = 0;
+        } else {
+            // We don't start at the old point, when appending
+            pointIndex = get(size() - 1).getLast() + 1;
+        }
+        for (int i = fromIndex; i <= toIndex; i++) {
+            // Clone the Instruction Object, as InstructionLists are reused in the GTFs module
+            Instruction instruction = InstructionsHelper.cloneInstruction(instructionList.get(i));
+            int instructionLength = instruction.getLength();
             instruction.setFirst(pointIndex);
-            pointIndex += instruction.getLength();
+            pointIndex += instructionLength;
             instruction.setLast(pointIndex);
             add(instruction);
         }
+        // We have to be consistent in the end again
+        checkConsistency(this);
     }
 
     private void checkConsistency(InstructionList instructionList) {
-        int lastPointIndex = instructionList.getPoints().size();
+        if (instructionList.isEmpty() && getPoints().isEmpty())
+            return;
+        int lastPointIndex = instructionList.getPoints().size() - 1;
         int lastPointer = instructionList.get(instructionList.size() - 1).getLast();
         if (lastPointIndex != lastPointer)
-            throw new IllegalStateException("InstructionList is inconsistent, it contains " + lastPointIndex + " points, but the last Instruction points to " + lastPointer);
+            throw new IllegalStateException("InstructionList is inconsistent, it contains " + instructionList.getPoints().size() + " points, but the last Instruction points to " + lastPointer);
     }
 
     public void append(InstructionList instructionList) {
-        this.append(instructionList, instructionList.size() - 1);
+        this.append(instructionList, 0, instructionList.size() - 1);
     }
 }

@@ -18,16 +18,13 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.storage.NodeAccess;
-import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.PointList;
+import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
 /**
  * Simple helper class used during the instruction generation
  */
-class InstructionsHelper {
+public class InstructionsHelper {
 
     static double calculateOrientationDelta(double prevLatitude, double prevLongitude, double latitude, double longitude, double prevOrientation) {
         double orientation = Helper.ANGLE_CALC.calcOrientation(prevLatitude, prevLongitude, latitude, longitude, false);
@@ -90,5 +87,19 @@ class InstructionsHelper {
             tmpLon = tmpWayGeo.getLongitude(1);
         }
         return new GHPoint(tmpLat, tmpLon);
+    }
+
+    public static Instruction cloneInstruction(Instruction instruction) {
+        Instruction clone;
+        if (instruction instanceof RoundaboutInstruction) {
+            clone = new RoundaboutInstruction((RoundaboutInstruction) instruction);
+        } else if (instruction instanceof ViaInstruction) {
+            clone = new ViaInstruction(instruction);
+        } else if (instruction instanceof FinishInstruction) {
+            clone = new FinishInstruction((FinishInstruction) instruction);
+        } else {
+            clone = new Instruction(instruction);
+        }
+        return clone;
     }
 }

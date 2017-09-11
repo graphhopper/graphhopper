@@ -24,8 +24,7 @@ public class ViaInstruction extends Instruction {
     private int viaPosition = -1;
 
     public ViaInstruction(String name, InstructionAnnotation ia, int first) {
-        super(REACHED_VIA, name, ia, first);
-        this.setLast(first);
+        super(REACHED_VIA, name, ia, first, first);
     }
 
     public ViaInstruction(Instruction instr) {

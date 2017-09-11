@@ -46,8 +46,8 @@ public class Instruction {
     protected double distance;
     protected long time;
 
-    protected int first;
-    protected int last;
+    protected int first = -1;
+    protected int last = -1;
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
@@ -62,7 +62,14 @@ public class Instruction {
 
     public Instruction(int sign, String name, InstructionAnnotation ia, int first, int last) {
         this(sign, name, ia, first);
-        this.last = last;
+        setLast(last);
+    }
+
+    /**
+     * Clone the given Instruction
+     */
+    public Instruction(Instruction instruction) {
+        this(instruction.sign, instruction.name, instruction.annotation, instruction.first, instruction.last);
     }
 
     /**
@@ -142,6 +149,7 @@ public class Instruction {
     }
 
     public void setFirst(int first) {
+
         this.first = first;
     }
 
@@ -150,6 +158,8 @@ public class Instruction {
     }
 
     public void setLast(int last) {
+        if (last < getFirst())
+            throw new IllegalArgumentException("Last cannot be smaller than first, but was: " + last);
         this.last = last;
     }
 

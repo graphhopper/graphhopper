@@ -28,8 +28,11 @@ public class FinishInstruction extends Instruction {
     }
 
     public FinishInstruction(String name, int pointRef) {
-        super(Instruction.FINISH, name, InstructionAnnotation.EMPTY, pointRef);
-        this.setLast(pointRef);
+        super(Instruction.FINISH, name, InstructionAnnotation.EMPTY, pointRef, pointRef);
+    }
+
+    public FinishInstruction(FinishInstruction instruction) {
+        super(instruction);
     }
 
     @Override
