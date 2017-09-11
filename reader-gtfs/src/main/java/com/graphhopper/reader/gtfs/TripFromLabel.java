@@ -165,13 +165,19 @@ class TripFromLabel {
                 instructions.getPoints().add(pl);
 
                 if (!ptLeg.isInSameVehicleAsPrevious) {
-                    int lastStart;
+                    int previousStart;
                     if (instructions.isEmpty()) {
-                        lastStart = 0;
+                        previousStart = 0;
                     } else {
-                        lastStart = instructions.get(instructions.size() - 1).getLast();
+                        previousStart = instructions.get(instructions.size() - 1).getLast();
                     }
-                    final Instruction departureInstruction = new Instruction(Instruction.PT_START_TRIP, ptLeg.trip_headsign, InstructionAnnotation.EMPTY, lastStart, lastStart + pl.getSize());
+                    int last;
+                    if (previousStart == 0) {
+                        last = pl.size() - 1;
+                    } else {
+                        last = previousStart + pl.size();
+                    }
+                    final Instruction departureInstruction = new Instruction(Instruction.PT_START_TRIP, ptLeg.trip_headsign, InstructionAnnotation.EMPTY, previousStart, last);
                     departureInstruction.setDistance(leg.getDistance());
                     departureInstruction.setTime(ptLeg.travelTime);
                     instructions.add(departureInstruction);
@@ -185,9 +191,9 @@ class TripFromLabel {
                     instruction.setFirst(newLast);
                     instruction.setLast(newLast);
                 }
-                final int lastStart = instructions.get(instructions.size() - 1).getLast();
+                final int previousStart = instructions.get(instructions.size() - 1).getLast();
                 final Trip.Stop arrivalStop = ptLeg.stops.get(ptLeg.stops.size() - 1);
-                Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, InstructionAnnotation.EMPTY, lastStart, lastStart);
+                Instruction arrivalInstruction = new Instruction(Instruction.PT_END_TRIP, arrivalStop.stop_name, InstructionAnnotation.EMPTY, previousStart, previousStart);
                 if (ptLeg.isInSameVehicleAsPrevious) {
                     instructions.replaceLast(arrivalInstruction);
                 } else {
