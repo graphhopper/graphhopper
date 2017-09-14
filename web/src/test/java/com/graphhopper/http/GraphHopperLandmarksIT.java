@@ -63,11 +63,22 @@ public class GraphHopperLandmarksIT extends BaseServletTester {
     }
 
     @Test
-    public void testSimpleQuery() throws Exception {
+    public void testQueries() throws Exception {
         JsonNode json = query("point=55.99022,29.129734&point=56.001069,29.150848", 200);
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
         assertEquals("distance wasn't correct:" + distance, 1870, distance, 100);
+
+        json = query("point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true", 200);
+        distance = json.get("paths").get(0).get("distance").asDouble();
+        assertEquals("distance wasn't correct:" + distance, 1870, distance, 100);
+
+        GraphHopper hopper = getInstance(GraphHopper.class);
+        hopper.getLMFactoryDecorator().setDisablingAllowed(true);
+        json = query("point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true&lm.disable=true", 200);
+        distance = json.get("paths").get(0).get("distance").asDouble();
+        assertEquals("distance wasn't correct:" + distance, 1870, distance, 100);
+        hopper.getLMFactoryDecorator().setDisablingAllowed(false);
     }
 
     @Test
