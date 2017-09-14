@@ -1,18 +1,18 @@
 # do not edit manually, instead use spreadsheet https://t.co/f086oJXAEI and script ./core/files/update-translations.sh
 
-continue=pluigu
-continue_onto=pluigu laŭlonge de %1$s
-turn_left=turnu maldekstren
-turn_right=turnu dekstren
-turn_slight_left=turnetu maldekstren
-turn_slight_right=turnetu dekstren
-turn_sharp_left=turnegu maldekstren
-turn_sharp_right=turnegu dekstren
+continue=pluu
+continue_onto=pluu laŭlonge de %1$s
+turn_left=turniĝu maldekstren
+turn_right=turniĝu dekstren
+turn_slight_left=turniĝetu maldekstren
+turn_slight_right=turniĝetu dekstren
+turn_sharp_left=turniĝegu maldekstren
+turn_sharp_right=turniĝegu dekstren
 keep_left=veturu ĉe maldekstra flanko
 keep_right=veturu ĉe dekstra fllanko
 turn_onto=%1$s al %2$s
 u_turn=faru ĝiradon U-forma
-unknown=nekonata instrukcio '%1$s'
+unknown=nekonata instrukcio ‘%1$s’
 web.search_button=Serĉi
 web.from_hint=El
 web.via_hint=Tra
