@@ -169,7 +169,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <maxRank>7</maxRank>
+                    <maxRank>4</maxRank>
                     <failOnError>true</failOnError>
                     <excludeFilterFile>findbugs-exclude.xml</excludeFilterFile>
                 </configuration>
