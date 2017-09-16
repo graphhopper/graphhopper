@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.util.TestAlgoCollector.AlgoHelperEntry;
 import com.graphhopper.routing.util.TestAlgoCollector.OneRun;
@@ -47,7 +48,6 @@ import static org.junit.Assert.assertEquals;
 
 /**
  * Try algorithms, indices and graph storages with real data
- * <p>
  *
  * @author Peter Karich
  */
@@ -532,7 +532,7 @@ public class RoutingAlgorithmWithOSMIT {
 
             Collection<AlgoHelperEntry> prepares = RoutingAlgorithmIT.createAlgos(hopper, hints, tMode);
 
-            EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder);
+            EdgeFilter edgeFilter = new DefaultEdgeFilter(encoder.getAccessEncodedValue());
             for (AlgoHelperEntry entry : prepares) {
                 algoEntry = entry;
                 LocationIndex idx = entry.getIdx();
@@ -574,13 +574,12 @@ public class RoutingAlgorithmWithOSMIT {
         List<Thread> threads = new ArrayList<Thread>();
         final AtomicInteger integ = new AtomicInteger(0);
         int MAX = 100;
-        final FlagEncoder carEncoder = encodingManager.getEncoder("car");
 
         // testing if algorithms are independent. should be. so test only two algorithms. 
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
         final Weighting weighting = new ShortestWeighting(encodingManager.getEncoder("car"));
-        final EdgeFilter filter = new DefaultEdgeFilter(carEncoder);
+        final EdgeFilter filter = new DefaultEdgeFilter(encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS));
         for (int no = 0; no < MAX; no++) {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {
                 String[] algos = new String[]{

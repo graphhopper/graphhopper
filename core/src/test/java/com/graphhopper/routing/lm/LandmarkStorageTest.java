@@ -18,6 +18,9 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -27,6 +30,7 @@ import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
@@ -43,12 +47,16 @@ import static org.junit.Assert.*;
 public class LandmarkStorageTest {
     private GraphHopperStorage ghStorage;
     private FlagEncoder encoder;
+    private BooleanEncodedValue accessEnc;
+    private DecimalEncodedValue averageSpeedEnc;
 
     @Before
     public void setUp() {
         encoder = new CarFlagEncoder();
-        ghStorage = new GraphHopperStorage(new RAMDirectory(),
-                new EncodingManager.Builder().addAll(encoder).build(), false, new GraphExtension.NoOpExtension());
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
+        accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        averageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        ghStorage = new GraphHopperStorage(new RAMDirectory(), em, false, new GraphExtension.NoOpExtension());
         ghStorage.create(1000);
     }
 
@@ -82,7 +90,7 @@ public class LandmarkStorageTest {
 
     @Test
     public void testSetGetWeight() {
-        ghStorage.edge(0, 1, 40, true);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 0, 1, true, 40);
         Directory dir = new RAMDirectory();
         DataAccess da = dir.find("landmarks_fastest_car");
         da.create(2000);
@@ -109,12 +117,11 @@ public class LandmarkStorageTest {
 
     @Test
     public void testWithSubnetworks() {
-        ghStorage.edge(0, 1, 10, true);
-        ghStorage.edge(1, 2, 10, true);
-
-        ghStorage.edge(2, 4).setFlags(encoder.setAccess(0, false, false));
-        ghStorage.edge(4, 5, 10, true);
-        ghStorage.edge(5, 6, 10, false);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 0, 1, true, 10);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 1, 2, true, 10);
+        ghStorage.edge(2, 4);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 4, 5, true, 10);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 5, 6, false, 10);
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new FastestWeighting(encoder), 2);
         storage.setMinimumNodes(2);
@@ -128,11 +135,11 @@ public class LandmarkStorageTest {
     public void testWithSubnetworks2() {
         // should not happen with subnetwork preparation
         // 0 - 1 - 2 = 3 - 4
-        ghStorage.edge(0, 1, 10, true);
-        ghStorage.edge(1, 2, 10, true);
-        ghStorage.edge(2, 3, 10, false);
-        ghStorage.edge(3, 2, 10, false);
-        ghStorage.edge(3, 4, 10, true);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 0, 1, true, 10);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 1, 2, true, 10);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 2, 3, false, 10);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 3, 2, false, 10);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 3, 4, true, 10);
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new FastestWeighting(encoder), 2);
         storage.setMinimumNodes(3);
@@ -145,12 +152,12 @@ public class LandmarkStorageTest {
     public void testWithOnewaySubnetworks() {
         // should not happen with subnetwork preparation
         // create an indifferent problem: node 2 and 3 are part of two 'disconnected' subnetworks
-        ghStorage.edge(0, 1, 10, true);
-        ghStorage.edge(1, 2, 10, false);
-        ghStorage.edge(2, 3, 10, false);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 0, 1, true, 10);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 1, 2, false, 10);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 2, 3, false, 10);
 
-        ghStorage.edge(4, 5, 10, true);
-        ghStorage.edge(5, 2, 10, false);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 4, 5, true, 10);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 5, 2, false, 10);
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new FastestWeighting(encoder), 2);
         storage.setMinimumNodes(2);
@@ -163,9 +170,10 @@ public class LandmarkStorageTest {
     @Test
     public void testWeightingConsistence() {
         // create an indifferent problem: shortest weighting can pass the speed==0 edge but fastest cannot (?)
-        ghStorage.edge(0, 1, 10, true);
-        ghStorage.edge(1, 2).setDistance(10).setFlags(encoder.setProperties(0.9, true, true));
-        ghStorage.edge(2, 3, 10, true);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 0, 1, true, 10);
+        EdgeIteratorState edge = GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 1, 2, true, 10);
+        edge.set(averageSpeedEnc, 0.9);
+        GHUtility.createEdge(ghStorage, averageSpeedEnc, 60, accessEnc, 2, 3, true, 10);
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new FastestWeighting(encoder), 2);
         storage.setMinimumNodes(2);
@@ -177,7 +185,7 @@ public class LandmarkStorageTest {
 
     @Test
     public void testWithBorderBlocking() {
-        AbstractRoutingAlgorithmTester.initBiGraph(ghStorage);
+        AbstractRoutingAlgorithmTester.initBiGraph(ghStorage, accessEnc, averageSpeedEnc);
 
         LandmarkStorage storage = new LandmarkStorage(ghStorage, new RAMDirectory(), new FastestWeighting(encoder), 2);
         final SpatialRule ruleRight = new DefaultSpatialRule() {

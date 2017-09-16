@@ -1,10 +1,8 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
-
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.Assert.assertEquals;
 
@@ -14,19 +12,22 @@ public class TagParserFactoryTest {
     public void testParseDefaultValue() {
         ReaderWay way = new ReaderWay(2L);
         way.setTag("highway", "xy");
-        DecimalEncodedValue ev = new DecimalEncodedValue("maxspeed", 5, 0, 1, false);
-        final AtomicInteger parsed = new AtomicInteger(-1);
-        EdgeSetter setter = new EdgeSetter() {
+        DecimalEncodedValue ev = new DecimalEncodedValue("maxspeed", 5, 1, 1, false);
+        ev.init(new EncodedValue.InitializerConfig(), 4);
+        ReaderWayFilter filter = new ReaderWayFilter() {
             @Override
-            public void set(EdgeIteratorState edgeState, EncodedValue value, Object object) {
-                parsed.set(((Number) object).intValue());
+            public boolean accept(ReaderWay way) {
+                return true;
             }
         };
-        TagParserFactory.Car.createMaxSpeed(ev).parse(setter, way, null);
-        assertEquals(-1, parsed.get());
+
+        IntsRef ints = new IntsRef(1);
+        TagParserFactory.Car.createMaxSpeed(ev, filter).parse(ints, way);
+        assertEquals(1, ev.getDecimal(false, ints), .1);
 
         way.setTag("maxspeed", "30");
-        TagParserFactory.Car.createMaxSpeed(ev).parse(setter, way, null);
-        assertEquals(30, parsed.get());
+        TagParser tp = TagParserFactory.Car.createMaxSpeed(ev, filter);
+        tp.parse(ints, way);
+        assertEquals(30, ev.getDecimal(false, ints), .1);
     }
 }

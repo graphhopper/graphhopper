@@ -27,7 +27,6 @@ import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.search.NameIndex;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -97,7 +96,7 @@ class BaseGraph implements Graph {
         this.nodes = dir.find("nodes");
         this.edges = dir.find("edges");
         this.listener = listener;
-        this.edgeAccess = new EdgeAccess(edges, bitUtil) {
+        this.edgeAccess = new EdgeAccess(edges) {
             @Override
             final EdgeIterable createSingleEdge(EdgeFilter filter) {
                 return new EdgeIterable(BaseGraph.this, this, filter);
@@ -127,11 +126,6 @@ class BaseGraph implements Graph {
             @Override
             final boolean isInBounds(int edgeId) {
                 return edgeId < edgeCount && edgeId >= 0;
-            }
-
-            @Override
-            final long reverseFlags(long edgePointer, long flags) {
-                return encodingManager.reverseFlags(flags);
             }
 
             @Override
@@ -223,7 +217,6 @@ class BaseGraph implements Graph {
     void initStorage() {
         edgeEntryIndex = 0;
         nodeEntryIndex = 0;
-        boolean flagsSizeIsLong = encodingManager.getBytesForFlags() == 8;
         int extendedDataSizeInBytes = encodingManager.getExtendedDataSize();
 
         edgeAccess.init(nextEdgeEntryIndex(4),
@@ -231,10 +224,8 @@ class BaseGraph implements Graph {
                 nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(4),
                 nextEdgeEntryIndex(extendedDataSizeInBytes),
-                /* TODO LATER: deprecate flags and distance */
-                nextEdgeEntryIndex(4),
-                nextEdgeEntryIndex(encodingManager.getBytesForFlags()),
-                flagsSizeIsLong);
+                /* TODO: deprecate distance */
+                nextEdgeEntryIndex(4));
 
         E_GEO = nextEdgeEntryIndex(4);
         E_NAME = nextEdgeEntryIndex(4);
@@ -325,11 +316,6 @@ class BaseGraph implements Graph {
     @Override
     public BBox getBounds() {
         return bounds;
-    }
-
-    @Override
-    public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirection) {
-        return edge(a, b).setDistance(distance).setFlags(encodingManager.flagsDefault(true, bothDirection));
     }
 
     void setSegmentSize(int bytes) {
@@ -445,8 +431,8 @@ class BaseGraph implements Graph {
     EdgeIteratorState copyProperties(CommonEdgeIterator from, EdgeIteratorState to) {
         to.setDistance(from.getDistance()).
                 setName(from.getName()).
-                setFlags(from.getDirectFlags()).
                 setWayGeometry(from.fetchWayGeometry(0));
+        to.setData(from.getData());
 
         if (E_ADDITIONAL >= 0)
             to.setAdditionalField(from.getAdditionalField());
@@ -963,7 +949,6 @@ class BaseGraph implements Graph {
                 boolean baseNodeIsNodeA = baseNode == nodeA;
                 adjNode = baseNodeIsNodeA ? edgeAccess.getNodeB(edgePointer) : nodeA;
                 reverse = !baseNodeIsNodeA;
-                freshFlags = false;
                 edgeRowCache = null;
 
                 // position to next edge
@@ -1023,7 +1008,6 @@ class BaseGraph implements Graph {
                     return false;
 
                 baseNode = edgeAccess.getNodeA(edgePointer);
-                freshFlags = false;
                 adjNode = edgeAccess.getNodeB(edgePointer);
                 // some edges are deleted and are marked via a negative node
                 if (EdgeAccess.isInvalidNodeB(adjNode))
@@ -1071,8 +1055,6 @@ class BaseGraph implements Graph {
         // we need reverse if detach is called
         boolean reverse = false;
         int edgeId = -1;
-        private long cachedFlags;
-        boolean freshFlags;
         IntsRef edgeRowCache;
         // avoid calling setData multiple times instead 'flush' on 'next' and use
         // private boolean edgeRowCacheChanged;
@@ -1104,25 +1086,18 @@ class BaseGraph implements Graph {
             return this;
         }
 
-        final long getDirectFlags() {
-            if (!freshFlags) {
-                cachedFlags = edgeAccess.getFlags_(edgePointer, reverse);
-                freshFlags = true;
-            }
-            return cachedFlags;
-        }
-
-        @Override
-        public long getFlags() {
-            return getDirectFlags();
-        }
-
         @Override
         public final IntsRef getData() {
             if (edgeRowCache == null)
                 edgeRowCache = edgeAccess.getData(edgePointer);
 
             return edgeRowCache;
+        }
+
+        @Override
+        public final void setData(IntsRef ints) {
+            edgeRowCache = ints;
+            edgeAccess.setData(edgePointer, ints);
         }
 
         @Override
@@ -1214,14 +1189,6 @@ class BaseGraph implements Graph {
         }
 
         @Override
-        public final EdgeIteratorState setFlags(long fl) {
-            edgeAccess.setFlags_(edgePointer, reverse, fl);
-            cachedFlags = fl;
-            freshFlags = true;
-            return this;
-        }
-
-        @Override
         public final int getAdditionalField() {
             return baseGraph.edges.getInt(edgePointer + baseGraph.E_ADDITIONAL);
         }
@@ -1235,22 +1202,6 @@ class BaseGraph implements Graph {
         @Override
         public final EdgeIteratorState copyPropertiesTo(EdgeIteratorState edge) {
             return baseGraph.copyProperties(this, edge);
-        }
-
-        /**
-         * Reports whether the edge is available in forward direction for the specified encoder.
-         */
-        @Override
-        public boolean isForward(FlagEncoder encoder) {
-            return encoder.isForward(getDirectFlags());
-        }
-
-        /**
-         * Reports whether the edge is available in backward direction for the specified encoder.
-         */
-        @Override
-        public boolean isBackward(FlagEncoder encoder) {
-            return encoder.isBackward(getDirectFlags());
         }
 
         @Override
@@ -1279,12 +1230,6 @@ class BaseGraph implements Graph {
         public EdgeIteratorState setName(String name) {
             baseGraph.setName(edgePointer, name);
             return this;
-        }
-
-        @Override
-        public final boolean getBool(int key, boolean _default) {
-            // for non-existent keys return default
-            return _default;
         }
 
         @Override

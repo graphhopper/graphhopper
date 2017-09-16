@@ -29,13 +29,12 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class TunnelElevationInterpolator extends AbstractEdgeElevationInterpolator {
 
-    public TunnelElevationInterpolator(GraphHopperStorage storage,
-                                       DataFlagEncoder dataFlagEncoder) {
+    public TunnelElevationInterpolator(GraphHopperStorage storage, DataFlagEncoder dataFlagEncoder) {
         super(storage, dataFlagEncoder);
     }
 
     @Override
     protected boolean isInterpolatableEdge(EdgeIteratorState edge) {
-        return dataFlagEncoder.isTransportModeTunnel(edge);
+        return dataFlagEncoder.isTunnel(edge.getData());
     }
 }

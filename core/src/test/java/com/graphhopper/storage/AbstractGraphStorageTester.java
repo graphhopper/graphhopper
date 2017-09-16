@@ -17,6 +17,9 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -45,12 +48,15 @@ public abstract class AbstractGraphStorageTester {
     private final String locationParent = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraphLoc = "./target/graphstorage/default";
-    protected EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car,foot").build();
+    protected EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car,foot").build();
     protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
-    protected FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
+    protected BooleanEncodedValue carAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+    protected DecimalEncodedValue carAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+    protected BooleanEncodedValue footAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Foot.ACCESS);
+    protected DecimalEncodedValue footAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Foot.AVERAGE_SPEED);
     protected GraphHopperStorage graph;
-    EdgeFilter carOutFilter = new DefaultEdgeFilter(carEncoder, false, true);
-    EdgeFilter carInFilter = new DefaultEdgeFilter(carEncoder, true, false);
+    EdgeFilter carOutFilter = new DefaultEdgeFilter(carAccessEnc, true, false);
+    EdgeFilter carInFilter = new DefaultEdgeFilter(carAccessEnc, false, true);
     EdgeExplorer carOutExplorer;
     EdgeExplorer carInExplorer;
     EdgeExplorer carAllExplorer;
@@ -106,7 +112,7 @@ public abstract class AbstractGraphStorageTester {
 
     @After
     public void tearDown() {
-        Helper.close((Closeable) graph);
+        Helper.close(graph);
         Helper.removeDir(new File(locationParent));
     }
 
@@ -115,12 +121,12 @@ public abstract class AbstractGraphStorageTester {
         graph = createGHStorage();
 
         double maxDist = EdgeAccess.MAX_DIST;
-        EdgeIteratorState edge1 = graph.edge(0, 1, maxDist, true);
+        EdgeIteratorState edge1 = graph.edge(0, 1).setDistance(maxDist);
         assertEquals(maxDist, edge1.getDistance(), 1);
 
         // max out should NOT lead to infinity as this leads fast to NaN!
         try {
-            graph.edge(0, 2, maxDist + 1, true);
+            graph.edge(0, 2).setDistance(maxDist + 1);
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Distance too large"));
         }
@@ -133,35 +139,35 @@ public abstract class AbstractGraphStorageTester {
         for (int i = 0; i < defaultSize * 2; i++) {
             na.setNode(i, 2 * i, 3 * i);
         }
-        graph.edge(defaultSize + 1, defaultSize + 2, 10, true);
-        graph.edge(defaultSize + 1, defaultSize + 3, 10, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, defaultSize + 1, defaultSize + 2, true, 10d);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, defaultSize + 1, defaultSize + 3, true, 10);
         assertEquals(2, GHUtility.count(carAllExplorer.setBaseNode(defaultSize + 1)));
     }
 
     @Test
     public void testPropertiesWithNoInit() {
         graph = createGHStorage();
-        assertEquals(0, graph.edge(0, 1).getFlags());
+        assertEquals(0, graph.edge(0, 1).getData().ints[0]);
         assertEquals(0, graph.edge(0, 2).getDistance(), 1e-6);
     }
 
     @Test
     public void testCreateLocation() {
         graph = createGHStorage();
-        graph.edge(3, 1, 50, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 50, carAccessEnc, 60, 1, true);
         assertEquals(1, count(carOutExplorer.setBaseNode(1)));
 
-        graph.edge(1, 2, 100, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 100);
         assertEquals(2, count(carOutExplorer.setBaseNode(1)));
     }
 
     @Test
     public void testEdges() {
         graph = createGHStorage();
-        graph.edge(2, 1, 12, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 2, 1, true, 12);
         assertEquals(1, count(carOutExplorer.setBaseNode(2)));
 
-        graph.edge(2, 3, 12, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, true, 12);
         assertEquals(1, count(carOutExplorer.setBaseNode(1)));
         assertEquals(2, count(carOutExplorer.setBaseNode(2)));
         assertEquals(1, count(carOutExplorer.setBaseNode(3)));
@@ -171,11 +177,11 @@ public abstract class AbstractGraphStorageTester {
     public void testUnidirectional() {
         graph = createGHStorage();
 
-        graph.edge(1, 2, 12, false);
-        graph.edge(1, 11, 12, false);
-        graph.edge(11, 1, 12, false);
-        graph.edge(1, 12, 12, false);
-        graph.edge(3, 2, 112, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, false, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 11, false, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 11, 1, false, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 12, false, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 2, false, 112);
         EdgeIterator i = carOutExplorer.setBaseNode(2);
         assertFalse(i.next());
 
@@ -204,11 +210,11 @@ public abstract class AbstractGraphStorageTester {
     public void testUnidirectionalEdgeFilter() {
         graph = createGHStorage();
 
-        graph.edge(1, 2, 12, false);
-        graph.edge(1, 11, 12, false);
-        graph.edge(11, 1, 12, false);
-        graph.edge(1, 12, 12, false);
-        graph.edge(3, 2, 112, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, false, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 11, false, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 11, 1, false, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 12, false, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 2, false, 112);
         EdgeIterator i = carOutExplorer.setBaseNode(2);
         assertFalse(i.next());
 
@@ -239,8 +245,8 @@ public abstract class AbstractGraphStorageTester {
     public void testUpdateUnidirectional() {
         graph = createGHStorage();
 
-        graph.edge(1, 2, 12, false);
-        graph.edge(3, 2, 112, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, false, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 2, false, 112);
         EdgeIterator i = carOutExplorer.setBaseNode(2);
         assertFalse(i.next());
         i = carOutExplorer.setBaseNode(3);
@@ -248,7 +254,7 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(2, i.getAdjNode());
         assertFalse(i.next());
 
-        graph.edge(2, 3, 112, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, false, 112);
         i = carOutExplorer.setBaseNode(2);
         assertTrue(i.next());
         assertEquals(3, i.getAdjNode());
@@ -261,18 +267,18 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testClone() {
         graph = createGHStorage();
-        graph.edge(1, 2, 10, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 10);
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 12, 23);
         na.setNode(1, 8, 13);
         na.setNode(2, 2, 10);
         na.setNode(3, 5, 9);
-        graph.edge(1, 3, 10, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 3, true, 10);
 
         Graph cloneGraph = graph.copyTo(AbstractGraphStorageTester.this.createGHStorage(locationParent + "/clone", false));
         assertEquals(graph.getNodes(), cloneGraph.getNodes());
         assertEquals(count(carOutExplorer.setBaseNode(1)), count(cloneGraph.createEdgeExplorer(carOutFilter).setBaseNode(1)));
-        cloneGraph.edge(1, 4, 10, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 4, true, 10);
         assertEquals(3, count(cloneGraph.createEdgeExplorer(carOutFilter).setBaseNode(1)));
         assertEquals(graph.getBounds(), cloneGraph.getBounds());
         Helper.close((Closeable) cloneGraph);
@@ -281,13 +287,13 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testCopyProperties() {
         graph = createGHStorage();
-        EdgeIteratorState edge = graph.edge(1, 3, 10, false).setName("testing").setWayGeometry(Helper.createPointList(1, 2));
+        EdgeIteratorState edge = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 3, false, 10).setName("testing").setWayGeometry(Helper.createPointList(1, 2));
 
-        EdgeIteratorState newEdge = graph.edge(1, 3, 10, false);
+        EdgeIteratorState newEdge = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 3, false, 10);
         edge.copyPropertiesTo(newEdge);
         assertEquals(edge.getName(), newEdge.getName());
         assertEquals(edge.getDistance(), newEdge.getDistance(), 1e-7);
-        assertEquals(edge.getFlags(), newEdge.getFlags());
+        assertEquals(edge.getData(), newEdge.getData());
         assertEquals(edge.fetchWayGeometry(0), newEdge.fetchWayGeometry(0));
     }
 
@@ -299,12 +305,12 @@ public abstract class AbstractGraphStorageTester {
         na.setNode(1, 22, 23);
         assertEquals(2, graph.getNodes());
 
-        graph.edge(0, 1, 10, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 10);
         assertEquals(2, graph.getNodes());
 
-        graph.edge(0, 2, 10, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 2, true, 10);
         assertEquals(3, graph.getNodes());
-        Helper.close((Closeable) graph);
+        Helper.close(graph);
 
         graph = createGHStorage();
         assertEquals(0, graph.getNodes());
@@ -326,7 +332,7 @@ public abstract class AbstractGraphStorageTester {
         }
 
         try {
-            Helper.close((Closeable) graph);
+            Helper.close(graph);
             graph = createGHStorage();
             gs.copyTo(graph);
             checkExampleGraph(graph);
@@ -334,7 +340,7 @@ public abstract class AbstractGraphStorageTester {
             ex.printStackTrace();
             assertTrue(ex.toString(), false);
         }
-        Helper.close((Closeable) graph);
+        Helper.close(graph);
     }
 
     @Test
@@ -352,11 +358,11 @@ public abstract class AbstractGraphStorageTester {
         na.setNode(3, 78, 89);
         na.setNode(4, 2, 1);
         na.setNode(5, 7, 5);
-        g.edge(0, 1, 12, true);
-        g.edge(0, 2, 212, true);
-        g.edge(0, 3, 212, true);
-        g.edge(0, 4, 212, true);
-        g.edge(0, 5, 212, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 2, true, 212);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 3, true, 212);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 4, true, 212);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 5, true, 212);
     }
 
     private void checkExampleGraph(Graph graph) {
@@ -386,11 +392,11 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testDirectional() {
         graph = createGHStorage();
-        graph.edge(1, 2, 12, true);
-        graph.edge(2, 3, 12, false);
-        graph.edge(3, 4, 12, false);
-        graph.edge(3, 5, 12, true);
-        graph.edge(6, 3, 12, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, false, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 4, false, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 5, true, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 6, 3, false, 12);
 
         assertEquals(1, count(carAllExplorer.setBaseNode(1)));
         assertEquals(1, count(carInExplorer.setBaseNode(1)));
@@ -416,28 +422,28 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testDozendEdges() {
         graph = createGHStorage();
-        graph.edge(1, 2, 12, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 12);
         assertEquals(1, count(carAllExplorer.setBaseNode(1)));
 
-        graph.edge(1, 3, 13, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 3, false, 13);
         assertEquals(2, count(carAllExplorer.setBaseNode(1)));
 
-        graph.edge(1, 4, 14, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 4, false, 14);
         assertEquals(3, count(carAllExplorer.setBaseNode(1)));
 
-        graph.edge(1, 5, 15, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 5, false, 15);
         assertEquals(4, count(carAllExplorer.setBaseNode(1)));
 
-        graph.edge(1, 6, 16, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 6, false, 16);
         assertEquals(5, count(carAllExplorer.setBaseNode(1)));
 
-        graph.edge(1, 7, 16, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 7, false, 16);
         assertEquals(6, count(carAllExplorer.setBaseNode(1)));
 
-        graph.edge(1, 8, 16, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 8, false, 16);
         assertEquals(7, count(carAllExplorer.setBaseNode(1)));
 
-        graph.edge(1, 9, 16, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 9, false, 16);
         assertEquals(8, count(carAllExplorer.setBaseNode(1)));
         assertEquals(8, count(carOutExplorer.setBaseNode(1)));
 
@@ -450,7 +456,7 @@ public abstract class AbstractGraphStorageTester {
         graph = createGHStorage();
 
         assertEquals(0, count(carAllExplorer.setBaseNode(1)));
-        graph.edge(0, 1, 12, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 12);
         assertEquals(1, count(carAllExplorer.setBaseNode(1)));
     }
 
@@ -463,8 +469,8 @@ public abstract class AbstractGraphStorageTester {
         na.setNode(20, 20, 1);
         na.setNode(21, 21, 1);
 
-        graph.edge(10, 20, 10, false);
-        graph.edge(21, 6, 10, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 10, 20, false, 10);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 21, 6, false, 10);
 
         graph.markNodeRemoved(0);
         graph.markNodeRemoved(7);
@@ -514,18 +520,18 @@ public abstract class AbstractGraphStorageTester {
             } else {
                 // connect to
                 // ... a deleted node
-                graph.edge(i, 0, 10 * i, true);
+                GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, i, 0, true, 10 * i);
                 // ... a non-deleted and non-moved node
-                graph.edge(i, 2, 10 * i, true);
+                GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, i, 2, true, 10 * i);
                 // ... a moved node
-                graph.edge(i, fillToSize - 1, 10 * i, true);
+                GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, i, fillToSize - 1, true, 10 * i);
             }
         }
 
-        graph.edge(0, 1, 10, true);
-        graph.edge(0, 3, 20, false);
-        graph.edge(3, 5, 20, true);
-        graph.edge(1, 5, 20, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 10);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 3, false, 20);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 5, true, 20);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 5, false, 20);
 
         graph.markNodeRemoved(0);
         graph.markNodeRemoved(2);
@@ -569,9 +575,9 @@ public abstract class AbstractGraphStorageTester {
         na.setNode(2, 3, 3);
         na.setNode(3, 78, 89);
 
-        graph.edge(3, 0, 21, true);
-        graph.edge(5, 0, 22, true);
-        graph.edge(5, 3, 23, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 0, true, 21);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 5, 0, true, 22);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 5, 3, true, 23);
 
         graph.markNodeRemoved(0);
         graph.markNodeRemoved(3);
@@ -602,15 +608,15 @@ public abstract class AbstractGraphStorageTester {
         na.setNode(12, 12, 1);
 
         // mini subnetwork which gets completely removed:
-        graph.edge(5, 10, 510, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 5, 10, true, 510);
         graph.markNodeRemoved(5);
         graph.markNodeRemoved(10);
 
         PointList pl = new PointList();
         pl.add(1, 2, Double.NaN);
         pl.add(1, 3, Double.NaN);
-        graph.edge(9, 11, 911, true).setWayGeometry(pl);
-        graph.edge(9, 12, 912, true).setWayGeometry(pl);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 9, 11, true, 911).setWayGeometry(pl);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 9, 12, true, 912).setWayGeometry(pl);
 
         assertEquals(13, graph.getNodes());
         assertEquals(Arrays.<String>asList(), GHUtility.getProblems(graph));
@@ -648,15 +654,15 @@ public abstract class AbstractGraphStorageTester {
         na.setNode(11, 11, 1);
 
         // mini subnetwork which gets completely removed:
-        graph.edge(5, 10, 510, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 5, 10, true, 510);
         graph.markNodeRemoved(3);
         graph.markNodeRemoved(4);
         graph.markNodeRemoved(5);
         graph.markNodeRemoved(10);
 
-        graph.edge(9, 11, 911, true);
-        graph.edge(7, 9, 78, true);
-        graph.edge(8, 9, 89, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 9, 11, true, 911);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 7, 9, true, 78);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 8, 9, true, 89);
 
         // perform deletion
         graph.optimize();
@@ -701,19 +707,25 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testFlags() {
         graph = createGHStorage();
-        graph.edge(0, 1).setDistance(10).setFlags(carEncoder.setProperties(100, true, true));
-        graph.edge(2, 3).setDistance(10).setFlags(carEncoder.setProperties(10, true, false));
+        EdgeIteratorState edge = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 10d);
+        edge.set(carAverageSpeedEnc, 100d);
+        edge = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, false, 10d);
+        edge.set(carAverageSpeedEnc, 10d);
 
         EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
-        assertEquals(carEncoder.setProperties(100, true, true), iter.getFlags());
+        assertEquals(100d, iter.get(carAverageSpeedEnc), .1);
+        assertTrue(iter.get(carAccessEnc));
+        assertTrue(iter.getReverse(carAccessEnc));
 
         iter = carAllExplorer.setBaseNode(2);
         assertTrue(iter.next());
-        assertEquals(carEncoder.setProperties(10, true, false), iter.getFlags());
+        assertEquals(10d, iter.get(carAverageSpeedEnc), .1);
+        assertTrue(iter.get(carAccessEnc));
+        assertFalse(iter.getReverse(carAccessEnc));
 
         try {
-            graph.edge(0, 1).setDistance(-1);
+            GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, -1d);
             assertTrue(false);
         } catch (IllegalArgumentException ex) {
         }
@@ -722,8 +734,8 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testEdgeProperties() {
         graph = createGHStorage();
-        EdgeIteratorState iter1 = graph.edge(0, 1, 10, true);
-        EdgeIteratorState iter2 = graph.edge(0, 2, 20, true);
+        EdgeIteratorState iter1 = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 10);
+        EdgeIteratorState iter2 = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 2, true, 20);
 
         int edgeId = iter1.getEdge();
         EdgeIteratorState iter = graph.getEdgeIteratorState(edgeId, 0);
@@ -762,9 +774,9 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testCreateDuplicateEdges() {
         graph = createGHStorage();
-        graph.edge(2, 1, 12, true);
-        graph.edge(2, 3, 12, true);
-        graph.edge(2, 3, 13, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 2, 1, true, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, true, 12);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, false, 13);
         assertEquals(3, GHUtility.count(carOutExplorer.setBaseNode(2)));
 
         // no exception
@@ -787,41 +799,43 @@ public abstract class AbstractGraphStorageTester {
         EdgeIteratorState oneIter = graph.getEdgeIteratorState(iter.getEdge(), 3);
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(2, oneIter.getBaseNode());
-        assertTrue(carEncoder.isForward(oneIter.getFlags()));
-        assertFalse(carEncoder.isBackward(oneIter.getFlags()));
+        assertTrue(carAccessEnc.getBool(false, oneIter.getData()));
+        assertFalse(carAccessEnc.getBool(true, oneIter.getData()));
 
         oneIter = graph.getEdgeIteratorState(iter.getEdge(), 2);
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(3, oneIter.getBaseNode());
-        assertFalse(carEncoder.isForward(oneIter.getFlags()));
-        assertTrue(carEncoder.isBackward(oneIter.getFlags()));
+        assertFalse(carAccessEnc.getBool(false, oneIter.getData()));
+        assertTrue(carAccessEnc.getBool(true, oneIter.getData()));
 
-        graph.edge(3, 2, 14, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 2, true, 14);
         assertEquals(4, GHUtility.count(carOutExplorer.setBaseNode(2)));
     }
 
     @Test
     public void testIdenticalNodes() {
         graph = createGHStorage();
-        graph.edge(0, 0, 100, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 0, true, 100);
         assertEquals(1, GHUtility.count(carAllExplorer.setBaseNode(0)));
     }
 
     @Test
     public void testIdenticalNodes2() {
         graph = createGHStorage();
-        graph.edge(0, 0, 100, false);
-        graph.edge(0, 0, 100, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 0, false, 100);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 0, false, 100);
         assertEquals(2, GHUtility.count(carAllExplorer.setBaseNode(0)));
     }
 
     @Test
     public void testEdgeReturn() {
         graph = createGHStorage();
-        EdgeIteratorState iter = graph.edge(4, 10).setDistance(100).setFlags(carEncoder.setProperties(10, true, false));
+        EdgeIteratorState iter = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 4, 10, false, 100d);
+        iter.set(carAverageSpeedEnc, 10d);
         assertEquals(4, iter.getBaseNode());
         assertEquals(10, iter.getAdjNode());
-        iter = graph.edge(14, 10).setDistance(100).setFlags(carEncoder.setProperties(10, true, false));
+        iter = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 14, 10, false, 100d);
+        iter.set(carAverageSpeedEnc, 10d);
         assertEquals(14, iter.getBaseNode());
         assertEquals(10, iter.getAdjNode());
     }
@@ -836,11 +850,14 @@ public abstract class AbstractGraphStorageTester {
         na.setNode(10, 0.99, 0.99);
 
         PointList pointList = Helper.createPointList(1, 1, 1, 2, 1, 3);
-        graph.edge(0, 4).setDistance(100).setFlags(carEncoder.setProperties(10, true, false)).setWayGeometry(pointList);
+        EdgeIteratorState edge = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 4, false, 100d).setWayGeometry(pointList);
+        edge.set(carAverageSpeedEnc, 10d);
         pointList = Helper.createPointList(1, 5, 1, 6, 1, 7, 1, 8, 1, 9);
-        graph.edge(4, 10).setDistance(100).setFlags(carEncoder.setProperties(10, true, false)).setWayGeometry(pointList);
+        edge = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 4, 10, false, 100d).setWayGeometry(pointList);
+        edge.set(carAverageSpeedEnc, 10d);
         pointList = Helper.createPointList(1, 13, 1, 12, 1, 11);
-        graph.edge(14, 0).setDistance(100).setFlags(carEncoder.setProperties(10, true, false)).setWayGeometry(pointList);
+        edge = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 14, 0, false, 100d).setWayGeometry(pointList);
+        edge.set(carAverageSpeedEnc, 10d);
 
         EdgeIterator iter = carAllExplorer.setBaseNode(0);
         assertTrue(iter.next());
@@ -878,10 +895,12 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testFootMix() {
         graph = createGHStorage();
-        graph.edge(0, 1).setDistance(10).setFlags(footEncoder.setProperties(10, true, true));
-        graph.edge(0, 2).setDistance(10).setFlags(carEncoder.setProperties(10, true, true));
-        graph.edge(0, 3).setDistance(10).setFlags(footEncoder.setProperties(10, true, true) | carEncoder.setProperties(10, true, true));
-        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footEncoder, false, true));
+        GHUtility.createEdge(graph, footAverageSpeedEnc, 5, footAccessEnc, 0, 1, true, 10d).set(footAverageSpeedEnc, 10d);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 2, true, 10d).set(carAverageSpeedEnc, 10d);
+        EdgeIteratorState edge = graph.edge(0, 3).setDistance(10);
+        GHUtility.setAccess(edge, footAccessEnc, true, true).set(footAverageSpeedEnc, 10d);
+        GHUtility.setAccess(edge, carAccessEnc, true, true).set(carAverageSpeedEnc, 10d);
+        EdgeExplorer footOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(footAccessEnc, false, true));
         assertEquals(GHUtility.asSet(3, 1), GHUtility.getNeighbors(footOutExplorer.setBaseNode(0)));
         assertEquals(GHUtility.asSet(3, 2), GHUtility.getNeighbors(carOutExplorer.setBaseNode(0)));
     }
@@ -889,9 +908,9 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testGetAllEdges() {
         graph = createGHStorage();
-        graph.edge(0, 1, 2, true);
-        graph.edge(3, 1, 1, false);
-        graph.edge(3, 2, 1, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 2);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 1, false, 1);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 2, false, 1);
 
         EdgeIterator iter = graph.getAllEdges();
         assertTrue(iter.next());
@@ -921,10 +940,10 @@ public abstract class AbstractGraphStorageTester {
         na.setNode(1, 1, 5);
         na.setNode(2, 2, 5);
         na.setNode(3, 3, 5);
-        graph.edge(0, 1, 1, true);
-        graph.edge(0, 2, 1, true);
-        graph.edge(1, 2, 1, true);
-        graph.edge(2, 3, 1, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 1);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 2, true, 1);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 1);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, true, 1);
         AllEdgesIterator iter = graph.getAllEdges();
         assertEquals(4, GHUtility.count(iter));
         assertEquals(4, iter.getMaxId());
@@ -952,10 +971,10 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testNameIndex() {
         graph = createGHStorage();
-        EdgeIteratorState iter1 = graph.edge(0, 1, 10, true);
+        EdgeIteratorState iter1 = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 10);
         iter1.setName("named street1");
 
-        EdgeIteratorState iter2 = graph.edge(0, 1, 10, true);
+        EdgeIteratorState iter2 = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 10);
         iter2.setName("named street2");
 
         assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
@@ -965,7 +984,7 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void test8BytesFlags() {
         Directory dir = new RAMDirectory();
-        List<FlagEncoder> list = new ArrayList<FlagEncoder>();
+        List<FlagEncoder> list = new ArrayList<>();
         list.add(new TmpCarFlagEncoder(29, 0.001, 0) {
             @Override
             public String toString() {
@@ -973,35 +992,45 @@ public abstract class AbstractGraphStorageTester {
             }
         });
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
-        EncodingManager manager = new EncodingManager.Builder().addAll(list, 8).build();
+        EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(list, 8).build();
         graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);
-        edge.setFlags(Long.MAX_VALUE / 3);
+        IntsRef ints = manager.createIntsRef();
+        ints.ints[0] = BitUtil.LITTLE.getIntHigh(Long.MAX_VALUE / 3);
+        ints.ints[1] = BitUtil.LITTLE.getIntLow(Long.MAX_VALUE / 3);
+        edge.setData(ints);
+        ints = edge.getData();
         // System.out.println(BitUtil.LITTLE.toBitString(Long.MAX_VALUE / 3) + "\n" + BitUtil.LITTLE.toBitString(edge.getFlags()));
-        assertEquals(Long.MAX_VALUE / 3, edge.getFlags());
+        long lng = BitUtil.LITTLE.toLong(ints.ints[0], ints.ints[1]);
+        assertEquals(Long.MAX_VALUE / 3, lng);
         graph.close();
 
         graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         edge = graph.edge(0, 1);
-        edge.setFlags(list.get(0).setProperties(99.123, true, true));
-        assertEquals(99.123, list.get(0).getSpeed(edge.getFlags()), 1e-3);
+        BooleanEncodedValue car2AccessEnc = manager.getBooleanEncodedValue("car2.access");
+        edge.set(car2AccessEnc, true);
+        edge.setReverse(car2AccessEnc, true);
+        edge.set(manager.getDecimalEncodedValue("car2.average_speed"), 99.123);
+        assertEquals(99.123, list.get(0).getSpeed(edge.getData()), 1e-3);
         EdgeIteratorState edgeIter = GHUtility.getEdge(graph, 1, 0);
-        long flags = edgeIter.getFlags();
-        assertEquals(99.123, list.get(0).getSpeed(flags), 1e-3);
-        assertTrue(edgeIter.isForward(list.get(0)));
-        assertTrue(edgeIter.isBackward(list.get(0)));
+
+        assertEquals(99.123, list.get(0).getSpeed(edgeIter.getData()), 1e-3);
+        assertTrue(edgeIter.get(car2AccessEnc));
+        assertTrue(edgeIter.getReverse(car2AccessEnc));
         edge = graph.edge(2, 3);
-        edge.setFlags(list.get(1).setProperties(44.123, true, false));
-        assertEquals(44.123, list.get(1).getSpeed(edge.getFlags()), 1e-3);
+        BooleanEncodedValue tmpCarAccessEnc = manager.getBooleanEncodedValue("car.access");
+        edge.set(tmpCarAccessEnc, true);
+        edge.set(manager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED), 44.123);
+        assertEquals(44.123, list.get(1).getSpeed(edge.getData()), 1e-3);
 
         edgeIter = GHUtility.getEdge(graph, 3, 2);
-        flags = edgeIter.getFlags();
-        assertEquals(44.123, list.get(1).getSpeed(flags), 1e-3);
-        assertEquals(44.123, list.get(1).getReverseSpeed(flags), 1e-3);
-        assertFalse(edgeIter.isForward(list.get(1)));
-        assertTrue(edgeIter.isBackward(list.get(1)));
+        ints = edgeIter.getData();
+        assertEquals(44.123, list.get(1).getSpeed(ints), 1e-3);
+        assertEquals(44.123, list.get(1).getReverseSpeed(ints), 1e-3);
+        assertFalse(edgeIter.get(tmpCarAccessEnc));
+        assertTrue(edgeIter.getReverse(tmpCarAccessEnc));
     }
 
     @Test
@@ -1029,7 +1058,7 @@ public abstract class AbstractGraphStorageTester {
         na.setNode(1, 11, 20, 1);
         na.setNode(2, 12, 12, 0.4);
 
-        EdgeIteratorState iter2 = graph.edge(0, 1, 100, true);
+        EdgeIteratorState iter2 = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 100);
         final BaseGraph baseGraph = (BaseGraph) graph.getBaseGraph();
         assertEquals(4, baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1, 2, 3, 3, 4, 5, 5, 6, 7, 7, 8, 9));
@@ -1042,7 +1071,7 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(4 + (1 + 12), baseGraph.getMaxGeoRef());
         iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0));
         assertEquals(4 + (1 + 12) + (1 + 6), baseGraph.getMaxGeoRef());
-        EdgeIteratorState iter1 = graph.edge(0, 2, 200, true);
+        EdgeIteratorState iter1 = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 2, true, 200);
         iter1.setWayGeometry(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0));
         assertEquals(4 + (1 + 12) + (1 + 6) + (1 + 6), baseGraph.getMaxGeoRef());
     }
@@ -1050,10 +1079,11 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testDetachEdge() {
         graph = createGHStorage();
-        graph.edge(0, 1, 2, true);
-        long flags = carEncoder.setProperties(10, true, false);
-        graph.edge(0, 2, 2, true).setWayGeometry(Helper.createPointList(1, 2, 3, 4)).setFlags(flags);
-        graph.edge(1, 2, 2, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 2d);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 2, false, 2d).
+                setWayGeometry(Helper.createPointList(1, 2, 3, 4)).
+                set(carAverageSpeedEnc, 10d);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 2d);
 
         EdgeIterator iter = graph.createEdgeExplorer().setBaseNode(0);
         try {
@@ -1068,15 +1098,15 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(2, iter.getAdjNode());
         assertEquals(1, edgeState02.fetchWayGeometry(0).getLatitude(0), 1e-1);
         assertEquals(2, edgeState02.getAdjNode());
-        assertTrue(carEncoder.isForward(edgeState02.getFlags()));
+        assertTrue(edgeState02.get(carAccessEnc));
 
         EdgeIteratorState edgeState20 = iter.detach(true);
         assertEquals(0, edgeState20.getAdjNode());
         assertEquals(2, edgeState20.getBaseNode());
         assertEquals(3, edgeState20.fetchWayGeometry(0).getLatitude(0), 1e-1);
-        assertFalse(carEncoder.isForward(edgeState20.getFlags()));
-        assertEquals(GHUtility.getEdge(graph, 0, 2).getFlags(), edgeState02.getFlags());
-        assertEquals(GHUtility.getEdge(graph, 2, 0).getFlags(), edgeState20.getFlags());
+        assertFalse(edgeState20.get(carAccessEnc));
+        assertEquals(GHUtility.getEdge(graph, 0, 2).getData(), edgeState02.getData());
+        assertEquals(GHUtility.getEdge(graph, 2, 0).getData(), edgeState20.getData());
 
         iter.next();
         assertEquals(1, iter.getAdjNode());
@@ -1088,13 +1118,13 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(3, edgeState20.fetchWayGeometry(0).getLatitude(0), 1e-1);
 
         // #162 a directed self referencing edge should be able to reverse its state too
-        graph.edge(3, 3, 2, true).setFlags(flags);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 3, false, 2).set(carAverageSpeedEnc, 10d);
         EdgeIterator edgeState33 = graph.createEdgeExplorer().setBaseNode(3);
         edgeState33.next();
         assertEquals(3, edgeState33.getBaseNode());
         assertEquals(3, edgeState33.getAdjNode());
-        assertEquals(edgeState02.getFlags(), edgeState33.detach(false).getFlags());
-        assertEquals(edgeState20.getFlags(), edgeState33.detach(true).getFlags());
+        assertEquals(edgeState02.getData(), edgeState33.detach(false).getData());
+        assertEquals(edgeState20.getData(), edgeState33.detach(true).getData());
     }
 
     static class TmpCarFlagEncoder extends CarFlagEncoder {

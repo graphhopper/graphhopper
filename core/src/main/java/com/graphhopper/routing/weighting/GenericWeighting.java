@@ -17,6 +17,10 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
@@ -41,12 +45,17 @@ public class GenericWeighting extends AbstractWeighting {
     protected final double maxSpeed;
     protected final DataFlagEncoder gEncoder;
     protected final DataFlagEncoder.WeightingConfig weightingConfig;
-    protected final int accessType;
     protected final int uncertainAccessiblePenalty = 10;
 
     protected final double height;
     protected final double weight;
     protected final double width;
+    private final IntEncodedValue accessClassEnc;
+    private final BooleanEncodedValue accessEnc;
+    private final DecimalEncodedValue maxSpeedEnc;
+    private final DecimalEncodedValue maxWeightEnc;
+    private final DecimalEncodedValue maxWidthEnc;
+    private final DecimalEncodedValue maxHeightEnc;
 
     public GenericWeighting(DataFlagEncoder encoder, PMap hintsMap) {
         super(encoder);
@@ -60,10 +69,20 @@ public class GenericWeighting extends AbstractWeighting {
             throw new IllegalArgumentException("Some specified speed value bigger than maximum possible speed: " + maxSpecifiedSpeed + " > " + encoder.getMaxPossibleSpeed());
 
         this.maxSpeed = maxSpecifiedSpeed / SPEED_CONV;
-        accessType = gEncoder.getAccessType("motor_vehicle");
+
         height = hintsMap.getDouble(HEIGHT_LIMIT, 0d);
+        maxHeightEnc = gEncoder.getDecimalEncodedValue(TagParserFactory.MAX_HEIGHT);
         weight = hintsMap.getDouble(WEIGHT_LIMIT, 0d);
+        maxWeightEnc = gEncoder.getDecimalEncodedValue(TagParserFactory.MAX_WEIGHT);
         width = hintsMap.getDouble(WIDTH_LIMIT, 0d);
+        maxWidthEnc = gEncoder.getDecimalEncodedValue(TagParserFactory.MAX_WIDTH);
+        // TODO select the correct access type and max_speed via a provided access type (car, motor_vehicle, bike, ...) instead of encoder prefix
+        // String prefix = hintsMap.get("access_type") + ".";
+
+        // ugly: misusing average speed to store maximum values
+        maxSpeedEnc = gEncoder.getDecimalEncodedValue(gEncoder.getPrefix() + "average_speed");
+        accessEnc = gEncoder.getBooleanEncodedValue(gEncoder.getPrefix() + "access");
+        accessClassEnc = gEncoder.getIntEncodedValue("access_class");
     }
 
     @Override
@@ -74,27 +93,25 @@ public class GenericWeighting extends AbstractWeighting {
     @Override
     public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         // handle oneways and removed edges via subnetwork removal (existing and allowed highway tags but 'island' edges)
-        if (reverse) {
-            if (!gEncoder.isBackward(edgeState, accessType))
-                return Double.POSITIVE_INFINITY;
-        } else if (!gEncoder.isForward(edgeState, accessType)) {
+        if (reverse && !edgeState.getReverse(accessEnc) || !reverse && !edgeState.get(accessEnc))
             return Double.POSITIVE_INFINITY;
-        }
 
-        if (gEncoder.isStoreHeight() && overLimit(height, gEncoder.getHeight(edgeState))
-                || gEncoder.isStoreWeight() && overLimit(weight, gEncoder.getWeight(edgeState))
-                || gEncoder.isStoreWidth() && overLimit(width, gEncoder.getWidth(edgeState)))
+        if (gEncoder.isStoreHeight() && overLimit(height, edgeState.get(maxHeightEnc))
+                || gEncoder.isStoreWeight() && overLimit(weight, edgeState.get(maxWeightEnc))
+                || gEncoder.isStoreWidth() && overLimit(width, edgeState.get(maxWidthEnc)))
             return Double.POSITIVE_INFINITY;
 
         long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 
-        switch (gEncoder.getAccessValue(edgeState.getFlags())) {
-            case NOT_ACCESSIBLE:
+        switch (edgeState.get(accessClassEnc)) {
+            case 0:
                 return Double.POSITIVE_INFINITY;
-            case EVENTUALLY_ACCESSIBLE:
+            case 3:
                 time = time * uncertainAccessiblePenalty;
+            default:
+                // ignore
         }
 
         return time;
@@ -116,7 +133,7 @@ public class GenericWeighting extends AbstractWeighting {
         // TODO inner city guessing -> lit, maxspeed <= 50, residential etc => create new encoder.isInnerCity(edge)
         // See #472 use edge.getDouble((encoder), K_MAXSPEED_MOTORVEHICLE_FORWARD, _default) or edge.getMaxSpeed(...) instead?
         // encoder could be made optional via passing to EdgeExplorer
-        double maxspeed = gEncoder.getMaxspeed(edgeState, accessType, reverse);
+        double maxspeed = reverse ? edgeState.getReverse(maxSpeedEnc) : edgeState.get(maxSpeedEnc);
         if (maxspeed > 0 && speed > maxspeed)
             speed = maxspeed;
 
@@ -124,7 +141,7 @@ public class GenericWeighting extends AbstractWeighting {
         long timeInMillis = (long) (edgeState.getDistance() / speed * SPEED_CONV);
 
         // add direction penalties at start/stop/via points
-        boolean unfavoredEdge = edgeState.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, false);
+        boolean unfavoredEdge = edgeState.get(EdgeIteratorState.UNFAVORED_EDGE);
         if (unfavoredEdge)
             timeInMillis += headingPenaltyMillis;
 

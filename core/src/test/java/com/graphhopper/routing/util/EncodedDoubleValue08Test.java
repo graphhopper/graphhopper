@@ -18,6 +18,9 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -35,24 +38,6 @@ public class EncodedDoubleValue08Test {
     @Test(expected = IllegalStateException.class)
     public void testIllegalFactorMaxValueCombination() {
         new EncodedDoubleValue08("illegalcombination", 6, 2, 2, 0, 3);
-    }
-
-    @Test
-    public void testMaxValue() {
-        EncodedDoubleValue08 instance1 = new EncodedDoubleValue08("test1", 0, 8, 0.5, 60, 100);
-        long flags = instance1.setDoubleValue(0, instance1.getMaxValue());
-        assertEquals(100, instance1.getDoubleValue(flags), 1e-1);
-
-        CarFlagEncoder carEncoder = new CarFlagEncoder(10, 0.5, 0);
-        new EncodingManager.Builder().addAll(carEncoder).build();
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "motorway_link");
-        way.setTag("maxspeed", "70 mph");
-        flags = carEncoder.handleWayTags(way, 1, 0);
-
-        // double speed = AbstractFlagEncoder.parseSpeed("70 mph");
-        flags = carEncoder.reverseFlags(flags);
-        assertEquals(101.5, carEncoder.getSpeed(flags), 1e-1);
     }
 
     @Test

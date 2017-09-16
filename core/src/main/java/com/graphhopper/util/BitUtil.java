@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.storage.IntsRef;
+
 import java.nio.ByteOrder;
 
 /**
@@ -167,6 +169,14 @@ public abstract class BitUtil {
 
     public abstract byte[] fromBitString(String str);
 
+    public final String toBitString(IntsRef ints) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = ints.offset; i < ints.length; i++) {
+            sb.append(toBitString(ints.ints[i], 32));
+        }
+        return sb.toString();
+    }
+
     /**
      * Similar to Long.toBinaryString
      */
@@ -190,7 +200,6 @@ public abstract class BitUtil {
 
     /**
      * Higher order bits comes first in the returned string.
-     * <p>
      *
      * @param bits how many bits should be returned.
      */
@@ -216,7 +225,6 @@ public abstract class BitUtil {
     /**
      * Reverses the bits in the specified long value and it removes the remaining higher bits. See
      * also http://graphics.stanford.edu/~seander/bithacks.html#BitReverseObvious
-     * <p>
      *
      * @param maxBits the maximum number of recognized bits for reversal
      */

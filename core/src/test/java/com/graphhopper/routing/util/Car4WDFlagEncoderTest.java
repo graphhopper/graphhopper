@@ -31,98 +31,99 @@ import static org.junit.Assert.*;
  * @author zstadler
  */
 public class Car4WDFlagEncoderTest extends CarFlagEncoderTest {
-    private final EncodingManager em = new EncodingManager.Builder().addAllFlagEncoders("car4wd,bike,foot").build();
+    private final EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues(true).
+            addAllFlagEncoders("car4wd,bike,foot").build();
     private final Car4WDFlagEncoder encoder = (Car4WDFlagEncoder) em.getEncoder("car4wd");
 
     @Override
     @Test
     public void testAccess() {
         ReaderWay way = new ReaderWay(1);
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
         way.setTag("highway", "service");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
         way.setTag("access", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "track");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.setTag("motorcar", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         // for now allow grade1+2+3 for every country, see #253
         way.clearTags();
         way.setTag("highway", "track");
         way.setTag("tracktype", "grade2");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
         // This is the only difference from a "car"
         way.setTag("tracktype", "grade4");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "delivery");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "unclassified");
         way.setTag("ford", "yes");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
         way.setTag("motorcar", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("route", "ferry");
-        assertTrue(encoder.acceptWay(way) > 0);
-        assertTrue(encoder.isFerry(encoder.acceptWay(way)));
+        assertTrue(encoder.getAccess(way).isWay());
+        assertTrue(encoder.getAccess(way).isFerry());
         way.setTag("motorcar", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("route", "ferry");
         way.setTag("foot", "yes");
-        assertFalse(encoder.acceptWay(way) > 0);
-        assertFalse(encoder.isFerry(encoder.acceptWay(way)));
+        assertFalse(encoder.getAccess(way).isWay());
+        assertFalse(encoder.getAccess(way).isFerry());
 
         way.clearTags();
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "no");
         way.setTag("motorcar", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "emergency");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("motor_vehicle", "emergency");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
 
         way.clearTags();
         way.setTag("highway", "road");
         way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "road");
         way.setTag("access", "no");
         way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
     }
 }

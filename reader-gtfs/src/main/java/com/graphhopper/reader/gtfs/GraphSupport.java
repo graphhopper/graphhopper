@@ -24,7 +24,6 @@ import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
@@ -72,11 +71,6 @@ class GraphSupport {
 
             @Override
             public EdgeIteratorState edge(int a, int b) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
                 throw new UnsupportedOperationException();
             }
 
@@ -142,17 +136,6 @@ class GraphSupport {
                     }
 
                     @Override
-                    public long getFlags() {
-                        return edge.getFlags();
-                    }
-
-                    @Override
-                    public EdgeIteratorState setFlags(long flags) {
-                        edge.setFlags(flags);
-                        return this;
-                    }
-
-                    @Override
                     public int getAdditionalField() {
                         return edge.getAdditionalField();
                     }
@@ -164,23 +147,13 @@ class GraphSupport {
                     }
 
                     @Override
-                    public boolean isForward(FlagEncoder encoder) {
-                        return edge.isForward(encoder);
-                    }
-
-                    @Override
-                    public boolean isBackward(FlagEncoder encoder) {
-                        return edge.isBackward(encoder);
-                    }
-
-                    @Override
-                    public boolean getBool(int key, boolean _default) {
-                        return edge.getBool(key, _default);
-                    }
-
-                    @Override
                     public IntsRef getData() {
                         return edge.getData();
+                    }
+
+                    @Override
+                    public void setData(IntsRef flags) {
+                        edge.setData(flags);
                     }
 
                     @Override

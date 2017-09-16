@@ -20,6 +20,8 @@ package com.graphhopper.storage.change;
 import com.carrotsearch.hppc.cursors.IntCursor;
 import com.graphhopper.coll.GHIntHashSet;
 import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -28,13 +30,11 @@ import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.EdgeIteratorState;
-
-import java.util.Collection;
-import java.util.Iterator;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -88,7 +88,7 @@ public class ChangeGraphHelper {
 
     private long applyChange(JsonFeature jsonFeature, FlagEncoder encoder) {
         long updates = 0;
-        EdgeFilter filter = new DefaultEdgeFilter(encoder);
+        EdgeFilter filter = new DefaultEdgeFilter(encoder.getAccessEncodedValue());
         GHIntHashSet edges = new GHIntHashSet();
         if (jsonFeature.hasGeometry()) {
             graphBrowser.fillEdgeIDs(edges, jsonFeature.getGeometry(), filter);
@@ -99,6 +99,10 @@ public class ChangeGraphHelper {
 
         Iterator<IntCursor> iter = edges.iterator();
         Map<String, Object> props = jsonFeature.getProperties();
+        BooleanEncodedValue accessEnc = encoder.getBooleanEncodedValue(encoder.getPrefix() + "access");
+        // TODO NOW json key is 'speed' but here we should avoid the vehicle and use 'profile.average_speed'
+        DecimalEncodedValue averageSpeedEnc = encoder.getDecimalEncodedValue(encoder.getPrefix() + "average_speed");
+
         while (iter.hasNext()) {
             int edgeId = iter.next().value;
             EdgeIteratorState edge = graph.getEdgeIteratorState(edgeId, Integer.MIN_VALUE);
@@ -107,17 +111,17 @@ public class ChangeGraphHelper {
                 updates++;
                 if (enableLogging)
                     logger.info(encoder.toString() + " - access change via feature " + jsonFeature.getId());
-                edge.setFlags(encoder.setAccess(edge.getFlags(), value, value));
+                edge.set(accessEnc, value);
 
             } else if (props.containsKey("speed")) {
                 // TODO use different speed for the different directions (see e.g. Bike2WeightFlagEncoder)
                 double value = ((Number) props.get("speed")).doubleValue();
-                double oldSpeed = encoder.getSpeed(edge.getFlags());
+                double oldSpeed = edge.get(averageSpeedEnc);
                 if (oldSpeed != value) {
                     updates++;
                     if (enableLogging)
                         logger.info(encoder.toString() + " - speed change via feature " + jsonFeature.getId() + ". Old: " + oldSpeed + ", new:" + value);
-                    edge.setFlags(encoder.setSpeed(edge.getFlags(), value));
+                    edge.set(averageSpeedEnc, value);
                 }
             }
         }

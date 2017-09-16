@@ -24,7 +24,6 @@ import com.graphhopper.util.EdgeIteratorState;
 
 /**
  * Specifies how the best route is calculated. E.g. the fastest or shortest route.
- * <p>
  *
  * @author Peter Karich
  */
@@ -71,7 +70,6 @@ public interface Weighting {
 
     /**
      * This method creates a new edge filter that allows access for the specified direction.
-     * TODO the DefaultEdgeFilter constructor has exactly the opposite but unintuitive argument order: encoder, reverse, forward
      *
      * @see com.graphhopper.routing.util.DefaultEdgeFilter
      */

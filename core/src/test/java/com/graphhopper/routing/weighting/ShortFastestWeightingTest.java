@@ -17,8 +17,12 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -32,11 +36,18 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class ShortFastestWeightingTest {
-    private final FlagEncoder encoder = new EncodingManager.Builder().addAllFlagEncoders("car").build().getEncoder("car");
+    private final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
+    private final FlagEncoder encoder = encodingManager.getEncoder("car");
 
     @Test
     public void testShort() {
-        EdgeIteratorState edge = createEdge(10, encoder.setProperties(50, true, true));
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        DecimalEncodedValue averageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+
+        IntsRef ints = encodingManager.createIntsRef();
+        accessEnc.setBool(false, ints, true);
+        averageSpeedEnc.setDecimal(false, ints, 50d);
+        EdgeIteratorState edge = createEdge(10, ints);
         Weighting instance = new ShortFastestWeighting(encoder, 0.03);
         assertEquals(1.02, instance.calcWeight(edge, false, EdgeIterator.NO_EDGE), 1e-8);
 
@@ -54,7 +65,7 @@ public class ShortFastestWeightingTest {
         }
     }
 
-    EdgeIterator createEdge(final double distance, final long flags) {
+    EdgeIterator createEdge(final double distance, final IntsRef flags) {
         return new GHUtility.DisabledEdgeIterator() {
             @Override
             public double getDistance() {
@@ -62,13 +73,13 @@ public class ShortFastestWeightingTest {
             }
 
             @Override
-            public long getFlags() {
+            public IntsRef getData() {
                 return flags;
             }
 
             @Override
-            public boolean getBool(int key, boolean _default) {
-                return _default;
+            public boolean get(BooleanEncodedValue encodedValue) {
+                return true;
             }
         };
     }

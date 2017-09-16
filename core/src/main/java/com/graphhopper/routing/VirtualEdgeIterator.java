@@ -21,7 +21,6 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.profiles.StringEncodedValue;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIterator;
@@ -39,7 +38,7 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     private int current;
 
     public VirtualEdgeIterator(int edgeCount) {
-        edges = new ArrayList<EdgeIteratorState>(edgeCount);
+        edges = new ArrayList<>(edgeCount);
         reset();
     }
 
@@ -105,16 +104,6 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
-    public long getFlags() {
-        return edges.get(current).getFlags();
-    }
-
-    @Override
-    public EdgeIteratorState setFlags(long flags) {
-        return edges.get(current).setFlags(flags);
-    }
-
-    @Override
     public String getName() {
         return edges.get(current).getName();
     }
@@ -125,8 +114,8 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
-    public boolean getBool(int key, boolean _default) {
-        return edges.get(current).getBool(key, _default);
+    public void setData(IntsRef ints) {
+        edges.get(current).setData(ints);
     }
 
     @Override
@@ -235,16 +224,6 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
-    public boolean isBackward(FlagEncoder encoder) {
-        return edges.get(current).isBackward(encoder);
-    }
-
-    @Override
-    public boolean isForward(FlagEncoder encoder) {
-        return edges.get(current).isForward(encoder);
-    }
-
-    @Override
     public boolean isShortcut() {
         EdgeIteratorState edge = edges.get(current);
         return edge instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edge).isShortcut();
@@ -277,7 +256,7 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
-    public int getMergeStatus(long flags) {
+    public int getMergeStatus(int flags) {
         throw new UnsupportedOperationException("Not supported.");
     }
 }

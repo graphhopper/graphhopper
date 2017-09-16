@@ -27,7 +27,7 @@ import static org.junit.Assert.assertFalse;
  * @author Peter Karich
  */
 public class HikeFlagEncoderTest {
-    private final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car,hike").build();
+    private final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car,hike").build();
     private final HikeFlagEncoder hikeEncoder = (HikeFlagEncoder) encodingManager.getEncoder("hike");
 
     @Test
@@ -37,7 +37,7 @@ public class HikeFlagEncoderTest {
         way.setTag("access", "no");
         way.setTag("sidewalk", "both");
         way.setTag("foot", "no");
-        assertFalse(hikeEncoder.acceptWay(way) > 0);
+        assertFalse(hikeEncoder.getAccess(way).isWay());
     }
 
     @Test

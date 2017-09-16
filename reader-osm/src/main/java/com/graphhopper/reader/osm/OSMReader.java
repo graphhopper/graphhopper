@@ -18,12 +18,13 @@
 package com.graphhopper.reader.osm;
 
 import com.carrotsearch.hppc.*;
+import com.graphhopper.GHResponse;
 import com.graphhopper.coll.*;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.osm.OSMTurnRelation.TurnCostTableEntry;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -79,8 +80,8 @@ public class OSMReader implements DataReader {
     private final DistanceCalc3D distCalc3D = Helper.DIST_3D;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
     private final boolean exitOnlyPillarNodeException = true;
-    private final Map<FlagEncoder, EdgeExplorer> outExplorerMap = new HashMap<FlagEncoder, EdgeExplorer>();
-    private final Map<FlagEncoder, EdgeExplorer> inExplorerMap = new HashMap<FlagEncoder, EdgeExplorer>();
+    private final Map<FlagEncoder, EdgeExplorer> outExplorerMap = new HashMap<>();
+    private final Map<FlagEncoder, EdgeExplorer> inExplorerMap = new HashMap<>();
     protected long zeroCounter = 0;
     protected PillarInfo pillarInfo;
     private long locations;
@@ -234,7 +235,7 @@ public class OSMReader implements DataReader {
         if (!item.hasTags())
             return false;
 
-        return encodingManager.acceptWay(item) > 0;
+        return encodingManager.acceptWay(item, new EncodingManager.AcceptWay());
     }
 
     /**
@@ -315,8 +316,8 @@ public class OSMReader implements DataReader {
 
         long wayOsmId = way.getId();
 
-        long includeWay = encodingManager.acceptWay(way);
-        if (includeWay == 0)
+        EncodingManager.AcceptWay acceptWayProperties = new EncodingManager.AcceptWay();
+        if (!encodingManager.acceptWay(way, acceptWayProperties))
             return;
 
         long relationFlags = getRelFlagsMap().get(way.getId());
@@ -347,8 +348,8 @@ public class OSMReader implements DataReader {
             }
         }
 
-        long wayFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
-        if (wayFlags == 0)
+        IntsRef ints = encodingManager.handleWayTags(encodingManager.createIntsRef(), way, acceptWayProperties, relationFlags);
+        if (ints.isEmpty())
             return;
 
         List<EdgeIteratorState> createdEdges = new ArrayList<EdgeIteratorState>();
@@ -360,7 +361,8 @@ public class OSMReader implements DataReader {
             long nodeFlags = getNodeFlagsMap().get(nodeId);
             // barrier was spotted and way is otherwise passable for that mode of travel
             if (nodeFlags > 0) {
-                if ((nodeFlags & wayFlags) > 0) {
+                // TODO NOW this check does not work anymore, instead we could try to access the nodeFlags with the 'access' EVs for the way IntsRef
+                if ((nodeFlags & ints.ints[0]) > 0) {
                     // remove barrier to avoid duplicates
                     getNodeFlagsMap().put(nodeId, 0);
 
@@ -376,13 +378,13 @@ public class OSMReader implements DataReader {
                         LongArrayList partNodeIds = new LongArrayList();
                         partNodeIds.add(osmNodeIds.buffer, lastBarrier, length);
                         partNodeIds.set(length - 1, newNodeId);
-                        createdEdges.addAll(addOSMWay(partNodeIds, wayFlags, wayOsmId));
+                        createdEdges.addAll(addOSMWay(partNodeIds, ints, wayOsmId));
 
                         // create zero length edge for barrier
-                        createdEdges.addAll(addBarrierEdge(newNodeId, nodeId, wayFlags, nodeFlags, wayOsmId));
+                        createdEdges.addAll(addBarrierEdge(newNodeId, nodeId, ints, nodeFlags, wayOsmId));
                     } else {
                         // run edge from real first node to shadow node
-                        createdEdges.addAll(addBarrierEdge(nodeId, newNodeId, wayFlags, nodeFlags, wayOsmId));
+                        createdEdges.addAll(addBarrierEdge(nodeId, newNodeId, ints, nodeFlags, wayOsmId));
 
                         // exchange first node for created barrier node
                         osmNodeIds.set(0, newNodeId);
@@ -398,11 +400,11 @@ public class OSMReader implements DataReader {
             if (lastBarrier < size - 1) {
                 LongArrayList partNodeIds = new LongArrayList();
                 partNodeIds.add(osmNodeIds.buffer, lastBarrier, size - lastBarrier);
-                createdEdges.addAll(addOSMWay(partNodeIds, wayFlags, wayOsmId));
+                createdEdges.addAll(addOSMWay(partNodeIds, ints, wayOsmId));
             }
         } else {
             // no barriers - simply add the whole way
-            createdEdges.addAll(addOSMWay(way.getNodes(), wayFlags, wayOsmId));
+            createdEdges.addAll(addOSMWay(way.getNodes(), ints, wayOsmId));
         }
 
         for (EdgeIteratorState edge : createdEdges) {
@@ -452,10 +454,11 @@ public class OSMReader implements DataReader {
         EdgeExplorer edgeInExplorer = inExplorerMap.get(encoder);
 
         if (edgeOutExplorer == null || edgeInExplorer == null) {
-            edgeOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, false, true));
+            // TODO NOW
+            edgeOutExplorer = graph.createEdgeExplorer(EdgeFilter.ALL_EDGES);//new DefaultEdgeFilter(encoder, false, true));
             outExplorerMap.put(encoder, edgeOutExplorer);
 
-            edgeInExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(encoder, true, false));
+            edgeInExplorer = graph.createEdgeExplorer(EdgeFilter.ALL_EDGES);//new DefaultEdgeFilter(encoder, true, false));
             inExplorerMap.put(encoder, edgeInExplorer);
         }
         return turnRelation.getRestrictionAsEntries(encoder, edgeOutExplorer, edgeInExplorer, this);
@@ -596,7 +599,7 @@ public class OSMReader implements DataReader {
     /**
      * This method creates from an OSM way (via the osm ids) one or more edges in the graph.
      */
-    Collection<EdgeIteratorState> addOSMWay(final LongIndexedContainer osmNodeIds, final long wayFlags, final long wayOsmId) {
+    Collection<EdgeIteratorState> addOSMWay(final LongIndexedContainer osmNodeIds, final IntsRef ints, final long wayOsmId) {
         PointList pointList = new PointList(osmNodeIds.size(), nodeAccess.is3D());
         List<EdgeIteratorState> newEdges = new ArrayList<EdgeIteratorState>(5);
         int firstNode = -1;
@@ -624,7 +627,7 @@ public class OSMReader implements DataReader {
                         tmpNode = -tmpNode - 3;
                         if (pointList.getSize() > 1 && firstNode >= 0) {
                             // TOWER node
-                            newEdges.add(addEdge(firstNode, tmpNode, pointList, wayFlags, wayOsmId));
+                            newEdges.add(addEdge(firstNode, tmpNode, pointList, ints, wayOsmId));
                             pointList.clear();
                             pointList.add(nodeAccess, tmpNode);
                         }
@@ -652,7 +655,7 @@ public class OSMReader implements DataReader {
                     tmpNode = -tmpNode - 3;
                     pointList.add(nodeAccess, tmpNode);
                     if (firstNode >= 0) {
-                        newEdges.add(addEdge(firstNode, tmpNode, pointList, wayFlags, wayOsmId));
+                        newEdges.add(addEdge(firstNode, tmpNode, pointList, ints, wayOsmId));
                         pointList.clear();
                         pointList.add(nodeAccess, tmpNode);
                     }
@@ -667,7 +670,7 @@ public class OSMReader implements DataReader {
         return newEdges;
     }
 
-    EdgeIteratorState addEdge(int fromIndex, int toIndex, PointList pointList, long flags, long wayOsmId) {
+    EdgeIteratorState addEdge(int fromIndex, int toIndex, PointList pointList, IntsRef ints, long wayOsmId) {
         // sanity checks
         if (fromIndex < 0 || toIndex < 0)
             throw new AssertionError("to or from index is invalid for this edge " + fromIndex + "->" + toIndex + ", points:" + pointList);
@@ -722,7 +725,8 @@ public class OSMReader implements DataReader {
             towerNodeDistance = maxDistance;
         }
 
-        EdgeIteratorState iter = graph.edge(fromIndex, toIndex).setDistance(towerNodeDistance).setFlags(flags);
+        EdgeIteratorState iter = graph.edge(fromIndex, toIndex).setDistance(towerNodeDistance);
+        iter.setData(ints);
 
         if (nodes > 2) {
             if (doSimplify)
@@ -805,14 +809,16 @@ public class OSMReader implements DataReader {
     /**
      * Add a zero length edge with reduced routing options to the graph.
      */
-    Collection<EdgeIteratorState> addBarrierEdge(long fromId, long toId, long flags, long nodeFlags, long wayOsmId) {
+    Collection<EdgeIteratorState> addBarrierEdge(long fromId, long toId, IntsRef ints, long nodeFlags, long wayOsmId) {
         // clear barred directions from routing flags
-        flags &= ~nodeFlags;
-        // add edge
+        // TODO NOW change EncodedValue 'access'
+        // encodingManager.setBarrier
+        // wayFlags &= ~nodeFlags;
+
         barrierNodeIds.clear();
         barrierNodeIds.add(fromId);
         barrierNodeIds.add(toId);
-        return addOSMWay(barrierNodeIds, flags, wayOsmId);
+        return addOSMWay(barrierNodeIds, ints, wayOsmId);
     }
 
     /**

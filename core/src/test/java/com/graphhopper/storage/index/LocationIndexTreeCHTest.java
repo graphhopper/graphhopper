@@ -25,6 +25,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -75,23 +76,25 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
         na.setNode(3, -1, 1);
         na.setNode(4, -2, 2);
 
-        EdgeIteratorState iter1 = ghStorage.edge(0, 1, 10, true);
-        EdgeIteratorState iter2 = ghStorage.edge(1, 2, 10, true);
-        EdgeIteratorState iter3 = ghStorage.edge(2, 3, 14, true);
-        EdgeIteratorState iter4 = ghStorage.edge(3, 4, 14, true);
+        EdgeIteratorState iter1 = GHUtility.createEdge(ghStorage, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 10);
+        EdgeIteratorState iter2 = GHUtility.createEdge(ghStorage, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 10);
+        EdgeIteratorState iter3 = GHUtility.createEdge(ghStorage, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, true, 14);
+        EdgeIteratorState iter4 = GHUtility.createEdge(ghStorage, carAverageSpeedEnc, 60, carAccessEnc, 3, 4, true, 14);
 
         // create shortcuts
         ghStorage.freeze();
         FlagEncoder car = encodingManager.getEncoder("car");
-        long flags = car.setProperties(60, true, true);
+        IntsRef flags = encodingManager.createIntsRef();
+        carAccessEnc.setBool(false, flags, true);
+        carAccessEnc.setBool(true, flags, true);
         CHEdgeIteratorState iter5 = lg.shortcut(0, 2);
-        iter5.setDistance(20).setFlags(flags);
+        iter5.setDistance(20).setData(flags);
         iter5.setSkippedEdges(iter1.getEdge(), iter2.getEdge());
         CHEdgeIteratorState iter6 = lg.shortcut(2, 4);
-        iter6.setDistance(28).setFlags(flags);
+        iter6.setDistance(28).setData(flags);
         iter6.setSkippedEdges(iter3.getEdge(), iter4.getEdge());
         CHEdgeIteratorState tmp = lg.shortcut(0, 4);
-        tmp.setDistance(40).setFlags(flags);
+        tmp.setDistance(40).setData(flags);
         tmp.setSkippedEdges(iter5.getEdge(), iter6.getEdge());
 
         LocationIndex index = createIndex(ghStorage, -1);
@@ -132,8 +135,8 @@ public class LocationIndexTreeCHTest extends LocationIndexTreeTest {
         na.setNode(1, 0, 0);
         na.setNode(2, 0.5, 0.5);
         na.setNode(3, 0.5, 1);
-        EdgeIteratorState iter1 = g.edge(1, 0, 100, true);
-        g.edge(2, 3, 100, true);
+        EdgeIteratorState iter1 = GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 1, 0, true, 100);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, true, 100);
 
         CHGraphImpl lg = (CHGraphImpl) g.getGraph(CHGraph.class);
         g.freeze();

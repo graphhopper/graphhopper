@@ -22,7 +22,6 @@ import com.graphhopper.coll.GHBitSet;
 
 /**
  * Implementation of depth first search (DFS) by LIFO queue
- * <p>
  *
  * @author Peter Karich
  * @author Jan Sölter

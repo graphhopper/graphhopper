@@ -57,7 +57,7 @@ class PtTravelTimeWeighting extends AbstractWeighting {
 
     @Override
     public long calcMillis(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edge.getFlags());
+        GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edge.getData());
         switch (edgeType) {
             case HIGHWAY:
                 return (long) (getWalkDistance(edge) * 3.6 / walkSpeedKmH) * 1000;
@@ -65,16 +65,16 @@ class PtTravelTimeWeighting extends AbstractWeighting {
             case LEAVE_TIME_EXPANDED_NETWORK:
                 return 0;
             default:
-                return ((PtFlagEncoder) getFlagEncoder()).getTime(edge.getFlags());
+                return ((PtFlagEncoder) getFlagEncoder()).getTime(edge.getData());
         }
     }
 
 	int calcNTransfers(EdgeIteratorState edge) {
-        return transferFactor * ((PtFlagEncoder) getFlagEncoder()).getTransfers(edge.getFlags());
+        return transferFactor * ((PtFlagEncoder) getFlagEncoder()).getTransfers(edge.getData());
 	}
 
     double getWalkDistance(EdgeIteratorState edge) {
-        GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edge.getFlags());
+        GtfsStorage.EdgeType edgeType = ((PtFlagEncoder) getFlagEncoder()).getEdgeType(edge.getData());
         switch (edgeType) {
             case HIGHWAY:
                 return edge.getDistance();

@@ -18,7 +18,6 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -31,27 +30,21 @@ abstract class EdgeAccess {
     private static final double INT_DIST_FACTOR = 1000d;
     static double MAX_DIST = (Integer.MAX_VALUE - 1) / INT_DIST_FACTOR;
     final DataAccess edges;
-    private final BitUtil bitUtil;
     int edgeDataSizeInBytes;
-    int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_FLAGS, E_EXT_BYTES_OFFSET;
-    private boolean flagsSizeIsLong;
+    int E_NODEA, E_NODEB, E_LINKA, E_LINKB, E_DIST, E_EXT_BYTES_OFFSET;
 
-    EdgeAccess(DataAccess edges, BitUtil bitUtil) {
+    EdgeAccess(DataAccess edges) {
         this.edges = edges;
-        this.bitUtil = bitUtil;
     }
 
-    final void init(int E_NODEA, int E_NODEB, int E_LINKA, int E_LINKB, int extendedBytesOffset,
-                    int E_DIST, int E_FLAGS, boolean flagsSizeIsLong) {
+    final void init(int E_NODEA, int E_NODEB, int E_LINKA, int E_LINKB, int E_EXT_BYTES_OFFSET, int E_DIST) {
         this.E_NODEA = E_NODEA;
         this.E_NODEB = E_NODEB;
         this.E_LINKA = E_LINKA;
         this.E_LINKB = E_LINKB;
         this.E_DIST = E_DIST;
-        this.E_FLAGS = E_FLAGS;
-        this.flagsSizeIsLong = flagsSizeIsLong;
-        this.E_EXT_BYTES_OFFSET = extendedBytesOffset;
-        this.edgeDataSizeInBytes = E_DIST - extendedBytesOffset;
+        this.E_EXT_BYTES_OFFSET = E_EXT_BYTES_OFFSET;
+        this.edgeDataSizeInBytes = E_DIST - E_EXT_BYTES_OFFSET;
     }
 
     abstract BaseGraph.EdgeIterable createSingleEdge(EdgeFilter edgeFilter);
@@ -59,8 +52,6 @@ abstract class EdgeAccess {
     abstract long toPointer(int edgeOrShortcutId);
 
     abstract boolean isInBounds(int edgeOrShortcutId);
-
-    abstract long reverseFlags(long edgePointer, long flags);
 
     abstract int getEdgeRef(int nodeId);
 
@@ -105,14 +96,7 @@ abstract class EdgeAccess {
     IntsRef getData(long edgePointer) {
         // TODO PERFORMANCE use the DataAccess array directly with a different offset
         // TODO Everything is int-based: the dataIndex, the offset and the EncodedValue hierarchy with the 'int'-value as base
-        IntsRef ints;
-        if (edgeDataSizeInBytes < 4)
-            ints = IntsRef.EMPTY;
-            // we cannot throw an exception here as otherwise QueryGraph cannot call getData to copy it into the virtual edges -> TODO?
-            // throw new IllegalArgumentException("To use encoded values you have to set extendedDataSize at least to 4");
-        else
-            ints = new IntsRef(edgeDataSizeInBytes / 4);
-
+        IntsRef ints = new IntsRef(edgeDataSizeInBytes / 4);
         for (int i = 0; i < ints.length; i++) {
             ints.ints[i] = edges.getInt(edgePointer + E_EXT_BYTES_OFFSET + i * 4);
         }
@@ -123,31 +107,6 @@ abstract class EdgeAccess {
         for (int i = 0; i < ref.ints.length; i++) {
             edges.setInt(edgePointer + E_EXT_BYTES_OFFSET + i * 4, ref.ints[i]);
         }
-    }
-
-    final long getFlags_(long edgePointer, boolean reverse) {
-        int low = edges.getInt(edgePointer + E_FLAGS);
-        long resFlags = low;
-        if (flagsSizeIsLong) {
-            int high = edges.getInt(edgePointer + E_FLAGS + 4);
-            resFlags = bitUtil.combineIntsToLong(low, high);
-        }
-        if (reverse)
-            resFlags = reverseFlags(edgePointer, resFlags);
-
-        return resFlags;
-    }
-
-    final long setFlags_(long edgePointer, boolean reverse, long flags) {
-        if (reverse)
-            flags = reverseFlags(edgePointer, flags);
-
-        edges.setInt(edgePointer + E_FLAGS, bitUtil.getIntLow(flags));
-
-        if (flagsSizeIsLong)
-            edges.setInt(edgePointer + E_FLAGS + 4, bitUtil.getIntHigh(flags));
-
-        return flags;
     }
 
     /**

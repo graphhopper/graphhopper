@@ -21,19 +21,17 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.profiles.StringEncodedValue;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
 
 /**
  * This interface represents an edge and is one possible state of an EdgeIterator.
- * <p>
  *
  * @author Peter Karich
  * @see EdgeIterator
  * @see EdgeExplorer
  */
 public interface EdgeIteratorState {
-    int K_UNFAVORED_EDGE = -1;
+    BooleanEncodedValue UNFAVORED_EDGE = new BooleanEncodedValue("unfavored_edge");
 
     /**
      * @return the edge id of the current edge. Do not make any assumptions about the concrete
@@ -64,7 +62,6 @@ public interface EdgeIteratorState {
      * are necessary to have a more exact geometry. See the docs for more information
      * (docs/core/low-level-api.md#what-are-pillar-and-tower-nodes). Updates to the returned list
      * are not reflected in the graph, for that you've to use setWayGeometry.
-     * <p>
      *
      * @param mode can be <ul> <li>0 = only pillar nodes, no tower nodes</li> <li>1 = inclusive the
      *             base tower node only</li> <li>2 = inclusive the adjacent tower node only</li> <li>3 =
@@ -86,10 +83,6 @@ public interface EdgeIteratorState {
 
     EdgeIteratorState setDistance(double dist);
 
-    long getFlags();
-
-    EdgeIteratorState setFlags(long flags);
-
     /**
      * @return the additional field value for this edge
      */
@@ -100,29 +93,10 @@ public interface EdgeIteratorState {
      */
     EdgeIteratorState setAdditionalField(int value);
 
-    /**
-     * @see FlagEncoder#isForward(long) and #472
-     */
-    boolean isForward(FlagEncoder encoder);
-
-    /**
-     * @see FlagEncoder#isBackward(long) and #472
-     */
-    boolean isBackward(FlagEncoder encoder);
-
-    /**
-     * Get additional boolean information of the edge.
-     * <p>
-     *
-     * @param key      direction or vehicle dependent integer key
-     * @param _default default value if key is not found
-     */
-    boolean getBool(int key, boolean _default);
-
     IntsRef getData();
 
-    // TODO NOW use getData instead of all the following setter&getter here e.g. would avoid going down to
-    // storage several times for several setter calls
+    void setData(IntsRef ints);
+
     boolean get(BooleanEncodedValue property);
 
     void set(BooleanEncodedValue property, boolean value);

@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -27,25 +29,30 @@ import com.graphhopper.util.EdgeIteratorState;
  * @author Peter Karich
  */
 public abstract class AbstractWeighting implements Weighting {
+    private final BooleanEncodedValue accessEnc;
+    protected final DecimalEncodedValue averageSpeedEnc;
+    private final String profile;
     protected final FlagEncoder flagEncoder;
 
+    // TODO NOW remove FlagEncoder parameter
     protected AbstractWeighting(FlagEncoder encoder) {
         this.flagEncoder = encoder;
-        if (!flagEncoder.isRegistered())
-            throw new IllegalStateException("Make sure you add the FlagEncoder " + flagEncoder + " to an EncodingManager before using it elsewhere");
+        this.profile = encoder.toString();
         if (!isValidName(getName()))
             throw new IllegalStateException("Not a valid name for a Weighting: " + getName());
+
+        accessEnc = encoder.getBooleanEncodedValue(encoder.getPrefix() + "access");
+        averageSpeedEnc = encoder.getDecimalEncodedValue(encoder.getPrefix() + "average_speed");
     }
 
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        long flags = edgeState.getFlags();
-        if (reverse && !flagEncoder.isBackward(flags)
-                || !reverse && !flagEncoder.isForward(flags))
+        if (reverse && !edgeState.getReverse(accessEnc)
+                || !reverse && !edgeState.get(accessEnc))
             throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
-                    + "Reverse:" + reverse + ", fwd:" + flagEncoder.isForward(flags) + ", bwd:" + flagEncoder.isBackward(flags));
+                    + "Reverse:" + reverse + ", fwd:" + edgeState.get(accessEnc) + ", bwd:" + edgeState.getReverse(accessEnc));
 
-        double speed = reverse ? flagEncoder.getReverseSpeed(flags) : flagEncoder.getSpeed(flags);
+        double speed = reverse ? edgeState.getReverse(averageSpeedEnc) : edgeState.get(averageSpeedEnc);
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid speed stored in edge! " + speed);
         if (speed == 0)
@@ -62,7 +69,7 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public EdgeFilter createEdgeFilter(boolean forward, boolean reverse) {
-        return new DefaultEdgeFilter(flagEncoder, reverse, forward);
+        return new DefaultEdgeFilter(accessEnc, forward, reverse);
     }
 
     @Override
@@ -103,6 +110,6 @@ public abstract class AbstractWeighting implements Weighting {
 
     @Override
     public String toString() {
-        return getName() + "|" + flagEncoder;
+        return getName() + "|" + profile;
     }
 }

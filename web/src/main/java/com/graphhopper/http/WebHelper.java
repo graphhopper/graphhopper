@@ -31,7 +31,6 @@ import java.net.URLEncoder;
  * The necessary information for polyline encoding is in this answer:
  * http://stackoverflow.com/a/24510799/194609 with a link to official Java sources as well as to a
  * good explanation.
- * <p>
  *
  * @author Peter Karich
  */

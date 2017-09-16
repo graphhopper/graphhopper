@@ -18,6 +18,9 @@
 package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -32,7 +35,9 @@ import static org.junit.Assert.*;
  */
 public class GHUtilityTest {
     private final FlagEncoder carEncoder = new CarFlagEncoder();
-    private final EncodingManager encodingManager = new EncodingManager.Builder().addAll(carEncoder).build();
+    private final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carEncoder).build();
+    private final BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+    private final DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
 
     Graph createGraph() {
         return new GraphBuilder(encodingManager).create();
@@ -45,7 +50,7 @@ public class GHUtilityTest {
     //   6     \1
     //   ______/
     // 0/
-    Graph initUnsorted(Graph g) {
+    Graph initUnsorted(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue avSpeedEnc) {
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 1);
         na.setNode(1, 2.5, 4.5);
@@ -56,18 +61,18 @@ public class GHUtilityTest {
         na.setNode(6, 2.3, 2.2);
         na.setNode(7, 5, 1.5);
         na.setNode(8, 4.6, 4);
-        g.edge(8, 2, 0.5, true);
-        g.edge(7, 3, 2.1, false);
-        g.edge(1, 0, 3.9, true);
-        g.edge(7, 5, 0.7, true);
-        g.edge(1, 2, 1.9, true);
-        g.edge(8, 1, 2.05, true);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 8, 2, true, 0.5);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 7, 3, false, 2.1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 0, true, 3.9);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 7, 5, true, 0.7);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 2, true, 1.9);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 8, 1, true, 2.05);
         return g;
     }
 
     @Test
     public void testSort() {
-        Graph g = initUnsorted(createGraph());
+        Graph g = initUnsorted(createGraph(), accessEnc, avSpeedEnc);
         Graph newG = GHUtility.sortDFS(g, createGraph());
         assertEquals(g.getNodes(), newG.getNodes());
         NodeAccess na = newG.getNodeAccess();
@@ -82,7 +87,7 @@ public class GHUtilityTest {
 
     @Test
     public void testSort2() {
-        Graph g = initUnsorted(createGraph());
+        Graph g = initUnsorted(createGraph(), accessEnc, avSpeedEnc);
         Graph newG = GHUtility.sortDFS(g, createGraph());
         assertEquals(g.getNodes(), newG.getNodes());
         NodeAccess na = newG.getNodeAccess();
@@ -99,15 +104,15 @@ public class GHUtilityTest {
         na.setNode(0, 0, 1);
         na.setNode(1, 2.5, 2);
         na.setNode(2, 3.5, 3);
-        g.edge(0, 1, 1.1, false);
-        g.edge(2, 1, 1.1, false);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 0, 1, false, 1.1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 2, 1, false, 1.1);
         GHUtility.sortDFS(g, createGraph());
     }
 
     @Test
     public void testCopyWithSelfRef() {
-        Graph g = initUnsorted(createGraph());
-        g.edge(0, 0, 11, true);
+        Graph g = initUnsorted(createGraph(), accessEnc, avSpeedEnc);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 0, 0, true, 11);
 
         CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate(new FastestWeighting(carEncoder));
         GHUtility.copyTo(g, lg);
@@ -117,8 +122,8 @@ public class GHUtilityTest {
 
     @Test
     public void testCopy() {
-        Graph g = initUnsorted(createGraph());
-        EdgeIteratorState edgeState = g.edge(6, 5, 11, true);
+        Graph g = initUnsorted(createGraph(), accessEnc, avSpeedEnc);
+        EdgeIteratorState edgeState = GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 6, 5, true, 11);
         edgeState.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
 
         GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHGraph(new FastestWeighting(carEncoder)).create();
@@ -140,12 +145,12 @@ public class GHUtilityTest {
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(8);
         iter.next();
         assertEquals(2.05, iter.getDistance(), 1e-6);
-        assertTrue(iter.isBackward(carEncoder));
-        assertTrue(iter.isForward(carEncoder));
+        assertTrue(iter.getReverse(accessEnc));
+        assertTrue(iter.get(accessEnc));
         iter.next();
         assertEquals(0.5, iter.getDistance(), 1e-6);
-        assertTrue(iter.isBackward(carEncoder));
-        assertTrue(iter.isForward(carEncoder));
+        assertTrue(iter.getReverse(accessEnc));
+        assertTrue(iter.get(accessEnc));
 
         iter = lg.createEdgeExplorer().setBaseNode(7);
         iter.next();
@@ -153,8 +158,8 @@ public class GHUtilityTest {
 
         iter.next();
         assertEquals(2.1, iter.getDistance(), 1e-6);
-        assertFalse(iter.isBackward(carEncoder));
-        assertTrue(iter.isForward(carEncoder));
+        assertFalse(iter.getReverse(accessEnc));
+        assertTrue(iter.get(accessEnc));
         assertFalse(iter.next());
     }
 

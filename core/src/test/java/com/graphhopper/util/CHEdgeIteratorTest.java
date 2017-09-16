@@ -17,6 +17,9 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
@@ -25,6 +28,7 @@ import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.storage.CHGraph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -36,23 +40,31 @@ public class CHEdgeIteratorTest {
     @Test
     public void testUpdateFlags() {
         CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
-        EncodingManager encodingManager = new EncodingManager.Builder().addAll(carFlagEncoder).build();
+        EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carFlagEncoder).build();
         FastestWeighting weighting = new FastestWeighting(carFlagEncoder);
-        EdgeFilter carOutFilter = new DefaultEdgeFilter(carFlagEncoder, false, true);
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        DecimalEncodedValue averageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        EdgeFilter carOutFilter = new DefaultEdgeFilter(accessEnc, true, false);
         GraphHopperStorage ghStorage = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
         CHGraph g = ghStorage.getGraph(CHGraph.class, weighting);
-        g.edge(0, 1).setDistance(12).setFlags(carFlagEncoder.setProperties(10, true, true));
-        g.edge(0, 2).setDistance(13).setFlags(carFlagEncoder.setProperties(20, true, true));
+        GHUtility.createEdge(g, averageSpeedEnc, 60, accessEnc, 0, 1, true, 12d).set(averageSpeedEnc, 10d);
+        GHUtility.createEdge(g, averageSpeedEnc, 60, accessEnc, 0, 2, true, 13d).set(averageSpeedEnc, 20d);
         ghStorage.freeze();
 
         assertEquals(2, GHUtility.count(g.getAllEdges()));
         assertEquals(1, GHUtility.count(g.createEdgeExplorer(carOutFilter).setBaseNode(1)));
         EdgeIteratorState iter = GHUtility.getEdge(g, 0, 1);
         assertEquals(1, iter.getAdjNode());
-        assertEquals(carFlagEncoder.setProperties(10, true, true), iter.getFlags());
+        IntsRef ints = encodingManager.createIntsRef();
+        accessEnc.setBool(false, ints, true);
+        accessEnc.setBool(true, ints, true);
+        averageSpeedEnc.setDecimal(false, ints, 10d);
+        assertEquals(ints, iter.getData());
 
         // update setProperties
-        iter.setFlags(carFlagEncoder.setProperties(20, true, false));
+        averageSpeedEnc.setDecimal(false, ints, 20d);
+        accessEnc.setBool(true, ints, false);
+        iter.setData(ints);
         assertEquals(12, iter.getDistance(), 1e-4);
 
         // update distance
@@ -60,7 +72,11 @@ public class CHEdgeIteratorTest {
         assertEquals(10, iter.getDistance(), 1e-4);
         assertEquals(0, GHUtility.count(g.createEdgeExplorer(carOutFilter).setBaseNode(1)));
         iter = GHUtility.getEdge(g, 0, 1);
-        assertEquals(carFlagEncoder.setProperties(20, true, false), iter.getFlags());
+
+        accessEnc.setBool(false, ints, true);
+        accessEnc.setBool(true, ints, false);
+        averageSpeedEnc.setDecimal(false, ints, 20d);
+        assertEquals(ints, iter.getData());
         assertEquals(10, iter.getDistance(), 1e-4);
         assertEquals(1, GHUtility.getNeighbors(g.createEdgeExplorer().setBaseNode(1)).size());
         assertEquals(0, GHUtility.getNeighbors(g.createEdgeExplorer(carOutFilter).setBaseNode(1)).size());

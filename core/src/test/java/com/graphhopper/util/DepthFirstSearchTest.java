@@ -19,9 +19,11 @@ package com.graphhopper.util;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import org.junit.Before;
@@ -57,18 +59,19 @@ public class DepthFirstSearchTest {
             }
         };
 
-        EncodingManager em = new EncodingManager.Builder().addAllFlagEncoders("car").build();
-        FlagEncoder fe = em.getEncoder("car");
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
+        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
         Graph g = new GraphBuilder(em).create();
-        g.edge(1, 2, 1, false);
-        g.edge(1, 5, 1, false);
-        g.edge(1, 4, 1, false);
-        g.edge(2, 3, 1, false);
-        g.edge(3, 4, 1, false);
-        g.edge(5, 6, 1, false);
-        g.edge(6, 4, 1, false);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 2, false, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 5, false, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 4, false, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 2, 3, false, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 3, 4, false, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 5, 6, false, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 6, 4, false, 1);
 
-        dfs.start(g.createEdgeExplorer(new DefaultEdgeFilter(fe, false, true)), 1);
+        dfs.start(g.createEdgeExplorer(new DefaultEdgeFilter(accessEnc, true, false)), 1);
 
         assertTrue(counter > 0);
         assertEquals("[1, 2, 3, 4, 5, 6]", list.toString());
@@ -87,16 +90,17 @@ public class DepthFirstSearchTest {
             }
         };
 
-        EncodingManager em = new EncodingManager.Builder().addAllFlagEncoders("car").build();
-        FlagEncoder fe = em.getEncoder("car");
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
+        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
         Graph g = new GraphBuilder(em).create();
-        g.edge(1, 2, 1, false);
-        g.edge(1, 4, 1, true);
-        g.edge(1, 3, 1, false);
-        g.edge(2, 3, 1, false);
-        g.edge(4, 3, 1, true);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 2, false, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 4, true, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 3, false, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 2, 3, false, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 4, 3, true, 1);
 
-        dfs.start(g.createEdgeExplorer(new DefaultEdgeFilter(fe, false, true)), 1);
+        dfs.start(g.createEdgeExplorer(new DefaultEdgeFilter(accessEnc, true, false)), 1);
 
         assertTrue(counter > 0);
         assertEquals("[1, 2, 3, 4]", list.toString());

@@ -25,6 +25,10 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.Trip;
 import com.graphhopper.gtfs.fare.Fares;
 import com.graphhopper.routing.InstructionsFromEdges;
+import com.graphhopper.routing.bwdcompat.AnnotationAccessor;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -217,7 +221,6 @@ class TripFromLabel {
     private final GeometryFactory geometryFactory = new GeometryFactory();
 
     TripFromLabel(GtfsStorage gtfsStorage) {
-
         this.gtfsStorage = gtfsStorage;
     }
 
@@ -272,14 +275,19 @@ class TripFromLabel {
             }
             return result;
         } else {
+
             final FlagEncoder encoder = weighting.getFlagEncoder();
+            AnnotationAccessor accessor;
+            if (encoder == null)
+                accessor = edge -> InstructionAnnotation.EMPTY;
+            else
+                accessor = edge -> encoder.getAnnotation(edge.getData(), tr);
+
+            DecimalEncodedValue maxSpeedEnc = encoder.getDecimalEncodedValue(TagParserFactory.Car.MAX_SPEED);
+            BooleanEncodedValue roundaboutEnc = encoder.getBooleanEncodedValue(TagParserFactory.ROUNDABOUT);
             InstructionList instructions = new InstructionList(tr);
             InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(path.get(1).edge.edgeIteratorState.getBaseNode(),
-                    graph, weighting, graph.getNodeAccess(),
-                    edge -> encoder.getAnnotation(edge.getFlags(), tr),
-                    edge -> encoder.getSpeed(edge.getFlags()),
-                    edge -> encoder.isBool(edge.getFlags(), FlagEncoder.K_ROUNDABOUT),
-                    instructions);
+                    graph, weighting, graph.getNodeAccess(), accessor, maxSpeedEnc, roundaboutEnc, instructions);
             int prevEdgeId = -1;
             for (int i = 1; i < path.size(); i++) {
                 EdgeIteratorState edge = path.get(i).edge.edgeIteratorState;

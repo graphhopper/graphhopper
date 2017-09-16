@@ -18,16 +18,17 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHIntHashSet;
-
-import static org.junit.Assert.assertEquals;
-
-import org.junit.Test;
-
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
 
 /**
  * @author Alexey Valikov
@@ -74,33 +75,34 @@ public class BridgeElevationInterpolatorTest extends AbstractEdgeElevationInterp
         na.setNode(8, 30, 10, 10);
         na.setNode(9, 40, 10, 0);
 
-        EdgeIteratorState edge01 = graph.edge(0, 1, 10, true);
-        EdgeIteratorState edge12 = graph.edge(1, 2, 10, true);
-        EdgeIteratorState edge23 = graph.edge(2, 3, 10, true);
-        EdgeIteratorState edge34 = graph.edge(3, 4, 10, true);
-        EdgeIteratorState edge56 = graph.edge(5, 6, 10, true);
-        EdgeIteratorState edge67 = graph.edge(6, 7, 10, true);
-        EdgeIteratorState edge78 = graph.edge(7, 8, 10, true);
-        EdgeIteratorState edge89 = graph.edge(8, 9, 10, true);
-        EdgeIteratorState edge17 = graph.edge(1, 7, 10, true);
-        EdgeIteratorState edge27 = graph.edge(2, 7, 10, true);
-        EdgeIteratorState edge37 = graph.edge(3, 7, 10, true);
-        edge17.setWayGeometry(
-                Helper.createPointList3D(12, 2, 200, 14, 4, 400, 16, 6, 600, 18, 8, 800));
+        BooleanEncodedValue dfeAccessEnc = dataFlagEncoder.getBooleanEncodedValue(dataFlagEncoder.getPrefix() + "access");
 
-        edge01.setFlags(dataFlagEncoder.handleWayTags(normalWay, 1, 0));
-        edge12.setFlags(dataFlagEncoder.handleWayTags(normalWay, 1, 0));
-        edge23.setFlags(dataFlagEncoder.handleWayTags(normalWay, 1, 0));
-        edge34.setFlags(dataFlagEncoder.handleWayTags(normalWay, 1, 0));
+        EdgeIteratorState edge01 = GHUtility.createEdge(graph, dfeAvSpeedEnc, 60, dfeAccessEnc, 0, 1, true, 10);
+        EdgeIteratorState edge12 = GHUtility.createEdge(graph, dfeAvSpeedEnc, 60, dfeAccessEnc, 1, 2, true, 10);
+        EdgeIteratorState edge23 = GHUtility.createEdge(graph, dfeAvSpeedEnc, 60, dfeAccessEnc, 2, 3, true, 10);
+        EdgeIteratorState edge34 = GHUtility.createEdge(graph, dfeAvSpeedEnc, 60, dfeAccessEnc, 3, 4, true, 10);
+        EdgeIteratorState edge56 = GHUtility.createEdge(graph, dfeAvSpeedEnc, 60, dfeAccessEnc, 5, 6, true, 10);
+        EdgeIteratorState edge67 = GHUtility.createEdge(graph, dfeAvSpeedEnc, 60, dfeAccessEnc, 6, 7, true, 10);
+        EdgeIteratorState edge78 = GHUtility.createEdge(graph, dfeAvSpeedEnc, 60, dfeAccessEnc, 7, 8, true, 10);
+        EdgeIteratorState edge89 = GHUtility.createEdge(graph, dfeAvSpeedEnc, 60, dfeAccessEnc, 8, 9, true, 10);
+        EdgeIteratorState edge17 = GHUtility.createEdge(graph, dfeAvSpeedEnc, 60, dfeAccessEnc, 1, 7, true, 10);
+        EdgeIteratorState edge27 = GHUtility.createEdge(graph, dfeAvSpeedEnc, 60, dfeAccessEnc, 2, 7, true, 10);
+        EdgeIteratorState edge37 = GHUtility.createEdge(graph, dfeAvSpeedEnc, 60, dfeAccessEnc, 3, 7, true, 10);
+        edge17.setWayGeometry(Helper.createPointList3D(12, 2, 200, 14, 4, 400, 16, 6, 600, 18, 8, 800));
 
-        edge56.setFlags(dataFlagEncoder.handleWayTags(normalWay, 1, 0));
-        edge67.setFlags(dataFlagEncoder.handleWayTags(interpolatableWay, 1, 0));
-        edge78.setFlags(dataFlagEncoder.handleWayTags(interpolatableWay, 1, 0));
-        edge89.setFlags(dataFlagEncoder.handleWayTags(normalWay, 1, 0));
+        edge01.setData(dataFlagEncoder.handleWayTags(encodingManager.createIntsRef(), normalWay, EncodingManager.Access.WAY, 0));
+        edge12.setData(dataFlagEncoder.handleWayTags(encodingManager.createIntsRef(), normalWay, EncodingManager.Access.WAY, 0));
+        edge23.setData(dataFlagEncoder.handleWayTags(encodingManager.createIntsRef(), normalWay, EncodingManager.Access.WAY, 0));
+        edge34.setData(dataFlagEncoder.handleWayTags(encodingManager.createIntsRef(), normalWay, EncodingManager.Access.WAY, 0));
 
-        edge17.setFlags(dataFlagEncoder.handleWayTags(interpolatableWay, 1, 0));
-        edge27.setFlags(dataFlagEncoder.handleWayTags(interpolatableWay, 1, 0));
-        edge37.setFlags(dataFlagEncoder.handleWayTags(interpolatableWay, 1, 0));
+        edge56.setData(dataFlagEncoder.handleWayTags(encodingManager.createIntsRef(), normalWay, EncodingManager.Access.WAY, 0));
+        edge67.setData(dataFlagEncoder.handleWayTags(encodingManager.createIntsRef(), interpolatableWay, EncodingManager.Access.WAY, 0));
+        edge78.setData(dataFlagEncoder.handleWayTags(encodingManager.createIntsRef(), interpolatableWay, EncodingManager.Access.WAY, 0));
+        edge89.setData(dataFlagEncoder.handleWayTags(encodingManager.createIntsRef(), normalWay, EncodingManager.Access.WAY, 0));
+
+        edge17.setData(dataFlagEncoder.handleWayTags(encodingManager.createIntsRef(), interpolatableWay, EncodingManager.Access.WAY, 0));
+        edge27.setData(dataFlagEncoder.handleWayTags(encodingManager.createIntsRef(), interpolatableWay, EncodingManager.Access.WAY, 0));
+        edge37.setData(dataFlagEncoder.handleWayTags(encodingManager.createIntsRef(), interpolatableWay, EncodingManager.Access.WAY, 0));
 
         final GHIntHashSet outerNodeIds = new GHIntHashSet();
         final GHIntHashSet innerNodeIds = new GHIntHashSet();

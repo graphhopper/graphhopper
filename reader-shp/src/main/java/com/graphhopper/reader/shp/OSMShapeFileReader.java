@@ -21,7 +21,9 @@ import com.graphhopper.coll.GHObjectIntHashMap;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.Helper;
@@ -60,7 +62,7 @@ public class OSMShapeFileReader extends ShapeFileReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(OSMShapeFileReader.class);
     private final HashSet<EdgeAddedListener> edgeAddedListeners = new HashSet<>();
     private int nextNodeId = FIRST_NODE_ID;
-    private final String encoding= "utf8";
+    private final String encoding = "utf8";
 
     public OSMShapeFileReader(GraphHopperStorage ghStorage) {
         super(ghStorage);
@@ -318,20 +320,18 @@ public class OSMShapeFileReader extends ShapeFileReader {
         }
 
         // Process the flags using the encoders
-        long includeWay = encodingManager.acceptWay(way);
-        if (includeWay == 0) {
+        EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
+        if (encodingManager.acceptWay(way, acceptWay))
             return;
-        }
 
         // TODO we're not using the relation flags
         long relationFlags = 0;
-
-        long wayFlags = encodingManager.handleWayTags(way, includeWay, relationFlags);
-        if (wayFlags == 0)
+        IntsRef wayFlags = encodingManager.handleWayTags(encodingManager.createIntsRef(), way, acceptWay, relationFlags);
+        if (wayFlags.isEmpty())
             return;
 
         edge.setDistance(distance);
-        edge.setFlags(wayFlags);
+        edge.setData(wayFlags);
         edge.setWayGeometry(pillarNodes);
 
         if (edgeAddedListeners.size() > 0) {

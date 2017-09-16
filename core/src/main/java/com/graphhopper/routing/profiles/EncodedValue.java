@@ -26,30 +26,31 @@ public interface EncodedValue {
      * This method sets the dataIndex and shift of this EncodedValue object and potentially changes the submitted init
      * object afterwards via calling next
      *
-     * @see InitializerConfig#next(int)
+     * @see InitializerConfig#find(int)
      */
-    void init(InitializerConfig init);
+    void init(InitializerConfig init, int maxBytes);
 
     String getName();
 
     class InitializerConfig {
-        int dataIndex = 0;
-        int shift = 0;
+        int dataIndex = -1;
+        int shift = 32;
+        int nextShift = 32;
         int propertyIndex = 0;
+        int wayBitMask = 0;
 
-        /**
-         * Returns the necessary bit mask for the current bit range of the specified usedBits
-         */
-        int next(int usedBits) {
+        void find(int usedBits) {
+            shift = nextShift;
             propertyIndex++;
-            int wayBitMask = (1 << usedBits) - 1;
-            wayBitMask <<= shift;
-            shift += usedBits;
-            if (shift > 32) {
-                shift = 0;
+            if ((shift - 1 + usedBits) / 32 > (shift - 1) / 32) {
                 dataIndex++;
+                shift = 0;
             }
-            return wayBitMask;
+
+            // we need 1L as otherwise it'll fail for usedBits==32
+            wayBitMask = (int) ((1L << usedBits) - 1);
+            wayBitMask <<= shift;
+            nextShift = shift + usedBits;
         }
     }
 }

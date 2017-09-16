@@ -36,29 +36,31 @@ public final class BooleanEncodedValue extends IntEncodedValue {
     }
 
     public final void setBool(boolean reverse, IntsRef ref, boolean value) {
-        int flags = ref.ints[dataIndex + ref.offset];
         if (store2DirectedValues && reverse) {
+            int flags = ref.ints[bwdDataIndex + ref.offset];
             flags &= ~bwdMask;
             // set value
             if (value)
                 flags = flags | (1 << bwdShift);
+            ref.ints[bwdDataIndex + ref.offset] = flags;
 
         } else {
-            // clear value bits
+            int flags = ref.ints[fwdDataIndex + ref.offset];
             flags &= ~fwdMask;
-            // set value
             if (value)
                 flags = flags | (1 << fwdShift);
+            ref.ints[fwdDataIndex + ref.offset] = flags;
         }
-
-        ref.ints[dataIndex + ref.offset] = flags;
     }
 
     public final boolean getBool(boolean reverse, IntsRef ref) {
-        int flags = ref.ints[dataIndex + ref.offset];
-        if (store2DirectedValues && reverse)
+        int flags;
+        if (store2DirectedValues && reverse) {
+            flags = ref.ints[bwdDataIndex + ref.offset];
             return (((flags & bwdMask) >>> bwdShift) & 0x1) == 0x1;
+        }
 
+        flags = ref.ints[fwdDataIndex + ref.offset];
         return (((flags & fwdMask) >>> fwdShift) & 0x1) == 0x1;
     }
 }

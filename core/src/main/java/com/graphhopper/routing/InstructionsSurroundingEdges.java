@@ -17,7 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.bwdcompat.SpeedAccessor;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
@@ -49,12 +49,12 @@ class InstructionsSurroundingEdges {
 
     // All Streets surrounding the turn, including oneways in the wrong direction
     final List<EdgeIteratorState> surroundingEdges;
-    final SpeedAccessor speedAccessor;
+    final DecimalEncodedValue maxSpeedEnc;
     final NodeAccess nodeAccess;
 
     public InstructionsSurroundingEdges(EdgeIteratorState prevEdge,
                                         EdgeIteratorState currentEdge,
-                                        SpeedAccessor speedAccessor,
+                                        DecimalEncodedValue maxSpeedEnc,
                                         EdgeFilter forwardEdgeFilter,
                                         EdgeExplorer crossingExplorer,
                                         NodeAccess nodeAccess,
@@ -63,7 +63,7 @@ class InstructionsSurroundingEdges {
                                         int adjNode) {
         this.prevEdge = prevEdge;
         this.currentEdge = currentEdge;
-        this.speedAccessor = speedAccessor;
+        this.maxSpeedEnc = maxSpeedEnc;
         this.nodeAccess = nodeAccess;
 
         EdgeIteratorState tmpEdge;
@@ -96,8 +96,8 @@ class InstructionsSurroundingEdges {
      * on the prominent street that one would follow anyway.
      */
     public boolean surroundingStreetsAreSlowerByFactor(double factor) {
-        double tmpSpeed = getSpeed(currentEdge);
-        double pathSpeed = getSpeed(prevEdge);
+        double tmpSpeed = currentEdge.get(maxSpeedEnc);
+        double pathSpeed = prevEdge.get(maxSpeedEnc);
 
         // Speed-Change on the path indicates, that we change road types, show instruction
         if (pathSpeed != tmpSpeed || pathSpeed < 1) {
@@ -107,7 +107,7 @@ class InstructionsSurroundingEdges {
         double maxSurroundingSpeed = -1;
 
         for (EdgeIteratorState edge : surroundingEdges) {
-            tmpSpeed = getSpeed(edge);
+            tmpSpeed = edge.get(maxSpeedEnc);
             if (tmpSpeed < 1) {
                 // This might happen for the DataFlagEncoder, might create unnecessary turn instructions
                 return false;
@@ -119,10 +119,6 @@ class InstructionsSurroundingEdges {
 
         // Surrounding streets need to be slower by a factor
         return maxSurroundingSpeed * factor < pathSpeed;
-    }
-
-    private double getSpeed(EdgeIteratorState edge) {
-        return speedAccessor.getSpeed(edge);
     }
 
     /**
@@ -152,13 +148,13 @@ class InstructionsSurroundingEdges {
         }
 
         // If flags are changing, there might be a chance we find these flags on a different edge
-        boolean checkFlag = currentEdge.getFlags() != prevEdge.getFlags();
+        boolean checkFlag = currentEdge.getData().ints[0] != prevEdge.getData().ints[0];
         for (EdgeIteratorState edge : reachableEdges) {
             String edgeName = edge.getName();
-            long edgeFlag = edge.getFlags();
+            long edgeFlag = edge.getData().ints[0];
             // leave the current street || enter a different street
-            if (isTheSameStreet(prevName, prevEdge.getFlags(), edgeName, edgeFlag, checkFlag)
-                    || isTheSameStreet(name, currentEdge.getFlags(), edgeName, edgeFlag, checkFlag)) {
+            if (isTheSameStreet(prevName, prevEdge.getData().ints[0], edgeName, edgeFlag, checkFlag)
+                    || isTheSameStreet(name, currentEdge.getData().ints[0], edgeName, edgeFlag, checkFlag)) {
                 return true;
             }
         }

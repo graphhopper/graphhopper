@@ -21,7 +21,6 @@ import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.profiles.StringEncodedValue;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
@@ -41,22 +40,20 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     private final int adjNode;
     private final int originalTraversalKey;
     private double distance;
-    private long flags;
-    private IntsRef edgeData;
+    private IntsRef edgeInts;
     private String name;
     // indication if edges are penalized as start/stop edge
     private boolean unfavored;
     private EdgeIteratorState reverseEdge;
 
     public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance,
-                                    long flags, IntsRef edgeData, String name, PointList pointList) {
+                                    IntsRef edgeInts, String name, PointList pointList) {
         this.originalTraversalKey = originalTraversalKey;
         this.edgeId = edgeId;
         this.baseNode = baseNode;
         this.adjNode = adjNode;
         this.distance = distance;
-        this.edgeData = edgeData;
-        this.flags = flags;
+        this.edgeInts = edgeInts;
         this.name = name;
         this.pointList = pointList;
     }
@@ -123,99 +120,96 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public long getFlags() {
-        return flags;
-    }
-
-    @Override
-    public EdgeIteratorState setFlags(long flags) {
-        this.flags = flags;
-        return this;
+    public void setData(IntsRef ints) {
+        edgeInts = ints;
     }
 
     @Override
     public IntsRef getData() {
-        return edgeData;
+        return edgeInts;
     }
 
     @Override
     public void set(BooleanEncodedValue property, boolean value) {
-        property.setBool(false, edgeData, value);
+        property.setBool(false, edgeInts, value);
     }
 
     @Override
     public boolean get(BooleanEncodedValue property) {
-        return property.getBool(false, edgeData);
+        if (property == EdgeIteratorState.UNFAVORED_EDGE)
+            return unfavored;
+
+        return property.getBool(false, edgeInts);
     }
 
     @Override
     public void setReverse(BooleanEncodedValue property, boolean value) {
-        property.setBool(true, edgeData, value);
+        property.setBool(true, edgeInts, value);
     }
 
     @Override
     public boolean getReverse(BooleanEncodedValue property) {
-        return property.getBool(true, edgeData);
+        return property.getBool(true, edgeInts);
     }
 
     @Override
     public int get(IntEncodedValue property) {
-        return property.getInt(false, edgeData);
+        return property.getInt(false, edgeInts);
     }
 
     @Override
     public void set(IntEncodedValue property, int value) {
-        property.setInt(false, edgeData, value);
+        property.setInt(false, edgeInts, value);
     }
 
     @Override
     public int getReverse(IntEncodedValue property) {
-        return property.getInt(true, edgeData);
+        return property.getInt(true, edgeInts);
     }
 
     @Override
     public void setReverse(IntEncodedValue property, int value) {
-        property.setInt(true, edgeData, value);
+        property.setInt(true, edgeInts, value);
     }
 
     @Override
     public double get(DecimalEncodedValue property) {
-        return property.getDecimal(false, edgeData);
+        return property.getDecimal(false, edgeInts);
     }
 
     @Override
     public void set(DecimalEncodedValue property, double value) {
-        property.setDecimal(false, edgeData, value);
+        property.setDecimal(false, edgeInts, value);
     }
 
     @Override
     public double getReverse(DecimalEncodedValue property) {
-        return property.getDecimal(true, edgeData);
+        return property.getDecimal(true, edgeInts);
     }
 
     @Override
     public void setReverse(DecimalEncodedValue property, double value) {
-        property.setDecimal(true, edgeData, value);
+        property.setDecimal(true, edgeInts, value);
     }
 
     @Override
     public String get(StringEncodedValue property) {
-        return property.getString(false, edgeData);
+        return property.getString(false, edgeInts);
     }
 
     @Override
     public void set(StringEncodedValue property, String value) {
-        property.setString(false, edgeData, value);
+        property.setString(false, edgeInts, value);
     }
 
     @Override
     public String getReverse(StringEncodedValue property) {
-        return property.getString(true, edgeData);
+        return property.getString(true, edgeInts);
     }
 
     @Override
     public void setReverse(StringEncodedValue property, String value) {
-        property.setString(true, edgeData, value);
+        property.setString(true, edgeInts, value);
     }
 
     @Override
@@ -227,15 +221,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     public EdgeIteratorState setName(String name) {
         this.name = name;
         return this;
-    }
-
-    @Override
-    public boolean getBool(int key, boolean _default) {
-        if (key == EdgeIteratorState.K_UNFAVORED_EDGE)
-            return unfavored;
-
-        // for non-existent keys return default
-        return _default;
     }
 
     /**
@@ -256,22 +241,12 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     }
 
     @Override
-    public boolean isForward(FlagEncoder encoder) {
-        return encoder.isForward(getFlags());
-    }
-
-    @Override
-    public boolean isBackward(FlagEncoder encoder) {
-        return encoder.isBackward(getFlags());
-    }
-
-    @Override
     public int getAdditionalField() {
         throw new UnsupportedOperationException("Not supported.");
     }
 
     @Override
-    public int getMergeStatus(long flags) {
+    public int getMergeStatus(int flags) {
         throw new UnsupportedOperationException("Not supported.");
     }
 

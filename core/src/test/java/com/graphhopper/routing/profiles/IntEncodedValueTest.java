@@ -11,7 +11,7 @@ public class IntEncodedValueTest {
     @Test
     public void testInvalidReverseAccess() {
         IntEncodedValue prop = new IntEncodedValue("test", 10, 50, false);
-        prop.init(new EncodedValue.InitializerConfig());
+        prop.init(new EncodedValue.InitializerConfig(), 4);
         try {
             prop.setInt(true, new IntsRef(1), -1);
             assertTrue(false);
@@ -22,8 +22,30 @@ public class IntEncodedValueTest {
     @Test
     public void testDirectedValue() {
         IntEncodedValue prop = new IntEncodedValue("test", 10, 50, true);
-        prop.init(new EncodedValue.InitializerConfig());
+        prop.init(new EncodedValue.InitializerConfig(), 4);
         IntsRef ref = new IntsRef(1);
+        prop.setInt(false, ref, 10);
+        prop.setInt(true, ref, 20);
+        assertEquals(10, prop.getInt(false, ref));
+        assertEquals(20, prop.getInt(true, ref));
+    }
+
+    @Test
+    public void multiIntsUsage() {
+        IntEncodedValue prop = new IntEncodedValue("test", 32, 50, true);
+        prop.init(new EncodedValue.InitializerConfig(), 8);
+        IntsRef ref = new IntsRef(2);
+        prop.setInt(false, ref, 10);
+        prop.setInt(true, ref, 20);
+        assertEquals(10, prop.getInt(false, ref));
+        assertEquals(20, prop.getInt(true, ref));
+    }
+
+    @Test
+    public void padding() {
+        IntEncodedValue prop = new IntEncodedValue("test", 30, 50, true);
+        prop.init(new EncodedValue.InitializerConfig(), 8);
+        IntsRef ref = new IntsRef(2);
         prop.setInt(false, ref, 10);
         prop.setInt(true, ref, 20);
         assertEquals(10, prop.getInt(false, ref));

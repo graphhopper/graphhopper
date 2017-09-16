@@ -20,6 +20,7 @@ package com.graphhopper.routing.template;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.routing.*;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -42,7 +43,7 @@ import static org.junit.Assert.assertEquals;
  */
 public class RoundTripRoutingTemplateTest {
     private final FlagEncoder carFE = new CarFlagEncoder();
-    private final EncodingManager em = new EncodingManager.Builder().addAll(carFE).build();
+    private final EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carFE).build();
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED_2DIR;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
 
@@ -79,6 +80,7 @@ public class RoundTripRoutingTemplateTest {
     }
 
     private Graph createTestGraph(boolean fullGraph) {
-        return new AlternativeRouteTest(tMode).createTestGraph(fullGraph, em);
+        return new AlternativeRouteTest(tMode).createTestGraph(fullGraph, em, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS),
+                em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
     }
 }

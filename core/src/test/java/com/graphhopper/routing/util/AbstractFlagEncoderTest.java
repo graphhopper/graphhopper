@@ -44,5 +44,4 @@ public class AbstractFlagEncoderTest {
 
         assertEquals(6, encoder.parseSpeed("walk"), 1e-3);
     }
-
 }

@@ -13,7 +13,7 @@ public class StringEncodedValueTest {
     public void testInit() {
         StringEncodedValue prop = new StringEncodedValue("highway", Arrays.asList("primary", "secondary"), "secondary");
         EncodedValue.InitializerConfig init = new EncodedValue.InitializerConfig();
-        prop.init(init);
+        prop.init(init, 4);
 
         assertEquals(2, prop.bits);
         assertEquals(0, init.dataIndex);

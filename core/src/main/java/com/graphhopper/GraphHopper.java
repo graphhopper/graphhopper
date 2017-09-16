@@ -19,6 +19,7 @@ package com.graphhopper;
 
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
+import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.*;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
@@ -535,17 +536,25 @@ public class GraphHopper implements GraphHopperAPI {
         String flagEncodersStr = args.get("graph.flag_encoders", "");
         if (!flagEncodersStr.isEmpty()) {
             if (bytesForFlags > 8) {
-                setEncodingManager(new EncodingManager.Builder(new TagsParserOSM(), bytesForFlags).
-                        add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("max_speed", 5, 0, 5, false))).
-                        add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("average_speed", 5, 0, 5, false))).
+                final Map<String, Double> speedMap = TagParserFactory.Car.createSpeedMap();
+                ReaderWayFilter filter = new ReaderWayFilter() {
+                    @Override
+                    public boolean accept(ReaderWay way) {
+                        return speedMap.containsKey(way.getTag("highway"));
+                    }
+                };
+                setEncodingManager(new EncodingManager.Builder(new TagsParser(), bytesForFlags).
+                        addGlobalEncodedValues().
+                        add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("max_speed", 5, 0, 5, false), filter)).
+                        add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("average_speed", 5, 0, 5, false), speedMap)).
                         add(TagParserFactory.createRoundabout(new BooleanEncodedValue("roundabout"))).
-                        add(TagParserFactory.Car.createAccess(new BooleanEncodedValue("access", true))).
-                        add(TagParserFactory.createHighway(new StringEncodedValue("highway",
+                        add(TagParserFactory.Car.createAccess(new BooleanEncodedValue("access", true), filter)).
+                        add(TagParserFactory.createRoadClass(new StringEncodedValue("highway",
                                 Arrays.asList("primary", "secondary", "tertiary", "motorway", "motorway_link",
                                         "motorroad", "residential", "trunk"), "tertiary"))).
                         build());
             } else {
-                setEncodingManager(new EncodingManager.Builder().addAll(flagEncoderFactory, flagEncodersStr, bytesForFlags).build());
+                setEncodingManager(new EncodingManager.Builder(new TagsParser(), bytesForFlags).addGlobalEncodedValues().addAll(flagEncoderFactory, flagEncodersStr, bytesForFlags).build());
             }
         }
 
@@ -925,7 +934,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (hintsMap.has(Routing.BLOCK_AREA)) {
             String blockAreaStr = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
             GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(graph, locationIndex).
-                    parseBlockArea(blockAreaStr, new DefaultEdgeFilter(encoder));
+                    parseBlockArea(blockAreaStr, new DefaultEdgeFilter(encoder.getAccessEncodedValue()));
             return new BlockAreaWeighting(weighting, blockArea);
         }
 
@@ -1013,7 +1022,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             // TODO how can we know the weighting (that needs the QueryGraph) before the lookup?
             // then we can easily call weighting.createEdgeFilter(true, true) instead of:
-            EdgeFilter edgeFilter = vehicle.equals(EncodingManager.ENCODER_NAME) ? EdgeFilter.ALL_EDGES : new DefaultEdgeFilter(encoder);
+            EdgeFilter edgeFilter = vehicle.equals(EncodingManager.ENCODER_NAME) ? EdgeFilter.ALL_EDGES : new DefaultEdgeFilter(encoder.getAccessEncodedValue());
             List<Path> altPaths = null;
             int maxRetries = routingTemplate.getMaxRetries();
             Locale locale = request.getLocale();

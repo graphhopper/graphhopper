@@ -129,7 +129,7 @@ public class RacingBikeFlagEncoder extends BikeCommonFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
     @Override

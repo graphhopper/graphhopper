@@ -18,8 +18,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.bwdcompat.AnnotationAccessor;
-import com.graphhopper.routing.bwdcompat.BoolAccessor;
-import com.graphhopper.routing.bwdcompat.SpeedAccessor;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -40,8 +40,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final NodeAccess nodeAccess;
     private final InstructionList ways;
     private final AnnotationAccessor annotationAccessor;
-    private final SpeedAccessor speedAccessor;
-    private final BoolAccessor roundabout;
+    private final DecimalEncodedValue maxSpeedEnc;
+    private final BooleanEncodedValue roundaboutEnc;
     private final EdgeFilter forwardEdgeFilter;
     /*
      * We need three points to make directions
@@ -78,13 +78,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
     public InstructionsFromEdges(int tmpNode, Graph graph, Weighting weighting, NodeAccess nodeAccess,
                                  AnnotationAccessor annotationAccessor,
-                                 SpeedAccessor speedAccessor,
-                                 BoolAccessor roundabout, InstructionList ways) {
+                                 DecimalEncodedValue maxSpeedEnc,
+                                 BooleanEncodedValue roundaboutEnc, InstructionList ways) {
         this.weighting = weighting;
         this.nodeAccess = nodeAccess;
-        this.roundabout = roundabout;
+        this.roundaboutEnc = roundaboutEnc;
         this.annotationAccessor = annotationAccessor;
-        this.speedAccessor = speedAccessor;
+        this.maxSpeedEnc = maxSpeedEnc;
         this.ways = ways;
         prevLat = this.nodeAccess.getLatitude(tmpNode);
         prevLon = this.nodeAccess.getLongitude(tmpNode);
@@ -102,13 +102,12 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // baseNode is the current node and adjNode is the next
         int adjNode = edge.getAdjNode();
         int baseNode = edge.getBaseNode();
-        long flags = edge.getFlags();
         double adjLat = nodeAccess.getLatitude(adjNode);
         double adjLon = nodeAccess.getLongitude(adjNode);
         double latitude, longitude;
 
         PointList wayGeo = edge.fetchWayGeometry(3);
-        boolean isRoundabout = roundabout.get(edge);
+        boolean isRoundabout = edge.get(roundaboutEnc);
 
         if (wayGeo.getSize() <= 2) {
             latitude = adjLat;
@@ -143,7 +142,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
                     while (edgeIter.next()) {
                         if ((edgeIter.getAdjNode() != prevNode)
-                                && !roundabout.get(edgeIter)) {
+                                && !edgeIter.get(roundaboutEnc)) {
                             roundaboutInstruction.increaseExitNumber();
                             break;
                         }
@@ -173,7 +172,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             // out of the roundabout
             EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(edge.getAdjNode());
             while (edgeIter.next()) {
-                if (!roundabout.get(edgeIter)) {
+                if (!edgeIter.get(roundaboutEnc)) {
                     ((RoundaboutInstruction) prevInstruction).increaseExitNumber();
                     break;
                 }
@@ -261,7 +260,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         }
 
         InstructionsSurroundingEdges surroundingEdges = new InstructionsSurroundingEdges(prevEdge, edge,
-                speedAccessor, forwardEdgeFilter, crossingExplorer, nodeAccess, prevNode, baseNode, adjNode);
+                maxSpeedEnc, forwardEdgeFilter, crossingExplorer, nodeAccess, prevNode, baseNode, adjNode);
         int nrOfPossibleTurns = surroundingEdges.nrOfPossibleTurns();
 
         // there is no other turn possible
@@ -293,8 +292,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             return sign;
         }
 
-        long flag = edge.getFlags();
-        long prevFlag = prevEdge.getFlags();
+        long flag = edge.getData().ints[0];
+        long prevFlag = prevEdge.getData().ints[0];
 
         boolean surroundingStreetsAreSlower = surroundingEdges.surroundingStreetsAreSlowerByFactor(1);
 
@@ -314,7 +313,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             if (!InstructionsHelper.isNameSimilar(name, prevName)
                     || InstructionsHelper.isNameSimilar(otherContinue.getName(), prevName)
                     || prevFlag != flag
-                    || prevFlag == otherContinue.getFlags()
+                    || prevFlag == otherContinue.getData().ints[0]
                     || !surroundingStreetsAreSlower) {
                 GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue, nodeAccess);
                 double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);

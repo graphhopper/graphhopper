@@ -249,7 +249,7 @@ public class Measurement {
             print("unit_testsCH.get_weight", miniPerf);
         }
 
-        EdgeFilter outFilter = new DefaultEdgeFilter(encoder, false, true);
+        EdgeFilter outFilter = new DefaultEdgeFilter(encoder.getAccessEncodedValue(), true, false);
         final EdgeExplorer outExplorer = graph.createEdgeExplorer(outFilter);
         MiniPerfTest miniPerf = new MiniPerfTest() {
             @Override

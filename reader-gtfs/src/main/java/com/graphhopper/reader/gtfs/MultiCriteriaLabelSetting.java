@@ -122,7 +122,7 @@ class MultiCriteriaLabelSetting {
                 Label label = fromHeap.poll();
                 action.accept(label);
                 for (EdgeIteratorState edge : explorer.exploreEdgesAround(label)) {
-                    GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
+                    GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getData());
                     long nextTime;
                     if (reverse) {
                         nextTime = label.currentTime - explorer.calcTravelTimeMillis(edge, label.currentTime);

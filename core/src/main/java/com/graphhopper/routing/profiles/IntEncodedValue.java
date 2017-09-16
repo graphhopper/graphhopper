@@ -20,9 +20,9 @@ package com.graphhopper.routing.profiles;
 import com.graphhopper.storage.IntsRef;
 
 /**
- * This class defines where to store an integer. It is important to note that 1. the range of the integer is
+ * This class defines where to store an unsigned integer. It is important to note that: 1. the range of the integer is
  * highly limited (unlike the Java 32bit integer values) so that the storeable part of it fits into the
- * specified number of bits (using the internal shift value) and 2. the default value is always 0.
+ * specified number of bits (using the internal shift value) and 2. the 'raw' default value is always 0.
  * <p>
  * To illustrate why the default is always 0 and how you can still use other defaults imagine the storage engine
  * creates a new entry. Either the engine knows the higher level logic or we assume the default value is 0 and
@@ -40,10 +40,12 @@ public class IntEncodedValue implements EncodedValue {
     /**
      * There are multiple int values possible per edge. Here we specify the index into this integer array.
      */
-    protected int dataIndex;
+    protected int fwdDataIndex;
+    protected int bwdDataIndex;
 
     final int bits;
-    int maxValue;
+    // we need a long here as our ints are unsigned
+    long maxValue;
     int fwdShift;
     int bwdShift;
     int fwdMask;
@@ -56,6 +58,9 @@ public class IntEncodedValue implements EncodedValue {
     }
 
     /**
+     * This constructor reserve the specified number of bits in the underlying datastructure or twice the amount if
+     * store2DirectedValues is true.
+     *
      * @param defaultValue defines which value to return if the 'raw' integer value is 0.
      */
     public IntEncodedValue(String name, int bits, int defaultValue, boolean store2DirectedValues) {
@@ -66,25 +71,32 @@ public class IntEncodedValue implements EncodedValue {
         this.bits = bits;
         if (bits <= 0)
             throw new IllegalArgumentException("bits cannot be 0 or negative");
+        if (bits > 32)
+            throw new IllegalArgumentException("At the moment bits cannot be >32");
         this.defaultValue = defaultValue;
         this.store2DirectedValues = store2DirectedValues;
     }
 
     @Override
-    public final void init(EncodedValue.InitializerConfig init) {
+    public final void init(EncodedValue.InitializerConfig init, int maxBytes) {
         if (isInitialized())
             throw new IllegalStateException("Cannot call init multiple times");
 
-        this.dataIndex = init.dataIndex;
-
+        init.find(bits);
+        this.fwdMask = init.wayBitMask;
+        this.fwdDataIndex = init.dataIndex;
         this.fwdShift = init.shift;
-        this.fwdMask = init.next(bits);
         if (store2DirectedValues) {
+            init.find(bits);
+            this.bwdMask = init.wayBitMask;
+            this.bwdDataIndex = init.dataIndex;
             this.bwdShift = init.shift;
-            this.bwdMask = init.next(bits);
         }
 
-        this.maxValue = (1 << bits) - 1;
+        if (init.dataIndex >= maxBytes / 4)
+            throw new IllegalArgumentException("Too few bytes reserved for EncodedValues data " + maxBytes + ", requested integer index " + init.dataIndex);
+
+        this.maxValue = (1L << bits) - 1;
     }
 
     private boolean isInitialized() {
@@ -101,8 +113,7 @@ public class IntEncodedValue implements EncodedValue {
     }
 
     /**
-     * This method 'merges' the specified integer value with the specified 'flags' to return a value that can
-     * be stored.
+     * This method stores the specified integer value in the specified IntsRef.
      */
     public final void setInt(boolean reverse, IntsRef ref, int value) {
         checkValue(value);
@@ -110,29 +121,32 @@ public class IntEncodedValue implements EncodedValue {
     }
 
     final void uncheckedSet(boolean reverse, IntsRef ref, int value) {
-        int flags = ref.ints[dataIndex + ref.offset];
         if (store2DirectedValues && reverse) {
+            int flags = ref.ints[bwdDataIndex + ref.offset];
             // clear value bits
             flags &= ~bwdMask;
             value <<= bwdShift;
+            // set value
+            ref.ints[bwdDataIndex + ref.offset] = flags | value;
         } else {
-            // clear value bits
+            int flags = ref.ints[fwdDataIndex + ref.offset];
             flags &= ~fwdMask;
             value <<= fwdShift;
+            ref.ints[fwdDataIndex + ref.offset] = flags | value;
         }
-        // set value
-        ref.ints[dataIndex + ref.offset] = flags | value;
     }
 
     /**
      * This method restores the integer value from the specified 'flags' taken from the storage.
      */
     public final int getInt(boolean reverse, IntsRef ref) {
-        int flags = ref.ints[dataIndex + ref.offset];
+        int flags;
         if (reverse && store2DirectedValues) {
+            flags = ref.ints[bwdDataIndex + ref.offset];
             flags &= bwdMask;
             flags >>>= bwdShift;
         } else {
+            flags = ref.ints[fwdDataIndex + ref.offset];
             flags &= fwdMask;
             flags >>>= fwdShift;
         }
@@ -144,7 +158,7 @@ public class IntEncodedValue implements EncodedValue {
 
     @Override
     public final int hashCode() {
-        return (bwdMask | fwdMask) ^ dataIndex;
+        return (bwdMask | fwdMask) ^ (fwdDataIndex + bwdDataIndex);
     }
 
 
@@ -152,7 +166,7 @@ public class IntEncodedValue implements EncodedValue {
     public final boolean equals(Object obj) {
         IntEncodedValue other = (IntEncodedValue) obj;
         return other.fwdMask == fwdMask && other.bwdMask == bwdMask && other.bits == bits
-                && other.dataIndex == dataIndex && other.name.equals(name);
+                && other.fwdDataIndex == fwdDataIndex && other.bwdDataIndex == other.bwdDataIndex && other.name.equals(name);
     }
 
     @Override

@@ -42,6 +42,8 @@ public class HikeFlagEncoder extends FootFlagEncoder {
         this(properties.getInt("speedBits", 4),
                 properties.getDouble("speedFactor", 1));
         this.setBlockFords(properties.getBool("block_fords", false));
+        // allow all sac scales
+        allowedSacScaleTags.clear();
     }
 
     public HikeFlagEncoder(String propertiesStr) {
@@ -61,53 +63,7 @@ public class HikeFlagEncoder extends FootFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 2;
-    }
-
-    @Override
-    public long acceptWay(ReaderWay way) {
-        String highwayValue = way.getTag("highway");
-        if (highwayValue == null) {
-            if (way.hasTag("route", ferries)) {
-                String footTag = way.getTag("foot");
-                if (footTag == null || "yes".equals(footTag))
-                    return acceptBit | ferryBit;
-            }
-
-            // special case not for all acceptedRailways, only platform
-            if (way.hasTag("railway", "platform"))
-                return acceptBit;
-
-            return 0;
-        }
-
-        // no need to evaluate ferries or fords - already included here
-        if (way.hasTag("foot", intendedValues))
-            return acceptBit;
-
-        // check access restrictions
-        if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-            return 0;
-
-        // hiking allows all sac_scale values
-        // String sacScale = way.getTag("sac_scale");
-        if (way.hasTag("sidewalk", sidewalkValues))
-            return acceptBit;
-
-        if (!allowedHighwayTags.contains(highwayValue))
-            return 0;
-
-        if (way.hasTag("motorroad", "yes"))
-            return 0;
-
-        // do not get our feet wet, "yes" is already included above
-        if (isBlockFords() && (way.hasTag("highway", "ford") || way.hasTag("ford")))
-            return 0;
-
-        if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
-            return 0;
-        else
-            return acceptBit;
+        return 3;
     }
 
     @Override

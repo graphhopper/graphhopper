@@ -21,6 +21,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -69,7 +70,10 @@ public class AStarBidirectionTest extends AbstractRoutingAlgorithmTester {
     @Test
     public void testInitFromAndTo() {
         Graph g = createGHStorage(false);
-        g.edge(0, 1, 1, true);
+        EdgeIteratorState edge = g.edge(0, 1);
+        edge.set(carAccessEnc, true);
+        edge.setReverse(carAccessEnc, true);
+
         updateDistancesFor(g, 0, 0.00, 0.00);
         updateDistancesFor(g, 1, 0.01, 0.01);
 

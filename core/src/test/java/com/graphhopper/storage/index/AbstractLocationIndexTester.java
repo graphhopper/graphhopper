@@ -17,18 +17,22 @@
  */
 package com.graphhopper.storage.index;
 
-import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.util.DefaultEdgeFilter;
+import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.DistanceCalcEarth;
-import com.graphhopper.util.EdgeIterator;
-import com.graphhopper.util.Helper;
+import com.graphhopper.util.*;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.Closeable;
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Random;
 
 import static org.junit.Assert.assertEquals;
@@ -73,8 +77,9 @@ public abstract class AbstractLocationIndexTester {
 
     @Test
     public void testSimpleGraph() {
-        Graph g = AbstractLocationIndexTester.this.createGHStorage(new EncodingManager.Builder().addAllFlagEncoders("car").build());
-        initSimpleGraph(g);
+        GraphHopperStorage g = createGHStorage(new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build());
+        initSimpleGraph(g, Arrays.asList(g.getEncodingManager().getBooleanEncodedValue(TagParserFactory.Car.ACCESS)),
+                Arrays.asList(g.getEncodingManager().getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED)));
 
         idx = createIndex(g, -1);
         assertEquals(4, findID(idx, 5, 2));
@@ -90,7 +95,7 @@ public abstract class AbstractLocationIndexTester {
         Helper.close((Closeable) g);
     }
 
-    public void initSimpleGraph(Graph g) {
+    public void initSimpleGraph(Graph g, List<BooleanEncodedValue> accessEncList, List<DecimalEncodedValue> avSpeedList) {
         //  6 |       4
         //  5 |           
         //    |     6
@@ -111,20 +116,25 @@ public abstract class AbstractLocationIndexTester {
         na.setNode(4, 6, 1);
         na.setNode(5, 4, 4);
         na.setNode(6, 4.5, -0.5);
-        g.edge(0, 1, 3.5, true);
-        g.edge(0, 2, 2.5, true);
-        g.edge(2, 3, 1, true);
-        g.edge(3, 4, 3.2, true);
-        g.edge(1, 4, 2.4, true);
-        g.edge(3, 5, 1.5, true);
-        // make sure 6 is connected
-        g.edge(6, 4, 1.2, true);
+        for (int i = 0; i < accessEncList.size(); i++) {
+            BooleanEncodedValue accessEnc = accessEncList.get(i);
+            DecimalEncodedValue avSpeedEnc = avSpeedList.get(i);
+            GHUtility.createEdge(g, avSpeedEnc, 10, accessEnc, 0, 1, true, 3.5);
+            GHUtility.createEdge(g, avSpeedEnc, 10, accessEnc, 0, 2, true, 2.5);
+            GHUtility.createEdge(g, avSpeedEnc, 10, accessEnc, 2, 3, true, 1);
+            GHUtility.createEdge(g, avSpeedEnc, 10, accessEnc, 3, 4, true, 3.2);
+            GHUtility.createEdge(g, avSpeedEnc, 10, accessEnc, 1, 4, true, 2.4);
+            GHUtility.createEdge(g, avSpeedEnc, 10, accessEnc, 3, 5, true, 1.5);
+            // make sure 6 is connected
+            GHUtility.createEdge(g, avSpeedEnc, 10, accessEnc, 6, 4, true, 1.2);
+        }
     }
 
     @Test
     public void testSimpleGraph2() {
-        Graph g = AbstractLocationIndexTester.this.createGHStorage(new EncodingManager.Builder().addAllFlagEncoders("car").build());
-        initSimpleGraph(g);
+        GraphHopperStorage g = createGHStorage(new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build());
+        initSimpleGraph(g, Arrays.asList(g.getEncodingManager().getBooleanEncodedValue(TagParserFactory.Car.ACCESS)),
+                Arrays.asList(g.getEncodingManager().getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED)));
 
         idx = createIndex(g, -1);
         assertEquals(4, findID(idx, 5, 2));
@@ -145,7 +155,9 @@ public abstract class AbstractLocationIndexTester {
 
     @Test
     public void testGrid() {
-        Graph g = createSampleGraph(new EncodingManager.Builder().addAllFlagEncoders("car").build());
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
+        GraphHopperStorage g = createGHStorage(em);
+        initSampleGraph(g, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS), em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
         int locs = g.getNodes();
 
         idx = createIndex(g, -1);
@@ -200,7 +212,9 @@ public abstract class AbstractLocationIndexTester {
 
     @Test
     public void testSinglePoints120() {
-        Graph g = createSampleGraph(new EncodingManager.Builder().addAllFlagEncoders("car").build());
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
+        Graph g = createGHStorage(em);
+        initSampleGraph(g, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS), em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
         idx = createIndex(g, -1);
 
         assertEquals(1, findID(idx, 1.637, 2.23));
@@ -215,7 +229,9 @@ public abstract class AbstractLocationIndexTester {
 
     @Test
     public void testSinglePoints32() {
-        Graph g = createSampleGraph(new EncodingManager.Builder().addAllFlagEncoders("car").build());
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
+        Graph g = createGHStorage(em);
+        initSampleGraph(g, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS), em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
         idx = createIndex(g, -1);
 
         // 10 or 6
@@ -232,9 +248,9 @@ public abstract class AbstractLocationIndexTester {
 
     @Test
     public void testNoErrorOnEdgeCase_lastIndex() {
-        final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
+        final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
         int locs = 10000;
-        Graph g = AbstractLocationIndexTester.this.createGHStorage(new MMapDirectory(location), encodingManager, false);
+        Graph g = createGHStorage(new MMapDirectory(location), encodingManager, false);
         NodeAccess na = g.getNodeAccess();
         Random rand = new Random(12);
         for (int i = 0; i < locs; i++) {
@@ -244,10 +260,8 @@ public abstract class AbstractLocationIndexTester {
         Helper.close((Closeable) g);
     }
 
-    public Graph createSampleGraph(EncodingManager encodingManager) {
-        Graph graph = AbstractLocationIndexTester.this.createGHStorage(encodingManager);
+    public Graph initSampleGraph(Graph graph, BooleanEncodedValue accessEnc, DecimalEncodedValue averageSpeedEnc) {
         // length does not matter here but lat,lon and outgoing edges do!
-
 //        
 //   lat             /--------\
 //    5   o-        p--------\ q
@@ -300,48 +314,56 @@ public abstract class AbstractLocationIndexTester {
         na.setNode(16, 5, 5);
         // => 17 locations
 
-        graph.edge(a0, b1, 1, true);
-        graph.edge(c2, b1, 1, true);
-        graph.edge(c2, d3, 1, true);
-        graph.edge(f5, b1, 1, true);
-        graph.edge(e4, f5, 1, true);
-        graph.edge(m12, d3, 1, true);
-        graph.edge(e4, k10, 1, true);
-        graph.edge(f5, d3, 1, true);
-        graph.edge(f5, i8, 1, true);
-        graph.edge(f5, j9, 1, true);
-        graph.edge(k10, g6, 1, true);
-        graph.edge(j9, l11, 1, true);
-        graph.edge(i8, l11, 1, true);
-        graph.edge(i8, h7, 1, true);
-        graph.edge(k10, n13, 1, true);
-        graph.edge(k10, o14, 1, true);
-        graph.edge(l11, p15, 1, true);
-        graph.edge(m12, p15, 1, true);
-        graph.edge(q16, p15, 1, true);
-        graph.edge(q16, m12, 1, true);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, a0, b1, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, c2, b1, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, c2, d3, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, f5, b1, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, e4, f5, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, m12, d3, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, e4, k10, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, f5, d3, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, f5, i8, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, f5, j9, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, k10, g6, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, j9, l11, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, i8, l11, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, i8, h7, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, k10, n13, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, k10, o14, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, l11, p15, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, m12, p15, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, q16, p15, true, 1);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, q16, m12, true, 1);
         return graph;
     }
 
     @Test
     public void testDifferentVehicles() {
-        final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car,foot").build();
-        Graph g = AbstractLocationIndexTester.this.createGHStorage(encodingManager);
-        initSimpleGraph(g);
+        final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car,foot").build();
+        BooleanEncodedValue carAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        DecimalEncodedValue carAvSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+
+        BooleanEncodedValue footAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Foot.ACCESS);
+        DecimalEncodedValue footAvSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Foot.AVERAGE_SPEED);
+        Graph g = createGHStorage(encodingManager);
+        initSimpleGraph(g, Arrays.asList(carAccessEnc, footAccessEnc), Arrays.asList(carAvSpeedEnc, footAvSpeedEnc));
         idx = createIndex(g, -1);
         assertEquals(1, findID(idx, 1, -1));
 
         // now make all edges from node 1 accessible for CAR only
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
-        CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        DecimalEncodedValue averageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
         while (iter.next()) {
-            iter.setFlags(carEncoder.setProperties(50, true, true));
+            iter.set(accessEnc, true);
+            iter.setReverse(accessEnc, true);
+            iter.set(averageSpeedEnc, 50d);
         }
         idx.close();
 
         idx = createIndex(g, -1);
-        FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
-        assertEquals(2, idx.findClosest(1, -1, new DefaultEdgeFilter(footEncoder)).getClosestNode());
+        assertEquals(2, idx.findClosest(1, -1,
+                new DefaultEdgeFilter(encodingManager.getBooleanEncodedValue(TagParserFactory.Foot.ACCESS))).getClosestNode());
         Helper.close((Closeable) g);
     }
 }

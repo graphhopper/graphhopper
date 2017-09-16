@@ -19,6 +19,7 @@ package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.PrinctonReader;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
@@ -133,11 +134,13 @@ public class RoutingAlgorithmIT {
         int noJvmWarming = N / 4;
 
         Random rand = new Random(0);
-        final EncodingManager eManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
+        final EncodingManager eManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
         final GraphHopperStorage graph = new GraphBuilder(eManager).create();
 
         String bigFile = "10000EWD.txt.gz";
-        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile))).read();
+        new PrinctonReader(graph, eManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS),
+                eManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED)).
+                setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile))).read();
         GraphHopper hopper = new GraphHopper() {
             {
                 setCHEnabled(false);
@@ -151,7 +154,8 @@ public class RoutingAlgorithmIT {
             }
         };
 
-        Collection<AlgoHelperEntry> prepares = createAlgos(hopper, new HintsMap().setWeighting("shortest").setVehicle("car"), TraversalMode.NODE_BASED);
+        Collection<AlgoHelperEntry> prepares = createAlgos(hopper, new HintsMap().setWeighting("shortest").setVehicle("car"),
+                TraversalMode.NODE_BASED);
 
         for (AlgoHelperEntry entry : prepares) {
             StopWatch sw = new StopWatch();

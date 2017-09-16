@@ -20,8 +20,6 @@ package com.graphhopper.routing.ch;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
@@ -30,9 +28,9 @@ public class PrepareEncoderTest {
 
     @Test
     public void testOverwrite() {
-        long forward = PrepareEncoder.getScFwdDir();
-        long backward = PrepareEncoder.getScFwdDir() ^ PrepareEncoder.getScDirMask();
-        long both = PrepareEncoder.getScDirMask();
+        int forward = PrepareEncoder.getScFwdDir();
+        int backward = PrepareEncoder.getScFwdDir() ^ PrepareEncoder.getScDirMask();
+        int both = PrepareEncoder.getScDirMask();
         assertEquals(1, PrepareEncoder.getScMergeStatus(forward, forward));
         assertEquals(1, PrepareEncoder.getScMergeStatus(backward, backward));
         assertEquals(2, PrepareEncoder.getScMergeStatus(forward, both));

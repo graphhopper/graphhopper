@@ -18,11 +18,27 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.storage.IntsRef;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 
-public interface TagsParser {
+public class TagsParser {
 
-    void parse(ReaderWay way, EdgeIteratorState edgeState, Collection<TagParser> parsers);
+    private static Logger LOGGER = LoggerFactory.getLogger(TagsParser.class);
+
+    public void parse(Collection<TagParser> parsers, IntsRef ints, ReaderWay way) {
+        try {
+            for (TagParser tagParser : parsers) {
+                if (tagParser.getReadWayFilter().accept(way))
+                    // parsing should allow to call edgeState.set multiple times (e.g. for composed values) without reimplementing this set method
+                    tagParser.parse(ints, way);
+            }
+
+        } catch (Exception ex) {
+            // TODO for now do not stop when there are errors
+            LOGGER.error("Cannot parse way to store edge properties. Way: " + way, ex);
+        }
+    }
 }

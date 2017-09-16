@@ -28,7 +28,6 @@ import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.*;
 
 import java.util.*;
@@ -117,7 +116,7 @@ public class GHUtility {
         return list;
     }
 
-    public static void printEdgeInfo(final Graph g, FlagEncoder encoder) {
+    public static void printEdgeInfo(final Graph g, BooleanEncodedValue accessEnc) {
         System.out.println("-- Graph n:" + g.getNodes() + " e:" + g.getAllEdges().getMaxId() + " ---");
         AllEdgesIterator iter = g.getAllEdges();
         while (iter.next()) {
@@ -126,8 +125,8 @@ public class GHUtility {
                 AllCHEdgesIterator aeSkip = (AllCHEdgesIterator) iter;
                 sc = aeSkip.isShortcut() ? "sc" : "  ";
             }
-            String fwdStr = iter.isForward(encoder) ? "fwd" : "   ";
-            String bckStr = iter.isBackward(encoder) ? "bckwd" : "";
+            String fwdStr = iter.get(accessEnc) ? "fwd" : "   ";
+            String bckStr = iter.getReverse(accessEnc) ? "bwd" : "";
             System.out.println(sc + " " + iter + " " + fwdStr + " " + bckStr);
         }
     }
@@ -154,7 +153,7 @@ public class GHUtility {
         String str = nodeId + ":" + na.getLatitude(nodeId) + "," + na.getLongitude(nodeId) + "\n";
         while (iter.next()) {
             str += "  ->" + iter.getAdjNode() + "(" + iter.getSkippedEdge1() + "," + iter.getSkippedEdge2() + ") "
-                    + iter.getEdge() + " \t" + BitUtil.BIG.toBitString(iter.getFlags(), 8) + "\n";
+                    + iter.getEdge() + " \t" + BitUtil.BIG.toBitString(iter.getData()) + "\n";
         }
         return str;
     }
@@ -166,7 +165,7 @@ public class GHUtility {
         while (iter.next()) {
             str += "  ->" + iter.getAdjNode() + " (" + iter.getDistance() + ") pillars:"
                     + iter.fetchWayGeometry(0).getSize() + ", edgeId:" + iter.getEdge()
-                    + "\t" + BitUtil.BIG.toBitString(iter.getFlags(), 8) + "\n";
+                    + "\t" + BitUtil.BIG.toBitString(iter.getData()) + "\n";
         }
         return str;
     }
@@ -295,7 +294,7 @@ public class GHUtility {
         return adjNode;
     }
 
-    public static EdgeIteratorState createMockedEdgeIteratorState(final double distance, final long flags) {
+    public static EdgeIteratorState createMockedEdgeIteratorState(final double distance, final IntsRef ints) {
         return new GHUtility.DisabledEdgeIterator() {
             @Override
             public double getDistance() {
@@ -303,13 +302,8 @@ public class GHUtility {
             }
 
             @Override
-            public long getFlags() {
-                return flags;
-            }
-
-            @Override
-            public boolean getBool(int key, boolean _default) {
-                return _default;
+            public IntsRef getData() {
+                return ints;
             }
         };
     }
@@ -327,6 +321,32 @@ public class GHUtility {
                 return iter;
         }
         return null;
+    }
+
+    /**
+     * This method create a new edge with certain access values.
+     *
+     * @param bothDirections if false only the direction from-to is accessible, if true both directions will be accessible.
+     */
+    public static EdgeIteratorState createEdge(Graph g, DecimalEncodedValue averageSpeedEnc, double speed,
+                                               BooleanEncodedValue accessEnc, int from, int to, boolean bothDirections,
+                                               double dist) {
+        return createEdge(g, averageSpeedEnc, speed, accessEnc, from, to, bothDirections).setDistance(dist);
+    }
+
+    public static EdgeIteratorState createEdge(Graph g, DecimalEncodedValue averageSpeedEnc, double speed,
+                                               BooleanEncodedValue accessEnc, int from, int to, boolean bothDirections) {
+        EdgeIteratorState edge = setAccess(g.edge(from, to), accessEnc, true, bothDirections);
+        edge.set(averageSpeedEnc, speed);
+        return edge;
+    }
+
+    public static EdgeIteratorState setAccess(EdgeIteratorState edge, BooleanEncodedValue accessEnc, boolean fwd, boolean bwd) {
+        edge.set(accessEnc, fwd);
+        edge.setReverse(accessEnc, bwd);
+        // alternatively we could do a more lower level approach:
+        // accessEnc.setBool(true, ints = edge.getData(), true) etc and as a separate step: edge.setData(ints);
+        return edge;
     }
 
     /**
@@ -362,6 +382,15 @@ public class GHUtility {
         return edgeKey / 2;
     }
 
+    public static IntsRef setProperties(IntsRef ints, DecimalEncodedValue averageSpeedEnc, double averageSpeed,
+                                        BooleanEncodedValue accessEnc, boolean fwd, boolean bwd) {
+        averageSpeedEnc.setDecimal(false, ints, averageSpeed);
+        averageSpeedEnc.setDecimal(true, ints, averageSpeed);
+        accessEnc.setBool(false, ints, fwd);
+        accessEnc.setBool(true, ints, bwd);
+        return ints;
+    }
+
     /**
      * This edge iterator can be used in tests to mock specific iterator behaviour via overloading
      * certain methods.
@@ -374,11 +403,6 @@ public class GHUtility {
 
         @Override
         public EdgeIteratorState setDistance(double dist) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public EdgeIteratorState setFlags(long flags) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
@@ -408,11 +432,6 @@ public class GHUtility {
         }
 
         @Override
-        public long getFlags() {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
         public PointList fetchWayGeometry(int type) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -433,7 +452,7 @@ public class GHUtility {
         }
 
         @Override
-        public boolean getBool(int key, boolean _default) {
+        public void setData(IntsRef ints) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
 
@@ -523,16 +542,6 @@ public class GHUtility {
         }
 
         @Override
-        public boolean isBackward(FlagEncoder encoder) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
-        public boolean isForward(FlagEncoder encoder) {
-            throw new UnsupportedOperationException("Not supported. Edge is empty.");
-        }
-
-        @Override
         public int getAdditionalField() {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
@@ -578,7 +587,7 @@ public class GHUtility {
         }
 
         @Override
-        public int getMergeStatus(long flags) {
+        public int getMergeStatus(int flags) {
             throw new UnsupportedOperationException("Not supported. Edge is empty.");
         }
     }

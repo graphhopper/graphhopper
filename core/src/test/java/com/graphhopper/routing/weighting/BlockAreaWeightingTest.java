@@ -1,6 +1,7 @@
 package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -9,6 +10,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphEdgeIdFinder;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.shapes.Circle;
 import org.junit.Before;
 import org.junit.Test;
@@ -26,10 +28,11 @@ public class BlockAreaWeightingTest {
     @Before
     public void setUp() {
         encoder = new CarFlagEncoder();
-        em = new EncodingManager.Builder().addAll(Arrays.asList(encoder), 8).build();
+        em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(encoder), 8).build();
         graph = new GraphBuilder(em).create();
         // 0-1
-        graph.edge(0, 1, 1, true);
+        GHUtility.createEdge(graph, em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED), 60, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS),
+                0, 1, true, 1);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
     }

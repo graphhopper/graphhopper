@@ -18,6 +18,8 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -33,8 +35,11 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class MotorcycleFlagEncoderTest {
-    private final EncodingManager em = new EncodingManager.Builder().addAllFlagEncoders("motorcycle,foot").build();
+    private final EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("motorcycle,foot").build();
     private final MotorcycleFlagEncoder encoder = (MotorcycleFlagEncoder) em.getEncoder("motorcycle");
+    private BooleanEncodedValue mcAccessEnc;
+    private DecimalEncodedValue mcAverageSpeedEnc;
+    private DecimalEncodedValue mcCurvatureEnc;
 
     private Graph initExampleGraph() {
         GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), em, true, new GraphExtension.NoOpExtension()).create(1000);
@@ -46,103 +51,110 @@ public class MotorcycleFlagEncoderTest {
                 setWayGeometry(Helper.createPointList3D(51.1, 12.0011, 49, 51.1, 12.0015, 55));
         edge.setDistance(100);
 
-        edge.setFlags(encoder.setReverseSpeed(encoder.setProperties(10, true, true), 15));
+        mcAccessEnc = em.getBooleanEncodedValue("motorcycle.access");
+        mcAverageSpeedEnc = em.getDecimalEncodedValue("motorcycle.average_speed");
+        mcCurvatureEnc = em.getDecimalEncodedValue("motorcycle.curvature");
+
+        edge.set(mcAverageSpeedEnc, 10d);
+        edge.setReverse(mcAverageSpeedEnc, 15d);
+        edge.set(mcAccessEnc, true);
+        edge.setReverse(mcAccessEnc, true);
         return gs;
     }
 
     @Test
     public void testAccess() {
         ReaderWay way = new ReaderWay(1);
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
         way.setTag("highway", "service");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
         way.setTag("access", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "track");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "delivery");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "unclassified");
         way.setTag("ford", "yes");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
         way.setTag("motorcycle", "yes");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("route", "ferry");
-        assertTrue(encoder.acceptWay(way) > 0);
-        assertTrue(encoder.isFerry(encoder.acceptWay(way)));
+        assertTrue(encoder.getAccess(way).isWay());
+        assertTrue(encoder.getAccess(way).isFerry());
         way.setTag("motorcycle", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("route", "ferry");
         way.setTag("foot", "yes");
-        assertFalse(encoder.acceptWay(way) > 0);
-        assertFalse(encoder.isFerry(encoder.acceptWay(way)));
+        assertFalse(encoder.getAccess(way).isWay());
+        assertFalse(encoder.getAccess(way).isFerry());
 
         way.clearTags();
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "yes");
         way.setTag("motor_vehicle", "no");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("access", "emergency");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "service");
         way.setTag("motor_vehicle", "emergency");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         DateFormat simpleDateFormat = Helper.createFormatter("yyyy MMM dd");
 
         way.clearTags();
         way.setTag("highway", "road");
         way.setTag("access:conditional", "no @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertFalse(encoder.acceptWay(way) > 0);
+        assertFalse(encoder.getAccess(way).isWay());
 
         way.clearTags();
         way.setTag("highway", "road");
         way.setTag("access", "no");
         way.setTag("access:conditional", "yes @ (" + simpleDateFormat.format(new Date().getTime()) + ")");
-        assertTrue(encoder.acceptWay(way) > 0);
+        assertTrue(encoder.getAccess(way).isWay());
     }
 
     @Test
     public void testHandleWayTags() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "service");
-        long flags = encoder.acceptWay(way);
-        assertTrue(flags > 0);
-        long result = encoder.handleWayTags(way, flags, 0);
+        assertTrue(encoder.getAccess(way).isWay());
+        IntsRef result = encoder.handleWayTags(em.createIntsRef(), way, encoder.getAccess(way), 0);
         assertEquals(20, encoder.getSpeed(result), .1);
         assertEquals(20, encoder.getReverseSpeed(result), .1);
     }
 
     @Test
     public void testSetSpeed0_issue367() {
-        long flags = encoder.setProperties(10, true, true);
-        flags = encoder.setSpeed(flags, 0);
+        IntsRef flags = em.createIntsRef();
+        mcAverageSpeedEnc.setDecimal(false, flags, 10d);
+        encoder.setSpeed(flags, 0);
 
         assertEquals(0, encoder.getSpeed(flags), .1);
         assertEquals(10, encoder.getReverseSpeed(flags), .1);
-        assertFalse(encoder.isForward(flags));
-        assertTrue(encoder.isBackward(flags));
+        assertFalse(mcAccessEnc.getBool(false, flags));
+        assertTrue(mcAccessEnc.getBool(true, flags));
     }
 
     @Test
@@ -160,10 +172,10 @@ public class MotorcycleFlagEncoderTest {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "primary");
         way.setTag("estimated_distance", estimatedDistance);
-        long includeWay = encoder.acceptWay(way);
-        long flags = encoder.handleWayTags(way, includeWay, 0l);
-        edge.setFlags(flags);
+        IntsRef ints = em.createIntsRef();
+        encoder.handleWayTags(ints, way, encoder.getAccess(way), 0l);
+        edge.setData(ints);
         encoder.applyWayTags(way, edge);
-        return encoder.getDouble(edge.getFlags(), MotorcycleFlagEncoder.CURVATURE_KEY);
+        return edge.get(mcCurvatureEnc);
     }
 }

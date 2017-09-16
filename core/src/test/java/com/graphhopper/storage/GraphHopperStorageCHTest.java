@@ -19,6 +19,9 @@ package com.graphhopper.storage;
 
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.ch.PrepareEncoder;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -86,18 +89,18 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     public void testEdgeFilter() {
         graph = createGHStorage();
         CHGraph g = getGraph(graph);
-        g.edge(0, 1, 10, true);
-        g.edge(0, 2, 20, true);
-        g.edge(2, 3, 30, true);
-        g.edge(10, 11, 1, true);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 10);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 0, 2, true, 20);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, true, 30);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 10, 11, true, 1);
 
         graph.freeze();
         CHEdgeIteratorState tmpIter = g.shortcut(3, 4);
-        tmpIter.setDistance(40).setFlags(carEncoder.setAccess(0, true, true));
+        tmpIter.setDistance(40).set(carAverageSpeedEnc, 0d);
         assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge1());
         assertEquals(EdgeIterator.NO_EDGE, tmpIter.getSkippedEdge2());
 
-        g.shortcut(0, 4).setDistance(40).setFlags(carEncoder.setAccess(0, true, true));
+        g.shortcut(0, 4).setDistance(40).set(carAverageSpeedEnc, 0d);
         g.setLevel(0, 1);
         g.setLevel(4, 1);
 
@@ -123,18 +126,18 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         EdgeExplorer baseCarOutExplorer = graph.createEdgeExplorer(carOutFilter);
 
         // only remove edges
-        long flags = carEncoder.setProperties(60, true, true);
-        long flags2 = carEncoder.setProperties(60, true, false);
-        lg.edge(4, 1, 30, true);
+        IntsRef flags = GHUtility.setProperties(encodingManager.createIntsRef(), carAverageSpeedEnc, 60d, carAccessEnc, true, true);
+        IntsRef flags2 = GHUtility.setProperties(encodingManager.createIntsRef(), carAverageSpeedEnc, 60d, carAccessEnc, true, false);
+        GHUtility.createEdge(lg, carAverageSpeedEnc, 60, carAccessEnc, 4, 1, true, 30);
         graph.freeze();
         CHEdgeIteratorState tmp = lg.shortcut(1, 2);
-        tmp.setDistance(10).setFlags(flags);
+        tmp.setDistance(10).setData(flags);
         tmp.setSkippedEdges(10, 11);
         tmp = lg.shortcut(1, 0);
-        tmp.setDistance(20).setFlags(flags2);
+        tmp.setDistance(20).setData(flags2);
         tmp.setSkippedEdges(12, 13);
         tmp = lg.shortcut(3, 1);
-        tmp.setDistance(30).setFlags(flags2);
+        tmp.setDistance(30).setData(flags2);
         tmp.setSkippedEdges(14, 15);
         // create everytime a new independent iterator for disconnect method
         EdgeIterator iter = lg.createEdgeExplorer().setBaseNode(1);
@@ -173,7 +176,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.freeze();
 
         // only remove edges
-        long flags = carEncoder.setProperties(10, true, true);
+        IntsRef flags = GHUtility.setProperties(encodingManager.createIntsRef(), carAverageSpeedEnc, 10d, carAccessEnc, true, true);
         CHEdgeIteratorState sc1 = g.shortcut(0, 1);
         assertTrue(sc1.isShortcut());
         sc1.setWeight(2.001);
@@ -183,24 +186,26 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         sc1.setWeight(Double.MAX_VALUE);
         assertTrue(Double.isInfinite(sc1.getWeight()));
 
-        sc1.setFlags(flags);
+        sc1.setData(flags);
         sc1.setWeight(100.123);
         assertEquals(100.123, sc1.getWeight(), 1e-3);
-        assertTrue(sc1.isForward(carEncoder));
-        assertTrue(sc1.isBackward(carEncoder));
+        assertTrue(sc1.get(carAccessEnc));
+        assertTrue(sc1.getReverse(carAccessEnc));
+        assertTrue(sc1.detach(true).get(carAccessEnc));
 
-        flags = carEncoder.setProperties(10, false, true);
-        sc1.setFlags(flags);
+        flags = GHUtility.setProperties(encodingManager.createIntsRef(), carAverageSpeedEnc, 10d, carAccessEnc, false, true);
+        sc1.setData(flags);
         sc1.setWeight(100.123);
         assertEquals(100.123, sc1.getWeight(), 1e-3);
-        assertFalse(sc1.isForward(carEncoder));
-        assertTrue(sc1.isBackward(carEncoder));
+        assertFalse(sc1.get(carAccessEnc));
+        assertTrue(sc1.getReverse(carAccessEnc));
+        assertTrue(sc1.detach(true).get(carAccessEnc));
     }
 
     @Test
     public void testGetWeightIfAdvancedEncoder() {
         FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
-        EncodingManager em = new EncodingManager.Builder().addAll(customEncoder).build();
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(customEncoder).build();
         FastestWeighting weighting = new FastestWeighting(customEncoder);
         GraphHopperStorage ghStorage = new GraphBuilder(em).setCHGraph(weighting).create();
         ghStorage.edge(0, 2);
@@ -208,8 +213,8 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         CHGraphImpl lg = (CHGraphImpl) ghStorage.getGraph(CHGraph.class, weighting);
         CHEdgeIteratorState sc1 = lg.shortcut(0, 1);
-        long flags = customEncoder.setProperties(10, false, true);
-        sc1.setFlags(flags);
+        IntsRef flags = GHUtility.setProperties(encodingManager.createIntsRef(), carAverageSpeedEnc, 10d, carAccessEnc, false, true);
+        sc1.setData(flags);
         sc1.setWeight(100.123);
 
         assertEquals(100.123, lg.getEdgeIteratorState(sc1.getEdge(), sc1.getAdjNode()).getWeight(), 1e-3);
@@ -219,7 +224,9 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         sc1 = lg.shortcut(1, 0);
         assertTrue(sc1.isShortcut());
-        sc1.setFlags(PrepareEncoder.getScDirMask());
+        IntsRef ints = encodingManager.createIntsRef();
+        ints.ints[0] = PrepareEncoder.getScDirMask();
+        sc1.setData(ints);
         sc1.setWeight(1.011011);
         assertEquals(1.011011, sc1.getWeight(), 1e-3);
     }
@@ -326,14 +333,16 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     @Test
     public void testSimpleShortcutCreationAndTraversal() {
         graph = createGHStorage();
-        graph.edge(1, 3, 10, true);
-        graph.edge(3, 4, 10, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 3, true, 10);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 4, true, 10);
         graph.freeze();
 
         CHGraph lg = graph.getGraph(CHGraph.class);
-        lg.shortcut(1, 4).setWeight(3).setFlags(carEncoder.setProperties(10, true, true));
+        lg.shortcut(1, 4).setWeight(3).
+                setData(GHUtility.setProperties(encodingManager.createIntsRef(), carAverageSpeedEnc, 10d,
+                        carAccessEnc, true, true));
 
-        EdgeExplorer vehicleOutExplorer = lg.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, false, true));
+        EdgeExplorer vehicleOutExplorer = lg.createEdgeExplorer(new DefaultEdgeFilter(carAccessEnc, true, false));
         // iteration should result in same nodes even if reusing the iterator
         assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(vehicleOutExplorer.setBaseNode(1)));
         assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(vehicleOutExplorer.setBaseNode(1)));
@@ -343,43 +352,56 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     public void testShortcutCreationAndAccessForManyVehicles() {
         FlagEncoder tmpCar = new CarFlagEncoder();
         FlagEncoder tmpBike = new Bike2WeightFlagEncoder();
-        EncodingManager em = new EncodingManager.Builder().addAll(tmpCar, tmpBike).build();
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(tmpCar, tmpBike).build();
         List<Weighting> chWeightings = new ArrayList<Weighting>();
         chWeightings.add(new FastestWeighting(tmpCar));
         chWeightings.add(new FastestWeighting(tmpBike));
+        BooleanEncodedValue tmpCarAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        DecimalEncodedValue tmpCarAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        BooleanEncodedValue tmpBikeAccessEnc = encodingManager.getBooleanEncodedValue(tmpBike.getPrefix() + "access");
+        DecimalEncodedValue tmpBikeAverageSpeedEnc = encodingManager.getDecimalEncodedValue(tmpBike.getPrefix() + "average_speed");
 
         graph = new GraphHopperStorage(chWeightings, new RAMDirectory(), em, false, new GraphExtension.NoOpExtension()).create(1000);
-        graph.edge(0, 1).setDistance(10).setFlags(tmpCar.setProperties(100, true, true) | tmpBike.setProperties(10, true, true));
-        graph.edge(1, 2).setDistance(10).setFlags(tmpCar.setProperties(100, true, true) | tmpBike.setProperties(10, true, true));
+        IntsRef ints = encodingManager.createIntsRef();
+        GHUtility.setProperties(ints, tmpCarAverageSpeedEnc, 100d, tmpCarAccessEnc, true, true);
+        GHUtility.setProperties(ints, tmpBikeAverageSpeedEnc, 10d, tmpBikeAccessEnc, true, true);
+
+        graph.edge(0, 1).setDistance(10).setData(ints);
+        graph.edge(1, 2).setDistance(10).setData(ints);
 
         graph.freeze();
 
         CHGraph carCHGraph = graph.getGraph(CHGraph.class, chWeightings.get(0));
         // enable forward directions for car
-        EdgeIteratorState carSC02 = carCHGraph.shortcut(0, 2).setWeight(10).setFlags(PrepareEncoder.getScFwdDir()).setDistance(20);
+        ints = encodingManager.createIntsRef();
+        ints.ints[0] = PrepareEncoder.getScFwdDir();
+        EdgeIteratorState carSC02 = carCHGraph.shortcut(0, 2).setWeight(10).setDistance(20);
+        carSC02.setData(ints);
 
         CHGraph bikeCHGraph = graph.getGraph(CHGraph.class, chWeightings.get(1));
         // enable both directions for bike
-        EdgeIteratorState bikeSC02 = bikeCHGraph.shortcut(0, 2).setWeight(10).setFlags(PrepareEncoder.getScDirMask()).setDistance(20);
+        ints.ints[0] = PrepareEncoder.getScDirMask();
+        EdgeIteratorState bikeSC02 = bikeCHGraph.shortcut(0, 2).setWeight(10).setDistance(20);
+        bikeSC02.setData(ints);
 
         // assert car CH graph
-        assertTrue(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isForward(tmpCar));
-        assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isBackward(tmpCar));
+        assertTrue(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).get(tmpCarAccessEnc));
+        assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).getReverse(tmpCarAccessEnc));
 
         // throw exception for wrong encoder
         try {
-            assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).isForward(tmpBike));
+            assertFalse(carCHGraph.getEdgeIteratorState(carSC02.getEdge(), 2).get(tmpBikeAccessEnc));
             assertTrue(false);
         } catch (AssertionError ex) {
         }
 
         // assert bike CH graph
-        assertTrue(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isForward(tmpBike));
-        assertTrue(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isBackward(tmpBike));
+        assertTrue(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).get(tmpBikeAccessEnc));
+        assertTrue(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).getReverse(tmpBikeAccessEnc));
 
         // throw exception for wrong encoder
         try {
-            assertFalse(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).isBackward(tmpCar));
+            assertFalse(bikeCHGraph.getEdgeIteratorState(bikeSC02.getEdge(), 2).getReverse(tmpCarAccessEnc));
             assertTrue(false);
         } catch (AssertionError ex) {
         }

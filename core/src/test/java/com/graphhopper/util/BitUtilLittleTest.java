@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.storage.IntsRef;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -38,7 +39,12 @@ public class BitUtilLittleTest extends AbstractBitUtilTester {
         assertEquals("00101010101010101010101010101010", bitUtil.toBitString(bitUtil.fromInt(Integer.MAX_VALUE / 3)));
 
         assertEquals("10000000000000000000000000000000", bitUtil.toBitString(1L << 63, 32));
-        assertEquals("00000000000000000000000000000001", bitUtil.toBitString((1L << 32), 32));
+        assertEquals("00000000000000000000000000000001", bitUtil.toBitString(1L << 32, 32));
+
+        IntsRef ints = new IntsRef(2);
+        ints.ints[0] = 1;
+        ints.ints[1] = 1;
+        assertEquals("0000000000000000000000000000000100000000000000000000000000000001", bitUtil.toBitString(ints));
     }
 
     @Test

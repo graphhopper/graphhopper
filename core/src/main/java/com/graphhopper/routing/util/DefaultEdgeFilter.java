@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -25,24 +27,32 @@ import com.graphhopper.util.EdgeIteratorState;
 public class DefaultEdgeFilter implements EdgeFilter {
     private final boolean bwd;
     private final boolean fwd;
-    private FlagEncoder encoder;
+    private BooleanEncodedValue accessEnc;
 
     /**
-     * Creates an edges filter which accepts both direction of the specified vehicle.
+     * Creates an edges filter which allows edges that are either accessible in forward or in backward direction.
      */
-    public DefaultEdgeFilter(FlagEncoder encoder) {
-        this(encoder, true, true);
+    public DefaultEdgeFilter(BooleanEncodedValue accessEnc) {
+        this(accessEnc, true, true);
     }
 
-    public DefaultEdgeFilter(FlagEncoder encoder, boolean bwd, boolean fwd) {
-        this.encoder = encoder;
-        this.bwd = bwd;
+    // necessary?
+//    public DefaultEdgeFilter(EncodedValueLookup lookup, String prefix) {
+//        this(lookup.getBooleanEncodedValue(prefix + "access"), true, true);
+//    }
+
+    /**
+     * Creates an edges filter which allows edges that are either accessible in forward (if fwd is true) or in backward direction (if bwd is true).
+     */
+    public DefaultEdgeFilter(BooleanEncodedValue accessEnc, boolean fwd, boolean bwd) {
+        this.accessEnc = accessEnc;
         this.fwd = fwd;
+        this.bwd = bwd;
     }
 
     @Override
     public final boolean accept(EdgeIteratorState iter) {
-        return fwd && iter.isForward(encoder) || bwd && iter.isBackward(encoder);
+        return fwd && iter.get(accessEnc) || bwd && iter.getReverse(accessEnc);
     }
 
     public boolean acceptsBackward() {
@@ -55,6 +65,6 @@ public class DefaultEdgeFilter implements EdgeFilter {
 
     @Override
     public String toString() {
-        return encoder.toString() + ", bwd:" + bwd + ", fwd:" + fwd;
+        return accessEnc + ", bwd:" + bwd + ", fwd:" + fwd;
     }
 }

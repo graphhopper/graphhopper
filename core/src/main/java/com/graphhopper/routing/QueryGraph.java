@@ -26,7 +26,10 @@ import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.*;
+import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.GraphExtension;
+import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -300,9 +303,6 @@ public class QueryGraph implements Graph {
                 int adjNode = closestEdge.getAdjNode();
                 int origTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), false);
                 int origRevTraversalKey = GHUtility.createEdgeKey(baseNode, adjNode, closestEdge.getEdge(), true);
-                EdgeIteratorState revEdge = closestEdge.detach(true);
-                long reverseFlags = revEdge.getFlags();
-                IntsRef revEdgeData = revEdge.getData();
                 int prevWayIndex = 1;
                 int prevNodeId = baseNode;
                 int virtNodeId = virtualNodes.getSize() + mainNodes;
@@ -328,7 +328,7 @@ public class QueryGraph implements Graph {
                     createEdges(origTraversalKey, origRevTraversalKey,
                             prevPoint, prevWayIndex,
                             res.getSnappedPoint(), res.getWayIndex(),
-                            fullPL, closestEdge, prevNodeId, virtNodeId, reverseFlags, revEdgeData);
+                            fullPL, closestEdge, prevNodeId, virtNodeId);
 
                     virtualNodes.add(currSnapped.lat, currSnapped.lon, currSnapped.ele);
 
@@ -351,7 +351,7 @@ public class QueryGraph implements Graph {
                     createEdges(origTraversalKey, origRevTraversalKey,
                             prevPoint, prevWayIndex,
                             fullPL.toGHPoint(fullPL.getSize() - 1), fullPL.getSize() - 2,
-                            fullPL, closestEdge, virtNodeId - 1, adjNode, reverseFlags, revEdgeData);
+                            fullPL, closestEdge, virtNodeId - 1, adjNode);
 
                 return true;
             }
@@ -395,7 +395,7 @@ public class QueryGraph implements Graph {
     private void createEdges(int origTraversalKey, int origRevTraversalKey,
                              GHPoint3D prevSnapped, int prevWayIndex, GHPoint3D currSnapped, int wayIndex,
                              PointList fullPL, EdgeIteratorState closestEdge,
-                             int prevNodeId, int nodeId, long reverseFlags, IntsRef reverseEdgeData) {
+                             int prevNodeId, int nodeId) {
         int max = wayIndex + 1;
         // basePoints must have at least the size of 2 to make sure fetchWayGeometry(3) returns at least 2
         PointList basePoints = new PointList(max - prevWayIndex + 1, mainNodeAccess.is3D());
@@ -411,9 +411,10 @@ public class QueryGraph implements Graph {
 
         // edges between base and snapped point
         VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origTraversalKey,
-                virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getFlags(), closestEdge.getData(), closestEdge.getName(), basePoints);
+                virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getData(), closestEdge.getName(), basePoints);
+        // TODO NOW set internally reverse to true so that properties will be correctly fetched
         VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevTraversalKey,
-                virtEdgeId, nodeId, prevNodeId, baseDistance, reverseFlags, reverseEdgeData, closestEdge.getName(), baseReversePoints);
+                virtEdgeId, nodeId, prevNodeId, baseDistance, closestEdge.getData(), closestEdge.getName(), baseReversePoints);
         baseEdge.setReverseEdge(baseReverseEdge);
         baseReverseEdge.setReverseEdge(baseEdge);
         virtualEdges.add(baseEdge);
@@ -724,11 +725,6 @@ public class QueryGraph implements Graph {
     }
 
     public EdgeIteratorState edge(int a, int b, double distance, int flags) {
-        throw exc();
-    }
-
-    @Override
-    public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
         throw exc();
     }
 

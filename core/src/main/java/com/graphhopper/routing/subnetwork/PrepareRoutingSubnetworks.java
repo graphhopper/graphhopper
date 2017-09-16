@@ -21,12 +21,12 @@ import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
-import com.graphhopper.coll.GHIntArrayList;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.NodeAccess;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,14 +47,17 @@ public class PrepareRoutingSubnetworks {
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final GraphHopperStorage ghStorage;
     private final AtomicInteger maxEdgesPerNode = new AtomicInteger(0);
-    private final List<FlagEncoder> encoders;
+    private final List<PrepEdgeFilter> allFilters;
     private int minNetworkSize = 200;
     private int minOneWayNetworkSize = 0;
     private int subnetworks = -1;
 
     public PrepareRoutingSubnetworks(GraphHopperStorage ghStorage, List<FlagEncoder> encoders) {
         this.ghStorage = ghStorage;
-        this.encoders = encoders;
+        this.allFilters = new ArrayList<>();
+        for (FlagEncoder encoder : encoders) {
+            allFilters.add(new PrepEdgeFilter(encoder.getAccessEncodedValue()));
+        }
     }
 
     public PrepareRoutingSubnetworks setMinNetworkSize(int minNetworkSize) {
@@ -73,16 +76,15 @@ public class PrepareRoutingSubnetworks {
 
         logger.info("start finding subnetworks (min:" + minNetworkSize + ", min one way:" + minOneWayNetworkSize + ") " + Helper.getMemInfo());
         int unvisitedDeadEnds = 0;
-        for (FlagEncoder encoder : encoders) {
+        for (PrepEdgeFilter filter : allFilters) {
             // mark edges for one vehicle as inaccessible
-            PrepEdgeFilter filter = new PrepEdgeFilter(encoder);
             if (minOneWayNetworkSize > 0)
                 unvisitedDeadEnds += removeDeadEndUnvisitedNetworks(filter);
 
             List<IntArrayList> components = findSubnetworks(filter);
             keepLargeNetworks(filter, components);
             subnetworks = Math.max(components.size(), subnetworks);
-            logger.info(components.size() + " subnetworks found for " + encoder + ", " + Helper.getMemInfo());
+            logger.info(components.size() + " subnetworks found for " + filter + ", " + Helper.getMemInfo());
         }
 
         markNodesRemovedIfUnreachable();
@@ -100,8 +102,7 @@ public class PrepareRoutingSubnetworks {
     /**
      * This method finds the double linked components according to the specified filter.
      */
-    List<IntArrayList> findSubnetworks(PrepEdgeFilter filter) {
-        final FlagEncoder encoder = filter.getEncoder();
+    List<IntArrayList> findSubnetworks(final PrepEdgeFilter filter) {
         final EdgeExplorer explorer = ghStorage.createEdgeExplorer(filter);
         int locs = ghStorage.getNodes();
         List<IntArrayList> list = new ArrayList<IntArrayList>(100);
@@ -132,7 +133,7 @@ public class PrepareRoutingSubnetworks {
 
                 @Override
                 protected final boolean checkAdjacent(EdgeIteratorState edge) {
-                    if (encoder.isForward(edge.getFlags()) || encoder.isBackward(edge.getFlags())) {
+                    if (filter.accept(edge)) {
                         tmpCounter++;
                         return true;
                     }
@@ -155,7 +156,7 @@ public class PrepareRoutingSubnetworks {
         int maxCount = -1;
         IntIndexedContainer oldComponent = null;
         int allRemoved = 0;
-        FlagEncoder encoder = filter.getEncoder();
+        BooleanEncodedValue accessEnc = filter.getAccessEncodedValue();
         EdgeExplorer explorer = ghStorage.createEdgeExplorer(filter);
         for (IntArrayList component : components) {
             if (maxCount < 0) {
@@ -167,12 +168,12 @@ public class PrepareRoutingSubnetworks {
             int removedEdges;
             if (maxCount < component.size()) {
                 // new biggest area found. remove old
-                removedEdges = removeEdges(explorer, encoder, oldComponent, minNetworkSize);
+                removedEdges = removeEdges(explorer, accessEnc, oldComponent, minNetworkSize);
 
                 maxCount = component.size();
                 oldComponent = component;
             } else {
-                removedEdges = removeEdges(explorer, encoder, component, minNetworkSize);
+                removedEdges = removeEdges(explorer, accessEnc, component, minNetworkSize);
             }
 
             allRemoved += removedEdges;
@@ -183,13 +184,13 @@ public class PrepareRoutingSubnetworks {
         return allRemoved;
     }
 
-    String toString(FlagEncoder encoder, EdgeIterator iter) {
+    String toString(BooleanEncodedValue accessEnc, FlagEncoder encoder, EdgeIterator iter) {
         String str = "";
         while (iter.next()) {
             int adjNode = iter.getAdjNode();
             str += adjNode + " (" + ghStorage.getNodeAccess().getLat(adjNode) + "," + ghStorage.getNodeAccess().getLon(adjNode) + "), ";
-            str += "speed  (fwd:" + encoder.getSpeed(iter.getFlags()) + ", rev:" + encoder.getReverseSpeed(iter.getFlags()) + "), ";
-            str += "access (fwd:" + encoder.isForward(iter.getFlags()) + ", rev:" + encoder.isBackward(iter.getFlags()) + "), ";
+            str += "speed  (fwd:" + encoder.getSpeed(iter.getData()) + ", rev:" + encoder.getReverseSpeed(iter.getData()) + "), ";
+            str += "access (fwd:" + accessEnc.getBool(false, iter.getData()) + ", rev:" + accessEnc.getBool(true, iter.getData()) + "), ";
             str += "distance:" + iter.getDistance();
             str += ";\n ";
         }
@@ -206,8 +207,8 @@ public class PrepareRoutingSubnetworks {
      * @return number of removed edges
      */
     int removeDeadEndUnvisitedNetworks(final PrepEdgeFilter bothFilter) {
-        StopWatch sw = new StopWatch(bothFilter.getEncoder() + " findComponents").start();
-        final EdgeFilter outFilter = new DefaultEdgeFilter(bothFilter.getEncoder(), false, true);
+        StopWatch sw = new StopWatch(bothFilter.getAccessEncodedValue() + " findComponents").start();
+        final EdgeFilter outFilter = new DefaultEdgeFilter(bothFilter.getAccessEncodedValue(),  true, false);
 
         // partition graph into strongly connected components using Tarjan's algorithm        
         TarjansSCCAlgorithm tarjan = new TarjansSCCAlgorithm(ghStorage, outFilter, true);
@@ -226,22 +227,25 @@ public class PrepareRoutingSubnetworks {
      */
     int removeEdges(final PrepEdgeFilter bothFilter, List<IntArrayList> components, int min) {
         // remove edges determined from nodes but only if less than minimum size
-        FlagEncoder encoder = bothFilter.getEncoder();
+        BooleanEncodedValue accessEnc = bothFilter.getAccessEncodedValue();
         EdgeExplorer explorer = ghStorage.createEdgeExplorer(bothFilter);
         int removedEdges = 0;
         for (IntArrayList component : components) {
-            removedEdges += removeEdges(explorer, encoder, component, min);
+            removedEdges += removeEdges(explorer, accessEnc, component, min);
         }
         return removedEdges;
     }
 
-    int removeEdges(EdgeExplorer explorer, FlagEncoder encoder, IntIndexedContainer component, int min) {
+    int removeEdges(EdgeExplorer explorer, BooleanEncodedValue accessEnc, IntIndexedContainer component, int min) {
         int removedEdges = 0;
         if (component.size() < min) {
             for (int i = 0; i < component.size(); i++) {
                 EdgeIterator edge = explorer.setBaseNode(component.get(i));
                 while (edge.next()) {
-                    edge.setFlags(encoder.setAccess(edge.getFlags(), false, false));
+                    IntsRef ints = edge.getData();
+                    accessEnc.setBool(false, ints, false);
+                    accessEnc.setBool(true, ints, false);
+                    edge.setData(ints);
                     removedEdges++;
                 }
             }
@@ -263,7 +267,6 @@ public class PrepareRoutingSubnetworks {
 
     /**
      * This method checks if the node is removed or inaccessible for ALL encoders.
-     * <p>
      *
      * @return true if no edges are reachable from the specified nodeIndex for any flag encoder.
      */
@@ -275,9 +278,8 @@ public class PrepareRoutingSubnetworks {
         EdgeIterator iter = edgeExplorerAllEdges.setBaseNode(nodeIndex);
         while (iter.next()) {
             // if at least on encoder allows one direction return false
-            for (FlagEncoder encoder : encoders) {
-                if (encoder.isBackward(iter.getFlags())
-                        || encoder.isForward(iter.getFlags()))
+            for (EdgeFilter filter : allFilters) {
+                if (filter.accept(iter))
                     return false;
             }
         }
@@ -287,15 +289,15 @@ public class PrepareRoutingSubnetworks {
 
     static class PrepEdgeFilter extends DefaultEdgeFilter {
 
-        FlagEncoder encoder;
+        private BooleanEncodedValue accessEnc;
 
-        public PrepEdgeFilter(FlagEncoder encoder) {
-            super(encoder);
-            this.encoder = encoder;
+        public PrepEdgeFilter(BooleanEncodedValue accessEnc) {
+            super(accessEnc);
+            this.accessEnc = accessEnc;
         }
 
-        public FlagEncoder getEncoder() {
-            return encoder;
+        public BooleanEncodedValue getAccessEncodedValue() {
+            return accessEnc;
         }
     }
 }

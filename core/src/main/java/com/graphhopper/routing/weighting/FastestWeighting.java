@@ -23,10 +23,11 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Routing;
 
+import static com.graphhopper.util.EdgeIteratorState.UNFAVORED_EDGE;
+
 /**
  * Calculates the fastest route with the specified vehicle (VehicleEncoder). Calculates the weight
  * in seconds.
- * <p>
  *
  * @author Peter Karich
  */
@@ -40,11 +41,11 @@ public class FastestWeighting extends AbstractWeighting {
     private final long headingPenaltyMillis;
     private final double maxSpeed;
 
-    public FastestWeighting(FlagEncoder encoder, PMap map) {
-        super(encoder);
+    public FastestWeighting(FlagEncoder flagEncoder, PMap map) {
+        super(flagEncoder);
         headingPenalty = map.getDouble(Routing.HEADING_PENALTY, Routing.DEFAULT_HEADING_PENALTY);
         headingPenaltyMillis = Math.round(headingPenalty * 1000);
-        maxSpeed = encoder.getMaxSpeed() / SPEED_CONV;
+        maxSpeed = flagEncoder.getMaxSpeed() / SPEED_CONV;
     }
 
     public FastestWeighting(FlagEncoder encoder) {
@@ -58,14 +59,14 @@ public class FastestWeighting extends AbstractWeighting {
 
     @Override
     public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        double speed = reverse ? flagEncoder.getReverseSpeed(edge.getFlags()) : flagEncoder.getSpeed(edge.getFlags());
+        double speed = reverse ? edge.getReverse(averageSpeedEnc) : edge.get(averageSpeedEnc);
         if (speed == 0)
             return Double.POSITIVE_INFINITY;
 
         double time = edge.getDistance() / speed * SPEED_CONV;
 
         // add direction penalties at start/stop/via points
-        boolean unfavoredEdge = edge.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, false);
+        boolean unfavoredEdge = edge.get(UNFAVORED_EDGE);
         if (unfavoredEdge)
             time += headingPenalty;
 
@@ -76,7 +77,7 @@ public class FastestWeighting extends AbstractWeighting {
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
         // TODO move this to AbstractWeighting?
         long time = 0;
-        boolean unfavoredEdge = edgeState.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, false);
+        boolean unfavoredEdge = edgeState.get(EdgeIteratorState.UNFAVORED_EDGE);
         if (unfavoredEdge)
             time += headingPenaltyMillis;
 

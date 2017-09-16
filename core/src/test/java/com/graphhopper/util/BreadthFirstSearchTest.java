@@ -19,6 +19,7 @@ package com.graphhopper.util;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -54,19 +55,22 @@ public class BreadthFirstSearchTest {
             }
         };
 
-        Graph g = new GraphBuilder(new EncodingManager.Builder().addAllFlagEncoders("car").build()).create();
-        g.edge(0, 1, 85, true);
-        g.edge(0, 2, 217, true);
-        g.edge(0, 3, 173, true);
-        g.edge(0, 5, 173, true);
-        g.edge(1, 6, 75, true);
-        g.edge(2, 7, 51, true);
-        g.edge(3, 8, 23, true);
-        g.edge(4, 8, 793, true);
-        g.edge(8, 10, 343, true);
-        g.edge(6, 9, 72, true);
-        g.edge(9, 10, 8, true);
-        g.edge(5, 10, 1, true);
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
+        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue("car.access");
+        Graph g = new GraphBuilder(em).create();
+
+        GHUtility.setAccess(g.edge(0, 1).setDistance(85), accessEnc, true, true);
+        GHUtility.setAccess(g.edge(0, 2).setDistance(217), accessEnc, true, true);
+        GHUtility.setAccess(g.edge(0, 3).setDistance(173), accessEnc, true, true);
+        GHUtility.setAccess(g.edge(0, 5).setDistance(173), accessEnc, true, true);
+        GHUtility.setAccess(g.edge(1, 6).setDistance(75), accessEnc, true, true);
+        GHUtility.setAccess(g.edge(2, 7).setDistance(51), accessEnc, true, true);
+        GHUtility.setAccess(g.edge(3, 8).setDistance(23), accessEnc, true, true);
+        GHUtility.setAccess(g.edge(4, 8).setDistance(793), accessEnc, true, true);
+        GHUtility.setAccess(g.edge(8, 10).setDistance(343), accessEnc, true, true);
+        GHUtility.setAccess(g.edge(6, 9).setDistance(72), accessEnc, true, true);
+        GHUtility.setAccess(g.edge(9, 10).setDistance(8), accessEnc, true, true);
+        GHUtility.setAccess(g.edge(5, 10).setDistance(1), accessEnc, true, true);
 
         bfs.start(g.createEdgeExplorer(), 0);
 
@@ -88,13 +92,16 @@ public class BreadthFirstSearchTest {
             }
         };
 
-        Graph g = new GraphBuilder(new EncodingManager.Builder().addAllFlagEncoders("car").build()).create();
-        g.edge(1, 2, 1, false);
-        g.edge(2, 3, 1, false);
-        g.edge(3, 4, 1, false);
-        g.edge(1, 5, 1, false);
-        g.edge(5, 6, 1, false);
-        g.edge(6, 4, 1, false);
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
+        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue("car.access");
+        Graph g = new GraphBuilder(em).create();
+
+        GHUtility.setAccess(g.edge(1, 2).setDistance(1), accessEnc, true, false);
+        GHUtility.setAccess(g.edge(2, 3).setDistance(1), accessEnc, true, false);
+        GHUtility.setAccess(g.edge(3, 4).setDistance(1), accessEnc, true, false);
+        GHUtility.setAccess(g.edge(1, 5).setDistance(1), accessEnc, true, false);
+        GHUtility.setAccess(g.edge(5, 6).setDistance(1), accessEnc, true, false);
+        GHUtility.setAccess(g.edge(6, 4).setDistance(1), accessEnc, true, false);
 
         bfs.start(g.createEdgeExplorer(), 1);
 

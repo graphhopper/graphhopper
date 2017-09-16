@@ -20,105 +20,110 @@ package com.graphhopper.reader.gtfs;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.routing.profiles.TagParser;
 import com.graphhopper.routing.util.AbstractFlagEncoder;
-import com.graphhopper.routing.util.EncodedDoubleValue08;
-import com.graphhopper.routing.util.EncodedValue08;
+import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.storage.IntsRef;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class PtFlagEncoder extends AbstractFlagEncoder {
 
-	private final FootFlagEncoder footFlagEncoder;
-	private EncodedValue08 time;
-	private EncodedValue08 transfers;
-	private EncodedValue08 validityId;
-	private EncodedValue08 type;
+    private final FootFlagEncoder footFlagEncoder;
+    private IntEncodedValue time;
+    private IntEncodedValue transfers;
+    private IntEncodedValue validityId;
+    private IntEncodedValue type;
 
-	public PtFlagEncoder() {
-		super(0, 1, 0);
+    public PtFlagEncoder() {
+        super(0, 1, 0);
 
-		// I use the foot flag encoder only as a delegate to filter by OSM tags,
-		// not to encode flags.
-		footFlagEncoder = new FootFlagEncoder();
-		// Still, I have to do this. Otherwise 'acceptWay' returns 0 even though
-		// it wants to accept. Basically, I have to tell it what 'true' means.
-		footFlagEncoder.defineWayBits(1, 0);
-		footFlagEncoder.defineRelationBits(1, 0);
-	}
+        // TODO NOW replace this filtering via the TagParsers from the FootFlagEncoder?
+        // I use the foot flag encoder only as a delegate to filter by OSM tags,
+        // not to encode flags.
+        footFlagEncoder = new FootFlagEncoder();
 
-	@Override
-	public int defineWayBits(int index, int shift) {
-		shift = super.defineWayBits(index, shift);
-
-		// I have to set super.speedEncoder even though
-		// super already knows speedBits and speedFactor because they are constructor parameters.
-		speedEncoder = new EncodedDoubleValue08("Speed", shift, speedBits, speedFactor, 0, 0);
-		shift += speedEncoder.getBits();
-
-		time = new EncodedValue08("time", shift, 32, 1.0, 0, Integer.MAX_VALUE);
-		shift += time.getBits();
-		transfers = new EncodedValue08("transfers", shift, 1, 1.0, 0, 1);
-		shift += transfers.getBits();
-		validityId = new EncodedValue08("validityId", shift, 20, 1.0, 0, 1048575);
-		shift += validityId.getBits();
-		GtfsStorage.EdgeType[] edgeTypes = GtfsStorage.EdgeType.values();
-		type = new EncodedValue08("type", shift, 6, 1.0, GtfsStorage.EdgeType.HIGHWAY.ordinal(), edgeTypes[edgeTypes.length-1].ordinal());
-		shift += type.getBits();
-		return shift;
-	}
-
-	@Override
-	public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
-		return footFlagEncoder.handleRelationTags(relation, oldRelationFlags);
-	}
-
-	@Override
-	public long acceptWay(ReaderWay way) {
-		return footFlagEncoder.acceptWay(way);
-	}
-
-	@Override
-	public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
-		return footFlagEncoder.handleWayTags(way, allowed, relationFlags);
-	}
-
-	long getTime(long flags) {
-        return time.getValue(flags);
+        // Still, I have to do this. Otherwise 'getAccess' returns 0 even though
+        // it wants to accept. Basically, I have to tell it what 'true' means.
+        // TODO NOW: still necessary? footFlagEncoder.defineWayBits(1, 0);
+        footFlagEncoder.defineRelationBits(1, 0);
     }
 
-    long setTime(long flags, long time) {
-        return this.time.setValue(flags, time);
+    public Map<String, TagParser> createTagParsers(final String prefix) {
+        // I have to set super.speedEncoder even though
+        // super already knows speedBits and speedFactor because they are constructor parameters.
+        averageSpeedEnc = new DecimalEncodedValue("Speed", speedBits, 0, speedFactor, false);
+        accessEnc = new BooleanEncodedValue("access", true);
+        time = new IntEncodedValue("time", 32, 0, false);
+        // use BooleanEncodedValue?
+        transfers = new IntEncodedValue("transfers", 1, 0, false);
+        validityId = new IntEncodedValue("validityId", 20, 0, false);
+        type = new IntEncodedValue("type", 6, GtfsStorage.EdgeType.HIGHWAY.ordinal(), false);
+        return new HashMap<>();
     }
 
-    int getTransfers(long flags) {
-		return (int) transfers.getValue(flags);
-	}
+    @Override
+    public long handleRelationTags(ReaderRelation relation, long oldRelationFlags) {
+        return footFlagEncoder.handleRelationTags(relation, oldRelationFlags);
+    }
 
-	long setTransfers(long flags, int transfers) {
-		return this.transfers.setValue(flags, transfers);
-	}
+    @Override
+    public EncodingManager.Access getAccess(ReaderWay way) {
+        return footFlagEncoder.getAccess(way);
+    }
 
-	int getValidityId(long flags) {
-		return (int) validityId.getValue(flags);
-	}
+    @Override
+    public IntsRef handleWayTags(IntsRef ints, ReaderWay way, EncodingManager.Access allowed, long relationFlags) {
+        return footFlagEncoder.handleWayTags(ints, way, allowed, relationFlags);
+    }
 
-	long setValidityId(long flags, int validityId) {
-		return this.validityId.setValue(flags, validityId);
-	}
+    long getTime(IntsRef flags) {
+        return time.getInt(false, flags);
+    }
 
-	GtfsStorage.EdgeType getEdgeType(long flags) {
-		return GtfsStorage.EdgeType.values()[(int) type.getValue(flags)];
-	}
+    IntsRef setTime(IntsRef flags, long time) {
+        this.time.setInt(false, flags, (int) time);
+        return flags;
+    }
 
-	long setEdgeType(long flags, GtfsStorage.EdgeType edgeType) {
-		return type.setValue(flags, edgeType.ordinal());
-	}
+    int getTransfers(IntsRef flags) {
+        return transfers.getInt(false, flags);
+    }
 
-	public String toString() {
-		return "pt";
-	}
+    IntsRef setTransfers(IntsRef flags, int transfers) {
+        this.transfers.setInt(false, flags, transfers);
+        return flags;
+    }
 
-	@Override
-	public int getVersion() {
-		return 0;
-	}
+    int getValidityId(IntsRef flags) {
+        return validityId.getInt(false, flags);
+    }
+
+    IntsRef setValidityId(IntsRef flags, int validityId) {
+        this.validityId.setInt(false, flags, validityId);
+        return flags;
+    }
+
+    GtfsStorage.EdgeType getEdgeType(IntsRef flags) {
+        return GtfsStorage.EdgeType.values()[type.getInt(false, flags)];
+    }
+
+    IntsRef setEdgeType(IntsRef flags, GtfsStorage.EdgeType edgeType) {
+        type.setInt(false, flags, edgeType.ordinal());
+        return flags;
+    }
+
+    public String toString() {
+        return "pt";
+    }
+
+    @Override
+    public int getVersion() {
+        return 0;
+    }
 }

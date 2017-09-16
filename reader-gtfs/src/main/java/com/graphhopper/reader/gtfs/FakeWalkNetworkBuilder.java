@@ -19,9 +19,12 @@
 package com.graphhopper.reader.gtfs;
 
 import com.conveyal.gtfs.GTFSFeed;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.triangulate.ConformingDelaunayTriangulator;
 import com.vividsolutions.jts.triangulate.ConstraintVertex;
@@ -43,6 +46,7 @@ class FakeWalkNetworkBuilder {
             sites.add(site);
             vertex2nodeId.put(site, i-1);
         });
+        BooleanEncodedValue accessEnc = encoder.getAccessEncodedValue();
         ConformingDelaunayTriangulator conformingDelaunayTriangulator = new ConformingDelaunayTriangulator(sites, 0.0);
         conformingDelaunayTriangulator.setConstraints(new ArrayList(), new ArrayList());
         conformingDelaunayTriangulator.formInitialDelaunay();
@@ -56,8 +60,10 @@ class FakeWalkNetworkBuilder {
                     edge.dest().getY(),
                     edge.dest().getX());
             ghEdge.setDistance(distance);
-            ghEdge.setFlags(encoder.setSpeed(ghEdge.getFlags(), 5.0));
-            ghEdge.setFlags(encoder.setAccess(ghEdge.getFlags(), true, true));
+            IntsRef ints = encoder.setSpeed(ghEdge.getData(), 5.0);
+            accessEnc.setBool(false, ints, true);
+            accessEnc.setBool(true, ints, true);
+            ghEdge.setData(ints);
         }
     }
 

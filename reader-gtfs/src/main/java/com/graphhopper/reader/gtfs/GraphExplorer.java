@@ -39,7 +39,7 @@ final class GraphExplorer {
     private final PtTravelTimeWeighting weighting;
 
     GraphExplorer(Graph graph, PtTravelTimeWeighting weighting, PtFlagEncoder flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse) {
-        this.edgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, reverse, !reverse));
+        this.edgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder.getAccessEncodedValue(), !reverse, reverse));
         this.flagEncoder = flagEncoder;
         this.weighting = weighting;
         this.gtfsStorage = gtfsStorage;
@@ -58,8 +58,8 @@ final class GraphExplorer {
 
                     @Override
                     public boolean hasNext() {
-                        while(edgeIterator.next()) {
-                            final GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator.getFlags());
+                        while (edgeIterator.next()) {
+                            final GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator.getData());
                             if (!isValidOn(edgeIterator, label.currentTime)) {
                                 continue;
                             }
@@ -73,7 +73,7 @@ final class GraphExplorer {
                                 continue;
                             }
                             if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK && !reverse) {
-                                if (secondsOnTrafficDay(edgeIterator, label.currentTime) > flagEncoder.getTime(edgeIterator.getFlags())) {
+                                if (secondsOnTrafficDay(edgeIterator, label.currentTime) > flagEncoder.getTime(edgeIterator.getData())) {
                                     continue;
                                 } else {
                                     if (foundEnteredTimeExpandedNetworkEdge) {
@@ -83,7 +83,7 @@ final class GraphExplorer {
                                     }
                                 }
                             } else if (edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && reverse) {
-                                if (secondsOnTrafficDay(edgeIterator, label.currentTime) < flagEncoder.getTime(edgeIterator.getFlags())) {
+                                if (secondsOnTrafficDay(edgeIterator, label.currentTime) < flagEncoder.getTime(edgeIterator.getData())) {
                                     continue;
                                 }
                             }
@@ -102,7 +102,7 @@ final class GraphExplorer {
     }
 
     long calcTravelTimeMillis(EdgeIteratorState edge, long earliestStartTime) {
-        GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
+        GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getData());
         switch (edgeType) {
             case HIGHWAY:
                 return weighting.calcMillis(edge, false, -1);
@@ -119,28 +119,28 @@ final class GraphExplorer {
                     return 0;
                 }
             default:
-                return flagEncoder.getTime(edge.getFlags()) * 1000;
+                return flagEncoder.getTime(edge.getData()) * 1000;
         }
     }
 
     private long waitingTime(EdgeIteratorState edge, long earliestStartTime) {
-        return flagEncoder.getTime(edge.getFlags()) * 1000 - millisOnTravelDay(edge, earliestStartTime);
+        return flagEncoder.getTime(edge.getData()) * 1000 - millisOnTravelDay(edge, earliestStartTime);
     }
 
     private int secondsOnTrafficDay(EdgeIteratorState edge, long instant) {
-        final ZoneId zoneId = gtfsStorage.getTimeZones().get(flagEncoder.getValidityId(edge.getFlags())).zoneId;
+        final ZoneId zoneId = gtfsStorage.getTimeZones().get(flagEncoder.getValidityId(edge.getData())).zoneId;
         return Instant.ofEpochMilli(instant).atZone(zoneId).toLocalTime().toSecondOfDay();
     }
 
     private long millisOnTravelDay(EdgeIteratorState edge, long instant) {
-        final ZoneId zoneId = gtfsStorage.getTimeZones().get(flagEncoder.getValidityId(edge.getFlags())).zoneId;
+        final ZoneId zoneId = gtfsStorage.getTimeZones().get(flagEncoder.getValidityId(edge.getData())).zoneId;
         return Instant.ofEpochMilli(instant).atZone(zoneId).toLocalTime().toNanoOfDay() / 1000000L;
     }
 
     private boolean isValidOn(EdgeIteratorState edge, long instant) {
-        GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
+        GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getData());
         if (edgeType == GtfsStorage.EdgeType.BOARD || edgeType == GtfsStorage.EdgeType.ALIGHT) {
-            final int validityId = flagEncoder.getValidityId(edge.getFlags());
+            final int validityId = flagEncoder.getValidityId(edge.getData());
             final GtfsStorage.Validity validity = gtfsStorage.getValidities().get(validityId);
             final int trafficDay = (int) ChronoUnit.DAYS.between(validity.start, Instant.ofEpochMilli(instant).atZone(validity.zoneId).toLocalDate());
             return trafficDay >= 0 && validity.validity.get(trafficDay);

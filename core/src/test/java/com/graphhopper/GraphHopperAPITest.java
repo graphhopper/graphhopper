@@ -18,6 +18,9 @@
 package com.graphhopper;
 
 import com.graphhopper.json.geo.JsonFeature;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -25,6 +28,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.change.ChangeGraphHelper;
 import com.graphhopper.storage.index.LocationIndex;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 import org.junit.Test;
@@ -42,7 +46,9 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class GraphHopperAPITest {
-    final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
+    final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
+    final BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+    final DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
 
     void initGraph(GraphHopperStorage graph) {
         NodeAccess na = graph.getNodeAccess();
@@ -51,8 +57,8 @@ public class GraphHopperAPITest {
         na.setNode(2, 42.1, 10.2);
         na.setNode(3, 42, 10.4);
 
-        graph.edge(0, 1, 10, true);
-        graph.edge(2, 3, 10, true);
+        GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 0, 1, true, 10);
+        GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 2, 3, true, 10);
     }
 
     @Test
@@ -63,9 +69,9 @@ public class GraphHopperAPITest {
         NodeAccess na = graph.getNodeAccess();
         na.setNode(4, 41.9, 10.2);
 
-        graph.edge(1, 2, 10, false);
-        graph.edge(0, 4, 40, true);
-        graph.edge(4, 3, 40, true);
+        GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 1, 2, false, 10);
+        GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 0, 4, true, 40);
+        GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 4, 3, true, 40);
 
         GraphHopper instance = new GraphHopper().
                 setStoreOnFlush(false).
@@ -132,7 +138,7 @@ public class GraphHopperAPITest {
     public void testConcurrentGraphChange() throws InterruptedException {
         final GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
         initGraph(graph);
-        graph.edge(1, 2, 10, true);
+        GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 1, 2, true, 10);
 
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicInteger checkPointCounter = new AtomicInteger(0);

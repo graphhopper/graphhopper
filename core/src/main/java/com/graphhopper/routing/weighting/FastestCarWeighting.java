@@ -19,6 +19,7 @@ package com.graphhopper.routing.weighting;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -35,9 +36,9 @@ public class FastestCarWeighting implements Weighting {
     private final BooleanEncodedValue access;
 
     public FastestCarWeighting(EncodingManager em, String name) {
-        this.maxSpeed = em.getEncodedValue("max_speed", DecimalEncodedValue.class);
-        this.averageSpeed = em.getEncodedValue("average_speed", DecimalEncodedValue.class);
-        this.access = em.getEncodedValue("access", BooleanEncodedValue.class);
+        this.maxSpeed = em.getDecimalEncodedValue(TagParserFactory.Car.MAX_SPEED);
+        this.averageSpeed = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        this.access = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
         this.maxSpeedValue = 100 / SPEED_CONV;
         this.name = name;
     }

@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
@@ -26,6 +29,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.TurnCostExtension;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -68,17 +72,17 @@ public class EdgeBasedRoutingAlgorithmTest {
     // 2--3--4
     // |  |  |
     // 5--6--7
-    public static void initGraph(Graph g) {
-        g.edge(0, 1, 3, true);
-        g.edge(0, 2, 1, true);
-        g.edge(1, 3, 1, true);
-        g.edge(2, 3, 1, true);
-        g.edge(3, 4, 1, true);
-        g.edge(2, 5, .5, true);
-        g.edge(3, 6, 1, true);
-        g.edge(4, 7, 1, true);
-        g.edge(5, 6, 1, true);
-        g.edge(6, 7, 1, true);
+    public static void initGraph(Graph g, BooleanEncodedValue accessEnc, DecimalEncodedValue avSpeedEnc) {
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 0, 1, true, 3);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 0, 2, true, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 3, true, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 2, 3, true, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 3, 4, true, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 2, 5, true, .5);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 3, 6, true, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 4, 7, true, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 5, 6, true, 1);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 6, 7, true, 1);
     }
 
     EncodingManager createEncodingManager(boolean restrictedOnly) {
@@ -87,7 +91,7 @@ public class EdgeBasedRoutingAlgorithmTest {
         else
             // allow for basic costs too
             carEncoder = new CarFlagEncoder(5, 5, 3);
-        return new EncodingManager.Builder().addAll(carEncoder).build();
+        return new EncodingManager.Builder().addGlobalEncodedValues().addAll(carEncoder).build();
     }
 
     public RoutingAlgorithm createAlgo(Graph g, AlgorithmOptions opts) {
@@ -132,8 +136,11 @@ public class EdgeBasedRoutingAlgorithmTest {
 
     @Test
     public void testBasicTurnRestriction() {
-        GraphHopperStorage g = createStorage(createEncodingManager(true));
-        initGraph(g);
+        EncodingManager em = createEncodingManager(true);
+        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        GraphHopperStorage g = createStorage(em);
+        initGraph(g, accessEnc, avSpeedEnc);
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
         initTurnRestrictions(g, tcs, carEncoder);
         Path p = createAlgo(g, AlgorithmOptions.start().
@@ -158,8 +165,11 @@ public class EdgeBasedRoutingAlgorithmTest {
 
     @Test
     public void testUTurns() {
-        GraphHopperStorage g = createStorage(createEncodingManager(true));
-        initGraph(g);
+        EncodingManager em = createEncodingManager(true);
+        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        GraphHopperStorage g = createStorage(em);
+        initGraph(g, accessEnc, avSpeedEnc);
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
 
         long tflags = carEncoder.getTurnFlags(true, 0);
@@ -191,8 +201,12 @@ public class EdgeBasedRoutingAlgorithmTest {
 
     @Test
     public void testBasicTurnCosts() {
-        GraphHopperStorage g = createStorage(createEncodingManager(false));
-        initGraph(g);
+        EncodingManager em = createEncodingManager(false);
+        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+
+        GraphHopperStorage g = createStorage(em);
+        initGraph(g, accessEnc, avSpeedEnc);
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
         Path p = createAlgo(g, AlgorithmOptions.start().
                 weighting(createWeighting(carEncoder, tcs, 40)).
@@ -217,8 +231,12 @@ public class EdgeBasedRoutingAlgorithmTest {
 
     @Test
     public void testTurnCostsBug_991() {
-        final GraphHopperStorage g = createStorage(createEncodingManager(false));
-        initGraph(g);
+        EncodingManager em = createEncodingManager(false);
+        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+
+        final GraphHopperStorage g = createStorage(em);
+        initGraph(g, accessEnc, avSpeedEnc);
         TurnCostExtension tcs = (TurnCostExtension) g.getExtension();
 
         long tflags = carEncoder.getTurnFlags(false, 2);

@@ -17,6 +17,9 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -27,6 +30,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
 
@@ -36,9 +40,11 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class PathBidirRefTest {
-    private final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
+    private final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
     private FlagEncoder carEncoder = encodingManager.getEncoder("car");
-    private EdgeFilter carOutEdges = new DefaultEdgeFilter(carEncoder, false, true);
+    private BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+    private DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+    private EdgeFilter carOutEdges = new DefaultEdgeFilter(accessEnc, true, false);
 
     Graph createGraph() {
         return new GraphBuilder(encodingManager).create();
@@ -47,7 +53,7 @@ public class PathBidirRefTest {
     @Test
     public void testExtract() {
         Graph g = createGraph();
-        g.edge(1, 2, 10, true);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 2, true, 10);
         PathBidirRef pw = new PathBidirRef(g, new FastestWeighting(carEncoder));
         EdgeExplorer explorer = g.createEdgeExplorer(carOutEdges);
         EdgeIterator iter = explorer.setBaseNode(1);
@@ -63,8 +69,8 @@ public class PathBidirRefTest {
     @Test
     public void testExtract2() {
         Graph g = createGraph();
-        g.edge(1, 2, 10, false);
-        g.edge(2, 3, 20, false);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 2, false, 10);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 2, 3, false, 20);
         EdgeExplorer explorer = g.createEdgeExplorer(carOutEdges);
         EdgeIterator iter = explorer.setBaseNode(1);
         iter.next();
@@ -72,7 +78,7 @@ public class PathBidirRefTest {
         pw.sptEntry = new SPTEntry(iter.getEdge(), 2, 10);
         pw.sptEntry.parent = new SPTEntry(EdgeIterator.NO_EDGE, 1, 0);
 
-        explorer = g.createEdgeExplorer(new DefaultEdgeFilter(carEncoder, true, false));
+        explorer = g.createEdgeExplorer(new DefaultEdgeFilter(accessEnc, false, true));
         iter = explorer.setBaseNode(3);
         iter.next();
         pw.edgeTo = new SPTEntry(iter.getEdge(), 2, 20);

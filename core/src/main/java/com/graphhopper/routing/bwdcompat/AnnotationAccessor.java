@@ -21,5 +21,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.InstructionAnnotation;
 
 public interface AnnotationAccessor {
+    // TODO NOW we should use other properties stored as EncodedValues
+    @Deprecated
     InstructionAnnotation get(EdgeIteratorState edge);
 }

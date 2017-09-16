@@ -2,13 +2,14 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
-import com.graphhopper.routing.util.spatialrules.AccessValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.util.spatialrules.Polygon;
 import com.graphhopper.routing.util.spatialrules.SpatialRule;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.countries.GermanySpatialRule;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
 import com.graphhopper.util.shapes.GHPoint;
@@ -28,9 +29,12 @@ public class DataFlagEncoderTest {
     private final PMap properties;
     private final DataFlagEncoder encoder;
     private final EncodingManager encodingManager;
-    private final int motorVehicleInt;
-
+    private final StringEncodedValue roadClassEnc;
     private final double DELTA = 0.1;
+    private final StringEncodedValue surfaceEnc;
+    private final IntEncodedValue accessClassEnc;
+    private final BooleanEncodedValue accessEnc;
+    private final DecimalEncodedValue maxSpeedEnc;
 
     public DataFlagEncoderTest() {
         properties = new PMap();
@@ -38,20 +42,24 @@ public class DataFlagEncoderTest {
         properties.put("store_weight", true);
         properties.put("store_width", true);
         encoder = new DataFlagEncoder(properties);
-        encodingManager = new EncodingManager.Builder().addAll(Arrays.asList(encoder), 8).build();
-
-        motorVehicleInt = encoder.getAccessType("motor_vehicle");
+        encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(encoder), 8).build();
+        roadClassEnc = encodingManager.getStringEncodedValue(TagParserFactory.ROAD_CLASS);
+        // misusing average as max speed
+        maxSpeedEnc = encodingManager.getDecimalEncodedValue(encoder.getPrefix() + "average_speed");
+        surfaceEnc = encodingManager.getStringEncodedValue(TagParserFactory.SURFACE);
+        accessClassEnc = encodingManager.getIntEncodedValue("access_class");
+        accessEnc = encodingManager.getBooleanEncodedValue(encoder.getPrefix() + "access");
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testInsufficientEncoderBitLength() {
-        EncodingManager em = new EncodingManager.Builder().addAll(Arrays.asList(new DataFlagEncoder(properties)), 4).build();
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(new DataFlagEncoder(properties)), 4).build();
     }
 
     @Test
     public void testSufficientEncoderBitLength() {
-        EncodingManager em = new EncodingManager.Builder().addAll(Arrays.asList(new DataFlagEncoder(properties)), 8).build();
-        EncodingManager em1 = new EncodingManager.Builder().addAll(Arrays.asList(new DataFlagEncoder()), 4).build();
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(new DataFlagEncoder(properties)), 8).build();
+        EncodingManager em1 = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(new DataFlagEncoder()), 4).build();
     }
 
     @Test
@@ -60,27 +68,27 @@ public class DataFlagEncoderTest {
         osmWay.setTag("highway", "primary");
         osmWay.setTag("surface", "sand");
         osmWay.setTag("tunnel", "yes");
-        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        IntsRef flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals("primary", encoder.getHighwayAsString(edge));
-        assertEquals("sand", encoder.getSurfaceAsString(edge));
-        assertEquals("tunnel", encoder.getTransportModeAsString(edge));
-        assertTrue(encoder.isForward(edge, motorVehicleInt));
-        assertTrue(encoder.isBackward(edge, motorVehicleInt));
+        assertEquals("primary", edge.get(roadClassEnc));
+        assertEquals("sand", edge.get(surfaceEnc));
+        assertEquals("tunnel", edge.get(accessClassEnc));
+        assertTrue(edge.get(accessEnc));
+        assertTrue(edge.getReverse(accessEnc));
 
         osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("oneway", "yes");
-        flags = encoder.handleWayTags(osmWay, 1, 0);
+        flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertTrue(encoder.isForward(edge, motorVehicleInt));
-        assertFalse(encoder.isBackward(edge, motorVehicleInt));
+        assertTrue(edge.get(accessEnc));
+        assertFalse(edge.getReverse(accessEnc));
 
         osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "unknownX");
-        flags = encoder.handleWayTags(osmWay, 1, 0);
+        flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals("_default", encoder.getHighwayAsString(edge));
+        assertEquals("_default", edge.get(roadClassEnc));
     }
 
     @Test
@@ -88,22 +96,22 @@ public class DataFlagEncoderTest {
         ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("tunnel", "yes");
-        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        IntsRef flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals("primary", encoder.getHighwayAsString(edge));
-        assertEquals("tunnel", encoder.getTransportModeAsString(edge));
-        assertTrue(encoder.isTransportModeTunnel(edge));
-        assertFalse(encoder.isTransportModeBridge(edge));
+        assertEquals("primary", edge.get(roadClassEnc));
+        assertEquals("tunnel", edge.get(accessClassEnc));
+        assertTrue(encoder.isTunnel(edge.getData()));
+        assertFalse(encoder.isBridge(edge.getData()));
 
         osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("tunnel", "yes");
         osmWay.setTag("bridge", "yes");
-        flags = encoder.handleWayTags(osmWay, 1, 0);
+        flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals("bridge", encoder.getTransportModeAsString(edge));
-        assertFalse(encoder.isTransportModeTunnel(edge));
-        assertTrue(encoder.isTransportModeBridge(edge));
+        assertEquals("bridge", edge.get(accessClassEnc));
+        assertFalse(encoder.isTunnel(edge.getData()));
+        assertTrue(encoder.isBridge(edge.getData()));
     }
 
     @Test
@@ -111,22 +119,22 @@ public class DataFlagEncoderTest {
         ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("bridge", "yes");
-        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        IntsRef flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals("primary", encoder.getHighwayAsString(edge));
-        assertEquals("bridge", encoder.getTransportModeAsString(edge));
-        assertFalse(encoder.isTransportModeTunnel(edge));
-        assertTrue(encoder.isTransportModeBridge(edge));
+        assertEquals("primary", edge.get(roadClassEnc));
+        assertEquals("bridge", edge.get(accessClassEnc));
+        assertFalse(encoder.isTunnel(edge.getData()));
+        assertTrue(encoder.isBridge(edge.getData()));
 
         osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("bridge", "yes");
         osmWay.setTag("tunnel", "yes");
-        flags = encoder.handleWayTags(osmWay, 1, 0);
+        flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals("bridge", encoder.getTransportModeAsString(edge));
-        assertFalse(encoder.isTransportModeTunnel(edge));
-        assertTrue(encoder.isTransportModeBridge(edge));
+        assertEquals("bridge", edge.get(accessClassEnc));
+        assertFalse(encoder.isTunnel(edge.getData()));
+        assertTrue(encoder.isBridge(edge.getData()));
     }
 
     @Test
@@ -134,11 +142,11 @@ public class DataFlagEncoderTest {
         ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "unclassified");
         osmWay.setTag("ford", "yes");
-        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        IntsRef flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals("ford", encoder.getTransportModeAsString(edge));
-        assertTrue(encoder.isTransportModeFord(edge.getFlags()));
-        assertTrue(encoder.getAnnotation(edge.getFlags(), TranslationMapTest.SINGLETON.get("en")).getMessage().contains("ford"));
+        assertEquals("ford", edge.get(accessClassEnc));
+        assertTrue(encoder.isFord(edge.getData()));
+        assertTrue(encoder.getAnnotation(edge.getData(), TranslationMapTest.SINGLETON.get("en")).getMessage().contains("ford"));
     }
 
     @Test
@@ -158,13 +166,19 @@ public class DataFlagEncoderTest {
     public void testDestinationTag() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
-        assertEquals(AccessValue.ACCESSIBLE, encoder.getAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+        IntsRef ints = encodingManager.handleWayTags(encodingManager.createIntsRef(), way, new EncodingManager.AcceptWay(), 0);
+        int idx = accessClassEnc.getInt(false, ints);
+        assertEquals(SpatialRule.Access.YES, SpatialRule.Access.values()[idx]);
 
         way.setTag("vehicle", "destination");
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, encoder.getAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+        ints = encodingManager.handleWayTags(encodingManager.createIntsRef(), way, new EncodingManager.AcceptWay(), 0);
+        idx = accessClassEnc.getInt(false, ints);
+        assertEquals(SpatialRule.Access.CONDITIONAL, SpatialRule.Access.values()[idx]);
 
         way.setTag("vehicle", "no");
-        assertEquals(AccessValue.NOT_ACCESSIBLE, encoder.getAccessValue(encoder.handleWayTags(way, encoder.acceptWay(way), 0)));
+        ints = encodingManager.handleWayTags(encodingManager.createIntsRef(), way, new EncodingManager.AcceptWay(), 0);
+        idx = accessClassEnc.getInt(false, ints);
+        assertEquals(SpatialRule.Access.NO, SpatialRule.Access.values()[idx]);
     }
 
     @Test
@@ -172,28 +186,28 @@ public class DataFlagEncoderTest {
         ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("maxspeed", "10");
-        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        IntsRef flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals(10, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
-        assertEquals(10, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
+        assertEquals(10, edge.get(maxSpeedEnc), .1);
+        assertEquals(10, edge.getReverse(maxSpeedEnc), .1);
 
         osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("maxspeed:forward", "10");
-        flags = encoder.handleWayTags(osmWay, 1, 0);
+        flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals(10, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
-        assertEquals(-1, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
+        assertEquals(10, edge.get(maxSpeedEnc), .1);
+        assertEquals(-1, edge.getReverse(maxSpeedEnc), .1);
 
         osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("maxspeed:forward", "50");
         osmWay.setTag("maxspeed:backward", "50");
         osmWay.setTag("maxspeed", "60");
-        flags = encoder.handleWayTags(osmWay, 1, 0);
+        flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals(50, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
-        assertEquals(50, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
+        assertEquals(50, edge.get(maxSpeedEnc), .1);
+        assertEquals(50, edge.getReverse(maxSpeedEnc), .1);
     }
 
     @Test
@@ -201,18 +215,18 @@ public class DataFlagEncoderTest {
         ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("maxspeed", "145");
-        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        IntsRef flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
         EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals(140, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
-        assertEquals(140, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
+        assertEquals(140, edge.get(maxSpeedEnc), .1);
+        assertEquals(140, edge.getReverse(maxSpeedEnc), .1);
 
         osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("maxspeed", "1000");
-        flags = encoder.handleWayTags(osmWay, 1, 0);
+        flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
         edge = GHUtility.createMockedEdgeIteratorState(0, flags);
-        assertEquals(140, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
-        assertEquals(140, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
+        assertEquals(140, edge.get(maxSpeedEnc), .1);
+        assertEquals(140, edge.getReverse(maxSpeedEnc), .1);
     }
 
     @Test
@@ -222,15 +236,15 @@ public class DataFlagEncoderTest {
         ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
         osmWay.setTag("maxspeed:forward", "10");
-        long flags = encoder.handleWayTags(osmWay, 1, 0);
-        edge.setFlags(flags);
+        IntsRef flags = encoder.handleWayTags(encodingManager.createIntsRef(), osmWay, EncodingManager.Access.WAY, 0);
+        edge.setData(flags);
 
-        assertEquals(10, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
-        assertEquals(-1, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
+        assertEquals(10, edge.get(maxSpeedEnc), .1);
+        assertEquals(-1, edge.getReverse(maxSpeedEnc), .1);
 
         edge = edge.detach(true);
-        assertEquals(-1, encoder.getMaxspeed(edge, motorVehicleInt, false), .1);
-        assertEquals(10, encoder.getMaxspeed(edge, motorVehicleInt, true), .1);
+        assertEquals(-1, edge.get(maxSpeedEnc), .1);
+        assertEquals(10, edge.getReverse(maxSpeedEnc), .1);
     }
 
     @Test
@@ -238,88 +252,92 @@ public class DataFlagEncoderTest {
         Graph graph = new GraphBuilder(encodingManager).create();
         EdgeIteratorState edge = graph.edge(0, 1);
 
-        edge.setFlags(encoder.setAccess(edge.getFlags(), true, true));
-        assertTrue(encoder.isForward(edge, motorVehicleInt));
-        assertTrue(encoder.isBackward(edge, motorVehicleInt));
+        edge.set(accessEnc, true);
+        edge.setReverse(accessEnc, true);
+        assertTrue(accessEnc.getBool(false, edge.getData()));
+        assertTrue(accessEnc.getBool(true, edge.getData()));
 
-        edge.setFlags(encoder.setAccess(edge.getFlags(), true, false));
-        assertTrue(encoder.isForward(edge, motorVehicleInt));
-        assertFalse(encoder.isBackward(edge, motorVehicleInt));
+        edge.set(accessEnc, true);
+        edge.setReverse(accessEnc, false);
+        assertTrue(accessEnc.getBool(false, edge.getData()));
+        assertFalse(accessEnc.getBool(true, edge.getData()));
 
         edge = edge.detach(true);
-        assertFalse(encoder.isForward(edge, motorVehicleInt));
-        assertTrue(encoder.isBackward(edge, motorVehicleInt));
-        edge = edge.detach(true);
-        assertTrue(encoder.isForward(edge, motorVehicleInt));
-        assertFalse(encoder.isBackward(edge, motorVehicleInt));
+        assertFalse(accessEnc.getBool(false, edge.getData()));
+        assertTrue(accessEnc.getBool(true, edge.getData()));
 
-        edge.setFlags(encoder.setAccess(edge.getFlags(), false, false));
-        assertFalse(encoder.isForward(edge, motorVehicleInt));
-        assertFalse(encoder.isBackward(edge, motorVehicleInt));
+        edge = edge.detach(true);
+        assertTrue(accessEnc.getBool(false, edge.getData()));
+        assertFalse(accessEnc.getBool(true, edge.getData()));
+
+        edge.set(accessEnc, true);
+        edge.setReverse(accessEnc, true);
+        assertFalse(accessEnc.getBool(false, edge.getData()));
+        assertFalse(accessEnc.getBool(true, edge.getData()));
     }
 
     @Test
     public void acceptWay() {
         ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
-        assertTrue(encoder.acceptWay(osmWay) != 0);
+        assertTrue(encoder.getAccess(osmWay).isWay());
 
         // important to filter out illegal highways to reduce the number of edges before adding them to the graph
         osmWay.setTag("highway", "building");
-        assertTrue(encoder.acceptWay(osmWay) == 0);
+        assertTrue(encoder.getAccess(osmWay).canSkip());
     }
 
     @Test
     public void stringToMeter() {
-        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5"), DELTA);
-        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5m"), DELTA);
-        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5 m"), DELTA);
-        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5   m"), DELTA);
-        assertEquals(1.5, DataFlagEncoder.stringToMeter("1.5 meter"), DELTA);
-        assertEquals(1.5, DataFlagEncoder.stringToMeter("4 ft 11 in"), DELTA);
-        assertEquals(1.5, DataFlagEncoder.stringToMeter("4'11''"), DELTA);
+        assertEquals(1.5, TagParserFactory.stringToMeter("1.5"), DELTA);
+        assertEquals(1.5, TagParserFactory.stringToMeter("1.5m"), DELTA);
+        assertEquals(1.5, TagParserFactory.stringToMeter("1.5 m"), DELTA);
+        assertEquals(1.5, TagParserFactory.stringToMeter("1.5   m"), DELTA);
+        assertEquals(1.5, TagParserFactory.stringToMeter("1.5 meter"), DELTA);
+        assertEquals(1.5, TagParserFactory.stringToMeter("4 ft 11 in"), DELTA);
+        assertEquals(1.5, TagParserFactory.stringToMeter("4'11''"), DELTA);
 
 
-        assertEquals(3, DataFlagEncoder.stringToMeter("3 m."), DELTA);
-        assertEquals(3, DataFlagEncoder.stringToMeter("3meters"), DELTA);
-        assertEquals(0.8 * 3, DataFlagEncoder.stringToMeter("~3"), DELTA);
-        assertEquals(3 * 0.8, DataFlagEncoder.stringToMeter("3 m approx"), DELTA);
+        assertEquals(3, TagParserFactory.stringToMeter("3 m."), DELTA);
+        assertEquals(3, TagParserFactory.stringToMeter("3meters"), DELTA);
+        assertEquals(0.8 * 3, TagParserFactory.stringToMeter("~3"), DELTA);
+        assertEquals(3 * 0.8, TagParserFactory.stringToMeter("3 m approx"), DELTA);
 
         // 2.743 + 0.178
-        assertEquals(2.921, DataFlagEncoder.stringToMeter("9 ft 7in"), DELTA);
-        assertEquals(2.921, DataFlagEncoder.stringToMeter("9'7\""), DELTA);
-        assertEquals(2.921, DataFlagEncoder.stringToMeter("9'7''"), DELTA);
-        assertEquals(2.921, DataFlagEncoder.stringToMeter("9' 7\""), DELTA);
+        assertEquals(2.921, TagParserFactory.stringToMeter("9 ft 7in"), DELTA);
+        assertEquals(2.921, TagParserFactory.stringToMeter("9'7\""), DELTA);
+        assertEquals(2.921, TagParserFactory.stringToMeter("9'7''"), DELTA);
+        assertEquals(2.921, TagParserFactory.stringToMeter("9' 7\""), DELTA);
 
-        assertEquals(2.743, DataFlagEncoder.stringToMeter("9'"), DELTA);
-        assertEquals(2.743, DataFlagEncoder.stringToMeter("9 feet"), DELTA);
+        assertEquals(2.743, TagParserFactory.stringToMeter("9'"), DELTA);
+        assertEquals(2.743, TagParserFactory.stringToMeter("9 feet"), DELTA);
     }
 
     @Test(expected = NumberFormatException.class)
     public void stringToMeterException() {
         // Unexpected values
-        DataFlagEncoder.stringToMeter("height limit 1.5m");
+        TagParserFactory.stringToMeter("height limit 1.5m");
     }
 
     @Test
     public void stringToTons() {
-        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5"), DELTA);
-        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5 t"), DELTA);
-        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5   t"), DELTA);
-        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5 tons"), DELTA);
-        assertEquals(1.5, DataFlagEncoder.stringToTons("1.5 ton"), DELTA);
-        assertEquals(1.5, DataFlagEncoder.stringToTons("3306.9 lbs"), DELTA);
-        assertEquals(3, DataFlagEncoder.stringToTons("3 T"), DELTA);
-        assertEquals(3, DataFlagEncoder.stringToTons("3ton"), DELTA);
+        assertEquals(1.5, TagParserFactory.stringToTons("1.5"), DELTA);
+        assertEquals(1.5, TagParserFactory.stringToTons("1.5 t"), DELTA);
+        assertEquals(1.5, TagParserFactory.stringToTons("1.5   t"), DELTA);
+        assertEquals(1.5, TagParserFactory.stringToTons("1.5 tons"), DELTA);
+        assertEquals(1.5, TagParserFactory.stringToTons("1.5 ton"), DELTA);
+        assertEquals(1.5, TagParserFactory.stringToTons("3306.9 lbs"), DELTA);
+        assertEquals(3, TagParserFactory.stringToTons("3 T"), DELTA);
+        assertEquals(3, TagParserFactory.stringToTons("3ton"), DELTA);
 
         // maximum gross weight
-        assertEquals(6, DataFlagEncoder.stringToTons("6t mgw"), DELTA);
+        assertEquals(6, TagParserFactory.stringToTons("6t mgw"), DELTA);
     }
 
     @Test(expected = NumberFormatException.class)
     public void stringToTonsException() {
         // Unexpected values
-        DataFlagEncoder.stringToTons("weight limit 1.5t");
+        TagParserFactory.stringToTons("weight limit 1.5t");
     }
 
     @Test
@@ -366,6 +384,9 @@ public class DataFlagEncoderTest {
         DataFlagEncoder encoder = new DataFlagEncoder(new PMap());
         encoder.setSpatialRuleLookup(index);
         EncodingManager em = new EncodingManager.Builder().addAll(encoder).build();
+        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(encoder.getPrefix() + "access");
+        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(encoder.getPrefix() + "average_speed");
+        IntEncodedValue spatialIdEnc = em.getIntEncodedValue(encoder.getPrefix() + "spatial_id");
 
         ReaderWay way = new ReaderWay(27l);
         way.setTag("highway", "track");
@@ -384,29 +405,29 @@ public class DataFlagEncoderTest {
         livingStreet2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
 
         Graph graph = new GraphBuilder(em).create();
-        EdgeIteratorState e1 = graph.edge(0, 1, 1, true);
-        EdgeIteratorState e2 = graph.edge(0, 2, 1, true);
-        EdgeIteratorState e3 = graph.edge(0, 3, 1, true);
-        EdgeIteratorState e4 = graph.edge(0, 4, 1, true);
+        EdgeIteratorState e1 = GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 0, 1, true, 1);
+        EdgeIteratorState e2 = GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 0, 2, true, 1);
+        EdgeIteratorState e3 = GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 0, 3, true, 1);
+        EdgeIteratorState e4 = GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 0, 4, true, 1);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 2, -0.01, -0.01);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 3, 0.01, 0.01);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 4, -0.01, -0.01);
 
-        e1.setFlags(encoder.handleWayTags(way, 1, 0));
-        e2.setFlags(encoder.handleWayTags(way2, 1, 0));
-        e3.setFlags(encoder.handleWayTags(livingStreet, 1, 0));
-        e4.setFlags(encoder.handleWayTags(livingStreet2, 1, 0));
+        e1.setData(encoder.handleWayTags(encodingManager.createIntsRef(), way, EncodingManager.Access.WAY, 0));
+        e2.setData(encoder.handleWayTags(encodingManager.createIntsRef(), way2, EncodingManager.Access.WAY, 0));
+        e3.setData(encoder.handleWayTags(encodingManager.createIntsRef(), livingStreet, EncodingManager.Access.WAY, 0));
+        e4.setData(encoder.handleWayTags(encodingManager.createIntsRef(), livingStreet2, EncodingManager.Access.WAY, 0));
 
-        assertEquals(index.getSpatialId(new GermanySpatialRule()), encoder.getSpatialId(e1.getFlags()));
-        assertEquals(index.getSpatialId(SpatialRule.EMPTY), encoder.getSpatialId(e2.getFlags()));
+        assertEquals(index.getSpatialId(new GermanySpatialRule()), spatialIdEnc.getInt(false, e1.getData()));
+        assertEquals(index.getSpatialId(SpatialRule.EMPTY), spatialIdEnc.getInt(false, e2.getData()));
 
-        assertEquals(AccessValue.EVENTUALLY_ACCESSIBLE, encoder.getAccessValue(e1.getFlags()));
-        assertEquals(AccessValue.ACCESSIBLE, encoder.getAccessValue(e2.getFlags()));
+        assertEquals(SpatialRule.Access.CONDITIONAL, encoder.getAccess(e1));
+        assertEquals(SpatialRule.Access.YES, encoder.getAccess(e2));
 
-        assertEquals(5, encoder.getMaxspeed(e3, -1, false), .1);
-        assertEquals(-1, encoder.getMaxspeed(e4, -1, false), .1);
+        assertEquals(5, e3.get(maxSpeedEnc), .1);
+        assertEquals(-1, e4.get(maxSpeedEnc), .1);
     }
 
 }

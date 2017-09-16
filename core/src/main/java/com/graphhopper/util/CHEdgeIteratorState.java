@@ -18,6 +18,7 @@
 package com.graphhopper.util;
 
 import com.graphhopper.routing.ch.PrepareEncoder;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.storage.CHGraph;
 
 /**
@@ -29,6 +30,7 @@ import com.graphhopper.storage.CHGraph;
  * @see CHEdgeIterator
  */
 public interface CHEdgeIteratorState extends EdgeIteratorState {
+    BooleanEncodedValue SC_ACCESS = new BooleanEncodedValue("access");
     int getSkippedEdge1();
 
     int getSkippedEdge2();
@@ -46,9 +48,9 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
     /**
      * This method is only used on preparation.
      *
-     * @see PrepareEncoder#getScMergeStatus(long, long)
+     * @see PrepareEncoder#getScMergeStatus(int, int)
      */
-    int getMergeStatus(long flags);
+    int getMergeStatus(int flags);
 
     /**
      * Returns the weight of this shortcut.

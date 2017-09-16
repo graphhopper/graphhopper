@@ -18,16 +18,17 @@
 package com.graphhopper.routing.lm;
 
 import com.graphhopper.routing.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
+import com.graphhopper.util.GHUtility;
 import com.graphhopper.util.Helper;
 import org.junit.Before;
 import org.junit.Test;
@@ -49,13 +50,18 @@ public class PrepareLandmarksTest
     private GraphHopperStorage graph;
     private FlagEncoder encoder;
     private TraversalMode tm;
+    private EncodingManager em;
+    private BooleanEncodedValue accessEnc;
+    private DecimalEncodedValue averageSpeedEnc;
 
     @Before
     public void setUp() {
         encoder = new CarFlagEncoder();
         tm = TraversalMode.NODE_BASED;
-        GraphHopperStorage tmp = new GraphHopperStorage(new RAMDirectory(),
-                new EncodingManager.Builder().addAll(encoder).build(), false, new GraphExtension.NoOpExtension());
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
+        accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        averageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        GraphHopperStorage tmp = new GraphHopperStorage(new RAMDirectory(), em, false, new GraphExtension.NoOpExtension());
         tmp.create(1000);
         graph = tmp;
     }
@@ -68,18 +74,20 @@ public class PrepareLandmarksTest
         Random rand = new Random(0);
         int width = 15, height = 15;
 
+
         for (int hIndex = 0; hIndex < height; hIndex++) {
             for (int wIndex = 0; wIndex < width; wIndex++) {
                 int node = wIndex + hIndex * width;
 
-                long flags = encoder.setProperties(20 + rand.nextDouble() * 30, true, true);
+                IntsRef flags = GHUtility.setProperties(em.createIntsRef(), averageSpeedEnc, 20 + rand.nextDouble() * 30,
+                        accessEnc, true, true);
                 // do not connect first with last column!
                 if (wIndex + 1 < width)
-                    graph.edge(node, node + 1).setFlags(flags);
+                    graph.edge(node, node + 1).setData(flags);
 
                 // avoid dead ends
                 if (hIndex + 1 < height)
-                    graph.edge(node, node + width).setFlags(flags);
+                    graph.edge(node, node + width).setData(flags);
 
                 AbstractRoutingAlgorithmTester.updateDistancesFor(graph, node, -hIndex / 50.0, wIndex / 50.0);
             }
@@ -174,8 +182,8 @@ public class PrepareLandmarksTest
 
     @Test
     public void testStoreAndLoad() {
-        graph.edge(0, 1, 80_000, true);
-        graph.edge(1, 2, 80_000, true);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, 0, 1, true, 80_000);
+        GHUtility.createEdge(graph, averageSpeedEnc, 60, accessEnc, 1, 2, true, 80_000);
         String fileStr = "./target/tmp-lm";
         Helper.removeDir(new File(fileStr));
 

@@ -19,35 +19,36 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.weighting.PriorityWeighting;
+import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
 
+import static com.graphhopper.routing.profiles.TagParserFactory.Foot.*;
 import static com.graphhopper.routing.util.PriorityCode.*;
 
 /**
  * Defines bit layout for pedestrians (speed, access, surface, ...). Here we put a penalty on unsafe
  * roads only. If you wish to also prefer routes due to beauty like hiking routes use the
  * HikeFlagEncoder instead.
- * <p>
  *
  * @author Peter Karich
  * @author Nop
  * @author Karl Hübner
  */
 public class FootFlagEncoder extends AbstractFlagEncoder {
-    static final int SLOW_SPEED = 2;
-    static final int MEAN_SPEED = 5;
-    static final int FERRY_SPEED = 10;
+
     final Set<String> safeHighwayTags = new HashSet<String>();
     final Set<String> allowedHighwayTags = new HashSet<String>();
     final Set<String> avoidHighwayTags = new HashSet<String>();
+    final Set<String> allowedSacScaleTags = new HashSet<>();
     // convert network tag of hiking routes into a way route code
     final Map<String, Integer> hikingNetworkToCode = new HashMap<String, Integer>();
     protected HashSet<String> sidewalkValues = new HashSet<String>(5);
     protected HashSet<String> sidewalksNoValues = new HashSet<String>(5);
-    private EncodedValue08 priorityWayEncoder;
+    private IntEncodedValue priorityEnc;
     private EncodedValue08 relationCodeEncoder;
 
     /**
@@ -127,6 +128,12 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
         hikingNetworkToCode.put("rwn", UNCHANGED.getValue());
         hikingNetworkToCode.put("lwn", UNCHANGED.getValue());
 
+        // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
+        allowedSacScaleTags.add("hiking");
+        allowedSacScaleTags.add("mountain_hiking");
+        allowedSacScaleTags.add("demanding_mountain_hiking");
+        allowedSacScaleTags.add("alpine_hiking");
+
         maxPossibleSpeed = FERRY_SPEED;
 
         init();
@@ -134,20 +141,53 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 3;
+        return 4;
     }
 
     @Override
-    public int defineWayBits(int index, int shift) {
-        // first two bits are reserved for route handling in superclass
-        shift = super.defineWayBits(index, shift);
-        // larger value required - ferries are faster than pedestrians
-        speedEncoder = new EncodedDoubleValue08("Speed", shift, speedBits, speedFactor, MEAN_SPEED, maxPossibleSpeed);
-        shift += speedEncoder.getBits();
+    public Map<String, TagParser> createTagParsers(final String prefix) {
+        Map<String, TagParser> map = new HashMap<>();
+        averageSpeedEnc = new DecimalEncodedValue(prefix + "average_speed", speedBits, 0, speedFactor, false);
+        map.put(prefix + "average_speed", TagParserFactory.Foot.createAverageSpeed(averageSpeedEnc));
+        final ReaderWayFilter filter = new ReaderWayFilter() {
+            @Override
+            public boolean accept(ReaderWay way) {
+                return allowedHighwayTags.contains(way.getTag("highway"));
+            }
+        };
+        map.put(prefix + "access", TagParserFactory.Foot.createAccess(new BooleanEncodedValue(prefix + "access", true), filter));
+        map.put("roundabout", null);
 
-        priorityWayEncoder = new EncodedValue08("PreferWay", shift, 3, 1, 0, 7);
-        shift += priorityWayEncoder.getBits();
-        return shift;
+        priorityEnc = new IntEncodedValue(prefix + "priority", 3, 0, false);
+        map.put(priorityEnc.getName(),
+                new TagParser() {
+                    @Override
+                    public String toString() {
+                        return getName();
+                    }
+
+                    @Override
+                    public String getName() {
+                        return priorityEnc.getName();
+                    }
+
+                    @Override
+                    public EncodedValue getEncodedValue() {
+                        return priorityEnc;
+                    }
+
+                    @Override
+                    public ReaderWayFilter getReadWayFilter() {
+                        return filter;
+                    }
+
+                    @Override
+                    public void parse(IntsRef ints, ReaderWay way) {
+
+                    }
+                });
+
+        return map;
     }
 
     @Override
@@ -166,7 +206,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     /**
      * Foot flag encoder does not provide any turn cost / restrictions
-     * <p>
      *
      * @return <code>false</code>
      */
@@ -177,7 +216,6 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     /**
      * Foot flag encoder does not provide any turn cost / restrictions
-     * <p>
      *
      * @return 0
      */
@@ -193,58 +231,53 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
 
     /**
      * Some ways are okay but not separate for pedestrians.
-     * <p>
      */
     @Override
-    public long acceptWay(ReaderWay way) {
+    public EncodingManager.Access getAccess(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
             if (way.hasTag("route", ferries)) {
                 String footTag = way.getTag("foot");
                 if (footTag == null || "yes".equals(footTag))
-                    return acceptBit | ferryBit;
+                    return EncodingManager.Access.FERRY;
             }
 
             // special case not for all acceptedRailways, only platform
             if (way.hasTag("railway", "platform"))
-                return acceptBit;
+                return EncodingManager.Access.WAY;
 
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
         }
 
         String sacScale = way.getTag("sac_scale");
-        if (sacScale != null) {
-            if (!"hiking".equals(sacScale) && !"mountain_hiking".equals(sacScale)
-                    && !"demanding_mountain_hiking".equals(sacScale) && !"alpine_hiking".equals(sacScale))
-                // other scales are too dangerous, see http://wiki.openstreetmap.org/wiki/Key:sac_scale
-                return 0;
-        }
+        if (!allowedSacScaleTags.isEmpty() && sacScale != null && !allowedSacScaleTags.contains(sacScale))
+            return EncodingManager.Access.CAN_SKIP;
 
         // no need to evaluate ferries or fords - already included here
         if (way.hasTag("foot", intendedValues))
-            return acceptBit;
+            return EncodingManager.Access.WAY;
 
         // check access restrictions
         if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
         if (way.hasTag("sidewalk", sidewalkValues))
-            return acceptBit;
+            return EncodingManager.Access.WAY;
 
         if (!allowedHighwayTags.contains(highwayValue))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
         if (way.hasTag("motorroad", "yes"))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
         // do not get our feet wet, "yes" is already included above
         if (isBlockFords() && (way.hasTag("highway", "ford") || way.hasTag("ford")))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
         if (getConditionalTagInspector().isPermittedWayConditionallyRestricted(way))
-            return 0;
+            return EncodingManager.Access.CAN_SKIP;
 
-        return acceptBit;
+        return EncodingManager.Access.WAY;
     }
 
     @Override
@@ -267,49 +300,23 @@ public class FootFlagEncoder extends AbstractFlagEncoder {
     }
 
     @Override
-    public long handleWayTags(ReaderWay way, long allowed, long relationFlags) {
-        if (!isAccept(allowed))
-            return 0;
+    public IntsRef handleWayTags(IntsRef ints, ReaderWay way, EncodingManager.Access allowed, long relationFlags) {
+        if (allowed.canSkip())
+            return ints;
 
-        long flags = 0;
-        if (!isFerry(allowed)) {
-            String sacScale = way.getTag("sac_scale");
-            if (sacScale != null) {
-                if ("hiking".equals(sacScale))
-                    flags = speedEncoder.setDoubleValue(flags, MEAN_SPEED);
-                else
-                    flags = speedEncoder.setDoubleValue(flags, SLOW_SPEED);
-            } else {
-                flags = speedEncoder.setDoubleValue(flags, MEAN_SPEED);
-            }
-            flags |= directionBitMask;
-
-            boolean isRoundabout = way.hasTag("junction", "roundabout");
-            if (isRoundabout)
-                flags = setBool(flags, K_ROUNDABOUT, true);
-
-        } else {
+        if (allowed.isFerry()) {
             double ferrySpeed = getFerrySpeed(way, SLOW_SPEED, MEAN_SPEED, FERRY_SPEED);
-            flags = setSpeed(flags, ferrySpeed);
-            flags |= directionBitMask;
+            averageSpeedEnc.setDecimal(false, ints, ferrySpeed);
+            accessEnc.setBool(false, ints, true);
+            accessEnc.setBool(true, ints, true);
         }
 
         int priorityFromRelation = 0;
         if (relationFlags != 0)
             priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
-        flags = priorityWayEncoder.setValue(flags, handlePriority(way, priorityFromRelation));
-        return flags;
-    }
-
-    @Override
-    public double getDouble(long flags, int key) {
-        switch (key) {
-            case PriorityWeighting.KEY:
-                return (double) priorityWayEncoder.getValue(flags) / BEST.getValue();
-            default:
-                return super.getDouble(flags, key);
-        }
+        priorityEnc.setInt(false, ints, priorityFromRelation);
+        return ints;
     }
 
     protected int handlePriority(ReaderWay way, int priorityFromRelation) {

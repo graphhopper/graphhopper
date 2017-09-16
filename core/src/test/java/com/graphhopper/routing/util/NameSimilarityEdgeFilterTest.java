@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 import org.junit.Ignore;
@@ -30,9 +31,17 @@ import static org.junit.Assert.assertTrue;
  */
 public class NameSimilarityEdgeFilterTest {
 
+    private class TestEdgeFilter implements EdgeFilter {
+
+        @Override
+        public boolean accept(EdgeIteratorState edgeState) {
+            return true;
+        }
+    }
+
     @Test
     public void testAccept() {
-        EdgeFilter edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Laufamholzstraße 154 Nürnberg");
+        EdgeFilter edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Laufamholzstraße 154 Nürnberg");
         EdgeIteratorState edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
         assertTrue(edgeFilter.accept(edge));
 
@@ -48,22 +57,22 @@ public class NameSimilarityEdgeFilterTest {
         edge = createTestEdgeIterator(null);
         assertFalse(edgeFilter.accept(edge));
 
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), null);
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), null);
         edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
         assertTrue(edgeFilter.accept(edge));
 
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "");
         edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
         assertTrue(edgeFilter.accept(edge));
 
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Johannesstraße, 99636, Rastenberg, Deutschland");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Johannesstraße, 99636, Rastenberg, Deutschland");
         edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
         assertFalse(edgeFilter.accept(edge));
 
         edge = createTestEdgeIterator("Johannesstraße");
         assertTrue(edgeFilter.accept(edge));
 
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Hauptstraße, 39025, Naturns, Italien");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Hauptstraße, 39025, Naturns, Italien");
         edge = createTestEdgeIterator("Teststraße");
         assertFalse(edgeFilter.accept(edge));
 
@@ -86,11 +95,11 @@ public class NameSimilarityEdgeFilterTest {
         EdgeFilter edgeFilter;
         EdgeIteratorState edge;
 
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Wentworth Street, Caringbah South");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Wentworth Street, Caringbah South");
         edge = createTestEdgeIterator("Wentworth Street");
         assertTrue(edgeFilter.accept(edge));
 
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Zum Toffental, Altdorf bei Nürnnberg");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Zum Toffental, Altdorf bei Nürnnberg");
         edge = createTestEdgeIterator("Zum Toffental");
         assertTrue(edgeFilter.accept(edge));
     }
@@ -100,21 +109,21 @@ public class NameSimilarityEdgeFilterTest {
         EdgeFilter edgeFilter;
         EdgeIteratorState edge;
 
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Rue Notre-Dame O Montréal");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Rue Notre-Dame O Montréal");
         edge = createTestEdgeIterator("Rue Dupré");
         assertFalse(edgeFilter.accept(edge));
 
         edge = createTestEdgeIterator("Rue Notre-Dame Ouest");
         assertTrue(edgeFilter.accept(edge));
 
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "227 Rue Saint-Antoine O, Montréal");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "227 Rue Saint-Antoine O, Montréal");
         edge = createTestEdgeIterator("Rue Saint-Antoine O");
         assertTrue(edgeFilter.accept(edge));
 
         edge = createTestEdgeIterator("Rue Saint-Jacques");
         assertFalse(edgeFilter.accept(edge));
 
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "1025 Rue de Bleury, Montréal, QC H2Z 1M7");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "1025 Rue de Bleury, Montréal, QC H2Z 1M7");
         edge = createTestEdgeIterator("Rue de Bleury");
         assertTrue(edgeFilter.accept(edge));
 
@@ -122,15 +131,15 @@ public class NameSimilarityEdgeFilterTest {
         assertFalse(edgeFilter.accept(edge));
 
         // Modified Test from Below
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "257 Main Road, Claremont, Cape Town, 7708, Afrique du Sud");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "257 Main Road, Claremont, Cape Town, 7708, Afrique du Sud");
         edge = createTestEdgeIterator("Main Road");
         assertTrue(edgeFilter.accept(edge));
 
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Cape Point Rd, Cape Peninsula, Cape Town, 8001, Afrique du Sud");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Cape Point Rd, Cape Peninsula, Cape Town, 8001, Afrique du Sud");
         edge = createTestEdgeIterator("Cape Point / Cape of Good Hope");
         assertTrue(edgeFilter.accept(edge));
 
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Viale Puglie, 26, 20137 Milano, Italy");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Viale Puglie, 26, 20137 Milano, Italy");
         edge = createTestEdgeIterator("Viale Puglie");
         assertTrue(edgeFilter.accept(edge));
     }
@@ -143,40 +152,40 @@ public class NameSimilarityEdgeFilterTest {
         edge = createTestEdgeIterator("Augustine Street");
 
         // Google Maps
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Augustine St, Hunters Hill NSW 2110, Australia");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Augustine St, Hunters Hill NSW 2110, Australia");
         assertTrue(edgeFilter.accept(edge));
 
         // Opencagedata
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Augustine Street, Sydney Neusüdwales 2110, Australien");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Augustine Street, Sydney Neusüdwales 2110, Australien");
         assertTrue(edgeFilter.accept(edge));
 
         // Nominatim
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Augustine Street, Sydney, Municipality of Hunters Hill, Neusüdwales, 2111, Australien");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Augustine Street, Sydney, Municipality of Hunters Hill, Neusüdwales, 2111, Australien");
         assertTrue(edgeFilter.accept(edge));
 
     }
 
     @Ignore
-    public void testThatShouldSucceed(){
+    public void testThatShouldSucceed() {
         EdgeFilter edgeFilter;
         EdgeIteratorState edge;
 
         // The Problem is that Rd vs Road is abreviated, if we have Road, it works
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "257 Main Rd, Claremont, Cape Town, 7708, Afrique du Sud");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "257 Main Rd, Claremont, Cape Town, 7708, Afrique du Sud");
         edge = createTestEdgeIterator("Main Road");
         assertTrue(edgeFilter.accept(edge));
 
         // Just too much difference Between Google Maps and OSM @ 32.121435,-110.857969
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "7202 S Wilmot Rd, Tucson, AZ 85701");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "7202 S Wilmot Rd, Tucson, AZ 85701");
         edge = createTestEdgeIterator("South Wilmot Road");
         assertTrue(edgeFilter.accept(edge));
 
         // @ 37.307774,13.581259
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Via Manzoni, 50/52, 92100 Agrigento AG, Italy");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Via Manzoni, 50/52, 92100 Agrigento AG, Italy");
         edge = createTestEdgeIterator("Via Alessandro Manzoni");
         assertTrue(edgeFilter.accept(edge));
 
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Av. Juan Ramón Ramírez, 12, 02630 La Roda, Albacete, Spain");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Av. Juan Ramón Ramírez, 12, 02630 La Roda, Albacete, Spain");
         edge = createTestEdgeIterator("Avenida Juan Ramón Ramírez");
         assertTrue(edgeFilter.accept(edge));
 
@@ -189,45 +198,45 @@ public class NameSimilarityEdgeFilterTest {
      */
     @Ignore
     public void testAcceptWithTypos() {
-        EdgeFilter edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Laufamholzstraße 154 Nürnberg");
+        EdgeFilter edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Laufamholzstraße 154 Nürnberg");
         EdgeIteratorState edge = createTestEdgeIterator("Laufamholzstraße, ST1333");
         assertTrue(edgeFilter.accept(edge));
 
         // Single Typo
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Kaufamholzstraße 154 Nürnberg");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Kaufamholzstraße 154 Nürnberg");
         assertTrue(edgeFilter.accept(edge));
 
         // Two Typos
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Kaufamholystraße 154 Nürnberg");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Kaufamholystraße 154 Nürnberg");
         assertTrue(edgeFilter.accept(edge));
 
         // Three Typos
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Kaufmholystraße 154 Nürnberg");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Kaufmholystraße 154 Nürnberg");
         assertFalse(edgeFilter.accept(edge));
 
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Hauptstraße");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Hauptstraße");
         edge = createTestEdgeIterator("Hauptstraße");
         assertTrue(edgeFilter.accept(edge));
 
         // Single Typo
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Hauptstrase");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Hauptstrase");
         assertTrue(edgeFilter.accept(edge));
 
         // Two Typos
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "Lauptstrase");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "Lauptstrase");
         assertTrue(edgeFilter.accept(edge));
 
         // We ignore too short Strings for now
         /*
         // Distance - PerfectDistance = 1
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "z");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "z");
         assertFalse(edgeFilter.accept(edge));
         // Distance - PerfectDistance = 1
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "az");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "az");
         assertFalse(edgeFilter.accept(edge));
 
         // Distance - PerfectDistance = 2
-        edgeFilter = new NameSimilarityEdgeFilter(new DefaultEdgeFilter(new CarFlagEncoder()), "xy");
+        edgeFilter = new NameSimilarityEdgeFilter(new TestEdgeFilter(), "xy");
         assertFalse(edgeFilter.accept(edge));
         */
     }
@@ -241,12 +250,7 @@ public class NameSimilarityEdgeFilterTest {
             }
 
             @Override
-            public boolean isForward(FlagEncoder encoder) {
-                return true;
-            }
-
-            @Override
-            public boolean isBackward(FlagEncoder encoder) {
+            public boolean get(BooleanEncodedValue property) {
                 return true;
             }
         };

@@ -1,7 +1,7 @@
 package com.graphhopper.routing.profiles;
 
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.storage.IntsRef;
 
 public interface TagParser {
 
@@ -18,5 +18,5 @@ public interface TagParser {
      * This method picks and transform its necessary values from specified way to create a result that
      * can be stored in the associated edge.
      */
-    void parse(EdgeSetter setter, ReaderWay way, EdgeIteratorState edgeState);
+    void parse(IntsRef ints, ReaderWay way);
 }

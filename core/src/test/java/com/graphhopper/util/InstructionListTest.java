@@ -19,10 +19,12 @@ package com.graphhopper.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathExtract;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -55,11 +57,15 @@ public class InstructionListTest {
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
     private EncodingManager carManager;
     private FlagEncoder carEncoder;
+    private BooleanEncodedValue carAccessEnc;
+    private DecimalEncodedValue carAverageSpeedEnc;
 
     @Before
     public void setUp() {
         carEncoder = new CarFlagEncoder();
-        carManager = new EncodingManager.Builder().addAll(carEncoder).build();
+        carManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carEncoder).build();
+        carAccessEnc = carManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        carAverageSpeedEnc = carManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
     }
 
     @SuppressWarnings("unchecked")
@@ -84,27 +90,27 @@ public class InstructionListTest {
         na.setNode(6, 1.0, 1.0);
         na.setNode(7, 1.0, 1.1);
         na.setNode(8, 1.0, 1.2);
-        g.edge(0, 1, 10000, true).setName("0-1");
-        g.edge(1, 2, 11000, true).setName("1-2");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 10000).setName("0-1");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 11000).setName("1-2");
 
-        g.edge(0, 3, 11000, true);
-        g.edge(1, 4, 10000, true).setName("1-4");
-        g.edge(2, 5, 11000, true).setName("5-2");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 0, 3, true, 11000);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 1, 4, true, 10000).setName("1-4");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 2, 5, true, 11000).setName("5-2");
 
-        g.edge(3, 6, 11000, true).setName("3-6");
-        g.edge(4, 7, 10000, true).setName("4-7");
-        g.edge(5, 8, 10000, true).setName("5-8");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 3, 6, true, 11000).setName("3-6");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 4, 7, true, 10000).setName("4-7");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 5, 8, true, 10000).setName("5-8");
 
-        g.edge(6, 7, 11000, true).setName("6-7");
-        EdgeIteratorState iter = g.edge(7, 8, 10000, true);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 6, 7, true, 11000).setName("6-7");
+        EdgeIteratorState iter = GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 7, 8, true, 10000);
         PointList list = new PointList();
         list.add(1.0, 1.15);
         list.add(1.0, 1.16);
         iter.setWayGeometry(list);
         iter.setName("7-8");
         // missing edge name
-        g.edge(9, 10, 10000, true);
-        EdgeIteratorState iter2 = g.edge(8, 9, 20000, true);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 9, 10, true, 10000);
+        EdgeIteratorState iter2 = GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 8, 9, true, 20000);
         list.clear();
         list.add(1.0, 1.3);
         iter2.setName("8-9");
@@ -216,10 +222,10 @@ public class InstructionListTest {
         na.setNode(3, 10.0, 10.08);
         na.setNode(4, 10.1, 10.10);
         na.setNode(5, 10.2, 10.13);
-        g.edge(3, 4, 100, true).setName("3-4");
-        g.edge(4, 5, 100, true).setName("4-5");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 3, 4, true, 100).setName("3-4");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 4, 5, true, 100).setName("4-5");
 
-        EdgeIteratorState iter = g.edge(2, 4, 100, true);
+        EdgeIteratorState iter = GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 2, 4, true, 100);
         iter.setName("2-4");
         PointList list = new PointList();
         list.add(10.20, 10.05);
@@ -255,10 +261,10 @@ public class InstructionListTest {
         na.setNode(3, 10.0, 10.05);
         na.setNode(4, 10.1, 10.10);
         na.setNode(5, 10.2, 10.15);
-        g.edge(3, 4, 100, true).setName("street");
-        g.edge(4, 5, 100, true).setName("4-5");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 3, 4, true, 100).setName("street");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 4, 5, true, 100).setName("4-5");
 
-        EdgeIteratorState iter = g.edge(2, 4, 100, true);
+        EdgeIteratorState iter = GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 2, 4, true, 100);
         iter.setName("street");
         PointList list = new PointList();
         list.add(10.20, 10.05);
@@ -287,12 +293,12 @@ public class InstructionListTest {
         na.setNode(6, 15.1, 10.1);
         na.setNode(7, 15.1, 9.8);
 
-        g.edge(1, 2, 7000, true).setName("1-2").setFlags(flagsForSpeed(carManager, 70));
-        g.edge(2, 3, 8000, true).setName("2-3").setFlags(flagsForSpeed(carManager, 80));
-        g.edge(2, 6, 10000, true).setName("2-6").setFlags(flagsForSpeed(carManager, 10));
-        g.edge(3, 4, 9000, true).setName("3-4").setFlags(flagsForSpeed(carManager, 90));
-        g.edge(3, 7, 10000, true).setName("3-7").setFlags(flagsForSpeed(carManager, 10));
-        g.edge(4, 5, 10000, true).setName("4-5").setFlags(flagsForSpeed(carManager, 100));
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 7000).setName("1-2").set(carAverageSpeedEnc, 70d);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, true, 8000).setName("2-3").set(carAverageSpeedEnc, 80d);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 2, 6, true, 10000).setName("2-6").set(carAverageSpeedEnc, 10d);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 3, 4, true, 9000).setName("3-4").set(carAverageSpeedEnc, 90d);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 3, 7, true, 10000).setName("3-7").set(carAverageSpeedEnc, 10d);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 4, 5, true, 10000).setName("4-5").set(carAverageSpeedEnc, 100d);
 
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(1, 5);
         InstructionList wayList = p.createPathExtract(carManager, false).calcInstructions(usTR);
@@ -444,13 +450,6 @@ public class InstructionListTest {
         verifyGPX(instructions.createGPX());
     }
 
-    private long flagsForSpeed(EncodingManager encodingManager, int speedKmPerHour) {
-        ReaderWay way = new ReaderWay(1);
-        way.setTag("highway", "motorway");
-        way.setTag("maxspeed", String.format("%d km/h", speedKmPerHour));
-        return encodingManager.handleWayTags(way, 1, 0);
-    }
-
     @Test
     public void testEmptyList() {
         Graph g = new GraphBuilder(carManager).create();
@@ -498,12 +497,12 @@ public class InstructionListTest {
         na.setNode(6, 15.1, 10.1);
         na.setNode(7, 15.1, 9.8);
 
-        g.edge(1, 2, 10000, true).setName("1-2");
-        g.edge(2, 3, 10000, true).setName("2-3");
-        g.edge(2, 6, 10000, true).setName("2-6");
-        g.edge(3, 4, 10000, true).setName("3-4").setWayGeometry(waypoint);
-        g.edge(3, 7, 10000, true).setName("3-7");
-        g.edge(4, 5, 10000, true).setName("4-5");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 10000).setName("1-2");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, true, 10000).setName("2-3");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 2, 6, true, 10000).setName("2-6");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 3, 4, true, 10000).setName("3-4").setWayGeometry(waypoint);
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 3, 7, true, 10000).setName("3-7");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 4, 5, true, 10000).setName("4-5");
 
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(1, 5);
         InstructionList wayList = p.createPathExtract(carManager, false).calcInstructions(usTR);

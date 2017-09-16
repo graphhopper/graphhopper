@@ -32,14 +32,11 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
         this(4, 2, 0);
     }
 
-    public BikeFlagEncoder(String propertiesString) {
-        this(new PMap(propertiesString));
-    }
-
     public BikeFlagEncoder(PMap properties) {
         this(properties.getInt("speed_bits", 4),
                 properties.getLong("speed_factor", 2),
                 properties.getBool("turn_costs", false) ? 1 : 0);
+        this.setSpeedTwoDirections(properties.getBool("speed_two_directions", false));
         this.setBlockFords(properties.getBool("block_fords", true));
     }
 
@@ -72,7 +69,7 @@ public class BikeFlagEncoder extends BikeCommonFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
     @Override

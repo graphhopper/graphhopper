@@ -17,8 +17,8 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.util.FlagEncoder;
-import com.graphhopper.routing.util.MotorcycleFlagEncoder;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
@@ -26,6 +26,8 @@ import com.graphhopper.util.PMap;
  * This Class uses bendiness parameter to prefer curvy routes.
  */
 public class CurvatureWeighting extends PriorityWeighting {
+
+    private final DecimalEncodedValue curvatureEnc;
     private final double minFactor;
 
     public CurvatureWeighting(FlagEncoder flagEncoder, PMap pMap) {
@@ -34,6 +36,7 @@ public class CurvatureWeighting extends PriorityWeighting {
         double minBendiness = 1; // see correctErrors
         double maxPriority = 1; // BEST / BEST
         minFactor = minBendiness / Math.log(flagEncoder.getMaxSpeed()) / (0.5 + maxPriority);
+        curvatureEnc = flagEncoder.getDecimalEncodedValue("curvature");
     }
 
     @Override
@@ -43,8 +46,8 @@ public class CurvatureWeighting extends PriorityWeighting {
 
     @Override
     public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
-        double priority = flagEncoder.getDouble(edge.getFlags(), KEY);
-        double bendiness = flagEncoder.getDouble(edge.getFlags(), MotorcycleFlagEncoder.CURVATURE_KEY);
+        double priority = edge.get(priorityEnc);
+        double bendiness = edge.get(curvatureEnc);
         double speed = getRoadSpeed(edge, reverse);
         double roadDistance = edge.getDistance();
 
@@ -54,8 +57,8 @@ public class CurvatureWeighting extends PriorityWeighting {
         return (bendiness * regularWeight) / (0.5 + priority);
     }
 
-    protected double getRoadSpeed(EdgeIteratorState edge, boolean reverse) {
-        return reverse ? flagEncoder.getReverseSpeed(edge.getFlags()) : flagEncoder.getSpeed(edge.getFlags());
+    protected final double getRoadSpeed(EdgeIteratorState edge, boolean reverse) {
+        return reverse ? edge.getReverse(averageSpeedEnc) : edge.get(averageSpeedEnc);
     }
 
     @Override

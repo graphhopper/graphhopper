@@ -17,6 +17,8 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -35,13 +37,15 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class PrinctonReaderTest {
-    private EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
-    private EdgeFilter carOutEdges = new DefaultEdgeFilter(encodingManager.getEncoder("car"), false, true);
+    private EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
+    private BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+    private EdgeFilter carOutEdges = new DefaultEdgeFilter(accessEnc, true, false);
 
     @Test
     public void testRead() {
         Graph graph = new GraphBuilder(encodingManager).create();
-        new PrinctonReader(graph).setStream(PrinctonReader.class.getResourceAsStream("tinyEWD.txt")).read();
+        new PrinctonReader(graph, accessEnc, encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED)).
+                setStream(PrinctonReader.class.getResourceAsStream("tinyEWD.txt")).read();
         assertEquals(8, graph.getNodes());
         EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
         assertEquals(2, count(explorer.setBaseNode(0)));
@@ -51,7 +55,8 @@ public class PrinctonReaderTest {
     @Test
     public void testMediumRead() throws IOException {
         Graph graph = new GraphBuilder(encodingManager).create();
-        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
+        new PrinctonReader(graph, accessEnc, encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED)).
+                setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
         assertEquals(250, graph.getNodes());
         EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
         assertEquals(13, count(explorer.setBaseNode(244)));

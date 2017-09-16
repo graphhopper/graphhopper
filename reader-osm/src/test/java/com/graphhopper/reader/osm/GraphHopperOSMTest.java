@@ -27,15 +27,15 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.PrepareLandmarks;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.Parameters;
+import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.Routing;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.After;
@@ -688,6 +688,8 @@ public class GraphHopperOSMTest {
         GraphHopperStorage g = new GraphHopperStorage(Collections.singletonList(weighting), new RAMDirectory(), encodingManager,
                 false, new GraphExtension.NoOpExtension()).
                 create(20);
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
 
         //   2---3---4
         //  /    |    \
@@ -705,19 +707,19 @@ public class GraphHopperOSMTest {
         na.setNode(7, 0.000, 0.001);
         na.setNode(8, 0.001, 0.001);
 
-        g.edge(0, 1, 100, true);
-        g.edge(1, 2, 100, true);
-        g.edge(2, 3, 100, true);
-        g.edge(3, 4, 100, true);
-        g.edge(4, 5, 100, true);
-        g.edge(5, 6, 100, true);
-        g.edge(6, 7, 100, true);
-        g.edge(7, 0, 100, true);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 0, 1, true, 100);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 2, true, 100);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 2, 3, true, 100);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 3, 4, true, 100);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 4, 5, true, 100);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 5, 6, true, 100);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 6, 7, true, 100);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 7, 0, true, 100);
 
-        g.edge(1, 8, 110, true);
-        g.edge(3, 8, 110, true);
-        g.edge(5, 8, 110, true);
-        g.edge(7, 8, 110, true);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 8, true, 110);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 3, 8, true, 110);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 5, 8, true, 110);
+        GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 7, 8, true, 110);
 
         GraphHopper tmp = new GraphHopperOSM().
                 setCHEnabled(withCH).

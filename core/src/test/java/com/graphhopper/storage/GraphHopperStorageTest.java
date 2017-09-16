@@ -66,13 +66,13 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         na.setNode(1, 11, 20, 1);
         na.setNode(2, 12, 12, 0.4);
 
-        EdgeIteratorState iter2 = graph.edge(0, 1, 100, true);
+        EdgeIteratorState iter2 = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 100);
         iter2.setWayGeometry(Helper.createPointList3D(1.5, 1, 0, 2, 3, 0));
-        EdgeIteratorState iter1 = graph.edge(0, 2, 200, true);
+        EdgeIteratorState iter1 = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 2, true, 200);
         iter1.setWayGeometry(Helper.createPointList3D(3.5, 4.5, 0, 5, 6, 0));
-        graph.edge(9, 10, 200, true);
-        graph.edge(9, 11, 200, true);
-        graph.edge(1, 2, 120, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 9, 10, true, 200);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 9, 11, true, 200);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, false, 120);
 
         iter1.setName("named street1");
         iter2.setName("named street2");
@@ -89,7 +89,8 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         assertEquals("named street1", graph.getEdgeIteratorState(iter1.getEdge(), iter1.getAdjNode()).getName());
         assertEquals("named street2", graph.getEdgeIteratorState(iter2.getEdge(), iter2.getAdjNode()).getName());
-        graph.edge(3, 4, 123, true).setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 4, true, 123).
+                setWayGeometry(Helper.createPointList3D(4.4, 5.5, 0, 6.6, 7.7, 0));
         checkGraph(graph);
     }
 
@@ -151,9 +152,9 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
     public void internalDisconnect() {
         GraphHopperStorage storage = createGHStorage();
         BaseGraph graph = (BaseGraph) storage.getGraph(Graph.class);
-        EdgeIteratorState iter0 = graph.edge(0, 1, 10, true);
-        EdgeIteratorState iter2 = graph.edge(1, 2, 10, true);
-        EdgeIteratorState iter3 = graph.edge(0, 3, 10, true);
+        EdgeIteratorState iter0 = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 10);
+        EdgeIteratorState iter2 = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 10);
+        EdgeIteratorState iter3 = GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 3, true, 10);
 
         EdgeExplorer explorer = graph.createEdgeExplorer();
 
@@ -183,7 +184,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         int roughEdgeRowLength = 4 * 8;
         int testIndex = dir.find("edges").getSegmentSize() * 3 / roughEdgeRowLength;
         // we need a big node index to trigger multiple segments, but low enough to avoid OOM
-        graph.edge(0, testIndex, 10, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, testIndex, true, 10);
 
         // test if optimize works without error
         graph.optimize();
@@ -221,6 +222,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
         assertEquals(store.getAllEdges().getMaxId(), store.getGraph(Graph.class).getAllEdges().getMaxId());
     }
 
+    @Test
     public void testAdditionalEdgeField() {
         GraphExtension extStorage = new GraphExtension() {
             @Override
@@ -288,7 +290,7 @@ public class GraphHopperStorageTest extends AbstractGraphStorageTester {
 
         GraphHopperStorage storage = new GraphHopperStorage(new RAMDirectory(), encodingManager, false, extStorage);
         storage.create(1000);
-        EdgeIteratorState iter = storage.edge(0, 1, 10, true);
+        EdgeIteratorState iter = GHUtility.createEdge(storage, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, true, 10);
 
         assertEquals(extStorage.getDefaultEdgeFieldValue(), iter.getAdditionalField());
     }

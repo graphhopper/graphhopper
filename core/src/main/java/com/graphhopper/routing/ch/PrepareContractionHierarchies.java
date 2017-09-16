@@ -542,8 +542,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                                 + ", neighbors:" + GHUtility.getNeighbors(iter));
                     }
 
-                    // note: flags overwrite weight => call first
-                    iter.setFlags(sc.flags);
+                    // TODO NOW note: flags overwrite weight => call first
+//                    iter.setFlags(sc.flags);
                     iter.setWeight(sc.weight);
                     iter.setDistance(sc.dist);
                     iter.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
@@ -555,8 +555,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             if (!updatedInGraph) {
                 CHEdgeIteratorState edgeState = prepareGraph.shortcut(sc.from, sc.to);
-                // note: flags overwrite weight => call first
-                edgeState.setFlags(sc.flags);
+                // TODO NOW note: flags overwrite weight => call first
+//                edgeState.setFlags(sc.flags);
                 edgeState.setWeight(sc.weight);
                 edgeState.setDistance(sc.dist);
                 edgeState.setSkippedEdges(sc.skippedEdge1, sc.skippedEdge2);
@@ -578,10 +578,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     PrepareContractionHierarchies initFromGraph() {
         ghStorage.freeze();
         maxEdgesCount = ghStorage.getAllEdges().getMaxId();
-        FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
-        vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
-        vehicleOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
-        final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
+        vehicleInExplorer = prepareGraph.createEdgeExplorer(prepareWeighting.createEdgeFilter(true, false));
+        vehicleOutExplorer = prepareGraph.createEdgeExplorer(prepareWeighting.createEdgeFilter(false, true));
+        final EdgeFilter allFilter = prepareWeighting.createEdgeFilter(true, true);
 
         // filter by vehicle and level number
         final EdgeFilter accessWithLevelFilter = new LevelEdgeFilter(prepareGraph) {
@@ -778,7 +777,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         double dist;
         double weight;
         int originalEdges;
-        long flags = PrepareEncoder.getScFwdDir();
+        int flags = PrepareEncoder.getScFwdDir();
 
         public Shortcut(int from, int to, double weight, double dist) {
             this.from = from;
