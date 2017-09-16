@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<FindBugsFilter>
+    <!-- ignore some bug type for demonstration only -->
+    <Match>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
+    </Match>
+    <!-- bugs can also be excluded on the package/file/class/method level
+         see here: http://findbugs.sourceforge.net/manual/filter.html
+         for example this is how we can exclude a bug in some class: -->
+    <Match>
+        <Class name="com.graphhopper.storage.EdgeAccess"/>
+        <Bug pattern="INT_BAD_COMPARISON_WITH_NONNEGATIVE_VALUE"/>
+    </Match>
+</FindBugsFilter>
