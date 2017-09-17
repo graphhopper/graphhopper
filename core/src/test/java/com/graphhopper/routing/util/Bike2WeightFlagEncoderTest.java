@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.*;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -28,15 +29,13 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
-    private final EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues(true).addAllFlagEncoders("bike,bike2").build();
-
-    @Override
-    protected BikeCommonFlagEncoder createBikeEncoder() {
-        return (BikeCommonFlagEncoder) em.getEncoder("bike2");
+    @Before
+    public void setUp() {
+        createBikeEncoder("bike,bike2", "bike2");
     }
 
     private Graph initExampleGraph() {
-        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), em, true, new GraphExtension.NoOpExtension()).create(1000);
+        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension()).create(1000);
         NodeAccess na = gs.getNodeAccess();
         // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
         na.setNode(0, 51.1, 12.001, 50);
@@ -97,17 +96,17 @@ public class Bike2WeightFlagEncoderTest extends BikeFlagEncoderTest {
     @Test
     public void testRoutingFailsWithInvalidGraph_issue665() {
         GraphHopperStorage graph = new GraphHopperStorage(
-                new RAMDirectory(), em, true, new GraphExtension.NoOpExtension());
+                new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension());
         graph.create(100);
 
         ReaderWay way = new ReaderWay(0);
         way.setTag("route", "ferry");
 
         EncodingManager.AcceptWay acceptWay = new EncodingManager.AcceptWay();
-        assertTrue(em.acceptWay(way, acceptWay));
+        assertTrue(encodingManager.acceptWay(way, acceptWay));
         assertTrue(acceptWay.hasAccepted());
         long relationFlags = 0;
-        IntsRef ints = em.handleWayTags(encodingManager.createIntsRef(), way, acceptWay, relationFlags);
+        IntsRef ints = encodingManager.handleWayTags(encodingManager.createIntsRef(), way, acceptWay, relationFlags);
         graph.edge(0, 1).setDistance(247).setData(ints);
 
         assertTrue(isGraphValid(graph, encoder));

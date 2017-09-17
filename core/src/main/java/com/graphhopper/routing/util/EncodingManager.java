@@ -94,7 +94,8 @@ public class EncodingManager implements EncodedValueLookup {
         /**
          * This method adds some EncodedValues that are required like roundabout and road_class
          */
-        public Builder addGlobalEncodedValues(boolean surface) {
+        public Builder addGlobalEncodedValues_(boolean surface, boolean carMaxSpeed) {
+            // TODO NOW for all bike we need surface (unpaved) as global encoded value to avoid creating multiple -> addBikeEncodedValues()?
             if (surface) {
                 List<String> surfaces = Arrays.asList("_default", "paved", "asphalt", "cobblestone", "cobblestone:flattened", "sett", "concrete",
                         "concrete:lanes", "concrete:plates", "paving_stones", "paving_stones:30", "unpaved", "compacted"
@@ -102,16 +103,14 @@ public class EncodingManager implements EncodedValueLookup {
                         , "mud", "pebblestone", "salt", "sand", "wood");
                 add(TagParserFactory.createSurface(new StringEncodedValue(TagParserFactory.SURFACE, surfaces, "_default")));
             }
-            return addGlobalEncodedValues();
-        }
 
-        /**
-         * This method adds some EncodedValues that are required like roundabout and road_class
-         */
-        public Builder addGlobalEncodedValues() {
-            // TODO NOW for instructions we need TagParserFactory.Car.MAX_SPEED to be global!
-            // TODO NOW for all bike we need surface (unpaved) as global encoded value to avoid creating multiple -> addBikeEncodedValues()?
-            add(TagParserFactory.createRoundabout(new BooleanEncodedValue(TagParserFactory.ROUNDABOUT, false)));
+            if (carMaxSpeed) {
+                // TODO NOW do we really need this for instructions?
+                DecimalEncodedValue ev = new DecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED, 7, 0, 2, false);
+                add(TagParserFactory.Car.createMaxSpeed(ev, TagParserFactory.ACCEPT_IF_HIGHWAY));
+            }
+
+            add(TagParserFactory.createRoundabout(new BooleanEncodedValue(TagParserFactory.ROUNDABOUT)));
             List<String> roadClasses = Arrays.asList("_default", "footway", "path", "steps", "pedestrian", "living_street", "track",
                     "residential", "service", "trunk", "trunk_link", "motorway", "motorway_link", "motorroad",
                     "primary", "primary_link", "secondary", "secondary_link", "tertiary", "tertiary_link",
@@ -120,7 +119,16 @@ public class EncodingManager implements EncodedValueLookup {
 
             List<String> roadEnvList = Arrays.asList("_default", "bridge", "tunnel", "ford", "aerialway");
             add(TagParserFactory.createRoadEnvironment(new StringEncodedValue(TagParserFactory.ROAD_ENVIRONMENT, roadEnvList, "_default"), roadEnvList));
+
+            // bit usage: 1, 5, 3, plus surface: 5, plus max_speed: 7
             return this;
+        }
+
+        /**
+         * This method adds some EncodedValues that are required like roundabout and road_class
+         */
+        public Builder addGlobalEncodedValues() {
+            return addGlobalEncodedValues_(true, true);
         }
 
         public Builder add(TagParser parser) {
@@ -196,9 +204,15 @@ public class EncodingManager implements EncodedValueLookup {
         public EncodingManager build() {
             check();
 
+            int bits = 0;
+            int maxBits = em.extendedDataSize * 8;
             EncodedValue.InitializerConfig initializer = new EncodedValue.InitializerConfig();
             for (TagParser tp : em.parsers.values()) {
-                tp.getEncodedValue().init(initializer, em.extendedDataSize);
+                bits += tp.getEncodedValue().init(initializer);
+
+                if (bits >= maxBits)
+                    throw new IllegalArgumentException("Too few space reserved for EncodedValues data. Maximum bits: " + maxBits + ", requested " + bits +
+                            ". Current EncodedValue " + tp.getEncodedValue().toString() + ", all: " + em.parsers);
             }
 
             if (em.edgeEncoders.isEmpty()) {

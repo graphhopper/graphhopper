@@ -138,8 +138,8 @@ public class RoutingAlgorithmIT {
         final GraphHopperStorage graph = new GraphBuilder(eManager).create();
 
         String bigFile = "10000EWD.txt.gz";
-        new PrinctonReader(graph, eManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS),
-                eManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED)).
+        new PrinctonReader(graph, eManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
+                eManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED)).
                 setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile))).read();
         GraphHopper hopper = new GraphHopper() {
             {

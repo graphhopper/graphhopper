@@ -31,7 +31,7 @@ public final class StringEncodedValue extends IntEncodedValue {
     private final String[] map;
 
     public StringEncodedValue(String name, List<String> values, String defaultValue) {
-        super(name, 32-Integer.numberOfLeadingZeros(values.size()));
+        super(name, 32 - Integer.numberOfLeadingZeros(values.size()));
 
         // we want to use binarySearch so we need to sort the list
         // TODO should we simply use a separate Map<String, Int>?

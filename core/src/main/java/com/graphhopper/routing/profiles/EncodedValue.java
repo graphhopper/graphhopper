@@ -26,10 +26,14 @@ public interface EncodedValue {
      * This method sets the dataIndex and shift of this EncodedValue object and potentially changes the submitted init
      * object afterwards via calling next
      *
+     * @return used bits
      * @see InitializerConfig#find(int)
      */
-    void init(InitializerConfig init, int maxBytes);
+    int init(InitializerConfig init);
 
+    /**
+     * This method returns the hierarchical name like vehicle.type of this EncodedValue
+     */
     String getName();
 
     class InitializerConfig {

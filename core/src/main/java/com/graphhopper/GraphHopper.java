@@ -545,13 +545,9 @@ public class GraphHopper implements GraphHopperAPI {
                 };
                 setEncodingManager(new EncodingManager.Builder(new TagsParser(), bytesForFlags).
                         addGlobalEncodedValues().
-                        add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue("max_speed", 5, 0, 5, false), filter)).
-                        add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue("average_speed", 5, 0, 5, false), speedMap)).
-                        add(TagParserFactory.createRoundabout(new BooleanEncodedValue("roundabout"))).
-                        add(TagParserFactory.Car.createAccess(new BooleanEncodedValue("access", true), filter)).
-                        add(TagParserFactory.createRoadClass(new StringEncodedValue("highway",
-                                Arrays.asList("primary", "secondary", "tertiary", "motorway", "motorway_link",
-                                        "motorroad", "residential", "trunk"), "tertiary"))).
+                        add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED, 5, 0, 5, false), filter)).
+                        add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, false), speedMap)).
+                        add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).
                         build());
             } else {
                 setEncodingManager(new EncodingManager.Builder(new TagsParser(), bytesForFlags).addGlobalEncodedValues().addAll(flagEncoderFactory, flagEncodersStr, bytesForFlags).build());

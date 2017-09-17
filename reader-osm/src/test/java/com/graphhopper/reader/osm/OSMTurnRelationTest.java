@@ -51,8 +51,8 @@ public class OSMTurnRelationTest {
 
         EncodingManager em = new EncodingManager.Builder().addAll(encoder).build();
         GraphHopperStorage ghStorage = new GraphBuilder(em).create();
-        EdgeBasedRoutingAlgorithmTest.initGraph(ghStorage, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS),
-                em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
+        EdgeBasedRoutingAlgorithmTest.initGraph(ghStorage, em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
+                em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED));
         OSMReader osmReader = new OSMReader(ghStorage) {
 
             @Override

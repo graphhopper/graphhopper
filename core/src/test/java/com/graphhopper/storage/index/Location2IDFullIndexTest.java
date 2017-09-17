@@ -42,8 +42,8 @@ public class Location2IDFullIndexTest extends AbstractLocationIndexTester {
     public void testFullIndex() {
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
         LocationIndex tmpIdx = new Location2IDFullIndex(initSampleGraph(createGHStorage(em),
-                em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS),
-                em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED)));
+                em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
+                em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED)));
         assertEquals(5, findID(tmpIdx, 2, 3));
         assertEquals(10, findID(tmpIdx, 4, 1));
         assertEquals(10, findID(tmpIdx, 3.6, 1.4));

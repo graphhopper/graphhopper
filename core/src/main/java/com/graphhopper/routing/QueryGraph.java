@@ -209,9 +209,9 @@ public class QueryGraph implements Graph {
             throw new IllegalStateException("Call lookup only once. Otherwise you'll have problems for queries sharing the same edge.");
 
         // initialize all none-final variables
-        virtualEdges = new ArrayList<VirtualEdgeIteratorState>(resList.size() * 2);
+        virtualEdges = new ArrayList<>(resList.size() * 2);
         virtualNodes = new PointList(resList.size(), mainNodeAccess.is3D());
-        queryResults = new ArrayList<QueryResult>(resList.size());
+        queryResults = new ArrayList<>(resList.size());
         baseGraph.virtualEdges = virtualEdges;
         baseGraph.virtualNodes = virtualNodes;
         baseGraph.queryResults = queryResults;
@@ -260,7 +260,7 @@ public class QueryGraph implements Graph {
             int edgeId = closestEdge.getEdge();
             List<QueryResult> list = edge2res.get(edgeId);
             if (list == null) {
-                list = new ArrayList<QueryResult>(5);
+                list = new ArrayList<>(5);
                 edge2res.put(edgeId, list);
             }
             list.add(res);
@@ -411,10 +411,10 @@ public class QueryGraph implements Graph {
 
         // edges between base and snapped point
         VirtualEdgeIteratorState baseEdge = new VirtualEdgeIteratorState(origTraversalKey,
-                virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getData(), closestEdge.getName(), basePoints);
-        // TODO NOW set internally reverse to true so that properties will be correctly fetched
+                virtEdgeId, prevNodeId, nodeId, baseDistance, closestEdge.getData(), closestEdge.getName(), basePoints, false);
+
         VirtualEdgeIteratorState baseReverseEdge = new VirtualEdgeIteratorState(origRevTraversalKey,
-                virtEdgeId, nodeId, prevNodeId, baseDistance, closestEdge.getData(), closestEdge.getName(), baseReversePoints);
+                virtEdgeId, nodeId, prevNodeId, baseDistance, closestEdge.getData(), closestEdge.getName(), baseReversePoints, true);
         baseEdge.setReverseEdge(baseReverseEdge);
         baseReverseEdge.setReverseEdge(baseEdge);
         virtualEdges.add(baseEdge);

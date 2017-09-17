@@ -44,8 +44,8 @@ public class ChangeGraphHelperTest {
     @Test
     public void testApplyChanges() {
         FlagEncoder encoder = encodingManager.getEncoder("car");
-        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
 
         // 0-1-2

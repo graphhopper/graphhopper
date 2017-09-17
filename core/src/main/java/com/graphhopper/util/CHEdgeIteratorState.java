@@ -30,7 +30,6 @@ import com.graphhopper.storage.CHGraph;
  * @see CHEdgeIterator
  */
 public interface CHEdgeIteratorState extends EdgeIteratorState {
-    BooleanEncodedValue SC_ACCESS = new BooleanEncodedValue("access");
     int getSkippedEdge1();
 
     int getSkippedEdge2();

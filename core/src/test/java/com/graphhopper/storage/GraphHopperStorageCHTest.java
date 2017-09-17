@@ -352,12 +352,12 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     public void testShortcutCreationAndAccessForManyVehicles() {
         FlagEncoder tmpCar = new CarFlagEncoder();
         FlagEncoder tmpBike = new Bike2WeightFlagEncoder();
-        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(tmpCar, tmpBike).build();
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(tmpCar, tmpBike).build();
         List<Weighting> chWeightings = new ArrayList<Weighting>();
         chWeightings.add(new FastestWeighting(tmpCar));
         chWeightings.add(new FastestWeighting(tmpBike));
-        BooleanEncodedValue tmpCarAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        DecimalEncodedValue tmpCarAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        BooleanEncodedValue tmpCarAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        DecimalEncodedValue tmpCarAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
         BooleanEncodedValue tmpBikeAccessEnc = encodingManager.getBooleanEncodedValue(tmpBike.getPrefix() + "access");
         DecimalEncodedValue tmpBikeAverageSpeedEnc = encodingManager.getDecimalEncodedValue(tmpBike.getPrefix() + "average_speed");
 

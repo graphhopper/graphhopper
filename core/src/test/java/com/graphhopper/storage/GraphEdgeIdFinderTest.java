@@ -47,8 +47,8 @@ public class GraphEdgeIdFinderTest {
     public void testParseStringHints() {
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
-        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
         GraphHopperStorage graph = new GraphBuilder(em).create();
         // 0-1-2
         // | |

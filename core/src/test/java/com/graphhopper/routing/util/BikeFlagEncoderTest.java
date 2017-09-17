@@ -20,10 +20,8 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.storage.IntsRef;
+import org.junit.Before;
 import org.junit.Test;
 
 import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
@@ -36,19 +34,9 @@ import static org.junit.Assert.*;
  */
 public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
 
-    DecimalEncodedValue averageSpeedEnc;
-    BooleanEncodedValue accessEnc;
-    DecimalEncodedValue priorityEnc;
-
-    @Override
-    protected BikeCommonFlagEncoder createBikeEncoder() {
-        encodingManager = new EncodingManager.Builder().addGlobalEncodedValues(true).
-                addAllFlagEncoders("bike,mtb").build();
-        BikeCommonFlagEncoder encoder = (BikeCommonFlagEncoder) encodingManager.getEncoder("bike");
-        averageSpeedEnc = encodingManager.getDecimalEncodedValue(encoder.getPrefix() + "average_speed");
-        accessEnc = encodingManager.getBooleanEncodedValue(encoder.getPrefix() + "access");
-        priorityEnc = encodingManager.getDecimalEncodedValue(encoder.getPrefix() + "priority");
-        return encoder;
+    @Before
+    public void setUp() {
+        createBikeEncoder("bike,mtb", "bike");
     }
 
     @Test
@@ -599,7 +587,7 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     @Test
     public void testTurnFlagEncoding_withCosts() {
         encoder = new BikeFlagEncoder(4, 2, 127);
-        new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(encoder).build();
+        new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
 
         long flags_r0 = encoder.getTurnFlags(true, 0);
         long flags_0 = encoder.getTurnFlags(false, 0);

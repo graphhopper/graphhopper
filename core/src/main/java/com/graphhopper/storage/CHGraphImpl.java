@@ -57,13 +57,16 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     // shortcut memory layout is synced with edges indices until E_FLAGS, then:
     private int S_SKIP_EDGE1, S_SKIP_EDGE2;
     private int shortcutCount = 0;
+    private final BooleanEncodedValue scAccess;
 
-    CHGraphImpl(Weighting w, Directory dir, final BaseGraph baseGraph) {
+    CHGraphImpl(Weighting w, Directory dir, final BaseGraph baseGraph, BooleanEncodedValue shortcutAccess) {
         if (w == null)
             throw new IllegalStateException("Weighting for CHGraph cannot be null");
 
         this.weighting = w;
         this.baseGraph = baseGraph;
+        this.scAccess = shortcutAccess;
+
         final String name = AbstractWeighting.weightingToFileName(w);
         this.nodesCH = dir.find("nodes_ch_" + name);
         this.shortcuts = dir.find("shortcuts_" + name);
@@ -426,9 +429,9 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public boolean get(BooleanEncodedValue property) {
-            // TODO NOW does not work as property is e.g. foot.access and not a special instance
+            // TODO NOW Use EncodedValue instead of raw access?
             // the only solution is to inject the correct access EncodedValue into this CHGraphImpl instance somehow
-            if (isShortcut() && SC_ACCESS == property)
+            if (isShortcut() && scAccess == property)
                 return (getData().ints[0] & PrepareEncoder.getScBwdDir()) != 0;
 
             return super.get(property);
@@ -436,7 +439,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public boolean getReverse(BooleanEncodedValue property) {
-            if (isShortcut() && SC_ACCESS == property)
+            if (isShortcut() && scAccess == property)
                 return (getData().ints[0] & PrepareEncoder.getScBwdDir()) != 0;
 
             return super.getReverse(property);
@@ -533,7 +536,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public boolean get(BooleanEncodedValue property) {
             // TODO NOW Use EncodedValue instead of raw access
-            if (isShortcut() && SC_ACCESS == property)
+            if (isShortcut() && scAccess == property)
                 return reverse ? (super.getData().ints[0] & PrepareEncoder.getScBwdDir()) != 0 :
                         (super.getData().ints[0] & PrepareEncoder.getScFwdDir()) != 0;
 
@@ -542,7 +545,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public boolean getReverse(BooleanEncodedValue property) {
-            if (isShortcut() && SC_ACCESS == property)
+            if (isShortcut() && scAccess == property)
                 return reverse ? (super.getData().ints[0] & PrepareEncoder.getScFwdDir()) != 0 :
                         (super.getData().ints[0] & PrepareEncoder.getScBwdDir()) != 0;
 

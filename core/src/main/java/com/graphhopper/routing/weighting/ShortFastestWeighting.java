@@ -23,7 +23,6 @@ import com.graphhopper.util.PMap;
 
 /**
  * Calculates the fastest route with distance influence controlled by a new parameter.
- * <p>
  *
  * @author Peter Karich
  */

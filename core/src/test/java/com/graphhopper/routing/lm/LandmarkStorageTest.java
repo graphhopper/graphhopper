@@ -54,8 +54,8 @@ public class LandmarkStorageTest {
     public void setUp() {
         encoder = new CarFlagEncoder();
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
-        accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        averageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        averageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
         ghStorage = new GraphHopperStorage(new RAMDirectory(), em, false, new GraphExtension.NoOpExtension());
         ghStorage.create(1000);
     }

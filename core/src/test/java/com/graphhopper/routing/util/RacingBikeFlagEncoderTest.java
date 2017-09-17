@@ -19,8 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.storage.IntsRef;
+import org.junit.Before;
 import org.junit.Test;
 
 import static com.graphhopper.routing.util.BikeCommonFlagEncoder.PUSHING_SECTION_SPEED;
@@ -32,13 +32,10 @@ import static org.junit.Assert.assertTrue;
  * @author ratrun
  */
 public class RacingBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
-    private DecimalEncodedValue averageSpeedEnc;
 
-    @Override
-    protected BikeCommonFlagEncoder createBikeEncoder() {
-        encodingManager = new EncodingManager.Builder().addGlobalEncodedValues(true).addAllFlagEncoders("bike,racingbike").build();
-        averageSpeedEnc = encodingManager.getDecimalEncodedValue("racingbike.average_speed");
-        return (BikeCommonFlagEncoder) encodingManager.getEncoder("racingbike");
+    @Before
+    public void setUp() {
+        createBikeEncoder("bike,racingbike", "racingbike");
     }
 
     @Test

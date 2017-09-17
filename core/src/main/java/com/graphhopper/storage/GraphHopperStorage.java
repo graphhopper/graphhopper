@@ -35,7 +35,6 @@ import java.util.List;
  * The associated graphs manage their own necessary data structures and are used to provide e.g.
  * different traversal methods. By default this class implements the graph interface and results in
  * identical behavior as the Graph instance from getGraph(Graph.class)
- * <p>
  *
  * @author Peter Karich
  * @see GraphBuilder to create a (CH)Graph easier
@@ -82,7 +81,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
         this.baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, extendedStorage);
         for (Weighting w : chWeightings) {
-            chGraphs.add(new CHGraphImpl(w, dir, this.baseGraph));
+            chGraphs.add(new CHGraphImpl(w, dir, this.baseGraph, w.getFlagEncoder().getAccessEncodedValue()));
         }
     }
 

@@ -35,11 +35,11 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class CarFlagEncoderTest {
-    private final EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues(true).
+    private final EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().
             addAllFlagEncoders("car,bike,foot").build();
     private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("car");
-    private final BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-    private final DecimalEncodedValue averageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+    private final BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+    private final DecimalEncodedValue averageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(TagParserFactory.ROUNDABOUT);
 
     @Test

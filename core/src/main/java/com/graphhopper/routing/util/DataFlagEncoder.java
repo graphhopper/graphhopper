@@ -108,6 +108,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         map.put("roundabout", null);
         map.put("road_class", null);
         map.put("road_environment", null);
+        map.put("surface", null);
 
         // ugly: misusing average speed to store maximum values otherwise AbstractFlagEncoder would not be able to init averageSpeedEnc
         averageSpeedEnc = new DecimalEncodedValue(prefix + "average_speed", speedBits, 0, speedFactor, true);
@@ -234,10 +235,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         for (String s : accessList) {
             accessClassMap.put(s, counter++);
         }
-
-        List<String> surfaceList = Arrays.asList("unknown", "asphalt", "unpaved", "paved", "gravel",
-                "ground", "dirt", "grass", "concrete", "paving_stones", "sand", "compacted", "cobblestone", "mud", "ice");
-        map.put("surface", TagParserFactory.createSurface(new StringEncodedValue("surface", surfaceList, "unknown")));
 
         int tmpMax = spatialRuleLookup.size() - 1;
         int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);

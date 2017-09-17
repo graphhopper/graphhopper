@@ -19,10 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.TagParser;
-import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.BitUtil;
 import org.junit.Rule;
@@ -43,7 +40,7 @@ public class EncodingManagerTest {
 
     @Test
     public void testCompatibility() {
-        EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues(true).addAllFlagEncoders("car,bike,foot").build();
+        EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car,bike,foot").build();
         BikeFlagEncoder bike = (BikeFlagEncoder) manager.getEncoder("bike");
         CarFlagEncoder car = (CarFlagEncoder) manager.getEncoder("car");
         FootFlagEncoder foot = (FootFlagEncoder) manager.getEncoder("foot");
@@ -93,7 +90,8 @@ public class EncodingManagerTest {
         }
 
         try {
-            new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(new FootFlagEncoder(), new CarFlagEncoder(), new BikeFlagEncoder(), new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder()).build();
+            new EncodingManager.Builder().addGlobalEncodedValues().
+                    addAll(new FootFlagEncoder(), new CarFlagEncoder(), new BikeFlagEncoder(), new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder()).build();
             assertTrue(false);
         } catch (Exception ex) {
             assertTrue(ex.getMessage(), ex.getMessage().startsWith("Too few bytes reserved for EncodedValues data"));
@@ -151,7 +149,7 @@ public class EncodingManagerTest {
 
     @Test
     public void testSkipWaysWithoutHighwayTag() {
-        EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues(true).addAllFlagEncoders("car,bike,foot").build();
+        EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car,bike,foot").build();
         CarFlagEncoder encoder = (CarFlagEncoder) manager.getEncoder("car");
         ReaderWay readerWay = new ReaderWay(0);
         readerWay.setTag("highway", "primary");
@@ -196,7 +194,7 @@ public class EncodingManagerTest {
                 return "less_relations_bits";
             }
         };
-        EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(defaultBikeEncoder, lessRelationCodesEncoder).build();
+        EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(defaultBikeEncoder, lessRelationCodesEncoder).build();
 
         // relation code is PREFER
         osmRel.setTag("route", "bicycle");
@@ -219,7 +217,7 @@ public class EncodingManagerTest {
 
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
         MountainBikeFlagEncoder mtbEncoder = new MountainBikeFlagEncoder();
-        EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(bikeEncoder, mtbEncoder).build();
+        EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(bikeEncoder, mtbEncoder).build();
 
         // relation code for network rcn is VERY_NICE for bike and PREFER for mountainbike
         osmRel.setTag("route", "bicycle");
@@ -253,7 +251,7 @@ public class EncodingManagerTest {
 
     @Test
     public void testCompatibilityBug() {
-        EncodingManager manager2 = new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(FlagEncoderFactory.DEFAULT, "bike2", 8).build();
+        EncodingManager manager2 = new EncodingManager.Builder().addGlobalEncodedValues().addAll(FlagEncoderFactory.DEFAULT, "bike2", 8).build();
         ReaderWay osmWay = new ReaderWay(1);
         osmWay.setTag("highway", "footway");
         osmWay.setTag("name", "test");
@@ -280,7 +278,7 @@ public class EncodingManagerTest {
     public void testSupportFords() {
         // 1) no encoder crossing fords
         String flagEncodersStr = "car,bike,foot";
-        EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(FlagEncoderFactory.DEFAULT, flagEncodersStr, 8).build();
+        EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(FlagEncoderFactory.DEFAULT, flagEncodersStr, 8).build();
 
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
@@ -288,7 +286,7 @@ public class EncodingManagerTest {
 
         // 2) two encoders crossing fords
         flagEncodersStr = "car,bike|block_fords=false,foot|block_fords=false";
-        manager = new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(FlagEncoderFactory.DEFAULT, flagEncodersStr, 8).build();
+        manager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(FlagEncoderFactory.DEFAULT, flagEncodersStr, 8).build();
 
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
         assertFalse(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());
@@ -296,7 +294,7 @@ public class EncodingManagerTest {
 
         // 2) Try combined with another tag
         flagEncodersStr = "car|turn_costs=true|block_fords=true,bike,foot|block_fords=false";
-        manager = new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(FlagEncoderFactory.DEFAULT, flagEncodersStr, 8).build();
+        manager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(FlagEncoderFactory.DEFAULT, flagEncodersStr, 8).build();
 
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("car")).isBlockFords());
         assertTrue(((AbstractFlagEncoder) manager.getEncoder("bike")).isBlockFords());

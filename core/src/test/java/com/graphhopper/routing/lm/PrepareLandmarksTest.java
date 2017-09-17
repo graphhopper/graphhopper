@@ -58,9 +58,9 @@ public class PrepareLandmarksTest
     public void setUp() {
         encoder = new CarFlagEncoder();
         tm = TraversalMode.NODE_BASED;
-        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
-        accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        averageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
+        accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        averageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
         GraphHopperStorage tmp = new GraphHopperStorage(new RAMDirectory(), em, false, new GraphExtension.NoOpExtension());
         tmp.create(1000);
         graph = tmp;
@@ -73,7 +73,6 @@ public class PrepareLandmarksTest
         // 15 16 17 ...
         Random rand = new Random(0);
         int width = 15, height = 15;
-
 
         for (int hIndex = 0; hIndex < height; hIndex++) {
             for (int wIndex = 0; wIndex < width; wIndex++) {

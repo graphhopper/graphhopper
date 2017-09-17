@@ -147,6 +147,7 @@ public class MotorcycleFlagEncoderTest {
 
     @Test
     public void testSetSpeed0_issue367() {
+        initExampleGraph();
         IntsRef flags = em.createIntsRef();
         mcAverageSpeedEnc.setDecimal(false, flags, 10d);
         encoder.setSpeed(flags, 0);

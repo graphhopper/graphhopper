@@ -579,7 +579,7 @@ public class RoutingAlgorithmWithOSMIT {
         // also the preparing is too costly to be called for every thread
         int algosLength = 2;
         final Weighting weighting = new ShortestWeighting(encodingManager.getEncoder("car"));
-        final EdgeFilter filter = new DefaultEdgeFilter(encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS));
+        final EdgeFilter filter = new DefaultEdgeFilter(encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS));
         for (int no = 0; no < MAX; no++) {
             for (int instanceNo = 0; instanceNo < instances.size(); instanceNo++) {
                 String[] algos = new String[]{

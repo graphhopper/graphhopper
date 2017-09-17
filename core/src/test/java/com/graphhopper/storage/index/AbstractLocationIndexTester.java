@@ -78,8 +78,8 @@ public abstract class AbstractLocationIndexTester {
     @Test
     public void testSimpleGraph() {
         GraphHopperStorage g = createGHStorage(new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build());
-        initSimpleGraph(g, Arrays.asList(g.getEncodingManager().getBooleanEncodedValue(TagParserFactory.Car.ACCESS)),
-                Arrays.asList(g.getEncodingManager().getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED)));
+        initSimpleGraph(g, Arrays.asList(g.getEncodingManager().getBooleanEncodedValue(TagParserFactory.CAR_ACCESS)),
+                Arrays.asList(g.getEncodingManager().getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED)));
 
         idx = createIndex(g, -1);
         assertEquals(4, findID(idx, 5, 2));
@@ -133,8 +133,8 @@ public abstract class AbstractLocationIndexTester {
     @Test
     public void testSimpleGraph2() {
         GraphHopperStorage g = createGHStorage(new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build());
-        initSimpleGraph(g, Arrays.asList(g.getEncodingManager().getBooleanEncodedValue(TagParserFactory.Car.ACCESS)),
-                Arrays.asList(g.getEncodingManager().getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED)));
+        initSimpleGraph(g, Arrays.asList(g.getEncodingManager().getBooleanEncodedValue(TagParserFactory.CAR_ACCESS)),
+                Arrays.asList(g.getEncodingManager().getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED)));
 
         idx = createIndex(g, -1);
         assertEquals(4, findID(idx, 5, 2));
@@ -157,7 +157,7 @@ public abstract class AbstractLocationIndexTester {
     public void testGrid() {
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
         GraphHopperStorage g = createGHStorage(em);
-        initSampleGraph(g, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS), em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
+        initSampleGraph(g, em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS), em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED));
         int locs = g.getNodes();
 
         idx = createIndex(g, -1);
@@ -214,7 +214,7 @@ public abstract class AbstractLocationIndexTester {
     public void testSinglePoints120() {
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
         Graph g = createGHStorage(em);
-        initSampleGraph(g, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS), em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
+        initSampleGraph(g, em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS), em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED));
         idx = createIndex(g, -1);
 
         assertEquals(1, findID(idx, 1.637, 2.23));
@@ -231,7 +231,7 @@ public abstract class AbstractLocationIndexTester {
     public void testSinglePoints32() {
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
         Graph g = createGHStorage(em);
-        initSampleGraph(g, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS), em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
+        initSampleGraph(g, em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS), em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED));
         idx = createIndex(g, -1);
 
         // 10 or 6
@@ -340,11 +340,11 @@ public abstract class AbstractLocationIndexTester {
     @Test
     public void testDifferentVehicles() {
         final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car,foot").build();
-        BooleanEncodedValue carAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        DecimalEncodedValue carAvSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        BooleanEncodedValue carAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        DecimalEncodedValue carAvSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
-        BooleanEncodedValue footAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Foot.ACCESS);
-        DecimalEncodedValue footAvSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Foot.AVERAGE_SPEED);
+        BooleanEncodedValue footAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.FOOT_ACCESS);
+        DecimalEncodedValue footAvSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.FOOT_AVERAGE_SPEED);
         Graph g = createGHStorage(encodingManager);
         initSimpleGraph(g, Arrays.asList(carAccessEnc, footAccessEnc), Arrays.asList(carAvSpeedEnc, footAvSpeedEnc));
         idx = createIndex(g, -1);
@@ -352,8 +352,8 @@ public abstract class AbstractLocationIndexTester {
 
         // now make all edges from node 1 accessible for CAR only
         EdgeIterator iter = g.createEdgeExplorer().setBaseNode(1);
-        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        DecimalEncodedValue averageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        DecimalEncodedValue averageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
         while (iter.next()) {
             iter.set(accessEnc, true);
             iter.setReverse(accessEnc, true);
@@ -363,7 +363,7 @@ public abstract class AbstractLocationIndexTester {
 
         idx = createIndex(g, -1);
         assertEquals(2, idx.findClosest(1, -1,
-                new DefaultEdgeFilter(encodingManager.getBooleanEncodedValue(TagParserFactory.Foot.ACCESS))).getClosestNode());
+                new DefaultEdgeFilter(encodingManager.getBooleanEncodedValue(TagParserFactory.FOOT_ACCESS))).getClosestNode());
         Helper.close((Closeable) g);
     }
 }

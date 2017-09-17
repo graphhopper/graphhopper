@@ -18,7 +18,7 @@ public class MappedDecimalEncodedValueTest {
     public void setup() {
         List<Double> list = Arrays.asList(1d, 2d, 4.5, 6d);
         maxweight = new MappedDecimalEncodedValue("maxweight", list, 0.1, 6d, false);
-        maxweight.init(new EncodedValue.InitializerConfig(), 4);
+        maxweight.init(new EncodedValue.InitializerConfig());
     }
 
     @Test

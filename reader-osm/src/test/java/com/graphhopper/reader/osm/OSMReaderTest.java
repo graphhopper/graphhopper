@@ -291,7 +291,7 @@ public class OSMReaderTest {
         EdgeIterator iter = carOutExplorer.setBaseNode(n60);
         iter.next();
         assertEquals(35, carEncoder.getSpeed(iter.getData()), .1);
-        assertEquals(40d, iter.get(carEncoder.getDecimalEncodedValue(TagParserFactory.Car.MAX_SPEED)), .1);
+        assertEquals(40d, iter.get(carEncoder.getDecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED)), .1);
     }
 
     @Test
@@ -821,9 +821,9 @@ public class OSMReaderTest {
 
         final EncodingManager em = new EncodingManager.Builder(parser, 4).
                 addGlobalEncodedValues().
-                add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue(TagParserFactory.Car.MAX_SPEED, 5, 0, 5, false), filter)).
-                add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED, 5, 0, 5, false), speedMap)).
-                add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.Car.ACCESS, true), filter)).
+                add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED, 5, 0, 5, false), filter)).
+                add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, false), speedMap)).
+                add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).
                 build();
         GraphHopper hopper = new GraphHopperOSM() {
             @Override
@@ -872,8 +872,8 @@ public class OSMReaderTest {
             footEncoder = new FootFlagEncoder();
 
             setEncodingManager(new EncodingManager.Builder().addGlobalEncodedValues().addAll(footEncoder, carEncoder, bikeEncoder).build());
-            carAccessEnc = getEncodingManager().getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-            footAccessEnc = getEncodingManager().getBooleanEncodedValue(TagParserFactory.Foot.ACCESS);
+            carAccessEnc = getEncodingManager().getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+            footAccessEnc = getEncodingManager().getBooleanEncodedValue(TagParserFactory.FOOT_ACCESS);
         }
 
         @Override

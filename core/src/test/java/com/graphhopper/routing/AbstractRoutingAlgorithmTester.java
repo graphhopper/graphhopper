@@ -155,12 +155,12 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Before
     public void setUp() {
         carEncoder = encodingManager.getEncoder("car");
-        carAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        carAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        carAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        carAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
         footEncoder = encodingManager.getEncoder("foot");
-        footAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Foot.ACCESS);
-        footAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Foot.AVERAGE_SPEED);
+        footAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.FOOT_ACCESS);
+        footAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.FOOT_AVERAGE_SPEED);
 
         defaultOpts = AlgorithmOptions.start().
                 weighting(new ShortestWeighting(carEncoder)).build();
@@ -634,11 +634,11 @@ public abstract class AbstractRoutingAlgorithmTester {
         // 0->1\
         // |    2
         // 4<-3/
-        GHUtility.createEdge(graph, carAverageSpeedEnc, 1, carAccessEnc, 60, 0, false);
-        GHUtility.createEdge(graph, carAverageSpeedEnc, 2, carAccessEnc, 60, 1, true);
-        GHUtility.createEdge(graph, carAverageSpeedEnc, 3, carAccessEnc, 60, 2, true);
-        GHUtility.createEdge(graph, carAverageSpeedEnc, 4, carAccessEnc, 60, 3, false);
-        GHUtility.createEdge(graph, carAverageSpeedEnc, 0, carAccessEnc, 60, 4, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 0, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 2, 1, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 2, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 4, 3, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 4, true);
 
         updateDistancesFor(graph, 4, 0, 0);
         updateDistancesFor(graph, 0, 0.00010, 0);
@@ -648,6 +648,7 @@ public abstract class AbstractRoutingAlgorithmTester {
 
         // 0-1 to 3-4
         Path p = calcPathViaQuery(graph, 0.00010, 0.00001, 0, 0.00009);
+        assertTrue(p.isFound());
         assertEquals(Helper.createTList(5, 1, 2, 3, 6), p.calcNodes());
         assertEquals(p.toString(), 26.81, p.getDistance(), .1);
 
@@ -726,7 +727,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     @Test
     public void testTwoWeightsPerEdge() {
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
-        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(encoder).build();
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
         BooleanEncodedValue bikeAccess = em.getBooleanEncodedValue(encoder.getPrefix() + "access");
         DecimalEncodedValue bikeSpeed = em.getDecimalEncodedValue(encoder.getPrefix() + "average_speed");
         AlgorithmOptions opts = AlgorithmOptions.start().
@@ -828,12 +829,16 @@ public abstract class AbstractRoutingAlgorithmTester {
         GraphHopperStorage graph = createGHStorage(encodingManager, Arrays.asList(opts.getWeighting()), true);
         initEleGraph(graph, carAccessEnc, carAverageSpeedEnc, 60);
         Path p = createAlgo(graph, opts).calcPath(0, 10);
-        // GHUtility.printEdgeInfo(graph, carEncoder);
+        assertEquals(425621, p.getWeight(), 1);
         assertEquals(Helper.createTList(0, 4, 6, 10), p.calcNodes());
 
         AlgorithmOptions fakeOpts = AlgorithmOptions.start().weighting(fakeWeighting).build();
         graph = createGHStorage(encodingManager, Arrays.asList(fakeOpts.getWeighting()), true);
         initEleGraph(graph, carAccessEnc, carAverageSpeedEnc, 60);
+        p = createAlgo(graph, fakeOpts).calcPath(0, 10);
+        assertEquals(444535, p.getWeight(), 1);
+        assertEquals(Helper.createTList(0, 1, 2, 11, 7, 10), p.calcNodes());
+
         QueryResult from = newQR(graph, 3, 0);
         QueryResult to = newQR(graph, 10, 9);
 

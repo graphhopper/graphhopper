@@ -19,11 +19,11 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Translation;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.text.DateFormat;
@@ -41,13 +41,18 @@ import static org.junit.Assert.*;
 public abstract class AbstractBikeFlagEncoderTester {
     protected BikeCommonFlagEncoder encoder;
     protected EncodingManager encodingManager;
+    protected DecimalEncodedValue averageSpeedEnc;
+    protected BooleanEncodedValue accessEnc;
+    protected DecimalEncodedValue priorityEnc;
 
-    @Before
-    public void setUp() {
-        encoder = createBikeEncoder();
+    protected void createBikeEncoder(String emString, String encoderStr) {
+        encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().
+                addAllFlagEncoders(emString).build();
+        encoder = (BikeCommonFlagEncoder) encodingManager.getEncoder(encoderStr);
+        averageSpeedEnc = encodingManager.getDecimalEncodedValue(encoder.getPrefix() + "average_speed");
+        accessEnc = encodingManager.getBooleanEncodedValue(encoder.getPrefix() + "access");
+        priorityEnc = encodingManager.getDecimalEncodedValue(encoder.getPrefix() + "priority");
     }
-
-    protected abstract BikeCommonFlagEncoder createBikeEncoder();
 
     protected void assertPriority(int expectedPrio, ReaderWay way) {
         assertPriority(expectedPrio, way, 0);

@@ -47,8 +47,8 @@ import static org.junit.Assert.*;
  */
 public class GraphHopperAPITest {
     final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
-    final BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-    final DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+    final BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+    final DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
     void initGraph(GraphHopperStorage graph) {
         NodeAccess na = graph.getNodeAccess();

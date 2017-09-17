@@ -41,8 +41,8 @@ public class ShortFastestWeightingTest {
 
     @Test
     public void testShort() {
-        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        DecimalEncodedValue averageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        DecimalEncodedValue averageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
         IntsRef ints = encodingManager.createIntsRef();
         accessEnc.setBool(false, ints, true);
@@ -73,13 +73,13 @@ public class ShortFastestWeightingTest {
             }
 
             @Override
-            public IntsRef getData() {
-                return flags;
+            public double get(DecimalEncodedValue property) {
+                return property.getDecimal(false, flags);
             }
 
             @Override
-            public boolean get(BooleanEncodedValue encodedValue) {
-                return true;
+            public boolean get(BooleanEncodedValue property) {
+                return property.getBool(false, flags);
             }
         };
     }

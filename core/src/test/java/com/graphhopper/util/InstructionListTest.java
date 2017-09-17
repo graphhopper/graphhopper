@@ -64,8 +64,8 @@ public class InstructionListTest {
     public void setUp() {
         carEncoder = new CarFlagEncoder();
         carManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carEncoder).build();
-        carAccessEnc = carManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        carAverageSpeedEnc = carManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        carAccessEnc = carManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        carAverageSpeedEnc = carManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
     }
 
     @SuppressWarnings("unchecked")

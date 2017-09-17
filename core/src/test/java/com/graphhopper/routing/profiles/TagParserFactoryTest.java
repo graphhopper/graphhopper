@@ -13,7 +13,7 @@ public class TagParserFactoryTest {
         ReaderWay way = new ReaderWay(2L);
         way.setTag("highway", "xy");
         DecimalEncodedValue ev = new DecimalEncodedValue("maxspeed", 5, 1, 1, false);
-        ev.init(new EncodedValue.InitializerConfig(), 4);
+        ev.init(new EncodedValue.InitializerConfig());
         ReaderWayFilter filter = new ReaderWayFilter() {
             @Override
             public boolean accept(ReaderWay way) {

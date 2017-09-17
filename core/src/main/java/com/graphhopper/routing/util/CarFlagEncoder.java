@@ -129,8 +129,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     @Override
     public Map<String, TagParser> createTagParsers(String prefix) {
         Map<String, TagParser> tpMap = new HashMap<>();
-        tpMap.put("roundabout", null);
-
+        tpMap.put(TagParserFactory.ROUNDABOUT, null);
+        tpMap.put(TagParserFactory.CAR_MAX_SPEED, null);
         tpMap.put(prefix + "average_speed", TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(prefix + "average_speed", speedBits, 0, speedFactor, false),
                 defaultSpeedMap));
         ReaderWayFilter filter = new ReaderWayFilter() {
@@ -140,7 +140,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             }
         };
         tpMap.put(prefix + "access", TagParserFactory.Car.createAccess(new BooleanEncodedValue(prefix + "access", true), filter));
-        tpMap.put(prefix + "max_speed", TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue(prefix + "max_speed", speedBits, 0, speedFactor, false), filter));
         return tpMap;
     }
 

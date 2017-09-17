@@ -33,7 +33,7 @@ public class MappedDecimalEncodedValue extends IntEncodedValue {
      * consecutive.
      */
     public MappedDecimalEncodedValue(String name, Collection<Double> values, double precision, Double defaultValue, boolean store2DirectedValues) {
-        super(name, (int) Long.highestOneBit(values.size()), -1, store2DirectedValues);
+        super(name, 32 - Integer.numberOfLeadingZeros(values.size()), -1, store2DirectedValues);
 
         this.precision = precision;
         // store int-int mapping

@@ -40,8 +40,8 @@ import static org.junit.Assert.assertEquals;
 public class FastestWeightingTest {
     private final EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
     private final FlagEncoder encoder = em.getEncoder("car");
-    private final DecimalEncodedValue averageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
-    private final BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+    private final DecimalEncodedValue averageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
+    private final BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
 
     @Test
     public void testMinWeightHasSameUnitAs_getWeight() {
@@ -63,7 +63,7 @@ public class FastestWeightingTest {
         accessEnc.setBool(false, ints, true);
         accessEnc.setBool(true, ints, true);
         VirtualEdgeIteratorState virtEdge = new VirtualEdgeIteratorState(0, 1, 1, 2, 10d,
-                ints, "test", Helper.createPointList(51, 0, 51, 1));
+                ints, "test", Helper.createPointList(51, 0, 51, 1), false);
         double time = instance.calcWeight(virtEdge, false, 0);
 
         virtEdge.setUnfavored(true);

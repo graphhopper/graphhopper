@@ -31,7 +31,7 @@ public class BlockAreaWeightingTest {
         em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(encoder), 8).build();
         graph = new GraphBuilder(em).create();
         // 0-1
-        GHUtility.createEdge(graph, em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED), 60, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS),
+        GHUtility.createEdge(graph, em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED), 60, em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
                 0, 1, true, 1);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 0, 0.00, 0.00);
         AbstractRoutingAlgorithmTester.updateDistancesFor(graph, 1, 0.01, 0.01);

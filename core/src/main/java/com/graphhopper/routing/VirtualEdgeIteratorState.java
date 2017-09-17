@@ -17,10 +17,7 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.profiles.IntEncodedValue;
-import com.graphhopper.routing.profiles.StringEncodedValue;
+import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
@@ -45,9 +42,10 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     // indication if edges are penalized as start/stop edge
     private boolean unfavored;
     private EdgeIteratorState reverseEdge;
+    private final boolean reverse;
 
     public VirtualEdgeIteratorState(int originalTraversalKey, int edgeId, int baseNode, int adjNode, double distance,
-                                    IntsRef edgeInts, String name, PointList pointList) {
+                                    IntsRef edgeInts, String name, PointList pointList, boolean reverse) {
         this.originalTraversalKey = originalTraversalKey;
         this.edgeId = edgeId;
         this.baseNode = baseNode;
@@ -56,6 +54,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         this.edgeInts = edgeInts;
         this.name = name;
         this.pointList = pointList;
+        this.reverse = reverse;
     }
 
     /**
@@ -131,7 +130,7 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
 
     @Override
     public void set(BooleanEncodedValue property, boolean value) {
-        property.setBool(false, edgeInts, value);
+        property.setBool(reverse, edgeInts, value);
     }
 
     @Override
@@ -139,77 +138,77 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
         if (property == EdgeIteratorState.UNFAVORED_EDGE)
             return unfavored;
 
-        return property.getBool(false, edgeInts);
+        return property.getBool(reverse, edgeInts);
     }
 
     @Override
     public void setReverse(BooleanEncodedValue property, boolean value) {
-        property.setBool(true, edgeInts, value);
+        property.setBool(!reverse, edgeInts, value);
     }
 
     @Override
     public boolean getReverse(BooleanEncodedValue property) {
-        return property.getBool(true, edgeInts);
+        return property.getBool(!reverse, edgeInts);
     }
 
     @Override
     public int get(IntEncodedValue property) {
-        return property.getInt(false, edgeInts);
+        return property.getInt(reverse, edgeInts);
     }
 
     @Override
     public void set(IntEncodedValue property, int value) {
-        property.setInt(false, edgeInts, value);
+        property.setInt(reverse, edgeInts, value);
     }
 
     @Override
     public int getReverse(IntEncodedValue property) {
-        return property.getInt(true, edgeInts);
+        return property.getInt(!reverse, edgeInts);
     }
 
     @Override
     public void setReverse(IntEncodedValue property, int value) {
-        property.setInt(true, edgeInts, value);
+        property.setInt(!reverse, edgeInts, value);
     }
 
     @Override
     public double get(DecimalEncodedValue property) {
-        return property.getDecimal(false, edgeInts);
+        return property.getDecimal(reverse, edgeInts);
     }
 
     @Override
     public void set(DecimalEncodedValue property, double value) {
-        property.setDecimal(false, edgeInts, value);
+        property.setDecimal(reverse, edgeInts, value);
     }
 
     @Override
     public double getReverse(DecimalEncodedValue property) {
-        return property.getDecimal(true, edgeInts);
+        return property.getDecimal(!reverse, edgeInts);
     }
 
     @Override
     public void setReverse(DecimalEncodedValue property, double value) {
-        property.setDecimal(true, edgeInts, value);
+        property.setDecimal(!reverse, edgeInts, value);
     }
 
     @Override
     public String get(StringEncodedValue property) {
-        return property.getString(false, edgeInts);
+        return property.getString(reverse, edgeInts);
     }
 
     @Override
     public void set(StringEncodedValue property, String value) {
-        property.setString(false, edgeInts, value);
+        property.setString(reverse, edgeInts, value);
     }
 
     @Override
     public String getReverse(StringEncodedValue property) {
-        return property.getString(true, edgeInts);
+        return property.getString(!reverse, edgeInts);
     }
 
     @Override
     public void setReverse(StringEncodedValue property, String value) {
-        property.setString(true, edgeInts, value);
+        property.setString(!reverse, edgeInts, value);
     }
 
     @Override

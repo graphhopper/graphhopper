@@ -26,6 +26,8 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters.Routing;
 
+import static com.graphhopper.util.EdgeIteratorState.UNFAVORED_EDGE;
+
 /**
  * Calculates the best route according to a configurable weighting.
  *
@@ -91,21 +93,26 @@ public class GenericWeighting extends AbstractWeighting {
     }
 
     @Override
-    public double calcWeight(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+    public double calcWeight(EdgeIteratorState edge, boolean reverse, int prevOrNextEdgeId) {
         // handle oneways and removed edges via subnetwork removal (existing and allowed highway tags but 'island' edges)
-        if (reverse && !edgeState.getReverse(accessEnc) || !reverse && !edgeState.get(accessEnc))
+        if (reverse && !edge.getReverse(accessEnc) || !reverse && !edge.get(accessEnc))
             return Double.POSITIVE_INFINITY;
 
-        if (gEncoder.isStoreHeight() && overLimit(height, edgeState.get(maxHeightEnc))
-                || gEncoder.isStoreWeight() && overLimit(weight, edgeState.get(maxWeightEnc))
-                || gEncoder.isStoreWidth() && overLimit(width, edgeState.get(maxWidthEnc)))
+        if (gEncoder.isStoreHeight() && overLimit(height, edge.get(maxHeightEnc))
+                || gEncoder.isStoreWeight() && overLimit(weight, edge.get(maxWeightEnc))
+                || gEncoder.isStoreWidth() && overLimit(width, edge.get(maxWidthEnc)))
             return Double.POSITIVE_INFINITY;
 
-        long time = calcMillis(edgeState, reverse, prevOrNextEdgeId);
+        long time = calcMillis(edge, reverse, prevOrNextEdgeId);
         if (time == Long.MAX_VALUE)
             return Double.POSITIVE_INFINITY;
 
-        switch (edgeState.get(accessClassEnc)) {
+        // add direction penalties at start/stop/via points
+        boolean unfavoredEdge = edge.get(UNFAVORED_EDGE);
+        if (unfavoredEdge)
+            time += headingPenalty;
+
+        switch (edge.get(accessClassEnc)) {
             case 0:
                 return Double.POSITIVE_INFINITY;
             case 3:

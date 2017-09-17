@@ -301,14 +301,15 @@ public class GHUtility {
                 return distance;
             }
 
-            @Override
-            public IntsRef getData() {
-                return ints;
+            public boolean get(BooleanEncodedValue property) {
+                return property.getBool(false, ints);
+            }
+
+            public double get(DecimalEncodedValue property) {
+                return property.getDecimal(false, ints);
             }
         };
     }
-
-    ;
 
     /**
      * @return the <b>first</b> edge containing the specified nodes base and adj. Returns null if
@@ -338,6 +339,7 @@ public class GHUtility {
                                                BooleanEncodedValue accessEnc, int from, int to, boolean bothDirections) {
         EdgeIteratorState edge = setAccess(g.edge(from, to), accessEnc, true, bothDirections);
         edge.set(averageSpeedEnc, speed);
+        edge.setReverse(averageSpeedEnc, speed);
         return edge;
     }
 

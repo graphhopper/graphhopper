@@ -619,8 +619,8 @@ public class PrepareContractionHierarchiesTest {
 
         List<Weighting> chWeightings = Arrays.asList(carWeighting, bikeWeighting);
         GraphHopperStorage ghStorage = new GraphHopperStorage(chWeightings, dir, tmpEncodingManager, false, new GraphExtension.NoOpExtension()).create(1000);
-        initShortcutsGraph(ghStorage, tmpEncodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS),
-                tmpEncodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
+        initShortcutsGraph(ghStorage, tmpEncodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
+                tmpEncodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED));
 
         ghStorage.freeze();
 
@@ -640,10 +640,10 @@ public class PrepareContractionHierarchiesTest {
 
         List<Weighting> chWeightings = Arrays.asList(carWeighting, bikeWeighting);
         GraphHopperStorage ghStorage = new GraphHopperStorage(chWeightings, dir, tmpEncodingManager, false, new GraphExtension.NoOpExtension()).create(1000);
-        initShortcutsGraph(ghStorage, tmpEncodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS),
-                tmpEncodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
+        initShortcutsGraph(ghStorage, tmpEncodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
+                tmpEncodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED));
         EdgeIteratorState edge = GHUtility.getEdge(ghStorage, 9, 14);
-        GHUtility.setAccess(edge, tmpEncodingManager.getBooleanEncodedValue(TagParserFactory.Bike.ACCESS), false, false);
+        GHUtility.setAccess(edge, tmpEncodingManager.getBooleanEncodedValue(TagParserFactory.BIKE_ACCESS), false, false);
         ghStorage.freeze();
 
         checkPath(ghStorage, carWeighting, 7, 5, Helper.createTList(3, 9, 14, 16, 13, 12));

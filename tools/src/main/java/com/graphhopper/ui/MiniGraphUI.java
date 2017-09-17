@@ -55,7 +55,6 @@ import java.util.Random;
  * https://graphhopper.com/blog/2016/01/19/alternative-roads-to-rome/
  * <p>
  * Use the web module for a better/faster/userfriendly/... alternative!
- * <p>
  *
  * @author Peter Karich
  */
@@ -88,7 +87,7 @@ public class MiniGraphUI {
         final Graph graph = hopper.getGraphHopperStorage();
         this.na = graph.getNodeAccess();
         encoder = hopper.getEncodingManager().getEncoder("car");
-        accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+        accessEnc = hopper.getEncodingManager().getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
         HintsMap map = new HintsMap("fastest").
                 setVehicle("car");
 

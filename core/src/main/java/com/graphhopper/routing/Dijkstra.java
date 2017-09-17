@@ -32,7 +32,6 @@ import java.util.PriorityQueue;
 /**
  * Implements a single source shortest path algorithm
  * http://en.wikipedia.org/wiki/Dijkstra's_algorithm
- * <p>
  *
  * @author Peter Karich
  */

@@ -33,7 +33,7 @@ public class PathExtract {
     PathExtract(Path path, EncodingManager encodingManager) {
         this.path = path;
 
-        maxSpeedEnc = encodingManager.getEncodedValue(TagParserFactory.Car.MAX_SPEED, DecimalEncodedValue.class);
+        maxSpeedEnc = encodingManager.getEncodedValue(TagParserFactory.CAR_MAX_SPEED, DecimalEncodedValue.class);
         roundaboutEnc = encodingManager.getEncodedValue(TagParserFactory.ROUNDABOUT, BooleanEncodedValue.class);
     }
 

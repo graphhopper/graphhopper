@@ -80,7 +80,7 @@ public class RoundTripRoutingTemplateTest {
     }
 
     private Graph createTestGraph(boolean fullGraph) {
-        return new AlternativeRouteTest(tMode).createTestGraph(fullGraph, em, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS),
-                em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
+        return new AlternativeRouteTest(tMode).createTestGraph(fullGraph, em, em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
+                em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED));
     }
 }

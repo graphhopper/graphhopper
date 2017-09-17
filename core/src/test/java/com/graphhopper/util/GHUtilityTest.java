@@ -36,8 +36,8 @@ import static org.junit.Assert.*;
 public class GHUtilityTest {
     private final FlagEncoder carEncoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carEncoder).build();
-    private final BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-    private final DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+    private final BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+    private final DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
     Graph createGraph() {
         return new GraphBuilder(encodingManager).create();

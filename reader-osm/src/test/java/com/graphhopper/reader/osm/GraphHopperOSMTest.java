@@ -688,8 +688,8 @@ public class GraphHopperOSMTest {
         GraphHopperStorage g = new GraphHopperStorage(Collections.singletonList(weighting), new RAMDirectory(), encodingManager,
                 false, new GraphExtension.NoOpExtension()).
                 create(20);
-        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
         //   2---3---4
         //  /    |    \

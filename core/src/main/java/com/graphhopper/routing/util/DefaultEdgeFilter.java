@@ -18,7 +18,6 @@
 package com.graphhopper.routing.util;
 
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.EncodedValueLookup;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
@@ -65,6 +64,6 @@ public class DefaultEdgeFilter implements EdgeFilter {
 
     @Override
     public String toString() {
-        return accessEnc + ", bwd:" + bwd + ", fwd:" + fwd;
+        return accessEnc + ", fwd:" + fwd + ", bwd:" + bwd;
     }
 }

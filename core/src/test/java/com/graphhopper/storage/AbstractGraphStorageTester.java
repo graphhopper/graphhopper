@@ -20,6 +20,7 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.profiles.TagsParser;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -50,10 +51,10 @@ public abstract class AbstractGraphStorageTester {
     protected String defaultGraphLoc = "./target/graphstorage/default";
     protected EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car,foot").build();
     protected CarFlagEncoder carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
-    protected BooleanEncodedValue carAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-    protected DecimalEncodedValue carAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
-    protected BooleanEncodedValue footAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Foot.ACCESS);
-    protected DecimalEncodedValue footAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Foot.AVERAGE_SPEED);
+    protected BooleanEncodedValue carAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+    protected DecimalEncodedValue carAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
+    protected BooleanEncodedValue footAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.FOOT_ACCESS);
+    protected DecimalEncodedValue footAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.FOOT_AVERAGE_SPEED);
     protected GraphHopperStorage graph;
     EdgeFilter carOutFilter = new DefaultEdgeFilter(carAccessEnc, true, false);
     EdgeFilter carInFilter = new DefaultEdgeFilter(carAccessEnc, false, true);
@@ -992,7 +993,7 @@ public abstract class AbstractGraphStorageTester {
             }
         });
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
-        EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(list, 8).build();
+        EncodingManager manager = new EncodingManager.Builder(new TagsParser(), 12).addGlobalEncodedValues().addAll(list, 8).build();
         graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);
@@ -1022,7 +1023,7 @@ public abstract class AbstractGraphStorageTester {
         edge = graph.edge(2, 3);
         BooleanEncodedValue tmpCarAccessEnc = manager.getBooleanEncodedValue("car.access");
         edge.set(tmpCarAccessEnc, true);
-        edge.set(manager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED), 44.123);
+        edge.set(manager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED), 44.123);
         assertEquals(44.123, list.get(1).getSpeed(edge.getData()), 1e-3);
 
         edgeIter = GHUtility.getEdge(graph, 3, 2);

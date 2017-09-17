@@ -32,11 +32,11 @@ import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * Tests if a graph optimized by contraction hierarchies returns the same results as a none
  * optimized one. Additionally fine grained path unpacking is tested.
- * <p>
  *
  * @author Peter Karich
  */
@@ -67,24 +67,24 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     public void testPathRecursiveUnpacking() {
         // use an encoder where it is possible to store 2 weights per edge        
         FlagEncoder encoder = new Bike2WeightFlagEncoder();
-        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(encoder).build();
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
         ShortestWeighting weighting = new ShortestWeighting(encoder);
         GraphHopperStorage ghStorage = createGHStorage(em, Arrays.asList(weighting), false);
         CHGraphImpl g2 = (CHGraphImpl) ghStorage.getGraph(CHGraph.class, weighting);
         BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(encoder.getPrefix() + "access");
         DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(encoder.getPrefix() + "average_speed");
-        GHUtility.createEdge(g2, avSpeedEnc, 60, accessEnc, 0, 1, true, 1);
-        EdgeIteratorState iter1_1 = GHUtility.createEdge(g2, avSpeedEnc, 60, accessEnc, 0, 2, false, 1.4);
-        EdgeIteratorState iter1_2 = GHUtility.createEdge(g2, avSpeedEnc, 60, accessEnc, 2, 5, false, 1.4);
-        GHUtility.createEdge(g2, avSpeedEnc, 60, accessEnc, 1, 2, true, 1);
-        GHUtility.createEdge(g2, avSpeedEnc, 60, accessEnc, 1, 3, true, 3);
-        GHUtility.createEdge(g2, avSpeedEnc, 60, accessEnc, 2, 3, true, 1);
-        GHUtility.createEdge(g2, avSpeedEnc, 60, accessEnc, 4, 3, true, 1);
-        GHUtility.createEdge(g2, avSpeedEnc, 60, accessEnc, 2, 5, true, 1.4);
-        GHUtility.createEdge(g2, avSpeedEnc, 60, accessEnc, 3, 5, true, 1);
-        GHUtility.createEdge(g2, avSpeedEnc, 60, accessEnc, 5, 6, true, 1);
-        GHUtility.createEdge(g2, avSpeedEnc, 60, accessEnc, 4, 6, true, 1);
-        GHUtility.createEdge(g2, avSpeedEnc, 60, accessEnc, 6, 7, true, 1);
+        GHUtility.createEdge(g2, avSpeedEnc, 18, accessEnc, 0, 1, true, 1);
+        EdgeIteratorState iter1_1 = GHUtility.createEdge(g2, avSpeedEnc, 18, accessEnc, 0, 2, false, 1.4);
+        EdgeIteratorState iter1_2 = GHUtility.createEdge(g2, avSpeedEnc, 18, accessEnc, 2, 5, false, 1.4);
+        GHUtility.createEdge(g2, avSpeedEnc, 18, accessEnc, 1, 2, true, 1);
+        GHUtility.createEdge(g2, avSpeedEnc, 18, accessEnc, 1, 3, true, 3);
+        GHUtility.createEdge(g2, avSpeedEnc, 18, accessEnc, 2, 3, true, 1);
+        GHUtility.createEdge(g2, avSpeedEnc, 18, accessEnc, 4, 3, true, 1);
+        GHUtility.createEdge(g2, avSpeedEnc, 18, accessEnc, 2, 5, true, 1.4);
+        GHUtility.createEdge(g2, avSpeedEnc, 18, accessEnc, 3, 5, true, 1);
+        GHUtility.createEdge(g2, avSpeedEnc, 18, accessEnc, 5, 6, true, 1);
+        GHUtility.createEdge(g2, avSpeedEnc, 18, accessEnc, 4, 6, true, 1);
+        GHUtility.createEdge(g2, avSpeedEnc, 18, accessEnc, 6, 7, true, 1);
         EdgeIteratorState iter2_2 = g2.edge(5, 7).setDistance(1.4);
         iter2_2.set(carAverageSpeedEnc, 10d);
         iter2_2.set(carAccessEnc, true);
@@ -114,7 +114,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         Path p = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
                 ghStorage, g2, weighting, TraversalMode.NODE_BASED).
                 createAlgo(g2, opts).calcPath(0, 7);
-
+        assertTrue(p.isFound());
         assertEquals(Helper.createTList(0, 2, 5, 7), p.calcNodes());
         assertEquals(1064, p.getTime());
         assertEquals(4.2, p.getDistance(), 1e-5);

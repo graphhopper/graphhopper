@@ -42,14 +42,14 @@ public class PathTest {
     private final FlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager carManager = new EncodingManager.Builder().
             addGlobalEncodedValues().addAll(encoder).build();
-    private final BooleanEncodedValue carAccessEnc = carManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-    private final DecimalEncodedValue carAvSpeedEnc = carManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+    private final BooleanEncodedValue carAccessEnc = carManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+    private final DecimalEncodedValue carAvSpeedEnc = carManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
     private final DataFlagEncoder dataFlagEncoder = new DataFlagEncoder().setStoreHeight(true).setStoreWeight(true).setStoreWidth(true);
     private final EncodingManager dataFlagManager = new EncodingManager.Builder(new TagsParser(), 12).
             addGlobalEncodedValues().addAll(dataFlagEncoder).build();
     private final FlagEncoder carEncoderMixed = new CarFlagEncoder();
-    private final EncodingManager mixedEncoders = new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(
+    private final EncodingManager mixedEncoders = new EncodingManager.Builder().addGlobalEncodedValues().addAll(
             carEncoderMixed, new FootFlagEncoder(), new BikeFlagEncoder()).build();
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation tr = trMap.getWithFallBack(Locale.US);
@@ -72,7 +72,7 @@ public class PathTest {
         na.setNode(1, 1.0, 0.1);
         na.setNode(2, 2.0, 0.1);
 
-        DecimalEncodedValue averageSpeedEnc = carManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        DecimalEncodedValue averageSpeedEnc = carManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
         EdgeIteratorState edge1 = GHUtility.createEdge(g, carAvSpeedEnc, 60, carAccessEnc, 0, 1, true, 1000d);
         edge1.set(averageSpeedEnc, 10d);
@@ -170,7 +170,7 @@ public class PathTest {
         na.setNode(4, 7.5, 0.25);
         na.setNode(5, 5.0, 1.0);
 
-        DecimalEncodedValue averageSpeedEnc = carManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        DecimalEncodedValue averageSpeedEnc = carManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
         EdgeIteratorState edge1 = GHUtility.createEdge(g, carAvSpeedEnc, 60, carAccessEnc, 0, 1, true, 1000d);
         edge1.set(averageSpeedEnc, 50d);
@@ -347,7 +347,7 @@ public class PathTest {
         na.setNode(10, 52.5135, 13.348);
         na.setNode(11, 52.514, 13.347);
 
-        DecimalEncodedValue averageSpeedEnc = carManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        DecimalEncodedValue averageSpeedEnc = carManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
         BooleanEncodedValue roundaboutEnc = carManager.getBooleanEncodedValue(TagParserFactory.ROUNDABOUT);
 
         GHUtility.createEdge(g, carAvSpeedEnc, 60, carAccessEnc, 2, 1, false, 5).setName("MainStreet 2 1");
@@ -668,8 +668,8 @@ public class PathTest {
             na.setNode(18, 52.513, 13.361);
             na.setNode(19, 52.515, 13.368);
 
-            BooleanEncodedValue mixedCarAccessEnc = mixedEncoders.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-            DecimalEncodedValue mixedCarSpeedEnc = mixedEncoders.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+            BooleanEncodedValue mixedCarAccessEnc = mixedEncoders.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+            DecimalEncodedValue mixedCarSpeedEnc = mixedEncoders.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
             GHUtility.createEdge(g, mixedCarSpeedEnc, 60, mixedCarAccessEnc, 1, 2, true, 5).setName("MainStreet 1 2");
 
             // roundabout

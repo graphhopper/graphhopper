@@ -14,7 +14,7 @@ public class DecimalEncodedValueTest {
     @Test
     public void testInit() {
         DecimalEncodedValue prop = new DecimalEncodedValue("test", 10, 50, 2, false);
-        prop.init(new EncodedValue.InitializerConfig(), 4);
+        prop.init(new EncodedValue.InitializerConfig());
         IntsRef ref = new IntsRef(1);
         prop.setDecimal(false, ref, 10d);
         assertEquals(10d, prop.getDecimal(false, ref), 0.1);
@@ -24,7 +24,7 @@ public class DecimalEncodedValueTest {
     public void testMaxValue() {
         CarFlagEncoder carEncoder = new CarFlagEncoder(10, 0.5, 0);
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carEncoder).build();
-        DecimalEncodedValue carAverageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        DecimalEncodedValue carAverageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
@@ -33,7 +33,7 @@ public class DecimalEncodedValueTest {
         assertEquals(101.5, carAverageSpeedEnc.getDecimal(true, flags), 1e-1);
 
         DecimalEncodedValue instance1 = new DecimalEncodedValue("test1", 8, 60, 0.5, false);
-        instance1.init(new EncodedValue.InitializerConfig(), 4);
+        instance1.init(new EncodedValue.InitializerConfig());
         flags = em.createIntsRef();
         // TODO NOW should we expose "maxValue" -> instance1.getMax()
         instance1.setDecimal(false, flags, 100d);
@@ -43,7 +43,7 @@ public class DecimalEncodedValueTest {
     @Test
     public void testNegativeBounds() {
         DecimalEncodedValue prop = new DecimalEncodedValue("test", 10, 50, 5, false);
-        prop.init(new EncodedValue.InitializerConfig(), 4);
+        prop.init(new EncodedValue.InitializerConfig());
         try {
             prop.setDecimal(false, new IntsRef(1), -1);
             assertTrue(false);

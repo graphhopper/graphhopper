@@ -43,7 +43,6 @@ public interface EdgeIteratorState {
      * Returns the node used to instantiate the EdgeIterator. Example: "EdgeIterator iter =
      * graph.getEdges(baseNode)". Often only used for convenience reasons. Do not confuse this with
      * a <i>source node</i> of a directed edge.
-     * <p>
      *
      * @return the requested node itself
      * @see EdgeIterator
@@ -135,7 +134,6 @@ public interface EdgeIteratorState {
 
     /**
      * Clones this EdgeIteratorState.
-     * <p>
      *
      * @param reverse if true a detached edgeState with reversed properties is created where base
      *                and adjacent nodes, flags and wayGeometry are in reversed order. See #162 for more details
@@ -145,7 +143,6 @@ public interface EdgeIteratorState {
 
     /**
      * Copies the properties of this edge into the specified edge. Does not change nodes!
-     * <p>
      *
      * @return the specified edge e
      */

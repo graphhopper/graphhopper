@@ -37,12 +37,12 @@ public class EncodingManagerNewTest {
                 return speedMap.containsKey(way.getTag("highway"));
             }
         };
-        avSpeedEnc = new DecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED, 5, 0, 5, true);
-        accessEnc = new BooleanEncodedValue(TagParserFactory.Car.ACCESS, true);
+        avSpeedEnc = new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, true);
+        accessEnc = new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true);
         encodingManager = new EncodingManager.Builder(parser, 4).
                 addGlobalEncodedValues().
                 add(TagParserFactory.Car.createAverageSpeed(avSpeedEnc, speedMap)).
-                add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue(TagParserFactory.Car.MAX_SPEED, 5, 50, 5, false), filter)).
+                add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED, 5, 50, 5, false), filter)).
                 add(TagParserFactory.Car.createAccess(accessEnc, filter)).
                 add(TagParserFactory.createMaxWeight(new DecimalEncodedValue(TagParserFactory.MAX_WEIGHT, 5, 5, 1, false), filter)).
                 build();
@@ -58,7 +58,7 @@ public class EncodingManagerNewTest {
 
         IntsRef ints = encodingManager.handleWayTags(encodingManager.createIntsRef(), readerWay, new EncodingManager.AcceptWay(), 0);
 
-        DecimalEncodedValue maxSpeed = encodingManager.getEncodedValue(TagParserFactory.Car.MAX_SPEED, DecimalEncodedValue.class);
+        DecimalEncodedValue maxSpeed = encodingManager.getEncodedValue(TagParserFactory.CAR_MAX_SPEED, DecimalEncodedValue.class);
         IntEncodedValue weight = encodingManager.getEncodedValue(TagParserFactory.MAX_WEIGHT, IntEncodedValue.class);
         StringEncodedValue highway = encodingManager.getEncodedValue(TagParserFactory.ROAD_CLASS, StringEncodedValue.class);
         assertEquals(30d, maxSpeed.getDecimal(false, ints), .1);
@@ -86,7 +86,7 @@ public class EncodingManagerNewTest {
 
         IntEncodedValue weight = encodingManager.getEncodedValue(TagParserFactory.MAX_WEIGHT, IntEncodedValue.class);
         assertEquals(5, edge.get(weight));
-        DecimalEncodedValue speed = encodingManager.getEncodedValue(TagParserFactory.Car.MAX_SPEED, DecimalEncodedValue.class);
+        DecimalEncodedValue speed = encodingManager.getEncodedValue(TagParserFactory.CAR_MAX_SPEED, DecimalEncodedValue.class);
         assertEquals(50, edge.get(speed), .1);
     }
 
@@ -141,7 +141,7 @@ public class EncodingManagerNewTest {
         IntsRef ints = encodingManager.handleWayTags(encodingManager.createIntsRef(), readerWay, new EncodingManager.AcceptWay(), 0);
         edge.setData(ints);
 
-        BooleanEncodedValue access = encodingManager.getEncodedValue(TagParserFactory.Car.ACCESS, BooleanEncodedValue.class);
+        BooleanEncodedValue access = encodingManager.getEncodedValue(TagParserFactory.CAR_ACCESS, BooleanEncodedValue.class);
         assertTrue(edge.get(access));
         assertFalse(edge.getReverse(access));
         assertFalse(edge.detach(true).get(access));
@@ -216,14 +216,14 @@ public class EncodingManagerNewTest {
 
         TagsParser parser = new TagsParser();
         EncodingManager encodingManager = new EncodingManager.Builder(parser, 4).
-                add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.Car.ACCESS, true), filter)).
+                add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).
                 add(directedSpeedParser).
                 build();
 
         GraphHopperStorage g = new GraphBuilder(encodingManager).create();
         EdgeIteratorState edge = GHUtility.createEdge(g,
                 encodingManager.getDecimalEncodedValue("directed_speed"), 60,
-                encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS), 0, 1, true, 10);
+                encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS), 0, 1, true, 10);
 
         ReaderWay readerWay = new ReaderWay(0);
         readerWay.setTag("maxspeed", "30");

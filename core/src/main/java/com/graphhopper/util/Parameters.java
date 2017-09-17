@@ -186,6 +186,9 @@ public class Parameters {
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
     }
 
+    /**
+     * Public transit constants
+     */
     public static final class PT {
         public static final String EARLIEST_DEPARTURE_TIME = "pt.earliest_departure_time";
         public static final String PROFILE_QUERY = "pt.profile";
@@ -195,6 +198,31 @@ public class Parameters {
         public static final String MAX_WALK_DISTANCE_PER_LEG = "pt.max_walk_distance_per_leg";
         public static final String MAX_TRANSFER_DISTANCE_PER_LEG = "pt.max_transfer_distance_per_leg";
         public static final String LIMIT_SOLUTIONS = "pt.limit_solutions";
+    }
 
+    /**
+     * Constants for EncodedValue
+     */
+    public static final class Enc {
+        public static final class Hierarchy {
+            public static final String CAR = "car";
+            public static final String BIKE = "bike";
+            public static final String FOOT = "foot";
+            // MOTOR_VEHICLE = "motor_vehicle";
+        }
+
+        public static final class Type {
+            public static final String ACCESS = "access";
+            public static final String CAR_AVERAGE_SPEED = "average_speed";
+            public static final String CAR_MAX_SPEED = "max_speed";
+            public static final String ROUNDABOUT = "roundabout";
+            public static final String ROAD_CLASS = "road_class";
+            public static final String ROAD_ENVIRONMENT = "road_environment";
+            public static final String SURFACE = "surface";
+            public static final String MAX_HEIGHT = "max_height";
+            public static final String MAX_WEIGHT = "max_weight";
+            public static final String MAX_WIDTH = "max_width";
+            public static final String SPATIAL_RULE_ID = "spatial_rule_id";
+        }
     }
 }

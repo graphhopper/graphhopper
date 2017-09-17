@@ -60,8 +60,8 @@ public class DepthFirstSearchTest {
         };
 
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
-        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
         Graph g = new GraphBuilder(em).create();
         GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 2, false, 1);
         GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 5, false, 1);
@@ -91,8 +91,8 @@ public class DepthFirstSearchTest {
         };
 
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
-        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
         Graph g = new GraphBuilder(em).create();
         GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 2, false, 1);
         GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 4, true, 1);

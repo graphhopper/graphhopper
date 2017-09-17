@@ -39,10 +39,10 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class FootFlagEncoderTest {
-    private final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues(true).
+    private final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().
             addAllFlagEncoders("car,bike,foot").build();
-    private final BooleanEncodedValue footAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Foot.ACCESS);
-    private final DecimalEncodedValue footAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Foot.AVERAGE_SPEED);
+    private final BooleanEncodedValue footAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.FOOT_ACCESS);
+    private final DecimalEncodedValue footAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.FOOT_AVERAGE_SPEED);
     private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
 
     @Test
@@ -64,8 +64,8 @@ public class FootFlagEncoderTest {
     @Test
     public void testCombined() {
         FlagEncoder carEncoder = encodingManager.getEncoder("car");
-        BooleanEncodedValue carAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        DecimalEncodedValue carAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+        BooleanEncodedValue carAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        DecimalEncodedValue carAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
         IntsRef ints = encodingManager.createIntsRef();
         carAccessEnc.setBool(false, ints, true);
         carAccessEnc.setBool(true, ints, false);
@@ -95,7 +95,7 @@ public class FootFlagEncoderTest {
         GHUtility.createEdge(g, footAverageSpeedEnc, 5, footAccessEnc, 0, 1, true, 10d);
         GHUtility.createEdge(g, footAverageSpeedEnc, 5, footAccessEnc, 0, 2, true, 10d);
         GHUtility.createEdge(g, footAverageSpeedEnc, 5, footAccessEnc, 1, 3, true, 10d);
-        EdgeExplorer out = g.createEdgeExplorer(new DefaultEdgeFilter(encodingManager.getBooleanEncodedValue(TagParserFactory.Foot.ACCESS),
+        EdgeExplorer out = g.createEdgeExplorer(new DefaultEdgeFilter(encodingManager.getBooleanEncodedValue(TagParserFactory.FOOT_ACCESS),
                 true, false));
         assertEquals(GHUtility.asSet(1, 2), GHUtility.getNeighbors(out.setBaseNode(0)));
         assertEquals(GHUtility.asSet(0, 3), GHUtility.getNeighbors(out.setBaseNode(1)));

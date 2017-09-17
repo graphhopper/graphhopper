@@ -20,22 +20,18 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.storage.IntsRef;
+import org.junit.Before;
 import org.junit.Test;
 
 import static com.graphhopper.routing.util.PriorityCode.*;
 import static org.junit.Assert.*;
 
 public class MountainBikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
-    private DecimalEncodedValue averageSpeedEnc;
 
-    @Override
-    protected BikeCommonFlagEncoder createBikeEncoder() {
-        encodingManager = new EncodingManager.Builder().addGlobalEncodedValues(true).addAllFlagEncoders("bike,mtb").build();
-        averageSpeedEnc = encodingManager.getDecimalEncodedValue("mtb.average_speed");
-
-        return (BikeCommonFlagEncoder) encodingManager.getEncoder("mtb");
+    @Before
+    public void setUp() {
+        createBikeEncoder("bike,mtb", "mtb");
     }
 
     @Test

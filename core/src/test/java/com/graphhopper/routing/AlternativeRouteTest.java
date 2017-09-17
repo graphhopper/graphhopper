@@ -111,8 +111,8 @@ public class AlternativeRouteTest {
     @Test
     public void testCalcAlternatives() throws Exception {
         Weighting weighting = new FastestWeighting(carFE);
-        Graph g = createTestGraph(true, em, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS),
-                em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
+        Graph g = createTestGraph(true, em, em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
+                em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED));
         AlternativeRoute altDijkstra = new AlternativeRoute(g, weighting, traversalMode);
         altDijkstra.setMaxShareFactor(0.5);
         altDijkstra.setMaxWeightFactor(2);
@@ -141,8 +141,8 @@ public class AlternativeRouteTest {
     @Test
     public void testCalcAlternatives2() throws Exception {
         Weighting weighting = new FastestWeighting(carFE);
-        Graph g = createTestGraph(true, em, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS),
-                em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
+        Graph g = createTestGraph(true, em, em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
+                em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED));
         AlternativeRoute altDijkstra = new AlternativeRoute(g, weighting, traversalMode);
         altDijkstra.setMaxPaths(3);
         altDijkstra.setMaxShareFactor(0.7);
@@ -178,8 +178,8 @@ public class AlternativeRouteTest {
 
     @Test
     public void testDisconnectedAreas() {
-        Graph g = createTestGraph(true, em, em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS),
-                em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED));
+        Graph g = createTestGraph(true, em, em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
+                em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED));
 
         // one single disconnected node
         updateDistancesFor(g, 20, 0.00, -0.01);

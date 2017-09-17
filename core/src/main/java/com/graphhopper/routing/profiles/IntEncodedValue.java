@@ -42,7 +42,6 @@ public class IntEncodedValue implements EncodedValue {
      */
     protected int fwdDataIndex;
     protected int bwdDataIndex;
-
     final int bits;
     // we need a long here as our ints are unsigned
     long maxValue;
@@ -78,7 +77,7 @@ public class IntEncodedValue implements EncodedValue {
     }
 
     @Override
-    public final void init(EncodedValue.InitializerConfig init, int maxBytes) {
+    public final int init(EncodedValue.InitializerConfig init) {
         if (isInitialized())
             throw new IllegalStateException("Cannot call init multiple times");
 
@@ -93,10 +92,8 @@ public class IntEncodedValue implements EncodedValue {
             this.bwdShift = init.shift;
         }
 
-        if (init.dataIndex >= maxBytes / 4)
-            throw new IllegalArgumentException("Too few bytes reserved for EncodedValues data " + maxBytes + ", requested integer index " + init.dataIndex);
-
         this.maxValue = (1L << bits) - 1;
+        return store2DirectedValues ? 2 * bits : bits;
     }
 
     private boolean isInitialized() {

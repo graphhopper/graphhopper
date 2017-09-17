@@ -46,7 +46,22 @@ public class TagParserFactory {
             add("1");
         }
     };
+
     public static final String ROUNDABOUT = "roundabout";
+    public static final String ROAD_CLASS = "road_class";
+    public static final String ROAD_ENVIRONMENT = "road_environment";
+    public static final String SURFACE = "surface";
+    public static final String MAX_HEIGHT = "max_height";
+    public static final String MAX_WEIGHT = "max_weight";
+    public static final String MAX_WIDTH = "max_width";
+    public static final String SPATIAL_RULE_ID = "spatial_rule_id";
+    public static final String CAR_ACCESS = "car.access";
+    public static final String CAR_MAX_SPEED = "car.max_speed";
+    public static final String CAR_AVERAGE_SPEED = "car.average_speed";
+    public static final String BIKE_ACCESS = "bike.access";
+    public static final String BIKE_AVERAGE_SPEED = "bike.average_speed";
+    public static final String FOOT_ACCESS = "foot.access";
+    public static final String FOOT_AVERAGE_SPEED = "foot.average_speed";
 
     public static TagParser createRoundabout(final BooleanEncodedValue ev) {
         return new AbstractTagParser(ev) {
@@ -62,8 +77,6 @@ public class TagParserFactory {
 
         };
     }
-
-    public static final String ROAD_CLASS = "road_class";
 
     /**
      * For OpenStreetMap this TagParser handles the highway tag and sets it to "ferry" if this is a ferry relation.
@@ -82,8 +95,6 @@ public class TagParserFactory {
         };
     }
 
-    public static final String SURFACE = "surface";
-
     public static TagParser createSurface(final StringEncodedValue ev) {
         return new AbstractTagParser(ev) {
             @Override
@@ -97,8 +108,6 @@ public class TagParserFactory {
             }
         };
     }
-
-    public static final String SPATIAL_RULE_ID = "spatial_rule_id";
 
     public static TagParser createSpatialRuleId(final SpatialRuleLookup spatialRuleLookup, final IntEncodedValue spatialId) {
         return new AbstractTagParser(spatialId) {
@@ -118,8 +127,6 @@ public class TagParserFactory {
         };
     }
 
-    public static final String ROAD_ENVIRONMENT = "road_environment";
-
     /**
      * For OpenStreetMap this TagParser handles the road environment like if the transportation happens on a ferry or tunnel.
      */
@@ -135,7 +142,7 @@ public class TagParserFactory {
 
             @Override
             public void parse(IntsRef ints, ReaderWay way) {
-                // TODO use default instead: roadEnvEnc.getDefault
+                // TODO use roadEnvEnc.getDefault instead
                 String roadEnv = roadEnvOrder.get(0);
                 for (String tm : roadEnvOrder) {
                     if (way.hasTag(tm)) {
@@ -148,9 +155,6 @@ public class TagParserFactory {
             }
         };
     }
-
-
-    public static final String MAX_WEIGHT = "max_weight";
 
     public static TagParser createMaxWeight(final DecimalEncodedValue ev, final ReaderWayFilter filter) {
         final List<String> weightTags = Arrays.asList("maxweight", "maxgcweight");
@@ -175,8 +179,6 @@ public class TagParserFactory {
         };
     }
 
-    public static final String MAX_HEIGHT = "max_height";
-
     public static TagParser createMaxHeight(final DecimalEncodedValue ev, final ReaderWayFilter filter) {
         final List<String> heightTags = Arrays.asList("maxheight", "maxheight:physical");
 
@@ -200,8 +202,6 @@ public class TagParserFactory {
             }
         };
     }
-
-    public static final String MAX_WIDTH = "max_width";
 
     public static TagParser createMaxWidth(final DecimalEncodedValue ev, final ReaderWayFilter filter) {
         final List<String> widthTags = Arrays.asList("maxwidth", "maxwidth:physical");
@@ -280,8 +280,6 @@ public class TagParserFactory {
     }
 
     public static class Car {
-        public static final String PREFIX = "car.";
-        public static final String MAX_SPEED = PREFIX + "max_speed";
 
         public static TagParser createMaxSpeed(final DecimalEncodedValue ev, final ReaderWayFilter filter) {
             return new AbstractTagParser(ev) {
@@ -301,8 +299,6 @@ public class TagParserFactory {
                 }
             };
         }
-
-        public static final String AVERAGE_SPEED = PREFIX + "average_speed";
 
         public static TagParser createAverageSpeed(final DecimalEncodedValue ev, final Map<String, Double> speedMap) {
             final ReaderWayFilter acceptKnownRoadClasses = new ReaderWayFilter() {
@@ -331,8 +327,6 @@ public class TagParserFactory {
                 }
             };
         }
-
-        public static final String ACCESS = PREFIX + "access";
 
         public static TagParser createAccess(final BooleanEncodedValue access, final ReaderWayFilter acceptKnownRoadClasses) {
             return new AbstractTagParser(access) {
@@ -394,8 +388,6 @@ public class TagParserFactory {
         public static final double SLOW_SPEED = 2d;
         public static final double MEAN_SPEED = 5d;
         public static final double FERRY_SPEED = 10d;
-        public static final String PREFIX = "foot.";
-        public static final String AVERAGE_SPEED = PREFIX + "average_speed";
 
         public static final TagParser createAverageSpeed(final DecimalEncodedValue encodedValue) {
             return new AbstractTagParser(encodedValue) {
@@ -420,8 +412,6 @@ public class TagParserFactory {
             };
         }
 
-        public static final String ACCESS = PREFIX + "access";
-
         public static TagParser createAccess(final BooleanEncodedValue access, final ReaderWayFilter acceptKnownRoadClasses) {
             return new AbstractTagParser(access) {
                 @Override
@@ -442,9 +432,6 @@ public class TagParserFactory {
 
     public static class Bike {
 
-        public static final String PREFIX = "bike.";
-        public static final String AVERAGE_SPEED = PREFIX + "average_speed";
-
         public static TagParser createAverageSpeed(final DecimalEncodedValue averageSpeedEnc) {
             return new AbstractTagParser(averageSpeedEnc) {
                 @Override
@@ -458,8 +445,6 @@ public class TagParserFactory {
                 }
             };
         }
-
-        public static final String ACCESS = PREFIX + "access";
 
         public static TagParser createAccess(final BooleanEncodedValue access, final ReaderWayFilter acceptKnownRoadClasses) {
             return new AbstractTagParser(access) {
@@ -482,24 +467,6 @@ public class TagParserFactory {
                 }
             };
         }
-
-        // TODO NOW replace with more generic 'surface'
-        public static final String UNPAVED = PREFIX + "unpaved";
-
-        public static TagParser createUnpaved(final BooleanEncodedValue unpavedEnc) {
-            return new AbstractTagParser(unpavedEnc) {
-
-                @Override
-                public ReaderWayFilter getReadWayFilter() {
-                    return ACCEPT_IF_HIGHWAY;
-                }
-
-                @Override
-                public void parse(IntsRef ints, ReaderWay way) {
-                    // TODO NOW
-                }
-            };
-        }
     }
 
     private static abstract class AbstractTagParser implements TagParser {
@@ -516,7 +483,7 @@ public class TagParserFactory {
 
         @Override
         public final String toString() {
-            return getName();
+            return ev.toString();
         }
 
         @Override

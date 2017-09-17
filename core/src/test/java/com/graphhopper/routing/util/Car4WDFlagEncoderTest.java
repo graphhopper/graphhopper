@@ -31,7 +31,7 @@ import static org.junit.Assert.*;
  * @author zstadler
  */
 public class Car4WDFlagEncoderTest extends CarFlagEncoderTest {
-    private final EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues(true).
+    private final EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().
             addAllFlagEncoders("car4wd,bike,foot").build();
     private final Car4WDFlagEncoder encoder = (Car4WDFlagEncoder) em.getEncoder("car4wd");
 

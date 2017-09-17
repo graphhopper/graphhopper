@@ -42,8 +42,8 @@ import static org.junit.Assert.assertEquals;
 public class PathBidirRefTest {
     private final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
     private FlagEncoder carEncoder = encodingManager.getEncoder("car");
-    private BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-    private DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+    private BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+    private DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(accessEnc, true, false);
 
     Graph createGraph() {

@@ -43,8 +43,8 @@ import static org.junit.Assert.*;
 public class PrepareRoutingSubnetworksTest {
     private final FlagEncoder carFlagEncoder = new CarFlagEncoder();
     private final EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carFlagEncoder).build();
-    private final BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-    private final DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+    private final BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+    private final DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
     GraphHopperStorage createStorage(EncodingManager eman) {
         return new GraphBuilder(eman).create();
@@ -157,8 +157,8 @@ public class PrepareRoutingSubnetworksTest {
     public void testRemoveNode() {
         FlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
-        EncodingManager em2 = new EncodingManager.Builder().addAll(carEncoder, bikeEncoder).build();
-        GraphHopperStorage g = createSubnetworkTestStorage2(em2, em2.getBooleanEncodedValue(TagParserFactory.Car.ACCESS));
+        EncodingManager em2 = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carEncoder, bikeEncoder).build();
+        GraphHopperStorage g = createSubnetworkTestStorage2(em2, em2.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS));
         PrepareRoutingSubnetworks instance = new PrepareRoutingSubnetworks(g, em2.fetchEdgeEncoders());
 
         EdgeExplorer edgeExplorer = g.createEdgeExplorer();
@@ -175,10 +175,10 @@ public class PrepareRoutingSubnetworksTest {
     public void testRemoveSubnetworkWhenMultipleVehicles() {
         FlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
-        EncodingManager em2 = new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(carEncoder, bikeEncoder).build();
-        BooleanEncodedValue carAccessEnc = em2.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-        BooleanEncodedValue bikeAccessEnc = em2.getBooleanEncodedValue(TagParserFactory.Bike.ACCESS);
-        DecimalEncodedValue bikeAverageSpeedEnc = em2.getDecimalEncodedValue(TagParserFactory.Bike.AVERAGE_SPEED);
+        EncodingManager em2 = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carEncoder, bikeEncoder).build();
+        BooleanEncodedValue carAccessEnc = em2.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        BooleanEncodedValue bikeAccessEnc = em2.getBooleanEncodedValue(TagParserFactory.BIKE_ACCESS);
+        DecimalEncodedValue bikeAverageSpeedEnc = em2.getDecimalEncodedValue(TagParserFactory.BIKE_AVERAGE_SPEED);
         GraphHopperStorage g = createSubnetworkTestStorage2(em2, carAccessEnc);
         IntsRef ints = em2.createIntsRef();
         carAccessEnc.setBool(false, ints, false);

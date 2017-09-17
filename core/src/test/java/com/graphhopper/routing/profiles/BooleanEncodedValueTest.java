@@ -13,10 +13,10 @@ public class BooleanEncodedValueTest {
     public void testBit() {
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         IntEncodedValue intProp = new IntEncodedValue("somevalue", 5);
-        intProp.init(config, 4);
+        intProp.init(config);
 
-        BooleanEncodedValue bool = new BooleanEncodedValue("access");
-        bool.init(config, 4);
+        BooleanEncodedValue bool = new BooleanEncodedValue("access", false);
+        bool.init(config);
         IntsRef ref = new IntsRef(1);
         bool.setBool(false, ref, false);
         assertFalse(bool.getBool(false, ref));
@@ -28,7 +28,7 @@ public class BooleanEncodedValueTest {
     public void testBitDirected() {
         EncodedValue.InitializerConfig config = new EncodedValue.InitializerConfig();
         BooleanEncodedValue bool = new BooleanEncodedValue("access", true);
-        bool.init(config, 4);
+        bool.init(config);
         IntsRef ref = new IntsRef(1);
         bool.setBool(false, ref, false);
         bool.setBool(true, ref, true);

@@ -38,13 +38,13 @@ import static org.junit.Assert.assertEquals;
  */
 public class PrinctonReaderTest {
     private EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
-    private BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
+    private BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(accessEnc, true, false);
 
     @Test
     public void testRead() {
         Graph graph = new GraphBuilder(encodingManager).create();
-        new PrinctonReader(graph, accessEnc, encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED)).
+        new PrinctonReader(graph, accessEnc, encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED)).
                 setStream(PrinctonReader.class.getResourceAsStream("tinyEWD.txt")).read();
         assertEquals(8, graph.getNodes());
         EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
@@ -55,7 +55,7 @@ public class PrinctonReaderTest {
     @Test
     public void testMediumRead() throws IOException {
         Graph graph = new GraphBuilder(encodingManager).create();
-        new PrinctonReader(graph, accessEnc, encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED)).
+        new PrinctonReader(graph, accessEnc, encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED)).
                 setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
         assertEquals(250, graph.getNodes());
         EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);

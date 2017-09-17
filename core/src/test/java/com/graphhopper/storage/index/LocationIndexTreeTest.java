@@ -39,9 +39,10 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class LocationIndexTreeTest extends AbstractLocationIndexTester {
-    protected final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
-    protected final BooleanEncodedValue carAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.Car.ACCESS);
-    protected final DecimalEncodedValue carAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.Car.AVERAGE_SPEED);
+    protected final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().
+            addAllFlagEncoders("car").build();
+    protected final BooleanEncodedValue carAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+    protected final DecimalEncodedValue carAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
     @Override
     public LocationIndexTree createIndex(Graph g, int resolution) {
@@ -435,7 +436,7 @@ public class LocationIndexTreeTest extends AbstractLocationIndexTester {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         BikeFlagEncoder bikeEncoder = new BikeFlagEncoder();
 
-        EncodingManager tmpEM = new EncodingManager.Builder().addGlobalEncodedValues(true).addAll(carEncoder, bikeEncoder).build();
+        EncodingManager tmpEM = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carEncoder, bikeEncoder).build();
         BooleanEncodedValue bikeAccessEnc = tmpEM.getBooleanEncodedValue(bikeEncoder.getPrefix() + "access");
         BooleanEncodedValue carAccessEnc = tmpEM.getBooleanEncodedValue(carEncoder.getPrefix() + "access");
         Graph graph = createGHStorage(new RAMDirectory(), tmpEM, false);
