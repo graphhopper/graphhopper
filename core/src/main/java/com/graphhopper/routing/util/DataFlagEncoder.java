@@ -114,6 +114,11 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         averageSpeedEnc = new DecimalEncodedValue(prefix + "average_speed", speedBits, 0, speedFactor, true);
         map.put(averageSpeedEnc.getName(), new TagParser() {
             @Override
+            public String toString() {
+                return getName();
+            }
+
+            @Override
             public String getName() {
                 return averageSpeedEnc.getName();
             }
@@ -130,7 +135,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
             @Override
             public void parse(IntsRef ints, ReaderWay way) {
-                // TODO NOW
                 double maxSpeed = parseSpeed(way.getTag("maxspeed"));
                 if (maxSpeed < 0) {
                     // TODO What if no maxspeed is set, but only forward and backward, and both are higher than the usually allowed?
@@ -159,7 +163,6 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             }
         });
 
-        // TODO NOW change ID of parser too somehow -> use encodedvalue name?
         map.put(prefix + "access", TagParserFactory.Car.createAccess(new BooleanEncodedValue(prefix + "access", true),
                 osmWayFilter));
 
@@ -180,6 +183,11 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         // Note: if you update this list you have to update the method getAccessTagAsInt too
         accessClassEnc = new IntEncodedValue("access_class", 2, 0, false);
         map.put("access_class", new TagParser() {
+            @Override
+            public String toString() {
+                return getName();
+            }
+
             @Override
             public String getName() {
                 return "access_class";

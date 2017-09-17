@@ -94,7 +94,7 @@ public class GenericWeightingTest {
     @Test
     public void testDisabledRoadAttributes() {
         DataFlagEncoder simpleEncoder = new DataFlagEncoder();
-        EncodingManager simpleEncodingManager = new EncodingManager.Builder().addAll(simpleEncoder).build();
+        EncodingManager simpleEncodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(simpleEncoder).build();
         BooleanEncodedValue accessEnc = simpleEncodingManager.getBooleanEncodedValue("generic." + "access");
         DecimalEncodedValue avSpeedEnc = simpleEncodingManager.getDecimalEncodedValue("generic." + "average_speed");
         Graph simpleGraph = new GraphBuilder(simpleEncodingManager).create();
@@ -109,7 +109,7 @@ public class GenericWeightingTest {
         AbstractRoutingAlgorithmTester.updateDistancesFor(simpleGraph, 0, 0.00, 0.00);
         AbstractRoutingAlgorithmTester.updateDistancesFor(simpleGraph, 1, 0.01, 0.01);
         simpleGraph.getEdgeIteratorState(0, 1).setData(
-                simpleEncoder.handleWayTags(simpleEncodingManager.createIntsRef(), way, EncodingManager.Access.WAY, 0));
+                simpleEncodingManager.handleWayTags(simpleEncodingManager.createIntsRef(), way, new EncodingManager.AcceptWay(), 0));
 
         Weighting instance = new GenericWeighting(simpleEncoder, new HintsMap().put(GenericWeighting.HEIGHT_LIMIT, 5.0));
         EdgeIteratorState edge = simpleGraph.getEdgeIteratorState(0, 1);

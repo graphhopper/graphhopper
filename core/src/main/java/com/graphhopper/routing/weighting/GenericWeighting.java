@@ -55,9 +55,9 @@ public class GenericWeighting extends AbstractWeighting {
     private final IntEncodedValue accessClassEnc;
     private final BooleanEncodedValue accessEnc;
     private final DecimalEncodedValue maxSpeedEnc;
-    private final DecimalEncodedValue maxWeightEnc;
-    private final DecimalEncodedValue maxWidthEnc;
-    private final DecimalEncodedValue maxHeightEnc;
+    private DecimalEncodedValue maxWeightEnc;
+    private DecimalEncodedValue maxWidthEnc;
+    private DecimalEncodedValue maxHeightEnc;
 
     public GenericWeighting(DataFlagEncoder encoder, PMap hintsMap) {
         super(encoder);
@@ -73,11 +73,15 @@ public class GenericWeighting extends AbstractWeighting {
         this.maxSpeed = maxSpecifiedSpeed / SPEED_CONV;
 
         height = hintsMap.getDouble(HEIGHT_LIMIT, 0d);
-        maxHeightEnc = gEncoder.getDecimalEncodedValue(TagParserFactory.MAX_HEIGHT);
+        // TODO NOW replace with lookup.hasEncodedValue(key)?
+        if (encoder.isStoreHeight()) maxHeightEnc = gEncoder.getDecimalEncodedValue(TagParserFactory.MAX_HEIGHT);
+
         weight = hintsMap.getDouble(WEIGHT_LIMIT, 0d);
-        maxWeightEnc = gEncoder.getDecimalEncodedValue(TagParserFactory.MAX_WEIGHT);
+        if (encoder.isStoreWeight()) maxWeightEnc = gEncoder.getDecimalEncodedValue(TagParserFactory.MAX_WEIGHT);
+
         width = hintsMap.getDouble(WIDTH_LIMIT, 0d);
-        maxWidthEnc = gEncoder.getDecimalEncodedValue(TagParserFactory.MAX_WIDTH);
+        if (encoder.isStoreWidth()) maxWidthEnc = gEncoder.getDecimalEncodedValue(TagParserFactory.MAX_WIDTH);
+
         // TODO select the correct access type and max_speed via a provided access type (car, motor_vehicle, bike, ...) instead of encoder prefix
         // String prefix = hintsMap.get("access_type") + ".";
 
@@ -98,9 +102,9 @@ public class GenericWeighting extends AbstractWeighting {
         if (reverse && !edge.getReverse(accessEnc) || !reverse && !edge.get(accessEnc))
             return Double.POSITIVE_INFINITY;
 
-        if (gEncoder.isStoreHeight() && overLimit(height, edge.get(maxHeightEnc))
-                || gEncoder.isStoreWeight() && overLimit(weight, edge.get(maxWeightEnc))
-                || gEncoder.isStoreWidth() && overLimit(width, edge.get(maxWidthEnc)))
+        if (overLimit(edge, height, maxHeightEnc)
+                || overLimit(edge, weight, maxWeightEnc)
+                || overLimit(edge, width, maxWidthEnc))
             return Double.POSITIVE_INFINITY;
 
         long time = calcMillis(edge, reverse, prevOrNextEdgeId);
@@ -112,10 +116,10 @@ public class GenericWeighting extends AbstractWeighting {
         if (unfavoredEdge)
             time += headingPenalty;
 
-        switch (edge.get(accessClassEnc)) {
-            case 0:
+        switch (gEncoder.getAccess(edge)) {
+            case NO:
                 return Double.POSITIVE_INFINITY;
-            case 3:
+            case CONDITIONAL:
                 time = time * uncertainAccessiblePenalty;
             default:
                 // ignore
@@ -124,8 +128,11 @@ public class GenericWeighting extends AbstractWeighting {
         return time;
     }
 
-    private boolean overLimit(double value, double valueMax) {
-        return value > 0 && valueMax > 0 && value >= valueMax;
+    private boolean overLimit(EdgeIteratorState edge, double value, DecimalEncodedValue valueEnc) {
+        if (valueEnc == null)
+            return false;
+
+        return value >= edge.get(valueEnc);
     }
 
     @Override

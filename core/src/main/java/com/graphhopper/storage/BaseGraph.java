@@ -967,9 +967,9 @@ class BaseGraph implements Graph {
                 throw new IllegalStateException("call next before detaching or setEdgeId (edgeId:" + edgeId + " vs. next " + nextEdgeId + ")");
 
             EdgeIterable iter = edgeAccess.createSingleEdge(filter);
-            // TODO this saves a bit RAM and saves us from trouble that writes to the edgeRowCache do not force a re-read for other edge instances like the detached ones.
-            // Alternatives?
-            iter.edgeRowCache = edgeRowCache;
+            // TODO NOW writes to the edgeRowCache should force a re-read for other edge instances like the detached ones
+            if (edgeRowCache != null)
+                iter.edgeRowCache = edgeRowCache.clone();
             boolean ret;
             if (reverseArg) {
                 ret = iter.init(edgeId, baseNode);

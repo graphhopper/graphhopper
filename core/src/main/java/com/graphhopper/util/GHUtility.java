@@ -339,7 +339,8 @@ public class GHUtility {
                                                BooleanEncodedValue accessEnc, int from, int to, boolean bothDirections) {
         EdgeIteratorState edge = setAccess(g.edge(from, to), accessEnc, true, bothDirections);
         edge.set(averageSpeedEnc, speed);
-        edge.setReverse(averageSpeedEnc, speed);
+        if (bothDirections)
+            edge.setReverse(averageSpeedEnc, speed);
         return edge;
     }
 

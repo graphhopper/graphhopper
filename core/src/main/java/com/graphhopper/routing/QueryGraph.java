@@ -230,19 +230,18 @@ public class QueryGraph implements Graph {
                 throw new IllegalStateException("Do not call QueryGraph.lookup with invalid QueryResult " + res);
 
             int base = closestEdge.getBaseNode();
+            EdgeIteratorState origEdge = baseGraph.getEdgeIteratorState(closestEdge.getEdge(), Integer.MIN_VALUE);
 
             // Force the identical direction for all closest edges.
             // It is important to sort multiple results for the same edge by its wayIndex
-            boolean doReverse = base > closestEdge.getAdjNode();
+            boolean doReverse = base != origEdge.getBaseNode();
             if (base == closestEdge.getAdjNode()) {
-                // check for special case #162 where adj == base and force direction via latitude comparison
-                PointList pl = closestEdge.fetchWayGeometry(0);
-                if (pl.size() > 1)
-                    doReverse = pl.getLatitude(0) > pl.getLatitude(pl.size() - 1);
+                // check for special case #162 where adj == base and force direction of original to avoid geometry fetching
+                doReverse = true;
             }
 
             if (doReverse) {
-                closestEdge = closestEdge.detach(true);
+                closestEdge = origEdge;
                 PointList fullPL = closestEdge.fetchWayGeometry(3);
                 res.setClosestEdge(closestEdge);
                 if (res.getSnappedPosition() == QueryResult.Position.PILLAR)
@@ -424,7 +423,6 @@ public class QueryGraph implements Graph {
     /**
      * Set those edges at the virtual node (nodeId) to 'unfavored' that require at least a turn of
      * 100° from favoredHeading.
-     * <p>
      *
      * @param nodeId         VirtualNode at which edges get unfavored
      * @param favoredHeading north based azimuth of favored heading between 0 and 360
@@ -484,7 +482,6 @@ public class QueryGraph implements Graph {
      * effectively penalizes both virtual edges towards an adjacent node of virtualNodeId.
      * This makes it more likely (but does not guarantee) that the router chooses a route towards
      * the other adjacent node of virtualNodeId.
-     * <p>
      *
      * @param virtualNodeId virtual node at which edges get unfavored
      * @param virtualEdgeId this edge and the reverse virtual edge become unfavored
@@ -707,9 +704,6 @@ public class QueryGraph implements Graph {
     }
 
     @Override
-    /**
-     * @see QueryGraph
-     */
     public EdgeExplorer createEdgeExplorer() {
         return createEdgeExplorer(EdgeFilter.ALL_EDGES);
     }

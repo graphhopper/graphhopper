@@ -52,8 +52,7 @@ public class EncodingManager implements EncodedValueLookup {
      */
     public static final String ENCODER_NAME = "weighting";
     private static final String ERR = "Encoders are requesting %s bits, more than %s bits of %s flags. ";
-    private static final String WAY_ERR = "Decrease the number of vehicles or increase the flags to take long via graph.bytes_for_flags=8";
-    private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<AbstractFlagEncoder>();
+    private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
     private int bitsForEdgeFlags;
     private final int bitsForTurnFlags = 8 * 4;
     private boolean enableInstructions = true;
@@ -94,7 +93,7 @@ public class EncodingManager implements EncodedValueLookup {
         /**
          * This method adds some EncodedValues that are required like roundabout and road_class
          */
-        public Builder addGlobalEncodedValues_(boolean surface, boolean carMaxSpeed) {
+        public Builder addGlobalEncodedValues(boolean surface, boolean carMaxSpeed) {
             // TODO NOW for all bike we need surface (unpaved) as global encoded value to avoid creating multiple -> addBikeEncodedValues()?
             if (surface) {
                 List<String> surfaces = Arrays.asList("_default", "paved", "asphalt", "cobblestone", "cobblestone:flattened", "sett", "concrete",
@@ -128,7 +127,7 @@ public class EncodingManager implements EncodedValueLookup {
          * This method adds some EncodedValues that are required like roundabout and road_class
          */
         public Builder addGlobalEncodedValues() {
-            return addGlobalEncodedValues_(true, true);
+            return addGlobalEncodedValues(true, true);
         }
 
         public Builder add(TagParser parser) {
@@ -137,7 +136,6 @@ public class EncodingManager implements EncodedValueLookup {
             if (old != null)
                 throw new IllegalArgumentException("Cannot add parser " + old.getName() + ". Already existing: " + parser.getName());
 
-            // TODO NOW: throw exception if byte limit exceeded! similar to WAY_ERR
             em.parsers.put(parser.getName(), parser);
             em.filters.add(parser.getReadWayFilter());
             return this;
@@ -212,7 +210,8 @@ public class EncodingManager implements EncodedValueLookup {
 
                 if (bits >= maxBits)
                     throw new IllegalArgumentException("Too few space reserved for EncodedValues data. Maximum bits: " + maxBits + ", requested " + bits +
-                            ". Current EncodedValue " + tp.getEncodedValue().toString() + ", all: " + em.parsers);
+                            ". Current EncodedValue " + tp.getEncodedValue().toString() + ", all: " + em.parsers +
+                            ". Decrease the number of vehicles or increase graph.bytes_for_flags to allow more bytes");
             }
 
             if (em.edgeEncoders.isEmpty()) {

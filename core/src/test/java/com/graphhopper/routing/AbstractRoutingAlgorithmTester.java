@@ -634,11 +634,11 @@ public abstract class AbstractRoutingAlgorithmTester {
         // 0->1\
         // |    2
         // 4<-3/
-        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 0, false);
-        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 2, 1, true);
-        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 2, true);
-        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 4, 3, false);
-        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 4, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 0, 1, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, true);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 4, false);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 4, 0, true);
 
         updateDistancesFor(graph, 4, 0, 0);
         updateDistancesFor(graph, 0, 0.00010, 0);
@@ -838,6 +838,10 @@ public abstract class AbstractRoutingAlgorithmTester {
         p = createAlgo(graph, fakeOpts).calcPath(0, 10);
         assertEquals(444535, p.getWeight(), 1);
         assertEquals(Helper.createTList(0, 1, 2, 11, 7, 10), p.calcNodes());
+
+//        p = createAlgo(graph, fakeOpts).calcPath(0, 10);
+//        assertEquals(444535, p.getWeight(), 1);
+//        assertEquals(Helper.createTList(0, 1, 2, 11, 7, 10), p.calcNodes());
 
         QueryResult from = newQR(graph, 3, 0);
         QueryResult to = newQR(graph, 10, 9);

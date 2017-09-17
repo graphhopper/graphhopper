@@ -383,7 +383,7 @@ public class DataFlagEncoderTest {
 
         DataFlagEncoder encoder = new DataFlagEncoder(new PMap());
         encoder.setSpatialRuleLookup(index);
-        EncodingManager em = new EncodingManager.Builder().addAll(encoder).build();
+        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
         BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(encoder.getPrefix() + "access");
         DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(encoder.getPrefix() + "average_speed");
         IntEncodedValue spatialIdEnc = em.getIntEncodedValue(encoder.getPrefix() + "spatial_id");
