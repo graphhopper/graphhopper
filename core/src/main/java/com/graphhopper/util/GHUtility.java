@@ -301,12 +301,44 @@ public class GHUtility {
                 return distance;
             }
 
+            @Override
+            public IntsRef getData() {
+                return ints;
+            }
+
+            @Override
+            public String get(StringEncodedValue property) {
+                return property.getString(false, ints);
+            }
+
+            @Override
+            public int get(IntEncodedValue property) {
+                return property.getInt(false, ints);
+            }
+
+            @Override
+            public int getReverse(IntEncodedValue property) {
+                return property.getInt(true, ints);
+            }
+
+            @Override
             public boolean get(BooleanEncodedValue property) {
                 return property.getBool(false, ints);
             }
 
+            @Override
+            public boolean getReverse(BooleanEncodedValue property) {
+                return property.getBool(true, ints);
+            }
+
+            @Override
             public double get(DecimalEncodedValue property) {
                 return property.getDecimal(false, ints);
+            }
+
+            @Override
+            public double getReverse(DecimalEncodedValue property) {
+                return property.getDecimal(true, ints);
             }
         };
     }

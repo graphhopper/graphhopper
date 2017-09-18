@@ -247,7 +247,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         int tmpMax = spatialRuleLookup.size() - 1;
         int bits = 32 - Integer.numberOfLeadingZeros(tmpMax);
         if (bits > 0)
-            map.put("spatial_rule_id", TagParserFactory.createSpatialRuleId(spatialRuleLookup, new IntEncodedValue("spatial_rule_id", bits, 0, false)));
+            map.put(TagParserFactory.SPATIAL_RULE_ID, TagParserFactory.createSpatialRuleId(spatialRuleLookup,
+                    new IntEncodedValue(TagParserFactory.SPATIAL_RULE_ID, bits, 0, false)));
         return map;
     }
 
@@ -286,7 +287,8 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
                 if (motorcarTag == null && !way.hasTag("foot") && !way.hasTag("bicycle")
                         || "yes".equals(motorcarTag))
                     return EncodingManager.Access.FERRY;
-            }
+            } else
+                return EncodingManager.Access.CAN_SKIP;
         }
         return EncodingManager.Access.WAY;
     }

@@ -75,7 +75,6 @@ public class Car4WDFlagEncoderTest extends CarFlagEncoderTest {
 
         way.clearTags();
         way.setTag("route", "ferry");
-        assertTrue(encoder.getAccess(way).isWay());
         assertTrue(encoder.getAccess(way).isFerry());
         way.setTag("motorcar", "no");
         assertFalse(encoder.getAccess(way).isWay());

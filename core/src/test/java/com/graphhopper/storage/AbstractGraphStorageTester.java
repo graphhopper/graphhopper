@@ -41,7 +41,6 @@ import static org.junit.Assert.*;
 /**
  * Abstract test class to be extended for implementations of the Graph interface. Graphs
  * implementing GraphStorage should extend GraphStorageTest instead.
- * <p>
  *
  * @author Peter Karich
  */
@@ -268,19 +267,21 @@ public abstract class AbstractGraphStorageTester {
     @Test
     public void testClone() {
         graph = createGHStorage();
-        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 10);
         NodeAccess na = graph.getNodeAccess();
         na.setNode(0, 12, 23);
         na.setNode(1, 8, 13);
         na.setNode(2, 2, 10);
         na.setNode(3, 5, 9);
+        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 10);
         GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 3, true, 10);
 
         Graph cloneGraph = graph.copyTo(AbstractGraphStorageTester.this.createGHStorage(locationParent + "/clone", false));
         assertEquals(graph.getNodes(), cloneGraph.getNodes());
         assertEquals(count(carOutExplorer.setBaseNode(1)), count(cloneGraph.createEdgeExplorer(carOutFilter).setBaseNode(1)));
-        GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 1, 4, true, 10);
+
+        GHUtility.createEdge(cloneGraph, carAverageSpeedEnc, 60, carAccessEnc, 1, 4, true, 10);
         assertEquals(3, count(cloneGraph.createEdgeExplorer(carOutFilter).setBaseNode(1)));
+        assertEquals(2, count(graph.createEdgeExplorer(carOutFilter).setBaseNode(1)));
         assertEquals(graph.getBounds(), cloneGraph.getBounds());
         Helper.close((Closeable) cloneGraph);
     }
@@ -800,14 +801,14 @@ public abstract class AbstractGraphStorageTester {
         EdgeIteratorState oneIter = graph.getEdgeIteratorState(iter.getEdge(), 3);
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(2, oneIter.getBaseNode());
-        assertTrue(carAccessEnc.getBool(false, oneIter.getData()));
-        assertFalse(carAccessEnc.getBool(true, oneIter.getData()));
+        assertTrue(oneIter.get(carAccessEnc));
+        assertFalse(oneIter.getReverse(carAccessEnc));
 
         oneIter = graph.getEdgeIteratorState(iter.getEdge(), 2);
         assertEquals(13, oneIter.getDistance(), 1e-6);
         assertEquals(3, oneIter.getBaseNode());
-        assertFalse(carAccessEnc.getBool(false, oneIter.getData()));
-        assertTrue(carAccessEnc.getBool(true, oneIter.getData()));
+        assertFalse(oneIter.get(carAccessEnc));
+        assertTrue(oneIter.getReverse(carAccessEnc));
 
         GHUtility.createEdge(graph, carAverageSpeedEnc, 60, carAccessEnc, 3, 2, true, 14);
         assertEquals(4, GHUtility.count(carOutExplorer.setBaseNode(2)));
@@ -998,11 +999,10 @@ public abstract class AbstractGraphStorageTester {
 
         EdgeIteratorState edge = graph.edge(0, 1);
         IntsRef ints = manager.createIntsRef();
-        ints.ints[0] = BitUtil.LITTLE.getIntHigh(Long.MAX_VALUE / 3);
-        ints.ints[1] = BitUtil.LITTLE.getIntLow(Long.MAX_VALUE / 3);
+        ints.ints[0] = BitUtil.LITTLE.getIntLow(Long.MAX_VALUE / 3);
+        ints.ints[1] = BitUtil.LITTLE.getIntHigh(Long.MAX_VALUE / 3);
         edge.setData(ints);
         ints = edge.getData();
-        // System.out.println(BitUtil.LITTLE.toBitString(Long.MAX_VALUE / 3) + "\n" + BitUtil.LITTLE.toBitString(edge.getFlags()));
         long lng = BitUtil.LITTLE.toLong(ints.ints[0], ints.ints[1]);
         assertEquals(Long.MAX_VALUE / 3, lng);
         graph.close();

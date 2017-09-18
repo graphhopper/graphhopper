@@ -45,7 +45,6 @@ import static com.graphhopper.routing.profiles.TagParserFactory.ROUNDABOUT;
  * @see EncodingManager
  */
 public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncoder {
-    protected final static int K_FORWARD = 0, K_BACKWARD = 1;
     private final static Logger LOGGER = LoggerFactory.getLogger(AbstractFlagEncoder.class);
     /* restriction definitions where order is important */
     protected final List<String> restrictions = new ArrayList<String>(5);
@@ -285,7 +284,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         if (speed < speedFactor / 2) {
             averageSpeedEnc.setDecimal(false, ints, 0);
             accessEnc.setBool(false, ints, false);
-            accessEnc.setBool(true, ints, false);
+            // accessEnc.setBool(true, ints, false);
         }
 
         if (speed > getMaxSpeed())

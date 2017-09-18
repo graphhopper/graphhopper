@@ -84,5 +84,10 @@ public interface SpatialRuleLookup {
         public BBox getBounds() {
             return new BBox(-180, 180, -90, 90);
         }
+
+        @Override
+        public String toString() {
+            return "EMPTY";
+        }
     };
 }

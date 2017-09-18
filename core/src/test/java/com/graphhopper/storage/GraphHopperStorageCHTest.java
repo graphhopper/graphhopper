@@ -353,16 +353,16 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         FlagEncoder tmpCar = new CarFlagEncoder();
         FlagEncoder tmpBike = new Bike2WeightFlagEncoder();
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(tmpCar, tmpBike).build();
-        List<Weighting> chWeightings = new ArrayList<Weighting>();
+        List<Weighting> chWeightings = new ArrayList<>();
         chWeightings.add(new FastestWeighting(tmpCar));
         chWeightings.add(new FastestWeighting(tmpBike));
-        BooleanEncodedValue tmpCarAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
-        DecimalEncodedValue tmpCarAverageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
-        BooleanEncodedValue tmpBikeAccessEnc = encodingManager.getBooleanEncodedValue(tmpBike.getPrefix() + "access");
-        DecimalEncodedValue tmpBikeAverageSpeedEnc = encodingManager.getDecimalEncodedValue(tmpBike.getPrefix() + "average_speed");
+        BooleanEncodedValue tmpCarAccessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
+        DecimalEncodedValue tmpCarAverageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
+        BooleanEncodedValue tmpBikeAccessEnc = em.getBooleanEncodedValue(tmpBike.getPrefix() + "access");
+        DecimalEncodedValue tmpBikeAverageSpeedEnc = em.getDecimalEncodedValue(tmpBike.getPrefix() + "average_speed");
 
         graph = new GraphHopperStorage(chWeightings, new RAMDirectory(), em, false, new GraphExtension.NoOpExtension()).create(1000);
-        IntsRef ints = encodingManager.createIntsRef();
+        IntsRef ints = em.createIntsRef();
         GHUtility.setProperties(ints, tmpCarAverageSpeedEnc, 100d, tmpCarAccessEnc, true, true);
         GHUtility.setProperties(ints, tmpBikeAverageSpeedEnc, 10d, tmpBikeAccessEnc, true, true);
 
@@ -373,7 +373,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
         CHGraph carCHGraph = graph.getGraph(CHGraph.class, chWeightings.get(0));
         // enable forward directions for car
-        ints = encodingManager.createIntsRef();
+        ints = em.createIntsRef();
         ints.ints[0] = PrepareEncoder.getScFwdDir();
         EdgeIteratorState carSC02 = carCHGraph.shortcut(0, 2).setWeight(10).setDistance(20);
         carSC02.setData(ints);

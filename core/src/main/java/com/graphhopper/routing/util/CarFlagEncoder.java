@@ -48,6 +48,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
      * http://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed
      */
     protected final Map<String, Double> defaultSpeedMap = new HashMap<>();
+    private boolean speedTwoDirections;
 
     public CarFlagEncoder() {
         this(5, 5, 0);
@@ -119,6 +120,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         defaultSpeedMap.putAll(TagParserFactory.Car.createSpeedMap());
 
         init();
+    }
+
+    public CarFlagEncoder setSpeedTwoDirections(boolean speedTwoDirections) {
+        this.speedTwoDirections = speedTwoDirections;
+        return this;
     }
 
     @Override

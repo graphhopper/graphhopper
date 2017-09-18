@@ -90,11 +90,11 @@ public class EncodingManagerTest {
         }
 
         try {
-            new EncodingManager.Builder().addGlobalEncodedValues().
+            new EncodingManager.Builder(new TagsParser(), 8).addGlobalEncodedValues().
                     addAll(new FootFlagEncoder(), new CarFlagEncoder(), new BikeFlagEncoder(), new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder()).build();
             assertTrue(false);
         } catch (Exception ex) {
-            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Too few bytes reserved for EncodedValues data"));
+            assertTrue(ex.getMessage(), ex.getMessage().startsWith("Too few space reserved for EncodedValues data"));
         }
     }
 
@@ -142,9 +142,10 @@ public class EncodingManagerTest {
             }
         };
 
-        EncodingManager subject = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
+        EncodingManager subject = new EncodingManager.Builder().addGlobalEncodedValues(false, false).addAll(encoder).build();
 
-        assertEquals("new_encoder|my_properties|version=10, roundabout, road_class, road_environment, new_encoder.average_speed, new_encoder.access", subject.toDetailsString());
+        assertEquals("new_encoder|my_properties|version=10, roundabout, road_class, road_environment, new_encoder.average_speed, new_encoder.access",
+                subject.toDetailsString());
     }
 
     @Test

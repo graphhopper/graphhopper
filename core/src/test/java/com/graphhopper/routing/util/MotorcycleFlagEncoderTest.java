@@ -20,6 +20,7 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -53,7 +54,7 @@ public class MotorcycleFlagEncoderTest {
 
         mcAccessEnc = em.getBooleanEncodedValue("motorcycle.access");
         mcAverageSpeedEnc = em.getDecimalEncodedValue("motorcycle.average_speed");
-        mcCurvatureEnc = em.getDecimalEncodedValue("motorcycle.curvature");
+        mcCurvatureEnc = em.getDecimalEncodedValue(TagParserFactory.CURVATURE);
 
         edge.set(mcAverageSpeedEnc, 10d);
         edge.setReverse(mcAverageSpeedEnc, 15d);
@@ -89,7 +90,6 @@ public class MotorcycleFlagEncoderTest {
 
         way.clearTags();
         way.setTag("route", "ferry");
-        assertTrue(encoder.getAccess(way).isWay());
         assertTrue(encoder.getAccess(way).isFerry());
         way.setTag("motorcycle", "no");
         assertFalse(encoder.getAccess(way).isWay());
@@ -149,7 +149,10 @@ public class MotorcycleFlagEncoderTest {
     public void testSetSpeed0_issue367() {
         initExampleGraph();
         IntsRef flags = em.createIntsRef();
+        mcAccessEnc.setBool(false, flags, true);
+        mcAccessEnc.setBool(true, flags, true);
         mcAverageSpeedEnc.setDecimal(false, flags, 10d);
+        mcAverageSpeedEnc.setDecimal(true, flags, 10d);
         encoder.setSpeed(flags, 0);
 
         assertEquals(0, encoder.getSpeed(flags), .1);

@@ -39,12 +39,11 @@ public class EncodingManagerNewTest {
         };
         avSpeedEnc = new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, true);
         accessEnc = new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true);
-        encodingManager = new EncodingManager.Builder(parser, 4).
+        encodingManager = new EncodingManager.Builder(parser, 8).
                 addGlobalEncodedValues().
                 add(TagParserFactory.Car.createAverageSpeed(avSpeedEnc, speedMap)).
-                add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED, 5, 50, 5, false), filter)).
                 add(TagParserFactory.Car.createAccess(accessEnc, filter)).
-                add(TagParserFactory.createMaxWeight(new DecimalEncodedValue(TagParserFactory.MAX_WEIGHT, 5, 5, 1, false), filter)).
+                add(TagParserFactory.createMaxWeight(new DecimalEncodedValue(TagParserFactory.MAX_WEIGHT, 5, 0, 1, false), filter)).
                 build();
     }
 
@@ -85,9 +84,7 @@ public class EncodingManagerNewTest {
         encodingManager.applyWayTags(readerWay, edge);
 
         IntEncodedValue weight = encodingManager.getEncodedValue(TagParserFactory.MAX_WEIGHT, IntEncodedValue.class);
-        assertEquals(5, edge.get(weight));
-        DecimalEncodedValue speed = encodingManager.getEncodedValue(TagParserFactory.CAR_MAX_SPEED, DecimalEncodedValue.class);
-        assertEquals(50, edge.get(speed), .1);
+        assertEquals(0, edge.get(weight));
     }
 
     // TODO currently we do not throw an exception in TagsParserOSM.parse

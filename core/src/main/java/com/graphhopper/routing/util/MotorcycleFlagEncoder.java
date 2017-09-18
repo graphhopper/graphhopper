@@ -22,6 +22,7 @@ import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.weighting.CurvatureWeighting;
 import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
+import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
 
@@ -60,6 +61,9 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
 
     public MotorcycleFlagEncoder(int speedBits, double speedFactor, int maxTurnCosts) {
         super(speedBits, speedFactor, maxTurnCosts);
+
+        setSpeedTwoDirections(true);
+
         restrictions.remove("motorcar");
         //  moped, mofa
         restrictions.add("motorcycle");
@@ -153,7 +157,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
 // TODO NOW
             }
         });
-        final DecimalEncodedValue curvatureEnc = new DecimalEncodedValue("curvature", 4, 10, 1, false);
+        final DecimalEncodedValue curvatureEnc = new DecimalEncodedValue(TagParserFactory.CURVATURE, 4, 10, 1, false);
         map.put(curvatureEnc.getName(), new TagParser() {
             @Override
             public String getName() {
@@ -183,6 +187,30 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         super.initEncodedValues(prefix, index);
         priorityWayEnc = getIntEncodedValue(prefix + "priority");
         curvatureEnc = getDecimalEncodedValue("curvature");
+    }
+
+    @Override
+    public double getReverseSpeed(IntsRef ints) {
+        return averageSpeedEnc.getDecimal(true, ints);
+    }
+
+
+    @Override
+    public IntsRef setReverseSpeed(IntsRef ints, double speed) {
+        if (speed < 0 || Double.isNaN(speed))
+            throw new IllegalArgumentException("Speed cannot be negative or NaN: " + speed
+                    + ", flags:" + BitUtil.LITTLE.toBitString(ints));
+
+        if (speed < speedFactor / 2) {
+            averageSpeedEnc.setDecimal(true, ints, 0);
+            accessEnc.setBool(true, ints, false);
+        }
+
+        if (speed > getMaxSpeed())
+            speed = getMaxSpeed();
+
+        averageSpeedEnc.setDecimal(true, ints, speed);
+        return ints;
     }
 
     @Override

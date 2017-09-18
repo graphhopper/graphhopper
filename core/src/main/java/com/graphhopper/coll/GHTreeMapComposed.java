@@ -24,17 +24,16 @@ import java.util.TreeMap;
 /**
  * A priority queue implemented by a TreeMap. As the tree map does not allow duplicated we compose
  * the key via priority | nodeId.
- * <p>
  *
  * @author Peter Karich
  */
 public class GHTreeMapComposed {
     private static final Integer NOT_EMPTY = new Integer(-3);
-    private final BitUtil bitUtil = BitUtil.BIG;
+    private final BitUtil bitUtil = BitUtil.LITTLE;
     private final TreeMap<Long, Integer> map;
 
     public GHTreeMapComposed() {
-        map = new TreeMap<Long, Integer>();
+        map = new TreeMap<>();
     }
 
     public void clear() {
@@ -42,7 +41,7 @@ public class GHTreeMapComposed {
     }
 
     void remove(int key, int value) {
-        long v = bitUtil.toLong(value, key);
+        long v = bitUtil.toLong(key, value);
         if (!map.remove(v).equals(NOT_EMPTY)) {
             throw new IllegalStateException("cannot remove key " + key + " with value " + value
                     + " - did you insert " + key + "," + value + " before?");
@@ -55,7 +54,7 @@ public class GHTreeMapComposed {
     }
 
     public void insert(int key, int value) {
-        long v = bitUtil.toLong(value, key);
+        long v = bitUtil.toLong(key, value);
         map.put(v, NOT_EMPTY);
     }
 

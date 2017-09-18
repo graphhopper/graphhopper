@@ -55,6 +55,7 @@ public class TagParserFactory {
     public static final String MAX_WEIGHT = "max_weight";
     public static final String MAX_WIDTH = "max_width";
     public static final String SPATIAL_RULE_ID = "spatial_rule_id";
+    public static final String CURVATURE = "curvature";
     public static final String CAR_ACCESS = "car.access";
     public static final String CAR_MAX_SPEED = "car.max_speed";
     public static final String CAR_AVERAGE_SPEED = "car.average_speed";
