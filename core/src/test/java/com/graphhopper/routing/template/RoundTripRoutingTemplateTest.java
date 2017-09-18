@@ -23,15 +23,16 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.RAMDirectory;
+import com.graphhopper.storage.*;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
@@ -45,6 +46,20 @@ public class RoundTripRoutingTemplateTest {
     private final EncodingManager em = new EncodingManager(carFE);
     // TODO private final TraversalMode tMode = TraversalMode.EDGE_BASED_2DIR;
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
+
+    @Test(expected = IllegalStateException.class)
+    public void lookup_throwsIfNumberOfGivenPointsNotOne() {
+        RoundTripRoutingTemplate routingTemplate = new RoundTripRoutingTemplate(
+                new GHRequest(Collections.singletonList(new GHPoint(0, 0))), new GHResponse(), null, 1);
+        routingTemplate.lookup(Arrays.asList(new GHPoint(0, 0), new GHPoint(1, 1)), carFE);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void lookup_throwsIfNumberOfPointsInRequestNotOne() {
+        RoundTripRoutingTemplate routingTemplate = new RoundTripRoutingTemplate(
+                new GHRequest(0, 1, 2, 3), new GHResponse(), null, 1);
+        routingTemplate.lookup(Collections.singletonList(new GHPoint(0, 0)), carFE);
+    }
 
     @Test
     public void testCalcRoundTrip() throws Exception {

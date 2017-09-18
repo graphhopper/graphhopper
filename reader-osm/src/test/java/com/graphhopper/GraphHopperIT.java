@@ -804,7 +804,8 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testRoundTour() {
+    public void testRoundTour_settingHeadingViaRequestHints() {
+        // setting the initial heading via request hints will be deprecated in the future
         GHRequest rq = new GHRequest().
                 addPoint(new GHPoint(43.741069, 7.426854)).
                 setVehicle(vehicle).setWeighting("fastest").
@@ -812,9 +813,22 @@ public class GraphHopperIT {
         rq.getHints().put(RoundTrip.HEADING, 50);
         rq.getHints().put(RoundTrip.DISTANCE, 1000);
         rq.getHints().put(RoundTrip.SEED, 0);
+        doTestRoundTour(rq);
+    }
 
+    @Test
+    public void testRoundTour_settingHeadingViaGHRequest() {
+        GHRequest rq = new GHRequest().
+                addPoint(new GHPoint(43.741069, 7.426854), 50).
+                setVehicle(vehicle).setWeighting("fastest").
+                setAlgorithm(ROUND_TRIP);
+        rq.getHints().put(RoundTrip.DISTANCE, 1000);
+        rq.getHints().put(RoundTrip.SEED, 0);
+        doTestRoundTour(rq);
+    }
+
+    private void doTestRoundTour(GHRequest rq) {
         GHResponse rsp = hopper.route(rq);
-
         assertEquals(1, rsp.getAll().size());
         PathWrapper pw = rsp.getBest();
         assertEquals(1.45, rsp.getBest().getDistance() / 1000f, .01);
