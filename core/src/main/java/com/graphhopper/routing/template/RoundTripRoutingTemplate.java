@@ -72,7 +72,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
         final double distanceInMeter = ghRequest.getHints().getDouble(RoundTrip.DISTANCE, 10000);
         final long seed = ghRequest.getHints().getLong(RoundTrip.SEED, 0L);
         double initialHeading = getInitialHeading();
-        final int roundTripPointCount = Math.min(20, ghRequest.getHints().getInt(Algorithms.ROUND_TRIP + ".points", 2 + (int) (distanceInMeter / 50000)));
+        final int roundTripPointCount = Math.min(20, ghRequest.getHints().getInt(RoundTrip.POINTS, 2 + (int) (distanceInMeter / 50000)));
         final GHPoint start = points.get(0);
 
         TourStrategy strategy = new MultiPointTour(new Random(seed), distanceInMeter, roundTripPointCount, initialHeading);
