@@ -17,26 +17,27 @@
  */
 package com.graphhopper.routing.profiles;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.graphhopper.storage.IntsRef;
 
 /**
- * This class provides easy access to just one bit.
+ * This class provides easy access to just one bit and the default value is false.
  */
 public final class BooleanEncodedValue extends IntEncodedValue {
 
-    /**
-     * The default value is false.
-     */
+    private BooleanEncodedValue() {
+    }
+
     public BooleanEncodedValue(String name) {
         this(name, false);
     }
 
-    public BooleanEncodedValue(String name, boolean store2DirectedValues) {
-        super(name, 1, 0, store2DirectedValues);
+    public BooleanEncodedValue(String name, boolean storeBothDirections) {
+        super(name, 1, 0, storeBothDirections);
     }
 
     public final void setBool(boolean reverse, IntsRef ref, boolean value) {
-        if (store2DirectedValues && reverse) {
+        if (storeBothDirections && reverse) {
             int flags = ref.ints[bwdDataIndex + ref.offset];
             flags &= ~bwdMask;
             // set value
@@ -55,7 +56,7 @@ public final class BooleanEncodedValue extends IntEncodedValue {
 
     public final boolean getBool(boolean reverse, IntsRef ref) {
         int flags;
-        if (store2DirectedValues && reverse) {
+        if (storeBothDirections && reverse) {
             flags = ref.ints[bwdDataIndex + ref.offset];
             return (((flags & bwdMask) >>> bwdShift) & 0x1) == 0x1;
         }

@@ -20,7 +20,6 @@ package com.graphhopper.storage;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
-import com.graphhopper.routing.profiles.TagsParser;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.BBox;
@@ -994,7 +993,7 @@ public abstract class AbstractGraphStorageTester {
             }
         });
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
-        EncodingManager manager = new EncodingManager.Builder(new TagsParser(), 12).addGlobalEncodedValues().addAll(list, 8).build();
+        EncodingManager manager = new EncodingManager.Builder(12).addGlobalEncodedValues().addAll(list, 8).build();
         graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);

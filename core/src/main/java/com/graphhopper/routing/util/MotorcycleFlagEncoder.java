@@ -41,7 +41,7 @@ import static com.graphhopper.routing.profiles.TagParserFactory.ACCEPT_IF_HIGHWA
 public class MotorcycleFlagEncoder extends CarFlagEncoder {
     private final HashSet<String> avoidSet = new HashSet<String>();
     private final HashSet<String> preferSet = new HashSet<String>();
-    private IntEncodedValue priorityWayEnc;
+    private DecimalEncodedValue priorityWayEnc;
     private DecimalEncodedValue curvatureEnc;
 
     public MotorcycleFlagEncoder() {
@@ -135,7 +135,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         };
         map.put(prefix + "access", TagParserFactory.Car.createAccess(new BooleanEncodedValue(prefix + "access", true), filter));
 
-        final IntEncodedValue priorityWayEnc = new IntEncodedValue(prefix + "priority", 3, 3, false);
+        final DecimalEncodedValue priorityWayEnc = new DecimalEncodedValue(prefix + "priority", 3, 3, .15, false);
         map.put(priorityWayEnc.getName(), new TagParser() {
             @Override
             public String getName() {
@@ -185,7 +185,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
     @Override
     public void initEncodedValues(String prefix, int index) {
         super.initEncodedValues(prefix, index);
-        priorityWayEnc = getIntEncodedValue(prefix + "priority");
+        priorityWayEnc = getDecimalEncodedValue(prefix + "priority");
         curvatureEnc = getDecimalEncodedValue("curvature");
     }
 

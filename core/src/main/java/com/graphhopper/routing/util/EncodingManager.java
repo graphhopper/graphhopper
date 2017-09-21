@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
@@ -28,6 +30,8 @@ import com.graphhopper.storage.RAMDirectory;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PMap;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -40,36 +44,52 @@ import java.util.*;
  */
 public class EncodingManager implements EncodedValueLookup {
 
-    // keep order of which they are added
+    private static Logger LOGGER = LoggerFactory.getLogger(TagsParser.class);
+
+    private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
+    // for serialization we should not rely on the correct order, instead we force order with this List
+    @JsonProperty("encoded_values")
+    private final List<EncodedValue> encodedValueList = new ArrayList<>();
     private final Map<String, TagParser> parsers = new LinkedHashMap<>();
     private final Collection<ReaderWayFilter> filters = new HashSet<>();
-    private final TagsParser parser;
+    @JsonProperty("extended_data_size")
     private final int extendedDataSize;
 
-    // backward compatibility variables:
     /**
      * for backward compatibility we have to specify an encoder name ("vehicle")
      */
     public static final String ENCODER_NAME = "weighting";
     private static final String ERR = "Encoders are requesting %s bits, more than %s bits of %s flags. ";
     private final List<AbstractFlagEncoder> edgeEncoders = new ArrayList<>();
+    @JsonProperty("bits_for_edge_flags")
     private int bitsForEdgeFlags;
+    @JsonProperty("bits_for_turn_flags")
     private final int bitsForTurnFlags = 8 * 4;
+    @JsonProperty("enable_instructions")
     private boolean enableInstructions = true;
+    @JsonProperty("preferred_language")
     private String preferredLanguage = "";
 
     /**
-     * This constructor creates the object that orchestrates the edge properties.
+     * This constructor creates the object that orchestrates the edge properties, so called EncodedValues.
      *
      * @param extendedDataSpaceInBytes in bytes
      */
-    private EncodingManager(TagsParser parser, int extendedDataSpaceInBytes) {
-        this.parser = parser;
+    private EncodingManager(int extendedDataSpaceInBytes) {
         this.extendedDataSize = Math.max(1, extendedDataSpaceInBytes / 4) * 4;
+    }
+
+    private EncodingManager() {
+        extendedDataSize = 4;
     }
 
     public IntsRef createIntsRef() {
         return new IntsRef(extendedDataSize / 4);
+    }
+
+    // for serialization
+    public String getFlagEncoderDetailsList() {
+        return toDetailsString();
     }
 
     public static class Builder {
@@ -80,14 +100,14 @@ public class EncodingManager implements EncodedValueLookup {
         private int nextTurnBit = 0;
 
         /**
-         * used only for tests, could be removed in 0.11
+         * used only for tests
          */
         public Builder() {
-            this(new TagsParser(), 8);
+            this(8);
         }
 
-        public Builder(TagsParser parser, int extendedDataSize) {
-            this.em = new EncodingManager(parser, extendedDataSize);
+        public Builder(int extendedDataSize) {
+            this.em = new EncodingManager(extendedDataSize);
         }
 
         /**
@@ -137,12 +157,14 @@ public class EncodingManager implements EncodedValueLookup {
                 throw new IllegalArgumentException("Cannot add parser " + old.getName() + ". Already existing: " + parser.getName());
 
             em.parsers.put(parser.getName(), parser);
+            em.encodedValueMap.put(parser.getName(), parser.getEncodedValue());
+            em.encodedValueList.add(parser.getEncodedValue());
             em.filters.add(parser.getReadWayFilter());
             return this;
         }
 
         public Builder addAllFlagEncoders(String encoderList) {
-            addAll(FlagEncoderFactory.DEFAULT, encoderList, 4);
+            addAll(FlagEncoderFactory.DEFAULT, encoderList, 4, true);
             return this;
         }
 
@@ -150,7 +172,15 @@ public class EncodingManager implements EncodedValueLookup {
          * Use TagParsers instead of FlagEncoder
          */
         public Builder addAll(FlagEncoderFactory factory, String encoderList, int bytesForFlags) {
-            addAll(parseEncoderString(factory, encoderList), bytesForFlags);
+            addAll(parseEncoderString(factory, encoderList), bytesForFlags, true);
+            return this;
+        }
+
+        /**
+         * Use TagParsers instead of FlagEncoder
+         */
+        public Builder addAll(FlagEncoderFactory factory, String encoderList, int bytesForFlags, boolean addEncodedValues) {
+            addAll(parseEncoderString(factory, encoderList), bytesForFlags, addEncodedValues);
             return this;
         }
 
@@ -166,20 +196,26 @@ public class EncodingManager implements EncodedValueLookup {
          * Use TagParsers instead of FlagEncoder
          */
         public Builder addAll(List<? extends FlagEncoder> list, int bytesForFlags) {
+            return addAll(list, bytesForFlags, true);
+        }
+
+        public Builder addAll(List<? extends FlagEncoder> list, int bytesForFlags, boolean addEncodedValues) {
             em.bitsForEdgeFlags = bytesForFlags * 8;
             for (FlagEncoder flagEncoder : list) {
-                add(flagEncoder);
+                add(flagEncoder, addEncodedValues);
             }
             return this;
         }
 
-        private Builder add(FlagEncoder flagEncoder) {
+        private Builder add(FlagEncoder flagEncoder, boolean addEncodedValues) {
             check();
 
             AbstractFlagEncoder encoder = (AbstractFlagEncoder) flagEncoder;
             for (FlagEncoder fe : em.edgeEncoders) {
                 if (fe.toString().equals(encoder.toString()))
                     throw new IllegalArgumentException("Cannot register edge encoder. Name already exists: " + fe.toString());
+                if (fe.toString().equalsIgnoreCase(ENCODER_NAME))
+                    throw new IllegalArgumentException("Cannot register edge encoder with reserved name " + ENCODER_NAME);
             }
             if (encoder.isRegistered())
                 throw new IllegalStateException("You must not register the FlagEncoder '" + encoder.toString() + "' twice!");
@@ -187,12 +223,17 @@ public class EncodingManager implements EncodedValueLookup {
             em.edgeEncoders.add(encoder);
 
             for (Map.Entry<String, TagParser> entry : encoder.createTagParsers(getPrefix(encoder)).entrySet()) {
-                if (entry.getValue() == null) {
-                    if (!em.parsers.containsKey(entry.getKey()))
-                        throw new IllegalArgumentException("FlagEncoder " + encoder.toString() + " requires the TagParser '" + entry.getKey() + "' and this must be created before adding the FlagEncoder");
+                if (addEncodedValues) {
+                    if (entry.getValue() == null) {
+                        if (!em.parsers.containsKey(entry.getKey()))
+                            throw new IllegalArgumentException("FlagEncoder " + encoder.toString() + " requires the TagParser&EncodedValue '" + entry.getKey() + "' and this must be created before adding the FlagEncoder");
 
+                    } else {
+                        add(entry.getValue());
+                    }
                 } else {
-                    add(entry.getValue());
+                    if (!em.parsers.containsKey(entry.getKey()))
+                        throw new IllegalArgumentException("FlagEncoder " + encoder.toString() + " requires the TagParser&EncodedValue '" + entry.getKey() + "' and this must be created before adding the FlagEncoder");
                 }
             }
 
@@ -205,17 +246,17 @@ public class EncodingManager implements EncodedValueLookup {
             int bits = 0;
             int maxBits = em.extendedDataSize * 8;
             EncodedValue.InitializerConfig initializer = new EncodedValue.InitializerConfig();
-            for (TagParser tp : em.parsers.values()) {
-                bits += tp.getEncodedValue().init(initializer);
+            for (EncodedValue ev : em.encodedValueList) {
+                bits += ev.init(initializer);
 
                 if (bits >= maxBits)
                     throw new IllegalArgumentException("Too few space reserved for EncodedValues data. Maximum bits: " + maxBits + ", requested " + bits +
-                            ". Current EncodedValue " + tp.getEncodedValue().toString() + ", all: " + em.parsers +
+                            ". Current EncodedValue " + ev.toString() + ", all: " + em.parsers +
                             ". Decrease the number of vehicles or increase graph.bytes_for_flags to allow more bytes");
             }
 
             if (em.edgeEncoders.isEmpty()) {
-                // TODO it should not fail when using 0 bits, if 0 it seems that the storage access is wrong or overwrites the bit space reserved for the waygeometry.
+                // TODO NOW it should not fail when using 0 bits, if 0 it seems that the storage access is wrong or overwrites the bit space reserved for the waygeometry.
                 em.bitsForEdgeFlags = 4 * 8;
 
             } else {
@@ -261,6 +302,11 @@ public class EncodingManager implements EncodedValueLookup {
             if (buildCalled)
                 throw new IllegalStateException("EncodingManager.Builder.build() already called");
         }
+
+        public void addEncodedValue(EncodedValue encodedValue) {
+            em.encodedValueList.add(encodedValue);
+            em.encodedValueMap.put(encodedValue.getName(), encodedValue);
+        }
     }
 
     // TODO move later into builder
@@ -304,10 +350,10 @@ public class EncodingManager implements EncodedValueLookup {
 
     @Override
     public <T extends EncodedValue> T getEncodedValue(String key, Class<T> encodedValueType) {
-        TagParser prop = parsers.get(key);
-        if (prop == null)
-            throw new IllegalArgumentException("Cannot find encoded value " + key + " in existing collection: " + parsers);
-        return (T) prop.getEncodedValue();
+        EncodedValue ev = encodedValueMap.get(key);
+        if (ev == null)
+            throw new IllegalArgumentException("Cannot find encoded value " + key + " in collection: " + ev);
+        return (T) ev;
     }
 
     static String fixWayName(String str) {
@@ -370,10 +416,11 @@ public class EncodingManager implements EncodedValueLookup {
         if ("8".equals(properties.get("graph.bytes_for_flags")))
             bytesForFlags = 8;
         EncodingManager.Builder builder = new EncodingManager.Builder();
-        builder.addAll(factory, acceptStr, bytesForFlags);
+        builder.addAll(factory, acceptStr, bytesForFlags, true);
         return builder.build();
     }
 
+    @JsonIgnore
     public int getBytesForFlags() {
         return bitsForEdgeFlags / 8;
     }
@@ -382,6 +429,8 @@ public class EncodingManager implements EncodedValueLookup {
      * @return true if the specified encoder is found
      */
     public boolean supports(String encoder) {
+        if (edgeEncoders.isEmpty())
+            return encoder.equals(ENCODER_NAME);
         return getEncoder(encoder, false) != null;
     }
 
@@ -390,6 +439,10 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     private FlagEncoder getEncoder(String name, boolean throwExc) {
+        if (name.equals(ENCODER_NAME))
+            // TODO NOW too dangerous?
+            return null;
+
         for (FlagEncoder encoder : edgeEncoders) {
             if (name.equalsIgnoreCase(encoder.toString()))
                 return encoder;
@@ -403,8 +456,17 @@ public class EncodingManager implements EncodedValueLookup {
      * Determine whether a way is routable for one of the added encoders.
      */
     public boolean acceptWay(ReaderWay way, AcceptWay acceptWay) {
+        if (!acceptWay.isEmpty())
+            throw new IllegalArgumentException("AcceptWay must be empty");
+
         for (AbstractFlagEncoder encoder : edgeEncoders) {
             acceptWay.put(encoder.toString(), encoder.getAccess(way));
+        }
+        for (Map.Entry<String, TagParser> e : parsers.entrySet()) {
+            if (e.getValue().getReadWayFilter().accept(way)) {
+                // TODO NOW how to trigger ferry parsing?
+                acceptWay.put(e.getKey(), Access.WAY);
+            }
         }
         return acceptWay.hasAccepted();
     }
@@ -430,6 +492,10 @@ public class EncodingManager implements EncodedValueLookup {
             if (access != Access.CAN_SKIP)
                 hasAccepted = true;
             return this;
+        }
+
+        public boolean isEmpty() {
+            return accessMap.isEmpty();
         }
 
         public boolean hasAccepted() {
@@ -482,7 +548,16 @@ public class EncodingManager implements EncodedValueLookup {
                 encoder.handleWayTags(ints, way, acceptWay.get(encoder.toString()), relationFlags & encoder.getRelBitMask());
         }
 
-        parser.parse(parsers.values(), ints, way);
+        try {
+            for (TagParser tagParser : parsers.values()) {
+                if (tagParser.getReadWayFilter().accept(way))
+                    // parsing should allow to call edgeState.set multiple times (e.g. for composed values) without reimplementing this set method
+                    tagParser.parse(ints, way);
+            }
+        } catch (Exception ex) {
+            // TODO for now do not stop when there are errors
+            LOGGER.error("Cannot parse way to store edge properties. Way: " + way, ex);
+        }
         return ints;
     }
 

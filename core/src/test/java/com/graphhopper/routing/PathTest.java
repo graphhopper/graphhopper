@@ -21,7 +21,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
-import com.graphhopper.routing.profiles.TagsParser;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.GenericWeighting;
@@ -46,7 +45,7 @@ public class PathTest {
     private final DecimalEncodedValue carAvSpeedEnc = carManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
     private final DataFlagEncoder dataFlagEncoder = new DataFlagEncoder().setStoreHeight(true).setStoreWeight(true).setStoreWidth(true);
-    private final EncodingManager dataFlagManager = new EncodingManager.Builder(new TagsParser(), 12).
+    private final EncodingManager dataFlagManager = new EncodingManager.Builder(12).
             addGlobalEncodedValues().addAll(dataFlagEncoder).build();
     private final FlagEncoder carEncoderMixed = new CarFlagEncoder();
     private final EncodingManager mixedEncoders = new EncodingManager.Builder().addGlobalEncodedValues().addAll(

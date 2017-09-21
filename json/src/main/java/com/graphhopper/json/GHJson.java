@@ -18,6 +18,7 @@
 package com.graphhopper.json;
 
 import java.io.Reader;
+import java.io.Writer;
 
 /**
  * A simple JSON (de)serialization facade. E.g. to be easily replaced with platform specific
@@ -31,4 +32,32 @@ public interface GHJson {
      * class.
      */
     <T> T fromJson(Reader source, Class<T> aClass);
+
+    /**
+     * This method converts the specified object into a JSON string.
+     */
+    String toJson(Object object);
+
+    /**
+     * This method converts the specified object into JSON using the provided writer.
+     */
+    void toJson(Object object, Writer writer);
+
+    GHJson EMPTY = new GHJson() {
+
+        @Override
+        public <T> T fromJson(Reader source, Class<T> aClass) {
+            throw new IllegalStateException("Cannot deserialize " + aClass);
+        }
+
+        @Override
+        public String toJson(Object object) {
+            throw new IllegalStateException("Cannot serialize " + object);
+        }
+
+        @Override
+        public void toJson(Object object, Writer writer) {
+            throw new IllegalStateException("Cannot serialize " + object);
+        }
+    };
 }

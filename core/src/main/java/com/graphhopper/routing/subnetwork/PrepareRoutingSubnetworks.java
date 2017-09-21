@@ -39,7 +39,6 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Removes nodes which are not part of the large networks. Ie. mostly nodes with no edges at all but
  * also small subnetworks which could be bugs in OSM data or indicate otherwise disconnected areas
  * e.g. via barriers or one way problems - see #86.
- * <p>
  *
  * @author Peter Karich
  */

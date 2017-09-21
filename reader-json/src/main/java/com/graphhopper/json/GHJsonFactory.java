@@ -19,6 +19,7 @@ package com.graphhopper.json;
 
 import com.bedatadriven.jackson.datatype.jts.JtsModule;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 /**
  * This class wraps the creation of the specific GHJson implementation.
@@ -28,6 +29,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class GHJsonFactory {
     public GHJson create() {
         ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        objectMapper.registerModule(new GHModule());
         objectMapper.registerModule(new JtsModule());
         return new GHJsonJackson(objectMapper);
     }

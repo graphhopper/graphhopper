@@ -220,11 +220,9 @@ public class OSMReader implements DataReader {
     }
 
     /**
-     * Filter ways but do not analyze properties wayNodes will be filled with participating node
-     * ids.
-     * <p>
+     * Filter ways but do not analyze properties.
      *
-     * @return true the current xml entry is a way entry and has nodes
+     * @return true the current entry is a way entry and has nodes
      */
     boolean filterWay(ReaderWay item) {
         // ignore broken geometry

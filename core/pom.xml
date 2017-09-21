@@ -59,7 +59,7 @@
             <artifactId>jackson-annotations</artifactId>
             <version>${jackson.version}</version>
         </dependency>
-        
+
         <dependency>
             <groupId>com.vividsolutions</groupId>
             <artifactId>jts</artifactId>
@@ -85,7 +85,7 @@
             <version>${log4j.version}</version>
             <scope>test</scope>
         </dependency>
-        
+
     </dependencies>
 
     <build>

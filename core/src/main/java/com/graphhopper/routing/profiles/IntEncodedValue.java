@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing.profiles;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.storage.IntsRef;
 
 /**
@@ -36,21 +37,34 @@ import com.graphhopper.storage.IntsRef;
  */
 public class IntEncodedValue implements EncodedValue {
 
+    @JsonProperty
     private final String name;
+    @JsonProperty
+    private final String classType;
+
     /**
      * There are multiple int values possible per edge. Here we specify the index into this integer array.
      */
     protected int fwdDataIndex;
     protected int bwdDataIndex;
+    @JsonProperty
     final int bits;
-    // we need a long here as our ints are unsigned
+    // we need a long here as Java ints are signed
     long maxValue;
     int fwdShift;
     int bwdShift;
     int fwdMask;
     int bwdMask;
+    @JsonProperty
     int defaultValue;
-    boolean store2DirectedValues;
+    @JsonProperty
+    boolean storeBothDirections;
+
+    IntEncodedValue() {
+        bits = 0;
+        name = "";
+        classType = getClass().getName();
+    }
 
     public IntEncodedValue(String name, int bits) {
         this(name, bits, 0, false);
@@ -58,12 +72,13 @@ public class IntEncodedValue implements EncodedValue {
 
     /**
      * This constructor reserve the specified number of bits in the underlying datastructure or twice the amount if
-     * store2DirectedValues is true.
+     * storeBothDirections is true.
      *
      * @param defaultValue defines which value to return if the 'raw' integer value is 0.
      */
-    public IntEncodedValue(String name, int bits, int defaultValue, boolean store2DirectedValues) {
+    public IntEncodedValue(String name, int bits, int defaultValue, boolean storeBothDirections) {
         this.name = name;
+        this.classType = getClass().getSimpleName();
         if (!name.toLowerCase().equals(name))
             throw new IllegalArgumentException("EncodedValue name must be lower case but was " + name);
 
@@ -73,7 +88,7 @@ public class IntEncodedValue implements EncodedValue {
         if (bits > 32)
             throw new IllegalArgumentException("At the moment bits cannot be >32");
         this.defaultValue = defaultValue;
-        this.store2DirectedValues = store2DirectedValues;
+        this.storeBothDirections = storeBothDirections;
     }
 
     @Override
@@ -81,19 +96,19 @@ public class IntEncodedValue implements EncodedValue {
         if (isInitialized())
             throw new IllegalStateException("Cannot call init multiple times");
 
-        init.find(bits);
+        init.next(bits);
         this.fwdMask = init.wayBitMask;
         this.fwdDataIndex = init.dataIndex;
         this.fwdShift = init.shift;
-        if (store2DirectedValues) {
-            init.find(bits);
+        if (storeBothDirections) {
+            init.next(bits);
             this.bwdMask = init.wayBitMask;
             this.bwdDataIndex = init.dataIndex;
             this.bwdShift = init.shift;
         }
 
         this.maxValue = (1L << bits) - 1;
-        return store2DirectedValues ? 2 * bits : bits;
+        return storeBothDirections ? 2 * bits : bits;
     }
 
     private boolean isInitialized() {
@@ -118,7 +133,7 @@ public class IntEncodedValue implements EncodedValue {
     }
 
     final void uncheckedSet(boolean reverse, IntsRef ref, int value) {
-        if (store2DirectedValues && reverse) {
+        if (storeBothDirections && reverse) {
             int flags = ref.ints[bwdDataIndex + ref.offset];
             // clear value bits
             flags &= ~bwdMask;
@@ -138,7 +153,7 @@ public class IntEncodedValue implements EncodedValue {
      */
     public final int getInt(boolean reverse, IntsRef ref) {
         int flags;
-        if (reverse && store2DirectedValues) {
+        if (reverse && storeBothDirections) {
             flags = ref.ints[bwdDataIndex + ref.offset];
             flags &= bwdMask;
             flags >>>= bwdShift;
@@ -153,18 +168,6 @@ public class IntEncodedValue implements EncodedValue {
         return flags;
     }
 
-    @Override
-    public final int hashCode() {
-        return (bwdMask | fwdMask) ^ (fwdDataIndex + bwdDataIndex);
-    }
-
-
-    @Override
-    public final boolean equals(Object obj) {
-        IntEncodedValue other = (IntEncodedValue) obj;
-        return other.fwdMask == fwdMask && other.bwdMask == bwdMask && other.bits == bits
-                && other.fwdDataIndex == fwdDataIndex && other.bwdDataIndex == other.bwdDataIndex && other.name.equals(name);
-    }
 
     @Override
     public final String getName() {
@@ -173,6 +176,38 @@ public class IntEncodedValue implements EncodedValue {
 
     @Override
     public final String toString() {
-        return getName();
+        return getName() + "|bits=" + bits + "|fwd_shift=" + fwdShift + "|store_both_directions=" + storeBothDirections;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        IntEncodedValue that = (IntEncodedValue) o;
+
+        if (fwdDataIndex != that.fwdDataIndex) return false;
+        if (bwdDataIndex != that.bwdDataIndex) return false;
+        if (bits != that.bits) return false;
+        if (fwdShift != that.fwdShift) return false;
+        if (bwdShift != that.bwdShift) return false;
+        if (defaultValue != that.defaultValue) return false;
+        if (storeBothDirections != that.storeBothDirections) return false;
+        if (!name.equals(that.name)) return false;
+        return classType.equals(that.classType);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name.hashCode();
+        result = 31 * result + classType.hashCode();
+        result = 31 * result + fwdDataIndex;
+        result = 31 * result + bwdDataIndex;
+        result = 31 * result + bits;
+        result = 31 * result + fwdShift;
+        result = 31 * result + bwdShift;
+        result = 31 * result + defaultValue;
+        result = 31 * result + (storeBothDirections ? 1 : 0);
+        return result;
     }
 }

@@ -35,11 +35,6 @@ public class DefaultEdgeFilter implements EdgeFilter {
         this(accessEnc, true, true);
     }
 
-    // necessary?
-//    public DefaultEdgeFilter(EncodedValueLookup lookup, String prefix) {
-//        this(lookup.getBooleanEncodedValue(prefix + "access"), true, true);
-//    }
-
     /**
      * Creates an edges filter which allows edges that are either accessible in forward (if fwd is true) or in backward direction (if bwd is true).
      */

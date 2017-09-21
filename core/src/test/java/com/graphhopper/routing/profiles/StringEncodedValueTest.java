@@ -17,7 +17,6 @@ public class StringEncodedValueTest {
         assertEquals(2, prop.bits);
         assertEquals(0, init.dataIndex);
         assertEquals(0, init.shift);
-        assertEquals(1, init.propertyIndex);
         IntsRef ref = new IntsRef(1);
         // some invalid value should force default?
         ref.ints[0] = -1;

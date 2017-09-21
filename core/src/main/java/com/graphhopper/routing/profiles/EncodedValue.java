@@ -27,7 +27,7 @@ public interface EncodedValue {
      * object afterwards via calling next
      *
      * @return used bits
-     * @see InitializerConfig#find(int)
+     * @see InitializerConfig#next(int)
      */
     int init(InitializerConfig init);
 
@@ -40,12 +40,14 @@ public interface EncodedValue {
         int dataIndex = -1;
         int shift = 32;
         int nextShift = 32;
-        int propertyIndex = 0;
         int wayBitMask = 0;
 
-        void find(int usedBits) {
+        /**
+         * This method determines a space of the specified bits and sets shift and dataIndex accordingly
+         * @param usedBits
+         */
+        void next(int usedBits) {
             shift = nextShift;
-            propertyIndex++;
             if ((shift - 1 + usedBits) / 32 > (shift - 1) / 32) {
                 dataIndex++;
                 shift = 0;

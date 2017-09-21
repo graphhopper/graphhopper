@@ -1,5 +1,7 @@
 package com.graphhopper.routing.util;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.weighting.FastestCarWeighting;
@@ -15,6 +17,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.Map;
 
@@ -28,8 +31,6 @@ public class EncodingManagerNewTest {
 
     @Before
     public void setUp() {
-        // do not add surface property to test exception below
-        TagsParser parser = new TagsParser();
         final Map<String, Double> speedMap = TagParserFactory.Car.createSpeedMap();
         ReaderWayFilter filter = new ReaderWayFilter() {
             @Override
@@ -39,12 +40,14 @@ public class EncodingManagerNewTest {
         };
         avSpeedEnc = new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, true);
         accessEnc = new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true);
-        encodingManager = new EncodingManager.Builder(parser, 8).
-                addGlobalEncodedValues().
-                add(TagParserFactory.Car.createAverageSpeed(avSpeedEnc, speedMap)).
-                add(TagParserFactory.Car.createAccess(accessEnc, filter)).
-                add(TagParserFactory.createMaxWeight(new DecimalEncodedValue(TagParserFactory.MAX_WEIGHT, 5, 0, 1, false), filter)).
-                build();
+        DecimalEncodedValue maxWeightEnc = new DecimalEncodedValue(TagParserFactory.MAX_WEIGHT, 5, 0, 1, false);
+        encodingManager = new EncodingManager.Builder(8).
+                // do not add surface property to test exception below
+                        addGlobalEncodedValues(false, true).
+                        add(TagParserFactory.Car.createAverageSpeed(avSpeedEnc, speedMap)).
+                        add(TagParserFactory.Car.createAccess(accessEnc, filter)).
+                        add(TagParserFactory.createMaxWeight(maxWeightEnc, filter)).
+                        build();
     }
 
     @Test
@@ -211,8 +214,7 @@ public class EncodingManagerNewTest {
             }
         };
 
-        TagsParser parser = new TagsParser();
-        EncodingManager encodingManager = new EncodingManager.Builder(parser, 4).
+        EncodingManager encodingManager = new EncodingManager.Builder(4).
                 add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).
                 add(directedSpeedParser).
                 build();

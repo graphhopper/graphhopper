@@ -64,24 +64,19 @@ public class FastestCarWeighting implements Weighting {
 
         return edgeState.getDistance() / speed * SPEED_CONV;
 
-//            // add direction penalties at start/stop/via points
-//            boolean unfavoredEdge = edge.getBool(EdgeIteratorState.K_UNFAVORED_EDGE, false);
+        // add direction penalties at start/stop/via points
+//            boolean unfavoredEdge = edgeState.get(EdgeIteratorState.UNFAVORED_EDGE);
 //            if (unfavoredEdge)
 //                time += headingPenalty;
     }
 
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
-        // TODO access
-//            long flags = edgeState.getFlags();
-//            if (reverse && !flagEncoder.isBackward(flags)
-//                    || !reverse && !flagEncoder.isForward(flags))
-//                throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
-//                        + "Reverse:" + reverse + ", fwd:" + flagEncoder.isForward(flags) + ", bwd:" + flagEncoder.isBackward(flags));
+        if (reverse && !edgeState.getReverse(access) || !reverse && !edgeState.get(access))
+            throw new IllegalStateException("Calculating time should not require to read speed from edge in wrong direction. "
+                    + "Reverse:" + reverse + ", fwd:" + edgeState.get(access) + ", bwd:" + edgeState.getReverse(access));
 
-        // TODO reverse
-        // double speed = reverse ? flagEncoder.getReverseSpeed(flags) : flagEncoder.getSpeed(flags);
-        double speed = edgeState.get(averageSpeed) * 0.9;
+        double speed = (reverse ? edgeState.getReverse(averageSpeed) : edgeState.get(averageSpeed)) * 0.9;
         if (Double.isInfinite(speed) || Double.isNaN(speed) || speed < 0)
             throw new IllegalStateException("Invalid speed stored in edge! " + speed);
         if (speed == 0)
@@ -95,6 +90,7 @@ public class FastestCarWeighting implements Weighting {
         return getName().equals(reqMap.getWeighting());
     }
 
+    @Override
     public FlagEncoder getFlagEncoder() {
         // Cannot access flag encoder for new encoding mechanism
         return null;

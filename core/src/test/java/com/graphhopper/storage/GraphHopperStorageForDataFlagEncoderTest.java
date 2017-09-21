@@ -1,6 +1,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
@@ -43,7 +44,6 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(encoder), 8).build();
         accessEnc = encodingManager.getBooleanEncodedValue("generic." + "access");
         avSpeedEnc = encodingManager.getDecimalEncodedValue("generic." + "average_speed");
-
     }
 
     @Before
@@ -91,7 +91,8 @@ public class GraphHopperStorageForDataFlagEncoderTest {
         graph.flush();
         graph.close();
 
-        GraphHopper hopper = new GraphHopper().setGraphHopperLocation(defaultGraphLoc).setCHEnabled(false).importOrLoad();
+        // TODO NOW inject json and storage.properties creation into GraphHopperStorage so that storage is called on graph.flush and can be read here:
+        GraphHopper hopper = new GraphHopper(new GHJsonFactory().create()).setGraphHopperLocation(defaultGraphLoc).setCHEnabled(false).importOrLoad();
         EncodingManager em = hopper.getEncodingManager();
         assertNotNull(em);
         assertEquals(1, em.fetchEdgeEncoders().size());

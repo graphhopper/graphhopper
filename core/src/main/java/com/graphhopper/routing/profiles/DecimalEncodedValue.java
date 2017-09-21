@@ -32,6 +32,10 @@ public class DecimalEncodedValue extends IntEncodedValue {
         this.defaultValue = toInt(defaultValue);
     }
 
+    private DecimalEncodedValue() {
+        factor = 1;
+    }
+
     private int toInt(double val) {
         return (int) Math.round(val / factor);
     }

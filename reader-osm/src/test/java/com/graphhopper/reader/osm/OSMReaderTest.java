@@ -515,7 +515,7 @@ public class OSMReaderTest {
     public void testRoadAttributes() {
         GraphHopper hopper = new GraphHopperFacade(fileRoadAttributes);
         DataFlagEncoder encoder = new DataFlagEncoder().setStoreHeight(true).setStoreWeight(true).setStoreWidth(true);
-        EncodingManager em = new EncodingManager.Builder(new TagsParser(), 12).addGlobalEncodedValues().addAll(Arrays.asList(encoder), 8).build();
+        EncodingManager em = new EncodingManager.Builder(12).addGlobalEncodedValues().addAll(Arrays.asList(encoder), 8).build();
         hopper.setEncodingManager(em);
         hopper.importOrLoad();
 
@@ -810,7 +810,6 @@ public class OSMReaderTest {
 
     @Test
     public void testEncodedValueBasedEncodingManager() {
-        TagsParser parser = new TagsParser();
         final Map<String, Double> speedMap = TagParserFactory.Car.createSpeedMap();
         ReaderWayFilter filter = new ReaderWayFilter() {
             @Override
@@ -819,9 +818,8 @@ public class OSMReaderTest {
             }
         };
 
-        final EncodingManager em = new EncodingManager.Builder(parser, 4).
+        final EncodingManager em = new EncodingManager.Builder(4).
                 addGlobalEncodedValues().
-                add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED, 5, 0, 5, false), filter)).
                 add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, false), speedMap)).
                 add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).
                 build();

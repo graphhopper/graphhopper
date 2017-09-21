@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.profiles;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.graphhopper.storage.IntsRef;
 
 import java.util.Arrays;
@@ -42,6 +44,12 @@ public final class StringEncodedValue extends IntEncodedValue {
             throw new IllegalArgumentException("default value " + defaultValue + " not found");
     }
 
+    private StringEncodedValue() {
+        super();
+        map = new String[0];
+    }
+
+    @JsonIgnore
     public final int getMapSize() {
         return map.length;
     }

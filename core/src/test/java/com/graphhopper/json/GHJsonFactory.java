@@ -18,23 +18,17 @@
 package com.graphhopper.json;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
-import java.io.IOException;
-import java.io.Reader;
-
-class GHJsonJackson implements GHJson {
-    private final ObjectMapper objectMapper;
-
-    GHJsonJackson(ObjectMapper om) {
-        this.objectMapper = om;
-    }
-
-    @Override
-    public <T> T fromJson(Reader source, Class<T> aClass) {
-        try {
-            return objectMapper.readValue(source, aClass);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+/**
+ * Copied class from reader-json to avoid circular dependency ugliness (core->test->reader-json->core)
+ */
+public class GHJsonFactory {
+    public GHJson create() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        // For now no need of JTS stuff in core tests
+        // objectMapper.registerModule(new com.bedatadriven.jackson.datatype.jts.JtsModule());
+        objectMapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        return new GHJsonJackson(objectMapper);
     }
 }

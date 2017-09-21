@@ -19,7 +19,10 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.TagParser;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.BitUtil;
 import org.junit.Rule;
@@ -90,7 +93,7 @@ public class EncodingManagerTest {
         }
 
         try {
-            new EncodingManager.Builder(new TagsParser(), 8).addGlobalEncodedValues().
+            new EncodingManager.Builder(8).addGlobalEncodedValues().
                     addAll(new FootFlagEncoder(), new CarFlagEncoder(), new BikeFlagEncoder(), new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder()).build();
             assertTrue(false);
         } catch (Exception ex) {
@@ -144,8 +147,7 @@ public class EncodingManagerTest {
 
         EncodingManager subject = new EncodingManager.Builder().addGlobalEncodedValues(false, false).addAll(encoder).build();
 
-        assertEquals("new_encoder|my_properties|version=10, roundabout, road_class, road_environment, new_encoder.average_speed, new_encoder.access",
-                subject.toDetailsString());
+        assertEquals("new_encoder|my_properties|version=10", subject.toDetailsString());
     }
 
     @Test

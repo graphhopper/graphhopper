@@ -17,6 +17,7 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.json.GHJson;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ReaderWay;
@@ -25,7 +26,10 @@ import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.lm.LMAlgoFactoryDecorator;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.ReaderWayFilter;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.subnetwork.PrepareRoutingSubnetworks;
 import com.graphhopper.routing.template.AlternativeRoutingTemplate;
 import com.graphhopper.routing.template.RoundTripRoutingTemplate;
@@ -50,8 +54,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -115,8 +118,14 @@ public class GraphHopper implements GraphHopperAPI {
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = FlagEncoderFactory.DEFAULT;
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private final GHJson json;
 
     public GraphHopper() {
+        this(GHJson.EMPTY);
+    }
+
+    public GraphHopper(GHJson json) {
+        this.json = json;
         chFactoryDecorator.setEnabled(true);
         lmFactoryDecorator.setEnabled(false);
 
@@ -543,14 +552,15 @@ public class GraphHopper implements GraphHopperAPI {
                         return speedMap.containsKey(way.getTag("highway"));
                     }
                 };
-                setEncodingManager(new EncodingManager.Builder(new TagsParser(), bytesForFlags).
+                setEncodingManager(new EncodingManager.Builder(bytesForFlags).
                         addGlobalEncodedValues().
                         add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED, 5, 0, 5, false), filter)).
                         add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, false), speedMap)).
                         add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).
                         build());
             } else {
-                setEncodingManager(new EncodingManager.Builder(new TagsParser(), bytesForFlags).addGlobalEncodedValues().addAll(flagEncoderFactory, flagEncodersStr, bytesForFlags).build());
+                setEncodingManager(new EncodingManager.Builder(bytesForFlags).addGlobalEncodedValues().
+                        addAll(flagEncoderFactory, flagEncodersStr, bytesForFlags, true).build());
             }
         }
 
@@ -739,8 +749,17 @@ public class GraphHopper implements GraphHopperAPI {
 
         setGraphHopperLocation(graphHopperFolder);
 
-        if (encodingManager == null)
-            setEncodingManager(EncodingManager.create(flagEncoderFactory, ghLocation));
+        if (encodingManager == null) {
+            try {
+                if (json != GHJson.EMPTY)
+                    setEncodingManager(json.fromJson(new FileReader(ghLocation + "/storage.json"), EncodingManager.class));
+                else
+                    // backward compatibility
+                    setEncodingManager(EncodingManager.create(flagEncoderFactory, ghLocation));
+            } catch (FileNotFoundException ex) {
+                throw new RuntimeException(ex);
+            }
+        }
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
@@ -942,7 +961,7 @@ public class GraphHopper implements GraphHopperAPI {
      */
     public Weighting createTurnWeighting(Graph graph, Weighting weighting, TraversalMode tMode) {
         FlagEncoder encoder = weighting.getFlagEncoder();
-        // TODO For new 1112 encoding approach we need different turn cost support
+        // TODO NOW For new encoding approach we need different turn cost support?
         if (encoder == null)
             return weighting;
 
@@ -1016,7 +1035,7 @@ public class GraphHopper implements GraphHopperAPI {
             else
                 routingTemplate = new ViaRoutingTemplate(request, ghRsp, encodingManager, locationIndex);
 
-            // TODO how can we know the weighting (that needs the QueryGraph) before the lookup?
+            // TODO NOW how can we know the weighting (that needs the QueryGraph) before the lookup?
             // then we can easily call weighting.createEdgeFilter(true, true) instead of:
             EdgeFilter edgeFilter = vehicle.equals(EncodingManager.ENCODER_NAME) ? EdgeFilter.ALL_EDGES : new DefaultEdgeFilter(encoder.getAccessEncodedValue());
             List<Path> altPaths = null;
@@ -1229,6 +1248,12 @@ public class GraphHopper implements GraphHopperAPI {
     protected void flush() {
         logger.info("flushing graph " + ghStorage.toString() + ", details:" + ghStorage.toDetailsString() + ", "
                 + Helper.getMemInfo() + ")");
+        try {
+            if (json != GHJson.EMPTY)
+                json.toJson(encodingManager, new FileWriter(ghLocation + "/storage.json"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         ghStorage.flush();
         logger.info("flushed graph " + Helper.getMemInfo() + ")");
         fullyLoaded = true;
