@@ -104,7 +104,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
         if (ghRequest.hasFavoredHeading(0)) {
             return ghRequest.getFavoredHeading(0);
         } else {
-            return ghRequest.getHints().getDouble(RoundTrip.HEADING, Double.NaN);
+            return Double.NaN;
         }
     }
 
