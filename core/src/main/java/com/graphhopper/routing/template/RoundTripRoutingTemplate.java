@@ -71,7 +71,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
             throw new IllegalStateException("For round trip calculation exactly one point is required");
         final double distanceInMeter = ghRequest.getHints().getDouble(RoundTrip.DISTANCE, 10000);
         final long seed = ghRequest.getHints().getLong(RoundTrip.SEED, 0L);
-        double initialHeading = getInitialHeading();
+        double initialHeading = ghRequest.getFavoredHeading(0);
         final int roundTripPointCount = Math.min(20, ghRequest.getHints().getInt(RoundTrip.POINTS, 2 + (int) (distanceInMeter / 50000)));
         final GHPoint start = points.get(0);
 
@@ -98,14 +98,6 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
 
         queryResults.add(startQR);
         return queryResults;
-    }
-
-    private double getInitialHeading() {
-        if (ghRequest.hasFavoredHeading(0)) {
-            return ghRequest.getFavoredHeading(0);
-        } else {
-            return Double.NaN;
-        }
     }
 
     void setQueryResults(List<QueryResult> queryResults) {
