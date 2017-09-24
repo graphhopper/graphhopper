@@ -74,6 +74,7 @@
         <maven>3.2</maven>
     </prerequisites>
     <modules>
+    	<module>json</module>
         <module>core</module>
         <module>reader-osm</module>
         <module>reader-gtfs</module>

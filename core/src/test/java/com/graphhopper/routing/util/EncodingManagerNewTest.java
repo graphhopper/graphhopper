@@ -25,6 +25,8 @@ import static org.junit.Assert.*;
 
 public class EncodingManagerNewTest {
 
+    final GHJson json = new GHJsonFactory().create();
+
     private EncodingManager encodingManager;
     private DecimalEncodedValue avSpeedEnc;
     private BooleanEncodedValue accessEnc;
@@ -236,6 +238,32 @@ public class EncodingManagerNewTest {
         EdgeIteratorState reverseEdge = edge.detach(true);
         assertEquals(30, reverseEdge.get(directedEnc), .1);
         assertEquals(50, edge.get(directedEnc), .1);
+    }
+
+
+    @Test
+    public void deserializationWithoutFlagEncoders() {
+        final Map<String, Double> speedMap = TagParserFactory.Car.createSpeedMap();
+        ReaderWayFilter filter = new ReaderWayFilter() {
+            @Override
+            public boolean accept(ReaderWay way) {
+                return speedMap.containsKey(way.getTag("highway"));
+            }
+        };
+
+        EncodingManager encodingManager = new EncodingManager.Builder(4).
+                addGlobalEncodedValues().
+                add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).
+                build();
+
+        String jsonStr = json.toJson(encodingManager);
+        // System.out.println(jsonStr);
+        EncodingManager newEM = json.fromJson(new StringReader(jsonStr), EncodingManager.class);
+        BooleanEncodedValue expected = encodingManager.getBooleanEncodedValue(TagParserFactory.ROUNDABOUT);
+        BooleanEncodedValue newEncodedValue = newEM.getBooleanEncodedValue(TagParserFactory.ROUNDABOUT);
+        assertTrue(expected != newEncodedValue);
+        assertEquals(expected.toString(), newEncodedValue.toString());
+        assertEquals(expected, newEncodedValue);
     }
 
     @Test
