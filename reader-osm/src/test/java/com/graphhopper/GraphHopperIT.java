@@ -806,10 +806,9 @@ public class GraphHopperIT {
     @Test
     public void testRoundTour() {
         GHRequest rq = new GHRequest().
-                addPoint(new GHPoint(43.741069, 7.426854)).
+                addPoint(new GHPoint(43.741069, 7.426854), 50).
                 setVehicle(vehicle).setWeighting("fastest").
                 setAlgorithm(ROUND_TRIP);
-        rq.getHints().put(RoundTrip.HEADING, 50);
         rq.getHints().put(RoundTrip.DISTANCE, 1000);
         rq.getHints().put(RoundTrip.SEED, 0);
 
