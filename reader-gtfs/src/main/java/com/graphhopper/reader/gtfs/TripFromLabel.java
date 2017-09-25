@@ -148,7 +148,7 @@ class TripFromLabel {
     private InstructionList getInstructions(Translation tr, List<Trip.Leg> legs) {
         final InstructionList instructions = new InstructionList(tr);
         if (legs.size() > 0 && legs.get(0).geometry.getCoordinates().length > 0)
-            instructions.setPoints(new PointList(10, legs.get(0).geometry.getCoordinates()[0].z != Coordinate.NULL_ORDINATE));
+            instructions.setPoints(new PointList(10, legs.get(0).geometry.getDimension() == 3));
         for (int i = 0; i < legs.size(); ++i) {
             Trip.Leg leg = legs.get(i);
             if (leg instanceof Trip.WalkLeg) {
