@@ -196,12 +196,10 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         assertFalse(sc1.isForward(carEncoder));
         assertTrue(sc1.isBackward(carEncoder));
 
-        try{
-            // check min weight
-            sc1.setFlags(flags);
-            sc1.setWeight(1e-5);
-            fail("No exception was thrown");
-        }catch (IllegalStateException e){}
+        // check min weight
+        sc1.setFlags(flags);
+        sc1.setWeight(1e-5);
+        assertEquals(1e-3, sc1.getWeight(), 1e-10);
     }
 
     @Test

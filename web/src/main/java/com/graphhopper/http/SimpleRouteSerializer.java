@@ -100,6 +100,8 @@ public class SimpleRouteSerializer implements RouteSerializer {
 
                     jsonPath.put("legs", ar.getLegs());
 
+                    jsonPath.put("details", ar.getPathDetails());
+
                     jsonPath.put("ascend", ar.getAscend());
                     jsonPath.put("descend", ar.getDescend());
                 }

@@ -231,19 +231,27 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
     public long acceptWay(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
+            long acceptPotentially = 0;
+
             if (way.hasTag("route", ferries)) {
                 // if bike is NOT explicitly tagged allow bike but only if foot is not specified
                 String bikeTag = way.getTag("bicycle");
                 if (bikeTag == null && !way.hasTag("foot") || "yes".equals(bikeTag))
-                    return acceptBit | ferryBit;
+                    acceptPotentially = acceptBit | ferryBit;
             }
 
             // special case not for all acceptedRailways, only platform
             if (way.hasTag("railway", "platform"))
-                return acceptBit;
+                acceptPotentially = acceptBit;
 
             if (way.hasTag("man_made", "pier"))
-                return acceptBit;
+                acceptPotentially = acceptBit;
+
+            if (acceptPotentially != 0) {
+                if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
+                    return 0;
+                return acceptPotentially;
+            }
 
             return 0;
         }
@@ -351,10 +359,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             }
 
         } else {
-            double ferrySpeed = getFerrySpeed(way,
-                    highwaySpeeds.get("living_street"),
-                    highwaySpeeds.get("track"),
-                    highwaySpeeds.get("primary"));
+            double ferrySpeed = getFerrySpeed(way);
             flags = handleSpeed(way, ferrySpeed, flags);
             flags |= directionBitMask;
         }

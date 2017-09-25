@@ -93,7 +93,7 @@ class Label {
         return adjNode + " " + Instant.ofEpochMilli(currentTime) + " " + nTransfers + " " + nWalkDistanceConstraintViolations + " " +  (departureTime != null ? Instant.ofEpochMilli(departureTime) : "");
     }
 
-    static Iterable<Transition> reverseEdges(Label leaf, Graph graph, PtFlagEncoder flagEncoder, boolean reverseEdgeFlags) {
+    static Iterable<Transition> reverseEdges(Label leaf, GraphExplorer graph, PtFlagEncoder flagEncoder, boolean reverseEdgeFlags) {
         return new Iterable<Transition>() {
             @Override
             public Iterator<Transition> iterator() {
@@ -111,7 +111,8 @@ class Label {
                             ++i;
                             return new Transition(label, null);
                         } else {
-                            EdgeIteratorState edgeIteratorState = label.parent == null ? null : graph.getEdgeIteratorState(label.edge, label.parent.adjNode).detach(reverseEdgeFlags);
+                            EdgeIteratorState edgeIteratorState = label.parent == null ? null :
+                                    graph.getEdgeIteratorState(label.edge, label.parent.adjNode).detach(reverseEdgeFlags);
                             Transition transition;
                             if (reverseEdgeFlags) {
                                 transition = new Transition(label, edgeIteratorState != null ? getEdgeLabel(edgeIteratorState, flagEncoder) : null);

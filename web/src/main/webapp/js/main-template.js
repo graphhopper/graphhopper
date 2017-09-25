@@ -661,6 +661,27 @@ function routeLatLng(request, doQuery) {
                 var instructions = require('./instructions.js');
                 oneTab.append(instructions.create(mapLayer, path, urlForHistory, request));
             }
+
+            var detailObj = path.details;
+            if(detailObj && request.api_params.debug) {
+                // detailKey, would be for example average_speed
+                for (var detailKey in detailObj) {
+                    var pathDetailsArr = detailObj[detailKey];
+                    for (var i = 0; i < pathDetailsArr.length; i++) {
+                        var pathDetailObj = pathDetailsArr[i];
+                        var firstIndex = pathDetailObj[0];
+                        var value = pathDetailObj[2];
+                        var lngLat = path.points.coordinates[firstIndex];
+                        L.marker([lngLat[1], lngLat[0]], {
+                            icon: L.icon({
+                                iconUrl: './img/marker-small-blue.png',
+                                iconSize: [15, 15]
+                            }),
+                            draggable: true
+                        }).addTo(mapLayer.getRoutingLayer()).bindPopup(detailKey + ":" + value);
+                    }
+                }
+            }
         }
         // already select best path
         firstHeader.click();

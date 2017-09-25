@@ -62,25 +62,33 @@ public class HikeFlagEncoder extends FootFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
     @Override
     public long acceptWay(ReaderWay way) {
         String highwayValue = way.getTag("highway");
         if (highwayValue == null) {
+            long acceptPotentially = 0;
+
             if (way.hasTag("route", ferries)) {
                 String footTag = way.getTag("foot");
                 if (footTag == null || "yes".equals(footTag))
-                    return acceptBit | ferryBit;
+                    acceptPotentially = acceptBit | ferryBit;
             }
 
             // special case not for all acceptedRailways, only platform
             if (way.hasTag("railway", "platform"))
-                return acceptBit;
+                acceptPotentially = acceptBit;
 
             if (way.hasTag("man_made", "pier"))
-                return acceptBit;
+                acceptPotentially = acceptBit;
+
+            if (acceptPotentially != 0) {
+                if (way.hasTag(restrictions, restrictedValues) && !getConditionalTagInspector().isRestrictedWayConditionallyPermitted(way))
+                    return 0;
+                return acceptPotentially;
+            }
 
             return 0;
         }

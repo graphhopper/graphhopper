@@ -210,6 +210,17 @@ public class FootFlagEncoderTest {
     }
 
     @Test
+    public void testFerrySpeed() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("route", "ferry");
+        // a bit longer than an hour
+        way.setTag("duration:seconds", "4000");
+        long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
+        assertTrue(footEncoder.getSpeed(flags) > footEncoder.getMaxSpeed());
+        assertEquals(20, footEncoder.getSpeed(flags), .1);
+    }
+
+    @Test
     public void testMixSpeedAndSafe() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway");

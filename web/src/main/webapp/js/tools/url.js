@@ -36,7 +36,7 @@ function mergeParamIntoObject(res, key, value) {
     var objectIndex = key.indexOf(".");
     if(objectIndex < 0) {
         // force always array for some keys even if just one parameter
-        if (typeof res[key] === "undefined" && key !== "heading" && key !== "point") {
+        if (typeof res[key] === "undefined" && key !== "heading" && key !== "point" && key !== "details") {
             if (value === 'true')
                 value = true;
             else if (value === 'false')

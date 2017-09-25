@@ -82,7 +82,7 @@ public class Parameters {
         public static final class RoundTrip {
             public static final String DISTANCE = ROUND_TRIP + ".distance";
             public static final String SEED = ROUND_TRIP + ".seed";
-            public static final String HEADING = "heading";
+            public static final String POINTS = ROUND_TRIP + ".points";
             public static final String INIT_MAX_RETRIES = ROUTING_INIT_PREFIX + ROUND_TRIP + ".max_retries";
         }
     }
@@ -184,6 +184,19 @@ public class Parameters {
          * Describes the maximum allowed distance between two consecutive waypoints of a non-CH request. Distance is in meter.
          */
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
+    }
+
+    /**
+     * Properties for the details response
+     */
+    public static final class DETAILS {
+
+        public static final String PATH_DETAILS = "details";
+
+        public static final String AVERAGE_SPEED = "average_speed";
+        public static final String STREET_NAME = "street_name";
+        public static final String EDGE_ID = "edge_id";
+        public static final String TIME = "time";
     }
 
     public static final class PT {

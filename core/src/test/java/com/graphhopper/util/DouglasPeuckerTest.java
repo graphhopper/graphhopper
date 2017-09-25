@@ -67,6 +67,21 @@ public class DouglasPeuckerTest {
         dp.simplify(pointList);
         assertEquals(20, pointList.getSize());
         assertFalse(pointList.toString(), pointList.toString().contains("NaN"));
+
+        pointList.clear();
+        pointList.parse2DJSON(points1);
+        dp.simplify(pointList, 0, pointList.size() -1);
+        assertEquals(20, pointList.getSize());
+
+        pointList.clear();
+        pointList.parse2DJSON(points1);
+        int removed1 = dp.simplify(pointList.copy(10, 20));
+
+        pointList.clear();
+        pointList.parse2DJSON(points1);
+        int removed2 = dp.simplify(pointList, 10, 19);
+
+        assertEquals(removed1, removed2);
     }
 
     @Test
