@@ -50,7 +50,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
     protected GraphHopperStorage createGHStorage(EncodingManager em,
                                                  List<? extends Weighting> weightings, boolean is3D) {
         return new GraphHopperStorage(weightings, new RAMDirectory(),
-                em, is3D, new GraphExtension.NoOpExtension()).
+                em, json, is3D, new GraphExtension.NoOpExtension()).
                 create(1000);
     }
 

@@ -1,5 +1,7 @@
 package com.graphhopper.routing.util;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.profiles.*;
@@ -29,6 +31,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class DataFlagEncoderTest {
+    protected GHJson json = new GHJsonFactory().create();
     private final PMap properties;
     private final DataFlagEncoder encoder;
     private final EncodingManager encodingManager;
@@ -238,7 +241,7 @@ public class DataFlagEncoderTest {
 
     @Test
     public void reverseEdge() {
-        Graph graph = new GraphBuilder(encodingManager).create();
+        Graph graph = new GraphBuilder(encodingManager, json).create();
         EdgeIteratorState edge = graph.edge(0, 1);
         ReaderWay osmWay = new ReaderWay(0);
         osmWay.setTag("highway", "primary");
@@ -256,7 +259,7 @@ public class DataFlagEncoderTest {
 
     @Test
     public void setAccess() {
-        Graph graph = new GraphBuilder(encodingManager).create();
+        Graph graph = new GraphBuilder(encodingManager, json).create();
         EdgeIteratorState edge = graph.edge(0, 1);
 
         edge.set(accessEnc, true);
@@ -411,7 +414,7 @@ public class DataFlagEncoderTest {
         livingStreet2.setTag("highway", "living_street");
         livingStreet2.setTag("estimated_center", new GHPoint(-0.005, -0.005));
 
-        Graph graph = new GraphBuilder(em).create();
+        Graph graph = new GraphBuilder(em, json).create();
         EdgeIteratorState e1 = GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 0, 1, true, 1);
         EdgeIteratorState e2 = GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 0, 2, true, 1);
         EdgeIteratorState e3 = GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 0, 3, true, 1);

@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
@@ -39,6 +41,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class FootFlagEncoderTest {
+    protected GHJson json = new GHJsonFactory().create();
     private final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().
             addAllFlagEncoders("car,bike,foot").build();
     private final BooleanEncodedValue footAccessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.FOOT_ACCESS);
@@ -91,7 +94,7 @@ public class FootFlagEncoderTest {
 
     @Test
     public void testGraph() {
-        Graph g = new GraphBuilder(encodingManager).create();
+        Graph g = new GraphBuilder(encodingManager, json).create();
         GHUtility.createEdge(g, footAverageSpeedEnc, 5, footAccessEnc, 0, 1, true, 10d);
         GHUtility.createEdge(g, footAverageSpeedEnc, 5, footAccessEnc, 0, 2, true, 10d);
         GHUtility.createEdge(g, footAverageSpeedEnc, 5, footAccessEnc, 1, 3, true, 10d);

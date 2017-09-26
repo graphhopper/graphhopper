@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
@@ -44,6 +46,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public abstract class AbstractGraphStorageTester {
+    protected GHJson json = new GHJsonFactory().create();
     private final String locationParent = "./target/graphstorage";
     protected int defaultSize = 100;
     protected String defaultGraphLoc = "./target/graphstorage/default";
@@ -101,7 +104,7 @@ public abstract class AbstractGraphStorageTester {
     abstract GraphHopperStorage createGHStorage(String location, boolean is3D);
 
     protected final GraphHopperStorage newRAMGHStorage() {
-        return new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension());
+        return new GraphHopperStorage(new RAMDirectory(), encodingManager, json, false, new GraphExtension.NoOpExtension());
     }
 
     @Before
@@ -994,7 +997,7 @@ public abstract class AbstractGraphStorageTester {
         });
         list.add(new TmpCarFlagEncoder(29, 0.001, 0));
         EncodingManager manager = new EncodingManager.Builder(12).addGlobalEncodedValues().addAll(list, 8).build();
-        graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
+        graph = new GraphHopperStorage(dir, manager, json, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         EdgeIteratorState edge = graph.edge(0, 1);
         IntsRef ints = manager.createIntsRef();
@@ -1006,7 +1009,7 @@ public abstract class AbstractGraphStorageTester {
         assertEquals(Long.MAX_VALUE / 3, lng);
         graph.close();
 
-        graph = new GraphHopperStorage(dir, manager, false, new GraphExtension.NoOpExtension()).create(defaultSize);
+        graph = new GraphHopperStorage(dir, manager, json, false, new GraphExtension.NoOpExtension()).create(defaultSize);
 
         edge = graph.edge(0, 1);
         BooleanEncodedValue car2AccessEnc = manager.getBooleanEncodedValue("car2.access");

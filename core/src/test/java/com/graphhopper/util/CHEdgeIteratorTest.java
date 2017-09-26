@@ -17,6 +17,8 @@
  */
 package com.graphhopper.util;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
@@ -37,6 +39,7 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class CHEdgeIteratorTest {
+    private GHJson json = new GHJsonFactory().create();
     @Test
     public void testUpdateFlags() {
         CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
@@ -45,7 +48,7 @@ public class CHEdgeIteratorTest {
         BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
         DecimalEncodedValue averageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
         EdgeFilter carOutFilter = new DefaultEdgeFilter(accessEnc, true, false);
-        GraphHopperStorage ghStorage = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
+        GraphHopperStorage ghStorage = new GraphBuilder(encodingManager, json).setCHGraph(weighting).create();
         CHGraph g = ghStorage.getGraph(CHGraph.class, weighting);
         GHUtility.createEdge(g, averageSpeedEnc, 60, accessEnc, 0, 1, true, 12d).set(averageSpeedEnc, 10d);
         GHUtility.createEdge(g, averageSpeedEnc, 60, accessEnc, 0, 2, true, 13d).set(averageSpeedEnc, 20d);

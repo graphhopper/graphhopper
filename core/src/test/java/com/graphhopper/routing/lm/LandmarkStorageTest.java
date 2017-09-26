@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.lm;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -45,6 +47,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class LandmarkStorageTest {
+    protected GHJson json = new GHJsonFactory().create();
     private GraphHopperStorage ghStorage;
     private FlagEncoder encoder;
     private BooleanEncodedValue accessEnc;
@@ -56,7 +59,7 @@ public class LandmarkStorageTest {
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
         accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
         averageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
-        ghStorage = new GraphHopperStorage(new RAMDirectory(), em, false, new GraphExtension.NoOpExtension());
+        ghStorage = new GraphHopperStorage(new RAMDirectory(), em, json, false, new GraphExtension.NoOpExtension());
         ghStorage.create(1000);
     }
 

@@ -19,6 +19,8 @@ package com.graphhopper.util;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.Graph;
@@ -33,6 +35,7 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class BreadthFirstSearchTest {
+    private GHJson json = new GHJsonFactory().create();
     int counter;
     GHIntHashSet set = new GHIntHashSet();
     IntArrayList list = new IntArrayList();
@@ -57,7 +60,7 @@ public class BreadthFirstSearchTest {
 
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
         BooleanEncodedValue accessEnc = em.getBooleanEncodedValue("car.access");
-        Graph g = new GraphBuilder(em).create();
+        Graph g = new GraphBuilder(em, json).create();
 
         GHUtility.setAccess(g.edge(0, 1).setDistance(85), accessEnc, true, true);
         GHUtility.setAccess(g.edge(0, 2).setDistance(217), accessEnc, true, true);
@@ -94,7 +97,7 @@ public class BreadthFirstSearchTest {
 
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
         BooleanEncodedValue accessEnc = em.getBooleanEncodedValue("car.access");
-        Graph g = new GraphBuilder(em).create();
+        Graph g = new GraphBuilder(em, json).create();
 
         GHUtility.setAccess(g.edge(1, 2).setDistance(1), accessEnc, true, false);
         GHUtility.setAccess(g.edge(2, 3).setDistance(1), accessEnc, true, false);

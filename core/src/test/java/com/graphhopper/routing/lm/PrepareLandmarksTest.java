@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.lm;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -47,6 +49,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class PrepareLandmarksTest
 /* extends AbstractRoutingAlgorithmTester */ {
+    protected GHJson json = new GHJsonFactory().create();
     private GraphHopperStorage graph;
     private FlagEncoder encoder;
     private TraversalMode tm;
@@ -61,7 +64,7 @@ public class PrepareLandmarksTest
         em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
         accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
         averageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
-        GraphHopperStorage tmp = new GraphHopperStorage(new RAMDirectory(), em, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage tmp = new GraphHopperStorage(new RAMDirectory(), em, json, false, new GraphExtension.NoOpExtension());
         tmp.create(1000);
         graph = tmp;
     }

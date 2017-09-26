@@ -1,6 +1,8 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
@@ -19,13 +21,15 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 public class GraphHopperStorageLMTest {
+    private final GHJson json = new GHJsonFactory().create();
+
     @Test
     public void testLoad() {
         String defaultGraphLoc = "./target/ghstorage_lm";
         Helper.removeDir(new File(defaultGraphLoc));
         CarFlagEncoder carFlagEncoder = new CarFlagEncoder();
         EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carFlagEncoder).build();
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).setStore(true).
+        GraphHopperStorage graph = new GraphBuilder(encodingManager, json).setStore(true).
                 setLocation(defaultGraphLoc).create();
 
         // 0-1

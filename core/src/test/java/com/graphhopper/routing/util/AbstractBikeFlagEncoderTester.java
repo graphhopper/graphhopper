@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
@@ -39,6 +41,7 @@ import static org.junit.Assert.*;
  * @author ratrun
  */
 public abstract class AbstractBikeFlagEncoderTester {
+    protected GHJson json = new GHJsonFactory().create();
     protected BikeCommonFlagEncoder encoder;
     protected EncodingManager encodingManager;
     protected DecimalEncodedValue averageSpeedEnc;

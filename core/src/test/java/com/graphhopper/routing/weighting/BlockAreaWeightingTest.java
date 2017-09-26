@@ -1,5 +1,7 @@
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -21,6 +23,7 @@ import static org.junit.Assert.assertEquals;
 
 public class BlockAreaWeightingTest {
 
+    private GHJson json = new GHJsonFactory().create();
     private FlagEncoder encoder = new CarFlagEncoder();
     private EncodingManager em;
     private Graph graph;
@@ -29,7 +32,7 @@ public class BlockAreaWeightingTest {
     public void setUp() {
         encoder = new CarFlagEncoder();
         em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(encoder), 8).build();
-        graph = new GraphBuilder(em).create();
+        graph = new GraphBuilder(em, json).create();
         // 0-1
         GHUtility.createEdge(graph, em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED), 60, em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
                 0, 1, true, 1);

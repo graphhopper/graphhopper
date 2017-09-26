@@ -18,6 +18,8 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -43,13 +45,15 @@ import static org.junit.Assert.assertEquals;
  */
 public class GraphEdgeIdFinderTest {
 
+    private GHJson json = new GHJsonFactory().create();
+
     @Test
     public void testParseStringHints() {
         FlagEncoder encoder = new CarFlagEncoder();
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
         BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
         DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
-        GraphHopperStorage graph = new GraphBuilder(em).create();
+        GraphHopperStorage graph = new GraphBuilder(em, json).create();
         // 0-1-2
         // | |
         // 3-4

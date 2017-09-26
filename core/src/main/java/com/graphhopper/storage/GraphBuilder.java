@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.json.GHJson;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.Weighting;
 
@@ -24,11 +25,11 @@ import java.util.Arrays;
 
 /**
  * For now this is just a helper class to quickly create a GraphStorage.
- * <p>
  *
  * @author Peter Karich
  */
 public class GraphBuilder {
+    private GHJson json;
     private final EncodingManager encodingManager;
     private String location;
     private boolean mmap;
@@ -37,8 +38,9 @@ public class GraphBuilder {
     private long byteCapacity = 100;
     private Weighting singleCHWeighting;
 
-    public GraphBuilder(EncodingManager encodingManager) {
+    public GraphBuilder(EncodingManager encodingManager, GHJson json) {
         this.encodingManager = encodingManager;
+        this.json = json;
     }
 
     /**
@@ -99,9 +101,9 @@ public class GraphBuilder {
 
         GraphHopperStorage graph;
         if (encodingManager.needsTurnCostsSupport() || singleCHWeighting == null)
-            graph = new GraphHopperStorage(dir, encodingManager, elevation, new TurnCostExtension());
+            graph = new GraphHopperStorage(dir, encodingManager, json, elevation, new TurnCostExtension());
         else
-            graph = new GraphHopperStorage(Arrays.asList(singleCHWeighting), dir, encodingManager, elevation, new TurnCostExtension.NoOpExtension());
+            graph = new GraphHopperStorage(Arrays.asList(singleCHWeighting), dir, encodingManager, json, elevation, new TurnCostExtension.NoOpExtension());
 
         return graph;
     }

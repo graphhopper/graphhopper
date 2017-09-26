@@ -27,6 +27,7 @@ import java.net.URL;
 import java.util.DoubleSummaryStatistics;
 import java.util.Random;
 
+import com.graphhopper.json.GHJson;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -113,7 +114,7 @@ public class ShapeFileReaderTest {
         gh.setWayPointMaxDistance(0);
         return gh.setStoreOnFlush(false).setDataReaderFile(inputFile)
                 .setGraphHopperLocation(new File(outDir).getAbsolutePath())
-                .setEncodingManager(new EncodingManager.Builder().addAll(new CarFlagEncoder()).build())
+                .setEncodingManager(new EncodingManager.Builder().addGlobalEncodedValues().addAll(new CarFlagEncoder()).build())
                 .setCHEnabled(false).importOrLoad();
     }
 
@@ -128,7 +129,7 @@ public class ShapeFileReaderTest {
 
             hopperShp = initHopper(new GraphHopperSHP(), shapefile, tempOutputDirFromShp);
 
-            hopperPbf = initHopper(new GraphHopperOSM(), pbf, tempOutputDirFromPbf);
+            hopperPbf = initHopper(new GraphHopperOSM(GHJson.EMPTY), pbf, tempOutputDirFromPbf);
 
         } catch (Exception e) {
             // Junit silently fails if we get an exception in the setup before

@@ -18,6 +18,8 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
@@ -43,6 +45,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class QueryGraphTest {
+    private GHJson json = new GHJsonFactory().create();
     private EncodingManager encodingManager;
     private FlagEncoder carEncoder;
     private GraphHopperStorage g;
@@ -55,7 +58,7 @@ public class QueryGraphTest {
         encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carEncoder).build();
         accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
         averageSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, false, new GraphExtension.NoOpExtension()).create(100);
+        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, json, false, new GraphExtension.NoOpExtension()).create(100);
     }
 
     @After
@@ -266,7 +269,7 @@ public class QueryGraphTest {
     @Test
     public void testUseMeanElevation() {
         g.close();
-        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, true, new GraphExtension.NoOpExtension()).create(100);
+        g = new GraphHopperStorage(new RAMDirectory(), encodingManager, json, true, new GraphExtension.NoOpExtension()).create(100);
         NodeAccess na = g.getNodeAccess();
         na.setNode(0, 0, 0, 0);
         na.setNode(1, 0, 0.0001, 20);
@@ -500,7 +503,7 @@ public class QueryGraphTest {
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(encoder).build();
         BooleanEncodedValue tmpAccessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
         DecimalEncodedValue tmpAverageSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
-        GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(), em, false, turnExt).
+        GraphHopperStorage graphWithTurnCosts = new GraphHopperStorage(new RAMDirectory(), em, json, false, turnExt).
                 create(100);
         NodeAccess na = graphWithTurnCosts.getNodeAccess();
         na.setNode(0, .00, .00);

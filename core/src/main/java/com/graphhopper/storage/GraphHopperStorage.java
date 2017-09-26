@@ -17,6 +17,7 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.json.GHJson;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -48,11 +49,11 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     // same flush order etc
     private final Collection<CHGraphImpl> chGraphs = new ArrayList<CHGraphImpl>(5);
 
-    public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
-        this(Collections.<Weighting>emptyList(), dir, encodingManager, withElevation, extendedStorage);
+    public GraphHopperStorage(Directory dir, EncodingManager encodingManager, GHJson json, boolean withElevation, GraphExtension extendedStorage) {
+        this(Collections.<Weighting>emptyList(), dir, encodingManager, json, withElevation, extendedStorage);
     }
 
-    public GraphHopperStorage(List<? extends Weighting> chWeightings, Directory dir, final EncodingManager encodingManager,
+    public GraphHopperStorage(List<? extends Weighting> chWeightings, Directory dir, final EncodingManager encodingManager, GHJson json,
                               boolean withElevation, GraphExtension extendedStorage) {
         if (extendedStorage == null)
             throw new IllegalArgumentException("GraphExtension cannot be null, use NoOpExtension");
@@ -62,7 +63,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
         this.encodingManager = encodingManager;
         this.dir = dir;
-        this.properties = new StorableProperties(dir);
+        this.properties = new StorableProperties(dir, json);
         InternalGraphEventListener listener = new InternalGraphEventListener() {
             @Override
             public void initStorage() {

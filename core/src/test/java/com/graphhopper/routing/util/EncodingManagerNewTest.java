@@ -6,6 +6,7 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.routing.weighting.FastestCarWeighting;
 import com.graphhopper.routing.weighting.Weighting;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.IntsRef;
@@ -30,6 +31,7 @@ public class EncodingManagerNewTest {
     private EncodingManager encodingManager;
     private DecimalEncodedValue avSpeedEnc;
     private BooleanEncodedValue accessEnc;
+    private Graph graph;
 
     @Before
     public void setUp() {
@@ -50,6 +52,7 @@ public class EncodingManagerNewTest {
                         add(TagParserFactory.Car.createAccess(accessEnc, filter)).
                         add(TagParserFactory.createMaxWeight(maxWeightEnc, filter)).
                         build();
+        graph = new GraphBuilder(encodingManager, json).create();
     }
 
     @Test
@@ -83,8 +86,7 @@ public class EncodingManagerNewTest {
         ReaderWay readerWay = new ReaderWay(0);
         readerWay.setTag("highway", "tertiary");
 
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
-        EdgeIteratorState edge = GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 0, 1, true, 10);
+        EdgeIteratorState edge = GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 0, 1, true, 10);
 
         encodingManager.applyWayTags(readerWay, edge);
 
@@ -99,8 +101,7 @@ public class EncodingManagerNewTest {
         ReaderWay readerWay = new ReaderWay(0);
         readerWay.setTag("maxspeed", "180");
 
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
-        EdgeIteratorState edge = GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 0, 1, true, 10);
+        EdgeIteratorState edge = GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 0, 1, true, 10);
 
         try {
             encodingManager.applyWayTags(readerWay, edge);
@@ -111,8 +112,7 @@ public class EncodingManagerNewTest {
 
     @Test
     public void testNotInitializedProperty() {
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
-        EdgeIteratorState edge = GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 0, 1, true, 10);
+        EdgeIteratorState edge = GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 0, 1, true, 10);
         StringEncodedValue surface = new StringEncodedValue("surface", Arrays.asList("mud", "something"), "something");
         try {
             edge.get(surface);
@@ -124,8 +124,7 @@ public class EncodingManagerNewTest {
     @Test
     public void testWeighting() {
         Weighting weighting = new FastestCarWeighting(encodingManager, "some_weighting");
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
-        EdgeIteratorState edge = GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 0, 1, true, 10);
+        EdgeIteratorState edge = GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 0, 1, true, 10);
         edge.set(avSpeedEnc, 26d);
         edge.set(accessEnc, true);
         assertEquals(10 / ((26 / 5 * 5) * 0.9) * 3600, weighting.calcMillis(edge, false, -1), 1);
@@ -133,8 +132,7 @@ public class EncodingManagerNewTest {
 
     @Test
     public void testDirectionDependentBit() {
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
-        EdgeIteratorState edge = g.edge(0, 1);
+        EdgeIteratorState edge = graph.edge(0, 1);
 
         ReaderWay readerWay = new ReaderWay(0);
         readerWay.setTag("maxspeed", "30");
@@ -149,14 +147,14 @@ public class EncodingManagerNewTest {
         assertFalse(edge.detach(true).get(access));
 
         // add new edge and apply its associated OSM tags
-        EdgeIteratorState edge2 = g.edge(0, 2);
+        EdgeIteratorState edge2 = graph.edge(0, 2);
         readerWay = new ReaderWay(2);
         readerWay.setTag("highway", "primary");
         ints = encodingManager.handleWayTags(encodingManager.createIntsRef(), readerWay, new EncodingManager.AcceptWay(), 0);
         edge2.setData(ints);
 
         // assert that if the properties are cached that it is properly done
-        EdgeExplorer explorer = g.createEdgeExplorer();
+        EdgeExplorer explorer = graph.createEdgeExplorer();
         EdgeIterator iter = explorer.setBaseNode(0);
         assertTrue(iter.next());
         assertEquals(2, iter.getAdjNode());
@@ -221,7 +219,7 @@ public class EncodingManagerNewTest {
                 add(directedSpeedParser).
                 build();
 
-        GraphHopperStorage g = new GraphBuilder(encodingManager).create();
+        GraphHopperStorage g = new GraphBuilder(encodingManager, json).create();
         EdgeIteratorState edge = GHUtility.createEdge(g,
                 encodingManager.getDecimalEncodedValue("directed_speed"), 60,
                 encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS), 0, 1, true, 10);

@@ -22,13 +22,18 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.GraphHopperIT;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.reader.dem.ElevationProvider;
 import com.graphhopper.reader.dem.SRTMProvider;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.ReaderWayFilter;
+import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestCarWeighting;
 import com.graphhopper.routing.weighting.Weighting;
@@ -52,6 +57,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class OSMReaderTest {
+    private final GHJson json = new GHJsonFactory().create();
     private final String file1 = "test-osm.xml";
     private final String file2 = "test-osm2.xml";
     private final String file3 = "test-osm3.xml";
@@ -84,7 +90,7 @@ public class OSMReaderTest {
     }
 
     GraphHopperStorage newGraph(String directory, EncodingManager encodingManager, boolean is3D, boolean turnRestrictionsImport) {
-        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, is3D,
+        return new GraphHopperStorage(new RAMDirectory(directory, false), encodingManager, json, is3D,
                 turnRestrictionsImport ? new TurnCostExtension() : new GraphExtension.NoOpExtension());
     }
 
@@ -418,7 +424,7 @@ public class OSMReaderTest {
     @Test
     public void testRelation() {
         EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("bike").build();
-        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage ghStorage = new GraphHopperStorage(new RAMDirectory(), manager, json, false, new GraphExtension.NoOpExtension());
         OSMReader reader = new OSMReader(ghStorage);
         ReaderRelation osmRel = new ReaderRelation(1);
         osmRel.add(new ReaderRelation.Member(ReaderRelation.WAY, 1, ""));
@@ -684,7 +690,7 @@ public class OSMReaderTest {
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
         EncodingManager manager = new EncodingManager.Builder().addAll(Arrays.asList(bike, foot, car), 4).build();
 
-        GraphHopperStorage ghStorage = new GraphBuilder(manager).create();
+        GraphHopperStorage ghStorage = new GraphBuilder(manager, json).create();
         OSMReader reader = new OSMReader(ghStorage) {
             @Override
             public Collection<OSMTurnRelation.TurnCostTableEntry> analyzeTurnRelation(FlagEncoder encoder,
@@ -794,7 +800,7 @@ public class OSMReaderTest {
 
     @Test
     public void testRoutingRequestFails_issue665() {
-        GraphHopper hopper = new GraphHopperOSM()
+        GraphHopper hopper = new GraphHopperOSM(json)
                 .setDataReaderFile(getClass().getResource(file7).getFile())
                 .setEncodingManager(new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car,motorcycle").build())
                 .setGraphHopperLocation(dir);
@@ -823,7 +829,7 @@ public class OSMReaderTest {
                 add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, false), speedMap)).
                 add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).
                 build();
-        GraphHopper hopper = new GraphHopperOSM() {
+        GraphHopper hopper = new GraphHopperOSM(json) {
             @Override
             public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
                 return new FastestCarWeighting(em, "fastest2");
@@ -854,6 +860,7 @@ public class OSMReaderTest {
         }
 
         public GraphHopperFacade(String osmFile, boolean turnCosts) {
+            super(json);
             setStoreOnFlush(false);
             setOSMFile(osmFile);
             setGraphHopperLocation(dir);

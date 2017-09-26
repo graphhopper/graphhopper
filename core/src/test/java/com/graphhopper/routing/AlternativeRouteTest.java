@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.AlternativeRoute.AlternativeBidirSearch;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -46,6 +48,7 @@ import static org.junit.Assert.*;
 
 @RunWith(Parameterized.class)
 public class AlternativeRouteTest {
+    protected GHJson json = new GHJsonFactory().create();
     private final FlagEncoder carFE = new CarFlagEncoder();
     private final EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carFE).build();
     private final TraversalMode traversalMode;
@@ -67,7 +70,7 @@ public class AlternativeRouteTest {
 
     public GraphHopperStorage createTestGraph(boolean fullGraph, EncodingManager tmpEM,
                                               BooleanEncodedValue accessEnc, DecimalEncodedValue avSpeedEnc) {
-        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage graph = new GraphHopperStorage(new RAMDirectory(), tmpEM, json, false, new GraphExtension.NoOpExtension());
         graph.create(1000);
 
         /* 9

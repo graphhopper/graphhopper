@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
@@ -40,6 +42,7 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class PathBidirRefTest {
+    protected GHJson json = new GHJsonFactory().create();
     private final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
     private FlagEncoder carEncoder = encodingManager.getEncoder("car");
     private BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
@@ -47,7 +50,7 @@ public class PathBidirRefTest {
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(accessEnc, true, false);
 
     Graph createGraph() {
-        return new GraphBuilder(encodingManager).create();
+        return new GraphBuilder(encodingManager, json).create();
     }
 
     @Test

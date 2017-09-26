@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage.index;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
@@ -44,6 +46,7 @@ import static org.junit.Assert.assertTrue;
 public abstract class AbstractLocationIndexTester {
     String location = "./target/tmp/";
     LocationIndex idx;
+    protected GHJson json = new GHJsonFactory().create();
 
     public abstract LocationIndex createIndex(Graph g, int resolution);
 
@@ -52,7 +55,7 @@ public abstract class AbstractLocationIndexTester {
     }
 
     GraphHopperStorage createGHStorage(Directory dir, EncodingManager encodingManager, boolean is3D) {
-        return new GraphHopperStorage(dir, encodingManager, is3D, new GraphExtension.NoOpExtension()).create(100);
+        return new GraphHopperStorage(dir, encodingManager, json, is3D, new GraphExtension.NoOpExtension()).create(100);
     }
 
     protected int findID(LocationIndex index, double lat, double lon) {

@@ -37,7 +37,7 @@ public class GraphHopperStorageWithTurnCostsTest extends GraphHopperStorageTest 
     @Override
     protected GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
         turnCostStorage = new TurnCostExtension();
-        return new GraphHopperStorage(dir, encodingManager, is3D, turnCostStorage);
+        return new GraphHopperStorage(dir, encodingManager, json, is3D, turnCostStorage);
     }
 
     @Override

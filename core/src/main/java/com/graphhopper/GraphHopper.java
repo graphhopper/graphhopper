@@ -54,7 +54,9 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.text.DateFormat;
 import java.util.*;
 import java.util.concurrent.locks.Lock;
@@ -749,17 +751,8 @@ public class GraphHopper implements GraphHopperAPI {
 
         setGraphHopperLocation(graphHopperFolder);
 
-        if (encodingManager == null) {
-            try {
-                if (json != GHJson.EMPTY)
-                    setEncodingManager(json.fromJson(new FileReader(ghLocation + "/storage.json"), EncodingManager.class));
-                else
-                    // backward compatibility
-                    setEncodingManager(EncodingManager.create(flagEncoderFactory, ghLocation));
-            } catch (FileNotFoundException ex) {
-                throw new RuntimeException(ex);
-            }
-        }
+        if (encodingManager == null)
+            setEncodingManager(EncodingManager.create(flagEncoderFactory, json, ghLocation));
 
         if (!allowWrites && dataAccessType.isMMap())
             dataAccessType = DAType.MMAP_RO;
@@ -773,9 +766,9 @@ public class GraphHopper implements GraphHopperAPI {
 
         if (chFactoryDecorator.isEnabled()) {
             initCHAlgoFactoryDecorator();
-            ghStorage = new GraphHopperStorage(chFactoryDecorator.getWeightings(), dir, encodingManager, hasElevation(), ext);
+            ghStorage = new GraphHopperStorage(chFactoryDecorator.getWeightings(), dir, encodingManager, json, hasElevation(), ext);
         } else {
-            ghStorage = new GraphHopperStorage(dir, encodingManager, hasElevation(), ext);
+            ghStorage = new GraphHopperStorage(dir, encodingManager, json, hasElevation(), ext);
         }
 
         ghStorage.setSegmentSize(defaultSegmentSize);
@@ -785,7 +778,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         GHLock lock = null;
         try {
-            // create locks only if writes are allowed, if they are not allowed a lock cannot be created 
+            // create locks only if writes are allowed, if they are not allowed a lock cannot be created
             // (e.g. on a read only filesystem locks would fail)
             if (ghStorage.getDirectory().getDefaultType().isStoring() && isAllowWrites()) {
                 lockFactory.setLockDir(new File(ghLocation));
@@ -866,7 +859,7 @@ public class GraphHopper implements GraphHopperAPI {
             if (ghStorage.isCHPossible() && isCHPrepared())
                 throw new IllegalArgumentException("Sorting a prepared CHGraph is not possible yet. See #12");
 
-            GraphHopperStorage newGraph = GHUtility.newStorage(ghStorage);
+            GraphHopperStorage newGraph = GHUtility.newStorage(ghStorage, json);
             GHUtility.sortDFS(ghStorage, newGraph);
             logger.info("graph sorted (" + Helper.getMemInfo() + ")");
             ghStorage = newGraph;

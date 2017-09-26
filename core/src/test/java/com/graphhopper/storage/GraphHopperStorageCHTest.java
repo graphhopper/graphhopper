@@ -47,7 +47,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
 
     @Override
     public GraphHopperStorage newGHStorage(Directory dir, boolean is3D) {
-        return new GraphHopperStorage(Arrays.asList(new FastestWeighting(carEncoder)), dir, encodingManager, is3D, new GraphExtension.NoOpExtension());
+        return new GraphHopperStorage(Arrays.asList(new FastestWeighting(carEncoder)), dir, encodingManager, json, is3D, new GraphExtension.NoOpExtension());
     }
 
     @Test
@@ -56,7 +56,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph.flush();
         graph.close();
 
-        graph = new GraphBuilder(encodingManager).setLocation(defaultGraphLoc).setMmap(false).setStore(true).create();
+        graph = new GraphBuilder(encodingManager, json).setLocation(defaultGraphLoc).setMmap(false).setStore(true).create();
         try {
             graph.loadExisting();
             assertTrue(false);
@@ -207,7 +207,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         FlagEncoder customEncoder = new Bike2WeightFlagEncoder();
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(customEncoder).build();
         FastestWeighting weighting = new FastestWeighting(customEncoder);
-        GraphHopperStorage ghStorage = new GraphBuilder(em).setCHGraph(weighting).create();
+        GraphHopperStorage ghStorage = new GraphBuilder(em, json).setCHGraph(weighting).create();
         ghStorage.edge(0, 2);
         ghStorage.freeze();
 
@@ -361,7 +361,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         BooleanEncodedValue tmpBikeAccessEnc = em.getBooleanEncodedValue(tmpBike.getPrefix() + "access");
         DecimalEncodedValue tmpBikeAverageSpeedEnc = em.getDecimalEncodedValue(tmpBike.getPrefix() + "average_speed");
 
-        graph = new GraphHopperStorage(chWeightings, new RAMDirectory(), em, false, new GraphExtension.NoOpExtension()).create(1000);
+        graph = new GraphHopperStorage(chWeightings, new RAMDirectory(), em, json, false, new GraphExtension.NoOpExtension()).create(1000);
         IntsRef ints = em.createIntsRef();
         GHUtility.setProperties(ints, tmpCarAverageSpeedEnc, 100d, tmpCarAccessEnc, true, true);
         GHUtility.setProperties(ints, tmpBikeAverageSpeedEnc, 10d, tmpBikeAccessEnc, true, true);

@@ -18,6 +18,8 @@
 package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
@@ -44,6 +46,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public abstract class AbstractRoutingAlgorithmTester {
+    protected GHJson json = new GHJsonFactory().create();
     protected static final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().
             addAllFlagEncoders("car,foot").build();
     private static final DistanceCalc distCalc = new DistanceCalcEarth();
@@ -171,7 +174,7 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
 
     protected GraphHopperStorage createGHStorage(EncodingManager em, List<? extends Weighting> weightings, boolean is3D) {
-        return new GraphBuilder(em).set3D(is3D).create();
+        return new GraphBuilder(em, json).set3D(is3D).create();
     }
 
     protected GraphHopperStorage createGHStorage(boolean is3D) {

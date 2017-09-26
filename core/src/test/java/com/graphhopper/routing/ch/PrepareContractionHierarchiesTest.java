@@ -18,6 +18,8 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies.Shortcut;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
@@ -47,6 +49,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class PrepareContractionHierarchiesTest {
+    protected GHJson json = new GHJsonFactory().create();
     private final CarFlagEncoder carEncoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carEncoder).build();
     private final BooleanEncodedValue carAccessEnc = encodingManager.getBooleanEncodedValue("car.access");
@@ -130,7 +133,7 @@ public class PrepareContractionHierarchiesTest {
     }
 
     GraphHopperStorage createGHStorage() {
-        return new GraphBuilder(encodingManager).setCHGraph(weighting).create();
+        return new GraphBuilder(encodingManager, json).setCHGraph(weighting).create();
     }
 
     GraphHopperStorage createExampleGraph() {
@@ -618,7 +621,8 @@ public class PrepareContractionHierarchiesTest {
         Weighting bikeWeighting = new ShortestWeighting(tmpBikeEncoder);
 
         List<Weighting> chWeightings = Arrays.asList(carWeighting, bikeWeighting);
-        GraphHopperStorage ghStorage = new GraphHopperStorage(chWeightings, dir, tmpEncodingManager, false, new GraphExtension.NoOpExtension()).create(1000);
+        GraphHopperStorage ghStorage = new GraphHopperStorage(chWeightings, dir, tmpEncodingManager, json,
+                false, new GraphExtension.NoOpExtension()).create(1000);
         initShortcutsGraph(ghStorage, tmpEncodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
                 tmpEncodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED));
 
@@ -639,7 +643,8 @@ public class PrepareContractionHierarchiesTest {
         Weighting bikeWeighting = new FastestWeighting(tmpBikeEncoder);
 
         List<Weighting> chWeightings = Arrays.asList(carWeighting, bikeWeighting);
-        GraphHopperStorage ghStorage = new GraphHopperStorage(chWeightings, dir, tmpEncodingManager, false, new GraphExtension.NoOpExtension()).create(1000);
+        GraphHopperStorage ghStorage = new GraphHopperStorage(chWeightings, dir, tmpEncodingManager, json,
+                false, new GraphExtension.NoOpExtension()).create(1000);
         initShortcutsGraph(ghStorage, tmpEncodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
                 tmpEncodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED));
         EdgeIteratorState edge = GHUtility.getEdge(ghStorage, 9, 14);

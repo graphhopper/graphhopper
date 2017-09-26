@@ -18,6 +18,8 @@
 package com.graphhopper.routing.subnetwork;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
@@ -41,13 +43,14 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class PrepareRoutingSubnetworksTest {
+    protected GHJson json = new GHJsonFactory().create();
     private final FlagEncoder carFlagEncoder = new CarFlagEncoder();
     private final EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carFlagEncoder).build();
     private final BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
     private final DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
     GraphHopperStorage createStorage(EncodingManager eman) {
-        return new GraphBuilder(eman).create();
+        return new GraphBuilder(eman, json).create();
     }
 
     GraphHopperStorage createSubnetworkTestStorage() {

@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHTBitSet;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.PreparationWeighting;
@@ -59,6 +60,14 @@ import java.util.Random;
  * @author Peter Karich
  */
 public class MiniGraphUI {
+
+    public static void main(String[] strs) throws Exception {
+        CmdArgs args = CmdArgs.read(strs);
+        GraphHopper hopper = new GraphHopperOSM(new GHJsonFactory().create()).init(args).importOrLoad();
+        boolean debug = args.getBool("minigraphui.debug", false);
+        new MiniGraphUI(hopper, debug).visualize();
+    }
+
     //    private final Graph graph;
     private final Graph routingGraph;
     private final NodeAccess na;
@@ -349,13 +358,6 @@ public class MiniGraphUI {
             repaintManager.setDoubleBufferingEnabled(false);
             mainPanel.setBuffering(false);
         }
-    }
-
-    public static void main(String[] strs) throws Exception {
-        CmdArgs args = CmdArgs.read(strs);
-        GraphHopper hopper = new GraphHopperOSM().init(args).importOrLoad();
-        boolean debug = args.getBool("minigraphui.debug", false);
-        new MiniGraphUI(hopper, debug).visualize();
     }
 
     public Color[] generateColors(int n) {

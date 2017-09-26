@@ -18,6 +18,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.PrinctonReader;
 import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.EncodingManager;
@@ -52,6 +54,8 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class RoutingAlgorithmIT {
+    private GHJson json = new GHJsonFactory().create();
+
     public static List<AlgoHelperEntry> createAlgos(final GraphHopper hopper, final HintsMap hints, TraversalMode tMode) {
         GraphHopperStorage ghStorage = hopper.getGraphHopperStorage();
         LocationIndex idx = hopper.getLocationIndex();
@@ -135,7 +139,7 @@ public class RoutingAlgorithmIT {
 
         Random rand = new Random(0);
         final EncodingManager eManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
-        final GraphHopperStorage graph = new GraphBuilder(eManager).create();
+        final GraphHopperStorage graph = new GraphBuilder(eManager, json).create();
 
         String bigFile = "10000EWD.txt.gz";
         new PrinctonReader(graph, eManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),

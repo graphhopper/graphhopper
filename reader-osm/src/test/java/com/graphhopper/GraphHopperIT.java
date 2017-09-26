@@ -17,6 +17,8 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.EncodingManager;
@@ -42,7 +44,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class GraphHopperIT {
-
+    private static final GHJson json = new GHJsonFactory().create();
     public static final String DIR = "../core/files";
     private static final String graphFileFoot = "target/graphhopperIT-foot";
     private static final String osmFile = DIR + "/monaco.osm.gz";
@@ -58,7 +60,7 @@ public class GraphHopperIT {
         // make sure we are using fresh graphhopper files with correct vehicle
         Helper.removeDir(new File(graphFileFoot));
 
-        hopper = new GraphHopperOSM().
+        hopper = new GraphHopperOSM(json).
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
@@ -154,7 +156,7 @@ public class GraphHopperIT {
 
     @Test
     public void testAlternativeRoutesBikeAndCar() {
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSM(json).
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
@@ -192,7 +194,7 @@ public class GraphHopperIT {
 
     @Test
     public void testPointHint() {
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSM(json).
                 setOSMFile(DIR + "/Laufamholzstrasse.osm.xml").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
@@ -227,7 +229,7 @@ public class GraphHopperIT {
 
     @Test
     public void testNorthBayreuthDestination() {
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSM(json).
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
@@ -251,7 +253,7 @@ public class GraphHopperIT {
 
     @Test
     public void testNorthBayreuthBlockeEdges() {
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSM(json).
                 setOSMFile(DIR + "/north-bayreuth.osm.gz").
                 setCHEnabled(false).
                 setGraphHopperLocation(tmpGraphFile).
@@ -503,7 +505,7 @@ public class GraphHopperIT {
 
     @Test
     public void testSRTMWithInstructions() throws Exception {
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSM(json).
                 setOSMFile(osmFile).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
@@ -556,7 +558,7 @@ public class GraphHopperIT {
 
     @Test
     public void testSRTMWithoutTunnelInterpolation() throws Exception {
-        GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
+        GraphHopper tmpHopper = new GraphHopperOSM(json).setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
                 .setEncodingManager(new EncodingManager.Builder().addAll(FlagEncoderFactory.DEFAULT, importVehicles, 8).build());
 
@@ -582,7 +584,7 @@ public class GraphHopperIT {
 
     @Test
     public void testSRTMWithTunnelInterpolation() throws Exception {
-        GraphHopper tmpHopper = new GraphHopperOSM().setOSMFile(osmFile).setStoreOnFlush(true)
+        GraphHopper tmpHopper = new GraphHopperOSM(json).setOSMFile(osmFile).setStoreOnFlush(true)
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
                 .setEncodingManager(new EncodingManager.Builder().addAll(FlagEncoderFactory.DEFAULT, genericImportVehicles, 8).build());
 
@@ -614,7 +616,7 @@ public class GraphHopperIT {
         String tmpImportVehicles = "car,bike";
         String tmpWeightCalcStr = "fastest";
 
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSM(json).
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setCHEnabled(false).
@@ -658,7 +660,7 @@ public class GraphHopperIT {
         String tmpImportVehicles = "car,bike";
         String tmpWeightCalcStr = "fastest";
 
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSM(json).
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
@@ -694,7 +696,7 @@ public class GraphHopperIT {
     @Test
     public void testMultipleVehiclesWithCH() {
         String tmpOsmFile = DIR + "/monaco.osm.gz";
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSM(json).
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
@@ -706,7 +708,7 @@ public class GraphHopperIT {
 
         tmpHopper.clean();
         // new instance, try different order, resulting only in different default vehicle
-        tmpHopper = new GraphHopperOSM().
+        tmpHopper = new GraphHopperOSM(json).
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
@@ -759,7 +761,7 @@ public class GraphHopperIT {
         String tmpOsmFile = DIR + "/monaco.osm.gz";
         String tmpImportVehicles = "foot";
 
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSM(json).
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
@@ -805,7 +807,7 @@ public class GraphHopperIT {
     public void testFlexMode_631() {
         String tmpOsmFile = DIR + "/monaco.osm.gz";
 
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSM(json).
                 setOSMFile(tmpOsmFile).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).
@@ -864,7 +866,7 @@ public class GraphHopperIT {
 
     @Test
     public void testTurnCostsOnOff() {
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSM(json).
                 setOSMFile(DIR + "/moscow.osm.gz").
                 setStoreOnFlush(true).
                 setCHEnabled(false).
@@ -890,7 +892,7 @@ public class GraphHopperIT {
 
     @Test
     public void testCHAndTurnCostsWithFlexmode() {
-        GraphHopper tmpHopper = new GraphHopperOSM().
+        GraphHopper tmpHopper = new GraphHopperOSM(json).
                 setOSMFile(DIR + "/moscow.osm.gz").
                 setStoreOnFlush(true).
                 setGraphHopperLocation(tmpGraphFile).

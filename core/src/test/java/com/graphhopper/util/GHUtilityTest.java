@@ -18,6 +18,8 @@
 package com.graphhopper.util;
 
 import com.graphhopper.coll.GHIntLongHashMap;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
@@ -34,13 +36,14 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class GHUtilityTest {
+    private GHJson json = new GHJsonFactory().create();
     private final FlagEncoder carEncoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(carEncoder).build();
     private final BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
     private final DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
 
     Graph createGraph() {
-        return new GraphBuilder(encodingManager).create();
+        return new GraphBuilder(encodingManager, json).create();
     }
 
     // 7      8\
@@ -114,7 +117,7 @@ public class GHUtilityTest {
         Graph g = initUnsorted(createGraph(), accessEnc, avSpeedEnc);
         GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 0, 0, true, 11);
 
-        CHGraph lg = new GraphBuilder(encodingManager).chGraphCreate(new FastestWeighting(carEncoder));
+        CHGraph lg = new GraphBuilder(encodingManager, json).chGraphCreate(new FastestWeighting(carEncoder));
         GHUtility.copyTo(g, lg);
 
         assertEquals(g.getAllEdges().getMaxId(), lg.getAllEdges().getMaxId());
@@ -126,7 +129,7 @@ public class GHUtilityTest {
         EdgeIteratorState edgeState = GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 6, 5, true, 11);
         edgeState.setWayGeometry(Helper.createPointList(12, 10, -1, 3));
 
-        GraphHopperStorage newStore = new GraphBuilder(encodingManager).setCHGraph(new FastestWeighting(carEncoder)).create();
+        GraphHopperStorage newStore = new GraphBuilder(encodingManager, json).setCHGraph(new FastestWeighting(carEncoder)).create();
         CHGraph lg = newStore.getGraph(CHGraph.class);
         GHUtility.copyTo(g, lg);
         newStore.freeze();

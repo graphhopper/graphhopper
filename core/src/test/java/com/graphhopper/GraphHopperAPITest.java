@@ -17,6 +17,8 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -46,6 +48,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class GraphHopperAPITest {
+    private GHJson json = new GHJsonFactory().create();
     final EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
     final BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
     final DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
@@ -63,7 +66,7 @@ public class GraphHopperAPITest {
 
     @Test
     public void testLoad() {
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        GraphHopperStorage graph = new GraphBuilder(encodingManager, json).create();
         initGraph(graph);
         // do further changes:
         NodeAccess na = graph.getNodeAccess();
@@ -94,7 +97,7 @@ public class GraphHopperAPITest {
 
     @Test
     public void testDisconnected179() {
-        GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        GraphHopperStorage graph = new GraphBuilder(encodingManager, json).create();
         initGraph(graph);
 
         GraphHopper instance = new GraphHopper().
@@ -136,7 +139,7 @@ public class GraphHopperAPITest {
 
     @Test
     public void testConcurrentGraphChange() throws InterruptedException {
-        final GraphHopperStorage graph = new GraphBuilder(encodingManager).create();
+        final GraphHopperStorage graph = new GraphBuilder(encodingManager, json).create();
         initGraph(graph);
         GHUtility.createEdge(graph, avSpeedEnc, 60, accessEnc, 1, 2, true, 10);
 

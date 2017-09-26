@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -36,6 +38,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class MotorcycleFlagEncoderTest {
+    protected GHJson json = new GHJsonFactory().create();
     private final EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("motorcycle,foot").build();
     private final MotorcycleFlagEncoder encoder = (MotorcycleFlagEncoder) em.getEncoder("motorcycle");
     private BooleanEncodedValue mcAccessEnc;
@@ -43,7 +46,7 @@ public class MotorcycleFlagEncoderTest {
     private DecimalEncodedValue mcCurvatureEnc;
 
     private Graph initExampleGraph() {
-        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), em, true, new GraphExtension.NoOpExtension()).create(1000);
+        GraphHopperStorage gs = new GraphHopperStorage(new RAMDirectory(), em, json, true, new GraphExtension.NoOpExtension()).create(1000);
         NodeAccess na = gs.getNodeAccess();
         // 50--(0.0001)-->49--(0.0004)-->55--(0.0005)-->60
         na.setNode(0, 51.1, 12.001, 50);

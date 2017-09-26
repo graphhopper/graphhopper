@@ -17,55 +17,44 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.json.GHJson;
 import com.graphhopper.util.Constants;
 import com.graphhopper.util.Helper;
 
-import java.io.IOException;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.util.LinkedHashMap;
+import java.io.*;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
- * Writes an in-memory HashMap into a file on flush. Thread safe, see #743.
+ * Writes an in-memory Map into a file on flush. Thread safe, see #743.
  *
  * @author Peter Karich
  */
 public class StorableProperties implements Storable<StorableProperties> {
-    private final Map<String, String> map = new LinkedHashMap<>();
-    private final DataAccess da;
+    private final Map<String, Object> map = new TreeMap<>();
+    private final String file;
+    private final GHJson json;
 
-    public StorableProperties(Directory dir) {
-        this.da = dir.find("properties");
-        // reduce size
-        da.setSegmentSize(1 << 15);
+    public StorableProperties(Directory dir, GHJson json) {
+        file = dir.getLocation() + "/properties.json";
+        this.json = json;
     }
 
     @Override
     public synchronized boolean loadExisting() {
-        if (!da.loadExisting())
-            return false;
-
-        int len = (int) da.getCapacity();
-        byte[] bytes = new byte[len];
-        da.getBytes(0, bytes, len);
         try {
-            Helper.loadProperties(map, new StringReader(new String(bytes, Helper.UTF_CS)));
+            map.clear();
+            map.putAll((Map<String, Object>) json.fromJson(new InputStreamReader(new FileInputStream(file), Helper.UTF_CS), Map.class));
             return true;
-        } catch (IOException ex) {
-            throw new IllegalStateException(ex);
+        } catch (FileNotFoundException e) {
+            return false;
         }
     }
 
     @Override
     public synchronized void flush() {
         try {
-            StringWriter sw = new StringWriter();
-            Helper.saveProperties(map, sw);
-            // TODO at the moment the size is limited to da.segmentSize() !
-            byte[] bytes = sw.toString().getBytes(Helper.UTF_CS);
-            da.setBytes(0, bytes, bytes.length);
-            da.flush();
+            json.toJson(map, new OutputStreamWriter(new FileOutputStream(file), Helper.UTF_CS));
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -101,7 +90,7 @@ public class StorableProperties implements Storable<StorableProperties> {
         if (!key.equals(key.toLowerCase()))
             throw new IllegalArgumentException("Do not use upper case keys (" + key + ") for StorableProperties since 0.7");
 
-        String ret = map.get(key);
+        String ret = (String) map.get(key);
         if (ret == null)
             return "";
 
@@ -110,23 +99,22 @@ public class StorableProperties implements Storable<StorableProperties> {
 
     @Override
     public synchronized void close() {
-        da.close();
     }
 
     @Override
     public synchronized boolean isClosed() {
-        return da.isClosed();
+        return false;
     }
 
     @Override
     public synchronized StorableProperties create(long size) {
-        da.create(size);
         return this;
     }
 
     @Override
     public synchronized long getCapacity() {
-        return da.getCapacity();
+        // unknown
+        return 1;
     }
 
     public synchronized void putCurrentVersions() {
@@ -185,6 +173,6 @@ public class StorableProperties implements Storable<StorableProperties> {
 
     @Override
     public synchronized String toString() {
-        return da.toString();
+        return file;
     }
 }

@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
@@ -49,6 +51,7 @@ import static org.junit.Assert.assertNotNull;
  */
 @RunWith(Parameterized.class)
 public class EdgeBasedRoutingAlgorithmTest {
+    protected GHJson json = new GHJsonFactory().create();
     private final String algoStr;
     private FlagEncoder carEncoder;
 
@@ -100,7 +103,7 @@ public class EdgeBasedRoutingAlgorithmTest {
     }
 
     protected GraphHopperStorage createStorage(EncodingManager em) {
-        return new GraphBuilder(em).create();
+        return new GraphBuilder(em, json).create();
     }
 
     private void initTurnRestrictions(Graph g, TurnCostExtension tcs, TurnCostEncoder tEncoder) {

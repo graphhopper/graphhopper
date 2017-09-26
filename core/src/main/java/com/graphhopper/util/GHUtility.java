@@ -21,6 +21,7 @@ import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntArrayList;
+import com.graphhopper.json.GHJson;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.IntEncodedValue;
@@ -277,11 +278,11 @@ public class GHUtility {
     /**
      * Create a new storage from the specified one without copying the data.
      */
-    public static GraphHopperStorage newStorage(GraphHopperStorage store) {
+    public static GraphHopperStorage newStorage(GraphHopperStorage store, GHJson json) {
         Directory outdir = guessDirectory(store);
         boolean is3D = store.getNodeAccess().is3D();
 
-        return new GraphHopperStorage(store.getCHWeightings(), outdir, store.getEncodingManager(),
+        return new GraphHopperStorage(store.getCHWeightings(), outdir, store.getEncodingManager(), json,
                 is3D, store.getExtension()).
                 create(store.getNodes());
     }

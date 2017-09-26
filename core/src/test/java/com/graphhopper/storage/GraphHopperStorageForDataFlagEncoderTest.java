@@ -1,6 +1,7 @@
 package com.graphhopper.storage;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
@@ -25,6 +26,7 @@ import static org.junit.Assert.*;
  * Created by tuan on 20/01/17.
  */
 public class GraphHopperStorageForDataFlagEncoderTest {
+    private final GHJson json = new GHJsonFactory().create();
     private final String locationParent = "./target/graphstorage";
     private String defaultGraphLoc = "./target/graphstorage/default";
     private GraphHopperStorage graph;
@@ -59,7 +61,7 @@ public class GraphHopperStorageForDataFlagEncoderTest {
 
     @Test
     public void testStorageProperties() {
-        graph = new GraphBuilder(encodingManager).setStore(true).setLocation(defaultGraphLoc).create();
+        graph = new GraphBuilder(encodingManager, json).setStore(true).setLocation(defaultGraphLoc).create();
 
         // 0-1
         ReaderWay way_0_1 = new ReaderWay(27l);

@@ -1,5 +1,7 @@
 package com.graphhopper.routing.lm;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -14,12 +16,11 @@ import org.junit.Test;
 
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 
 public class LMAlgoFactoryDecoratorTest {
+    protected GHJson json = new GHJsonFactory().create();
 
     @Test
     public void addWeighting() {
@@ -36,7 +37,7 @@ public class LMAlgoFactoryDecoratorTest {
         FlagEncoder car = new CarFlagEncoder();
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(car).build();
         dec.addWeighting(new FastestWeighting(car)).addWeighting(new ShortestWeighting(car));
-        dec.createPreparations(new GraphHopperStorage(new RAMDirectory(), em, false, new GraphExtension.NoOpExtension()), null);
+        dec.createPreparations(new GraphHopperStorage(new RAMDirectory(), em, json, false, new GraphExtension.NoOpExtension()), null);
         assertEquals(1, dec.getPreparations().get(0).getLandmarkStorage().getFactor(), .1);
         assertEquals(0.3, dec.getPreparations().get(1).getLandmarkStorage().getFactor(), .1);
     }

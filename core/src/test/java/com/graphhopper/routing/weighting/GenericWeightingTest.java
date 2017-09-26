@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.weighting;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.AbstractRoutingAlgorithmTester;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
@@ -41,6 +43,7 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class GenericWeightingTest {
+    private GHJson json = new GHJsonFactory().create();
     private final PMap properties;
     private final DataFlagEncoder encoder;
     private final EncodingManager em;
@@ -64,7 +67,7 @@ public class GenericWeightingTest {
         way.setTag("maxspeed", "10");
         way.setTag("maxheight", "4.4");
 
-        graph = new GraphBuilder(em).create();
+        graph = new GraphBuilder(em, json).create();
         // 0-1
         GHUtility.createEdge(graph, em.getDecimalEncodedValue("generic." + "average_speed"), 60, em.getBooleanEncodedValue("generic." + "access"),
                 0, 1, true, 1);
@@ -97,7 +100,7 @@ public class GenericWeightingTest {
         EncodingManager simpleEncodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(simpleEncoder).build();
         BooleanEncodedValue accessEnc = simpleEncodingManager.getBooleanEncodedValue("generic." + "access");
         DecimalEncodedValue avSpeedEnc = simpleEncodingManager.getDecimalEncodedValue("generic." + "average_speed");
-        Graph simpleGraph = new GraphBuilder(simpleEncodingManager).create();
+        Graph simpleGraph = new GraphBuilder(simpleEncodingManager, json).create();
 
         ReaderWay way = new ReaderWay(27l);
         way.setTag("highway", "primary");

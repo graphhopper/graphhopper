@@ -19,6 +19,7 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
@@ -58,7 +59,7 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
         encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(dataFlagEncoder, new FootFlagEncoder()), 8).build();
         dfAccessEnc = encodingManager.getBooleanEncodedValue(dataFlagEncoder.getPrefix() + "access");
         dfeAvSpeedEnc = encodingManager.getDecimalEncodedValue(dataFlagEncoder.getPrefix() + "average_speed");
-        graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, true,
+        graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, new GHJsonFactory().create(), true,
                 new GraphExtension.NoOpExtension()).create(100);
 
         edgeElevationInterpolator = createEdgeElevationInterpolator();

@@ -19,6 +19,8 @@ package com.graphhopper.util;
 
 import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
@@ -37,6 +39,7 @@ import static org.junit.Assert.assertTrue;
  */
 public class DepthFirstSearchTest {
 
+    private GHJson json = new GHJsonFactory().create();
     int counter;
     GHIntHashSet set = new GHIntHashSet();
     IntArrayList list = new IntArrayList();
@@ -62,7 +65,7 @@ public class DepthFirstSearchTest {
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
         BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
         DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
-        Graph g = new GraphBuilder(em).create();
+        Graph g = new GraphBuilder(em, json).create();
         GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 2, false, 1);
         GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 5, false, 1);
         GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 4, false, 1);
@@ -93,7 +96,7 @@ public class DepthFirstSearchTest {
         EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
         BooleanEncodedValue accessEnc = em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
         DecimalEncodedValue avSpeedEnc = em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
-        Graph g = new GraphBuilder(em).create();
+        Graph g = new GraphBuilder(em, json).create();
         GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 2, false, 1);
         GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 4, true, 1);
         GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 1, 3, false, 1);

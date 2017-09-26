@@ -23,6 +23,7 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.util.*;
@@ -76,7 +77,7 @@ public class Measurement {
         String gitCommit = args.get("measurement.gitinfo", "");
         int count = args.getInt("measurement.count", 5000);
 
-        GraphHopper hopper = new GraphHopperOSM() {
+        GraphHopper hopper = new GraphHopperOSM(new GHJsonFactory().create()) {
             @Override
             protected void prepareCH() {
                 StopWatch sw = new StopWatch().start();

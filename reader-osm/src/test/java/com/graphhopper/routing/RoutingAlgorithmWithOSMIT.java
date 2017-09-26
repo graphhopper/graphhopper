@@ -18,6 +18,8 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.dem.SRTMProvider;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.routing.profiles.TagParserFactory;
@@ -52,6 +54,7 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class RoutingAlgorithmWithOSMIT {
+    private final GHJson json = new GHJsonFactory().create();
     TestAlgoCollector testCollector;
 
     @Before
@@ -502,7 +505,7 @@ public class RoutingAlgorithmWithOSMIT {
         OneRun tmpOneRun = null;
         try {
             Helper.removeDir(new File(graphFile));
-            GraphHopper hopper = new GraphHopperOSM().
+            GraphHopper hopper = new GraphHopperOSM(json).
                     setStoreOnFlush(true).
                     setCHEnabled(false).
                     setDataReaderFile(osmFile).
@@ -561,7 +564,7 @@ public class RoutingAlgorithmWithOSMIT {
         String graphFile = "target/monaco-gh";
         Helper.removeDir(new File(graphFile));
         final EncodingManager encodingManager = new EncodingManager.Builder().addAllFlagEncoders("car").build();
-        final GraphHopper hopper = new GraphHopperOSM().
+        final GraphHopper hopper = new GraphHopperOSM(json).
                 setStoreOnFlush(true).
                 setEncodingManager(encodingManager).setCHEnabled(false).
                 setWayPointMaxDistance(0).

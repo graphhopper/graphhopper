@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.util.Helper;
 import org.junit.Test;
 
@@ -28,24 +30,26 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class StorablePropertiesTest {
+    private final GHJson json = new GHJsonFactory().create();
+
     Directory createDir(String location, boolean store) {
         return new RAMDirectory(location, store).create();
     }
 
     @Test
     public void testLoad() {
-        StorableProperties instance = new StorableProperties(createDir("", false));
+        StorableProperties instance = new StorableProperties(createDir("", false), json);
         // an in-memory storage does not load anything
         assertFalse(instance.loadExisting());
 
-        instance = new StorableProperties(createDir("", true));
+        instance = new StorableProperties(createDir("", true), json);
         assertFalse(instance.loadExisting());
         instance.close();
     }
 
     @Test
     public void testVersionCheck() {
-        StorableProperties instance = new StorableProperties(createDir("", false));
+        StorableProperties instance = new StorableProperties(createDir("", false), json);
         instance.putCurrentVersions();
         assertTrue(instance.checkVersions(true));
 
@@ -64,7 +68,7 @@ public class StorablePropertiesTest {
     public void testStore() {
         String dir = "./target/test";
         Helper.removeDir(new File(dir));
-        StorableProperties instance = new StorableProperties(createDir(dir, true));
+        StorableProperties instance = new StorableProperties(createDir(dir, true), json);
         instance.create(1000);
         instance.put("test.min", 123);
         instance.put("test.max", 321);
@@ -72,7 +76,7 @@ public class StorablePropertiesTest {
         instance.flush();
         instance.close();
 
-        instance = new StorableProperties(createDir(dir, true));
+        instance = new StorableProperties(createDir(dir, true), json);
         assertTrue(instance.loadExisting());
         assertEquals("123", instance.get("test.min"));
         assertEquals("321", instance.get("test.max"));

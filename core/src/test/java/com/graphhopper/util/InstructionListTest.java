@@ -19,6 +19,8 @@ package com.graphhopper.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.Path;
 import com.graphhopper.routing.PathExtract;
@@ -52,6 +54,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class InstructionListTest {
+    private final GHJson json = new GHJsonFactory().create();
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
     private final Translation usTR = trMap.getWithFallBack(Locale.US);
     private final TraversalMode tMode = TraversalMode.NODE_BASED;
@@ -71,7 +74,7 @@ public class InstructionListTest {
     @SuppressWarnings("unchecked")
     @Test
     public void testWayList() {
-        Graph g = new GraphBuilder(carManager).create();
+        Graph g = new GraphBuilder(carManager, json).create();
         // 0-1-2
         // | | |
         // 3-4-5  9-10
@@ -210,7 +213,7 @@ public class InstructionListTest {
 
     @Test
     public void testWayList2() {
-        Graph g = new GraphBuilder(carManager).create();
+        Graph g = new GraphBuilder(carManager, json).create();
         //   2
         //    \.  5
         //      \/
@@ -249,7 +252,7 @@ public class InstructionListTest {
     // problem: we normally don't want instructions if streetname stays but here it is suboptimal:
     @Test
     public void testNoInstructionIfSameStreet() {
-        Graph g = new GraphBuilder(carManager).create();
+        Graph g = new GraphBuilder(carManager, json).create();
         //   2
         //    \.  5
         //      \/
@@ -278,7 +281,7 @@ public class InstructionListTest {
 
     @Test
     public void testInstructionsWithTimeAndPlace() {
-        Graph g = new GraphBuilder(carManager).create();
+        Graph g = new GraphBuilder(carManager, json).create();
         //   n-4-5   (n: pillar node)
         //   |
         // 7-3-2-6
@@ -452,7 +455,7 @@ public class InstructionListTest {
 
     @Test
     public void testEmptyList() {
-        Graph g = new GraphBuilder(carManager).create();
+        Graph g = new GraphBuilder(carManager, json).create();
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(0, 1);
         InstructionList il = p.createPathExtract(carManager, false).calcInstructions(usTR);
         assertEquals(0, il.size());
@@ -480,7 +483,7 @@ public class InstructionListTest {
 
     @Test
     public void testFind() {
-        Graph g = new GraphBuilder(carManager).create();
+        Graph g = new GraphBuilder(carManager, json).create();
         //   n-4-5   (n: pillar node)
         //   |
         // 7-3-2-6

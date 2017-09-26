@@ -19,6 +19,7 @@ package com.graphhopper.routing.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.graphhopper.json.GHJson;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
@@ -33,6 +34,7 @@ import com.graphhopper.util.PMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
 import java.util.*;
 
 /**
@@ -399,9 +401,9 @@ public class EncodingManager implements EncodedValueLookup {
      * Create the EncodingManager from the provided GraphHopper location. Throws an
      * IllegalStateException if it fails. Used if no EncodingManager specified on load.
      */
-    public static EncodingManager create(FlagEncoderFactory factory, String ghLoc) {
+    public static EncodingManager create(FlagEncoderFactory factory, GHJson json, String ghLoc) {
         Directory dir = new RAMDirectory(ghLoc, true);
-        StorableProperties properties = new StorableProperties(dir);
+        StorableProperties properties = new StorableProperties(dir, json);
         if (!properties.loadExisting())
             throw new IllegalStateException("Cannot load properties to fetch EncodingManager configuration at: " + dir.getLocation());
 
@@ -415,6 +417,8 @@ public class EncodingManager implements EncodedValueLookup {
         int bytesForFlags = 4;
         if ("8".equals(properties.get("graph.bytes_for_flags")))
             bytesForFlags = 8;
+
+        // TODO NOW create EncodingManager from ghLoc or storableProperties!
         EncodingManager.Builder builder = new EncodingManager.Builder();
         builder.addAll(factory, acceptStr, bytesForFlags, true);
         return builder.build();

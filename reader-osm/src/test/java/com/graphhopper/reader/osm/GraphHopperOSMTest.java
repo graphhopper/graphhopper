@@ -22,6 +22,8 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.PathWrapper;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
@@ -61,6 +63,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class GraphHopperOSMTest {
+    private final GHJson json = new GHJsonFactory().create();
     private static final String ghLoc = "./target/tmp/ghosm";
     private static final String testOsm = "./src/test/resources/com/graphhopper/reader/osm/test-osm.xml";
     private static final String testOsm3 = "./src/test/resources/com/graphhopper/reader/osm/test-osm3.xml";
@@ -80,7 +83,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testLoadOSM() {
-        GraphHopper closableInstance = new GraphHopperOSM().
+        GraphHopper closableInstance = new GraphHopperOSM(json).
                 setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build()).
                 setGraphHopperLocation(ghLoc).
@@ -93,7 +96,7 @@ public class GraphHopperOSMTest {
         closableInstance.close();
 
         // no encoding manager necessary
-        closableInstance = new GraphHopperOSM().
+        closableInstance = new GraphHopperOSM(json).
                 setStoreOnFlush(true);
         assertTrue(closableInstance.load(ghLoc));
         rsp = closableInstance.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
@@ -118,7 +121,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testLoadOSMNoCH() {
-        GraphHopper gh = new GraphHopperOSM().setStoreOnFlush(true).setCHEnabled(false).
+        GraphHopper gh = new GraphHopperOSM(json).setStoreOnFlush(true).setCHEnabled(false).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build()).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
@@ -131,7 +134,7 @@ public class GraphHopperOSMTest {
         assertEquals(3, rsp.getBest().getPoints().getSize());
 
         gh.close();
-        gh = new GraphHopperOSM().setStoreOnFlush(true).setCHEnabled(false).
+        gh = new GraphHopperOSM(json).setStoreOnFlush(true).setCHEnabled(false).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build());
         assertTrue(gh.load(ghLoc));
         rsp = gh.route(new GHRequest(51.2492152, 9.4317166, 51.2, 9.4));
@@ -140,7 +143,7 @@ public class GraphHopperOSMTest {
 
         gh.close();
 
-        gh = new GraphHopperOSM().
+        gh = new GraphHopperOSM(json).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm).
                 init(new CmdArgs().put("graph.flag_encoders", "car").put(Parameters.CH.PREPARE + "weightings", "no"));
@@ -152,7 +155,7 @@ public class GraphHopperOSMTest {
     @Test
     public void testLoadingWithDifferentCHConfig_issue471() {
         // with CH should not be loadable without CH configured
-        GraphHopper gh = new GraphHopperOSM().setStoreOnFlush(true).
+        GraphHopper gh = new GraphHopperOSM(json).setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build()).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
@@ -162,7 +165,7 @@ public class GraphHopperOSMTest {
         assertEquals(3, rsp.getBest().getPoints().getSize());
         gh.close();
 
-        gh = new GraphHopperOSM().setStoreOnFlush(true).setCHEnabled(false).
+        gh = new GraphHopperOSM(json).setStoreOnFlush(true).setCHEnabled(false).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build());
         try {
             gh.load(ghLoc);
@@ -174,7 +177,7 @@ public class GraphHopperOSMTest {
         Helper.removeDir(new File(ghLoc));
 
         // without CH should not be loadable with CH enabled
-        gh = new GraphHopperOSM().setStoreOnFlush(true).setCHEnabled(false).
+        gh = new GraphHopperOSM(json).setStoreOnFlush(true).setCHEnabled(false).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build()).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
@@ -184,7 +187,7 @@ public class GraphHopperOSMTest {
         assertEquals(3, rsp.getBest().getPoints().getSize());
         gh.close();
 
-        gh = new GraphHopperOSM().setStoreOnFlush(true).
+        gh = new GraphHopperOSM(json).setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build());
         try {
             gh.load(ghLoc);
@@ -196,18 +199,18 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testAllowMultipleReadingInstances() {
-        GraphHopper instance1 = new GraphHopperOSM().setStoreOnFlush(true).
+        GraphHopper instance1 = new GraphHopperOSM(json).setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build()).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
         instance1.importOrLoad();
 
-        GraphHopper instance2 = new GraphHopperOSM().setStoreOnFlush(true).
+        GraphHopper instance2 = new GraphHopperOSM(json).setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build()).
                 setDataReaderFile(testOsm);
         instance2.load(ghLoc);
 
-        GraphHopper instance3 = new GraphHopperOSM().setStoreOnFlush(true).
+        GraphHopper instance3 = new GraphHopperOSM(json).setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build()).
                 setDataReaderFile(testOsm);
         instance3.load(ghLoc);
@@ -221,7 +224,7 @@ public class GraphHopperOSMTest {
     public void testDoNotAllowWritingAndLoadingAtTheSameTime() throws Exception {
         final CountDownLatch latch1 = new CountDownLatch(1);
         final CountDownLatch latch2 = new CountDownLatch(1);
-        final GraphHopper instance1 = new GraphHopperOSM() {
+        final GraphHopper instance1 = new GraphHopperOSM(json) {
             @Override
             protected DataReader importData() throws IOException {
                 try {
@@ -249,7 +252,7 @@ public class GraphHopperOSMTest {
         };
         thread.start();
 
-        GraphHopper instance2 = new GraphHopperOSM().setStoreOnFlush(true).
+        GraphHopper instance2 = new GraphHopperOSM(json).setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build()).
                 setDataReaderFile(testOsm);
         try {
@@ -275,7 +278,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testPrepare() {
-        instance = new GraphHopperOSM().
+        instance = new GraphHopperOSM(json).
                 setStoreOnFlush(false).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build()).
                 setGraphHopperLocation(ghLoc).
@@ -291,7 +294,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testSortedGraph_noCH() {
-        instance = new GraphHopperOSM().setStoreOnFlush(false).
+        instance = new GraphHopperOSM(json).setStoreOnFlush(false).
                 setSortGraph(true).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build()).setCHEnabled(false).
                 setGraphHopperLocation(ghLoc).
@@ -319,7 +322,7 @@ public class GraphHopperOSMTest {
     @Test
     public void testFootAndCar() {
         // now all ways are imported
-        instance = new GraphHopperOSM().setStoreOnFlush(false).
+        instance = new GraphHopperOSM(json).setStoreOnFlush(false).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car,foot").build()).setCHEnabled(false).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm3);
@@ -363,7 +366,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testFailsForWrongConfig() throws IOException {
-        instance = new GraphHopperOSM().init(
+        instance = new GraphHopperOSM(json).init(
                 new CmdArgs().
                         put("datareader.file", testOsm3).
                         put("datareader.dataaccess", "RAM").
@@ -376,7 +379,7 @@ public class GraphHopperOSMTest {
 
         // different config (flagEncoder list)
         try {
-            GraphHopper tmpGH = new GraphHopperOSM().init(
+            GraphHopper tmpGH = new GraphHopperOSM(json).init(
                     new CmdArgs().
                             put("datareader.file", testOsm3).
                             put("datareader.dataaccess", "RAM").
@@ -390,7 +393,7 @@ public class GraphHopperOSMTest {
         }
 
         // different bytesForFlags should fail to load
-        instance = new GraphHopperOSM().init(
+        instance = new GraphHopperOSM(json).init(
                 new CmdArgs().
                         put("datareader.file", testOsm3).
                         put("datareader.dataaccess", "RAM").
@@ -407,7 +410,7 @@ public class GraphHopperOSMTest {
 
         // different order is no longer okay, see #350
         try {
-            GraphHopper tmpGH = new GraphHopperOSM().init(new CmdArgs().
+            GraphHopper tmpGH = new GraphHopperOSM(json).init(new CmdArgs().
                     put("datareader.file", testOsm3).
                     put("datareader.dataaccess", "RAM").
                     put(Parameters.CH.PREPARE + "weightings", "no").
@@ -422,7 +425,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testNoNPE_ifLoadNotSuccessful() {
-        instance = new GraphHopperOSM().
+        instance = new GraphHopperOSM(json).
                 setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build());
         try {
@@ -438,7 +441,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testDoesNotCreateEmptyFolderIfLoadingFromNonExistingPath() {
-        instance = new GraphHopperOSM().
+        instance = new GraphHopperOSM(json).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build());
 
         assertFalse(instance.load(ghLoc));
@@ -448,6 +451,10 @@ public class GraphHopperOSMTest {
     @Test
     public void testFailsForMissingParameters() throws IOException {
         class GHTmp extends GraphHopperOSM {
+            GHTmp() {
+                super(json);
+            }
+
             @Override
             public DataReader importData() throws IOException {
                 return super.importData();
@@ -465,7 +472,7 @@ public class GraphHopperOSMTest {
         }
 
         // missing graph location
-        instance = new GraphHopperOSM();
+        instance = new GraphHopperOSM(json);
         try {
             instance.importOrLoad();
             assertTrue(false);
@@ -474,7 +481,7 @@ public class GraphHopperOSMTest {
         }
 
         // missing OSM file to import
-        instance = new GraphHopperOSM().
+        instance = new GraphHopperOSM(json).
                 setStoreOnFlush(true).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build()).
                 setGraphHopperLocation(ghLoc);
@@ -487,7 +494,7 @@ public class GraphHopperOSMTest {
         }
 
         // missing encoding manager          
-        instance = new GraphHopperOSM().
+        instance = new GraphHopperOSM(json).
                 setStoreOnFlush(true).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm3);
@@ -499,7 +506,7 @@ public class GraphHopperOSMTest {
         }
 
         // Import is possible even if no storeOnFlush is specified BUT here we miss the OSM file
-        instance = new GraphHopperOSM().
+        instance = new GraphHopperOSM(json).
                 setStoreOnFlush(false).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("car").build()).
                 setGraphHopperLocation(ghLoc);
@@ -515,7 +522,7 @@ public class GraphHopperOSMTest {
     @Test
     public void testFootOnly() {
         // now only footable ways are imported => no A D C and B D E => the other both ways have pillar nodes!
-        instance = new GraphHopperOSM().setStoreOnFlush(false).
+        instance = new GraphHopperOSM(json).setStoreOnFlush(false).
                 setEncodingManager(new EncodingManager.Builder().addAllFlagEncoders("foot").build()).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm3);
@@ -534,7 +541,7 @@ public class GraphHopperOSMTest {
 
     @Test
     public void testVia() {
-        instance = new GraphHopperOSM().setStoreOnFlush(true).
+        instance = new GraphHopperOSM(json).setStoreOnFlush(true).
                 init(new CmdArgs().
                         put("datareader.file", testOsm3).
                         put("prepare.min_network_size", "1").
@@ -686,7 +693,7 @@ public class GraphHopperOSMTest {
         EncodingManager encodingManager = new EncodingManager.Builder().addAll(carEncoder).build();
         Weighting weighting = new FastestWeighting(carEncoder);
         GraphHopperStorage g = new GraphHopperStorage(Collections.singletonList(weighting), new RAMDirectory(), encodingManager,
-                false, new GraphExtension.NoOpExtension()).
+                json, false, new GraphExtension.NoOpExtension()).
                 create(20);
         BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
         DecimalEncodedValue avSpeedEnc = encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
@@ -721,7 +728,7 @@ public class GraphHopperOSMTest {
         GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 5, 8, true, 110);
         GHUtility.createEdge(g, avSpeedEnc, 60, accessEnc, 7, 8, true, 110);
 
-        GraphHopper tmp = new GraphHopperOSM().
+        GraphHopper tmp = new GraphHopperOSM(json).
                 setCHEnabled(withCH).
                 setEncodingManager(encodingManager);
         tmp.getCHFactoryDecorator().setWeightingsAsStrings("fastest");
@@ -736,7 +743,7 @@ public class GraphHopperOSMTest {
         CarFlagEncoder carEncoder = new CarFlagEncoder();
         EncodingManager em = new EncodingManager.Builder().addAll(carEncoder).build();
         // Weighting weighting = new FastestWeighting(carEncoder);
-        instance = new GraphHopperOSM().setStoreOnFlush(false).setCHEnabled(false).
+        instance = new GraphHopperOSM(json).setStoreOnFlush(false).setCHEnabled(false).
                 setEncodingManager(em).
                 setGraphHopperLocation(ghLoc).
                 setDataReaderFile(testOsm);
@@ -797,7 +804,7 @@ public class GraphHopperOSMTest {
             EncodingManager em = new EncodingManager.Builder().addAll(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
                     new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()), 8).build();
 
-            GraphHopper tmpGH = new GraphHopperOSM().
+            GraphHopper tmpGH = new GraphHopperOSM(json).
                     setStoreOnFlush(false).
                     setEncodingManager(em).
                     setGraphHopperLocation(ghLoc).
@@ -838,7 +845,7 @@ public class GraphHopperOSMTest {
             EncodingManager em = new EncodingManager.Builder().addAll(Arrays.asList(new CarFlagEncoder(), new MotorcycleFlagEncoder(),
                     new MountainBikeFlagEncoder(), new RacingBikeFlagEncoder(), new FootFlagEncoder()), 8).build();
 
-            GraphHopper tmpGH = new GraphHopperOSM().
+            GraphHopper tmpGH = new GraphHopperOSM(json).
                     setStoreOnFlush(false).
                     setCHEnabled(false).
                     setEncodingManager(em).
@@ -885,7 +892,7 @@ public class GraphHopperOSMTest {
         Weighting fwSimpleTruck = new FastestWeighting(simpleTruck);
         Weighting fwTruck = new FastestWeighting(truck);
         RAMDirectory ramDir = new RAMDirectory();
-        GraphHopperStorage storage = new GraphHopperStorage(Arrays.asList(fwSimpleTruck, fwTruck), ramDir, em, false, new GraphExtension.NoOpExtension());
+        GraphHopperStorage storage = new GraphHopperStorage(Arrays.asList(fwSimpleTruck, fwTruck), ramDir, em, json, false, new GraphExtension.NoOpExtension());
         decorator.addWeighting(fwSimpleTruck);
         decorator.addWeighting(fwTruck);
         decorator.addPreparation(new PrepareContractionHierarchies(ramDir, storage, storage.getGraph(CHGraph.class, fwSimpleTruck), fwSimpleTruck, TraversalMode.NODE_BASED));
@@ -911,7 +918,7 @@ public class GraphHopperOSMTest {
     public void testGetMultipleWeightingsForCH() {
         EncodingManager em = new EncodingManager.Builder().addAll(Arrays.asList(new CarFlagEncoder()), 8).build();
 
-        GraphHopper tmpGH = new GraphHopperOSM().
+        GraphHopper tmpGH = new GraphHopperOSM(json).
                 setStoreOnFlush(false).
                 setEncodingManager(em);
         tmpGH.getCHFactoryDecorator().setWeightingsAsStrings("fastest", "shortest");

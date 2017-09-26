@@ -17,6 +17,8 @@
  */
 package com.graphhopper.reader;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -37,13 +39,14 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class PrinctonReaderTest {
+    GHJson json = new GHJsonFactory().create();
     private EncodingManager encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAllFlagEncoders("car").build();
     private BooleanEncodedValue accessEnc = encodingManager.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS);
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(accessEnc, true, false);
 
     @Test
     public void testRead() {
-        Graph graph = new GraphBuilder(encodingManager).create();
+        Graph graph = new GraphBuilder(encodingManager, json).create();
         new PrinctonReader(graph, accessEnc, encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED)).
                 setStream(PrinctonReader.class.getResourceAsStream("tinyEWD.txt")).read();
         assertEquals(8, graph.getNodes());
@@ -54,7 +57,7 @@ public class PrinctonReaderTest {
 
     @Test
     public void testMediumRead() throws IOException {
-        Graph graph = new GraphBuilder(encodingManager).create();
+        Graph graph = new GraphBuilder(encodingManager, json).create();
         new PrinctonReader(graph, accessEnc, encodingManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED)).
                 setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
         assertEquals(250, graph.getNodes());

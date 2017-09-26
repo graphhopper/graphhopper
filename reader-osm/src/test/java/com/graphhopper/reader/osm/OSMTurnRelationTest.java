@@ -17,6 +17,8 @@
  */
 package com.graphhopper.reader.osm;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.osm.OSMTurnRelation.Type;
 import com.graphhopper.routing.EdgeBasedRoutingAlgorithmTest;
 import com.graphhopper.routing.profiles.TagParserFactory;
@@ -38,6 +40,8 @@ import static org.junit.Assert.assertEquals;
  * @author Peter Karich
  */
 public class OSMTurnRelationTest {
+    private final GHJson json = new GHJsonFactory().create();
+
     @Test
     public void testGetRestrictionAsEntries() {
         CarFlagEncoder encoder = new CarFlagEncoder(5, 5, 1);
@@ -50,7 +54,7 @@ public class OSMTurnRelationTest {
         internalToOSMEdge.put(4, 4L);
 
         EncodingManager em = new EncodingManager.Builder().addAll(encoder).build();
-        GraphHopperStorage ghStorage = new GraphBuilder(em).create();
+        GraphHopperStorage ghStorage = new GraphBuilder(em, json).create();
         EdgeBasedRoutingAlgorithmTest.initGraph(ghStorage, em.getBooleanEncodedValue(TagParserFactory.CAR_ACCESS),
                 em.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED));
         OSMReader osmReader = new OSMReader(ghStorage) {

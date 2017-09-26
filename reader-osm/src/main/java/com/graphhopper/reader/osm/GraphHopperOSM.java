@@ -18,6 +18,7 @@
 package com.graphhopper.reader.osm;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.json.GHJson;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.storage.GraphHopperStorage;
 
@@ -27,6 +28,11 @@ import com.graphhopper.storage.GraphHopperStorage;
  * @author Peter Karich
  */
 public class GraphHopperOSM extends GraphHopper {
+
+    public GraphHopperOSM(GHJson json) {
+        super(json);
+    }
+
     @Override
     protected DataReader createReader(GraphHopperStorage ghStorage) {
         return initDataReader(new OSMReader(ghStorage));
