@@ -424,13 +424,16 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         return clonePL;
     }
 
+    /**
+     * This method does a deep copy of this object for the specified range.
+     */
     public PointList copy(int from, int end) {
         if (from > end)
             throw new IllegalArgumentException("from must be smaller or equals to end");
         if (from < 0 || end > size)
             throw new IllegalArgumentException("Illegal interval: " + from + ", " + end + ", size:" + size);
 
-        PointList copyPL = new PointList(size, is3D);
+        PointList copyPL = new PointList(end - from, is3D);
         if (is3D)
             for (int i = from; i < end; i++) {
                 copyPL.add(latitudes[i], longitudes[i], elevations[i]);
