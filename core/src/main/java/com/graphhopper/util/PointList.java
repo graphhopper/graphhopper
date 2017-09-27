@@ -157,6 +157,16 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             elevations = new double[cap];
     }
 
+    private PointList(double[] latitudes, double[] longitudes, double[] elevations) {
+        this.size = latitudes.length;
+        this.latitudes = latitudes;
+        this.longitudes = longitudes;
+        this.is3D = elevations != null;
+        if (is3D) {
+            this.elevations = elevations;
+        }
+    }
+
     @Override
     public boolean is3D() {
         return is3D;
@@ -430,17 +440,18 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         if (from < 0 || end > size)
             throw new IllegalArgumentException("Illegal interval: " + from + ", " + end + ", size:" + size);
 
-        PointList copyPL = new PointList(size, is3D);
+        double[] copyLat = new double[end - from];
+        double[] copyLon = new double[end - from];
+        double[] copyEl = null;
         if (is3D)
-            for (int i = from; i < end; i++) {
-                copyPL.add(latitudes[i], longitudes[i], elevations[i]);
-            }
-        else
-            for (int i = from; i < end; i++) {
-                copyPL.add(latitudes[i], longitudes[i], Double.NaN);
-            }
+            copyEl = new double[end - from];
 
-        return copyPL;
+        System.arraycopy(this.latitudes, from, copyLat, 0, end - from);
+        System.arraycopy(this.longitudes, from, copyLon, 0, end - from);
+        if (is3D)
+            System.arraycopy(this.elevations, from, copyEl, 0, end - from);
+
+        return new PointList(copyLat, copyLon, copyEl);
     }
 
     @Override

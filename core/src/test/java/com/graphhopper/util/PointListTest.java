@@ -21,6 +21,7 @@ import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 /**
  * @author Peter Karich
@@ -94,5 +95,21 @@ public class PointListTest {
             counter++;
             assertEquals(counter, point.getLat(), 0.1);
         }
+    }
+
+    @Test
+    public void testCopy() {
+        PointList pl1 = new PointList(100, true);
+        for (int i = 0; i < 1000; i++) {
+            pl1.add(i, i, 0);
+        }
+
+        PointList pl2 = pl1.copy(100, 600);
+
+        assertEquals(500, pl2.size);
+        for (int i = 0; i < pl2.size; i++) {
+            assertEquals(pl1.getLat(i + 100), pl2.getLat(i), .01);
+        }
+
     }
 }
