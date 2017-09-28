@@ -51,14 +51,14 @@ public class RoundTripRoutingTemplateTest {
     private final GHPoint ghPoint1 = new GHPoint(0, 0);
     private final GHPoint ghPoint2 = new GHPoint(1, 1);
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void lookup_throwsIfNumberOfGivenPointsNotOne() {
         RoundTripRoutingTemplate routingTemplate = new RoundTripRoutingTemplate(
                 new GHRequest(Collections.singletonList(ghPoint1)), new GHResponse(), null, 1);
         routingTemplate.lookup(Arrays.asList(ghPoint1, ghPoint2), carFE);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void lookup_throwsIfNumberOfPointsInRequestNotOne() {
         RoundTripRoutingTemplate routingTemplate = new RoundTripRoutingTemplate(
                 new GHRequest(Arrays.asList(ghPoint1, ghPoint2)), new GHResponse(), null, 1);
