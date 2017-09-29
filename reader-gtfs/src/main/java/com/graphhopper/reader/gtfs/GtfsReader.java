@@ -50,13 +50,15 @@ class GtfsReader {
     private LocalDate endDate;
 
     static class TripWithStopTimes {
-        public TripWithStopTimes(Trip trip, Iterable<StopTime> stopTimes) {
+        public TripWithStopTimes(Trip trip, Iterable<StopTime> stopTimes, BitSet validOnDay) {
             this.trip = trip;
             this.stopTimes = stopTimes;
+            this.validOnDay = validOnDay;
         }
 
         Trip trip;
         Iterable<StopTime> stopTimes;
+        BitSet validOnDay;
     }
 
     private static class EnterAndExitNodeIdWithStopId {
@@ -160,7 +162,16 @@ class GtfsReader {
         }
         blockTrips.asMap().values().forEach(unsortedTrips -> {
             List<TripWithStopTimes> trips = unsortedTrips.stream()
-                    .map(trip -> new TripWithStopTimes(trip, getInterpolatedStopTimesForTrip(trip.trip_id)))
+                    .map(trip -> {
+                        Service service = feed.services.get(trip.service_id);
+                        BitSet validOnDay = new BitSet((int) DAYS.between(startDate, endDate));
+                        for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
+                            if (service.activeOn(date)) {
+                                validOnDay.set((int) DAYS.between(startDate, date));
+                            }
+                        }
+                        return new TripWithStopTimes(trip, getInterpolatedStopTimesForTrip(trip.trip_id), validOnDay);
+                    })
                     .sorted(Comparator.comparingInt(trip -> trip.stopTimes.iterator().next().departure_time))
                     .collect(Collectors.toList());
             if (trips.stream().map(trip -> feed.getFrequencies(trip.trip.trip_id)).distinct().count() != 1) {
@@ -215,13 +226,6 @@ class GtfsReader {
         for (TripWithStopTimes trip : trips) {
             IntArrayList boardEdges = new IntArrayList();
             IntArrayList alightEdges = new IntArrayList();
-            Service service = feed.services.get(trip.trip.service_id);
-            BitSet validOnDay = new BitSet((int) DAYS.between(startDate, endDate));
-            for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
-                if (service.activeOn(date)) {
-                    validOnDay.set((int) DAYS.between(startDate, date));
-                }
-            }
             ZoneId zoneId = ZoneId.of(feed.agency.get(feed.routes.get(trip.trip.route_id).agency_id).agency_timezone);
             StopTime prev = null;
             int arrivalNode = -1;
@@ -264,7 +268,7 @@ class GtfsReader {
                 nodeAccess.setAdditionalNodeField(departureNode, NodeType.INTERNAL_PT.ordinal());
                 times.put(departureNode, stopTime.departure_time + time);
                 int dayShift = stopTime.departure_time / (24 * 60 * 60);
-                GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(validOnDay, dayShift), zoneId, startDate);
+                GtfsStorage.Validity validOn = new GtfsStorage.Validity(getValidOn(trip.validOnDay, dayShift), zoneId, startDate);
                 int validityId;
                 if (gtfsStorage.getOperatingDayPatterns().containsKey(validOn)) {
                     validityId = gtfsStorage.getOperatingDayPatterns().get(validOn);

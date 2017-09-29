@@ -33,6 +33,7 @@ import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 
 import java.time.LocalDate;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -145,7 +146,8 @@ public class RealtimeFeed {
                                 return stopTime;
                             })
                             .collect(Collectors.toList());
-                    return new GtfsReader.TripWithStopTimes(trip, stopTimes);
+                    BitSet validity = new BitSet();
+                    return new GtfsReader.TripWithStopTimes(trip, stopTimes, validity);
                 })
                 .forEach(trip -> gtfsReader.addTrips(LocalDate.now(), LocalDate.now(), Collections.singletonList(trip), 0));
         return new RealtimeFeed(blockedEdges);
