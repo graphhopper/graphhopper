@@ -25,7 +25,7 @@ import com.google.common.collect.HashMultimap;
 import com.google.common.collect.SetMultimap;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.storage.GraphHopperStorage;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.storage.index.QueryResult;
@@ -90,7 +90,7 @@ class GtfsReader {
         SINGLE_FREQUENCY.headway_secs = 1;
     }
 
-    private final GraphHopperStorage graph;
+    private final Graph graph;
     private final LocationIndex walkNetworkIndex;
     private final GtfsStorage gtfsStorage;
 
@@ -106,19 +106,19 @@ class GtfsReader {
     private Collection<EnterAndExitNodeIdWithStopId> stopEnterAndExitNodes = new ArrayList<>();
     private final PtFlagEncoder encoder;
 
-    GtfsReader(String id, GraphHopperStorage ghStorage, LocationIndex walkNetworkIndex) {
+    GtfsReader(String id, Graph graph, PtFlagEncoder encoder, LocationIndex walkNetworkIndex) {
         this.id = id;
-        this.graph = ghStorage;
-        this.gtfsStorage = (GtfsStorage) ghStorage.getExtension();
-        this.nodeAccess = ghStorage.getNodeAccess();
+        this.graph = graph;
+        this.gtfsStorage = (GtfsStorage) graph.getExtension();
+        this.nodeAccess = graph.getNodeAccess();
         this.walkNetworkIndex = walkNetworkIndex;
-        this.encoder = (PtFlagEncoder) graph.getEncodingManager().getEncoder("pt");
+        this.encoder = encoder;
         this.feed = this.gtfsStorage.getGtfsFeeds().get(id);
-        this.startDate = feed.calculateStats().getStartDate();
-        this.endDate = feed.calculateStats().getEndDate();
     }
 
     void readGraph() {
+        this.startDate = feed.calculateStats().getStartDate();
+        this.endDate = feed.calculateStats().getEndDate();
         transfers = new Transfers(feed);
         gtfsStorage.getFares().putAll(feed.fares);
         i = graph.getNodes();

@@ -327,7 +327,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                 walkNetworkIndex = new EmptyLocationIndex();
             }
             for (int i = 0; i < id; i++) {
-                new GtfsReader("gtfs_" + i, graphHopperStorage, walkNetworkIndex).readGraph();
+                new GtfsReader("gtfs_" + i, graphHopperStorage, ptFlagEncoder, walkNetworkIndex).readGraph();
             }
             graphHopperStorage.flush();
             return graphHopperStorage;
