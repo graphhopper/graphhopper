@@ -182,7 +182,7 @@ public class RealtimeIT {
         final GtfsRealtime.TripUpdate.Builder tripUpdate = feedMessageBuilder.addEntityBuilder()
                 .setId("pups")
                 .getTripUpdateBuilder()
-                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setScheduleRelationship(ADDED).setTripId("EXTRA").setStartTime("06:45:00"));
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setScheduleRelationship(ADDED).setTripId("EXTRA").setRouteId("CITY").setStartTime("06:45:00"));
         tripUpdate
                 .addStopTimeUpdateBuilder()
                 .setStopSequence(1)

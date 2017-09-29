@@ -62,7 +62,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         }
 
         public GraphHopperGtfs createWith(GtfsRealtime.FeedMessage realtimeFeed) {
-            return new GraphHopperGtfs(flagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(gtfsStorage, realtimeFeed));
+            return new GraphHopperGtfs(flagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(gtfsStorage, flagEncoder, realtimeFeed));
         }
 
         public GraphHopperGtfs createWithoutRealtimeFeed() {

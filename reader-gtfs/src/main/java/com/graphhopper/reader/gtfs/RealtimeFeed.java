@@ -19,9 +19,11 @@
 package com.graphhopper.reader.gtfs;
 
 import com.carrotsearch.hppc.IntHashSet;
+import com.carrotsearch.hppc.IntIntHashMap;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
+import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
@@ -52,7 +54,7 @@ public class RealtimeFeed {
         return new RealtimeFeed(new IntHashSet());
     }
 
-    public static RealtimeFeed fromProtobuf(GtfsStorage staticGtfs, GtfsRealtime.FeedMessage feedMessage) {
+    public static RealtimeFeed fromProtobuf(GtfsStorage staticGtfs, PtFlagEncoder encoder, GtfsRealtime.FeedMessage feedMessage) {
         final IntHashSet blockedEdges = new IntHashSet();
         feedMessage.getEntityList().stream()
             .filter(GtfsRealtime.FeedEntity::hasTripUpdate)
@@ -69,7 +71,74 @@ public class RealtimeFeed {
                         });
             });
         final Graph graph = new Graph() {
+            final NodeAccess nodeAccess = new NodeAccess() {
+                IntIntHashMap additionalNodeFields = new IntIntHashMap();
 
+                @Override
+                public int getAdditionalNodeField(int nodeId) {
+                    return 0;
+                }
+
+                @Override
+                public void setAdditionalNodeField(int nodeId, int additionalValue) {
+                    additionalNodeFields.put(nodeId, additionalValue);
+                }
+
+                @Override
+                public boolean is3D() {
+                    return false;
+                }
+
+                @Override
+                public int getDimension() {
+                    return 0;
+                }
+
+                @Override
+                public void ensureNode(int nodeId) {
+
+                }
+
+                @Override
+                public void setNode(int nodeId, double lat, double lon) {
+
+                }
+
+                @Override
+                public void setNode(int nodeId, double lat, double lon, double ele) {
+
+                }
+
+                @Override
+                public double getLatitude(int nodeId) {
+                    return 0;
+                }
+
+                @Override
+                public double getLat(int nodeId) {
+                    return 0;
+                }
+
+                @Override
+                public double getLongitude(int nodeId) {
+                    return 0;
+                }
+
+                @Override
+                public double getLon(int nodeId) {
+                    return 0;
+                }
+
+                @Override
+                public double getElevation(int nodeId) {
+                    return 0;
+                }
+
+                @Override
+                public double getEle(int nodeId) {
+                    return 0;
+                }
+            };
             @Override
             public Graph getBaseGraph() {
                 return null;
@@ -82,7 +151,7 @@ public class RealtimeFeed {
 
             @Override
             public NodeAccess getNodeAccess() {
-                return null;
+                return nodeAccess;
             }
 
             @Override
@@ -97,7 +166,9 @@ public class RealtimeFeed {
 
             @Override
             public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
-                return null;
+                final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
+                        -1, a, b, 0,0, "", null);
+                return newEdge;
             }
 
             @Override
@@ -130,7 +201,7 @@ public class RealtimeFeed {
                 return staticGtfs;
             }
         };
-        final GtfsReader gtfsReader = new GtfsReader("gtfs_0", graph, null, null);
+        final GtfsReader gtfsReader = new GtfsReader("gtfs_0", graph, encoder, null);
         feedMessage.getEntityList().stream()
                 .filter(GtfsRealtime.FeedEntity::hasTripUpdate)
                 .map(GtfsRealtime.FeedEntity::getTripUpdate)
