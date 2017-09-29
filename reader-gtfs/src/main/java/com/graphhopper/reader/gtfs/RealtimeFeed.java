@@ -130,7 +130,7 @@ public class RealtimeFeed {
                 return staticGtfs;
             }
         };
-        final GtfsReader gtfsReader = new GtfsReader("wurst", graph, null, null);
+        final GtfsReader gtfsReader = new GtfsReader("gtfs_0", graph, null, null);
         feedMessage.getEntityList().stream()
                 .filter(GtfsRealtime.FeedEntity::hasTripUpdate)
                 .map(GtfsRealtime.FeedEntity::getTripUpdate)
@@ -143,6 +143,8 @@ public class RealtimeFeed {
                             .map(stopTimeUpdate -> {
                                 final StopTime stopTime = new StopTime();
                                 stopTime.stop_sequence = stopTimeUpdate.getStopSequence();
+                                stopTime.stop_id = stopTimeUpdate.getStopId();
+                                stopTime.trip_id = trip.trip_id;
                                 // stopTime.arrival_time = stopTimeUpdate.getArrival().getTime();
                                 return stopTime;
                             })
