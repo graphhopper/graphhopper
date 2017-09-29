@@ -32,6 +32,7 @@ import com.graphhopper.util.PointList;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Spliterators;
@@ -48,7 +49,7 @@ final class GraphExplorer {
     private final boolean reverse;
     private final PtTravelTimeWeighting weighting;
     private final PointList extraNodes;
-    private final List<VirtualEdgeIteratorState> extraEdges;
+    private final List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>();
     private final ArrayListMultimap<Integer, VirtualEdgeIteratorState> extraEdgesBySource = ArrayListMultimap.create();
     private final ArrayListMultimap<Integer, VirtualEdgeIteratorState> extraEdgesByDestination = ArrayListMultimap.create();
     private final Graph graph;
@@ -65,7 +66,7 @@ final class GraphExplorer {
         this.realtimeFeed = realtimeFeed;
         this.reverse = reverse;
         this.extraNodes = extraNodes;
-        this.extraEdges = extraEdges;
+        this.extraEdges.addAll(extraEdges);
         for (VirtualEdgeIteratorState extraEdge : extraEdges) {
             extraEdgesBySource.put(extraEdge.getBaseNode(), extraEdge);
             extraEdgesByDestination.put(extraEdge.getAdjNode(), (VirtualEdgeIteratorState) extraEdge.detach(true));

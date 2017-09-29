@@ -50,6 +50,13 @@ public class RealtimeFeed {
                             blockedEdges.add(leaveEdges[skippedStopSequenceNumber]);
                         });
             });
+        feedMessage.getEntityList().stream()
+                .filter(GtfsRealtime.FeedEntity::hasTripUpdate)
+                .map(GtfsRealtime.FeedEntity::getTripUpdate)
+                .filter(tripUpdate -> tripUpdate.getTrip().getScheduleRelationship() == GtfsRealtime.TripDescriptor.ScheduleRelationship.ADDED)
+                .forEach(tripUpdate -> {
+                    tripUpdate.getStopTimeUpdateList();
+                });
         return new RealtimeFeed(blockedEdges);
     }
 
