@@ -177,10 +177,11 @@ class GtfsReader {
             if (trips.stream().map(trip -> feed.getFrequencies(trip.trip.trip_id)).distinct().count() != 1) {
                 throw new RuntimeException("Found a block with frequency-based trips. Not supported.");
             }
+            ZoneId zoneId = ZoneId.of(feed.agency.get(feed.routes.get(trips.iterator().next().trip.route_id).agency_id).agency_timezone);
             Collection<Frequency> frequencies = feed.getFrequencies(trips.iterator().next().trip.trip_id);
             for (Frequency frequency : (frequencies.isEmpty() ? Collections.singletonList(SINGLE_FREQUENCY) : frequencies)) {
                 for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
-                    addTrips(startDate, endDate, trips, time);
+                    addTrips(startDate, endDate, zoneId, trips, time);
                 }
             }
         });
@@ -221,12 +222,11 @@ class GtfsReader {
         }
     }
 
-    void addTrips(LocalDate startDate, LocalDate endDate, List<TripWithStopTimes> trips, int time) {
+    void addTrips(LocalDate startDate, LocalDate endDate, ZoneId zoneId, List<TripWithStopTimes> trips, int time) {
         List<Integer> arrivalNodes = new ArrayList<>();
         for (TripWithStopTimes trip : trips) {
             IntArrayList boardEdges = new IntArrayList();
             IntArrayList alightEdges = new IntArrayList();
-            ZoneId zoneId = ZoneId.of(feed.agency.get(feed.routes.get(trip.trip.route_id).agency_id).agency_timezone);
             StopTime prev = null;
             int arrivalNode = -1;
             int departureNode = -1;
