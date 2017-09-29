@@ -98,16 +98,16 @@ public class PointListTest {
     }
 
     @Test
-    public void testCopy() {
+    public void testShallowCopy() {
         PointList pl1 = new PointList(100, true);
         for (int i = 0; i < 1000; i++) {
             pl1.add(i, i, 0);
         }
 
-        PointList pl2 = pl1.copy(100, 600);
+        PointList pl2 = pl1.shallowCopy(100, 600);
 
-        assertEquals(500, pl2.size);
-        for (int i = 0; i < pl2.size; i++) {
+        assertEquals(500, pl2.size());
+        for (int i = 0; i < pl2.size(); i++) {
             assertEquals(pl1.getLat(i + 100), pl2.getLat(i), .01);
         }
 

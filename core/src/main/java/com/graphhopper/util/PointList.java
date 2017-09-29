@@ -269,11 +269,11 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public int getSize() {
-        return size;
+        return size();
     }
 
     public boolean isEmpty() {
-        return size == 0;
+        return size() == 0;
     }
 
     @Override
@@ -434,7 +434,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         return clonePL;
     }
 
-    public PointList copy(int from, int end) {
+    public PointList copy(final int from, final int end) {
         if (from > end)
             throw new IllegalArgumentException("from must be smaller or equals to end");
         if (from < 0 || end > size)
@@ -452,6 +452,52 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             System.arraycopy(this.elevations, from, copyEl, 0, end - from);
 
         return new PointList(copyLat, copyLon, copyEl);
+    }
+
+    public PointList shallowCopy(final int from, final int end) {
+        if (from > end)
+            throw new IllegalArgumentException("from must be smaller or equals to end");
+        if (from < 0 || end > size)
+            throw new IllegalArgumentException("Illegal interval: " + from + ", " + end + ", size:" + size);
+
+        return new PointList(this.latitudes, this.longitudes, this.elevations) {
+            @Override
+            public void set(int index, double lat, double lon, double ele) {
+                throw new RuntimeException("cannot change Shallow Copy of PointList");
+            }
+
+            @Override
+            public int size() {
+                return end - from;
+            }
+
+            @Override
+            public void add(double lat, double lon, double ele) {
+                throw new RuntimeException("cannot change Shallow Copy of PointList");
+            }
+
+            @Override
+            public double getLatitude(int index) {
+                if (index > size())
+                    throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size());
+                return super.getLatitude(from + index);
+            }
+
+            @Override
+            public double getLongitude(int index) {
+                if (index > size())
+                    throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size());
+                return super.getLongitude(from + index);
+            }
+
+            @Override
+            public double getElevation(int index) {
+                if (index > size())
+                    throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size());
+                return super.getElevation(from + index);
+            }
+
+        };
     }
 
     @Override

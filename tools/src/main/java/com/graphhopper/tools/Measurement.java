@@ -71,7 +71,7 @@ public class Measurement {
 
         seed = args.getLong("measurement.seed", 123);
         String gitCommit = args.get("measurement.gitinfo", "");
-        int count = args.getInt("measurement.count", 5000);
+        int count = args.getInt("measurement.count", 20000);
 
         GraphHopper hopper = new GraphHopperOSM() {
             @Override
@@ -112,7 +112,9 @@ public class Measurement {
             maxNode = g.getNodes();
             boolean isCH = false;
             boolean isLM = false;
+
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
+            /*
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
             printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1);
@@ -127,10 +129,10 @@ public class Measurement {
 
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
-
+*/
             if (hopper.getCHFactoryDecorator().isEnabled()) {
                 isCH = true;
-
+/*
                 if (hopper.getLMFactoryDecorator().isEnabled()) {
                     isLM = true;
                     System.gc();
@@ -138,7 +140,7 @@ public class Measurement {
                     int lmCount = 5;
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount);
                 }
-
+*/
                 isLM = false;
                 System.gc();
                 Weighting weighting = hopper.getCHFactoryDecorator().getWeightings().get(0);
