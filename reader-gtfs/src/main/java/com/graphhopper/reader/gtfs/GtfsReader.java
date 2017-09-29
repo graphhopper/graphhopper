@@ -155,9 +155,9 @@ class GtfsReader {
             for (Frequency frequency : (frequencies.isEmpty() ? Collections.singletonList(SINGLE_FREQUENCY) : frequencies)) {
                 for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
                     List<Integer> arrivalNodes = new ArrayList<>();
-                    IntArrayList boardEdges = new IntArrayList();
-                    IntArrayList alightEdges = new IntArrayList();
                     for (Trip trip : trips) {
+                        IntArrayList boardEdges = new IntArrayList();
+                        IntArrayList alightEdges = new IntArrayList();
                         Service service = feed.services.get(trip.service_id);
                         BitSet validOnDay = new BitSet((int) DAYS.between(startDate, endDate));
                         for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
