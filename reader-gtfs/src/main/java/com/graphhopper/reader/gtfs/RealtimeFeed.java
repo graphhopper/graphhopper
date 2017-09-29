@@ -28,7 +28,6 @@ import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
@@ -36,6 +35,7 @@ import com.graphhopper.util.shapes.BBox;
 
 import java.time.LocalDate;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
@@ -46,12 +46,15 @@ import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate
 public class RealtimeFeed {
     private final IntHashSet blockedEdges;
 
-    private RealtimeFeed(IntHashSet blockedEdges) {
+    private final List<VirtualEdgeIteratorState> additionalEdges;
+
+    private RealtimeFeed(IntHashSet blockedEdges, List<VirtualEdgeIteratorState> additionalEdges) {
         this.blockedEdges = blockedEdges;
+        this.additionalEdges = additionalEdges;
     }
 
     public static RealtimeFeed empty() {
-        return new RealtimeFeed(new IntHashSet());
+        return new RealtimeFeed(new IntHashSet(), Collections.emptyList());
     }
 
     public static RealtimeFeed fromProtobuf(GtfsStorage staticGtfs, PtFlagEncoder encoder, GtfsRealtime.FeedMessage feedMessage) {
@@ -70,6 +73,7 @@ public class RealtimeFeed {
                             blockedEdges.add(leaveEdges[skippedStopSequenceNumber]);
                         });
             });
+        final List<VirtualEdgeIteratorState> additionalEdges = new ArrayList<>();
         final Graph graph = new Graph() {
             final NodeAccess nodeAccess = new NodeAccess() {
                 IntIntHashMap additionalNodeFields = new IntIntHashMap();
@@ -168,6 +172,7 @@ public class RealtimeFeed {
             public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
                 final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
                         -1, a, b, 0,0, "", null);
+                additionalEdges.add(newEdge);
                 return newEdge;
             }
 
@@ -224,10 +229,15 @@ public class RealtimeFeed {
                     return new GtfsReader.TripWithStopTimes(trip, stopTimes, validity);
                 })
                 .forEach(trip -> gtfsReader.addTrips(LocalDate.now(), LocalDate.now(), ZoneId.systemDefault(), Collections.singletonList(trip), 0));
-        return new RealtimeFeed(blockedEdges);
+        return new RealtimeFeed(blockedEdges, additionalEdges);
     }
 
     boolean isBlocked(int edgeId) {
         return blockedEdges.contains(edgeId);
     }
+
+    List<VirtualEdgeIteratorState> getAdditionalEdges() {
+        return additionalEdges;
+    }
+
 }

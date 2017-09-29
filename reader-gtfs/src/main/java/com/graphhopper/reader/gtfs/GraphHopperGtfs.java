@@ -97,7 +97,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         private final GHPoint enter;
         private final GHPoint exit;
         private final Translation translation;
-        private final List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>();
+        private final List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>(realtimeFeed.getAdditionalEdges());
         private final PointList extraNodes = new PointList();
         private final Map<Integer, PathWrapper> walkPaths = new HashMap<>();
 
