@@ -373,13 +373,13 @@ public class Path {
     /**
      * Calculates the PathDetails for this Path. This method will return fast, if there are no calculators.
      *
-     * @param pathBuilderFactory Generates the relevant PathBuilders, accepts null inputs
+     * @param pathBuilderFactory Generates the relevant PathBuilders
      * @return List of PathDetails for this Path
      */
-    public Map<String, List<PathDetail>> calcDetails(final PathDetailsBuilderFactory pathBuilderFactory, int previousIndex) {
-        if (!isFound() || pathBuilderFactory == null)
+    public Map<String, List<PathDetail>> calcDetails(List<String> requestedPathDetails, PathDetailsBuilderFactory pathBuilderFactory, int previousIndex) {
+        if (!isFound() || requestedPathDetails.isEmpty())
             return Collections.EMPTY_MAP;
-        List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders();
+        List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, encoder, weighting);
         if (pathBuilders.isEmpty())
             return Collections.EMPTY_MAP;
 

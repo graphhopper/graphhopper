@@ -32,17 +32,7 @@ import static com.graphhopper.util.Parameters.DETAILS.*;
  */
 public class PathDetailsBuilderFactory {
 
-    private final List<String> requestedPathDetails;
-    private final FlagEncoder encoder;
-    private final Weighting weighting;
-
-    public PathDetailsBuilderFactory(List<String> requestedPathDetails, FlagEncoder encoder, Weighting weighting) {
-        this.requestedPathDetails = requestedPathDetails;
-        this.encoder = encoder;
-        this.weighting = weighting;
-    }
-
-    public List<PathDetailsBuilder> createPathDetailsBuilders() {
+    public List<PathDetailsBuilder> createPathDetailsBuilders(List<String> requestedPathDetails, FlagEncoder encoder, Weighting weighting) {
         List<PathDetailsBuilder> builders = new ArrayList<>();
 
         if (requestedPathDetails.contains(AVERAGE_SPEED))

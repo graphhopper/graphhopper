@@ -46,7 +46,8 @@ public class PathMerger {
     private boolean simplifyResponse = true;
     private DouglasPeucker douglasPeucker = DP;
     private boolean calcPoints = true;
-    private PathDetailsBuilderFactory calculatorFactory;
+    private PathDetailsBuilderFactory pathBuilderFactory;
+    private List<String> requestedPathDetails = Collections.EMPTY_LIST;
 
     public PathMerger setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
@@ -58,8 +59,9 @@ public class PathMerger {
         return this;
     }
 
-    public PathMerger setPathDetailsBuilderFactory(PathDetailsBuilderFactory calculatorFactory) {
-        this.calculatorFactory = calculatorFactory;
+    public PathMerger setPathDetailsBuilders(PathDetailsBuilderFactory pathBuilderFactory, List<String> requestedPathDetails) {
+        this.pathBuilderFactory = pathBuilderFactory;
+        this.requestedPathDetails = requestedPathDetails;
         return this;
     }
 
@@ -82,7 +84,7 @@ public class PathMerger {
 
         InstructionList fullInstructions = new InstructionList(tr);
         PointList fullPoints = PointList.EMPTY;
-        List<String> description = new ArrayList<String>();
+        List<String> description = new ArrayList<>();
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++) {
             Path path = paths.get(pathIndex);
             description.addAll(path.getDescription());
@@ -110,7 +112,7 @@ public class PathMerger {
                     fullPoints = new PointList(tmpPoints.size(), tmpPoints.is3D());
 
                 fullPoints.add(tmpPoints);
-                altRsp.addPathDetails(path.calcDetails(calculatorFactory, origPoints));
+                altRsp.addPathDetails(path.calcDetails(requestedPathDetails, pathBuilderFactory, origPoints));
                 origPoints += tmpPoints.size();
             }
 
