@@ -155,7 +155,7 @@ public class PathSimplification {
 
     private void reduceLength(Object o, int index, int startIndex, int newEndIndex) {
         if (o instanceof InstructionList) {
-            ((InstructionList) o).get(index).setPoints(this.pointList.copy(startIndex, newEndIndex));
+            ((InstructionList) o).get(index).setPoints(this.pointList.shallowCopy(startIndex, newEndIndex));
         } else if (o instanceof List) {
             PathDetail pd = ((List<PathDetail>) o).get(index);
             pd.setFirst(startIndex);

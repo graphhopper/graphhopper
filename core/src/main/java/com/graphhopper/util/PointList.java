@@ -138,7 +138,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
     };
     private final static DistanceCalc3D distCalc3D = Helper.DIST_3D;
-    private static String ERR_MSG = "Tried to access PointList with too big index!";
+    protected static String ERR_MSG = "Tried to access PointList with too big index!";
     protected int size = 0;
     protected boolean is3D;
     private double[] latitudes;
@@ -407,13 +407,13 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             return false;
 
         for (int i = 0; i < size; i++) {
-            if (!NumHelper.equalsEps(latitudes[i], other.latitudes[i]))
+            if (!NumHelper.equalsEps(getLatitude(i), other.getLatitude(i)))
                 return false;
 
-            if (!NumHelper.equalsEps(longitudes[i], other.longitudes[i]))
+            if (!NumHelper.equalsEps(getLongitude(i), other.getLongitude(i)))
                 return false;
 
-            if (is3D && !NumHelper.equalsEps(elevations[i], other.elevations[i]))
+            if (this.is3D() && !NumHelper.equalsEps(getElevation(i), other.getElevation(i)))
                 return false;
         }
         return true;
@@ -436,78 +436,35 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
 
     public PointList copy(final int from, final int end) {
         if (from > end)
-            throw new IllegalArgumentException("from must be smaller or equals to end");
+            throw new IllegalArgumentException("from must be smaller or equal to end");
         if (from < 0 || end > size)
             throw new IllegalArgumentException("Illegal interval: " + from + ", " + end + ", size:" + size);
 
-        double[] copyLat = new double[end - from];
-        double[] copyLon = new double[end - from];
-        double[] copyEl = null;
+        PointList copyPL = new PointList(end - from, is3D);
         if (is3D)
-            copyEl = new double[end - from];
+            for (int i = from; i < end; i++) {
+                copyPL.add(latitudes[i], longitudes[i], elevations[i]);
+            }
+        else
+            for (int i = from; i < end; i++) {
+                copyPL.add(latitudes[i], longitudes[i], Double.NaN);
+            }
 
-        System.arraycopy(this.latitudes, from, copyLat, 0, end - from);
-        System.arraycopy(this.longitudes, from, copyLon, 0, end - from);
-        if (is3D)
-            System.arraycopy(this.elevations, from, copyEl, 0, end - from);
-
-        return new PointList(copyLat, copyLon, copyEl);
+        return copyPL;
     }
 
     public PointList shallowCopy(final int from, final int end) {
-        if (from > end)
-            throw new IllegalArgumentException("from must be smaller or equals to end");
-        if (from < 0 || end > size)
-            throw new IllegalArgumentException("Illegal interval: " + from + ", " + end + ", size:" + size);
-
-        return new PointList(this.latitudes, this.longitudes, this.elevations) {
-            @Override
-            public void set(int index, double lat, double lon, double ele) {
-                throw new RuntimeException("cannot change Shallow Copy of PointList");
-            }
-
-            @Override
-            public int size() {
-                return end - from;
-            }
-
-            @Override
-            public void add(double lat, double lon, double ele) {
-                throw new RuntimeException("cannot change Shallow Copy of PointList");
-            }
-
-            @Override
-            public double getLatitude(int index) {
-                if (index > size())
-                    throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size());
-                return super.getLatitude(from + index);
-            }
-
-            @Override
-            public double getLongitude(int index) {
-                if (index > size())
-                    throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size());
-                return super.getLongitude(from + index);
-            }
-
-            @Override
-            public double getElevation(int index) {
-                if (index > size())
-                    throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size());
-                return super.getElevation(from + index);
-            }
-
-        };
+        return new ShallowImmutablePointList(from, end, this);
     }
 
     @Override
     public int hashCode() {
         int hash = 5;
-        for (int i = 0; i < latitudes.length; i++) {
-            hash = 73 * hash + (int) Math.round(latitudes[i] * 1000000);
-            hash = 73 * hash + (int) Math.round(longitudes[i] * 1000000);
+        for (int i = 0; i < getSize(); i++) {
+            hash = 73 * hash + (int) Math.round(getLatitude(i) * 1000000);
+            hash = 73 * hash + (int) Math.round(getLongitude(i) * 1000000);
         }
-        hash = 73 * hash + this.size;
+        hash = 73 * hash + this.getSize();
         return hash;
     }
 
