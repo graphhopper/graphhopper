@@ -157,16 +157,6 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             elevations = new double[cap];
     }
 
-    private PointList(double[] latitudes, double[] longitudes, double[] elevations) {
-        this.size = latitudes.length;
-        this.latitudes = latitudes;
-        this.longitudes = longitudes;
-        this.is3D = elevations != null;
-        if (is3D) {
-            this.elevations = elevations;
-        }
-    }
-
     @Override
     public boolean is3D() {
         return is3D;
