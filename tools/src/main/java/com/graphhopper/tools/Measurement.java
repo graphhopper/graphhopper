@@ -114,7 +114,6 @@ public class Measurement {
             boolean isLM = false;
 
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
-            /*
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
             printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1);
@@ -129,10 +128,8 @@ public class Measurement {
 
                 // compareRouting(hopper, vehicleStr, count / 5);
             }
-*/
             if (hopper.getCHFactoryDecorator().isEnabled()) {
                 isCH = true;
-/*
                 if (hopper.getLMFactoryDecorator().isEnabled()) {
                     isLM = true;
                     System.gc();
@@ -140,7 +137,6 @@ public class Measurement {
                     int lmCount = 5;
                     printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount);
                 }
-*/
                 isLM = false;
                 System.gc();
                 Weighting weighting = hopper.getCHFactoryDecorator().getWeightings().get(0);
