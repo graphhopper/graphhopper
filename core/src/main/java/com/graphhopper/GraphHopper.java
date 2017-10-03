@@ -1110,7 +1110,7 @@ public class GraphHopper implements GraphHopperAPI {
         for (int i = 0; i < points.size(); i++) {
             GHPoint point = points.get(i);
             if (!bounds.contains(point.getLat(), point.getLon())) {
-                throw new PointOutOfBoundsException("Point " + i + " is ouf of bounds: " + point, i);
+                throw new PointOutOfBoundsException("Point " + i + " is out of bounds: " + point, i);
             }
         }
     }
