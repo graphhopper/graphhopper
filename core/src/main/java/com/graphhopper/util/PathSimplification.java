@@ -48,7 +48,11 @@ public class PathSimplification {
 
         this.pathDetails = pathWrapper.getPathDetails();
         for (String name : pathDetails.keySet()) {
-            listsToSimplify.add(pathDetails.get(name));
+            List<PathDetail> pathDetailList = pathDetails.get(name);
+            if (pathDetailList.isEmpty())
+                throw new IllegalStateException("PathDetails " + name + " must not be empty");
+
+            listsToSimplify.add(pathDetailList);
         }
         this.douglasPeucker = douglasPeucker;
     }

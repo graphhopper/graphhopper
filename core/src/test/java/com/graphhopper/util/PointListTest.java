@@ -98,6 +98,21 @@ public class PointListTest {
     }
 
     @Test
+    public void testCopy_issue1166() {
+        PointList list = new PointList(20, false);
+        for (int i = 0; i < 10; i++) {
+            list.add(1, i);
+        }
+        assertEquals(10, list.getSize());
+        assertEquals(20, list.getCapacity());
+
+        PointList copy = list.copy(9, 10);
+        assertEquals(1, copy.getSize());
+        assertEquals(1, copy.getCapacity());
+        assertEquals(9, copy.getLongitude(0), .1);
+    }
+
+    @Test
     public void testShallowCopy() {
         PointList pl1 = new PointList(100, true);
         for (int i = 0; i < 1000; i++) {

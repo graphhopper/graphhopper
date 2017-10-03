@@ -68,7 +68,7 @@ public class RoundTripRoutingTemplate extends AbstractRoutingTemplate implements
     @Override
     public List<QueryResult> lookup(List<GHPoint> points, FlagEncoder encoder) {
         if (points.size() != 1 || ghRequest.getPoints().size() != 1)
-            throw new IllegalStateException("For round trip calculation exactly one point is required");
+            throw new IllegalArgumentException("For round trip calculation exactly one point is required");
         final double distanceInMeter = ghRequest.getHints().getDouble(RoundTrip.DISTANCE, 10000);
         final long seed = ghRequest.getHints().getLong(RoundTrip.SEED, 0L);
         double initialHeading = ghRequest.getFavoredHeading(0);

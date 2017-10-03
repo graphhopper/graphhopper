@@ -424,7 +424,13 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         return clonePL;
     }
 
-    public PointList copy(final int from, final int end) {
+    /**
+     * This method does a deep copy of this object for the specified range.
+     *
+     * @param from the copying of the old PointList starts at this index
+     * @param end the copying of the old PointList ends at the index before (i.e. end is exclusive)
+     */
+    public PointList copy(int from, int end) {
         if (from > end)
             throw new IllegalArgumentException("from must be smaller or equal to end");
         if (from < 0 || end > size)

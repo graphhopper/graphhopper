@@ -25,7 +25,6 @@ import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
-import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphBuilder;
@@ -137,7 +136,7 @@ public class PathSimplificationTest {
         // Path is: [0 0-1, 3 1-4, 6 4-7, 9 7-8, 11 8-9, 10 9-10]
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(0, 10);
         InstructionList wayList = p.calcInstructions(usTR);
-        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(DETAILS.AVERAGE_SPEED), carEncoder, new FastestWeighting(carEncoder)), 0);
+        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(DETAILS.AVERAGE_SPEED), new PathDetailsBuilderFactory(), 0);
 
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.setInstructions(wayList);

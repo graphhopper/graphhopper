@@ -254,6 +254,9 @@ public class PathWrapper {
             throw new IllegalStateException("Details have to be the same size");
         }
         for (Map.Entry<String, List<PathDetail>> detailEntry : details.entrySet()) {
+            if (detailEntry.getValue().isEmpty())
+                throw new IllegalStateException("PathDetails " + detailEntry.getKey() + " must not be empty");
+
             if (this.pathDetails.containsKey(detailEntry.getKey())) {
                 List<PathDetail> pd = this.pathDetails.get(detailEntry.getKey());
                 PathMerger.merge(pd, detailEntry.getValue());
