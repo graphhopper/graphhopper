@@ -17,10 +17,6 @@
  */
 package com.graphhopper.util;
 
-import com.graphhopper.util.shapes.GHPoint3D;
-import com.vividsolutions.jts.geom.LineString;
-
-import java.util.Iterator;
 import java.util.List;
 
 /**
