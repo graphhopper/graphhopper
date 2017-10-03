@@ -60,7 +60,7 @@ An algorithm needs the path extraction: from the shortest-path-tree one needs to
 can be determined. For bidirectional algorithms this is a bit more complicated and done in PathBidirRef. 
 For [_Contraction Hierarchies_](http://ad-wiki.informatik.uni-freiburg.de/teaching/EfficientRoutePlanningSS2012)
  we use the _CHGraph_ which additionally holds shortcuts. While path extraction we need to identify those
- shortcuts and get the edges recursivly, this is done in Path4CH.
+ shortcuts and get the edges recursively, this is done in Path4CH.
 
 ## 3.1 Base Graph
 
