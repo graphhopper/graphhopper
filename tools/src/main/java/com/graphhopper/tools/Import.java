@@ -18,18 +18,33 @@
 package com.graphhopper.tools;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.json.GHJsonFactory;
+import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Parameters;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 
 /**
  * @author Peter Karich
  */
 public class Import {
+    private static final Logger logger = LoggerFactory.getLogger(Import.class);
+
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
         args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
-        GraphHopper hopper = new GraphHopperOSM();
+        GraphHopper hopper = new GraphHopperOSM(
+                SpatialRuleLookupHelper.createLandmarkSplittingFeatureCollection(args.get(Parameters.Landmark.PREPARE + "split_area_location", ""))
+        );
         SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(hopper, args);
         hopper.init(args);
         hopper.importOrLoad();
