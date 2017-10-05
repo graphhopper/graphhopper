@@ -415,7 +415,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         if (this.getSize() != other.getSize() || this.is3D() != other.is3D())
             return false;
 
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < size(); i++) {
             if (!NumHelper.equalsEps(getLatitude(i), other.getLatitude(i)))
                 return false;
 
