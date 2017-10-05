@@ -154,6 +154,11 @@ public class PathSimplificationTest {
 
         assertEquals(numberOfPoints, pathWrapper.getPoints().size());
 
+        pathWrapper = new PathWrapper();
+        pathWrapper.setInstructions(wayList);
+        pathWrapper.addPathDetails(details);
+        pathWrapper.setPoints(p.calcPoints());
+
         douglasPeucker.setMaxDistance(100000000);
         ps = new PathSimplification(pathWrapper, douglasPeucker, true);
         ps.simplify();
