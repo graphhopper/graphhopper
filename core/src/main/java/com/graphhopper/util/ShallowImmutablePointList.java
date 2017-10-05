@@ -20,10 +20,11 @@ package com.graphhopper.util;
 import java.util.List;
 
 /**
- * Slim list to store several points (without the need for a point object).
- * <p>
+ * This is a shallow copy of a PointList. This class can be used to create a memory efficient copy of a PointList.
+ * You have to be aware, that if the wrapped PointList changes, the shallow copy will change as well. This can lead to
+ * unexpected results. We recommend making the wrapped PointList immutable {@link PointList#makeImmutable()}.
  *
- * @author Peter Karich
+ * @author Robin Boldt
  */
 public class ShallowImmutablePointList extends PointList {
 
@@ -97,6 +98,15 @@ public class ShallowImmutablePointList extends PointList {
             sb.append(')');
         }
         return sb.toString();
+    }
+
+    public void makeImmutable() {
+        this.wrappedPointList.makeImmutable();
+    }
+
+    @Override
+    public boolean isImmutable() {
+        return this.wrappedPointList.isImmutable();
     }
 
     /*
@@ -184,11 +194,6 @@ public class ShallowImmutablePointList extends PointList {
 
     @Override
     public PointList copy(final int from, final int end) {
-        throw new UnsupportedOperationException(IMMUTABLE_ERR);
-    }
-
-    @Override
-    public PointList shallowCopy(final int from, final int end) {
         throw new UnsupportedOperationException(IMMUTABLE_ERR);
     }
 
