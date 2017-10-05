@@ -138,6 +138,12 @@ public class PointListTest {
             assertEquals(pl2.getLon(i), pl3.getLon(i), .01);
         }
 
+        PointList pl4 = pl1.shallowCopyUnsafe(0, pl1.size());
+        assertTrue(pl1.equals(pl4));
+
+        PointList pl5 = pl1.shallowCopyUnsafe(100, 600);
+        assertTrue(pl2.equals(pl5));
+
     }
 
     @Test(expected = IllegalStateException.class)
