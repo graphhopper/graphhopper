@@ -142,8 +142,6 @@ public class PathMerger {
         if (allFound && simplifyResponse && (calcPoints || enableInstructions)) {
             PathSimplification ps = new PathSimplification(altRsp, douglasPeucker, enableInstructions);
             ps.simplify();
-            // Make sure that the instruction references are not broken
-            altRsp.getPoints().makeImmutable();
         }
     }
 

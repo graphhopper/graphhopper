@@ -138,7 +138,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
     };
     private final static DistanceCalc3D distCalc3D = Helper.DIST_3D;
-    protected static String ERR_MSG = "Tried to access PointList with too big index!";
+    final static String ERR_MSG = "Tried to access PointList with too big index!";
     protected int size = 0;
     protected boolean is3D;
     private double[] latitudes;
@@ -186,9 +186,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public void set(int index, double lat, double lon, double ele) {
-        if (this.isImmutable()) {
-            throw new IllegalStateException("You cannot change an immutable PointList");
-        }
+        ensureMutability();
         if (index >= size)
             throw new ArrayIndexOutOfBoundsException("index has to be smaller than size " + size);
 
@@ -220,9 +218,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public void add(double lat, double lon, double ele) {
-        if (this.isImmutable()) {
-            throw new IllegalStateException("You cannot change an immutable PointList");
-        }
+        ensureMutability();
         int newSize = size + 1;
         incCap(newSize);
         latitudes[size] = lat;
@@ -249,9 +245,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public void add(PointList points) {
-        if (this.isImmutable()) {
-            throw new IllegalStateException("You cannot change an immutable PointList");
-        }
+        ensureMutability();
         int newSize = size + points.getSize();
         incCap(newSize);
         for (int i = 0; i < points.getSize(); i++) {
@@ -318,9 +312,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public void reverse() {
-        if (this.isImmutable()) {
-            throw new IllegalStateException("You cannot change an immutable PointList");
-        }
+        ensureMutability();
         // in-place reverse
         int max = size / 2;
         for (int i = 0; i < max; i++) {
@@ -343,16 +335,12 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public void clear() {
-        if (this.isImmutable()) {
-            throw new IllegalStateException("You cannot change an immutable PointList");
-        }
+        ensureMutability();
         size = 0;
     }
 
     public void trimToSize(int newSize) {
-        if (this.isImmutable()) {
-            throw new IllegalStateException("You cannot change an immutable PointList");
-        }
+        ensureMutability();
         if (newSize > size)
             throw new IllegalArgumentException("new size needs be smaller than old size");
 
@@ -471,27 +459,13 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     /**
      * Create a shallow copy of this Pointlist from from to end, excluding end.
      * <p>
-     * This method is unsafe, because you can still change this object. If you do so, you can break the values of the
-     * shallow copy. The shallow copy only contains pointers with from and end and does not know what you change, make
-     * sure to create a new shallow copy after changing this object, if the shallow copy might become corrupt due to your
-     * change.
-     * <p>
-     * If possible, consider using {@link PointList#shallowCopySafe(int, int)}.
+     * The <code>ensureConsistency</code> parameter makes this PointList immutable, so the shallow copy will stay
+     * consistent with this object. If you don't ensure the consistency it might happen that due to changes of this
+     * object, the shallow copy might contain incorrect or corrupt data.
      */
-    public PointList shallowCopyUnsafe(final int from, final int end) {
-        return new ShallowImmutablePointList(from, end, this);
-    }
-
-    /**
-     * Create a shallow copy of this Pointlist from from to end, excluding end.
-     * <p>
-     * This method makes this object immutable, therefore the shallow copy is guaranteed to always contain the correct
-     * references.
-     * <p>
-     * If you know what your are doing, you can also use {@link PointList#shallowCopyUnsafe(int, int)}.
-     */
-    public PointList shallowCopySafe(final int from, final int end) {
-        this.makeImmutable();
+    public PointList shallowCopy(final int from, final int end, boolean ensureConsistency) {
+        if (ensureConsistency)
+            this.makeImmutable();
         return new ShallowImmutablePointList(from, end, this);
     }
 
@@ -589,7 +563,17 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         return this.isImmutable;
     }
 
+    /**
+     * Once immutable, there is no way to make this object mutable again. This is done to ensure the consistency of
+     * shallow copies. If you need to modify this object again, you have to create a deep copy of it.
+     */
     public void makeImmutable() {
         this.isImmutable = true;
+    }
+
+    private void ensureMutability() {
+        if (this.isImmutable()) {
+            throw new IllegalStateException("You cannot change an immutable PointList");
+        }
     }
 }

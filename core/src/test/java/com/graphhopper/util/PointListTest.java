@@ -113,13 +113,13 @@ public class PointListTest {
     }
 
     @Test
-    public void testShallowCopyUnsafe() {
+    public void testShallowCopy() {
         PointList pl1 = new PointList(100, true);
         for (int i = 0; i < 1000; i++) {
             pl1.add(i, i, 0);
         }
 
-        PointList pl2 = pl1.shallowCopyUnsafe(100, 600);
+        PointList pl2 = pl1.shallowCopy(100, 600, false);
         assertEquals(500, pl2.size());
         for (int i = 0; i < pl2.size(); i++) {
             assertEquals(pl1.getLat(i + 100), pl2.getLat(i), .01);
@@ -130,7 +130,7 @@ public class PointListTest {
         assertEquals(0, pl2.getLat(0), .01);
 
         // Create a shallow copy of the shallow copy
-        PointList pl3 = pl2.shallowCopySafe(0, 100);
+        PointList pl3 = pl2.shallowCopy(0, 100, true);
         // If we create a safe shallow copy of pl2, we have to make pl1 immutable
         assertTrue(pl1.isImmutable());
         assertEquals(100, pl3.size());
@@ -138,10 +138,10 @@ public class PointListTest {
             assertEquals(pl2.getLon(i), pl3.getLon(i), .01);
         }
 
-        PointList pl4 = pl1.shallowCopyUnsafe(0, pl1.size());
+        PointList pl4 = pl1.shallowCopy(0, pl1.size(), false);
         assertTrue(pl1.equals(pl4));
 
-        PointList pl5 = pl1.shallowCopyUnsafe(100, 600);
+        PointList pl5 = pl1.shallowCopy(100, 600, false);
         assertTrue(pl2.equals(pl5));
 
     }
