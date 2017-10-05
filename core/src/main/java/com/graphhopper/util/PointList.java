@@ -412,9 +412,6 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         if (this.isEmpty() && other.isEmpty())
             return true;
 
-        if (this.isImmutable() != ((PointList) obj).isImmutable())
-            return false;
-
         if (this.getSize() != other.getSize() || this.is3D() != other.is3D())
             return false;
 
@@ -505,8 +502,6 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             hash = 73 * hash + (int) Math.round(getLatitude(i) * 1000000);
             hash = 73 * hash + (int) Math.round(getLongitude(i) * 1000000);
         }
-        if (isImmutable())
-            hash += 1;
         hash = 73 * hash + this.getSize();
         return hash;
     }
