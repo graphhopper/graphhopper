@@ -33,6 +33,10 @@ public class Parameters {
          */
         public static final String DIJKSTRA_BI = "dijkstrabi";
         /**
+         * Bidirectional Dijkstra making use of stall-on-demand optimization
+         */
+        public static final String DIJKSTRA_BI_SOD = "dijkstrabisod";
+        /**
          * Unidirectional Dijkstra (not for CH)
          */
         public static final String DIJKSTRA = "dijkstra";

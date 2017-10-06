@@ -129,7 +129,8 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         createFactory(ghStorage, opts);
 
         // use base graph for solving normal Dijkstra
-        Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, defaultOpts).calcPath(0, 3);
+        Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, super.createAlgorithmOptions())
+                .calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 402.29, p1.getDistance(), 1e-2);
         assertEquals(p1.toString(), 144823, p1.getTime());

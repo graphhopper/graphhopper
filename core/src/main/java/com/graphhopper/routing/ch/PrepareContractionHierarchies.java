@@ -31,6 +31,7 @@ import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI_SOD;
 
 /**
  * This class prepares the graph for a bidirectional algorithm supporting contraction hierarchies
@@ -647,9 +648,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             AStarBidirection tmpAlgo = new AStarBidirectionCH(graph, prepareWeighting, traversalMode);
             tmpAlgo.setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
             algo = tmpAlgo;
-
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
             algo = new DijkstraBidirectionCH(graph, prepareWeighting, traversalMode);
+        } else if (DIJKSTRA_BI_SOD.equals(opts.getAlgorithm())) {
+            algo = new DijkstraBidirectionCHWithSOD(graph, prepareWeighting, traversalMode);
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");
         }
