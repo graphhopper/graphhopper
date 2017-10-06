@@ -104,6 +104,9 @@ class MultiCriteriaLabelSetting {
                 Label label = fromHeap.poll();
                 action.accept(label);
                 explorer.exploreEdgesAround(label).forEach(edge -> {
+                    if (edge == null) {
+                        System.out.println("wurst");
+                    }
                     GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edge.getFlags());
                     long nextTime;
                     if (reverse) {

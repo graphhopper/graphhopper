@@ -75,6 +75,8 @@ public class RealtimeFeed {
             });
         final List<VirtualEdgeIteratorState> additionalEdges = new ArrayList<>();
         final Graph graph = new Graph() {
+            int firstNode = 999999;
+            int firstEdge = 999999;
             final NodeAccess nodeAccess = new NodeAccess() {
                 IntIntHashMap additionalNodeFields = new IntIntHashMap();
 
@@ -171,8 +173,15 @@ public class RealtimeFeed {
             @Override
             public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
                 final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
-                        -1, a, b, 0,0, "", null);
+                        firstEdge++, a+firstNode, b+firstNode, 0,0, "", null);
+                final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(-1,
+                        firstEdge++, b+firstNode, a+firstNode, 0,0, "", null);
+
+                newEdge.setReverseEdge(reverseNewEdge);
+                reverseNewEdge.setReverseEdge(newEdge);
                 additionalEdges.add(newEdge);
+                additionalEdges.add(reverseNewEdge);
+
                 return newEdge;
             }
 
