@@ -80,26 +80,6 @@ public class ShallowImmutablePointList extends PointList {
         return wrappedPointList.getElevation(fromOffset + index);
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < getSize(); i++) {
-            if (i > 0)
-                sb.append(", ");
-
-            sb.append('(');
-            sb.append(getLatitude(i));
-            sb.append(',');
-            sb.append(getLongitude(i));
-            if (is3D) {
-                sb.append(',');
-                sb.append(getElevation(i));
-            }
-            sb.append(')');
-        }
-        return sb.toString();
-    }
-
     public void makeImmutable() {
         this.wrappedPointList.makeImmutable();
     }
@@ -175,30 +155,6 @@ public class ShallowImmutablePointList extends PointList {
 
     @Override
     public void parse2DJSON(String str) {
-        throw new UnsupportedOperationException(IMMUTABLE_ERR);
-    }
-
-    /*
-    Not exactly a mutation, but shouldn't be needed
-     */
-
-    @Override
-    public List<Double[]> toGeoJson(boolean includeElevation) {
-        throw new UnsupportedOperationException(IMMUTABLE_ERR);
-    }
-
-    @Override
-    public PointList clone(boolean reverse) {
-        throw new UnsupportedOperationException(IMMUTABLE_ERR);
-    }
-
-    @Override
-    public PointList copy(final int from, final int end) {
-        throw new UnsupportedOperationException(IMMUTABLE_ERR);
-    }
-
-    @Override
-    public double calcDistance(DistanceCalc calc) {
         throw new UnsupportedOperationException(IMMUTABLE_ERR);
     }
 

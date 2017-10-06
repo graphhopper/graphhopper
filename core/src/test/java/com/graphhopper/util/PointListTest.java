@@ -20,7 +20,10 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
+import java.util.Arrays;
+
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -152,5 +155,70 @@ public class PointListTest {
         pl.makeImmutable();
         pl.add(0, 0, 0);
     }
+
+    @Test()
+    public void testToString() {
+        PointList pl = new PointList(3, true);
+        pl.add(0, 0, 0);
+        pl.add(1, 1, 1);
+        pl.add(2, 2, 2);
+
+        assertEquals("(0.0,0.0,0.0), (1.0,1.0,1.0), (2.0,2.0,2.0)", pl.toString());
+        assertEquals("(1.0,1.0,1.0), (2.0,2.0,2.0)", pl.shallowCopy(1, 3, false).toString());
+    }
+
+    @Test()
+    public void testClone() {
+        PointList pl = new PointList(3, true);
+        pl.add(0, 0, 0);
+        pl.add(1, 1, 1);
+        pl.add(2, 2, 2);
+
+        PointList shallowPl = pl.shallowCopy(1, 3, false);
+        PointList clonedPl = shallowPl.clone(false);
+
+        assertEquals(shallowPl, clonedPl);
+        clonedPl.setNode(0, 5, 5, 5);
+        assertNotEquals(shallowPl, clonedPl);
+    }
+
+    @Test()
+    public void testCopyOfShallowCopy() {
+        PointList pl = new PointList(3, true);
+        pl.add(0, 0, 0);
+        pl.add(1, 1, 1);
+        pl.add(2, 2, 2);
+
+        PointList shallowPl = pl.shallowCopy(1, 3, false);
+        PointList copiedPl = shallowPl.copy(0, 2);
+
+        assertEquals(shallowPl, copiedPl);
+        copiedPl.setNode(0, 5, 5, 5);
+        assertNotEquals(shallowPl, copiedPl);
+    }
+
+    @Test()
+    public void testCalcDistanceOfShallowCopy() {
+        PointList pl = new PointList(3, true);
+        pl.add(0, 0, 0);
+        pl.add(1, 1, 1);
+        pl.add(2, 2, 2);
+
+        PointList shallowPl = pl.shallowCopy(1, 3, false);
+        PointList clonedPl = shallowPl.clone(false);
+        assertEquals(clonedPl.calcDistance(Helper.DIST_EARTH), shallowPl.calcDistance(Helper.DIST_EARTH), .01);
+    }
+
+    @Test()
+    public void testToGeoJson() {
+        PointList pl = new PointList(3, true);
+        pl.add(0, 0, 0);
+        pl.add(1, 1, 1);
+        pl.add(2, 2, 2);
+
+        assertEquals(3, pl.toGeoJson(true).size());
+        assertEquals(2, pl.shallowCopy(1, 3, false).toGeoJson(true).size());
+    }
+
 
 }

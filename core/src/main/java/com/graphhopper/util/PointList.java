@@ -350,17 +350,17 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < getSize(); i++) {
             if (i > 0)
                 sb.append(", ");
 
             sb.append('(');
-            sb.append(latitudes[i]);
+            sb.append(getLatitude(i));
             sb.append(',');
-            sb.append(longitudes[i]);
-            if (is3D) {
+            sb.append(getLongitude(i));
+            if (this.is3D()) {
                 sb.append(',');
-                sb.append(elevations[i]);
+                sb.append(getElevation(i));
             }
             sb.append(')');
         }
@@ -376,8 +376,8 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
 
     public List<Double[]> toGeoJson(boolean includeElevation) {
 
-        ArrayList<Double[]> points = new ArrayList<Double[]>(size);
-        for (int i = 0; i < size; i++) {
+        ArrayList<Double[]> points = new ArrayList<Double[]>(getSize());
+        for (int i = 0; i < getSize(); i++) {
             if (includeElevation)
                 points.add(new Double[]{
                         Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i)),
@@ -416,15 +416,19 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         return true;
     }
 
+    /**
+     * Clones this PointList. If this PointList was immutable, the cloned will be mutable. If this PointList was a
+     * ShallowImmutablePointList, the cloned PointList will be a regular PointList.
+     */
     public PointList clone(boolean reverse) {
-        PointList clonePL = new PointList(size, is3D);
-        if (is3D)
-            for (int i = 0; i < size; i++) {
-                clonePL.add(latitudes[i], longitudes[i], elevations[i]);
+        PointList clonePL = new PointList(getSize(), is3D());
+        if (is3D())
+            for (int i = 0; i < getSize(); i++) {
+                clonePL.add(getLatitude(i), getLongitude(i), getElevation(i));
             }
         else
-            for (int i = 0; i < size; i++) {
-                clonePL.add(latitudes[i], longitudes[i]);
+            for (int i = 0; i < getSize(); i++) {
+                clonePL.add(getLatitude(i), getLongitude(i));
             }
         if (reverse)
             clonePL.reverse();
@@ -440,17 +444,17 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     public PointList copy(int from, int end) {
         if (from > end)
             throw new IllegalArgumentException("from must be smaller or equal to end");
-        if (from < 0 || end > size)
-            throw new IllegalArgumentException("Illegal interval: " + from + ", " + end + ", size:" + size);
+        if (from < 0 || end > getSize())
+            throw new IllegalArgumentException("Illegal interval: " + from + ", " + end + ", size:" + getSize());
 
-        PointList copyPL = new PointList(end - from, is3D);
-        if (is3D)
+        PointList copyPL = new PointList(end - from, is3D());
+        if (is3D())
             for (int i = from; i < end; i++) {
-                copyPL.add(latitudes[i], longitudes[i], elevations[i]);
+                copyPL.add(getLatitude(i), getLongitude(i), getElevation(i));
             }
         else
             for (int i = from; i < end; i++) {
-                copyPL.add(latitudes[i], longitudes[i], Double.NaN);
+                copyPL.add(getLatitude(i), getLongitude(i), Double.NaN);
             }
 
         return copyPL;
@@ -485,18 +489,18 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         double prevLon = Double.NaN;
         double prevEle = Double.NaN;
         double dist = 0;
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < size(); i++) {
             if (i > 0) {
-                if (is3D)
-                    dist += distCalc3D.calcDist(prevLat, prevLon, prevEle, latitudes[i], longitudes[i], elevations[i]);
+                if (is3D())
+                    dist += distCalc3D.calcDist(prevLat, prevLon, prevEle, getLat(i), getLon(i), getEle(i));
                 else
-                    dist += calc.calcDist(prevLat, prevLon, latitudes[i], longitudes[i]);
+                    dist += calc.calcDist(prevLat, prevLon, getLat(i), getLon(i));
             }
 
-            prevLat = latitudes[i];
-            prevLon = longitudes[i];
-            if (is3D)
-                prevEle = elevations[i];
+            prevLat = getLat(i);
+            prevLon = getLon(i);
+            if (is3D())
+                prevEle = getEle(i);
         }
         return dist;
     }
