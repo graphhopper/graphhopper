@@ -21,6 +21,7 @@ import com.graphhopper.GraphHopper;
 
 import java.io.InputStreamReader;
 import java.util.List;
+import java.util.StringTokenizer;
 
 import static com.graphhopper.util.Helper.readFile;
 
@@ -32,6 +33,8 @@ public class Constants {
      * The value of <tt>System.getProperty("java.version")</tt>. *
      */
     public static final String JAVA_VERSION = System.getProperty("java.version");
+
+
     /**
      * The value of <tt>System.getProperty("os.name")</tt>. *
      */
@@ -59,6 +62,11 @@ public class Constants {
     public static final String OS_ARCH = System.getProperty("os.arch");
     public static final String OS_VERSION = System.getProperty("os.version");
     public static final String JAVA_VENDOR = System.getProperty("java.vendor");
+    public static final String JVM_SPEC_VERSION = System.getProperty("java.specification.version");
+    public static final boolean JRE_IS_MINIMUM_JAVA9;
+    private static final int JVM_MAJOR_VERSION;
+    private static final int JVM_MINOR_VERSION;
+
     public static final int VERSION_NODE = 5;
     public static final int VERSION_EDGE = 14;
     public static final int VERSION_SHORTCUT = 2;
@@ -73,6 +81,15 @@ public class Constants {
     public static final boolean SNAPSHOT;
 
     static {
+        final StringTokenizer st = new StringTokenizer(JVM_SPEC_VERSION, ".");
+        JVM_MAJOR_VERSION = Integer.parseInt(st.nextToken());
+        if (st.hasMoreTokens()) {
+            JVM_MINOR_VERSION = Integer.parseInt(st.nextToken());
+        } else {
+            JVM_MINOR_VERSION = 0;
+        }
+        JRE_IS_MINIMUM_JAVA9 = JVM_MAJOR_VERSION > 1 || (JVM_MAJOR_VERSION == 1 && JVM_MINOR_VERSION >= 9);
+
         String version = "0.0";
         try {
             // see com/graphhopper/version file in resources which is modified in the maven packaging process

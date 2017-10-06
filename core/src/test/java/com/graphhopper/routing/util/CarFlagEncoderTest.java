@@ -414,7 +414,7 @@ public class CarFlagEncoderTest {
         // accept
         assertTrue(encoder.acceptWay(way) > 0);
         // calculate speed from estimated_distance and duration
-        assertEquals(61, encoder.getFerrySpeed(way, 20, 30, 40), 1e-1);
+        assertEquals(61, encoder.getFerrySpeed(way), 1e-1);
 
         //Test for very short and slow 0.5km/h still realisitic ferry
         way = new ReaderWay(1);
@@ -426,7 +426,7 @@ public class CarFlagEncoderTest {
         // accept
         assertTrue(encoder.acceptWay(way) > 0);
         // We can't store 0.5km/h, but we expect the lowest possible speed (5km/h)
-        assertEquals(2.5, encoder.getFerrySpeed(way, 20, 30, 40), 1e-1);
+        assertEquals(2.5, encoder.getFerrySpeed(way), 1e-1);
         assertEquals(5, encoder.getSpeed(encoder.setSpeed(0, 2.5)), 1e-1);
 
         //Test for an unrealisitic long duration
@@ -439,7 +439,7 @@ public class CarFlagEncoderTest {
         // accept
         assertTrue(encoder.acceptWay(way) > 0);
         // We have ignored the unrealisitc long duration and take the unknown speed
-        assertEquals(20, encoder.getFerrySpeed(way, 20, 30, 40), 1e-1);
+        assertEquals(5, encoder.getFerrySpeed(way), 1e-1);
     }
 
     @Test

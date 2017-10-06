@@ -3,7 +3,7 @@ var messages = require('./messages.js');
 
 var routeSegmentPopup = null;
 
-function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, debugInstructions) {
+function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, debug) {
     var sign = instr.sign;
     if (instrIndex === 0)
         sign = "marker-icon-green";
@@ -23,7 +23,7 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
     var instructionDiv = $("<tr class='instruction'/>");
     if (sign !== "continue") {
         var indiPic = "<img class='pic' style='vertical-align: middle' src='" +
-                dirname + "/img/" + sign + ".png'/>";
+            dirname + "/img/" + sign + ".png'/>";
         instructionDiv.append("<td class='instr_pic'>" + indiPic + "</td>");
     } else {
         instructionDiv.append("<td class='instr_pic'/>");
@@ -43,19 +43,17 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
             if (routeSegmentPopup)
                 mapLayer.removeLayerFromMap(routeSegmentPopup);
 
-            routeSegmentPopup = L.popup().
-                    setLatLng([lngLat[1], lngLat[0]]).
-                    setContent(title).
-                    openOn(mapLayer.getMap());
+            routeSegmentPopup = L.popup().setLatLng([lngLat[1], lngLat[0]]).setContent(title).openOn(mapLayer.getMap());
 
         });
 
-        if(debugInstructions){
+        if (debug) {
             // Debug Turn Instructions more easily
             L.marker([lngLat[1], lngLat[0]], {
                 icon: L.icon({
-                    iconUrl: './img/marker-small-blue.png',
-                    iconSize: [15, 15]
+                    iconUrl: './img/marker-small-red.png',
+                    // Made the instructions icon a bit bigger, as they are placed before the path details
+                    iconSize: [16, 16]
                 }),
                 draggable: true
             }).addTo(mapLayer.getRoutingLayer()).bindPopup(title);
@@ -66,14 +64,14 @@ function addInstruction(mapLayer, main, instr, instrIndex, lngLat, useMiles, deb
 
 module.exports.create = function (mapLayer, path, urlForHistory, request) {
     var instructionsElement = $("<table class='instructions'>");
-    var debugInstructions = request.api_params.debug_instructions;
+    var debug = request.api_params.debug;
 
     var partialInstr = path.instructions.length > 100;
     var len = Math.min(path.instructions.length, 100);
     for (var m = 0; m < len; m++) {
         var instr = path.instructions[m];
         var lngLat = path.points.coordinates[instr.interval[0]];
-        addInstruction(mapLayer, instructionsElement, instr, m, lngLat, request.useMiles, debugInstructions);
+        addInstruction(mapLayer, instructionsElement, instr, m, lngLat, request.useMiles, debug);
     }
     var infoDiv = $("<div class='instructions_info'>");
     infoDiv.append(instructionsElement);
@@ -107,10 +105,13 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
     exportLink.attr('href', urlForHistory);
     var osmRouteLink = $("<br/><a>view on OSM</a>");
 
-    var osmVehicle = "bicycle";
-    if (request.getVehicle().toUpperCase() === "FOOT") {
-        osmVehicle = "foot";
+    var osmVehicle = request.getVehicle();
+    if (osmVehicle === "bicycle") {
+        osmVehicle = "bike";
+    } else if (osmVehicle.indexOf("truck") >= 0) {
+        osmVehicle = "car";
     }
+
     osmRouteLink.attr("href", "http://www.openstreetmap.org/directions?engine=graphhopper_" + osmVehicle + "&route=" + encodeURIComponent(request.from.lat + "," + request.from.lng + ";" + request.to.lat + "," + request.to.lng));
     hiddenDiv.append(osmRouteLink);
 
@@ -125,9 +126,8 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
         addToGoogle = "&dirflg=w";
         addToBing = "&mode=W";
     } else if ((request.getVehicle().toUpperCase().indexOf("BIKE") >= 0) ||
-            (request.getVehicle().toUpperCase() === "MTB")) {
+        (request.getVehicle().toUpperCase() === "MTB")) {
         addToGoogle = "&dirflg=b";
-        // ? addToBing = "&mode=B";
     }
 
     googleLink.attr("href", "https://maps.google.com/?saddr=" + request.from + "&daddr=" + request.to + addToGoogle);

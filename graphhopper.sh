@@ -62,7 +62,7 @@ function ensureOsm {
        wget -S -nv -O "$OSM_FILE" "$LINK"
     elif [ ${OSM_FILE: -4} == ".ghz" ]; then
        wget -S -nv -O "$OSM_FILE" "$LINK"
-       unzip "$FILE" -d "$NAME-gh"
+       cd $DATADIR && unzip "$BASENAME" -d "$NAME-gh"
     else    
        # make sure aborting download does not result in loading corrupt osm file
        TMP_OSM=temp.osm
@@ -90,8 +90,8 @@ function ensureMaven {
       if [ ! -f "$MAVEN_HOME/bin/mvn" ]; then
         echo "No Maven found in the PATH. Now downloading+installing it to $MAVEN_HOME"
         cd "$GH_HOME"
-        MVN_PACKAGE=apache-maven-3.3.9
-        wget -O maven.zip http://archive.apache.org/dist/maven/maven-3/3.3.9/binaries/$MVN_PACKAGE-bin.zip
+        MVN_PACKAGE=apache-maven-3.5.0
+        wget -O maven.zip http://archive.apache.org/dist/maven/maven-3/3.5.0/binaries/$MVN_PACKAGE-bin.zip
         unzip maven.zip
         mv $MVN_PACKAGE maven
         rm maven.zip
@@ -159,8 +159,14 @@ if [ "$FILE" = "" ]; then
   exit
 fi
 
+# DATA_DIR = directories path to the file if any (if current directory, return .)
+DATADIR=$(dirname "${FILE}")
+# create the directories if needed
+mkdir -p $DATADIR
+# BASENAME = filename (file without the directories)
+BASENAME=$(basename "${FILE}")
 # NAME = file without extension if any
-NAME="${FILE%.*}"
+NAME="${BASENAME%.*}"
 
 if [ "$FILE" == "-" ]; then
    OSM_FILE=
@@ -174,14 +180,14 @@ elif [ ${FILE: -3} == "-gh" ]; then
 elif [ ${FILE: -4} == ".ghz" ]; then
    OSM_FILE="$FILE"
    if [[ ! -d "$NAME-gh" ]]; then
-      unzip "$FILE" -d "$NAME-gh"
+      cd $DATADIR && unzip "$BASENAME" -d "$NAME-gh"
    fi
 else
    # no known end -> no import
    OSM_FILE=
 fi
 
-GRAPH=$NAME-gh
+GRAPH=$DATADIR/$NAME-gh
 VERSION=$(grep  "<name>" -A 1 pom.xml | grep version | cut -d'>' -f2 | cut -d'<' -f1)
 JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
 

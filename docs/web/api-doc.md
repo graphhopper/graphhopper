@@ -49,7 +49,7 @@ lm.active_landmarks| 4        | Not recommended to change this
 
 ### Flexible
 
-Unlock certain flexible features via `ch.disable=true` or disable CH on the server-side in the config.properties via `prepare.ch.weightings=no`
+Unlock certain flexible features via `ch.disable=true` per request or disable CH on the server-side in the config.properties via `prepare.ch.weightings=no`
 
 Parameter        | Default    | Description
 :----------------|:-----------|:-----------
@@ -57,7 +57,8 @@ ch.disable       | `false`    | Use this parameter in combination with one or mo
 weighting        | `fastest`  | Which kind of 'best' route calculation you need. Other option is `shortest` (e.g. for `vehicle=foot` or `bike`), `short_fastest` if time and distance is expensive (e.g. for `vehicle=truck`) and `curvature` (only for `vehicle=motorcycle`)
 edge_traversal   |`false`     | Use `true` if you want to consider turn restrictions for bike and motor vehicles. Keep in mind that the response time is roughly 2 times slower.
 algorithm        |`astarbi`   | The algorithm to calculate the route. Other options are `dijkstra`, `astar`, `astarbi`, `alternative_route` and `round_trip`
-heading          | NaN        | Favour a heading direction for a certain point. Specify either one heading for the start point or as many as there are points. In this case headings are associated by their order to the specific points. Headings are given as north based clockwise angle between 0 and 360 degree. This parameter also influences the tour generated with `algorithm=round_trip` and force the initial direction.
+block_area       | -          | Block road access via a point with the format `latitude,longitude` or an area defined by a circle `lat,lon,radius` or a rectangle `lat1,lon1,lat2,lon2`. Separate multiple areas with a semicolon `;`.
+heading          | NaN        | Favour a heading direction for a certain point. Specify either one heading for the start point or as many as there are points. In this case headings are associated by their order to the specific points. Headings are given as north based clockwise angle between 0 and 360 degree. This parameter also influences the tour generated with `algorithm=round_trip` and forces the initial direction.
 heading_penalty  | 120        | Penalty for omitting a specified heading. The penalty corresponds to the accepted time delay in seconds in comparison to the route without a heading.
 pass_through     | `false`    | If `true` u-turns are avoided at via-points with regard to the `heading_penalty`.
 round_trip.distance                 | 10000 | If `algorithm=round_trip` this parameter configures approximative length of the resulting round trip

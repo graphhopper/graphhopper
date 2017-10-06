@@ -3,8 +3,9 @@ sudo: false
 matrix:
   fast_finish: true
   include:
+    - jdk: oraclejdk8
       # Java 9 needs to be manually installed/upgraded
-      # see: https://github.com/travis-ci/travis-ci/issues/2968#issuecomment-149164058
+      # see: https://github.com/travis-ci/travis-ci/issues/2968#issuecomment-149164058      
     - jdk: oraclejdk9
       env: JVM=latest
       sudo: required
@@ -60,7 +61,7 @@ after_success:
 
 notifications:
   email:
-    - github@graphhopper.com
+    - secure: l7/fjqL0c/9UcULXdhaKxsroZMg07nfNDiOHRBf7YKf8wrKdH52Z5kP7E10+a8iD/ieLD+ZaZPlom1bE7HymE1bVkp3d17Ezha47W5sdyOOb3NBDpg8olS4TkehOKo3AQhLXSfF6QGtipxY8Iy9QknXHngQOrcoGYiOlzCZ3BTQ=
 
 cache:
   directories:

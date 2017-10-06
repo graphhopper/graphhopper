@@ -20,22 +20,20 @@ package com.graphhopper.routing;
 import com.carrotsearch.hppc.IntArrayList;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.coll.GHIntArrayList;
-import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
-import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
-import com.graphhopper.util.shapes.GHPoint;
+import com.graphhopper.util.details.PathDetail;
+import com.graphhopper.util.details.PathDetailsBuilder;
+import com.graphhopper.util.details.PathDetailsBuilderFactory;
+import com.graphhopper.util.details.PathDetailsFromEdges;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Stores the nodes for the found path of an algorithm. It additionally needs the edgeIds to make
@@ -372,6 +370,32 @@ public class Path {
         return ways;
     }
 
+    /**
+     * Calculates the PathDetails for this Path. This method will return fast, if there are no calculators.
+     *
+     * @param pathBuilderFactory Generates the relevant PathBuilders
+     * @return List of PathDetails for this Path
+     */
+    public Map<String, List<PathDetail>> calcDetails(List<String> requestedPathDetails, PathDetailsBuilderFactory pathBuilderFactory, int previousIndex) {
+        if (!isFound() || requestedPathDetails.isEmpty())
+            return Collections.EMPTY_MAP;
+        List<PathDetailsBuilder> pathBuilders = pathBuilderFactory.createPathDetailsBuilders(requestedPathDetails, encoder, weighting);
+        if (pathBuilders.isEmpty())
+            return Collections.EMPTY_MAP;
+
+        forEveryEdge(new PathDetailsFromEdges(pathBuilders, previousIndex));
+
+        Map<String, List<PathDetail>> pathDetails = new HashMap<>(pathBuilders.size());
+        for (PathDetailsBuilder builder : pathBuilders) {
+            Map.Entry<String, List<PathDetail>> entry = builder.build();
+            List<PathDetail> existing = pathDetails.put(entry.getKey(), entry.getValue());
+            if (existing != null)
+                throw new IllegalStateException("Some PathDetailsBuilders use duplicate key: " + entry.getKey());
+        }
+
+        return pathDetails;
+    }
+
     @Override
     public String toString() {
         return "distance:" + getDistance() + ", edges:" + edgeIds.size();
@@ -393,6 +417,7 @@ public class Path {
      */
     public interface EdgeVisitor {
         void next(EdgeIteratorState edge, int index, int prevEdgeId);
+
         void finish();
     }
 }

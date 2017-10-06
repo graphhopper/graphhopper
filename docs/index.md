@@ -18,8 +18,8 @@ For bugs see our contribute section below.
 
 ## For Users
 
-Try the web demo 'GraphHopper Maps' with [this user guide](./web/quickstart.md) on your machine
-or the [Android demo](https://graphhopper.com/public/releases/graphhopper-android-0.8.2.apk).
+Install the web demo 'GraphHopper Maps' with [this user guide](./web/quickstart.md) on your machine
+or the [Android demo](https://github.com/graphhopper/graphhopper/blob/master/README.md#get-started).
 
 #### Web
 
@@ -41,7 +41,7 @@ The elevation configuration is separately documented [here](./core/elevation.md)
 
 [The quickstart](./core/quickstart-from-source.md) is an introduction for developers. Explains git checkout, IDE setup and commands for setting up a GraphHopper server.
 
-Find all changes in previous and current versions in the [changelogs](../core/files/changelogs.txt).
+Find all changes in previous and current versions in the [changelogs](../core/files/changelog.txt).
 
 #### Contribute
 
@@ -61,6 +61,7 @@ Various topics are explained in more detail separately:
  * [Low level API](./core/low-level-api.md): Instructions how to use GraphHopper as a Java library.
  * [Create new FlagEncoder](./core/create-new-flagencoder.md): Documentation to create new routing profiles to influence which ways to favor and how the track-time is calculated.
  * [Spatial Rules](./core/spatial-rules.md): Instruction on how to use and create new SpatialRules. SpatialRules are used to enforce country-specific routing rules.
+ * [Turn Restrictions](./core/turn-restrictions.md): Details on how to enable and use turn restrictions.
  * [Postgis query script](../core/files/postgis)
 
 #### Other links

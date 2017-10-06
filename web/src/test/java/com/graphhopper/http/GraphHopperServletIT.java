@@ -24,6 +24,7 @@ import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.AfterClass;
@@ -31,6 +32,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -52,6 +54,8 @@ public class GraphHopperServletIT extends BaseServletTester {
     public void setUp() {
         CmdArgs args = new CmdArgs().
                 put("config", "../config-example.properties").
+                put("prepare.min_network_size", "0").
+                put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.location", DIR);
         setUpJetty(args);
@@ -110,7 +114,7 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testGraphHopperWeb() throws Exception {
-        GraphHopperAPI hopper = new GraphHopperWeb();
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
         GHResponse rsp = hopper.route(new GHRequest(42.554851, 1.536198, 42.510071, 1.548128));
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
@@ -138,8 +142,72 @@ public class GraphHopperServletIT extends BaseServletTester {
     }
 
     @Test
+    public void testPathDetails() throws Exception {
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
+        assertTrue(hopper.load(getTestRouteAPIUrl()));
+        GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
+        request.setPathDetails(Arrays.asList("average_speed", "edge_id", "time"));
+        GHResponse rsp = hopper.route(request);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
+        Map<String, List<PathDetail>> pathDetails = rsp.getBest().getPathDetails();
+        assertFalse(pathDetails.isEmpty());
+        assertTrue(pathDetails.containsKey("average_speed"));
+        assertTrue(pathDetails.containsKey("edge_id"));
+        assertTrue(pathDetails.containsKey("time"));
+        List<PathDetail> averageSpeedList = pathDetails.get("average_speed");
+        assertEquals(9, averageSpeedList.size());
+        assertEquals(30.0, averageSpeedList.get(0).getValue());
+        assertEquals(14, averageSpeedList.get(0).getLength());
+        assertEquals(60.0, averageSpeedList.get(1).getValue());
+        assertEquals(5, averageSpeedList.get(1).getLength());
+
+        List<PathDetail> edgeIdDetails = pathDetails.get("edge_id");
+        assertEquals(77, edgeIdDetails.size());
+        assertEquals(3759L, edgeIdDetails.get(0).getValue());
+        assertEquals(2, edgeIdDetails.get(0).getLength());
+        assertEquals(881L, edgeIdDetails.get(1).getValue());
+        assertEquals(8, edgeIdDetails.get(1).getLength());
+
+        long expectedTime = rsp.getBest().getTime();
+        long actualTime = 0;
+        List<PathDetail> timeDetails = pathDetails.get("time");
+        for (PathDetail pd: timeDetails) {
+            actualTime += (Long) pd.getValue();
+        }
+
+        assertEquals(expectedTime, actualTime);
+    }
+
+    @Test
+    public void testPathDetailsNoConnection() throws Exception {
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
+        assertTrue(hopper.load(getTestRouteAPIUrl()));
+        GHRequest request = new GHRequest(42.542078, 1.45586, 42.537841, 1.439981);
+        request.setPathDetails(Arrays.asList("average_speed"));
+        GHResponse rsp = hopper.route(request);
+        assertTrue(rsp.getErrors().toString(), rsp.hasErrors());
+    }
+
+    @Test
+    public void testPathDetailsWithoutGraphHopperWeb() throws Exception {
+        JsonNode json = query("point=42.554851,1.536198&point=42.510071,1.548128&details=average_speed", 200);
+        JsonNode infoJson = json.get("info");
+        assertFalse(infoJson.has("errors"));
+        JsonNode path = json.get("paths").get(0);
+        assertTrue(path.has("details"));
+        JsonNode details = path.get("details");
+        assertTrue(details.has("average_speed"));
+        JsonNode averageSpeed = details.get("average_speed");
+        assertEquals(30.0, averageSpeed.get(0).get(2).asDouble(), .01);
+        assertEquals(14, averageSpeed.get(0).get(1).asInt());
+        assertEquals(60.0, averageSpeed.get(1).get(2).asDouble(), .01);
+        assertEquals(19, averageSpeed.get(1).get(1).asInt());
+    }
+
+    @Test
     public void testInitInstructionsWithTurnDescription() {
-        GraphHopperAPI hopper = new GraphHopperWeb();
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
         GHRequest request = new GHRequest(42.554851, 1.536198, 42.510071, 1.548128);
         GHResponse rsp = hopper.route(request);
@@ -152,7 +220,7 @@ public class GraphHopperServletIT extends BaseServletTester {
 
     @Test
     public void testGraphHopperWebRealExceptions() {
-        GraphHopperAPI hopper = new GraphHopperWeb();
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));
 
         // IllegalArgumentException (Wrong Request)

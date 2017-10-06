@@ -41,7 +41,7 @@ public class Instruction {
     public static final int PT_TRANSFER = 102;
     public static final int PT_END_TRIP = 103;
     private static final AngleCalc AC = Helper.ANGLE_CALC;
-    protected final PointList points;
+    protected PointList points;
     protected final InstructionAnnotation annotation;
     protected boolean rawName;
     protected int sign;
@@ -137,14 +137,20 @@ public class Instruction {
         return points.getElevation(0);
     }
 
+    /* This method returns the points associated to this instruction. Please note that it will not include the last point,
+     * i.e. the first point of the next instruction object.
+     */
     public PointList getPoints() {
         return points;
+    }
+
+    public void setPoints(PointList points) {
+        this.points = points;
     }
 
     /**
      * This method returns a list of gpx entries where the time (in time) is relative to the first
      * which is 0. It does NOT contain the last point which is the first of the next instruction.
-     * <p>
      *
      * @return the time offset to add for the next instruction
      */

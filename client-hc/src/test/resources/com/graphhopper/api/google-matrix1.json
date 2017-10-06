@@ -1,0 +1,88 @@
+{
+  "destination_addresses": [
+    "334-350 Hicks St, Brooklyn, NY 11201, USA",
+    "334-350 Hicks St, Brooklyn, NY 11201, USA",
+    "334-350 Hicks St, Brooklyn, NY 11201, USA"
+  ],
+  "origin_addresses": [
+    "45 Bell St, Chagrin Falls, OH 44022, USA",
+    "170 Lynch Church Road, Marietta, OH 45750, USA"
+  ],
+  "rows": [
+    {
+      "elements": [
+        {
+          "distance": {
+            "text": "443 mi",
+            "value": 712692
+          },
+          "duration": {
+            "text": "7 hours 13 mins",
+            "value": 25995
+          },
+          "status": "OK"
+        },
+        {
+          "distance": {
+            "text": "443 mi",
+            "value": 712692
+          },
+          "duration": {
+            "text": "7 hours 13 mins",
+            "value": 25995
+          },
+          "status": "OK"
+        },
+        {
+          "distance": {
+            "text": "443 mi",
+            "value": 712692
+          },
+          "duration": {
+            "text": "7 hours 13 mins",
+            "value": 25995
+          },
+          "status": "OK"
+        }
+      ]
+    },
+    {
+      "elements": [
+        {
+          "distance": {
+            "text": "501 mi",
+            "value": 806813
+          },
+          "duration": {
+            "text": "7 hours 59 mins",
+            "value": 28737
+          },
+          "status": "OK"
+        },
+        {
+          "distance": {
+            "text": "501 mi",
+            "value": 806813
+          },
+          "duration": {
+            "text": "7 hours 59 mins",
+            "value": 28737
+          },
+          "status": "OK"
+        },
+        {
+          "distance": {
+            "text": "501 mi",
+            "value": 806813
+          },
+          "duration": {
+            "text": "7 hours 59 mins",
+            "value": 28737
+          },
+          "status": "OK"
+        }
+      ]
+    }
+  ],
+  "status": "OK"
+}

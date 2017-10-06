@@ -82,7 +82,7 @@ public class Parameters {
         public static final class RoundTrip {
             public static final String DISTANCE = ROUND_TRIP + ".distance";
             public static final String SEED = ROUND_TRIP + ".seed";
-            public static final String HEADING = "heading";
+            public static final String POINTS = ROUND_TRIP + ".points";
             public static final String INIT_MAX_RETRIES = ROUTING_INIT_PREFIX + ROUND_TRIP + ".max_retries";
         }
     }
@@ -120,8 +120,8 @@ public class Parameters {
         public static final double DEFAULT_HEADING_PENALTY = 300;
         public static final String HEADING_PENALTY = "heading_penalty";
         /**
-         * block road access via a point lat,lon or an area defined from a circle lat,lon,radius or
-         * a rectangular lat1,lon1,lat2,lon2
+         * block road access via a point in the format lat,lon or an area defined by a circle lat,lon,radius or
+         * a rectangle lat1,lon1,lat2,lon2
          */
         public static final String BLOCK_AREA = "block_area";
     }
@@ -186,13 +186,28 @@ public class Parameters {
         public static final String MAX_NON_CH_POINT_DISTANCE = ROUTING_INIT_PREFIX + NON_CH_PREFIX + "max_waypoint_distance";
     }
 
+    /**
+     * Properties for the details response
+     */
+    public static final class DETAILS {
+
+        public static final String PATH_DETAILS = "details";
+
+        public static final String AVERAGE_SPEED = "average_speed";
+        public static final String STREET_NAME = "street_name";
+        public static final String EDGE_ID = "edge_id";
+        public static final String TIME = "time";
+    }
+
     public static final class PT {
         public static final String EARLIEST_DEPARTURE_TIME = "pt.earliest_departure_time";
-        public static final String RANGE_QUERY_END_TIME = "pt.range_query_end_time";
+        public static final String PROFILE_QUERY = "pt.profile";
         public static final String ARRIVE_BY = "pt.arrive_by";
         public static final String IGNORE_TRANSFERS = "pt.ignore_transfers";
         public static final String WALK_SPEED = "pt.walk_speed";
         public static final String MAX_WALK_DISTANCE_PER_LEG = "pt.max_walk_distance_per_leg";
         public static final String MAX_TRANSFER_DISTANCE_PER_LEG = "pt.max_transfer_distance_per_leg";
+        public static final String LIMIT_SOLUTIONS = "pt.limit_solutions";
+
     }
 }
