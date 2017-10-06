@@ -185,7 +185,9 @@ GHRequest.prototype.createPointParams = function (useRawInput) {
         point = this.route.getIndex(i);
         if (i > 0)
             str += "&";
-        if (useRawInput)
+        if (typeof point.input == 'undefined')
+            str += "point=";
+        else if (useRawInput)
             str += "point=" + encodeURIComponent(point.input);
         else
             str += "point=" + encodeURIComponent(point.toString());
