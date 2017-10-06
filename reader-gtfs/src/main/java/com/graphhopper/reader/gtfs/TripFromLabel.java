@@ -297,7 +297,7 @@ class TripFromLabel {
                     edges(path).map(edgeLabel -> edgeLabel.edgeIteratorState).collect(Collectors.toList()),
                     lineStringFromEdges(path),
                     edges(path).mapToDouble(edgeLabel -> edgeLabel.distance).sum(),
-                    instructions.stream().collect(Collectors.toCollection(() -> new InstructionList(tr))),
+                    instructions,
                     Date.from(arrivalTime)));
         }
     }

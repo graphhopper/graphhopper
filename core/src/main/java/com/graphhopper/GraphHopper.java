@@ -41,6 +41,7 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
+import com.graphhopper.util.details.PathDetailsBuilder;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
@@ -114,6 +115,7 @@ public class GraphHopper implements GraphHopperAPI {
     private ElevationProvider eleProvider = ElevationProvider.NOOP;
     private FlagEncoderFactory flagEncoderFactory = FlagEncoderFactory.DEFAULT;
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
+    private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     public GraphHopper() {
         chFactoryDecorator.setEnabled(true);
@@ -206,6 +208,11 @@ public class GraphHopper implements GraphHopperAPI {
      */
     public GraphHopper setTraversalMode(TraversalMode traversalMode) {
         this.traversalMode = traversalMode;
+        return this;
+    }
+
+    public GraphHopper setPathDetailsBuilderFactory(PathDetailsBuilderFactory pathBuilderFactory) {
+        this.pathBuilderFactory = pathBuilderFactory;
         return this;
     }
 
@@ -1050,14 +1057,13 @@ public class GraphHopper implements GraphHopperAPI {
                 boolean tmpEnableInstructions = hints.getBool(Routing.INSTRUCTIONS, enableInstructions);
                 boolean tmpCalcPoints = hints.getBool(Routing.CALC_POINTS, calcPoints);
                 double wayPointMaxDistance = hints.getDouble(Routing.WAY_POINT_MAX_DISTANCE, 1d);
-                PathDetailsBuilderFactory calculatorFactory = new PathDetailsBuilderFactory(request.getPathDetails(), encoder, weighting);
 
                 DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
                 PathMerger pathMerger = new PathMerger().
                         setCalcPoints(tmpCalcPoints).
                         setDouglasPeucker(peucker).
                         setEnableInstructions(tmpEnableInstructions).
-                        setPathDetailsBuilderFactory(calculatorFactory).
+                        setPathDetailsBuilders(pathBuilderFactory, request.getPathDetails()).
                         setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
 
                 if(request.hasFavoredHeading(0))
@@ -1107,7 +1113,7 @@ public class GraphHopper implements GraphHopperAPI {
         for (int i = 0; i < points.size(); i++) {
             GHPoint point = points.get(i);
             if (!bounds.contains(point.getLat(), point.getLon())) {
-                throw new PointOutOfBoundsException("Point " + i + " is ouf of bounds: " + point, i);
+                throw new PointOutOfBoundsException("Point " + i + " is out of bounds: " + point, i);
             }
         }
     }

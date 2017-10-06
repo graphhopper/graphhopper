@@ -284,7 +284,7 @@ public class PathTest {
         Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{AVERAGE_SPEED}), encoder, new FastestWeighting(encoder)), 0);
+        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(new String[]{AVERAGE_SPEED}), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> averageSpeedDetails = details.get(AVERAGE_SPEED);
@@ -306,7 +306,7 @@ public class PathTest {
         Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{STREET_NAME}), encoder, new FastestWeighting(encoder)), 0);
+        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(new String[]{STREET_NAME}), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> streetNameDetails = details.get(STREET_NAME);
@@ -330,7 +330,7 @@ public class PathTest {
         Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{EDGE_ID}), encoder, new FastestWeighting(encoder)), 0);
+        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(new String[]{EDGE_ID}), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> edgeIdDetails = details.get(EDGE_ID);
@@ -353,7 +353,7 @@ public class PathTest {
         Path p = new Dijkstra(pathDetailGraph, new ShortestWeighting(encoder), TraversalMode.NODE_BASED).calcPath(1, 5);
         assertTrue(p.isFound());
 
-        Map<String, List<PathDetail>> details = p.calcDetails(new PathDetailsBuilderFactory(Arrays.asList(new String[]{TIME}), encoder, new FastestWeighting(encoder)), 0);
+        Map<String, List<PathDetail>> details = p.calcDetails(Arrays.asList(new String[]{TIME}), new PathDetailsBuilderFactory(), 0);
         assertTrue(details.size() == 1);
 
         List<PathDetail> timeDetails = details.get(TIME);
