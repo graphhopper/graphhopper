@@ -214,21 +214,23 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             if (sign != Instruction.IGNORE) {
                 /*
                     Check if the next instruction is likely to only be a short connector to execute a u-turn
-                    --->--
-                          |    <-- This is the short connector
-                    ---<--
+                    --A->--
+                           |    <-- This is the short connector
+                    --B-<--
                     Note: The current approach only works if the short connector is only 1 edge, as we check the orientation
                     and name of the edge before the current edge. Could be extended to a second edge, however I haven't
                     seen many cases where we would have needed 2 edges.
                     Example 1: point=49.498577%2C8.489041&point=49.498932%2C8.490103 (actually I am not sure if we would even want a u-turn here)
 
+                    Road A and Road B have to have the same name and roughly the same orientation, otherwise we are assuming this is no u-turn.
                   */
+
                 if (prevInstruction.getDistance() < MAX_U_TURN_DISTANCE && (sign < 0) == (prevInstruction.getSign() < 0) &&
                         (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT) &&
                         (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT) &&
                         InstructionsHelper.isNameSimilar(doublePrevName, name) &&
-                        (Math.abs(doublePrevOrientation - prevOrientation) % Math.PI > (Math.PI / 2) * .9) &&
-                        (Math.abs(doublePrevOrientation - prevOrientation) % Math.PI < (Math.PI / 2) * 1.1)
+                        (Math.abs(doublePrevOrientation - prevOrientation) % Math.PI > (Math.PI / 2) * .6) &&
+                        (Math.abs(doublePrevOrientation - prevOrientation) % Math.PI < (Math.PI / 2) * 1.4)
                         ) {
                     prevInstruction.setSign(Instruction.U_TURN);
                     prevInstruction.setName(name);
