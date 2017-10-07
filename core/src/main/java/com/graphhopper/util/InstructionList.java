@@ -254,6 +254,12 @@ public class InstructionList extends AbstractList<Instruction> {
         if (!Double.isNaN(azimuth))
             output.append("<gh:azimuth>").append(Helper.round2(azimuth)).append("</gh:azimuth>");
 
+        if (instruction instanceof RoundaboutInstruction) {
+            RoundaboutInstruction ri = (RoundaboutInstruction) instruction;
+
+            output.append("<gh:exit_number>").append(ri.getExitNumber()).append("</gh:exit_number>");
+        }
+
         output.append("<gh:sign>").append(instruction.getSign()).append("</gh:sign>");
         output.append("</extensions>");
         output.append("</rtept>");
