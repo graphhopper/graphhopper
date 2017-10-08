@@ -713,6 +713,31 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void testCircularJunctionInstructionsWithCH() {
+        String tmpOsmFile = DIR + "/berlin-siegessaeule.osm.gz";
+        String tmpVehicle = "car";
+        String tmpImportVehicles = "car,bike";
+        String tmpWeightCalcStr = "fastest";
+
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(tmpOsmFile).
+                setStoreOnFlush(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager(tmpImportVehicles)).
+                importOrLoad();
+
+        assertEquals(tmpVehicle, tmpHopper.getDefaultVehicle().toString());
+
+        assertEquals(2, tmpHopper.getCHFactoryDecorator().getPreparations().size());
+
+        GHResponse rsp = tmpHopper.route(new GHRequest(52.513505,13.350443, 52.513505,13.350245)
+                .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
+
+        PathWrapper arsp = rsp.getBest();
+        assertEquals(5, ((RoundaboutInstruction) arsp.getInstructions().get(1)).getExitNumber());
+    }
+
+    @Test
     public void testMultipleVehiclesWithCH() {
         String tmpOsmFile = DIR + "/monaco.osm.gz";
         GraphHopper tmpHopper = new GraphHopperOSM().

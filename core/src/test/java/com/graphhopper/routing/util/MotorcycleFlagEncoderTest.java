@@ -135,6 +135,33 @@ public class MotorcycleFlagEncoderTest {
     }
 
     @Test
+    public void testCircularJunction() {
+        long flags = encoder.setAccess(0, true, true);
+        long resFlags = encoder.setBool(flags, FlagEncoder.K_CIRCULAR_JUNCTION, true);
+        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_CIRCULAR_JUNCTION));
+        assertTrue(encoder.isForward(resFlags));
+        assertTrue(encoder.isBackward(resFlags));
+
+        resFlags = encoder.setBool(flags, FlagEncoder.K_CIRCULAR_JUNCTION, false);
+        assertFalse(encoder.isBool(resFlags, FlagEncoder.K_CIRCULAR_JUNCTION));
+        assertTrue(encoder.isForward(resFlags));
+        assertTrue(encoder.isBackward(resFlags));
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "motorway");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        assertFalse(encoder.isBool(flags, FlagEncoder.K_CIRCULAR_JUNCTION));
+
+        way.setTag("junction", "circular");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertTrue(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_CIRCULAR_JUNCTION));
+    }
+
+    @Test
     public void testSetSpeed0_issue367() {
         long flags = encoder.setProperties(10, true, true);
         flags = encoder.setSpeed(flags, 0);

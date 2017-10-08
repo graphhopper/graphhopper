@@ -164,6 +164,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
                             ri.setRadian((angle < 0 ? -Math.PI : Math.PI) - angle);
                         }
 
+                        if (jsonObj.has("circular_junction")) {
+                           if (jsonObj.get("circular_junction").asBoolean())
+                               ri.setCircularJunction();
+                        }
+
                         instr = ri;
                     } else if (sign == Instruction.REACHED_VIA) {
                         ViaInstruction tmpInstr = new ViaInstruction(text, ia, instPL);

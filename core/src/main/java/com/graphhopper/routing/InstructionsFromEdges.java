@@ -100,7 +100,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         double latitude, longitude;
 
         PointList wayGeo = edge.fetchWayGeometry(3);
+        // TODO can we rely on encoders to set booleans correctly?
         boolean isRoundabout = encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT);
+        boolean isCircularJunction = encoder.isBool(flags, FlagEncoder.K_CIRCULAR_JUNCTION);
 
         if (wayGeo.getSize() <= 2) {
             latitude = adjLat;
@@ -130,6 +132,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 int sign = Instruction.USE_ROUNDABOUT;
                 RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(sign, name,
                         annotation, new PointList(10, nodeAccess.is3D()));
+
+                if (isCircularJunction)
+                    roundaboutInstruction.setCircularJunction();
+
                 if (prevName != null) {
                     // check if there is an exit at the same node the roundabout was entered
                     EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
