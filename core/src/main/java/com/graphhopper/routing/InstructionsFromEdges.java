@@ -229,9 +229,10 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT) &&
                         (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT) &&
                         InstructionsHelper.isNameSimilar(doublePrevName, name) &&
-                        (Math.abs(doublePrevOrientation - prevOrientation) % Math.PI > (Math.PI / 2) * .6) &&
-                        (Math.abs(doublePrevOrientation - prevOrientation) % Math.PI < (Math.PI / 2) * 1.4)
+                        (Math.abs(doublePrevOrientation - prevOrientation) % Math.PI > (Math.PI / 2) * .65) &&
+                        (Math.abs(doublePrevOrientation - prevOrientation) % Math.PI < (Math.PI / 2) * 1.35)
                         ) {
+                    System.out.println((Math.PI / 2) * .65 + " < " + Math.abs(doublePrevOrientation - prevOrientation) % Math.PI + " < " + (Math.PI / 2) * 1.35);
                     prevInstruction.setSign(Instruction.U_TURN);
                     prevInstruction.setName(name);
                 } else {
