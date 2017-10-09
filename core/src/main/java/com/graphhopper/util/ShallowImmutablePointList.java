@@ -26,7 +26,7 @@ import java.util.List;
  *
  * @author Robin Boldt
  */
-public class ShallowImmutablePointList extends PointList {
+public final class ShallowImmutablePointList extends PointList {
 
     private final static String IMMUTABLE_ERR = "This class is immutable, you are not allowed to change it";
 
