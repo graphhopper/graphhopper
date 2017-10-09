@@ -377,7 +377,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             flags = transportModeEncoder.setValue(flags, tmValue);
 
             // ROUNDABOUT
-            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
             if (isRoundabout)
                 flags = setBool(flags, K_ROUNDABOUT, true);
 
@@ -835,7 +835,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 3;
+        return 4;
     }
 
     @Override
