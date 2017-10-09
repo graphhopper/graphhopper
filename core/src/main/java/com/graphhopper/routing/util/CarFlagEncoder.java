@@ -146,7 +146,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 1;
+        return 2;
     }
 
     /**
@@ -250,7 +250,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
             flags = setSpeed(flags, speed);
 
-            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            boolean isCircularJunction = way.hasTag("junction", "circular");
+            if (isCircularJunction)
+                flags = setBool(flags, K_CIRCULAR_JUNCTION, true);
+
+            // w.r.t. routing treat a circular junction as roundabout
+            boolean isRoundabout = isCircularJunction || way.hasTag("junction", "roundabout");
             if (isRoundabout)
                 flags = setBool(flags, K_ROUNDABOUT, true);
 

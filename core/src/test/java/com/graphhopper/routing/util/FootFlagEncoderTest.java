@@ -35,7 +35,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class FootFlagEncoderTest {
-    private final EncodingManager encodingManager = new EncodingManager("car,bike,foot");
+    private final EncodingManager encodingManager = new EncodingManager("car,bike,foot", 8);
     private final FootFlagEncoder footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
 
     @Test
@@ -366,6 +366,16 @@ public class FootFlagEncoderTest {
         way.setTag("highway", "tertiary");
         long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
         assertTrue(footEncoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+    }
+
+    @Test
+    public void handleWayTagsCircularJunction() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("junction", "circular");
+        way.setTag("highway", "tertiary");
+        long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
+        assertTrue(footEncoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+        assertTrue(footEncoder.isBool(flags, FlagEncoder.K_CIRCULAR_JUNCTION));
     }
 
     public void testFord() {

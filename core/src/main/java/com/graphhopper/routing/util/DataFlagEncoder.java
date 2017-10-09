@@ -376,8 +376,13 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
             }
             flags = transportModeEncoder.setValue(flags, tmValue);
 
-            // ROUNDABOUT
-            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            // CIRCULAR JUNCTION
+            boolean isCircularJunction = way.hasTag("junction", "circular");
+            if (isCircularJunction)
+                flags = setBool(flags, K_CIRCULAR_JUNCTION, true);
+
+            // ROUNDABOUT (treat circular junction as roundabout)
+            boolean isRoundabout = isCircularJunction || way.hasTag("junction", "roundabout");
             if (isRoundabout)
                 flags = setBool(flags, K_ROUNDABOUT, true);
 
@@ -642,6 +647,11 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         return (edge.getFlags() & roundaboutBit) != 0;
     }
 
+    public boolean isCircularJunction(EdgeIteratorState edge) {
+        // similar to isRoundabout (see above)
+        return (edge.getFlags() & circularJunctionBit) != 0;
+    }
+
     public int getAccessType(String accessStr) {
         // access, motor_vehicle, bike, foot, hgv, bus
         return 0;
@@ -835,7 +845,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 3;
+        return 4;
     }
 
     @Override

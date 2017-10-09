@@ -199,7 +199,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 3;
     }
 
     @Override
@@ -353,7 +353,12 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             flags = handleSpeed(way, wayTypeSpeed, flags);
             flags = handleBikeRelated(way, flags, relationFlags > UNCHANGED.getValue());
 
-            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            boolean isCircularJunction = way.hasTag("junction", "circular");
+            if (isCircularJunction)
+                flags = setBool(flags, K_CIRCULAR_JUNCTION, true);
+
+            // w.r.t. routing treat a circular junction as roundabout
+            boolean isRoundabout = isCircularJunction || way.hasTag("junction", "roundabout");
             if (isRoundabout) {
                 flags = setBool(flags, K_ROUNDABOUT, true);
             }

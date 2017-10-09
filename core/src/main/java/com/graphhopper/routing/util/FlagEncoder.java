@@ -34,6 +34,11 @@ public interface FlagEncoder extends TurnCostEncoder {
     static final int K_ROUNDABOUT = 2;
 
     /**
+     * Reports whether this edge is part of a circular junction.
+     */
+    static final int K_CIRCULAR_JUNCTION = 3;
+
+    /**
      * @return the version of this FlagEncoder to enforce none-compatibility when new attributes are
      * introduced
      */

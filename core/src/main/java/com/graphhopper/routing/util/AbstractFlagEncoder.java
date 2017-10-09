@@ -62,6 +62,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     protected long backwardBit;
     protected long directionBitMask;
     protected long roundaboutBit;
+    protected long circularJunctionBit;
     protected EncodedDoubleValue speedEncoder;
     // bit to signal that way is accepted
     protected long acceptBit;
@@ -180,6 +181,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         directionBitMask = 3L << shift;
         shift += 2;
         roundaboutBit = 1L << shift;
+        shift++;
+        circularJunctionBit = 1L << shift;
         shift++;
 
         // define internal flags for parsing
@@ -634,6 +637,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                 return value ? flags | backwardBit : flags & ~backwardBit;
             case K_ROUNDABOUT:
                 return value ? flags | roundaboutBit : flags & ~roundaboutBit;
+            case K_CIRCULAR_JUNCTION:
+                return value ? flags | circularJunctionBit : flags & ~circularJunctionBit;
             default:
                 throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
         }
@@ -648,6 +653,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
                 return isBackward(flags);
             case K_ROUNDABOUT:
                 return (flags & roundaboutBit) != 0;
+            case K_CIRCULAR_JUNCTION:
+                return (flags & circularJunctionBit) != 0;
             default:
                 throw new IllegalArgumentException("Unknown key " + key + " for boolean value");
         }

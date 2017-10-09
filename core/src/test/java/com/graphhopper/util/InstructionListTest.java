@@ -352,6 +352,34 @@ public class InstructionListTest {
         assertEquals("At roundabout, take exit 2 onto streetname", json.get("text").toString());
         assertEquals(-1, (Double) json.get("turn_angle"), 0.01);
         assertEquals("2", json.get("exit_number").toString());
+        assertEquals(false, json.get("circular_junction"));
+        // assert that a valid JSON object can be written
+        assertNotNull(write(json));
+    }
+
+    @Test
+    public void testCircularJunctionJsonIntegrity() {
+        InstructionList il = new InstructionList(usTR);
+
+        PointList pl = new PointList();
+        pl.add(52.514, 13.349);
+        pl.add(52.5135, 13.35);
+        pl.add(52.514, 13.351);
+        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
+                new InstructionAnnotation(0, ""), pl)
+                .setDirOfRotation(-0.1)
+                .setRadian(-Math.PI + 1)
+                .setExitNumber(2)
+                .setCircularJunction()
+                .setExited();
+        il.add(instr);
+
+        Map<String, Object> json = il.createJson().get(0);
+        // assert that all information is present in map for JSON
+        assertEquals("Take exit 2 onto streetname", json.get("text").toString());
+        assertEquals(-1, (Double) json.get("turn_angle"), 0.01);
+        assertEquals("2", json.get("exit_number").toString());
+        assertEquals(true, json.get("circular_junction"));
         // assert that a valid JSON object can be written
         assertNotNull(write(json));
     }

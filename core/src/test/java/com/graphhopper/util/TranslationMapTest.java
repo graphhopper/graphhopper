@@ -67,4 +67,16 @@ public class TranslationMapTest {
         Translation ptMap = SINGLETON.get("pt");
         assertTrue(ptMap.tr("roundabout_exit_onto", "1", "somestreet").contains("somestreet"));
     }
+
+    @Test
+    public void testCircularJunctionString() {
+        Translation ptMap = SINGLETON.get("pt");
+        assertTrue(ptMap.tr("circular_junction_exit", "1").contains("1"));
+    }
+
+    @Test
+    public void testToCircularJunctionString() {
+        Translation ptMap = SINGLETON.get("pt");
+        assertTrue(ptMap.tr("circular_junction_exit_onto", "1", "somestreet").contains("somestreet"));
+    }
 }

@@ -29,6 +29,7 @@ public class RoundaboutInstruction extends Instruction {
     private int clockwise = 0;
     private boolean exited = false;
     private double radian = Double.NaN;
+    private boolean circularJunction = false;
 
     public RoundaboutInstruction(int sign, String name, InstructionAnnotation ia, PointList pl) {
         super(sign, name, ia, pl);
@@ -95,11 +96,21 @@ public class RoundaboutInstruction extends Instruction {
         return this;
     }
 
+    public boolean isCircularJunction() {
+        return circularJunction;
+    }
+
+    public RoundaboutInstruction setCircularJunction() {
+        this.circularJunction = true;
+        return this;
+    }
+
     @Override
     public Map<String, Object> getExtraInfoJSON() {
         Map<String, Object> tmpMap = new HashMap<String, Object>(3);
         tmpMap.put("exit_number", getExitNumber());
         tmpMap.put("exited", this.exited);
+        tmpMap.put("circular_junction", this.circularJunction);
         double tmpAngle = getTurnAngle();
         if (!Double.isNaN(tmpAngle))
             tmpMap.put("turn_angle", Helper.round(tmpAngle, 2));
@@ -119,6 +130,9 @@ public class RoundaboutInstruction extends Instruction {
         if (indi == Instruction.USE_ROUNDABOUT) {
             if (!exited) {
                 str = tr.tr("roundabout_enter");
+            } else if (circularJunction) {
+                str = Helper.isEmpty(streetName) ? tr.tr("circular_junction_exit", getExitNumber())
+                        : tr.tr("circular_junction_exit_onto", getExitNumber(), streetName);
             } else {
                 str = Helper.isEmpty(streetName) ? tr.tr("roundabout_exit", getExitNumber())
                         : tr.tr("roundabout_exit_onto", getExitNumber(), streetName);
