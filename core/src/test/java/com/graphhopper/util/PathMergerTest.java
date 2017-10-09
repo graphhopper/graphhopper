@@ -18,13 +18,11 @@ import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
+import com.graphhopper.util.exceptions.ConnectionNotFoundException.Keys;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
+import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 import static org.junit.Assert.assertEquals;
@@ -42,7 +40,7 @@ public class PathMergerTest {
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
 
     @Test
-    public void test() {
+    public void testConnectionNotFoundDetails() {
         Graph g = createGraph();
         LocationIndex locationIndex = new LocationIndexTree(g, new RAMDirectory()).prepareIndex();
 
@@ -82,31 +80,22 @@ public class PathMergerTest {
         Throwable error = ghRsp.getErrors().get(0);
         assertTrue(error instanceof ConnectionNotFoundException);
         String errorMessage = error.getMessage();
-        assertTrue(errorMessage, errorMessage.equals("Connection between locations not found: [(1,2), (4,5)]"));
-        verifyDetails(((ConnectionNotFoundException)error).getDetails());
+        assertTrue(errorMessage, errorMessage.
+                equals("Connection between point 1 and point 2, and point 4 and point 5 not found"));
+        Map<String, Object> details = ((ConnectionNotFoundException) error).getDetails();
+        verifyDetails((Map<?, ?>)details.get("connection-not-found-0"), 1, 52.2, 8.2, 2, 52.4, 8.4);
+        verifyDetails((Map<?, ?>)details.get("connection-not-found-1"), 4, 52.6, 8.6, 5, 52.8, 8.8);
     }
 
-    private void verifyDetails(Map<String, Object> details) {
-        List<Integer> idxFromList = Arrays.asList(1, 4);
-        List<Double> latFromList = Arrays.asList(52.2, 52.6);
-        List<Double> lonFromList = Arrays.asList(8.2, 8.6);
-        List<Integer> idxToList = Arrays.asList(2, 5);
-        List<Double> latToList = Arrays.asList(52.4, 52.8);
-        List<Double> lonToList = Arrays.asList(8.4, 8.8);
+    private void verifyDetails(Map<?, ?> detailEntry, int idFrom, double latFrom,
+                               double lonFrom, int idTo, double latTo, double lonTo) {
 
-        for (Map.Entry<String, Object> entry : details.entrySet()) {
-            assertEquals(idxFromList.size(), ((List<?>)entry.getValue()).size());
-        }
-
-        for (int n = 0; n < idxFromList.size(); ++n) {
-            // TODO use matcher for lists of floating point values with delta
-            assertEquals(idxFromList.get(n), ((List<?>)details.get("idxFrom")).get(n));
-            assertEquals(latFromList.get(n), (Double)((List<?>)details.get("latFrom")).get(n), 0.01);
-            assertEquals(lonFromList.get(n), (Double)((List<?>)details.get("lonFrom")).get(n), 0.01);
-            assertEquals(idxToList.get(n), ((List<?>)details.get("idxTo")).get(n));
-            assertEquals(latToList.get(n), (Double)((List<?>)details.get("latTo")).get(n), 0.01);
-            assertEquals(lonToList.get(n), (Double)((List<?>)details.get("lonTo")).get(n), 0.01);
-        }
+        assertEquals(detailEntry.get(Keys.idFrom.name()), idFrom);
+        assertEquals((Double)detailEntry.get(Keys.latFrom.name()), latFrom, 0.01);
+        assertEquals((Double)detailEntry.get(Keys.lonFrom.name()), lonFrom, 0.01);
+        assertEquals(detailEntry.get(Keys.idTo.name()), idTo);
+        assertEquals((Double)detailEntry.get(Keys.latTo.name()), latTo, 0.01);
+        assertEquals((Double)detailEntry.get(Keys.lonTo.name()), lonTo, 0.01);
     }
 
     private Graph createGraph() {

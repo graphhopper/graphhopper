@@ -128,7 +128,7 @@ public class PathMerger {
             altRsp.setInstructions(fullInstructions);
 
         if (!allFound) {
-            altRsp.addError(new ConnectionNotFoundException(paths, altRsp));
+            altRsp.addError(new ConnectionNotFoundException(paths, altRsp.getWaypoints()));
         }
 
         altRsp.setDescription(description).
