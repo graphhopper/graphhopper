@@ -18,8 +18,13 @@
 package com.graphhopper.reader.osm;
 
 import com.graphhopper.GraphHopper;
+import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.DataReader;
+import com.graphhopper.routing.lm.PrepareLandmarks;
+import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.storage.GraphHopperStorage;
+
+import java.util.List;
 
 /**
  * This class is the simplified entry to all functionality if you import from OpenStreetMap data.
@@ -27,6 +32,18 @@ import com.graphhopper.storage.GraphHopperStorage;
  * @author Peter Karich
  */
 public class GraphHopperOSM extends GraphHopper {
+
+    private final JsonFeatureCollection landmarkSplittingFeatureCollection;
+
+    public GraphHopperOSM() {
+        this(null);
+    }
+
+    public GraphHopperOSM(JsonFeatureCollection landmarkSplittingFeatureCollection) {
+        super();
+        this.landmarkSplittingFeatureCollection = landmarkSplittingFeatureCollection;
+    }
+
     @Override
     protected DataReader createReader(GraphHopperStorage ghStorage) {
         return initDataReader(new OSMReader(ghStorage));
@@ -43,5 +60,33 @@ public class GraphHopperOSM extends GraphHopper {
     public GraphHopperOSM setOSMFile(String osmFileStr) {
         super.setDataReaderFile(osmFileStr);
         return this;
+    }
+
+    @Override
+    protected void loadOrPrepareLM() {
+        if (!getLMFactoryDecorator().isEnabled() || getLMFactoryDecorator().getPreparations().isEmpty())
+            return;
+
+        if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
+            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(landmarkSplittingFeatureCollection, "area", new SpatialRuleLookupBuilder.SpatialRuleFactory() {
+                @Override
+                public SpatialRule createSpatialRule(final String id, List<Polygon> polygons) {
+                    return new DefaultSpatialRule() {
+                        @Override
+                        public String getId() {
+                            return id;
+                        }
+                    }.setBorders(polygons);
+                }
+            });
+            for (PrepareLandmarks prep : getLMFactoryDecorator().getPreparations()) {
+                // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
+                if (ruleLookup != null && ruleLookup.size() > 0) {
+                    prep.setSpatialRuleLookup(ruleLookup);
+                }
+            }
+        }
+
+        super.loadOrPrepareLM();
     }
 }

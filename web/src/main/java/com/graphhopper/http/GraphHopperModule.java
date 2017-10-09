@@ -68,43 +68,9 @@ public class GraphHopperModule extends AbstractModule {
     @Provides
     @Singleton
     GraphHopper createGraphHopper(CmdArgs args) {
-        GraphHopper graphHopper = new GraphHopperOSM() {
-            @Override
-            protected void loadOrPrepareLM() {
-                if (!getLMFactoryDecorator().isEnabled() || getLMFactoryDecorator().getPreparations().isEmpty())
-                    return;
-
-                try {
-                    String location = args.get(Parameters.Landmark.PREPARE + "split_area_location", "");
-                    Reader reader = location.isEmpty() ? new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream()) : new FileReader(location);
-                    JsonFeatureCollection jsonFeatureCollection = new GHJsonFactory().create().fromJson(reader, JsonFeatureCollection.class);
-                    if (!jsonFeatureCollection.getFeatures().isEmpty()) {
-                        SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(jsonFeatureCollection, "area", new SpatialRuleLookupBuilder.SpatialRuleFactory() {
-                            @Override
-                            public SpatialRule createSpatialRule(String id, List<Polygon> polygons) {
-                                return new DefaultSpatialRule() {
-                                    @Override
-                                    public String getId() {
-                                        return id;
-                                    }
-                                }.setBorders(polygons);
-                            }
-                        });
-                        for (PrepareLandmarks prep : getLMFactoryDecorator().getPreparations()) {
-                            // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
-                            if (ruleLookup != null && ruleLookup.size() > 0) {
-                                prep.setSpatialRuleLookup(ruleLookup);
-                            }
-                        }
-                    }
-                } catch (IOException ex) {
-                    logger.error("Problem while reading border map GeoJSON. Skipping this.", ex);
-                }
-
-                super.loadOrPrepareLM();
-            }
-        }.forServer();
-
+        GraphHopper graphHopper = new GraphHopperOSM(
+                SpatialRuleLookupHelper.createLandmarkSplittingFeatureCollection(args.get(Parameters.Landmark.PREPARE + "split_area_location", ""))
+        ).forServer();
         SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, args);
 
         graphHopper.init(args);

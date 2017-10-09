@@ -233,7 +233,7 @@ public class InstructionListTest {
         p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(3, 5);
         wayList = p.calcInstructions(usTR);
         tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto 3-4", "Turn slight right onto 4-5", "Arrive at destination"),
+        assertEquals(Arrays.asList("Continue onto 3-4", "Keep right onto 4-5", "Arrive at destination"),
                 tmpList);
     }
 
