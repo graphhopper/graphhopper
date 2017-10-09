@@ -89,7 +89,6 @@ public class PathMergerTest {
 
     private void verifyDetails(Map<?, ?> detailEntry, int idFrom, double latFrom,
                                double lonFrom, int idTo, double latTo, double lonTo) {
-
         assertEquals(detailEntry.get(Keys.idFrom.name()), idFrom);
         assertEquals((Double)detailEntry.get(Keys.latFrom.name()), latFrom, 0.01);
         assertEquals((Double)detailEntry.get(Keys.lonFrom.name()), lonFrom, 0.01);

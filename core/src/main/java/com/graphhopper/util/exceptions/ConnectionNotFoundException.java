@@ -46,7 +46,6 @@ public class ConnectionNotFoundException extends DetailedIllegalArgumentExceptio
     private static String unconnectedListString(List<Path> paths) {
         StringBuilder sb = new StringBuilder(INTRO);
 
-
         for (int n = 0; n < paths.size(); ++n) {
             if (!paths.get(n).isFound())
                 sb.append(String.format(FMT, n, n + 1)).append(JOIN);
@@ -62,7 +61,6 @@ public class ConnectionNotFoundException extends DetailedIllegalArgumentExceptio
     }
 
     private static Map<String, Object> unconnectedInfo(List<Path> paths, PointList waypoints) {
-
         Map<String, Object> info = new HashMap<>();
 
         for (int pathIndex = 0; pathIndex < paths.size(); ++pathIndex) {
