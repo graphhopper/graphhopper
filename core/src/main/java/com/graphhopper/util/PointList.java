@@ -25,7 +25,9 @@ import com.vividsolutions.jts.geom.LineString;
 import java.util.*;
 
 /**
- * Slim list to store several points (without the need for a point object).
+ * Slim list to store several points (without the need for a point object). Be aware that the PointList is closely
+ * coupled with the {@link ShallowImmutablePointList} if you change it or extend it, you should make sure that your
+ * changes play well with the ShallowImmutablePointList to avoid unexpected issues.
  * <p>
  *
  * @author Peter Karich
