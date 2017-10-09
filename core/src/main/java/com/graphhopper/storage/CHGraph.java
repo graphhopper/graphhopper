@@ -37,7 +37,8 @@ public interface CHGraph extends Graph {
     void setLevel(int nodeId, int level);
 
     /**
-     * @return the level of the specified node.
+     * @return the level of the specified node. The higher the more important the node is. Virtual nodes have the
+     * biggest level associated.
      */
     int getLevel(int nodeId);
 
