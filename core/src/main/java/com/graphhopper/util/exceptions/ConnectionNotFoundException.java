@@ -40,7 +40,7 @@ public class ConnectionNotFoundException extends DetailedIllegalArgumentExceptio
     }
 
     public ConnectionNotFoundException(List<Path> paths, PointList waypoints) {
-        super(unconnectedListString(paths), unconnectedInfo(paths, waypoints));
+        this(unconnectedListString(paths), unconnectedInfo(paths, waypoints));
     }
 
     private static String unconnectedListString(List<Path> paths) {
