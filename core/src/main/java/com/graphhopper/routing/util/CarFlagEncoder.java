@@ -146,7 +146,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 2;
+        return 1;
     }
 
     /**

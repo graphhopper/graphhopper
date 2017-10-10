@@ -835,7 +835,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 4;
+        return 3;
     }
 
     @Override

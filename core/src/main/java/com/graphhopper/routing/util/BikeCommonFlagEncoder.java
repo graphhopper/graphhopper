@@ -199,7 +199,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public int getVersion() {
-        return 3;
+        return 2;
     }
 
     @Override
