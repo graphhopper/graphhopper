@@ -33,8 +33,8 @@ import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.shapes.BBox;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
+import java.time.*;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
@@ -230,7 +230,11 @@ public class RealtimeFeed {
                                 stopTime.stop_sequence = stopTimeUpdate.getStopSequence();
                                 stopTime.stop_id = stopTimeUpdate.getStopId();
                                 stopTime.trip_id = trip.trip_id;
-                                // stopTime.arrival_time = stopTimeUpdate.getArrival().getTime();
+                                final ZonedDateTime arrival_time = Instant.ofEpochSecond(stopTimeUpdate.getArrival().getTime()).atZone(ZoneId.of("America/Los_Angeles"));
+                                stopTime.arrival_time = (int) Duration.between(arrival_time.truncatedTo(ChronoUnit.DAYS), arrival_time).getSeconds();
+                                final ZonedDateTime departure_time = Instant.ofEpochSecond(stopTimeUpdate.getArrival().getTime()).atZone(ZoneId.of("America/Los_Angeles"));
+
+                                stopTime.departure_time = (int) Duration.between(departure_time.truncatedTo(ChronoUnit.DAYS), departure_time).getSeconds();
                                 return stopTime;
                             })
                             .collect(Collectors.toList());
@@ -238,6 +242,7 @@ public class RealtimeFeed {
                     return new GtfsReader.TripWithStopTimes(trip, stopTimes, validity);
                 })
                 .forEach(trip -> gtfsReader.addTrips(LocalDate.now(), LocalDate.now(), ZoneId.systemDefault(), Collections.singletonList(trip), 0));
+        gtfsReader.wireUpStops();
         return new RealtimeFeed(blockedEdges, additionalEdges);
     }
 
