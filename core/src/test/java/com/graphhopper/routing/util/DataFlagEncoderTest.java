@@ -142,6 +142,16 @@ public class DataFlagEncoderTest {
     }
 
     @Test
+    public void testCircularJunction() {
+        ReaderWay osmWay = new ReaderWay(0);
+        osmWay.setTag("highway", "unclassified");
+        osmWay.setTag("junction", "circular");
+        long flags = encoder.handleWayTags(osmWay, 1, 0);
+        EdgeIteratorState edge = GHUtility.createMockedEdgeIteratorState(0, flags);
+        assertTrue(encoder.isRoundabout(edge));
+    }
+
+    @Test
     public void testHighwaySpeed() {
         Map<String, Double> map = new LinkedHashMap<>();
         map.put("motorway", 100d);

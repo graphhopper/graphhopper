@@ -3,6 +3,7 @@ package com.graphhopper.spatialrules;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.json.geo.JsonFeatureCollection;
+import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.FlagEncoderFactory;
@@ -11,12 +12,15 @@ import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
 import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.PMap;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 
 /**
  * Helper class to build the spatial rule index
@@ -27,7 +31,7 @@ public class SpatialRuleLookupHelper {
 
     private static final Logger logger = LoggerFactory.getLogger(SpatialRuleLookupHelper.class);
 
-    public static void buildAndInjectSpatialRuleIntoGH(GraphHopper graphHopper, CmdArgs args){
+    public static void buildAndInjectSpatialRuleIntoGH(GraphHopper graphHopper, CmdArgs args) {
         String spatialRuleLocation = args.get("spatial_rules.location", "");
         if (!spatialRuleLocation.isEmpty()) {
             try {
@@ -50,6 +54,16 @@ public class SpatialRuleLookupHelper {
                 throw new RuntimeException(ex);
             }
         }
+    }
+
+    public static JsonFeatureCollection createLandmarkSplittingFeatureCollection(String location) {
+        try {
+            Reader reader = location.isEmpty() ? new InputStreamReader(LandmarkStorage.class.getResource("map.geo.json").openStream()) : new FileReader(location);
+            return new GHJsonFactory().create().fromJson(reader, JsonFeatureCollection.class);
+        } catch (IOException e) {
+            logger.error("Problem while reading border map GeoJSON. Skipping this.", e);
+        }
+        return null;
     }
 
 }

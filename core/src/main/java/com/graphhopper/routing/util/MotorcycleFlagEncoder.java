@@ -208,7 +208,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
             if (speed > 30 && way.hasTag("surface", badSurfaceSpeedMap))
                 speed = 30;
 
-            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
             if (isRoundabout)
                 flags = setBool(0, K_ROUNDABOUT, true);
 

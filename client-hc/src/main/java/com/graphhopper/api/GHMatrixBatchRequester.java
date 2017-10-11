@@ -83,7 +83,7 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
                 ghRequest.getToPoints().size(), withTimes, withDistances, withWeights);
 
         boolean debug = ghRequest.getHints().getBool("debug", false);
-        String postUrl = buildURLNoHints("/calculate", ghRequest);
+        String postUrl = buildURL("/calculate", ghRequest);
 
         try {
             String postResponseStr = postJson(postUrl, requestJson);
