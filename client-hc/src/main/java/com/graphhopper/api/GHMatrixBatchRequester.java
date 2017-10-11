@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Peter Karich
@@ -74,6 +75,14 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         requestJson.put("out_arrays", outArrayListJson);
         requestJson.put("vehicle", ghRequest.getVehicle());
         requestJson.put("elevation", hasElevation);
+
+        ObjectNode hintsObject = factory.objectNode();
+        Map<String, String> hintsMap = ghRequest.getHints().toMap();
+        for(String hintKey : hintsMap.keySet()){
+            String hint = hintsMap.get(hintKey);
+            hintsObject.put(hintKey,hint);
+        }
+        requestJson.put("hints",hintsObject);
 
         boolean withTimes = outArraysList.contains("times");
         boolean withDistances = outArraysList.contains("distances");
