@@ -388,6 +388,28 @@ public class InstructionListTest {
     }
 
     @Test
+    public void testCreateGPXIncludesRoundaboutExitNumber() {
+        InstructionList instructions = new InstructionList(usTR);
+
+        PointList pl = new PointList();
+        pl.add(52.555423473315, 13.43890086052345);
+        pl.add(52.555550691982, 13.43946393816465);
+        pl.add(52.555619423589, 13.43886994061328);
+        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
+                InstructionAnnotation.EMPTY, pl)
+                .setRadian(2.058006514284998d)
+                .setExitNumber(3)
+                .setExited();
+        instructions.add(instr);
+        instructions.add(new FinishInstruction(52.555619423589, 13.43886994061328, 0));
+
+        String gpxStr = instructions.createGPX("test", 0, true, true, false, false);
+
+        assertTrue(gpxStr, gpxStr.contains("<gh:exit_number>3</gh:exit_number>"));
+        verifyGPX(gpxStr);
+    }
+
+    @Test
     public void testCreateGPXWithEle() {
         final List<GPXEntry> fakeList = new ArrayList<GPXEntry>();
         fakeList.add(new GPXEntry(12, 13, 0));
