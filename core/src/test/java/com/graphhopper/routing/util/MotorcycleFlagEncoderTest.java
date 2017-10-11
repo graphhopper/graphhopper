@@ -135,6 +135,41 @@ public class MotorcycleFlagEncoderTest {
     }
 
     @Test
+    public void testRoundabout() {
+        long flags = encoder.setAccess(0, true, true);
+        long resFlags = encoder.setBool(flags, FlagEncoder.K_ROUNDABOUT, true);
+        assertTrue(encoder.isBool(resFlags, FlagEncoder.K_ROUNDABOUT));
+        assertTrue(encoder.isForward(resFlags));
+        assertTrue(encoder.isBackward(resFlags));
+
+        resFlags = encoder.setBool(flags, FlagEncoder.K_ROUNDABOUT, false);
+        assertFalse(encoder.isBool(resFlags, FlagEncoder.K_ROUNDABOUT));
+        assertTrue(encoder.isForward(resFlags));
+        assertTrue(encoder.isBackward(resFlags));
+
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("highway", "motorway");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertTrue(encoder.isForward(flags));
+        assertTrue(encoder.isBackward(flags));
+        assertFalse(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+
+        way.setTag("junction", "roundabout");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertTrue(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+
+        way.clearTags();
+        way.setTag("highway", "motorway");
+        way.setTag("junction", "circular");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertTrue(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+    }
+
+    @Test
     public void testSetSpeed0_issue367() {
         long flags = encoder.setProperties(10, true, true);
         flags = encoder.setSpeed(flags, 0);

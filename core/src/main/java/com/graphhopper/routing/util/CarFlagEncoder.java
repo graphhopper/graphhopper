@@ -250,7 +250,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
             flags = setSpeed(flags, speed);
 
-            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
             if (isRoundabout)
                 flags = setBool(flags, K_ROUNDABOUT, true);
 
