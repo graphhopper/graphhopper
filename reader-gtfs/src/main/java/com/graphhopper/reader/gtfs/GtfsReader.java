@@ -99,7 +99,7 @@ class GtfsReader {
     private final GtfsStorage gtfsStorage;
 
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
-    private Transfers transfers;
+    private final Transfers transfers;
     private final NodeAccess nodeAccess;
     private final String id;
     private int i;
@@ -118,12 +118,12 @@ class GtfsReader {
         this.walkNetworkIndex = walkNetworkIndex;
         this.encoder = encoder;
         this.feed = this.gtfsStorage.getGtfsFeeds().get(id);
+        this.transfers = new Transfers(feed);
     }
 
     void readGraph() {
         this.startDate = feed.calculateStats().getStartDate();
         this.endDate = feed.calculateStats().getEndDate();
-        transfers = new Transfers(feed);
         gtfsStorage.getFares().putAll(feed.fares);
         i = graph.getNodes();
         buildPtNetwork();
