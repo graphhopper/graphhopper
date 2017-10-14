@@ -442,7 +442,7 @@ class GtfsReader {
 
     private void insertInboundTransfers(String fromStopId, String from_route_id, int minimumTransferTime, SortedSet<Fun.Tuple2<Integer, Integer>> toStopTimelineNode) {
         for (TimelineNodeIdWithTripId entry : arrivalTimelineNodes.get(fromStopId)) {
-            if (from_route_id == null || from_route_id.equals(feed.trips.get(entry.tripId).route_id)) {
+            if (from_route_id == null || from_route_id.equals(entry.routeId)) {
                 int arrivalTime = times.get(entry.timelineNodeId);
                 SortedSet<Fun.Tuple2<Integer, Integer>> tailSet = toStopTimelineNode.tailSet(new Fun.Tuple2<>(arrivalTime + minimumTransferTime, -1));
                 if (!tailSet.isEmpty()) {
