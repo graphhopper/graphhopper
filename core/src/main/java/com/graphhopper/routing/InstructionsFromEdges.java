@@ -66,11 +66,11 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private double doublePrevLat, doublePrevLon; // Lat and Lon of node t-2
     private int prevNode;
     private double prevOrientation;
-    private double doublePrevOrientation;
+    private double prevInstructionPrevOrientation = Double.NaN;
     private Instruction prevInstruction;
     private boolean prevInRoundabout;
     private String prevName;
-    private String doublePrevName;
+    private String prevInstructionName;
     private InstructionAnnotation prevAnnotation;
     private EdgeExplorer outEdgeExplorer;
     private EdgeExplorer crossingExplorer;
@@ -128,7 +128,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             double heading = Helper.ANGLE_CALC.calcAzimuth(startLat, startLon, latitude, longitude);
             prevInstruction.setExtraInfo("heading", Helper.round(heading, 2));
             ways.add(prevInstruction);
-            doublePrevName = prevName;
             prevName = name;
             prevAnnotation = annotation;
 
@@ -139,6 +138,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 int sign = Instruction.USE_ROUNDABOUT;
                 RoundaboutInstruction roundaboutInstruction = new RoundaboutInstruction(sign, name,
                         annotation, new PointList(10, nodeAccess.is3D()));
+                prevInstructionPrevOrientation = prevOrientation;
                 if (prevName != null) {
                     // check if there is an exit at the same node the roundabout was entered
                     EdgeIterator edgeIter = outEdgeExplorer.setBaseNode(baseNode);
@@ -151,7 +151,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     }
 
                     // previous orientation is last orientation before entering roundabout
-                    doublePrevOrientation = prevOrientation;
                     prevOrientation = Helper.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
 
                     // calculate direction of entrance turn to determine direction of rotation
@@ -163,9 +162,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
                 } else // first instructions is roundabout instruction
                 {
-                    doublePrevOrientation = prevOrientation;
                     prevOrientation = Helper.ANGLE_CALC.calcOrientation(prevLat, prevLon, latitude, longitude);
-                    doublePrevName = prevName;
                     prevName = name;
                     prevAnnotation = annotation;
                 }
@@ -204,7 +201,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     .setDirOfRotation(deltaOut)
                     .setExited();
 
-            doublePrevName = prevName;
+            prevInstructionName = prevName;
             prevName = name;
             prevAnnotation = annotation;
 
@@ -217,33 +214,46 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     --A->--
                            |    <-- This is the short connector
                     --B-<--
-                    Note: The current approach only works if the short connector is only 1 edge, as we check the orientation
-                    and name of the edge before the current edge. Could be extended to a second edge, however I haven't
-                    seen many cases where we would have needed 2 edges.
-                    Example 1: point=49.498577%2C8.489041&point=49.498932%2C8.490103 (actually I am not sure if we would even want a u-turn here)
+                    Road A and Road B have to have the same name and roughly the same, but opposite orientation, otherwise we are assuming this is no u-turn.
 
-                    Road A and Road B have to have the same name and roughly the same orientation, otherwise we are assuming this is no u-turn.
+                    Note: This approach only works if there a turn instruction fro A->Connector and Connector->B.
+                    Currently we don't create a turn instruction if there is no other possible turn
                   */
 
-                if (prevInstruction.getDistance() < MAX_U_TURN_DISTANCE && (sign < 0) == (prevInstruction.getSign() < 0) &&
+                boolean isUTurn = false;
+                if (!Double.isNaN(prevInstructionPrevOrientation) &&
+                        prevInstruction.getDistance() < MAX_U_TURN_DISTANCE &&
+                        (sign < 0) == (prevInstruction.getSign() < 0) &&
                         (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT) &&
                         (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT) &&
-                        InstructionsHelper.isNameSimilar(doublePrevName, name) &&
-                        (Math.abs(doublePrevOrientation - prevOrientation) % Math.PI > (Math.PI / 2) * .65) &&
-                        (Math.abs(doublePrevOrientation - prevOrientation) % Math.PI < (Math.PI / 2) * 1.35)
-                        ) {
-                    System.out.println((Math.PI / 2) * .65 + " < " + Math.abs(doublePrevOrientation - prevOrientation) % Math.PI + " < " + (Math.PI / 2) * 1.35);
+                        InstructionsHelper.isNameSimilar(prevInstructionName, name)) {
+                    // Chances are good that this is a u-turn, we only need to check if the orientation matches
+                    GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
+                    double lat = point.getLat();
+                    double lon = point.getLon();
+                    double currentOrientation = Helper.ANGLE_CALC.calcOrientation(prevLat, prevLon, lat, lon, false);
+
+                    double diff = Math.abs(prevInstructionPrevOrientation - currentOrientation);
+                    if (diff > (Math.PI * .9) && diff < (Math.PI * 1.1)){
+                        isUTurn = true;
+                    }
+
+                }
+
+                if (isUTurn) {
                     prevInstruction.setSign(Instruction.U_TURN);
                     prevInstruction.setName(name);
                 } else {
                     prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
+                    // Remember the Orientation and name of the road, before doing this maneuver
+                    prevInstructionPrevOrientation = prevOrientation;
+                    prevInstructionName = prevName;
                     ways.add(prevInstruction);
                     prevAnnotation = annotation;
                 }
             }
             // Updated the prevName, since we don't always create an instruction on name changes the previous
             // name can be an old name. This leads to incorrect turn instructions due to name changes
-            doublePrevName = prevName;
             prevName = name;
         }
 
@@ -286,7 +296,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
         double lat = point.getLat();
         double lon = point.getLon();
-        doublePrevOrientation = prevOrientation;
         prevOrientation = Helper.ANGLE_CALC.calcOrientation(doublePrevLat, doublePrevLon, prevLat, prevLon);
         int sign = InstructionsHelper.calculateSign(prevLat, prevLon, lat, lon, prevOrientation);
 

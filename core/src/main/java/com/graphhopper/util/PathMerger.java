@@ -48,7 +48,7 @@ public class PathMerger {
     private boolean calcPoints = true;
     private PathDetailsBuilderFactory pathBuilderFactory;
     private List<String> requestedPathDetails = Collections.EMPTY_LIST;
-    private double favoredHeading = Double.MIN_VALUE;
+    private double favoredHeading = Double.NaN;
 
     public PathMerger setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
@@ -167,28 +167,30 @@ public class PathMerger {
         pathDetails.addAll(otherDetails);
     }
 
+    /**
+     * This method iterates over all instructions and uses the available context to improve the instructions.
+     * If the requests contains a heading, this method can transform the first continue to a u-turn if the heading
+     * points into the opposite direction of the route.
+     * At a waypoint it can transform the continue to a u-turn if the route involves turning.
+     */
     private InstructionList updateInstructionsWithContext(InstructionList instructions) {
         Instruction instruction;
         Instruction nextInstruction;
-        double heading;
-        double lastHeading;
 
         for (int i = 0; i < instructions.size() - 1; i++) {
             instruction = instructions.get(i);
 
-            if (i == 0 && favoredHeading > Double.MIN_VALUE &&
-                    instruction.extraInfo.containsKey("heading")) {
-
-                heading = (double) instruction.extraInfo.get("heading");
-                if (Math.abs(heading - favoredHeading) % 360 > 170 &&
-                        Math.abs(heading - favoredHeading) % 360 < 190) {
+            if (i == 0 && !Double.isNaN(favoredHeading) && instruction.extraInfo.containsKey("heading")) {
+                double heading = (double) instruction.extraInfo.get("heading");
+                double diff = Math.abs(heading - favoredHeading) % 360;
+                if (diff > 170 && diff < 190) {
                     // The requested heading points into the opposite direction of the calculated heading
                     // therefore we change the continue instruction to a u-turn
-                    instruction.sign = Instruction.U_TURN;
+                    instruction.setSign(Instruction.U_TURN);
                 }
             }
 
-            if (instruction.sign == Instruction.REACHED_VIA) {
+            if (instruction.getSign() == Instruction.REACHED_VIA) {
                 nextInstruction = instructions.get(i + 1);
                 if (nextInstruction.getSign() != Instruction.CONTINUE_ON_STREET ||
                         !instruction.extraInfo.containsKey("last_heading") ||
@@ -196,14 +198,13 @@ public class PathMerger {
                     // TODO throw exception?
                     continue;
                 }
-                lastHeading = (double) instruction.extraInfo.get("last_heading");
-                heading = (double) nextInstruction.extraInfo.get("heading");
+                double lastHeading = (double) instruction.extraInfo.get("last_heading");
+                double heading = (double) nextInstruction.extraInfo.get("heading");
 
-                // Turn around the orientation of the last heading
-                lastHeading = (lastHeading + 180) % 360;
-
-                if (Math.abs(heading - lastHeading) < 1) {
-                    nextInstruction.sign = Instruction.U_TURN;
+                // Since it's supposed to go back the same edge, we can be very strict with the diff
+                double diff = Math.abs(lastHeading - heading) % 360;
+                if (diff > 179 && diff < 181) {
+                    nextInstruction.setSign(Instruction.U_TURN);
                 }
             }
         }
