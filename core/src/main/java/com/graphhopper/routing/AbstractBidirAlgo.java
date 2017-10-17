@@ -17,7 +17,6 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -31,8 +30,8 @@ import com.graphhopper.storage.Graph;
 public abstract class AbstractBidirAlgo extends AbstractRoutingAlgorithm {
     protected boolean finishedFrom;
     protected boolean finishedTo;
-    protected int visitedCountFrom;
-    protected int visitedCountTo;
+    int visitedCountFrom;
+    int visitedCountTo;
 
     public AbstractBidirAlgo(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);

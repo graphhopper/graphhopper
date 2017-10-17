@@ -42,8 +42,8 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
     protected SPTEntry currFrom;
     protected SPTEntry currTo;
     protected PathBidirRef bestPath;
-    protected PriorityQueue<SPTEntry> pqOpenSetFrom;
-    protected PriorityQueue<SPTEntry> pqOpenSetTo;
+    PriorityQueue<SPTEntry> pqOpenSetFrom;
+    PriorityQueue<SPTEntry> pqOpenSetTo;
     private boolean updateBestPath = true;
 
     public DijkstraBidirectionRef(Graph graph, Weighting weighting, TraversalMode tMode) {
@@ -157,8 +157,8 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
         return currFrom.weight + currTo.weight >= bestPath.getWeight();
     }
 
-    protected void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
-                             IntObjectMap<SPTEntry> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
+    void fillEdges(SPTEntry currEdge, PriorityQueue<SPTEntry> prioQueue,
+                   IntObjectMap<SPTEntry> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
         EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
             if (!accept(iter, currEdge.edge))

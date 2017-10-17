@@ -31,7 +31,6 @@ import java.util.*;
 
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI_SOD;
 
 /**
  * This class prepares the graph for a bidirectional algorithm supporting contraction hierarchies
@@ -47,6 +46,7 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI_SOD;
  * @author Peter Karich
  */
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
+    public static final String STALL_ON_DEMAND = "stall_on_demand";
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final PreparationWeighting prepareWeighting;
     private final TraversalMode traversalMode;
@@ -649,9 +649,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             tmpAlgo.setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
             algo = tmpAlgo;
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
-            algo = new DijkstraBidirectionCH(graph, prepareWeighting, traversalMode);
-        } else if (DIJKSTRA_BI_SOD.equals(opts.getAlgorithm())) {
-            algo = new DijkstraBidirectionCHWithSOD(graph, prepareWeighting, traversalMode);
+            if (opts.getHints().getBool(STALL_ON_DEMAND, true)) {
+                algo = new DijkstraBidirectionCHWithSOD(graph, prepareWeighting, traversalMode);
+            } else {
+                algo = new DijkstraBidirectionCH(graph, prepareWeighting, traversalMode);
+            }
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");
         }
@@ -659,80 +661,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
         algo.setEdgeFilter(levelFilter);
         return algo;
-    }
-
-    public static class AStarBidirectionCH extends AStarBidirection {
-        public AStarBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
-            super(graph, weighting, traversalMode);
-        }
-
-        @Override
-        protected void initCollections(int size) {
-            super.initCollections(Math.min(size, 2000));
-        }
-
-        @Override
-        protected boolean finished() {
-            // we need to finish BOTH searches for CH!
-            if (finishedFrom && finishedTo)
-                return true;
-
-            // changed finish condition for CH
-            return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
-        }
-
-        @Override
-        protected Path createAndInitPath() {
-            bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
-            return bestPath;
-        }
-
-        @Override
-        public String getName() {
-            return "astarbi|ch";
-        }
-
-        @Override
-        public String toString() {
-            return getName() + "|" + weighting;
-        }
-    }
-
-    public static class DijkstraBidirectionCH extends DijkstraBidirectionRef {
-        public DijkstraBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
-            super(graph, weighting, traversalMode);
-        }
-
-        @Override
-        protected void initCollections(int size) {
-            super.initCollections(Math.min(size, 2000));
-        }
-
-        @Override
-        public boolean finished() {
-            // we need to finish BOTH searches for CH!
-            if (finishedFrom && finishedTo)
-                return true;
-
-            // changed also the final finish condition for CH
-            return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
-        }
-
-        @Override
-        protected Path createAndInitPath() {
-            bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
-            return bestPath;
-        }
-
-        @Override
-        public String getName() {
-            return "dijkstrabi|ch";
-        }
-
-        @Override
-        public String toString() {
-            return getName() + "|" + weighting;
-        }
     }
 
     @Override

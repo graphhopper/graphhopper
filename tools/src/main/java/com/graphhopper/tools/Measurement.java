@@ -25,6 +25,7 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.CHGraph;
@@ -49,7 +50,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
-import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI_SOD;
 
 /**
  * @author Peter Karich
@@ -148,10 +148,8 @@ public class Measurement {
                 CHGraph lg = g.getGraph(CHGraph.class, weighting);
                 fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                 printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1, "");
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_sod", vehicleStr, true, -1, DIJKSTRA_BI_SOD);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1, "");
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_sod_no_instr", vehicleStr, false, -1, DIJKSTRA_BI_SOD);
+                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1);
+                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1);
             }
             logger.info("store into " + propLocation);
         } catch (Exception ex) {
@@ -328,7 +326,8 @@ public class Measurement {
     }
 
     private void compareCHWithAndWithoutSOD(final GraphHopper hopper, String vehicle, int count) {
-        logger.info("Comparing " + count + " routes. Differences will be printed to stderr.");
+        logger.info("Comparing " + count + " routes for CH with and without stall on demand." +
+                " Differences will be printed to stderr.");
         final Random rand = new Random(seed);
         final Graph g = hopper.getGraphHopperStorage();
         final NodeAccess na = g.getNodeAccess();
@@ -341,48 +340,44 @@ public class Measurement {
             double fromLon = na.getLongitude(from);
             double toLat = na.getLatitude(to);
             double toLon = na.getLongitude(to);
-            GHRequest stdReq = new GHRequest(fromLat, fromLon, toLat, toLon).
+            GHRequest sodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
                     setWeighting("fastest").
                     setVehicle(vehicle).
                     setAlgorithm(DIJKSTRA_BI);
 
-            GHRequest sodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
+            GHRequest noSodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
                     setWeighting("fastest").
                     setVehicle(vehicle).
-                    setAlgorithm(Algorithms.DIJKSTRA_BI_SOD);
+                    setAlgorithm(DIJKSTRA_BI);
+            noSodReq.getHints().put(PrepareContractionHierarchies.STALL_ON_DEMAND, false);
 
-            GHResponse stdRsp = hopper.route(stdReq);
             GHResponse sodRsp = hopper.route(sodReq);
+            GHResponse noSodRsp = hopper.route(noSodReq);
 
             String locStr = " iteration " + i + ". " + fromLat + "," + fromLon + " -> " + toLat + "," + toLon;
             if (sodRsp.hasErrors()) {
-                if (stdRsp.hasErrors()) {
-                    logger.info("Error for SOD and original");
+                if (noSodRsp.hasErrors()) {
+                    logger.info("Error with and without SOD");
                     continue;
                 } else {
-                    logger.error("Error for SOD but not for original" + locStr);
+                    logger.error("Error with SOD but not without SOD" + locStr);
                     continue;
                 }
             }
-            String infoStr = " weight:" + sodRsp.getBest().getRouteWeight() + ", original: " + stdRsp.getBest().getRouteWeight()
-                    + " distance:" + sodRsp.getBest().getDistance() + ", original: " + stdRsp.getBest().getDistance()
-                    + " time:" + Helper.round2(sodRsp.getBest().getTime() / 1000) + ", original: " + Helper.round2(stdRsp.getBest().getTime() / 1000)
-                    + " points:" + sodRsp.getBest().getPoints().size() + ", original: " + stdRsp.getBest().getPoints().size();
+            String infoStr =
+                    " weight:" + noSodRsp.getBest().getRouteWeight() + ", original: " + sodRsp.getBest().getRouteWeight()
+                            + " distance:" + noSodRsp.getBest().getDistance() + ", original: " + sodRsp.getBest().getDistance()
+                            + " time:" + Helper.round2(noSodRsp.getBest().getTime() / 1000) + ", original: " + Helper.round2(sodRsp.getBest().getTime() / 1000)
+                            + " points:" + noSodRsp.getBest().getPoints().size() + ", original: " + sodRsp.getBest().getPoints().size();
 
-            if (Math.abs(1 - sodRsp.getBest().getRouteWeight() / stdRsp.getBest().getRouteWeight()) > 0.000001)
+            if (Math.abs(1 - noSodRsp.getBest().getRouteWeight() / sodRsp.getBest().getRouteWeight()) > 0.000001)
                 logger.error("Too big weight difference for SOD. " + locStr + infoStr);
         }
     }
 
     private void printTimeOfRouteQuery(final GraphHopper hopper, final boolean ch, final boolean lm,
-                                       int count, String prefix, final String vehicle, final boolean withInstructions,
-                                       final int activeLandmarks) {
-        printTimeOfRouteQuery(hopper, ch, lm, count, prefix, vehicle, withInstructions, activeLandmarks, "");
-    }
-
-    private void printTimeOfRouteQuery(final GraphHopper hopper, final boolean ch, final boolean lm,
-                                       int count, String prefix, final String vehicle, final boolean withInstructions,
-                                       final int activeLandmarks, final String algoStr) {
+                                       int count, String prefix, final String vehicle,
+                                       final boolean withInstructions, final int activeLandmarks) {
         final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
@@ -410,8 +405,7 @@ public class Measurement {
                 double toLon = na.getLongitude(to);
                 GHRequest req = new GHRequest(fromLat, fromLon, toLat, toLon).
                         setWeighting("fastest").
-                        setVehicle(vehicle).
-                        setAlgorithm(algoStr);
+                        setVehicle(vehicle);
 
                 req.getHints().put(CH.DISABLE, !ch).
                         put(Landmark.DISABLE, !lm).
@@ -472,8 +466,8 @@ public class Measurement {
         count -= failedCount.get();
 
         // if using none-bidirectional algorithm make sure you exclude CH routing
-        String guessed_algorithm = ch ? ("".equals(algoStr) ? DIJKSTRA_BI : algoStr) : Algorithms.ASTAR_BI;
-        put(prefix + ".guessed_algorithm", guessed_algorithm);
+        final String algoStr = ch ? Algorithms.DIJKSTRA_BI : Algorithms.ASTAR_BI;
+        put(prefix + ".guessed_algorithm", algoStr);
         put(prefix + ".failed_count", failedCount.get());
         put(prefix + ".distance_min", minDistance.get());
         put(prefix + ".distance_mean", (float) distSum.get() / count);

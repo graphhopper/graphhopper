@@ -15,9 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ch;
+package com.graphhopper.routing;
 
-import com.graphhopper.routing.*;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -32,6 +32,7 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.graphhopper.routing.ch.PrepareContractionHierarchies.STALL_ON_DEMAND;
 import static org.junit.Assert.assertEquals;
 
 /**
@@ -129,8 +130,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         createFactory(ghStorage, opts);
 
         // use base graph for solving normal Dijkstra
-        Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, super.createAlgorithmOptions())
-                .calcPath(0, 3);
+        Path p1 = new RoutingAlgorithmFactorySimple().createAlgo(ghStorage, defaultOpts).calcPath(0, 3);
         assertEquals(Helper.createTList(0, 1, 5, 2, 3), p1.calcNodes());
         assertEquals(p1.toString(), 402.29, p1.getDistance(), 1e-2);
         assertEquals(p1.toString(), 144823, p1.getTime());
@@ -166,5 +166,63 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         assertEquals(p3.toString(), 17000, p3.getDistance(), 1e-6);
         assertEquals(p3.toString(), 12240 * 1000, p3.getTime());
         assertEquals(Helper.createTList(0, 4, 5, 7), p3.calcNodes());
+    }
+
+    // 7------8------.---9----0
+    // |      | \    |   |
+    // 6------   |   |   |
+    // |      |  1   |   |
+    // 5------   |   |  /
+    // |  _,--|   2  | /
+    // |/         |  |/
+    // 4----------3--/
+    @Test
+    public void testStallingNodesReducesNumberOfVisitedNodes() {
+        GraphHopperStorage graph = createGHStorage(false);
+        graph.edge(8, 9, 100, false);
+        graph.edge(8, 3, 2, false);
+        graph.edge(8, 5, 1, false);
+        graph.edge(8, 6, 1, false);
+        graph.edge(8, 7, 1, false);
+        graph.edge(1, 2, 2, false);
+        graph.edge(1, 8, 1, false);
+        graph.edge(2, 3, 3, false);
+        for (int i = 3; i < 7; ++i) {
+            graph.edge(i, i + 1, 1, false);
+        }
+        graph.edge(9, 0, 1, false);
+        graph.edge(3, 9, 200, false);
+        CHGraph chGraph = graph.getGraph(CHGraph.class);
+
+        // explicitly set the node levels equal to the node ids
+        // the graph contraction with this ordering yields no shortcuts
+        for (int i = 0; i < 10; ++i) {
+            chGraph.setLevel(i, i);
+        }
+        graph.freeze();
+        RoutingAlgorithm algo = createCHAlgo(graph, chGraph, true);
+        Path p = algo.calcPath(1, 0);
+        // node 3 will be stalled and nodes 4-7 won't be explored --> we visit 7 nodes
+        // note that node 9 will be visited by both forward and backward searches
+        assertEquals(7, algo.getVisitedNodes());
+        assertEquals(102, p.getDistance(), 1.e-3);
+        assertEquals(p.toString(), Helper.createTList(1, 8, 9, 0), p.calcNodes());
+
+        // without stalling we visit 11 nodes
+        RoutingAlgorithm algoNoSod = createCHAlgo(graph, chGraph, false);
+        Path pNoSod = algoNoSod.calcPath(1, 0);
+        assertEquals(11, algoNoSod.getVisitedNodes());
+        assertEquals(102, pNoSod.getDistance(), 1.e-3);
+        assertEquals(pNoSod.toString(), Helper.createTList(1, 8, 9, 0), pNoSod.calcNodes());
+    }
+
+    private RoutingAlgorithm createCHAlgo(GraphHopperStorage graph, CHGraph lg, boolean withSOD) {
+        AlgorithmOptions algorithmOptions = defaultOpts;
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
+                graph, lg, algorithmOptions.getWeighting(), TraversalMode.NODE_BASED);
+        if (!withSOD) {
+            algorithmOptions.getHints().put(STALL_ON_DEMAND, false);
+        }
+        return ch.createAlgo(lg, algorithmOptions);
     }
 }
