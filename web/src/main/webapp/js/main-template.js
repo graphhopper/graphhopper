@@ -297,6 +297,7 @@ function checkInput() {
         var index = $(this).parent().data('index');
         ghRequest.route.removeSingle(index);
         mapLayer.clearLayers();
+        checkInput();
         routeLatLng(ghRequest, false);
     };
 

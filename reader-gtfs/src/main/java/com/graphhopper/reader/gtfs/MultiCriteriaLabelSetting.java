@@ -35,6 +35,7 @@ import java.util.stream.StreamSupport;
  *
  * @author Michael Zilske
  * @author Peter Karich
+ * @author Wesam Herbawi
  */
 class MultiCriteriaLabelSetting {
 

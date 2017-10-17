@@ -353,7 +353,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             flags = handleSpeed(way, wayTypeSpeed, flags);
             flags = handleBikeRelated(way, flags, relationFlags > UNCHANGED.getValue());
 
-            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
             if (isRoundabout) {
                 flags = setBool(flags, K_ROUNDABOUT, true);
             }
