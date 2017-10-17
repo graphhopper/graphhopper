@@ -218,6 +218,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
                     Note: This approach only works if there a turn instruction fro A->Connector and Connector->B.
                     Currently we don't create a turn instruction if there is no other possible turn
+                    We only create a u-turn if edge B is a one-way, see #1073 for more details.
                   */
 
                 boolean isUTurn = false;
@@ -226,6 +227,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                         (sign < 0) == (prevInstruction.getSign() < 0) &&
                         (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT) &&
                         (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT) &&
+                        edge.isForward(encoder) != edge.isBackward(encoder) &&
                         InstructionsHelper.isNameSimilar(prevInstructionName, name)) {
                     // Chances are good that this is a u-turn, we only need to check if the orientation matches
                     GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
