@@ -25,7 +25,9 @@ import com.vividsolutions.jts.geom.LineString;
 import java.util.*;
 
 /**
- * Slim list to store several points (without the need for a point object).
+ * Slim list to store several points (without the need for a point object). Be aware that the PointList is closely
+ * coupled with the {@link ShallowImmutablePointList} if you change it or extend it, you should make sure that your
+ * changes play well with the ShallowImmutablePointList to avoid unexpected issues.
  * <p>
  *
  * @author Peter Karich
@@ -138,12 +140,13 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
     };
     private final static DistanceCalc3D distCalc3D = Helper.DIST_3D;
-    private static String ERR_MSG = "Tried to access PointList with too big index!";
+    final static String ERR_MSG = "Tried to access PointList with too big index!";
     protected int size = 0;
     protected boolean is3D;
     private double[] latitudes;
     private double[] longitudes;
     private double[] elevations;
+    private boolean isImmutable = false;
 
     public PointList() {
         this(10, false);
@@ -185,6 +188,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public void set(int index, double lat, double lon, double ele) {
+        ensureMutability();
         if (index >= size)
             throw new ArrayIndexOutOfBoundsException("index has to be smaller than size " + size);
 
@@ -216,6 +220,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public void add(double lat, double lon, double ele) {
+        ensureMutability();
         int newSize = size + 1;
         incCap(newSize);
         latitudes[size] = lat;
@@ -242,6 +247,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public void add(PointList points) {
+        ensureMutability();
         int newSize = size + points.getSize();
         incCap(newSize);
         for (int i = 0; i < points.getSize(); i++) {
@@ -259,11 +265,11 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public int getSize() {
-        return size;
+        return size();
     }
 
     public boolean isEmpty() {
-        return size == 0;
+        return size() == 0;
     }
 
     @Override
@@ -308,6 +314,7 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public void reverse() {
+        ensureMutability();
         // in-place reverse
         int max = size / 2;
         for (int i = 0; i < max; i++) {
@@ -330,10 +337,12 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     }
 
     public void clear() {
+        ensureMutability();
         size = 0;
     }
 
     public void trimToSize(int newSize) {
+        ensureMutability();
         if (newSize > size)
             throw new IllegalArgumentException("new size needs be smaller than old size");
 
@@ -343,17 +352,17 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < getSize(); i++) {
             if (i > 0)
                 sb.append(", ");
 
             sb.append('(');
-            sb.append(latitudes[i]);
+            sb.append(getLatitude(i));
             sb.append(',');
-            sb.append(longitudes[i]);
-            if (is3D) {
+            sb.append(getLongitude(i));
+            if (this.is3D()) {
                 sb.append(',');
-                sb.append(elevations[i]);
+                sb.append(getElevation(i));
             }
             sb.append(')');
         }
@@ -369,8 +378,8 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
 
     public List<Double[]> toGeoJson(boolean includeElevation) {
 
-        ArrayList<Double[]> points = new ArrayList<Double[]>(size);
-        for (int i = 0; i < size; i++) {
+        ArrayList<Double[]> points = new ArrayList<Double[]>(getSize());
+        for (int i = 0; i < getSize(); i++) {
             if (includeElevation)
                 points.add(new Double[]{
                         Helper.round6(getLongitude(i)), Helper.round6(getLatitude(i)),
@@ -396,28 +405,32 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         if (this.getSize() != other.getSize() || this.is3D() != other.is3D())
             return false;
 
-        for (int i = 0; i < size; i++) {
-            if (!NumHelper.equalsEps(latitudes[i], other.latitudes[i]))
+        for (int i = 0; i < size(); i++) {
+            if (!NumHelper.equalsEps(getLatitude(i), other.getLatitude(i)))
                 return false;
 
-            if (!NumHelper.equalsEps(longitudes[i], other.longitudes[i]))
+            if (!NumHelper.equalsEps(getLongitude(i), other.getLongitude(i)))
                 return false;
 
-            if (is3D && !NumHelper.equalsEps(elevations[i], other.elevations[i]))
+            if (this.is3D() && !NumHelper.equalsEps(getElevation(i), other.getElevation(i)))
                 return false;
         }
         return true;
     }
 
+    /**
+     * Clones this PointList. If this PointList was immutable, the cloned will be mutable. If this PointList was a
+     * ShallowImmutablePointList, the cloned PointList will be a regular PointList.
+     */
     public PointList clone(boolean reverse) {
-        PointList clonePL = new PointList(size, is3D);
-        if (is3D)
-            for (int i = 0; i < size; i++) {
-                clonePL.add(latitudes[i], longitudes[i], elevations[i]);
+        PointList clonePL = new PointList(getSize(), is3D());
+        if (is3D())
+            for (int i = 0; i < getSize(); i++) {
+                clonePL.add(getLatitude(i), getLongitude(i), getElevation(i));
             }
         else
-            for (int i = 0; i < size; i++) {
-                clonePL.add(latitudes[i], longitudes[i]);
+            for (int i = 0; i < getSize(); i++) {
+                clonePL.add(getLatitude(i), getLongitude(i));
             }
         if (reverse)
             clonePL.reverse();
@@ -428,35 +441,48 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
      * This method does a deep copy of this object for the specified range.
      *
      * @param from the copying of the old PointList starts at this index
-     * @param end the copying of the old PointList ends at the index before (i.e. end is exclusive)
+     * @param end  the copying of the old PointList ends at the index before (i.e. end is exclusive)
      */
     public PointList copy(int from, int end) {
         if (from > end)
-            throw new IllegalArgumentException("from must be smaller or equals to end");
-        if (from < 0 || end > size)
-            throw new IllegalArgumentException("Illegal interval: " + from + ", " + end + ", size:" + size);
+            throw new IllegalArgumentException("from must be smaller or equal to end");
+        if (from < 0 || end > getSize())
+            throw new IllegalArgumentException("Illegal interval: " + from + ", " + end + ", size:" + getSize());
 
-        PointList copyPL = new PointList(end - from, is3D);
-        if (is3D)
+        PointList copyPL = new PointList(end - from, is3D());
+        if (is3D())
             for (int i = from; i < end; i++) {
-                copyPL.add(latitudes[i], longitudes[i], elevations[i]);
+                copyPL.add(getLatitude(i), getLongitude(i), getElevation(i));
             }
         else
             for (int i = from; i < end; i++) {
-                copyPL.add(latitudes[i], longitudes[i], Double.NaN);
+                copyPL.add(getLatitude(i), getLongitude(i), Double.NaN);
             }
 
         return copyPL;
     }
 
+    /**
+     * Create a shallow copy of this Pointlist from from to end, excluding end.
+     * <p>
+     * The <code>ensureConsistency</code> parameter makes this PointList immutable, so the shallow copy will stay
+     * consistent with this object. If you don't ensure the consistency it might happen that due to changes of this
+     * object, the shallow copy might contain incorrect or corrupt data.
+     */
+    public PointList shallowCopy(final int from, final int end, boolean ensureConsistency) {
+        if (ensureConsistency)
+            this.makeImmutable();
+        return new ShallowImmutablePointList(from, end, this);
+    }
+
     @Override
     public int hashCode() {
         int hash = 5;
-        for (int i = 0; i < latitudes.length; i++) {
-            hash = 73 * hash + (int) Math.round(latitudes[i] * 1000000);
-            hash = 73 * hash + (int) Math.round(longitudes[i] * 1000000);
+        for (int i = 0; i < getSize(); i++) {
+            hash = 73 * hash + (int) Math.round(getLatitude(i) * 1000000);
+            hash = 73 * hash + (int) Math.round(getLongitude(i) * 1000000);
         }
-        hash = 73 * hash + this.size;
+        hash = 73 * hash + this.getSize();
         return hash;
     }
 
@@ -465,18 +491,18 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         double prevLon = Double.NaN;
         double prevEle = Double.NaN;
         double dist = 0;
-        for (int i = 0; i < size; i++) {
+        for (int i = 0; i < size(); i++) {
             if (i > 0) {
-                if (is3D)
-                    dist += distCalc3D.calcDist(prevLat, prevLon, prevEle, latitudes[i], longitudes[i], elevations[i]);
+                if (is3D())
+                    dist += distCalc3D.calcDist(prevLat, prevLon, prevEle, getLat(i), getLon(i), getEle(i));
                 else
-                    dist += calc.calcDist(prevLat, prevLon, latitudes[i], longitudes[i]);
+                    dist += calc.calcDist(prevLat, prevLon, getLat(i), getLon(i));
             }
 
-            prevLat = latitudes[i];
-            prevLon = longitudes[i];
-            if (is3D)
-                prevEle = elevations[i];
+            prevLat = getLat(i);
+            prevLon = getLon(i);
+            if (is3D())
+                prevEle = getEle(i);
         }
         return dist;
     }
@@ -537,5 +563,23 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             pointList.add(new GHPoint(coordinate.y, coordinate.x));
         }
         return pointList;
+    }
+
+    public boolean isImmutable() {
+        return this.isImmutable;
+    }
+
+    /**
+     * Once immutable, there is no way to make this object mutable again. This is done to ensure the consistency of
+     * shallow copies. If you need to modify this object again, you have to create a deep copy of it.
+     */
+    public void makeImmutable() {
+        this.isImmutable = true;
+    }
+
+    private void ensureMutability() {
+        if (this.isImmutable()) {
+            throw new IllegalStateException("You cannot change an immutable PointList");
+        }
     }
 }

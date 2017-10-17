@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Peter Karich
@@ -67,13 +68,22 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
             outArrayListJson.add(str);
         }
 
-        // TODO allow elevation for full path
         boolean hasElevation = false;
-        requestJson.put("from_points", fromPointList);
-        requestJson.put("to_points", toPointList);
-        requestJson.put("out_arrays", outArrayListJson);
+        requestJson.putArray("from_points").addAll(fromPointList);
+        requestJson.putArray("to_points").addAll(toPointList);
+        requestJson.putArray("out_arrays").addAll(outArrayListJson);
         requestJson.put("vehicle", ghRequest.getVehicle());
         requestJson.put("elevation", hasElevation);
+
+        ObjectNode hintsObject = requestJson.putObject("hints");
+        Map<String, String> hintsMap = ghRequest.getHints().toMap();
+        for (String hintKey : hintsMap.keySet()) {
+            if (ignoreSet.contains(hintKey))
+                continue;
+
+            String hint = hintsMap.get(hintKey);
+            hintsObject.put(hintKey, hint);
+        }
 
         boolean withTimes = outArraysList.contains("times");
         boolean withDistances = outArraysList.contains("distances");
@@ -82,12 +92,11 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
                 ghRequest.getFromPoints().size(),
                 ghRequest.getToPoints().size(), withTimes, withDistances, withWeights);
 
-        boolean debug = ghRequest.getHints().getBool("debug", false);
         String postUrl = buildURLNoHints("/calculate", ghRequest);
 
         try {
             String postResponseStr = postJson(postUrl, requestJson);
-
+            boolean debug = ghRequest.getHints().getBool("debug", false);
             if (debug) {
                 logger.info("POST URL:" + postUrl + ", request:" + requestJson + ", response: " + postResponseStr);
             }

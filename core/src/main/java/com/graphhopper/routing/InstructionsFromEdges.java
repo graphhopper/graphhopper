@@ -370,13 +370,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 }
 
                 if (otherDelta < delta) {
-                    // TODO Use keeps once we have a robust client
-                    //return Instruction.KEEP_LEFT;
-                    return Instruction.TURN_SLIGHT_LEFT;
+                    return Instruction.KEEP_LEFT;
                 } else {
-                    // TODO Use keeps once we have a robust client
-                    //return Instruction.KEEP_RIGHT;
-                    return Instruction.TURN_SLIGHT_RIGHT;
+                    return Instruction.KEEP_RIGHT;
                 }
 
 
