@@ -650,9 +650,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             algo = tmpAlgo;
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
             if (opts.getHints().getBool(STALL_ON_DEMAND, true)) {
-                algo = new DijkstraBidirectionCHWithSOD(graph, prepareWeighting, traversalMode);
-            } else {
                 algo = new DijkstraBidirectionCH(graph, prepareWeighting, traversalMode);
+            } else {
+                algo = new DijkstraBidirectionCHNoSOD(graph, prepareWeighting, traversalMode);
             }
         } else {
             throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");

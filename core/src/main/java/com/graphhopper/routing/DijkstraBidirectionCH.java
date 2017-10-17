@@ -17,44 +17,77 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.ch.Path4CH;
+import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.storage.SPTEntry;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
 
-public class DijkstraBidirectionCH extends DijkstraBidirectionRef {
+/**
+ * Uses a very simple version of stall-on-demand (SOD) for CH queries to prevent exploring nodes that can not be part
+ * of a shortest path. When a node that is about to be settled is stallable it is not expanded, but no further search
+ * for neighboring stallable nodes is performed.
+ */
+public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
     public DijkstraBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         super(graph, weighting, traversalMode);
     }
 
     @Override
-    protected void initCollections(int size) {
-        super.initCollections(Math.min(size, 2000));
-    }
-
-    @Override
-    public boolean finished() {
-        // we need to finish BOTH searches for CH!
-        if (finishedFrom && finishedTo)
+    public boolean fillEdgesFrom() {
+        if (pqOpenSetFrom.isEmpty()) {
+            return false;
+        }
+        currFrom = pqOpenSetFrom.poll();
+        visitedCountFrom++;
+        if (entryIsStallable(currFrom, bestWeightMapFrom, inEdgeExplorer, false)) {
             return true;
-
-        // changed also the final finish condition for CH
-        return currFrom.weight >= bestPath.getWeight() && currTo.weight >= bestPath.getWeight();
+        }
+        bestWeightMapOther = bestWeightMapTo;
+        fillEdges(currFrom, pqOpenSetFrom, bestWeightMapFrom, outEdgeExplorer, false);
+        return true;
     }
 
     @Override
-    protected Path createAndInitPath() {
-        bestPath = new Path4CH(graph, graph.getBaseGraph(), weighting);
-        return bestPath;
+    public boolean fillEdgesTo() {
+        if (pqOpenSetTo.isEmpty()) {
+            return false;
+        }
+        currTo = pqOpenSetTo.poll();
+        visitedCountTo++;
+        if (entryIsStallable(currTo, bestWeightMapTo, outEdgeExplorer, true)) {
+            return true;
+        }
+        bestWeightMapOther = bestWeightMapFrom;
+        fillEdges(currTo, pqOpenSetTo, bestWeightMapTo, inEdgeExplorer, true);
+        return true;
     }
 
     @Override
     public String getName() {
-        return "dijkstrabinosod|ch";
+        return "dijkstrabi|ch";
     }
 
     @Override
     public String toString() {
         return getName() + "|" + weighting;
+    }
+
+    private boolean entryIsStallable(SPTEntry entry, IntObjectMap<SPTEntry> bestWeightMap, EdgeExplorer edgeExplorer,
+                                     boolean reverse) {
+        // We check for all 'incoming' edges if we can prove that the current node (that is about to be settled) is 
+        // reached via a suboptimal path. We do this regardless of the CH level of the adjacent nodes.
+        EdgeIterator iter = edgeExplorer.setBaseNode(entry.adjNode);
+        while (iter.next()) {
+            int traversalId = traversalMode.createTraversalId(iter, reverse);
+            SPTEntry adjNode = bestWeightMap.get(traversalId);
+            if (adjNode != null &&
+                    adjNode.weight + weighting.calcWeight(iter, reverse, iter.getEdge()) < entry.weight) {
+                return true;
+            }
+        }
+        return false;
     }
 }
