@@ -119,14 +119,19 @@ class GtfsReader {
         this.encoder = encoder;
         this.feed = this.gtfsStorage.getGtfsFeeds().get(id);
         this.transfers = new Transfers(feed);
+        this.i = graph.getNodes();
     }
 
     void readGraph() {
         this.startDate = feed.calculateStats().getStartDate();
         this.endDate = feed.calculateStats().getEndDate();
         gtfsStorage.getFares().putAll(feed.fares);
-        i = graph.getNodes();
         buildPtNetwork();
+        connectStopsToStreetNetwork();
+        connectStopsToStationNodes();
+    }
+
+    void connectStopsToStreetNetwork() {
         EdgeFilter filter = new EverythingButPt(encoder);
         for (EnterAndExitNodeIdWithStopId entry : stopEnterAndExitNodes) {
             Stop stop = feed.stops.get(entry.stopId);
@@ -139,6 +144,14 @@ class GtfsReader {
             } else {
                 streetNode = locationQueryResult.getClosestNode();
             }
+            gtfsStorage.getStationNodes().put(entry.stopId, streetNode);
+        }
+    }
+
+    void connectStopsToStationNodes() {
+        for (EnterAndExitNodeIdWithStopId entry : stopEnterAndExitNodes) {
+            Stop stop = feed.stops.get(entry.stopId);
+            int streetNode = gtfsStorage.getStationNodes().get(entry.stopId);
             for (Integer enterNodeId : entry.enterNodeIds) {
                 EdgeIteratorState entryEdge = graph.edge(streetNode, enterNodeId, 0.0, false);
                 setEdgeType(entryEdge, GtfsStorage.EdgeType.ENTER_PT);
@@ -149,7 +162,6 @@ class GtfsReader {
                 setEdgeType(exitEdge, GtfsStorage.EdgeType.EXIT_PT);
                 exitEdge.setName(stop.stop_name);
             }
-            gtfsStorage.getStationNodes().put(entry.stopId, streetNode);
         }
     }
 

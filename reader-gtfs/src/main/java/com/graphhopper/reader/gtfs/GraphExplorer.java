@@ -86,7 +86,7 @@ final class GraphExplorer {
         final List<VirtualEdgeIteratorState> extraEdges = reverse ? extraEdgesByDestination.get(label.adjNode) : extraEdgesBySource.get(label.adjNode);
         return Stream.concat(
                 label.adjNode < graph.getNodes() ? mainEdgesAround(label) : Stream.empty(),
-                extraEdges.stream());
+                extraEdges.stream().peek(e -> {if (label.adjNode == 7) System.out.println(e);}));
     }
 
     Stream<EdgeIteratorState> mainEdgesAround(Label label) {

@@ -62,7 +62,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         }
 
         public GraphHopperGtfs createWith(GtfsRealtime.FeedMessage realtimeFeed) {
-            return new GraphHopperGtfs(flagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(gtfsStorage, flagEncoder, realtimeFeed));
+            return new GraphHopperGtfs(flagEncoder, translationMap, graphHopperStorage, locationIndex, gtfsStorage, RealtimeFeed.fromProtobuf(graphHopperStorage, gtfsStorage, flagEncoder, realtimeFeed));
         }
 
         public GraphHopperGtfs createWithoutRealtimeFeed() {
@@ -102,7 +102,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         private final Map<Integer, PathWrapper> walkPaths = new HashMap<>();
 
         private final GHResponse response = new GHResponse();
-        private final QueryGraph queryGraph = new QueryGraph(graphHopperStorage);
+        private final QueryGraph queryGraph = new QueryGraph(new WrapperGraph(graphHopperStorage, extraEdges));
         private GraphExplorer graphExplorer;
         private int edgeId = 777777;
 
@@ -164,11 +164,11 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         }
 
         private void substitutePointWithVirtualNode(int index, boolean reverse, GHPoint ghPoint, ArrayList<QueryResult> allQueryResults) {
-            final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, weighting, flagEncoder, gtfsStorage, realtimeFeed, reverse, new PointList(), Collections.emptyList(), true, false);
+            final GraphExplorer graphExplorer = new GraphExplorer(queryGraph, weighting, flagEncoder, gtfsStorage, realtimeFeed, reverse, new PointList(), extraEdges, true, false);
 
             extraNodes.add(ghPoint);
 
-            int newNode = graphHopperStorage.getNodes() + 1000 + index;
+            int newNode = graphHopperStorage.getNodes() + 10000 + index;
             final List<Label> stationNodes = findStationNodes(graphExplorer, allQueryResults.get(index).getClosestNode(), reverse);
             for (Label stationNode : stationNodes) {
                 final PathWrapper pathWrapper = stationNode.parent.parent != null ?
@@ -180,6 +180,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                         edgeId++, reverse ? newNode : stationNode.adjNode, reverse ? stationNode.adjNode : newNode, pathWrapper.getDistance(), 0, "", pathWrapper.getPoints());
                 newEdge.setFlags(((PtFlagEncoder) weighting.getFlagEncoder()).setEdgeType(newEdge.getFlags(), reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT));
                 final long time = pathWrapper.getTime() / 1000;
+                System.out.println(time);
                 newEdge.setFlags(((PtFlagEncoder) weighting.getFlagEncoder()).setTime(newEdge.getFlags(), time));
                 reverseNewEdge.setFlags(newEdge.getFlags());
                 newEdge.setReverseEdge(reverseNewEdge);

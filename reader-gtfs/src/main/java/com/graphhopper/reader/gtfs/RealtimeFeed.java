@@ -31,6 +31,7 @@ import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 
 import java.time.*;
@@ -57,7 +58,7 @@ public class RealtimeFeed {
         return new RealtimeFeed(new IntHashSet(), Collections.emptyList());
     }
 
-    public static RealtimeFeed fromProtobuf(GtfsStorage staticGtfs, PtFlagEncoder encoder, GtfsRealtime.FeedMessage feedMessage) {
+    public static RealtimeFeed fromProtobuf(Graph graph, GtfsStorage staticGtfs, PtFlagEncoder encoder, GtfsRealtime.FeedMessage feedMessage) {
         final IntHashSet blockedEdges = new IntHashSet();
         feedMessage.getEntityList().stream()
             .filter(GtfsRealtime.FeedEntity::hasTripUpdate)
@@ -74,8 +75,8 @@ public class RealtimeFeed {
                         });
             });
         final List<VirtualEdgeIteratorState> additionalEdges = new ArrayList<>();
-        final Graph graph = new Graph() {
-            int firstNode = 999999;
+        final Graph overlayGraph = new Graph() {
+            int nNodes = 0;
             int firstEdge = 999999;
             final NodeAccess nodeAccess = new NodeAccess() {
                 IntIntHashMap additionalNodeFields = new IntIntHashMap();
@@ -152,7 +153,7 @@ public class RealtimeFeed {
 
             @Override
             public int getNodes() {
-                return 0;
+                return graph.getNodes() + nNodes;
             }
 
             @Override
@@ -172,15 +173,16 @@ public class RealtimeFeed {
 
             @Override
             public EdgeIteratorState edge(int a, int b, double distance, boolean bothDirections) {
+                int edge = firstEdge++;
                 final VirtualEdgeIteratorState newEdge = new VirtualEdgeIteratorState(-1,
-                        firstEdge++, a+firstNode, b+firstNode, 0,0, "", null);
+                        edge, a, b, 0,0, "", new PointList());
                 final VirtualEdgeIteratorState reverseNewEdge = new VirtualEdgeIteratorState(-1,
-                        firstEdge++, b+firstNode, a+firstNode, 0,0, "", null);
+                        edge, b, a, 0,0, "", new PointList());
 
                 newEdge.setReverseEdge(reverseNewEdge);
                 reverseNewEdge.setReverseEdge(newEdge);
                 additionalEdges.add(newEdge);
-                additionalEdges.add(reverseNewEdge);
+//                additionalEdges.add(reverseNewEdge);
 
                 return newEdge;
             }
@@ -215,7 +217,7 @@ public class RealtimeFeed {
                 return staticGtfs;
             }
         };
-        final GtfsReader gtfsReader = new GtfsReader("gtfs_0", graph, encoder, null);
+        final GtfsReader gtfsReader = new GtfsReader("gtfs_0", overlayGraph, encoder, null);
         feedMessage.getEntityList().stream()
                 .filter(GtfsRealtime.FeedEntity::hasTripUpdate)
                 .map(GtfsRealtime.FeedEntity::getTripUpdate)
@@ -243,6 +245,7 @@ public class RealtimeFeed {
                 })
                 .forEach(trip -> gtfsReader.addTrips(LocalDate.now(), LocalDate.now(), ZoneId.systemDefault(), Collections.singletonList(trip), 0));
         gtfsReader.wireUpStops();
+        gtfsReader.connectStopsToStationNodes();
         return new RealtimeFeed(blockedEdges, additionalEdges);
     }
 

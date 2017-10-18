@@ -26,7 +26,6 @@ import com.graphhopper.Trip;
 import com.graphhopper.gtfs.fare.Fares;
 import com.graphhopper.routing.InstructionsFromEdges;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.Graph;
 import com.graphhopper.util.*;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Geometry;
