@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Spliterators;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -84,51 +85,16 @@ final class GraphExplorer {
                 extraEdges.stream().peek(e -> {if (label.adjNode == 2586) {
                     System.out.println(extraEdgesByDestination);
                     System.out.println(e);
-                }}));
+                }})).filter(new EdgeIteratorStatePredicate(label));
     }
 
     Stream<EdgeIteratorState> mainEdgesAround(Label label) {
         return StreamSupport.stream(new Spliterators.AbstractSpliterator<EdgeIteratorState>(0, 0) {
-            boolean foundEnteredTimeExpandedNetworkEdge = false;
             EdgeIterator edgeIterator = edgeExplorer.setBaseNode(label.adjNode);
 
             @Override
             public boolean tryAdvance(Consumer<? super EdgeIteratorState> action) {
                 while (edgeIterator.next()) {
-                    final GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator.getFlags());
-                    if (walkOnly && edgeType != GtfsStorage.EdgeType.HIGHWAY && edgeType != (reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT)) {
-                        continue;
-                    }
-                    if (profileQuery && (edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT)) {
-                        continue;
-                    }
-                    if (!isValidOn(edgeIterator, label.currentTime)) {
-                        continue;
-                    }
-                    if (realtimeFeed.isBlocked(edgeIterator.getEdge())) {
-                        continue;
-                    }
-                    if (edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL && !reverse) {
-                        continue;
-                    }
-                    if (edgeType == GtfsStorage.EdgeType.WAIT && reverse) {
-                        continue;
-                    }
-                    if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK && !reverse) {
-                        if (secondsOnTrafficDay(edgeIterator, label.currentTime) > flagEncoder.getTime(edgeIterator.getFlags())) {
-                            continue;
-                        } else {
-                            if (foundEnteredTimeExpandedNetworkEdge) {
-                                continue;
-                            } else {
-                                foundEnteredTimeExpandedNetworkEdge = true;
-                            }
-                        }
-                    } else if (edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && reverse) {
-                        if (secondsOnTrafficDay(edgeIterator, label.currentTime) < flagEncoder.getTime(edgeIterator.getFlags())) {
-                            continue;
-                        }
-                    }
                     action.accept(edgeIterator);
                     return true;
                 }
@@ -205,5 +171,51 @@ final class GraphExplorer {
 
     public Graph getGraph() {
         return graph;
+    }
+
+    private class EdgeIteratorStatePredicate implements Predicate<EdgeIteratorState> {
+        private final Label label;
+        boolean foundEnteredTimeExpandedNetworkEdge;
+
+        public EdgeIteratorStatePredicate(Label label) {
+            this.label = label;
+            foundEnteredTimeExpandedNetworkEdge = false;
+        }
+
+        @Override
+        public boolean test(EdgeIteratorState edgeIterator) {
+            final GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator.getFlags());
+            if (walkOnly && edgeType != GtfsStorage.EdgeType.HIGHWAY && edgeType != (reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT)) {
+                return false;
+            }
+            if (!isValidOn(edgeIterator, label.currentTime)) {
+                return false;
+            }
+            if (realtimeFeed.isBlocked(edgeIterator.getEdge())) {
+                return false;
+            }
+            if (edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL && !reverse) {
+                return false;
+            }
+            if (edgeType == GtfsStorage.EdgeType.WAIT && reverse) {
+                return false;
+            }
+            if (edgeType == GtfsStorage.EdgeType.ENTER_TIME_EXPANDED_NETWORK && !reverse) {
+                if (secondsOnTrafficDay(edgeIterator, label.currentTime) > flagEncoder.getTime(edgeIterator.getFlags())) {
+                    return false;
+                } else {
+                    if (foundEnteredTimeExpandedNetworkEdge) {
+                        return false;
+                    } else {
+                        foundEnteredTimeExpandedNetworkEdge = true;
+                    }
+                }
+            } else if (edgeType == GtfsStorage.EdgeType.LEAVE_TIME_EXPANDED_NETWORK && reverse) {
+                if (secondsOnTrafficDay(edgeIterator, label.currentTime) < flagEncoder.getTime(edgeIterator.getFlags())) {
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 }
