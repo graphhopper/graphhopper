@@ -486,6 +486,25 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         return hash;
     }
 
+    private static Boolean inited = Boolean.FALSE;
+
+    public int hashcode() {
+        synchronized(inited) {
+            if (!inited) {
+                inited = Boolean.TRUE;
+            }
+        }
+        int hash = 5;
+        for (int i = 0; i < getSize(); i++) {
+            hash = 73 * hash + (int) Math.round(getLatitude(i) * 1000000);
+            hash = 73 * hash + (int) Math.round(getLongitude(i) * 1000000);
+        }
+        hash = 73 * hash + this.getSize();
+        return hash;
+    }
+
+
+
     public double calcDistance(DistanceCalc calc) {
         double prevLat = Double.NaN;
         double prevLon = Double.NaN;
