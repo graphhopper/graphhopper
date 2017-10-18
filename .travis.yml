@@ -48,7 +48,7 @@ before_install:
 install: true
 
 script:
-  - mvn clean test verify -B
+  - mvn clean test verify checkstyle:checkstyle findbugs:findbugs -B
 
 after_success:
   # deploy snapshot artifacts to maven central
