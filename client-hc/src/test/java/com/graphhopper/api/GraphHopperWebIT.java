@@ -8,6 +8,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.RoundaboutInstruction;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
@@ -16,6 +17,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -259,5 +261,21 @@ public class GraphHopperWebIT {
 
         assertEquals(741, wrapper.getInstructions().get(0).getSign());
         assertEquals("Continue onto A 81", wrapper.getInstructions().get(0).getName());
+    }
+
+    @Test
+    public void testPathDetails() {
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(49.6724, 11.3494)).
+                addPoint(new GHPoint(49.6550, 11.4180));
+        req.getPathDetails().add("average_speed");
+        GHResponse res = gh.route(req);
+        assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
+        PathWrapper alt = res.getBest();
+        assertEquals(1, alt.getPathDetails().size());
+        List<PathDetail> details = alt.getPathDetails().get("average_speed");
+        assertFalse(details.isEmpty());
+        assertTrue((Double) details.get(0).getValue() > 20);
+        assertTrue((Double) details.get(0).getValue() < 70);
     }
 }
