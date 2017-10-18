@@ -180,17 +180,27 @@ public class RealtimeIT {
         // But the 6:00 departure of my line is going to skip my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
         feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("wurst"));
-        final GtfsRealtime.TripUpdate.Builder tripUpdate = feedMessageBuilder.addEntityBuilder()
+
+
+        feedMessageBuilder.addEntityBuilder()
+                .setId("pups")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(5)
+                .setScheduleRelationship(SKIPPED);
+
+        final GtfsRealtime.TripUpdate.Builder extraTripUpdate = feedMessageBuilder.addEntityBuilder()
                 .setId("pups")
                 .getTripUpdateBuilder()
                 .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setScheduleRelationship(ADDED).setTripId("EXTRA").setRouteId("CITY").setStartTime("06:45:00"));
-        tripUpdate
+        extraTripUpdate
                 .addStopTimeUpdateBuilder()
                 .setStopSequence(1)
                 .setStopId("NADAV")
                 .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45).atZone(zoneId).toEpochSecond()))
                 .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45).atZone(zoneId).toEpochSecond()));
-        tripUpdate
+        extraTripUpdate
                 .addStopTimeUpdateBuilder()
                 .setStopSequence(2)
                 .setStopId("BEATTY_AIRPORT")

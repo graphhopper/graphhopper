@@ -184,6 +184,9 @@ public class RealtimeFeed {
                 additionalEdges.add(newEdge);
 //                additionalEdges.add(reverseNewEdge);
 
+                if (a== 2589 && b == 2579) {
+                    System.out.println("Wust");
+                }
                 return newEdge;
             }
 

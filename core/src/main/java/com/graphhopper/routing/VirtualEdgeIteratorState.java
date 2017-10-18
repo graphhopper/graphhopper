@@ -122,9 +122,6 @@ public class VirtualEdgeIteratorState implements EdgeIteratorState, CHEdgeIterat
     @Override
     public EdgeIteratorState setFlags(long flags) {
         this.flags = flags;
-        if (reverseEdge != null && reverseEdge.getEdge() > getEdge()) {
-            reverseEdge.setFlags(flags);
-        }
         return this;
     }
 

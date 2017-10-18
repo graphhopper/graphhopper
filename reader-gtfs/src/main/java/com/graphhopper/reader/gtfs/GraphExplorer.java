@@ -71,12 +71,7 @@ final class GraphExplorer {
                 throw new RuntimeException();
             }
             extraEdgesBySource.put(extraEdge.getBaseNode(), extraEdge);
-            final VirtualEdgeIteratorState detach = (VirtualEdgeIteratorState) extraEdge.detach(true);
-            if (detach == null) {
-                throw new RuntimeException();
-            }
-
-            extraEdgesByDestination.put(extraEdge.getAdjNode(), detach);
+            extraEdgesByDestination.put(extraEdge.getAdjNode(), new VirtualEdgeIteratorState(extraEdge.getOriginalTraversalKey(), extraEdge.getEdge(), extraEdge.getAdjNode(), extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge.getName(), extraEdge.fetchWayGeometry(3)));
         }
         this.walkOnly = walkOnly;
         this.profileQuery = profileQuery;
@@ -86,7 +81,10 @@ final class GraphExplorer {
         final List<VirtualEdgeIteratorState> extraEdges = reverse ? extraEdgesByDestination.get(label.adjNode) : extraEdgesBySource.get(label.adjNode);
         return Stream.concat(
                 label.adjNode < graph.getNodes() ? mainEdgesAround(label) : Stream.empty(),
-                extraEdges.stream().peek(e -> {if (label.adjNode == 7) System.out.println(e);}));
+                extraEdges.stream().peek(e -> {if (label.adjNode == 2586) {
+                    System.out.println(extraEdgesByDestination);
+                    System.out.println(e);
+                }}));
     }
 
     Stream<EdgeIteratorState> mainEdgesAround(Label label) {
@@ -147,6 +145,9 @@ final class GraphExplorer {
             case HIGHWAY:
                 return weighting.calcMillis(edge, false, -1);
             case ENTER_TIME_EXPANDED_NETWORK:
+                if (edge.getBaseNode() == 2589 && edge.getAdjNode() == 2579) {
+                    System.out.println("tröt");
+                }
                 if (reverse) {
                     return 0;
                 } else {
