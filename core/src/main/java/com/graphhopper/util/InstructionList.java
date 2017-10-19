@@ -161,8 +161,8 @@ public class InstructionList extends AbstractList<Instruction> {
 
     private void createWayPointBlock(StringBuilder output, Instruction instruction) {
         output.append("\n<wpt ");
-        output.append("lat=\"").append(Helper.round6(instruction.getFirstLat()));
-        output.append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
+        output.append("lat=\"").append(Helper.print6(instruction.getFirstLat()));
+        output.append("\" lon=\"").append(Helper.print6(instruction.getFirstLon())).append("\">");
         String name;
         if (instruction.getName().isEmpty())
             name = instruction.getTurnDescription(tr);
@@ -219,8 +219,8 @@ public class InstructionList extends AbstractList<Instruction> {
 
             gpxOutput.append("<trkseg>");
             for (GPXEntry entry : createGPXList()) {
-                gpxOutput.append("\n<trkpt lat=\"").append(Helper.round6(entry.getLat()));
-                gpxOutput.append("\" lon=\"").append(Helper.round6(entry.getLon())).append("\">");
+                gpxOutput.append("\n<trkpt lat=\"").append(Helper.print6(entry.getLat()));
+                gpxOutput.append("\" lon=\"").append(Helper.print6(entry.getLon())).append("\">");
                 if (includeElevation)
                     gpxOutput.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
                 gpxOutput.append("<time>").append(formatter.format(startTimeMillis + entry.getTime())).append("</time>");
@@ -236,8 +236,8 @@ public class InstructionList extends AbstractList<Instruction> {
     }
 
     public void createRteptBlock(StringBuilder output, Instruction instruction, Instruction nextI) {
-        output.append("\n<rtept lat=\"").append(Helper.round6(instruction.getFirstLat())).
-                append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
+        output.append("\n<rtept lat=\"").append(Helper.print6(instruction.getFirstLat())).
+                append("\" lon=\"").append(Helper.print6(instruction.getFirstLon())).append("\">");
 
         if (!instruction.getName().isEmpty())
             output.append("<desc>").append(simpleXMLEscape(instruction.getTurnDescription(tr))).append("</desc>");
