@@ -1,0 +1,17 @@
+engines:
+  checkstyle:
+    enabled: true
+  duplication:
+    enabled: true
+    config:
+      languages:
+      # it's not yet available for Java :)
+      - java
+  pmd:
+    enabled: true
+ratings:
+  paths:
+  - "**.java"
+exclude_paths:
+- "web/src/main/webapp/"
+- "**.js"
