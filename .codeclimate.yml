@@ -1,0 +1,13 @@
+engines:
+  checkstyle:
+    enabled: true
+  duplicateion:
+    enabled: true
+    config:
+      languages:
+      - java
+  pmd:
+    enabled: true
+ratings:
+  paths:
+  - "**.java"
