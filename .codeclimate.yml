@@ -1,6 +1,11 @@
 engines:
   checkstyle:
     enabled: true
+    checks:
+      com.puppycrawl.tools.checkstyle.checks.imports.AvoidStarImportCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.imports.CustomImportOrderCheck:
+        enabled: false
   duplication:
     enabled: true
     config:
