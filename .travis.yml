@@ -11,8 +11,6 @@ matrix:
       sudo: required
       dist: trusty
       group: edge
-  allow_failures:
-    - jdk: oraclejdk9
 
 env:
   global:
