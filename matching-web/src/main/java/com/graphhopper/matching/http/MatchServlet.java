@@ -41,6 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.*;
 
+import static com.graphhopper.util.Parameters.DETAILS.PATH_DETAILS;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
 
 /**
@@ -102,6 +103,7 @@ public class MatchServlet extends GraphHopperServlet {
         double defaultAccuracy = 40;
         double gpsAccuracy = Math.min(Math.max(getDoubleParam(httpReq, "gps_accuracy", defaultAccuracy), 5), gpsMaxAccuracy);
         Locale locale = Helper.getLocale(getParam(httpReq, "locale", "en"));
+        List<String> pathDetails = Arrays.asList(getParams(httpReq, PATH_DETAILS));
         MatchResult matchRsp = null;
         StopWatch sw = new StopWatch().start();
 
@@ -121,6 +123,8 @@ public class MatchServlet extends GraphHopperServlet {
                 Translation tr = trMap.getWithFallBack(locale);
                 DouglasPeucker peucker = new DouglasPeucker().setMaxDistance(wayPointMaxDistance);
                 PathMerger pathMerger = new PathMerger().
+                        setEnableInstructions(enableInstructions).
+                        setPathDetailsBuilders(hopper.getPathDetailsBuilderFactory(), pathDetails).
                         setDouglasPeucker(peucker).
                         setSimplifyResponse(wayPointMaxDistance > 0);
                 pathMerger.doWork(matchGHRsp, Collections.singletonList(path), tr);
