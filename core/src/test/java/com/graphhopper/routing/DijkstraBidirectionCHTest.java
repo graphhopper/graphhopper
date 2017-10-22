@@ -200,7 +200,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
             chGraph.setLevel(i, i);
         }
         graph.freeze();
-        RoutingAlgorithm algo = createCHAlgo(graph, chGraph, true);
+        RoutingAlgorithm algo = createCHAlgo(graph, chGraph, true, defaultOpts);
         Path p = algo.calcPath(1, 0);
         // node 3 will be stalled and nodes 4-7 won't be explored --> we visit 7 nodes
         // note that node 9 will be visited by both forward and backward searches
@@ -209,20 +209,19 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), Helper.createTList(1, 8, 9, 0), p.calcNodes());
 
         // without stalling we visit 11 nodes
-        RoutingAlgorithm algoNoSod = createCHAlgo(graph, chGraph, false);
+        RoutingAlgorithm algoNoSod = createCHAlgo(graph, chGraph, false, defaultOpts);
         Path pNoSod = algoNoSod.calcPath(1, 0);
         assertEquals(11, algoNoSod.getVisitedNodes());
         assertEquals(102, pNoSod.getDistance(), 1.e-3);
         assertEquals(pNoSod.toString(), Helper.createTList(1, 8, 9, 0), pNoSod.calcNodes());
     }
 
-    private RoutingAlgorithm createCHAlgo(GraphHopperStorage graph, CHGraph lg, boolean withSOD) {
-        AlgorithmOptions algorithmOptions = defaultOpts;
+    private RoutingAlgorithm createCHAlgo(GraphHopperStorage graph, CHGraph chGraph, boolean withSOD, AlgorithmOptions algorithmOptions) {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
-                graph, lg, algorithmOptions.getWeighting(), TraversalMode.NODE_BASED);
+                graph, chGraph, algorithmOptions.getWeighting(), TraversalMode.NODE_BASED);
         if (!withSOD) {
             algorithmOptions.getHints().put(STALL_ON_DEMAND, false);
         }
-        return ch.createAlgo(lg, algorithmOptions);
+        return ch.createAlgo(chGraph, algorithmOptions);
     }
 }
