@@ -56,7 +56,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph = new GraphBuilder(encodingManager).setLocation(defaultGraphLoc).setMmap(false).setStore(true).create();
         try {
             graph.loadExisting();
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
         }
 
