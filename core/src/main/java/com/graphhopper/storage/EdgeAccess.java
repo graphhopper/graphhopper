@@ -124,9 +124,9 @@ abstract class EdgeAccess {
      */
     final int internalEdgeAdd(int newEdgeId, int fromNodeId, int toNodeId) {
         writeEdge(newEdgeId, fromNodeId, toNodeId, EdgeIterator.NO_EDGE, EdgeIterator.NO_EDGE);
-        connectNewEdge(fromNodeId, newEdgeId);
+        connectNewEdge(fromNodeId, toNodeId, newEdgeId);
         if (fromNodeId != toNodeId)
-            connectNewEdge(toNodeId, newEdgeId);
+            connectNewEdge(toNodeId, fromNodeId, newEdgeId);
         return newEdgeId;
     }
 
@@ -147,11 +147,10 @@ abstract class EdgeAccess {
         return edges.getInt(_getLinkPosInEdgeArea(nodeThis, nodeOther, edgePointer));
     }
 
-    final void connectNewEdge(int fromNode, int newOrExistingEdge) {
+    final void connectNewEdge(int fromNode, int otherNode, int newOrExistingEdge) {
         int edge = getEdgeRef(fromNode);
         if (edge > EdgeIterator.NO_EDGE) {
             long edgePointer = toPointer(newOrExistingEdge);
-            int otherNode = getOtherNode(fromNode, edgePointer);
             long lastLink = _getLinkPosInEdgeArea(fromNode, otherNode, edgePointer);
             edges.setInt(lastLink, edge);
         }

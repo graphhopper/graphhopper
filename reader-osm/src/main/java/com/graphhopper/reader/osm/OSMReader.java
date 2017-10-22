@@ -51,12 +51,12 @@ import static com.graphhopper.util.Helper.nf;
  * This class parses an OSM xml or pbf file and creates a graph from it. It does so in a two phase
  * parsing processes in order to reduce memory usage compared to a single parsing processing.
  * <p>
- * 1. a) Reads ways from OSM file and stores all associated node ids in osmNodeIdToIndexMap. If a
+ * 1. a) Reads ways from OSM file and stores all associated node ids in {@link #osmNodeIdToInternalNodeMap}. If a
  * node occurs once it is a pillar node and if more it is a tower node, otherwise
- * osmNodeIdToIndexMap returns EMPTY.
+ * {@link #osmNodeIdToInternalNodeMap} returns EMPTY.
  * <p>
  * 1. b) Reads relations from OSM file. In case that the relation is a route relation, it stores
- * specific relation attributes required for routing into osmWayIdToRouteWeigthMap for all the ways
+ * specific relation attributes required for routing into {@link #osmWayIdToRouteWeightMap} for all the ways
  * of the relation.
  * <p>
  * 2.a) Reads nodes from OSM file and stores lat+lon information either into the intermediate
@@ -64,7 +64,7 @@ import static com.graphhopper.util.Helper.nf;
  * graphStorage via setLatitude/setLongitude. It can also happen that a pillar node needs to be
  * transformed into a tower node e.g. via barriers or different speed values for one way.
  * <p>
- * 2.b) Reads ways OSM file and creates edges while calculating the speed etc from the OSM tags.
+ * 2.b) Reads ways from OSM file and creates edges while calculating the speed etc from the OSM tags.
  * When creating an edge the pillar node information from the intermediate data structure will be
  * stored in the way geometry of that edge.
  * <p>
@@ -263,7 +263,7 @@ public class OSMReader implements DataReader {
             while ((item = in.getNext()) != null) {
                 switch (item.getType()) {
                     case ReaderElement.NODE:
-                        if (nodeFilter.get(item.getId()) != -1) {
+                        if (nodeFilter.get(item.getId()) != EMPTY_NODE) {
                             processNode((ReaderNode) item);
                         }
                         break;

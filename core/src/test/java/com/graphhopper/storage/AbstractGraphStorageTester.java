@@ -36,7 +36,7 @@ import static org.junit.Assert.*;
 
 /**
  * Abstract test class to be extended for implementations of the Graph interface. Graphs
- * implementing GraphStorage should extend GraphStorageTest instead.
+ * implementing GraphStorage should extend {@link GraphHopperStorageTest} instead.
  * <p>
  *
  * @author Peter Karich
