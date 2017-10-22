@@ -351,7 +351,7 @@ public class Measurement {
                     setWeighting("fastest").
                     setVehicle(vehicle).
                     setAlgorithm(DIJKSTRA_BI);
-            noSodReq.getHints().put(STALL_ON_DEMAND, false);
+            noSodReq.getHints().put("stall_on_demand", false);
 
             GHResponse sodRsp = hopper.route(sodReq);
             GHResponse noSodRsp = hopper.route(noSodReq);
@@ -410,7 +410,7 @@ public class Measurement {
                         setVehicle(vehicle);
 
                 req.getHints().put(CH.DISABLE, !ch).
-                        put(STALL_ON_DEMAND, sod).
+                        put("stall_on_demand", sod).
                         put(Landmark.DISABLE, !lm).
                         put(Landmark.ACTIVE_COUNT, activeLandmarks).
                         put("instructions", withInstructions);

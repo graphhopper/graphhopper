@@ -266,7 +266,7 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
                 graph, chGraph, algorithmOptions.getWeighting(), TraversalMode.NODE_BASED);
         if (!withSOD) {
-            algorithmOptions.getHints().put(STALL_ON_DEMAND, false);
+            algorithmOptions.getHints().put("stall_on_demand", false);
         }
         return ch.createAlgo(chGraph, algorithmOptions);
     }

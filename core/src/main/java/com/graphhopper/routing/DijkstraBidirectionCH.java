@@ -29,6 +29,8 @@ import com.graphhopper.util.EdgeIterator;
  * Uses a very simple version of stall-on-demand (SOD) for CH queries to prevent exploring nodes that can not be part
  * of a shortest path. When a node that is about to be settled is stallable it is not expanded, but no further search
  * for neighboring stallable nodes is performed.
+ *
+ * @author ammagamma
  */
 public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
     public DijkstraBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {

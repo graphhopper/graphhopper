@@ -46,7 +46,6 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
  * @author Peter Karich
  */
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
-    public static final String STALL_ON_DEMAND = "stall_on_demand";
     private final Logger logger = LoggerFactory.getLogger(getClass());
     private final PreparationWeighting prepareWeighting;
     private final TraversalMode traversalMode;
@@ -649,7 +648,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             tmpAlgo.setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
             algo = tmpAlgo;
         } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
-            if (opts.getHints().getBool(STALL_ON_DEMAND, true)) {
+            if (opts.getHints().getBool("stall_on_demand", true)) {
                 algo = new DijkstraBidirectionCH(graph, prepareWeighting, traversalMode);
             } else {
                 algo = new DijkstraBidirectionCHNoSOD(graph, prepareWeighting, traversalMode);
