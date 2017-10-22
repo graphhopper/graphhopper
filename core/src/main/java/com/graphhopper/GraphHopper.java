@@ -41,7 +41,6 @@ import com.graphhopper.util.*;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
-import com.graphhopper.util.details.PathDetailsBuilder;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.PointDistanceExceededException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
@@ -214,6 +213,10 @@ public class GraphHopper implements GraphHopperAPI {
     public GraphHopper setPathDetailsBuilderFactory(PathDetailsBuilderFactory pathBuilderFactory) {
         this.pathBuilderFactory = pathBuilderFactory;
         return this;
+    }
+
+    public PathDetailsBuilderFactory getPathDetailsBuilderFactory() {
+        return pathBuilderFactory;
     }
 
     /**
