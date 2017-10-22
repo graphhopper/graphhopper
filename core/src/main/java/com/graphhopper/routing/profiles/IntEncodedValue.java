@@ -71,10 +71,12 @@ public class IntEncodedValue implements EncodedValue {
     }
 
     /**
-     * This constructor reserve the specified number of bits in the underlying datastructure or twice the amount if
-     * storeBothDirections is true.
+     * This constructor reserves the specified number of bits in the underlying data structure or twice the amount if
+     * store2DirectedValues is true.
      *
-     * @param defaultValue defines which value to return if the 'raw' integer value is 0.
+     * @param defaultValue         defines which value to return if the 'raw' integer value is 0.
+     * @param store2DirectedValues if true the encoded value can be different for the forward and backward
+     *                             direction of an edge.
      */
     public IntEncodedValue(String name, int bits, int defaultValue, boolean storeBothDirections) {
         this.name = name;
