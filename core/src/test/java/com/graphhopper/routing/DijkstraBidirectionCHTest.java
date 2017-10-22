@@ -17,6 +17,7 @@
  */
 package com.graphhopper.routing;
 
+import com.carrotsearch.hppc.IntArrayList;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
@@ -214,6 +215,51 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         assertEquals(11, algoNoSod.getVisitedNodes());
         assertEquals(102, pNoSod.getDistance(), 1.e-3);
         assertEquals(pNoSod.toString(), Helper.createTList(1, 8, 9, 0), pNoSod.calcNodes());
+    }
+
+    // t(0)--slow->1--s(2)
+    //    \        |
+    //    fast     |
+    //      \--<---|
+    @Test
+    public void testDirectionDependentSpeedFwdSearch() {
+        runTestWithDirectionDependentEdgeSpeed(10, 20, 0, 2, Helper.createTList(0, 1, 2), new MotorcycleFlagEncoder());
+        runTestWithDirectionDependentEdgeSpeed(10, 20, 0, 2, Helper.createTList(0, 1, 2), new Bike2WeightFlagEncoder());
+    }
+
+    // s(0)--fast->1--t(2)
+    //    \        |
+    //    slow     |
+    //      \--<---|
+    @Test
+    public void testDirectionDependentSpeedBwdSearch() {
+        runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, Helper.createTList(2, 1, 0), new MotorcycleFlagEncoder());
+        runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, Helper.createTList(2, 1, 0), new Bike2WeightFlagEncoder());
+    }
+
+    private void runTestWithDirectionDependentEdgeSpeed(
+            int speed, int revSpeed, int from, int to, IntArrayList expectedPath, FlagEncoder encoder) {
+        EncodingManager encodingManager = new EncodingManager(encoder);
+        FastestWeighting weighting = new FastestWeighting(encoder);
+        AlgorithmOptions algoOpts = AlgorithmOptions.start().weighting(weighting).build();
+        GraphHopperStorage graph = createGHStorage(encodingManager, Arrays.asList(weighting), false);
+        EdgeIteratorState edge = graph.edge(0, 1, 2, true);
+        long flags = edge.getFlags();
+        flags = encoder.setSpeed(flags, speed);
+        flags = encoder.setReverseSpeed(flags, revSpeed);
+        edge.setFlags(flags);
+        graph.edge(1, 2, 1, true);
+
+        CHGraph chGraph = graph.getGraph(CHGraph.class);
+        for (int i = 0; i < 3; ++i) {
+            chGraph.setLevel(i, i);
+        }
+        graph.freeze();
+
+        RoutingAlgorithm algo = createCHAlgo(graph, chGraph, true, algoOpts);
+        Path p = algo.calcPath(from, to);
+        assertEquals(3, p.getDistance(), 1.e-3);
+        assertEquals(p.toString(), expectedPath, p.calcNodes());
     }
 
     private RoutingAlgorithm createCHAlgo(GraphHopperStorage graph, CHGraph chGraph, boolean withSOD, AlgorithmOptions algorithmOptions) {
