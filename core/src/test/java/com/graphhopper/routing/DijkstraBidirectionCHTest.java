@@ -33,7 +33,6 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.graphhopper.routing.ch.PrepareContractionHierarchies.STALL_ON_DEMAND;
 import static org.junit.Assert.assertEquals;
 
 /**
