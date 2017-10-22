@@ -688,7 +688,8 @@ public class OSMReaderTest {
         CarFlagEncoder car = new CarFlagEncoder(5, 5, 24);
         FootFlagEncoder foot = new FootFlagEncoder();
         BikeFlagEncoder bike = new BikeFlagEncoder(4, 2, 24);
-        EncodingManager manager = new EncodingManager.Builder().addAll(Arrays.asList(bike, foot, car), 4).build();
+        EncodingManager manager = new EncodingManager.Builder().addGlobalEncodedValues().
+                addAll(Arrays.asList(bike, foot, car), 4).build();
 
         GraphHopperStorage ghStorage = new GraphBuilder(manager, json).create();
         OSMReader reader = new OSMReader(ghStorage) {
@@ -842,9 +843,6 @@ public class OSMReaderTest {
         hopper.getCHFactoryDecorator().setEnabled(false);
         hopper.importOrLoad();
 
-//        for (int i = 0; i < hopper.getGraphHopperStorage().getNodes(); i++) {
-//            System.out.println(GHUtility.getNodeInfo(hopper.getGraphHopperStorage(), i, EdgeFilter.ALL_EDGES));
-//        }
         GHRequest req = new GHRequest(51.2492152, 9.4317166, 49, 10).
                 setVehicle(EncodingManager.ENCODER_NAME).
                 setWeighting("fastest2").
