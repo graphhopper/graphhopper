@@ -84,7 +84,7 @@ public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
             int traversalId = traversalMode.createTraversalId(iter, reverse);
             SPTEntry adjNode = bestWeightMap.get(traversalId);
             if (adjNode != null &&
-                    adjNode.weight + weighting.calcWeight(iter, reverse, iter.getEdge()) < entry.weight) {
+                    adjNode.weight + weighting.calcWeight(iter, !reverse, iter.getEdge()) < entry.weight) {
                 return true;
             }
         }
