@@ -6,6 +6,14 @@ engines:
         enabled: false
       com.puppycrawl.tools.checkstyle.checks.imports.CustomImportOrderCheck:
         enabled: false
+      com.puppycrawl.tools.checkstyle.checks.sizes.LineLengthCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.naming.AbbreviationAsWordInNameCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.whitespace.SeparatorWrapCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.whitespace.EmptyLineSeparatorCheck:
+        enabled: false
   duplication:
     enabled: true
     config:
