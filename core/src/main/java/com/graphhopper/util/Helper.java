@@ -63,7 +63,6 @@ public class Helper {
     private static final float DEGREE_FACTOR = Integer.MAX_VALUE / 400f;
     // milli meter is a bit extreme but we have integers
     private static final float ELE_FACTOR = 1000f;
-    private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("#");
 
     private Helper() {
     }
@@ -483,13 +482,6 @@ public class Helper {
 
     public static final double round6(double value) {
         return Math.round(value * 1e6) / 1e6;
-    }
-
-    public static final String print6(double value) {
-        DECIMAL_FORMAT.setMinimumFractionDigits(1);
-        DECIMAL_FORMAT.setMaximumFractionDigits(6);
-        DECIMAL_FORMAT.setMinimumIntegerDigits(1);
-        return DECIMAL_FORMAT.format(value);
     }
 
     public static final double round4(double value) {

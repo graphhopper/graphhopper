@@ -20,6 +20,7 @@ package com.graphhopper.util;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.text.DateFormat;
+import java.text.DecimalFormat;
 import java.util.*;
 
 /**
@@ -159,10 +160,10 @@ public class InstructionList extends AbstractList<Instruction> {
         return createGPX(trackName, startTimeMillis, includeElevation, true, true, true);
     }
 
-    private void createWayPointBlock(StringBuilder output, Instruction instruction) {
+    private void createWayPointBlock(StringBuilder output, Instruction instruction, DecimalFormat decimalFormat) {
         output.append("\n<wpt ");
-        output.append("lat=\"").append(Helper.print6(instruction.getFirstLat()));
-        output.append("\" lon=\"").append(Helper.print6(instruction.getFirstLon())).append("\">");
+        output.append("lat=\"").append(decimalFormat.format(instruction.getFirstLat()));
+        output.append("\" lon=\"").append(decimalFormat.format(instruction.getFirstLon())).append("\">");
         String name;
         if (instruction.getName().isEmpty())
             name = instruction.getTurnDescription(tr);
@@ -175,6 +176,11 @@ public class InstructionList extends AbstractList<Instruction> {
 
     public String createGPX(String trackName, long startTimeMillis, boolean includeElevation, boolean withRoute, boolean withTrack, boolean withWayPoints) {
         DateFormat formatter = Helper.createFormatter();
+
+        DecimalFormat decimalFormat = new DecimalFormat("#");
+        decimalFormat.setMinimumFractionDigits(1);
+        decimalFormat.setMaximumFractionDigits(6);
+        decimalFormat.setMinimumIntegerDigits(1);
 
         String header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
                 + "<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
@@ -192,12 +198,12 @@ public class InstructionList extends AbstractList<Instruction> {
         StringBuilder gpxOutput = new StringBuilder(header);
         if (!isEmpty()) {
             if (withWayPoints) {
-                createWayPointBlock(gpxOutput, instructions.get(0));   // Start 
+                createWayPointBlock(gpxOutput, instructions.get(0), decimalFormat);   // Start
                 for (Instruction currInstr : instructions) {
                     if ((currInstr.getSign() == Instruction.REACHED_VIA) // Via
                             || (currInstr.getSign() == Instruction.FINISH)) // End
                     {
-                        createWayPointBlock(gpxOutput, currInstr);
+                        createWayPointBlock(gpxOutput, currInstr, decimalFormat);
                     }
                 }
             }
@@ -206,11 +212,11 @@ public class InstructionList extends AbstractList<Instruction> {
                 Instruction nextInstr = null;
                 for (Instruction currInstr : instructions) {
                     if (null != nextInstr)
-                        createRteptBlock(gpxOutput, nextInstr, currInstr);
+                        createRteptBlock(gpxOutput, nextInstr, currInstr, decimalFormat);
 
                     nextInstr = currInstr;
                 }
-                createRteptBlock(gpxOutput, nextInstr, null);
+                createRteptBlock(gpxOutput, nextInstr, null, decimalFormat);
                 gpxOutput.append("\n</rte>");
             }
         }
@@ -219,8 +225,8 @@ public class InstructionList extends AbstractList<Instruction> {
 
             gpxOutput.append("<trkseg>");
             for (GPXEntry entry : createGPXList()) {
-                gpxOutput.append("\n<trkpt lat=\"").append(Helper.print6(entry.getLat()));
-                gpxOutput.append("\" lon=\"").append(Helper.print6(entry.getLon())).append("\">");
+                gpxOutput.append("\n<trkpt lat=\"").append(decimalFormat.format(entry.getLat()));
+                gpxOutput.append("\" lon=\"").append(decimalFormat.format(entry.getLon())).append("\">");
                 if (includeElevation)
                     gpxOutput.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
                 gpxOutput.append("<time>").append(formatter.format(startTimeMillis + entry.getTime())).append("</time>");
@@ -235,9 +241,9 @@ public class InstructionList extends AbstractList<Instruction> {
         return gpxOutput.toString();
     }
 
-    public void createRteptBlock(StringBuilder output, Instruction instruction, Instruction nextI) {
-        output.append("\n<rtept lat=\"").append(Helper.print6(instruction.getFirstLat())).
-                append("\" lon=\"").append(Helper.print6(instruction.getFirstLon())).append("\">");
+    public void createRteptBlock(StringBuilder output, Instruction instruction, Instruction nextI, DecimalFormat decimalFormat) {
+        output.append("\n<rtept lat=\"").append(decimalFormat.format(instruction.getFirstLat())).
+                append("\" lon=\"").append(decimalFormat.format(instruction.getFirstLon())).append("\">");
 
         if (!instruction.getName().isEmpty())
             output.append("<desc>").append(simpleXMLEscape(instruction.getTurnDescription(tr))).append("</desc>");
