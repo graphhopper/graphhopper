@@ -410,6 +410,25 @@ public class InstructionListTest {
     }
 
     @Test
+    public void testCreateGPXCorrectFormattingSmallNumbers() {
+        InstructionList instructions = new InstructionList(usTR);
+
+        PointList pl = new PointList();
+        pl.add(0.000001, 0.000001);
+        pl.add(-0.000123, -0.000125);
+        Instruction instruction = new Instruction(0, "do it", null, pl);
+        instructions.add(instruction);
+        instructions.add(new FinishInstruction(0.000852, 0.000852, 0));
+
+        String gpxStr = instructions.createGPX("test", 0, true, true, true, true);
+
+        assertFalse(gpxStr, gpxStr.contains("E-"));
+        assertTrue(gpxStr, gpxStr.contains("0.000001"));
+        assertTrue(gpxStr, gpxStr.contains("-0.000125"));
+        verifyGPX(gpxStr);
+    }
+
+    @Test
     public void testCreateGPXWithEle() {
         final List<GPXEntry> fakeList = new ArrayList<GPXEntry>();
         fakeList.add(new GPXEntry(12, 13, 0));
