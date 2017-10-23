@@ -227,7 +227,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         baseGraph.checkInit();
         if (properties.loadExisting()) {
             properties.checkVersions(false);
-            // check encoding for compatiblity
+            // check encoding for compatibility
             String flagEncodersStr = properties.get("graph.flag_encoders");
 
             if (!flagEncodersStr.isEmpty() && !encodingManager.toDetailsString().equalsIgnoreCase(flagEncodersStr)) {
@@ -299,7 +299,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     /**
      * Avoid that edges and nodes of the base graph are further modified. Necessary as hook for e.g.
-     * ch graphs on top to initilize themself
+     * ch graphs on top to initialize themselves
      */
     public synchronized void freeze() {
         if (!baseGraph.isFrozen())
