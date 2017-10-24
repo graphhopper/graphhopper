@@ -14,6 +14,8 @@ engines:
         enabled: false
       com.puppycrawl.tools.checkstyle.checks.whitespace.EmptyLineSeparatorCheck:
         enabled: false
+      com.puppycrawl.tools.checkstyle.checks.blocks.NeedBracesCheck:
+        enabled: false
   duplication:
     enabled: true
     config:
