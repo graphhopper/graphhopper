@@ -31,11 +31,11 @@ import java.io.InputStreamReader;
  * @author Peter Karich
  */
 public class PrincetonReader {
-    private Graph g;
+    private Graph graph;
     private InputStream is;
 
     public PrincetonReader(Graph graph) {
-        g = graph;
+        this.graph = graph;
     }
 
     public PrincetonReader setStream(InputStream is) {
@@ -57,7 +57,7 @@ public class PrincetonReader {
                 if (line == null)
                     throw new IllegalStateException("Cannot read line " + lineNo);
 
-                String args[] = line.split(" ");
+                String[] args = line.split(" ");
                 int from = -1;
                 int to = -1;
                 double dist = -1;
@@ -81,7 +81,7 @@ public class PrincetonReader {
                     throw new RuntimeException("incorrect read!? from:" + from + ", to:" + to + ", dist:" + dist);
                 }
 
-                g.edge(from, to, dist, false);
+                graph.edge(from, to, dist, false);
             }
         } catch (Exception ex) {
             throw new RuntimeException("Problem in line " + lineNo, ex);
