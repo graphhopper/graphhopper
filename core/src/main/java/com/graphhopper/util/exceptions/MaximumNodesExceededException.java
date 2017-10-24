@@ -20,12 +20,12 @@ package com.graphhopper.util.exceptions;
 import java.util.Map;
 
 /**
- * If a route cannot be found due to disconnected graphs.
+ * This exception will be thrown if the visited nodes exceeded the allowed max nodes.
  *
- * @author Peter Karich
+ * @author Robin Boldt
  */
-public class ConnectionNotFoundException extends PathNotFoundException {
-    public ConnectionNotFoundException(String var1, Map<String, Object> details) {
+public class MaximumNodesExceededException extends PathNotFoundException {
+    public MaximumNodesExceededException(String var1, Map<String, Object> details) {
         super(var1, details);
     }
 }

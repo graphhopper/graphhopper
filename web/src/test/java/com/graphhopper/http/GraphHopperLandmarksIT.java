@@ -88,6 +88,9 @@ public class GraphHopperLandmarksIT extends BaseServletTester {
         JsonNode json = query("point=55.99022,29.129734&point=56.007787,29.208355&ch.disable=true", 400);
         JsonNode errorJson = json.get("message");
         assertTrue(errorJson.toString(), errorJson.toString().contains("Different subnetworks"));
+        JsonNode errorDetails = json.get("hints").get(0);
+        assertEquals(1, errorDetails.get("subnetwork-from").asInt());
+        assertEquals(2, errorDetails.get("subnetwork-to").asInt());
 
         // without landmarks it should work
         GraphHopper hopper = getInstance(GraphHopper.class);

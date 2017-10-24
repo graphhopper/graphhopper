@@ -102,9 +102,9 @@ public class GraphHopperWeb implements GraphHopperAPI {
     }
 
     PathWrapper createPathWrapper(JsonNode path,
-                                          boolean tmpCalcPoints, boolean tmpInstructions,
-                                          boolean tmpElevation, boolean turnDescription,
-                                          boolean tmpCalcDetails) {
+                                  boolean tmpCalcPoints, boolean tmpInstructions,
+                                  boolean tmpElevation, boolean turnDescription,
+                                  boolean tmpCalcDetails) {
         PathWrapper pathWrapper = new PathWrapper();
         pathWrapper.addErrors(readErrors(path));
         if (pathWrapper.hasErrors())
@@ -281,6 +281,10 @@ public class GraphHopperWeb implements GraphHopperAPI {
             } else if (exClass.equals(PointOutOfBoundsException.class.getName())) {
                 int pointIndex = error.get("point_index").asInt();
                 errors.add(new PointOutOfBoundsException(exMessage, pointIndex));
+            } else if (exClass.equals(MaximumNodesExceededException.class.getName())) {
+                errors.add(new MaximumNodesExceededException(exMessage, toMap(error)));
+            } else if (exClass.equals(PathNotFoundException.class.getName())) {
+                errors.add(new PathNotFoundException(exMessage, toMap(error)));
             } else if (exClass.isEmpty())
                 errors.add(new DetailedRuntimeException(exMessage, toMap(error)));
             else

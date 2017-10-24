@@ -24,6 +24,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.StopWatch;
+import com.graphhopper.util.exceptions.DetailedRuntimeException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -88,7 +89,7 @@ public class GraphHopperServlet extends GHBaseServlet {
 
         if (!ghRsp.hasErrors()) {
             try {
-                if(requestPoints.isEmpty()){
+                if (requestPoints.isEmpty()) {
                     throw new IllegalArgumentException("You have to pass at least one point");
                 }
                 List<Double> favoredHeadings = Collections.EMPTY_LIST;
@@ -144,7 +145,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                         put(WAY_POINT_MAX_DISTANCE, minPathPrecision);
 
                 ghRsp = graphHopper.route(request);
-            } catch (IllegalArgumentException ex) {
+            } catch (RuntimeException ex) {
                 ghRsp.addError(ex);
             }
         }

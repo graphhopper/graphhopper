@@ -20,12 +20,12 @@ package com.graphhopper.util.exceptions;
 import java.util.Map;
 
 /**
- * If a route cannot be found due to disconnected graphs.
+ * General exception if a path cannot be found.
  *
- * @author Peter Karich
+ * @author Robin Boldt
  */
-public class ConnectionNotFoundException extends PathNotFoundException {
-    public ConnectionNotFoundException(String var1, Map<String, Object> details) {
+public class PathNotFoundException extends DetailedIllegalArgumentException {
+    public PathNotFoundException(String var1, Map<String, Object> details) {
         super(var1, details);
     }
 }
