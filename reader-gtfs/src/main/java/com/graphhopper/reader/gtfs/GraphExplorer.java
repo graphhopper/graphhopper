@@ -82,7 +82,7 @@ final class GraphExplorer {
         final List<VirtualEdgeIteratorState> extraEdges = reverse ? extraEdgesByDestination.get(label.adjNode) : extraEdgesBySource.get(label.adjNode);
         return Stream.concat(
                 label.adjNode < graph.getNodes() ? mainEdgesAround(label) : Stream.empty(),
-                extraEdges.stream()).peek(e -> {if (label.adjNode == 2579) {
+                extraEdges.stream()).peek(e -> {if (label.adjNode == 2581) {
             System.out.println(e);
         }}).filter(new EdgeIteratorStatePredicate(label));
     }
@@ -183,7 +183,7 @@ final class GraphExplorer {
 
         @Override
         public boolean test(EdgeIteratorState edgeIterator) {
-            if (edgeIterator.getBaseNode() == 2589) {
+            if (edgeIterator.getBaseNode() == 2579) {
                 System.out.println("wurst");
             }
             final GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator.getFlags());

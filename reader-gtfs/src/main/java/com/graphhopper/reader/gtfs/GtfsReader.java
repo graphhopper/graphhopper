@@ -120,12 +120,12 @@ class GtfsReader {
         this.feed = this.gtfsStorage.getGtfsFeeds().get(id);
         this.transfers = new Transfers(feed);
         this.i = graph.getNodes();
+        this.startDate = feed.calculateStats().getStartDate();
+        this.endDate = feed.calculateStats().getEndDate();
+        this.gtfsStorage.getFares().putAll(feed.fares);
     }
 
     void readGraph() {
-        this.startDate = feed.calculateStats().getStartDate();
-        this.endDate = feed.calculateStats().getEndDate();
-        gtfsStorage.getFares().putAll(feed.fares);
         buildPtNetwork();
         connectStopsToStreetNetwork();
         connectStopsToStationNodes();
@@ -195,7 +195,7 @@ class GtfsReader {
             Collection<Frequency> frequencies = feed.getFrequencies(trips.iterator().next().trip.trip_id);
             for (Frequency frequency : (frequencies.isEmpty() ? Collections.singletonList(SINGLE_FREQUENCY) : frequencies)) {
                 for (int time = frequency.start_time; time < frequency.end_time; time += frequency.headway_secs) {
-                    addTrips(startDate, endDate, zoneId, trips, time);
+                    addTrips(zoneId, trips, time);
                 }
             }
         });
@@ -246,7 +246,7 @@ class GtfsReader {
         }
     }
 
-    void addTrips(LocalDate startDate, LocalDate endDate, ZoneId zoneId, List<TripWithStopTimes> trips, int time) {
+    void addTrips(ZoneId zoneId, List<TripWithStopTimes> trips, int time) {
         List<Integer> arrivalNodes = new ArrayList<>();
         for (TripWithStopTimes trip : trips) {
             IntArrayList boardEdges = new IntArrayList();

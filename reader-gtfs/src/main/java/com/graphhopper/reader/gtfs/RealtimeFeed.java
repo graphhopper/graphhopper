@@ -43,6 +43,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SKIPPED;
+import static java.time.temporal.ChronoUnit.DAYS;
 
 public class RealtimeFeed {
     private final IntHashSet blockedEdges;
@@ -243,10 +244,12 @@ public class RealtimeFeed {
                                 return stopTime;
                             })
                             .collect(Collectors.toList());
-                    BitSet validity = new BitSet();
-                    return new GtfsReader.TripWithStopTimes(trip, stopTimes, validity);
+                    BitSet validOnDay = new BitSet();
+                    LocalDate startDate = staticGtfs.getGtfsFeeds().get("gtfs_0").calculateStats().getStartDate();
+                    validOnDay.set((int) DAYS.between(startDate, LocalDate.of(2007,1,1)));
+                    return new GtfsReader.TripWithStopTimes(trip, stopTimes, validOnDay);
                 })
-                .forEach(trip -> gtfsReader.addTrips(LocalDate.now(), LocalDate.now(), ZoneId.systemDefault(), Collections.singletonList(trip), 0));
+                .forEach(trip -> gtfsReader.addTrips(ZoneId.systemDefault(), Collections.singletonList(trip), 0));
         gtfsReader.wireUpStops();
         gtfsReader.connectStopsToStationNodes();
         return new RealtimeFeed(blockedEdges, additionalEdges);
