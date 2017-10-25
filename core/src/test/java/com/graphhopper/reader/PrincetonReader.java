@@ -25,20 +25,20 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 
 /**
- * Data taken from here http://algs4.cs.princeton.edu/44sp/
- * <p>
+ * This reader implementation allows to read graph definitions from text files in the format used on
+ * http://algs4.cs.princeton.edu/44sp/.
  *
  * @author Peter Karich
  */
-public class PrinctonReader {
-    private Graph g;
+public class PrincetonReader {
+    private Graph graph;
     private InputStream is;
 
-    public PrinctonReader(Graph graph) {
-        g = graph;
+    public PrincetonReader(Graph graph) {
+        this.graph = graph;
     }
 
-    public PrinctonReader setStream(InputStream is) {
+    public PrincetonReader setStream(InputStream is) {
         this.is = is;
         return this;
     }
@@ -57,7 +57,7 @@ public class PrinctonReader {
                 if (line == null)
                     throw new IllegalStateException("Cannot read line " + lineNo);
 
-                String args[] = line.split(" ");
+                String[] args = line.split(" ");
                 int from = -1;
                 int to = -1;
                 double dist = -1;
@@ -81,7 +81,7 @@ public class PrinctonReader {
                     throw new RuntimeException("incorrect read!? from:" + from + ", to:" + to + ", dist:" + dist);
                 }
 
-                g.edge(from, to, dist, false);
+                graph.edge(from, to, dist, false);
             }
         } catch (Exception ex) {
             throw new RuntimeException("Problem in line " + lineNo, ex);
