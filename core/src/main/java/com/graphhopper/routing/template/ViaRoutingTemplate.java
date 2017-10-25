@@ -141,7 +141,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
 
             if (algo.getVisitedNodes() >= algoOpts.getMaxVisitedNodes()) {
                 Map<String, Object> details = new HashMap<>();
-                details.put(Routing.MAX_VISITED_NODES, algoOpts.getMaxVisitedNodes());
+                details.put("max-visited-nodes", algoOpts.getMaxVisitedNodes());
                 throw new MaximumNodesExceededException("No path found due to maximum nodes exceeded", details);
 
             }
