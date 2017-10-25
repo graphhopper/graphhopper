@@ -86,9 +86,6 @@ public abstract class AbstractEdgeElevationInterpolator {
 
         while (edge.next()) {
             final int edgeId = edge.getEdge();
-            if(edgeId == 6){
-                System.out.println(6);
-            }
             if (isInterpolatableEdge(edge)) {
                 if (!visitedEdgeIds.contains(edgeId)) {
                     interpolateEdge(edge, visitedEdgeIds, edgeExplorer);
