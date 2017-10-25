@@ -34,8 +34,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.File;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
+import java.time.*;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -86,7 +85,7 @@ public class RealtimeIT {
 
         // But the 6:00 departure of my line is going to skip my departure stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("wurst"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
         feedMessageBuilder.addEntityBuilder()
                 .setId("pups")
                 .getTripUpdateBuilder()
@@ -117,7 +116,7 @@ public class RealtimeIT {
 
         // But the 6:00 departure of my line is going to skip my arrival stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("wurst"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
         feedMessageBuilder.addEntityBuilder()
                 .setId("pups")
                 .getTripUpdateBuilder()
@@ -148,7 +147,7 @@ public class RealtimeIT {
 
         // But the 6:00 departure of my line is going to skip my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("wurst"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
         feedMessageBuilder.addEntityBuilder()
                 .setId("pups")
                 .getTripUpdateBuilder()
@@ -179,7 +178,9 @@ public class RealtimeIT {
 
         // But the 6:00 departure of my line is going to skip my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("wurst"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
+                .setGtfsRealtimeVersion("1")
+                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
 
 
         feedMessageBuilder.addEntityBuilder()
@@ -229,7 +230,7 @@ public class RealtimeIT {
         // My line does not stop at Bullfrog today. If this was a real transfer, I would not be
         // able to change lines there. But it is not a real transfer, so I can go on as planned.
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("wurst"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
         feedMessageBuilder.addEntityBuilder()
                 .setId("pups")
                 .getTripUpdateBuilder()

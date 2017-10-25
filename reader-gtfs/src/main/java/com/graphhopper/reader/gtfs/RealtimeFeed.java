@@ -20,6 +20,7 @@ package com.graphhopper.reader.gtfs;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntIntHashMap;
+import com.conveyal.gtfs.GTFSFeed;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
@@ -60,6 +61,8 @@ public class RealtimeFeed {
     }
 
     public static RealtimeFeed fromProtobuf(Graph graph, GtfsStorage staticGtfs, PtFlagEncoder encoder, GtfsRealtime.FeedMessage feedMessage) {
+        String feedKey = "gtfs_0"; //FIXME
+        GTFSFeed feed = staticGtfs.getGtfsFeeds().get(feedKey);
         final IntHashSet blockedEdges = new IntHashSet();
         feedMessage.getEntityList().stream()
             .filter(GtfsRealtime.FeedEntity::hasTripUpdate)
@@ -78,7 +81,7 @@ public class RealtimeFeed {
         final List<VirtualEdgeIteratorState> additionalEdges = new ArrayList<>();
         final Graph overlayGraph = new Graph() {
             int nNodes = 0;
-            int firstEdge = 999999;
+            int firstEdge = 999999; //FIXME
             final NodeAccess nodeAccess = new NodeAccess() {
                 IntIntHashMap additionalNodeFields = new IntIntHashMap();
 
@@ -183,11 +186,7 @@ public class RealtimeFeed {
                 newEdge.setReverseEdge(reverseNewEdge);
                 reverseNewEdge.setReverseEdge(newEdge);
                 additionalEdges.add(newEdge);
-//                additionalEdges.add(reverseNewEdge);
-
-                if (a== 2589 && b == 2579) {
-                    System.out.println("Wust");
-                }
+//                additionalEdges.add(reverseNewEdge); //FIXME
                 return newEdge;
             }
 
@@ -221,7 +220,10 @@ public class RealtimeFeed {
                 return staticGtfs;
             }
         };
-        final GtfsReader gtfsReader = new GtfsReader("gtfs_0", overlayGraph, encoder, null);
+        final GtfsReader gtfsReader = new GtfsReader(feedKey, overlayGraph, encoder, null);
+        Instant timestamp = Instant.ofEpochSecond(feedMessage.getHeader().getTimestamp());
+        LocalDate dateToChange = timestamp.atZone(ZoneId.of(feed.agency.values().iterator().next().agency_timezone)).toLocalDate(); //FIXME
+
         feedMessage.getEntityList().stream()
                 .filter(GtfsRealtime.FeedEntity::hasTripUpdate)
                 .map(GtfsRealtime.FeedEntity::getTripUpdate)
@@ -239,14 +241,13 @@ public class RealtimeFeed {
                                 final ZonedDateTime arrival_time = Instant.ofEpochSecond(stopTimeUpdate.getArrival().getTime()).atZone(ZoneId.of("America/Los_Angeles"));
                                 stopTime.arrival_time = (int) Duration.between(arrival_time.truncatedTo(ChronoUnit.DAYS), arrival_time).getSeconds();
                                 final ZonedDateTime departure_time = Instant.ofEpochSecond(stopTimeUpdate.getArrival().getTime()).atZone(ZoneId.of("America/Los_Angeles"));
-
                                 stopTime.departure_time = (int) Duration.between(departure_time.truncatedTo(ChronoUnit.DAYS), departure_time).getSeconds();
                                 return stopTime;
                             })
                             .collect(Collectors.toList());
                     BitSet validOnDay = new BitSet();
-                    LocalDate startDate = staticGtfs.getGtfsFeeds().get("gtfs_0").calculateStats().getStartDate();
-                    validOnDay.set((int) DAYS.between(startDate, LocalDate.of(2007,1,1)));
+                    LocalDate startDate = feed.calculateStats().getStartDate();
+                    validOnDay.set((int) DAYS.between(startDate, dateToChange));
                     return new GtfsReader.TripWithStopTimes(trip, stopTimes, validOnDay);
                 })
                 .forEach(trip -> gtfsReader.addTrips(ZoneId.systemDefault(), Collections.singletonList(trip), 0));
