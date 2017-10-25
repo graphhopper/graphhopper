@@ -49,9 +49,9 @@ public class WrapperGraph implements Graph {
     @Override
     public int getNodes() {
         return IntStream.concat(
-                IntStream.of(baseGraph.getNodes()),
+                IntStream.of(baseGraph.getNodes()-1),
                 extraEdges.stream().flatMapToInt(edge -> IntStream.of(edge.getBaseNode(), edge.getAdjNode())))
-                .max().getAsInt();
+                .max().getAsInt()+1;
     }
 
     @Override

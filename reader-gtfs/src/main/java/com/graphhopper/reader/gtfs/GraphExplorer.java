@@ -82,10 +82,9 @@ final class GraphExplorer {
         final List<VirtualEdgeIteratorState> extraEdges = reverse ? extraEdgesByDestination.get(label.adjNode) : extraEdgesBySource.get(label.adjNode);
         return Stream.concat(
                 label.adjNode < graph.getNodes() ? mainEdgesAround(label) : Stream.empty(),
-                extraEdges.stream().peek(e -> {if (label.adjNode == 2586) {
-                    System.out.println(extraEdgesByDestination);
-                    System.out.println(e);
-                }})).filter(new EdgeIteratorStatePredicate(label));
+                extraEdges.stream()).peek(e -> {if (label.adjNode == 2579) {
+            System.out.println(e);
+        }}).filter(new EdgeIteratorStatePredicate(label));
     }
 
     Stream<EdgeIteratorState> mainEdgesAround(Label label) {
@@ -111,7 +110,7 @@ final class GraphExplorer {
             case HIGHWAY:
                 return weighting.calcMillis(edge, false, -1);
             case ENTER_TIME_EXPANDED_NETWORK:
-                if (edge.getBaseNode() == 2589 && edge.getAdjNode() == 2579) {
+                if (edge.getBaseNode() == 2589) {
                     System.out.println("tröt");
                 }
                 if (reverse) {
@@ -184,6 +183,9 @@ final class GraphExplorer {
 
         @Override
         public boolean test(EdgeIteratorState edgeIterator) {
+            if (edgeIterator.getBaseNode() == 2589) {
+                System.out.println("wurst");
+            }
             final GtfsStorage.EdgeType edgeType = flagEncoder.getEdgeType(edgeIterator.getFlags());
             if (walkOnly && edgeType != GtfsStorage.EdgeType.HIGHWAY && edgeType != (reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT)) {
                 return false;
