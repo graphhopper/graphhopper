@@ -17,7 +17,7 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.routing.util.DataFlagEncoder;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
 
@@ -29,12 +29,13 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class BridgeElevationInterpolator extends AbstractEdgeElevationInterpolator {
 
-    public BridgeElevationInterpolator(GraphHopperStorage storage, DataFlagEncoder dataFlagEncoder) {
-        super(storage, dataFlagEncoder);
+    public BridgeElevationInterpolator(GraphHopperStorage storage, StringEncodedValue roadEnvironmentEnc) {
+        super(storage, roadEnvironmentEnc);
     }
 
     @Override
     protected boolean isInterpolatableEdge(EdgeIteratorState edge) {
-        return dataFlagEncoder.isBridge(edge.getData());
+        //TODO We should not hardcode this string here
+        return edge.get(roadEnvironmentEnc).equals("bridge");
     }
 }

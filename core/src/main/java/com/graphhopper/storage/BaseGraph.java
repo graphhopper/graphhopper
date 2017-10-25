@@ -1003,6 +1003,7 @@ class BaseGraph implements Graph {
         public boolean next() {
             while (true) {
                 edgeId++;
+                edgeRowCache = null;
                 edgePointer = (long) edgeId * edgeAccess.getEntryBytes();
                 if (!checkRange())
                     return false;

@@ -609,4 +609,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     public void setEncodedValueLookup(EncodedValueLookup encodedValueLookup) {
         this.encodedValueLookup = encodedValueLookup;
     }
+
+    @Override
+    public boolean containsEncodedValue(String key) {
+        // TODO Fix this for each encoder
+        return false;
+    }
 }

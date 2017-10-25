@@ -21,8 +21,8 @@ import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntHashSet;
+import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.routing.util.AllEdgesIterator;
-import com.graphhopper.routing.util.DataFlagEncoder;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.BreadthFirstSearch;
@@ -45,7 +45,7 @@ import com.graphhopper.util.PointList;
  * using {@link #isInterpolatableEdge(EdgeIteratorState)}. Once such an edge is
  * found, we'll calculate a connected component of tunnel/bridge edges starting
  * from the base node of this edge, using simple {@link BreadthFirstSearch}.
- * Nodes which only have interpolatabe edges connected to them are inner nodes
+ * Nodes which only have interpolatable edges connected to them are inner nodes
  * and are considered to not lie on the Earth surface. Nodes which also have
  * non-interpolatable edges are outer nodes and are considered to lie on the
  * Earth surface. Elevations of inner nodes are then interpolated from the outer
@@ -57,14 +57,14 @@ import com.graphhopper.util.PointList;
 public abstract class AbstractEdgeElevationInterpolator {
 
     private final GraphHopperStorage storage;
-    protected final DataFlagEncoder dataFlagEncoder;
+    protected final StringEncodedValue roadEnvironmentEnc;
     private final NodeElevationInterpolator nodeElevationInterpolator;
     private final ElevationInterpolator elevationInterpolator = new ElevationInterpolator();
 
     public AbstractEdgeElevationInterpolator(GraphHopperStorage storage,
-                                             DataFlagEncoder dataFlagEncoder) {
+                                             StringEncodedValue roadEnvironmentEnc) {
         this.storage = storage;
-        this.dataFlagEncoder = dataFlagEncoder;
+        this.roadEnvironmentEnc = roadEnvironmentEnc;
         this.nodeElevationInterpolator = new NodeElevationInterpolator(storage);
     }
 
@@ -86,6 +86,9 @@ public abstract class AbstractEdgeElevationInterpolator {
 
         while (edge.next()) {
             final int edgeId = edge.getEdge();
+            if(edgeId == 6){
+                System.out.println(6);
+            }
             if (isInterpolatableEdge(edge)) {
                 if (!visitedEdgeIds.contains(edgeId)) {
                     interpolateEdge(edge, visitedEdgeIds, edgeExplorer);

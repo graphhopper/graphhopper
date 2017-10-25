@@ -358,6 +358,12 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
+    @Override
+    public boolean containsEncodedValue(String key) {
+        return encodedValueMap.containsKey(key);
+    }
+
+
     static String fixWayName(String str) {
         if (str == null)
             return "";

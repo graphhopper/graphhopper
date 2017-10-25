@@ -11,4 +11,6 @@ public interface EncodedValueLookup {
     DecimalEncodedValue getDecimalEncodedValue(String key);
 
     StringEncodedValue getStringEncodedValue(String key);
+
+    boolean containsEncodedValue(String key);
 }

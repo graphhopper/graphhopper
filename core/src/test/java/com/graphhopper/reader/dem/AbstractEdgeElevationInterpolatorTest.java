@@ -23,9 +23,9 @@ import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
-import com.graphhopper.routing.util.DataFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.FootFlagEncoder;
+import com.graphhopper.routing.profiles.StringEncodedValue;
+import com.graphhopper.routing.profiles.TagParserFactory;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.RAMDirectory;
@@ -46,27 +46,34 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
     protected ReaderWay normalWay;
 
     protected GraphHopperStorage graph;
-    protected DataFlagEncoder dataFlagEncoder;
     protected AbstractEdgeElevationInterpolator edgeElevationInterpolator;
     protected EncodingManager encodingManager;
-    protected BooleanEncodedValue dfAccessEnc;
-    protected DecimalEncodedValue dfeAvSpeedEnc;
+    protected CarFlagEncoder carFlagEncoder;
+    protected BooleanEncodedValue accessEnc;
+    protected DecimalEncodedValue avSpeedEnc;
+    protected StringEncodedValue roadEnvironmentEnc;
+    EncodingManager.AcceptWay acceptWay;
 
     @SuppressWarnings("resource")
     @Before
     public void setUp() {
-        dataFlagEncoder = new DataFlagEncoder();
-        encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(dataFlagEncoder, new FootFlagEncoder()), 8).build();
-        dfAccessEnc = encodingManager.getBooleanEncodedValue(dataFlagEncoder.getPrefix() + "access");
-        dfeAvSpeedEnc = encodingManager.getDecimalEncodedValue(dataFlagEncoder.getPrefix() + "average_speed");
+        encodingManager = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(new CarFlagEncoder()), 8).build();
         graph = new GraphHopperStorage(new RAMDirectory(), encodingManager, new GHJsonFactory().create(), true,
                 new GraphExtension.NoOpExtension()).create(100);
+
+        carFlagEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
+        accessEnc = encodingManager.getBooleanEncodedValue("car.access");
+        avSpeedEnc = encodingManager.getDecimalEncodedValue("car.average_speed");
+        roadEnvironmentEnc = encodingManager.getStringEncodedValue(TagParserFactory.ROAD_ENVIRONMENT);
 
         edgeElevationInterpolator = createEdgeElevationInterpolator();
 
         interpolatableWay = createInterpolatableWay();
         normalWay = new ReaderWay(0);
         normalWay.setTag("highway", "primary");
+
+        acceptWay = new EncodingManager.AcceptWay();
+        encodingManager.acceptWay(normalWay, acceptWay);
     }
 
     @After
@@ -77,7 +84,7 @@ public abstract class AbstractEdgeElevationInterpolatorTest {
     protected abstract ReaderWay createInterpolatableWay();
 
     protected AbstractEdgeElevationInterpolator createEdgeElevationInterpolator() {
-        return new BridgeElevationInterpolator(graph, dataFlagEncoder);
+        return new BridgeElevationInterpolator(graph, encodingManager.getStringEncodedValue(TagParserFactory.ROAD_ENVIRONMENT));
     }
 
     protected void gatherOuterAndInnerNodeIdsOfStructure(EdgeIteratorState edge,
