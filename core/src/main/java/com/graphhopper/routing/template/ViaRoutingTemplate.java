@@ -121,12 +121,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             int idx = 0;
             for (Path path : tmpPathList) {
                 if (path.getTime() < 0) {
-                    Map<String, Object> details = new HashMap<>();
-                    details.put("time", path.getTime());
-                    details.put("from", queryResults.get(idx).getSnappedPoint());
-                    details.put("to", queryResults.get(idx + 1).getSnappedPoint());
-                    details.put("request", ghRequest);
-                    throw new DetailedRuntimeException("Time was negative. Please report as bug and include:" + ghRequest, details);
+                    throw new RuntimeException("Time was negative " + path.getTime() + " for index " + idx + ". Please report as bug and include:" + ghRequest);
                 }
 
                 pathList.add(path);
@@ -140,10 +135,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             queryGraph.clearUnfavoredStatus();
 
             if (algo.getVisitedNodes() >= algoOpts.getMaxVisitedNodes()) {
-                Map<String, Object> details = new HashMap<>();
-                details.put("max-visited-nodes", algoOpts.getMaxVisitedNodes());
-                throw new MaximumNodesExceededException("No path found due to maximum nodes exceeded", details);
-
+                throw new MaximumNodesExceededException("No path found due to maximum nodes exceeded", new HashMap<String, Object>());
             }
 
             visitedNodesSum += algo.getVisitedNodes();

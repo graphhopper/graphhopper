@@ -439,8 +439,7 @@ public class GraphHopperIT {
         GHResponse rsp = hopper.route(req);
 
         assertTrue(rsp.hasErrors());
-        MaximumNodesExceededException exception = (MaximumNodesExceededException) rsp.getErrors().get(0);
-        assertEquals(5, exception.getDetails().get("max-visited-nodes"));
+        assertEquals(MaximumNodesExceededException.class, rsp.getErrors().get(0).getClass());
 
         req = new GHRequest().
                 addPoint(from).

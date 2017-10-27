@@ -24,7 +24,6 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.util.StopWatch;
-import com.graphhopper.util.exceptions.DetailedRuntimeException;
 import com.graphhopper.util.shapes.GHPoint;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -47,6 +46,7 @@ import java.util.*;
 import static com.graphhopper.util.Parameters.DETAILS.PATH_DETAILS;
 import static com.graphhopper.util.Parameters.Routing.*;
 import static javax.servlet.http.HttpServletResponse.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_INTERNAL_SERVER_ERROR;
 
 /**
  * Servlet to use GraphHopper in a remote client application like mobile or browser. Note: If type
@@ -84,6 +84,7 @@ public class GraphHopperServlet extends GHBaseServlet {
         String weighting = getParam(httpReq, "weighting", "fastest");
         String algoStr = getParam(httpReq, "algorithm", "");
         String localeStr = getParam(httpReq, "locale", "en");
+        int errorCode = SC_BAD_REQUEST;
 
         StopWatch sw = new StopWatch().start();
 
@@ -145,8 +146,11 @@ public class GraphHopperServlet extends GHBaseServlet {
                         put(WAY_POINT_MAX_DISTANCE, minPathPrecision);
 
                 ghRsp = graphHopper.route(request);
+            } catch (IllegalArgumentException ex) {
+                ghRsp.addError(ex);
             } catch (RuntimeException ex) {
                 ghRsp.addError(ex);
+                errorCode = SC_INTERNAL_SERVER_ERROR;
             }
         }
 
@@ -173,7 +177,7 @@ public class GraphHopperServlet extends GHBaseServlet {
 
         if (writeGPX) {
             if (ghRsp.hasErrors()) {
-                httpRes.setStatus(SC_BAD_REQUEST);
+                httpRes.setStatus(errorCode);
                 httpRes.getWriter().append(errorsToXML(ghRsp.getErrors()));
             } else {
                 // no error => we can now safely call getFirst
@@ -189,7 +193,7 @@ public class GraphHopperServlet extends GHBaseServlet {
                 ((Map) infoMap).put("took", Math.round(took * 1000));
 
             if (ghRsp.hasErrors())
-                writeJsonError(httpRes, SC_BAD_REQUEST, objectMapper.getNodeFactory().pojoNode(map));
+                writeJsonError(httpRes, errorCode, objectMapper.getNodeFactory().pojoNode(map));
             else {
                 writeJson(httpReq, httpRes, objectMapper.getNodeFactory().pojoNode(map));
             }

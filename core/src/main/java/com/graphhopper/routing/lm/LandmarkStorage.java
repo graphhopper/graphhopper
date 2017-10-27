@@ -549,10 +549,7 @@ public class LandmarkStorage implements Storable<LandmarkStorage> {
         if (subnetworkFrom <= UNCLEAR_SUBNETWORK || subnetworkTo <= UNCLEAR_SUBNETWORK)
             return false;
         if (subnetworkFrom != subnetworkTo) {
-            Map<String, Object> details = new HashMap<String, Object>();
-            details.put("subnetwork-from", subnetworkFrom);
-            details.put("subnetwork-to", subnetworkTo);
-            throw new ConnectionNotFoundException("Connection between locations not found. Different subnetworks " + subnetworkFrom + " vs. " + subnetworkTo, details);
+            throw new ConnectionNotFoundException("Connection between locations not found. Different subnetworks " + subnetworkFrom + " vs. " + subnetworkTo, new HashMap<String, Object>(), ConnectionNotFoundException.Reason.DIFFERENT_SUBNETWORKS);
         }
 
         int[] tmpIDs = landmarkIDs.get(subnetworkFrom);

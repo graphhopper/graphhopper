@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util.exceptions;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -27,5 +28,30 @@ import java.util.Map;
 public class ConnectionNotFoundException extends PathNotFoundException {
     public ConnectionNotFoundException(String var1, Map<String, Object> details) {
         super(var1, details);
+    }
+
+    /**
+     * You can add a reason for this exception, to add more details why this happened.
+     */
+    public ConnectionNotFoundException(String var1, Map<String, Object> details, Reason reason) {
+        super(var1, details);
+
+        if (details == null) {
+            details = new HashMap<>();
+        }
+        details.put("reason", reason.toString());
+    }
+
+    public enum Reason {
+        DIFFERENT_SUBNETWORKS;
+
+        @Override
+        public String toString() {
+            switch (this) {
+                case DIFFERENT_SUBNETWORKS:
+                    return "different_subnetworks";
+            }
+            throw new IllegalStateException("Could not find the Reason");
+        }
     }
 }
