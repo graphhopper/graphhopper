@@ -135,7 +135,7 @@ public class ViaRoutingTemplate extends AbstractRoutingTemplate implements Routi
             queryGraph.clearUnfavoredStatus();
 
             if (algo.getVisitedNodes() >= algoOpts.getMaxVisitedNodes()) {
-                throw new MaximumNodesExceededException("No path found due to maximum nodes exceeded", new HashMap<String, Object>());
+                throw new MaximumNodesExceededException("No path found due to maximum nodes (\"junctions\") exceeded. This can happen if the requested points are too far apart.", new HashMap<String, Object>());
             }
 
             visitedNodesSum += algo.getVisitedNodes();

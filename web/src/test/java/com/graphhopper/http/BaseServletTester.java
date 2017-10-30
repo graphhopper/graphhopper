@@ -83,7 +83,7 @@ public class BaseServletTester {
         if (server != null)
             return;
 
-        server = new GHServer(args);
+        server = getServer(args);
 
         if (injector == null)
             setUpGuice(server.createModule());
@@ -107,6 +107,10 @@ public class BaseServletTester {
         if (!started) {
             throw new IllegalStateException("Unable to start the server");
         }
+    }
+
+    GHServer getServer(CmdArgs args) {
+        return new GHServer(args);
     }
 
     protected String getTestRouteAPIUrl() {
