@@ -562,4 +562,11 @@ public class CarFlagEncoderTest {
         way.setTag("surface", "unpaved");
         assertEquals(30, encoder.applyBadSurfaceSpeed(way, 90), 1e-1);
     }
+
+    @Test
+    public void testContainsEncodedValue() {
+        assertTrue(encoder.containsEncodedValue(TagParserFactory.ROUNDABOUT));
+        //TODO this should be false IMHO, see #1112
+        assertTrue(encoder.containsEncodedValue(TagParserFactory.BIKE_ACCESS));
+    }
 }
