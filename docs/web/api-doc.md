@@ -161,6 +161,9 @@ paths[0].instructions[0].turn_angle           | [optional] Only available for US
     ],
     "points": "oxg_Iy|ppAl@wCdE}LfFsN|@_Ej@eEtAaMh@sGVuDNcDb@{PFyGdAi]FoC?q@sXQ_@?",
     "points_encoded": true,
+    "details":{
+        "street_name":[[0,1,"Rue Principale"],[1,13,"D19E"],[13,18,"D19"],..]
+    },
     "time": 129290
   }]
 }
