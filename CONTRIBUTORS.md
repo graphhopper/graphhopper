@@ -1,6 +1,11 @@
 # Contributors
 
-Most of the contributors are mentioned at Github as [Members](https://github.com/graphhopper?tab=members) or [Contributors](https://github.com/graphhopper/graphhopper/contributors). Here is a manual overview
+Most of the contributors are mentioned at Github as [Members](https://github.com/graphhopper?tab=members) or [Contributors](https://github.com/graphhopper/graphhopper/contributors). 
+
+Contributors that agree to the [project its CLA](https://www.graphhopper.com/individual-contributor-license-agreement/)
+state this as a comment via a separate, signed commit.
+
+Here is an overview:
 
  * ammagamma, improvements like #700, #703
  * AnahitaS, docs for Android, Android, Tomcat
