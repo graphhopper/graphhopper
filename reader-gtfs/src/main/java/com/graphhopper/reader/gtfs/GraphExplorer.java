@@ -36,7 +36,6 @@ import java.util.List;
 import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
@@ -54,10 +53,9 @@ final class GraphExplorer {
     private final ArrayListMultimap<Integer, VirtualEdgeIteratorState> extraEdgesByDestination = ArrayListMultimap.create();
     private final Graph graph;
     private final boolean walkOnly;
-    private final boolean profileQuery;
 
 
-    GraphExplorer(Graph graph, PtTravelTimeWeighting weighting, PtFlagEncoder flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, PointList extraNodes, List<VirtualEdgeIteratorState> extraEdges, boolean walkOnly, boolean profileQuery) {
+    GraphExplorer(Graph graph, PtTravelTimeWeighting weighting, PtFlagEncoder flagEncoder, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed, boolean reverse, PointList extraNodes, List<VirtualEdgeIteratorState> extraEdges, boolean walkOnly) {
         this.graph = graph;
         this.edgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, reverse, !reverse));
         this.flagEncoder = flagEncoder;
@@ -75,7 +73,6 @@ final class GraphExplorer {
             extraEdgesByDestination.put(extraEdge.getAdjNode(), new VirtualEdgeIteratorState(extraEdge.getOriginalTraversalKey(), extraEdge.getEdge(), extraEdge.getAdjNode(), extraEdge.getBaseNode(), extraEdge.getDistance(), extraEdge.getFlags(), extraEdge.getName(), extraEdge.fetchWayGeometry(3)));
         }
         this.walkOnly = walkOnly;
-        this.profileQuery = profileQuery;
     }
 
     Stream<EdgeIteratorState> exploreEdgesAround(Label label) {
@@ -87,13 +84,13 @@ final class GraphExplorer {
         }}).filter(new EdgeIteratorStatePredicate(label));
     }
 
-    Stream<EdgeIteratorState> mainEdgesAround(Label label) {
+    private Stream<EdgeIteratorState> mainEdgesAround(Label label) {
         return StreamSupport.stream(new Spliterators.AbstractSpliterator<EdgeIteratorState>(0, 0) {
             EdgeIterator edgeIterator = edgeExplorer.setBaseNode(label.adjNode);
 
             @Override
             public boolean tryAdvance(Consumer<? super EdgeIteratorState> action) {
-                while (edgeIterator.next()) {
+                if (edgeIterator.next()) {
                     action.accept(edgeIterator);
                     return true;
                 }
@@ -110,9 +107,6 @@ final class GraphExplorer {
             case HIGHWAY:
                 return weighting.calcMillis(edge, false, -1);
             case ENTER_TIME_EXPANDED_NETWORK:
-                if (edge.getBaseNode() == 2589) {
-                    System.out.println("tröt");
-                }
                 if (reverse) {
                     return 0;
                 } else {
@@ -155,7 +149,7 @@ final class GraphExplorer {
         }
     }
 
-    public EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
+    EdgeIteratorState getEdgeIteratorState(int edgeId, int adjNode) {
         if (edgeId == -1) {
             throw new RuntimeException();
         }
@@ -164,7 +158,7 @@ final class GraphExplorer {
                 .findFirst().orElseGet(() -> graph.getEdgeIteratorState(edgeId, adjNode));
     }
 
-    public NodeAccess getNodeAccess() {
+    NodeAccess getNodeAccess() {
         return graph.getNodeAccess();
     }
 
@@ -176,7 +170,7 @@ final class GraphExplorer {
         private final Label label;
         boolean foundEnteredTimeExpandedNetworkEdge;
 
-        public EdgeIteratorStatePredicate(Label label) {
+        EdgeIteratorStatePredicate(Label label) {
             this.label = label;
             foundEnteredTimeExpandedNetworkEdge = false;
         }
