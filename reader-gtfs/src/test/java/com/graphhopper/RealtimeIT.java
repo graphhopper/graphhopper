@@ -22,7 +22,6 @@ import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
-import com.graphhopper.reader.gtfs.RealtimeFeed;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.storage.GraphHopperStorage;
@@ -87,7 +86,7 @@ public class RealtimeIT {
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
         feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
         feedMessageBuilder.addEntityBuilder()
-                .setId("pups")
+                .setId("1")
                 .getTripUpdateBuilder()
                 .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
                 .addStopTimeUpdateBuilder()
@@ -118,7 +117,7 @@ public class RealtimeIT {
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
         feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
         feedMessageBuilder.addEntityBuilder()
-                .setId("pups")
+                .setId("1")
                 .getTripUpdateBuilder()
                 .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
                 .addStopTimeUpdateBuilder()
@@ -149,7 +148,7 @@ public class RealtimeIT {
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
         feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
         feedMessageBuilder.addEntityBuilder()
-                .setId("pups")
+                .setId("1")
                 .getTripUpdateBuilder()
                 .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
                 .addStopTimeUpdateBuilder()
@@ -184,7 +183,7 @@ public class RealtimeIT {
 
 
         feedMessageBuilder.addEntityBuilder()
-                .setId("pups")
+                .setId("1")
                 .getTripUpdateBuilder()
                 .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
                 .addStopTimeUpdateBuilder()
@@ -192,7 +191,7 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         final GtfsRealtime.TripUpdate.Builder extraTripUpdate = feedMessageBuilder.addEntityBuilder()
-                .setId("pups")
+                .setId("2")
                 .getTripUpdateBuilder()
                 .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setScheduleRelationship(ADDED).setTripId("EXTRA").setRouteId("CITY").setStartTime("06:45:00"));
         extraTripUpdate
@@ -232,7 +231,7 @@ public class RealtimeIT {
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
         feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
         feedMessageBuilder.addEntityBuilder()
-                .setId("pups")
+                .setId("1")
                 .getTripUpdateBuilder()
                 .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("AB1").setStartTime("00:00:00"))
                 .addStopTimeUpdateBuilder()

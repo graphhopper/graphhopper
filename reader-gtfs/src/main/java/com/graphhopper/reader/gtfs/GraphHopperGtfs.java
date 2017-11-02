@@ -107,7 +107,6 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         private GraphExplorer graphExplorer;
 
         RequestHandler(GHRequest request) {
-            System.out.println(graphWithExtraEdges.getAllEdges().getMaxId());
             maxVisitedNodesForRequest = request.getHints().getInt(Parameters.Routing.MAX_VISITED_NODES, 1_000_000);
             profileQuery = request.getHints().getBool(PROFILE_QUERY, false);
             ignoreTransfers = request.getHints().getBool(Parameters.PT.IGNORE_TRANSFERS, profileQuery);

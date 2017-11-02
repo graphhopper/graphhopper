@@ -81,7 +81,7 @@ public class RealtimeFeed {
         final List<VirtualEdgeIteratorState> additionalEdges = new ArrayList<>();
         final Graph overlayGraph = new Graph() {
             int nNodes = 0;
-            int firstEdge = 999999; //FIXME
+            int firstEdge = graph.getAllEdges().getMaxId()+1;
             final NodeAccess nodeAccess = new NodeAccess() {
                 IntIntHashMap additionalNodeFields = new IntIntHashMap();
 
