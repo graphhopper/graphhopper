@@ -61,13 +61,13 @@ public class DataFlagEncoderTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testInsufficientEncoderBitLength() {
-        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(new DataFlagEncoder(properties)), 4).build();
+        new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(new DataFlagEncoder(properties), new CarFlagEncoder()), 1).build();
     }
 
     @Test
     public void testSufficientEncoderBitLength() {
-        EncodingManager em = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(new DataFlagEncoder(properties)), 8).build();
-        EncodingManager em1 = new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(new DataFlagEncoder()), 4).build();
+        new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(new DataFlagEncoder(properties)), 8).build();
+        new EncodingManager.Builder().addGlobalEncodedValues().addAll(Arrays.asList(new DataFlagEncoder()), 4).build();
     }
 
     @Test
@@ -220,6 +220,7 @@ public class DataFlagEncoderTest {
         assertEquals(50, edge.getReverse(maxSpeedEnc), .1);
     }
 
+    // TODO, currently the DecimalEncoded value is not robust against setting values > maxValue, what should we do about this?
     @Test
     public void testLargeMaxspeed() {
         ReaderWay osmWay = new ReaderWay(0);

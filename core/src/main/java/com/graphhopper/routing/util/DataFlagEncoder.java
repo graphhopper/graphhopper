@@ -236,7 +236,9 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
         // Note: if you update this list you have to update the method getAccessValue too
         List<String> accessList = Arrays.asList(
                 //"designated", "permissive", "customers", "delivery",
-                "yes", "destination", "private", "no"
+                "yes", "destination",
+                //"private", <= this currently conflicts with SpatialRule.Access, as this only allows yes, conditional, and no
+                "no"
         );
 
         int counter = 0;
