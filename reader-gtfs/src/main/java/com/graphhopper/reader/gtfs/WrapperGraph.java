@@ -21,11 +21,13 @@ package com.graphhopper.reader.gtfs;
 import com.graphhopper.routing.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.GraphExtension;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeExplorer;
 import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.PointList;
 import com.graphhopper.util.shapes.BBox;
 
 import java.util.List;
@@ -81,7 +83,110 @@ public class WrapperGraph implements Graph {
 
     @Override
     public AllEdgesIterator getAllEdges() {
-        return baseGraph.getAllEdges();
+        return new AllEdgesIterator() {
+            @Override
+            public int getMaxId() {
+                return IntStream.concat(
+                        IntStream.of(baseGraph.getAllEdges().getMaxId()),
+                        extraEdges.stream().mapToInt(VirtualEdgeIteratorState::getEdge))
+                        .max().getAsInt();
+            }
+
+            @Override
+            public boolean next() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int getEdge() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int getBaseNode() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int getAdjNode() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public PointList fetchWayGeometry(int mode) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setWayGeometry(PointList list) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public double getDistance() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setDistance(double dist) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public long getFlags() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setFlags(long flags) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public int getAdditionalField() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setAdditionalField(int value) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean isForward(FlagEncoder encoder) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean isBackward(FlagEncoder encoder) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public boolean getBool(int key, boolean _default) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public String getName() {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState setName(String name) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState detach(boolean reverse) {
+                throw new UnsupportedOperationException();
+            }
+
+            @Override
+            public EdgeIteratorState copyPropertiesTo(EdgeIteratorState e) {
+                throw new UnsupportedOperationException();
+            }
+        };
     }
 
     @Override
