@@ -12,18 +12,19 @@ Here is an overview:
  * andreaswolf, flag encoder versioning and more
  * agouge, discussion and API refactoring
  * b3nn0, Android improvements
- * boldtrn, motorcycle knowledge and many improvements like conditional tag parsing, round trips, ...
+ * boldtrn, one of the core developers with motorcycle knowledge :)
  * cgarreau, increase of routing success rate via subnetwork cleanup
  * ChristianSeitzer, motorcycle improvements
+ * ChristophKaser, agrees to the project's CLA, improved Android compatibility #1207
  * daisy1754, fixed usage of graphhopper.sh script
  * dardin88, instructions improved
  * dewos, web API bug fixes
  * devemux86, improvements regarding Android, GPX and more
- * edy, improvements regarding docker #849
- * elibar, fix for alternative route calculation
  * dos65, bug fixes in routing algo
  * drnextgis, ru translation and JS fixes
  * duongnt, fixes in storage
+ * edy, improvements regarding docker #849
+ * elibar, fix for alternative route calculation
  * fbonzon, several UI improvements like #615
  * florent-morel, improvements regarding fords, #320
  * fredao, translations 
@@ -43,8 +44,8 @@ Here is an overview:
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
  * ocampana, initial implementation for instructions
  * PGWelch, shapefile reader #874
- * ratrun, route relations, GPX information, bike handling etc
  * rajanski, script to do routing via PostGIS
+ * ratrun, route relations, GPX information, bike handling etc
  * rodneyodonnell, improved dead end removal (PrepareRoutingSubnetworks) and fords
  * rodo, more descriptions
  * seeebiii, motorcycle improvements
@@ -52,7 +53,6 @@ Here is an overview:
  * Svantulden, improved documentation and nearest API
  * thehereward, code cleanups like #620
  * vvikas, ideas for many to many improvements and #616
- * ChristophKaser, agrees to the [project's CLA](https://www.graphhopper.com/individual-contributor-license-agreement/), improved Android compatibility #1207
 
 ## Translations
 
