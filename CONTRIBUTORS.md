@@ -47,6 +47,7 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
  * Svantulden, improved documentation and nearest API
  * thehereward, code cleanups like #620
  * vvikas, ideas for many to many improvements and #616
+ * ChristophKaser, agrees to the [project's CLA](https://www.graphhopper.com/individual-contributor-license-agreement/), improved Android compatibility #1207
 
 ## Translations
 
