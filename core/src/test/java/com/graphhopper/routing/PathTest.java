@@ -362,8 +362,8 @@ public class PathTest {
         DecimalEncodedValue averageSpeedEnc = carManager.getDecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED);
         BooleanEncodedValue roundaboutEnc = carManager.getBooleanEncodedValue(TagParserFactory.ROUNDABOUT);
 
-        GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 2, 1, false, 5).setName("MainStreet 2 1");
-        GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 1, 11, false, 5).setName("MainStreet 1 11");
+        GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 2, 1, true, 5).setName("MainStreet 2 1");
+        GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 1, 11, true, 5).setName("MainStreet 1 11");
 
         // roundabout
         EdgeIteratorState tmpEdge;
@@ -372,17 +372,17 @@ public class PathTest {
         tmpEdge = GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 9, 10, false, 2).setName("9-10");
         tmpEdge.set(roundaboutEnc, true);
         tmpEdge = GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 6, 10, false, 2).setName("6-10");
-        tmpEdge.set(carAccessEnc, true);
+        tmpEdge.set(roundaboutEnc, true);
         tmpEdge = GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 10, 1, false, 2).setName("10-1");
-        tmpEdge.set(carAccessEnc, true);
+        tmpEdge.set(roundaboutEnc, true);
         tmpEdge = GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 3, 2, false, 5).setName("2-3");
-        tmpEdge.set(carAccessEnc, true);
+        tmpEdge.set(roundaboutEnc, true);
         tmpEdge = GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 4, 3, false, 5).setName("3-4");
-        tmpEdge.set(carAccessEnc, true);
+        tmpEdge.set(roundaboutEnc, true);
         tmpEdge = GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 5, 4, false, 5).setName("4-5");
-        tmpEdge.set(carAccessEnc, true);
+        tmpEdge.set(roundaboutEnc, true);
         tmpEdge = GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 2, 5, false, 5).setName("5-2");
-        tmpEdge.set(carAccessEnc, true);
+        tmpEdge.set(roundaboutEnc, true);
 
         GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 4, 7, true, 5).setName("MainStreet 4 7");
         GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 5, 8, true, 5).setName("5-8");
@@ -556,6 +556,7 @@ public class PathTest {
 
     @Test
     public void testCalcInstructionsForDataFlagEncoder() {
+        //TODO Probably we have to fix the DataFlagEncoder first
         final NodeAccess na = carGraph.getNodeAccess();
 
         na.setNode(1, 48.982618, 13.122021);
@@ -573,7 +574,7 @@ public class PathTest {
         GHUtility.createEdge(carGraph, carAvSpeedEnc, 60, carAccessEnc, 2, 3, true, 5).
                 setData(dataFlagEncoder.handleWayTags(dataFlagManager.createIntsRef(), way, EncodingManager.Access.WAY, 0));
 
-        Path p = new Dijkstra(carGraph, new GenericWeighting(dataFlagEncoder, new HintsMap()), TraversalMode.NODE_BASED).calcPath(1, 3);
+        Path p = new Dijkstra(carGraph, new GenericWeighting(dataFlagEncoder, new HintsMap()), TraversalMode.NODE_BASED).calcPath(12, 16);
         assertTrue(p.isFound());
         InstructionList wayList = p.createPathExtract(dataFlagManager, false).calcInstructions(tr);
         assertEquals(3, wayList.size());
