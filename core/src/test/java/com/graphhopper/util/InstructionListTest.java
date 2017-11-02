@@ -296,12 +296,14 @@ public class InstructionListTest {
         na.setNode(6, 15.1, 10.1);
         na.setNode(7, 15.1, 9.8);
 
-        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 1, 2, true, 7000).setName("1-2").set(carAverageSpeedEnc, 70d);
-        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 2, 3, true, 8000).setName("2-3").set(carAverageSpeedEnc, 80d);
-        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 2, 6, true, 10000).setName("2-6").set(carAverageSpeedEnc, 10d);
-        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 3, 4, true, 9000).setName("3-4").set(carAverageSpeedEnc, 90d);
-        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 3, 7, true, 10000).setName("3-7").set(carAverageSpeedEnc, 10d);
-        GHUtility.createEdge(g, carAverageSpeedEnc, 60, carAccessEnc, 4, 5, true, 10000).setName("4-5").set(carAverageSpeedEnc, 100d);
+        // TODO The * 0.9 is not applied in the encoder, but in the parser and therefore not used here.
+        // We could remove the * 0.9 and change the results of the test, for now I wanted to keep the results to show that it behaves equally
+        GHUtility.createEdge(g, carAverageSpeedEnc, 70 * .9, carAccessEnc, 1, 2, true, 7000).setName("1-2");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 80 * .9, carAccessEnc, 2, 3, true, 8000).setName("2-3");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 10 * .9, carAccessEnc, 2, 6, true, 10000).setName("2-6");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 90 * .9, carAccessEnc, 3, 4, true, 9000).setName("3-4");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 10 * .9, carAccessEnc, 3, 7, true, 10000).setName("3-7");
+        GHUtility.createEdge(g, carAverageSpeedEnc, 100 * .9, carAccessEnc, 4, 5, true, 10000).setName("4-5");
 
         Path p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(1, 5);
         InstructionList wayList = p.createPathExtract(carManager, false).calcInstructions(usTR);
