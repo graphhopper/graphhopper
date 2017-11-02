@@ -23,6 +23,7 @@ import java.util.Map;
 
 public class Instruction {
     public static final int UNKNOWN = -99;
+    public static final int KEEP_LEFT = -7;
     public static final int LEAVE_ROUNDABOUT = -6; // for future use
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
@@ -35,7 +36,6 @@ public class Instruction {
     public static final int REACHED_VIA = 5;
     public static final int USE_ROUNDABOUT = 6;
     public static final int IGNORE = Integer.MIN_VALUE;
-    public static final int KEEP_LEFT = -7;
     public static final int KEEP_RIGHT = 7;
     public static final int PT_START_TRIP = 101;
     public static final int PT_TRANSFER = 102;
