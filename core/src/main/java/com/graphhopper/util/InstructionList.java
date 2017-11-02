@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 
 /**
@@ -181,6 +182,7 @@ public class InstructionList extends AbstractList<Instruction> {
         decimalFormat.setMinimumFractionDigits(1);
         decimalFormat.setMaximumFractionDigits(6);
         decimalFormat.setMinimumIntegerDigits(1);
+        decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.US));
 
         String header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
                 + "<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
