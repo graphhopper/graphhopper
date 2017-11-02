@@ -2,8 +2,8 @@ package com.graphhopper;
 
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.InstructionList;
-import com.vividsolutions.jts.geom.Geometry;
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.Point;
 
 import java.util.Date;
 import java.util.List;

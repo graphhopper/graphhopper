@@ -20,7 +20,7 @@ package com.graphhopper.json.geo;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.graphhopper.util.shapes.BBox;
-import com.vividsolutions.jts.geom.Geometry;
+import org.locationtech.jts.geom.Geometry;
 
 import java.util.Map;
 
