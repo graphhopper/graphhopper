@@ -222,13 +222,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                   */
 
                 boolean isUTurn = false;
-                if (!Double.isNaN(prevInstructionPrevOrientation) &&
-                        prevInstruction.getDistance() < MAX_U_TURN_DISTANCE &&
-                        (sign < 0) == (prevInstruction.getSign() < 0) &&
-                        (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT) &&
-                        (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT) &&
-                        edge.isForward(encoder) != edge.isBackward(encoder) &&
-                        InstructionsHelper.isNameSimilar(prevInstructionName, name)) {
+                if (!Double.isNaN(prevInstructionPrevOrientation)
+                        && prevInstruction.getDistance() < MAX_U_TURN_DISTANCE
+                        && (sign < 0) == (prevInstruction.getSign() < 0)
+                        && (Math.abs(sign) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(sign) == Instruction.TURN_RIGHT || Math.abs(sign) == Instruction.TURN_SHARP_RIGHT)
+                        && (Math.abs(prevInstruction.getSign()) == Instruction.TURN_SLIGHT_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_RIGHT || Math.abs(prevInstruction.getSign()) == Instruction.TURN_SHARP_RIGHT)
+                        && edge.isForward(encoder) != edge.isBackward(encoder)
+                        && InstructionsHelper.isNameSimilar(prevInstructionName, name)) {
                     // Chances are good that this is a u-turn, we only need to check if the orientation matches
                     GHPoint point = InstructionsHelper.getPointForOrientationCalculation(edge, nodeAccess);
                     double lat = point.getLat();

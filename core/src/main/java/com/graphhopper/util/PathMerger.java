@@ -192,9 +192,9 @@ public class PathMerger {
 
             if (instruction.getSign() == Instruction.REACHED_VIA) {
                 nextInstruction = instructions.get(i + 1);
-                if (nextInstruction.getSign() != Instruction.CONTINUE_ON_STREET ||
-                        !instruction.extraInfo.containsKey("last_heading") ||
-                        !nextInstruction.extraInfo.containsKey("heading")) {
+                if (nextInstruction.getSign() != Instruction.CONTINUE_ON_STREET
+                        || !instruction.extraInfo.containsKey("last_heading")
+                        || !nextInstruction.extraInfo.containsKey("heading")) {
                     // TODO throw exception?
                     continue;
                 }
