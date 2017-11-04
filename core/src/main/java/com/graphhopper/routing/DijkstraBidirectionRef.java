@@ -42,8 +42,8 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
     protected SPTEntry currFrom;
     protected SPTEntry currTo;
     protected PathBidirRef bestPath;
-    private PriorityQueue<SPTEntry> pqOpenSetFrom;
-    private PriorityQueue<SPTEntry> pqOpenSetTo;
+    PriorityQueue<SPTEntry> pqOpenSetFrom;
+    PriorityQueue<SPTEntry> pqOpenSetTo;
     private boolean updateBestPath = true;
 
     public DijkstraBidirectionRef(Graph graph, Weighting weighting, TraversalMode tMode) {

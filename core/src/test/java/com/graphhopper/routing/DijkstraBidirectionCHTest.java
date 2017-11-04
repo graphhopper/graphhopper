@@ -15,9 +15,10 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ch;
+package com.graphhopper.routing;
 
-import com.graphhopper.routing.*;
+import com.carrotsearch.hppc.IntArrayList;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.ShortestWeighting;
@@ -165,5 +166,107 @@ public class DijkstraBidirectionCHTest extends AbstractRoutingAlgorithmTester {
         assertEquals(p3.toString(), 17000, p3.getDistance(), 1e-6);
         assertEquals(p3.toString(), 12240 * 1000, p3.getTime());
         assertEquals(Helper.createTList(0, 4, 5, 7), p3.calcNodes());
+    }
+
+    // 7------8------.---9----0
+    // |      | \    |   |
+    // 6------   |   |   |
+    // |      |  1   |   |
+    // 5------   |   |  /
+    // |  _,--|   2  | /
+    // |/         |  |/
+    // 4----------3--/
+    @Test
+    public void testStallingNodesReducesNumberOfVisitedNodes() {
+        GraphHopperStorage graph = createGHStorage(false);
+        graph.edge(8, 9, 100, false);
+        graph.edge(8, 3, 2, false);
+        graph.edge(8, 5, 1, false);
+        graph.edge(8, 6, 1, false);
+        graph.edge(8, 7, 1, false);
+        graph.edge(1, 2, 2, false);
+        graph.edge(1, 8, 1, false);
+        graph.edge(2, 3, 3, false);
+        for (int i = 3; i < 7; ++i) {
+            graph.edge(i, i + 1, 1, false);
+        }
+        graph.edge(9, 0, 1, false);
+        graph.edge(3, 9, 200, false);
+        CHGraph chGraph = graph.getGraph(CHGraph.class);
+
+        // explicitly set the node levels equal to the node ids
+        // the graph contraction with this ordering yields no shortcuts
+        for (int i = 0; i < 10; ++i) {
+            chGraph.setLevel(i, i);
+        }
+        graph.freeze();
+        RoutingAlgorithm algo = createCHAlgo(graph, chGraph, true, defaultOpts);
+        Path p = algo.calcPath(1, 0);
+        // node 3 will be stalled and nodes 4-7 won't be explored --> we visit 7 nodes
+        // note that node 9 will be visited by both forward and backward searches
+        assertEquals(7, algo.getVisitedNodes());
+        assertEquals(102, p.getDistance(), 1.e-3);
+        assertEquals(p.toString(), Helper.createTList(1, 8, 9, 0), p.calcNodes());
+
+        // without stalling we visit 11 nodes
+        RoutingAlgorithm algoNoSod = createCHAlgo(graph, chGraph, false, defaultOpts);
+        Path pNoSod = algoNoSod.calcPath(1, 0);
+        assertEquals(11, algoNoSod.getVisitedNodes());
+        assertEquals(102, pNoSod.getDistance(), 1.e-3);
+        assertEquals(pNoSod.toString(), Helper.createTList(1, 8, 9, 0), pNoSod.calcNodes());
+    }
+
+    // t(0)--slow->1--s(2)
+    //    \        |
+    //    fast     |
+    //      \--<---|
+    @Test
+    public void testDirectionDependentSpeedFwdSearch() {
+        runTestWithDirectionDependentEdgeSpeed(10, 20, 0, 2, Helper.createTList(0, 1, 2), new MotorcycleFlagEncoder());
+        runTestWithDirectionDependentEdgeSpeed(10, 20, 0, 2, Helper.createTList(0, 1, 2), new Bike2WeightFlagEncoder());
+    }
+
+    // s(0)--fast->1--t(2)
+    //    \        |
+    //    slow     |
+    //      \--<---|
+    @Test
+    public void testDirectionDependentSpeedBwdSearch() {
+        runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, Helper.createTList(2, 1, 0), new MotorcycleFlagEncoder());
+        runTestWithDirectionDependentEdgeSpeed(20, 10, 2, 0, Helper.createTList(2, 1, 0), new Bike2WeightFlagEncoder());
+    }
+
+    private void runTestWithDirectionDependentEdgeSpeed(
+            int speed, int revSpeed, int from, int to, IntArrayList expectedPath, FlagEncoder encoder) {
+        EncodingManager encodingManager = new EncodingManager(encoder);
+        FastestWeighting weighting = new FastestWeighting(encoder);
+        AlgorithmOptions algoOpts = AlgorithmOptions.start().weighting(weighting).build();
+        GraphHopperStorage graph = createGHStorage(encodingManager, Arrays.asList(weighting), false);
+        EdgeIteratorState edge = graph.edge(0, 1, 2, true);
+        long flags = edge.getFlags();
+        flags = encoder.setSpeed(flags, speed);
+        flags = encoder.setReverseSpeed(flags, revSpeed);
+        edge.setFlags(flags);
+        graph.edge(1, 2, 1, true);
+
+        CHGraph chGraph = graph.getGraph(CHGraph.class);
+        for (int i = 0; i < 3; ++i) {
+            chGraph.setLevel(i, i);
+        }
+        graph.freeze();
+
+        RoutingAlgorithm algo = createCHAlgo(graph, chGraph, true, algoOpts);
+        Path p = algo.calcPath(from, to);
+        assertEquals(3, p.getDistance(), 1.e-3);
+        assertEquals(p.toString(), expectedPath, p.calcNodes());
+    }
+
+    private RoutingAlgorithm createCHAlgo(GraphHopperStorage graph, CHGraph chGraph, boolean withSOD, AlgorithmOptions algorithmOptions) {
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(new GHDirectory("", DAType.RAM_INT),
+                graph, chGraph, algorithmOptions.getWeighting(), TraversalMode.NODE_BASED);
+        if (!withSOD) {
+            algorithmOptions.getHints().put("stall_on_demand", false);
+        }
+        return ch.createAlgo(chGraph, algorithmOptions);
     }
 }

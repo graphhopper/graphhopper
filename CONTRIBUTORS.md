@@ -1,24 +1,30 @@
 # Contributors
 
-Most of the contributors are mentioned at Github as [Members](https://github.com/graphhopper?tab=members) or [Contributors](https://github.com/graphhopper/graphhopper/contributors). Here is a manual overview
+Most of the contributors are mentioned at Github as [Members](https://github.com/graphhopper?tab=members) or [Contributors](https://github.com/graphhopper/graphhopper/contributors). 
+
+Contributors that agree to the [project its CLA](https://www.graphhopper.com/individual-contributor-license-agreement/)
+state this as a comment via a separate, signed commit.
+
+Here is an overview:
 
  * ammagamma, improvements like #700, #703
  * AnahitaS, docs for Android, Android, Tomcat
  * andreaswolf, flag encoder versioning and more
  * agouge, discussion and API refactoring
  * b3nn0, Android improvements
- * boldtrn, motorcycle knowledge and many improvements like conditional tag parsing, round trips, ...
+ * boldtrn, one of the core developers with motorcycle knowledge :)
  * cgarreau, increase of routing success rate via subnetwork cleanup
  * ChristianSeitzer, motorcycle improvements
+ * ChristophKaser, agrees to the project's CLA, improved Android compatibility #1207
  * daisy1754, fixed usage of graphhopper.sh script
  * dardin88, instructions improved
  * dewos, web API bug fixes
  * devemux86, improvements regarding Android, GPX and more
- * edy, improvements regarding docker #849
- * elibar, fix for alternative route calculation
  * dos65, bug fixes in routing algo
  * drnextgis, ru translation and JS fixes
  * duongnt, fixes in storage
+ * edy, improvements regarding docker #849
+ * elibar, fix for alternative route calculation
  * fbonzon, several UI improvements like #615
  * florent-morel, improvements regarding fords, #320
  * fredao, translations 
@@ -38,8 +44,8 @@ Most of the contributors are mentioned at Github as [Members](https://github.com
  * NopMap, massive improvements regarding OSM, parsing and encoding, route relations
  * ocampana, initial implementation for instructions
  * PGWelch, shapefile reader #874
- * ratrun, route relations, GPX information, bike handling etc
  * rajanski, script to do routing via PostGIS
+ * ratrun, route relations, GPX information, bike handling etc
  * rodneyodonnell, improved dead end removal (PrepareRoutingSubnetworks) and fords
  * rodo, more descriptions
  * seeebiii, motorcycle improvements

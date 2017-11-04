@@ -11,8 +11,6 @@ matrix:
       sudo: required
       dist: trusty
       group: edge
-  allow_failures:
-    - jdk: oraclejdk9
 
 env:
   global:
@@ -48,7 +46,7 @@ before_install:
 install: true
 
 script:
-  - mvn clean test verify -B
+  - mvn clean test verify checkstyle:check findbugs:check -B
 
 after_success:
   # deploy snapshot artifacts to maven central

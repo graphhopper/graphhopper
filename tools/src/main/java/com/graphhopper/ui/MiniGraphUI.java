@@ -97,7 +97,7 @@ public class MiniGraphUI {
             final RoutingAlgorithmFactory tmpFactory = hopper.getAlgorithmFactory(map);
             algoFactory = new RoutingAlgorithmFactory() {
 
-                class TmpAlgo extends PrepareContractionHierarchies.DijkstraBidirectionCH implements DebugAlgo {
+                class TmpAlgo extends DijkstraBidirectionCH implements DebugAlgo {
                     private final GraphicsWrapper mg;
                     private Graphics2D g2;
 

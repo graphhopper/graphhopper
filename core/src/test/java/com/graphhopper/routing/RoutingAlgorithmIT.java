@@ -18,7 +18,7 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.GraphHopper;
-import com.graphhopper.reader.PrinctonReader;
+import com.graphhopper.reader.PrincetonReader;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.HintsMap;
@@ -130,7 +130,7 @@ public class RoutingAlgorithmIT {
         final GraphHopperStorage graph = new GraphBuilder(eManager).create();
 
         String bigFile = "10000EWD.txt.gz";
-        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream(bigFile))).read();
+        new PrincetonReader(graph).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream(bigFile))).read();
         GraphHopper hopper = new GraphHopper() {
             {
                 setCHEnabled(false);

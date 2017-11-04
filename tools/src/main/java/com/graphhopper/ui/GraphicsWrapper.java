@@ -125,11 +125,11 @@ public class GraphicsWrapper {
 
 
     public void plotNode(Graphics2D g2, int loc, Color c, int size) {
-        plotNode(g2, loc, c, size);
+        plotNode(g2, loc, c, size, "");
     }
 
     public void plotNode(Graphics2D g2, int loc, Color c, int size, String text) {
-        plotNode(g2, na, loc, c, 4, "");
+        plotNode(g2, na, loc, c, size, "");
     }
 
     public void plotNode(Graphics2D g2, NodeAccess na, int loc, Color c, int size, String text) {
