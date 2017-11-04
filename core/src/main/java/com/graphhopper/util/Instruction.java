@@ -23,7 +23,8 @@ import java.util.Map;
 
 public class Instruction {
     public static final int UNKNOWN = -99;
-    public static final int U_TURN = -98;
+    public static final int U_TURN_UNKNOWN = -98;
+    public static final int U_TURN_LEFT = -8;
     public static final int KEEP_LEFT = -7;
     public static final int LEAVE_ROUNDABOUT = -6; // for future use
     public static final int TURN_SHARP_LEFT = -3;
@@ -38,6 +39,7 @@ public class Instruction {
     public static final int USE_ROUNDABOUT = 6;
     public static final int IGNORE = Integer.MIN_VALUE;
     public static final int KEEP_RIGHT = 7;
+    public static final int U_TURN_RIGHT = 8;
     public static final int PT_START_TRIP = 101;
     public static final int PT_TRANSFER = 102;
     public static final int PT_END_TRIP = 103;
@@ -262,7 +264,13 @@ public class Instruction {
         } else {
             String dir = null;
             switch (indi) {
-                case Instruction.U_TURN:
+                case Instruction.U_TURN_UNKNOWN:
+                    dir = tr.tr("u_turn");
+                    break;
+                case Instruction.U_TURN_LEFT:
+                    dir = tr.tr("u_turn");
+                    break;
+                case Instruction.U_TURN_RIGHT:
                     dir = tr.tr("u_turn");
                     break;
                 case Instruction.KEEP_LEFT:

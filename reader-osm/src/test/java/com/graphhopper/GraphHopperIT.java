@@ -368,7 +368,7 @@ public class GraphHopperIT {
         assertEquals("Turn right onto Avenue Albert II", resultJson.get(6).get("text"));
 
         assertEquals("Waypoint 1", resultJson.get(20).get("text"));
-        assertEquals(Instruction.U_TURN, resultJson.get(21).get("sign"));
+        assertEquals(Instruction.U_TURN_UNKNOWN, resultJson.get(21).get("sign"));
 
         assertEquals("Continue onto Avenue Albert II", resultJson.get(31).get("text"));
         assertEquals("Turn left", resultJson.get(32).get("text"));

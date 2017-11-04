@@ -186,7 +186,7 @@ public class PathMerger {
                 if (diff > 170 && diff < 190) {
                     // The requested heading points into the opposite direction of the calculated heading
                     // therefore we change the continue instruction to a u-turn
-                    instruction.setSign(Instruction.U_TURN);
+                    instruction.setSign(Instruction.U_TURN_UNKNOWN);
                 }
             }
 
@@ -204,7 +204,7 @@ public class PathMerger {
                 // Since it's supposed to go back the same edge, we can be very strict with the diff
                 double diff = Math.abs(lastHeading - heading) % 360;
                 if (diff > 179 && diff < 181) {
-                    nextInstruction.setSign(Instruction.U_TURN);
+                    nextInstruction.setSign(Instruction.U_TURN_UNKNOWN);
                 }
             }
         }

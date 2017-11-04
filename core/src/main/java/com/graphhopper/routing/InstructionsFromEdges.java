@@ -222,6 +222,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                   */
 
                 boolean isUTurn = false;
+                int uTurnType = Instruction.U_TURN_UNKNOWN;
                 if (!Double.isNaN(prevInstructionPrevOrientation)
                         && prevInstruction.getDistance() < MAX_U_TURN_DISTANCE
                         && (sign < 0) == (prevInstruction.getSign() < 0)
@@ -236,14 +237,19 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     double currentOrientation = Helper.ANGLE_CALC.calcOrientation(prevLat, prevLon, lat, lon, false);
 
                     double diff = Math.abs(prevInstructionPrevOrientation - currentOrientation);
-                    if (diff > (Math.PI * .9) && diff < (Math.PI * 1.1)){
+                    if (diff > (Math.PI * .9) && diff < (Math.PI * 1.1)) {
                         isUTurn = true;
+                        if (sign < 0) {
+                            uTurnType = Instruction.U_TURN_LEFT;
+                        } else {
+                            uTurnType = Instruction.U_TURN_RIGHT;
+                        }
                     }
 
                 }
 
                 if (isUTurn) {
-                    prevInstruction.setSign(Instruction.U_TURN);
+                    prevInstruction.setSign(uTurnType);
                     prevInstruction.setName(name);
                 } else {
                     prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));

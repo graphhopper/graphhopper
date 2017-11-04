@@ -16,10 +16,12 @@ module.exports.extractMetaVersionInfo = function (json) {
 
 module.exports.getSignName = function (sign) {
     if (sign === -98)
-        return "u_turn";
-    if (sign === -7)
+        return "u_turn_unknown";
+    else if (sign === -8)
+        return "u_turn_left";
+    else if (sign === -7)
         return "keep_left";
-    if (sign === -3)
+    else if (sign === -3)
         return "sharp_left";
     else if (sign === -2)
         return "left";
@@ -41,6 +43,8 @@ module.exports.getSignName = function (sign) {
         return "roundabout";
     else if (sign === 7)
         return "keep_right";
+    else if (sign === 8)
+        return "u_turn_right";
     else if (sign === 101)
         return "pt_start_trip";
     else if (sign === 102)
@@ -48,7 +52,7 @@ module.exports.getSignName = function (sign) {
     else if (sign === 103)
         return "pt_end_trip";
     else
-        // throw "did not find sign " + sign;
+    // throw "did not find sign " + sign;
         return "unknown";
 };
 
