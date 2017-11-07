@@ -30,6 +30,7 @@ import com.graphhopper.util.PMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Manager class to register encoder, assign their flag values and check objects with all encoders
@@ -108,7 +109,7 @@ public class EncodingManager {
         if (encoderList.contains(":"))
             throw new IllegalArgumentException("EncodingManager does no longer use reflection instantiate encoders directly.");
 
-        if (!encoderList.equals(encoderList.toLowerCase()))
+        if (!encoderList.equals(encoderList.toLowerCase(Locale.ROOT)))
             throw new IllegalArgumentException("Since 0.7 EncodingManager does no longer accept upper case profiles: " + encoderList);
 
         String[] entries = encoderList.split(",");
