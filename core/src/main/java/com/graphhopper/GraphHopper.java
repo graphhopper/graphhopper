@@ -880,7 +880,7 @@ public class GraphHopper implements GraphHopperAPI {
 
     private void interpolateBridgesAndOrTunnels() {
         EncodingManager em = ghStorage.getEncodingManager();
-        if (em.containsEncodedValue(TagParserFactory.ROAD_ENVIRONMENT)) {
+        if (em.supports(TagParserFactory.ROAD_ENVIRONMENT)) {
             StringEncodedValue roadEnvironmentEnc = em.getStringEncodedValue(TagParserFactory.ROAD_ENVIRONMENT);
             StopWatch sw = new StopWatch().start();
             new TunnelElevationInterpolator(ghStorage, roadEnvironmentEnc).execute();

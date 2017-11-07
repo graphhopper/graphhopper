@@ -358,12 +358,6 @@ public class EncodingManager implements EncodedValueLookup {
         return (T) ev;
     }
 
-    @Override
-    public boolean containsEncodedValue(String key) {
-        return encodedValueMap.containsKey(key);
-    }
-
-
     static String fixWayName(String str) {
         if (str == null)
             return "";
@@ -436,12 +430,15 @@ public class EncodingManager implements EncodedValueLookup {
     }
 
     /**
-     * @return true if the specified encoder is found
+     * @return true if the specified encoder or encoded value is found
      */
-    public boolean supports(String encoder) {
+    @Override
+    public boolean supports(String key) {
+        if (encodedValueMap.containsKey(key))
+            return true;
         if (edgeEncoders.isEmpty())
-            return encoder.equals(ENCODER_NAME);
-        return getEncoder(encoder, false) != null;
+            return key.equals(ENCODER_NAME);
+        return getEncoder(key, false) != null;
     }
 
     public FlagEncoder getEncoder(String name) {

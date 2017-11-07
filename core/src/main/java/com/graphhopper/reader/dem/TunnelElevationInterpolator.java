@@ -17,6 +17,7 @@
  */
 package com.graphhopper.reader.dem;
 
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.profiles.StringEncodedValue;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.EdgeIteratorState;
@@ -29,13 +30,16 @@ import com.graphhopper.util.EdgeIteratorState;
  */
 public class TunnelElevationInterpolator extends AbstractEdgeElevationInterpolator {
 
+    private final int tunnelRef;
+
     public TunnelElevationInterpolator(GraphHopperStorage storage, StringEncodedValue roadEnvironmentEnc) {
         super(storage, roadEnvironmentEnc);
+        //TODO We should not hardcode this string here
+        tunnelRef = roadEnvironmentEnc.indexOf("tunnel");
     }
 
     @Override
     protected boolean isInterpolatableEdge(EdgeIteratorState edge) {
-        //TODO We should not hardcode this string here
-        return edge.get(roadEnvironmentEnc).equals("tunnel");
+        return edge.get((IntEncodedValue) roadEnvironmentEnc) == tunnelRef;
     }
 }

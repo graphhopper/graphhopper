@@ -565,8 +565,8 @@ public class CarFlagEncoderTest {
 
     @Test
     public void testContainsEncodedValue() {
-        assertTrue(encoder.containsEncodedValue(TagParserFactory.ROUNDABOUT));
+        assertTrue(encoder.supports(TagParserFactory.ROUNDABOUT));
         //TODO this should be false IMHO, see #1112
-        assertTrue(encoder.containsEncodedValue(TagParserFactory.BIKE_ACCESS));
+        assertTrue(encoder.supports(TagParserFactory.BIKE_ACCESS));
     }
 }

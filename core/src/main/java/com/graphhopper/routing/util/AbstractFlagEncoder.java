@@ -611,7 +611,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     @Override
-    public boolean containsEncodedValue(String key) {
-        return encodedValueLookup.containsEncodedValue(key);
+    public boolean supports(String key) {
+        return encodedValueLookup.supports(key);
     }
 }
