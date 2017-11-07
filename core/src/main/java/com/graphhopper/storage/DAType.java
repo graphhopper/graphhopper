@@ -17,6 +17,10 @@
  */
 package com.graphhopper.storage;
 
+import com.graphhopper.util.Helper;
+
+import static com.graphhopper.util.Helper.*;
+
 /**
  * Defines how a DataAccess object is created.
  * <p>
@@ -72,7 +76,7 @@ public class DAType {
     }
 
     public static DAType fromString(String dataAccess) {
-        dataAccess = dataAccess.toUpperCase();
+        dataAccess = toUpperCase(dataAccess);
         DAType type;
         if (dataAccess.contains("SYNC"))
             throw new IllegalArgumentException("SYNC option is no longer supported, see #982");

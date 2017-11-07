@@ -48,6 +48,7 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
 
 /**
@@ -68,7 +69,7 @@ public class Measurement {
     void start(CmdArgs args) {
         String graphLocation = args.get("graph.location", "");
         String propLocation = args.get("measurement.location", "");
-        if (Helper.isEmpty(propLocation))
+        if (isEmpty(propLocation))
             propLocation = "measurement" + new SimpleDateFormat("yyyy-MM-dd_HH_mm_ss").format(new Date()) + ".properties";
 
         seed = args.getLong("measurement.seed", 123);
@@ -161,8 +162,8 @@ public class Measurement {
             put("measurement.seed", seed);
             put("measurement.time", sw.stop().getTime());
             System.gc();
-            put("measurement.totalMB", Helper.getTotalMB());
-            put("measurement.usedMB", Helper.getUsedMB());
+            put("measurement.totalMB", getTotalMB());
+            put("measurement.usedMB", getUsedMB());
             try {
                 store(new FileWriter(propLocation), "measurement finish, "
                         + new Date().toString() + ", " + Constants.BUILD_DATE);
@@ -183,7 +184,7 @@ public class Measurement {
         // graph size (edge, node and storage size)
         put("graph.nodes", g.getNodes());
         put("graph.edges", g.getAllEdges().getMaxId());
-        put("graph.size_in_MB", g.getCapacity() / Helper.MB);
+        put("graph.size_in_MB", g.getCapacity() / MB);
         put("graph.encoder", vehicleStr);
 
         AllEdgesIterator iter = g.getAllEdges();
@@ -317,7 +318,7 @@ public class Measurement {
 
             String infoStr = " weight:" + lmRsp.getBest().getRouteWeight() + ", original: " + originalRsp.getBest().getRouteWeight()
                     + " distance:" + lmRsp.getBest().getDistance() + ", original: " + originalRsp.getBest().getDistance()
-                    + " time:" + Helper.round2(lmRsp.getBest().getTime() / 1000) + ", original: " + Helper.round2(originalRsp.getBest().getTime() / 1000)
+                    + " time:" + round2(lmRsp.getBest().getTime() / 1000) + ", original: " + round2(originalRsp.getBest().getTime() / 1000)
                     + " points:" + lmRsp.getBest().getPoints().size() + ", original: " + originalRsp.getBest().getPoints().size();
 
             if (Math.abs(1 - lmRsp.getBest().getRouteWeight() / originalRsp.getBest().getRouteWeight()) > 0.000001)
@@ -367,7 +368,7 @@ public class Measurement {
             String infoStr =
                     " weight:" + noSodRsp.getBest().getRouteWeight() + ", original: " + sodRsp.getBest().getRouteWeight()
                             + " distance:" + noSodRsp.getBest().getDistance() + ", original: " + sodRsp.getBest().getDistance()
-                            + " time:" + Helper.round2(noSodRsp.getBest().getTime() / 1000) + ", original: " + Helper.round2(sodRsp.getBest().getTime() / 1000)
+                            + " time:" + round2(noSodRsp.getBest().getTime() / 1000) + ", original: " + round2(sodRsp.getBest().getTime() / 1000)
                             + " points:" + noSodRsp.getBest().getPoints().size() + ", original: " + sodRsp.getBest().getPoints().size();
 
             if (Math.abs(1 - noSodRsp.getBest().getRouteWeight() / sodRsp.getBest().getRouteWeight()) > 0.000001)
@@ -434,7 +435,7 @@ public class Measurement {
 
                     if (rsp.getErrors().get(0).getMessage() == null)
                         rsp.getErrors().get(0).printStackTrace();
-                    else if (!rsp.getErrors().get(0).getMessage().toLowerCase().contains("not found"))
+                    else if (!toLowerCase(rsp.getErrors().get(0).getMessage()).contains("not found"))
                         logger.error("errors should NOT happen in Measurement! " + req + " => " + rsp.getErrors());
 
                     return 0;

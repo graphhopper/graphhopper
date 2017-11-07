@@ -123,12 +123,11 @@ public class GraphEdgeIdFinder {
 
     /**
      * This method reads the blockAreaString and creates a Collection of Shapes or a set of found edges if area is small enough.
+     * @param useEdgeIdsUntilAreaSize until the specified area (specified in m²) use the findEdgesInShape method
      */
-    public BlockArea parseBlockArea(String blockAreaString, EdgeFilter filter) {
+    public BlockArea parseBlockArea(String blockAreaString, EdgeFilter filter, double useEdgeIdsUntilAreaSize) {
         final String objectSeparator = ";";
         final String innerObjSep = ",";
-        // use shapes if bigger than 1km^2
-        final double shapeArea = 1000 * 1000;
         BlockArea blockArea = new BlockArea(graph);
 
         // Add blocked circular areas or points
@@ -139,7 +138,7 @@ public class GraphEdgeIdFinder {
                 String[] splittedObject = objectAsString.split(innerObjSep);
                 if (splittedObject.length == 4) {
                     final BBox bbox = BBox.parseTwoPoints(objectAsString);
-                    if (bbox.calculateArea() > shapeArea)
+                    if (bbox.calculateArea() > useEdgeIdsUntilAreaSize)
                         blockArea.add(bbox);
                     else
                         findEdgesInShape(blockArea.blockedEdges, bbox, filter);
@@ -148,7 +147,7 @@ public class GraphEdgeIdFinder {
                     double lon = Double.parseDouble(splittedObject[1]);
                     int radius = Integer.parseInt(splittedObject[2]);
                     Circle circle = new Circle(lat, lon, radius);
-                    if (circle.calculateArea() > shapeArea) {
+                    if (circle.calculateArea() > useEdgeIdsUntilAreaSize) {
                         blockArea.add(circle);
                     } else {
                         findEdgesInShape(blockArea.blockedEdges, circle, filter);

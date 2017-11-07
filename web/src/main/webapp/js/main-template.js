@@ -137,8 +137,8 @@ $(document).ready(function (e) {
                     if (vehicles.length > 0)
                         ghRequest.initVehicle(vehicles[0]);
 
-                    if (!ghRequest.isPublicTransit())
-                        $(".time_input").hide();
+                    if (ghRequest.isPublicTransit())
+                        $(".time_input").show();
 
                     var hiddenVehicles = [];
                     for (var i in vehicles) {

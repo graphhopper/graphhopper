@@ -19,6 +19,7 @@
         <log4j.version>1.2.17</log4j.version>
         <commons-compress.version>1.12</commons-compress.version>
         <jackson.version>2.8.4</jackson.version>
+        <maven.compiler.target>1.8</maven.compiler.target>
 
         <org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>4</org-netbeans-modules-editor-indent.CodeStyle.project.indent-shift-width>
         <org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>4</org-netbeans-modules-editor-indent.CodeStyle.project.spaces-per-tab>
@@ -94,7 +95,7 @@
                     <compilerArgument>-Xlint:deprecation</compilerArgument>
                     -->
 
-                    <!-- suppress warning about Unsafe functionality -->                    
+                    <!-- suppress warning about Unsafe functionality -->
                     <compilerArgument>-XDignore.symbol.file</compilerArgument>
                     <fork>true</fork>
                     <source>1.7</source>
@@ -169,6 +170,49 @@
                 </configuration>
                 -->
             </plugin>
+            <plugin>
+                <groupId>de.thetaphi</groupId>
+                <artifactId>forbiddenapis</artifactId>
+                <version>2.4.1</version>
+                <configuration>
+                    <!--
+                      if the used Java version is too new,
+                      don't fail, just do nothing:
+                    -->
+                    <failOnUnsupportedJava>false</failOnUnsupportedJava>
+                    <bundledSignatures>
+                        <!--
+                          This will automatically choose the right
+                          signatures based on 'maven.compiler.target':
+                        -->
+                        <bundledSignature>jdk-unsafe</bundledSignature>
+                        <bundledSignature>jdk-deprecated</bundledSignature>
+                        <!-- disallow undocumented classes like sun.misc.Unsafe: -->
+                        <bundledSignature>jdk-non-portable</bundledSignature>
+                    </bundledSignatures>
+                    <excludes>
+                        <!-- Excluded because of "Helper7#getBeanMemInfo" -->
+                        <exclude>
+                            com/graphhopper/util/Helper7.class
+                        </exclude>
+                        <exclude>
+                            com/graphhopper/storage/UnsafeDataAccess.class
+                        </exclude>
+                        <!-- Forbidden class/interface use: java.io.FileReader [Uses default charset] -->
+                        <exclude>
+                            com/graphhopper/json/JsonFeatureConverter.class
+                        </exclude>
+                        <!-- orbidden class/interface use: java.io.FileReader [Uses default charset] -->
+                        <exclude>
+                            com/graphhopper/spatialrules/SpatialRuleLookupHelper.class
+                        </exclude>
+                        <!-- Has a couple of issues with the FileWriter -->
+                        <exclude>
+                            com/graphhopper/tools/Measurement.class
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
         </plugins>
     </build>
 
@@ -196,7 +240,7 @@
                 <activeByDefault>false</activeByDefault>
             </activation>
             <!-- this exception is valid for jdk8 profile below too -->
-            <modules>                
+            <modules>
                 <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
                 Currently works for jdk8 only -->
                 <module>reader-shp</module>
@@ -268,14 +312,14 @@
                 <module>android/app</module>
             </modules>
         </profile>
-        
+
         <profile>
             <id>jdk8</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
             <properties />
-            <modules>                
+            <modules>
                 <!-- See https://github.com/graphhopper/graphhopper/pull/874#issuecomment-261231518
                 Currently works for jdk8 only -->
                 <module>reader-shp</module>
@@ -291,7 +335,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <profile>
             <id>jdk9</id>
             <activation>

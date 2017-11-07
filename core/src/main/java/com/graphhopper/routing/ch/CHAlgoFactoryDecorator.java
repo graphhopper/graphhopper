@@ -35,6 +35,7 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.*;
 
+import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
 
 /**
@@ -227,7 +228,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
         weightingsAsStrings.clear();
         for (String strWeighting : weightingList) {
-            strWeighting = strWeighting.toLowerCase();
+            strWeighting = toLowerCase(strWeighting);
             strWeighting = strWeighting.trim();
             addWeighting(strWeighting);
         }
@@ -282,7 +283,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         ExecutorCompletionService completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
         for (final PrepareContractionHierarchies prepare : getPreparations()) {
-            LOGGER.info((++counter) + "/" + getPreparations().size() + " calling CH prepare.doWork for " + prepare.getWeighting() + " ... (" + Helper.getMemInfo() + ")");
+            LOGGER.info((++counter) + "/" + getPreparations().size() + " calling CH prepare.doWork for " + prepare.getWeighting() + " ... (" + getMemInfo() + ")");
             final String name = AbstractWeighting.weightingToFileName(prepare.getWeighting());
             completionService.submit(new Runnable() {
                 @Override
@@ -290,7 +291,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
                     // toString is not taken into account so we need to cheat, see http://stackoverflow.com/q/6113746/194609 for other options
                     Thread.currentThread().setName(name);
                     prepare.doWork();
-                    properties.put(CH.PREPARE + "date." + name, Helper.createFormatter().format(new Date()));
+                    properties.put(CH.PREPARE + "date." + name, createFormatter().format(new Date()));
                 }
             }, name);
 
