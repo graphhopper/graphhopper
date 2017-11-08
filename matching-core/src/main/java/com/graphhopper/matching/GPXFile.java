@@ -18,30 +18,28 @@
 package com.graphhopper.matching;
 
 import com.graphhopper.routing.Path;
-import com.graphhopper.util.Constants;
-import com.graphhopper.util.DistanceCalc;
-import com.graphhopper.util.GPXEntry;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.Instruction;
-import com.graphhopper.util.InstructionList;
-import com.graphhopper.util.PointList;
-import com.graphhopper.util.Translation;
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.TimeZone;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
+import com.graphhopper.util.*;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import java.io.*;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
+
 /**
  * A simple utility method to import from and export to GPX files.
  * <p>
+ *
  * @author Peter Karich
  */
 public class GPXFile {
@@ -182,6 +180,12 @@ public class GPXFile {
         SimpleDateFormat formatter = new SimpleDateFormat(DATE_FORMAT_Z);
         formatter.setTimeZone(TimeZone.getTimeZone("UTC"));
 
+        DecimalFormat decimalFormat = new DecimalFormat("#");
+        decimalFormat.setMinimumFractionDigits(1);
+        decimalFormat.setMaximumFractionDigits(6);
+        decimalFormat.setMinimumIntegerDigits(1);
+        decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.US));
+
         String header = "<?xml version='1.0' encoding='UTF-8' standalone='no' ?>"
                 + "<gpx xmlns='http://www.topografix.com/GPX/1/1' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'"
                 + " creator='Graphhopper MapMatching " + Constants.VERSION + "' version='1.1'"
@@ -203,12 +207,12 @@ public class GPXFile {
             Instruction nextInstr = null;
             for (Instruction currInstr : instructions) {
                 if (null != nextInstr) {
-                    instructions.createRteptBlock(gpxOutput, nextInstr, currInstr);
+                    instructions.createRteptBlock(gpxOutput, nextInstr, currInstr, decimalFormat);
                 }
 
                 nextInstr = currInstr;
             }
-            instructions.createRteptBlock(gpxOutput, nextInstr, null);
+            instructions.createRteptBlock(gpxOutput, nextInstr, null, decimalFormat);
             gpxOutput.append("\n</rte>");
         }
 
