@@ -62,7 +62,7 @@ public class GraphEdgeIdFinderTest {
                 .prepareIndex();
 
         GraphEdgeIdFinder graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("0.01,0.005,1", new DefaultEdgeFilter(encoder));
+        GraphEdgeIdFinder.BlockArea blockArea = graphFinder.parseBlockArea("0.01,0.005,1", new DefaultEdgeFilter(encoder), 1000 * 1000);
 
         GHIntHashSet blockedEdges = new GHIntHashSet();
         blockedEdges.add(0);
@@ -72,7 +72,7 @@ public class GraphEdgeIdFinderTest {
 
         // big area converts into shapes
         graphFinder = new GraphEdgeIdFinder(graph, locationIndex);
-        blockArea = graphFinder.parseBlockArea("0,0,1000", new DefaultEdgeFilter(encoder));
+        blockArea = graphFinder.parseBlockArea("0,0,1000", new DefaultEdgeFilter(encoder), 1000 * 1000);
         blockedEdges.clear();
         assertEquals(blockedEdges, blockArea.blockedEdges);
         blockedShapes.add(new Circle(0, 0, 1000));
