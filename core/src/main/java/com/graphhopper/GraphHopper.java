@@ -576,10 +576,15 @@ public class GraphHopper implements GraphHopperAPI {
             CGIARProvider cgiarProvider = new CGIARProvider();
             cgiarProvider.setAutoRemoveTemporaryFiles(args.getBool("graph.elevation.cgiar.clear", true));
             tmpProvider = cgiarProvider;
+        } else if (eleProviderStr.equalsIgnoreCase("gmted")) {
+            tmpProvider = new GMTEDProvider();
+        } else if (eleProviderStr.equalsIgnoreCase("multi")) {
+            tmpProvider = new MultiSourceElevationProvider();
         }
 
         tmpProvider.setCalcMean(eleCalcMean);
-        tmpProvider.setCacheDir(new File(cacheDirStr));
+        if (!cacheDirStr.isEmpty())
+            tmpProvider.setCacheDir(new File(cacheDirStr));
         if (!baseURL.isEmpty())
             tmpProvider.setBaseURL(baseURL);
         tmpProvider.setDAType(elevationDAType);
