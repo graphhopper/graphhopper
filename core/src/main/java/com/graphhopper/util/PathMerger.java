@@ -23,9 +23,7 @@ import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.details.PathDetailsBuilderFactory;
 import com.graphhopper.util.exceptions.ConnectionNotFoundException;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class merges multiple {@link Path} objects into one continues object that
@@ -130,7 +128,7 @@ public class PathMerger {
             altRsp.setInstructions(fullInstructions);
 
         if (!allFound) {
-            altRsp.addError(new ConnectionNotFoundException("Connection between locations not found", Collections.<String, Object>emptyMap()));
+            altRsp.addError(new ConnectionNotFoundException(paths, altRsp.getWaypoints()));
         }
 
         altRsp.setDescription(description).
