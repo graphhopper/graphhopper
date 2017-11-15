@@ -65,6 +65,11 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
 
         @Override
+        public void setElevation(int index, double ele) {
+            throw new RuntimeException("cannot change EMPTY PointList");
+        }
+
+        @Override
         public void trimToSize(int newSize) {
             throw new RuntimeException("cannot change EMPTY PointList");
         }
@@ -306,6 +311,14 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
             return Double.NaN;
 
         return elevations[index];
+    }
+
+    public void setElevation(int index, double ele) {
+        if (index >= size)
+            throw new ArrayIndexOutOfBoundsException(ERR_MSG + " index:" + index + ", size:" + size);
+        if (!is3D)
+            throw new IllegalStateException("This is a 2D PointList, you cannot set it's elevation");
+        this.elevations[index] = ele;
     }
 
     @Override

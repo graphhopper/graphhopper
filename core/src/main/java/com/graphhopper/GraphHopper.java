@@ -85,6 +85,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean allowWrites = true;
     private String preferredLanguage = "";
     private boolean fullyLoaded = false;
+    private boolean smoothRoads = false;
     // for routing
     private int maxRoundTripRetries = 3;
     private boolean simplifyResponse = true;
@@ -554,6 +555,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         // elevation
         String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
+        this.smoothRoads = args.getBool("graph.elevation.smooth_roads", false);
 
         // keep fallback until 0.8
         boolean eleCalcMean = args.has("graph.elevation.calcmean")
@@ -847,6 +849,11 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (hasElevation()) {
+            if (smoothRoads) {
+                StopWatch sw = new StopWatch().start();
+                RoadElevationInterpolator.smoothElevation(ghStorage);
+                logger.info("Smoothed roads in " + (int) sw.stop().getSeconds() + "s");
+            }
             interpolateBridgesAndOrTunnels();
         }
 
