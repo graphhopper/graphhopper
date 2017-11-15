@@ -17,6 +17,7 @@
  */
 package com.graphhopper.util;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +49,7 @@ public class Instruction {
     protected String name;
     protected double distance;
     protected long time;
+    protected List<Lane> lanes = new ArrayList<>();
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
@@ -117,6 +119,14 @@ public class Instruction {
     public Instruction setTime(long time) {
         this.time = time;
         return this;
+    }
+
+    public List<Lane> getLanes() {
+        return lanes;
+    }
+
+    public void setLanes(List<Lane> lanes) {
+        this.lanes = lanes;
     }
 
     /**

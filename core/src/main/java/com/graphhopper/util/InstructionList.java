@@ -101,6 +101,9 @@ public class InstructionList extends AbstractList<Instruction> {
             instrJson.put("time", instruction.getTime());
             instrJson.put("distance", Helper.round(instruction.getDistance(), 3));
             instrJson.put("sign", instruction.getSign());
+            if (!instruction.getLanes().isEmpty()) {
+                instrJson.put("lanes", createLanesJson(instruction));
+            }
             instrJson.putAll(instruction.getExtraInfoJSON());
 
             int tmpIndex = pointsIndex + instruction.getPoints().size();
@@ -114,6 +117,17 @@ public class InstructionList extends AbstractList<Instruction> {
             counter++;
         }
         return instrList;
+    }
+
+    private List<Map<String, Object>> createLanesJson(Instruction instruction) {
+        List<Map<String, Object>> instrJson = new ArrayList<>();
+        for(Lane lane : instruction.getLanes()) {
+            Map<String, Object> entry = new HashMap<>();
+            entry.put("direction", lane.getDirection());
+            entry.put("valid", lane.isValid());
+            instrJson.add(entry);
+        }
+        return instrJson;
     }
 
     /**
