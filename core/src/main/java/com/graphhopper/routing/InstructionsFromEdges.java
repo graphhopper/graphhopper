@@ -17,13 +17,18 @@
  */
 package com.graphhopper.routing;
 
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.FlagEncoder;
+import com.graphhopper.routing.util.LaneInfoEncoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class calculates instructions from the edges in a Path.
@@ -68,6 +73,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private double prevOrientation;
     private double prevInstructionPrevOrientation = Double.NaN;
     private Instruction prevInstruction;
+    private long prevFlags;
     private boolean prevInRoundabout;
     private String prevName;
     private String prevInstructionName;
@@ -252,6 +258,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                     prevInstruction.setSign(uTurnType);
                     prevInstruction.setName(name);
                 } else {
+                    List<Lane> lanes = getLanesInfo(prevFlags, sign);
+                    prevInstruction.setLanes(lanes);
                     prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
                     // Remember the Orientation and name of the road, before doing this maneuver
                     prevInstructionPrevOrientation = prevOrientation;
@@ -281,6 +289,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevLat = adjLat;
         prevLon = adjLon;
         prevEdge = edge;
+        prevFlags = flags;
     }
 
     @Override
@@ -298,6 +307,26 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         // This is the heading how the edge ended
         finishInstruction.setExtraInfo("last_heading", Helper.ANGLE_CALC.calcAzimuth(doublePrevLat, doublePrevLon, prevLat, prevLon));
         ways.add(finishInstruction);
+    }
+
+    protected List<Lane> getLanesInfo(long flags, int sign) {
+        if (encoder instanceof LaneInfoEncoder && ((LaneInfoEncoder) encoder).isLaneInfoEnabled()) {
+            double laneInfo = encoder.getDouble(flags, CarFlagEncoder.K_TURN_LANES);
+            List<Lane> lanes = ((LaneInfoEncoder) encoder).decodeTurnLanesToList((long) laneInfo);
+            for (Lane lane : lanes) {
+                if (lanes.size() == 1) {
+                    lane.setValid(true);
+                } else if (sign < 0 && lane.getDirection() != "merge_to_left" && lane.getDirection().contains("left")) {
+                    lane.setValid(true);
+                } else if (sign == 0 && (lane.getDirectionCode() == CarFlagEncoder.NONE_LANE_CODE || lane.getDirection().contains("through"))) {
+                    lane.setValid(true);
+                } else if (sign > 0 && lane.getDirection() != "merge_to_right" && lane.getDirection().contains("right")) {
+                    lane.setValid(true);
+                }
+            }
+            return lanes;
+        }
+        return Collections.emptyList();
     }
 
     private int getTurn(EdgeIteratorState edge, int baseNode, int prevNode, int adjNode, InstructionAnnotation annotation, String name) {
