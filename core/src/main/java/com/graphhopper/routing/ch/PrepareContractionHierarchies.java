@@ -52,14 +52,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private final LevelEdgeFilter levelFilter;
     private final GraphHopperStorage ghStorage;
     private final CHGraphImpl prepareGraph;
-    private final DataAccess originalEdges;
-    private final Map<Shortcut, Shortcut> shortcuts = new HashMap<>();
     private final Random rand = new Random(123);
     private final StopWatch allSW = new StopWatch();
-    private final AddShortcutHandler addScHandler = new AddShortcutHandler();
-    private final CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
-    private CHEdgeExplorer vehicleInExplorer;
-    private CHEdgeExplorer vehicleOutExplorer;
     private CHEdgeExplorer vehicleAllExplorer;
     private CHEdgeExplorer vehicleAllTmpExplorer;
     private CHEdgeExplorer calcPrioAllExplorer;
@@ -67,12 +61,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     // the most important nodes comes last
     private GHTreeMapComposed sortedNodes;
     private int oldPriorities[];
-    private IgnoreNodeFilter ignoreNodeFilter;
-    private DijkstraOneToMany prepareAlgo;
-    private int newShortcuts;
-    private long dijkstraCount;
     private double meanDegree;
-    private StopWatch dijkstraSW = new StopWatch();
     private int periodicUpdatesPercentage = 20;
     private int lastNodesLazyUpdatePercentage = 10;
     private int neighborUpdatePercentage = 20;
@@ -82,6 +71,18 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private double periodTime;
     private double lazyTime;
     private double neighborTime;
+
+    private final DataAccess originalEdges;
+    private final Map<Shortcut, Shortcut> shortcuts = new HashMap<>();
+    private final AddShortcutHandler addScHandler = new AddShortcutHandler();
+    private final CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
+    private CHEdgeExplorer vehicleInExplorer;
+    private CHEdgeExplorer vehicleOutExplorer;
+    private IgnoreNodeFilter ignoreNodeFilter;
+    private DijkstraOneToMany prepareAlgo;
+    private int newShortcuts;
+    private long dijkstraCount;
+    private StopWatch dijkstraSW = new StopWatch();
     private int maxEdgesCount;
 
     public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
@@ -181,6 +182,65 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             return;
 
         contractNodes();
+    }
+
+    @Override
+    public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
+        AbstractBidirAlgo algo;
+        if (ASTAR_BI.equals(opts.getAlgorithm())) {
+            AStarBidirection tmpAlgo = new AStarBidirectionCH(graph, prepareWeighting, traversalMode);
+            tmpAlgo.setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
+            algo = tmpAlgo;
+        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
+            if (opts.getHints().getBool("stall_on_demand", true)) {
+                algo = new DijkstraBidirectionCH(graph, prepareWeighting, traversalMode);
+            } else {
+                algo = new DijkstraBidirectionCHNoSOD(graph, prepareWeighting, traversalMode);
+            }
+        } else {
+            throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");
+        }
+
+        algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
+        algo.setEdgeFilter(levelFilter);
+        return algo;
+    }
+
+    PrepareContractionHierarchies initFromGraph() {
+        ghStorage.freeze();
+        maxEdgesCount = ghStorage.getAllEdges().getMaxId();
+        FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
+        final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
+        // filter by vehicle and level number
+        final EdgeFilter accessWithLevelFilter = new LevelEdgeFilter(prepareGraph) {
+            @Override
+            public final boolean accept(EdgeIteratorState edgeState) {
+                if (!super.accept(edgeState))
+                    return false;
+
+                return allFilter.accept(edgeState);
+            }
+        };
+
+        maxLevel = prepareGraph.getNodes() + 1;
+
+        vehicleAllExplorer = prepareGraph.createEdgeExplorer(allFilter);
+        vehicleAllTmpExplorer = prepareGraph.createEdgeExplorer(allFilter);
+        calcPrioAllExplorer = prepareGraph.createEdgeExplorer(accessWithLevelFilter);
+
+        // Use an alternative to PriorityQueue as it has some advantages:
+        //   1. Gets automatically smaller if less entries are stored => less total RAM used.
+        //      Important because Graph is increasing until the end.
+        //   2. is slightly faster
+        //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
+        sortedNodes = new GHTreeMapComposed();
+        oldPriorities = new int[prepareGraph.getNodes()];
+
+        ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
+        vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
+        vehicleOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
+        prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareWeighting, traversalMode);
+        return this;
     }
 
     boolean prepareNodes() {
@@ -345,8 +405,19 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 + ", " + Helper.getMemInfo());
     }
 
+    public void close() {
+        prepareAlgo.close();
+        originalEdges.close();
+        sortedNodes = null;
+        oldPriorities = null;
+    }
+
     public long getDijkstraCount() {
         return dijkstraCount;
+    }
+
+    public int getShortcuts() {
+        return newShortcuts;
     }
 
     public double getLazyTime() {
@@ -367,13 +438,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     public Weighting getWeighting() {
         return prepareGraph.getWeighting();
-    }
-
-    public void close() {
-        prepareAlgo.close();
-        originalEdges.close();
-        sortedNodes = null;
-        oldPriorities = null;
     }
 
     private String getTimesAsString() {
@@ -441,6 +505,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private CalcShortcutsResult calcShortcutCount(int v) {
         findShortcuts(calcScHandler.setNode(v));
         return calcScHandler.calcShortcutsResult;
+    }
+
+    @Override
+    public String toString() {
+        return "prepare|dijkstrabi|ch";
     }
 
     /**
@@ -579,46 +648,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 + na.getLat(base) + "," + na.getLon(base) + " -> " + na.getLat(adj) + "," + na.getLon(adj);
     }
 
-    PrepareContractionHierarchies initFromGraph() {
-        ghStorage.freeze();
-        maxEdgesCount = ghStorage.getAllEdges().getMaxId();
-        FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
-        vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
-        vehicleOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
-        final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
-
-        // filter by vehicle and level number
-        final EdgeFilter accessWithLevelFilter = new LevelEdgeFilter(prepareGraph) {
-            @Override
-            public final boolean accept(EdgeIteratorState edgeState) {
-                if (!super.accept(edgeState))
-                    return false;
-
-                return allFilter.accept(edgeState);
-            }
-        };
-
-        maxLevel = prepareGraph.getNodes() + 1;
-        ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
-        vehicleAllExplorer = prepareGraph.createEdgeExplorer(allFilter);
-        vehicleAllTmpExplorer = prepareGraph.createEdgeExplorer(allFilter);
-        calcPrioAllExplorer = prepareGraph.createEdgeExplorer(accessWithLevelFilter);
-
-        // Use an alternative to PriorityQueue as it has some advantages:
-        //   1. Gets automatically smaller if less entries are stored => less total RAM used.
-        //      Important because Graph is increasing until the end.
-        //   2. is slightly faster
-        //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
-        sortedNodes = new GHTreeMapComposed();
-        oldPriorities = new int[prepareGraph.getNodes()];
-        prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareWeighting, traversalMode);
-        return this;
-    }
-
-    public int getShortcuts() {
-        return newShortcuts;
-    }
-
     private void setOrigEdgeCount(int edgeId, int value) {
         edgeId -= maxEdgesCount;
         if (edgeId < 0) {
@@ -642,42 +671,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         long tmp = (long) edgeId * 4;
         originalEdges.ensureCapacity(tmp + 4);
         return originalEdges.getInt(tmp);
-    }
-
-    @Override
-    public RoutingAlgorithm createAlgo(Graph graph, AlgorithmOptions opts) {
-        AbstractBidirAlgo algo;
-        if (ASTAR_BI.equals(opts.getAlgorithm())) {
-            AStarBidirection tmpAlgo = new AStarBidirectionCH(graph, prepareWeighting, traversalMode);
-            tmpAlgo.setApproximation(RoutingAlgorithmFactorySimple.getApproximation(ASTAR_BI, opts, graph.getNodeAccess()));
-            algo = tmpAlgo;
-        } else if (DIJKSTRA_BI.equals(opts.getAlgorithm())) {
-            if (opts.getHints().getBool("stall_on_demand", true)) {
-                algo = new DijkstraBidirectionCH(graph, prepareWeighting, traversalMode);
-            } else {
-                algo = new DijkstraBidirectionCHNoSOD(graph, prepareWeighting, traversalMode);
-            }
-        } else {
-            throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for Contraction Hierarchies. Try with ch.disable=true");
-        }
-
-        algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-        algo.setEdgeFilter(levelFilter);
-        return algo;
-    }
-
-    @Override
-    public String toString() {
-        return "prepare|dijkstrabi|ch";
-    }
-
-    interface ShortcutHandler {
-        void foundShortcut(int u_fromNode, int w_toNode,
-                           double existingDirectWeight, double distance,
-                           int outgoingEdge, int outgoingEdgeOrigCount,
-                           int incomingEdge, int incomingEdgeOrigCount);
-
-        int getNode();
     }
 
     static class IgnoreNodeFilter implements EdgeFilter {
@@ -753,6 +746,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
     }
 
+    interface ShortcutHandler {
+        void foundShortcut(int u_fromNode, int w_toNode,
+                           double existingDirectWeight, double distance,
+                           int outgoingEdge, int outgoingEdgeOrigCount,
+                           int incomingEdge, int incomingEdgeOrigCount);
+
+        int getNode();
+    }
+    
     class CalcShortcutHandler implements ShortcutHandler {
         int node;
         CalcShortcutsResult calcShortcutsResult = new CalcShortcutsResult();
