@@ -206,7 +206,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         };
 
         maxLevel = prepareGraph.getNodes() + 1;
-
         vehicleAllExplorer = prepareGraph.createEdgeExplorer(allFilter);
         vehicleAllTmpExplorer = prepareGraph.createEdgeExplorer(allFilter);
         calcPrioAllExplorer = prepareGraph.createEdgeExplorer(accessWithLevelFilter);
@@ -218,8 +217,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new int[prepareGraph.getNodes()];
-
-        nodeContractor.initFromGraph(prepareFlagEncoder);
+        nodeContractor.initFromGraph();
         return this;
     }
 
@@ -302,7 +300,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
                 logger.info(Helper.nf(counter) + ", updates:" + updateCounter
                         + ", nodes: " + Helper.nf(sortedNodes.getSize())
-                        + ", shortcuts:" + Helper.nf(nodeContractor.getNewShortcuts())
+                        + ", shortcuts:" + Helper.nf(nodeContractor.getAddedShortcutsCount())
                         + ", dijkstras:" + Helper.nf(nodeContractor.getDijkstraCount())
                         + ", " + getTimesAsString()
                         + ", meanDegree:" + (long) meanDegree
@@ -379,7 +377,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         lazyTime += lazySW.getSeconds();
         neighborTime += neighborSW.getSeconds();
         logger.info("took:" + (int) allSW.stop().getSeconds()
-                + ", new shortcuts: " + Helper.nf(nodeContractor.getNewShortcuts())
+                + ", new shortcuts: " + Helper.nf(nodeContractor.getAddedShortcutsCount())
                 + ", " + prepareWeighting
                 + ", dijkstras:" + nodeContractor.getDijkstraCount()
                 + ", " + getTimesAsString()
@@ -402,7 +400,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     public int getShortcuts() {
-        return nodeContractor.getNewShortcuts();
+        return nodeContractor.getAddedShortcutsCount();
     }
 
     public double getLazyTime() {

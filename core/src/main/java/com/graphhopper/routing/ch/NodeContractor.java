@@ -44,7 +44,7 @@ class NodeContractor {
     private CHEdgeExplorer vehicleOutExplorer;
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany prepareAlgo;
-    private int newShortcuts;
+    private int addedShortcutsCount;
     private long dijkstraCount;
     // todo: maxVisitedNodes is 0 initially and will also be zero at the first call of findShortcuts, meaning that no
     // witnesses will be found and all possible shortcuts will be considered. so far this did not really play a role
@@ -62,9 +62,10 @@ class NodeContractor {
         originalEdges.create(1000);
     }
 
-    void initFromGraph(FlagEncoder prepareFlagEncoder) {
+    void initFromGraph() {
         maxLevel = prepareGraph.getNodes() + 1;
         ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
+        FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
         vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
         vehicleOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
         prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareWeighting, traversalMode);
@@ -86,7 +87,7 @@ class NodeContractor {
     long contractNode(int node) {
         shortcuts.clear();
         long tmpDegreeCounter = findShortcuts(addScHandler.setNode(node));
-        newShortcuts += addShortcuts(shortcuts.keySet());
+        addedShortcutsCount += addShortcuts(shortcuts.keySet());
         return tmpDegreeCounter;
     }
 
@@ -231,8 +232,8 @@ class NodeContractor {
                 + na.getLat(base) + "," + na.getLon(base) + " -> " + na.getLat(adj) + "," + na.getLon(adj);
     }
 
-    int getNewShortcuts() {
-        return newShortcuts;
+    int getAddedShortcutsCount() {
+        return addedShortcutsCount;
     }
 
     private void setOrigEdgeCount(int edgeId, int value) {
