@@ -670,6 +670,6 @@ public class PrepareContractionHierarchiesTest {
         Shortcut sc2 = new Shortcut(1, 3, 6.82048125, 121.25);
         sc2.flags = PrepareEncoder.getScDirMask();
         List<Shortcut> list = Arrays.asList(sc1, sc2);
-        assertEquals(2, prepare.addShortcuts(list));
+        assertEquals(2, prepare.testAddShortcuts(list));
     }
 }

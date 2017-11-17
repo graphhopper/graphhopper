@@ -209,7 +209,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     PrepareContractionHierarchies initFromGraph() {
         ghStorage.freeze();
-        maxEdgesCount = ghStorage.getAllEdges().getMaxId();
+        setMaxEdgesCount(ghStorage.getAllEdges().getMaxId());
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
         final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
         // filter by vehicle and level number
@@ -237,10 +237,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new int[prepareGraph.getNodes()];
 
-        ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
-        vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
-        vehicleOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
-        prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareWeighting, traversalMode);
+        _initFromGraph(prepareFlagEncoder);
         return this;
     }
 
@@ -316,21 +313,21 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
 
             if (counter % logSize == 0) {
-                dijkstraTime += dijkstraSW.getSeconds();
+                dijkstraTime += getDijkstraSeconds();
                 periodTime += periodSW.getSeconds();
                 lazyTime += lazySW.getSeconds();
                 neighborTime += neighborSW.getSeconds();
 
                 logger.info(Helper.nf(counter) + ", updates:" + updateCounter
                         + ", nodes: " + Helper.nf(sortedNodes.getSize())
-                        + ", shortcuts:" + Helper.nf(newShortcuts)
-                        + ", dijkstras:" + Helper.nf(dijkstraCount)
+                        + ", shortcuts:" + Helper.nf(getNewShortcuts())
+                        + ", dijkstras:" + Helper.nf(_getDijkstraCount())
                         + ", " + getTimesAsString()
                         + ", meanDegree:" + (long) meanDegree
-                        + ", algo:" + prepareAlgo.getMemoryUsageAsString()
+                        + ", algo:" + getPrepareAlgoMemoryUsage()
                         + ", " + Helper.getMemInfo());
 
-                dijkstraSW = new StopWatch();
+                resetDijkstraTime();
                 periodSW = new StopWatch();
                 lazySW = new StopWatch();
                 neighborSW = new StopWatch();
@@ -352,7 +349,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
 
             // contract node v!
-            maxVisitedNodes = (int) meanDegree * 100;
+            setMaxVisitedNodes((int) meanDegree * 100);
             long tmpDegreeCounter = contractNode(polledNode);
             // sliding mean value when using "*2" => slower changes
             meanDegree = (meanDegree * 2 + tmpDegreeCounter) / 3;
@@ -393,14 +390,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // The preparation object itself has to be intact to create the algorithm.
         close();
 
-        dijkstraTime += dijkstraSW.getSeconds();
+        dijkstraTime += getDijkstraSeconds();
         periodTime += periodSW.getSeconds();
         lazyTime += lazySW.getSeconds();
         neighborTime += neighborSW.getSeconds();
         logger.info("took:" + (int) allSW.stop().getSeconds()
-                + ", new shortcuts: " + Helper.nf(newShortcuts)
+                + ", new shortcuts: " + Helper.nf(getNewShortcuts())
                 + ", " + prepareWeighting
-                + ", dijkstras:" + dijkstraCount
+                + ", dijkstras:" + _getDijkstraCount()
                 + ", " + getTimesAsString()
                 + ", meanDegree:" + (long) meanDegree
                 + ", initSize:" + initSize
@@ -411,18 +408,17 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     public void close() {
-        prepareAlgo.close();
-        originalEdges.close();
+        _close();
         sortedNodes = null;
         oldPriorities = null;
     }
 
     public long getDijkstraCount() {
-        return dijkstraCount;
+        return _getDijkstraCount();
     }
 
     public int getShortcuts() {
-        return newShortcuts;
+        return getNewShortcuts();
     }
 
     public double getLazyTime() {
@@ -453,8 +449,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     Set<Shortcut> testFindShortcuts(int node) {
-        findShortcuts(addScHandler.setNode(node));
-        return shortcuts.keySet();
+        return _testFindShortcuts(node);
+    }
+
+    int testAddShortcuts(List<Shortcut> shortcuts) {
+        // todo: get rid of this method
+        return addShortcuts(shortcuts);
     }
 
     /**
@@ -464,7 +464,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
      * lead to a slowish or even endless loop.
      */
     int calculatePriority(int v) {
-        maxVisitedNodes = (int) meanDegree * 100;
+        setMaxVisitedNodes((int) meanDegree * 100);
         CalcShortcutsResult calcShortcutsResult = calcShortcutCount(v);
 
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
@@ -501,6 +501,31 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return 10 * edgeDifference + originalEdgesCount + contractedNeighbors;
     }
 
+    @Override
+    public String toString() {
+        return "prepare|dijkstrabi|ch";
+    }
+
+    private void _initFromGraph(FlagEncoder prepareFlagEncoder) {
+        ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
+        vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
+        vehicleOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
+        prepareAlgo = new DijkstraOneToMany(prepareGraph, prepareWeighting, traversalMode);
+    }
+
+    private void _close() {
+        prepareAlgo.close();
+        originalEdges.close();
+    }
+
+    private void setMaxEdgesCount(int maxEdgesCount) {
+        this.maxEdgesCount = maxEdgesCount;
+    }
+
+    private void setMaxVisitedNodes(int maxVisitedNodes) {
+        this.maxVisitedNodes = maxVisitedNodes;
+    }
+
     private long contractNode(int node) {
         shortcuts.clear();
         long tmpDegreeCounter = findShortcuts(addScHandler.setNode(node));
@@ -512,12 +537,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         findShortcuts(calcScHandler.setNode(v));
         return calcScHandler.calcShortcutsResult;
     }
-
-    @Override
-    public String toString() {
-        return "prepare|dijkstrabi|ch";
-    }
-
+    
     /**
      * Finds shortcuts, does not change the underlying graph.
      */
@@ -650,6 +670,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 + na.getLat(base) + "," + na.getLon(base) + " -> " + na.getLat(adj) + "," + na.getLon(adj);
     }
 
+    private int getNewShortcuts() {
+        return newShortcuts;
+    }
+
     private void setOrigEdgeCount(int edgeId, int value) {
         edgeId -= maxEdgesCount;
         if (edgeId < 0) {
@@ -675,7 +699,29 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return originalEdges.getInt(tmp);
     }
 
+    private Set<Shortcut> _testFindShortcuts(int node) {
+        findShortcuts(addScHandler.setNode(node));
+        return shortcuts.keySet();
+    }
+
+    private String getPrepareAlgoMemoryUsage() {
+        return prepareAlgo.getMemoryUsageAsString();
+    }
+
+    private long _getDijkstraCount() {
+        return dijkstraCount;
+    }
+
+    private void resetDijkstraTime() {
+        dijkstraSW = new StopWatch();
+    }
+
+    private float getDijkstraSeconds() {
+        return dijkstraSW.getSeconds();
+    }
+
     static class IgnoreNodeFilter implements EdgeFilter {
+
         int avoidNode;
         int maxLevel;
         CHGraph graph;
@@ -831,7 +877,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
     }
 
-    private static class CalcShortcutsResult {
+    static class CalcShortcutsResult {
         int originalEdgesCount;
         int shortcutsCount;
     }
