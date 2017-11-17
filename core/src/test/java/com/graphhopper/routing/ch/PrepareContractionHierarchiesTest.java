@@ -19,7 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.ch.PrepareContractionHierarchies.NodeContractor.Shortcut;
+import com.graphhopper.routing.ch.NodeContractor.Shortcut;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -161,7 +161,7 @@ public class PrepareContractionHierarchiesTest {
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg,
                 weighting, tMode);
         prepare.initFromGraph().prepareNodes();
-        algo.setEdgeFilter(new PrepareContractionHierarchies.NodeContractor.IgnoreNodeFilter(lg, g.getNodes() + 1).setAvoidNode(3));
+        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, g.getNodes() + 1).setAvoidNode(3));
         algo.setWeightLimit(100);
         int nodeEntry = algo.findEndNode(4, 2);
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
@@ -181,7 +181,7 @@ public class PrepareContractionHierarchiesTest {
         DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, tMode);
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, weighting, tMode);
         prepare.initFromGraph().prepareNodes();
-        algo.setEdgeFilter(new PrepareContractionHierarchies.NodeContractor.IgnoreNodeFilter(lg, g.getNodes() + 1).setAvoidNode(3));
+        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, g.getNodes() + 1).setAvoidNode(3));
         algo.setWeightLimit(10);
         int nodeEntry = algo.findEndNode(4, 2);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
@@ -198,7 +198,7 @@ public class PrepareContractionHierarchiesTest {
         DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, tMode);
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, weighting, tMode);
         prepare.initFromGraph().prepareNodes();
-        algo.setEdgeFilter(new PrepareContractionHierarchies.NodeContractor.IgnoreNodeFilter(lg, g.getNodes() + 1).setAvoidNode(0));
+        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, g.getNodes() + 1).setAvoidNode(0));
         algo.setWeightLimit(2);
         int endNode = algo.findEndNode(4, 1);
         // did not reach endNode
