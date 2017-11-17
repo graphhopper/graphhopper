@@ -82,6 +82,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private DijkstraOneToMany prepareAlgo;
     private int newShortcuts;
     private long dijkstraCount;
+    private int maxVisitedNodes;
     private StopWatch dijkstraSW = new StopWatch();
     private int maxEdgesCount;
 
@@ -351,7 +352,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
 
             // contract node v!
-            contractNode(polledNode);
+            maxVisitedNodes = (int) meanDegree * 100;
+            long tmpDegreeCounter = contractNode(polledNode);
+            // sliding mean value when using "*2" => slower changes
+            meanDegree = (meanDegree * 2 + tmpDegreeCounter) / 3;
+            // meanDegree = (meanDegree + tmpDegreeCounter) / 2;
             prepareGraph.setLevel(polledNode, level);
             level++;
 
@@ -362,7 +367,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             CHEdgeIterator iter = vehicleAllExplorer.setBaseNode(polledNode);
             while (iter.next()) {
 
-                if(Thread.currentThread().isInterrupted()){
+                if (Thread.currentThread().isInterrupted()) {
                     throw new RuntimeException("Thread was interrupted");
                 }
 
@@ -459,7 +464,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
      * lead to a slowish or even endless loop.
      */
     int calculatePriority(int v) {
-        // set of shortcuts that would be added if adjNode v would be contracted next.
+        maxVisitedNodes = (int) meanDegree * 100;
         CalcShortcutsResult calcShortcutsResult = calcShortcutCount(v);
 
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
@@ -496,10 +501,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return 10 * edgeDifference + originalEdgesCount + contractedNeighbors;
     }
 
-    private void contractNode(int node) {
+    private long contractNode(int node) {
         shortcuts.clear();
-        findShortcuts(addScHandler.setNode(node));
+        long tmpDegreeCounter = findShortcuts(addScHandler.setNode(node));
         newShortcuts += addShortcuts(shortcuts.keySet());
+        return tmpDegreeCounter;
     }
 
     private CalcShortcutsResult calcShortcutCount(int v) {
@@ -515,7 +521,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     /**
      * Finds shortcuts, does not change the underlying graph.
      */
-    void findShortcuts(ShortcutHandler sch) {
+    long findShortcuts(ShortcutHandler sch) {
         long tmpDegreeCounter = 0;
         EdgeIterator incomingEdges = vehicleInExplorer.setBaseNode(sch.getNode());
         // collect outgoing nodes (goal-nodes) only once
@@ -554,7 +560,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
                 double existingDistSum = v_u_dist + outgoingEdges.getDistance();
                 prepareAlgo.setWeightLimit(existingDirectWeight);
-                prepareAlgo.setMaxVisitedNodes((int) meanDegree * 100);
+                prepareAlgo.setMaxVisitedNodes(maxVisitedNodes);
                 prepareAlgo.setEdgeFilter(ignoreNodeFilter.setAvoidNode(sch.getNode()));
 
                 dijkstraSW.start();
@@ -573,11 +579,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                         incomingEdge, incomingEdgeOrigCount);
             }
         }
-        if (sch instanceof AddShortcutHandler) {
-            // sliding mean value when using "*2" => slower changes
-            meanDegree = (meanDegree * 2 + tmpDegreeCounter) / 3;
-            // meanDegree = (meanDegree + tmpDegreeCounter) / 2;
-        }
+        return tmpDegreeCounter;
     }
 
     /**
@@ -754,7 +756,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         int getNode();
     }
-    
+
     class CalcShortcutHandler implements ShortcutHandler {
         int node;
         CalcShortcutsResult calcShortcutsResult = new CalcShortcutsResult();
