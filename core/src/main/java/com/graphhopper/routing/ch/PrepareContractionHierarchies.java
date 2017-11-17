@@ -36,7 +36,7 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
  * This class prepares the graph for a bidirectional algorithm supporting contraction hierarchies
  * ie. an algorithm returned by createAlgo.
  * <p>
- * There are several description of contraction hierarchies available. The following is one of the
+ * There are several descriptions of contraction hierarchies available. The following is one of the
  * more detailed: http://web.cs.du.edu/~sturtevant/papers/highlevelpathfinding.pdf
  * <p>
  * The only difference is that we use two skipped edges instead of one skipped node for faster
@@ -53,11 +53,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private final GraphHopperStorage ghStorage;
     private final CHGraphImpl prepareGraph;
     private final DataAccess originalEdges;
-    private final Map<Shortcut, Shortcut> shortcuts = new HashMap<Shortcut, Shortcut>();
+    private final Map<Shortcut, Shortcut> shortcuts = new HashMap<>();
     private final Random rand = new Random(123);
     private final StopWatch allSW = new StopWatch();
-    AddShortcutHandler addScHandler = new AddShortcutHandler();
-    CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
+    private final AddShortcutHandler addScHandler = new AddShortcutHandler();
+    private final CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
     private CHEdgeExplorer vehicleInExplorer;
     private CHEdgeExplorer vehicleOutExplorer;
     private CHEdgeExplorer vehicleAllExplorer;
@@ -69,7 +69,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private int oldPriorities[];
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany prepareAlgo;
-    private long counter;
     private int newShortcuts;
     private long dijkstraCount;
     private double meanDegree;
@@ -204,7 +203,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     void contractNodes() {
         meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
         int level = 1;
-        counter = 0;
+        long counter = 0;
         int initSize = sortedNodes.getSize();
         long logSize = Math.round(Math.max(10, sortedNodes.getSize() / 100 * logMessagesPercentage));
         if (logMessagesPercentage == 0)
@@ -292,9 +291,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
 
             // contract node v!
-            shortcuts.clear();
-            findShortcuts(addScHandler.setNode(polledNode));
-            newShortcuts += addShortcuts(shortcuts.keySet());
+            contractNode(polledNode);
             prepareGraph.setLevel(polledNode, level);
             level++;
 
@@ -399,19 +396,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
      */
     int calculatePriority(int v) {
         // set of shortcuts that would be added if adjNode v would be contracted next.
-        findShortcuts(calcScHandler.setNode(v));
+        CalcShortcutsResult calcShortcutsResult = calcShortcutCount(v);
 
-//        System.out.println(v + "\t " + tmpShortcuts);
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
         //
         // every adjNode has an 'original edge' number associated. initially it is r=1
         // when a new shortcut is introduced then r of the associated edges is summed up:
         // r(u,w)=r(u,v)+r(v,w) now we can define
         // originalEdgesCount = σ(v) := sum_{ (u,w) ∈ shortcuts(v) } of r(u, w)
-        int originalEdgesCount = calcScHandler.originalEdgesCount;
-//        for (Shortcut sc : tmpShortcuts) {
-//            originalEdgesCount += sc.originalEdges;
-//        }
+        int originalEdgesCount = calcShortcutsResult.originalEdgesCount;
 
         // # lowest influence on preparation speed or shortcut creation count
         // (but according to paper should speed up queries)
@@ -432,11 +425,22 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // |shortcuts(v)| − |{(u, v) | v uncontracted}| − |{(v, w) | v uncontracted}|
         // meanDegree is used instead of outDegree+inDegree as if one adjNode is in both directions
         // only one bucket memory is used. Additionally one shortcut could also stand for two directions.
-        int edgeDifference = calcScHandler.shortcuts - degree;
+        int edgeDifference = calcShortcutsResult.shortcutsCount - degree;
 
         // according to the paper do a simple linear combination of the properties to get the priority.
         // this is the current optimum for unterfranken:
         return 10 * edgeDifference + originalEdgesCount + contractedNeighbors;
+    }
+
+    private void contractNode(int node) {
+        shortcuts.clear();
+        findShortcuts(addScHandler.setNode(node));
+        newShortcuts += addShortcuts(shortcuts.keySet());
+    }
+
+    private CalcShortcutsResult calcShortcutCount(int v) {
+        findShortcuts(calcScHandler.setNode(v));
+        return calcScHandler.calcShortcutsResult;
     }
 
     /**
@@ -454,8 +458,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
             double v_u_dist = incomingEdges.getDistance();
             double v_u_weight = prepareWeighting.calcWeight(incomingEdges, true, EdgeIterator.NO_EDGE);
-            int skippedEdge1 = incomingEdges.getEdge();
-            int incomingEdgeOrigCount = getOrigEdgeCount(skippedEdge1);
+            int incomingEdge = incomingEdges.getEdge();
+            int incomingEdgeOrigCount = getOrigEdgeCount(incomingEdge);
             // collect outgoing nodes (goal-nodes) only once
             EdgeIterator outgoingEdges = vehicleOutExplorer.setBaseNode(sch.getNode());
             // force fresh maps etc as this cannot be determined by from node alone (e.g. same from node but different avoidNode)
@@ -496,8 +500,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
                 sch.foundShortcut(u_fromNode, w_toNode,
                         existingDirectWeight, existingDistSum,
-                        outgoingEdges,
-                        skippedEdge1, incomingEdgeOrigCount);
+                        outgoingEdges.getEdge(), getOrigEdgeCount(outgoingEdges.getEdge()),
+                        incomingEdge, incomingEdgeOrigCount);
             }
         }
         if (sch instanceof AddShortcutHandler) {
@@ -510,10 +514,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     /**
      * Introduces the necessary shortcuts for adjNode v in the graph.
      */
-    int addShortcuts(Collection<Shortcut> tmpShortcuts) {
+    int addShortcuts(Collection<Shortcut> shortcuts) {
         int tmpNewShortcuts = 0;
         NEXT_SC:
-        for (Shortcut sc : tmpShortcuts) {
+        for (Shortcut sc : shortcuts) {
             boolean updatedInGraph = false;
             // check if we need to update some existing shortcut in the graph
             CHEdgeIterator iter = vehicleOutExplorer.setBaseNode(sc.from);
@@ -670,8 +674,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     interface ShortcutHandler {
         void foundShortcut(int u_fromNode, int w_toNode,
                            double existingDirectWeight, double distance,
-                           EdgeIterator outgoingEdges,
-                           int skippedEdge1, int incomingEdgeOrigCount);
+                           int outgoingEdge, int outgoingEdgeOrigCount,
+                           int incomingEdge, int incomingEdgeOrigCount);
 
         int getNode();
     }
@@ -751,8 +755,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     class CalcShortcutHandler implements ShortcutHandler {
         int node;
-        int originalEdgesCount;
-        int shortcuts;
+        CalcShortcutsResult calcShortcutsResult = new CalcShortcutsResult();
 
         @Override
         public int getNode() {
@@ -761,26 +764,23 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
         public CalcShortcutHandler setNode(int n) {
             node = n;
-            originalEdgesCount = 0;
-            shortcuts = 0;
+            calcShortcutsResult.originalEdgesCount = 0;
+            calcShortcutsResult.shortcutsCount = 0;
             return this;
         }
 
         @Override
         public void foundShortcut(int u_fromNode, int w_toNode,
                                   double existingDirectWeight, double distance,
-                                  EdgeIterator outgoingEdges,
-                                  int skippedEdge1, int incomingEdgeOrigCount) {
-            shortcuts++;
-            originalEdgesCount += incomingEdgeOrigCount + getOrigEdgeCount(outgoingEdges.getEdge());
+                                  int outgoingEdge, int outgoingEdgeOrigCount,
+                                  int incomingEdge, int incomingEdgeOrigCount) {
+            calcShortcutsResult.shortcutsCount++;
+            calcShortcutsResult.originalEdgesCount += incomingEdgeOrigCount + outgoingEdgeOrigCount;
         }
     }
 
     class AddShortcutHandler implements ShortcutHandler {
         int node;
-
-        public AddShortcutHandler() {
-        }
 
         @Override
         public int getNode() {
@@ -796,8 +796,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         @Override
         public void foundShortcut(int u_fromNode, int w_toNode,
                                   double existingDirectWeight, double existingDistSum,
-                                  EdgeIterator outgoingEdges,
-                                  int skippedEdge1, int incomingEdgeOrigCount) {
+                                  int outgoingEdge, int outgoingEdgeOrigCount,
+                                  int incomingEdge, int incomingEdgeOrigCount) {
             // FOUND shortcut
             // but be sure that it is the only shortcut in the collection
             // and also in the graph for u->w. If existing AND identical weight => update setProperties.
@@ -811,7 +811,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             Shortcut tmpRetSc = shortcuts.get(tmpSc);
             if (tmpRetSc != null) {
                 // overwrite flags only if skipped edges are identical
-                if (tmpRetSc.skippedEdge2 == skippedEdge1 && tmpRetSc.skippedEdge1 == outgoingEdges.getEdge()) {
+                if (tmpRetSc.skippedEdge2 == incomingEdge && tmpRetSc.skippedEdge1 == outgoingEdge) {
                     tmpRetSc.flags = PrepareEncoder.getScDirMask();
                     return;
                 }
@@ -821,9 +821,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             if (old != null)
                 throw new IllegalStateException("Shortcut did not exist (" + sc + ") but was overwriting another one? " + old);
 
-            sc.skippedEdge1 = skippedEdge1;
-            sc.skippedEdge2 = outgoingEdges.getEdge();
-            sc.originalEdges = incomingEdgeOrigCount + getOrigEdgeCount(outgoingEdges.getEdge());
+            sc.skippedEdge1 = incomingEdge;
+            sc.skippedEdge2 = outgoingEdge;
+            sc.originalEdges = incomingEdgeOrigCount + outgoingEdgeOrigCount;
         }
+    }
+
+    private static class CalcShortcutsResult {
+        int originalEdgesCount;
+        int shortcutsCount;
     }
 }
