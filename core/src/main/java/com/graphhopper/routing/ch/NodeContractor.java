@@ -247,9 +247,8 @@ class NodeContractor {
             // ignore setting as every normal edge has original edge count of 1
             if (value != 1)
                 throw new IllegalStateException("Trying to set original edge count for normal edge to a value = " + value
-                        + ", edge:" + (edgeId + maxEdgesCount) + ", max:" + maxEdgesCount + ", graph.max:");
-            // todo: is it ok to remove the following line from the error message ?, ghStorage is not available in node contractor atm
-            //+ ghStorage.getAllEdges().getMaxId());
+                        + ", edge:" + (edgeId + maxEdgesCount) + ", max:" + maxEdgesCount + ", graph.max:" +
+                        prepareGraph.getAllEdges().getMaxId());
             return;
         }
 
