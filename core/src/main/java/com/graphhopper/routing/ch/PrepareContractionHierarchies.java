@@ -239,6 +239,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     void contractNodes() {
+        // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
+        // each edge can exist in both directions
         meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
         int level = 1;
         long counter = 0;
@@ -329,13 +331,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
 
             // contract node v!
-            nodeContractor.setMaxVisitedNodes((int) meanDegree * 100);
-            long tmpDegreeCounter = nodeContractor.contractNode(polledNode);
-            // todo: so far tmpDegreeCounter is not really the degree of the polled node but rather half of it, see todo
-            // in NodeContractor#findShortcuts
-            // sliding mean value when using "*2" => slower changes
-            meanDegree = (meanDegree * 2 + tmpDegreeCounter) / 3;
-            // meanDegree = (meanDegree + tmpDegreeCounter) / 2;
+            nodeContractor.setMaxVisitedNodes(getMaxVisitedNodesEstimate());
+            long degree = nodeContractor.contractNode(polledNode);
+            // put weight factor on meanDegree instead of taking the average => meanDegree is more stable
+            meanDegree = (meanDegree * 2 + degree) / 3;
             prepareGraph.setLevel(polledNode, level);
             level++;
 
@@ -446,7 +445,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
      * lead to a slowish or even endless loop.
      */
     private int calculatePriority(int v) {
-        nodeContractor.setMaxVisitedNodes((int) meanDegree * 100);
+        nodeContractor.setMaxVisitedNodes(getMaxVisitedNodesEstimate());
         NodeContractor.CalcShortcutsResult calcShortcutsResult = nodeContractor.calcShortcutCount(v);
 
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
@@ -481,6 +480,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // according to the paper do a simple linear combination of the properties to get the priority.
         // this is the current optimum for unterfranken:
         return 10 * edgeDifference + originalEdgesCount + contractedNeighbors;
+    }
+
+    private int getMaxVisitedNodesEstimate() {
+        return (int) meanDegree * 100;
     }
 
     @Override

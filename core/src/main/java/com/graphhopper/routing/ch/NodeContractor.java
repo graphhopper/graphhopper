@@ -90,9 +90,9 @@ class NodeContractor {
 
     long contractNode(int node) {
         shortcuts.clear();
-        long tmpDegreeCounter = findShortcuts(addScHandler.setNode(node));
+        long degree = findShortcuts(addScHandler.setNode(node));
         addedShortcutsCount += addShortcuts(shortcuts.keySet());
-        return tmpDegreeCounter;
+        return degree;
     }
 
     CalcShortcutsResult calcShortcutCount(int v) {
@@ -104,11 +104,11 @@ class NodeContractor {
      * Searches for shortcuts and calls the given handler on each shortcut that is found. The graph is not directly
      * changed by this method.
      *
-     * @return the degree of the handler's node (disregarding edges from/to already contracted nodes)
-     * todo: what is returned is not the degree, because only incoming edges are considered
+     * @return the degree of the handler's node (disregarding edges from/to already contracted nodes) the degree is not
+     * the total number of adjacent edges, but only the number of incoming edges
      */
     private long findShortcuts(ShortcutHandler sch) {
-        long tmpDegreeCounter = 0;
+        long degree = 0;
         EdgeIterator incomingEdges = vehicleInExplorer.setBaseNode(sch.getNode());
         // collect outgoing nodes (goal-nodes) only once
         while (incomingEdges.next()) {
@@ -125,7 +125,7 @@ class NodeContractor {
             EdgeIterator outgoingEdges = vehicleOutExplorer.setBaseNode(sch.getNode());
             // force fresh maps etc as this cannot be determined by from node alone (e.g. same from node but different avoidNode)
             prepareAlgo.clear();
-            tmpDegreeCounter++;
+            degree++;
             while (outgoingEdges.next()) {
                 int w_toNode = outgoingEdges.getAdjNode();
                 // add only uncontracted nodes
@@ -165,11 +165,12 @@ class NodeContractor {
                         incomingEdge, incomingEdgeOrigCount);
             }
         }
-        return tmpDegreeCounter;
+        return degree;
     }
 
     /**
      * Adds the given shortcuts to the graph.
+     * @return the actual number of shortcuts that were added to the graph
      */
     int addShortcuts(Collection<Shortcut> shortcuts) {
         int tmpNewShortcuts = 0;
