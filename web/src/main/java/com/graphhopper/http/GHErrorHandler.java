@@ -41,16 +41,15 @@ public class GHErrorHandler extends ErrorHandler {
             url += "?" + httpReq.getQueryString();
 
         if (throwable != null) {
-            String message = throwable.getMessage();
-            logger.error(message + "! Via:" + url, throwable);
+            logger.error("Internal error for request " + url, throwable);
         } else {
             String message = (String) httpReq.getAttribute("javax.servlet.error.message");
             if (httpRes.getStatus() / 100 == 4) {
-                logger.warn(message + ", via:" + url);
+                logger.warn("Bad request '" + message + "' " + url);
             } else if (message != null) {
-                logger.error("Internal error " + message + "! Via:" + url);
+                logger.error("Internal error with message " + message + " for " + url);
             } else {
-                logger.error("Internal error " + str + ", throwable unknown! Via:" + url);
+                logger.error("Internal error with unknown throwable (" + str + ") for " + url);
             }
         }
 
