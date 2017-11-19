@@ -189,7 +189,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return algo;
     }
 
-    PrepareContractionHierarchies initFromGraph() {
+    private void initFromGraph() {
         ghStorage.freeze();
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
         final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
@@ -197,10 +197,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         final EdgeFilter accessWithLevelFilter = new LevelEdgeFilter(prepareGraph) {
             @Override
             public final boolean accept(EdgeIteratorState edgeState) {
-                if (!super.accept(edgeState))
-                    return false;
-
-                return allFilter.accept(edgeState);
+                return super.accept(edgeState) && allFilter.accept(edgeState);
             }
         };
 
@@ -221,10 +218,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         oldPriorities = new int[prepareGraph.getNodes()];
         nodeContractor = new NodeContractor(dir, ghStorage, prepareGraph, weighting, traversalMode);
         nodeContractor.initFromGraph();
-        return this;
     }
 
-    boolean prepareNodes() {
+    private boolean prepareNodes() {
         int nodes = prepareGraph.getNodes();
         for (int node = 0; node < nodes; node++) {
             prepareGraph.setLevel(node, maxLevel);
@@ -235,13 +231,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             sortedNodes.insert(node, priority);
         }
 
-        if (sortedNodes.isEmpty())
-            return false;
-
-        return true;
+        return !sortedNodes.isEmpty();
     }
 
-    void contractNodes() {
+    private void contractNodes() {
         int level = 1;
         long counter = 0;
         int initSize = sortedNodes.getSize();
@@ -427,10 +420,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 + ", t(period):" + Helper.round2(periodTime)
                 + ", t(lazy):" + Helper.round2(lazyTime)
                 + ", t(neighbor):" + Helper.round2(neighborTime);
-    }
-
-    Set<NodeContractor.Shortcut> testFindShortcuts(int node) {
-        return nodeContractor.testFindShortcuts(node);
     }
 
     /**

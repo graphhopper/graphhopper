@@ -153,59 +153,6 @@ public class PrepareContractionHierarchiesTest {
     }
 
     @Test
-    public void testShortestPathSkipNode() {
-        GraphHopperStorage g = createExampleGraph();
-        double normalDist = new Dijkstra(g, weighting, tMode).calcPath(4, 2).getDistance();
-        DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, tMode);
-        CHGraph lg = g.getGraph(CHGraph.class);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg,
-                weighting, tMode);
-        prepare.initFromGraph().prepareNodes();
-        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, g.getNodes() + 1).setAvoidNode(3));
-        algo.setWeightLimit(100);
-        int nodeEntry = algo.findEndNode(4, 2);
-        assertTrue(algo.getWeight(nodeEntry) > normalDist);
-
-        algo.clear();
-        algo.setMaxVisitedNodes(1);
-        nodeEntry = algo.findEndNode(4, 2);
-        assertEquals(-1, nodeEntry);
-    }
-
-    @Test
-    public void testShortestPathSkipNode2() {
-        GraphHopperStorage g = createExampleGraph();
-        CHGraph lg = g.getGraph(CHGraph.class);
-        double normalDist = new Dijkstra(g, weighting, tMode).calcPath(4, 2).getDistance();
-        assertEquals(3, normalDist, 1e-5);
-        DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, tMode);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, weighting, tMode);
-        prepare.initFromGraph().prepareNodes();
-        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, g.getNodes() + 1).setAvoidNode(3));
-        algo.setWeightLimit(10);
-        int nodeEntry = algo.findEndNode(4, 2);
-        assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
-
-        nodeEntry = algo.findEndNode(4, 1);
-        assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
-    }
-
-    @Test
-    public void testShortestPathLimit() {
-        GraphHopperStorage g = createExampleGraph();
-        CHGraph lg = g.getGraph(CHGraph.class);
-
-        DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, tMode);
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, weighting, tMode);
-        prepare.initFromGraph().prepareNodes();
-        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, g.getNodes() + 1).setAvoidNode(0));
-        algo.setWeightLimit(2);
-        int endNode = algo.findEndNode(4, 1);
-        // did not reach endNode
-        assertNotEquals(1, endNode);
-    }
-
-    @Test
     public void testAddShortcuts() {
         GraphHopperStorage g = createExampleGraph();
         CHGraph lg = g.getGraph(CHGraph.class);
@@ -273,57 +220,6 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(Helper.createTList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10), p.calcNodes());
     }
 
-    @Test
-    public void testDirectedGraph3() {
-        GraphHopperStorage g = createGHStorage();
-        CHGraphImpl lg = (CHGraphImpl) g.getGraph(CHGraph.class);
-        //5 6 7
-        // \|/
-        //4-3_1<-\ 10
-        //     \_|/
-        //   0___2_11
-
-        g.edge(0, 2, 2, true);
-        g.edge(10, 2, 2, true);
-        g.edge(11, 2, 2, true);
-        // create a longer one directional edge => no longish one-dir shortcut should be created
-        g.edge(2, 1, 2, true);
-        g.edge(2, 1, 10, false);
-
-        g.edge(1, 3, 2, true);
-        g.edge(3, 4, 2, true);
-        g.edge(3, 5, 2, true);
-        g.edge(3, 6, 2, true);
-        g.edge(3, 7, 2, true);
-
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, weighting, tMode);
-        prepare.initFromGraph();
-        prepare.prepareNodes();
-
-        // find all shortcuts if we contract node 1
-        Collection<Shortcut> scs = prepare.testFindShortcuts(1);
-        assertEquals(2, scs.size());
-        Iterator<Shortcut> iter = scs.iterator();
-        Shortcut sc1 = iter.next();
-        Shortcut sc2 = iter.next();
-        if (sc1.weight > sc2.weight) {
-            Shortcut tmp = sc1;
-            sc1 = sc2;
-            sc2 = tmp;
-        }
-
-        // both dirs
-        assertTrue(sc1.toString(), sc1.from == 3 && sc1.to == 2);
-        assertTrue(sc1.toString(), carEncoder.isForward(sc1.flags) && carEncoder.isBackward(sc1.flags));
-
-        // directed
-        assertTrue(sc2.toString(), sc2.from == 2 && sc2.to == 3);
-        assertTrue(sc2.toString(), carEncoder.isForward(sc2.flags));
-
-        assertEquals(sc1.toString(), 4, sc1.weight, 1e-4);
-        assertEquals(sc2.toString(), 12, sc2.weight, 1e-4);
-    }
-
     void initRoundaboutGraph(Graph g) {
         //              roundabout:
         //16-0-9-10--11   12<-13
@@ -388,58 +284,6 @@ public class PrepareContractionHierarchiesTest {
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(4, 7);
         assertEquals(Helper.createTList(4, 5, 6, 7), p.calcNodes());
-    }
-
-    @Test
-    public void testFindShortcuts_Roundabout() {
-        GraphHopperStorage ghStorage = createGHStorage();
-        CHGraph lg = ghStorage.getGraph(CHGraph.class);
-        EdgeIteratorState iter1_3 = ghStorage.edge(1, 3, 1, true);
-        EdgeIteratorState iter3_4 = ghStorage.edge(3, 4, 1, true);
-        EdgeIteratorState iter4_5 = ghStorage.edge(4, 5, 1, false);
-        EdgeIteratorState iter5_6 = ghStorage.edge(5, 6, 1, false);
-        EdgeIteratorState iter6_8 = ghStorage.edge(6, 8, 2, false);
-        EdgeIteratorState iter8_4 = ghStorage.edge(8, 4, 1, false);
-        ghStorage.edge(6, 7, 1, true);
-        ghStorage.freeze();
-
-        PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, ghStorage, lg,
-                weighting, tMode);
-        CHEdgeIteratorState tmp = lg.shortcut(1, 4);
-        tmp.setFlags(PrepareEncoder.getScDirMask());
-        tmp.setWeight(2);
-        tmp.setSkippedEdges(iter1_3.getEdge(), iter3_4.getEdge());
-        long f = PrepareEncoder.getScFwdDir();
-        tmp = lg.shortcut(4, 6);
-        tmp.setFlags(f);
-        tmp.setWeight(2);
-        tmp.setSkippedEdges(iter4_5.getEdge(), iter5_6.getEdge());
-        tmp = lg.shortcut(6, 4);
-        tmp.setFlags(f);
-        tmp.setWeight(3);
-        tmp.setSkippedEdges(iter6_8.getEdge(), iter8_4.getEdge());
-
-        prepare.initFromGraph();
-        prepare.prepareNodes();
-        lg.setLevel(3, 3);
-        lg.setLevel(5, 5);
-        lg.setLevel(7, 7);
-        lg.setLevel(8, 8);
-
-        // there should be two different shortcuts for both directions!
-        Collection<Shortcut> sc = prepare.testFindShortcuts(4);
-        assertEquals(2, sc.size());
-        Iterator<Shortcut> iter = sc.iterator();
-        Shortcut sc1 = iter.next();
-        Shortcut sc2 = iter.next();
-        if (sc1.from > sc2.from) {
-            Shortcut tmpSc = sc1;
-            sc1 = sc2;
-            sc2 = tmpSc;
-        }
-
-        assertEquals("1->6, weight:4.0 (7,8)", sc1.toString());
-        assertEquals("6->1, weight:5.0 (9,7)", sc2.toString());
     }
 
     void initUnpackingGraph(GraphHopperStorage ghStorage, CHGraph g, Weighting w) {
