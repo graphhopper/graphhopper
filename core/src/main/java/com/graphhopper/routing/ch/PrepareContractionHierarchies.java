@@ -483,7 +483,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private int getMaxVisitedNodesEstimate() {
-        return (int) meanDegree * 100;
+        return (int) (meanDegree * 100);
     }
 
     @Override
