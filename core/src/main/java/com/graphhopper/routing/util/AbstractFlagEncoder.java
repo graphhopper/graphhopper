@@ -674,8 +674,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     /**
-     * @param way:   needed to retrieve tags
-     * @param speed: speed guessed e.g. from the road type or other tags
+     * @param way   needed to retrieve tags
+     * @param speed speed guessed e.g. from the road type or other tags
      * @return The assumed speed.
      */
     protected double applyMaxSpeed(ReaderWay way, double speed) {
