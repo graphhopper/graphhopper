@@ -46,14 +46,15 @@ import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
  */
 public class PrepareContractionHierarchies extends AbstractAlgoPreparation implements RoutingAlgorithmFactory {
     private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final NodeContractor nodeContractor;
+    private final Directory dir;
     private final PreparationWeighting prepareWeighting;
+    private final Weighting weighting;
     private final TraversalMode traversalMode;
-    private final LevelEdgeFilter levelFilter;
     private final GraphHopperStorage ghStorage;
     private final CHGraphImpl prepareGraph;
     private final Random rand = new Random(123);
     private final StopWatch allSW = new StopWatch();
+    private NodeContractor nodeContractor;
     private CHEdgeExplorer vehicleAllExplorer;
     private CHEdgeExplorer vehicleAllTmpExplorer;
     private CHEdgeExplorer calcPrioAllExplorer;
@@ -74,13 +75,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     public PrepareContractionHierarchies(Directory dir, GraphHopperStorage ghStorage, CHGraph chGraph,
                                          Weighting weighting, TraversalMode traversalMode) {
+        this.dir = dir;
         this.ghStorage = ghStorage;
         this.prepareGraph = (CHGraphImpl) chGraph;
         this.traversalMode = traversalMode;
-        levelFilter = new LevelEdgeFilter(prepareGraph);
-
+        this.weighting = weighting;
         prepareWeighting = new PreparationWeighting(weighting);
-        nodeContractor = new NodeContractor(dir, prepareGraph, weighting, traversalMode);
     }
 
     /**
@@ -185,13 +185,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
 
         algo.setMaxVisitedNodes(opts.getMaxVisitedNodes());
-        algo.setEdgeFilter(levelFilter);
+        algo.setEdgeFilter(new LevelEdgeFilter(prepareGraph));
         return algo;
     }
 
     PrepareContractionHierarchies initFromGraph() {
         ghStorage.freeze();
-        nodeContractor.setMaxEdgesCount(ghStorage.getAllEdges().getMaxId());
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
         final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
         // filter by vehicle and level number
@@ -220,6 +219,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new int[prepareGraph.getNodes()];
+        nodeContractor = new NodeContractor(dir, ghStorage, prepareGraph, weighting, traversalMode);
         nodeContractor.initFromGraph();
         return this;
     }

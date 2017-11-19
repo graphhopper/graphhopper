@@ -33,6 +33,7 @@ import java.util.Map;
 import java.util.Set;
 
 class NodeContractor {
+    private final GraphHopperStorage ghStorage;
     private final CHGraph prepareGraph;
     private final PreparationWeighting prepareWeighting;
     // todo: so far node contraction can only be done for node-based graph traversal
@@ -52,10 +53,12 @@ class NodeContractor {
     private int maxEdgesCount;
     private int maxLevel;
 
-    NodeContractor(Directory dir, CHGraph prepareGraph, Weighting weighting, TraversalMode traversalMode) {
+    NodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting,
+                   TraversalMode traversalMode) {
         if (traversalMode.isEdgeBased()) {
             throw new IllegalArgumentException("Contraction Hierarchies only support node based traversal so far, given: " + traversalMode);
         }
+        this.ghStorage = ghStorage;
         this.prepareGraph = prepareGraph;
         this.prepareWeighting = new PreparationWeighting(weighting);
         this.traversalMode = traversalMode;
@@ -65,6 +68,7 @@ class NodeContractor {
 
     void initFromGraph() {
         maxLevel = prepareGraph.getNodes() + 1;
+        maxEdgesCount = ghStorage.getAllEdges().getMaxId();
         ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
         vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
@@ -75,10 +79,6 @@ class NodeContractor {
     void close() {
         prepareAlgo.close();
         originalEdges.close();
-    }
-
-    void setMaxEdgesCount(int maxEdgesCount) {
-        this.maxEdgesCount = maxEdgesCount;
     }
 
     void setMaxVisitedNodes(int maxVisitedNodes) {
