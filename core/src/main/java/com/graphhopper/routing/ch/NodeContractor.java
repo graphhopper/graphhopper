@@ -35,6 +35,7 @@ import java.util.Set;
 class NodeContractor {
     private final CHGraph prepareGraph;
     private final PreparationWeighting prepareWeighting;
+    // todo: so far node contraction can only be done for node-based graph traversal
     private final TraversalMode traversalMode;
     private final DataAccess originalEdges;
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<>();
@@ -55,6 +56,9 @@ class NodeContractor {
     private int maxLevel;
 
     NodeContractor(Directory dir, CHGraph prepareGraph, Weighting weighting, TraversalMode traversalMode) {
+        if (traversalMode.isEdgeBased()) {
+            throw new IllegalArgumentException("Contraction Hierarchies only support node based traversal so far, given: " + traversalMode);
+        }
         this.prepareGraph = prepareGraph;
         this.prepareWeighting = new PreparationWeighting(weighting);
         this.traversalMode = traversalMode;
