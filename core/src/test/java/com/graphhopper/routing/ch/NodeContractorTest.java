@@ -258,6 +258,8 @@ public class NodeContractorTest {
         createNodeContractor().contractNode(1);
 
         List<Shortcut> shortcuts = new ArrayList<>();
+        // todo: why does the all iterator yield skipEdge2=0 instead of 1 in the found shortcut ?
+//      CHEdgeIterator iter = lg.getAllEdges();
         CHEdgeIterator iter = lg.createEdgeExplorer().setBaseNode(0);
         while (iter.next()) {
             if (iter.isShortcut()) {
@@ -282,7 +284,7 @@ public class NodeContractorTest {
         // no shortcuts added
         assertEquals(3, lg.getAllEdges().getMaxId());
     }
-    
+
     private void setMaxLevelOnAllNodes() {
         int nodes = lg.getNodes();
         for (int node = 0; node < nodes; node++) {
