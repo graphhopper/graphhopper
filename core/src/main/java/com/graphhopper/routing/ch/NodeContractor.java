@@ -58,6 +58,7 @@ class NodeContractor {
         if (traversalMode.isEdgeBased()) {
             throw new IllegalArgumentException("Contraction Hierarchies only support node based traversal so far, given: " + traversalMode);
         }
+        // todo: it would be nice to check if ghStorage is frozen here
         this.ghStorage = ghStorage;
         this.prepareGraph = prepareGraph;
         this.prepareWeighting = new PreparationWeighting(weighting);

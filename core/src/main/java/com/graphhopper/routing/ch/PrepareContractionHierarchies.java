@@ -433,11 +433,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return nodeContractor.testFindShortcuts(node);
     }
 
-    int testAddShortcuts(List<NodeContractor.Shortcut> shortcuts) {
-        // todo: get rid of this method
-        return nodeContractor.addShortcuts(shortcuts);
-    }
-
     /**
      * Calculates the priority of adjNode v without changing the graph. Warning: the calculated
      * priority must NOT depend on priority(v) and therefor findShortcuts should also not depend on
