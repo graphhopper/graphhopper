@@ -140,7 +140,7 @@ public class PrepareContractionHierarchiesTest {
         g.edge(0, 1, 1, true);
         g.edge(0, 2, 1, true);
         g.edge(0, 4, 3, true);
-        g.edge(1, 2, 2, true);
+        g.edge(1, 2, 3, true);
         g.edge(2, 3, 1, true);
         g.edge(4, 3, 2, true);
         g.edge(5, 1, 2, true);
@@ -263,9 +263,10 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(oldCount, g.getAllEdges().getMaxId());
         assertEquals(oldCount, GHUtility.count(g.getAllEdges()));
 
-        assertEquals(9, prepare.getShortcuts());
-        assertEquals(oldCount + 9, lg.getAllEdges().getMaxId());
-        assertEquals(oldCount + 9, GHUtility.count(lg.getAllEdges()));
+        int numShortcuts = 11;
+        assertEquals(numShortcuts, prepare.getShortcuts());
+        assertEquals(oldCount + numShortcuts, lg.getAllEdges().getMaxId());
+        assertEquals(oldCount + numShortcuts, GHUtility.count(lg.getAllEdges()));
         RoutingAlgorithm algo = prepare.createAlgo(lg, new AlgorithmOptions(DIJKSTRA_BI, weighting, tMode));
         Path p = algo.calcPath(0, 10);
         assertEquals(10, p.getDistance(), 1e-6);

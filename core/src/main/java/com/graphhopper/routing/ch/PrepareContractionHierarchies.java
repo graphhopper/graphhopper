@@ -206,6 +206,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         };
 
         maxLevel = prepareGraph.getNodes() + 1;
+        // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
+        // each edge can exist in both directions
+        meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
         vehicleAllExplorer = prepareGraph.createEdgeExplorer(allFilter);
         vehicleAllTmpExplorer = prepareGraph.createEdgeExplorer(allFilter);
         calcPrioAllExplorer = prepareGraph.createEdgeExplorer(accessWithLevelFilter);
@@ -239,9 +242,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     void contractNodes() {
-        // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
-        // each edge can exist in both directions
-        meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
         int level = 1;
         long counter = 0;
         int initSize = sortedNodes.getSize();

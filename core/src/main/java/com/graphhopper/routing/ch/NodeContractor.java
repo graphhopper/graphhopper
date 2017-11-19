@@ -47,9 +47,6 @@ class NodeContractor {
     private DijkstraOneToMany prepareAlgo;
     private int addedShortcutsCount;
     private long dijkstraCount;
-    // todo: maxVisitedNodes is 0 initially and will also be zero at the first call of findShortcuts, meaning that no
-    // witnesses will be found and all possible shortcuts will be considered. so far this did not really play a role
-    // as it only slightly changes the node ordering ...
     private int maxVisitedNodes;
     private StopWatch dijkstraSW = new StopWatch();
     private int maxEdgesCount;
