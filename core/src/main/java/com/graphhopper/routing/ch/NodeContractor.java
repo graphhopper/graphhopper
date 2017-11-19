@@ -48,7 +48,7 @@ class NodeContractor {
     private DijkstraOneToMany prepareAlgo;
     private int addedShortcutsCount;
     private long dijkstraCount;
-    private int maxVisitedNodes;
+    private int maxVisitedNodes = Integer.MAX_VALUE;
     private StopWatch dijkstraSW = new StopWatch();
     private int maxEdgesCount;
     private int maxLevel;

@@ -25,6 +25,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
+import com.graphhopper.util.CHEdgeIterator;
 import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Before;
@@ -32,9 +33,7 @@ import org.junit.Test;
 
 import java.util.*;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class NodeContractorTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
@@ -48,6 +47,12 @@ public class NodeContractorTest {
     @Before
     public void setUp() {
         dir = new GHDirectory("", DAType.RAM_INT);
+    }
+
+    private NodeContractor createNodeContractor() {
+        NodeContractor nodeContractor = new NodeContractor(dir, g, lg, weighting, tMode);
+        nodeContractor.initFromGraph();
+        return nodeContractor;
     }
 
     private void createExampleGraph() {
@@ -202,8 +207,7 @@ public class NodeContractorTest {
         lg.setLevel(8, 8);
 
         // there should be two different shortcuts for both directions!
-        NodeContractor nodeContractor = new NodeContractor(dir, g, lg, weighting, tMode);
-        nodeContractor.initFromGraph();
+        NodeContractor nodeContractor = createNodeContractor();
         Collection<NodeContractor.Shortcut> sc = nodeContractor.testFindShortcuts(4);
         assertEquals(2, sc.size());
         Iterator<NodeContractor.Shortcut> iter = sc.iterator();
@@ -240,15 +244,105 @@ public class NodeContractorTest {
         NodeContractor.Shortcut sc2 = new NodeContractor.Shortcut(1, 3, 6.82048125, 121.25);
         sc2.flags = PrepareEncoder.getScDirMask();
         List<NodeContractor.Shortcut> list = Arrays.asList(sc1, sc2);
-        NodeContractor nodeContractor = new NodeContractor(dir, g, lg, weighting, tMode);
-        nodeContractor.initFromGraph();
+        NodeContractor nodeContractor = createNodeContractor();
         assertEquals(2, nodeContractor.addShortcuts(list));
     }
 
+    @Test
+    public void testContractNode_directed_shortcutRequired() {
+        // 0 --> 1 --> 2
+        EdgeIteratorState edge1 = g.edge(0, 1, 1, false);
+        EdgeIteratorState edge2 = g.edge(1, 2, 2, false);
+        g.freeze();
+        setMaxLevelOnAllNodes();
+        createNodeContractor().contractNode(1);
+
+        List<Shortcut> shortcuts = new ArrayList<>();
+        CHEdgeIterator iter = lg.createEdgeExplorer().setBaseNode(0);
+        while (iter.next()) {
+            if (iter.isShortcut()) {
+                shortcuts.add(new Shortcut(iter.getBaseNode(), iter.getAdjNode(), iter.getWeight(), iter.getDistance(), iter.isForward(encoder),
+                        iter.isBackward(encoder), iter.getSkippedEdge1(), iter.getSkippedEdge2()));
+            }
+        }
+        assertEquals(1, shortcuts.size());
+        assertEquals(new Shortcut(0, 2, 3.0, 3.0, true, false, edge1.getEdge(), edge2.getEdge()), shortcuts.get(0));
+    }
+
+    @Test
+    public void testContractNode_simple_withWitness() {
+        // 0 --> 1 --> 2
+        //  \_________/
+        g.edge(0, 1, 1, false);
+        g.edge(1, 2, 2, false);
+        g.edge(0, 2, 1, false);
+        g.freeze();
+        setMaxLevelOnAllNodes();
+        createNodeContractor().contractNode(1);
+        // no shortcuts added
+        assertEquals(3, lg.getAllEdges().getMaxId());
+    }
+    
     private void setMaxLevelOnAllNodes() {
         int nodes = lg.getNodes();
         for (int node = 0; node < nodes; node++) {
             lg.setLevel(node, nodes + 1);
+        }
+    }
+
+    private static class Shortcut {
+        int baseNode;
+        int adjNode;
+        double weight;
+        double distance;
+        boolean fwd;
+        boolean bwd;
+        int skipEdge1;
+        int skipEdge2;
+
+        Shortcut(int baseNode, int adjNode, double weight, double distance, boolean fwd, boolean bwd, int skipEdge1, int skipEdge2) {
+            this.baseNode = baseNode;
+            this.adjNode = adjNode;
+            this.weight = weight;
+            this.distance = distance;
+            this.fwd = fwd;
+            this.bwd = bwd;
+            this.skipEdge1 = skipEdge1;
+            this.skipEdge2 = skipEdge2;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+            Shortcut shortcut = (Shortcut) o;
+            return baseNode == shortcut.baseNode &&
+                    adjNode == shortcut.adjNode &&
+                    Double.compare(shortcut.weight, weight) == 0 &&
+                    Double.compare(shortcut.distance, distance) == 0 &&
+                    fwd == shortcut.fwd &&
+                    bwd == shortcut.bwd &&
+                    skipEdge1 == shortcut.skipEdge1 &&
+                    skipEdge2 == shortcut.skipEdge2;
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(baseNode, adjNode, weight, distance, fwd, bwd, skipEdge1, skipEdge2);
+        }
+
+        @Override
+        public String toString() {
+            return "Shortcut{" +
+                    "baseNode=" + baseNode +
+                    ", adjNode=" + adjNode +
+                    ", weight=" + weight +
+                    ", distance=" + distance +
+                    ", fwd=" + fwd +
+                    ", bwd=" + bwd +
+                    ", skipEdge1=" + skipEdge1 +
+                    ", skipEdge2=" + skipEdge2 +
+                    '}';
         }
     }
 }
