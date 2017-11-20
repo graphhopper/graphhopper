@@ -16,6 +16,10 @@ engines:
         enabled: false
       com.puppycrawl.tools.checkstyle.checks.blocks.NeedBracesCheck:
         enabled: false
+      com.puppycrawl.tools.checkstyle.checks.whitespace.OperatorWrapCheck:
+        enabled: false
+      com.puppycrawl.tools.checkstyle.checks.naming.LocalVariableNameCheck:
+        enabled: false
   duplication:
     enabled: true
     config:
