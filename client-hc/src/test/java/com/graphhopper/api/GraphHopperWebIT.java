@@ -253,6 +253,29 @@ public class GraphHopperWebIT {
     }
 
     @Test
+    public void testMatrix_DoNotWrapHints() {
+        final GraphHopperMatrixWeb ghMatrix = new GraphHopperMatrixWeb(new GHMatrixBatchRequester() {
+            @Override
+            protected String postJson(String url, JsonNode data) throws IOException {
+                assertFalse(data.has("hints"));
+                assertTrue(data.has("something"));
+                return super.postJson(url, data);
+            }
+        });
+        ghMatrix.setKey(System.getProperty("graphhopper.key", KEY));
+
+        GHMRequest req = new GHMRequest();
+        req.addPoint(new GHPoint(49.6724, 11.3494));
+        req.addPoint(new GHPoint(49.6550, 11.4180));
+        req.getHints().put("something", "xy");
+        ghMatrix.route(req);
+
+        // clashing parameter will overwrite!
+        req.getHints().put("vehicle", "xy");
+        assertEquals("xy", req.getVehicle());
+    }
+
+    @Test
     public void testUnknownInstructionSign() throws IOException {
         // Actual path for the request: point=48.354413%2C8.676335&point=48.35442%2C8.676345
         // Modified the sign though

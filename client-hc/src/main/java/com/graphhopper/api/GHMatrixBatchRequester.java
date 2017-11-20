@@ -75,14 +75,13 @@ public class GHMatrixBatchRequester extends GHMatrixAbstractRequester {
         requestJson.put("vehicle", ghRequest.getVehicle());
         requestJson.put("elevation", hasElevation);
 
-        ObjectNode hintsObject = requestJson.putObject("hints");
         Map<String, String> hintsMap = ghRequest.getHints().toMap();
         for (String hintKey : hintsMap.keySet()) {
             if (ignoreSet.contains(hintKey))
                 continue;
 
             String hint = hintsMap.get(hintKey);
-            hintsObject.put(hintKey, hint);
+            requestJson.put(hintKey, hint);
         }
 
         boolean withTimes = outArraysList.contains("times");
