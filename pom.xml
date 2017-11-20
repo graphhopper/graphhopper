@@ -190,6 +190,27 @@
                         <!-- disallow undocumented classes like sun.misc.Unsafe: -->
                         <bundledSignature>jdk-non-portable</bundledSignature>
                     </bundledSignatures>
+                    <excludes>
+                        <!-- Excluded because of "Helper7#getBeanMemInfo" -->
+                        <exclude>
+                            com/graphhopper/util/Helper7.class
+                        </exclude>
+                        <exclude>
+                            com/graphhopper/storage/UnsafeDataAccess.class
+                        </exclude>
+                        <!-- Forbidden class/interface use: java.io.FileReader [Uses default charset] -->
+                        <exclude>
+                            com/graphhopper/json/JsonFeatureConverter.class
+                        </exclude>
+                        <!-- orbidden class/interface use: java.io.FileReader [Uses default charset] -->
+                        <exclude>
+                            com/graphhopper/spatialrules/SpatialRuleLookupHelper.class
+                        </exclude>
+                        <!-- Has a couple of issues with the FileWriter -->
+                        <exclude>
+                            com/graphhopper/tools/Measurement.class
+                        </exclude>
+                    </excludes>
                 </configuration>
             </plugin>
         </plugins>
