@@ -101,6 +101,19 @@ public class PointListTest {
     }
 
     @Test
+    public void testRemoveLast() {
+        PointList list = new PointList(20, false);
+        for (int i = 0; i < 10; i++) {
+            list.add(1, i);
+        }
+        assertEquals(10, list.getSize());
+        assertEquals(9, list.getLon(list.getSize()-1), .1);
+        list.removeLastPoint();
+        assertEquals(9, list.getSize());
+        assertEquals(8, list.getLon(list.getSize()-1), .1);
+    }
+
+    @Test
     public void testCopy_issue1166() {
         PointList list = new PointList(20, false);
         for (int i = 0; i < 10; i++) {

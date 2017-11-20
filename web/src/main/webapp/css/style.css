@@ -50,7 +50,7 @@ body {
 }
 
 .pointInput {
-    width: 220px;
+    width: 215px;
     float: left;
 }
 
@@ -79,6 +79,7 @@ body {
 }
 
 .time_input {
+    display: none;
     float: right;
     padding-right: 20px;
 }
@@ -196,6 +197,7 @@ body {
     clear: both;
 }
 #hosting {
+    clear: both;
     display: none;
     /* float: left;*/
     padding-top: 4px;
