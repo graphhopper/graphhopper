@@ -238,6 +238,20 @@ public class Instruction {
             throw new IllegalStateException("Instruction must contain at least one point " + toString());
     }
 
+    /**
+     * This method returns the length of an Instruction. The length of an instruction is defined by [the
+     * index of the first point of the next instruction] - [the index of the first point of this instruction].
+     * <p>
+     * In general this will just resolve to the size of the PointList, except for {@link ViaInstruction} and
+     * {@link FinishInstruction}, which are only virtual instructions, in a sense that they don't provide
+     * a turn instruction, but only an info ("reached via point or destination").
+     * <p>
+     * See #1216 and #1138
+     */
+    public int getLength() {
+        return points.getSize();
+    }
+
     public String getTurnDescription(Translation tr) {
         if (rawName)
             return getName();
