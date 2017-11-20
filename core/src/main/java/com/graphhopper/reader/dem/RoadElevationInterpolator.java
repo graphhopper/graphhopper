@@ -21,9 +21,6 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.util.Helper;
-import com.graphhopper.util.PointList;
 
 /**
  * This class smooths the elevation data of all edges by calculating the average elevation over
@@ -35,47 +32,21 @@ import com.graphhopper.util.PointList;
  *
  * @author Robin Boldt
  */
-public class RoadElevationInterpolator {
+public abstract class RoadElevationInterpolator {
 
-    private final static int MIN_GEOMETRY_SIZE = 3;
-    // The max amount of points to go left and right
-    private final static int MAX_SEARCH_RADIUS = 8;
-    // If the point is farther then this, we stop averaging
-    private final static int MAX_SEARCH_DISTANCE = 180;
-
-
-    public static void smoothElevation(Graph graph) {
+    public void smoothElevation(Graph graph) {
         final AllEdgesIterator edge = graph.getAllEdges();
         final GHBitSet visitedEdgeIds = new GHBitSetImpl(edge.getMaxId());
 
         while (edge.next()) {
             final int edgeId = edge.getEdge();
             if (!visitedEdgeIds.contains(edgeId)) {
-                PointList geometry = edge.fetchWayGeometry(3);
-                if (geometry.size() >= MIN_GEOMETRY_SIZE) {
-                    for (int i = 1; i < geometry.size() - 1; i++) {
-                        int start = i - MAX_SEARCH_RADIUS < 0 ? 0 : i - MAX_SEARCH_RADIUS;
-                        // +1 because we check for "< end"
-                        int end = i + MAX_SEARCH_RADIUS + 1 >= geometry.size() ? geometry.size() : i + MAX_SEARCH_RADIUS + 1;
-                        double sum = 0;
-                        int counter = 0;
-                        for (int j = start; j < end; j++) {
-                            // We skip points that are too far away, important for motorways
-                            if (MAX_SEARCH_DISTANCE > Helper.DIST_PLANE.calcDist(geometry.getLat(i), geometry.getLon(i), geometry.getLat(j), geometry.getLon(j))) {
-                                sum += geometry.getEle(j);
-                                counter++;
-                            }
-                        }
-                        double smoothed = sum / counter;
-                        geometry.setElevation(i, smoothed);
-                    }
-                    //Remove the Tower Nodes
-                    PointList pillarNodesPointList = geometry.copy(1, geometry.size()-1);
-                    edge.setWayGeometry(pillarNodesPointList);
-                }
+                smooth(edge);
             }
             visitedEdgeIds.add(edgeId);
         }
     }
+
+    protected abstract void smooth(AllEdgesIterator edge);
 
 }

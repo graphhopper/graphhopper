@@ -31,7 +31,7 @@ import static org.junit.Assert.assertEquals;
 /**
  * @author Robin Boldt
  */
-public class RoadElevationInterpolatorTest {
+public class RoadAverageElevationInterpolatorTest {
 
     @Test
     public void interpolatesElevationOfPillarNodes() {
@@ -58,7 +58,7 @@ public class RoadElevationInterpolatorTest {
         pl2.add(0.0017, 0.0015, 220);
         edge2.setWayGeometry(pl2);
 
-        RoadElevationInterpolator.smoothElevation(graph);
+        new RoadAverageElevationInterpolator().smoothElevation(graph);
 
         edge1 = graph.getEdgeIteratorState(0, 1);
         pl1 = edge1.fetchWayGeometry(3);
