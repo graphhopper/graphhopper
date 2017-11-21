@@ -112,13 +112,13 @@ class NodeContractor {
         EdgeIterator incomingEdges = vehicleInExplorer.setBaseNode(sch.getNode());
         // collect outgoing nodes (goal-nodes) only once
         while (incomingEdges.next()) {
-            int u_fromNode = incomingEdges.getAdjNode();
+            int fromNode = incomingEdges.getAdjNode();
             // accept only uncontracted nodes
-            if (prepareGraph.getLevel(u_fromNode) != maxLevel)
+            if (prepareGraph.getLevel(fromNode) != maxLevel)
                 continue;
 
-            double v_u_dist = incomingEdges.getDistance();
-            double v_u_weight = prepareWeighting.calcWeight(incomingEdges, true, EdgeIterator.NO_EDGE);
+            final double incomingEdgeDistance = incomingEdges.getDistance();
+            double incomingEdgeWeight = prepareWeighting.calcWeight(incomingEdges, true, EdgeIterator.NO_EDGE);
             int incomingEdge = incomingEdges.getEdge();
             int incomingEdgeOrigCount = getOrigEdgeCount(incomingEdge);
             // collect outgoing nodes (goal-nodes) only once
@@ -127,15 +127,15 @@ class NodeContractor {
             prepareAlgo.clear();
             degree++;
             while (outgoingEdges.next()) {
-                int w_toNode = outgoingEdges.getAdjNode();
+                int toNode = outgoingEdges.getAdjNode();
                 // add only uncontracted nodes
-                if (prepareGraph.getLevel(w_toNode) != maxLevel || u_fromNode == w_toNode)
+                if (prepareGraph.getLevel(toNode) != maxLevel || fromNode == toNode)
                     continue;
 
                 // Limit weight as ferries or forbidden edges can increase local search too much.
                 // If we decrease the correct weight we only explore less and introduce more shortcuts.
                 // I.e. no change to accuracy is made.
-                double existingDirectWeight = v_u_weight + prepareWeighting.calcWeight(outgoingEdges, false, incomingEdges.getEdge());
+                double existingDirectWeight = incomingEdgeWeight + prepareWeighting.calcWeight(outgoingEdges, false, incomingEdges.getEdge());
                 if (Double.isNaN(existingDirectWeight))
                     throw new IllegalStateException("Weighting should never return NaN values"
                             + ", in:" + getCoords(incomingEdges, prepareGraph) + ", out:" + getCoords(outgoingEdges, prepareGraph)
@@ -144,22 +144,22 @@ class NodeContractor {
                 if (Double.isInfinite(existingDirectWeight))
                     continue;
 
-                final double existingDistSum = v_u_dist + outgoingEdges.getDistance();
+                final double existingDistSum = incomingEdgeDistance + outgoingEdges.getDistance();
                 prepareAlgo.setWeightLimit(existingDirectWeight);
                 prepareAlgo.setMaxVisitedNodes(maxVisitedNodes);
                 prepareAlgo.setEdgeFilter(ignoreNodeFilter.setAvoidNode(sch.getNode()));
 
                 dijkstraSW.start();
                 dijkstraCount++;
-                int endNode = prepareAlgo.findEndNode(u_fromNode, w_toNode);
+                int endNode = prepareAlgo.findEndNode(fromNode, toNode);
                 dijkstraSW.stop();
 
                 // compare end node as the limit could force dijkstra to finish earlier
-                if (endNode == w_toNode && prepareAlgo.getWeight(endNode) <= existingDirectWeight)
+                if (endNode == toNode && prepareAlgo.getWeight(endNode) <= existingDirectWeight)
                     // FOUND witness path, so do not add shortcut
                     continue;
 
-                sch.foundShortcut(u_fromNode, w_toNode,
+                sch.foundShortcut(fromNode, toNode,
                         existingDirectWeight, existingDistSum,
                         outgoingEdges.getEdge(), getOrigEdgeCount(outgoingEdges.getEdge()),
                         incomingEdge, incomingEdgeOrigCount);
@@ -363,7 +363,7 @@ class NodeContractor {
     }
 
     interface ShortcutHandler {
-        void foundShortcut(int u_fromNode, int w_toNode,
+        void foundShortcut(int fromNode, int toNode,
                            double existingDirectWeight, double distance,
                            int outgoingEdge, int outgoingEdgeOrigCount,
                            int incomingEdge, int incomingEdgeOrigCount);
@@ -388,7 +388,7 @@ class NodeContractor {
         }
 
         @Override
-        public void foundShortcut(int u_fromNode, int w_toNode,
+        public void foundShortcut(int fromNode, int toNode,
                                   double existingDirectWeight, double distance,
                                   int outgoingEdge, int outgoingEdgeOrigCount,
                                   int incomingEdge, int incomingEdgeOrigCount) {
@@ -412,7 +412,7 @@ class NodeContractor {
         }
 
         @Override
-        public void foundShortcut(int u_fromNode, int w_toNode,
+        public void foundShortcut(int fromNode, int toNode,
                                   double existingDirectWeight, double existingDistSum,
                                   int outgoingEdge, int outgoingEdgeOrigCount,
                                   int incomingEdge, int incomingEdgeOrigCount) {
@@ -421,11 +421,11 @@ class NodeContractor {
             // and also in the graph for u->w. If existing AND identical weight => update setProperties.
             // Hint: shortcuts are always one-way due to distinct level of every node but we don't
             // know yet the levels so we need to determine the correct direction or if both directions
-            Shortcut sc = new Shortcut(u_fromNode, w_toNode, existingDirectWeight, existingDistSum);
+            Shortcut sc = new Shortcut(fromNode, toNode, existingDirectWeight, existingDistSum);
             if (shortcuts.containsKey(sc))
                 return;
 
-            Shortcut tmpSc = new Shortcut(w_toNode, u_fromNode, existingDirectWeight, existingDistSum);
+            Shortcut tmpSc = new Shortcut(toNode, fromNode, existingDirectWeight, existingDistSum);
             Shortcut tmpRetSc = shortcuts.get(tmpSc);
             if (tmpRetSc != null) {
                 // overwrite flags only if skipped edges are identical

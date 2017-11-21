@@ -74,7 +74,7 @@ public class NodeContractorTest {
     @Test
     public void testShortestPathSkipNode() {
         createExampleGraph();
-        double normalDist = new Dijkstra(g, weighting, tMode).calcPath(4, 2).getDistance();
+        final double normalDist = new Dijkstra(g, weighting, tMode).calcPath(4, 2).getDistance();
         DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, tMode);
         CHGraph lg = g.getGraph(CHGraph.class);
 
@@ -94,7 +94,7 @@ public class NodeContractorTest {
     @Test
     public void testShortestPathSkipNode2() {
         createExampleGraph();
-        double normalDist = new Dijkstra(g, weighting, tMode).calcPath(4, 2).getDistance();
+        final double normalDist = new Dijkstra(g, weighting, tMode).calcPath(4, 2).getDistance();
         assertEquals(3, normalDist, 1e-5);
         DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, tMode);
 
@@ -175,28 +175,28 @@ public class NodeContractorTest {
 
     @Test
     public void testFindShortcuts_Roundabout() {
-        EdgeIteratorState iter1_3 = g.edge(1, 3, 1, true);
-        EdgeIteratorState iter3_4 = g.edge(3, 4, 1, true);
-        EdgeIteratorState iter4_5 = g.edge(4, 5, 1, false);
-        EdgeIteratorState iter5_6 = g.edge(5, 6, 1, false);
-        EdgeIteratorState iter6_8 = g.edge(6, 8, 2, false);
-        EdgeIteratorState iter8_4 = g.edge(8, 4, 1, false);
+        EdgeIteratorState iter1to3 = g.edge(1, 3, 1, true);
+        EdgeIteratorState iter3to4 = g.edge(3, 4, 1, true);
+        EdgeIteratorState iter4to5 = g.edge(4, 5, 1, false);
+        EdgeIteratorState iter5to6 = g.edge(5, 6, 1, false);
+        EdgeIteratorState iter6to8 = g.edge(6, 8, 2, false);
+        EdgeIteratorState iter8to4 = g.edge(8, 4, 1, false);
         g.edge(6, 7, 1, true);
         g.freeze();
 
         CHEdgeIteratorState tmp = lg.shortcut(1, 4);
         tmp.setFlags(PrepareEncoder.getScDirMask());
         tmp.setWeight(2);
-        tmp.setSkippedEdges(iter1_3.getEdge(), iter3_4.getEdge());
+        tmp.setSkippedEdges(iter1to3.getEdge(), iter3to4.getEdge());
         long f = PrepareEncoder.getScFwdDir();
         tmp = lg.shortcut(4, 6);
         tmp.setFlags(f);
         tmp.setWeight(2);
-        tmp.setSkippedEdges(iter4_5.getEdge(), iter5_6.getEdge());
+        tmp.setSkippedEdges(iter4to5.getEdge(), iter5to6.getEdge());
         tmp = lg.shortcut(6, 4);
         tmp.setFlags(f);
         tmp.setWeight(3);
-        tmp.setSkippedEdges(iter6_8.getEdge(), iter8_4.getEdge());
+        tmp.setSkippedEdges(iter6to8.getEdge(), iter8to4.getEdge());
 
         setMaxLevelOnAllNodes();
 
@@ -257,8 +257,8 @@ public class NodeContractorTest {
     @Test
     public void testContractNode_directed_shortcutRequired() {
         // 0 --> 1 --> 2
-        EdgeIteratorState edge1 = g.edge(0, 1, 1, false);
-        EdgeIteratorState edge2 = g.edge(1, 2, 2, false);
+        final EdgeIteratorState edge1 = g.edge(0, 1, 1, false);
+        final EdgeIteratorState edge2 = g.edge(1, 2, 2, false);
         g.freeze();
         setMaxLevelOnAllNodes();
         createNodeContractor().contractNode(1);
@@ -268,8 +268,8 @@ public class NodeContractorTest {
     @Test
     public void testContractNode_bidirected_shortcutsRequired() {
         // 0 -- 1 -- 2
-        EdgeIteratorState edge1 = g.edge(0, 1, 1, true);
-        EdgeIteratorState edge2 = g.edge(1, 2, 2, true);
+        final EdgeIteratorState edge1 = g.edge(0, 1, 1, true);
+        final EdgeIteratorState edge2 = g.edge(1, 2, 2, true);
         g.freeze();
         setMaxLevelOnAllNodes();
         createNodeContractor().contractNode(1);
@@ -290,7 +290,7 @@ public class NodeContractorTest {
     }
 
     /**
-     * queries the ch graph and checks if the graph's shortcuts match the given expected shortcuts
+     * Queries the ch graph and checks if the graph's shortcuts match the given expected shortcuts.
      */
     private void checkShortcuts(Shortcut... expectedShortcuts) {
         Set<Shortcut> expected = setOf(expectedShortcuts);
