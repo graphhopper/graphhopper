@@ -111,9 +111,14 @@ public class PathMerger {
                 if (fullPoints.isEmpty())
                     fullPoints = new PointList(tmpPoints.size(), tmpPoints.is3D());
 
+                // Remove duplicated points, see #1138
+                if (pathIndex + 1 < paths.size()) {
+                    tmpPoints.removeLastPoint();
+                }
+
                 fullPoints.add(tmpPoints);
                 altRsp.addPathDetails(path.calcDetails(requestedPathDetails, pathBuilderFactory, origPoints));
-                origPoints += tmpPoints.size();
+                origPoints = fullPoints.size();
             }
 
             allFound = allFound && path.isFound();

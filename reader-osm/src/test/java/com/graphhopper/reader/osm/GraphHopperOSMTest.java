@@ -558,7 +558,7 @@ public class GraphHopperOSMTest {
         assertFalse("should find 1->2->3", grsp.hasErrors());
         PathWrapper rsp = grsp.getBest();
         assertEquals(rsp12.getBest().getDistance() + rsp23.getBest().getDistance(), rsp.getDistance(), 1e-6);
-        assertEquals(5, rsp.getPoints().getSize());
+        assertEquals(4, rsp.getPoints().getSize());
         assertEquals(5, rsp.getInstructions().size());
         assertEquals(Instruction.REACHED_VIA, rsp.getInstructions().get(1).getSign());
     }
