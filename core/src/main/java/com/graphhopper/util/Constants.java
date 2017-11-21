@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.StringTokenizer;
 
 import static com.graphhopper.util.Helper.*;
-import static com.graphhopper.util.Helper.readFile;
 
 /**
  * Defining several important constants for GraphHopper. Partially taken from Lucene.

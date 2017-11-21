@@ -22,7 +22,8 @@ import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.change.ChangeGraphHelper;
 
 import java.io.*;
-import java.nio.charset.Charset;
+
+import static com.graphhopper.util.Helper.UTF_CS;
 
 /**
  * Creates JsonFeature out of files and applies them to the graph.
@@ -48,7 +49,7 @@ public class JsonFeatureConverter {
         File fileOrFolder = new File(fileOrFolderStr);
         try {
             if (fileOrFolder.isFile()) {
-                return applyChanges(new InputStreamReader(new FileInputStream(fileOrFolder), Charset.forName("UTF-8")));
+                return applyChanges(new InputStreamReader(new FileInputStream(fileOrFolder), UTF_CS));
             }
 
             long sum = 0;
@@ -59,7 +60,7 @@ public class JsonFeatureConverter {
                 }
             });
             for (File f : fList) {
-                sum += applyChanges(new InputStreamReader(new FileInputStream(f), Charset.forName("UTF-8")));
+                sum += applyChanges(new InputStreamReader(new FileInputStream(f), UTF_CS));
             }
             return sum;
 

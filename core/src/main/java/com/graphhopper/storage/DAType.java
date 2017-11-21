@@ -17,9 +17,7 @@
  */
 package com.graphhopper.storage;
 
-import com.graphhopper.util.Helper;
-
-import static com.graphhopper.util.Helper.*;
+import static com.graphhopper.util.Helper.toUpperCase;
 
 /**
  * Defines how a DataAccess object is created.
