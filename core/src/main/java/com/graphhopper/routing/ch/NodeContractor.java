@@ -95,8 +95,8 @@ class NodeContractor {
         return degree;
     }
 
-    CalcShortcutsResult calcShortcutCount(int v) {
-        findShortcuts(calcScHandler.setNode(v));
+    CalcShortcutsResult calcShortcutCount(int node) {
+        findShortcuts(calcScHandler.setNode(node));
         return calcScHandler.calcShortcutsResult;
     }
 
@@ -144,7 +144,7 @@ class NodeContractor {
                 if (Double.isInfinite(existingDirectWeight))
                     continue;
 
-                double existingDistSum = v_u_dist + outgoingEdges.getDistance();
+                final double existingDistSum = v_u_dist + outgoingEdges.getDistance();
                 prepareAlgo.setWeightLimit(existingDirectWeight);
                 prepareAlgo.setMaxVisitedNodes(maxVisitedNodes);
                 prepareAlgo.setEdgeFilter(ignoreNodeFilter.setAvoidNode(sch.getNode()));
@@ -170,6 +170,7 @@ class NodeContractor {
 
     /**
      * Adds the given shortcuts to the graph.
+     *
      * @return the actual number of shortcuts that were added to the graph
      */
     int addShortcuts(Collection<Shortcut> shortcuts) {
@@ -229,11 +230,11 @@ class NodeContractor {
         return tmpNewShortcuts;
     }
 
-    private String getCoords(EdgeIteratorState e, Graph g) {
-        NodeAccess na = g.getNodeAccess();
-        int base = e.getBaseNode();
-        int adj = e.getAdjNode();
-        return base + "->" + adj + " (" + e.getEdge() + "); "
+    private String getCoords(EdgeIteratorState edge, Graph graph) {
+        NodeAccess na = graph.getNodeAccess();
+        int base = edge.getBaseNode();
+        int adj = edge.getAdjNode();
+        return base + "->" + adj + " (" + edge.getEdge() + "); "
                 + na.getLat(base) + "," + na.getLon(base) + " -> " + na.getLat(adj) + "," + na.getLon(adj);
     }
 
@@ -293,8 +294,8 @@ class NodeContractor {
         int maxLevel;
         CHGraph graph;
 
-        IgnoreNodeFilter(CHGraph g, int maxLevel) {
-            this.graph = g;
+        IgnoreNodeFilter(CHGraph chGraph, int maxLevel) {
+            this.graph = chGraph;
             this.maxLevel = maxLevel;
         }
 
@@ -379,8 +380,8 @@ class NodeContractor {
             return node;
         }
 
-        public CalcShortcutHandler setNode(int n) {
-            node = n;
+        public CalcShortcutHandler setNode(int node) {
+            this.node = node;
             calcShortcutsResult.originalEdgesCount = 0;
             calcShortcutsResult.shortcutsCount = 0;
             return this;
@@ -404,9 +405,9 @@ class NodeContractor {
             return node;
         }
 
-        public AddShortcutHandler setNode(int n) {
+        public AddShortcutHandler setNode(int node) {
             shortcuts.clear();
-            node = n;
+            this.node = node;
             return this;
         }
 

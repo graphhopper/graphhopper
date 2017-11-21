@@ -428,9 +428,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
      * the priority(v). Otherwise updating the priority before contracting in contractNodes() could
      * lead to a slowish or even endless loop.
      */
-    private int calculatePriority(int v) {
+    private int calculatePriority(int node) {
         nodeContractor.setMaxVisitedNodes(getMaxVisitedNodesEstimate());
-        NodeContractor.CalcShortcutsResult calcShortcutsResult = nodeContractor.calcShortcutCount(v);
+        NodeContractor.CalcShortcutsResult calcShortcutsResult = nodeContractor.calcShortcutCount(node);
 
         // # huge influence: the bigger the less shortcuts gets created and the faster is the preparation
         //
@@ -446,7 +446,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         // number of already contracted neighbors of v
         int contractedNeighbors = 0;
         int degree = 0;
-        CHEdgeIterator iter = calcPrioAllExplorer.setBaseNode(v);
+        CHEdgeIterator iter = calcPrioAllExplorer.setBaseNode(node);
         while (iter.next()) {
             degree++;
             if (iter.isShortcut())
