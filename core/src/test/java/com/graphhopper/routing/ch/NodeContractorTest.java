@@ -19,15 +19,14 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraOneToMany;
+import com.graphhopper.routing.util.AllCHEdgesIterator;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.CHEdgeIterator;
-import com.graphhopper.util.CHEdgeIteratorState;
-import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.*;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -206,9 +205,16 @@ public class NodeContractorTest {
         lg.setLevel(7, 7);
         lg.setLevel(8, 8);
 
-        // there should be two different shortcuts for both directions!
+        // after 'manual contraction' the graph looks like:
+        // 1 -- 4 -->-- 6 -- 7
+        //       \      |
+        //        --<----
+
+        // contract node 4!
         NodeContractor nodeContractor = createNodeContractor();
         Collection<NodeContractor.Shortcut> sc = nodeContractor.testFindShortcuts(4);
+
+        // there should be two different shortcuts for both directions!
         assertEquals(2, sc.size());
         Iterator<NodeContractor.Shortcut> iter = sc.iterator();
         NodeContractor.Shortcut sc1 = iter.next();
@@ -256,23 +262,22 @@ public class NodeContractorTest {
         g.freeze();
         setMaxLevelOnAllNodes();
         createNodeContractor().contractNode(1);
-
-        List<Shortcut> shortcuts = new ArrayList<>();
-        // todo: why does the all iterator yield skipEdge2=0 instead of 1 in the found shortcut ?
-//      CHEdgeIterator iter = lg.getAllEdges();
-        CHEdgeIterator iter = lg.createEdgeExplorer().setBaseNode(0);
-        while (iter.next()) {
-            if (iter.isShortcut()) {
-                shortcuts.add(new Shortcut(iter.getBaseNode(), iter.getAdjNode(), iter.getWeight(), iter.getDistance(), iter.isForward(encoder),
-                        iter.isBackward(encoder), iter.getSkippedEdge1(), iter.getSkippedEdge2()));
-            }
-        }
-        assertEquals(1, shortcuts.size());
-        assertEquals(new Shortcut(0, 2, 3.0, 3.0, true, false, edge1.getEdge(), edge2.getEdge()), shortcuts.get(0));
+        checkShortcuts(expectedShortcut(0, 2, edge1, edge2, true, false));
     }
 
     @Test
-    public void testContractNode_simple_withWitness() {
+    public void testContractNode_bidirected_shortcutsRequired() {
+        // 0 -- 1 -- 2
+        EdgeIteratorState edge1 = g.edge(0, 1, 1, true);
+        EdgeIteratorState edge2 = g.edge(1, 2, 2, true);
+        g.freeze();
+        setMaxLevelOnAllNodes();
+        createNodeContractor().contractNode(1);
+        checkShortcuts(expectedShortcut(0, 2, edge2, edge1, true, true));
+    }
+
+    @Test
+    public void testContractNode_directed_withWitness() {
         // 0 --> 1 --> 2
         //  \_________/
         g.edge(0, 1, 1, false);
@@ -281,8 +286,47 @@ public class NodeContractorTest {
         g.freeze();
         setMaxLevelOnAllNodes();
         createNodeContractor().contractNode(1);
-        // no shortcuts added
-        assertEquals(3, lg.getAllEdges().getMaxId());
+        checkNoShortcuts();
+    }
+
+    /**
+     * queries the ch graph and checks if the graph's shortcuts match the given expected shortcuts
+     */
+    private void checkShortcuts(Shortcut... expectedShortcuts) {
+        Set<Shortcut> expected = setOf(expectedShortcuts);
+        if (expected.size() != expectedShortcuts.length) {
+            fail("was given duplicate shortcuts");
+        }
+        AllCHEdgesIterator iter = lg.getAllEdges();
+        Set<Shortcut> given = new HashSet<>();
+        while (iter.next()) {
+            if (iter.isShortcut()) {
+                given.add(new Shortcut(
+                        iter.getBaseNode(), iter.getAdjNode(), iter.getWeight(), iter.getDistance(),
+                        iter.isForward(encoder), iter.isBackward(encoder),
+                        iter.getSkippedEdge1(), iter.getSkippedEdge2()));
+            }
+        }
+        assertEquals(expected, given);
+    }
+
+    private void checkNoShortcuts() {
+        checkShortcuts();
+    }
+
+    private Shortcut expectedShortcut(int baseNode, int adjNode, EdgeIteratorState edge1, EdgeIteratorState edge2,
+                                      boolean fwd, boolean bwd) {
+        //todo: weight calculation might have to be adjusted for different encoders/weightings/reverse speed
+        double weight = weighting.calcWeight(edge1, false, EdgeIterator.NO_EDGE) +
+                weighting.calcWeight(edge2, false, EdgeIterator.NO_EDGE);
+        double distance = edge1.getDistance() + edge2.getDistance();
+        return new Shortcut(baseNode, adjNode, weight, distance, fwd, bwd, edge1.getEdge(), edge2.getEdge());
+    }
+
+    private Set<Shortcut> setOf(Shortcut... shortcuts) {
+        Set<Shortcut> result = new HashSet<>();
+        result.addAll(Arrays.asList(shortcuts));
+        return result;
     }
 
     private void setMaxLevelOnAllNodes() {
