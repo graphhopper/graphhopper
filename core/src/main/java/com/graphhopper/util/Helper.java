@@ -88,6 +88,14 @@ public class Helper {
         return new Locale(param.substring(0, index), param.substring(index + 1));
     }
 
+    public static String toLowerCase(String string){
+        return string.toLowerCase(Locale.ROOT);
+    }
+
+    public static String toUpperCase(String string){
+        return string.toUpperCase(Locale.ROOT);
+    }
+
     static String packageToPath(Package pkg) {
         return pkg.getName().replaceAll("\\.", File.separator);
     }

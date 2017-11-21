@@ -19,6 +19,8 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.util.PMap;
 
+import static com.graphhopper.util.Helper.toLowerCase;
+
 /**
  * @author Peter Karich
  */
@@ -53,7 +55,7 @@ public class HintsMap extends PMap {
     }
 
     public String getWeighting() {
-        return super.get("weighting", "").toLowerCase();
+        return toLowerCase(super.get("weighting", ""));
     }
 
     public HintsMap setWeighting(String w) {
@@ -63,7 +65,7 @@ public class HintsMap extends PMap {
     }
 
     public String getVehicle() {
-        return super.get("vehicle", "").toLowerCase();
+        return toLowerCase(super.get("vehicle", ""));
     }
 
     public HintsMap setVehicle(String v) {
