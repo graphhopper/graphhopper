@@ -21,11 +21,8 @@ import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.change.ChangeGraphHelper;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.FilenameFilter;
-import java.io.Reader;
+import java.io.*;
+import java.nio.charset.Charset;
 
 /**
  * Creates JsonFeature out of files and applies them to the graph.
@@ -51,7 +48,7 @@ public class JsonFeatureConverter {
         File fileOrFolder = new File(fileOrFolderStr);
         try {
             if (fileOrFolder.isFile()) {
-                return applyChanges(new FileReader(fileOrFolder));
+                return applyChanges(new InputStreamReader(new FileInputStream(fileOrFolder), Charset.forName("UTF-8")));
             }
 
             long sum = 0;
@@ -62,7 +59,7 @@ public class JsonFeatureConverter {
                 }
             });
             for (File f : fList) {
-                sum += applyChanges(new FileReader(f));
+                sum += applyChanges(new InputStreamReader(new FileInputStream(f), Charset.forName("UTF-8")));
             }
             return sum;
 
