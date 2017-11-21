@@ -40,7 +40,7 @@ public class NodeContractorTest {
     private final Weighting weighting = new ShortestWeighting(encoder);
     private final GraphHopperStorage g = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
     private final CHGraph lg = g.getGraph(CHGraph.class);
-    private final TraversalMode tMode = TraversalMode.NODE_BASED;
+    private final TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private Directory dir;
 
     @Before
@@ -49,7 +49,7 @@ public class NodeContractorTest {
     }
 
     private NodeContractor createNodeContractor() {
-        NodeContractor nodeContractor = new NodeContractor(dir, g, lg, weighting, tMode);
+        NodeContractor nodeContractor = new NodeContractor(dir, g, lg, weighting, traversalMode);
         nodeContractor.initFromGraph();
         return nodeContractor;
     }
@@ -74,8 +74,8 @@ public class NodeContractorTest {
     @Test
     public void testShortestPathSkipNode() {
         createExampleGraph();
-        final double normalDist = new Dijkstra(g, weighting, tMode).calcPath(4, 2).getDistance();
-        DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, tMode);
+        final double normalDist = new Dijkstra(g, weighting, traversalMode).calcPath(4, 2).getDistance();
+        DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, traversalMode);
         CHGraph lg = g.getGraph(CHGraph.class);
 
         setMaxLevelOnAllNodes();
@@ -94,9 +94,9 @@ public class NodeContractorTest {
     @Test
     public void testShortestPathSkipNode2() {
         createExampleGraph();
-        final double normalDist = new Dijkstra(g, weighting, tMode).calcPath(4, 2).getDistance();
+        final double normalDist = new Dijkstra(g, weighting, traversalMode).calcPath(4, 2).getDistance();
         assertEquals(3, normalDist, 1e-5);
-        DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, tMode);
+        DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, traversalMode);
 
         setMaxLevelOnAllNodes();
 
@@ -112,7 +112,7 @@ public class NodeContractorTest {
     @Test
     public void testShortestPathLimit() {
         createExampleGraph();
-        DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, tMode);
+        DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, traversalMode);
 
         setMaxLevelOnAllNodes();
 
@@ -148,7 +148,7 @@ public class NodeContractorTest {
         setMaxLevelOnAllNodes();
 
         // find all shortcuts if we contract node 1
-        NodeContractor nodeContractor = new NodeContractor(dir, g, lg, weighting, tMode);
+        NodeContractor nodeContractor = new NodeContractor(dir, g, lg, weighting, traversalMode);
         nodeContractor.initFromGraph();
         Collection<NodeContractor.Shortcut> scs = nodeContractor.testFindShortcuts(1);
         assertEquals(2, scs.size());
@@ -175,12 +175,12 @@ public class NodeContractorTest {
 
     @Test
     public void testFindShortcuts_Roundabout() {
-        EdgeIteratorState iter1to3 = g.edge(1, 3, 1, true);
-        EdgeIteratorState iter3to4 = g.edge(3, 4, 1, true);
-        EdgeIteratorState iter4to5 = g.edge(4, 5, 1, false);
-        EdgeIteratorState iter5to6 = g.edge(5, 6, 1, false);
-        EdgeIteratorState iter6to8 = g.edge(6, 8, 2, false);
-        EdgeIteratorState iter8to4 = g.edge(8, 4, 1, false);
+        final EdgeIteratorState iter1to3 = g.edge(1, 3, 1, true);
+        final EdgeIteratorState iter3to4 = g.edge(3, 4, 1, true);
+        final EdgeIteratorState iter4to5 = g.edge(4, 5, 1, false);
+        final EdgeIteratorState iter5to6 = g.edge(5, 6, 1, false);
+        final EdgeIteratorState iter6to8 = g.edge(6, 8, 2, false);
+        final EdgeIteratorState iter8to4 = g.edge(8, 4, 1, false);
         g.edge(6, 7, 1, true);
         g.freeze();
 

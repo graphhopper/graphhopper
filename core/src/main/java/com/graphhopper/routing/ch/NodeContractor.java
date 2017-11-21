@@ -427,12 +427,10 @@ class NodeContractor {
 
             Shortcut tmpSc = new Shortcut(toNode, fromNode, existingDirectWeight, existingDistSum);
             Shortcut tmpRetSc = shortcuts.get(tmpSc);
-            if (tmpRetSc != null) {
-                // overwrite flags only if skipped edges are identical
-                if (tmpRetSc.skippedEdge2 == incomingEdge && tmpRetSc.skippedEdge1 == outgoingEdge) {
-                    tmpRetSc.flags = PrepareEncoder.getScDirMask();
-                    return;
-                }
+            // overwrite flags only if skipped edges are identical
+            if (tmpRetSc != null && tmpRetSc.skippedEdge2 == incomingEdge && tmpRetSc.skippedEdge1 == outgoingEdge) {
+                tmpRetSc.flags = PrepareEncoder.getScDirMask();
+                return;
             }
 
             Shortcut old = shortcuts.put(sc, sc);
