@@ -599,18 +599,25 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
 
         @Override
         public final void setSkippedEdges(int edge1, int edge2) {
-            baseGraph.edges.setInt(edgePointer + S_SKIP_EDGE1, edge1);
-            baseGraph.edges.setInt(edgePointer + S_SKIP_EDGE2, edge2);
+            checkShortcut(true, "setSkippedEdges");
+            if (EdgeIterator.Edge.isValid(edge1) != EdgeIterator.Edge.isValid(edge2)) {
+                throw new IllegalStateException("Skipped edges of a shortcut needs "
+                        + "to be both valid or invalid but they were not " + edge1 + ", " + edge2);
+            }
+            shortcuts.setInt(edgePointer + S_SKIP_EDGE1, edge1);
+            shortcuts.setInt(edgePointer + S_SKIP_EDGE2, edge2);
         }
 
         @Override
         public final int getSkippedEdge1() {
-            return baseGraph.edges.getInt(edgePointer + S_SKIP_EDGE1);
+            checkShortcut(true, "getSkippedEdge1");
+            return shortcuts.getInt(edgePointer + S_SKIP_EDGE1);
         }
 
         @Override
         public final int getSkippedEdge2() {
-            return baseGraph.edges.getInt(edgePointer + S_SKIP_EDGE2);
+            checkShortcut(true, "getSkippedEdge2");
+            return shortcuts.getInt(edgePointer + S_SKIP_EDGE2);
         }
 
         @Override
@@ -633,6 +640,14 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         @Override
         public int getMergeStatus(long flags) {
             return PrepareEncoder.getScMergeStatus(getDirectFlags(), flags);
+        }
+
+        void checkShortcut(boolean shouldBeShortcut, String methodName) {
+            if (isShortcut()) {
+                if (!shouldBeShortcut)
+                    throw new IllegalStateException("Cannot call " + methodName + " on shortcut " + getEdge());
+            } else if (shouldBeShortcut)
+                throw new IllegalStateException("Method " + methodName + " only for shortcuts " + getEdge());
         }
     }
 }

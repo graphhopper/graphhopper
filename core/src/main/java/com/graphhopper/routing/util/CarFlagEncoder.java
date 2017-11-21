@@ -335,8 +335,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     }
 
     /**
-     * @param way:   needed to retrieve tags
-     * @param speed: speed guessed e.g. from the road type or other tags
+     * @param way   needed to retrieve tags
+     * @param speed speed guessed e.g. from the road type or other tags
      * @return The assumed speed
      */
     protected double applyBadSurfaceSpeed(ReaderWay way, double speed) {

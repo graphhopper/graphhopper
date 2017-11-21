@@ -87,6 +87,10 @@ public class PathMerger {
         List<String> description = new ArrayList<>();
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++) {
             Path path = paths.get(pathIndex);
+            if (!path.isFound()) {
+                allFound = false;
+                continue;
+            }
             description.addAll(path.getDescription());
             fullTimeInMillis += path.getTime();
             fullDistance += path.getDistance();
