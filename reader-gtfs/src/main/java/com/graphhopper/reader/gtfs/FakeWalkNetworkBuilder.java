@@ -22,12 +22,12 @@ import com.conveyal.gtfs.GTFSFeed;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.DistanceCalc;
 import com.graphhopper.util.EdgeIteratorState;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.triangulate.ConformingDelaunayTriangulator;
-import com.vividsolutions.jts.triangulate.ConstraintVertex;
-import com.vividsolutions.jts.triangulate.quadedge.QuadEdge;
-import com.vividsolutions.jts.triangulate.quadedge.QuadEdgeSubdivision;
-import com.vividsolutions.jts.triangulate.quadedge.Vertex;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.triangulate.ConformingDelaunayTriangulator;
+import org.locationtech.jts.triangulate.ConstraintVertex;
+import org.locationtech.jts.triangulate.quadedge.QuadEdge;
+import org.locationtech.jts.triangulate.quadedge.QuadEdgeSubdivision;
+import org.locationtech.jts.triangulate.quadedge.Vertex;
 
 import java.util.*;
 

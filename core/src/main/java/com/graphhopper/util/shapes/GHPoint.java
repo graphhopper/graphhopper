@@ -18,7 +18,7 @@
 package com.graphhopper.util.shapes;
 
 import com.graphhopper.util.NumHelper;
-import com.vividsolutions.jts.geom.Point;
+import org.locationtech.jts.geom.Point;
 
 /**
  * @author Peter Karich

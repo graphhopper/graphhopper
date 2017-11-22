@@ -21,7 +21,7 @@ import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
-import com.vividsolutions.jts.geom.LineString;
+import org.locationtech.jts.geom.LineString;
 import org.junit.Test;
 
 import java.io.InputStreamReader;
