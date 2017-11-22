@@ -17,26 +17,17 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GHDirectory;
-import com.graphhopper.util.Downloader;
 import com.graphhopper.util.Helper;
 import org.apache.xmlgraphics.image.codec.tiff.TIFFDecodeParam;
 import org.apache.xmlgraphics.image.codec.tiff.TIFFImageDecoder;
 import org.apache.xmlgraphics.image.codec.util.SeekableStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.SocketTimeoutException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -56,22 +47,17 @@ import java.util.zip.ZipInputStream;
  * @author NopMap
  * @author Peter Karich
  */
-public class CGIARProvider implements ElevationProvider {
+public class CGIARProvider extends AbstractTiffElevationProvider {
     private static final int WIDTH = 6000;
-    final double precision = 1e7;
-    private final Logger logger = LoggerFactory.getLogger(getClass());
-    private final Map<String, HeightTile> cacheData = new HashMap<String, HeightTile>();
+    private final double precision = 1e7;
     private final double invPrecision = 1 / precision;
     private final int degree = 5;
-    private Downloader downloader = new Downloader("GraphHopper CGIARReader").setTimeout(10000);
-    private File cacheDir = new File("/tmp/cgiar");
-    // for alternatives see #346
-    private String baseUrl = "http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff";
-    private Directory dir;
-    private DAType daType = DAType.MMAP;
-    private boolean calcMean = false;
-    private boolean autoRemoveTemporary = true;
-    private long sleep = 2000;
+
+    public CGIARProvider() {
+        super("http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff",
+                "/tmp/cgiar",
+                "GraphHopper CGIARReader");
+    }
 
     public static void main(String[] args) {
         CGIARProvider provider = new CGIARProvider();
@@ -80,22 +66,22 @@ public class CGIARProvider implements ElevationProvider {
 
         // 337.0
         System.out.println(provider.getEle(49.949784, 11.57517));
-        // 453.0
+        // 466.0
         System.out.println(provider.getEle(49.968668, 11.575127));
-        // 447.0
+        // 455.0
         System.out.println(provider.getEle(49.968682, 11.574842));
 
-        // 3131
+        // 3134
         System.out.println(provider.getEle(-22.532854, -65.110474));
 
-        // 123
+        // 120
         System.out.println(provider.getEle(38.065392, -87.099609));
 
         // 1615
         System.out.println(provider.getEle(40, -105.2277023));
         System.out.println(provider.getEle(39.99999999, -105.2277023));
         System.out.println(provider.getEle(39.9999999, -105.2277023));
-        // 1617
+        // 1616
         System.out.println(provider.getEle(39.999999, -105.2277023));
 
         // 0
@@ -103,62 +89,10 @@ public class CGIARProvider implements ElevationProvider {
     }
 
     @Override
-    public void setCalcMean(boolean eleCalcMean) {
-        calcMean = eleCalcMean;
-    }
-
-    void setSleep(long sleep) {
-        this.sleep = sleep;
-    }
-
-    /**
-     * Creating temporary files can take a long time as we need to unpack tiff as well as to fill
-     * our DataAccess object, so this option can be used to disable the default clear mechanism via
-     * specifying 'false'.
-     */
-    public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
-        this.autoRemoveTemporary = autoRemoveTemporary;
-    }
-
-    public void setDownloader(Downloader downloader) {
-        this.downloader = downloader;
-    }
-
-    @Override
-    public ElevationProvider setCacheDir(File cacheDir) {
-        if (cacheDir.exists() && !cacheDir.isDirectory())
-            throw new IllegalArgumentException("Cache path has to be a directory");
-        try {
-            this.cacheDir = cacheDir.getCanonicalFile();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-        return this;
-    }
-
-    protected File getCacheDir() {
-        return cacheDir;
-    }
-
-    @Override
-    public ElevationProvider setBaseURL(String baseUrl) {
-        if (baseUrl == null || baseUrl.isEmpty())
-            throw new IllegalArgumentException("baseUrl cannot be empty");
-
-        this.baseUrl = baseUrl;
-        return this;
-    }
-
-    @Override
-    public ElevationProvider setDAType(DAType daType) {
-        this.daType = daType;
-        return this;
-    }
-
-    @Override
     public double getEle(double lat, double lon) {
-        // no data we can avoid the trouble
-        if (lat > 60 || lat < -60)
+        // Return fast, if there is no data available
+        // See https://www2.jpl.nasa.gov/srtm/faq.html
+        if (lat >= 60 || lat <= -56)
             return 0;
 
         lat = (int) (lat * precision) / precision;
@@ -172,7 +106,7 @@ public class CGIARProvider implements ElevationProvider {
             int minLat = down(lat);
             int minLon = down(lon);
             // less restrictive against boundary checking
-            demProvider = new HeightTile(minLat, minLon, WIDTH, degree * precision, degree);
+            demProvider = new HeightTile(minLat, minLon, WIDTH, WIDTH, degree * precision, degree, degree);
             demProvider.setCalcMean(calcMean);
 
             cacheData.put(name, demProvider);
@@ -190,31 +124,14 @@ public class CGIARProvider implements ElevationProvider {
                 String zippedURL = baseUrl + "/" + name + ".zip";
                 File file = new File(cacheDir, new File(zippedURL).getName());
 
-                // get zip file if not already in cacheDir - unzip later and in-memory only!
-                if (!file.exists()) {
-                    try {
-                        int max = 3;
-                        for (int trial = 0; trial < max; trial++) {
-                            try {
-                                downloader.downloadFile(zippedURL, file.getAbsolutePath());
-                                break;
-                            } catch (SocketTimeoutException ex) {
-                                // just try again after a little nap
-                                Thread.sleep(sleep);
-                                if (trial >= max - 1)
-                                    throw ex;
-                                continue;
-                            } catch (IOException ex) {
-                                demProvider.setSeaLevel(true);
-                                // use small size on disc and in-memory
-                                heights.setSegmentSize(100).create(10).
-                                        flush();
-                                return 0;
-                            }
-                        }
-                    } catch (Exception ex) {
-                        throw new RuntimeException(ex);
-                    }
+                try {
+                    downloadFile(file, zippedURL);
+                } catch (IOException e) {
+                    demProvider.setSeaLevel(true);
+                    // use small size on disc and in-memory
+                    heights.setSegmentSize(100).create(10).
+                            flush();
+                    return 0;
                 }
 
                 // short == 2 bytes
@@ -243,26 +160,8 @@ public class CGIARProvider implements ElevationProvider {
                         Helper.close(ss);
                 }
 
-                // logger.info("start converting to our format");
-                final int height = raster.getHeight();
-                final int width = raster.getWidth();
-                int x = 0, y = 0;
-                try {
-                    for (y = 0; y < height; y++) {
-                        for (x = 0; x < width; x++) {
-                            short val = (short) raster.getPixel(x, y, (int[]) null)[0];
-                            if (val < -1000 || val > 12000)
-                                val = Short.MIN_VALUE;
+                fillDataAccessWithElevationData(raster, heights, WIDTH);
 
-                            heights.setShort(2 * (y * WIDTH + x), val);
-                        }
-                    }
-                    heights.flush();
-
-                    // TODO remove tifName and zip?
-                } catch (Exception ex) {
-                    throw new RuntimeException("Problem at x:" + x + ", y:" + y, ex);
-                }
             } // loadExisting
         }
 
@@ -302,24 +201,7 @@ public class CGIARProvider implements ElevationProvider {
     }
 
     @Override
-    public void release() {
-        cacheData.clear();
-
-        // for memory mapped type we create temporary unpacked files which should be removed
-        if (autoRemoveTemporary && dir != null)
-            dir.clear();
-    }
-
-    @Override
     public String toString() {
         return "CGIAR";
-    }
-
-    private Directory getDirectory() {
-        if (dir != null)
-            return dir;
-
-        logger.info(this.toString() + " Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType);
-        return dir = new GHDirectory(cacheDir.getAbsolutePath(), daType);
     }
 }

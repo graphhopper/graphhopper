@@ -373,6 +373,14 @@ public class CarFlagEncoderTest {
         assertTrue(encoder.isForward(flags));
         assertFalse(encoder.isBackward(flags));
         assertTrue(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+
+        way.clearTags();
+        way.setTag("highway", "motorway");
+        way.setTag("junction", "circular");
+        flags = encoder.handleWayTags(way, encoder.acceptBit, 0);
+        assertTrue(encoder.isForward(flags));
+        assertFalse(encoder.isBackward(flags));
+        assertTrue(encoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
     }
 
     @Test

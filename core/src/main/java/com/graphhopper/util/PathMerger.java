@@ -46,7 +46,8 @@ public class PathMerger {
     private boolean simplifyResponse = true;
     private DouglasPeucker douglasPeucker = DP;
     private boolean calcPoints = true;
-    private PathDetailsBuilderFactory calculatorFactory;
+    private PathDetailsBuilderFactory pathBuilderFactory;
+    private List<String> requestedPathDetails = Collections.EMPTY_LIST;
 
     public PathMerger setCalcPoints(boolean calcPoints) {
         this.calcPoints = calcPoints;
@@ -58,8 +59,9 @@ public class PathMerger {
         return this;
     }
 
-    public PathMerger setPathDetailsBuilderFactory(PathDetailsBuilderFactory calculatorFactory) {
-        this.calculatorFactory = calculatorFactory;
+    public PathMerger setPathDetailsBuilders(PathDetailsBuilderFactory pathBuilderFactory, List<String> requestedPathDetails) {
+        this.pathBuilderFactory = pathBuilderFactory;
+        this.requestedPathDetails = requestedPathDetails;
         return this;
     }
 
@@ -82,9 +84,13 @@ public class PathMerger {
 
         InstructionList fullInstructions = new InstructionList(tr);
         PointList fullPoints = PointList.EMPTY;
-        List<String> description = new ArrayList<String>();
+        List<String> description = new ArrayList<>();
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++) {
             Path path = paths.get(pathIndex);
+            if (!path.isFound()) {
+                allFound = false;
+                continue;
+            }
             description.addAll(path.getDescription());
             fullTimeInMillis += path.getTime();
             fullDistance += path.getDistance();
@@ -109,9 +115,14 @@ public class PathMerger {
                 if (fullPoints.isEmpty())
                     fullPoints = new PointList(tmpPoints.size(), tmpPoints.is3D());
 
+                // Remove duplicated points, see #1138
+                if (pathIndex + 1 < paths.size()) {
+                    tmpPoints.removeLastPoint();
+                }
+
                 fullPoints.add(tmpPoints);
-                altRsp.addPathDetails(path.calcDetails(calculatorFactory, origPoints));
-                origPoints += tmpPoints.size();
+                altRsp.addPathDetails(path.calcDetails(requestedPathDetails, pathBuilderFactory, origPoints));
+                origPoints = fullPoints.size();
             }
 
             allFound = allFound && path.isFound();

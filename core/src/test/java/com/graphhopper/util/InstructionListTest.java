@@ -233,7 +233,7 @@ public class InstructionListTest {
         p = new Dijkstra(g, new ShortestWeighting(carEncoder), tMode).calcPath(3, 5);
         wayList = p.calcInstructions(usTR);
         tmpList = pick("text", wayList.createJson());
-        assertEquals(Arrays.asList("Continue onto 3-4", "Turn slight right onto 4-5", "Arrive at destination"),
+        assertEquals(Arrays.asList("Continue onto 3-4", "Keep right onto 4-5", "Arrive at destination"),
                 tmpList);
     }
 
@@ -385,6 +385,47 @@ public class InstructionListTest {
         assertNull(json.get("turn_angle"));
         // assert that a valid JSON object can be written
         assertNotNull(write(json));
+    }
+
+    @Test
+    public void testCreateGPXIncludesRoundaboutExitNumber() {
+        InstructionList instructions = new InstructionList(usTR);
+
+        PointList pl = new PointList();
+        pl.add(52.555423473315, 13.43890086052345);
+        pl.add(52.555550691982, 13.43946393816465);
+        pl.add(52.555619423589, 13.43886994061328);
+        RoundaboutInstruction instr = new RoundaboutInstruction(Instruction.USE_ROUNDABOUT, "streetname",
+                InstructionAnnotation.EMPTY, pl)
+                .setRadian(2.058006514284998d)
+                .setExitNumber(3)
+                .setExited();
+        instructions.add(instr);
+        instructions.add(new FinishInstruction(52.555619423589, 13.43886994061328, 0));
+
+        String gpxStr = instructions.createGPX("test", 0, true, true, false, false);
+
+        assertTrue(gpxStr, gpxStr.contains("<gh:exit_number>3</gh:exit_number>"));
+        verifyGPX(gpxStr);
+    }
+
+    @Test
+    public void testCreateGPXCorrectFormattingSmallNumbers() {
+        InstructionList instructions = new InstructionList(usTR);
+
+        PointList pl = new PointList();
+        pl.add(0.000001, 0.000001);
+        pl.add(-0.000123, -0.000125);
+        Instruction instruction = new Instruction(0, "do it", null, pl);
+        instructions.add(instruction);
+        instructions.add(new FinishInstruction(0.000852, 0.000852, 0));
+
+        String gpxStr = instructions.createGPX("test", 0, true, true, true, true);
+
+        assertFalse(gpxStr, gpxStr.contains("E-"));
+        assertTrue(gpxStr, gpxStr.contains("0.000001"));
+        assertTrue(gpxStr, gpxStr.contains("-0.000125"));
+        verifyGPX(gpxStr);
     }
 
     @Test

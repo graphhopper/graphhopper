@@ -65,12 +65,17 @@ public class GraphHopperLandmarksIT {
     }
 
     @Test
-    public void testSimpleQuery() throws Exception {
-        final Response response = app.client().target("http://localhost:8080/route?" + "point=55.99022,29.129734&point=56.001069,29.150848").request().buildGet().invoke();
+    public void testQueries() throws Exception {
+        Response response = app.client().target("http://localhost:8080/route?point=55.99022,29.129734&point=56.001069,29.150848").request().buildGet().invoke();
         assertEquals(200, response.getStatus());
         JsonNode json = response.readEntity(JsonNode.class);
         JsonNode path = json.get("paths").get(0);
         double distance = path.get("distance").asDouble();
+        assertEquals("distance wasn't correct:" + distance, 1870, distance, 100);
+
+        response = app.client().target("http://localhost:8080/route?point=55.99022,29.129734&point=56.001069,29.150848&ch.disable=true").request().buildGet().invoke();
+        json = response.readEntity(JsonNode.class);
+        distance = json.get("paths").get(0).get("distance").asDouble();
         assertEquals("distance wasn't correct:" + distance, 1870, distance, 100);
     }
 

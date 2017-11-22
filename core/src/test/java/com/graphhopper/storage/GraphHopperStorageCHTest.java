@@ -56,7 +56,7 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         graph = new GraphBuilder(encodingManager).setLocation(defaultGraphLoc).setMmap(false).setStore(true).create();
         try {
             graph.loadExisting();
-            assertTrue(false);
+            fail();
         } catch (Exception ex) {
         }
 
@@ -342,6 +342,46 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
         // iteration should result in same nodes even if reusing the iterator
         assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(vehicleOutExplorer.setBaseNode(1)));
         assertEquals(GHUtility.asSet(3, 4), GHUtility.getNeighbors(vehicleOutExplorer.setBaseNode(1)));
+    }
+
+    @Test
+    public void testAddShortcutSkippedEdgesWriteRead() {
+        graph = createGHStorage();
+        final EdgeIteratorState edge1 = graph.edge(1, 3, 10, true);
+        final EdgeIteratorState edge2 = graph.edge(3, 4, 10, true);
+        graph.freeze();
+
+        CHGraph lg = graph.getGraph(CHGraph.class);
+        lg.shortcut(1, 4);
+
+        AllCHEdgesIterator iter = lg.getAllEdges();
+        iter.next();
+        iter.next();
+        iter.next();
+        assertTrue(iter.isShortcut());
+        iter.setSkippedEdges(edge1.getEdge(), edge2.getEdge());
+        assertEquals(edge1.getEdge(), iter.getSkippedEdge1());
+        assertEquals(edge2.getEdge(), iter.getSkippedEdge2());
+    }
+
+    @Test
+    public void testAddShortcutSkippedEdgesWriteRead_writeWithCHEdgeIterator() {
+        graph = createGHStorage();
+        final EdgeIteratorState edge1 = graph.edge(1, 3, 10, true);
+        final EdgeIteratorState edge2 = graph.edge(3, 4, 10, true);
+        graph.freeze();
+
+        CHGraph lg = graph.getGraph(CHGraph.class);
+        CHEdgeIteratorState shortcut = lg.shortcut(1, 4);
+        shortcut.setSkippedEdges(edge1.getEdge(), edge2.getEdge());
+
+        AllCHEdgesIterator iter = lg.getAllEdges();
+        iter.next();
+        iter.next();
+        iter.next();
+        assertTrue(iter.isShortcut());
+        assertEquals(edge1.getEdge(), iter.getSkippedEdge1());
+        assertEquals(edge2.getEdge(), iter.getSkippedEdge2());
     }
 
     @Test

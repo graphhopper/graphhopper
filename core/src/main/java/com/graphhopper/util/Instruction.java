@@ -23,6 +23,7 @@ import java.util.Map;
 
 public class Instruction {
     public static final int UNKNOWN = -99;
+    public static final int KEEP_LEFT = -7;
     public static final int LEAVE_ROUNDABOUT = -6; // for future use
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
@@ -35,7 +36,6 @@ public class Instruction {
     public static final int REACHED_VIA = 5;
     public static final int USE_ROUNDABOUT = 6;
     public static final int IGNORE = Integer.MIN_VALUE;
-    public static final int KEEP_LEFT = -7;
     public static final int KEEP_RIGHT = 7;
     public static final int PT_START_TRIP = 101;
     public static final int PT_TRANSFER = 102;
@@ -236,6 +236,20 @@ public class Instruction {
     void checkOne() {
         if (points.size() < 1)
             throw new IllegalStateException("Instruction must contain at least one point " + toString());
+    }
+
+    /**
+     * This method returns the length of an Instruction. The length of an instruction is defined by [the
+     * index of the first point of the next instruction] - [the index of the first point of this instruction].
+     * <p>
+     * In general this will just resolve to the size of the PointList, except for {@link ViaInstruction} and
+     * {@link FinishInstruction}, which are only virtual instructions, in a sense that they don't provide
+     * a turn instruction, but only an info ("reached via point or destination").
+     * <p>
+     * See #1216 and #1138
+     */
+    public int getLength() {
+        return points.getSize();
     }
 
     public String getTurnDescription(Translation tr) {

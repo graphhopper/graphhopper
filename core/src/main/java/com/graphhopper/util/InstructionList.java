@@ -20,6 +20,8 @@ package com.graphhopper.util;
 import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.text.DateFormat;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 
 /**
@@ -78,7 +80,8 @@ public class InstructionList extends AbstractList<Instruction> {
         instructions.set(instructions.size() - 1, instr);
     }
 
-    @JsonValue public List<Map<String, Object>> createJson() {
+    @JsonValue
+    public List<Map<String, Object>> createJson() {
         List<Map<String, Object>> instrList = new ArrayList<>(instructions.size());
         int pointsIndex = 0;
         int counter = 0;
@@ -102,11 +105,7 @@ public class InstructionList extends AbstractList<Instruction> {
             instrJson.put("sign", instruction.getSign());
             instrJson.putAll(instruction.getExtraInfoJSON());
 
-            int tmpIndex = pointsIndex + instruction.getPoints().size();
-            // the last instruction should not point to the next instruction
-            if (counter + 1 == instructions.size())
-                tmpIndex--;
-
+            int tmpIndex = pointsIndex + instruction.getLength();
             instrJson.put("interval", Arrays.asList(pointsIndex, tmpIndex));
             pointsIndex = tmpIndex;
 
@@ -118,7 +117,6 @@ public class InstructionList extends AbstractList<Instruction> {
     /**
      * @return This method returns a list of gpx entries where the time (in millis) is relative to
      * the first which is 0.
-     * <p>
      */
     public List<GPXEntry> createGPXList() {
         if (isEmpty())
@@ -159,10 +157,10 @@ public class InstructionList extends AbstractList<Instruction> {
         return createGPX(trackName, startTimeMillis, includeElevation, true, true, true);
     }
 
-    private void createWayPointBlock(StringBuilder output, Instruction instruction) {
+    private void createWayPointBlock(StringBuilder output, Instruction instruction, DecimalFormat decimalFormat) {
         output.append("\n<wpt ");
-        output.append("lat=\"").append(Helper.round6(instruction.getFirstLat()));
-        output.append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
+        output.append("lat=\"").append(decimalFormat.format(instruction.getFirstLat()));
+        output.append("\" lon=\"").append(decimalFormat.format(instruction.getFirstLon())).append("\">");
         String name;
         if (instruction.getName().isEmpty())
             name = instruction.getTurnDescription(tr);
@@ -175,6 +173,12 @@ public class InstructionList extends AbstractList<Instruction> {
 
     public String createGPX(String trackName, long startTimeMillis, boolean includeElevation, boolean withRoute, boolean withTrack, boolean withWayPoints) {
         DateFormat formatter = Helper.createFormatter();
+
+        DecimalFormat decimalFormat = new DecimalFormat("#");
+        decimalFormat.setMinimumFractionDigits(1);
+        decimalFormat.setMaximumFractionDigits(6);
+        decimalFormat.setMinimumIntegerDigits(1);
+        decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.US));
 
         String header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
                 + "<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""
@@ -192,12 +196,12 @@ public class InstructionList extends AbstractList<Instruction> {
         StringBuilder gpxOutput = new StringBuilder(header);
         if (!isEmpty()) {
             if (withWayPoints) {
-                createWayPointBlock(gpxOutput, instructions.get(0));   // Start 
+                createWayPointBlock(gpxOutput, instructions.get(0), decimalFormat);   // Start
                 for (Instruction currInstr : instructions) {
                     if ((currInstr.getSign() == Instruction.REACHED_VIA) // Via
                             || (currInstr.getSign() == Instruction.FINISH)) // End
                     {
-                        createWayPointBlock(gpxOutput, currInstr);
+                        createWayPointBlock(gpxOutput, currInstr, decimalFormat);
                     }
                 }
             }
@@ -206,11 +210,11 @@ public class InstructionList extends AbstractList<Instruction> {
                 Instruction nextInstr = null;
                 for (Instruction currInstr : instructions) {
                     if (null != nextInstr)
-                        createRteptBlock(gpxOutput, nextInstr, currInstr);
+                        createRteptBlock(gpxOutput, nextInstr, currInstr, decimalFormat);
 
                     nextInstr = currInstr;
                 }
-                createRteptBlock(gpxOutput, nextInstr, null);
+                createRteptBlock(gpxOutput, nextInstr, null, decimalFormat);
                 gpxOutput.append("\n</rte>");
             }
         }
@@ -219,8 +223,8 @@ public class InstructionList extends AbstractList<Instruction> {
 
             gpxOutput.append("<trkseg>");
             for (GPXEntry entry : createGPXList()) {
-                gpxOutput.append("\n<trkpt lat=\"").append(Helper.round6(entry.getLat()));
-                gpxOutput.append("\" lon=\"").append(Helper.round6(entry.getLon())).append("\">");
+                gpxOutput.append("\n<trkpt lat=\"").append(decimalFormat.format(entry.getLat()));
+                gpxOutput.append("\" lon=\"").append(decimalFormat.format(entry.getLon())).append("\">");
                 if (includeElevation)
                     gpxOutput.append("<ele>").append(Helper.round2(entry.getEle())).append("</ele>");
                 gpxOutput.append("<time>").append(formatter.format(startTimeMillis + entry.getTime())).append("</time>");
@@ -235,9 +239,9 @@ public class InstructionList extends AbstractList<Instruction> {
         return gpxOutput.toString();
     }
 
-    public void createRteptBlock(StringBuilder output, Instruction instruction, Instruction nextI) {
-        output.append("\n<rtept lat=\"").append(Helper.round6(instruction.getFirstLat())).
-                append("\" lon=\"").append(Helper.round6(instruction.getFirstLon())).append("\">");
+    public void createRteptBlock(StringBuilder output, Instruction instruction, Instruction nextI, DecimalFormat decimalFormat) {
+        output.append("\n<rtept lat=\"").append(decimalFormat.format(instruction.getFirstLat())).
+                append("\" lon=\"").append(decimalFormat.format(instruction.getFirstLon())).append("\">");
 
         if (!instruction.getName().isEmpty())
             output.append("<desc>").append(simpleXMLEscape(instruction.getTurnDescription(tr))).append("</desc>");
@@ -253,6 +257,12 @@ public class InstructionList extends AbstractList<Instruction> {
         double azimuth = instruction.calcAzimuth(nextI);
         if (!Double.isNaN(azimuth))
             output.append("<gh:azimuth>").append(Helper.round2(azimuth)).append("</gh:azimuth>");
+
+        if (instruction instanceof RoundaboutInstruction) {
+            RoundaboutInstruction ri = (RoundaboutInstruction) instruction;
+
+            output.append("<gh:exit_number>").append(ri.getExitNumber()).append("</gh:exit_number>");
+        }
 
         output.append("<gh:sign>").append(instruction.getSign()).append("</gh:sign>");
         output.append("</extensions>");

@@ -89,27 +89,6 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
         instructionsElement.append(moreDiv);
     }
 
-    if (debug) {
-        var detailObj = path.details;
-        // detailKey, would be for example average_speed
-        for (var detailKey in detailObj) {
-            var pathDetailsArr = detailObj[detailKey];
-            for (var i = 0; i < pathDetailsArr.length; i++) {
-                var pathDetailObj = pathDetailsArr[i];
-                var firstIndex = pathDetailObj[0];
-                var value = pathDetailObj[2];
-                var lngLat = path.points.coordinates[firstIndex];
-                L.marker([lngLat[1], lngLat[0]], {
-                    icon: L.icon({
-                        iconUrl: './img/marker-small-blue.png',
-                        iconSize: [15, 15]
-                    }),
-                    draggable: true
-                }).addTo(mapLayer.getRoutingLayer()).bindPopup(detailKey + ":" + value);
-            }
-        }
-    }
-
     var hiddenDiv = $("<div id='routeDetails'/>");
     hiddenDiv.hide();
 
@@ -126,10 +105,13 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
     exportLink.attr('href', urlForHistory);
     var osmRouteLink = $("<br/><a>view on OSM</a>");
 
-    var osmVehicle = "bicycle";
-    if (request.getVehicle().toUpperCase() === "FOOT") {
-        osmVehicle = "foot";
+    var osmVehicle = request.getVehicle();
+    if (osmVehicle === "bicycle") {
+        osmVehicle = "bike";
+    } else if (osmVehicle.indexOf("truck") >= 0) {
+        osmVehicle = "car";
     }
+
     osmRouteLink.attr("href", "http://www.openstreetmap.org/directions?engine=graphhopper_" + osmVehicle + "&route=" + encodeURIComponent(request.from.lat + "," + request.from.lng + ";" + request.to.lat + "," + request.to.lng));
     hiddenDiv.append(osmRouteLink);
 
@@ -146,7 +128,6 @@ module.exports.create = function (mapLayer, path, urlForHistory, request) {
     } else if ((request.getVehicle().toUpperCase().indexOf("BIKE") >= 0) ||
         (request.getVehicle().toUpperCase() === "MTB")) {
         addToGoogle = "&dirflg=b";
-        // ? addToBing = "&mode=B";
     }
 
     googleLink.attr("href", "https://maps.google.com/?saddr=" + request.from + "&daddr=" + request.to + addToGoogle);

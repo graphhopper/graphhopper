@@ -20,7 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -95,4 +95,149 @@ public class PointListTest {
             assertEquals(counter, point.getLat(), 0.1);
         }
     }
+
+    @Test
+    public void testRemoveLast() {
+        PointList list = new PointList(20, false);
+        for (int i = 0; i < 10; i++) {
+            list.add(1, i);
+        }
+        assertEquals(10, list.getSize());
+        assertEquals(9, list.getLon(list.getSize() - 1), .1);
+        list.removeLastPoint();
+        assertEquals(9, list.getSize());
+        assertEquals(8, list.getLon(list.getSize() - 1), .1);
+
+        list = new PointList(20, false);
+        list.add(1, 1);
+        list.removeLastPoint();
+        try {
+            list.removeLastPoint();
+            fail();
+        } catch (Exception ex) {
+        }
+        assertEquals(0, list.getSize());
+    }
+
+    @Test
+    public void testCopy_issue1166() {
+        PointList list = new PointList(20, false);
+        for (int i = 0; i < 10; i++) {
+            list.add(1, i);
+        }
+        assertEquals(10, list.getSize());
+        assertEquals(20, list.getCapacity());
+
+        PointList copy = list.copy(9, 10);
+        assertEquals(1, copy.getSize());
+        assertEquals(1, copy.getCapacity());
+        assertEquals(9, copy.getLongitude(0), .1);
+    }
+
+    @Test
+    public void testShallowCopy() {
+        PointList pl1 = new PointList(100, true);
+        for (int i = 0; i < 1000; i++) {
+            pl1.add(i, i, 0);
+        }
+
+        PointList pl2 = pl1.shallowCopy(100, 600, false);
+        assertEquals(500, pl2.size());
+        for (int i = 0; i < pl2.size(); i++) {
+            assertEquals(pl1.getLat(i + 100), pl2.getLat(i), .01);
+        }
+
+        // If you change the original PointList the shallow copy changes as well
+        pl1.set(100, 0, 0, 0);
+        assertEquals(0, pl2.getLat(0), .01);
+
+        // Create a shallow copy of the shallow copy
+        PointList pl3 = pl2.shallowCopy(0, 100, true);
+        // If we create a safe shallow copy of pl2, we have to make pl1 immutable
+        assertTrue(pl1.isImmutable());
+        assertEquals(100, pl3.size());
+        for (int i = 0; i < pl3.size(); i++) {
+            assertEquals(pl2.getLon(i), pl3.getLon(i), .01);
+        }
+
+        PointList pl4 = pl1.shallowCopy(0, pl1.size(), false);
+        assertTrue(pl1.equals(pl4));
+
+        PointList pl5 = pl1.shallowCopy(100, 600, false);
+        assertTrue(pl2.equals(pl5));
+
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testImmutable() {
+        PointList pl = new PointList();
+        pl.makeImmutable();
+        pl.add(0, 0, 0);
+    }
+
+    @Test()
+    public void testToString() {
+        PointList pl = new PointList(3, true);
+        pl.add(0, 0, 0);
+        pl.add(1, 1, 1);
+        pl.add(2, 2, 2);
+
+        assertEquals("(0.0,0.0,0.0), (1.0,1.0,1.0), (2.0,2.0,2.0)", pl.toString());
+        assertEquals("(1.0,1.0,1.0), (2.0,2.0,2.0)", pl.shallowCopy(1, 3, false).toString());
+    }
+
+    @Test()
+    public void testClone() {
+        PointList pl = new PointList(3, true);
+        pl.add(0, 0, 0);
+        pl.add(1, 1, 1);
+        pl.add(2, 2, 2);
+
+        PointList shallowPl = pl.shallowCopy(1, 3, false);
+        PointList clonedPl = shallowPl.clone(false);
+
+        assertEquals(shallowPl, clonedPl);
+        clonedPl.setNode(0, 5, 5, 5);
+        assertNotEquals(shallowPl, clonedPl);
+    }
+
+    @Test()
+    public void testCopyOfShallowCopy() {
+        PointList pl = new PointList(3, true);
+        pl.add(0, 0, 0);
+        pl.add(1, 1, 1);
+        pl.add(2, 2, 2);
+
+        PointList shallowPl = pl.shallowCopy(1, 3, false);
+        PointList copiedPl = shallowPl.copy(0, 2);
+
+        assertEquals(shallowPl, copiedPl);
+        copiedPl.setNode(0, 5, 5, 5);
+        assertNotEquals(shallowPl, copiedPl);
+    }
+
+    @Test()
+    public void testCalcDistanceOfShallowCopy() {
+        PointList pl = new PointList(3, true);
+        pl.add(0, 0, 0);
+        pl.add(1, 1, 1);
+        pl.add(2, 2, 2);
+
+        PointList shallowPl = pl.shallowCopy(1, 3, false);
+        PointList clonedPl = shallowPl.clone(false);
+        assertEquals(clonedPl.calcDistance(Helper.DIST_EARTH), shallowPl.calcDistance(Helper.DIST_EARTH), .01);
+    }
+
+    @Test()
+    public void testToGeoJson() {
+        PointList pl = new PointList(3, true);
+        pl.add(0, 0, 0);
+        pl.add(1, 1, 1);
+        pl.add(2, 2, 2);
+
+        assertEquals(3, pl.toLineString(true).getNumPoints());
+        assertEquals(2, pl.shallowCopy(1, 3, false).toLineString(true).getNumPoints());
+    }
+
+
 }

@@ -32,16 +32,18 @@ import static com.graphhopper.util.GHUtility.count;
 import static org.junit.Assert.assertEquals;
 
 /**
+ * The data is taken from https://algs4.cs.princeton.edu/44sp/.
+ *
  * @author Peter Karich
  */
-public class PrinctonReaderTest {
+public class PrincetonReaderTest {
     private EncodingManager encodingManager = new EncodingManager("car");
     private EdgeFilter carOutEdges = new DefaultEdgeFilter(encodingManager.getEncoder("car"), false, true);
 
     @Test
     public void testRead() {
         Graph graph = new GraphBuilder(encodingManager).create();
-        new PrinctonReader(graph).setStream(PrinctonReader.class.getResourceAsStream("tinyEWD.txt")).read();
+        new PrincetonReader(graph).setStream(PrincetonReader.class.getResourceAsStream("tinyEWD.txt")).read();
         assertEquals(8, graph.getNodes());
         EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
         assertEquals(2, count(explorer.setBaseNode(0)));
@@ -51,7 +53,7 @@ public class PrinctonReaderTest {
     @Test
     public void testMediumRead() throws IOException {
         Graph graph = new GraphBuilder(encodingManager).create();
-        new PrinctonReader(graph).setStream(new GZIPInputStream(PrinctonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
+        new PrincetonReader(graph).setStream(new GZIPInputStream(PrincetonReader.class.getResourceAsStream("mediumEWD.txt.gz"))).read();
         assertEquals(250, graph.getNodes());
         EdgeExplorer explorer = graph.createEdgeExplorer(carOutEdges);
         assertEquals(13, count(explorer.setBaseNode(244)));

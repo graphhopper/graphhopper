@@ -48,7 +48,11 @@ public class PathSimplification {
 
         this.pathDetails = pathWrapper.getPathDetails();
         for (String name : pathDetails.keySet()) {
-            listsToSimplify.add(pathDetails.get(name));
+            List<PathDetail> pathDetailList = pathDetails.get(name);
+            if (pathDetailList.isEmpty())
+                throw new IllegalStateException("PathDetails " + name + " must not be empty");
+
+            listsToSimplify.add(pathDetailList);
         }
         this.douglasPeucker = douglasPeucker;
     }
@@ -135,17 +139,14 @@ public class PathSimplification {
                 prevPD = list.get(i);
             }
         }
+        // Make sure that the instruction references are not broken
+        pointList.makeImmutable();
         return pointList;
     }
 
     private int getLength(Object o, int index) {
         if (o instanceof InstructionList) {
-            // we do not store the last point of an instruction
-            int size = ((InstructionList) o).get(index).getPoints().size();
-            if (size == 0)
-                throw new IllegalStateException("PointList of instruction should not be empty " + o);
-            // the last point of instruction (i.e. first point of next instruction) is not included
-            return size;
+            return ((InstructionList) o).get(index).getLength();
         }
         if (o instanceof List) {
             return ((List<PathDetail>) o).get(index).getLength();
@@ -155,7 +156,7 @@ public class PathSimplification {
 
     private void reduceLength(Object o, int index, int startIndex, int newEndIndex) {
         if (o instanceof InstructionList) {
-            ((InstructionList) o).get(index).setPoints(this.pointList.copy(startIndex, newEndIndex));
+            ((InstructionList) o).get(index).setPoints(this.pointList.shallowCopy(startIndex, newEndIndex, false));
         } else if (o instanceof List) {
             PathDetail pd = ((List<PathDetail>) o).get(index);
             pd.setFirst(startIndex);

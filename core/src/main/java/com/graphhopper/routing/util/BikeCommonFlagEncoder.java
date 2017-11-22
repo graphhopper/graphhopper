@@ -325,8 +325,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
      * just only 90%.
      * <p>
      *
-     * @param way:   needed to retrieve tags
-     * @param speed: speed guessed e.g. from the road type or other tags
+     * @param way   needed to retrieve tags
+     * @param speed speed guessed e.g. from the road type or other tags
      * @return The assumed average speed.
      */
     @Override
@@ -353,7 +353,7 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             flags = handleSpeed(way, wayTypeSpeed, flags);
             flags = handleBikeRelated(way, flags, relationFlags > UNCHANGED.getValue());
 
-            boolean isRoundabout = way.hasTag("junction", "roundabout");
+            boolean isRoundabout = way.hasTag("junction", "roundabout") || way.hasTag("junction", "circular");
             if (isRoundabout) {
                 flags = setBool(flags, K_ROUNDABOUT, true);
             }

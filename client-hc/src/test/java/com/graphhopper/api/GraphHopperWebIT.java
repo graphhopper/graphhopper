@@ -8,6 +8,7 @@ import com.graphhopper.PathWrapper;
 import com.graphhopper.util.Instruction;
 import com.graphhopper.util.InstructionList;
 import com.graphhopper.util.RoundaboutInstruction;
+import com.graphhopper.util.details.PathDetail;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.exceptions.PointOutOfBoundsException;
 import com.graphhopper.util.shapes.GHPoint;
@@ -16,6 +17,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.SocketTimeoutException;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -49,7 +51,7 @@ public class GraphHopperWebIT {
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
         PathWrapper alt = res.getBest();
         isBetween(200, 250, alt.getPoints().size());
-        isBetween(9900, 10300, alt.getDistance());
+        isBetween(11000, 12000, alt.getDistance());
 
         // change vehicle
         res = gh.route(new GHRequest(49.6724, 11.3494, 49.6550, 11.4180).
@@ -88,7 +90,7 @@ public class GraphHopperWebIT {
         assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
         PathWrapper alt = res.getBest();
         assertEquals(0, alt.getPoints().size());
-        isBetween(9900, 10300, alt.getDistance());
+        isBetween(11000, 12000, alt.getDistance());
     }
 
     @Test
@@ -239,15 +241,38 @@ public class GraphHopperWebIT {
         }
 
         // ... only weight:
-        assertEquals(1685, res.getWeight(1, 2), 5);
+        assertEquals(1695, res.getWeight(1, 2), 5);
 
         req = AbstractGHMatrixWebTester.createRequest();
         req.addOutArray("weights");
         req.addOutArray("distances");
         res = ghMatrix.route(req);
 
-        assertEquals(9664, res.getDistance(1, 2), 20);
-        assertEquals(1685, res.getWeight(1, 2), 10);
+        assertEquals(9834, res.getDistance(1, 2), 20);
+        assertEquals(1695, res.getWeight(1, 2), 10);
+    }
+
+    @Test
+    public void testMatrix_DoNotWrapHints() {
+        final GraphHopperMatrixWeb ghMatrix = new GraphHopperMatrixWeb(new GHMatrixBatchRequester() {
+            @Override
+            protected String postJson(String url, JsonNode data) throws IOException {
+                assertFalse(data.has("hints"));
+                assertTrue(data.has("something"));
+                return super.postJson(url, data);
+            }
+        });
+        ghMatrix.setKey(System.getProperty("graphhopper.key", KEY));
+
+        GHMRequest req = new GHMRequest();
+        req.addPoint(new GHPoint(49.6724, 11.3494));
+        req.addPoint(new GHPoint(49.6550, 11.4180));
+        req.getHints().put("something", "xy");
+        ghMatrix.route(req);
+
+        // clashing parameter will overwrite!
+        req.getHints().put("vehicle", "xy");
+        assertEquals("xy", req.getVehicle());
     }
 
     @Test
@@ -259,5 +284,21 @@ public class GraphHopperWebIT {
 
         assertEquals(741, wrapper.getInstructions().get(0).getSign());
         assertEquals("Continue onto A 81", wrapper.getInstructions().get(0).getName());
+    }
+
+    @Test
+    public void testPathDetails() {
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(49.6724, 11.3494)).
+                addPoint(new GHPoint(49.6550, 11.4180));
+        req.getPathDetails().add("average_speed");
+        GHResponse res = gh.route(req);
+        assertFalse("errors:" + res.getErrors().toString(), res.hasErrors());
+        PathWrapper alt = res.getBest();
+        assertEquals(1, alt.getPathDetails().size());
+        List<PathDetail> details = alt.getPathDetails().get("average_speed");
+        assertFalse(details.isEmpty());
+        assertTrue((Double) details.get(0).getValue() > 20);
+        assertTrue((Double) details.get(0).getValue() < 70);
     }
 }

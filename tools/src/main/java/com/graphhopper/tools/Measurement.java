@@ -48,6 +48,8 @@ import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
+
 /**
  * @author Peter Karich
  */
@@ -115,14 +117,14 @@ public class Measurement {
             GHBitSet allowedEdges = printGraphDetails(g, vehicleStr);
             printMiscUnitPerfTests(g, isCH, encoder, count * 100, allowedEdges);
             printLocationIndexQuery(g, hopper.getLocationIndex(), count);
-            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1);
+            printTimeOfRouteQuery(hopper, isCH, isLM, count / 20, "routing", vehicleStr, true, -1, true);
 
             if (hopper.getLMFactoryDecorator().isEnabled()) {
                 System.gc();
                 isLM = true;
                 int activeLMCount = 12;
                 for (; activeLMCount > 3; activeLMCount -= 4) {
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count / 4, "routingLM" + activeLMCount, vehicleStr, true, activeLMCount, true);
                 }
 
                 // compareRouting(hopper, vehicleStr, count / 5);
@@ -130,13 +132,13 @@ public class Measurement {
 
             if (hopper.getCHFactoryDecorator().isEnabled()) {
                 isCH = true;
-
+//                compareCHWithAndWithoutSOD(hopper, vehicleStr, count/5);
                 if (hopper.getLMFactoryDecorator().isEnabled()) {
                     isLM = true;
                     System.gc();
                     // try just one constellation, often ~4-6 is best
                     int lmCount = 5;
-                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount);
+                    printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCHLM" + lmCount, vehicleStr, true, lmCount, true);
                 }
 
                 isLM = false;
@@ -145,8 +147,9 @@ public class Measurement {
                 CHGraph lg = g.getGraph(CHGraph.class, weighting);
                 fillAllowedEdges(lg.getAllEdges(), allowedEdges);
                 printMiscUnitPerfTests(lg, isCH, encoder, count * 100, allowedEdges);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1);
-                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1);
+                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH", vehicleStr, true, -1, true);
+                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_sod", vehicleStr, true, -1, false);
+                printTimeOfRouteQuery(hopper, isCH, isLM, count, "routingCH_no_instr", vehicleStr, false, -1, true);
             }
             logger.info("store into " + propLocation);
         } catch (Exception ex) {
@@ -322,9 +325,59 @@ public class Measurement {
         }
     }
 
+    private void compareCHWithAndWithoutSOD(final GraphHopper hopper, String vehicle, int count) {
+        logger.info("Comparing " + count + " routes for CH with and without stall on demand." +
+                " Differences will be printed to stderr.");
+        final Random rand = new Random(seed);
+        final Graph g = hopper.getGraphHopperStorage();
+        final NodeAccess na = g.getNodeAccess();
+
+        for (int i = 0; i < count; i++) {
+            int from = rand.nextInt(maxNode);
+            int to = rand.nextInt(maxNode);
+
+            double fromLat = na.getLatitude(from);
+            double fromLon = na.getLongitude(from);
+            double toLat = na.getLatitude(to);
+            double toLon = na.getLongitude(to);
+            GHRequest sodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
+                    setWeighting("fastest").
+                    setVehicle(vehicle).
+                    setAlgorithm(DIJKSTRA_BI);
+
+            GHRequest noSodReq = new GHRequest(fromLat, fromLon, toLat, toLon).
+                    setWeighting("fastest").
+                    setVehicle(vehicle).
+                    setAlgorithm(DIJKSTRA_BI);
+            noSodReq.getHints().put("stall_on_demand", false);
+
+            GHResponse sodRsp = hopper.route(sodReq);
+            GHResponse noSodRsp = hopper.route(noSodReq);
+
+            String locStr = " iteration " + i + ". " + fromLat + "," + fromLon + " -> " + toLat + "," + toLon;
+            if (sodRsp.hasErrors()) {
+                if (noSodRsp.hasErrors()) {
+                    logger.info("Error with and without SOD");
+                    continue;
+                } else {
+                    logger.error("Error with SOD but not without SOD" + locStr);
+                    continue;
+                }
+            }
+            String infoStr =
+                    " weight:" + noSodRsp.getBest().getRouteWeight() + ", original: " + sodRsp.getBest().getRouteWeight()
+                            + " distance:" + noSodRsp.getBest().getDistance() + ", original: " + sodRsp.getBest().getDistance()
+                            + " time:" + Helper.round2(noSodRsp.getBest().getTime() / 1000) + ", original: " + Helper.round2(sodRsp.getBest().getTime() / 1000)
+                            + " points:" + noSodRsp.getBest().getPoints().size() + ", original: " + sodRsp.getBest().getPoints().size();
+
+            if (Math.abs(1 - noSodRsp.getBest().getRouteWeight() / sodRsp.getBest().getRouteWeight()) > 0.000001)
+                logger.error("Too big weight difference for SOD. " + locStr + infoStr);
+        }
+    }
+
     private void printTimeOfRouteQuery(final GraphHopper hopper, final boolean ch, final boolean lm,
                                        int count, String prefix, final String vehicle,
-                                       final boolean withInstructions, final int activeLandmarks) {
+                                       final boolean withInstructions, final int activeLandmarks, final boolean sod) {
         final Graph g = hopper.getGraphHopperStorage();
         final AtomicLong maxDistance = new AtomicLong(0);
         final AtomicLong minDistance = new AtomicLong(Long.MAX_VALUE);
@@ -355,6 +408,7 @@ public class Measurement {
                         setVehicle(vehicle);
 
                 req.getHints().put(CH.DISABLE, !ch).
+                        put("stall_on_demand", sod).
                         put(Landmark.DISABLE, !lm).
                         put(Landmark.ACTIVE_COUNT, activeLandmarks).
                         put("instructions", withInstructions);
@@ -412,8 +466,11 @@ public class Measurement {
 
         count -= failedCount.get();
 
-        // if using none-bidirectional algorithm make sure you exclude CH routing
-        final String algoStr = ch ? Algorithms.DIJKSTRA_BI : Algorithms.ASTAR_BI;
+        // if using non-bidirectional algorithm make sure you exclude CH routing
+        String algoStr = ch ? Algorithms.DIJKSTRA_BI : Algorithms.ASTAR_BI;
+        if (ch && !sod) {
+            algoStr += "_no_sod";
+        }
         put(prefix + ".guessed_algorithm", algoStr);
         put(prefix + ".failed_count", failedCount.get());
         put(prefix + ".distance_min", minDistance.get());

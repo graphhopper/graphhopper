@@ -368,6 +368,15 @@ public class FootFlagEncoderTest {
         assertTrue(footEncoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
     }
 
+    @Test
+    public void handleWayTagsCircularJunction() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("junction", "circular");
+        way.setTag("highway", "tertiary");
+        long flags = footEncoder.handleWayTags(way, footEncoder.acceptWay(way), 0);
+        assertTrue(footEncoder.isBool(flags, FlagEncoder.K_ROUNDABOUT));
+    }
+
     public void testFord() {
         // by default deny access through fords!
         ReaderNode node = new ReaderNode(1, -1, -1);

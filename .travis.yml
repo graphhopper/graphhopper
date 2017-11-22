@@ -11,8 +11,6 @@ matrix:
       sudo: required
       dist: trusty
       group: edge
-  allow_failures:
-    - jdk: oraclejdk9
 
 env:
   global:
@@ -48,7 +46,7 @@ before_install:
 install: true
 
 script:
-  - mvn clean test verify -B
+  - mvn clean test verify checkstyle:check findbugs:check -B
 
 after_success:
   # deploy snapshot artifacts to maven central
@@ -61,7 +59,7 @@ after_success:
 
 notifications:
   email:
-    - github@graphhopper.com
+    - secure: l7/fjqL0c/9UcULXdhaKxsroZMg07nfNDiOHRBf7YKf8wrKdH52Z5kP7E10+a8iD/ieLD+ZaZPlom1bE7HymE1bVkp3d17Ezha47W5sdyOOb3NBDpg8olS4TkehOKo3AQhLXSfF6QGtipxY8Iy9QknXHngQOrcoGYiOlzCZ3BTQ=
 
 cache:
   directories:

@@ -39,7 +39,7 @@ public class AverageSpeedDetails extends AbstractPathDetailsBuilder {
 
     @Override
     public boolean isEdgeDifferentToLastEdge(EdgeIteratorState edge) {
-        if (encoder.getSpeed(edge.getFlags()) != curAvgSpeed) {
+        if (Math.abs(encoder.getSpeed(edge.getFlags()) - curAvgSpeed) > 0.0001) {
             this.curAvgSpeed = this.encoder.getSpeed(edge.getFlags());
             return true;
         }

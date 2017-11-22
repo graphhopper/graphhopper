@@ -21,15 +21,19 @@ import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.osm.GraphHopperOSM;
 import com.graphhopper.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Parameters;
 
 /**
  * @author Peter Karich
  */
 public class Import {
+
     public static void main(String[] strs) throws Exception {
         CmdArgs args = CmdArgs.read(strs);
         args = CmdArgs.readFromConfigAndMerge(args);
-        GraphHopper hopper = new GraphHopperOSM();
+        GraphHopper hopper = new GraphHopperOSM(
+                SpatialRuleLookupHelper.createLandmarkSplittingFeatureCollection(args.get(Parameters.Landmark.PREPARE + "split_area_location", ""))
+        );
         SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(hopper, args);
         hopper.init(args);
         hopper.importOrLoad();
