@@ -24,6 +24,7 @@ import com.graphhopper.storage.GraphBuilder;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.PointList;
+import org.junit.Before;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -33,13 +34,19 @@ import static org.junit.Assert.assertEquals;
  */
 public class RoadAverageElevationInterpolatorTest {
 
-    @Test
-    public void interpolatesElevationOfPillarNodes() {
+    Graph graph;
+    NodeAccess na;
 
+    @Before
+    public void setup() {
         CarFlagEncoder encoder = new CarFlagEncoder();
         EncodingManager carManager = new EncodingManager(encoder);
-        final Graph graph = new GraphBuilder(carManager).set3D(true).create();
-        final NodeAccess na = graph.getNodeAccess();
+        graph = new GraphBuilder(carManager).set3D(true).create();
+        na = graph.getNodeAccess();
+    }
+
+    @Test
+    public void interpolatesElevationOfPillarNodes() {
 
         na.setNode(0, 0, 0, 0);
         na.setNode(1, 0.001, 0.001, 50);
@@ -71,5 +78,42 @@ public class RoadAverageElevationInterpolatorTest {
         assertEquals(120, pl2.getElevation(1), .1);
         // This is not 120 anymore, as the point at index 1 was smoothed from 160=>120
         assertEquals(112, pl2.getElevation(2), .1);
+
+        assertEquals(50, pl2.getEle(0), .1);
+    }
+
+    @Test
+    public void interpolatesElevationOfTowerNodes() {
+
+        na.setNode(0, 0, 0, 0);
+        // Massive tower node outlier
+        na.setNode(1, 0.001, 0.001, 500);
+        na.setNode(2, 0.002, 0.002, 0);
+
+        EdgeIteratorState edge1 = graph.edge(0, 1, 10, true);
+        EdgeIteratorState edge2 = graph.edge(1, 2, 10, true);
+
+        PointList pl1 = new PointList(3, true);
+        pl1.add(0.0005, 0.0005, 10);
+        edge1.setWayGeometry(pl1);
+
+        PointList pl2 = new PointList(3, true);
+        pl2.add(0.0016, 0.0015, 10);
+        edge2.setWayGeometry(pl2);
+
+        new RoadAverageElevationInterpolator().smoothElevation(graph);
+
+        edge1 = graph.getEdgeIteratorState(0, 1);
+        pl1 = edge1.fetchWayGeometry(3);
+        assertEquals(3, pl1.size());
+        assertEquals(170, pl1.getElevation(1), .1);
+
+        edge2 = graph.getEdgeIteratorState(1, 2);
+        pl2 = edge2.fetchWayGeometry(3);
+        assertEquals(3, pl2.size());
+        assertEquals(170, pl2.getElevation(1), .1);
+
+        // Smooth from 500 to 335
+        assertEquals(335, pl2.getEle(0), .1);
     }
 }

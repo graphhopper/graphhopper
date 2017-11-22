@@ -851,7 +851,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (hasElevation()) {
             if (smoothRoads) {
                 StopWatch sw = new StopWatch().start();
-                new RoadLoessElevationInterpolator().smoothElevation(ghStorage);
+                new RoadAverageElevationInterpolator().smoothElevation(ghStorage);
                 logger.info("Smoothed roads in " + (int) sw.stop().getSeconds() + "s");
             }
             interpolateBridgesAndOrTunnels();

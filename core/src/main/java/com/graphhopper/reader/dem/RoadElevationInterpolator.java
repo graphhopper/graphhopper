@@ -35,18 +35,45 @@ import com.graphhopper.storage.Graph;
 public abstract class RoadElevationInterpolator {
 
     public void smoothElevation(Graph graph) {
+        smoothPillarNodes(graph);
+        smoothTowerNodes(graph);
+    }
+
+    private void smoothPillarNodes(Graph graph) {
         final AllEdgesIterator edge = graph.getAllEdges();
         final GHBitSet visitedEdgeIds = new GHBitSetImpl(edge.getMaxId());
 
         while (edge.next()) {
             final int edgeId = edge.getEdge();
             if (!visitedEdgeIds.contains(edgeId)) {
-                smooth(edge);
+                smoothPillarNodesOfEdge(edge);
             }
             visitedEdgeIds.add(edgeId);
         }
     }
 
-    protected abstract void smooth(AllEdgesIterator edge);
+    private void smoothTowerNodes(Graph graph) {
+        final AllEdgesIterator edge = graph.getAllEdges();
+        final GHBitSet visitedNodeIds = new GHBitSetImpl(edge.getMaxId());
+
+        while (edge.next()) {
+            final int baseNodeId = edge.getBaseNode();
+            final int adjNodeId = edge.getAdjNode();
+
+            if (!visitedNodeIds.contains(baseNodeId)) {
+                smoothTowerNode(graph, baseNodeId);
+                visitedNodeIds.add(baseNodeId);
+            }
+
+            if (!visitedNodeIds.contains(adjNodeId)) {
+                smoothTowerNode(graph, adjNodeId);
+                visitedNodeIds.add(adjNodeId);
+            }
+        }
+    }
+
+    protected abstract void smoothPillarNodesOfEdge(AllEdgesIterator edge);
+
+    protected abstract void smoothTowerNode(Graph graph, int nodeId);
 
 }
