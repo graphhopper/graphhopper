@@ -21,7 +21,6 @@ import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Lane;
-import com.sun.org.apache.regexp.internal.RE;
 import org.junit.Test;
 
 import java.text.DateFormat;
