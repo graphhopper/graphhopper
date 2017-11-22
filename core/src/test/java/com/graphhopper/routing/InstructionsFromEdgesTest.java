@@ -22,6 +22,9 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
 
+/**
+ * Tests the InstructionsFromEdges class.
+ */
 @RunWith(MockitoJUnitRunner.class)
 public class InstructionsFromEdgesTest {
 
@@ -37,6 +40,9 @@ public class InstructionsFromEdgesTest {
     private List<Lane> lanes;
     private long flags = 1;
 
+    /**
+     *  Initialize the class to test and setup the default mock actions.
+     */
     @Before
     public void setup() {
         lanes = new ArrayList<>();
