@@ -20,10 +20,15 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Lane;
+import com.sun.org.apache.regexp.internal.RE;
 import org.junit.Test;
 
 import java.text.DateFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 import static org.junit.Assert.*;
 
@@ -31,7 +36,7 @@ import static org.junit.Assert.*;
  * @author Peter Karich
  */
 public class CarFlagEncoderTest {
-    private final EncodingManager em = new EncodingManager("car,bike,foot");
+    private final EncodingManager em = new EncodingManager("car,bike,foot", 8);
     private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("car");
 
     @Test
@@ -506,7 +511,7 @@ public class CarFlagEncoderTest {
     @Test
     public void testTurnFlagEncoding_noCosts() {
         FlagEncoder tmpEnc = new CarFlagEncoder(8, 5, 0);
-        EncodingManager em = new EncodingManager(tmpEnc);
+        EncodingManager em = new EncodingManager(Arrays.asList(tmpEnc), 8);
 
         long flags_r0 = tmpEnc.getTurnFlags(true, 0);
         long flags_0 = tmpEnc.getTurnFlags(false, 0);
@@ -530,7 +535,7 @@ public class CarFlagEncoderTest {
     @Test
     public void testTurnFlagEncoding_withCosts() {
         FlagEncoder tmpEncoder = new CarFlagEncoder(8, 5, 127);
-        EncodingManager em = new EncodingManager(tmpEncoder);
+        EncodingManager em = new EncodingManager(Arrays.asList(tmpEncoder), 8);
 
         long flags_r0 = tmpEncoder.getTurnFlags(true, 0);
         long flags_0 = tmpEncoder.getTurnFlags(false, 0);
@@ -559,7 +564,7 @@ public class CarFlagEncoderTest {
     @Test
     public void testMaxValue() {
         CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
-        EncodingManager em = new EncodingManager(instance);
+        EncodingManager em = new EncodingManager(Arrays.asList(instance), 8);
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "motorway_link");
         way.setTag("maxspeed", "60 mph");
@@ -582,7 +587,7 @@ public class CarFlagEncoderTest {
     @Test
     public void testRegisterOnlyOnceAllowed() {
         CarFlagEncoder instance = new CarFlagEncoder(10, 0.5, 0);
-        EncodingManager tmpEM = new EncodingManager(instance);
+        EncodingManager tmpEM = new EncodingManager(Arrays.asList(instance), 8);
         try {
             tmpEM = new EncodingManager(instance);
             assertTrue(false);
@@ -618,5 +623,125 @@ public class CarFlagEncoderTest {
         way.setTag("surface", "unpaved");
         assertEquals(30, encoder.applyBadSurfaceSpeed(way, 90), 1e-1);
 
+    }
+
+    @Test
+    public void testEncodeTurnLane() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("turn:lanes", "none|none|none|merge_to_left");
+        Integer none = encoder.turnLaneMap.get("none");
+        Integer merge = encoder.turnLaneMap.get("merge_to_left");
+
+        Long result = encoder.encodeTurnLanes(way);
+
+        assertNotNull(result);
+        assertEquals((none << (4 * 3)) + (none << (4 * 2)) + (none << (4 * 1)) + (merge << (4 * 0)), result, 0);
+
+        String lanes = encoder.decodeTurnLanes(result);
+
+        assertNotNull(lanes);
+        assertEquals("none|none|none|merge_to_left", lanes);
+    }
+
+    @Test
+    public void testDecodeTurnLane() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("turn:lanes", "right|none|none|merge_to_left");
+        Long result = encoder.encodeTurnLanes(way);
+
+        List<Lane> lanes = encoder.decodeTurnLanesToList(result);
+
+        assertNotNull(lanes);
+        assertFalse(lanes.isEmpty());
+        List<String> laneStr = new ArrayList<>();
+        List<Integer> laneCodes = new ArrayList<>();
+        for (Lane lane : lanes) {
+            laneStr.add(lane.getDirection());
+            laneCodes.add(lane.getDirectionCode());
+        }
+        assertEquals("[right, none, none, merge_to_left]", laneStr.toString());
+        assertEquals("[12, 11, 11, 10]", laneCodes.toString());
+    }
+
+    @Test
+    public void testDecodeTurnLaneWithMultipleDirections() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("turn:lanes", "through|through|through;left");
+        Long result = encoder.encodeTurnLanes(way);
+
+        List<Lane> lanes = encoder.decodeTurnLanesToList(result);
+
+        assertNotNull(lanes);
+        assertFalse(lanes.isEmpty());
+        List<String> laneStr = new ArrayList<>();
+        List<Integer> laneCodes = new ArrayList<>();
+        for (Lane lane : lanes) {
+            laneStr.add(lane.getDirection());
+            laneCodes.add(lane.getDirectionCode());
+        }
+        assertEquals("[through, through, through;left]", laneStr.toString());
+        assertEquals("[7, 7, 5]", laneCodes.toString());
+    }
+
+    @Test
+    public void testSimplifiedTurnLaneWithMultipleDirections() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("turn:lanes", "slight_left;none;sharp_right");
+        Long result = encoder.encodeTurnLanes(way);
+
+        List<Lane> lanes = encoder.decodeTurnLanesToList(result);
+
+        assertNotNull(lanes);
+        assertFalse(lanes.isEmpty());
+        List<String> laneStr = new ArrayList<>();
+        for (Lane lane : lanes) {
+            laneStr.add(lane.getDirection());
+        }
+        assertEquals("[left;right;through]", laneStr.toString());
+    }
+
+    @Test
+    public void testTurnLaneWithEmptyTags() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("turn:lanes", "left|");
+        Long result = encoder.encodeTurnLanes(way);
+
+        List<Lane> lanes = encoder.decodeTurnLanesToList(result);
+
+        assertNotNull(lanes);
+        assertFalse(lanes.isEmpty());
+        List<String> laneStr = new ArrayList<>();
+        for (Lane lane : lanes) {
+            laneStr.add(lane.getDirection());
+        }
+        assertEquals("[left, none]", laneStr.toString());
+    }
+
+    @Test
+    public void testTurnLaneWithMultipleEmptyTags() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("turn:lanes", "left||||right");
+        Long result = encoder.encodeTurnLanes(way);
+
+        List<Lane> lanes = encoder.decodeTurnLanesToList(result);
+
+        assertNotNull(lanes);
+        assertFalse(lanes.isEmpty());
+        List<String> laneStr = new ArrayList<>();
+        for (Lane lane : lanes) {
+            laneStr.add(lane.getDirection());
+        }
+        assertEquals("[left, none, none, none, right]", laneStr.toString());
+    }
+
+    @Test
+    public void testTurnLanesMaxValue() {
+        ReaderWay way = new ReaderWay(1);
+        //int limit 7 lanes
+        way.setTag("turn:lanes", "none|none|none|none|none|none|none|none");
+
+        long result = encoder.encodeTurnLanes(way);
+
+        assertEquals(CarFlagEncoder.NONE_LANE_CODE, result, 0);
     }
 }

@@ -20,9 +20,11 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Lane;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
+
 
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
@@ -31,9 +33,18 @@ import java.util.*;
  * @author Peter Karich
  * @author Nop
  */
-public class CarFlagEncoder extends AbstractFlagEncoder {
+public class CarFlagEncoder extends AbstractFlagEncoder implements LaneInfoEncoder {
+    public static final int K_TURN_LANES = 4;
+
+    protected static final int LANE_MASK = 0B1111;
+    protected static final int LANE_MASK_SIZE = 4;
+    public static final int NONE_LANE_CODE = 11;
+    public static final int RIGHT_LANE_CODE = 12;
+    public static final int LEFT_LANE_CODE = 3;
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<String, Integer>();
+    protected final Map<String, Integer> turnLaneMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<String>();
+    protected EncodedDoubleValue lanesEncoder;
 
     // This value determines the maximal possible on roads with bad surfaces
     protected int badSurfaceSpeed;
@@ -141,6 +152,22 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         // forestry stuff
         defaultSpeedMap.put("track", 15);
 
+        turnLaneMap.put("slight_left", 1);
+        turnLaneMap.put("sharp_left", 2);
+        turnLaneMap.put("left", LEFT_LANE_CODE);
+        turnLaneMap.put("merge_to_right", 4);
+        turnLaneMap.put("through;left", 5);
+        turnLaneMap.put("through;right",6);
+        turnLaneMap.put("through", 7);
+        turnLaneMap.put("left;right", 8);
+        turnLaneMap.put("reverse", 9);
+        turnLaneMap.put("merge_to_left", 10);
+        turnLaneMap.put("none", NONE_LANE_CODE);
+        turnLaneMap.put("right", RIGHT_LANE_CODE);
+        turnLaneMap.put("slight_right", 13);
+        turnLaneMap.put("sharp_right", 14);
+        turnLaneMap.put("left;right;through", 15);
+
         init();
     }
 
@@ -158,7 +185,9 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         shift = super.defineWayBits(index, shift);
         speedEncoder = new EncodedDoubleValue("Speed", shift, speedBits, speedFactor, defaultSpeedMap.get("secondary"),
                 maxPossibleSpeed);
-        return shift + speedEncoder.getBits();
+        lanesEncoder = new EncodedDoubleValue("Lanes", shift, LANE_MASK_SIZE * 7, 1, 0,
+                (int) Math.pow(2, LANE_MASK_SIZE * 7) - 1, true);
+        return shift + speedEncoder.getBits() + lanesEncoder.getBits();
     }
 
     protected double getSpeed(ReaderWay way) {
@@ -276,7 +305,20 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             }
         }
 
+        if (isLaneInfoEnabled()) {
+            long laneFlags = encodeTurnLanes(way);
+            flags = lanesEncoder.setDoubleValue(flags, laneFlags);
+        }
+
         return flags;
+    }
+
+    @Override
+    public double getDouble(long flags, int key) {
+        if (key == K_TURN_LANES) {
+            return lanesEncoder.getDoubleValue(flags);
+        }
+        return super.getDouble(flags, key);
     }
 
     /**
@@ -349,5 +391,111 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     @Override
     public String toString() {
         return "car";
+    }
+
+    @Override
+    public long encodeTurnLanes(ReaderWay readerWay) {
+        String tag = readerWay.getTag("turn:lanes");
+        if (tag != null) {
+            Integer encoded = 0;
+            String[] laneTags = tag.split("\\|", -1);
+            Collections.reverse(Arrays.asList(laneTags));
+            for (int i = 0; i < laneTags.length; i++) {
+                String laneTag = laneTags[i];
+                Integer turnCode = turnLaneMap.get(laneTag);
+                if (laneTag.contains(";")) {
+                    turnCode = encodeTurnLanesWithMultipleDirections(laneTag);
+                }
+                turnCode = turnCode == null ? NONE_LANE_CODE : turnCode;
+                encoded = encoded + (turnCode << (LANE_MASK_SIZE * i));
+                if (encoded < 0) {
+                    return NONE_LANE_CODE;
+                }
+            }
+            return Long.valueOf(encoded);
+        }
+        return NONE_LANE_CODE;
+    }
+
+    private Integer encodeTurnLanesWithMultipleDirections(String laneTag) {
+        Integer turnCode;
+        boolean right = false;
+        boolean through = false;
+        boolean left = false;
+        String[] singleDirections = laneTag.split(";");
+        for (String direction : singleDirections) {
+            Integer code = turnLaneMap.get(direction);
+            if (code != null) {
+                left = left || code <= LEFT_LANE_CODE;
+                right = right || code >= RIGHT_LANE_CODE;
+                through = through || code == NONE_LANE_CODE || code == 7;
+            }
+        }
+        if (left && !right && through) {
+            turnCode = turnLaneMap.get("through;left");
+        } else if (!left && right && through) {
+            turnCode = turnLaneMap.get("through;right");
+        } else if (left && right && !through) {
+            turnCode = turnLaneMap.get("left;right");
+        } else if (left && right && through) {
+            turnCode = turnLaneMap.get("left;right;through");
+        } else if (right) {
+            turnCode = turnLaneMap.get("right");
+        } else if (left) {
+            turnCode = turnLaneMap.get("left");
+        } else {
+            turnCode = NONE_LANE_CODE;
+        }
+        return turnCode;
+    }
+
+    @Override
+    public String decodeTurnLanes(long flags) {
+        int mask = LANE_MASK;
+        int code = (int) flags;
+        int lane;
+        String lanes = "";
+        while ((lane = (code & mask)) != 0) {
+            String turnLaneString = getTurnLaneString(lane);
+            String appendedLanes = "|" + lanes;
+            lanes = turnLaneString + (lanes.isEmpty() ? "" : appendedLanes);
+            mask = mask << LANE_MASK_SIZE;
+        }
+        return lanes;
+    }
+
+    @Override
+    public List<Lane> decodeTurnLanesToList(long flags) {
+        int mask = LANE_MASK;
+        int code = (int) flags;
+        int lane;
+        int shifts = 0;
+        List<Lane> lanes = new ArrayList<>();
+        while ((lane = (code & mask)) != 0) {
+            lane = lane >> LANE_MASK_SIZE * shifts;
+            String turnLaneString = getTurnLaneString(lane);
+            lanes.add(new Lane(turnLaneString, lane));
+            mask = mask << LANE_MASK_SIZE;
+            shifts++;
+        }
+        Collections.reverse(lanes);
+        return lanes;
+    }
+
+    @Override
+    public boolean isLaneInfoEnabled() {
+        if (properties != null) {
+            return properties.getBool("lane_info", false);
+        }
+        return false;
+    }
+
+    private String getTurnLaneString(int lane) {
+        for (Map.Entry<String, Integer> entry : turnLaneMap.entrySet()) {
+            if (lane == entry.getValue()) {
+                return entry.getKey();
+            }
+        }
+        return "none";
     }
 }
