@@ -103,8 +103,8 @@ class NodeContractor {
      * Searches for shortcuts and calls the given handler on each shortcut that is found. The graph is not directly
      * changed by this method.
      *
-     * @return the degree of the handler's node (disregarding edges from/to already contracted nodes) the degree is not
-     * the total number of adjacent edges, but only the number of incoming edges
+     * Returns the 'degree' of the handler's node (disregarding edges from/to already contracted nodes). Note that 
+     * here the degree is not the total number of adjacent edges, but only the number of incoming edges
      */
     private long findShortcuts(ShortcutHandler sch) {
         long degree = 0;

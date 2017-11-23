@@ -43,8 +43,8 @@ public class NodeContractorTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = new EncodingManager(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
-    private final GraphHopperStorage g = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
-    private final CHGraph lg = g.getGraph(CHGraph.class);
+    private final GraphHopperStorage graph = new GraphBuilder(encodingManager).setCHGraph(weighting).create();
+    private final CHGraph lg = graph.getGraph(CHGraph.class);
     private final TraversalMode traversalMode = TraversalMode.NODE_BASED;
     private Directory dir;
 
@@ -54,7 +54,7 @@ public class NodeContractorTest {
     }
 
     private NodeContractor createNodeContractor() {
-        NodeContractor nodeContractor = new NodeContractor(dir, g, lg, weighting, traversalMode);
+        NodeContractor nodeContractor = new NodeContractor(dir, graph, lg, weighting, traversalMode);
         nodeContractor.initFromGraph();
         return nodeContractor;
     }
@@ -66,26 +66,26 @@ public class NodeContractorTest {
         //   /    |
         //  4-----3
         //
-        g.edge(0, 1, 1, true);
-        g.edge(0, 2, 1, true);
-        g.edge(0, 4, 3, true);
-        g.edge(1, 2, 3, true);
-        g.edge(2, 3, 1, true);
-        g.edge(4, 3, 2, true);
-        g.edge(5, 1, 2, true);
-        g.freeze();
+        graph.edge(0, 1, 1, true);
+        graph.edge(0, 2, 1, true);
+        graph.edge(0, 4, 3, true);
+        graph.edge(1, 2, 3, true);
+        graph.edge(2, 3, 1, true);
+        graph.edge(4, 3, 2, true);
+        graph.edge(5, 1, 2, true);
+        graph.freeze();
     }
 
     @Test
     public void testShortestPathSkipNode() {
         createExampleGraph();
-        final double normalDist = new Dijkstra(g, weighting, traversalMode).calcPath(4, 2).getDistance();
-        DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, traversalMode);
-        CHGraph lg = g.getGraph(CHGraph.class);
+        final double normalDist = new Dijkstra(graph, weighting, traversalMode).calcPath(4, 2).getDistance();
+        DijkstraOneToMany algo = new DijkstraOneToMany(graph, weighting, traversalMode);
+        CHGraph lg = graph.getGraph(CHGraph.class);
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, g.getNodes() + 1).setAvoidNode(3));
+        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(3));
         algo.setWeightLimit(100);
         int nodeEntry = algo.findEndNode(4, 2);
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
@@ -99,13 +99,13 @@ public class NodeContractorTest {
     @Test
     public void testShortestPathSkipNode2() {
         createExampleGraph();
-        final double normalDist = new Dijkstra(g, weighting, traversalMode).calcPath(4, 2).getDistance();
+        final double normalDist = new Dijkstra(graph, weighting, traversalMode).calcPath(4, 2).getDistance();
         assertEquals(3, normalDist, 1e-5);
-        DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, traversalMode);
+        DijkstraOneToMany algo = new DijkstraOneToMany(graph, weighting, traversalMode);
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, g.getNodes() + 1).setAvoidNode(3));
+        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(3));
         algo.setWeightLimit(10);
         int nodeEntry = algo.findEndNode(4, 2);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
@@ -117,11 +117,11 @@ public class NodeContractorTest {
     @Test
     public void testShortestPathLimit() {
         createExampleGraph();
-        DijkstraOneToMany algo = new DijkstraOneToMany(g, weighting, traversalMode);
+        DijkstraOneToMany algo = new DijkstraOneToMany(graph, weighting, traversalMode);
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, g.getNodes() + 1).setAvoidNode(0));
+        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(0));
         algo.setWeightLimit(2);
         int endNode = algo.findEndNode(4, 1);
         // did not reach endNode
@@ -136,18 +136,18 @@ public class NodeContractorTest {
         //     \_|/
         //   0___2_11
 
-        g.edge(0, 2, 2, true);
-        g.edge(10, 2, 2, true);
-        g.edge(11, 2, 2, true);
+        graph.edge(0, 2, 2, true);
+        graph.edge(10, 2, 2, true);
+        graph.edge(11, 2, 2, true);
         // create a longer one directional edge => no longish one-dir shortcut should be created
-        EdgeIteratorState edge2to1bidirected = g.edge(2, 1, 2, true);
-        EdgeIteratorState edge2to1directed = g.edge(2, 1, 10, false);
-        EdgeIteratorState edge1to3 = g.edge(1, 3, 2, true);
-        g.edge(3, 4, 2, true);
-        g.edge(3, 5, 2, true);
-        g.edge(3, 6, 2, true);
-        g.edge(3, 7, 2, true);
-        g.freeze();
+        EdgeIteratorState edge2to1bidirected = graph.edge(2, 1, 2, true);
+        EdgeIteratorState edge2to1directed = graph.edge(2, 1, 10, false);
+        EdgeIteratorState edge1to3 = graph.edge(1, 3, 2, true);
+        graph.edge(3, 4, 2, true);
+        graph.edge(3, 5, 2, true);
+        graph.edge(3, 6, 2, true);
+        graph.edge(3, 7, 2, true);
+        graph.freeze();
 
         setMaxLevelOnAllNodes();
 
@@ -165,14 +165,14 @@ public class NodeContractorTest {
         // 1 -- 3 -- 4 ---> 5 ---> 6 -- 7
         //            \           /
         //             <--- 8 <--- 
-        final EdgeIteratorState iter1to3 = g.edge(1, 3, 1, true);
-        final EdgeIteratorState iter3to4 = g.edge(3, 4, 1, true);
-        final EdgeIteratorState iter4to5 = g.edge(4, 5, 1, false);
-        final EdgeIteratorState iter5to6 = g.edge(5, 6, 1, false);
-        final EdgeIteratorState iter6to8 = g.edge(6, 8, 2, false);
-        final EdgeIteratorState iter8to4 = g.edge(8, 4, 1, false);
-        g.edge(6, 7, 1, true);
-        g.freeze();
+        final EdgeIteratorState iter1to3 = graph.edge(1, 3, 1, true);
+        final EdgeIteratorState iter3to4 = graph.edge(3, 4, 1, true);
+        final EdgeIteratorState iter4to5 = graph.edge(4, 5, 1, false);
+        final EdgeIteratorState iter5to6 = graph.edge(5, 6, 1, false);
+        final EdgeIteratorState iter6to8 = graph.edge(6, 8, 2, false);
+        final EdgeIteratorState iter8to4 = graph.edge(8, 4, 1, false);
+        graph.edge(6, 7, 1, true);
+        graph.freeze();
 
         CHEdgeIteratorState sc1to4 = lg.shortcut(1, 4);
         sc1to4.setFlags(PrepareEncoder.getScDirMask());
@@ -231,10 +231,10 @@ public class NodeContractorTest {
         //
         // where there are two roads from 1 to 2 and the directed road has a smaller weight
         // leading to two shortcuts sc1 (unidir) and sc2 (bidir) where the second should NOT be rejected due to the larger weight
-        final EdgeIteratorState edge1to2bidirected = g.edge(1, 2, 1, true);
-        final EdgeIteratorState edge1to2directed = g.edge(1, 2, 1, false);
-        final EdgeIteratorState edge2to3 = g.edge(2, 3, 1, true);
-        g.freeze();
+        final EdgeIteratorState edge1to2bidirected = graph.edge(1, 2, 1, true);
+        final EdgeIteratorState edge1to2directed = graph.edge(1, 2, 1, false);
+        final EdgeIteratorState edge2to3 = graph.edge(2, 3, 1, true);
+        graph.freeze();
         setMaxLevelOnAllNodes();
         NodeContractor nodeContractor = createNodeContractor();
         nodeContractor.contractNode(2);
@@ -247,9 +247,9 @@ public class NodeContractorTest {
     @Test
     public void testContractNode_directed_shortcutRequired() {
         // 0 --> 1 --> 2
-        final EdgeIteratorState edge1 = g.edge(0, 1, 1, false);
-        final EdgeIteratorState edge2 = g.edge(1, 2, 2, false);
-        g.freeze();
+        final EdgeIteratorState edge1 = graph.edge(0, 1, 1, false);
+        final EdgeIteratorState edge2 = graph.edge(1, 2, 2, false);
+        graph.freeze();
         setMaxLevelOnAllNodes();
         createNodeContractor().contractNode(1);
         checkShortcuts(expectedShortcut(0, 2, edge1, edge2, true, false));
@@ -258,9 +258,9 @@ public class NodeContractorTest {
     @Test
     public void testContractNode_directed_shortcutRequired_reverse() {
         // 0 <-- 1 <-- 2
-        final EdgeIteratorState edge1 = g.edge(2, 1, 1, false);
-        final EdgeIteratorState edge2 = g.edge(1, 0, 2, false);
-        g.freeze();
+        final EdgeIteratorState edge1 = graph.edge(2, 1, 1, false);
+        final EdgeIteratorState edge2 = graph.edge(1, 0, 2, false);
+        graph.freeze();
         setMaxLevelOnAllNodes();
         createNodeContractor().contractNode(1);
         checkShortcuts(expectedShortcut(0, 2, edge1, edge2, false, true));
@@ -269,9 +269,9 @@ public class NodeContractorTest {
     @Test
     public void testContractNode_bidirected_shortcutsRequired() {
         // 0 -- 1 -- 2
-        final EdgeIteratorState edge1 = g.edge(0, 1, 1, true);
-        final EdgeIteratorState edge2 = g.edge(1, 2, 2, true);
-        g.freeze();
+        final EdgeIteratorState edge1 = graph.edge(0, 1, 1, true);
+        final EdgeIteratorState edge2 = graph.edge(1, 2, 2, true);
+        graph.freeze();
         setMaxLevelOnAllNodes();
         createNodeContractor().contractNode(1);
         checkShortcuts(expectedShortcut(0, 2, edge2, edge1, true, true));
@@ -281,10 +281,10 @@ public class NodeContractorTest {
     public void testContractNode_directed_withWitness() {
         // 0 --> 1 --> 2
         //  \_________/
-        g.edge(0, 1, 1, false);
-        g.edge(1, 2, 2, false);
-        g.edge(0, 2, 1, false);
-        g.freeze();
+        graph.edge(0, 1, 1, false);
+        graph.edge(1, 2, 2, false);
+        graph.edge(0, 2, 1, false);
+        graph.freeze();
         setMaxLevelOnAllNodes();
         createNodeContractor().contractNode(1);
         checkNoShortcuts();
@@ -359,10 +359,10 @@ public class NodeContractorTest {
         }
 
         @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Shortcut shortcut = (Shortcut) o;
+        public boolean equals(Object obj) {
+            if (this == obj) return true;
+            if (obj == null || getClass() != obj.getClass()) return false;
+            Shortcut shortcut = (Shortcut) obj;
             return baseNode == shortcut.baseNode &&
                     adjNode == shortcut.adjNode &&
                     Double.compare(shortcut.weight, weight) == 0 &&
