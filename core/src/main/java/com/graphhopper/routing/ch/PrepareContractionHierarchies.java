@@ -471,7 +471,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private int getMaxVisitedNodesEstimate() {
-        // todo: we return 0 here if meanDegree is < 0, which is not really what we want, but changing this changes
+        // todo: we return 0 here if meanDegree is < 1, which is not really what we want, but changing this changes
         // the node contraction order and requires re-optimizing the parameters of the graph contraction
         return (int) meanDegree * 100;
     }
