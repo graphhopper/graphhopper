@@ -140,9 +140,9 @@ public class NodeContractorTest {
         graph.edge(10, 2, 2, true);
         graph.edge(11, 2, 2, true);
         // create a longer one directional edge => no longish one-dir shortcut should be created
-        EdgeIteratorState edge2to1bidirected = graph.edge(2, 1, 2, true);
-        EdgeIteratorState edge2to1directed = graph.edge(2, 1, 10, false);
-        EdgeIteratorState edge1to3 = graph.edge(1, 3, 2, true);
+        final EdgeIteratorState edge2to1bidirected = graph.edge(2, 1, 2, true);
+        final EdgeIteratorState edge2to1directed = graph.edge(2, 1, 10, false);
+        final EdgeIteratorState edge1to3 = graph.edge(1, 3, 2, true);
         graph.edge(3, 4, 2, true);
         graph.edge(3, 5, 2, true);
         graph.edge(3, 6, 2, true);
