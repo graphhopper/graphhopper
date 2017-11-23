@@ -26,11 +26,16 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CHEdgeIteratorState;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Objects;
+import java.util.Set;
 
 import static org.junit.Assert.*;
 
@@ -135,10 +140,9 @@ public class NodeContractorTest {
         g.edge(10, 2, 2, true);
         g.edge(11, 2, 2, true);
         // create a longer one directional edge => no longish one-dir shortcut should be created
-        g.edge(2, 1, 2, true);
-        g.edge(2, 1, 10, false);
-
-        g.edge(1, 3, 2, true);
+        EdgeIteratorState edge2to1bidirected = g.edge(2, 1, 2, true);
+        EdgeIteratorState edge2to1directed = g.edge(2, 1, 10, false);
+        EdgeIteratorState edge1to3 = g.edge(1, 3, 2, true);
         g.edge(3, 4, 2, true);
         g.edge(3, 5, 2, true);
         g.edge(3, 6, 2, true);
@@ -148,33 +152,19 @@ public class NodeContractorTest {
         setMaxLevelOnAllNodes();
 
         // find all shortcuts if we contract node 1
-        NodeContractor nodeContractor = new NodeContractor(dir, g, lg, weighting, traversalMode);
-        nodeContractor.initFromGraph();
-        Collection<NodeContractor.Shortcut> scs = nodeContractor.testFindShortcuts(1);
-        assertEquals(2, scs.size());
-        Iterator<NodeContractor.Shortcut> iter = scs.iterator();
-        NodeContractor.Shortcut sc1 = iter.next();
-        NodeContractor.Shortcut sc2 = iter.next();
-        if (sc1.weight > sc2.weight) {
-            NodeContractor.Shortcut tmp = sc1;
-            sc1 = sc2;
-            sc2 = tmp;
-        }
-
-        // both dirs
-        assertTrue(sc1.toString(), sc1.from == 3 && sc1.to == 2);
-        assertTrue(sc1.toString(), encoder.isForward(sc1.flags) && encoder.isBackward(sc1.flags));
-
-        // directed
-        assertTrue(sc2.toString(), sc2.from == 2 && sc2.to == 3);
-        assertTrue(sc2.toString(), encoder.isForward(sc2.flags));
-
-        assertEquals(sc1.toString(), 4, sc1.weight, 1e-4);
-        assertEquals(sc2.toString(), 12, sc2.weight, 1e-4);
+        NodeContractor nodeContractor = createNodeContractor();
+        nodeContractor.contractNode(1);
+        checkShortcuts(
+                expectedShortcut(2, 3, edge1to3, edge2to1bidirected, true, true),
+                expectedShortcut(2, 3, edge2to1directed, edge1to3, true, false)
+        );
     }
 
     @Test
     public void testFindShortcuts_Roundabout() {
+        // 1 -- 3 -- 4 ---> 5 ---> 6 -- 7
+        //            \           /
+        //             <--- 8 <--- 
         final EdgeIteratorState iter1to3 = g.edge(1, 3, 1, true);
         final EdgeIteratorState iter3to4 = g.edge(3, 4, 1, true);
         final EdgeIteratorState iter4to5 = g.edge(4, 5, 1, false);
@@ -184,19 +174,24 @@ public class NodeContractorTest {
         g.edge(6, 7, 1, true);
         g.freeze();
 
-        CHEdgeIteratorState tmp = lg.shortcut(1, 4);
-        tmp.setFlags(PrepareEncoder.getScDirMask());
-        tmp.setWeight(2);
-        tmp.setSkippedEdges(iter1to3.getEdge(), iter3to4.getEdge());
+        CHEdgeIteratorState sc1to4 = lg.shortcut(1, 4);
+        sc1to4.setFlags(PrepareEncoder.getScDirMask());
+        sc1to4.setWeight(2);
+        sc1to4.setDistance(2);
+        sc1to4.setSkippedEdges(iter1to3.getEdge(), iter3to4.getEdge());
+
         long f = PrepareEncoder.getScFwdDir();
-        tmp = lg.shortcut(4, 6);
-        tmp.setFlags(f);
-        tmp.setWeight(2);
-        tmp.setSkippedEdges(iter4to5.getEdge(), iter5to6.getEdge());
-        tmp = lg.shortcut(6, 4);
-        tmp.setFlags(f);
-        tmp.setWeight(3);
-        tmp.setSkippedEdges(iter6to8.getEdge(), iter8to4.getEdge());
+        CHEdgeIteratorState sc4to6 = lg.shortcut(4, 6);
+        sc4to6.setFlags(f);
+        sc4to6.setWeight(2);
+        sc4to6.setDistance(2);
+        sc4to6.setSkippedEdges(iter4to5.getEdge(), iter5to6.getEdge());
+
+        CHEdgeIteratorState sc6to4 = lg.shortcut(6, 4);
+        sc6to4.setFlags(f);
+        sc6to4.setWeight(3);
+        sc6to4.setDistance(3);
+        sc6to4.setSkippedEdges(iter6to8.getEdge(), iter8to4.getEdge());
 
         setMaxLevelOnAllNodes();
 
@@ -205,28 +200,24 @@ public class NodeContractorTest {
         lg.setLevel(7, 7);
         lg.setLevel(8, 8);
 
-        // after 'manual contraction' the graph looks like:
+        Shortcut manualSc1 = expectedShortcut(1, 4, iter1to3, iter3to4, true, true);
+        Shortcut manualSc2 = expectedShortcut(4, 6, iter4to5, iter5to6, true, false);
+        Shortcut manualSc3 = expectedShortcut(4, 6, iter6to8, iter8to4, false, true);
+        checkShortcuts(manualSc1, manualSc2, manualSc3);
+
+        // after 'manual contraction' of nodes 3, 5, 8 the graph looks like:
         // 1 -- 4 -->-- 6 -- 7
         //       \      |
         //        --<----
 
         // contract node 4!
         NodeContractor nodeContractor = createNodeContractor();
-        Collection<NodeContractor.Shortcut> sc = nodeContractor.testFindShortcuts(4);
-
-        // there should be two different shortcuts for both directions!
-        assertEquals(2, sc.size());
-        Iterator<NodeContractor.Shortcut> iter = sc.iterator();
-        NodeContractor.Shortcut sc1 = iter.next();
-        NodeContractor.Shortcut sc2 = iter.next();
-        if (sc1.from > sc2.from) {
-            NodeContractor.Shortcut tmpSc = sc1;
-            sc1 = sc2;
-            sc2 = tmpSc;
-        }
-
-        assertEquals("1->6, weight:4.0 (7,8)", sc1.toString());
-        assertEquals("6->1, weight:5.0 (9,7)", sc2.toString());
+        nodeContractor.contractNode(4);
+        checkShortcuts(manualSc1, manualSc2, manualSc3,
+                // there should be two different shortcuts for both directions!
+                expectedShortcut(1, 6, sc1to4, sc4to6, true, false),
+                expectedShortcut(1, 6, sc6to4, sc1to4, false, true)
+        );
     }
 
 
@@ -240,18 +231,17 @@ public class NodeContractorTest {
         //
         // where there are two roads from 1 to 2 and the directed road has a smaller weight
         // leading to two shortcuts sc1 (unidir) and sc2 (bidir) where the second should NOT be rejected due to the larger weight
-        g.edge(1, 2, 1, true);
-        g.edge(1, 2, 1, false);
-        g.edge(2, 3, 1, true);
+        final EdgeIteratorState edge1to2bidirected = g.edge(1, 2, 1, true);
+        final EdgeIteratorState edge1to2directed = g.edge(1, 2, 1, false);
+        final EdgeIteratorState edge2to3 = g.edge(2, 3, 1, true);
         g.freeze();
-
-        // order is important here
-        NodeContractor.Shortcut sc1 = new NodeContractor.Shortcut(1, 3, 6.81620625, 121.18);
-        NodeContractor.Shortcut sc2 = new NodeContractor.Shortcut(1, 3, 6.82048125, 121.25);
-        sc2.flags = PrepareEncoder.getScDirMask();
-        List<NodeContractor.Shortcut> list = Arrays.asList(sc1, sc2);
+        setMaxLevelOnAllNodes();
         NodeContractor nodeContractor = createNodeContractor();
-        assertEquals(2, nodeContractor.addShortcuts(list));
+        nodeContractor.contractNode(2);
+        checkShortcuts(
+                expectedShortcut(1, 3, edge2to3, edge1to2bidirected, false, true),
+                expectedShortcut(1, 3, edge1to2directed, edge2to3, true, false)
+        );
     }
 
     @Test
@@ -263,6 +253,17 @@ public class NodeContractorTest {
         setMaxLevelOnAllNodes();
         createNodeContractor().contractNode(1);
         checkShortcuts(expectedShortcut(0, 2, edge1, edge2, true, false));
+    }
+
+    @Test
+    public void testContractNode_directed_shortcutRequired_reverse() {
+        // 0 <-- 1 <-- 2
+        final EdgeIteratorState edge1 = g.edge(2, 1, 1, false);
+        final EdgeIteratorState edge2 = g.edge(1, 0, 2, false);
+        g.freeze();
+        setMaxLevelOnAllNodes();
+        createNodeContractor().contractNode(1);
+        checkShortcuts(expectedShortcut(0, 2, edge1, edge2, false, true));
     }
 
     @Test

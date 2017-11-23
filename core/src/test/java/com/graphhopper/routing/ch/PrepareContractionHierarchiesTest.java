@@ -19,7 +19,6 @@ package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.routing.*;
-import com.graphhopper.routing.ch.NodeContractor.Shortcut;
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
@@ -33,8 +32,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
 
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;

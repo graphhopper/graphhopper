@@ -30,7 +30,6 @@ import com.graphhopper.util.*;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 class NodeContractor {
     private final GraphHopperStorage ghStorage;
@@ -173,7 +172,7 @@ class NodeContractor {
      *
      * @return the actual number of shortcuts that were added to the graph
      */
-    int addShortcuts(Collection<Shortcut> shortcuts) {
+    private int addShortcuts(Collection<Shortcut> shortcuts) {
         int tmpNewShortcuts = 0;
         NEXT_SC:
         for (Shortcut sc : shortcuts) {
@@ -268,11 +267,6 @@ class NodeContractor {
         return originalEdges.getInt(tmp);
     }
 
-    Set<Shortcut> testFindShortcuts(int node) {
-        findShortcuts(addScHandler.setNode(node));
-        return shortcuts.keySet();
-    }
-
     String getPrepareAlgoMemoryUsage() {
         return prepareAlgo.getMemoryUsageAsString();
     }
@@ -344,10 +338,9 @@ class NodeContractor {
                 return false;
 
             final Shortcut other = (Shortcut) obj;
-            if (this.from != other.from || this.to != other.to)
-                return false;
+            return this.from == other.from && this.to == other.to &&
+                    Double.doubleToLongBits(this.weight) == Double.doubleToLongBits(other.weight);
 
-            return Double.doubleToLongBits(this.weight) == Double.doubleToLongBits(other.weight);
         }
 
         @Override
