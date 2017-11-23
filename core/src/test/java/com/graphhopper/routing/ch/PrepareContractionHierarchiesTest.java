@@ -156,7 +156,7 @@ public class PrepareContractionHierarchiesTest {
         int old = lg.getAllEdges().getMaxId();
         PrepareContractionHierarchies prepare = new PrepareContractionHierarchies(dir, g, lg, weighting, tMode);
         prepare.doWork();
-        assertEquals(old + 1, lg.getAllEdges().getMaxId());
+        assertEquals(old + 2, lg.getAllEdges().getMaxId());
     }
 
     @Test
@@ -207,7 +207,7 @@ public class PrepareContractionHierarchiesTest {
         assertEquals(oldCount, g.getAllEdges().getMaxId());
         assertEquals(oldCount, GHUtility.count(g.getAllEdges()));
 
-        int numShortcuts = 11;
+        int numShortcuts = 9;
         assertEquals(numShortcuts, prepare.getShortcuts());
         assertEquals(oldCount + numShortcuts, lg.getAllEdges().getMaxId());
         assertEquals(oldCount + numShortcuts, GHUtility.count(lg.getAllEdges()));

@@ -202,9 +202,6 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         };
 
         maxLevel = prepareGraph.getNodes() + 1;
-        // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
-        // each edge can exist in both directions
-        meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
         vehicleAllExplorer = prepareGraph.createEdgeExplorer(allFilter);
         vehicleAllTmpExplorer = prepareGraph.createEdgeExplorer(allFilter);
         calcPrioAllExplorer = prepareGraph.createEdgeExplorer(accessWithLevelFilter);
@@ -235,6 +232,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private void contractNodes() {
+        // meanDegree is the number of edges / number of nodes ratio of the graph, not really the average degree, because
+        // each edge can exist in both directions
+        // todo: initializing meanDegree here instead of in initFromGraph() means that in the first round of calculating
+        // node priorities all shortcut searches are cancelled immediately and all possible shortcuts are counted because
+        // no witness path can be found. this is not really what we want, but changing it requires re-optimizing the
+        // graph contraction parameters, because it affects the node contraction order.
+        meanDegree = prepareGraph.getAllEdges().getMaxId() / prepareGraph.getNodes();
         int level = 1;
         long counter = 0;
         int initSize = sortedNodes.getSize();
@@ -467,7 +471,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private int getMaxVisitedNodesEstimate() {
-        return (int) (meanDegree * 100);
+        // todo: we return 0 here if meanDegree is < 0, which is not really what we want, but changing this changes
+        // the node contraction order and requires re-optimizing the parameters of the graph contraction
+        return (int) meanDegree * 100;
     }
 
     @Override
