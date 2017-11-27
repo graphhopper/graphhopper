@@ -21,6 +21,7 @@ import com.graphhopper.coll.GHBitSet;
 import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.routing.util.AllEdgesIterator;
 import com.graphhopper.storage.Graph;
+import com.graphhopper.util.PointList;
 
 /**
  * This class smooths the elevation data of all edges by calculating the average elevation over
@@ -38,6 +39,8 @@ public abstract class RoadElevationInterpolator {
         smoothPillarNodes(graph);
         smoothTowerNodes(graph);
     }
+
+    public abstract PointList smoothElevation(PointList pl);
 
     private void smoothPillarNodes(Graph graph) {
         final AllEdgesIterator edge = graph.getAllEdges();

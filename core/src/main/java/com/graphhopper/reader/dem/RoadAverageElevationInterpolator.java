@@ -22,8 +22,7 @@ public class RoadAverageElevationInterpolator extends RoadElevationInterpolator 
     private final static int MAX_TOWER_DISTANCE = 30;
 
     @Override
-    protected void smoothPillarNodesOfEdge(AllEdgesIterator edge) {
-        PointList geometry = edge.fetchWayGeometry(3);
+    public PointList smoothElevation(PointList geometry) {
         if (geometry.size() >= MIN_GEOMETRY_SIZE) {
             for (int i = 1; i < geometry.size() - 1; i++) {
                 int start = i - MAX_SEARCH_RADIUS < 0 ? 0 : i - MAX_SEARCH_RADIUS;
@@ -41,6 +40,15 @@ public class RoadAverageElevationInterpolator extends RoadElevationInterpolator 
                 double smoothed = sum / counter;
                 geometry.setElevation(i, smoothed);
             }
+        }
+        return geometry;
+    }
+
+    @Override
+    protected void smoothPillarNodesOfEdge(AllEdgesIterator edge) {
+        PointList geometry = edge.fetchWayGeometry(3);
+        if (geometry.size() >= MIN_GEOMETRY_SIZE) {
+            geometry = smoothElevation(geometry);
             //Remove the Tower Nodes
             PointList pillarNodesPointList = geometry.copy(1, geometry.size() - 1);
             edge.setWayGeometry(pillarNodesPointList);
