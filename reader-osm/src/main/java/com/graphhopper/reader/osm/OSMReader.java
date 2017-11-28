@@ -29,7 +29,6 @@ import com.graphhopper.coll.GHLongLongHashMap;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.reader.dem.RoadAverageElevationInterpolator;
 import com.graphhopper.reader.dem.RoadElevationInterpolator;
 import com.graphhopper.reader.osm.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -87,7 +86,6 @@ public class OSMReader implements DataReader {
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
     private final DistanceCalc3D distCalc3D = Helper.DIST_3D;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
-    private final RoadElevationInterpolator interpolator = new RoadAverageElevationInterpolator();
     private boolean smoothElevation = false;
     private final boolean exitOnlyPillarNodeException = true;
     private final Map<FlagEncoder, EdgeExplorer> outExplorerMap = new HashMap<FlagEncoder, EdgeExplorer>();
@@ -687,7 +685,7 @@ public class OSMReader implements DataReader {
 
         // Smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
         if (this.smoothElevation)
-            pointList = interpolator.smoothElevation(pointList);
+            pointList = RoadElevationInterpolator.smoothElevation(pointList);
 
         double towerNodeDistance = 0;
         double prevLat = pointList.getLatitude(0);
