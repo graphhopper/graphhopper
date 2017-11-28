@@ -270,7 +270,10 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         size = newSize;
     }
 
-    public void removeLastPoint(){
+    public void removeLastPoint() {
+        if (size == 0)
+            throw new IllegalStateException("Cannot remove last point from empty PointList");
+
         size--;
     }
 

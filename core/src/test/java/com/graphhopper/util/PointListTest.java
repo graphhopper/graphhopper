@@ -20,11 +20,7 @@ package com.graphhopper.util;
 import com.graphhopper.util.shapes.GHPoint;
 import org.junit.Test;
 
-import java.util.Arrays;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 /**
  * @author Peter Karich
@@ -107,10 +103,20 @@ public class PointListTest {
             list.add(1, i);
         }
         assertEquals(10, list.getSize());
-        assertEquals(9, list.getLon(list.getSize()-1), .1);
+        assertEquals(9, list.getLon(list.getSize() - 1), .1);
         list.removeLastPoint();
         assertEquals(9, list.getSize());
-        assertEquals(8, list.getLon(list.getSize()-1), .1);
+        assertEquals(8, list.getLon(list.getSize() - 1), .1);
+
+        list = new PointList(20, false);
+        list.add(1, 1);
+        list.removeLastPoint();
+        try {
+            list.removeLastPoint();
+            fail();
+        } catch (Exception ex) {
+        }
+        assertEquals(0, list.getSize());
     }
 
     @Test
