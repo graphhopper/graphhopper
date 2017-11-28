@@ -4,7 +4,7 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.PointList;
 
 /**
- * This class smooths the elevation data a PointList by calculating the average elevation over
+ * This class smooths the elevation data of a PointList by calculating the average elevation over
  * multiple points of that PointList.
  * <p>
  * The ElevationData is read from rectangular tiles. Especially when going along a cliff,
