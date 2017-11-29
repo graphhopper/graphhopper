@@ -46,15 +46,15 @@ public class SRTMProviderTest {
 
     @Test
     public void testGetFileString() {
-        assertEquals("Eurasia/N49E011", instance.getFileString(49, 11));
-        assertEquals("Eurasia/N52W002", instance.getFileString(52.268157, -1.230469));
-        assertEquals("Africa/S06E034", instance.getFileString(-5.965754, 34.804687));
-        assertEquals("Australia/S29E131", instance.getFileString(-28.304381, 131.484375));
-        assertEquals("South_America/S09W045", instance.getFileString(-9, -45));
-        assertEquals("South_America/S10W046", instance.getFileString(-9.1, -45.1));
-        assertEquals("South_America/S10W045", instance.getFileString(-9.6, -45));
-        assertEquals("South_America/S28W071", instance.getFileString(-28, -71));
-        assertEquals("South_America/S29W072", instance.getFileString(-28.88316, -71.070557));
+        assertEquals("Eurasia/N49E011", instance.getFileName(49, 11));
+        assertEquals("Eurasia/N52W002", instance.getFileName(52.268157, -1.230469));
+        assertEquals("Africa/S06E034", instance.getFileName(-5.965754, 34.804687));
+        assertEquals("Australia/S29E131", instance.getFileName(-28.304381, 131.484375));
+        assertEquals("South_America/S09W045", instance.getFileName(-9, -45));
+        assertEquals("South_America/S10W046", instance.getFileName(-9.1, -45.1));
+        assertEquals("South_America/S10W045", instance.getFileName(-9.6, -45));
+        assertEquals("South_America/S28W071", instance.getFileName(-28, -71));
+        assertEquals("South_America/S29W072", instance.getFileName(-28.88316, -71.070557));
     }
 
     @Test

@@ -578,6 +578,8 @@ public class GraphHopper implements GraphHopperAPI {
             tmpProvider = cgiarProvider;
         } else if (eleProviderStr.equalsIgnoreCase("gmted")) {
             tmpProvider = new GMTEDProvider();
+        } else if (eleProviderStr.equalsIgnoreCase("srtmgl1")) {
+            tmpProvider = new SRTMGL1Provider();
         } else if (eleProviderStr.equalsIgnoreCase("multi")) {
             tmpProvider = new MultiSourceElevationProvider();
         }
