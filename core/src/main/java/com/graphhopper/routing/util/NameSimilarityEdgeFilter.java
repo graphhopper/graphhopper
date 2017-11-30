@@ -17,12 +17,15 @@
  */
 package com.graphhopper.routing.util;
 
+import com.graphhopper.apache.commons.lang3.StringUtils;
 import com.graphhopper.debatty.java.stringsimilarity.JaroWinkler;
 import com.graphhopper.util.EdgeIteratorState;
-import com.graphhopper.apache.commons.lang3.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.regex.Pattern;
+
+import static com.graphhopper.util.Helper.toLowerCase;
 
 /**
  * This class defines the basis for NameSimilarity matching using an EdgeFilter.
@@ -67,7 +70,7 @@ public class NameSimilarityEdgeFilter implements EdgeFilter {
         String tmp;
         List<String> list = new ArrayList<>(arr.length);
         for (int i = 0; i < arr.length; i++) {
-            tmp = NON_WORD_CHAR.matcher(arr[i].toLowerCase()).replaceAll("");
+            tmp = NON_WORD_CHAR.matcher(toLowerCase(arr[i])).replaceAll("");
             // Ignore matching short frases like, de, rue, st, etc.
             if (!tmp.isEmpty() && tmp.length() > 3) {
                 list.add(tmp);
