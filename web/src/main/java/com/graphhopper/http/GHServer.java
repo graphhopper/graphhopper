@@ -139,6 +139,8 @@ public class GHServer {
                 } else {
                     install(new GraphHopperModule(args));
                 }
+
+                install(new IsochroneServletModule());
                 install(new GraphHopperServletModule(args));
             }
         };

@@ -35,7 +35,11 @@
             <artifactId>graphhopper-reader-gtfs</artifactId>
             <version>${project.parent.version}</version>
         </dependency>
-
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>graphhopper-isochrone</artifactId>
+            <version>${project.parent.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -96,7 +100,13 @@
         <dependency>
             <groupId>com.graphhopper</groupId>
             <artifactId>directions-api-client-hc</artifactId>
-            <version>0.10-SNAPSHOT</version>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.graphhopper</groupId>
+            <artifactId>directions-api-client</artifactId>
+            <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
 
