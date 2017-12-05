@@ -17,13 +17,10 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.storage.DAType;
-import com.graphhopper.util.Constants;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.File;
 import java.io.IOException;
 
 import static org.junit.Assert.assertEquals;
@@ -59,7 +56,7 @@ public class SRTMProviderTest {
 
     @Test
     public void testGetHeight() throws IOException {
-        instance.setCacheDir(new File("./files/"));
+        instance = new SRTMProvider("./files/");
         // easy to verify orientation of tile:
 //        instance.getEle(43, 13);
 
@@ -88,7 +85,7 @@ public class SRTMProviderTest {
 
     @Test
     public void testGetHeight_issue545() throws IOException {
-        instance.setCacheDir(new File("./files/"));
+        instance = new SRTMProvider("./files/");
 
         // test different precision of the elevation file (3600)
         assertEquals(84, instance.getEle(48.003878, -124.660492), 1e-1);
@@ -96,7 +93,27 @@ public class SRTMProviderTest {
 
     @Test
     public void testGetHeightMMap() throws IOException {
-        instance.setCacheDir(new File("./files/"));
+        instance = new SRTMProvider("./files/");
         assertEquals(161, instance.getEle(55.8943144, -3), 1e-1);
+    }
+
+    @Test
+    public void testGetEle() {
+        instance = new SRTMProvider();
+        double precision = .1;
+        assertEquals(337, instance.getEle(49.949784, 11.57517), precision);
+        assertEquals(466, instance.getEle(49.968668, 11.575127), precision);
+        assertEquals(466, instance.getEle(49.968682, 11.574842), precision);
+        assertEquals(3100, instance.getEle(-22.532854, -65.110474), precision);
+        assertEquals(122, instance.getEle(38.065392, -87.099609), precision);
+        assertEquals(1617, instance.getEle(40, -105.2277023), precision);
+        assertEquals(1617, instance.getEle(39.99999999, -105.2277023), precision);
+        assertEquals(1617, instance.getEle(39.9999999, -105.2277023), precision);
+        assertEquals(1617, instance.getEle(39.999999, -105.2277023), precision);
+        assertEquals(1046, instance.getEle(47.468668, 14.575127), precision);
+        assertEquals(1113, instance.getEle(47.467753, 14.573911), precision);
+        assertEquals(1946, instance.getEle(46.468835, 12.578777), precision);
+        assertEquals(845, instance.getEle(48.469123, 9.576393), precision);
+        assertEquals(0, instance.getEle(56.4787319, 17.6118363), precision);
     }
 }

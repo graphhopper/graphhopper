@@ -67,4 +67,24 @@ public class SRTMGL1ProviderTest {
         assertEquals("s42w063", instance.getFileName(-41.015725, -62.949219));
     }
 
+    @Test
+    public void testGetEle() {
+        double precision = .1;
+        assertEquals(338, instance.getEle(49.949784, 11.57517), precision);
+        assertEquals(468, instance.getEle(49.968668, 11.575127), precision);
+        assertEquals(467, instance.getEle(49.968682, 11.574842), precision);
+        assertEquals(3110, instance.getEle(-22.532854, -65.110474), precision);
+        assertEquals(120, instance.getEle(38.065392, -87.099609), precision);
+        assertEquals(1617, instance.getEle(40, -105.2277023), precision);
+        assertEquals(1617, instance.getEle(39.99999999, -105.2277023), precision);
+        assertEquals(1617, instance.getEle(39.9999999, -105.2277023), precision);
+        assertEquals(1617, instance.getEle(39.999999, -105.2277023), precision);
+        assertEquals(1015, instance.getEle(47.468668, 14.575127), precision);
+        assertEquals(1107, instance.getEle(47.467753, 14.573911), precision);
+        assertEquals(1930, instance.getEle(46.468835, 12.578777), precision);
+        assertEquals(844, instance.getEle(48.469123, 9.576393), precision);
+        // The file for this coordinate does not exist, but there is a ferry tagged in OSM
+        assertEquals(0, instance.getEle(56.4787319, 17.6118363), precision);
+    }
+
 }

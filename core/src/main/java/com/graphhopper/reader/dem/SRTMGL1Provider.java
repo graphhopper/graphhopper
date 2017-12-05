@@ -47,8 +47,12 @@ public class SRTMGL1Provider extends AbstractSRTMElevationProvider {
     private final int lonDegree = 1;
 
     public SRTMGL1Provider() {
+        this("/tmp/srtmgl1");
+    }
+
+    public SRTMGL1Provider(String cacheDir) {
         super("https://cloud.sdsc.edu/v1/AUTH_opentopography/Raster/SRTM_GL1/SRTM_GL1_srtm/",
-                "/tmp/srtmgl1",
+                cacheDir,
                 "GraphHopper SRTMReader",
                 3601
         );

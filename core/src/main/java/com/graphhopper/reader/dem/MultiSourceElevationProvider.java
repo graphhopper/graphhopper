@@ -18,17 +18,6 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DAType;
-import com.graphhopper.storage.DataAccess;
-import com.graphhopper.util.Helper;
-import org.apache.xmlgraphics.image.codec.tiff.TIFFDecodeParam;
-import org.apache.xmlgraphics.image.codec.tiff.TIFFImageDecoder;
-import org.apache.xmlgraphics.image.codec.util.SeekableStream;
-
-import java.awt.image.Raster;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 
 /**
  * The MultiSourceElevationProvider mixes different elevation providers to provide the best available elevation data
@@ -38,25 +27,31 @@ import java.io.InputStream;
  */
 public class MultiSourceElevationProvider implements ElevationProvider {
 
-    private CGIARProvider cgiarProvider;
-    private GMTEDProvider gmtedProvider;
+    // Usually a high resolution provider in the SRTM area
+    private ElevationProvider srtmProvider;
+    // The fallback provider that provides elevation data globally
+    private ElevationProvider globalProvider;
 
-    public MultiSourceElevationProvider(CGIARProvider cgiarProvider, GMTEDProvider gmtedProvider) {
-        this.cgiarProvider = cgiarProvider;
-        this.gmtedProvider = gmtedProvider;
+    public MultiSourceElevationProvider(ElevationProvider srtmProvider, ElevationProvider globalProvider) {
+        this.srtmProvider = srtmProvider;
+        this.globalProvider = globalProvider;
     }
 
     public MultiSourceElevationProvider() {
-        this(new CGIARProvider(), new GMTEDProvider());
+        this(new SRTMGL1Provider(), new GMTEDProvider());
+    }
+
+    public MultiSourceElevationProvider(String cacheDir) {
+        this(new SRTMGL1Provider(cacheDir), new GMTEDProvider(cacheDir));
     }
 
     @Override
     public double getEle(double lat, double lon) {
         // Sometimes the cgiar data north of 59.999 equals 0
         if (lat < 59.999 && lat > -56) {
-            return cgiarProvider.getEle(lat, lon);
+            return srtmProvider.getEle(lat, lon);
         }
-        return gmtedProvider.getEle(lat, lon);
+        return globalProvider.getEle(lat, lon);
     }
 
     /**
@@ -69,35 +64,34 @@ public class MultiSourceElevationProvider implements ElevationProvider {
         if (urls.length != 2) {
             throw new IllegalArgumentException("The base url must consist of two urls separated by a ';'. The first for cgiar, the second for gmted");
         }
-        cgiarProvider.setBaseURL(urls[0]);
-        gmtedProvider.setBaseURL(urls[1]);
-        return this;
-    }
-
-    @Override
-    public ElevationProvider setCacheDir(File cacheDir) {
-        cgiarProvider.setCacheDir(cacheDir);
-        gmtedProvider.setCacheDir(cacheDir);
+        srtmProvider.setBaseURL(urls[0]);
+        globalProvider.setBaseURL(urls[1]);
         return this;
     }
 
     @Override
     public ElevationProvider setDAType(DAType daType) {
-        cgiarProvider.setDAType(daType);
-        gmtedProvider.setDAType(daType);
+        srtmProvider.setDAType(daType);
+        globalProvider.setDAType(daType);
         return this;
     }
 
     @Override
     public void setCalcMean(boolean calcMean) {
-        cgiarProvider.setCalcMean(calcMean);
-        gmtedProvider.setCalcMean(calcMean);
+        srtmProvider.setCalcMean(calcMean);
+        globalProvider.setCalcMean(calcMean);
     }
 
     @Override
     public void release() {
-        cgiarProvider.release();
-        gmtedProvider.release();
+        srtmProvider.release();
+        globalProvider.release();
+    }
+
+    @Override
+    public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
+        srtmProvider.setAutoRemoveTemporaryFiles(autoRemoveTemporary);
+        globalProvider.setAutoRemoveTemporaryFiles(autoRemoveTemporary);
     }
 
     @Override

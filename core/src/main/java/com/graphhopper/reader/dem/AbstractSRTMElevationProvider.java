@@ -18,14 +18,9 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.coll.GHIntObjectHashMap;
-import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.util.BitUtil;
 import com.graphhopper.util.Downloader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -38,33 +33,21 @@ import java.net.SocketTimeoutException;
  *
  * @author Robin Boldt
  */
-public abstract class AbstractSRTMElevationProvider implements ElevationProvider {
+public abstract class AbstractSRTMElevationProvider extends AbstractElevationProvider {
 
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
-    private final Logger logger = LoggerFactory.getLogger(getClass());
     private final int DEFAULT_WIDTH;
     private final int WIDTH_BYTE_INDEX = 0;
     // use a map as an array is not quite useful if we want to hold only parts of the world
     private final GHIntObjectHashMap<HeightTile> cacheData = new GHIntObjectHashMap<HeightTile>();
     private final double precision = 1e7;
     private final double invPrecision = 1 / precision;
-    private Directory dir;
-    private DAType daType = DAType.MMAP;
-    private Downloader downloader;
-    private File cacheDir;
-    private String baseUrl;
-    private boolean calcMean = false;
 
     public AbstractSRTMElevationProvider(String baseUrl, String cacheDir, String downloaderName, int defaultWidt) {
+        super(cacheDir);
         this.baseUrl = baseUrl;
-        this.cacheDir = new File(cacheDir);
         downloader = new Downloader(downloaderName).setTimeout(10000);
         this.DEFAULT_WIDTH = defaultWidt;
-    }
-
-    @Override
-    public void setCalcMean(boolean calcMean) {
-        this.calcMean = calcMean;
     }
 
     // use int key instead of string for lower memory usage
@@ -73,36 +56,21 @@ public abstract class AbstractSRTMElevationProvider implements ElevationProvider
         return (down(lat) + 90) * 1000 + down(lon) + 180;
     }
 
-    public void setDownloader(Downloader downloader) {
-        this.downloader = downloader;
+    @Override
+    public void release() {
+        cacheData.clear();
+
+        // for memory mapped type we create temporary unpacked files which should be removed
+        if (autoRemoveTemporary && dir != null)
+            dir.clear();
     }
 
-    @Override
-    public ElevationProvider setCacheDir(File cacheDir) {
-        if (cacheDir.exists() && !cacheDir.isDirectory())
-            throw new IllegalArgumentException("Cache path has to be a directory");
-
-        try {
-            this.cacheDir = cacheDir.getCanonicalFile();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-        return this;
-    }
-
-    @Override
-    public ElevationProvider setBaseURL(String baseUrl) {
-        if (baseUrl == null || baseUrl.isEmpty())
-            throw new IllegalArgumentException("baseUrl cannot be empty");
-
-        this.baseUrl = baseUrl;
-        return this;
-    }
-
-    @Override
-    public ElevationProvider setDAType(DAType daType) {
-        this.daType = daType;
-        return this;
+    /**
+     * Creating temporary files can take a long time to fill our DataAccess object, so this option
+     * can be used to disable the default clear mechanism via specifying 'false'.
+     */
+    public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
+        this.autoRemoveTemporary = autoRemoveTemporary;
     }
 
     int down(double val) {
@@ -170,8 +138,28 @@ public abstract class AbstractSRTMElevationProvider implements ElevationProvider
             heights.flush();
 
         } catch (Exception ex) {
-            throw new RuntimeException(ex);
+            if (ex instanceof FileNotFoundException) {
+                logger.warn("File not found for the coordinates for " + lat + "," + lon);
+                fillHeightsWithZeros(heights);
+                return;
+            }
+            throw new RuntimeException("There was an issue looking up the coordinates for " + lat + "," + lon, ex);
         }
+    }
+
+    /**
+     * It might happen that we try to access data that is above sea (long ferry routes).
+     * There might be no hgt files available for these ferries, so we just fill the heights with 0.
+     */
+    void fillHeightsWithZeros(DataAccess heights) {
+        int size = DEFAULT_WIDTH * DEFAULT_WIDTH;
+
+        heights.create(size);
+        for (int bytePos = 0; bytePos < size; bytePos += 2) {
+            heights.setShort(bytePos, (short) 0);
+        }
+        heights.setHeader(WIDTH_BYTE_INDEX, size / 2);
+        heights.flush();
     }
 
     private byte[] getByteArrayFromZipFile(double lat, double lon, String fileDetails) throws InterruptedException, FileNotFoundException, IOException {
@@ -195,23 +183,6 @@ public abstract class AbstractSRTMElevationProvider implements ElevationProvider
     }
 
     abstract byte[] readFile(File file) throws IOException;
-
-    @Override
-    public void release() {
-        cacheData.clear();
-
-        // for memory mapped type we create temporary unpacked files which should be removed
-        if (dir != null)
-            dir.clear();
-    }
-
-    Directory getDirectory() {
-        if (dir != null)
-            return dir;
-
-        logger.info(this.toString() + " Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType);
-        return dir = new GHDirectory(cacheDir.getAbsolutePath(), daType);
-    }
 
     abstract String getFileName(double lat, double lon);
 

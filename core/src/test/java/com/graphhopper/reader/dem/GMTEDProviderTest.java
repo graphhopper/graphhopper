@@ -110,4 +110,23 @@ public class GMTEDProviderTest {
         file.delete();
         zipFile.delete();
     }
+
+    @Test
+    public void testGetEle() {
+        double precision = .1;
+        assertEquals(339, instance.getEle(49.949784, 11.57517), precision);
+        assertEquals(438, instance.getEle(49.968668, 11.575127), precision);
+        assertEquals(432, instance.getEle(49.968682, 11.574842), precision);
+        assertEquals(3169, instance.getEle(-22.532854, -65.110474), precision);
+        assertEquals(124, instance.getEle(38.065392, -87.099609), precision);
+        assertEquals(1615, instance.getEle(40, -105.2277023), precision);
+        assertEquals(1618, instance.getEle(39.99999999, -105.2277023), precision);
+        assertEquals(1618, instance.getEle(39.9999999, -105.2277023), precision);
+        assertEquals(1618, instance.getEle(39.999999, -105.2277023), precision);
+        assertEquals(1070, instance.getEle(47.468668, 14.575127), precision);
+        assertEquals(1115, instance.getEle(47.467753, 14.573911), precision);
+        assertEquals(1990, instance.getEle(46.468835, 12.578777), precision);
+        assertEquals(841, instance.getEle(48.469123, 9.576393), precision);
+        assertEquals(0, instance.getEle(56.4787319, 17.6118363), precision);
+    }
 }

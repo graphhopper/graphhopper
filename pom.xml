@@ -108,7 +108,7 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>2.19.1</version>
                 <configuration>
-                    <argLine>-Xmx100m -Xms100m</argLine>
+                    <argLine>-Xmx256m -Xms256m</argLine>
                 </configuration>
             </plugin>
 

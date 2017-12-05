@@ -54,8 +54,12 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     private final int degree = 5;
 
     public CGIARProvider() {
+        this("/tmp/cgiar");
+    }
+
+    public CGIARProvider(String cacheDir) {
         super("http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff",
-                "/tmp/cgiar",
+                cacheDir,
                 "GraphHopper CGIARReader");
     }
 
@@ -86,6 +90,9 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
 
         // 0
         System.out.println(provider.getEle(29.840644, -42.890625));
+
+        // 841
+        System.out.println(provider.getEle(48.469123, 9.576393));
     }
 
     @Override
@@ -202,6 +209,6 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
 
     @Override
     public String toString() {
-        return "CGIAR";
+        return "cgiar";
     }
 }

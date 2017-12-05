@@ -531,7 +531,7 @@ public class GraphHopperIT {
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager(importVehicles));
 
-        tmpHopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
+        tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();
 
         GHResponse rsp = tmpHopper.route(new GHRequest(43.730729, 7.421288, 43.727697, 7.419199).
@@ -581,7 +581,7 @@ public class GraphHopperIT {
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
                 .setEncodingManager(new EncodingManager(importVehicles, 8));
 
-        tmpHopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
+        tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();
 
         GHResponse rsp = tmpHopper.route(new GHRequest(43.74056471749763, 7.4299266210693755,
@@ -607,7 +607,7 @@ public class GraphHopperIT {
                 .setCHEnabled(false).setGraphHopperLocation(tmpGraphFile)
                 .setEncodingManager(new EncodingManager(genericImportVehicles, 8));
 
-        tmpHopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
+        tmpHopper.setElevationProvider(new SRTMProvider(DIR));
         tmpHopper.importOrLoad();
 
         GHResponse rsp = tmpHopper.route(new GHRequest(43.74056471749763, 7.4299266210693755,

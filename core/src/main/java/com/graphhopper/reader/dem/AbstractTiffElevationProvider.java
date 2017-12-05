@@ -17,13 +17,8 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.util.Downloader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.awt.image.Raster;
 import java.io.File;
@@ -37,77 +32,14 @@ import java.util.Map;
  *
  * @author Robin Boldt
  */
-public abstract class AbstractTiffElevationProvider implements ElevationProvider {
-    final Logger logger = LoggerFactory.getLogger(getClass());
+public abstract class AbstractTiffElevationProvider extends AbstractElevationProvider {
     final Map<String, HeightTile> cacheData = new HashMap<String, HeightTile>();
-    protected Downloader downloader;
-    File cacheDir;
-    String baseUrl;
-    private Directory dir;
-    private DAType daType = DAType.MMAP;
-    boolean calcMean = false;
-    boolean autoRemoveTemporary = true;
-    long sleep = 2000;
 
     public AbstractTiffElevationProvider(String baseUrl, String cacheDir, String downloaderName) {
+        super(cacheDir);
         this.baseUrl = baseUrl;
-        this.cacheDir = new File(cacheDir);
         downloader = new Downloader(downloaderName).setTimeout(10000);
     }
-
-    @Override
-    public void setCalcMean(boolean eleCalcMean) {
-        calcMean = eleCalcMean;
-    }
-
-    void setSleep(long sleep) {
-        this.sleep = sleep;
-    }
-
-    /**
-     * Creating temporary files can take a long time as we need to unpack tiff as well as to fill
-     * our DataAccess object, so this option can be used to disable the default clear mechanism via
-     * specifying 'false'.
-     */
-    public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
-        this.autoRemoveTemporary = autoRemoveTemporary;
-    }
-
-    public void setDownloader(Downloader downloader) {
-        this.downloader = downloader;
-    }
-
-    @Override
-    public ElevationProvider setCacheDir(File cacheDir) {
-        if (cacheDir.exists() && !cacheDir.isDirectory())
-            throw new IllegalArgumentException("Cache path has to be a directory");
-        try {
-            this.cacheDir = cacheDir.getCanonicalFile();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-        return this;
-    }
-
-    protected File getCacheDir() {
-        return cacheDir;
-    }
-
-    @Override
-    public ElevationProvider setBaseURL(String baseUrl) {
-        if (baseUrl == null || baseUrl.isEmpty())
-            throw new IllegalArgumentException("baseUrl cannot be empty");
-
-        this.baseUrl = baseUrl;
-        return this;
-    }
-
-    @Override
-    public ElevationProvider setDAType(DAType daType) {
-        this.daType = daType;
-        return this;
-    }
-
 
     @Override
     public void release() {
@@ -163,11 +95,13 @@ public abstract class AbstractTiffElevationProvider implements ElevationProvider
         }
     }
 
-    protected Directory getDirectory() {
-        if (dir != null)
-            return dir;
-
-        logger.info(this.toString() + " Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType);
-        return dir = new GHDirectory(cacheDir.getAbsolutePath(), daType);
+    /**
+     * Creating temporary files can take a long time as we need to unpack tiff as well as to fill
+     * our DataAccess object, so this option can be used to disable the default clear mechanism via
+     * specifying 'false'.
+     */
+    public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
+        this.autoRemoveTemporary = autoRemoveTemporary;
     }
+
 }

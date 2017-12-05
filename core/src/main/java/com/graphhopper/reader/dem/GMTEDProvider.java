@@ -12,7 +12,7 @@
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language governing permissions and
+ *  See the License for the specific language goveGrning permissions and
  *  limitations under the License.
  */
 package com.graphhopper.reader.dem;
@@ -89,8 +89,12 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
     private final String FILE_NAME_END = "_20101117_gmted_mea075";
 
     public GMTEDProvider() {
+        this("/tmp/gmted");
+    }
+
+    public GMTEDProvider(String cacheDir) {
         super("https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/topo/downloads/GMTED/Global_tiles_GMTED/075darcsec/mea/",
-                "/tmp/gmted",
+                cacheDir,
                 "GraphHopper GMTEDReader");
     }
 
