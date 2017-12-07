@@ -1,23 +1,22 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- *  See the License for the specific language goveGrning permissions and
+ *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.storage.DataAccess;
 import com.graphhopper.util.Helper;
 import org.apache.xmlgraphics.image.codec.tiff.TIFFDecodeParam;
 import org.apache.xmlgraphics.image.codec.tiff.TIFFImageDecoder;
@@ -26,7 +25,6 @@ import org.apache.xmlgraphics.image.codec.util.SeekableStream;
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -81,20 +79,18 @@ import java.io.InputStream;
 public class GMTEDProvider extends AbstractTiffElevationProvider {
     private static final int WIDTH = 14400;
     private static final int HEIGHT = 9600;
-    // TODO is the precision correct?
-    private final double precision = 1e7;
     private final int latDegree = 20;
     private final int lonDegree = 30;
     // for alternatives see #346
     private final String FILE_NAME_END = "_20101117_gmted_mea075";
 
     public GMTEDProvider() {
-        this("/tmp/gmted");
+        this("");
     }
 
     public GMTEDProvider(String cacheDir) {
         super("https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/topo/downloads/GMTED/Global_tiles_GMTED/075darcsec/mea/",
-                cacheDir,
+                cacheDir.isEmpty() ? "/tmp/gmted" : cacheDir,
                 "GraphHopper GMTEDReader");
     }
 
@@ -143,77 +139,19 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
         System.out.println(provider.getEle(29.840644, -42.890625));
     }
 
-    @Override
-    public double getEle(double lat, double lon) {
-        // Return fast, if there is no data available
-        if (lat > 84 || lat < -70)
-            return 0;
-
-        lat = (int) (lat * precision) / precision;
-        lon = (int) (lon * precision) / precision;
-        String name = getFileName(lat, lon);
-        // To lowercase and remove the directory and file ending so it works with the DataAccess
-        HeightTile demProvider = cacheData.get(name);
-        if (demProvider == null) {
-            if (!cacheDir.exists())
-                cacheDir.mkdirs();
-
-            int minLat = getMinLatForTile(lat);
-            int minLon = getMinLonForTile(lon);
-            // less restrictive against boundary checking
-            demProvider = new HeightTile(minLat, minLon, WIDTH, HEIGHT, lonDegree * precision, lonDegree, latDegree);
-            demProvider.setCalcMean(calcMean);
-
-            cacheData.put(name, demProvider);
-            DataAccess heights = getDirectory().find(name + ".gh");
-            demProvider.setHeights(heights);
-            boolean loadExisting = false;
-            try {
-                loadExisting = heights.loadExisting();
-            } catch (Exception ex) {
-                logger.warn("cannot load " + name + ", error: " + ex.getMessage());
-            }
-
-            if (!loadExisting) {
-                String zippedURL = baseUrl + "/" + getDownloadURL(lat, lon);
-                File file = new File(cacheDir, new File(name + ".tif").getName());
-
-                try {
-                    downloadFile(file, zippedURL);
-                } catch (IOException e) {
-                    demProvider.setSeaLevel(true);
-                    // use small size on disc and in-memory
-                    heights.setSegmentSize(100).create(10).
-                            flush();
-                    return 0;
-                }
-
-                // short == 2 bytes
-                heights.create(2 * WIDTH * HEIGHT);
-
-                Raster raster;
-                SeekableStream ss = null;
-                try {
-                    InputStream is = new FileInputStream(file);
-                    ss = SeekableStream.wrapInputStream(is, true);
-                    TIFFImageDecoder imageDecoder = new TIFFImageDecoder(ss, new TIFFDecodeParam());
-                    raster = imageDecoder.decodeAsRaster();
-                } catch (Exception e) {
-                    throw new RuntimeException("Can't decode " + file.getName(), e);
-                } finally {
-                    if (ss != null)
-                        Helper.close(ss);
-                }
-
-                fillDataAccessWithElevationData(raster, heights, WIDTH);
-
-            } // loadExisting
+    Raster generateRasterFromFile(File file, String tifName) {
+        SeekableStream ss = null;
+        try {
+            InputStream is = new FileInputStream(file);
+            ss = SeekableStream.wrapInputStream(is, true);
+            TIFFImageDecoder imageDecoder = new TIFFImageDecoder(ss, new TIFFDecodeParam());
+            return imageDecoder.decodeAsRaster();
+        } catch (Exception e) {
+            throw new RuntimeException("Can't decode " + file.getName(), e);
+        } finally {
+            if (ss != null)
+                Helper.close(ss);
         }
-
-        if (demProvider.isSeaLevel())
-            return 0;
-
-        return demProvider.getHeight(lat, lon);
     }
 
     int getMinLatForTile(double lat) {
@@ -224,7 +162,21 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
         return (int) (Math.floor((180 + lon) / lonDegree) * lonDegree) - 180;
     }
 
-    // TODO it is a bit ugly that we have to duplicate the code with getDownloadURL, but since the DataAccess only allows lower case strings, but the files on the server are uppper cases, this creates too many issues
+    @Override
+    int getWidth() {
+        return WIDTH;
+    }
+
+    @Override
+    int getHeight() {
+        return HEIGHT;
+    }
+
+    @Override
+    boolean outsideSupportedArea(double lat, double lon) {
+        return lat > 84 || lat < -70;
+    }
+
     String getFileName(double lat, double lon) {
         int lonInt = getMinLonForTile(lon);
         int latInt = getMinLatForTile(lat);
@@ -240,7 +192,22 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
         String north = getNorthString(latInt);
         String east = getEastString(lonInt);
         String lonString = String.format("%03d", Math.abs(lonInt));
-        return east + lonString + "/" + String.format("%02d", Math.abs(latInt)) + north + lonString + east + FILE_NAME_END + ".tif";
+        return baseUrl + "/" + east + lonString + "/" + String.format("%02d", Math.abs(latInt)) + north + lonString + east + FILE_NAME_END + ".tif";
+    }
+
+    @Override
+    String getFileNameOfLocalFile(double lat, double lon) {
+        return getFileName(lat, lon) + ".tif";
+    }
+
+    @Override
+    int getLatDegree() {
+        return latDegree;
+    }
+
+    @Override
+    int getLonDegree() {
+        return lonDegree;
     }
 
     private String getNorthString(int lat) {

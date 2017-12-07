@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -56,22 +56,22 @@ public class GMTEDProviderTest {
     @Test
     public void testGetDownloadUrl() {
         // Created a couple of random tests and compared to https://topotools.cr.usgs.gov/gmted_viewer/viewer.htm
-        assertEquals("E000/30N000E_20101117_gmted_mea075.tif", instance.getDownloadURL(42.940339, 11.953125));
-        assertEquals("W090/30N090W_20101117_gmted_mea075.tif", instance.getDownloadURL(38.548165, -77.167969));
-        assertEquals("W180/70N180W_20101117_gmted_mea075.tif", instance.getDownloadURL(74.116047, -169.277344));
-        assertEquals("W180/70S180W_20101117_gmted_mea075.tif", instance.getDownloadURL(-61.015725, -156.621094));
-        assertEquals("E150/70N150E_20101117_gmted_mea075.tif", instance.getDownloadURL(74.590108, 166.640625));
-        assertEquals("E150/70S150E_20101117_gmted_mea075.tif", instance.getDownloadURL(-61.015725, 162.949219));
+        assertTrue(instance.getDownloadURL(42.940339, 11.953125).contains("E000/30N000E_20101117_gmted_mea075.tif"));
+        assertTrue(instance.getDownloadURL(38.548165, -77.167969).contains("W090/30N090W_20101117_gmted_mea075.tif"));
+        assertTrue(instance.getDownloadURL(74.116047, -169.277344).contains("W180/70N180W_20101117_gmted_mea075.tif"));
+        assertTrue(instance.getDownloadURL(-61.015725, -156.621094).contains("W180/70S180W_20101117_gmted_mea075.tif"));
+        assertTrue(instance.getDownloadURL(74.590108, 166.640625).contains("E150/70N150E_20101117_gmted_mea075.tif"));
+        assertTrue(instance.getDownloadURL(-61.015725, 162.949219).contains("E150/70S150E_20101117_gmted_mea075.tif"));
     }
 
     @Test
     public void testGetFileName() {
-        assertEquals("30n000e_20101117_gmted_mea075", instance.getFileName(42.940339, 11.953125));
-        assertEquals("30n090w_20101117_gmted_mea075", instance.getFileName(38.548165, -77.167969));
-        assertEquals("70n180w_20101117_gmted_mea075", instance.getFileName(74.116047, -169.277344));
-        assertEquals("70s180w_20101117_gmted_mea075", instance.getFileName(-61.015725, -156.621094));
-        assertEquals("70n150e_20101117_gmted_mea075", instance.getFileName(74.590108, 166.640625));
-        assertEquals("70s150e_20101117_gmted_mea075", instance.getFileName(-61.015725, 162.949219));
+        assertTrue(instance.getFileName(42.940339, 11.953125).equals("30n000e_20101117_gmted_mea075"));
+        assertTrue(instance.getFileName(38.548165, -77.167969).equals("30n090w_20101117_gmted_mea075"));
+        assertTrue(instance.getFileName(74.116047, -169.277344).equals("70n180w_20101117_gmted_mea075"));
+        assertTrue(instance.getFileName(-61.015725, -156.621094).equals("70s180w_20101117_gmted_mea075"));
+        assertTrue(instance.getFileName(74.590108, 166.640625).equals("70n150e_20101117_gmted_mea075"));
+        assertTrue(instance.getFileName(-61.015725, 162.949219).equals("70s150e_20101117_gmted_mea075"));
     }
 
     @Test
@@ -127,6 +127,7 @@ public class GMTEDProviderTest {
         assertEquals(1115, instance.getEle(47.467753, 14.573911), precision);
         assertEquals(1990, instance.getEle(46.468835, 12.578777), precision);
         assertEquals(841, instance.getEle(48.469123, 9.576393), precision);
+        assertEquals(0, instance.getEle(56.4787319, 17.6118363), precision);
         assertEquals(0, instance.getEle(56.4787319, 17.6118363), precision);
     }
 }

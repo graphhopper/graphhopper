@@ -569,37 +569,20 @@ public class GraphHopper implements GraphHopperAPI {
             args.get("graph.elevation.baseurl", "");
 
         boolean removeTempElevationFiles = args.getBool("graph.elevation.cgiar.clear", true);
-        if (!args.getBool("graph.elevation.clear", true))
-            removeTempElevationFiles = false;
-
+        removeTempElevationFiles = args.getBool("graph.elevation.clear", removeTempElevationFiles);
 
         DAType elevationDAType = DAType.fromString(args.get("graph.elevation.dataaccess", "MMAP"));
         ElevationProvider tmpProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("srtm")) {
-            if (!cacheDirStr.isEmpty())
-                tmpProvider = new SRTMProvider();
-            else
-                tmpProvider = new SRTMProvider(cacheDirStr);
+            tmpProvider = new SRTMProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("cgiar")) {
-            if (!cacheDirStr.isEmpty())
-                tmpProvider = new CGIARProvider();
-            else
-                tmpProvider = new CGIARProvider(cacheDirStr);
+            tmpProvider = new CGIARProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("gmted")) {
-            if (!cacheDirStr.isEmpty())
-                tmpProvider = new GMTEDProvider();
-            else
-                tmpProvider = new GMTEDProvider(cacheDirStr);
+            tmpProvider = new GMTEDProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("srtmgl1")) {
-            if (!cacheDirStr.isEmpty())
-                tmpProvider = new SRTMGL1Provider();
-            else
-                tmpProvider = new SRTMGL1Provider(cacheDirStr);
+            tmpProvider = new SRTMGL1Provider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("multi")) {
-            if (!cacheDirStr.isEmpty())
-                tmpProvider = new MultiSourceElevationProvider();
-            else
-                tmpProvider = new MultiSourceElevationProvider(cacheDirStr);
+            tmpProvider = new MultiSourceElevationProvider(cacheDirStr);
         }
 
         tmpProvider.setAutoRemoveTemporaryFiles(removeTempElevationFiles);

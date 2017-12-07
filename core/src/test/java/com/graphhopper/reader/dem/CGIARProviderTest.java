@@ -120,6 +120,7 @@ public class CGIARProviderTest {
         assertEquals(1091, instance.getEle(47.467753, 14.573911), precision);
         assertEquals(1951, instance.getEle(46.468835, 12.578777), precision);
         assertEquals(841, instance.getEle(48.469123, 9.576393), precision);
-        assertEquals(0, instance.getEle(56.4787319, 17.6118363), precision);
+        assertEquals(Double.NaN, instance.getEle(56.4787319, 17.6118363), precision);
+        assertEquals(Double.NaN, instance.getEle(56.4787319, 17.6118363), precision);
     }
 }

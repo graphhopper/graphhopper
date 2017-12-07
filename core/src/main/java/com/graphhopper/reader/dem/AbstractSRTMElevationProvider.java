@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -38,6 +38,7 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
     private static final BitUtil BIT_UTIL = BitUtil.BIG;
     private final int DEFAULT_WIDTH;
     private final int WIDTH_BYTE_INDEX = 0;
+    private final int DEGREE = 1;
     // use a map as an array is not quite useful if we want to hold only parts of the world
     private final GHIntObjectHashMap<HeightTile> cacheData = new GHIntObjectHashMap<HeightTile>();
     private final double precision = 1e7;
@@ -91,39 +92,57 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
         lon = (int) (lon * precision) / precision;
         int intKey = calcIntKey(lat, lon);
         HeightTile demProvider = cacheData.get(intKey);
-        if (demProvider != null)
-            return demProvider.getHeight(lat, lon);
+        if (demProvider == null) {
+            if (!cacheDir.exists())
+                cacheDir.mkdirs();
 
-        if (!cacheDir.exists())
-            cacheDir.mkdirs();
+            int minLat = down(lat);
+            int minLon = down(lon);
 
-        String fileName = getFileName(lat, lon);
-        if (fileName == null)
-            return 0;
+            String fileName = getFileName(lat, lon);
+            if (fileName == null)
+                return 0;
 
-        DataAccess heights = getDirectory().find("dem" + intKey);
-        boolean loadExisting = false;
-        try {
-            loadExisting = heights.loadExisting();
-        } catch (Exception ex) {
-            logger.warn("cannot load dem" + intKey + ", error:" + ex.getMessage());
+            DataAccess heights = getDirectory().find("dem" + intKey);
+            boolean loadExisting = false;
+            try {
+                loadExisting = heights.loadExisting();
+            } catch (Exception ex) {
+                logger.warn("cannot load dem" + intKey + ", error:" + ex.getMessage());
+            }
+
+            if (!loadExisting) {
+                try {
+                    updateHeightsFromZipFile(lat, lon, fileName, heights);
+                } catch (FileNotFoundException ex) {
+                    demProvider = new HeightTile(minLat, minLon, DEFAULT_WIDTH, DEFAULT_WIDTH, precision, DEGREE, DEGREE);
+                    cacheData.put(intKey, demProvider);
+                    demProvider.setHeights(heights);
+                    demProvider.setSeaLevel(true);
+                    // use small size on disc and in-memory
+                    heights.setSegmentSize(100).create(10).
+                            flush();
+                    return 0;
+                }
+            }
+
+            int width = (int) (Math.sqrt(heights.getHeader(WIDTH_BYTE_INDEX)) + 0.5);
+            if (width == 0)
+                width = DEFAULT_WIDTH;
+
+            demProvider = new HeightTile(minLat, minLon, width, width, precision, DEGREE, DEGREE);
+            cacheData.put(intKey, demProvider);
+            demProvider.setCalcMean(calcMean);
+            demProvider.setHeights(heights);
         }
 
-        if (!loadExisting)
-            updateHeightsFromZipFile(lat, lon, fileName, heights);
+        if (demProvider.isSeaLevel())
+            return 0;
 
-        int width = (int) (Math.sqrt(heights.getHeader(WIDTH_BYTE_INDEX)) + 0.5);
-        if (width == 0)
-            width = DEFAULT_WIDTH;
-
-        demProvider = new HeightTile(down(lat), down(lon), width, width, precision, 1, 1);
-        cacheData.put(intKey, demProvider);
-        demProvider.setCalcMean(calcMean);
-        demProvider.setHeights(heights);
         return demProvider.getHeight(lat, lon);
     }
 
-    void updateHeightsFromZipFile(double lat, double lon, String fileDetails, DataAccess heights) throws RuntimeException {
+    void updateHeightsFromZipFile(double lat, double lon, String fileDetails, DataAccess heights) throws RuntimeException, FileNotFoundException {
         try {
             byte[] bytes = getByteArrayFromZipFile(lat, lon, fileDetails);
             heights.create(bytes.length);
@@ -137,29 +156,12 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
             heights.setHeader(WIDTH_BYTE_INDEX, bytes.length / 2);
             heights.flush();
 
+        } catch (FileNotFoundException ex) {
+            logger.warn("File not found for the coordinates for " + lat + "," + lon);
+            throw ex;
         } catch (Exception ex) {
-            if (ex instanceof FileNotFoundException) {
-                logger.warn("File not found for the coordinates for " + lat + "," + lon);
-                fillHeightsWithZeros(heights);
-                return;
-            }
             throw new RuntimeException("There was an issue looking up the coordinates for " + lat + "," + lon, ex);
         }
-    }
-
-    /**
-     * It might happen that we try to access data that is above sea (long ferry routes).
-     * There might be no hgt files available for these ferries, so we just fill the heights with 0.
-     */
-    void fillHeightsWithZeros(DataAccess heights) {
-        int size = DEFAULT_WIDTH * DEFAULT_WIDTH;
-
-        heights.create(size);
-        for (int bytePos = 0; bytePos < size; bytePos += 2) {
-            heights.setShort(bytePos, (short) 0);
-        }
-        heights.setHeader(WIDTH_BYTE_INDEX, size / 2);
-        heights.flush();
     }
 
     private byte[] getByteArrayFromZipFile(double lat, double lon, String fileDetails) throws InterruptedException, FileNotFoundException, IOException {
@@ -183,9 +185,5 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
     }
 
     abstract byte[] readFile(File file) throws IOException;
-
-    abstract String getFileName(double lat, double lon);
-
-    abstract String getDownloadURL(double lat, double lon);
 
 }

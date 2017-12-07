@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,7 @@ import java.util.Map;
  */
 public abstract class AbstractTiffElevationProvider extends AbstractElevationProvider {
     final Map<String, HeightTile> cacheData = new HashMap<String, HeightTile>();
+    final double precision = 1e7;
 
     public AbstractTiffElevationProvider(String baseUrl, String cacheDir, String downloaderName) {
         super(cacheDir);
@@ -49,6 +50,96 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
         if (autoRemoveTemporary && dir != null)
             dir.clear();
     }
+
+    /**
+     * Return true if the coordinates are outside of the supported area
+     */
+    abstract boolean outsideSupportedArea(double lat, double lon);
+
+    /**
+     * The smallest lat that is still in the HeightTile
+     */
+    abstract int getMinLatForTile(double lat);
+
+    /**
+     * The smallest lon that is still in the HeightTile
+     */
+    abstract int getMinLonForTile(double lon);
+
+    abstract int getWidth();
+
+    abstract int getHeight();
+
+    /**
+     * Specify the name of the file after downloading
+     */
+    abstract String getFileNameOfLocalFile(double lat, double lon);
+
+    abstract int getLatDegree();
+
+    abstract int getLonDegree();
+
+    @Override
+    public double getEle(double lat, double lon) {
+        // Return fast, if there is no data available
+        if (outsideSupportedArea(lat, lon))
+            return 0;
+
+        lat = (int) (lat * precision) / precision;
+        lon = (int) (lon * precision) / precision;
+        String name = getFileName(lat, lon);
+        // To lowercase and remove the directory and file ending so it works with the DataAccess
+        HeightTile demProvider = cacheData.get(name);
+        if (demProvider == null) {
+            if (!cacheDir.exists())
+                cacheDir.mkdirs();
+
+            int minLat = getMinLatForTile(lat);
+            int minLon = getMinLonForTile(lon);
+            // less restrictive against boundary checking
+            demProvider = new HeightTile(minLat, minLon, getWidth(), getHeight(), getLonDegree() * precision, getLonDegree(), getLatDegree());
+            demProvider.setCalcMean(calcMean);
+
+            cacheData.put(name, demProvider);
+            DataAccess heights = getDirectory().find(name + ".gh");
+            demProvider.setHeights(heights);
+            boolean loadExisting = false;
+            try {
+                loadExisting = heights.loadExisting();
+            } catch (Exception ex) {
+                logger.warn("cannot load " + name + ", error: " + ex.getMessage());
+            }
+
+            if (!loadExisting) {
+                String zippedURL = getDownloadURL(lat, lon);
+                File file = new File(cacheDir, new File(getFileNameOfLocalFile(lat, lon)).getName());
+
+                try {
+                    downloadFile(file, zippedURL);
+                } catch (IOException e) {
+                    demProvider.setSeaLevel(true);
+                    // use small size on disc and in-memory
+                    heights.setSegmentSize(100).create(10).
+                            flush();
+                    return 0;
+                }
+
+                // short == 2 bytes
+                heights.create(2 * getWidth() * getHeight());
+
+                Raster raster = generateRasterFromFile(file, name + ".tif");
+                fillDataAccessWithElevationData(raster, heights, getWidth());
+
+            } // loadExisting
+        }
+
+        if (demProvider.isSeaLevel())
+            return 0;
+
+        return demProvider.getHeight(lat, lon);
+    }
+
+    abstract Raster generateRasterFromFile(File file, String tifName);
 
     /**
      * Download a file at the provided url and save it as the given downloadFile if the downloadFile does not exist.
@@ -88,8 +179,6 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
                 }
             }
             heights.flush();
-
-            // TODO remove tifName and zip?
         } catch (Exception ex) {
             throw new RuntimeException("Problem at x:" + x + ", y:" + y, ex);
         }

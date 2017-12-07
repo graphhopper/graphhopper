@@ -85,6 +85,7 @@ public class SRTMGL1ProviderTest {
         assertEquals(844, instance.getEle(48.469123, 9.576393), precision);
         // The file for this coordinate does not exist, but there is a ferry tagged in OSM
         assertEquals(0, instance.getEle(56.4787319, 17.6118363), precision);
+        assertEquals(0, instance.getEle(56.4787319, 17.6118363), precision);
     }
 
 }

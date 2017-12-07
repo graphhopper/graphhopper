@@ -38,13 +38,13 @@ public class SRTMProvider extends AbstractSRTMElevationProvider {
     private final GHIntObjectHashMap<String> areas = new GHIntObjectHashMap<String>();
 
     public SRTMProvider() {
-        this("/tmp/srtm");
+        this("");
     }
 
     public SRTMProvider(String cacheDir) {
         super(
                 "https://srtm.kurviger.de/SRTM3/",
-                cacheDir,
+                cacheDir.isEmpty()? "/tmp/srtm": cacheDir,
                 "GraphHopper SRTMReader",
                 1201
         );
