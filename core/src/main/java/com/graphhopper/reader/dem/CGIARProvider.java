@@ -46,9 +46,7 @@ import java.util.zip.ZipInputStream;
  * @author Peter Karich
  */
 public class CGIARProvider extends AbstractTiffElevationProvider {
-    private static final int WIDTH = 6000;
     private final double invPrecision = 1 / precision;
-    private final int degree = 5;
 
     public CGIARProvider() {
         this("");
@@ -57,7 +55,9 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     public CGIARProvider(String cacheDir) {
         super("http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff",
                 cacheDir.isEmpty() ? "/tmp/cgiar" : cacheDir,
-                "GraphHopper CGIARReader");
+                "GraphHopper CGIARReader",
+                6000, 6000,
+                5, 5);
     }
 
     public static void main(String[] args) {
@@ -116,9 +116,9 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
 
     int down(double val) {
         // 'rounding' to closest 5
-        int intVal = (int) (val / degree) * degree;
+        int intVal = (int) (val / LAT_DEGREE) * LAT_DEGREE;
         if (!(val >= 0 || intVal - val < invPrecision))
-            intVal = intVal - degree;
+            intVal = intVal - LAT_DEGREE;
 
         return intVal;
     }
@@ -129,12 +129,12 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     }
 
     protected String getFileName(double lat, double lon) {
-        lon = 1 + (180 + lon) / degree;
+        lon = 1 + (180 + lon) / LAT_DEGREE;
         int lonInt = (int) lon;
-        lat = 1 + (60 - lat) / degree;
+        lat = 1 + (60 - lat) / LAT_DEGREE;
         int latInt = (int) lat;
 
-        if (Math.abs(latInt - lat) < invPrecision / degree)
+        if (Math.abs(latInt - lat) < invPrecision / LAT_DEGREE)
             latInt--;
 
         // replace String.format as it seems to be slow
@@ -159,16 +159,6 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     }
 
     @Override
-    int getWidth() {
-        return WIDTH;
-    }
-
-    @Override
-    int getHeight() {
-        return WIDTH;
-    }
-
-    @Override
     String getDownloadURL(double lat, double lon) {
         return baseUrl + "/" + getFileName(lat, lon) + ".zip";
     }
@@ -176,16 +166,6 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     @Override
     String getFileNameOfLocalFile(double lat, double lon) {
         return getDownloadURL(lat, lon);
-    }
-
-    @Override
-    int getLatDegree() {
-        return degree;
-    }
-
-    @Override
-    int getLonDegree() {
-        return degree;
     }
 
     @Override

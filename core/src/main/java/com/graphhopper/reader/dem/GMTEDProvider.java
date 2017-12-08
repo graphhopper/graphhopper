@@ -77,10 +77,6 @@ import java.io.InputStream;
  * @author Robin Boldt
  */
 public class GMTEDProvider extends AbstractTiffElevationProvider {
-    private static final int WIDTH = 14400;
-    private static final int HEIGHT = 9600;
-    private final int latDegree = 20;
-    private final int lonDegree = 30;
     // for alternatives see #346
     private final String FILE_NAME_END = "_20101117_gmted_mea075";
 
@@ -91,7 +87,9 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
     public GMTEDProvider(String cacheDir) {
         super("https://edcintl.cr.usgs.gov/downloads/sciweb1/shared/topo/downloads/GMTED/Global_tiles_GMTED/075darcsec/mea/",
                 cacheDir.isEmpty() ? "/tmp/gmted" : cacheDir,
-                "GraphHopper GMTEDReader");
+                "GraphHopper GMTEDReader",
+                14400, 9600,
+                20, 30);
     }
 
     public static void main(String[] args) {
@@ -155,21 +153,11 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
     }
 
     int getMinLatForTile(double lat) {
-        return (int) (Math.floor((90 + lat) / latDegree) * latDegree) - 90;
+        return (int) (Math.floor((90 + lat) / LAT_DEGREE) * LAT_DEGREE) - 90;
     }
 
     int getMinLonForTile(double lon) {
-        return (int) (Math.floor((180 + lon) / lonDegree) * lonDegree) - 180;
-    }
-
-    @Override
-    int getWidth() {
-        return WIDTH;
-    }
-
-    @Override
-    int getHeight() {
-        return HEIGHT;
+        return (int) (Math.floor((180 + lon) / LON_DEGREE) * LON_DEGREE) - 180;
     }
 
     @Override
@@ -198,16 +186,6 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
     @Override
     String getFileNameOfLocalFile(double lat, double lon) {
         return getFileName(lat, lon) + ".tif";
-    }
-
-    @Override
-    int getLatDegree() {
-        return latDegree;
-    }
-
-    @Override
-    int getLonDegree() {
-        return lonDegree;
     }
 
     private String getNorthString(int lat) {

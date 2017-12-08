@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,6 +18,7 @@
 package com.graphhopper.reader.dem;
 
 import com.graphhopper.util.Downloader;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -33,11 +34,17 @@ import static org.junit.Assert.assertTrue;
  * @author Peter Karich
  */
 public class CGIARProviderTest {
+    private double precision = .1;
     CGIARProvider instance;
 
     @Before
     public void setUp() {
         instance = new CGIARProvider();
+    }
+
+    @After
+    public void tearDown() {
+        instance.release();
     }
 
     @Test
@@ -106,7 +113,6 @@ public class CGIARProviderTest {
 
     @Test
     public void testGetEle() {
-        double precision = .1;
         assertEquals(337, instance.getEle(49.949784, 11.57517), precision);
         assertEquals(466, instance.getEle(49.968668, 11.575127), precision);
         assertEquals(455, instance.getEle(49.968682, 11.574842), precision);
@@ -121,6 +127,28 @@ public class CGIARProviderTest {
         assertEquals(1951, instance.getEle(46.468835, 12.578777), precision);
         assertEquals(841, instance.getEle(48.469123, 9.576393), precision);
         assertEquals(Double.NaN, instance.getEle(56.4787319, 17.6118363), precision);
-        assertEquals(Double.NaN, instance.getEle(56.4787319, 17.6118363), precision);
+        // Outside of SRTM covered area
+        assertEquals(0, instance.getEle(60.0000001, 16), precision);
+        assertEquals(0, instance.getEle(60.0000001, 16), precision);
+        assertEquals(0, instance.getEle(60.0000001, 19), precision);
+        assertEquals(0, instance.getEle(60.251, 18.805), precision);
+    }
+
+    @Test
+    public void testGetEleVerticalBorder() {
+        // Border between the tiles srtm_39_04 and srtm_39_03
+        assertEquals("srtm_39_04", instance.getFileName(44.999999, 11.5));
+        assertEquals(5, instance.getEle(44.999999, 11.5), precision);
+        assertEquals("srtm_39_03", instance.getFileName(45.000001, 11.5));
+        assertEquals(6, instance.getEle(45.000001, 11.5), precision);
+    }
+
+    @Test
+    public void testGetEleHorizontalBorder() {
+        // Border between the tiles N42E011 and N42E012
+        assertEquals("srtm_38_04", instance.getFileName(44.94, 9.999999));
+        assertEquals(48, instance.getEle(44.94, 9.999999), precision);
+        assertEquals("srtm_39_04", instance.getFileName(44.94, 10.000001));
+        assertEquals(48, instance.getEle(44.94, 10.000001), precision);
     }
 }

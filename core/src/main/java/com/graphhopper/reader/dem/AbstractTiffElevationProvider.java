@@ -36,10 +36,22 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
     final Map<String, HeightTile> cacheData = new HashMap<String, HeightTile>();
     final double precision = 1e7;
 
-    public AbstractTiffElevationProvider(String baseUrl, String cacheDir, String downloaderName) {
+    final int WIDTH;
+    final int HEIGHT;
+
+    // Degrees of latitude covered by this tile
+    final int LAT_DEGREE;
+    // Degrees of longitude covered by this tile
+    final int LON_DEGREE;
+
+    public AbstractTiffElevationProvider(String baseUrl, String cacheDir, String downloaderName, int width, int height, int latDegree, int lonDegree) {
         super(cacheDir);
         this.baseUrl = baseUrl;
-        downloader = new Downloader(downloaderName).setTimeout(10000);
+        this.downloader = new Downloader(downloaderName).setTimeout(10000);
+        this.WIDTH = width;
+        this.HEIGHT = height;
+        this.LAT_DEGREE = latDegree;
+        this.LON_DEGREE = lonDegree;
     }
 
     @Override
@@ -66,18 +78,10 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
      */
     abstract int getMinLonForTile(double lon);
 
-    abstract int getWidth();
-
-    abstract int getHeight();
-
     /**
      * Specify the name of the file after downloading
      */
     abstract String getFileNameOfLocalFile(double lat, double lon);
-
-    abstract int getLatDegree();
-
-    abstract int getLonDegree();
 
     @Override
     public double getEle(double lat, double lon) {
@@ -88,7 +92,6 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
         lat = (int) (lat * precision) / precision;
         lon = (int) (lon * precision) / precision;
         String name = getFileName(lat, lon);
-        // To lowercase and remove the directory and file ending so it works with the DataAccess
         HeightTile demProvider = cacheData.get(name);
         if (demProvider == null) {
             if (!cacheDir.exists())
@@ -97,7 +100,7 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
             int minLat = getMinLatForTile(lat);
             int minLon = getMinLonForTile(lon);
             // less restrictive against boundary checking
-            demProvider = new HeightTile(minLat, minLon, getWidth(), getHeight(), getLonDegree() * precision, getLonDegree(), getLatDegree());
+            demProvider = new HeightTile(minLat, minLon, WIDTH, HEIGHT, LON_DEGREE * precision, LON_DEGREE, LAT_DEGREE);
             demProvider.setCalcMean(calcMean);
 
             cacheData.put(name, demProvider);
@@ -125,10 +128,10 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
                 }
 
                 // short == 2 bytes
-                heights.create(2 * getWidth() * getHeight());
+                heights.create(2 * WIDTH * HEIGHT);
 
                 Raster raster = generateRasterFromFile(file, name + ".tif");
-                fillDataAccessWithElevationData(raster, heights, getWidth());
+                fillDataAccessWithElevationData(raster, heights, WIDTH);
 
             } // loadExisting
         }
