@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SKIPPED;
@@ -264,4 +265,7 @@ public class RealtimeFeed {
         return additionalEdges;
     }
 
+    public Optional<GtfsRealtime.TripUpdate> getTripUpdate(GtfsRealtime.TripDescriptor tripDescriptor) {
+        return Optional.empty();
+    }
 }
