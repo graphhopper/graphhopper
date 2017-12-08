@@ -113,7 +113,7 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
 
             if (!loadExisting) {
                 try {
-                    updateHeightsFromZipFile(lat, lon, fileName, heights);
+                    updateHeightsFromFile(lat, lon, heights);
                 } catch (FileNotFoundException ex) {
                     demProvider = new HeightTile(minLat, minLon, DEFAULT_WIDTH, DEFAULT_WIDTH, precision, DEGREE, DEGREE);
                     cacheData.put(intKey, demProvider);
@@ -142,9 +142,9 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
         return demProvider.getHeight(lat, lon);
     }
 
-    void updateHeightsFromZipFile(double lat, double lon, String fileDetails, DataAccess heights) throws RuntimeException, FileNotFoundException {
+    private void updateHeightsFromFile(double lat, double lon, DataAccess heights) throws FileNotFoundException {
         try {
-            byte[] bytes = getByteArrayFromZipFile(lat, lon, fileDetails);
+            byte[] bytes = getByteArrayFromFile(lat, lon);
             heights.create(bytes.length);
             for (int bytePos = 0; bytePos < bytes.length; bytePos += 2) {
                 short val = BIT_UTIL.toShort(bytes, bytePos);
@@ -164,7 +164,7 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
         }
     }
 
-    private byte[] getByteArrayFromZipFile(double lat, double lon, String fileDetails) throws InterruptedException, FileNotFoundException, IOException {
+    private byte[] getByteArrayFromFile(double lat, double lon) throws InterruptedException, IOException {
         String zippedURL = baseUrl + getDownloadURL(lat, lon);
         File file = new File(cacheDir, new File(zippedURL).getName());
         InputStream is;
@@ -177,7 +177,6 @@ public abstract class AbstractSRTMElevationProvider extends AbstractElevationPro
                 } catch (SocketTimeoutException ex) {
                     // just try again after a little nap
                     Thread.sleep(2000);
-                    continue;
                 }
             }
 

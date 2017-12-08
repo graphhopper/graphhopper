@@ -137,6 +137,7 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
         System.out.println(provider.getEle(29.840644, -42.890625));
     }
 
+    @Override
     Raster generateRasterFromFile(File file, String tifName) {
         SeekableStream ss = null;
         try {

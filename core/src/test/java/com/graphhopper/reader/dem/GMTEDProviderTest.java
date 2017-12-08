@@ -20,6 +20,7 @@ package com.graphhopper.reader.dem;
 import com.graphhopper.util.Downloader;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -73,12 +74,12 @@ public class GMTEDProviderTest {
 
     @Test
     public void testGetFileName() {
-        assertTrue(instance.getFileName(42.940339, 11.953125).equals("30n000e_20101117_gmted_mea075"));
-        assertTrue(instance.getFileName(38.548165, -77.167969).equals("30n090w_20101117_gmted_mea075"));
-        assertTrue(instance.getFileName(74.116047, -169.277344).equals("70n180w_20101117_gmted_mea075"));
-        assertTrue(instance.getFileName(-61.015725, -156.621094).equals("70s180w_20101117_gmted_mea075"));
-        assertTrue(instance.getFileName(74.590108, 166.640625).equals("70n150e_20101117_gmted_mea075"));
-        assertTrue(instance.getFileName(-61.015725, 162.949219).equals("70s150e_20101117_gmted_mea075"));
+        assertEquals("30n000e_20101117_gmted_mea075", instance.getFileName(42.940339, 11.953125));
+        assertEquals("30n090w_20101117_gmted_mea075", instance.getFileName(38.548165, -77.167969));
+        assertEquals("70n180w_20101117_gmted_mea075", instance.getFileName(74.116047, -169.277344));
+        assertEquals("70s180w_20101117_gmted_mea075", instance.getFileName(-61.015725, -156.621094));
+        assertEquals("70n150e_20101117_gmted_mea075", instance.getFileName(74.590108, 166.640625));
+        assertEquals("70s150e_20101117_gmted_mea075", instance.getFileName(-61.015725, 162.949219));
     }
 
     @Test
@@ -121,8 +122,9 @@ public class GMTEDProviderTest {
     /*
     Enabling this test requires you to change the pom.xml and increase the memory limit for running tests.
     Change to: <argLine>-Xmx500m -Xms500m</argLine>
+    This test will download about 2gb of data.
      */
-    @Test
+    @Ignore
     public void testGetEle() {
         assertEquals(339, instance.getEle(49.949784, 11.57517), precision);
         assertEquals(438, instance.getEle(49.968668, 11.575127), precision);
@@ -147,7 +149,7 @@ public class GMTEDProviderTest {
 
     }
 
-    @Test
+    @Ignore
     public void testGetEleVerticalBorder() {
         // Border between the tiles 50n000e and 70n000e
         assertEquals("50n000e_20101117_gmted_mea075", instance.getFileName(69.999999, 19.493));
@@ -161,7 +163,7 @@ public class GMTEDProviderTest {
         assertEquals(241, instance.getEle(70, 19.236), precision);
     }
 
-    @Test
+    @Ignore
     public void testGetEleHorizontalBorder() {
         // Border between the tiles 50n000e and 50n030e
         assertEquals("50n000e_20101117_gmted_mea075", instance.getFileName(53, 29.999999));

@@ -19,6 +19,7 @@ package com.graphhopper.reader.dem;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -98,7 +99,7 @@ public class SRTMProviderTest {
         assertEquals(161, instance.getEle(55.8943144, -3), 1e-1);
     }
 
-    @Test
+    @Ignore
     public void testGetEle() {
         instance = new SRTMProvider();
         assertEquals(337, instance.getEle(49.949784, 11.57517), precision);
@@ -123,7 +124,7 @@ public class SRTMProviderTest {
         assertEquals(0, instance.getEle(60.251, 18.805), precision);
     }
 
-    @Test
+    @Ignore
     public void testGetEleVerticalBorder() {
         instance = new SRTMProvider();
         // Border between the tiles N42E011 and N43E011
@@ -133,7 +134,7 @@ public class SRTMProviderTest {
         assertEquals(419, instance.getEle(43.000001, 11.48), precision);
     }
 
-    @Test
+    @Ignore
     public void testGetEleHorizontalBorder() {
         instance = new SRTMProvider();
         // Border between the tiles N42E011 and N42E012

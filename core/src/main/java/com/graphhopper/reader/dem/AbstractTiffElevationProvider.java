@@ -33,11 +33,11 @@ import java.util.Map;
  * @author Robin Boldt
  */
 public abstract class AbstractTiffElevationProvider extends AbstractElevationProvider {
-    final Map<String, HeightTile> cacheData = new HashMap<String, HeightTile>();
+    private final Map<String, HeightTile> cacheData = new HashMap<String, HeightTile>();
     final double precision = 1e7;
 
-    final int WIDTH;
-    final int HEIGHT;
+    private final int WIDTH;
+    private final int HEIGHT;
 
     // Degrees of latitude covered by this tile
     final int LAT_DEGREE;
@@ -147,7 +147,7 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
     /**
      * Download a file at the provided url and save it as the given downloadFile if the downloadFile does not exist.
      */
-    protected void downloadFile(File downloadFile, String url) throws IOException {
+    private void downloadFile(File downloadFile, String url) throws IOException {
         if (!downloadFile.exists()) {
             int max = 3;
             for (int trial = 0; trial < max; trial++) {
@@ -166,7 +166,7 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
         }
     }
 
-    protected void fillDataAccessWithElevationData(Raster raster, DataAccess heights, int dataAccessWidth) {
+    private void fillDataAccessWithElevationData(Raster raster, DataAccess heights, int dataAccessWidth) {
         final int height = raster.getHeight();
         final int width = raster.getWidth();
         int x = 0;

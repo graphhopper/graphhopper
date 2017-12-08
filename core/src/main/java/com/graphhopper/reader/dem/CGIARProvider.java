@@ -53,6 +53,7 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     }
 
     public CGIARProvider(String cacheDir) {
+        // Alternative URLs for the CGIAR data can be found in #346
         super("http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff",
                 cacheDir.isEmpty() ? "/tmp/cgiar" : cacheDir,
                 "GraphHopper CGIARReader",
@@ -92,6 +93,7 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
         System.out.println(provider.getEle(48.469123, 9.576393));
     }
 
+    @Override
     Raster generateRasterFromFile(File file, String tifName) {
         SeekableStream ss = null;
         try {

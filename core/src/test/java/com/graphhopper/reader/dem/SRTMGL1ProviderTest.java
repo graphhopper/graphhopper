@@ -19,6 +19,7 @@ package com.graphhopper.reader.dem;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -74,7 +75,7 @@ public class SRTMGL1ProviderTest {
         assertEquals("s42w063", instance.getFileName(-41.015725, -62.949219));
     }
 
-    @Test
+    @Ignore
     public void testGetEle() {
         assertEquals(338, instance.getEle(49.949784, 11.57517), precision);
         assertEquals(468, instance.getEle(49.968668, 11.575127), precision);
@@ -99,7 +100,7 @@ public class SRTMGL1ProviderTest {
         assertEquals(0, instance.getEle(60.251, 18.805), precision);
     }
 
-    @Test
+    @Ignore
     public void testGetEleVerticalBorder() {
         // Border between the tiles n42e011 and n43e011
         assertEquals("n42e011", instance.getFileName(42.999999, 11.48));
@@ -108,7 +109,7 @@ public class SRTMGL1ProviderTest {
         assertEquals(420, instance.getEle(43.000001, 11.48), precision);
     }
 
-    @Test
+    @Ignore
     public void testGetEleHorizontalBorder() {
         // Border between the tiles n42e011 and n42e012
         assertEquals("n42e011", instance.getFileName(42.1, 11.999999));

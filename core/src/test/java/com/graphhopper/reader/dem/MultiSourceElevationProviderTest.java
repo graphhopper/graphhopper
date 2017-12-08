@@ -18,6 +18,7 @@
 package com.graphhopper.reader.dem;
 
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
@@ -59,7 +60,7 @@ public class MultiSourceElevationProviderTest {
     Enabling this test requires you to change the pom.xml and increase the memory limit for running tests.
     Change to: <argLine>-Xmx500m -Xms500m</argLine>
     */
-    @Test
+    @Ignore
     public void testGetEle() {
         instance = new MultiSourceElevationProvider();
         double precision = .1;
