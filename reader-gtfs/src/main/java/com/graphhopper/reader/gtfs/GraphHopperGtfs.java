@@ -18,6 +18,7 @@
 
 package com.graphhopper.reader.gtfs;
 
+import com.conveyal.gtfs.model.Entity;
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.*;
 import com.graphhopper.reader.osm.OSMReader;
@@ -221,12 +222,28 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     legs.addAll(0, walkPaths.get(accessNode(solution)).getLegs());
                     legs.addAll(walkPaths.get(egressNode(solution)).getLegs());
                 }
-                final PathWrapper pathWrapper = tripFromLabel.createPathWrapper(translation, waypoints, legs);
-                // TODO: remove
+                PathWrapper pathWrapper = tripFromLabel.createPathWrapper(translation, waypoints, legs);
+                pathWrapper = decorateWithRealtimeUpdates(pathWrapper);
                 pathWrapper.setTime((solution.currentTime - initialTime.toEpochMilli()) * (arriveBy ? -1 : 1));
                 response.add(pathWrapper);
             }
             response.getAll().sort(Comparator.comparingDouble(PathWrapper::getTime));
+        }
+
+        private PathWrapper decorateWithRealtimeUpdates(PathWrapper pathWrapper) {
+            pathWrapper.getLegs().forEach(leg -> {
+                if (leg instanceof Trip.PtLeg) {
+                    Trip.PtLeg ptLeg = (Trip.PtLeg) leg;
+                    final GtfsRealtime.TripDescriptor tripDescriptor = GtfsRealtime.TripDescriptor.newBuilder()
+                            .setTripId(ptLeg.trip_id)
+                            .build();
+                    realtimeFeed.getTripUpdate(tripDescriptor).ifPresent(tripUpdate -> {
+                        ptLeg.stops.forEach(stop -> {
+                        });
+                    });
+                }
+            });
+            return pathWrapper;
         }
 
         private int accessNode(Label solution) {
