@@ -21,6 +21,7 @@ package com.graphhopper.reader.gtfs;
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntIntHashMap;
 import com.conveyal.gtfs.GTFSFeed;
+import com.conveyal.gtfs.model.Agency;
 import com.conveyal.gtfs.model.StopTime;
 import com.conveyal.gtfs.model.Trip;
 import com.google.transit.realtime.GtfsRealtime;
@@ -62,8 +63,10 @@ public class RealtimeFeed {
     }
 
     public static RealtimeFeed fromProtobuf(Graph graph, GtfsStorage staticGtfs, PtFlagEncoder encoder, GtfsRealtime.FeedMessage feedMessage) {
-        String feedKey = "gtfs_0"; //FIXME
+        String feedKey = "gtfs_0";
         GTFSFeed feed = staticGtfs.getGtfsFeeds().get(feedKey);
+        // TODO: Require configuration of feed and agency this realtime feed is for.
+        Agency agency = feed.agency.values().iterator().next(); // Realtime feeds are always specific to an agency.
         final IntHashSet blockedEdges = new IntHashSet();
         feedMessage.getEntityList().stream()
             .filter(GtfsRealtime.FeedEntity::hasTripUpdate)
@@ -223,7 +226,7 @@ public class RealtimeFeed {
         };
         final GtfsReader gtfsReader = new GtfsReader(feedKey, overlayGraph, encoder, null);
         Instant timestamp = Instant.ofEpochSecond(feedMessage.getHeader().getTimestamp());
-        LocalDate dateToChange = timestamp.atZone(ZoneId.of(feed.agency.values().iterator().next().agency_timezone)).toLocalDate(); //FIXME
+        LocalDate dateToChange = timestamp.atZone(ZoneId.of(agency.agency_timezone)).toLocalDate(); //FIXME
 
         feedMessage.getEntityList().stream()
                 .filter(GtfsRealtime.FeedEntity::hasTripUpdate)
@@ -239,9 +242,9 @@ public class RealtimeFeed {
                                 stopTime.stop_sequence = stopTimeUpdate.getStopSequence();
                                 stopTime.stop_id = stopTimeUpdate.getStopId();
                                 stopTime.trip_id = trip.trip_id;
-                                final ZonedDateTime arrival_time = Instant.ofEpochSecond(stopTimeUpdate.getArrival().getTime()).atZone(ZoneId.of("America/Los_Angeles"));
+                                final ZonedDateTime arrival_time = Instant.ofEpochSecond(stopTimeUpdate.getArrival().getTime()).atZone(ZoneId.of(agency.agency_timezone));
                                 stopTime.arrival_time = (int) Duration.between(arrival_time.truncatedTo(ChronoUnit.DAYS), arrival_time).getSeconds();
-                                final ZonedDateTime departure_time = Instant.ofEpochSecond(stopTimeUpdate.getArrival().getTime()).atZone(ZoneId.of("America/Los_Angeles"));
+                                final ZonedDateTime departure_time = Instant.ofEpochSecond(stopTimeUpdate.getArrival().getTime()).atZone(ZoneId.of(agency.agency_timezone));
                                 stopTime.departure_time = (int) Duration.between(departure_time.truncatedTo(ChronoUnit.DAYS), departure_time).getSeconds();
                                 return stopTime;
                             })
@@ -251,7 +254,7 @@ public class RealtimeFeed {
                     validOnDay.set((int) DAYS.between(startDate, dateToChange));
                     return new GtfsReader.TripWithStopTimes(trip, stopTimes, validOnDay);
                 })
-                .forEach(trip -> gtfsReader.addTrips(ZoneId.systemDefault(), Collections.singletonList(trip), 0));
+                .forEach(trip -> gtfsReader.addTrips(ZoneId.of(agency.agency_timezone), Collections.singletonList(trip), 0));
         gtfsReader.wireUpStops();
         gtfsReader.connectStopsToStationNodes();
         return new RealtimeFeed(blockedEdges, additionalEdges);
