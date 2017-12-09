@@ -30,7 +30,6 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
@@ -258,7 +257,7 @@ public class RealtimeIT {
 //        assertEquals(responseWithoutRealtimeUpdateBest.toString(), responseWithRealtimeUpdateBest.toString());
     }
 
-    @Test @Ignore // Pending feature
+    @Test
     public void testDelayWithoutTransfer() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
@@ -268,11 +267,12 @@ public class RealtimeIT {
         );
 
         // I want to go at 6:44
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
+        Instant initialTime = LocalDateTime.of(2007, 1, 1, 6, 44).atZone(zoneId).toInstant();
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, initialTime);
         ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
-        // The 6:00 departure of my line is going to be "late" by 0 minutes
+        // The 6:00 departure of my line is going to be late by 3 minutes
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
         feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
                 .setGtfsRealtimeVersion("1")
@@ -291,11 +291,11 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(1, response.getAll().size());
 
-        assertEquals("My line run is 3 minutes late.", time(0, 8), response.getBest().getTime(), 0.1);
+        assertEquals("My line run is 3 minutes late.", time(0, 8), response.getBest().getLegs().get(response.getBest().getLegs().size() - 1).getArrivalTime().toInstant().toEpochMilli() - initialTime.toEpochMilli(), 0.1);
     }
 
 
-    @Test @Ignore // Pending feature
+    @Test
     public void testDelayFromBeginningWithoutTransfer() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
@@ -305,7 +305,8 @@ public class RealtimeIT {
         );
 
         // I want to go at 6:44
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
+        Instant initialTime = LocalDateTime.of(2007, 1, 1, 6, 44).atZone(zoneId).toInstant();
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, initialTime);
         ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
@@ -328,7 +329,7 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(1, response.getAll().size());
 
-        assertEquals("My line run is 3 minutes late.", time(0, 8), response.getBest().getTime(), 0.1);
+        assertEquals("My line run is 3 minutes late.", LocalDateTime.parse("2007-01-01T06:52:00").atZone(zoneId).toInstant(), response.getBest().getLegs().get(response.getBest().getLegs().size() - 1).getArrivalTime().toInstant());
     }
 
     @Test

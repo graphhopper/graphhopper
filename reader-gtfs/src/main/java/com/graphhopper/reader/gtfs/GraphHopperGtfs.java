@@ -280,7 +280,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         this.locationIndex = locationIndex;
         this.gtfsStorage = gtfsStorage;
         this.realtimeFeed = realtimeFeed;
-        this.tripFromLabel = new TripFromLabel(this.gtfsStorage);
+        this.tripFromLabel = new TripFromLabel(this.gtfsStorage, this.realtimeFeed);
     }
 
     public static GtfsStorage createGtfsStorage() {
