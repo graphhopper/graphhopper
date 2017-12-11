@@ -139,10 +139,10 @@ class GtfsReader {
         this.i = graph.getNodes();
         this.startDate = feed.calculateStats().getStartDate();
         this.endDate = feed.calculateStats().getEndDate();
-        this.gtfsStorage.getFares().putAll(feed.fares);
     }
 
     void readGraph() {
+        gtfsStorage.getFares().putAll(feed.fares);
         buildPtNetwork();
         connectStopsToStreetNetwork();
         connectStopsToStationNodes();
