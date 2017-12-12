@@ -77,10 +77,10 @@ public class GraphHopperMultimodalIT {
 
         GHResponse response = graphHopper.route(ghRequest);
 
-        assertThat(response.getAll().get(0).getLegs().get(0).departureTime.toInstant().atZone(zoneId).toLocalTime())
+        assertThat(response.getAll().get(0).getLegs().get(0).getDepartureTime().toInstant().atZone(zoneId).toLocalTime())
                 .isEqualTo("06:41:06");
-        assertThat(response.getAll().get(0).getLegs().get(0).arrivalTime.toInstant())
-                .isEqualTo(response.getAll().get(0).getLegs().get(1).departureTime.toInstant());
+        assertThat(response.getAll().get(0).getLegs().get(0).getArrivalTime().toInstant())
+                .isEqualTo(response.getAll().get(0).getLegs().get(1).getDepartureTime().toInstant());
     }
 
 }
