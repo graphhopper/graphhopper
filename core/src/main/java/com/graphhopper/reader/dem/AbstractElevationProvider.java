@@ -96,7 +96,8 @@ public abstract class AbstractElevationProvider implements ElevationProvider {
         if (dir != null)
             return dir;
 
-        logger.info(this.toString() + " Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType);
+        logger.info(this.toString() + " Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType +
+                " using calcmean: " + calcMean);
         return dir = new GHDirectory(cacheDir.getAbsolutePath(), daType);
     }
 

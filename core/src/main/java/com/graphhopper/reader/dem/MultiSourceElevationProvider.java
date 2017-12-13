@@ -38,11 +38,11 @@ public class MultiSourceElevationProvider implements ElevationProvider {
     }
 
     public MultiSourceElevationProvider() {
-        this(new SRTMGL1Provider(), new GMTEDProvider());
+        this(new CGIARProvider(), new GMTEDProvider());
     }
 
     public MultiSourceElevationProvider(String cacheDir) {
-        this(new SRTMGL1Provider(cacheDir), new GMTEDProvider(cacheDir));
+        this(new CGIARProvider(cacheDir), new GMTEDProvider(cacheDir));
     }
 
     @Override
