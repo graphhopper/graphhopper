@@ -52,7 +52,7 @@ public class SRTMGL1Provider extends AbstractSRTMElevationProvider {
 
     public SRTMGL1Provider(String cacheDir) {
         super("https://cloud.sdsc.edu/v1/AUTH_opentopography/Raster/SRTM_GL1/SRTM_GL1_srtm/",
-                cacheDir.isEmpty()? "/tmp/srtmgl1": cacheDir,
+                cacheDir.isEmpty() ? "/tmp/srtmgl1" : cacheDir,
                 "GraphHopper SRTMReader",
                 3601
         );
@@ -108,21 +108,32 @@ public class SRTMGL1Provider extends AbstractSRTMElevationProvider {
         return (int) (Math.floor((180 + lon) / lonDegree) * lonDegree) - 180;
     }
 
+    private String getLonString(int lonInt) {
+        lonInt = Math.abs(lonInt);
+        String lonString = lonInt < 100 ? "0" : "";
+        if (lonInt < 10)
+            lonString += "0";
+        lonString += lonInt;
+        return lonString;
+    }
+
+    private String getLatString(int latInt) {
+        latInt = Math.abs(latInt);
+        String latString = latInt < 10 ? "0" : "";
+        latString += latInt;
+        return latString;
+    }
+
     String getFileName(double lat, double lon) {
         int lonInt = getMinLonForTile(lon);
         int latInt = getMinLatForTile(lat);
-        String north = getNorthString(latInt);
-        String east = getEastString(lonInt);
-        String lonString = String.format("%03d", Math.abs(lonInt));
-        return (north + String.format("%02d", Math.abs(latInt)) + east + lonString).toLowerCase();
+        return (getNorthString(latInt) + getLatString(latInt) + getEastString(lonInt) + getLonString(lonInt)).toLowerCase();
     }
 
     String getDownloadURL(double lat, double lon) {
         int lonInt = getMinLonForTile(lon);
         int latInt = getMinLatForTile(lat);
         String north = getNorthString(latInt);
-        String east = getEastString(lonInt);
-        String lonString = String.format("%03d", Math.abs(lonInt));
         String dir;
         if (north.equals("N")) {
             dir = "North/";
@@ -134,7 +145,7 @@ public class SRTMGL1Provider extends AbstractSRTMElevationProvider {
             dir = "South/";
         }
 
-        return dir + north + String.format("%02d", Math.abs(latInt)) + east + lonString + ".hgt";
+        return dir + north + getLatString(latInt) + getEastString(lonInt) + getLonString(lonInt) + ".hgt";
     }
 
     private String getNorthString(int lat) {

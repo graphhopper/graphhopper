@@ -161,6 +161,22 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
         return (int) (Math.floor((180 + lon) / LON_DEGREE) * LON_DEGREE) - 180;
     }
 
+    private String getLonString(int lonInt) {
+        lonInt = Math.abs(lonInt);
+        String lonString = lonInt < 100 ? "0" : "";
+        if (lonInt < 10)
+            lonString += "0";
+        lonString += lonInt;
+        return lonString;
+    }
+
+    private String getLatString(int latInt) {
+        latInt = Math.abs(latInt);
+        String latString = latInt < 10 ? "0" : "";
+        latString += latInt;
+        return latString;
+    }
+
     @Override
     boolean outsideSupportedArea(double lat, double lon) {
         return lat > 84 || lat < -70;
@@ -169,19 +185,15 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
     String getFileName(double lat, double lon) {
         int lonInt = getMinLonForTile(lon);
         int latInt = getMinLatForTile(lat);
-        String north = getNorthString(latInt);
-        String east = getEastString(lonInt);
-        String lonString = String.format("%03d", Math.abs(lonInt));
-        return (String.format("%02d", Math.abs(latInt)) + north + lonString + east + FILE_NAME_END).toLowerCase();
+        return (getLatString(latInt) + getNorthString(latInt) + getLonString(lonInt) + getEastString(lonInt) + FILE_NAME_END).toLowerCase();
     }
 
     String getDownloadURL(double lat, double lon) {
         int lonInt = getMinLonForTile(lon);
         int latInt = getMinLatForTile(lat);
-        String north = getNorthString(latInt);
         String east = getEastString(lonInt);
-        String lonString = String.format("%03d", Math.abs(lonInt));
-        return baseUrl + "/" + east + lonString + "/" + String.format("%02d", Math.abs(latInt)) + north + lonString + east + FILE_NAME_END + ".tif";
+        String lonString = getLonString(lonInt);
+        return baseUrl + "/" + east + lonString + "/" + getLatString(latInt) + getNorthString(latInt) + lonString + east + FILE_NAME_END + ".tif";
     }
 
     @Override
