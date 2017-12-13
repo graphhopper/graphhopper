@@ -39,9 +39,6 @@ class InstructionsHelper {
         double delta = calculateOrientationDelta(prevLatitude, prevLongitude, latitude, longitude, prevOrientation);
         double absDelta = Math.abs(delta);
 
-        // TODO not only calculate the mathematical orientation, but also compare to other streets
-        // TODO If there is one street turning slight right and one right, but no straight street
-        // TODO We can assume the slight right street would be a continue
         if (absDelta < 0.2) {
             // 0.2 ~= 11°
             return Instruction.CONTINUE_ON_STREET;

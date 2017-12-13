@@ -57,6 +57,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 
 /**
@@ -436,7 +437,7 @@ public class GraphHopper implements GraphHopperAPI {
      */
     public GraphHopper setDataReaderFile(String dataReaderFileStr) {
         ensureNotLoaded();
-        if (Helper.isEmpty(dataReaderFileStr))
+        if (isEmpty(dataReaderFileStr))
             throw new IllegalArgumentException("Data reader file cannot be empty.");
 
         dataReaderFile = dataReaderFileStr;
@@ -522,15 +523,15 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalArgumentException("Instead osmreader.osm use datareader.file, for other changes see core/files/changelog.txt");
 
         String tmpOsmFile = args.get("datareader.file", "");
-        if (!Helper.isEmpty(tmpOsmFile))
+        if (!isEmpty(tmpOsmFile))
             dataReaderFile = tmpOsmFile;
 
         String graphHopperFolder = args.get("graph.location", "");
-        if (Helper.isEmpty(graphHopperFolder) && Helper.isEmpty(ghLocation)) {
-            if (Helper.isEmpty(dataReaderFile))
+        if (isEmpty(graphHopperFolder) && isEmpty(ghLocation)) {
+            if (isEmpty(dataReaderFile))
                 throw new IllegalArgumentException("You need to specify an OSM file.");
 
-            graphHopperFolder = Helper.pruneFileEnd(dataReaderFile) + "-gh";
+            graphHopperFolder = pruneFileEnd(dataReaderFile) + "-gh";
         }
 
         // graph
@@ -553,7 +554,7 @@ public class GraphHopper implements GraphHopperAPI {
             lockFactory = new NativeFSLockFactory();
 
         // elevation
-        String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
+        String eleProviderStr = toLowerCase(args.get("graph.elevation.provider", "noop"));
 
         // keep fallback until 0.8
         boolean eleCalcMean = args.has("graph.elevation.calcmean")
@@ -657,7 +658,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             try {
                 DataReader reader = importData();
-                DateFormat f = Helper.createFormatter();
+                DateFormat f = createFormatter();
                 ghStorage.getProperties().put("datareader.import.date", f.format(new Date()));
                 if (reader.getDataDate() != null)
                     ghStorage.getProperties().put("datareader.data.date", f.format(reader.getDataDate()));
@@ -686,7 +687,7 @@ public class GraphHopper implements GraphHopperAPI {
         encodingManager.setEnableInstructions(enableInstructions);
         encodingManager.setPreferredLanguage(preferredLanguage);
         DataReader reader = createReader(ghStorage);
-        logger.info("using " + ghStorage.toString() + ", memory:" + Helper.getMemInfo());
+        logger.info("using " + ghStorage.toString() + ", memory:" + getMemInfo());
         reader.readGraph();
         return reader;
     }
@@ -715,7 +716,7 @@ public class GraphHopper implements GraphHopperAPI {
      */
     @Override
     public boolean load(String graphHopperFolder) {
-        if (Helper.isEmpty(graphHopperFolder))
+        if (isEmpty(graphHopperFolder))
             throw new IllegalStateException("GraphHopperLocation is not specified. Call setGraphHopperLocation or init before");
 
         if (fullyLoaded)
@@ -849,7 +850,7 @@ public class GraphHopper implements GraphHopperAPI {
 
             GraphHopperStorage newGraph = GHUtility.newStorage(ghStorage);
             GHUtility.sortDFS(ghStorage, newGraph);
-            logger.info("graph sorted (" + Helper.getMemInfo() + ")");
+            logger.info("graph sorted (" + getMemInfo() + ")");
             ghStorage = newGraph;
         }
 
@@ -902,7 +903,7 @@ public class GraphHopper implements GraphHopperAPI {
      * @see HintsMap
      */
     public Weighting createWeighting(HintsMap hintsMap, FlagEncoder encoder, Graph graph) {
-        String weightingStr = hintsMap.getWeighting().toLowerCase();
+        String weightingStr = toLowerCase(hintsMap.getWeighting());
         Weighting weighting = null;
 
         if (encoder.supports(GenericWeighting.class)) {
@@ -1076,6 +1077,9 @@ public class GraphHopper implements GraphHopperAPI {
                         setPathDetailsBuilders(pathBuilderFactory, request.getPathDetails()).
                         setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
 
+                if(request.hasFavoredHeading(0))
+                    pathMerger.setFavoredHeading(request.getFavoredHeading(0));
+
                 if (routingTemplate.isReady(pathMerger, tr))
                     break;
             }
@@ -1132,7 +1136,7 @@ public class GraphHopper implements GraphHopperAPI {
         GHPoint lastPoint = points.get(0);
         GHPoint point;
         double dist;
-        DistanceCalc calc = Helper.DIST_3D;
+        DistanceCalc calc = DIST_3D;
         for (int i = 1; i < points.size(); i++) {
             point = points.get(i);
             dist = calc.calcDist(lastPoint.getLat(), lastPoint.getLon(), point.getLat(), point.getLon());
@@ -1220,9 +1224,9 @@ public class GraphHopper implements GraphHopperAPI {
 
     protected void flush() {
         logger.info("flushing graph " + ghStorage.toString() + ", details:" + ghStorage.toDetailsString() + ", "
-                + Helper.getMemInfo() + ")");
+                + getMemInfo() + ")");
         ghStorage.flush();
-        logger.info("flushed graph " + Helper.getMemInfo() + ")");
+        logger.info("flushed graph " + getMemInfo() + ")");
         fullyLoaded = true;
     }
 
@@ -1253,7 +1257,7 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("Cannot clean GraphHopper without specified graphHopperLocation");
 
         File folder = new File(getGraphHopperLocation());
-        Helper.removeDir(folder);
+        removeDir(folder);
     }
 
     protected void ensureNotLoaded() {

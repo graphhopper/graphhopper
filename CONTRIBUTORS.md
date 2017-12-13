@@ -38,6 +38,7 @@ Here is an overview:
  * JohannesPelzer, improved GPX information and various other things
  * karussell, one of the core developers
  * khuebner, initial turn costs support
+ * legraina, improved docker for dockerhub
  * lmar, improved instructions
  * michaz, one of the core developers
  * mprins, improvements for travis CI and regarding JDK9 #806
