@@ -730,7 +730,7 @@ public class GraphHopperIT {
 
         assertEquals(2, tmpHopper.getCHFactoryDecorator().getPreparations().size());
 
-        GHResponse rsp = tmpHopper.route(new GHRequest(52.513505,13.350443, 52.513505,13.350245)
+        GHResponse rsp = tmpHopper.route(new GHRequest(52.513505, 13.350443, 52.513505, 13.350245)
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
 
         Instruction instr = rsp.getBest().getInstructions().get(1);
@@ -864,6 +864,26 @@ public class GraphHopperIT {
                         addPoint(new GHPoint(49.9847, 11.499612)).
                         setVehicle("car").setWeighting("fastest").
                         setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED));
+
+        GHResponse rsp = tmpHopper.route(req);
+
+        assertFalse(rsp.hasErrors());
+    }
+
+    @Test
+    public void testPathDetailsSamePoint() {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/north-bayreuth.osm.gz").
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car"));
+        tmpHopper.importOrLoad();
+
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(49.984352, 11.498802)).
+                addPoint(new GHPoint(49.984352, 11.498802)).
+                setVehicle("car").setWeighting("fastest").
+                setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED));
 
         GHResponse rsp = tmpHopper.route(req);
 

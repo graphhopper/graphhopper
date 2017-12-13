@@ -12,25 +12,24 @@ public class Trip {
     public static abstract class Leg {
         public final String type;
         public final String departureLocation;
-        public final Date departureTime;
         public final List<EdgeIteratorState> edges;
         public final Geometry geometry;
         public final double distance;
-        public final Date arrivalTime;
 
-        public Leg(String type, String departureLocation, Date departureTime, List<EdgeIteratorState> edges, Geometry geometry, double distance, Date arrivalTime) {
+        public Leg(String type, String departureLocation, List<EdgeIteratorState> edges, Geometry geometry, double distance) {
             this.type = type;
             this.departureLocation = departureLocation;
             this.edges = edges;
             this.geometry = geometry;
             this.distance = distance;
-            this.departureTime = departureTime;
-            this.arrivalTime = arrivalTime;
         }
 
         public double getDistance() {
             return distance;
         }
+
+        public abstract Date getDepartureTime();
+        public abstract Date getArrivalTime();
     }
 
     public static class Stop {
@@ -48,14 +47,38 @@ public class Trip {
             this.arrivalTime = arrivalTime;
             this.departureTime = departureTime;
         }
+
+        @Override
+        public String toString() {
+            return "Stop{" +
+                    "stop_id='" + stop_id + '\'' +
+                    ", arrivalTime=" + arrivalTime +
+                    ", departureTime=" + departureTime +
+                    '}';
+        }
     }
     public static class WalkLeg extends Leg {
         public final InstructionList instructions;
+        private final Date departureTime;
+        private final Date arrivalTime;
 
         public WalkLeg(String departureLocation, Date departureTime, List<EdgeIteratorState> edges, Geometry geometry, double distance, InstructionList instructions, Date arrivalTime) {
-            super("walk", departureLocation, departureTime, edges, geometry, distance, arrivalTime);
+            super("walk", departureLocation, edges, geometry, distance);
             this.instructions = instructions;
+            this.departureTime = departureTime;
+            this.arrivalTime = arrivalTime;
         }
+
+        @Override
+        public Date getDepartureTime() {
+            return departureTime;
+        }
+
+        @Override
+        public Date getArrivalTime() {
+            return arrivalTime;
+        }
+
     }
     public static class PtLeg extends Leg {
         public final String feed_id;
@@ -66,8 +89,8 @@ public class Trip {
         public final String trip_id;
         public final String route_id;
 
-        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, List<EdgeIteratorState> edges, Date departureTime, List<Stop> stops, double distance, long travelTime, Date arrivalTime, Geometry geometry) {
-            super("pt", stops.get(0).stop_name, departureTime, edges, geometry, distance, arrivalTime);
+        public PtLeg(String feedId, boolean isInSameVehicleAsPrevious, String tripId, String routeId, List<EdgeIteratorState> edges, List<Stop> stops, double distance, long travelTime, Geometry geometry) {
+            super("pt", stops.get(0).stop_name, edges, geometry, distance);
             this.feed_id = feedId;
             this.isInSameVehicleAsPrevious = isInSameVehicleAsPrevious;
             this.trip_id = tripId;
@@ -77,6 +100,15 @@ public class Trip {
             this.stops = stops;
         }
 
+        @Override
+        public Date getDepartureTime() {
+            return stops.get(0).departureTime;
+        }
+
+        @Override
+        public Date getArrivalTime() {
+            return stops.get(stops.size()-1).arrivalTime;
+        }
     }
 
 }
