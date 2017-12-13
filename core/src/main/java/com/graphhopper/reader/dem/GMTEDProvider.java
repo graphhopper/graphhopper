@@ -28,6 +28,9 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Locale;
+
+import static com.graphhopper.util.Helper.*;
 
 /**
  * Elevation data from Global Multi-resolution Terrain Elevation Data 2010 (GMTED2010).
@@ -198,7 +201,7 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
                     throw new RuntimeException("Can't decode " + file.getName(), e);
                 } finally {
                     if (ss != null)
-                        Helper.close(ss);
+                        close(ss);
                 }
 
                 fillDataAccessWithElevationData(raster, heights, WIDTH);
@@ -226,8 +229,8 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
         int latInt = getMinLatForTile(lat);
         String north = getNorthString(latInt);
         String east = getEastString(lonInt);
-        String lonString = String.format("%03d", Math.abs(lonInt));
-        return (String.format("%02d", Math.abs(latInt)) + north + lonString + east + FILE_NAME_END).toLowerCase();
+        String lonString = String.format(Locale.ROOT, "%03d", Math.abs(lonInt));
+        return toLowerCase(String.format(Locale.ROOT, "%02d", Math.abs(latInt)) + north + lonString + east + FILE_NAME_END);
     }
 
     String getDownloadURL(double lat, double lon) {
@@ -235,8 +238,8 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
         int latInt = getMinLatForTile(lat);
         String north = getNorthString(latInt);
         String east = getEastString(lonInt);
-        String lonString = String.format("%03d", Math.abs(lonInt));
-        return east + lonString + "/" + String.format("%02d", Math.abs(latInt)) + north + lonString + east + FILE_NAME_END + ".tif";
+        String lonString = String.format(Locale.ROOT, "%03d", Math.abs(lonInt));
+        return east + lonString + "/" + String.format(Locale.ROOT, "%02d", Math.abs(latInt)) + north + lonString + east + FILE_NAME_END + ".tif";
     }
 
     private String getNorthString(int lat) {

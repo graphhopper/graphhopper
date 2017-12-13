@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.Map.Entry;
 
+import static com.graphhopper.util.Helper.*;
+
 /**
  * This encoder tries to store all way information into a 32 or 64bit value. Later extendable to
  * multiple ints or bytes. The assumption is that edge.getFlags is cheap and can be later replaced
@@ -426,7 +428,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     private long extractMeter(ReaderWay way, long flags, EncodedDoubleValue valueEncoder, List<String> keys) {
         String value = way.getFirstPriorityTag(keys);
-        if (Helper.isEmpty(value)) return flags;
+        if (isEmpty(value)) return flags;
 
         double val;
         try {
@@ -447,7 +449,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
 
     private long extractTons(ReaderWay way, long flags, EncodedDoubleValue valueEncoder, List<String> keys) {
         String value = way.getFirstPriorityTag(keys);
-        if (Helper.isEmpty(value)) return flags;
+        if (isEmpty(value)) return flags;
 
         double val;
         try {
@@ -467,7 +469,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     public static double stringToTons(String value) {
-        value = value.toLowerCase().replaceAll(" ", "").replaceAll("(tons|ton)", "t");
+        value = toLowerCase(value).replaceAll(" ", "").replaceAll("(tons|ton)", "t");
         value = value.replace("mgw", "").trim();
         double factor = 1;
         if (value.endsWith("t")) {
@@ -481,7 +483,7 @@ public class DataFlagEncoder extends AbstractFlagEncoder {
     }
 
     public static double stringToMeter(String value) {
-        value = value.toLowerCase().replaceAll(" ", "").replaceAll("(meters|meter|mtrs|mtr|mt|m\\.)", "m");
+        value = toLowerCase(value).replaceAll(" ", "").replaceAll("(meters|meter|mtrs|mtr|mt|m\\.)", "m");
         double factor = 1;
         double offset = 0;
         value = value.replaceAll("(\\\"|\'\')", "in").replaceAll("(\'|feet)", "ft");
