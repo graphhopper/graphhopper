@@ -59,7 +59,7 @@ public class PathSimplification {
     }
 
     public PointList simplify() {
-        if (listsToSimplify.isEmpty() || pointList.isEmpty() || pointList.size() <= 2)
+        if (listsToSimplify.isEmpty() || pointList.size() <= 2)
             return pointList;
 
         // The offset of already included points
