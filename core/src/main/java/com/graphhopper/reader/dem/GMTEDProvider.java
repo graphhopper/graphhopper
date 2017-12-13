@@ -27,6 +27,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
+import static com.graphhopper.util.Helper.*;
+
 /**
  * Elevation data from Global Multi-resolution Terrain Elevation Data 2010 (GMTED2010).
  * The data provides 7.5 arc seconds resolution (~250 m) global elevation data. The data is available between latitudes
@@ -149,7 +151,7 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
             throw new RuntimeException("Can't decode " + file.getName(), e);
         } finally {
             if (ss != null)
-                Helper.close(ss);
+                close(ss);
         }
     }
 
@@ -185,7 +187,7 @@ public class GMTEDProvider extends AbstractTiffElevationProvider {
     String getFileName(double lat, double lon) {
         int lonInt = getMinLonForTile(lon);
         int latInt = getMinLatForTile(lat);
-        return (getLatString(latInt) + getNorthString(latInt) + getLonString(lonInt) + getEastString(lonInt) + FILE_NAME_END).toLowerCase();
+        return toLowerCase(getLatString(latInt) + getNorthString(latInt) + getLonString(lonInt) + getEastString(lonInt) + FILE_NAME_END);
     }
 
     String getDownloadURL(double lat, double lon) {

@@ -21,6 +21,8 @@ import com.graphhopper.util.Helper;
 
 import java.io.*;
 
+import static com.graphhopper.util.Helper.*;
+
 /**
  * SRTMGL1 contains elevation data for most of the world with 1 arc second (~30m) accuracy.
  * We use the mirror of OpenTopography, as the official SRTMGL1 download requires authentication.
@@ -96,7 +98,7 @@ public class SRTMGL1Provider extends AbstractSRTMElevationProvider {
             os.write(buffer, 0, len);
         }
         os.flush();
-        Helper.close(buff);
+        close(buff);
         return os.toByteArray();
     }
 
@@ -127,7 +129,7 @@ public class SRTMGL1Provider extends AbstractSRTMElevationProvider {
     String getFileName(double lat, double lon) {
         int lonInt = getMinLonForTile(lon);
         int latInt = getMinLatForTile(lat);
-        return (getNorthString(latInt) + getLatString(latInt) + getEastString(lonInt) + getLonString(lonInt)).toLowerCase();
+        return toLowerCase(getNorthString(latInt) + getLatString(latInt) + getEastString(lonInt) + getLonString(lonInt));
     }
 
     String getDownloadURL(double lat, double lon) {
