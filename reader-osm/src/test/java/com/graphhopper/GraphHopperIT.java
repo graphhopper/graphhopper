@@ -130,6 +130,35 @@ public class GraphHopperIT {
     }
 
     @Test
+    public void testUTurn() throws Exception {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/monaco.osm.gz").
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car"));
+        tmpHopper.importOrLoad();
+
+        GHRequest request = new GHRequest();
+        //Force initial U-Turn
+        request.addPoint(new GHPoint(43.743887, 7.431151), 200);
+        request.addPoint(new GHPoint(43.744007, 7.431076));
+
+        request.setAlgorithm(ASTAR).setVehicle("car").setWeighting(weightCalcStr);
+        GHResponse rsp = tmpHopper.route(request);
+
+        assertFalse(rsp.hasErrors());
+        PathWrapper arsp = rsp.getBest();
+        InstructionList il = arsp.getInstructions();
+        assertEquals(3, il.size());
+
+        List<Map<String, Object>> resultJson = il.createJson();
+        // Initial U-turn
+        assertEquals("Make a U-turn onto Avenue Princesse Grace", resultJson.get(0).get("text"));
+        // Second U-turn to get to destination
+        assertEquals("Make a U-turn onto Avenue Princesse Grace", resultJson.get(1).get("text"));
+    }
+
+    @Test
     public void testAlternativeRoutes() {
         GHRequest req = new GHRequest(43.729057, 7.41251, 43.740298, 7.423561).
                 setAlgorithm(ALT_ROUTE).setVehicle(vehicle).setWeighting(weightCalcStr);
@@ -339,6 +368,7 @@ public class GraphHopperIT {
         assertEquals("Turn right onto Avenue Albert II", resultJson.get(6).get("text"));
 
         assertEquals("Waypoint 1", resultJson.get(20).get("text"));
+        assertEquals(Instruction.U_TURN_UNKNOWN, resultJson.get(21).get("sign"));
 
         assertEquals("Continue onto Avenue Albert II", resultJson.get(31).get("text"));
         assertEquals("Turn left", resultJson.get(32).get("text"));
@@ -656,6 +686,7 @@ public class GraphHopperIT {
 
         assertEquals("Continue onto Obere Landstraße", resultJson.get(0).get("text"));
         assertEquals("get off the bike", resultJson.get(0).get("annotation_text"));
+        assertEquals(69.28, (Double) resultJson.get(0).get("heading"), .01);
         assertEquals("Turn left onto Kirchengasse", resultJson.get(1).get("text"));
         assertEquals("get off the bike", resultJson.get(1).get("annotation_text"));
 
