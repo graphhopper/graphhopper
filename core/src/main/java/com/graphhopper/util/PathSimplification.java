@@ -49,7 +49,8 @@ public class PathSimplification {
         this.pathDetails = pathWrapper.getPathDetails();
         for (String name : pathDetails.keySet()) {
             List<PathDetail> pathDetailList = pathDetails.get(name);
-            if (pathDetailList.isEmpty())
+            // If the pointList only contains one point, PathDetails have to be empty because 1 point => 0 edges
+            if (pathDetailList.isEmpty() && pointList.size() > 1)
                 throw new IllegalStateException("PathDetails " + name + " must not be empty");
 
             listsToSimplify.add(pathDetailList);
@@ -58,7 +59,7 @@ public class PathSimplification {
     }
 
     public PointList simplify() {
-        if (listsToSimplify.isEmpty() || pointList.isEmpty())
+        if (listsToSimplify.isEmpty() || pointList.size() <= 2)
             return pointList;
 
         // The offset of already included points
