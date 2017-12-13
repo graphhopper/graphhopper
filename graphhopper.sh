@@ -21,6 +21,17 @@ if [ ! -f "config.properties" ]; then
   cp config-example.properties $CONFIG
 fi
 
+FORCE_DWN='false'
+while getopts f flag; do
+    case $flag in
+      f)    FORCE_DWN='true';;
+      ?)   printf "Usage: %s: [-f] args\n" $0
+            exit 2;;
+    esac
+done
+shift $(($OPTIND - 1))
+printf "Remaining arguments are: %s\n" "$*"
+
 ACTION=$1
 FILE=$2
 
@@ -52,9 +63,11 @@ function ensureOsm {
     # skip
     return
   elif [ ! -s "$OSM_FILE" ]; then
-    echo "File not found '$OSM_FILE'. Press ENTER to get it from: $LINK"
-    echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
-    read -e
+    if [ $FORCE_DWN = 'false' ]; then
+      echo "File not found '$OSM_FILE'. Press ENTER to get it from: $LINK"
+      echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
+      read -e
+    fi
       
     echo "## now downloading OSM file from $LINK and extracting to $OSM_FILE"
     
