@@ -139,6 +139,11 @@ public final class ShallowImmutablePointList extends PointList {
     }
 
     @Override
+    public void removeLastPoint() {
+        throw new UnsupportedOperationException(IMMUTABLE_ERR);
+    }
+
+    @Override
     public void reverse() {
         throw new UnsupportedOperationException(IMMUTABLE_ERR);
     }

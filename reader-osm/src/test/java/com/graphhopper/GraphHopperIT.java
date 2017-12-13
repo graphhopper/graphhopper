@@ -356,7 +356,7 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(6875.2, arsp.getDistance(), .1);
-        assertEquals(174, arsp.getPoints().getSize());
+        assertEquals(173, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
         assertEquals(38, il.size());
@@ -414,7 +414,7 @@ public class GraphHopperIT {
         arsp = rsp.getBest();
         assertEquals(0, arsp.getDistance(), .1);
         assertEquals(0, arsp.getRouteWeight(), .1);
-        assertEquals(2, arsp.getPoints().getSize());
+        assertEquals(1, arsp.getPoints().getSize());
         assertEquals(2, arsp.getInstructions().size());
         assertEquals(Instruction.REACHED_VIA, arsp.getInstructions().createJson().get(0).get("sign"));
         assertEquals(Instruction.FINISH, arsp.getInstructions().createJson().get(1).get("sign"));
@@ -539,7 +539,7 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(297, arsp.getDistance(), 5.);
-        assertEquals(24, arsp.getPoints().getSize());
+        assertEquals(23, arsp.getPoints().getSize());
 
         // test if start and first point are identical leading to an empty path, #788
         rq = new GHRequest().
@@ -761,7 +761,7 @@ public class GraphHopperIT {
 
         assertEquals(2, tmpHopper.getCHFactoryDecorator().getPreparations().size());
 
-        GHResponse rsp = tmpHopper.route(new GHRequest(52.513505,13.350443, 52.513505,13.350245)
+        GHResponse rsp = tmpHopper.route(new GHRequest(52.513505, 13.350443, 52.513505, 13.350245)
                 .setVehicle(tmpVehicle).setWeighting(tmpWeightCalcStr));
 
         Instruction instr = rsp.getBest().getInstructions().get(1);
@@ -876,7 +876,49 @@ public class GraphHopperIT {
         PathWrapper pw = rsp.getBest();
         assertEquals(1.45, rsp.getBest().getDistance() / 1000f, .01);
         assertEquals(17, rsp.getBest().getTime() / 1000f / 60, 1);
-        assertEquals(64, pw.getPoints().size());
+        assertEquals(63, pw.getPoints().size());
+    }
+
+    @Test
+    public void testPathDetails1216() {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/north-bayreuth.osm.gz").
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car"));
+        tmpHopper.importOrLoad();
+
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(49.984352, 11.498802)).
+                // This is exactly between two edges with different speed values
+                        addPoint(new GHPoint(49.984565, 11.499188)).
+                        addPoint(new GHPoint(49.9847, 11.499612)).
+                        setVehicle("car").setWeighting("fastest").
+                        setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED));
+
+        GHResponse rsp = tmpHopper.route(req);
+
+        assertFalse(rsp.hasErrors());
+    }
+
+    @Test
+    public void testPathDetailsSamePoint() {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/north-bayreuth.osm.gz").
+                setCHEnabled(false).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car"));
+        tmpHopper.importOrLoad();
+
+        GHRequest req = new GHRequest().
+                addPoint(new GHPoint(49.984352, 11.498802)).
+                addPoint(new GHPoint(49.984352, 11.498802)).
+                setVehicle("car").setWeighting("fastest").
+                setPathDetails(Arrays.asList(Parameters.DETAILS.AVERAGE_SPEED));
+
+        GHResponse rsp = tmpHopper.route(req);
+
+        assertFalse(rsp.hasErrors());
     }
 
     @Test

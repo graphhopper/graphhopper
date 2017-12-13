@@ -45,6 +45,11 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
         }
 
         @Override
+        public void removeLastPoint() {
+            throw new RuntimeException("cannot change EMPTY PointList");
+        }
+
+        @Override
         public double getLatitude(int index) {
             throw new RuntimeException("cannot access EMPTY PointList");
         }
@@ -258,6 +263,13 @@ public class PointList implements Iterable<GHPoint3D>, PointAccess {
                 elevations[tmp] = points.getElevation(i);
         }
         size = newSize;
+    }
+
+    public void removeLastPoint() {
+        if (size == 0)
+            throw new IllegalStateException("Cannot remove last point from empty PointList");
+
+        size--;
     }
 
     public int size() {

@@ -345,6 +345,46 @@ public class GraphHopperStorageCHTest extends GraphHopperStorageTest {
     }
 
     @Test
+    public void testAddShortcutSkippedEdgesWriteRead() {
+        graph = createGHStorage();
+        final EdgeIteratorState edge1 = graph.edge(1, 3, 10, true);
+        final EdgeIteratorState edge2 = graph.edge(3, 4, 10, true);
+        graph.freeze();
+
+        CHGraph lg = graph.getGraph(CHGraph.class);
+        lg.shortcut(1, 4);
+
+        AllCHEdgesIterator iter = lg.getAllEdges();
+        iter.next();
+        iter.next();
+        iter.next();
+        assertTrue(iter.isShortcut());
+        iter.setSkippedEdges(edge1.getEdge(), edge2.getEdge());
+        assertEquals(edge1.getEdge(), iter.getSkippedEdge1());
+        assertEquals(edge2.getEdge(), iter.getSkippedEdge2());
+    }
+
+    @Test
+    public void testAddShortcutSkippedEdgesWriteRead_writeWithCHEdgeIterator() {
+        graph = createGHStorage();
+        final EdgeIteratorState edge1 = graph.edge(1, 3, 10, true);
+        final EdgeIteratorState edge2 = graph.edge(3, 4, 10, true);
+        graph.freeze();
+
+        CHGraph lg = graph.getGraph(CHGraph.class);
+        CHEdgeIteratorState shortcut = lg.shortcut(1, 4);
+        shortcut.setSkippedEdges(edge1.getEdge(), edge2.getEdge());
+
+        AllCHEdgesIterator iter = lg.getAllEdges();
+        iter.next();
+        iter.next();
+        iter.next();
+        assertTrue(iter.isShortcut());
+        assertEquals(edge1.getEdge(), iter.getSkippedEdge1());
+        assertEquals(edge2.getEdge(), iter.getSkippedEdge2());
+    }
+
+    @Test
     public void testShortcutCreationAndAccessForManyVehicles() {
         FlagEncoder tmpCar = new CarFlagEncoder();
         FlagEncoder tmpBike = new Bike2WeightFlagEncoder();

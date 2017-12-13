@@ -199,6 +199,11 @@ public class SRTMProvider implements ElevationProvider {
 
     @Override
     public double getEle(double lat, double lon) {
+        // Return fast, if there is no data available
+        // See https://www2.jpl.nasa.gov/srtm/faq.html
+        if (lat >= 60 || lat <= -56)
+            return 0;
+
         lat = (int) (lat * precision) / precision;
         lon = (int) (lon * precision) / precision;
         int intKey = calcIntKey(lat, lon);
@@ -228,7 +233,7 @@ public class SRTMProvider implements ElevationProvider {
         if (width == 0)
             width = DEFAULT_WIDTH;
 
-        demProvider = new HeightTile(down(lat), down(lon), width, precision, 1);
+        demProvider = new HeightTile(down(lat), down(lon), width, width, precision, 1, 1);
         cacheData.put(intKey, demProvider);
         demProvider.setCalcMean(calcMean);
         demProvider.setHeights(heights);

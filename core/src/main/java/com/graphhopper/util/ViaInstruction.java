@@ -34,6 +34,11 @@ public class ViaInstruction extends Instruction {
         this.extraInfo = instr.extraInfo;
     }
 
+    @Override
+    public int getLength() {
+        return 0;
+    }
+
     public int getViaCount() {
         if (viaPosition < 0)
             throw new IllegalStateException("Uninitialized via count in instruction " + getName());

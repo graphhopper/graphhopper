@@ -93,7 +93,7 @@ public class GtfsStorage implements GraphExtension {
 	private Map<Integer, Validity> validities;
 	private Bind.MapWithModificationListener<FeedIdWithTimezone, Integer> timeZones;
 	private Map<Integer, FeedIdWithTimezone> readableTimeZones;
-	private Map<Integer, String> extra;
+	private Map<Integer, byte[]> tripDescriptors;
 	private Map<Integer, Integer> stopSequences;
 	private Map<String, Fare> fares;
 	private Map<GtfsRealtime.TripDescriptor, int[]> boardEdgesForTrip;
@@ -186,7 +186,7 @@ public class GtfsStorage implements GraphExtension {
 		Bind.mapInverse(this.timeZones, readableTimeZones);
 		this.readableTimeZones = Collections.unmodifiableMap(readableTimeZones);
 		this.validities = Collections.unmodifiableMap(reverseOperatingDayPatterns);
-		this.extra = data.getTreeMap("extra");
+		this.tripDescriptors = data.getTreeMap("tripDescriptors");
 		this.stopSequences = data.getTreeMap("stopSequences");
 		this.fares = data.getTreeMap("fares");
 		this.boardEdgesForTrip = data.getHashMap("boardEdgesForTrip");
@@ -259,8 +259,8 @@ public class GtfsStorage implements GraphExtension {
 		return timeZones;
 	}
 
-	Map<Integer, String> getExtraStrings() {
-		return extra;
+	Map<Integer, byte[]> getTripDescriptors() {
+		return tripDescriptors;
 	}
 
 	Map<Integer, Integer> getStopSequences() {

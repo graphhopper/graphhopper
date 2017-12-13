@@ -88,6 +88,10 @@ public class PathMerger {
         List<String> description = new ArrayList<>();
         for (int pathIndex = 0; pathIndex < paths.size(); pathIndex++) {
             Path path = paths.get(pathIndex);
+            if (!path.isFound()) {
+                allFound = false;
+                continue;
+            }
             description.addAll(path.getDescription());
             fullTimeInMillis += path.getTime();
             fullDistance += path.getDistance();
@@ -112,9 +116,14 @@ public class PathMerger {
                 if (fullPoints.isEmpty())
                     fullPoints = new PointList(tmpPoints.size(), tmpPoints.is3D());
 
+                // Remove duplicated points, see #1138
+                if (pathIndex + 1 < paths.size()) {
+                    tmpPoints.removeLastPoint();
+                }
+
                 fullPoints.add(tmpPoints);
                 altRsp.addPathDetails(path.calcDetails(requestedPathDetails, pathBuilderFactory, origPoints));
-                origPoints += tmpPoints.size();
+                origPoints = fullPoints.size();
             }
 
             allFound = allFound && path.isFound();

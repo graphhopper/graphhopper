@@ -48,6 +48,11 @@ public class FinishInstruction extends Instruction {
     }
 
     @Override
+    public int getLength() {
+        return 0;
+    }
+
+    @Override
     public String getTurnDescription(Translation tr) {
         if (rawName)
             return getName();

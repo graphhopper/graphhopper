@@ -19,7 +19,7 @@
         <version>0.10-SNAPSHOT</version>
     </parent>
     <properties>
-        <vtm.version>0.8.0</vtm.version>
+        <vtm.version>0.9.0</vtm.version>
         <!-- do not put the properties here as it differs from dev to dev <android.sdk.path>/home/peterk/Programme/android-sdk-linux_x86</android.sdk.path>
         instead use your IDE to set it up or specify android sdk via command line
         using -Dandroid.sdk.path=... or by setting environment variable ANDROID_HOME
@@ -68,22 +68,28 @@
             <classifier>natives-armeabi-v7a</classifier>
         </dependency>  
          <dependency>
+            <groupId>org.mapsforge</groupId>
+            <artifactId>vtm-android</artifactId>
+            <version>${vtm.version}</version>
+            <classifier>natives-arm64-v8a</classifier>
+        </dependency>
+         <dependency>
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm-android</artifactId>
             <version>${vtm.version}</version>
             <classifier>natives-x86</classifier>
         </dependency>        
-        
+         <dependency>
+            <groupId>org.mapsforge</groupId>
+            <artifactId>vtm-android</artifactId>
+            <version>${vtm.version}</version>
+            <classifier>natives-x86_64</classifier>
+        </dependency>
+
         <dependency>
             <groupId>org.mapsforge</groupId>            
             <artifactId>vtm-jts</artifactId>
             <version>${vtm.version}</version>
-            <exclusions>
-            	<exclusion>
-            	  <groupId>com.vividsolutions</groupId>            
-  		  <artifactId>jts-core</artifactId>
-            	</exclusion>
-            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.mapsforge</groupId>            
@@ -143,7 +149,7 @@
                 <configuration>
                     <sdk>
                         <!-- platform or api level (api level 8 = platform 2.2) -->                        
-                        <platform>25</platform>
+                        <platform>27</platform>
                     </sdk>
                     <deleteConflictingFiles>true</deleteConflictingFiles>
                     <undeployBeforeDeploy>true</undeployBeforeDeploy>

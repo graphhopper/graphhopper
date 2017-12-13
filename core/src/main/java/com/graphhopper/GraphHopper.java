@@ -576,10 +576,15 @@ public class GraphHopper implements GraphHopperAPI {
             CGIARProvider cgiarProvider = new CGIARProvider();
             cgiarProvider.setAutoRemoveTemporaryFiles(args.getBool("graph.elevation.cgiar.clear", true));
             tmpProvider = cgiarProvider;
+        } else if (eleProviderStr.equalsIgnoreCase("gmted")) {
+            tmpProvider = new GMTEDProvider();
+        } else if (eleProviderStr.equalsIgnoreCase("multi")) {
+            tmpProvider = new MultiSourceElevationProvider();
         }
 
         tmpProvider.setCalcMean(eleCalcMean);
-        tmpProvider.setCacheDir(new File(cacheDirStr));
+        if (!cacheDirStr.isEmpty())
+            tmpProvider.setCacheDir(new File(cacheDirStr));
         if (!baseURL.isEmpty())
             tmpProvider.setBaseURL(baseURL);
         tmpProvider.setDAType(elevationDAType);
@@ -921,7 +926,7 @@ public class GraphHopper implements GraphHopperAPI {
         if (hintsMap.has(Routing.BLOCK_AREA)) {
             String blockAreaStr = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
             GraphEdgeIdFinder.BlockArea blockArea = new GraphEdgeIdFinder(graph, locationIndex).
-                    parseBlockArea(blockAreaStr, new DefaultEdgeFilter(encoder));
+                    parseBlockArea(blockAreaStr, new DefaultEdgeFilter(encoder), hintsMap.getDouble("block_area.edge_id_max_area", 1000 * 1000));
             return new BlockAreaWeighting(weighting, blockArea);
         }
 

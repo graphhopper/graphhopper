@@ -182,7 +182,7 @@ public class GraphHopperGtfsIT {
 
         GHResponse response = graphHopper.route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()
-                .map(path -> LocalTime.from(((Trip.PtLeg) path.getLegs().get(0)).departureTime.toInstant().atZone(zoneId)))
+                .map(path -> LocalTime.from(((Trip.PtLeg) path.getLegs().get(0)).getDepartureTime().toInstant().atZone(zoneId)))
                 .collect(Collectors.toList());
         List<LocalTime> expectedDepartureTimes = Stream.of(
                 "06:44", "07:14", "07:44", "08:14", "08:44", "08:54", "09:04", "09:14", "09:24", "09:34", "09:44", "09:54",
@@ -209,7 +209,7 @@ public class GraphHopperGtfsIT {
 
         GHResponse response = graphHopper.route(ghRequest);
         List<LocalTime> actualDepartureTimes = response.getAll().stream()
-                .map(path -> LocalTime.from(((Trip.PtLeg) path.getLegs().get(0)).departureTime.toInstant().atZone(zoneId)))
+                .map(path -> LocalTime.from(((Trip.PtLeg) path.getLegs().get(0)).getDepartureTime().toInstant().atZone(zoneId)))
                 .collect(Collectors.toList());
         List<LocalTime> expectedDepartureTimes = Stream.of(
                 "12:44", "12:14", "11:44", "11:14")
