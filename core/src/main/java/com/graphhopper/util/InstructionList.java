@@ -174,11 +174,10 @@ public class InstructionList extends AbstractList<Instruction> {
     public String createGPX(String trackName, long startTimeMillis, boolean includeElevation, boolean withRoute, boolean withTrack, boolean withWayPoints) {
         DateFormat formatter = Helper.createFormatter();
 
-        DecimalFormat decimalFormat = new DecimalFormat("#");
+        DecimalFormat decimalFormat = new DecimalFormat("#", DecimalFormatSymbols.getInstance(Locale.ROOT));
         decimalFormat.setMinimumFractionDigits(1);
         decimalFormat.setMaximumFractionDigits(6);
         decimalFormat.setMinimumIntegerDigits(1);
-        decimalFormat.setDecimalFormatSymbols(DecimalFormatSymbols.getInstance(Locale.US));
 
         String header = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\" ?>"
                 + "<gpx xmlns=\"http://www.topografix.com/GPX/1/1\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\""

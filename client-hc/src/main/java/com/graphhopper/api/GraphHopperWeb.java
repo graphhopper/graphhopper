@@ -37,6 +37,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static com.graphhopper.util.Helper.*;
+
 /**
  * Main wrapper of the GraphHopper Directions API for a simple and efficient
  * usage.
@@ -412,7 +414,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
         String places = "";
         for (GHPoint p : request.getPoints()) {
-            places += "point=" + Helper.round6(p.lat) + "," + Helper.round6(p.lon) + "&";
+            places += "point=" + round6(p.lat) + "," + round6(p.lon) + "&";
         }
 
         String type = request.getHints().get("type", "json");
@@ -446,7 +448,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
             String urlValue = entry.getValue();
 
             // use lower case conversion for check only!
-            if (ignoreSet.contains(urlKey.toLowerCase())) {
+            if (ignoreSet.contains(toLowerCase(urlKey))) {
                 continue;
             }
 
