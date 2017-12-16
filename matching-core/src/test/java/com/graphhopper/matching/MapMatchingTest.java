@@ -197,6 +197,22 @@ public class MapMatchingTest {
     }
 
     /**
+     * This test is to check behavior over short tracks. GPX input:
+     * https://graphhopper.com/maps/?point=51.342422%2C12.3613358&point=51.3423281%2C12.3613358&layer=Lyrk
+     */
+    @Test
+    public void testClosePoints() {
+        MapMatching mapMatching = new MapMatching(hopper, algoOptions);
+        List<GPXEntry> inputGPXEntries = createRandomGPXEntries(
+                new GHPoint(51.342422, 12.3613358),
+                new GHPoint(51.342328, 12.3613358));
+        MatchResult mr = mapMatching.doWork(inputGPXEntries);
+
+        assertEquals(3, mr.getMatchLength(), 1);
+        assertEquals(284, mr.getMatchMillis(), 1);
+    }
+
+    /**
      * This test is to check what happens when two GPX entries are on one edge
      * which is longer than 'separatedSearchDistance' - which is always 66m. GPX
      * input:

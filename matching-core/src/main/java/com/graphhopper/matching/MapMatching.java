@@ -576,11 +576,10 @@ public class MapMatching {
                             + edgeIteratorState.getEdge());
                 }
                 if (currentEdge == null || !equalEdges(directedRealEdge, currentEdge)) {
-                    if (currentEdge != null) {
-                        EdgeMatch edgeMatch = new EdgeMatch(currentEdge, gpxExtensions);
-                        edgeMatches.add(edgeMatch);
-                        gpxExtensions = new ArrayList<>();
-                    }
+                    EdgeMatch edgeMatch = new EdgeMatch(directedRealEdge, gpxExtensions);
+                    edgeMatches.add(edgeMatch);
+                    gpxExtensions = new ArrayList<>();
+                    
                     currentEdge = directedRealEdge;
                 }
             }
