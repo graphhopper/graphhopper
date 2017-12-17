@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -34,6 +34,7 @@ public class GraphBuilder {
     private boolean mmap;
     private boolean store;
     private boolean elevation;
+    private boolean edgeBasedCH;
     private long byteCapacity = 100;
     private Weighting singleCHWeighting;
 
@@ -74,6 +75,11 @@ public class GraphBuilder {
         return this;
     }
 
+    public GraphBuilder setEdgeBasedCH(boolean edgeBasedCH) {
+        this.edgeBasedCH = edgeBasedCH;
+        return this;
+    }
+
     public boolean hasElevation() {
         return elevation;
     }
@@ -95,13 +101,13 @@ public class GraphBuilder {
                 new MMapDirectory(location) :
                 new RAMDirectory(location, store);
 
-        GraphHopperStorage graph;
-        if (encodingManager.needsTurnCostsSupport() || singleCHWeighting == null)
-            graph = new GraphHopperStorage(dir, encodingManager, elevation, new TurnCostExtension());
-        else
-            graph = new GraphHopperStorage(Arrays.asList(singleCHWeighting), dir, encodingManager, elevation, new TurnCostExtension.NoOpExtension());
+        GraphExtension graphExtension = encodingManager.needsTurnCostsSupport() ?
+                new TurnCostExtension() :
+                new TurnCostExtension.NoOpExtension();
 
-        return graph;
+        return singleCHWeighting == null ?
+                new GraphHopperStorage(dir, encodingManager, elevation, graphExtension) :
+                new GraphHopperStorage(Arrays.asList(singleCHWeighting), dir, encodingManager, elevation, edgeBasedCH, graphExtension);
     }
 
     /**

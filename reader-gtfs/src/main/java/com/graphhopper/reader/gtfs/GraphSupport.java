@@ -108,6 +108,16 @@ class GraphSupport {
                     }
 
                     @Override
+                    public int getFirstOrigEdge() {
+                        return getEdge();
+                    }
+
+                    @Override
+                    public int getLastOrigEdge() {
+                        return getEdge();
+                    }
+
+                    @Override
                     public int getBaseNode() {
                         return edge.getBaseNode();
                     }

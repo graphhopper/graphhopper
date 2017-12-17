@@ -103,6 +103,16 @@ public class WrapperGraph implements Graph {
             }
 
             @Override
+            public int getFirstOrigEdge() {
+                return getEdge();
+            }
+
+            @Override
+            public int getLastOrigEdge() {
+                return getEdge();
+            }
+
+            @Override
             public int getBaseNode() {
                 throw new UnsupportedOperationException();
             }

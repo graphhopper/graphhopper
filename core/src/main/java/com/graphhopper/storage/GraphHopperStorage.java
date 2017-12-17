@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -47,7 +47,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     private final StorableProperties properties;
     private final BaseGraph baseGraph;
     // same flush order etc
-    private final Collection<CHGraphImpl> chGraphs = new ArrayList<CHGraphImpl>(5);
+    private final Collection<CHGraphImpl> chGraphs = new ArrayList<>(5);
 
     public GraphHopperStorage(Directory dir, EncodingManager encodingManager, boolean withElevation, GraphExtension extendedStorage) {
         this(Collections.<Weighting>emptyList(), dir, encodingManager, withElevation, extendedStorage);
@@ -55,6 +55,11 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
 
     public GraphHopperStorage(List<? extends Weighting> chWeightings, Directory dir, final EncodingManager encodingManager,
                               boolean withElevation, GraphExtension extendedStorage) {
+        this(chWeightings, dir, encodingManager, withElevation, false, extendedStorage);
+    }
+
+    public GraphHopperStorage(List<? extends Weighting> chWeightings, Directory dir, final EncodingManager encodingManager,
+                              boolean withElevation, boolean withEdgeBasedCH, GraphExtension extendedStorage) {
         if (extendedStorage == null)
             throw new IllegalArgumentException("GraphExtension cannot be null, use NoOpExtension");
 
@@ -81,8 +86,10 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         };
 
         this.baseGraph = new BaseGraph(dir, encodingManager, withElevation, listener, extendedStorage);
+        // todo: do we need to cover the case where we use node based CH for some weightings and edge based CH for
+        // others ?
         for (Weighting w : chWeightings) {
-            chGraphs.add(new CHGraphImpl(w, dir, this.baseGraph));
+            chGraphs.add(new CHGraphImpl(w, dir, this.baseGraph, withEdgeBasedCH));
         }
     }
 

@@ -1,14 +1,14 @@
 /*
  *  Licensed to GraphHopper GmbH under one or more contributor
- *  license agreements. See the NOTICE file distributed with this work for 
+ *  license agreements. See the NOTICE file distributed with this work for
  *  additional information regarding copyright ownership.
- * 
- *  GraphHopper GmbH licenses this file to you under the Apache License, 
- *  Version 2.0 (the "License"); you may not use this file except in 
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
  *  compliance with the License. You may obtain a copy of the License at
- * 
+ *
  *       http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,6 +50,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private final DataAccess shortcuts;
     private final DataAccess nodesCH;
     private final long scDirMask = PrepareEncoder.getScDirMask();
+    private final boolean forEdgeBasedTraversal;
     private final BaseGraph baseGraph;
     private final EdgeAccess chEdgeAccess;
     private final Weighting weighting;
@@ -59,16 +60,17 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private int nodeCHEntryBytes;
     private int N_LEVEL;
     // shortcut memory layout is synced with edges indices until E_FLAGS, then:
-    private int S_SKIP_EDGE1, S_SKIP_EDGE2;
+    private int S_SKIP_EDGE1, S_SKIP_EDGE2, S_ORIG_FIRST, S_ORIG_LAST;
     private int shortcutCount = 0;
 
-    CHGraphImpl(Weighting w, Directory dir, final BaseGraph baseGraph) {
+    CHGraphImpl(Weighting w, Directory dir, final BaseGraph baseGraph, boolean forEdgeBasedTraversal) {
         if (w == null)
             throw new IllegalStateException("Weighting for CHGraph cannot be null");
 
         this.weighting = w;
         this.baseGraph = baseGraph;
         final String name = AbstractWeighting.weightingToFileName(w);
+        this.forEdgeBasedTraversal = forEdgeBasedTraversal;
         this.nodesCH = dir.find("nodes_ch_" + name);
         this.shortcuts = dir.find("shortcuts_" + name);
         this.chEdgeAccess = new EdgeAccess(shortcuts, baseGraph.bitUtil) {
@@ -355,7 +357,15 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         // shortcuts
         S_SKIP_EDGE1 = ea.E_FLAGS + 4;
         S_SKIP_EDGE2 = S_SKIP_EDGE1 + 4;
-        shortcutEntryBytes = S_SKIP_EDGE2 + 4;
+        if (forEdgeBasedTraversal) {
+            // todo: possible optimization: since the number of turn restrictions on each node is limited we can
+            // store both first/last orig into one int or even into E_FLAGS (?)
+            S_ORIG_FIRST = S_SKIP_EDGE2 + 4;
+            S_ORIG_LAST = S_ORIG_FIRST + 4;
+            shortcutEntryBytes = S_ORIG_LAST + 4;
+        } else {
+            shortcutEntryBytes = S_SKIP_EDGE2 + 4;
+        }
 
         // node based data:
         N_LEVEL = 0;
@@ -457,6 +467,32 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
+        public CHEdgeIteratorState setOuterOrigEdges(int firstOrigEdge, int lastOrigEdge) {
+            checkShortcutAndEdgeBased("setOuterOrigEdges");
+            shortcuts.setInt(edgePointer + S_ORIG_FIRST, firstOrigEdge);
+            shortcuts.setInt(edgePointer + S_ORIG_LAST, lastOrigEdge);
+            return this;
+        }
+
+        @Override
+        public int getFirstOrigEdge() {
+            if (!isShortcut()) {
+                return getEdge();
+            }
+            checkShortcutAndEdgeBased("getFirstOrigEdge");
+            return shortcuts.getInt(edgePointer + S_ORIG_FIRST);
+        }
+
+        @Override
+        public int getLastOrigEdge() {
+            if (!isShortcut()) {
+                return getEdge();
+            }
+            checkShortcutAndEdgeBased("getLastOrigEdge");
+            return shortcuts.getInt(edgePointer + S_ORIG_LAST);
+        }
+
+        @Override
         public final boolean isShortcut() {
             // assert baseGraph.isFrozen() : "chgraph not yet frozen";
             return edgeId >= baseGraph.edgeCount;
@@ -509,6 +545,13 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
                     throw new IllegalStateException("Cannot call " + methodName + " on shortcut " + getEdge());
             } else if (shouldBeShortcut)
                 throw new IllegalStateException("Method " + methodName + " only for shortcuts " + getEdge());
+        }
+
+        private void checkShortcutAndEdgeBased(String method) {
+            checkShortcut(true, method);
+            if (!forEdgeBasedTraversal) {
+                throw new IllegalStateException("Method " + method + " only allowed when CH graph is configured for edge based traversal");
+            }
         }
 
         @Override
@@ -623,6 +666,26 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
+        public CHEdgeIteratorState setOuterOrigEdges(int firstOrigEdge, int lastOrigEdge) {
+            checkShortcutAndEdgeBased("setOuterOrigEdges");
+            shortcuts.setInt(edgePointer + S_ORIG_FIRST, firstOrigEdge);
+            shortcuts.setInt(edgePointer + S_ORIG_LAST, lastOrigEdge);
+            return this;
+        }
+
+        @Override
+        public int getFirstOrigEdge() {
+            checkShortcutAndEdgeBased("getFirstOrigEdge");
+            return shortcuts.getInt(edgePointer + S_ORIG_FIRST);
+        }
+
+        @Override
+        public int getLastOrigEdge() {
+            checkShortcutAndEdgeBased("getLastOrigEdge");
+            return shortcuts.getInt(edgePointer + S_ORIG_LAST);
+        }
+
+        @Override
         public final boolean isShortcut() {
             assert baseGraph.isFrozen() : "level graph not yet frozen";
             return edgeAccess == chEdgeAccess;
@@ -651,5 +714,13 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             } else if (shouldBeShortcut)
                 throw new IllegalStateException("Method " + methodName + " only for shortcuts " + getEdge());
         }
+
+        private void checkShortcutAndEdgeBased(String method) {
+            checkShortcut(true, method);
+            if (!forEdgeBasedTraversal) {
+                throw new IllegalStateException("Method " + method + " not supported when turn costs are disabled");
+            }
+        }
+
     }
 }

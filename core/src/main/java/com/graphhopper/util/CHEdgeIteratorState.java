@@ -39,6 +39,17 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
     CHEdgeIteratorState setSkippedEdges(int edge1, int edge2);
 
     /**
+     * Sets the first and last original edges that are skipped by this shortcut. For example the following edge is a
+     * shortcut from x to y that skips the edges x->v and v->y (which themselves may be be shortcuts):
+     * x --> u --> v --> w --> y
+     * \--------->/ \-------->/
+     *
+     * @param firstOrigEdge the first original edge that is bridged by this shortcut, x->u in the above example
+     * @param lastOrigEdge  the last original edge that is bridged by this shortcut, w->y in the above example
+     */
+    CHEdgeIteratorState setOuterOrigEdges(int firstOrigEdge, int lastOrigEdge);
+
+    /**
      * @return true if this edge is a shortcut, false otherwise.
      */
     boolean isShortcut();
