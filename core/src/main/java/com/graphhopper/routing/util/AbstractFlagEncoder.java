@@ -597,7 +597,7 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             if (costs != 0 || Double.isInfinite(costs))
                 throw new IllegalArgumentException("Restricted turn can only have infinite costs (or use 0)");
         } else if (costs >= maxTurnCosts)
-            throw new IllegalArgumentException("Cost is too high. Or specifiy restricted == true");
+            throw new IllegalArgumentException("Cost is too high. Or specify restricted == true");
 
         if (costs < 0)
             throw new IllegalArgumentException("Turn costs cannot be negative");

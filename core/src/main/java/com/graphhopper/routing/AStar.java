@@ -151,11 +151,6 @@ public class AStar extends AbstractRoutingAlgorithm {
     }
 
     @Override
-    protected SPTEntry createSPTEntry(int node, double weight) {
-        throw new IllegalStateException("use AStarEdge constructor directly");
-    }
-
-    @Override
     protected boolean finished() {
         return currEdge.adjNode == to1;
     }

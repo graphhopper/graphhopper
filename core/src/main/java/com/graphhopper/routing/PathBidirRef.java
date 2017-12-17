@@ -61,7 +61,7 @@ public class PathBidirRef extends Path {
             return this;
 
         if (sptEntry.adjNode != edgeTo.adjNode)
-            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge has to be the same." + toString() + ", fromEntry:" + sptEntry + ", toEntry:" + edgeTo);
+            throw new IllegalStateException("Locations of the 'to'- and 'from'-Edge have to be the same. " + toString() + ", fromEntry:" + sptEntry + ", toEntry:" + edgeTo);
 
         extractSW.start();
         if (switchFromAndToSPTEntry) {

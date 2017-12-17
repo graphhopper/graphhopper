@@ -24,7 +24,7 @@ import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Used in CH preparation and therefor assumed that all edges are of type CHEdgeIteratorState
+ * Used in CH preparation and therefore assumed that all edges are of type CHEdgeIteratorState
  * <p>
  *
  * @author Peter Karich

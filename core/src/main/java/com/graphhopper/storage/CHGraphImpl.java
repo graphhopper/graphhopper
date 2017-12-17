@@ -47,16 +47,16 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
     private static final long MAX_WEIGHT_LONG = (Integer.MAX_VALUE >> 2) << 2;
     private static final double MAX_WEIGHT = (Integer.MAX_VALUE >> 2) / WEIGHT_FACTOR;
     private static final double MIN_WEIGHT = 1 / WEIGHT_FACTOR;
-    final DataAccess shortcuts;
-    final DataAccess nodesCH;
-    final long scDirMask = PrepareEncoder.getScDirMask();
+    private final DataAccess shortcuts;
+    private final DataAccess nodesCH;
+    private final long scDirMask = PrepareEncoder.getScDirMask();
     private final BaseGraph baseGraph;
     private final EdgeAccess chEdgeAccess;
     private final Weighting weighting;
-    int N_CH_REF;
-    int shortcutEntryBytes;
+    private int N_CH_REF;
+    private int shortcutEntryBytes;
     // the nodesCH storage is limited via baseGraph.nodeCount too
-    int nodeCHEntryBytes;
+    private int nodeCHEntryBytes;
     private int N_LEVEL;
     // shortcut memory layout is synced with edges indices until E_FLAGS, then:
     private int S_SKIP_EDGE1, S_SKIP_EDGE2;
@@ -433,7 +433,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public final void setSkippedEdges(int edge1, int edge2) {
+        public final CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
             checkShortcut(true, "setSkippedEdges");
             if (EdgeIterator.Edge.isValid(edge1) != EdgeIterator.Edge.isValid(edge2)) {
                 throw new IllegalStateException("Skipped edges of a shortcut needs "
@@ -441,6 +441,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             }
             shortcuts.setInt(edgePointer + S_SKIP_EDGE1, edge1);
             shortcuts.setInt(edgePointer + S_SKIP_EDGE2, edge2);
+            return this;
         }
 
         @Override
@@ -598,7 +599,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         }
 
         @Override
-        public final void setSkippedEdges(int edge1, int edge2) {
+        public final CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
             checkShortcut(true, "setSkippedEdges");
             if (EdgeIterator.Edge.isValid(edge1) != EdgeIterator.Edge.isValid(edge2)) {
                 throw new IllegalStateException("Skipped edges of a shortcut needs "
@@ -606,6 +607,7 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
             }
             shortcuts.setInt(edgePointer + S_SKIP_EDGE1, edge1);
             shortcuts.setInt(edgePointer + S_SKIP_EDGE2, edge2);
+            return this;
         }
 
         @Override

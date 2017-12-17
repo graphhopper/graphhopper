@@ -34,7 +34,7 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     private int current;
 
     public VirtualEdgeIterator(int edgeCount) {
-        edges = new ArrayList<EdgeIteratorState>(edgeCount);
+        edges = new ArrayList<>(edgeCount);
         reset();
     }
 
@@ -182,7 +182,7 @@ class VirtualEdgeIterator implements EdgeIterator, CHEdgeIteratorState {
     }
 
     @Override
-    public void setSkippedEdges(int edge1, int edge2) {
+    public CHEdgeIteratorState setSkippedEdges(int edge1, int edge2) {
         throw new UnsupportedOperationException("Not supported.");
     }
 

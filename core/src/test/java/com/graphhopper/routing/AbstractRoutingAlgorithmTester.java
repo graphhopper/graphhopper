@@ -145,8 +145,8 @@ public abstract class AbstractRoutingAlgorithmTester {
 
     @Before
     public void setUp() {
-        carEncoder = (CarFlagEncoder) encodingManager.getEncoder("car");
-        footEncoder = (FootFlagEncoder) encodingManager.getEncoder("foot");
+        carEncoder = encodingManager.getEncoder("car");
+        footEncoder = encodingManager.getEncoder("foot");
         defaultOpts = AlgorithmOptions.start().
                 weighting(new ShortestWeighting(carEncoder)).build();
     }
@@ -349,8 +349,8 @@ public abstract class AbstractRoutingAlgorithmTester {
     public void testWikipediaShortestPath() {
         GraphHopperStorage ghStorage = createWikipediaTestGraph();
         Path p = createAlgo(ghStorage).calcPath(0, 4);
+        assertEquals(p.toString(), Helper.createTList(0, 2, 5, 4), p.calcNodes());
         assertEquals(p.toString(), 20, p.getDistance(), 1e-4);
-        assertEquals(p.toString(), 4, p.calcNodes().size());
     }
 
     @Test
@@ -407,11 +407,11 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertFalse(p.isFound());
     }
 
-    // 1-2-3-4-5
+    // 0-1-2-3-4
     // |     / |
-    // |    9  |
+    // |    8  |
     // \   /   /
-    //  8-7-6-/
+    //  7-6-5-/
     @Test
     public void testBidirectional2() {
         GraphHopperStorage graph = createGHStorage(false);

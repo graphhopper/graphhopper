@@ -19,7 +19,6 @@ package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntObjectMap;
-import com.carrotsearch.hppc.predicates.IntObjectPredicate;
 import com.graphhopper.coll.GHIntObjectHashMap;
 import com.graphhopper.routing.AStar.AStarEntry;
 import com.graphhopper.routing.util.TraversalMode;
@@ -28,11 +27,8 @@ import com.graphhopper.routing.weighting.ConsistentWeightApproximator;
 import com.graphhopper.routing.weighting.WeightApproximator;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.SPTEntry;
 import com.graphhopper.util.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.PriorityQueue;
 
 /**
@@ -85,11 +81,11 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
     }
 
     protected void initCollections(int size) {
-        pqOpenSetFrom = new PriorityQueue<AStarEntry>(size);
-        bestWeightMapFrom = new GHIntObjectHashMap<AStarEntry>(size);
+        pqOpenSetFrom = new PriorityQueue<>(size);
+        bestWeightMapFrom = new GHIntObjectHashMap<>(size);
 
-        pqOpenSetTo = new PriorityQueue<AStarEntry>(size);
-        bestWeightMapTo = new GHIntObjectHashMap<AStarEntry>(size);
+        pqOpenSetTo = new PriorityQueue<>(size);
+        bestWeightMapTo = new GHIntObjectHashMap<>(size);
     }
 
     /**
@@ -102,11 +98,6 @@ public class AStarBidirection extends AbstractBidirAlgo implements Recalculation
 
     public WeightApproximator getApproximation() {
         return weightApprox.getApproximation();
-    }
-
-    @Override
-    protected SPTEntry createSPTEntry(int node, double weight) {
-        throw new IllegalStateException("use AStarEdge constructor directly");
     }
 
     @Override

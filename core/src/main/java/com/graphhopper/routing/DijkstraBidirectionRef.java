@@ -53,16 +53,16 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
     }
 
     protected void initCollections(int size) {
-        pqOpenSetFrom = new PriorityQueue<SPTEntry>(size);
-        bestWeightMapFrom = new GHIntObjectHashMap<SPTEntry>(size);
+        pqOpenSetFrom = new PriorityQueue<>(size);
+        bestWeightMapFrom = new GHIntObjectHashMap<>(size);
 
-        pqOpenSetTo = new PriorityQueue<SPTEntry>(size);
-        bestWeightMapTo = new GHIntObjectHashMap<SPTEntry>(size);
+        pqOpenSetTo = new PriorityQueue<>(size);
+        bestWeightMapTo = new GHIntObjectHashMap<>(size);
     }
 
     @Override
     public void initFrom(int from, double weight) {
-        currFrom = createSPTEntry(from, weight);
+        currFrom = new SPTEntry(from, weight);
         pqOpenSetFrom.add(currFrom);
         if (!traversalMode.isEdgeBased()) {
             bestWeightMapFrom.put(from, currFrom);
@@ -81,7 +81,7 @@ public class DijkstraBidirectionRef extends AbstractBidirAlgo {
 
     @Override
     public void initTo(int to, double weight) {
-        currTo = createSPTEntry(to, weight);
+        currTo = new SPTEntry(to, weight);
         pqOpenSetTo.add(currTo);
         if (!traversalMode.isEdgeBased()) {
             bestWeightMapTo.put(to, currTo);

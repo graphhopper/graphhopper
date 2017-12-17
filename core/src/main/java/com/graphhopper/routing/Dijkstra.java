@@ -50,15 +50,15 @@ public class Dijkstra extends AbstractRoutingAlgorithm {
     }
 
     protected void initCollections(int size) {
-        fromHeap = new PriorityQueue<SPTEntry>(size);
-        fromMap = new GHIntObjectHashMap<SPTEntry>(size);
+        fromHeap = new PriorityQueue<>(size);
+        fromMap = new GHIntObjectHashMap<>(size);
     }
 
     @Override
     public Path calcPath(int from, int to) {
         checkAlreadyRun();
         this.to = to;
-        currEdge = createSPTEntry(from, 0);
+        currEdge = new SPTEntry(from, 0);
         if (!traversalMode.isEdgeBased()) {
             fromMap.put(from, currEdge);
         }

@@ -156,14 +156,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     @Override
-    public void doWork() {
+    public void doSpecificWork() {
         allSW.start();
-        super.doWork();
-
         initFromGraph();
         if (!prepareNodes())
             return;
-
         contractNodes();
     }
 

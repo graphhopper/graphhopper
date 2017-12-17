@@ -100,7 +100,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
         if (weighting == null)
             throw new IllegalStateException("Cannot find CHGraph with null weighting");
 
-        List<Weighting> existing = new ArrayList<Weighting>();
+        List<Weighting> existing = new ArrayList<>();
         for (CHGraphImpl cg : chGraphs) {
             if (cg.getWeighting() == weighting)
                 return (T) cg;
@@ -127,7 +127,7 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     }
 
     public List<Weighting> getCHWeightings() {
-        List<Weighting> list = new ArrayList<Weighting>(chGraphs.size());
+        List<Weighting> list = new ArrayList<>(chGraphs.size());
         for (CHGraphImpl cg : chGraphs) {
             list.add(cg.getWeighting());
         }

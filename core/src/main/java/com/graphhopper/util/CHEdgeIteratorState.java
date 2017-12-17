@@ -36,7 +36,7 @@ public interface CHEdgeIteratorState extends EdgeIteratorState {
     /**
      * Sets the edges that this shortcut skips. Those skipped edges can be shortcuts too.
      */
-    void setSkippedEdges(int edge1, int edge2);
+    CHEdgeIteratorState setSkippedEdges(int edge1, int edge2);
 
     /**
      * @return true if this edge is a shortcut, false otherwise.
