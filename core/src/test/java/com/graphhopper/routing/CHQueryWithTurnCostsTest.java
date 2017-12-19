@@ -22,6 +22,7 @@ import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -544,12 +545,12 @@ public class CHQueryWithTurnCostsTest {
         DijkstraBidirectionEdgeCHNoSOD algo = createAlgo(traversalMode);
         Path path = algo.calcPath(from, to);
         if (expectedWeight < 0) {
-            assertFalse(String.format("Unexpected path from %d to %d.", from, to), path.isFound());
+            assertFalse(String.format(Locale.ROOT, "Unexpected path from %d to %d.", from, to), path.isFound());
         } else {
             if (expectedNodes != null) {
-                assertEquals(String.format("Unexpected path from %d to %d", from, to), expectedNodes, path.calcNodes());
+                assertEquals(String.format(Locale.ROOT, "Unexpected path from %d to %d", from, to), expectedNodes, path.calcNodes());
             }
-            assertEquals(String.format("Unexpected path weight from %d to %d", from, to), expectedWeight, path.getWeight(), 1.e-6);
+            assertEquals(String.format(Locale.ROOT, "Unexpected path weight from %d to %d", from, to), expectedWeight, path.getWeight(), 1.e-6);
         }
     }
 

@@ -30,6 +30,8 @@ import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
+import java.util.Locale;
+
 public class DijkstraBidirectionEdgeCHNoSOD extends GenericDijkstraBidirection<CHEntry> {
     private int from;
     private int to;
@@ -38,7 +40,7 @@ public class DijkstraBidirectionEdgeCHNoSOD extends GenericDijkstraBidirection<C
         super(graph, weighting, traversalMode);
         if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
             // todo: properly test/implement u-turn mode and allow it here
-            throw new IllegalArgumentException(String.format("Traversal mode '%s' not supported by this algorithm, " +
+            throw new IllegalArgumentException(String.format(Locale.ROOT, "Traversal mode '%s' not supported by this algorithm, " +
                     "for node based traversal use DijkstraBidirectionCH instead", traversalMode));
         }
     }

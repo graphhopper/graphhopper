@@ -18,6 +18,7 @@ import com.graphhopper.storage.TurnCostExtension;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Dummy implementation to use edge based contraction hierarchies, sooner or later this class will be merged
@@ -90,7 +91,7 @@ public class EdgeBasedPrepareContractionHierarchies extends AbstractAlgoPreparat
 
     private void contractAllNodes(EdgeBasedNodeContractor nodeContractor, List<Integer> contractionOrder) {
         if (contractionOrder.size() != chGraph.getNodes()) {
-            throw new IllegalArgumentException(String.format(
+            throw new IllegalArgumentException(String.format(Locale.ROOT,
                     "contraction order size (%d) must be equal to number of nodes in graph (%d)",
                     contractionOrder.size(), chGraph.getNodes()));
         }
