@@ -23,7 +23,10 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.SPTEntry;
-import com.graphhopper.util.*;
+import com.graphhopper.util.EdgeExplorer;
+import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
+import com.graphhopper.util.GHUtility;
 
 import java.util.PriorityQueue;
 
@@ -161,33 +164,53 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
             if (!accept(iter, currEdge.edge))
                 continue;
 
-            int traversalId = traversalMode.createTraversalId(iter, reverse);
-            double tmpWeight = weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.weight;
-            if (Double.isInfinite(tmpWeight))
+            final int origEdgeId = getOrigEdgeId(iter, reverse);
+            final int traversalId = getTraversalId(iter, origEdgeId, reverse);
+            final double weight = calcWeight(iter, currEdge, reverse);
+            if (Double.isInfinite(weight))
                 continue;
-            T ee = bestWeightMap.get(traversalId);
-            if (ee == null) {
-                ee = createEntry(iter.getEdge(), iter.getAdjNode(), tmpWeight);
-                ee.parent = currEdge;
-                bestWeightMap.put(traversalId, ee);
-                prioQueue.add(ee);
-            } else if (ee.weight > tmpWeight) {
-                prioQueue.remove(ee);
-                ee.edge = iter.getEdge();
-                ee.weight = tmpWeight;
-                ee.parent = currEdge;
-                prioQueue.add(ee);
+            T entry = bestWeightMap.get(traversalId);
+            if (entry == null) {
+                entry = createEntry(iter, origEdgeId, weight, currEdge);
+                bestWeightMap.put(traversalId, entry);
+                prioQueue.add(entry);
+            } else if (entry.weight > weight) {
+                prioQueue.remove(entry);
+                updateEntry(entry, iter, origEdgeId, weight, currEdge);
+                prioQueue.add(entry);
             } else
                 continue;
 
             if (updateBestPath)
-                updateBestPath(iter, ee, traversalId);
+                updateBestPath(iter, entry, traversalId);
         }
     }
 
     protected abstract T createStartEntry(int node, double weight);
 
-    protected abstract T createEntry(int edge, int node, double weight);
+    protected abstract T createEntry(EdgeIteratorState edge, int edgeId, double weight, T parent);
+
+    protected void updateEntry(T entry, EdgeIteratorState edge, int edgeId, double weight, T parent) {
+        entry.edge = edge.getEdge();
+        entry.weight = weight;
+        entry.parent = parent;
+    }
+
+    protected boolean accept(EdgeIteratorState edge, T currEdge, boolean reverse) {
+        return accept(edge, currEdge.edge);
+    }
+
+    protected int getOrigEdgeId(EdgeIteratorState edge, boolean reverse) {
+        return edge.getEdge();
+    }
+
+    protected int getTraversalId(EdgeIteratorState edge, int origEdgeId, boolean reverse) {
+        return traversalMode.createTraversalId(edge, reverse);
+    }
+
+    protected double calcWeight(EdgeIteratorState iter, T currEdge, boolean reverse) {
+        return weighting.calcWeight(iter, reverse, currEdge.edge) + currEdge.weight;
+    }
 
     IntObjectMap<T> getBestFromMap() {
         return bestWeightMapFrom;

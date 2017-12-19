@@ -34,7 +34,6 @@ import com.graphhopper.util.Parameters;
  * @author Peter Karich
  */
 public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry> {
-
     public DijkstraBidirectionRef(Graph graph, Weighting weighting, TraversalMode tMode) {
         super(graph, weighting, tMode);
     }
@@ -45,8 +44,10 @@ public class DijkstraBidirectionRef extends GenericDijkstraBidirection<SPTEntry>
     }
 
     @Override
-    protected SPTEntry createEntry(int edge, int node, double weight) {
-        return new SPTEntry(edge, node, weight);
+    protected SPTEntry createEntry(EdgeIteratorState edge, int edgeId, double weight, SPTEntry parent) {
+        SPTEntry sptEntry = new SPTEntry(edge.getEdge(), edge.getAdjNode(), weight);
+        sptEntry.parent = parent;
+        return sptEntry;
     }
 
     @Override

@@ -182,6 +182,47 @@ public abstract class AbstractRoutingAlgorithmTester {
         assertEquals(p.toString(), 62.1, p.getDistance(), .1);
     }
 
+    @Test
+    public void testCalcShortestPath_sourceEqualsTarget() {
+        GraphHopperStorage graph = createGHStorage(false);
+        graph.edge(0, 1, 1, true);
+        graph.edge(1, 2, 2, true);
+
+        RoutingAlgorithm algo = createAlgo(graph);
+        Path p = algo.calcPath(0, 0);
+        assertEquals(p.toString(), Helper.createTList(0), p.calcNodes());
+        assertEquals(p.toString(), 0, p.getDistance(), 1.e-6);
+    }
+
+    @Test
+    public void testSimpleAlternative() {
+        // 0--2--1
+        //    |  |
+        //    3--4
+        GraphHopperStorage graph = createGHStorage(false);
+        graph.edge(0, 2, 9, true);
+        graph.edge(2, 1, 2, true);
+        graph.edge(2, 3, 11, true);
+        graph.edge(3, 4, 6, true);
+        graph.edge(4, 1, 9, true);
+        Path p = createAlgo(graph).calcPath(0, 4);
+        assertEquals(p.toString(), 20, p.getDistance(), 1e-4);
+        assertEquals(Helper.createTList(0, 2, 1, 4), p.calcNodes());
+    }
+
+    @Test
+    public void testBidirectionalLinear() {
+        //3--2--1--4--5
+        GraphHopperStorage graph = createGHStorage(false);
+        graph.edge(2, 1, 2, true);
+        graph.edge(2, 3, 11, true);
+        graph.edge(5, 4, 6, true);
+        graph.edge(4, 1, 9, true);
+        Path p = createAlgo(graph).calcPath(3, 5);
+        assertEquals(p.toString(), 28, p.getDistance(), 1e-4);
+        assertEquals(Helper.createTList(3, 2, 1, 4, 5), p.calcNodes());
+    }
+
     // see calc-fastest-graph.svg
     @Test
     public void testCalcFastestPath() {
