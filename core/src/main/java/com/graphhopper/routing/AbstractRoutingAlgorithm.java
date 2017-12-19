@@ -43,7 +43,7 @@ public abstract class AbstractRoutingAlgorithm implements RoutingAlgorithm {
     protected EdgeExplorer inEdgeExplorer;
     protected EdgeExplorer outEdgeExplorer;
     protected int maxVisitedNodes = Integer.MAX_VALUE;
-    private EdgeFilter additionalEdgeFilter;
+    protected EdgeFilter additionalEdgeFilter;
     private boolean alreadyRun;
 
     /**

@@ -56,20 +56,40 @@ public class Path4CH extends PathBidirRef {
     }
 
     private void expandSkippedEdges(int skippedEdge1, int skippedEdge2, int from, int to, boolean reverse) {
-        // get properties like speed of the edge in the correct direction
-        if (reverseOrder == reverse) {
-            int tmp = from;
-            from = to;
-            to = tmp;
-        }
-
-        CHEdgeIteratorState edgeStateTo = getEdge(skippedEdge2, to);
-        if (edgeStateTo != null) {
-            expandEdge(edgeStateTo, !reverseOrder);
-            expandEdge(getEdge(skippedEdge1, from), reverseOrder);
+        // todo: add some explanation what is going on here / what the different cases are
+        if (from != to) {
+            // get properties like speed of the edge in the correct direction
+            if (reverseOrder == reverse) {
+                int tmp = from;
+                from = to;
+                to = tmp;
+            }
+            CHEdgeIteratorState sk2 = getEdge(skippedEdge2, to);
+            CHEdgeIteratorState sk1 = getEdge(skippedEdge1, from);
+            // todo: minor possible optimization: if sk2 is null we do not need to create sk1
+            if (sk2 != null && sk1 != null) {
+                expandEdge(sk2, !reverseOrder);
+                expandEdge(sk1, reverseOrder);
+            } else {
+                expandEdge(getEdge(skippedEdge1, to), !reverseOrder);
+                expandEdge(getEdge(skippedEdge2, from), reverseOrder);
+            }
         } else {
-            expandEdge(getEdge(skippedEdge1, to), !reverseOrder);
-            expandEdge(getEdge(skippedEdge2, from), reverseOrder);
+            CHEdgeIteratorState sk1 = getEdge(skippedEdge1, from);
+            CHEdgeIteratorState sk2 = getEdge(skippedEdge2, from);
+            if (sk1.getAdjNode() == sk1.getBaseNode() || sk2.getAdjNode() == sk2.getBaseNode()) {
+                // todo: this is a loop where both skipped edges are loops. what to do here ? can this ever happen ?
+                // if yes construct a test where this case happens and do something appropriate here
+                throw new IllegalStateException("Detected edge where both skipped edges are loops, did not anticipate this so far");
+            }
+
+            if (!reverseOrder) {
+                expandEdge(sk1, !reverse);
+                expandEdge(sk2, reverse);
+            } else {
+                expandEdge(sk2, reverse);
+                expandEdge(sk1, !reverse);
+            }
         }
     }
 

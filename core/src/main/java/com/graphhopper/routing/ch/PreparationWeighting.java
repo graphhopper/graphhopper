@@ -54,6 +54,9 @@ public class PreparationWeighting implements Weighting {
 
     @Override
     public long calcMillis(EdgeIteratorState edgeState, boolean reverse, int prevOrNextEdgeId) {
+        if (edgeState instanceof CHEdgeIteratorState && ((CHEdgeIteratorState) edgeState).isShortcut()) {
+            throw new IllegalStateException("calcMillis not supported for CH shortcuts");
+        }
         return userWeighting.calcMillis(edgeState, reverse, prevOrNextEdgeId);
     }
 

@@ -25,6 +25,10 @@ import com.graphhopper.storage.Graph;
 public class AStarBidirectionCH extends AStarBidirection {
     public AStarBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         super(graph, weighting, traversalMode);
+        if (traversalMode.isEdgeBased()) {
+            throw new IllegalArgumentException("A-Star algorithm is not yet supported for edge based graph traversal," +
+                    " you need to use DijkstraBidirectionCH instead");
+        }
     }
 
     @Override

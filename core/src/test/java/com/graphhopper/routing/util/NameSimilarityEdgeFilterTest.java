@@ -241,6 +241,18 @@ public class NameSimilarityEdgeFilterTest {
             }
 
             @Override
+            public int getBaseNode() {
+                //todo: this override can be removed if the loop-check in DefaultEdgeFilter is removed again
+                return 0;
+            }
+
+            @Override
+            public int getAdjNode() {
+                //todo: this override can be removed if the loop-check in DefaultEdgeFilter is removed again
+                return 0;
+            }
+
+            @Override
             public boolean isForward(FlagEncoder encoder) {
                 return true;
             }

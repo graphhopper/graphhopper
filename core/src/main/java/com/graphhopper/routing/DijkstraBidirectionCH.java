@@ -35,6 +35,10 @@ import com.graphhopper.util.EdgeIterator;
 public class DijkstraBidirectionCH extends DijkstraBidirectionCHNoSOD {
     public DijkstraBidirectionCH(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         super(graph, weighting, traversalMode);
+        if (traversalMode.isEdgeBased()) {
+            throw new IllegalArgumentException("For edge based graph traversal " +
+                    " you need to use DijkstraBidirectionEdgeCHNoSOD instead");
+        }
     }
 
     @Override

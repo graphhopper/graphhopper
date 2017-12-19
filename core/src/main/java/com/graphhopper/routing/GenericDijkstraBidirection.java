@@ -161,7 +161,7 @@ public abstract class GenericDijkstraBidirection<T extends SPTEntry> extends Abs
                    IntObjectMap<T> bestWeightMap, EdgeExplorer explorer, boolean reverse) {
         EdgeIterator iter = explorer.setBaseNode(currEdge.adjNode);
         while (iter.next()) {
-            if (!accept(iter, currEdge.edge))
+            if (!accept(iter, currEdge, reverse))
                 continue;
 
             final int origEdgeId = getOrigEdgeId(iter, reverse);

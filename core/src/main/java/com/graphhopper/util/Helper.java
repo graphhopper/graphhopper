@@ -18,15 +18,13 @@
 package com.graphhopper.util;
 
 import com.carrotsearch.hppc.IntArrayList;
+import com.carrotsearch.hppc.IntHashSet;
 import com.carrotsearch.hppc.IntIndexedContainer;
 import com.graphhopper.util.shapes.BBox;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -298,6 +296,10 @@ public class Helper {
 
     public static IntArrayList createTList(int... list) {
         return IntArrayList.from(list);
+    }
+
+    public static IntHashSet createTSet(int... set) {
+        return IntHashSet.from(set);
     }
 
     public static PointList createPointList(double... list) {
