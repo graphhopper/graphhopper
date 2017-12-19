@@ -1,8 +1,8 @@
-package com.graphhopper.routing.ch;
+package com.graphhopper.routing;
 
 import com.carrotsearch.hppc.IntArrayList;
-import com.graphhopper.routing.DijkstraBidirectionEdgeCHNoSOD;
-import com.graphhopper.routing.Path;
+import com.graphhopper.routing.ch.PreparationWeighting;
+import com.graphhopper.routing.ch.PrepareEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.LevelEdgeFilter;

@@ -61,6 +61,11 @@ public class TurnWeighting implements Weighting {
         return this;
     }
 
+    // todo: can we get rid of this method ?
+    public double getDefaultUTurnCost() {
+        return defaultUTurnCost;
+    }
+
     @Override
     public double getMinWeight(double distance) {
         return superWeighting.getMinWeight(distance);
