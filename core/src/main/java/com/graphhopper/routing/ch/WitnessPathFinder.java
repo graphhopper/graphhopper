@@ -15,6 +15,9 @@ import com.graphhopper.util.GHUtility;
 import java.util.List;
 import java.util.PriorityQueue;
 
+/**
+ * Dummy implementation that needs to be replaced by something more efficient
+ */
 public class WitnessPathFinder {
     private IntObjectMap<CHEntry> chEntries;
     private PriorityQueue<CHEntry> priorityQueue;
@@ -59,6 +62,7 @@ public class WitnessPathFinder {
     public void findTarget(double maxWeight, int targetEdge, int targetNode) {
         // todo: we should allow rerunning the search for different target edges and max weights and thereby reuse
         // results from previous searches
+        // todo: clean-up & optimize
         if (alreadyRun) {
             throw new IllegalStateException("already run, you need to create a new instance");
         }
@@ -77,6 +81,10 @@ public class WitnessPathFinder {
                 int edgeId = iter.getLastOrigEdge();
                 EdgeIteratorState iterState = graph.getEdgeIteratorState(edgeId, iter.getAdjNode());
                 int traversalId = traversalMode.createTraversalId(iterState, false);
+                final int origEdgeId = iter.getFirstOrigEdge();
+                if (!traversalMode.hasUTurnSupport() && origEdgeId == currEdge.incEdge) {
+                    continue;
+                }
                 double weight = weighting.calcWeight(iter, false, currEdge.incEdge) + currEdge.weight;
                 if (Double.isInfinite(weight))
                     continue;

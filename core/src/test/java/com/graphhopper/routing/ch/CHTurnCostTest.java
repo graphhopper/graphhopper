@@ -555,7 +555,6 @@ public class CHTurnCostTest {
                     }
                     int cost = nextCost(rnd);
                     addCostOrRestriction(inIter, outIter, node, cost);
-                    LOGGER.trace("addCostOrRestriction(edge{}, edge{}, {}, {});", inIter.getEdge(), outIter.getEdge(), node, cost);
                 }
             }
         }
@@ -629,6 +628,8 @@ public class CHTurnCostTest {
         RoutingAlgorithm chAlgo = factory.createAlgo(chGraph, AlgorithmOptions.start().build());
         Path chPath = chAlgo.calcPath(from, to);
         // todo: why do some tests fail when we increase precision (e.g. 1.e-1) ? any rounding issues here ?
+        // this could be due to numeric cancellation when calculating turn replacement differences in 
+        // EdgeBasedNodeContractor !?
         boolean algosAgree = Math.abs(dijkstraPath.getWeight() - chPath.getWeight()) < 1.e-2;
         assertTrue("Dijkstra and CH did not find equal shortest paths for route from " + from + " to " + to + "\n" +
                         " dijkstra: weight: " + dijkstraPath.getWeight() + ", nodes: " + dijkstraPath.calcNodes() + "\n" +
@@ -664,8 +665,10 @@ public class CHTurnCostTest {
     private void addCostOrRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {
         if (cost >= maxCost) {
             addRestriction(inEdge, outEdge, viaNode);
+            LOGGER.trace("addRestriction(edge{}, edge{}, {}, {});", inEdge.getEdge(), outEdge.getEdge(), viaNode);
         } else {
             addTurnCost(inEdge, outEdge, viaNode, cost);
+            LOGGER.trace("addTurnCost(edge{}, edge{}, {}, {});", inEdge.getEdge(), outEdge.getEdge(), viaNode, cost);
         }
     }
 
