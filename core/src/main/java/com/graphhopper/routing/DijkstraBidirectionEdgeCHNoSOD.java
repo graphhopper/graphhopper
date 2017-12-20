@@ -35,6 +35,8 @@ import java.util.Locale;
 public class DijkstraBidirectionEdgeCHNoSOD extends GenericDijkstraBidirection<CHEntry> {
     private int from;
     private int to;
+    private final EdgeExplorer innerInExplorer;
+    private final EdgeExplorer innerOutExplorer;
 
     public DijkstraBidirectionEdgeCHNoSOD(Graph graph, Weighting weighting, TraversalMode traversalMode) {
         super(graph, weighting, traversalMode);
@@ -43,6 +45,9 @@ public class DijkstraBidirectionEdgeCHNoSOD extends GenericDijkstraBidirection<C
             throw new IllegalArgumentException(String.format(Locale.ROOT, "Traversal mode '%s' not supported by this algorithm, " +
                     "for node based traversal use DijkstraBidirectionCH instead", traversalMode));
         }
+        // we need extra edge explorers, because they get called inside a loop that already iterates over edges
+        innerInExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, true, false));
+        innerOutExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, false, true));
     }
 
     @Override
@@ -124,10 +129,11 @@ public class DijkstraBidirectionEdgeCHNoSOD extends GenericDijkstraBidirection<C
                 return;
             }
         }
-        // we can not use in/outEdgeExplorer here because this method will be called within a loop using the 
-        // in/outEdgeExplorer already
-        EdgeExplorer edgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(flagEncoder, reverse, !reverse));
-        EdgeIterator iter = edgeExplorer.setBaseNode(edgeState.getAdjNode());
+
+        EdgeIterator iter = reverse ?
+                innerInExplorer.setBaseNode(edgeState.getAdjNode()) :
+                innerOutExplorer.setBaseNode(edgeState.getAdjNode());
+
         while (iter.next()) {
             final int edgeId = getOrigEdgeId(iter, !reverse);
             final int prevOrNextOrigEdgeId = getOrigEdgeId(edgeState, reverse);

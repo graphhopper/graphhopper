@@ -16,6 +16,7 @@ import java.util.List;
 
 public class EdgeBasedNodeContractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
+    // todo: modify code such that logging does not alter performance 
     private final GraphHopperStorage ghStorage;
     private final CHGraph prepareGraph;
     private final TurnWeighting turnWeighting;
