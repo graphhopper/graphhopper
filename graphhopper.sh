@@ -1,6 +1,52 @@
 #!/bin/bash
-(set -o igncr) 2>/dev/null && set -o igncr; # this comment is required for handling Windows cr/lf 
+(set -o igncr) 2>/dev/null && set -o igncr; # this comment is required for handling Windows cr/lf
 # See StackOverflow answer http://stackoverflow.com/a/14607651
+
+function printBashUsage {
+  echo "Usage:"
+  echo "-h | --help: display this message"
+  echo "-f | --force-download: force the download of the data file if needed"
+  echo "-d | --datareader.file: path to the map file or name of the file to download"
+  echo "-a | --action: must be one the following actions:"
+  echo "     --action import      creates the graphhopper files used for later (faster) starts"
+  echo "     --action web         starts a local server for user access at localhost:8989 and API access at localhost:8989/route"
+  echo "     --action build       creates the graphhopper JAR (without the web module)"
+  echo "     --action buildweb    creates the graphhopper JAR (with the web module)"
+  echo "     --action clean       removes all JARs, necessary if you need to use the latest source (e.g. after switching the branch etc)"
+  echo "     --action measurement does performance analysis of the current source version via random routes (Measurement class)"
+  echo "     --action torture     can be used to test real world routes via feeding graphhopper logs into a GraphHopper system (Torture class)"
+  echo "     --action miniui      is a simple Java/Swing visualization application used for debugging purposes (MiniGraphUI class)"
+  echo "     --action extract     calls the overpass API to grab any area as .osm file"
+  echo "     --action android     builds, deploys and starts the Android demo for your connected device"
+}
+
+REMAINING_ARGS=()
+while [ ! -z $1 ]; do
+  case $1 in
+    -h|--help) printBashUsage
+      exit 0;;
+    -f|--force-download) FORCE_DWN=1; shift 1;;
+    -a|--action) ACTION=$2; shift 2;;
+    -d|--datareader.file) FILE=$2; shift 2;;
+
+    -*|--*) echo "Option unknown: $1 \n"
+      echo
+      printBashUsage
+      exit 2;;
+    *) REMAINING_ARGS+=($1); shift 1;;
+  esac
+done
+
+if [ ! -z $REMAINING_ARGS ]; then
+  echo "Remaining arguments: ${REMAINING_ARGS[@]}"
+fi
+
+if [ -z $ACTION ] || [ -z $FILE ]; then
+  ACTION=${REMAINING_ARGS[0]}
+  FILE=${REMAINING_ARGS[1]}
+fi
+echo "ACTION: $ACTION"
+echo "FILE: $FILE"
 
 GH_CLASS=com.graphhopper.tools.Import
 GH_HOME=$(dirname "$0")
@@ -21,20 +67,6 @@ if [ ! -f "config.properties" ]; then
   cp config-example.properties $CONFIG
 fi
 
-FORCE_DWN='false'
-while getopts f flag; do
-    case $flag in
-      f)    FORCE_DWN='true';;
-      ?)   printf "Usage: %s: [-f] args\n" $0
-            exit 2;;
-    esac
-done
-shift $(($OPTIND - 1))
-printf "Remaining arguments are: %s\n" "$*"
-
-ACTION=$1
-FILE=$2
-
 function printUsage {
  echo
  echo "./graphhopper.sh import|web <some-map-file>"
@@ -54,35 +86,35 @@ function printUsage {
 }
 
 if [ "$ACTION" = "" ]; then
- echo "## action $ACTION not found. try" 
+ echo "## action $ACTION not found. try"
  printUsage
 fi
 
-function ensureOsm { 
+function ensureOsm {
   if [ "$OSM_FILE" = "" ]; then
     # skip
     return
   elif [ ! -s "$OSM_FILE" ]; then
-    if [ $FORCE_DWN = 'false' ]; then
+    if [ -z $FORCE_DWN ]; then
       echo "File not found '$OSM_FILE'. Press ENTER to get it from: $LINK"
       echo "Press CTRL+C if you do not have enough disc space or you don't want to download several MB."
       read -e
     fi
-      
+
     echo "## now downloading OSM file from $LINK and extracting to $OSM_FILE"
-    
+
     if [ ${OSM_FILE: -4} == ".pbf" ]; then
        wget -S -nv -O "$OSM_FILE" "$LINK"
     elif [ ${OSM_FILE: -4} == ".ghz" ]; then
        wget -S -nv -O "$OSM_FILE" "$LINK"
        cd $DATADIR && unzip "$BASENAME" -d "$NAME-gh"
-    else    
+    else
        # make sure aborting download does not result in loading corrupt osm file
        TMP_OSM=temp.osm
        wget -S -nv -O - "$LINK" | bzip2 -d > $TMP_OSM
        mv $TMP_OSM "$OSM_FILE"
     fi
-  
+
     if [[ ! -s "$OSM_FILE" ]]; then
       echo "ERROR couldn't download or extract OSM file $OSM_FILE ... exiting"
       exit
@@ -148,8 +180,8 @@ elif [ "$ACTION" = "eclipse" ]; then
 
 elif [ "$ACTION" = "build" ]; then
  packageCoreJar
- exit  
- 
+ exit
+
 elif [ "$ACTION" = "buildweb" ]; then
  execMvn --projects web -am -DskipTests=true package
  exit
@@ -160,7 +192,7 @@ elif [ "$ACTION" = "extract" ]; then
  #echo "$URL"
  wget -O extract.osm "$URL"
  exit
- 
+
 elif [ "$ACTION" = "android" ]; then
  execMvn -P include-android --projects android/app -am package android:deploy android:run
  exit
@@ -207,10 +239,10 @@ JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
 LINK=$(echo $NAME | tr '_' '/')
 if [ "$FILE" == "-" ]; then
    LINK=
-elif [ ${FILE: -4} == ".osm" ]; then 
+elif [ ${FILE: -4} == ".osm" ]; then
    LINK="http://download.geofabrik.de/$LINK-latest.osm.bz2"
 elif [ ${FILE: -4} == ".ghz" ]; then
-   LINK="http://graphhopper.com/public/maps/0.1/$FILE"      
+   LINK="http://graphhopper.com/public/maps/0.1/$FILE"
 elif [ ${FILE: -4} == ".pbf" ]; then
    LINK="http://download.geofabrik.de/$LINK-latest.osm.pbf"
 else
@@ -229,7 +261,7 @@ echo "## now $ACTION. JAVA_OPTS=$JAVA_OPTS"
 
 if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
   export MAVEN_OPTS="$MAVEN_OPTS $JAVA_OPTS"
-  if [ "$JETTY_PORT" = "" ]; then  
+  if [ "$JETTY_PORT" = "" ]; then
     JETTY_PORT=8989
   fi
   WEB_JAR="$GH_HOME/web/target/graphhopper-web-$VERSION-with-dep.jar"
@@ -251,7 +283,7 @@ if [ "$ACTION" = "ui" ] || [ "$ACTION" = "web" ]; then
     if [ "$GH_PID_FILE" != "" ]; then
        echo $! > $GH_PID_FILE
     fi
-    exit $?                    
+    exit $?
   fi
 
 elif [ "$ACTION" = "import" ]; then
@@ -265,7 +297,7 @@ elif [ "$ACTION" = "torture" ]; then
 
 elif [ "$ACTION" = "miniui" ]; then
  execMvn --projects tools -am -DskipTests clean package
- JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar   
+ JAR=tools/target/graphhopper-tools-$VERSION-jar-with-dependencies.jar
  "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.ui.MiniGraphUI datareader.file="$OSM_FILE" config=$CONFIG \
               graph.location="$GRAPH"
 
@@ -287,11 +319,11 @@ elif [ "$ACTION" = "measurement" ]; then
     "$JAVA" $JAVA_OPTS -cp "$JAR" com.graphhopper.tools.Measurement $ARGS measurement.count=$COUNT measurement.location="$M_FILE_NAME" \
             measurement.gitinfo="$commit_info"
  }
- 
- 
+
+
  # use all <last_commits> versions starting from HEAD
  last_commits=$3
-  
+
  if [ "$last_commits" = "" ]; then
    startMeasurement
    exit
@@ -304,7 +336,7 @@ elif [ "$ACTION" = "measurement" ]; then
    M_FILE_NAME=$(git log -n 1 --pretty=oneline | grep -o "\ .*" |  tr " ,;" "_")
    M_FILE_NAME="measurement$M_FILE_NAME.properties"
    echo -e "\nusing commit $commit and $M_FILE_NAME"
-   
+
    startMeasurement
    echo -e "\nmeasurement.commit=$commit\n" >> "$M_FILE_NAME"
  done
