@@ -922,7 +922,7 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (weighting == null)
-            throw new IllegalArgumentException("weighting " + weighting + " not supported");
+            throw new IllegalArgumentException("weighting " + weightingStr + " not supported");
 
         if (hintsMap.has(Routing.BLOCK_AREA)) {
             String blockAreaStr = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
@@ -1075,7 +1075,7 @@ public class GraphHopper implements GraphHopperAPI {
                         setPathDetailsBuilders(pathBuilderFactory, request.getPathDetails()).
                         setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
 
-                if(request.hasFavoredHeading(0))
+                if (request.hasFavoredHeading(0))
                     pathMerger.setFavoredHeading(request.getFavoredHeading(0));
 
                 if (routingTemplate.isReady(pathMerger, tr))
