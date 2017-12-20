@@ -25,9 +25,9 @@ while [ ! -z $1 ]; do
   case $1 in
     -h|--help) printBashUsage
       exit 0;;
-    -f|--force-download) FORCE_DWN=1; shift 1;;
+    -fd|--force-download) FORCE_DWN=1; shift 1;;
     -a|--action) ACTION=$2; shift 2;;
-    -d|--datareader.file) FILE=$2; shift 2;;
+    -f|--datareader.file) FILE=$2; shift 2;;
 
     -*|--*) echo "Option unknown: $1 \n"
       echo
@@ -45,8 +45,6 @@ if [ -z $ACTION ] || [ -z $FILE ]; then
   ACTION=${REMAINING_ARGS[0]}
   FILE=${REMAINING_ARGS[1]}
 fi
-echo "ACTION: $ACTION"
-echo "FILE: $FILE"
 
 GH_CLASS=com.graphhopper.tools.Import
 GH_HOME=$(dirname "$0")
