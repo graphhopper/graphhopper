@@ -18,7 +18,7 @@ import com.graphhopper.util.PointList;
 public class GraphElevationSmoothing {
 
     // If the point is farther then this, we stop averaging
-    private final static int MAX_SEARCH_DISTANCE = 100;
+    private final static int MAX_SEARCH_DISTANCE = 150;
 
     public static PointList smoothElevation(PointList geometry) {
         for (int i = 1; i < geometry.size() - 1; i++) {
