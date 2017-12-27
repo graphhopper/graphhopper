@@ -555,7 +555,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         // elevation
         String eleProviderStr = args.get("graph.elevation.provider", "noop").toLowerCase();
-        this.smoothElevation = args.getBool("graph.elevation.smooth_elevation", false);
+        this.smoothElevation = args.getBool("graph.elevation.smoothing", false);
 
         // keep fallback until 0.8
         boolean eleCalcMean = args.has("graph.elevation.calcmean")

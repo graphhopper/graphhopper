@@ -29,7 +29,7 @@ import com.graphhopper.coll.GHLongLongHashMap;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
-import com.graphhopper.reader.dem.RoadElevationInterpolator;
+import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.reader.osm.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -685,7 +685,7 @@ public class OSMReader implements DataReader {
 
         // Smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
         if (this.smoothElevation)
-            pointList = RoadElevationInterpolator.smoothElevation(pointList);
+            pointList = GraphElevationSmoothing.smoothElevation(pointList);
 
         double towerNodeDistance = 0;
         double prevLat = pointList.getLatitude(0);
