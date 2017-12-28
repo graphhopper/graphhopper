@@ -266,12 +266,10 @@ public class EdgeBasedNodeContractor implements NodeContractor {
         while (root.parent.edge != EdgeIterator.NO_EDGE) {
             root = root.getParent();
         }
-        if (root.parent.adjNode == chEntry.adjNode &&
+        if (root.parent.adjNode != chEntry.adjNode ||
                 // here we misuse root.parent.incEdge as first orig edge of the potential shortcut
-                !loopShortcutNecessary(
+                loopShortcutNecessary(
                         chEntry.adjNode, root.getParent().incEdge, chEntry.incEdge, chEntry.weight)) {
-            return;
-        } else {
             handleShortcut(root, chEntry);
         }
     }

@@ -32,7 +32,6 @@ class NodeBasedNodeContractor implements NodeContractor {
     private final GraphHopperStorage ghStorage;
     private final CHGraph prepareGraph;
     private final PreparationWeighting prepareWeighting;
-    // todo: so far node contraction can only be done for node-based graph traversal
     private final DataAccess originalEdges;
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<>();
     private final AddShortcutHandler addScHandler = new AddShortcutHandler();
