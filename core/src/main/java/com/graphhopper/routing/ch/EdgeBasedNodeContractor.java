@@ -47,6 +47,11 @@ public class EdgeBasedNodeContractor implements NodeContractor {
     private EdgeExplorer loopAvoidanceOutEdgeExplorer;
     private int maxLevel;
     private int addedShortcuts;
+    private int dijkstraCount;
+    private StopWatch dijkstraSW = new StopWatch();
+    private boolean dryMode;
+    private int shortcutCount;
+
 
     public EdgeBasedNodeContractor(GraphHopperStorage ghStorage, CHGraph prepareGraph, TurnWeighting turnWeighting, TraversalMode traversalMode) {
         this.ghStorage = ghStorage;
@@ -85,14 +90,22 @@ public class EdgeBasedNodeContractor implements NodeContractor {
 
     @Override
     public int calculatePriority(int node) {
-        // todo: return some metric that can be used, for example edge quotient to get started
-        return 0;
+        dryMode = true;
+        findShortcuts(node);
+        // the more shortcuts need to be introduced the later we want to contract this node
+        return shortcutCount; 
     }
 
     @Override
     public long contractNode(int node) {
+        dryMode = false;
+        return findShortcuts(node);
+    }
+
+    private long findShortcuts(int node) {
         LOGGER.debug("Contracting node {}", node);
         CHEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
+        shortcutCount = 0;
         while (incomingEdges.next()) {
             int fromNode = incomingEdges.getAdjNode();
             if (isContracted(fromNode) || fromNode == node)
@@ -115,7 +128,12 @@ public class EdgeBasedNodeContractor implements NodeContractor {
                 // todo: reuse witnesspath finder for different outgoing edges
                 WitnessPathFinder witnessPathFinder = new WitnessPathFinder(prepareGraph, turnWeighting, traversalMode,
                         initialEntries, fromNode);
+
+                dijkstraSW.start();
+                dijkstraCount++;
                 witnessPathFinder.findTarget(targetEdge, toNode);
+                dijkstraSW.stop();
+
                 CHEntry entry = witnessPathFinder.getFoundEntry(targetEdge, toNode);
                 LOGGER.trace("Witness path search to outgoing edge yielded entry {}", entry);
                 if (bestPathIsValidAndRequiresNode(entry, node, incomingEdges, outgoingEdges) &&
@@ -140,19 +158,17 @@ public class EdgeBasedNodeContractor implements NodeContractor {
 
     @Override
     public long getDijkstraCount() {
-        // todo
-        return 0;
+        return dijkstraCount;
     }
 
     @Override
     public void resetDijkstraTime() {
-        // todo
+        dijkstraSW = new StopWatch();
     }
 
     @Override
     public float getDijkstraSeconds() {
-        // todo
-        return 0;
+        return dijkstraSW.getSeconds();
     }
 
     private List<CHEntry> getInitialEntriesForWitnessPaths(int fromNode, int firstOrigEdge) {
@@ -259,7 +275,11 @@ public class EdgeBasedNodeContractor implements NodeContractor {
     }
 
     private void handleShortcut(CHEntry edgeFrom, CHEntry edgeTo) {
-        addShortcut(edgeFrom, edgeTo);
+        if (dryMode) {
+            shortcutCount++;
+        } else {
+            addShortcut(edgeFrom, edgeTo);
+        }
     }
 
     private boolean loopShortcutNecessary(int node, int firstOrigEdge, int lastOrigEdge, double loopWeight) {
