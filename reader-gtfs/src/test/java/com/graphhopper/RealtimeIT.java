@@ -262,9 +262,11 @@ public class RealtimeIT {
         GHResponse responseWithRealtimeUpdate = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(1, responseWithRealtimeUpdate.getAll().size());
 
-        PathWrapper responseWithRealtimeUpdateBest = responseWithRealtimeUpdate.getBest();
-        PathWrapper responseWithoutRealtimeUpdateBest = responseWithoutRealtimeUpdate.getBest();
-        assertEquals("My line run is 0 minutes late, doesn't matter.", time(0, 5), responseWithRealtimeUpdateBest.getTime(), 0.1);
+        Trip.PtLeg responseWithRealtimeUpdateBest = (Trip.PtLeg) responseWithRealtimeUpdate.getBest().getLegs().get(responseWithRealtimeUpdate.getBest().getLegs().size()-2);
+        Trip.PtLeg responseWithoutRealtimeUpdateBest = (Trip.PtLeg) responseWithoutRealtimeUpdate.getBest().getLegs().get(responseWithoutRealtimeUpdate.getBest().getLegs().size()-2);
+        assertEquals("My planned arrival time is correct.", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), responseWithRealtimeUpdateBest.stops.get(responseWithRealtimeUpdateBest.stops.size()-1).plannedArrivalTime.toInstant());
+        assertEquals("My expected arrival time is the same.", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), responseWithRealtimeUpdateBest.stops.get(responseWithRealtimeUpdateBest.stops.size()-1).predictedArrivalTime.toInstant());
+        assertEquals("The trip without realtime update does not have an expected arrival time.", null, responseWithoutRealtimeUpdateBest.stops.get(responseWithoutRealtimeUpdateBest.stops.size()-1).predictedArrivalTime);
 
 //        assertEquals(responseWithoutRealtimeUpdateBest.toString(), responseWithRealtimeUpdateBest.toString());
     }
