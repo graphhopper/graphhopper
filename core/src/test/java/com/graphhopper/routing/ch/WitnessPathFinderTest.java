@@ -44,7 +44,7 @@ public class WitnessPathFinderTest {
         graph.edge(1, 2, 1, false);
         graph.edge(1, 3, 2, false);
         graph.freeze();
-        List<CHEntry> initialEntries = Arrays.asList(new CHEntry(0, 0, 1, 8));
+        List<WitnessSearchEntry> initialEntries = Arrays.asList(new WitnessSearchEntry(0, 0, 1, 8));
         WitnessPathFinder witnessPathFinder = new WitnessPathFinder(chGraph, weighting, TraversalMode.EDGE_BASED_2DIR,
                 initialEntries, 0);
         witnessPathFinder.findTarget(1, 2);

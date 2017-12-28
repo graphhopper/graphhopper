@@ -50,8 +50,8 @@ public class DijkstraBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTeste
 
     @Test
     public void testRekeyBugOfIntBinHeap() {
-        //todo:
-        // this test is still really slow with edge based contraction hierarchies and needs to be enabled as soon
+        // todo:
+        // this test still takes >40s with edge based contraction hierarchies and needs to be enabled as soon
         // as the performance has been optimized
     }
 

@@ -40,15 +40,19 @@ import java.util.PriorityQueue;
  * as in {@link DijkstraOneToMany}.
  */
 public class WitnessPathFinder {
-    private IntObjectMap<CHEntry> chEntries;
+    private IntObjectMap<WitnessSearchEntry> chEntries;
     private BitSet settledEntries;
-    private PriorityQueue<CHEntry> priorityQueue;
+    private PriorityQueue<WitnessSearchEntry> priorityQueue;
     private final CHGraph graph;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
     private CHEdgeExplorer outEdgeExplorer;
+    // todo: find good value here or adjust dynamically, if this is set too low important witnesses wont be found
+    // and the number of shortcuts explodes, if it is too high the dijkstra searches take too long
+    private final int maxOrigEdgesSettled = 50;
+    private int numOrigEdgesSettled;
 
-    public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, List<CHEntry> initialEntries, int fromNode) {
+    public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, List<WitnessSearchEntry> initialEntries, int fromNode) {
         if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
             throw new IllegalArgumentException("Traversal mode " + traversalMode + "not supported");
         }
@@ -62,10 +66,10 @@ public class WitnessPathFinder {
         priorityQueue.addAll(initialEntries);
     }
 
-    private void initEntries(List<CHEntry> initialEntries) {
-        for (CHEntry chEntry : initialEntries) {
-            int traversalId = getEdgeKey(chEntry.incEdge, chEntry.adjNode);
-            chEntries.put(traversalId, chEntry);
+    private void initEntries(List<WitnessSearchEntry> initialEntries) {
+        for (WitnessSearchEntry entry : initialEntries) {
+            int traversalId = getEdgeKey(entry.incEdge, entry.adjNode);
+            chEntries.put(traversalId, entry);
         }
     }
 
@@ -83,11 +87,15 @@ public class WitnessPathFinder {
         }
 
         while (!priorityQueue.isEmpty()) {
-            CHEntry currEdge = priorityQueue.poll();
+            WitnessSearchEntry currEdge = priorityQueue.poll();
             if (currEdge.incEdge == targetEdge && currEdge.adjNode == targetNode) {
                 // put the entry back for future searches
                 priorityQueue.add(currEdge);
                 break;
+            }
+
+            if (numOrigEdgesSettled > maxOrigEdgesSettled && !currEdge.possibleShortcut) {
+                continue;
             }
 
             CHEdgeIterator iter = outEdgeExplorer.setBaseNode(currEdge.adjNode);
@@ -107,9 +115,12 @@ public class WitnessPathFinder {
                 if (Double.isInfinite(weight))
                     continue;
 
-                CHEntry entry = chEntries.get(traversalId);
+                WitnessSearchEntry entry = chEntries.get(traversalId);
                 if (entry == null) {
                     entry = createEntry(iter, currEdge, weight);
+                    if (currEdge.possibleShortcut && iter.getBaseNode() == currEdge.adjNode && iter.getBaseNode() == iter.getAdjNode()) {
+                        entry.possibleShortcut = true;
+                    }
                     chEntries.put(traversalId, entry);
                     priorityQueue.add(entry);
                 } else if (entry.weight > weight) {
@@ -119,6 +130,7 @@ public class WitnessPathFinder {
                 }
             }
             settledEntries.set(getEdgeKey(currEdge.incEdge, currEdge.adjNode));
+            numOrigEdgesSettled++;
         }
     }
 
@@ -128,8 +140,8 @@ public class WitnessPathFinder {
         return GHUtility.createEdgeKey(eis.getBaseNode(), eis.getAdjNode(), eis.getEdge(), false);
     }
 
-    private CHEntry createEntry(CHEdgeIterator iter, CHEntry parent, double weight) {
-        CHEntry entry = new CHEntry(iter.getEdge(), iter.getLastOrigEdge(), iter.getAdjNode(), weight);
+    private WitnessSearchEntry createEntry(CHEdgeIterator iter, CHEntry parent, double weight) {
+        WitnessSearchEntry entry = new WitnessSearchEntry(iter.getEdge(), iter.getLastOrigEdge(), iter.getAdjNode(), weight);
         entry.parent = parent;
         return entry;
     }

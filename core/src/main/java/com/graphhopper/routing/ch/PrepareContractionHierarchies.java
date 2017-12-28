@@ -360,6 +360,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     neighborSW.stop();
                 }
 
+                // todo: does this work for edge-based case ?
                 prepareGraph.disconnect(vehicleAllTmpExplorer, iter);
             }
         }

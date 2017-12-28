@@ -93,7 +93,7 @@ public class EdgeBasedNodeContractor implements NodeContractor {
         dryMode = true;
         findShortcuts(node);
         // the more shortcuts need to be introduced the later we want to contract this node
-        return shortcutCount; 
+        return shortcutCount;
     }
 
     @Override
@@ -113,7 +113,7 @@ public class EdgeBasedNodeContractor implements NodeContractor {
 
             // todo: note that we rely on shortcuts always having forward direction only, if we change this we need a
             // more sophisticated way to figure out what the 'first' and 'last' original edges are
-            List<CHEntry> initialEntries = getInitialEntriesForWitnessPaths(fromNode, incomingEdges.getFirstOrigEdge());
+            List<WitnessSearchEntry> initialEntries = getInitialEntriesForWitnessPaths(fromNode, incomingEdges.getFirstOrigEdge(), incomingEdges);
             if (initialEntries.isEmpty()) {
                 LOGGER.trace("No initial entries for incoming edge {}", incomingEdges);
                 continue;
@@ -170,9 +170,9 @@ public class EdgeBasedNodeContractor implements NodeContractor {
         return dijkstraSW.getSeconds();
     }
 
-    private List<CHEntry> getInitialEntriesForWitnessPaths(int fromNode, int firstOrigEdge) {
+    private List<WitnessSearchEntry> getInitialEntriesForWitnessPaths(int fromNode, int firstOrigEdge, CHEdgeIteratorState incomingEdge) {
         // todo: simplify & optimize
-        List<CHEntry> initialEntries = new ArrayList<>();
+        List<WitnessSearchEntry> initialEntries = new ArrayList<>();
         CHEdgeIterator outIter = outEdgeExplorer.setBaseNode(fromNode);
         while (outIter.next()) {
             if (isContracted(outIter.getAdjNode()))
@@ -207,8 +207,11 @@ public class EdgeBasedNodeContractor implements NodeContractor {
             }
 
             double weight = outTurnReplacementDifference + turnWeighting.calcWeight(outIter, false, EdgeIterator.NO_EDGE);
-            CHEntry entry = new CHEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight);
-            entry.parent = new CHEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0);
+            WitnessSearchEntry entry = new WitnessSearchEntry(outIter.getEdge(), outIter.getLastOrigEdge(), outIter.getAdjNode(), weight);
+            entry.parent = new WitnessSearchEntry(EdgeIterator.NO_EDGE, outIter.getFirstOrigEdge(), fromNode, 0);
+            if (outIter.getEdge() == incomingEdge.getEdge()) {
+                entry.possibleShortcut = true;
+            }
             LOGGER.trace("Adding initial entry {}", entry);
             initialEntries.add(entry);
         }
