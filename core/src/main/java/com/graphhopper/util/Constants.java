@@ -23,7 +23,7 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.StringTokenizer;
 
-import static com.graphhopper.util.Helper.readFile;
+import static com.graphhopper.util.Helper.*;
 
 /**
  * Defining several important constants for GraphHopper. Partially taken from Lucene.
@@ -94,7 +94,7 @@ public class Constants {
         try {
             // see com/graphhopper/version file in resources which is modified in the maven packaging process
             // to contain the current version
-            List<String> v = readFile(new InputStreamReader(GraphHopper.class.getResourceAsStream("version"), Helper.UTF_CS));
+            List<String> v = readFile(new InputStreamReader(GraphHopper.class.getResourceAsStream("version"), UTF_CS));
             version = v.get(0);
         } catch (Exception ex) {
             System.err.println("GraphHopper Initialization ERROR: cannot read version!? " + ex.getMessage());
@@ -114,12 +114,12 @@ public class Constants {
             if (indexM >= 0)
                 tmp = version.substring(0, indexM);
 
-            SNAPSHOT = version.toLowerCase().contains("-snapshot");
+            SNAPSHOT = toLowerCase(version).contains("-snapshot");
             VERSION = tmp;
         }
         String buildDate = "";
         try {
-            List<String> v = readFile(new InputStreamReader(GraphHopper.class.getResourceAsStream("builddate"), Helper.UTF_CS));
+            List<String> v = readFile(new InputStreamReader(GraphHopper.class.getResourceAsStream("builddate"), UTF_CS));
             buildDate = v.get(0);
         } catch (Exception ex) {
         }

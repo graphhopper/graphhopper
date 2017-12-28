@@ -26,6 +26,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import static com.graphhopper.util.Helper.*;
+
 /**
  * Stores command line options in a map. The capitalization of the key is ignored.
  * <p>
@@ -54,8 +56,8 @@ public class CmdArgs extends PMap {
             configLocation = fileStr;
 
         Map<String, String> map = new LinkedHashMap<String, String>();
-        Helper.loadProperties(map, new InputStreamReader(new FileInputStream(
-                new File(configLocation).getAbsoluteFile()), Helper.UTF_CS));
+        loadProperties(map, new InputStreamReader(new FileInputStream(
+                new File(configLocation).getAbsoluteFile()), UTF_CS));
         CmdArgs args = new CmdArgs();
         args.merge(map);
 
@@ -93,9 +95,9 @@ public class CmdArgs extends PMap {
             }
 
             String value = arg.substring(index + 1);
-            String old = map.put(key.toLowerCase(), value);
+            String old = map.put(toLowerCase(key), value);
             if (old != null)
-                throw new IllegalArgumentException("Pair '" + key.toLowerCase() + "'='" + value + "' not possible to " +
+                throw new IllegalArgumentException("Pair '" + toLowerCase(key) + "'='" + value + "' not possible to " +
                         "add to the CmdArgs-object as the key already exists with '" + old + "'");
         }
 

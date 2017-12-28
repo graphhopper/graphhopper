@@ -598,6 +598,76 @@ public class PathTest {
     }
 
     @Test
+    public void testUTurnLeft() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Real Situation: point=48.402116%2C9.994367&point=48.402198%2C9.99507
+        //       7
+        //       |
+        //  4----5----6
+        //       |
+        //  1----2----3
+        na.setNode(1, 48.402116, 9.994367);
+        na.setNode(2, 48.402198, 9.99507);
+        na.setNode(3, 48.402344, 9.996266);
+        na.setNode(4, 48.402191, 9.994351);
+        na.setNode(5, 48.402298, 9.995053);
+        na.setNode(6, 48.402422, 9.996067);
+        na.setNode(7, 48.402604, 9.994962);
+
+        g.edge(1, 2, 5, false).setName("Olgastraße");
+        g.edge(2, 3, 5, false).setName("Olgastraße");
+        g.edge(6, 5, 5, false).setName("Olgastraße");
+        g.edge(5, 4, 5, false).setName("Olgastraße");
+        g.edge(2, 5, 5, true).setName("Neithardtstraße");
+        g.edge(5, 7, 5, true).setName("Neithardtstraße");
+
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(1, 4);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        assertEquals(3, wayList.size());
+        assertEquals(Instruction.U_TURN_LEFT, wayList.get(1).getSign());
+    }
+
+    @Test
+    public void testUTurnRight() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Real Situation: point=-33.885758,151.181472&point=-33.885692,151.181445
+        //       7
+        //       |
+        //  4----5----6
+        //       |
+        //  3----2----1
+        na.setNode(1, -33.885758,151.181472);
+        na.setNode(2, -33.885852,151.180968);
+        na.setNode(3, -33.885968,151.180501);
+        na.setNode(4, -33.885883,151.180442);
+        na.setNode(5, -33.885772,151.180941);
+        na.setNode(6, -33.885692,151.181445);
+        na.setNode(7, -33.885692,151.181445);
+
+        g.edge(1, 2, 5, false).setName("Parramatta Road");
+        g.edge(2, 3, 5, false).setName("Parramatta Road");
+        g.edge(4, 5, 5, false).setName("Parramatta Road");
+        g.edge(5, 6, 5, false).setName("Parramatta Road");
+        g.edge(2, 5, 5, true).setName("Larkin Street");
+        g.edge(5, 7, 5, true).setName("Larkin Street");
+
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(1, 6);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        assertEquals(3, wayList.size());
+        assertEquals(Instruction.U_TURN_RIGHT, wayList.get(1).getSign());
+    }
+
+    @Test
     public void testCalcInstructionsForTurn() {
         // The street turns left, but there is not turn
         Path p = new Dijkstra(roundaboutGraph.g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)

@@ -7,7 +7,11 @@ import com.vividsolutions.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static com.graphhopper.util.Helper.toLowerCase;
 
 public class SpatialRuleLookupBuilder {
 
@@ -39,7 +43,7 @@ public class SpatialRuleLookupBuilder {
 
         for (int jsonFeatureIdx = 0; jsonFeatureIdx < jsonFeatureCollection.getFeatures().size(); jsonFeatureIdx++) {
             JsonFeature jsonFeature = jsonFeatureCollection.getFeatures().get(jsonFeatureIdx);
-            String id = jsonIdField.isEmpty() || jsonIdField.toLowerCase().equals("id") ? jsonFeature.getId() : (String) jsonFeature.getProperty(jsonIdField);
+            String id = jsonIdField.isEmpty() || toLowerCase(jsonIdField).equals("id") ? jsonFeature.getId() : (String) jsonFeature.getProperty(jsonIdField);
             if (id == null || id.isEmpty())
                 throw new IllegalArgumentException("ID cannot be empty but was for JsonFeature " + jsonFeatureIdx);
 

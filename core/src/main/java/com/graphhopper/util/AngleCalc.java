@@ -115,7 +115,7 @@ public class AngleCalc {
         if (orientation < 0)
             orientation += 2 * Math.PI;
 
-        return Math.toDegrees(Helper.round4(orientation))%360;
+        return Math.toDegrees(Helper.round4(orientation)) % 360;
     }
 
     String azimuth2compassPoint(double azimuth) {
