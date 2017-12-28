@@ -15,33 +15,30 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.routing.ch;
+package com.graphhopper.routing.util;
 
-public interface NodeContractor {
-    void initFromGraph();
+import com.graphhopper.storage.CHGraph;
+import com.graphhopper.util.EdgeIteratorState;
 
-    void close();
+public class IgnoreNodeFilter implements EdgeFilter {
+    private int avoidNode;
+    private CHGraph graph;
+    private int maxLevel;
 
-    void setMaxVisitedNodes(int maxVisitedNodes);
+    public IgnoreNodeFilter(CHGraph chGraph, int maxLevel) {
+        this.graph = chGraph;
+        this.maxLevel = maxLevel;
+    }
 
-    /**
-     * Calculates the priority of a node v without changing the graph. 
-     */
-    int calculatePriority(int node);
+    public IgnoreNodeFilter setAvoidNode(int node) {
+        this.avoidNode = node;
+        return this;
+    }
 
-    /**
-     * Adds the required shortcuts for the given node and returns the number of incoming edges to the given node
-     * in the remaining graph (= the graph of uncontracted nodes with shortcuts)
-     */
-    long contractNode(int node);
-
-    int getAddedShortcutsCount();
-
-    String getPrepareAlgoMemoryUsage();
-
-    long getDijkstraCount();
-
-    void resetDijkstraTime();
-
-    float getDijkstraSeconds();
+    @Override
+    public final boolean accept(EdgeIteratorState iter) {
+        // ignore if it is skipNode or adjNode is already contracted
+        int node = iter.getAdjNode();
+        return avoidNode != node && graph.getLevel(node) == maxLevel;
+    }
 }

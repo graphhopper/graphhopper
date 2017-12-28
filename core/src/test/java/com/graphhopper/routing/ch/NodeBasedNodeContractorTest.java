@@ -19,10 +19,7 @@ package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.Dijkstra;
 import com.graphhopper.routing.DijkstraOneToMany;
-import com.graphhopper.routing.util.AllCHEdgesIterator;
-import com.graphhopper.routing.util.CarFlagEncoder;
-import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.TraversalMode;
+import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
@@ -39,7 +36,7 @@ import java.util.Set;
 
 import static org.junit.Assert.*;
 
-public class NodeContractorTest {
+public class NodeBasedNodeContractorTest {
     private final CarFlagEncoder encoder = new CarFlagEncoder();
     private final EncodingManager encodingManager = new EncodingManager(encoder);
     private final Weighting weighting = new ShortestWeighting(encoder);
@@ -54,7 +51,7 @@ public class NodeContractorTest {
     }
 
     private NodeContractor createNodeContractor() {
-        NodeContractor nodeContractor = new NodeContractor(dir, graph, lg, weighting, traversalMode);
+        NodeContractor nodeContractor = new NodeBasedNodeContractor(dir, graph, lg, weighting);
         nodeContractor.initFromGraph();
         return nodeContractor;
     }
@@ -85,7 +82,7 @@ public class NodeContractorTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(3));
+        algo.setEdgeFilter(new IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(3));
         algo.setWeightLimit(100);
         int nodeEntry = algo.findEndNode(4, 2);
         assertTrue(algo.getWeight(nodeEntry) > normalDist);
@@ -105,7 +102,7 @@ public class NodeContractorTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(3));
+        algo.setEdgeFilter(new IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(3));
         algo.setWeightLimit(10);
         int nodeEntry = algo.findEndNode(4, 2);
         assertEquals(4, algo.getWeight(nodeEntry), 1e-5);
@@ -121,7 +118,7 @@ public class NodeContractorTest {
 
         setMaxLevelOnAllNodes();
 
-        algo.setEdgeFilter(new NodeContractor.IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(0));
+        algo.setEdgeFilter(new IgnoreNodeFilter(lg, graph.getNodes() + 1).setAvoidNode(0));
         algo.setWeightLimit(2);
         int endNode = algo.findEndNode(4, 1);
         // did not reach endNode

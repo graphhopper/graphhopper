@@ -22,7 +22,7 @@ import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Only certain nodes are accepted and therefor the others are ignored.
+ * Only certain nodes are accepted and therefore the others are ignored.
  * <p>
  *
  * @author Peter Karich

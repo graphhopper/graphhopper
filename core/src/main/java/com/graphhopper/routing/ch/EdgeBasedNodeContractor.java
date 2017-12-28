@@ -1,3 +1,20 @@
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.routing.ch;
 
 import com.graphhopper.routing.util.DefaultEdgeFilter;
@@ -14,7 +31,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class EdgeBasedNodeContractor {
+public class EdgeBasedNodeContractor implements NodeContractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
     // todo: modify code such that logging does not alter performance 
     private final GraphHopperStorage ghStorage;
@@ -37,7 +54,8 @@ public class EdgeBasedNodeContractor {
         this.traversalMode = traversalMode;
     }
 
-    void initFromGraph() {
+    @Override
+    public void initFromGraph() {
         // todo: do we really need this method ? the problem is that ghStorage/prepareGraph can potentially be modified
         // between the constructor call and contractNode,calcShortcutCount etc. ...
         maxLevel = prepareGraph.getNodes() + 1;
@@ -53,7 +71,25 @@ public class EdgeBasedNodeContractor {
         loopAvoidanceOutEdgeExplorer = ghStorage.createEdgeExplorer(outEdgeFilter);
     }
 
-    public void contractNode(int node) {
+    @Override
+    public void close() {
+        // todo: not sure if we need this yet
+    }
+
+    @Override
+    public void setMaxVisitedNodes(int maxVisitedNodes) {
+        // todo: limiting local searches is a bit more complicated in the edge-based case, because the local searches
+        // are also used to find the shortcut
+    }
+
+    @Override
+    public int calculatePriority(int node) {
+        // todo: return some metric that can be used, for example edge quotient to get started
+        return 0;
+    }
+
+    @Override
+    public long contractNode(int node) {
         LOGGER.debug("Contracting node {}", node);
         CHEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         while (incomingEdges.next()) {
@@ -89,6 +125,36 @@ public class EdgeBasedNodeContractor {
                 }
             }
         }
+        // todo: why do we need the degree again ?
+        return 0;
+    }
+
+    @Override
+    public int getAddedShortcutsCount() {
+        // todo
+        return 0;
+    }
+
+    @Override
+    public String getPrepareAlgoMemoryUsage() {
+        return "todo";
+    }
+
+    @Override
+    public long getDijkstraCount() {
+        // todo
+        return 0;
+    }
+
+    @Override
+    public void resetDijkstraTime() {
+        // todo
+    }
+
+    @Override
+    public float getDijkstraSeconds() {
+        // todo
+        return 0;
     }
 
     private List<CHEntry> getInitialEntriesForWitnessPaths(int fromNode, int firstOrigEdge) {
@@ -267,7 +333,6 @@ public class EdgeBasedNodeContractor {
             LOGGER.trace("Found a witness path using alternative target edge -> no shortcut");
             return false;
         }
-
 
         // skip all edges as long as they represent loops at the given node
         CHEntry parent = chEntry.getParent();
