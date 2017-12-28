@@ -89,6 +89,10 @@ public class RealtimeFeed {
             .forEach(tripUpdate -> {
                 final int[] boardEdges = staticGtfs.getBoardEdgesForTrip().get(tripUpdate.getTrip());
                 final int[] leaveEdges = staticGtfs.getAlightEdgesForTrip().get(tripUpdate.getTrip());
+                if (boardEdges == null || leaveEdges == null) {
+                    logger.warn("Trip not found: {}", tripUpdate.getTrip());
+                    return;
+                }
                 tripUpdate.getStopTimeUpdateList().stream()
                         .filter(stopTimeUpdate -> stopTimeUpdate.getScheduleRelationship() == SKIPPED)
                         .mapToInt(stu -> stu.getStopSequence()-1) // stop sequence number is 1-based, not 0-based
