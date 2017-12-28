@@ -213,7 +213,7 @@ class TripFromLabel {
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
                     Instant updatedDeparture = plannedDeparture.plus(getDepartureDelay(stopSequence), SECONDS);
                     Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), null, Date.from(updatedDeparture)));
+                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), null, null, null, Date.from(updatedDeparture), Date.from(plannedDeparture), Date.from(updatedDeparture)));
                     break;
                 }
                 case HOP: {
@@ -227,7 +227,7 @@ class TripFromLabel {
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
                     Instant updatedDeparture = plannedDeparture.plus(getDepartureDelay(stopTime.stop_sequence), SECONDS);
                     Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(updatedArrival), Date.from(updatedDeparture)));
+                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(updatedArrival), Date.from(arrivalTimeFromHopEdge), Date.from(updatedArrival), Date.from(updatedDeparture), Date.from(plannedDeparture), Date.from(updatedDeparture)));
                     break;
                 }
                 default: {
@@ -258,7 +258,7 @@ class TripFromLabel {
 
         void finish() {
             Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-            stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(updatedArrival), null));
+            stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(updatedArrival), Date.from(arrivalTimeFromHopEdge), Date.from(updatedArrival), null, null, null));
             for (Trip.Stop tripStop : stops) {
                 logger.trace("{}", tripStop);
             }
