@@ -39,8 +39,8 @@ import static com.graphhopper.util.Helper.*;
 import static com.graphhopper.util.Parameters.CH.DISABLE;
 
 /**
- * This class implements the CH decorator and provides several helper methods related to CH
- * preparation and its vehicle profiles.
+ * This class implements the CH decorator for the routing algorithm factory and provides several
+ * helper methods related to CH preparation and its vehicle profiles.
  *
  * @author Peter Karich
  */
@@ -315,8 +315,6 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         if (weightings.isEmpty())
             throw new IllegalStateException("No CH weightings found");
 
-        traversalMode = getNodeBase();
-
         for (Weighting weighting : getWeightings()) {
             PrepareContractionHierarchies tmpPrepareCH = new PrepareContractionHierarchies(
                     new GHDirectory("", DAType.RAM_INT), ghStorage, ghStorage.getGraph(CHGraph.class, weighting),
@@ -330,11 +328,4 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         }
     }
 
-    /**
-     * For now only node based will work, later on we can easily find usage of this method to remove
-     * it.
-     */
-    public TraversalMode getNodeBase() {
-        return TraversalMode.NODE_BASED;
-    }
 }

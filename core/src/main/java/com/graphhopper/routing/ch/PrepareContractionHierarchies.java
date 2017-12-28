@@ -170,11 +170,11 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         if (traversalMode.isEdgeBased()) {
             if (!DIJKSTRA_BI.equals(opts.getAlgorithm())) {
                 throw new IllegalArgumentException("Algorithm " + opts.getAlgorithm() + " not supported for edge based " +
-                        " Contraction Hierarchies. Try with ch.disable=true or node based traversal");
+                        "Contraction Hierarchies. Try with ch.disable=true or node based traversal");
             }
             // todo: implement A-Star and stall-on-demand for edge based, according to literature A-Star is more promising
             // and can amortize costs better than in node-based case
-            algo = new DijkstraBidirectionEdgeCHNoSOD(graph, createTurnWeightingForEdgeBased(), TraversalMode.EDGE_BASED_2DIR);
+            algo = new DijkstraBidirectionEdgeCHNoSOD(graph, createTurnWeightingForEdgeBased(graph), TraversalMode.EDGE_BASED_2DIR);
             algo.setEdgeFilter(new LevelEdgeFilter(prepareGraph));
             return algo;
         }
@@ -213,7 +213,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         //   but we need the additional oldPriorities array to keep the old value which is necessary for the update method
         sortedNodes = new GHTreeMapComposed();
         oldPriorities = new int[prepareGraph.getNodes()];
-        nodeContractor = createNodeContractor(traversalMode);
+        nodeContractor = createNodeContractor(ghStorage, traversalMode);
         nodeContractor.initFromGraph();
     }
 
@@ -439,12 +439,12 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
 
     @Override
     public String toString() {
-        return "prepare|dijkstrabi|ch";
+        return traversalMode.isEdgeBased() ? "prepare|dijkstrabi|edge|ch" : "prepare|dijkstrabi|ch";
     }
 
-    private NodeContractor createNodeContractor(TraversalMode traversalMode) {
+    private NodeContractor createNodeContractor(Graph graph, TraversalMode traversalMode) {
         if (traversalMode.isEdgeBased()) {
-            TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased();
+            TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
             // todo: shall we support TraversalMode.EDGE_BASED_2DIR_UTURN
             return new EdgeBasedNodeContractor(ghStorage, prepareGraph, chTurnWeighting, TraversalMode.EDGE_BASED_2DIR);
         } else {
@@ -452,8 +452,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
     }
 
-    private TurnWeighting createTurnWeightingForEdgeBased() {
-        GraphExtension extension = ghStorage.getExtension();
+    private TurnWeighting createTurnWeightingForEdgeBased(Graph graph) {
+        // important: do not simply take the extension from ghStorage, because we need the wrapped extension from
+        // query graph!
+        GraphExtension extension = graph.getExtension();
         if (!(extension instanceof TurnCostExtension)) {
             // todo: can we allow edge-based CH without turn costs ? does this make any sense (not really (?))
             throw new IllegalArgumentException("For edge-based CH you need a turn cost extension");

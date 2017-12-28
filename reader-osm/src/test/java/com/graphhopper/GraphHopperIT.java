@@ -992,7 +992,7 @@ public class GraphHopperIT {
                 setEncodingManager(new EncodingManager("car|turn_costs=true"));
         tmpHopper.importOrLoad();
 
-        // with turn costs (default if none-CH and turn cost enabled)
+        // with turn costs (default if non-CH and turn cost enabled)
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
         GHResponse rsp = tmpHopper.route(req);
         assertEquals(1044, rsp.getBest().getDistance(), 1);
@@ -1009,23 +1009,25 @@ public class GraphHopperIT {
     }
 
     @Test
-    public void testCHAndTurnCostsWithFlexmode() {
+    public void testTurnCostsOnOffCH() {
+        // todo: make it possible to use turn costs on/off at query time (?)
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(DIR + "/moscow.osm.gz").
                 setStoreOnFlush(true).
+                setCHEnabled(true).
                 setGraphHopperLocation(tmpGraphFile).
                 setEncodingManager(new EncodingManager("car|turn_costs=true"));
         tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
         tmpHopper.importOrLoad();
 
-        // without turn costs (default for CH)
+        // without turn costs
         GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
+        req.getHints().put(Routing.EDGE_BASED, "false");
         GHResponse rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(400, rsp.getBest().getDistance(), 1);
 
         // with turn costs                
-        req.getHints().put(CH.DISABLE, "true");
         req.getHints().put(Routing.EDGE_BASED, "true");
         rsp = tmpHopper.route(req);
         assertEquals(1044, rsp.getBest().getDistance(), 1);
