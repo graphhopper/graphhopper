@@ -459,6 +459,10 @@ public class EncodingManager implements EncodedValueLookup {
         return null;
     }
 
+    public TagParser getParser(String key) {
+        return parsers.get(key);
+    }
+
     /**
      * Determine whether a way is routable for one of the added encoders.
      */

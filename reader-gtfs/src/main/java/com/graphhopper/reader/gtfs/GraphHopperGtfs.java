@@ -204,7 +204,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
     }
 
     public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage, boolean createWalkNetwork, Collection<String> gtfsFiles, Collection<String> osmFiles) {
-        GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, GHJson.EMPTY,false, gtfsStorage);
+        GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, GHJson.EMPTY, false, gtfsStorage);
         if (graphHopperStorage.loadExisting()) {
             return graphHopperStorage;
         } else {

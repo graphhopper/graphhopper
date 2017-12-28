@@ -22,9 +22,11 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
+import com.graphhopper.util.Lane;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
+
 
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
@@ -35,6 +37,7 @@ import java.util.*;
 public class CarFlagEncoder extends AbstractFlagEncoder {
     protected final Map<String, Double> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
+    private boolean laneInfoEnabled = false;
 
     // This value determines the maximal possible on roads with bad surfaces
     protected int badSurfaceSpeed;
@@ -48,6 +51,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
      * http://wiki.openstreetmap.org/wiki/OSM_tags_for_routing/Maxspeed
      */
     protected final Map<String, Double> defaultSpeedMap = new HashMap<>();
+    protected final Map<String, Integer> turnLaneMap = new HashMap<>();
     private boolean speedTwoDirections;
 
     public CarFlagEncoder() {
@@ -60,6 +64,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 properties.getBool("turn_costs", false) ? 1 : 0);
         this.setBlockFords(properties.getBool("block_fords", true));
         this.setBlockByDefault(properties.getBool("block_barriers", true));
+        this.laneInfoEnabled = properties.getBool("lane_info", false);
     }
 
     public CarFlagEncoder(String propertiesStr) {
@@ -119,6 +124,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
         defaultSpeedMap.putAll(TagParserFactory.Car.createSpeedMap());
 
+        turnLaneMap.putAll(TagParserFactory.Car.createTurnLaneMap());
+
         init();
     }
 
@@ -134,11 +141,12 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
     @Override
     public Map<String, TagParser> createTagParsers(String prefix) {
-        Map<String, TagParser> tpMap = new HashMap<>();
+        Map<String, TagParser> tpMap = new LinkedHashMap<>();
         tpMap.put(TagParserFactory.ROUNDABOUT, null);
         tpMap.put(TagParserFactory.CAR_MAX_SPEED, null);
         tpMap.put(prefix + "average_speed", TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(prefix + "average_speed", speedBits, 0, speedFactor, false),
                 defaultSpeedMap));
+
         ReaderWayFilter filter = new ReaderWayFilter() {
             @Override
             public boolean accept(ReaderWay way) {
@@ -146,6 +154,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             }
         };
         tpMap.put(prefix + "access", TagParserFactory.Car.createAccess(new BooleanEncodedValue(prefix + "access", true), filter));
+        tpMap.put(TagParserFactory.TURN_LANE_INFO, TagParserFactory.Car.createTurnLane(new IntEncodedValue(TagParserFactory.TURN_LANE_INFO, 28), TagParserFactory.Car.createTurnLaneMap()));
+
         return tpMap;
     }
 
@@ -338,4 +348,5 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
     public String toString() {
         return "car";
     }
+
 }

@@ -20,6 +20,7 @@ package com.graphhopper.routing;
 import com.graphhopper.routing.bwdcompat.AnnotationAccessor;
 import com.graphhopper.routing.profiles.BooleanEncodedValue;
 import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.IntEncodedValue;
 import com.graphhopper.routing.profiles.TagParserFactory;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.FlagEncoder;
@@ -29,12 +30,16 @@ public class PathExtract {
     private Path path;
     private DecimalEncodedValue maxSpeedEnc;
     private BooleanEncodedValue roundaboutEnc;
+    private IntEncodedValue laneInfoEnc;
+    private EncodingManager encodingManager;
 
     PathExtract(Path path, EncodingManager encodingManager) {
         this.path = path;
 
         maxSpeedEnc = encodingManager.getEncodedValue(TagParserFactory.CAR_MAX_SPEED, DecimalEncodedValue.class);
         roundaboutEnc = encodingManager.getEncodedValue(TagParserFactory.ROUNDABOUT, BooleanEncodedValue.class);
+        laneInfoEnc = encodingManager.getEncodedValue(TagParserFactory.TURN_LANE_INFO, IntEncodedValue.class);
+        this.encodingManager = encodingManager;
     }
 
     AnnotationAccessor createAnnotationAccessor(final Translation tr) {
@@ -67,7 +72,8 @@ public class PathExtract {
             return ways;
         }
         path.forEveryEdge(new InstructionsFromEdges(path.getFromNode(), path.graph, path.weighting,
-                path.nodeAccess, createAnnotationAccessor(tr), maxSpeedEnc, roundaboutEnc, ways));
+                path.nodeAccess, createAnnotationAccessor(tr), maxSpeedEnc, roundaboutEnc, laneInfoEnc, encodingManager,
+                ways));
         return ways;
     }
 }

@@ -18,14 +18,19 @@
 package com.graphhopper.routing;
 
 import com.graphhopper.routing.bwdcompat.AnnotationAccessor;
-import com.graphhopper.routing.profiles.BooleanEncodedValue;
-import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
+import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.LaneInfoDecoder;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * This class calculates instructions from the edges in a Path.
@@ -42,7 +47,9 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private final AnnotationAccessor annotationAccessor;
     private final DecimalEncodedValue maxSpeedEnc;
     private final BooleanEncodedValue roundaboutEnc;
+    private final IntEncodedValue laneInfoEnc;
     private final EdgeFilter forwardEdgeFilter;
+    private final EncodingManager encodingManager;
     /*
      * We need three points to make directions
      *
@@ -70,6 +77,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private int prevNode;
     private double prevOrientation;
     private Instruction prevInstruction;
+    private long prevFlags;
     private boolean prevInRoundabout;
     private String prevName;
     private InstructionAnnotation prevAnnotation;
@@ -79,13 +87,18 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     public InstructionsFromEdges(int tmpNode, Graph graph, Weighting weighting, NodeAccess nodeAccess,
                                  AnnotationAccessor annotationAccessor,
                                  DecimalEncodedValue maxSpeedEnc,
-                                 BooleanEncodedValue roundaboutEnc, InstructionList ways) {
+                                 BooleanEncodedValue roundaboutEnc,
+                                 IntEncodedValue laneInfoEnc,
+                                 EncodingManager encodingManager,
+                                 InstructionList ways) {
         this.weighting = weighting;
         this.nodeAccess = nodeAccess;
         this.roundaboutEnc = roundaboutEnc;
+        this.laneInfoEnc = laneInfoEnc;
         this.annotationAccessor = annotationAccessor;
         this.maxSpeedEnc = maxSpeedEnc;
         this.ways = ways;
+        this.encodingManager = encodingManager;
         prevLat = this.nodeAccess.getLatitude(tmpNode);
         prevLon = this.nodeAccess.getLongitude(tmpNode);
         prevNode = -1;
@@ -206,6 +219,8 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
             int sign = getTurn(edge, baseNode, prevNode, adjNode, annotation, name);
 
             if (sign != Instruction.IGNORE) {
+                List<Lane> lanes = getLanesInfo(false, prevEdge, sign);
+                prevInstruction.setLanes(lanes);
                 prevInstruction = new Instruction(sign, name, annotation, new PointList(10, nodeAccess.is3D()));
                 ways.add(prevInstruction);
                 prevAnnotation = annotation;
@@ -231,6 +246,27 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
         prevLat = adjLat;
         prevLon = adjLon;
         prevEdge = edge;
+    }
+
+    private List<Lane> getLanesInfo(boolean reverse, EdgeIteratorState prevEdge, int sign) {
+        int laneInfo = laneInfoEnc.getInt(reverse, prevEdge.getData());
+        if (encodingManager == null) {
+            return Collections.emptyList();
+        }
+        LaneInfoDecoder turnLaneDecoder = (LaneInfoDecoder) this.encodingManager.getParser(TagParserFactory.TURN_LANE_INFO);
+        List<Lane> lanes = turnLaneDecoder.decodeTurnLanesToList((long) laneInfo);
+        for (Lane lane : lanes) {
+            if (lanes.size() == 1) {
+                lane.setValid(true);
+            } else if (sign < 0 && lane.getDirection() != "merge_to_left" && lane.getDirection().contains("left")) {
+                lane.setValid(true);
+            } else if (sign == 0 && (lane.getDirectionCode() == TagParserFactory.Car.NONE_LANE_CODE || lane.getDirection().contains("through"))) {
+                lane.setValid(true);
+            } else if (sign > 0 && lane.getDirection() != "merge_to_right" && lane.getDirection().contains("right")) {
+                lane.setValid(true);
+            }
+        }
+        return lanes;
     }
 
     @Override

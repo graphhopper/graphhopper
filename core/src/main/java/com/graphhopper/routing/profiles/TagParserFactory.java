@@ -63,6 +63,7 @@ public class TagParserFactory {
     public static final String BIKE_AVERAGE_SPEED = "bike.average_speed";
     public static final String FOOT_ACCESS = "foot.access";
     public static final String FOOT_AVERAGE_SPEED = "foot.average_speed";
+    public static final String TURN_LANE_INFO = "car.lane_info";
 
     public static TagParser createRoundabout(final BooleanEncodedValue ev) {
         return new AbstractTagParser(ev) {
@@ -282,6 +283,12 @@ public class TagParserFactory {
 
     public static class Car {
 
+        public static final int NONE_LANE_CODE = 11;
+        public static final int RIGHT_LANE_CODE = 12;
+        public static final int LEFT_LANE_CODE = 3;
+        public static final int LANE_MASK_SIZE = 4;
+        public static final int LANE_MASK = 0B1111;
+
         public static TagParser createMaxSpeed(final DecimalEncodedValue ev, final ReaderWayFilter filter) {
             return new AbstractTagParser(ev) {
                 @Override
@@ -354,6 +361,12 @@ public class TagParserFactory {
             };
         }
 
+        public static TagParser createTurnLane(final IntEncodedValue ev, final Map<String, Integer> turnLaneMap) {
+
+            AbstractTagParser abstractTagParser = new LaneInfoTagParser(ev, turnLaneMap);
+            return abstractTagParser;
+        }
+
         public static Map<String, Double> createSpeedMap() {
             Map<String, Double> map = new LinkedHashMap<>();
             // autobahn
@@ -383,6 +396,27 @@ public class TagParserFactory {
             map.put("track", 15d);
             return map;
         }
+
+        public static Map<String, Integer> createTurnLaneMap() {
+            Map<String, Integer> turnLaneMap = new HashMap<>();
+            turnLaneMap.put("slight_left", 1);
+            turnLaneMap.put("sharp_left", 2);
+            turnLaneMap.put("left", LEFT_LANE_CODE);
+            turnLaneMap.put("merge_to_right", 4);
+            turnLaneMap.put("through;left", 5);
+            turnLaneMap.put("through;right", 6);
+            turnLaneMap.put("through", 7);
+            turnLaneMap.put("left;right", 8);
+            turnLaneMap.put("reverse", 9);
+            turnLaneMap.put("merge_to_left", 10);
+            turnLaneMap.put("none", NONE_LANE_CODE);
+            turnLaneMap.put("right", RIGHT_LANE_CODE);
+            turnLaneMap.put("slight_right", 13);
+            turnLaneMap.put("sharp_right", 14);
+            turnLaneMap.put("left;right;through", 15);
+            return turnLaneMap;
+        }
+
     }
 
     public static class Foot {
@@ -470,7 +504,7 @@ public class TagParserFactory {
         }
     }
 
-    private static abstract class AbstractTagParser implements TagParser {
+    protected static abstract class AbstractTagParser implements TagParser {
         private EncodedValue ev;
 
         public AbstractTagParser(EncodedValue ev) {
@@ -492,4 +526,5 @@ public class TagParserFactory {
             return ev.getName();
         }
     }
+
 }
