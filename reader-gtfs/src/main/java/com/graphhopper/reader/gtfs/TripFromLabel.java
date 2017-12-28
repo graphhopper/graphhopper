@@ -195,7 +195,7 @@ class TripFromLabel {
         private final List<Trip.Stop> stops = new ArrayList<>();
         private final GTFSFeed gtfsFeed;
         private Instant arrivalTimeFromHopEdge;
-        private Instant updatedArrival;
+        private Optional<Instant> updatedArrival;
         private StopTime stopTime = null;
         private final GtfsReader.TripWithStopTimes tripUpdate;
 
@@ -211,23 +211,23 @@ class TripFromLabel {
                     int stopSequence = gtfsStorage.getStopSequences().get(t.edge.edgeIteratorState.getEdge());
                     stopTime = gtfsFeed.stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), stopSequence));
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
-                    Instant updatedDeparture = plannedDeparture.plus(getDepartureDelay(stopSequence), SECONDS);
+                    Optional<Instant> updatedDeparture = getDepartureDelay(stopSequence).map(delay -> plannedDeparture.plus(delay, SECONDS));
                     Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), null, null, null, Date.from(updatedDeparture), Date.from(plannedDeparture), Date.from(updatedDeparture)));
+                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), null, null, null, updatedDeparture.map(Date::from).orElse(Date.from(plannedDeparture)), Date.from(plannedDeparture), updatedDeparture.map(Date::from).orElse(null)));
                     break;
                 }
                 case HOP: {
                     int stopSequence = gtfsStorage.getStopSequences().get(t.edge.edgeIteratorState.getEdge());
                     stopTime = gtfsFeed.stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), stopSequence));
                     arrivalTimeFromHopEdge = Instant.ofEpochMilli(t.label.currentTime);
-                    updatedArrival = arrivalTimeFromHopEdge.plus(getArrivalDelay(stopSequence), SECONDS);
+                    updatedArrival = getArrivalDelay(stopSequence).map(delay -> arrivalTimeFromHopEdge.plus(delay, SECONDS));
                     break;
                 }
                 case DWELL: {
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
-                    Instant updatedDeparture = plannedDeparture.plus(getDepartureDelay(stopTime.stop_sequence), SECONDS);
+                    Optional<Instant> updatedDeparture = getDepartureDelay(stopTime.stop_sequence).map(delay -> plannedDeparture.plus(delay, SECONDS));
                     Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(updatedArrival), Date.from(arrivalTimeFromHopEdge), Date.from(updatedArrival), Date.from(updatedDeparture), Date.from(plannedDeparture), Date.from(updatedDeparture)));
+                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), updatedArrival.map(Date::from).orElse(Date.from(arrivalTimeFromHopEdge)), Date.from(arrivalTimeFromHopEdge), updatedArrival.map(Date::from).orElse(null), updatedDeparture.map(Date::from).orElse(Date.from(plannedDeparture)), Date.from(plannedDeparture), updatedDeparture.map(Date::from).orElse(null)));
                     break;
                 }
                 default: {
@@ -236,29 +236,29 @@ class TripFromLabel {
             }
         }
 
-        private long getArrivalDelay(int stopSequence) {
+        private Optional<Integer> getArrivalDelay(int stopSequence) {
             if (tripUpdate != null) {
                 int arrival_time = tripUpdate.stopTimes.get(stopSequence - 1).arrival_time;
                 logger.trace("stop_sequence {} scheduled arrival {} updated arrival {}", stopSequence, stopTime.arrival_time, arrival_time);
-                return arrival_time - stopTime.arrival_time;
+                return Optional.of(arrival_time - stopTime.arrival_time);
             } else {
-                return 0;
+                return Optional.empty();
             }
         }
 
-        private int getDepartureDelay(int stopSequence) {
+        private Optional<Integer> getDepartureDelay(int stopSequence) {
             if (tripUpdate != null) {
                 int departure_time = tripUpdate.stopTimes.get(stopSequence - 1).departure_time;
                 logger.trace("stop_sequence {} scheduled departure {} updated departure {}", stopSequence, stopTime.departure_time, departure_time);
-                return departure_time - stopTime.departure_time;
+                return Optional.of(departure_time - stopTime.departure_time);
             } else {
-                return 0;
+                return Optional.empty();
             }
         }
 
         void finish() {
             Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-            stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), Date.from(updatedArrival), Date.from(arrivalTimeFromHopEdge), Date.from(updatedArrival), null, null, null));
+            stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), updatedArrival.map(Date::from).orElse(Date.from(arrivalTimeFromHopEdge)), Date.from(arrivalTimeFromHopEdge), updatedArrival.map(Date::from).orElse(null), null, null, null));
             for (Trip.Stop tripStop : stops) {
                 logger.trace("{}", tripStop);
             }
