@@ -276,7 +276,7 @@ public class RouteResource {
             }
             jsonPath.putPOJO("snapped_waypoints", pointsEncoded ? WebHelper.encodePolyline(ar.getWaypoints(), enableElevation) : ar.getWaypoints().toLineString(enableElevation));
             if (ar.getFare() != null) {
-                jsonPath.put("fare", NumberFormat.getCurrencyInstance().format(ar.getFare()));
+                jsonPath.put("fare", NumberFormat.getCurrencyInstance(Locale.ROOT).format(ar.getFare()));
             }
         }
         return Response.ok(json).build();

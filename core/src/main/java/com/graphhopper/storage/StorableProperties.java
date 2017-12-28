@@ -26,6 +26,8 @@ import java.io.StringWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import static com.graphhopper.util.Helper.*;
+
 /**
  * Writes an in-memory HashMap into a file on flush. Thread safe, see #743.
  *
@@ -50,7 +52,7 @@ public class StorableProperties implements Storable<StorableProperties> {
         byte[] bytes = new byte[len];
         da.getBytes(0, bytes, len);
         try {
-            Helper.loadProperties(map, new StringReader(new String(bytes, Helper.UTF_CS)));
+            loadProperties(map, new StringReader(new String(bytes, UTF_CS)));
             return true;
         } catch (IOException ex) {
             throw new IllegalStateException(ex);
@@ -61,9 +63,9 @@ public class StorableProperties implements Storable<StorableProperties> {
     public synchronized void flush() {
         try {
             StringWriter sw = new StringWriter();
-            Helper.saveProperties(map, sw);
+            saveProperties(map, sw);
             // TODO at the moment the size is limited to da.segmentSize() !
-            byte[] bytes = sw.toString().getBytes(Helper.UTF_CS);
+            byte[] bytes = sw.toString().getBytes(UTF_CS);
             da.setBytes(0, bytes, bytes.length);
             da.flush();
         } catch (IOException ex) {
@@ -90,7 +92,7 @@ public class StorableProperties implements Storable<StorableProperties> {
      * Before it saves this value it creates a string out of it.
      */
     public synchronized StorableProperties put(String key, Object val) {
-        if (!key.equals(key.toLowerCase()))
+        if (!key.equals(toLowerCase(key)))
             throw new IllegalArgumentException("Do not use upper case keys (" + key + ") for StorableProperties since 0.7");
 
         map.put(key, val.toString());
@@ -98,7 +100,7 @@ public class StorableProperties implements Storable<StorableProperties> {
     }
 
     public synchronized String get(String key) {
-        if (!key.equals(key.toLowerCase()))
+        if (!key.equals(toLowerCase(key)))
             throw new IllegalArgumentException("Do not use upper case keys (" + key + ") for StorableProperties since 0.7");
 
         String ret = map.get(key);

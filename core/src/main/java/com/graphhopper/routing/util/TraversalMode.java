@@ -22,6 +22,8 @@ import com.graphhopper.util.GHUtility;
 
 import java.util.Arrays;
 
+import static com.graphhopper.util.Helper.toUpperCase;
+
 /**
  * Defines how the graph can be traversed while Dijkstra or similar RoutingAlgorithm is in progress.
  * Different options define how precise turn restrictions and costs are taken into account, but
@@ -70,7 +72,7 @@ public enum TraversalMode {
 
     public static TraversalMode fromString(String name) {
         try {
-            return valueOf(name.toUpperCase());
+            return valueOf(toUpperCase(name));
         } catch (Exception ex) {
             throw new IllegalArgumentException("TraversalMode " + name + " not supported. "
                     + "Supported are: " + Arrays.asList(TraversalMode.values()));

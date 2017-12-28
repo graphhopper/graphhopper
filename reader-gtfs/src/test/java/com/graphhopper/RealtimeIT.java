@@ -28,12 +28,18 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
-import java.time.*;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -51,8 +57,8 @@ public class RealtimeIT {
     private static GraphHopperStorage graphHopperStorage;
     private static LocationIndex locationIndex;
 
-    @Before
-    public void init() {
+    @BeforeClass
+    public static void init() throws InterruptedException {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
         EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
@@ -60,11 +66,17 @@ public class RealtimeIT {
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, true, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage, ptFlagEncoder);
+        graphHopperStorage.close();
+        locationIndex.close();
+        // Re-load read only
+        directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, true, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
+        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage, ptFlagEncoder);
         graphHopperFactory = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);
     }
 
-    @After
-    public void close() {
+    @AfterClass
+    public static void close() {
         graphHopperStorage.close();
         locationIndex.close();
     }
@@ -163,7 +175,7 @@ public class RealtimeIT {
         assertEquals("The 6:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
     }
 
-    @Test
+    @Test @Ignore //Pending feature
     public void testExtraTrip() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
@@ -250,9 +262,11 @@ public class RealtimeIT {
         GHResponse responseWithRealtimeUpdate = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(1, responseWithRealtimeUpdate.getAll().size());
 
-        PathWrapper responseWithRealtimeUpdateBest = responseWithRealtimeUpdate.getBest();
-        PathWrapper responseWithoutRealtimeUpdateBest = responseWithoutRealtimeUpdate.getBest();
-        assertEquals("My line run is 0 minutes late, doesn't matter.", time(0, 5), responseWithRealtimeUpdateBest.getTime(), 0.1);
+        Trip.PtLeg responseWithRealtimeUpdateBest = (Trip.PtLeg) responseWithRealtimeUpdate.getBest().getLegs().get(responseWithRealtimeUpdate.getBest().getLegs().size()-2);
+        Trip.PtLeg responseWithoutRealtimeUpdateBest = (Trip.PtLeg) responseWithoutRealtimeUpdate.getBest().getLegs().get(responseWithoutRealtimeUpdate.getBest().getLegs().size()-2);
+        assertEquals("My planned arrival time is correct.", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), responseWithRealtimeUpdateBest.stops.get(responseWithRealtimeUpdateBest.stops.size()-1).plannedArrivalTime.toInstant());
+        assertEquals("My expected arrival time is the same.", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), responseWithRealtimeUpdateBest.stops.get(responseWithRealtimeUpdateBest.stops.size()-1).predictedArrivalTime.toInstant());
+        assertEquals("The trip without realtime update does not have an expected arrival time.", null, responseWithoutRealtimeUpdateBest.stops.get(responseWithoutRealtimeUpdateBest.stops.size()-1).predictedArrivalTime);
 
 //        assertEquals(responseWithoutRealtimeUpdateBest.toString(), responseWithRealtimeUpdateBest.toString());
     }
@@ -329,7 +343,9 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(1, response.getAll().size());
 
-        assertEquals("My line run is 3 minutes late.", LocalDateTime.parse("2007-01-01T06:52:00").atZone(zoneId).toInstant(), response.getBest().getLegs().get(response.getBest().getLegs().size() - 1).getArrivalTime().toInstant());
+        Trip.PtLeg ptLeg = ((Trip.PtLeg) response.getBest().getLegs().get(response.getBest().getLegs().size() - 2));
+        assertEquals("My line run is 3 minutes late.", LocalDateTime.parse("2007-01-01T06:52:00").atZone(zoneId).toInstant(), ptLeg.getArrivalTime().toInstant());
+        assertEquals("It is still reporting its original, scheduled time.", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), ptLeg.stops.get(ptLeg.stops.size()-1).plannedArrivalTime.toInstant());
     }
 
     @Test
