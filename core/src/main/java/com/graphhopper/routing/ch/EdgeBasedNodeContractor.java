@@ -118,6 +118,8 @@ public class EdgeBasedNodeContractor implements NodeContractor {
                 LOGGER.trace("No initial entries for incoming edge {}", incomingEdges);
                 continue;
             }
+            WitnessPathFinder witnessPathFinder = new WitnessPathFinder(prepareGraph, turnWeighting, traversalMode,
+                    initialEntries, fromNode);
             CHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
             while (outgoingEdges.next()) {
                 int toNode = outgoingEdges.getAdjNode();
@@ -125,9 +127,6 @@ public class EdgeBasedNodeContractor implements NodeContractor {
                     continue;
 
                 int targetEdge = outgoingEdges.getLastOrigEdge();
-                // todo: reuse witnesspath finder for different outgoing edges
-                WitnessPathFinder witnessPathFinder = new WitnessPathFinder(prepareGraph, turnWeighting, traversalMode,
-                        initialEntries, fromNode);
 
                 dijkstraSW.start();
                 dijkstraCount++;

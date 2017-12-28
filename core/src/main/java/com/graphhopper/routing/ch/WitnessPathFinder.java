@@ -18,7 +18,9 @@
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntObjectMap;
+import com.graphhopper.coll.GHBitSetImpl;
 import com.graphhopper.coll.GHIntObjectHashMap;
+import com.graphhopper.routing.DijkstraOneToMany;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
@@ -29,20 +31,22 @@ import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
+import java.util.BitSet;
 import java.util.List;
 import java.util.PriorityQueue;
 
 /**
- * Dummy implementation that needs to be replaced by something more efficient
+ * Dummy implementation that probably needs to be replaced by something more efficient / use similar approach
+ * as in {@link DijkstraOneToMany}.
  */
 public class WitnessPathFinder {
     private IntObjectMap<CHEntry> chEntries;
+    private BitSet settledEntries;
     private PriorityQueue<CHEntry> priorityQueue;
     private final CHGraph graph;
     private final Weighting weighting;
     private final TraversalMode traversalMode;
     private CHEdgeExplorer outEdgeExplorer;
-    private boolean alreadyRun;
 
     public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, List<CHEntry> initialEntries, int fromNode) {
         if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
@@ -72,17 +76,19 @@ public class WitnessPathFinder {
     }
 
     public void findTarget(int targetEdge, int targetNode) {
-        // todo: we should allow rerunning the search for different target edges and max weights and thereby reuse
-        // results from previous searches
         // todo: clean-up & optimize
-        if (alreadyRun) {
-            throw new IllegalStateException("already run, you need to create a new instance");
+        int edgeKey = getEdgeKey(targetEdge, targetNode);
+        if (settledEntries.get(edgeKey)) {
+            return;
         }
-        alreadyRun = true;
+
         while (!priorityQueue.isEmpty()) {
             CHEntry currEdge = priorityQueue.poll();
-            if (currEdge.incEdge == targetEdge && currEdge.adjNode == targetNode)
+            if (currEdge.incEdge == targetEdge && currEdge.adjNode == targetNode) {
+                // put the entry back for future searches
+                priorityQueue.add(currEdge);
                 break;
+            }
 
             CHEdgeIterator iter = outEdgeExplorer.setBaseNode(currEdge.adjNode);
             while (iter.next()) {
@@ -112,6 +118,7 @@ public class WitnessPathFinder {
                     priorityQueue.add(entry);
                 }
             }
+            settledEntries.set(getEdgeKey(currEdge.incEdge, currEdge.adjNode));
         }
     }
 
@@ -137,6 +144,7 @@ public class WitnessPathFinder {
     private void initCollections(int size) {
         priorityQueue = new PriorityQueue<>(size);
         chEntries = new GHIntObjectHashMap<>(size);
+        settledEntries = new GHBitSetImpl(size);
     }
 
 }
