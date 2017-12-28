@@ -17,13 +17,11 @@
  */
 package com.graphhopper.routing;
 
-import com.graphhopper.routing.ch.EdgeBasedPrepareContractionHierarchies;
+import com.graphhopper.routing.ch.PrepareContractionHierarchies;
 import com.graphhopper.routing.util.EncodingManager;
+import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.RAMDirectory;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 import org.junit.Test;
 
 import java.util.List;
@@ -43,9 +41,9 @@ public class DijkstraBidirectionEdgeCHTest extends AbstractRoutingAlgorithmTeste
 
     @Override
     public RoutingAlgorithmFactory createFactory(GraphHopperStorage ghStorage, AlgorithmOptions opts) {
-        EdgeBasedPrepareContractionHierarchies ch = new EdgeBasedPrepareContractionHierarchies(
-                ghStorage, getGraph(ghStorage, opts.getWeighting()), opts.getWeighting())
-                .usingRandomContractionOrder();
+        PrepareContractionHierarchies ch = new PrepareContractionHierarchies(
+                new GHDirectory("", DAType.RAM_INT), ghStorage, getGraph(ghStorage, opts.getWeighting()), opts.getWeighting(),
+                TraversalMode.EDGE_BASED_2DIR);
         ch.doWork();
         return ch;
     }

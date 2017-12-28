@@ -22,7 +22,7 @@ import com.graphhopper.util.CHEdgeIteratorState;
 import com.graphhopper.util.EdgeIteratorState;
 
 /**
- * Only certain nodes are accepted and therefore the others are ignored.
+ * Only accepts edges leading to equal and higher level nodes. Used in CH preparation.
  * <p>
  *
  * @author Peter Karich

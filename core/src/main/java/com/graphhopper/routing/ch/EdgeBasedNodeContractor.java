@@ -46,6 +46,7 @@ public class EdgeBasedNodeContractor implements NodeContractor {
     private EdgeExplorer loopAvoidanceInEdgeExplorer;
     private EdgeExplorer loopAvoidanceOutEdgeExplorer;
     private int maxLevel;
+    private int addedShortcuts;
 
     public EdgeBasedNodeContractor(GraphHopperStorage ghStorage, CHGraph prepareGraph, TurnWeighting turnWeighting, TraversalMode traversalMode) {
         this.ghStorage = ghStorage;
@@ -110,13 +111,11 @@ public class EdgeBasedNodeContractor implements NodeContractor {
                 if (isContracted(toNode) || toNode == node)
                     continue;
 
-                // todo: need a better estimation for max weight
-                double maxWeight = Double.POSITIVE_INFINITY;
                 int targetEdge = outgoingEdges.getLastOrigEdge();
                 // todo: reuse witnesspath finder for different outgoing edges
                 WitnessPathFinder witnessPathFinder = new WitnessPathFinder(prepareGraph, turnWeighting, traversalMode,
                         initialEntries, fromNode);
-                witnessPathFinder.findTarget(maxWeight, targetEdge, toNode);
+                witnessPathFinder.findTarget(targetEdge, toNode);
                 CHEntry entry = witnessPathFinder.getFoundEntry(targetEdge, toNode);
                 LOGGER.trace("Witness path search to outgoing edge yielded entry {}", entry);
                 if (bestPathIsValidAndRequiresNode(entry, node, incomingEdges, outgoingEdges) &&
@@ -131,8 +130,7 @@ public class EdgeBasedNodeContractor implements NodeContractor {
 
     @Override
     public int getAddedShortcutsCount() {
-        // todo
-        return 0;
+        return addedShortcuts;
     }
 
     @Override
@@ -250,15 +248,18 @@ public class EdgeBasedNodeContractor implements NodeContractor {
         while (root.parent.edge != EdgeIterator.NO_EDGE) {
             root = root.getParent();
         }
-        if (root.parent.adjNode == chEntry.adjNode) {
-            // here we misuse root.parent.incEdge as first orig edge of the potential shortcut
-            if (loopShortcutNecessary(chEntry.adjNode, root.getParent().incEdge,
-                    chEntry.incEdge, chEntry.weight)) {
-                addShortcut(root, chEntry);
-            }
+        if (root.parent.adjNode == chEntry.adjNode &&
+                // here we misuse root.parent.incEdge as first orig edge of the potential shortcut
+                !loopShortcutNecessary(
+                        chEntry.adjNode, root.getParent().incEdge, chEntry.incEdge, chEntry.weight)) {
+            return;
         } else {
-            addShortcut(root, chEntry);
+            handleShortcut(root, chEntry);
         }
+    }
+
+    private void handleShortcut(CHEntry edgeFrom, CHEntry edgeTo) {
+        addShortcut(edgeFrom, edgeTo);
     }
 
     private boolean loopShortcutNecessary(int node, int firstOrigEdge, int lastOrigEdge, double loopWeight) {
@@ -292,7 +293,7 @@ public class EdgeBasedNodeContractor implements NodeContractor {
         int from = edgeFrom.parent.adjNode;
         int adjNode = edgeTo.adjNode;
         long direction = PrepareEncoder.getScFwdDir();
-        LOGGER.debug("Adding shortcut from {} to {}, weight: {}, firstOrigEdge: {}, lastOrigEdge: {}",
+        LOGGER.trace("Adding shortcut from {} to {}, weight: {}, firstOrigEdge: {}, lastOrigEdge: {}",
                 from, adjNode, edgeTo.weight, edgeFrom.getParent().incEdge, edgeTo.incEdge);
         CHEdgeIteratorState shortcut = prepareGraph.shortcut(from, adjNode);
         // we need to set flags first because they overwrite weight etc
@@ -301,6 +302,7 @@ public class EdgeBasedNodeContractor implements NodeContractor {
                 // this is a bit of a hack, we misuse incEdge of the root entry to store the first orig edge
                 .setOuterOrigEdges(edgeFrom.getParent().incEdge, edgeTo.incEdge)
                 .setWeight(edgeTo.weight);
+        addedShortcuts++;
         CHEntry entry = new CHEntry(
                 shortcut.getEdge(), shortcut.getEdge(), edgeTo.adjNode, edgeTo.weight);
         entry.parent = edgeFrom.parent;

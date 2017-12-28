@@ -59,7 +59,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private CHEdgeExplorer vehicleAllExplorer;
     private CHEdgeExplorer vehicleAllTmpExplorer;
     private int maxLevel;
-    // the most important nodes comes last
+    // nodes with highest priority come last
     private GHTreeMapComposed sortedNodes;
     private int oldPriorities[];
     private double meanDegree;
@@ -445,7 +445,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     private NodeContractor createNodeContractor(Graph graph, TraversalMode traversalMode) {
         if (traversalMode.isEdgeBased()) {
             TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
-            // todo: shall we support TraversalMode.EDGE_BASED_2DIR_UTURN
+            // todo: shall we support TraversalMode.EDGE_BASED_2DIR_UTURN ?
             return new EdgeBasedNodeContractor(ghStorage, prepareGraph, chTurnWeighting, TraversalMode.EDGE_BASED_2DIR);
         } else {
             return new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting);

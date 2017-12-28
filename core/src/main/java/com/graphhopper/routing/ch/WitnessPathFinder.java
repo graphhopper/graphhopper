@@ -1,3 +1,20 @@
+/*
+ *  Licensed to GraphHopper GmbH under one or more contributor
+ *  license agreements. See the NOTICE file distributed with this work for
+ *  additional information regarding copyright ownership.
+ *
+ *  GraphHopper GmbH licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except in
+ *  compliance with the License. You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
 package com.graphhopper.routing.ch;
 
 import com.carrotsearch.hppc.IntObjectMap;
@@ -43,23 +60,18 @@ public class WitnessPathFinder {
 
     private void initEntries(List<CHEntry> initialEntries) {
         for (CHEntry chEntry : initialEntries) {
-            CHEdgeIteratorState edgeIteratorState = graph.getEdgeIteratorState(chEntry.incEdge, chEntry.adjNode);
-            //more traversal key mess ...
-            int traversalId = GHUtility.createEdgeKey(edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode(),
-                    edgeIteratorState.getEdge(), false);
+            int traversalId = getEdgeKey(chEntry.incEdge, chEntry.adjNode);
             chEntries.put(traversalId, chEntry);
         }
     }
 
     public CHEntry getFoundEntry(int edge, int adjNode) {
-        // todo: this is similar to some code in EdgeBasedNodeContractor and should be cleaned up, see comments there
-        CHEdgeIteratorState eis = graph.getEdgeIteratorState(edge, adjNode);
-        int edgeKey = GHUtility.createEdgeKey(eis.getBaseNode(), eis.getAdjNode(), eis.getEdge(), false);
+        int edgeKey = getEdgeKey(edge, adjNode);
         CHEntry entry = chEntries.get(edgeKey);
         return entry != null ? entry : new CHEntry(edge, edge, adjNode, Double.POSITIVE_INFINITY);
     }
 
-    public void findTarget(double maxWeight, int targetEdge, int targetNode) {
+    public void findTarget(int targetEdge, int targetNode) {
         // todo: we should allow rerunning the search for different target edges and max weights and thereby reuse
         // results from previous searches
         // todo: clean-up & optimize
@@ -69,7 +81,7 @@ public class WitnessPathFinder {
         alreadyRun = true;
         while (!priorityQueue.isEmpty()) {
             CHEntry currEdge = priorityQueue.poll();
-            if ((currEdge.incEdge == targetEdge && currEdge.adjNode == targetNode) || currEdge.weight > maxWeight)
+            if (currEdge.incEdge == targetEdge && currEdge.adjNode == targetNode)
                 break;
 
             CHEdgeIterator iter = outEdgeExplorer.setBaseNode(currEdge.adjNode);
@@ -101,6 +113,12 @@ public class WitnessPathFinder {
                 }
             }
         }
+    }
+
+    private int getEdgeKey(int edge, int adjNode) {
+        // todo: this is similar to some code in EdgeBasedNodeContractor and should be cleaned up, see comments there
+        CHEdgeIteratorState eis = graph.getEdgeIteratorState(edge, adjNode);
+        return GHUtility.createEdgeKey(eis.getBaseNode(), eis.getAdjNode(), eis.getEdge(), false);
     }
 
     private CHEntry createEntry(CHEdgeIterator iter, CHEntry parent, double weight) {

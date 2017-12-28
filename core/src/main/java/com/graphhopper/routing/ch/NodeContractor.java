@@ -25,7 +25,7 @@ public interface NodeContractor {
     void setMaxVisitedNodes(int maxVisitedNodes);
 
     /**
-     * Calculates the priority of a node v without changing the graph. 
+     * Calculates the priority of a node v without changing the graph. Lower (!!) priority nodes are contracted first.
      */
     int calculatePriority(int node);
 
