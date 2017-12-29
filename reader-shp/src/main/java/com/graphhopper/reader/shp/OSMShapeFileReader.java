@@ -62,7 +62,7 @@ public class OSMShapeFileReader extends ShapeFileReader {
     private static final Logger LOGGER = LoggerFactory.getLogger(OSMShapeFileReader.class);
     private final HashSet<EdgeAddedListener> edgeAddedListeners = new HashSet<>();
     private int nextNodeId = FIRST_NODE_ID;
-    private final String encoding= "utf8";
+    private final String encoding = "utf8";
 
     public OSMShapeFileReader(GraphHopperStorage ghStorage) {
         super(ghStorage);
@@ -245,6 +245,12 @@ public class OSMShapeFileReader extends ShapeFileReader {
     @Override
     public DataReader setWayPointMaxDistance(double wayPointMaxDistance) {
         // TODO Auto-generated method stub
+        return this;
+    }
+
+    @Override
+    public DataReader setSmoothElevation(boolean smoothElevation) {
+        // TODO implement elevation smoothing for shape files
         return this;
     }
 

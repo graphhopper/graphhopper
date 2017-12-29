@@ -36,6 +36,8 @@ public interface DataReader {
 
     DataReader setWayPointMaxDistance(double wayPointMaxDistance);
 
+    DataReader setSmoothElevation(boolean smoothElevation);
+
     /**
      * This method triggers reading the underlying data to create a graph
      */
