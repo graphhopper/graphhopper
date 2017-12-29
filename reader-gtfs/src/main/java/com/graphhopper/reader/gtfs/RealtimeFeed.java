@@ -340,6 +340,7 @@ public class RealtimeFeed {
                 logger.trace("stop_sequence {} scheduled departure {} updated departure {}", i, previousOriginalStopTime.departure_time, updatedPreviousStopTime.departure_time);
                 time = updatedPreviousStopTime.departure_time;
                 stopTimes.add(updatedPreviousStopTime);
+                logger.trace("Number of stop times: {}", stopTimes.size());
             }
 
             final StopTime originalStopTime = feed.stop_times.get(new Fun.Tuple2(tripUpdate.getTrip().getTripId(), stopTimeUpdate.getStopSequence()));
@@ -361,6 +362,7 @@ public class RealtimeFeed {
                 logger.trace("stop_sequence {} scheduled departure {} updated departure {}", stopTimeUpdate.getStopSequence(), originalStopTime.departure_time, updatedStopTime.departure_time);
                 time = updatedStopTime.departure_time;
                 stopTimes.add(updatedStopTime);
+                logger.trace("Number of stop times: {}", stopTimes.size());
             } else if (stopTimeUpdate.getScheduleRelationship() == NO_DATA) {
             } else if (tripUpdate.getTrip().getScheduleRelationship() == GtfsRealtime.TripDescriptor.ScheduleRelationship.ADDED) {
                 final StopTime stopTime = new StopTime();
@@ -371,12 +373,13 @@ public class RealtimeFeed {
                 stopTime.arrival_time = (int) Duration.between(arrival_time.truncatedTo(ChronoUnit.DAYS), arrival_time).getSeconds();
                 final ZonedDateTime departure_time = Instant.ofEpochSecond(stopTimeUpdate.getArrival().getTime()).atZone(ZoneId.of(agency.agency_timezone));
                 stopTime.departure_time = (int) Duration.between(departure_time.truncatedTo(ChronoUnit.DAYS), departure_time).getSeconds();
-                System.out.println(delay);
                 stopTimes.add(stopTime);
+                logger.trace("Number of stop times: {}", stopTimes.size());
             } else {
                 throw new RuntimeException();
             }
         }
+        logger.trace("Number of stop times: {}", stopTimes.size());
         BitSet validOnDay = new BitSet(); // Not valid on any day. Just a template.
         return new GtfsReader.TripWithStopTimes(trip, stopTimes, validOnDay);
     }
