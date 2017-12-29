@@ -86,6 +86,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean allowWrites = true;
     private String preferredLanguage = "";
     private boolean fullyLoaded = false;
+    private boolean smoothElevation = false;
     // for routing
     private int maxRoundTripRetries = 3;
     private boolean simplifyResponse = true;
@@ -555,6 +556,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         // elevation
         String eleProviderStr = toLowerCase(args.get("graph.elevation.provider", "noop"));
+        this.smoothElevation = args.getBool("graph.elevation.smoothing", false);
 
         // keep fallback until 0.8
         boolean eleCalcMean = args.has("graph.elevation.calcmean")
@@ -703,7 +705,8 @@ public class GraphHopper implements GraphHopperAPI {
         return reader.setFile(new File(dataReaderFile)).
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
-                setWayPointMaxDistance(dataReaderWayPointMaxDistance);
+                setWayPointMaxDistance(dataReaderWayPointMaxDistance).
+                setSmoothElevation(this.smoothElevation);
     }
 
     /**
@@ -1271,4 +1274,5 @@ public class GraphHopper implements GraphHopperAPI {
     public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
         this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
     }
+
 }

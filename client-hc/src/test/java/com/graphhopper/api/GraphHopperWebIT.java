@@ -120,11 +120,11 @@ public class GraphHopperWebIT {
                 addPoint(new GHPoint(52.399067, 13.469238));
 
         GHResponse res = gh.route(req);
-        assertEquals("Turn right onto B 246", res.getBest().getInstructions().get(4).getName());
+        assertEquals("Continue onto B 96", res.getBest().getInstructions().get(4).getName());
 
         req.getHints().put("turn_description", false);
         res = gh.route(req);
-        assertEquals("B 246", res.getBest().getInstructions().get(4).getName());
+        assertEquals("B 96", res.getBest().getInstructions().get(4).getName());
     }
 
     @Test

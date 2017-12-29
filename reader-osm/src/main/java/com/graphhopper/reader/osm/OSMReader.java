@@ -29,6 +29,7 @@ import com.graphhopper.coll.GHLongLongHashMap;
 import com.graphhopper.coll.LongIntMap;
 import com.graphhopper.reader.*;
 import com.graphhopper.reader.dem.ElevationProvider;
+import com.graphhopper.reader.dem.GraphElevationSmoothing;
 import com.graphhopper.reader.osm.OSMTurnRelation.TurnCostTableEntry;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
@@ -85,6 +86,7 @@ public class OSMReader implements DataReader {
     private final DistanceCalc distCalc = Helper.DIST_EARTH;
     private final DistanceCalc3D distCalc3D = Helper.DIST_3D;
     private final DouglasPeucker simplifyAlgo = new DouglasPeucker();
+    private boolean smoothElevation = false;
     private final boolean exitOnlyPillarNodeException = true;
     private final Map<FlagEncoder, EdgeExplorer> outExplorerMap = new HashMap<FlagEncoder, EdgeExplorer>();
     private final Map<FlagEncoder, EdgeExplorer> inExplorerMap = new HashMap<FlagEncoder, EdgeExplorer>();
@@ -681,6 +683,10 @@ public class OSMReader implements DataReader {
         if (pointList.getDimension() != nodeAccess.getDimension())
             throw new AssertionError("Dimension does not match for pointList vs. nodeAccess " + pointList.getDimension() + " <-> " + nodeAccess.getDimension());
 
+        // Smooth the elevation before calculating the distance because the distance will be incorrect if calculated afterwards
+        if (this.smoothElevation)
+            pointList = GraphElevationSmoothing.smoothElevation(pointList);
+
         double towerNodeDistance = 0;
         double prevLat = pointList.getLatitude(0);
         double prevLon = pointList.getLongitude(0);
@@ -879,6 +885,12 @@ public class OSMReader implements DataReader {
     public OSMReader setWayPointMaxDistance(double maxDist) {
         doSimplify = maxDist > 0;
         simplifyAlgo.setMaxDistance(maxDist);
+        return this;
+    }
+
+    @Override
+    public DataReader setSmoothElevation(boolean smoothElevation) {
+        this.smoothElevation = smoothElevation;
         return this;
     }
 
