@@ -25,6 +25,7 @@ import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
 import com.graphhopper.util.CmdArgs;
+import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.CH;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -254,10 +255,11 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
 
         String entriesStr = "";
         for (PrepareContractionHierarchies p : preparations) {
-            if (p.getWeighting().matches(map))
+            boolean edgeBased = map.getBool(Parameters.Routing.EDGE_BASED, false);
+            if (p.isEdgeBased() == edgeBased && p.getWeighting().matches(map))
                 return p;
 
-            entriesStr += p.getWeighting() + ", ";
+            entriesStr += p.getWeighting() + "|" + (edgeBased ? "edge" : "node") + ", ";
         }
 
         throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries " + entriesStr);

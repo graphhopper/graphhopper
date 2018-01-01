@@ -197,6 +197,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         return algo;
     }
 
+    public boolean isEdgeBased() {
+        return traversalMode.isEdgeBased();
+    }
+
     private void initFromGraph() {
         ghStorage.freeze();
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
