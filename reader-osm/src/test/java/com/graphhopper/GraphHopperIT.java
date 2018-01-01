@@ -1011,6 +1011,8 @@ public class GraphHopperIT {
     @Test
     public void testTurnCostsOnOffCH() {
         // todo: make it possible to use turn costs on/off at query time (?)
+        // if not there should be an appropriate error message saying that the graph has not been prepared 
+        // for edge/node based traversal
         GraphHopper tmpHopper = new GraphHopperOSM().
                 setOSMFile(DIR + "/moscow.osm.gz").
                 setStoreOnFlush(true).
@@ -1030,6 +1032,36 @@ public class GraphHopperIT {
         // with turn costs                
         req.getHints().put(Routing.EDGE_BASED, "true");
         rsp = tmpHopper.route(req);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
         assertEquals(1044, rsp.getBest().getDistance(), 1);
+    }
+
+    @Test
+    public void testCHOnOffWithTurnCosts() {
+        GraphHopper tmpHopper = new GraphHopperOSM().
+                setOSMFile(DIR + "/moscow.osm.gz").
+                setStoreOnFlush(true).
+                setCHEnabled(true).
+                setGraphHopperLocation(tmpGraphFile).
+                setEncodingManager(new EncodingManager("car|turn_costs=true"));
+        tmpHopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        tmpHopper.importOrLoad();
+
+        // with CH
+        GHRequest req = new GHRequest(55.813357, 37.5958585, 55.811042, 37.594689);
+        req.getHints().put(Routing.EDGE_BASED, "true");
+        req.getHints().put(CH.DISABLE, "false");
+        GHResponse rsp1 = tmpHopper.route(req);
+        assertFalse(rsp1.getErrors().toString(), rsp1.hasErrors());
+        assertEquals(1044, rsp1.getBest().getDistance(), 1);
+
+        // without CH      
+        req.getHints().put(Routing.EDGE_BASED, "true");
+        req.getHints().put(CH.DISABLE, "true");
+        GHResponse rsp2 = tmpHopper.route(req);
+        assertFalse(rsp2.getErrors().toString(), rsp2.hasErrors());
+        assertEquals(1044, rsp2.getBest().getDistance(), 1);
+        // just a quick check that we did not run the same algorithm twice
+        assertNotEquals(rsp1.getHints().get("visited_nodes.sum", "_"), rsp2.getHints().get("visited_nodes.sum", "_"));
     }
 }
