@@ -1046,8 +1046,8 @@ public class GraphHopper implements GraphHopperAPI {
                     queryGraph = new QueryGraph(ghStorage);
                     queryGraph.lookup(qResults);
                     weighting = createWeighting(hints, encoder, queryGraph);
-                    ghRsp.addDebugInfo("tmode:" + tMode.toString());
                 }
+                ghRsp.addDebugInfo("tmode:" + tMode.toString());
 
                 int maxVisitedNodesForRequest = hints.getInt(Routing.MAX_VISITED_NODES, maxVisitedNodes);
                 if (maxVisitedNodesForRequest > maxVisitedNodes)
@@ -1075,7 +1075,7 @@ public class GraphHopper implements GraphHopperAPI {
                         setPathDetailsBuilders(pathBuilderFactory, request.getPathDetails()).
                         setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
 
-                if(request.hasFavoredHeading(0))
+                if (request.hasFavoredHeading(0))
                     pathMerger.setFavoredHeading(request.getFavoredHeading(0));
 
                 if (routingTemplate.isReady(pathMerger, tr))

@@ -259,7 +259,7 @@ public class CHAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             if (p.isEdgeBased() == edgeBased && p.getWeighting().matches(map))
                 return p;
 
-            entriesStr += p.getWeighting() + "|" + (edgeBased ? "edge" : "node") + ", ";
+            entriesStr += p.getWeighting() + "|" + (p.isEdgeBased() ? "edge" : "node") + ", ";
         }
 
         throw new IllegalArgumentException("Cannot find CH RoutingAlgorithmFactory for weighting map " + map + " in entries " + entriesStr);
