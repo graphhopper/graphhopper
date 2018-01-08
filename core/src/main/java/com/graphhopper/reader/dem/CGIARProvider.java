@@ -126,7 +126,7 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     }
 
     @Override
-    boolean outsideSupportedArea(double lat, double lon) {
+    boolean isOutsideSupportedArea(double lat, double lon) {
         return lat >= 60 || lat <= -56;
     }
 

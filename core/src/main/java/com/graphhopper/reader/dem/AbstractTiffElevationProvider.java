@@ -66,7 +66,7 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
     /**
      * Return true if the coordinates are outside of the supported area
      */
-    abstract boolean outsideSupportedArea(double lat, double lon);
+    abstract boolean isOutsideSupportedArea(double lat, double lon);
 
     /**
      * The smallest lat that is still in the HeightTile
@@ -86,7 +86,7 @@ public abstract class AbstractTiffElevationProvider extends AbstractElevationPro
     @Override
     public double getEle(double lat, double lon) {
         // Return fast, if there is no data available
-        if (outsideSupportedArea(lat, lon))
+        if (isOutsideSupportedArea(lat, lon))
             return 0;
 
         lat = (int) (lat * precision) / precision;
