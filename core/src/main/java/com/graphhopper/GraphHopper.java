@@ -86,6 +86,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean allowWrites = true;
     private String preferredLanguage = "";
     private boolean fullyLoaded = false;
+    private boolean smoothElevation = false;
     // for routing
     private int maxRoundTripRetries = 3;
     private boolean simplifyResponse = true;
@@ -555,6 +556,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         // elevation
         String eleProviderStr = toLowerCase(args.get("graph.elevation.provider", "noop"));
+        this.smoothElevation = args.getBool("graph.elevation.smoothing", false);
 
         // keep fallback until 0.8
         boolean eleCalcMean = args.has("graph.elevation.calcmean")
@@ -705,7 +707,8 @@ public class GraphHopper implements GraphHopperAPI {
         return reader.setFile(new File(dataReaderFile)).
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
-                setWayPointMaxDistance(dataReaderWayPointMaxDistance);
+                setWayPointMaxDistance(dataReaderWayPointMaxDistance).
+                setSmoothElevation(this.smoothElevation);
     }
 
     /**
@@ -924,7 +927,7 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (weighting == null)
-            throw new IllegalArgumentException("weighting " + weighting + " not supported");
+            throw new IllegalArgumentException("weighting " + weightingStr + " not supported");
 
         if (hintsMap.has(Routing.BLOCK_AREA)) {
             String blockAreaStr = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
@@ -1077,7 +1080,7 @@ public class GraphHopper implements GraphHopperAPI {
                         setPathDetailsBuilders(pathBuilderFactory, request.getPathDetails()).
                         setSimplifyResponse(simplifyResponse && wayPointMaxDistance > 0);
 
-                if(request.hasFavoredHeading(0))
+                if (request.hasFavoredHeading(0))
                     pathMerger.setFavoredHeading(request.getFavoredHeading(0));
 
                 if (routingTemplate.isReady(pathMerger, tr))
@@ -1273,4 +1276,5 @@ public class GraphHopper implements GraphHopperAPI {
     public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
         this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
     }
+
 }

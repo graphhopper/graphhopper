@@ -3,6 +3,10 @@ var tfAddition = '';
 if (ghenv.thunderforest.api_key)
     tfAddition = '?apikey=' + ghenv.thunderforest.api_key;
 
+var osAPIKey = 'mapsgraph-bf48cc0b';
+if (ghenv.omniscale.api_key)
+    osAPIKey = ghenv.omniscale.api_key;
+
 var osmAttr = '&copy; <a href="http://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors';
 
 // Automatically enable high-DPI tiles if provider and browser support it.
@@ -12,9 +16,9 @@ var lyrk = L.tileLayer('https://tiles.lyrk.org/' + (retinaTiles ? 'lr' : 'ls') +
     attribution: osmAttr + ', <a href="https://geodienste.lyrk.de/">Lyrk</a>'
 });
 
-var omniscale = L.tileLayer.wms('https://maps.omniscale.net/v1/mapsgraph-bf48cc0b/tile', {
+var omniscale = L.tileLayer('https://maps.omniscale.net/v2/' +osAPIKey + '/style.default' + (retinaTiles ? '/hq.true' : '') + '/{z}/{x}/{y}.png', {
     layers: 'osm',
-    attribution: osmAttr + ', &copy; <a href="http://maps.omniscale.com/">Omniscale</a>'
+    attribution: osmAttr + ', &copy; <a href="https://maps.omniscale.com/">Omniscale</a>'
 });
 
 var openMapSurfer = L.tileLayer('http://korona.geog.uni-heidelberg.de/tiles/roads/x={x}&y={y}&z={z}', {
