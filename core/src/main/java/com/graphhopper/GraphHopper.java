@@ -571,23 +571,25 @@ public class GraphHopper implements GraphHopperAPI {
         if (baseURL.isEmpty())
             args.get("graph.elevation.baseurl", "");
 
+        boolean removeTempElevationFiles = args.getBool("graph.elevation.cgiar.clear", true);
+        removeTempElevationFiles = args.getBool("graph.elevation.clear", removeTempElevationFiles);
+
         DAType elevationDAType = DAType.fromString(args.get("graph.elevation.dataaccess", "MMAP"));
         ElevationProvider tmpProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("srtm")) {
-            tmpProvider = new SRTMProvider();
+            tmpProvider = new SRTMProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("cgiar")) {
-            CGIARProvider cgiarProvider = new CGIARProvider();
-            cgiarProvider.setAutoRemoveTemporaryFiles(args.getBool("graph.elevation.cgiar.clear", true));
-            tmpProvider = cgiarProvider;
+            tmpProvider = new CGIARProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("gmted")) {
-            tmpProvider = new GMTEDProvider();
+            tmpProvider = new GMTEDProvider(cacheDirStr);
+        } else if (eleProviderStr.equalsIgnoreCase("srtmgl1")) {
+            tmpProvider = new SRTMGL1Provider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("multi")) {
-            tmpProvider = new MultiSourceElevationProvider();
+            tmpProvider = new MultiSourceElevationProvider(cacheDirStr);
         }
 
+        tmpProvider.setAutoRemoveTemporaryFiles(removeTempElevationFiles);
         tmpProvider.setCalcMean(eleCalcMean);
-        if (!cacheDirStr.isEmpty())
-            tmpProvider.setCacheDir(new File(cacheDirStr));
         if (!baseURL.isEmpty())
             tmpProvider.setBaseURL(baseURL);
         tmpProvider.setDAType(elevationDAType);
