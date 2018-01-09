@@ -285,7 +285,7 @@ class TripFromLabel {
 
             DecimalEncodedValue maxSpeedEnc = encoder.getDecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED);
             BooleanEncodedValue roundaboutEnc = encoder.getBooleanEncodedValue(TagParserFactory.ROUNDABOUT);
-            BooleanEncodedValue laneInfoEnc = encoder.getBooleanEncodedValue(TagParserFactory.TURN_LANE_INFO);
+            BooleanEncodedValue laneInfoEnc = encoder.getBooleanEncodedValue(TagParserFactory.CAR_TURN_LANE_INFO);
             InstructionList instructions = new InstructionList(tr);
             InstructionsFromEdges instructionsFromEdges = new InstructionsFromEdges(path.get(1).edge.edgeIteratorState.getBaseNode(),
                     graph, weighting, graph.getNodeAccess(), accessor, maxSpeedEnc, roundaboutEnc, laneInfoEnc, null, instructions);

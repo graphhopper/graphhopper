@@ -22,7 +22,6 @@ import com.graphhopper.reader.ReaderWay;
 import com.graphhopper.routing.profiles.*;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
-import com.graphhopper.util.Lane;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
@@ -154,7 +153,10 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
             }
         };
         tpMap.put(prefix + "access", TagParserFactory.Car.createAccess(new BooleanEncodedValue(prefix + "access", true), filter));
-        tpMap.put(TagParserFactory.TURN_LANE_INFO, TagParserFactory.Car.createTurnLane(new IntEncodedValue(TagParserFactory.TURN_LANE_INFO, 28), TagParserFactory.Car.createTurnLaneMap()));
+
+        if (laneInfoEnabled) {
+            tpMap.put(TagParserFactory.CAR_TURN_LANE_INFO, TagParserFactory.Car.createTurnLane(new IntEncodedValue(TagParserFactory.CAR_TURN_LANE_INFO, 28), TagParserFactory.Car.createTurnLaneMap()));
+        }
 
         return tpMap;
     }

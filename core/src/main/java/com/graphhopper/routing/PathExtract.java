@@ -38,7 +38,8 @@ public class PathExtract {
 
         maxSpeedEnc = encodingManager.getEncodedValue(TagParserFactory.CAR_MAX_SPEED, DecimalEncodedValue.class);
         roundaboutEnc = encodingManager.getEncodedValue(TagParserFactory.ROUNDABOUT, BooleanEncodedValue.class);
-        laneInfoEnc = encodingManager.getEncodedValue(TagParserFactory.TURN_LANE_INFO, IntEncodedValue.class);
+        laneInfoEnc = encodingManager.supports(TagParserFactory.CAR_TURN_LANE_INFO) ?
+                encodingManager.getEncodedValue(TagParserFactory.CAR_TURN_LANE_INFO, IntEncodedValue.class) : null;
         this.encodingManager = encodingManager;
     }
 

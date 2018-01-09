@@ -59,11 +59,11 @@ public class TagParserFactory {
     public static final String CAR_ACCESS = "car.access";
     public static final String CAR_MAX_SPEED = "car.max_speed";
     public static final String CAR_AVERAGE_SPEED = "car.average_speed";
+    public static final String CAR_TURN_LANE_INFO = "car.lane_info";
     public static final String BIKE_ACCESS = "bike.access";
     public static final String BIKE_AVERAGE_SPEED = "bike.average_speed";
     public static final String FOOT_ACCESS = "foot.access";
     public static final String FOOT_AVERAGE_SPEED = "foot.average_speed";
-    public static final String TURN_LANE_INFO = "car.lane_info";
 
     public static TagParser createRoundabout(final BooleanEncodedValue ev) {
         return new AbstractTagParser(ev) {

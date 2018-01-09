@@ -19,7 +19,6 @@ package com.graphhopper.routing;
 
 import com.graphhopper.routing.bwdcompat.AnnotationAccessor;
 import com.graphhopper.routing.profiles.*;
-import com.graphhopper.routing.util.CarFlagEncoder;
 import com.graphhopper.routing.util.EdgeFilter;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.util.LaneInfoDecoder;
@@ -29,6 +28,7 @@ import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.*;
 import com.graphhopper.util.shapes.GHPoint;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -77,7 +77,6 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     private int prevNode;
     private double prevOrientation;
     private Instruction prevInstruction;
-    private long prevFlags;
     private boolean prevInRoundabout;
     private String prevName;
     private InstructionAnnotation prevAnnotation;
@@ -249,21 +248,24 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
     }
 
     private List<Lane> getLanesInfo(boolean reverse, EdgeIteratorState prevEdge, int sign) {
-        int laneInfo = laneInfoEnc.getInt(reverse, prevEdge.getData());
-        if (encodingManager == null) {
-            return Collections.emptyList();
-        }
-        LaneInfoDecoder turnLaneDecoder = (LaneInfoDecoder) this.encodingManager.getParser(TagParserFactory.TURN_LANE_INFO);
-        List<Lane> lanes = turnLaneDecoder.decodeTurnLanesToList((long) laneInfo);
-        for (Lane lane : lanes) {
-            if (lanes.size() == 1) {
-                lane.setValid(true);
-            } else if (sign < 0 && lane.getDirection() != "merge_to_left" && lane.getDirection().contains("left")) {
-                lane.setValid(true);
-            } else if (sign == 0 && (lane.getDirectionCode() == TagParserFactory.Car.NONE_LANE_CODE || lane.getDirection().contains("through"))) {
-                lane.setValid(true);
-            } else if (sign > 0 && lane.getDirection() != "merge_to_right" && lane.getDirection().contains("right")) {
-                lane.setValid(true);
+        List<Lane> lanes = new ArrayList<>();
+        if (laneInfoEnc != null) {
+            int laneInfo = laneInfoEnc.getInt(reverse, prevEdge.getData());
+            if (encodingManager == null) {
+                return Collections.emptyList();
+            }
+            LaneInfoDecoder turnLaneDecoder = (LaneInfoDecoder) this.encodingManager.getParser(TagParserFactory.CAR_TURN_LANE_INFO);
+            lanes = turnLaneDecoder.decodeTurnLanesToList((long) laneInfo);
+            for (Lane lane : lanes) {
+                if (lanes.size() == 1) {
+                    lane.setValid(true);
+                } else if (sign < 0 && lane.getDirection() != "merge_to_left" && lane.getDirection().contains("left")) {
+                    lane.setValid(true);
+                } else if (sign == 0 && (lane.getDirectionCode() == TagParserFactory.Car.NONE_LANE_CODE || lane.getDirection().contains("through"))) {
+                    lane.setValid(true);
+                } else if (sign > 0 && lane.getDirection() != "merge_to_right" && lane.getDirection().contains("right")) {
+                    lane.setValid(true);
+                }
             }
         }
         return lanes;
