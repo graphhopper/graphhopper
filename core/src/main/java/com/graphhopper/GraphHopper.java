@@ -552,7 +552,7 @@ public class GraphHopper implements GraphHopperAPI {
                     }
                 };
                 setEncodingManager(new EncodingManager.Builder(bytesForFlags).
-                        addGlobalEncodedValues().
+                        addGlobalEncodedValues(false, false).
                         add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED, 5, 0, 5, false), filter)).
                         add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, false), speedMap)).
                         add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).
