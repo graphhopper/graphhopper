@@ -21,29 +21,36 @@ public class LaneInfoTagParser extends TagParserFactory.AbstractTagParser implem
     public void parse(IntsRef ints, ReaderWay way) {
 
         String tag = way.getTag("turn:lanes");
+        String tagForward = way.getTag("turn:lanes:forward");
         Integer value;
         if (tag != null) {
-            Integer encoded = 0;
-            String[] laneTags = tag.split("\\|", -1);
-            Collections.reverse(Arrays.asList(laneTags));
-            for (int i = 0; i < laneTags.length; i++) {
-                String laneTag = laneTags[i];
-                Integer turnCode = turnLaneMap.get(laneTag);
-                if (laneTag.contains(";")) {
-                    turnCode = encodeTurnLanesWithMultipleDirections(laneTag);
-                }
-                turnCode = turnCode == null ? TagParserFactory.Car.NONE_LANE_CODE : turnCode;
-                encoded = encoded + (turnCode << (TagParserFactory.Car.LANE_MASK_SIZE * i));
-                if (encoded < 0) {
-                    encoded = TagParserFactory.Car.NONE_LANE_CODE;
-                    break;
-                }
-            }
-            value = encoded;
+            value = encodeLanes(tag);
+        } else if (tagForward != null) {
+            value = encodeLanes(tagForward);
         } else {
             value = TagParserFactory.Car.NONE_LANE_CODE;
         }
         ev.setInt(false, ints, value);
+    }
+
+    private Integer encodeLanes(String tag) {
+        Integer encoded = 0;
+        String[] laneTags = tag.split("\\|", -1);
+        Collections.reverse(Arrays.asList(laneTags));
+        for (int i = 0; i < laneTags.length; i++) {
+            String laneTag = laneTags[i];
+            Integer turnCode = turnLaneMap.get(laneTag);
+            if (laneTag.contains(";")) {
+                turnCode = encodeTurnLanesWithMultipleDirections(laneTag);
+            }
+            turnCode = turnCode == null ? TagParserFactory.Car.NONE_LANE_CODE : turnCode;
+            encoded = encoded + (turnCode << (TagParserFactory.Car.LANE_MASK_SIZE * i));
+            if (encoded < 0) {
+                encoded = TagParserFactory.Car.NONE_LANE_CODE;
+                break;
+            }
+        }
+        return encoded;
     }
 
     private Integer encodeTurnLanesWithMultipleDirections(String laneTag) {
@@ -83,7 +90,7 @@ public class LaneInfoTagParser extends TagParserFactory.AbstractTagParser implem
         return new ReaderWayFilter() {
             @Override
             public boolean accept(ReaderWay way) {
-                return way.hasTag("turn:lanes");
+                return way.hasTag("turn:lanes") || way.hasTag("turn:lanes:forward");
             }
         };
     }
