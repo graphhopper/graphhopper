@@ -86,6 +86,7 @@ public class GraphHopper implements GraphHopperAPI {
     private boolean allowWrites = true;
     private String preferredLanguage = "";
     private boolean fullyLoaded = false;
+    private boolean smoothElevation = false;
     // for routing
     private int maxRoundTripRetries = 3;
     private boolean simplifyResponse = true;
@@ -555,6 +556,7 @@ public class GraphHopper implements GraphHopperAPI {
 
         // elevation
         String eleProviderStr = toLowerCase(args.get("graph.elevation.provider", "noop"));
+        this.smoothElevation = args.getBool("graph.elevation.smoothing", false);
 
         // keep fallback until 0.8
         boolean eleCalcMean = args.has("graph.elevation.calcmean")
@@ -569,23 +571,25 @@ public class GraphHopper implements GraphHopperAPI {
         if (baseURL.isEmpty())
             args.get("graph.elevation.baseurl", "");
 
+        boolean removeTempElevationFiles = args.getBool("graph.elevation.cgiar.clear", true);
+        removeTempElevationFiles = args.getBool("graph.elevation.clear", removeTempElevationFiles);
+
         DAType elevationDAType = DAType.fromString(args.get("graph.elevation.dataaccess", "MMAP"));
         ElevationProvider tmpProvider = ElevationProvider.NOOP;
         if (eleProviderStr.equalsIgnoreCase("srtm")) {
-            tmpProvider = new SRTMProvider();
+            tmpProvider = new SRTMProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("cgiar")) {
-            CGIARProvider cgiarProvider = new CGIARProvider();
-            cgiarProvider.setAutoRemoveTemporaryFiles(args.getBool("graph.elevation.cgiar.clear", true));
-            tmpProvider = cgiarProvider;
+            tmpProvider = new CGIARProvider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("gmted")) {
-            tmpProvider = new GMTEDProvider();
+            tmpProvider = new GMTEDProvider(cacheDirStr);
+        } else if (eleProviderStr.equalsIgnoreCase("srtmgl1")) {
+            tmpProvider = new SRTMGL1Provider(cacheDirStr);
         } else if (eleProviderStr.equalsIgnoreCase("multi")) {
-            tmpProvider = new MultiSourceElevationProvider();
+            tmpProvider = new MultiSourceElevationProvider(cacheDirStr);
         }
 
+        tmpProvider.setAutoRemoveTemporaryFiles(removeTempElevationFiles);
         tmpProvider.setCalcMean(eleCalcMean);
-        if (!cacheDirStr.isEmpty())
-            tmpProvider.setCacheDir(new File(cacheDirStr));
         if (!baseURL.isEmpty())
             tmpProvider.setBaseURL(baseURL);
         tmpProvider.setDAType(elevationDAType);
@@ -703,7 +707,8 @@ public class GraphHopper implements GraphHopperAPI {
         return reader.setFile(new File(dataReaderFile)).
                 setElevationProvider(eleProvider).
                 setWorkerThreads(dataReaderWorkerThreads).
-                setWayPointMaxDistance(dataReaderWayPointMaxDistance);
+                setWayPointMaxDistance(dataReaderWayPointMaxDistance).
+                setSmoothElevation(this.smoothElevation);
     }
 
     /**
@@ -923,7 +928,7 @@ public class GraphHopper implements GraphHopperAPI {
         }
 
         if (weighting == null)
-            throw new IllegalArgumentException("weighting " + weighting + " not supported");
+            throw new IllegalArgumentException("weighting " + weightingStr + " not supported");
 
         if (hintsMap.has(Routing.BLOCK_AREA)) {
             String blockAreaStr = hintsMap.get(Parameters.Routing.BLOCK_AREA, "");
@@ -1271,4 +1276,5 @@ public class GraphHopper implements GraphHopperAPI {
     public void setNonChMaxWaypointDistance(int nonChMaxWaypointDistance) {
         this.nonChMaxWaypointDistance = nonChMaxWaypointDistance;
     }
+
 }

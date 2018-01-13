@@ -17,13 +17,8 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.storage.DAType;
 import com.graphhopper.storage.DataAccess;
-import com.graphhopper.storage.Directory;
-import com.graphhopper.storage.GHDirectory;
 import com.graphhopper.util.Downloader;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.awt.image.Raster;
 import java.io.File;
@@ -37,77 +32,27 @@ import java.util.Map;
  *
  * @author Robin Boldt
  */
-public abstract class AbstractTiffElevationProvider implements ElevationProvider {
-    final Logger logger = LoggerFactory.getLogger(getClass());
-    final Map<String, HeightTile> cacheData = new HashMap<String, HeightTile>();
-    protected Downloader downloader;
-    File cacheDir;
-    String baseUrl;
-    private Directory dir;
-    private DAType daType = DAType.MMAP;
-    boolean calcMean = false;
-    boolean autoRemoveTemporary = true;
-    long sleep = 2000;
+public abstract class AbstractTiffElevationProvider extends AbstractElevationProvider {
+    private final Map<String, HeightTile> cacheData = new HashMap<String, HeightTile>();
+    final double precision = 1e7;
 
-    public AbstractTiffElevationProvider(String baseUrl, String cacheDir, String downloaderName) {
+    private final int WIDTH;
+    private final int HEIGHT;
+
+    // Degrees of latitude covered by this tile
+    final int LAT_DEGREE;
+    // Degrees of longitude covered by this tile
+    final int LON_DEGREE;
+
+    public AbstractTiffElevationProvider(String baseUrl, String cacheDir, String downloaderName, int width, int height, int latDegree, int lonDegree) {
+        super(cacheDir);
         this.baseUrl = baseUrl;
-        this.cacheDir = new File(cacheDir);
-        downloader = new Downloader(downloaderName).setTimeout(10000);
+        this.downloader = new Downloader(downloaderName).setTimeout(10000);
+        this.WIDTH = width;
+        this.HEIGHT = height;
+        this.LAT_DEGREE = latDegree;
+        this.LON_DEGREE = lonDegree;
     }
-
-    @Override
-    public void setCalcMean(boolean eleCalcMean) {
-        calcMean = eleCalcMean;
-    }
-
-    void setSleep(long sleep) {
-        this.sleep = sleep;
-    }
-
-    /**
-     * Creating temporary files can take a long time as we need to unpack tiff as well as to fill
-     * our DataAccess object, so this option can be used to disable the default clear mechanism via
-     * specifying 'false'.
-     */
-    public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
-        this.autoRemoveTemporary = autoRemoveTemporary;
-    }
-
-    public void setDownloader(Downloader downloader) {
-        this.downloader = downloader;
-    }
-
-    @Override
-    public ElevationProvider setCacheDir(File cacheDir) {
-        if (cacheDir.exists() && !cacheDir.isDirectory())
-            throw new IllegalArgumentException("Cache path has to be a directory");
-        try {
-            this.cacheDir = cacheDir.getCanonicalFile();
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
-        }
-        return this;
-    }
-
-    protected File getCacheDir() {
-        return cacheDir;
-    }
-
-    @Override
-    public ElevationProvider setBaseURL(String baseUrl) {
-        if (baseUrl == null || baseUrl.isEmpty())
-            throw new IllegalArgumentException("baseUrl cannot be empty");
-
-        this.baseUrl = baseUrl;
-        return this;
-    }
-
-    @Override
-    public ElevationProvider setDAType(DAType daType) {
-        this.daType = daType;
-        return this;
-    }
-
 
     @Override
     public void release() {
@@ -119,9 +64,90 @@ public abstract class AbstractTiffElevationProvider implements ElevationProvider
     }
 
     /**
+     * Return true if the coordinates are outside of the supported area
+     */
+    abstract boolean isOutsideSupportedArea(double lat, double lon);
+
+    /**
+     * The smallest lat that is still in the HeightTile
+     */
+    abstract int getMinLatForTile(double lat);
+
+    /**
+     * The smallest lon that is still in the HeightTile
+     */
+    abstract int getMinLonForTile(double lon);
+
+    /**
+     * Specify the name of the file after downloading
+     */
+    abstract String getFileNameOfLocalFile(double lat, double lon);
+
+    @Override
+    public double getEle(double lat, double lon) {
+        // Return fast, if there is no data available
+        if (isOutsideSupportedArea(lat, lon))
+            return 0;
+
+        lat = (int) (lat * precision) / precision;
+        lon = (int) (lon * precision) / precision;
+        String name = getFileName(lat, lon);
+        HeightTile demProvider = cacheData.get(name);
+        if (demProvider == null) {
+            if (!cacheDir.exists())
+                cacheDir.mkdirs();
+
+            int minLat = getMinLatForTile(lat);
+            int minLon = getMinLonForTile(lon);
+            // less restrictive against boundary checking
+            demProvider = new HeightTile(minLat, minLon, WIDTH, HEIGHT, LON_DEGREE * precision, LON_DEGREE, LAT_DEGREE);
+            demProvider.setCalcMean(calcMean);
+
+            cacheData.put(name, demProvider);
+            DataAccess heights = getDirectory().find(name + ".gh");
+            demProvider.setHeights(heights);
+            boolean loadExisting = false;
+            try {
+                loadExisting = heights.loadExisting();
+            } catch (Exception ex) {
+                logger.warn("cannot load " + name + ", error: " + ex.getMessage());
+            }
+
+            if (!loadExisting) {
+                String zippedURL = getDownloadURL(lat, lon);
+                File file = new File(cacheDir, new File(getFileNameOfLocalFile(lat, lon)).getName());
+
+                try {
+                    downloadFile(file, zippedURL);
+                } catch (IOException e) {
+                    demProvider.setSeaLevel(true);
+                    // use small size on disc and in-memory
+                    heights.setSegmentSize(100).create(10).
+                            flush();
+                    return 0;
+                }
+
+                // short == 2 bytes
+                heights.create(2 * WIDTH * HEIGHT);
+
+                Raster raster = generateRasterFromFile(file, name + ".tif");
+                fillDataAccessWithElevationData(raster, heights, WIDTH);
+
+            } // loadExisting
+        }
+
+        if (demProvider.isSeaLevel())
+            return 0;
+
+        return demProvider.getHeight(lat, lon);
+    }
+
+    abstract Raster generateRasterFromFile(File file, String tifName);
+
+    /**
      * Download a file at the provided url and save it as the given downloadFile if the downloadFile does not exist.
      */
-    protected void downloadFile(File downloadFile, String url) throws IOException {
+    private void downloadFile(File downloadFile, String url) throws IOException {
         if (!downloadFile.exists()) {
             int max = 3;
             for (int trial = 0; trial < max; trial++) {
@@ -140,7 +166,7 @@ public abstract class AbstractTiffElevationProvider implements ElevationProvider
         }
     }
 
-    protected void fillDataAccessWithElevationData(Raster raster, DataAccess heights, int dataAccessWidth) {
+    private void fillDataAccessWithElevationData(Raster raster, DataAccess heights, int dataAccessWidth) {
         final int height = raster.getHeight();
         final int width = raster.getWidth();
         int x = 0;
@@ -156,18 +182,18 @@ public abstract class AbstractTiffElevationProvider implements ElevationProvider
                 }
             }
             heights.flush();
-
-            // TODO remove tifName and zip?
         } catch (Exception ex) {
             throw new RuntimeException("Problem at x:" + x + ", y:" + y, ex);
         }
     }
 
-    protected Directory getDirectory() {
-        if (dir != null)
-            return dir;
-
-        logger.info(this.toString() + " Elevation Provider, from: " + baseUrl + ", to: " + cacheDir + ", as: " + daType);
-        return dir = new GHDirectory(cacheDir.getAbsolutePath(), daType);
+    /**
+     * Creating temporary files can take a long time as we need to unpack tiff as well as to fill
+     * our DataAccess object, so this option can be used to disable the default clear mechanism via
+     * specifying 'false'.
+     */
+    public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
+        this.autoRemoveTemporary = autoRemoveTemporary;
     }
+
 }
