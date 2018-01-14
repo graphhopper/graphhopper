@@ -62,8 +62,7 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <!-- TODO how to sync with GH? -->
-            <version>2.8.4</version>
+            <version>${jackson.version}</version>
         </dependency>
 
         <dependency>
