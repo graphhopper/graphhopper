@@ -22,7 +22,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.PathWrapper;
-import com.graphhopper.http.client.GraphHopperWeb;
+import com.graphhopper.api.GraphHopperWeb;
 import com.graphhopper.util.CmdArgs;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.details.PathDetail;
