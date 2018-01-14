@@ -19,8 +19,6 @@ package com.graphhopper.reader.dem;
 
 import com.graphhopper.storage.DAType;
 
-import java.io.File;
-
 /**
  * @author Peter Karich
  */
@@ -29,11 +27,6 @@ public interface ElevationProvider {
         @Override
         public double getEle(double lat, double lon) {
             return Double.NaN;
-        }
-
-        @Override
-        public ElevationProvider setCacheDir(File cacheDir) {
-            return this;
         }
 
         @Override
@@ -48,6 +41,10 @@ public interface ElevationProvider {
 
         @Override
         public void release() {
+        }
+
+        @Override
+        public void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary) {
         }
 
         @Override
@@ -67,12 +64,6 @@ public interface ElevationProvider {
     ElevationProvider setBaseURL(String baseURL);
 
     /**
-     * Specifies the directory where to temporarily store the elevation data after fetched from base
-     * URL. Default is a custom provider-dependent subdirectory in '/tmp'
-     */
-    ElevationProvider setCacheDir(File cacheDir);
-
-    /**
      * Set to true if you have a small area and need high speed access. Default is DAType.MMAP
      */
     ElevationProvider setDAType(DAType daType);
@@ -87,4 +78,11 @@ public interface ElevationProvider {
      * Release resources.
      */
     void release();
+
+    /**
+     * Creating temporary files can take a long time as we need to unpack them as well as to fill
+     * our DataAccess object, so this option can be used to disable the default clear mechanism via
+     * specifying 'false'.
+     */
+    void setAutoRemoveTemporaryFiles(boolean autoRemoveTemporary);
 }

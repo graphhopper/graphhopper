@@ -17,7 +17,6 @@
  */
 package com.graphhopper.reader.dem;
 
-import com.graphhopper.storage.DataAccess;
 import com.graphhopper.util.Helper;
 import org.apache.xmlgraphics.image.codec.tiff.TIFFDecodeParam;
 import org.apache.xmlgraphics.image.codec.tiff.TIFFImageDecoder;
@@ -26,7 +25,6 @@ import org.apache.xmlgraphics.image.codec.util.SeekableStream;
 import java.awt.image.Raster;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -48,15 +46,19 @@ import java.util.zip.ZipInputStream;
  * @author Peter Karich
  */
 public class CGIARProvider extends AbstractTiffElevationProvider {
-    private static final int WIDTH = 6000;
-    private final double precision = 1e7;
     private final double invPrecision = 1 / precision;
-    private final int degree = 5;
 
     public CGIARProvider() {
+        this("");
+    }
+
+    public CGIARProvider(String cacheDir) {
+        // Alternative URLs for the CGIAR data can be found in #346
         super("http://srtm.csi.cgiar.org/SRT-ZIP/SRTM_V41/SRTM_Data_GeoTiff",
-                "/tmp/cgiar",
-                "GraphHopper CGIARReader");
+                cacheDir.isEmpty() ? "/tmp/cgiar" : cacheDir,
+                "GraphHopper CGIARReader",
+                6000, 6000,
+                5, 5);
     }
 
     public static void main(String[] args) {
@@ -86,107 +88,55 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
 
         // 0
         System.out.println(provider.getEle(29.840644, -42.890625));
+
+        // 841
+        System.out.println(provider.getEle(48.469123, 9.576393));
     }
 
     @Override
-    public double getEle(double lat, double lon) {
-        // Return fast, if there is no data available
-        // See https://www2.jpl.nasa.gov/srtm/faq.html
-        if (lat >= 60 || lat <= -56)
-            return 0;
-
-        lat = (int) (lat * precision) / precision;
-        lon = (int) (lon * precision) / precision;
-        String name = getFileName(lat, lon);
-        HeightTile demProvider = cacheData.get(name);
-        if (demProvider == null) {
-            if (!cacheDir.exists())
-                cacheDir.mkdirs();
-
-            int minLat = down(lat);
-            int minLon = down(lon);
-            // less restrictive against boundary checking
-            demProvider = new HeightTile(minLat, minLon, WIDTH, WIDTH, degree * precision, degree, degree);
-            demProvider.setCalcMean(calcMean);
-
-            cacheData.put(name, demProvider);
-            DataAccess heights = getDirectory().find(name + ".gh");
-            demProvider.setHeights(heights);
-            boolean loadExisting = false;
-            try {
-                loadExisting = heights.loadExisting();
-            } catch (Exception ex) {
-                logger.warn("cannot load " + name + ", error: " + ex.getMessage());
+    Raster generateRasterFromFile(File file, String tifName) {
+        SeekableStream ss = null;
+        try {
+            InputStream is = new FileInputStream(file);
+            ZipInputStream zis = new ZipInputStream(is);
+            // find tif file in zip
+            ZipEntry entry = zis.getNextEntry();
+            while (entry != null && !entry.getName().equals(tifName)) {
+                entry = zis.getNextEntry();
             }
 
-            if (!loadExisting) {
-                String tifName = name + ".tif";
-                String zippedURL = baseUrl + "/" + name + ".zip";
-                File file = new File(cacheDir, new File(zippedURL).getName());
-
-                try {
-                    downloadFile(file, zippedURL);
-                } catch (IOException e) {
-                    demProvider.setSeaLevel(true);
-                    // use small size on disc and in-memory
-                    heights.setSegmentSize(100).create(10).
-                            flush();
-                    return 0;
-                }
-
-                // short == 2 bytes
-                heights.create(2 * WIDTH * WIDTH);
-
-                // logger.info("start decoding");
-                // decode tiff data
-                Raster raster;
-                SeekableStream ss = null;
-                try {
-                    InputStream is = new FileInputStream(file);
-                    ZipInputStream zis = new ZipInputStream(is);
-                    // find tif file in zip
-                    ZipEntry entry = zis.getNextEntry();
-                    while (entry != null && !entry.getName().equals(tifName)) {
-                        entry = zis.getNextEntry();
-                    }
-
-                    ss = SeekableStream.wrapInputStream(zis, true);
-                    TIFFImageDecoder imageDecoder = new TIFFImageDecoder(ss, new TIFFDecodeParam());
-                    raster = imageDecoder.decodeAsRaster();
-                } catch (Exception e) {
-                    throw new RuntimeException("Can't decode " + tifName, e);
-                } finally {
-                    if (ss != null)
-                        Helper.close(ss);
-                }
-
-                fillDataAccessWithElevationData(raster, heights, WIDTH);
-
-            } // loadExisting
+            ss = SeekableStream.wrapInputStream(zis, true);
+            TIFFImageDecoder imageDecoder = new TIFFImageDecoder(ss, new TIFFDecodeParam());
+            return imageDecoder.decodeAsRaster();
+        } catch (Exception e) {
+            throw new RuntimeException("Can't decode " + tifName, e);
+        } finally {
+            if (ss != null)
+                Helper.close(ss);
         }
-
-        if (demProvider.isSeaLevel())
-            return 0;
-
-        return demProvider.getHeight(lat, lon);
     }
 
     int down(double val) {
         // 'rounding' to closest 5
-        int intVal = (int) (val / degree) * degree;
+        int intVal = (int) (val / LAT_DEGREE) * LAT_DEGREE;
         if (!(val >= 0 || intVal - val < invPrecision))
-            intVal = intVal - degree;
+            intVal = intVal - LAT_DEGREE;
 
         return intVal;
     }
 
+    @Override
+    boolean isOutsideSupportedArea(double lat, double lon) {
+        return lat >= 60 || lat <= -56;
+    }
+
     protected String getFileName(double lat, double lon) {
-        lon = 1 + (180 + lon) / degree;
+        lon = 1 + (180 + lon) / LAT_DEGREE;
         int lonInt = (int) lon;
-        lat = 1 + (60 - lat) / degree;
+        lat = 1 + (60 - lat) / LAT_DEGREE;
         int latInt = (int) lat;
 
-        if (Math.abs(latInt - lat) < invPrecision / degree)
+        if (Math.abs(latInt - lat) < invPrecision / LAT_DEGREE)
             latInt--;
 
         // replace String.format as it seems to be slow
@@ -201,7 +151,27 @@ public class CGIARProvider extends AbstractTiffElevationProvider {
     }
 
     @Override
+    int getMinLatForTile(double lat) {
+        return down(lat);
+    }
+
+    @Override
+    int getMinLonForTile(double lon) {
+        return down(lon);
+    }
+
+    @Override
+    String getDownloadURL(double lat, double lon) {
+        return baseUrl + "/" + getFileName(lat, lon) + ".zip";
+    }
+
+    @Override
+    String getFileNameOfLocalFile(double lat, double lon) {
+        return getDownloadURL(lat, lon);
+    }
+
+    @Override
     public String toString() {
-        return "CGIAR";
+        return "cgiar";
     }
 }

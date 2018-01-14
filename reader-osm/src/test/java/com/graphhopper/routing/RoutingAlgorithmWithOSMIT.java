@@ -536,7 +536,7 @@ public class RoutingAlgorithmWithOSMIT {
                         setEnabled(true).setDisablingAllowed(true);
 
             if (is3D)
-                hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
+                hopper.setElevationProvider(new SRTMProvider(DIR));
 
             hopper.importOrLoad();
 
