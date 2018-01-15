@@ -32,6 +32,13 @@ public class GraphHopperGeocodingIT {
     }
 
     @Test
+    public void testForwardGeocodingNominatim() {
+        GHGeocodingResponse response = geocoding.geocode(new GHGeocodingRequest(false, Double.NaN, Double.NaN, "Berlin", "en", 5, "nominatim", 5000));
+        assertEquals(5, response.getHits().size());
+        assertTrue(response.getHits().get(0).getName().contains("Berlin"));
+    }
+
+    @Test
     public void testReverseGeocoding() {
         GHGeocodingResponse response = geocoding.geocode(new GHGeocodingRequest(52.5170365, 13.3888599, "en", 7));
         assertEquals(7, response.getHits().size());
