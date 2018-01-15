@@ -248,7 +248,9 @@ public class PbfBlobDecoder implements Runnable {
     private void processWays(List<Osmformat.Way> ways, PbfFieldDecoder fieldDecoder) {
         for (Osmformat.Way way : ways) {
             Map<String, String> tags = buildTags(way.getKeysList(), way.getValsList(), fieldDecoder);
-            ReaderWay osmWay = new ReaderWay(way.getId());
+            long osmId = way.getId();
+            int version = way.getInfo().getVersion();
+            ReaderWay osmWay = new ReaderWay(osmId, version);
             osmWay.setTags(tags);
 
             // Build up the list of way nodes for the way. The node ids are

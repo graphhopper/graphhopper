@@ -37,6 +37,7 @@ public abstract class ReaderElement {
     public static final int FILEHEADER = 3;
     private final int type;
     private final long id;
+    private int version = 1;
     private final Map<String, Object> properties;
 
     protected ReaderElement(long id, int type) {
@@ -51,6 +52,14 @@ public abstract class ReaderElement {
 
     public long getId() {
         return id;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    void setVersion(int version) {
+        this.version = version;
     }
 
     protected String tagsToString() {
