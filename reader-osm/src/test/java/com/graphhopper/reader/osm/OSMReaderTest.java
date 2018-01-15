@@ -61,6 +61,8 @@ public class OSMReaderTest {
     // The osmconvert tool can be found here: http://wiki.openstreetmap.org/wiki/Osmconvert
     private final String file6 = "test-osm6.pbf";
     private final String file7 = "test-osm7.xml";
+    private final String fileVersions1xml = "test-osm-way-version1.xml";
+    private final String fileVersions1pbf = "test-osm-way-version1.pbf";
     private final String fileNegIds = "test-osm-negative-ids.xml";
     private final String fileBarriers = "test-barriers.xml";
     private final String fileTurnRestrictions = "test-restrictions.xml";
@@ -801,6 +803,35 @@ public class OSMReaderTest {
 
         GHResponse ghRsp = hopper.route(req);
         assertFalse(ghRsp.getErrors().toString(), ghRsp.hasErrors());
+    }
+
+    @Test
+    public void testLoadXMLwithSeveralVersions() {
+        GraphHopper hopper = new GraphHopperFacade(fileVersions1xml).importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+
+        AllEdgesIterator allEdgesIter = graph.getAllEdges();
+        int edgesCount = 0;
+        while (allEdgesIter.next()) {
+            edgesCount++;
+        }
+        // we have 2 edges: 10-20-40 (version 3) and 10-50 (version 2)
+        assertEquals(2, edgesCount);
+    }
+
+    @Test
+    public void testLoadPBFwithSeveralVersions() {
+        GraphHopper hopper = new GraphHopperFacade(fileVersions1pbf).importOrLoad();
+        GraphHopperStorage graph = hopper.getGraphHopperStorage();
+
+        AllEdgesIterator allEdgesIter = graph.getAllEdges();
+        int edgesCount = 0;
+        while (allEdgesIter.next()) {
+            edgesCount++;
+        }
+        // In .pbf file we have way 40 with 3 versions (10-20, 10-20-30, 10-30) and way 50 with 2 versions (10-20-30, 10-20)
+        // result graph contains 2 edges (10-30, 10-20) for last versions of ways
+        assertEquals(2, edgesCount);
     }
 
     class GraphHopperFacade extends GraphHopperOSM {

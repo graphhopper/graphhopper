@@ -186,6 +186,7 @@ public class OSMInputFile implements Sink, OSMInput {
         while (event != XMLStreamConstants.END_DOCUMENT) {
             if (event == XMLStreamConstants.START_ELEMENT) {
                 String idStr = parser.getAttributeValue(null, "id");
+                String versionStr = parser.getAttributeValue(null, "version");
                 if (idStr != null) {
                     String name = parser.getLocalName();
                     long id = 0;
@@ -197,10 +198,13 @@ public class OSMInputFile implements Sink, OSMInput {
                                 return OSMXMLHelper.createNode(id, parser);
                             }
                             break;
-
                         case 'w': {
                             id = Long.parseLong(idStr);
-                            return OSMXMLHelper.createWay(id, parser);
+                            int version = 1;
+                            if (versionStr != null) {
+                                version = Integer.parseInt(versionStr);
+                            }
+                            return OSMXMLHelper.createWay(id, version, parser);
                         }
                         case 'r':
                             id = Long.parseLong(idStr);

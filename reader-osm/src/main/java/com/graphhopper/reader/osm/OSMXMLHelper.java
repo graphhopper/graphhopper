@@ -52,6 +52,14 @@ public class OSMXMLHelper {
         return way;
     }
 
+    public static ReaderWay createWay(long id, int version, XMLStreamReader parser) throws XMLStreamException {
+        ReaderWay way = new ReaderWay(id, version);
+        parser.nextTag();
+        readNodes(way, parser);
+        readTags(way, parser);
+        return way;
+    }
+
     private static void readNodes(ReaderWay way, XMLStreamReader parser) throws XMLStreamException {
         int event = parser.getEventType();
         while (event != XMLStreamConstants.END_DOCUMENT && parser.getLocalName().equals("nd")) {

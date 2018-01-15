@@ -32,6 +32,11 @@ public class ReaderWay extends ReaderElement {
         super(id, WAY);
     }
 
+    public ReaderWay(long id, int version) {
+        this(id);
+        setVersion(version);
+    }
+
     public LongArrayList getNodes() {
         return nodes;
     }

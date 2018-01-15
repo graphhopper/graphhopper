@@ -121,6 +121,9 @@ public class OSMReader implements DataReader {
     private Date osmDataDate;
     private boolean dontCreateStorage = false;
 
+    // карта вида <osmId -> lastVersion>
+    private Map<Long, Integer> osmWayIdToLastVersionMap;
+
     public OSMReader(GraphHopperStorage ghStorage) {
         this.ghStorage = ghStorage;
         this.graph = ghStorage;
@@ -131,6 +134,8 @@ public class OSMReader implements DataReader {
         osmNodeIdToNodeFlagsMap = new GHLongLongHashMap(200, .5f);
         osmWayIdToRouteWeightMap = new GHLongLongHashMap(200, .5f);
         pillarInfo = new PillarInfo(nodeAccess.is3D(), ghStorage.getDirectory());
+
+        osmWayIdToLastVersionMap = new HashMap<Long, Integer>();
     }
 
     @Override
@@ -145,16 +150,53 @@ public class OSMReader implements DataReader {
             throw new IllegalStateException("Your specified OSM file does not exist:" + osmFile.getAbsolutePath());
 
         StopWatch sw1 = new StopWatch().start();
-        preProcess(osmFile);
+        findWayLastVersions(osmFile);
         sw1.stop();
 
         StopWatch sw2 = new StopWatch().start();
-        writeOsm2Graph(osmFile);
+        preProcess(osmFile);
         sw2.stop();
 
-        LOGGER.info("time pass1:" + (int) sw1.getSeconds() + "s, "
-                + "pass2:" + (int) sw2.getSeconds() + "s, "
-                + "total:" + (int) (sw1.getSeconds() + sw2.getSeconds()) + "s");
+        StopWatch sw3 = new StopWatch().start();
+        writeOsm2Graph(osmFile);
+        sw3.stop();
+
+        LOGGER.info("time pass1:" + (int) sw3.getSeconds() + "s, "
+                + "pass2:" + (int) sw3.getSeconds() + "s, "
+                + "total:" + (int) (sw3.getSeconds() + sw3.getSeconds()) + "s");
+    }
+
+    /**
+     * Preprocessing of OSM file to find last OSM version for all ways
+     */
+    private void findWayLastVersions(File osmFile) {
+        try (OSMInput in = openOsmInputFile(osmFile)) {
+            long tmpWayCounter = 1;
+            ReaderElement item;
+            while ((item = in.getNext()) != null) {
+                if (item.isType(ReaderElement.WAY)) {
+                    final ReaderWay way = (ReaderWay) item;
+
+                    long osmId = way.getId();
+                    int version = way.getVersion();
+
+                    if (!osmWayIdToLastVersionMap.containsKey(osmId)) {
+                        osmWayIdToLastVersionMap.put(osmId, version);
+                    } else {
+                        int storedVersion = osmWayIdToLastVersionMap.get(osmId);
+                        if (version > storedVersion) {
+                            osmWayIdToLastVersionMap.put(osmId, version);
+                        }
+                    }
+
+                    if (++tmpWayCounter % 10_000_000 == 0) {
+                        LOGGER.info("Find last version for {} OSM lines", osmWayIdToLastVersionMap.size());
+                    }
+                }
+            }
+        } catch (Exception ex) {
+            throw new RuntimeException("Problem while parsing file", ex);
+        }
     }
 
     /**
@@ -169,6 +211,12 @@ public class OSMReader implements DataReader {
             while ((item = in.getNext()) != null) {
                 if (item.isType(ReaderElement.WAY)) {
                     final ReaderWay way = (ReaderWay) item;
+                    long osmId = way.getId();
+                    int version = way.getVersion();
+                    int lastVersion = osmWayIdToLastVersionMap.get(osmId);
+                    if (version != lastVersion) {  // skip ways not latest version
+                        continue;
+                    }
                     boolean valid = filterWay(way);
                     if (valid) {
                         LongIndexedContainer wayNodes = way.getNodes();
@@ -315,6 +363,16 @@ public class OSMReader implements DataReader {
      * Process properties, encode flags and create edges for the way.
      */
     void processWay(ReaderWay way) {
+        long osmId = way.getId();
+        int version = way.getVersion();
+        // if someone invoke processWay without findWayLastVersions (for example, in tests)
+        int lastVersion = 1;
+        if (osmWayIdToLastVersionMap.containsKey(osmId)) {
+            lastVersion = osmWayIdToLastVersionMap.get(osmId);
+        }
+        if (version != lastVersion)  // skip ways not latest version
+            return;
+
         if (way.getNodes().size() < 2)
             return;
 
@@ -789,6 +847,8 @@ public class OSMReader implements DataReader {
         osmWayIdToRouteWeightMap = null;
         osmWayIdSet = null;
         edgeIdToOsmWayIdMap = null;
+        osmWayIdToLastVersionMap.clear();
+        osmWayIdToLastVersionMap = null;
     }
 
     /**
