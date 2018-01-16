@@ -60,6 +60,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.graphhopper.routing.profiles.TagParserFactory.Car.LANE_MASK_SIZE;
 import static com.graphhopper.util.Parameters.Algorithms.*;
 
 /**
@@ -551,8 +552,9 @@ public class GraphHopper implements GraphHopperAPI {
                         return speedMap.containsKey(way.getTag("highway"));
                     }
                 };
+                Map<String, Integer> turnLaneMap = TagParserFactory.Car.createTurnLaneMap();
                 setEncodingManager(new EncodingManager.Builder(bytesForFlags).
-                        addGlobalEncodedValues().
+                        addGlobalEncodedValues(false, false).
                         add(TagParserFactory.Car.createMaxSpeed(new DecimalEncodedValue(TagParserFactory.CAR_MAX_SPEED, 5, 0, 5, false), filter)).
                         add(TagParserFactory.Car.createAverageSpeed(new DecimalEncodedValue(TagParserFactory.CAR_AVERAGE_SPEED, 5, 0, 5, false), speedMap)).
                         add(TagParserFactory.Car.createAccess(new BooleanEncodedValue(TagParserFactory.CAR_ACCESS, true), filter)).

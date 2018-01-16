@@ -68,7 +68,7 @@ public class GraphHopperModule extends AbstractModule {
     @Provides
     @Singleton
     GraphHopper createGraphHopper(CmdArgs args) {
-        GraphHopper graphHopper = new GraphHopperOSM() {
+        GraphHopper graphHopper = new GraphHopperOSM(new GHJsonFactory().create()) {
             @Override
             protected void loadOrPrepareLM() {
                 if (!getLMFactoryDecorator().isEnabled() || getLMFactoryDecorator().getPreparations().isEmpty())
