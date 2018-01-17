@@ -7,14 +7,13 @@ import org.junit.Test;
 
 import java.net.SocketTimeoutException;
 
+import static com.graphhopper.api.GraphHopperWebIT.KEY;
 import static org.junit.Assert.*;
 
 /**
  * @author Robin Boldt
  */
 public class GraphHopperGeocodingIT {
-
-    public static final String KEY = "614b8305-b4db-48c9-bf4a-40de90919939";
 
     GraphHopperGeocoding geocoding = new GraphHopperGeocoding();
 
@@ -40,8 +39,8 @@ public class GraphHopperGeocodingIT {
 
     @Test
     public void testReverseGeocoding() {
-        GHGeocodingResponse response = geocoding.geocode(new GHGeocodingRequest(52.5170365, 13.3888599, "en", 7));
-        assertEquals(7, response.getHits().size());
+        GHGeocodingResponse response = geocoding.geocode(new GHGeocodingRequest(52.5170365, 13.3888599, "en", 5));
+        assertEquals(5, response.getHits().size());
         assertTrue(response.getHits().get(0).getName().contains("Berlin"));
     }
 
@@ -56,6 +55,16 @@ public class GraphHopperGeocodingIT {
             }
         }
         fail();
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testForwardException() {
+        geocoding.geocode(new GHGeocodingRequest(false, 1, 1, null, "en", 5, "default", 1));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testBackwadException() {
+        geocoding.geocode(new GHGeocodingRequest(true, Double.NaN, Double.NaN, "Berlin", "en", 5, "default", 1));
     }
 
 }

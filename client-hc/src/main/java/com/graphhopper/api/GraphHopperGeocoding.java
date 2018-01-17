@@ -17,31 +17,20 @@
  */
 package com.graphhopper.api;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.graphhopper.GHRequest;
-import com.graphhopper.GHResponse;
-import com.graphhopper.GraphHopperAPI;
-import com.graphhopper.PathWrapper;
 import com.graphhopper.api.model.GHGeocodingRequest;
 import com.graphhopper.api.model.GHGeocodingResponse;
-import com.graphhopper.util.*;
-import com.graphhopper.util.details.PathDetail;
-import com.graphhopper.util.exceptions.*;
-import com.graphhopper.util.shapes.GHPoint;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.ResponseBody;
 
-import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-import static com.graphhopper.util.Helper.round6;
-import static com.graphhopper.util.Helper.toLowerCase;
-
 /**
- * Client implementation for the GraphHopper Directions API Geocoding
+ * Client implementation for the GraphHopper Directions API Geocoding. For details on how to use it, please consult
+ * the documentation at: https://graphhopper.com/api/1/docs/geocoding/.
+ * <p>
+ * Signup for a free API key at: https://graphhopper.com
  *
  * @author Robin Boldt
  */
@@ -58,6 +47,11 @@ public class GraphHopperGeocoding {
         this("https://graphhopper.com/api/1/geocode");
     }
 
+    /**
+     * This method allows you to point the client to a different URL than the default one.
+     *
+     * @param serviceUrl Geocoding endpoint that is compatible with the GraphHopper geocoding API
+     */
     public GraphHopperGeocoding(String serviceUrl) {
         this.routeServiceUrl = serviceUrl;
         downloader = new OkHttpClient.Builder().
@@ -66,6 +60,25 @@ public class GraphHopperGeocoding {
                 build();
 
         objectMapper = new ObjectMapper();
+    }
+
+    /**
+     * Perform a geocoding request. Both forward and revers are possible, just configure the <code>request</code>
+     * accordingly.
+     *
+     * @param request the request to send to the API
+     * @return found results for your request
+     */
+    public GHGeocodingResponse geocode(GHGeocodingRequest request) {
+        String url = buildUrl(request);
+
+        try {
+            Request okRequest = new Request.Builder().url(url).build();
+            ResponseBody rspBody = getClientForRequest(request).newCall(okRequest).execute().body();
+            return objectMapper.readValue(rspBody.bytes(), GHGeocodingResponse.class);
+        } catch (Exception ex) {
+            throw new RuntimeException("Problem performing geocoding for " + url + ": " + ex.getMessage(), ex);
+        }
     }
 
     public GraphHopperGeocoding setDownloader(OkHttpClient downloader) {
@@ -94,30 +107,22 @@ public class GraphHopperGeocoding {
         return client;
     }
 
-    public GHGeocodingResponse geocode(GHGeocodingRequest request) {
-        String url = buildUrl(request);
-
-        try {
-            Request okRequest = new Request.Builder().url(url).build();
-            ResponseBody rspBody = getClientForRequest(request).newCall(okRequest).execute().body();
-            return objectMapper.readValue(rspBody.bytes(), GHGeocodingResponse.class);
-        } catch (Exception ex) {
-            throw new RuntimeException("Problem performing geocoding for " + url + ": " + ex.getMessage(), ex);
-        }
-    }
-
     private String buildUrl(GHGeocodingRequest request) {
         String url = routeServiceUrl + "?";
 
         if (request.isReverse()) {
+            if (Double.isNaN(request.getLat()) || Double.isNaN(request.getLon()))
+                throw new IllegalArgumentException("For reverse geocoding you have to pass valid lat and long values");
             url += "reverse=true";
-            url += "&point=" + request.getLat() + "," + request.getLon();
         } else {
+            if (request.getQuery() == null)
+                throw new IllegalArgumentException("For forward geocoding you have to a string for the query");
             url += "reverse=false";
             url += "&q=" + request.getQuery();
-            if (!Double.isNaN(request.getLat()))
-                url += "&point=" + request.getLat() + "," + request.getLon();
         }
+
+        if (!Double.isNaN(request.getLat()))
+            url += "&point=" + request.getLat() + "," + request.getLon();
 
         url += "&limit=" + request.getLimit();
         url += "&locale=" + request.getLocale();
