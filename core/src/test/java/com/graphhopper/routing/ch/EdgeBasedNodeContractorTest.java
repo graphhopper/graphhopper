@@ -7,10 +7,7 @@ import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.ShortestWeighting;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.GraphBuilder;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 import com.graphhopper.util.EdgeIterator;
 import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
@@ -666,7 +663,8 @@ public class EdgeBasedNodeContractorTest {
     }
 
     private EdgeBasedNodeContractor createNodeContractor() {
-        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(graph, chGraph, chTurnWeighting, traversalMode);
+        Directory dir = new GHDirectory("", DAType.RAM_INT);
+        EdgeBasedNodeContractor nodeContractor = new EdgeBasedNodeContractor(dir, graph, chGraph, chTurnWeighting, traversalMode);
         nodeContractor.initFromGraph();
         return nodeContractor;
     }

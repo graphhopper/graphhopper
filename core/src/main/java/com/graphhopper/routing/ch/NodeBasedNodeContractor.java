@@ -28,45 +28,29 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-class NodeBasedNodeContractor implements NodeContractor {
-    private final GraphHopperStorage ghStorage;
-    private final CHGraph prepareGraph;
+class NodeBasedNodeContractor extends AbstractNodeContractor {
     private final PreparationWeighting prepareWeighting;
-    private final DataAccess originalEdges;
     private final Map<Shortcut, Shortcut> shortcuts = new HashMap<>();
     private final AddShortcutHandler addScHandler = new AddShortcutHandler();
     private final CalcShortcutHandler calcScHandler = new CalcShortcutHandler();
-    private CHEdgeExplorer vehicleInExplorer;
-    private CHEdgeExplorer vehicleOutExplorer;
     private CHEdgeExplorer calcPrioAllExplorer;
     private IgnoreNodeFilter ignoreNodeFilter;
     private DijkstraOneToMany prepareAlgo;
-    private int addedShortcutsCount;
-    private long dijkstraCount;
     private int maxVisitedNodes = Integer.MAX_VALUE;
-    private StopWatch dijkstraSW = new StopWatch();
-    private int maxEdgesCount;
-    private int maxLevel;
 
     NodeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, Weighting weighting) {
         // todo: it would be nice to check if ghStorage is frozen here
-        this.ghStorage = ghStorage;
-        this.prepareGraph = prepareGraph;
+        super(dir, ghStorage, prepareGraph, weighting);
         this.prepareWeighting = new PreparationWeighting(weighting);
-        originalEdges = dir.find("original_edges_" + AbstractWeighting.weightingToFileName(weighting));
-        originalEdges.create(1000);
     }
 
     @Override
     public void initFromGraph() {
-        // todo: do we really need this method ? the problem is that ghStorage/prepareGraph can potentially be modified
-        // between the constructor call and contractNode,calcShortcutCount etc. ...
-        maxLevel = prepareGraph.getNodes() + 1;
-        maxEdgesCount = ghStorage.getAllEdges().getMaxId();
+        super.initFromGraph();
         ignoreNodeFilter = new IgnoreNodeFilter(prepareGraph, maxLevel);
         FlagEncoder prepareFlagEncoder = prepareWeighting.getFlagEncoder();
-        vehicleInExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
-        vehicleOutExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
+        inEdgeExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, false));
+        outEdgeExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, false, true));
 
         // filter by vehicle and level number
         final EdgeFilter allFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, true);
@@ -82,8 +66,8 @@ class NodeBasedNodeContractor implements NodeContractor {
 
     @Override
     public void close() {
+        super.close();
         prepareAlgo.close();
-        originalEdges.close();
     }
 
     @Override
@@ -143,28 +127,8 @@ class NodeBasedNodeContractor implements NodeContractor {
     }
 
     @Override
-    public int getAddedShortcutsCount() {
-        return addedShortcutsCount;
-    }
-
-    @Override
     public String getPrepareAlgoMemoryUsage() {
         return prepareAlgo.getMemoryUsageAsString();
-    }
-
-    @Override
-    public long getDijkstraCount() {
-        return dijkstraCount;
-    }
-
-    @Override
-    public void resetDijkstraTime() {
-        dijkstraSW = new StopWatch();
-    }
-
-    @Override
-    public float getDijkstraSeconds() {
-        return dijkstraSW.getSeconds();
     }
 
     /**
@@ -175,7 +139,7 @@ class NodeBasedNodeContractor implements NodeContractor {
      */
     private long findShortcuts(ShortcutHandler sch) {
         long degree = 0;
-        EdgeIterator incomingEdges = vehicleInExplorer.setBaseNode(sch.getNode());
+        EdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(sch.getNode());
         // collect outgoing nodes (goal-nodes) only once
         while (incomingEdges.next()) {
             int fromNode = incomingEdges.getAdjNode();
@@ -188,7 +152,7 @@ class NodeBasedNodeContractor implements NodeContractor {
             int incomingEdge = incomingEdges.getEdge();
             int incomingEdgeOrigCount = getOrigEdgeCount(incomingEdge);
             // collect outgoing nodes (goal-nodes) only once
-            EdgeIterator outgoingEdges = vehicleOutExplorer.setBaseNode(sch.getNode());
+            EdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(sch.getNode());
             // force fresh maps etc as this cannot be determined by from node alone (e.g. same from node but different avoidNode)
             prepareAlgo.clear();
             degree++;
@@ -245,7 +209,7 @@ class NodeBasedNodeContractor implements NodeContractor {
         for (Shortcut sc : shortcuts) {
             boolean updatedInGraph = false;
             // check if we need to update some existing shortcut in the graph
-            CHEdgeIterator iter = vehicleOutExplorer.setBaseNode(sc.from);
+            CHEdgeIterator iter = outEdgeExplorer.setBaseNode(sc.from);
             while (iter.next()) {
                 if (iter.isShortcut() && iter.getAdjNode() == sc.to) {
                     int status = iter.getMergeStatus(sc.flags);
@@ -307,32 +271,6 @@ class NodeBasedNodeContractor implements NodeContractor {
         int adj = edge.getAdjNode();
         return base + "->" + adj + " (" + edge.getEdge() + "); "
                 + na.getLat(base) + "," + na.getLon(base) + " -> " + na.getLat(adj) + "," + na.getLon(adj);
-    }
-
-    private void setOrigEdgeCount(int edgeId, int value) {
-        edgeId -= maxEdgesCount;
-        if (edgeId < 0) {
-            // ignore setting as every normal edge has original edge count of 1
-            if (value != 1)
-                throw new IllegalStateException("Trying to set original edge count for normal edge to a value = " + value
-                        + ", edge:" + (edgeId + maxEdgesCount) + ", max:" + maxEdgesCount + ", graph.max:" +
-                        prepareGraph.getAllEdges().getMaxId());
-            return;
-        }
-
-        long tmp = (long) edgeId * 4;
-        originalEdges.ensureCapacity(tmp + 4);
-        originalEdges.setInt(tmp, value);
-    }
-
-    private int getOrigEdgeCount(int edgeId) {
-        edgeId -= maxEdgesCount;
-        if (edgeId < 0)
-            return 1;
-
-        long tmp = (long) edgeId * 4;
-        originalEdges.ensureCapacity(tmp + 4);
-        return originalEdges.getInt(tmp);
     }
 
     private static class Shortcut {

@@ -451,7 +451,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         if (traversalMode.isEdgeBased()) {
             TurnWeighting chTurnWeighting = createTurnWeightingForEdgeBased(graph);
             // todo: shall we support TraversalMode.EDGE_BASED_2DIR_UTURN ?
-            return new EdgeBasedNodeContractor(ghStorage, prepareGraph, chTurnWeighting, TraversalMode.EDGE_BASED_2DIR);
+            return new EdgeBasedNodeContractor(dir, ghStorage, prepareGraph, chTurnWeighting, TraversalMode.EDGE_BASED_2DIR);
         } else {
             return new NodeBasedNodeContractor(dir, ghStorage, prepareGraph, weighting);
         }

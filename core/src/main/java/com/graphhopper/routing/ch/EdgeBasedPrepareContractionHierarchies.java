@@ -26,11 +26,7 @@ import com.graphhopper.routing.util.LevelEdgeFilter;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
-import com.graphhopper.storage.CHGraph;
-import com.graphhopper.storage.Graph;
-import com.graphhopper.storage.GraphExtension;
-import com.graphhopper.storage.GraphHopperStorage;
-import com.graphhopper.storage.TurnCostExtension;
+import com.graphhopper.storage.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -74,8 +70,9 @@ public class EdgeBasedPrepareContractionHierarchies extends AbstractAlgoPreparat
 
     @Override
     protected void doSpecificWork() {
+        Directory dir = new GHDirectory("", DAType.RAM_INT);
         EdgeBasedNodeContractor nodeContractor =
-                new EdgeBasedNodeContractor(ghStorage, chGraph, chTurnWeighting, TraversalMode.EDGE_BASED_2DIR);
+                new EdgeBasedNodeContractor(dir, ghStorage, chGraph, chTurnWeighting, TraversalMode.EDGE_BASED_2DIR);
         ghStorage.freeze();
         nodeContractor.initFromGraph();
         setMaxLevelOnAllNodes();

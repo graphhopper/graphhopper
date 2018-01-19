@@ -22,6 +22,7 @@ import com.graphhopper.routing.util.FlagEncoder;
 import com.graphhopper.routing.util.TraversalMode;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.storage.CHGraph;
+import com.graphhopper.storage.Directory;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.util.*;
 import org.slf4j.Logger;
@@ -31,40 +32,28 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class EdgeBasedNodeContractor implements NodeContractor {
+public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private static final Logger LOGGER = LoggerFactory.getLogger(EdgeBasedNodeContractor.class);
     // todo: modify code such that logging does not alter performance 
-    private final GraphHopperStorage ghStorage;
-    private final CHGraph prepareGraph;
     private final TurnWeighting turnWeighting;
     private final TraversalMode traversalMode;
-    private CHEdgeExplorer inEdgeExplorer;
     private CHEdgeExplorer toNodeInEdgeExplorer;
-    private CHEdgeExplorer outEdgeExplorer;
     private EdgeExplorer fromNodeOrigInEdgeExplorer;
     private EdgeExplorer toNodeOrigOutEdgeExplorer;
     private EdgeExplorer loopAvoidanceInEdgeExplorer;
     private EdgeExplorer loopAvoidanceOutEdgeExplorer;
-    private int maxLevel;
-    private int addedShortcuts;
-    private int dijkstraCount;
-    private StopWatch dijkstraSW = new StopWatch();
     private boolean dryMode;
     private int shortcutCount;
 
-
-    public EdgeBasedNodeContractor(GraphHopperStorage ghStorage, CHGraph prepareGraph, TurnWeighting turnWeighting, TraversalMode traversalMode) {
-        this.ghStorage = ghStorage;
-        this.prepareGraph = prepareGraph;
+    public EdgeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, TurnWeighting turnWeighting, TraversalMode traversalMode) {
+        super(dir, ghStorage, prepareGraph, turnWeighting);
         this.turnWeighting = turnWeighting;
         this.traversalMode = traversalMode;
     }
 
     @Override
     public void initFromGraph() {
-        // todo: do we really need this method ? the problem is that ghStorage/prepareGraph can potentially be modified
-        // between the constructor call and contractNode,calcShortcutCount etc. ...
-        maxLevel = prepareGraph.getNodes() + 1;
+        super.initFromGraph();
         FlagEncoder prepareFlagEncoder = turnWeighting.getFlagEncoder();
         DefaultEdgeFilter inEdgeFilter = new DefaultEdgeFilter(prepareFlagEncoder, true, false);
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(prepareFlagEncoder, false, true);
@@ -145,30 +134,12 @@ public class EdgeBasedNodeContractor implements NodeContractor {
         return 0;
     }
 
-    @Override
-    public int getAddedShortcutsCount() {
-        return addedShortcuts;
-    }
 
     @Override
     public String getPrepareAlgoMemoryUsage() {
         return "todo";
     }
 
-    @Override
-    public long getDijkstraCount() {
-        return dijkstraCount;
-    }
-
-    @Override
-    public void resetDijkstraTime() {
-        dijkstraSW = new StopWatch();
-    }
-
-    @Override
-    public float getDijkstraSeconds() {
-        return dijkstraSW.getSeconds();
-    }
 
     private List<WitnessSearchEntry> getInitialEntriesForWitnessPaths(int fromNode, int firstOrigEdge, CHEdgeIteratorState incomingEdge) {
         // todo: simplify & optimize
@@ -322,7 +293,7 @@ public class EdgeBasedNodeContractor implements NodeContractor {
                 // this is a bit of a hack, we misuse incEdge of the root entry to store the first orig edge
                 .setOuterOrigEdges(edgeFrom.getParent().incEdge, edgeTo.incEdge)
                 .setWeight(edgeTo.weight);
-        addedShortcuts++;
+        addedShortcutsCount++;
         CHEntry entry = new CHEntry(
                 shortcut.getEdge(), shortcut.getEdge(), edgeTo.adjNode, edgeTo.weight);
         entry.parent = edgeFrom.parent;
