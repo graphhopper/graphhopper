@@ -89,7 +89,9 @@ public class RoutingAlgorithmIT {
         }
 
         if (hopper.getCHFactoryDecorator().isEnabled()) {
-            final HintsMap chHints = new HintsMap(defaultHints).put(Parameters.CH.DISABLE, false);
+            final HintsMap chHints = new HintsMap(defaultHints);
+            chHints.put(Parameters.CH.DISABLE, false);
+            chHints.put(Parameters.Routing.EDGE_BASED, tMode.isEdgeBased());
             Weighting pickedWeighting = null;
             for (Weighting tmpWeighting : hopper.getCHFactoryDecorator().getWeightings()) {
                 if (tmpWeighting.equals(weighting)) {

@@ -157,6 +157,22 @@ public class CHTurnCostTest {
         compareCHQueryWithDijkstra(factory, 1, 9);
     }
 
+    private void addRandomCostOrRestriction(int from, int via, int to, Random rnd) {
+        final double chance = 0.7;
+        if (rnd.nextDouble() < chance) {
+            addRestriction(from, via, to);
+            LOGGER.trace("addRestriction({}, {}, {});", from, via, to);
+        } else {
+            addRandomCost(from, via, to, rnd);
+        }
+    }
+
+    private void addRandomCost(int from, int via, int to, Random rnd) {
+        int cost = (int) (rnd.nextDouble() * maxCost / 2);
+        addTurnCost(from, via, to, cost);
+        LOGGER.trace("addTurnCost({}, {}, {}, {});", from, via, to, cost);
+    }
+
     @Test
     public void testFindPath_multipleInOutEdges_turnReplacementDifference_bug1() {
         //       3 - 4
@@ -181,23 +197,6 @@ public class CHTurnCostTest {
         RoutingAlgorithmFactory factory = prepareCH(Arrays.asList(6, 0, 1, 2, 8, 9, 10, 5, 3, 4, 7));
         compareCHQueryWithDijkstra(factory, 2, 9);
     }
-
-    public void addRandomCostOrRestriction(int from, int via, int to, Random rnd) {
-        final double chance = 0.7;
-        if (rnd.nextDouble() < chance) {
-            addRestriction(from, via, to);
-            LOGGER.trace("addRestriction({}, {}, {});", from, via, to);
-        } else {
-            addRandomCost(from, via, to, rnd);
-        }
-    }
-
-    public void addRandomCost(int from, int via, int to, Random rnd) {
-        int cost = (int) (rnd.nextDouble() * maxCost / 2);
-        addTurnCost(from, via, to, cost);
-        LOGGER.trace("addTurnCost({}, {}, {}, {});", from, via, to, cost);
-    }
-
 
     @Test
     @Repeat(times = 10)
@@ -559,7 +558,7 @@ public class CHTurnCostTest {
             }
         }
 
-        List<Integer> contractionOrder = getRandomIntegerSequence(chGraph.getNodes());
+        List<Integer> contractionOrder = getRandomIntegerSequence(chGraph.getNodes(), rnd);
         compareCHWithDijkstra(numQueries, contractionOrder);
     }
 
@@ -638,11 +637,15 @@ public class CHTurnCostTest {
     }
 
     private List<Integer> getRandomIntegerSequence(int nodes) {
+        return getRandomIntegerSequence(nodes, new Random());
+    }
+
+    private List<Integer> getRandomIntegerSequence(int nodes, Random rnd) {
         List<Integer> contractionOrder = new ArrayList<>(nodes);
         for (int i = 0; i < nodes; ++i) {
             contractionOrder.add(i);
         }
-        Collections.shuffle(contractionOrder);
+        Collections.shuffle(contractionOrder, rnd);
         return contractionOrder;
     }
 
@@ -665,7 +668,7 @@ public class CHTurnCostTest {
     private void addCostOrRestriction(EdgeIteratorState inEdge, EdgeIteratorState outEdge, int viaNode, int cost) {
         if (cost >= maxCost) {
             addRestriction(inEdge, outEdge, viaNode);
-            LOGGER.trace("addRestriction(edge{}, edge{}, {}, {});", inEdge.getEdge(), outEdge.getEdge(), viaNode);
+            LOGGER.trace("addRestriction(edge{}, edge{}, {});", inEdge.getEdge(), outEdge.getEdge(), viaNode);
         } else {
             addTurnCost(inEdge, outEdge, viaNode, cost);
             LOGGER.trace("addTurnCost(edge{}, edge{}, {}, {});", inEdge.getEdge(), outEdge.getEdge(), viaNode, cost);

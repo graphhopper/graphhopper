@@ -216,14 +216,11 @@ public class EdgeBasedNodeContractorTest {
         graph.freeze();
         setMaxLevelOnAllNodes();
         contractNodes(0, 1);
-        EdgeBasedNodeContractor nodeContractor = createNodeContractor();
-        nodeContractor.contractNode(0);
-        nodeContractor.contractNode(1);
         // no shortcuts so far
         checkShortcuts();
         // contracting node 2 should yield a shortcut to preserve the shortest path from (1->2) to (3->4). note that
         // it does not matter that nodes 0 and 1 have lower level and are contracted already!
-        nodeContractor.contractNode(2);
+        contractNodes(2);
         checkShortcuts(createShortcut(3, 4, e3to2, e2to4, 8));
     }
 
