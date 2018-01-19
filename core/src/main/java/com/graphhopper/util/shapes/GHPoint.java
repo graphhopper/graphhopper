@@ -94,6 +94,10 @@ public class GHPoint {
         return lat + "," + lon;
     }
 
+    public String toShortString() {
+        return String.format("%.4f,%.4f", lat, lon);
+    }
+
     /**
      * Attention: geoJson is LON,LAT
      */
