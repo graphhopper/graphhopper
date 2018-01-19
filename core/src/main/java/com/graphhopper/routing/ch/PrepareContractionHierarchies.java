@@ -222,6 +222,13 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private boolean prepareNodes() {
+        // todo: this is probably not the best way to check if the graph has been prepared already, but we need
+        // some kind of check like this, to make the tests in AbstractAlgorithmTester work where the preparation
+        // sometimes is started twice on the same graph. without this check the shortcuts remain from the first
+        // preparation, but we reset the node levels, which leads to problems.
+        if (prepareGraph.getAllEdges().getMaxId() > ghStorage.getAllEdges().getMaxId()) {
+            return false;
+        }
         int nodes = prepareGraph.getNodes();
         for (int node = 0; node < nodes; node++) {
             prepareGraph.setLevel(node, maxLevel);
@@ -232,6 +239,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             sortedNodes.insert(node, priority);
         }
 
+        // todo: is sortedNodes ever empty ? not sure what this check is good for ? if the graph was already prepared        
+        // it is too late here anyway because we have already reset the node levels (?!)
         return !sortedNodes.isEmpty();
     }
 

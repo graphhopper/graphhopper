@@ -11,7 +11,7 @@ import com.graphhopper.storage.GraphHopperStorage;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.*;
@@ -44,7 +44,9 @@ public class WitnessPathFinderTest {
         graph.edge(1, 2, 1, false);
         graph.edge(1, 3, 2, false);
         graph.freeze();
-        List<WitnessSearchEntry> initialEntries = Arrays.asList(new WitnessSearchEntry(0, 0, 1, 8));
+        WitnessSearchEntry entry = new WitnessSearchEntry(0, 0, 1, 8);
+        entry.possibleShortcut = true;
+        List<WitnessSearchEntry> initialEntries = Collections.singletonList(entry);
         WitnessPathFinder witnessPathFinder = new WitnessPathFinder(chGraph, weighting, TraversalMode.EDGE_BASED_2DIR,
                 initialEntries, 0);
         witnessPathFinder.findTarget(1, 2);

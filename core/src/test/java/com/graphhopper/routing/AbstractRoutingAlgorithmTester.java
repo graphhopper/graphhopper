@@ -434,6 +434,28 @@ public abstract class AbstractRoutingAlgorithmTester {
     }
 
     @Test
+    public void testCreateAlgoTwice() {
+        GraphHopperStorage graph = createGHStorage(false);
+        graph.edge(0, 1, 1, true);
+        graph.edge(1, 2, 1, true);
+        graph.edge(2, 3, 1, true);
+        graph.edge(3, 4, 1, true);
+        graph.edge(4, 5, 1, true);
+        graph.edge(5, 6, 1, true);
+        graph.edge(6, 7, 1, true);
+        graph.edge(7, 0, 1, true);
+        graph.edge(3, 8, 1, true);
+        graph.edge(8, 6, 1, true);
+
+        // run the same query twice, this can be interesting because in the second call algorithms that pre-process
+        // the graph might depend on the state of the graph after the first call 
+        Path p1 = createAlgo(graph).calcPath(0, 4);
+        Path p2 = createAlgo(graph).calcPath(0, 4);
+
+        assertEquals(p1.calcNodes(), p2.calcNodes());
+    }
+
+    @Test
     public void testMaxVisitedNodes() {
         GraphHopperStorage graph = createGHStorage(false);
         initBiGraph(graph);

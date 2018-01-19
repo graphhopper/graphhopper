@@ -28,7 +28,6 @@ import com.graphhopper.storage.CHGraph;
 import com.graphhopper.util.CHEdgeExplorer;
 import com.graphhopper.util.CHEdgeIterator;
 import com.graphhopper.util.CHEdgeIteratorState;
-import com.graphhopper.util.EdgeIteratorState;
 import com.graphhopper.util.GHUtility;
 
 import java.util.BitSet;
@@ -51,6 +50,7 @@ public class WitnessPathFinder {
     // and the number of shortcuts explodes, if it is too high the dijkstra searches take too long
     private final int maxOrigEdgesSettled = 50;
     private int numOrigEdgesSettled;
+    private int numPossibleShortcuts;
 
     public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, List<WitnessSearchEntry> initialEntries, int fromNode) {
         if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
@@ -67,9 +67,16 @@ public class WitnessPathFinder {
     }
 
     private void initEntries(List<WitnessSearchEntry> initialEntries) {
+        numPossibleShortcuts = 0;
         for (WitnessSearchEntry entry : initialEntries) {
+            if (entry.possibleShortcut) {
+                numPossibleShortcuts++;
+            }
             int traversalId = getEdgeKey(entry.incEdge, entry.adjNode);
             chEntries.put(traversalId, entry);
+        }
+        if (numPossibleShortcuts != 1) {
+            throw new IllegalStateException("There should be exactly one initial entry with possibleShortcut = true, but given: " + numPossibleShortcuts);
         }
     }
 
@@ -93,6 +100,10 @@ public class WitnessPathFinder {
                 break;
             }
 
+            if (currEdge.possibleShortcut) {
+                numPossibleShortcuts--;
+            }
+
             if (numOrigEdgesSettled > maxOrigEdgesSettled && !currEdge.possibleShortcut) {
                 continue;
             }
@@ -114,17 +125,27 @@ public class WitnessPathFinder {
                     entry = createEntry(iter, currEdge, weight);
                     if (currEdge.possibleShortcut && iter.getBaseNode() == currEdge.adjNode && iter.getBaseNode() == iter.getAdjNode()) {
                         entry.possibleShortcut = true;
+                        numPossibleShortcuts++;
                     }
                     chEntries.put(traversalId, entry);
                     priorityQueue.add(entry);
                 } else if (entry.weight > weight) {
                     priorityQueue.remove(entry);
                     updateEntry(entry, iter, weight, currEdge);
+                    if (currEdge.possibleShortcut && iter.getBaseNode() == currEdge.adjNode && iter.getBaseNode() == iter.getAdjNode()) {
+                        if (!entry.possibleShortcut) {
+                            numPossibleShortcuts++;
+                        }
+                        entry.possibleShortcut = true;
+                    }
                     priorityQueue.add(entry);
                 }
             }
             settledEntries.set(getEdgeKey(currEdge.incEdge, currEdge.adjNode));
             numOrigEdgesSettled++;
+            if (numPossibleShortcuts < 1) {
+                break;
+            }
         }
     }
 

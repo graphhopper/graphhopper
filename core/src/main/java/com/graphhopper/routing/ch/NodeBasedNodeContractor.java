@@ -150,7 +150,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
             final double incomingEdgeDistance = incomingEdges.getDistance();
             double incomingEdgeWeight = prepareWeighting.calcWeight(incomingEdges, true, EdgeIterator.NO_EDGE);
             int incomingEdge = incomingEdges.getEdge();
-            int incomingEdgeOrigCount = getOrigEdgeCount(incomingEdge);
+            int inOrigEdgeCount = getOrigEdgeCount(incomingEdge);
             // collect outgoing nodes (goal-nodes) only once
             EdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(sch.getNode());
             // force fresh maps etc as this cannot be determined by from node alone (e.g. same from node but different avoidNode)
@@ -192,7 +192,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
                 sch.foundShortcut(fromNode, toNode,
                         existingDirectWeight, existingDistSum,
                         outgoingEdges.getEdge(), getOrigEdgeCount(outgoingEdges.getEdge()),
-                        incomingEdge, incomingEdgeOrigCount);
+                        incomingEdge, inOrigEdgeCount);
             }
         }
         return degree;
@@ -325,8 +325,8 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
     private interface ShortcutHandler {
         void foundShortcut(int fromNode, int toNode,
                            double existingDirectWeight, double distance,
-                           int outgoingEdge, int outgoingEdgeOrigCount,
-                           int incomingEdge, int incomingEdgeOrigCount);
+                           int outgoingEdge, int outOrigEdgeCount,
+                           int incomingEdge, int inOrigEdgeCount);
 
         int getNode();
     }
@@ -350,10 +350,10 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         @Override
         public void foundShortcut(int fromNode, int toNode,
                                   double existingDirectWeight, double distance,
-                                  int outgoingEdge, int outgoingEdgeOrigCount,
-                                  int incomingEdge, int incomingEdgeOrigCount) {
+                                  int outgoingEdge, int outOrigEdgeCount,
+                                  int incomingEdge, int inOrigEdgeCount) {
             calcShortcutsResult.shortcutsCount++;
-            calcShortcutsResult.originalEdgesCount += incomingEdgeOrigCount + outgoingEdgeOrigCount;
+            calcShortcutsResult.originalEdgesCount += inOrigEdgeCount + outOrigEdgeCount;
         }
     }
 
@@ -374,8 +374,8 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
         @Override
         public void foundShortcut(int fromNode, int toNode,
                                   double existingDirectWeight, double existingDistSum,
-                                  int outgoingEdge, int outgoingEdgeOrigCount,
-                                  int incomingEdge, int incomingEdgeOrigCount) {
+                                  int outgoingEdge, int outOrigEdgeCount,
+                                  int incomingEdge, int inOrigEdgeCount) {
             // FOUND shortcut
             // but be sure that it is the only shortcut in the collection
             // and also in the graph for u->w. If existing AND identical weight => update setProperties.
@@ -399,7 +399,7 @@ class NodeBasedNodeContractor extends AbstractNodeContractor {
 
             sc.skippedEdge1 = incomingEdge;
             sc.skippedEdge2 = outgoingEdge;
-            sc.originalEdges = incomingEdgeOrigCount + outgoingEdgeOrigCount;
+            sc.originalEdges = inOrigEdgeCount + outOrigEdgeCount;
         }
     }
 
