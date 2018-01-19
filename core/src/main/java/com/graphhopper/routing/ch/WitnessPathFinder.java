@@ -80,9 +80,8 @@ public class WitnessPathFinder {
     }
 
     public void findTarget(int targetEdge, int targetNode) {
-        // todo: clean-up & optimize
-        int edgeKey = getEdgeKey(targetEdge, targetNode);
-        if (settledEntries.get(edgeKey)) {
+        int targetKey = getEdgeKey(targetEdge, targetNode);
+        if (settledEntries.get(targetKey)) {
             return;
         }
 
@@ -100,21 +99,16 @@ public class WitnessPathFinder {
 
             CHEdgeIterator iter = outEdgeExplorer.setBaseNode(currEdge.adjNode);
             while (iter.next()) {
-                if ((!traversalMode.hasUTurnSupport() && iter.getLastOrigEdge() == currEdge.incEdge) ||
-                        graph.getLevel(iter.getAdjNode()) < graph.getLevel(iter.getBaseNode()))
-                    continue;
-
-                int edgeId = iter.getLastOrigEdge();
-                EdgeIteratorState iterState = graph.getEdgeIteratorState(edgeId, iter.getAdjNode());
-                int traversalId = traversalMode.createTraversalId(iterState, false);
-                final int origEdgeId = iter.getFirstOrigEdge();
-                if (!traversalMode.hasUTurnSupport() && origEdgeId == currEdge.incEdge) {
+                if ((!traversalMode.hasUTurnSupport() && iter.getFirstOrigEdge() == currEdge.incEdge) ||
+                        graph.getLevel(iter.getAdjNode()) < graph.getLevel(iter.getBaseNode())) {
                     continue;
                 }
                 double weight = weighting.calcWeight(iter, false, currEdge.incEdge) + currEdge.weight;
-                if (Double.isInfinite(weight))
+                if (Double.isInfinite(weight)) {
                     continue;
+                }
 
+                int traversalId = getEdgeKey(iter.getLastOrigEdge(), iter.getAdjNode());
                 WitnessSearchEntry entry = chEntries.get(traversalId);
                 if (entry == null) {
                     entry = createEntry(iter, currEdge, weight);
