@@ -108,7 +108,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 continue;
             }
             WitnessPathFinder witnessPathFinder = new WitnessPathFinder(prepareGraph, turnWeighting, traversalMode,
-                    initialEntries, fromNode);
+                    initialEntries);
             CHEdgeIterator outgoingEdges = outEdgeExplorer.setBaseNode(node);
             while (outgoingEdges.next()) {
                 int toNode = outgoingEdges.getAdjNode();

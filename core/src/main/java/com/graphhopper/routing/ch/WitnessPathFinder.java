@@ -52,7 +52,7 @@ public class WitnessPathFinder {
     private int numOrigEdgesSettled;
     private int numPossibleShortcuts;
 
-    public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, List<WitnessSearchEntry> initialEntries, int fromNode) {
+    public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, List<WitnessSearchEntry> initialEntries) {
         if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
             throw new IllegalArgumentException("Traversal mode " + traversalMode + "not supported");
         }
@@ -63,7 +63,6 @@ public class WitnessPathFinder {
         int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
         initCollections(size);
         initEntries(initialEntries);
-        priorityQueue.addAll(initialEntries);
     }
 
     private void initEntries(List<WitnessSearchEntry> initialEntries) {
@@ -77,6 +76,14 @@ public class WitnessPathFinder {
         }
         if (numPossibleShortcuts != 1) {
             throw new IllegalStateException("There should be exactly one initial entry with possibleShortcut = true, but given: " + numPossibleShortcuts);
+        }
+        priorityQueue.addAll(initialEntries);
+        // todo: we do not remove/update duplicates anywhere, this is ok, because we take the initial entries from
+        // the priority queue (and not chEntries, which would be wrong) and always get the one with the lowest
+        // weight first. this can make problems if we change the algorithm though!
+        // right now duplicates are not removed, because it seems costly
+        if (priorityQueue.size() != chEntries.size()) {
+//            throw new IllegalStateException("There are duplicate initial entries");
         }
     }
 

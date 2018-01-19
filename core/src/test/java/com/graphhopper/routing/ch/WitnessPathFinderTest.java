@@ -48,7 +48,7 @@ public class WitnessPathFinderTest {
         entry.possibleShortcut = true;
         List<WitnessSearchEntry> initialEntries = Collections.singletonList(entry);
         WitnessPathFinder witnessPathFinder = new WitnessPathFinder(chGraph, weighting, TraversalMode.EDGE_BASED_2DIR,
-                initialEntries, 0);
+                initialEntries);
         witnessPathFinder.findTarget(1, 2);
         witnessPathFinder.findTarget(2, 3);
         CHEntry entry1 = witnessPathFinder.getFoundEntry(1, 2);
