@@ -690,6 +690,22 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         return speed;
     }
 
+    /**
+     * Checks if a road is access destricted. For example, if we have a case with
+     * access=destination and [encoder_vehicle]=yes, this method returns false
+     */
+    protected boolean isWayAccessDestination(ReaderWay way) {
+        for (String restriction : restrictions) {
+            if (way.hasTag(restriction, "destination")) {
+                return true;
+            }
+            if (way.hasTag(restriction, intendedValues)) {
+                return false;
+            }
+        }
+        return false;
+    }
+
     protected String getPropertiesString() {
         return "speed_factor=" + speedFactor + "|speed_bits=" + speedBits + "|turn_costs=" + (maxTurnCosts > 0);
     }

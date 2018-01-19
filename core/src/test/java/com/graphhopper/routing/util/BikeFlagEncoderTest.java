@@ -648,6 +648,23 @@ public class BikeFlagEncoderTest extends AbstractBikeFlagEncoderTester {
     }
 
     @Test
+    public void testAccess(){
+        ReaderWay way = new ReaderWay(1);
+        assertPriority(UNCHANGED.getValue(), way);
+        way.setTag("access", "destination");
+        assertPriority(WORST.getValue(), way);
+        way.clearTags();
+        way.setTag("bicycle", "destination");
+        assertPriority(WORST.getValue(), way);
+        way.setTag("access", "yes");
+        assertPriority(WORST.getValue(), way);
+        way.clearTags();
+        way.setTag("access", "destination");
+        way.setTag("bicycle", "yes");
+        assertPriority(UNCHANGED.getValue(), way);
+    }
+
+    @Test
     public void testClassBicycle() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "tertiary");

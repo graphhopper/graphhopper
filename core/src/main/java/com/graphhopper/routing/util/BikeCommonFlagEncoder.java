@@ -368,6 +368,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             priorityFromRelation = (int) relationCodeEncoder.getValue(relationFlags);
 
         flags = priorityWayEncoder.setValue(flags, handlePriority(way, wayTypeSpeed, priorityFromRelation));
+        if (isWayAccessDestination(way))
+            flags = speedEncoder.setDoubleValue(flags, speedFactor);
         return flags;
     }
 
@@ -488,6 +490,10 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
             weightToPrioMap.put(0d, UNCHANGED.getValue());
         else
             weightToPrioMap.put(110d, priorityFromRelation);
+
+        if (isWayAccessDestination(way))
+            // Some cases need to set this to WORST and not just REACH_DEST
+            weightToPrioMap.put(120d, WORST.getValue());
 
         collect(way, wayTypeSpeed, weightToPrioMap);
 

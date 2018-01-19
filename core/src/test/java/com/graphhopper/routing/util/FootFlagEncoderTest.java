@@ -29,6 +29,8 @@ import org.junit.Test;
 import java.text.DateFormat;
 import java.util.Date;
 
+import static com.graphhopper.routing.util.PriorityCode.UNCHANGED;
+import static com.graphhopper.routing.util.PriorityCode.WORST;
 import static org.junit.Assert.*;
 
 /**
@@ -289,6 +291,23 @@ public class FootFlagEncoderTest {
     }
 
     @Test
+    public void testDestination() {
+        ReaderWay way = new ReaderWay(1);
+        assertPriority(UNCHANGED.getValue(), way);
+        way.setTag("access", "destination");
+        assertPriority(WORST.getValue(), way);
+        way.clearTags();
+        way.setTag("foot", "destination");
+        assertPriority(WORST.getValue(), way);
+        way.setTag("access", "yes");
+        assertPriority(WORST.getValue(), way);
+        way.clearTags();
+        way.setTag("access", "destination");
+        way.setTag("foot", "yes");
+        assertPriority(UNCHANGED.getValue(), way);
+    }
+
+    @Test
     public void testSlowHiking() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "track");
@@ -401,5 +420,10 @@ public class FootFlagEncoderTest {
         node = new ReaderNode(1, -1, -1);
         node.setTag("ford", "yes");
         assertTrue(footEncoder.handleNodeTags(node) == 0);
+    }
+
+    // Copied from AbstractBikeFlagEncoderTest
+    protected void assertPriority(int expectedPrio, ReaderWay way) {
+        assertEquals(expectedPrio, footEncoder.handlePriority(way, 0));
     }
 }

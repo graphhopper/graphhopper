@@ -678,10 +678,10 @@ public class GraphHopperIT {
 
         PathWrapper arsp = rsp.getBest();
         assertEquals(6932.2, arsp.getDistance(), .1);
-        assertEquals(106, arsp.getPoints().getSize());
+        assertEquals(104, arsp.getPoints().getSize());
 
         InstructionList il = arsp.getInstructions();
-        assertEquals(24, il.size());
+        assertEquals(23, il.size());
         List<Map<String, Object>> resultJson = il.createJson();
 
         assertEquals("Continue onto Obere Landstraße", resultJson.get(0).get("text"));
@@ -692,15 +692,15 @@ public class GraphHopperIT {
 
         assertEquals("Turn right onto Pfarrplatz", resultJson.get(2).get("text"));
         assertEquals("Turn right onto Margarethenstraße", resultJson.get(3).get("text"));
-        assertEquals("Keep left onto Hoher Markt", resultJson.get(5).get("text"));
-        assertEquals("Turn right onto Wegscheid", resultJson.get(7).get("text"));
-        assertEquals("Turn right onto Ringstraße, L73", resultJson.get(9).get("text"));
-        assertEquals("Keep left onto Eyblparkstraße", resultJson.get(10).get("text"));
-        assertEquals("Keep left onto Austraße", resultJson.get(11).get("text"));
-        assertEquals("Keep left onto Rechte Kremszeile", resultJson.get(12).get("text"));
+        assertEquals("Keep left onto Hoher Markt", resultJson.get(4).get("text"));
+        assertEquals("Turn right onto Wegscheid", resultJson.get(6).get("text"));
+        assertEquals("Turn right onto Ringstraße, L73", resultJson.get(8).get("text"));
+        assertEquals("Keep left onto Eyblparkstraße", resultJson.get(9).get("text"));
+        assertEquals("Keep left onto Austraße", resultJson.get(10).get("text"));
+        assertEquals("Keep left onto Rechte Kremszeile", resultJson.get(11).get("text"));
         //..
-        assertEquals("Turn right onto Treppelweg", resultJson.get(19).get("text"));
-        assertEquals("cycleway", resultJson.get(19).get("annotation_text"));
+        assertEquals("Turn right onto Treppelweg", resultJson.get(18).get("text"));
+        assertEquals("cycleway", resultJson.get(18).get("annotation_text"));
     }
 
     @Test
