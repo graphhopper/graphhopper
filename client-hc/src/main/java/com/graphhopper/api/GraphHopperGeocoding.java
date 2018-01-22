@@ -111,7 +111,7 @@ public class GraphHopperGeocoding {
         String url = routeServiceUrl + "?";
 
         if (request.isReverse()) {
-            if (Double.isNaN(request.getLat()) || Double.isNaN(request.getLon()))
+            if (!request.getPoint().isValid())
                 throw new IllegalArgumentException("For reverse geocoding you have to pass valid lat and long values");
             url += "reverse=true";
         } else {
@@ -121,8 +121,8 @@ public class GraphHopperGeocoding {
             url += "&q=" + request.getQuery();
         }
 
-        if (!Double.isNaN(request.getLat()))
-            url += "&point=" + request.getLat() + "," + request.getLon();
+        if (request.getPoint().isValid())
+            url += "&point=" + request.getPoint().getLat() + "," + request.getPoint().getLon();
 
         url += "&limit=" + request.getLimit();
         url += "&locale=" + request.getLocale();

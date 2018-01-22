@@ -17,6 +17,8 @@
  */
 package com.graphhopper.api.model;
 
+import com.graphhopper.util.shapes.GHPoint;
+
 /**
  * A geocoding request following https://graphhopper.com/api/1/docs/geocoding/
  *
@@ -26,8 +28,7 @@ public class GHGeocodingRequest {
 
     private final boolean reverse;
 
-    private final double lat;
-    private final double lon;
+    private final GHPoint point;
 
     private final String query;
 
@@ -40,20 +41,30 @@ public class GHGeocodingRequest {
      * This is a wrapper to build a reverse geocoding request
      */
     public GHGeocodingRequest(double lat, double lon, String locale, int limit) {
-        this(true, lat, lon, null, locale, limit, "default", -1);
+        this(true, new GHPoint(lat, lon), null, locale, limit, "default", -1);
+    }
+
+    /**
+     * This is a wrapper to build a reverse geocoding request
+     */
+    public GHGeocodingRequest(GHPoint point, String locale, int limit) {
+        this(true, point, null, locale, limit, "default", -1);
     }
 
     /**
      * This is a wrapper to build a forward geocoding request
      */
     public GHGeocodingRequest(String query, String locale, int limit) {
-        this(false, Double.NaN, Double.NaN, query, locale, limit, "default", -1);
+        this(false, null, query, locale, limit, "default", -1);
     }
 
-    public GHGeocodingRequest(boolean reverse, double lat, double lon, String query, String locale, int limit, String provider, long timeout) {
+    public GHGeocodingRequest(boolean reverse, GHPoint point, String query, String locale, int limit, String provider, long timeout) {
         this.reverse = reverse;
-        this.lat = lat;
-        this.lon = lon;
+        if (point == null) {
+            this.point = new GHPoint();
+        } else {
+            this.point = point;
+        }
         this.query = query;
         this.locale = locale;
         this.limit = limit;
@@ -65,12 +76,8 @@ public class GHGeocodingRequest {
         return reverse;
     }
 
-    public double getLat() {
-        return lat;
-    }
-
-    public double getLon() {
-        return lon;
+    public GHPoint getPoint() {
+        return point;
     }
 
     public String getQuery() {
