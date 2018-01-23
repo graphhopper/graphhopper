@@ -17,6 +17,8 @@
  */
 package com.graphhopper.storage;
 
+import java.util.function.BiFunction;
+
 import com.graphhopper.util.EdgeIterator;
 
 /**
@@ -109,16 +111,45 @@ public class TurnCostExtension implements GraphExtension {
     /**
      * This method adds a new entry which is a turn restriction or cost information via the
      * turnFlags.
+     *
+     * It appends a new entry and does not overwrite existing entries of the same turn.
      */
     public void addTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags) {
         // no need to store turn information
-        if (turnFlags == EMPTY_FLAGS)
+        if (turnFlags == EMPTY_FLAGS) {
             return;
+        }
+        BiFunction<Long, Long, Long> overwriteFunc = (oldFlags, newFlags) -> {
+            return newFlags;
+        };
+        setAndMergeTurnInfo(fromEdge, viaNode, toEdge, turnFlags, overwriteFunc);
+    }
 
+    /**
+     * Add a new turn cost entry.
+     * @param fromEdge edge ID
+     * @param viaNode node ID
+     * @param toEdge edge ID
+     * @param turnFlags flags to be written
+     * @param mergeFunction function which merges the old and the new flags as you prefer.
+     * This function takes two arguments – the old flags are the first, the new flags the
+     * second argument.
+     *
+     * See EdgeBasedRoutingAlgorithmTest for examples.
+     */
+    public void setAndMergeTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags,
+            BiFunction<Long, Long, Long> mergeFunction) {
+        // no need to store turn information
+        if (turnFlags == EMPTY_FLAGS) {
+            return;
+        }
         // append
         int newEntryIndex = turnCostsCount;
-        turnCostsCount++;
         ensureTurnCostIndex(newEntryIndex);
+        boolean oldEntryFound = false;
+        long existingFlags = turnFlags;
+        long newFlags = turnFlags;
+        int next = NO_TURN_ENTRY;
 
         // determine if we already have an cost entry for this node
         int previousEntryIndex = nodeAccess.getAdditionalNodeField(viaNode);
@@ -127,24 +158,45 @@ public class TurnCostExtension implements GraphExtension {
             nodeAccess.setAdditionalNodeField(viaNode, newEntryIndex);
         } else {
             int i = 0;
-            int tmp = previousEntryIndex;
-            while ((tmp = turnCosts.getInt((long) tmp * turnCostsEntryBytes + TC_NEXT)) != NO_TURN_ENTRY) {
-                previousEntryIndex = tmp;
+            next = turnCosts.getInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT);
+            while (true) {
+                long costsIdx = (long) previousEntryIndex * turnCostsEntryBytes;
+                if (fromEdge == turnCosts.getInt(costsIdx + TC_FROM)
+                    && toEdge == turnCosts.getInt(costsIdx + TC_TO)) {
+                    // there is already an entry for this turn
+                    oldEntryFound = true;
+                    existingFlags = turnCosts.getInt(costsIdx + TC_FLAGS);
+                    break;
+                } else if (next == NO_TURN_ENTRY) {
+                    break;
+                }
+                previousEntryIndex = next;
                 // search for the last added cost entry
                 if (i++ > 1000) {
                     throw new IllegalStateException("Something unexpected happened. A node probably will not have 1000+ relations.");
                 }
+                // get index of next turn cost entry
+                next = turnCosts.getInt((long) next * turnCostsEntryBytes + TC_NEXT);
             }
-            // set next-pointer to this new cost entry
-            turnCosts.setInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT, newEntryIndex);
+            if (!oldEntryFound) {
+                // set next-pointer to this new cost entry
+                turnCosts.setInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT,
+                        newEntryIndex);
+            } else {
+                newFlags = mergeFunction.apply(existingFlags, newFlags);
+            }
         }
-        // add entry
-        long costsBase = (long) newEntryIndex * turnCostsEntryBytes;
+        long costsBase; // where to (over)write
+        if (!oldEntryFound) {
+            costsBase = (long) newEntryIndex * turnCostsEntryBytes;
+            turnCostsCount++;
+        } else {
+            costsBase = (long) previousEntryIndex * turnCostsEntryBytes;
+        }
         turnCosts.setInt(costsBase + TC_FROM, fromEdge);
         turnCosts.setInt(costsBase + TC_TO, toEdge);
-        turnCosts.setInt(costsBase + TC_FLAGS, (int) turnFlags);
-        // next-pointer is NO_TURN_ENTRY
-        turnCosts.setInt(costsBase + TC_NEXT, NO_TURN_ENTRY);
+        turnCosts.setInt(costsBase + TC_FLAGS, (int) newFlags);
+        turnCosts.setInt(costsBase + TC_NEXT, next);
     }
 
     /**
