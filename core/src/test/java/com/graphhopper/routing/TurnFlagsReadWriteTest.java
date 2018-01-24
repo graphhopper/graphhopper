@@ -3,7 +3,7 @@ package com.graphhopper.routing;
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
 
-import java.util.function.BiFunction;
+import org.junit.Test;
 
 import com.graphhopper.routing.util.BikeFlagEncoder;
 import com.graphhopper.routing.util.CarFlagEncoder;
@@ -35,6 +35,7 @@ public class TurnFlagsReadWriteTest {
     /**
      * Test if multiple turn costs can be safely written to the storage and read from it.
      */
+    @Test
     public void testMultipleTurnCosts() {
         FlagEncoder carEncoder1 = new CarFlagEncoder(5, 5, 3);
         FlagEncoder carEncoder2 = new BikeFlagEncoder(5, 5, 3);
@@ -51,15 +52,11 @@ public class TurnFlagsReadWriteTest {
 
         // merge functions
         // overwrite
-        BiFunction<Long, Long, Long> overwriteFunc = (oldFlags, newFlags) -> {
-            return newFlags;
-        };
+        TurnCostExtension.FlagsMergeStrategy overwrite = new TurnCostExtension.OverwriteStrategy();
         // binary OR
         // This is a suitable merge strategy if you have multiple flag encoders
         // and all flag encoders use their own bits in the integer which stores the flags.
-        BiFunction<Long, Long, Long> orFunc = (oldFlags, newFlags) -> {
-            return oldFlags | newFlags;
-        };
+        TurnCostExtension.FlagsMergeStrategy bitwiseOr = new TurnCostExtension.OrStrategy();
 
         int edge42 = getEdge(g, 4, 2).getEdge();
         int edge23 = getEdge(g, 2, 3).getEdge();
@@ -68,14 +65,14 @@ public class TurnFlagsReadWriteTest {
         int edge02 = getEdge(g, 0, 2).getEdge();
         int edge24 = getEdge(g, 2, 4).getEdge();
 
-        tcs.setAndMergeTurnInfo(edge42, 2, edge23, tflags, orFunc);
-        tcs.setAndMergeTurnInfo(edge42, 2, edge23, tflags2, orFunc);
-        tcs.setAndMergeTurnInfo(edge23, 3, edge31, tflags, orFunc);
-        tcs.setAndMergeTurnInfo(edge23, 3, edge31, tflags2Less, orFunc);
-        tcs.setAndMergeTurnInfo(edge31, 1, edge10, tflagsLess, orFunc);
-        tcs.setAndMergeTurnInfo(edge31, 1, edge10, tflags2, orFunc);
-        tcs.setAndMergeTurnInfo(edge02, 2, edge24, tflags, overwriteFunc);
-        tcs.setAndMergeTurnInfo(edge02, 2, edge24, tflags2, overwriteFunc);
+        tcs.setAndMergeTurnInfo(edge42, 2, edge23, tflags, bitwiseOr);
+        tcs.setAndMergeTurnInfo(edge42, 2, edge23, tflags2, bitwiseOr);
+        tcs.setAndMergeTurnInfo(edge23, 3, edge31, tflags, bitwiseOr);
+        tcs.setAndMergeTurnInfo(edge23, 3, edge31, tflags2Less, bitwiseOr);
+        tcs.setAndMergeTurnInfo(edge31, 1, edge10, tflagsLess, bitwiseOr);
+        tcs.setAndMergeTurnInfo(edge31, 1, edge10, tflags2, bitwiseOr);
+        tcs.setAndMergeTurnInfo(edge02, 2, edge24, tflags, overwrite);
+        tcs.setAndMergeTurnInfo(edge02, 2, edge24, tflags2, overwrite);
 
         long flags423 = tcs.getTurnCostFlags(edge42, 2, edge23);
         long flags231 = tcs.getTurnCostFlags(edge23, 3, edge31);

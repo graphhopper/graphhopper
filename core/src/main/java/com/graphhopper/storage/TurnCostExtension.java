@@ -17,8 +17,6 @@
  */
 package com.graphhopper.storage;
 
-import java.util.function.BiFunction;
-
 import com.graphhopper.util.EdgeIterator;
 
 /**
@@ -46,6 +44,8 @@ public class TurnCostExtension implements GraphExtension {
     private int turnCostsEntryBytes;
     private int turnCostsCount;
     private NodeAccess nodeAccess;
+
+    private FlagsMergeStrategy mergeStrategy = new OverwriteStrategy();
 
     public TurnCostExtension() {
         TC_FROM = nextTurnCostEntryIndex();
@@ -112,33 +112,30 @@ public class TurnCostExtension implements GraphExtension {
      * This method adds a new entry which is a turn restriction or cost information via the
      * turnFlags.
      *
-     * It appends a new entry and does not overwrite existing entries of the same turn.
+     * An already existing entry for this turn will be overwritten.
      */
     public void addTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags) {
         // no need to store turn information
         if (turnFlags == EMPTY_FLAGS) {
             return;
         }
-        BiFunction<Long, Long, Long> overwriteFunc = (oldFlags, newFlags) -> {
-            return newFlags;
-        };
-        setAndMergeTurnInfo(fromEdge, viaNode, toEdge, turnFlags, overwriteFunc);
+        setAndMergeTurnInfo(fromEdge, viaNode, toEdge, turnFlags, mergeStrategy);
     }
 
     /**
      * Add a new turn cost entry.
+     *
+     * See TurnFlagsReadWriteTest for usage examples.
+     *
      * @param fromEdge edge ID
      * @param viaNode node ID
      * @param toEdge edge ID
      * @param turnFlags flags to be written
-     * @param mergeFunction function which merges the old and the new flags as you prefer.
-     * This function takes two arguments – the old flags are the first, the new flags the
-     * second argument.
-     *
-     * See EdgeBasedRoutingAlgorithmTest for examples.
+     * @param mergeStrategy strategy to merge the old and the new flags. It comes into play
+     * if the turn cost extension stores already flags for this turn.
      */
     public void setAndMergeTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags,
-            BiFunction<Long, Long, Long> mergeFunction) {
+            FlagsMergeStrategy mergeStrategy) {
         // no need to store turn information
         if (turnFlags == EMPTY_FLAGS) {
             return;
@@ -183,7 +180,7 @@ public class TurnCostExtension implements GraphExtension {
                 turnCosts.setInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT,
                         newEntryIndex);
             } else {
-                newFlags = mergeFunction.apply(existingFlags, newFlags);
+                newFlags = mergeStrategy.apply(existingFlags, newFlags);
             }
         }
         long costsBase; // where to (over)write
@@ -283,4 +280,50 @@ public class TurnCostExtension implements GraphExtension {
     public String toString() {
         return "turn_cost";
     }
+
+    /**
+     * This interfaces enables you to implement your preferred merge strategy to merge turn flags of
+     * turn which are already stored in the TurnCostExtension with the flags which should be stored.
+     *
+     * @author Michael Reichert
+     */
+    public static interface FlagsMergeStrategy {
+
+        /**
+         * Merge old and new flags
+         * @param oldFlags flags already stored by the TurnCostExtension
+         * @param newFlags flags which should be written
+         * @return what will actually be written
+         */
+        public long apply(long oldFlags, long newFlags);
+    }
+
+    /**
+     * Overwrite existing turn flags.
+     *
+     * @author Michael Reichert
+     */
+    public static class OverwriteStrategy implements FlagsMergeStrategy {
+
+        @Override
+        public long apply(long oldFlags, long newFlags) {
+            return newFlags;
+        }
+    }
+
+    /**
+     * Overwrite existing turn flags with the bitwise OR of the old and the new flags. This is a good
+     * idea if you use multiple flag encoders and want to store their turn costs of the same turn.
+     * Each flag encoder has usually its own bits in the flags.
+     *
+     * @author Michael Reichert
+     */
+    public static class OrStrategy implements FlagsMergeStrategy {
+
+        @Override
+        public long apply(long oldFlags, long newFlags) {
+            return oldFlags | newFlags;
+        }
+    }
 }
+
