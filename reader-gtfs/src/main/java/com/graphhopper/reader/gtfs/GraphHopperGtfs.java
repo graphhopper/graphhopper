@@ -304,7 +304,7 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
             for (String osmFile : osmFiles) {
                 OSMReader osmReader = new OSMReader(graphHopperStorage);
                 osmReader.setFile(new File(osmFile));
-                osmReader.setDontCreateStorage(true);
+                osmReader.setCreateStorage(false);
                 try {
                     osmReader.readGraph();
                 } catch (IOException e) {
