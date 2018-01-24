@@ -59,7 +59,6 @@ android:
 |source | license | used as default | included in repo |
 |---------|-----------|---------|------|
 |OpenStreetMap data for the road network | [ODBL](https://www.openstreetmap.org/copyright) | yes | yes
-| GTFS NRW | [CC0](http://opendata.avv.de/lizenz_und_readme.txt) | no | yes
 | SRTM elevation | [public domain](https://www2.jpl.nasa.gov/srtm/), [acknowledgement](https://lpdaac.usgs.gov/citing_our_data) | no | yes
 | CGIAR elevation | [allowed usage for GraphHopper](https://graphhopper.com/public/license/CGIAR.txt) | no | no
 | SRTMGL1 elevation | [acknowledgement](https://lpdaac.usgs.gov/citing_our_data) | no | no
