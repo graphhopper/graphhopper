@@ -2,6 +2,7 @@ package com.graphhopper.routing;
 
 import static com.graphhopper.util.GHUtility.getEdge;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 import org.junit.Test;
 
@@ -74,10 +75,15 @@ public class TurnFlagsReadWriteTest {
         tcs.setAndMergeTurnInfo(edge02, 2, edge24, tflags, overwrite);
         tcs.setAndMergeTurnInfo(edge02, 2, edge24, tflags2, overwrite);
 
+        // check backward compatibilty (existing methods did not change their behavior)
+        tcs.addTurnInfo(edge02, 2, edge23, tflags, false);
+        tcs.addTurnInfo(edge02, 2, edge23, tflags2, false);
+
         long flags423 = tcs.getTurnCostFlags(edge42, 2, edge23);
         long flags231 = tcs.getTurnCostFlags(edge23, 3, edge31);
         long flags310 = tcs.getTurnCostFlags(edge31, 1, edge10);
         long flags024 = tcs.getTurnCostFlags(edge02, 2, edge24);
+        long flags023 = tcs.getTurnCostFlags(edge02, 2, edge23);
         assertEquals(3L, flags423 & 3L);
         assertEquals(12L, flags423 & 12L);
         assertEquals(3L, flags231 & 3L);
@@ -94,5 +100,9 @@ public class TurnFlagsReadWriteTest {
         assertEquals(Double.POSITIVE_INFINITY, carEncoder2.getTurnCost(flags310), 0);
         assertEquals(0.0, carEncoder1.getTurnCost(flags024), 0);
         assertEquals(Double.POSITIVE_INFINITY, carEncoder2.getTurnCost(flags024), 0);
+        assertEquals(3L, flags023 & 3L);
+        assertFalse(12L == (flags023 & 12L));
+        assertEquals(Double.POSITIVE_INFINITY, carEncoder1.getTurnCost(flags023), 0);
+        assertEquals(0, carEncoder2.getTurnCost(flags023), 0);
     }
 }

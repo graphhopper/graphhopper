@@ -109,17 +109,32 @@ public class TurnCostExtension implements GraphExtension {
     }
 
     /**
-     * This method adds a new entry which is a turn restriction or cost information via the
-     * turnFlags.
+     * Add a new entry which is a turn restriction or cost information via the turnFlags.
      *
-     * An already existing entry for this turn will be overwritten.
+     * The methods to read turn cost information will ignore the entry written by this
+     * method if another entry of the same turn has been written already.
      */
     public void addTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags) {
         // no need to store turn information
-        if (turnFlags == EMPTY_FLAGS) {
-            return;
+        addTurnInfo(fromEdge, viaNode, toEdge, turnFlags, false);
+    }
+
+    /**
+     * Add a new entry which is a turn restriction or cost information via the turnFlags.
+     *
+     * Keep in mind that the methods to read turn cost information will only return the flags which
+     * have been written first.
+     *
+     * @param checkExistingEntries If true, existing entries of the same turn will be overwritten.
+     * Existing entries of the same turn will not be overwritten if this parameter is false.
+     */
+    public void addTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags,
+            boolean checkExistingEntries) {
+        if (checkExistingEntries) {
+            setAndMergeTurnInfo(fromEdge, viaNode, toEdge, turnFlags, mergeStrategy);
+        } else {
+            setAndMergeTurnInfo(fromEdge, viaNode, toEdge, turnFlags, null);
         }
-        setAndMergeTurnInfo(fromEdge, viaNode, toEdge, turnFlags, mergeStrategy);
     }
 
     /**
@@ -158,7 +173,7 @@ public class TurnCostExtension implements GraphExtension {
             next = turnCosts.getInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT);
             while (true) {
                 long costsIdx = (long) previousEntryIndex * turnCostsEntryBytes;
-                if (fromEdge == turnCosts.getInt(costsIdx + TC_FROM)
+                if (mergeStrategy != null && fromEdge == turnCosts.getInt(costsIdx + TC_FROM)
                     && toEdge == turnCosts.getInt(costsIdx + TC_TO)) {
                     // there is already an entry for this turn
                     oldEntryFound = true;
@@ -175,7 +190,7 @@ public class TurnCostExtension implements GraphExtension {
                 // get index of next turn cost entry
                 next = turnCosts.getInt((long) next * turnCostsEntryBytes + TC_NEXT);
             }
-            if (!oldEntryFound) {
+            if (!oldEntryFound || mergeStrategy == null) {
                 // set next-pointer to this new cost entry
                 turnCosts.setInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT,
                         newEntryIndex);
