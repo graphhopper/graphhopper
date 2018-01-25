@@ -14,7 +14,7 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 /**
  * Only some rudimentary tests here, because the code here is more or less an implementation detail of
@@ -47,8 +47,8 @@ public class WitnessPathFinderTest {
         WitnessSearchEntry entry = new WitnessSearchEntry(0, 0, 1, 8);
         entry.possibleShortcut = true;
         List<WitnessSearchEntry> initialEntries = Collections.singletonList(entry);
-        WitnessPathFinder witnessPathFinder = new WitnessPathFinder(chGraph, weighting, TraversalMode.EDGE_BASED_2DIR,
-                initialEntries);
+        WitnessPathFinder witnessPathFinder = new WitnessPathFinder(chGraph, weighting, TraversalMode.EDGE_BASED_2DIR);
+        witnessPathFinder.setInitialEntries(initialEntries);
         witnessPathFinder.findTarget(1, 2);
         witnessPathFinder.findTarget(2, 3);
         CHEntry entry1 = witnessPathFinder.getFoundEntry(1, 2);

@@ -52,7 +52,7 @@ public class WitnessPathFinder {
     private int numOrigEdgesSettled;
     private int numPossibleShortcuts;
 
-    public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode, List<WitnessSearchEntry> initialEntries) {
+    public WitnessPathFinder(CHGraph graph, Weighting weighting, TraversalMode traversalMode) {
         if (traversalMode != TraversalMode.EDGE_BASED_2DIR) {
             throw new IllegalArgumentException("Traversal mode " + traversalMode + "not supported");
         }
@@ -60,31 +60,12 @@ public class WitnessPathFinder {
         this.weighting = weighting;
         this.traversalMode = traversalMode;
         outEdgeExplorer = graph.createEdgeExplorer(new DefaultEdgeFilter(weighting.getFlagEncoder(), false, true));
-        int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
-        initCollections(size);
-        initEntries(initialEntries);
+        reset();
     }
 
-    private void initEntries(List<WitnessSearchEntry> initialEntries) {
-        numPossibleShortcuts = 0;
-        for (WitnessSearchEntry entry : initialEntries) {
-            if (entry.possibleShortcut) {
-                numPossibleShortcuts++;
-            }
-            int traversalId = getEdgeKey(entry.incEdge, entry.adjNode);
-            chEntries.put(traversalId, entry);
-        }
-        if (numPossibleShortcuts != 1) {
-            throw new IllegalStateException("There should be exactly one initial entry with possibleShortcut = true, but given: " + numPossibleShortcuts);
-        }
-        priorityQueue.addAll(initialEntries);
-        // todo: we do not remove/update duplicates anywhere, this is ok, because we take the initial entries from
-        // the priority queue (and not chEntries, which would be wrong) and always get the one with the lowest
-        // weight first. this can make problems if we change the algorithm though!
-        // right now duplicates are not removed, because it seems costly
-        if (priorityQueue.size() != chEntries.size()) {
-//            throw new IllegalStateException("There are duplicate initial entries");
-        }
+    public void setInitialEntries(List<WitnessSearchEntry> initialEntries) {
+        reset();
+        initEntries(initialEntries);
     }
 
     public CHEntry getFoundEntry(int edge, int adjNode) {
@@ -162,6 +143,27 @@ public class WitnessPathFinder {
         return GHUtility.createEdgeKey(eis.getBaseNode(), eis.getAdjNode(), eis.getEdge(), false);
     }
 
+    private void initEntries(List<WitnessSearchEntry> initialEntries) {
+        for (WitnessSearchEntry entry : initialEntries) {
+            if (entry.possibleShortcut) {
+                numPossibleShortcuts++;
+            }
+            int traversalId = getEdgeKey(entry.incEdge, entry.adjNode);
+            chEntries.put(traversalId, entry);
+        }
+        if (numPossibleShortcuts != 1) {
+            throw new IllegalStateException("There should be exactly one initial entry with possibleShortcut = true, but given: " + numPossibleShortcuts);
+        }
+        priorityQueue.addAll(initialEntries);
+        // todo: we do not remove/update duplicates anywhere, this is ok, because we take the initial entries from
+        // the priority queue (and not chEntries, which would be wrong) and always get the one with the lowest
+        // weight first. this can make problems if we change the algorithm though!
+        // right now duplicates are not removed, because it seems costly
+        if (priorityQueue.size() != chEntries.size()) {
+//            throw new IllegalStateException("There are duplicate initial entries");
+        }
+    }
+    
     private WitnessSearchEntry createEntry(CHEdgeIterator iter, CHEntry parent, double weight) {
         WitnessSearchEntry entry = new WitnessSearchEntry(iter.getEdge(), iter.getLastOrigEdge(), iter.getAdjNode(), weight);
         entry.parent = parent;
@@ -173,6 +175,13 @@ public class WitnessPathFinder {
         entry.incEdge = iter.getLastOrigEdge();
         entry.weight = weight;
         entry.parent = parent;
+    }
+
+    private void reset() {
+        int size = Math.min(Math.max(200, graph.getNodes() / 10), 2000);
+        initCollections(size);
+        numOrigEdgesSettled = 0;
+        numPossibleShortcuts = 0;
     }
 
     private void initCollections(int size) {

@@ -389,10 +389,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         logger.info("took:" + (int) allSW.stop().getSeconds()
                 + ", new shortcuts: " + Helper.nf(nodeContractor.getAddedShortcutsCount())
                 + ", " + prepareWeighting
-                + ", dijkstras:" + nodeContractor.getDijkstraCount()
+                + ", dijkstras:" + Helper.nf(nodeContractor.getDijkstraCount())
                 + ", " + getTimesAsString()
                 + ", meanDegree:" + (long) meanDegree
-                + ", initSize:" + initSize
+                + ", initSize:" + Helper.nf(initSize)
                 + ", periodic:" + periodicUpdatesPercentage
                 + ", lazy:" + lastNodesLazyUpdatePercentage
                 + ", neighbor:" + neighborUpdatePercentage
