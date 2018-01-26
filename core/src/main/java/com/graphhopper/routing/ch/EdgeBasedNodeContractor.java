@@ -39,6 +39,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private final TraversalMode traversalMode;
     private WitnessPathFinder witnessPathFinder;
     private CHEdgeExplorer toNodeInEdgeExplorer;
+    private CHEdgeExplorer scExplorer;
     private EdgeExplorer fromNodeOrigInEdgeExplorer;
     private EdgeExplorer toNodeOrigOutEdgeExplorer;
     private EdgeExplorer loopAvoidanceInEdgeExplorer;
@@ -63,6 +64,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         DefaultEdgeFilter outEdgeFilter = new DefaultEdgeFilter(prepareFlagEncoder, false, true);
         inEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
         outEdgeExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
+        scExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
         toNodeInEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
         fromNodeOrigInEdgeExplorer = ghStorage.createEdgeExplorer(inEdgeFilter);
         toNodeOrigOutEdgeExplorer = ghStorage.createEdgeExplorer(outEdgeFilter);
@@ -193,10 +195,35 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private CHEntry doAddShortcut(CHEntry edgeFrom, CHEntry edgeTo) {
         int from = edgeFrom.parent.adjNode;
         int adjNode = edgeTo.adjNode;
-        long direction = PrepareEncoder.getScFwdDir();
+
+        final CHEdgeIterator iter = scExplorer.setBaseNode(from);
+        while (iter.next()) {
+            if (!iter.isShortcut()
+                    || !(iter.getFirstOrigEdge() == edgeFrom.getParent().incEdge)
+                    || !(iter.getLastOrigEdge() == edgeTo.incEdge)) {
+                continue;
+            }
+            final double existingWeight = turnWeighting.calcWeight(iter, false, EdgeIterator.NO_EDGE);
+            if (existingWeight <= edgeTo.weight) {
+                // this shortcut already exists with lower weight --> do nothing
+                CHEntry entry = new CHEntry(iter.getEdge(), iter.getLastOrigEdge(), adjNode, existingWeight);
+                entry.parent = edgeFrom.parent;
+                return entry;
+            } else {
+                // update weight
+                iter.setSkippedEdges(edgeFrom.edge, edgeTo.edge);
+                iter.setWeight(edgeTo.weight);
+                CHEntry entry = new CHEntry(iter.getEdge(), iter.getLastOrigEdge(), adjNode, edgeTo.weight);
+                entry.parent = edgeFrom.parent;
+                return entry;
+            }
+        }
+
+        // this shortcut is new --> add it
         LOGGER.trace("Adding shortcut from {} to {}, weight: {}, firstOrigEdge: {}, lastOrigEdge: {}",
                 from, adjNode, edgeTo.weight, edgeFrom.getParent().incEdge, edgeTo.incEdge);
         CHEdgeIteratorState shortcut = prepareGraph.shortcut(from, adjNode);
+        long direction = PrepareEncoder.getScFwdDir();
         // we need to set flags first because they overwrite weight etc
         shortcut.setFlags(direction);
         shortcut.setSkippedEdges(edgeFrom.edge, edgeTo.edge)
