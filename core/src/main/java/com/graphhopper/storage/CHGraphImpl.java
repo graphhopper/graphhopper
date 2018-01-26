@@ -421,6 +421,38 @@ public class CHGraphImpl implements CHGraph, Storable<CHGraph> {
         return "CHGraph|" + getWeighting().toString();
     }
 
+    public void debugPrint() {
+        final int printMax = 100;
+        System.out.println("nodesCH:");
+        String formatNodes = "%12s | %12s | %12s \n";
+        System.out.format(formatNodes, "#", "N_CH_REF", "N_LEVEL");
+        for (int i = 0; i < Math.min(baseGraph.getNodes(), printMax); ++i) {
+            System.out.format(formatNodes, i, chEdgeAccess.getEdgeRef(i), getLevel(i));
+        }
+        if (baseGraph.getNodes() > printMax) {
+            System.out.format(" ... %d more nodes", baseGraph.getNodes() - printMax);
+        }
+        System.out.println("shortcuts:");
+        String formatShortcuts = "%12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s | %12s\n";
+        System.out.format(formatShortcuts, "#", "E_NODEA", "E_NODEB", "E_LINKA", "E_LINKB", "E_DIST", "E_FLAGS", "S_SKIP_EDGE1", "S_SKIP_EDGE2", "S_ORIG_FIRST", "S_ORIG_LAST");
+        for (int i = baseGraph.edgeCount; i < Math.min(shortcutCount, printMax); ++i) {
+            System.out.format(formatShortcuts, i,
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_NODEA),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_NODEB),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_LINKA),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_LINKB),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_DIST),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + chEdgeAccess.E_FLAGS),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + S_SKIP_EDGE1),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + S_SKIP_EDGE2),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + S_ORIG_FIRST),
+                    shortcuts.getInt(chEdgeAccess.toPointer(i) + S_ORIG_LAST));
+        }
+        if (shortcutCount > printMax) {
+            System.out.printf(" ... %d more shortcut edges", shortcutCount - printMax);
+        }
+    }
+
     class CHEdgeIteratorImpl extends EdgeIterable implements CHEdgeExplorer, CHEdgeIterator {
         public CHEdgeIteratorImpl(BaseGraph baseGraph, EdgeAccess edgeAccess, EdgeFilter filter) {
             super(baseGraph, edgeAccess, filter);

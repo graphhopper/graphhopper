@@ -400,4 +400,8 @@ public final class GraphHopperStorage implements GraphStorage, Graph {
     public GraphExtension getExtension() {
         return baseGraph.getExtension();
     }
+
+    public void debugPrint() {
+        baseGraph.debugPrint();
+    }
 }

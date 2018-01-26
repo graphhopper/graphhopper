@@ -359,6 +359,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     throw new RuntimeException("Thread was interrupted");
                 }
 
+                // todo: there can be multiple edges/shortcuts going to the same node, maybe it helps to make sure
+                // that neighhbor updates are only run once per node ?
                 int nn = iter.getAdjNode();
                 if (prepareGraph.getLevel(nn) != maxLevel)
                     continue;
@@ -373,7 +375,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     neighborSW.stop();
                 }
 
-                // todo: does this work for edge-based case ?
+                // todo: does this work for edge-based case ? loop-helper shortcuts are probably not removed,
+                // but does it really matter ?
                 prepareGraph.disconnect(vehicleAllTmpExplorer, iter);
             }
         }
