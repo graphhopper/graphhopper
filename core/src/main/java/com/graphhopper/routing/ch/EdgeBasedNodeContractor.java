@@ -45,8 +45,11 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private EdgeExplorer loopAvoidanceInEdgeExplorer;
     private EdgeExplorer loopAvoidanceOutEdgeExplorer;
     private WitnessSearchStrategy witnessSearchStrategy;
+    //todo: replace with different handler implementations
     private boolean dryMode;
     private int shortcutCount;
+    private Stats calcPrioStats = new Stats();
+    private Stats contractStats = new Stats();
 
     public EdgeBasedNodeContractor(Directory dir, GraphHopperStorage ghStorage, CHGraph prepareGraph, TurnWeighting turnWeighting, TraversalMode traversalMode) {
         super(dir, ghStorage, prepareGraph, turnWeighting);
@@ -86,25 +89,40 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     @Override
     public int calculatePriority(int node) {
         dryMode = true;
-        findShortcuts(node);
+        long start = System.nanoTime();
+        int edges = findShortcuts(node);
+        stats().calcTime += (System.nanoTime() - start);
         // the more shortcuts need to be introduced the later we want to contract this node
-        return shortcutCount;
+        // the more edges will be removed when contracting this node the earlier we want to contract the node
+        // return shortcutCount - edges;
+        return shortcutCount; 
     }
 
     @Override
     public long contractNode(int node) {
         dryMode = false;
-        return findShortcuts(node);
+        long start = System.nanoTime();
+        long result = findShortcuts(node);
+        stats().calcTime += System.nanoTime() - start;
+        return result;
     }
 
-    private long findShortcuts(int node) {
+    private int findShortcuts(int node) {
         LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}", node, dryMode ? "counted" : "added");
+        stats().nodes++;
         CHEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
         shortcutCount = 0;
+        int degree = 0;
         while (incomingEdges.next()) {
             int fromNode = incomingEdges.getAdjNode();
-            if (isContracted(fromNode) || fromNode == node)
+            if (isContracted(fromNode))
                 continue;
+
+            degree++;
+
+            if (fromNode == node) {
+                continue;
+            }
 
             // todo: note that we rely on shortcuts always having forward direction only, if we change this we need a
             // more sophisticated way to figure out what the 'first' and 'last' original edges are
@@ -120,6 +138,7 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 if (isContracted(toNode) || toNode == node)
                     continue;
 
+                stats().shortcutsChecked++;
                 int targetEdge = outgoingEdges.getLastOrigEdge();
 
                 dijkstraSW.start();
@@ -130,17 +149,24 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 CHEntry entry = witnessPathFinder.getFoundEntry(targetEdge, toNode);
                 LOGGER.trace("Witness path search to outgoing edge yielded entry {}", entry);
                 if (witnessSearchStrategy.shortcutRequired(node, toNode, incomingEdges, outgoingEdges, witnessPathFinder, entry)) {
+                    // todo: note that we do not count loop-helper shortcuts here, but there are not that many usually
+                    stats().shortcutsNeeded++;
                     addShortcuts(entry);
+                } else {
+                    stats().numWitnessesFound++;
                 }
             }
         }
-        // todo: why do we need the degree again ?
-        return 0;
+        return degree;
     }
 
     @Override
     public String getPrepareAlgoMemoryUsage() {
-        return "todo";
+        // todo: this method is currently misused to print some statistics for performance analysis
+        String result = String.format("stats(calc): %s, stats(contract): %s", calcPrioStats, contractStats);
+        calcPrioStats = new Stats();
+        contractStats = new Stats();
+        return result;
     }
 
     private void addShortcuts(CHEntry chEntry) {
@@ -288,6 +314,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
             LOGGER.trace("Found a witness path -> no shortcut");
         }
         return bestPathUsesNodeToBeContracted;
+    }
+
+    private Stats stats() {
+        return dryMode ? calcPrioStats : contractStats;
     }
 
     private interface WitnessSearchStrategy {
@@ -470,6 +500,20 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         public boolean shortcutRequired(int node, int toNode, CHEdgeIteratorState incomingEdges,
                                         CHEdgeIteratorState outgoingEdges, WitnessPathFinder witnessPathFinder, CHEntry entry) {
             return false;
+        }
+    }
+
+    private static class Stats {
+        int nodes;
+        long shortcutsChecked;
+        long shortcutsNeeded;
+        long numWitnessesFound;
+        long calcTime;
+
+        @Override
+        public String toString() {
+            return String.format("runtime: %7.2f, nodes: %10s, scChecked: %10s, scNeeded: %10s, witnessesFound: %10s",
+                    calcTime * 1.e-9, Helper.nf(nodes), Helper.nf(shortcutsChecked), Helper.nf(shortcutsNeeded), Helper.nf(numWitnessesFound));
         }
     }
 }

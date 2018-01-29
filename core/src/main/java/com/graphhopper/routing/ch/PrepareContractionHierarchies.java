@@ -17,6 +17,8 @@
  */
 package com.graphhopper.routing.ch;
 
+import com.carrotsearch.hppc.IntHashSet;
+import com.carrotsearch.hppc.IntSet;
 import com.graphhopper.coll.GHTreeMapComposed;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.util.*;
@@ -310,14 +312,7 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 lazyTime += lazySW.getSeconds();
                 neighborTime += neighborSW.getSeconds();
 
-                logger.info(Helper.nf(counter) + ", updates:" + updateCounter
-                        + ", nodes: " + Helper.nf(sortedNodes.getSize())
-                        + ", shortcuts:" + Helper.nf(nodeContractor.getAddedShortcutsCount())
-                        + ", dijkstras:" + Helper.nf(nodeContractor.getDijkstraCount())
-                        + ", " + getTimesAsString()
-                        + ", meanDegree:" + (long) meanDegree
-                        + ", algo:" + nodeContractor.getPrepareAlgoMemoryUsage()
-                        + ", " + Helper.getMemInfo());
+                logStats(counter, updateCounter);
 
                 nodeContractor.resetDijkstraTime();
                 periodSW = new StopWatch();
@@ -352,6 +347,8 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 // skipped nodes are already set to maxLevel
                 break;
 
+            // there might be multiple edges going to the same neighbor nodes -> only calculate priority once per node
+            IntSet updatedNeighors = new IntHashSet(10);
             CHEdgeIterator iter = vehicleAllExplorer.setBaseNode(polledNode);
             while (iter.next()) {
 
@@ -359,16 +356,15 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     throw new RuntimeException("Thread was interrupted");
                 }
 
-                // todo: there can be multiple edges/shortcuts going to the same node, maybe it helps to make sure
-                // that neighhbor updates are only run once per node ?
                 int nn = iter.getAdjNode();
-                if (prepareGraph.getLevel(nn) != maxLevel)
+                if (prepareGraph.getLevel(nn) != maxLevel || updatedNeighors.contains(nn))
                     continue;
 
                 if (neighborUpdate && rand.nextInt(100) < neighborUpdatePercentage) {
                     neighborSW.start();
                     int oldPrio = oldPriorities[nn];
                     int priority = oldPriorities[nn] = calculatePriority(nn);
+                    updatedNeighors.add(nn);
                     if (priority != oldPrio)
                         sortedNodes.update(nn, oldPrio, priority);
 
@@ -381,15 +377,17 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
             }
         }
 
-        // Preparation works only once so we can release temporary data.
-        // The preparation object itself has to be intact to create the algorithm.
-        close();
-
         dijkstraTime += nodeContractor.getDijkstraSeconds();
         periodTime += periodSW.getSeconds();
         lazyTime += lazySW.getSeconds();
         neighborTime += neighborSW.getSeconds();
-        logger.info("took:" + (int) allSW.stop().getSeconds()
+        logStats(counter, updateCounter);
+
+        // Preparation works only once so we can release temporary data.
+        // The preparation object itself has to be intact to create the algorithm.
+        close();
+
+        logger.info("took:" + (int) allSW.stop().getSeconds() + "s "
                 + ", new shortcuts: " + Helper.nf(nodeContractor.getAddedShortcutsCount())
                 + ", " + prepareWeighting
                 + ", dijkstras:" + Helper.nf(nodeContractor.getDijkstraCount())
@@ -437,10 +435,9 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
     }
 
     private String getTimesAsString() {
-        return "t(dijk):" + Helper.round2(dijkstraTime)
-                + ", t(period):" + Helper.round2(periodTime)
-                + ", t(lazy):" + Helper.round2(lazyTime)
-                + ", t(neighbor):" + Helper.round2(neighborTime);
+        return String.format(
+                "t(dijk): %6.2f, t(period): %6.2f, t(lazy): %6.2f, t(neighbor): %6.2f",
+                dijkstraTime, periodTime, lazyTime, neighborTime);
     }
 
     private int calculatePriority(int node) {
@@ -479,6 +476,14 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
         }
         TurnCostExtension turnCostExtension = (TurnCostExtension) extension;
         return new TurnWeighting(new PreparationWeighting(weighting), turnCostExtension);
+    }
+
+    private void logStats(long counter, int updateCounter) {
+        logger.info(String.format("%10s, updates: %2d, nodes: %10s, shortcuts: %10s, dijkstras: %10s, %s, meanDegree: %2d, %s, %s",
+                Helper.nf(counter), updateCounter, Helper.nf(sortedNodes.getSize()),
+                Helper.nf(nodeContractor.getAddedShortcutsCount()), Helper.nf(nodeContractor.getDijkstraCount()),
+                getTimesAsString(), (long) meanDegree, nodeContractor.getPrepareAlgoMemoryUsage(),
+                Helper.getMemInfo()));
     }
 
 }
