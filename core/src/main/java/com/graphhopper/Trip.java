@@ -38,14 +38,23 @@ public class Trip {
         public final Point geometry;
 
         public final Date arrivalTime;
-        public final Date departureTime;
+        public final Date plannedArrivalTime;
+        public final Date predictedArrivalTime;
 
-        public Stop(String stop_id, String name, Point geometry, Date arrivalTime, Date departureTime) {
+        public final Date departureTime;
+        public final Date plannedDepartureTime;
+        public final Date predictedDepartureTime;
+
+        public Stop(String stop_id, String name, Point geometry, Date arrivalTime, Date plannedArrivalTime, Date predictedArrivalTime, Date departureTime, Date plannedDepartureTime, Date predictedDepartureTime) {
             this.stop_id = stop_id;
             this.stop_name = name;
             this.geometry = geometry;
             this.arrivalTime = arrivalTime;
+            this.plannedArrivalTime = plannedArrivalTime;
+            this.predictedArrivalTime = predictedArrivalTime;
             this.departureTime = departureTime;
+            this.plannedDepartureTime = plannedDepartureTime;
+            this.predictedDepartureTime = predictedDepartureTime;
         }
 
         @Override

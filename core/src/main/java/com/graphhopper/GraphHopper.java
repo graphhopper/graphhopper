@@ -530,7 +530,7 @@ public class GraphHopper implements GraphHopperAPI {
         String graphHopperFolder = args.get("graph.location", "");
         if (isEmpty(graphHopperFolder) && isEmpty(ghLocation)) {
             if (isEmpty(dataReaderFile))
-                throw new IllegalArgumentException("You need to specify an OSM file.");
+                throw new IllegalArgumentException("If no graph.location is provided you need to specify an OSM file.");
 
             graphHopperFolder = pruneFileEnd(dataReaderFile) + "-gh";
         }
