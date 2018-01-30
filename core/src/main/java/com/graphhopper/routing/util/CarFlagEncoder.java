@@ -400,25 +400,32 @@ public class CarFlagEncoder extends AbstractFlagEncoder implements LaneInfoEncod
     @Override
     public long encodeTurnLanes(ReaderWay readerWay) {
         String tag = readerWay.getTag("turn:lanes");
+        String tagForward = readerWay.getTag("turn:lanes:forward");
         if (tag != null) {
-            Integer encoded = 0;
-            String[] laneTags = tag.split("\\|", -1);
-            Collections.reverse(Arrays.asList(laneTags));
-            for (int i = 0; i < laneTags.length; i++) {
-                String laneTag = laneTags[i];
-                Integer turnCode = turnLaneMap.get(laneTag);
-                if (laneTag.contains(";")) {
-                    turnCode = encodeTurnLanesWithMultipleDirections(laneTag);
-                }
-                turnCode = turnCode == null ? NONE_LANE_CODE : turnCode;
-                encoded = encoded + (turnCode << (LANE_MASK_SIZE * i));
-                if (encoded < 0) {
-                    return NONE_LANE_CODE;
-                }
-            }
-            return Long.valueOf(encoded);
+            return encodeTagValue(tag);
+        } else if (tagForward != null) {
+            return encodeTagValue(tagForward);
         }
         return NONE_LANE_CODE;
+    }
+
+    private long encodeTagValue(String tag) {
+        Integer encoded = 0;
+        String[] laneTags = tag.split("\\|", -1);
+        Collections.reverse(Arrays.asList(laneTags));
+        for (int i = 0; i < laneTags.length; i++) {
+            String laneTag = laneTags[i];
+            Integer turnCode = turnLaneMap.get(laneTag);
+            if (laneTag.contains(";")) {
+                turnCode = encodeTurnLanesWithMultipleDirections(laneTag);
+            }
+            turnCode = turnCode == null ? NONE_LANE_CODE : turnCode;
+            encoded = encoded + (turnCode << (LANE_MASK_SIZE * i));
+            if (encoded < 0) {
+                return NONE_LANE_CODE;
+            }
+        }
+        return Long.valueOf(encoded);
     }
 
     private Integer encodeTurnLanesWithMultipleDirections(String laneTag) {

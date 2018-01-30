@@ -655,6 +655,24 @@ public class CarFlagEncoderTest {
     }
 
     @Test
+    public void testEncodeTurnLaneForward() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("turn:lanes:forward", "none|none|none|merge_to_left");
+        Integer none = encoder.turnLaneMap.get("none");
+        Integer merge = encoder.turnLaneMap.get("merge_to_left");
+
+        Long result = encoder.encodeTurnLanes(way);
+
+        assertNotNull(result);
+        assertEquals((none << (4 * 3)) + (none << (4 * 2)) + (none << (4 * 1)) + (merge << (4 * 0)), result, 0);
+
+        String lanes = encoder.decodeTurnLanes(result);
+
+        assertNotNull(lanes);
+        assertEquals("none|none|none|merge_to_left", lanes);
+    }
+
+    @Test
     public void testDecodeTurnLane() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("turn:lanes", "right|none|none|merge_to_left");
