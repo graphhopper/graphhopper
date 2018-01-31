@@ -48,7 +48,7 @@ public class WitnessPathFinder {
     private CHEdgeExplorer outEdgeExplorer;
     // todo: find good value here or adjust dynamically, if this is set too low important witnesses wont be found
     // and the number of shortcuts explodes, if it is too high the dijkstra searches take too long
-    private final int maxOrigEdgesSettled = 50;
+    private int maxOrigEdgesSettled;
     private int numOrigEdgesSettled;
     private int numPossibleShortcuts;
 
@@ -66,6 +66,7 @@ public class WitnessPathFinder {
     public void setInitialEntries(List<WitnessSearchEntry> initialEntries) {
         reset();
         initEntries(initialEntries);
+        maxOrigEdgesSettled = initialEntries.size() * 5;
     }
 
     public CHEntry getFoundEntry(int edge, int adjNode) {
