@@ -37,9 +37,11 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     // todo: modify code such that logging does not alter performance 
     private final TurnWeighting turnWeighting;
     private final TraversalMode traversalMode;
+    private int[] hierarchyDepths;
     private WitnessPathFinder witnessPathFinder;
     private CHEdgeExplorer toNodeInEdgeExplorer;
     private CHEdgeExplorer scExplorer;
+    private CHEdgeExplorer allCHExplorer;
     private EdgeExplorer fromNodeOrigInEdgeExplorer;
     private EdgeExplorer toNodeOrigOutEdgeExplorer;
     private EdgeExplorer loopAvoidanceInEdgeExplorer;
@@ -47,7 +49,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     private WitnessSearchStrategy witnessSearchStrategy;
     //todo: replace with different handler implementations
     private boolean dryMode;
-    private int shortcutCount;
+    private int numEdges;
+    private int numPrevEdges;
+    private int numOrigEdges;
+    private int numPrevOrigEdges;
     private Stats calcPrioStats = new Stats();
     private Stats contractStats = new Stats();
 
@@ -68,11 +73,13 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         inEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
         outEdgeExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
         scExplorer = prepareGraph.createEdgeExplorer(outEdgeFilter);
+        allCHExplorer = prepareGraph.createEdgeExplorer(new DefaultEdgeFilter(prepareFlagEncoder, true, true));
         toNodeInEdgeExplorer = prepareGraph.createEdgeExplorer(inEdgeFilter);
         fromNodeOrigInEdgeExplorer = ghStorage.createEdgeExplorer(inEdgeFilter);
         toNodeOrigOutEdgeExplorer = ghStorage.createEdgeExplorer(outEdgeFilter);
         loopAvoidanceInEdgeExplorer = ghStorage.createEdgeExplorer(inEdgeFilter);
         loopAvoidanceOutEdgeExplorer = ghStorage.createEdgeExplorer(outEdgeFilter);
+        hierarchyDepths = new int[prepareGraph.getNodes()];
     }
 
     @Override
@@ -90,12 +97,20 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
     public int calculatePriority(int node) {
         dryMode = true;
         long start = System.nanoTime();
-        int edges = findShortcuts(node);
+        findShortcuts(node);
         stats().calcTime += (System.nanoTime() - start);
+        CHEdgeIterator iter = allCHExplorer.setBaseNode(node);
+        while (iter.next()) {
+            if (isContracted(iter.getAdjNode()))
+                continue;
+            numPrevEdges++;
+            numPrevOrigEdges += getOrigEdgeCount(iter.getEdge());
+        }
+        // todo: optimize
         // the more shortcuts need to be introduced the later we want to contract this node
         // the more edges will be removed when contracting this node the earlier we want to contract the node
-        // return shortcutCount - edges;
-        return shortcutCount; 
+        // right now we use edge differences instead of quotients
+        return 8 * (numEdges - numPrevEdges) + 4 * (numOrigEdges - numPrevOrigEdges) + hierarchyDepths[node];
     }
 
     @Override
@@ -103,6 +118,12 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         dryMode = false;
         long start = System.nanoTime();
         long result = findShortcuts(node);
+        CHEdgeIterator iter = allCHExplorer.setBaseNode(node);
+        while (iter.next()) {
+            if (isContracted(iter.getAdjNode()) || iter.getAdjNode() == node)
+                continue;
+            hierarchyDepths[iter.getAdjNode()] = Math.max(hierarchyDepths[iter.getAdjNode()], hierarchyDepths[node] + 1);
+        }
         stats().calcTime += System.nanoTime() - start;
         return result;
     }
@@ -111,7 +132,10 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
         LOGGER.debug("Finding shortcuts for node {}, required shortcuts will be {}", node, dryMode ? "counted" : "added");
         stats().nodes++;
         CHEdgeIterator incomingEdges = inEdgeExplorer.setBaseNode(node);
-        shortcutCount = 0;
+        numEdges = 0;
+        numPrevEdges = 0;
+        numOrigEdges = 0;
+        numPrevOrigEdges = 0;
         int degree = 0;
         while (incomingEdges.next()) {
             int fromNode = incomingEdges.getAdjNode();
@@ -185,7 +209,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
 
     private void handleShortcut(CHEntry edgeFrom, CHEntry edgeTo) {
         if (dryMode) {
-            shortcutCount++;
+            numEdges++;
+            numOrigEdges += getOrigEdgeCount(edgeFrom.edge) + getOrigEdgeCount(edgeTo.edge);
         } else {
             addShortcut(edgeFrom, edgeTo);
         }
@@ -256,6 +281,8 @@ public class EdgeBasedNodeContractor extends AbstractNodeContractor {
                 // this is a bit of a hack, we misuse incEdge of the root entry to store the first orig edge
                 .setOuterOrigEdges(edgeFrom.getParent().incEdge, edgeTo.incEdge)
                 .setWeight(edgeTo.weight);
+        final int origEdgeCount = getOrigEdgeCount(edgeFrom.edge) + getOrigEdgeCount(edgeTo.edge);
+        setOrigEdgeCount(shortcut.getEdge(), origEdgeCount);
         addedShortcutsCount++;
         CHEntry entry = new CHEntry(
                 shortcut.getEdge(), shortcut.getEdge(), edgeTo.adjNode, edgeTo.weight);
