@@ -73,9 +73,14 @@ public class CHMeasurement {
         final NodeAccess nodeAccess = g.getNodeAccess();
         final Random random = new Random(seed);
 
+        final int iterations = 500;
+        
         MiniPerfTest compareTest = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
+                if (!warmup && run % 100 == 0) {
+                    LOGGER.info("Finished {} of {} runs.", run, iterations);
+                }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
                 req.getHints().put(Parameters.Routing.EDGE_BASED, withTurnCosts);
                 req.getHints().put(Parameters.CH.DISABLE, false);
@@ -113,6 +118,9 @@ public class CHMeasurement {
         MiniPerfTest performanceTest = new MiniPerfTest() {
             @Override
             public int doCalc(boolean warmup, int run) {
+                if (!warmup && run % 100 == 0) {
+                    LOGGER.info("Finished {} of {} runs.", run, iterations);
+                }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
                 req.getHints().put(Parameters.Routing.EDGE_BASED, withTurnCosts);
                 GHResponse route = graphHopper.route(req);
@@ -120,7 +128,7 @@ public class CHMeasurement {
             }
         };
 
-        final int iterations = 5_000;
+
         compareTest.setIterations(iterations).start();
         performanceTest.setIterations(iterations).start();
         if (performanceTest.getDummySum() > 0.01 * iterations) {
