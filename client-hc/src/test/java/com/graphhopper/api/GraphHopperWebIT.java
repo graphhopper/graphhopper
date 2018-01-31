@@ -54,6 +54,7 @@ public class GraphHopperWebIT {
         isBetween(11000, 12000, alt.getDistance());
         isBetween(310, 320, alt.getAscend());
         isBetween(235, 245, alt.getDescend());
+        isBetween(1000, 1500, alt.getRouteWeight());
 
 
         // change vehicle
