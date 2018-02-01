@@ -25,11 +25,14 @@ import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.TurnWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.*;
-import com.graphhopper.util.*;
+import com.graphhopper.util.CHEdgeExplorer;
+import com.graphhopper.util.CHEdgeIterator;
+import com.graphhopper.util.Helper;
+import com.graphhopper.util.StopWatch;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Random;
 
 import static com.graphhopper.util.Parameters.Algorithms.ASTAR_BI;
 import static com.graphhopper.util.Parameters.Algorithms.DIJKSTRA_BI;
@@ -364,7 +367,10 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                     neighborSW.start();
                     int oldPrio = oldPriorities[nn];
                     int priority = oldPriorities[nn] = calculatePriority(nn);
-                    updatedNeighors.add(nn);
+                    // todo: not sure why, but preventing duplicate neighbor updates in this way drastically increases
+                    // query time for edge-based CH (for Bremen map 3ms instead of 40ms!) 
+                    // --> disable for now, but would be very interesting to understand!
+//                    updatedNeighors.add(nn);
                     if (priority != oldPrio)
                         sortedNodes.update(nn, oldPrio, priority);
 
