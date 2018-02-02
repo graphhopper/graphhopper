@@ -59,6 +59,8 @@ public class CHMeasurement {
         }
         graphHopper.getCHFactoryDecorator().setDisablingAllowed(true);
         graphHopper.init(cmdArgs);
+        // remove previous data
+        graphHopper.clean();
 
         StopWatch sw = new StopWatch();
         sw.start();
@@ -73,21 +75,32 @@ public class CHMeasurement {
         final NodeAccess nodeAccess = g.getNodeAccess();
         final Random random = new Random(seed);
 
-        final int iterations = 500;
-        
+        final int iterations = 1_000;
+
         MiniPerfTest compareTest = new MiniPerfTest() {
+            long chTime = 0;
+            long noChTime = 0;
+
             @Override
             public int doCalc(boolean warmup, int run) {
                 if (!warmup && run % 100 == 0) {
-                    LOGGER.info("Finished {} of {} runs.", run, iterations);
+                    LOGGER.info("Finished {} of {} runs. {}", run, iterations,
+                            run > 0 ? String.format(" CH: %6.2fms, without CH: %6.2fms",
+                                    chTime * 1.e-6 / run, noChTime * 1.e-6 / run) : "");
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
                 req.getHints().put(Parameters.Routing.EDGE_BASED, withTurnCosts);
                 req.getHints().put(Parameters.CH.DISABLE, false);
+                long start = System.nanoTime();
                 GHResponse chRoute = graphHopper.route(req);
+                if (!warmup)
+                    chTime += (System.nanoTime() - start);
 
                 req.getHints().put(Parameters.CH.DISABLE, true);
+                start = System.nanoTime();
                 GHResponse nonChRoute = graphHopper.route(req);
+                if (!warmup)
+                    noChTime += System.nanoTime() - start;
 
                 getRealErrors(chRoute);
 
@@ -116,14 +129,20 @@ public class CHMeasurement {
 
 
         MiniPerfTest performanceTest = new MiniPerfTest() {
+            private long queryTime;
+
             @Override
             public int doCalc(boolean warmup, int run) {
                 if (!warmup && run % 100 == 0) {
-                    LOGGER.info("Finished {} of {} runs.", run, iterations);
+                    LOGGER.info("Finished {} of {} runs. {}", run, iterations,
+                            run > 0 ? String.format(" Time: %6.2fms", queryTime * 1.e-6 / run) : "");
                 }
                 GHRequest req = buildRandomRequest(random, numNodes, nodeAccess);
                 req.getHints().put(Parameters.Routing.EDGE_BASED, withTurnCosts);
+                long start = System.nanoTime();
                 GHResponse route = graphHopper.route(req);
+                if (!warmup)
+                    queryTime += System.nanoTime() - start;
                 return getRealErrors(route).size();
             }
         };
