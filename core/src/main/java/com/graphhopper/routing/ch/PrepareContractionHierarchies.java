@@ -360,19 +360,17 @@ public class PrepareContractionHierarchies extends AbstractAlgoPreparation imple
                 }
 
                 int nn = iter.getAdjNode();
-                if (prepareGraph.getLevel(nn) != maxLevel || updatedNeighors.contains(nn))
+                if (prepareGraph.getLevel(nn) != maxLevel)
                     continue;
 
-                if (neighborUpdate && rand.nextInt(100) < neighborUpdatePercentage) {
+                if (neighborUpdate && !updatedNeighors.contains(nn) && rand.nextInt(100) < neighborUpdatePercentage) {
                     neighborSW.start();
                     int oldPrio = oldPriorities[nn];
                     int priority = oldPriorities[nn] = calculatePriority(nn);
-                    // todo: not sure why, but preventing duplicate neighbor updates in this way drastically increases
-                    // query time for edge-based CH (for Bremen map 3ms instead of 40ms!) 
-                    // --> disable for now, but would be very interesting to understand!
-//                    updatedNeighors.add(nn);
-                    if (priority != oldPrio)
+                    if (priority != oldPrio) {
                         sortedNodes.update(nn, oldPrio, priority);
+                        updatedNeighors.add(nn);
+                    }
 
                     neighborSW.stop();
                 }
