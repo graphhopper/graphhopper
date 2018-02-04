@@ -46,7 +46,7 @@ import java.util.*;
  */
 public class EncodingManager implements EncodedValueLookup {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(TagsParser.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(EncodingManager.class);
 
     private final Map<String, EncodedValue> encodedValueMap = new LinkedHashMap<>();
     // for serialization we should not rely on the correct order, instead we force order with this List

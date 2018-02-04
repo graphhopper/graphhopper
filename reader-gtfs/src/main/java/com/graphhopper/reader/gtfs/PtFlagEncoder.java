@@ -57,12 +57,12 @@ public class PtFlagEncoder extends AbstractFlagEncoder {
     public Map<String, TagParser> createTagParsers(final String prefix) {
         // I have to set super.speedEncoder even though
         // super already knows speedBits and speedFactor because they are constructor parameters.
-        averageSpeedEnc = new DecimalEncodedValue("Speed", speedBits, 0, speedFactor, false);
+        averageSpeedEnc = new DecimalEncodedValue("speed", speedBits, 0, speedFactor, false);
         accessEnc = new BooleanEncodedValue("access", true);
         time = new IntEncodedValue("time", 32, 0, false);
         // use BooleanEncodedValue?
         transfers = new IntEncodedValue("transfers", 1, 0, false);
-        validityId = new IntEncodedValue("validityId", 20, 0, false);
+        validityId = new IntEncodedValue("validity_id", 20, 0, false);
         type = new IntEncodedValue("type", 6, GtfsStorage.EdgeType.HIGHWAY.ordinal(), false);
         return new HashMap<>();
     }

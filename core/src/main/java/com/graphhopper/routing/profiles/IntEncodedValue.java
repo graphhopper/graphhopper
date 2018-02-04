@@ -74,9 +74,9 @@ public class IntEncodedValue implements EncodedValue {
      * This constructor reserves the specified number of bits in the underlying data structure or twice the amount if
      * store2DirectedValues is true.
      *
-     * @param defaultValue         defines which value to return if the 'raw' integer value is 0.
-     * @param store2DirectedValues if true the encoded value can be different for the forward and backward
-     *                             direction of an edge.
+     * @param defaultValue        defines which value to return if the 'raw' integer value is 0.
+     * @param storeBothDirections if true the encoded value can be different for the forward and backward
+     *                            direction of an edge.
      */
     public IntEncodedValue(String name, int bits, int defaultValue, boolean storeBothDirections) {
         this.name = name;
@@ -86,9 +86,9 @@ public class IntEncodedValue implements EncodedValue {
 
         this.bits = bits;
         if (bits <= 0)
-            throw new IllegalArgumentException("bits cannot be 0 or negative");
+            throw new IllegalArgumentException(name + ": bits cannot be 0 or negative");
         if (bits > 32)
-            throw new IllegalArgumentException("At the moment bits cannot be >32");
+            throw new IllegalArgumentException(name + ": at the moment bits cannot be >32");
         this.defaultValue = defaultValue;
         this.storeBothDirections = storeBothDirections;
     }

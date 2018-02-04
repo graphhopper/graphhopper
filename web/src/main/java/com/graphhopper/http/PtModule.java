@@ -50,7 +50,7 @@ public final class PtModule extends AbstractModule {
     @Provides
     @Singleton
     GraphHopperStorage createGraphHopperStorage(CmdArgs args, GHDirectory directory, EncodingManager encodingManager, PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage) {
-        return GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage,
+        return GraphHopperGtfs.createOrLoad(directory, encodingManager, new GHJsonFactory().create(), ptFlagEncoder, gtfsStorage,
                 args.getBool("gtfs.createwalknetwork", false),
                 args.has("gtfs.file") ? Arrays.asList(args.get("gtfs.file", "").split(",")) : Collections.emptyList(),
                 args.has("datareader.file") ? Arrays.asList(args.get("datareader.file", "").split(",")) : Collections.emptyList());

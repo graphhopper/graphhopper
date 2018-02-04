@@ -20,6 +20,7 @@ package com.graphhopper.reader.gtfs;
 
 import com.google.transit.realtime.GtfsRealtime;
 import com.graphhopper.*;
+import com.graphhopper.json.GHJson;
 import com.graphhopper.reader.osm.OSMReader;
 import com.graphhopper.routing.QueryGraph;
 import com.graphhopper.routing.util.EncodingManager;
@@ -202,8 +203,10 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
         return new TranslationMap().doImport();
     }
 
-    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage, boolean createWalkNetwork, Collection<String> gtfsFiles, Collection<String> osmFiles) {
-        GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, false, gtfsStorage);
+    public static GraphHopperStorage createOrLoad(GHDirectory directory, EncodingManager encodingManager, GHJson json,
+                                                  PtFlagEncoder ptFlagEncoder, GtfsStorage gtfsStorage, boolean createWalkNetwork,
+                                                  Collection<String> gtfsFiles, Collection<String> osmFiles) {
+        GraphHopperStorage graphHopperStorage = new GraphHopperStorage(directory, encodingManager, json, false, gtfsStorage);
         if (graphHopperStorage.loadExisting()) {
             return graphHopperStorage;
         } else {

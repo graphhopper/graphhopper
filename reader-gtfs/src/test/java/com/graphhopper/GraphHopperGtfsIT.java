@@ -18,6 +18,7 @@
 
 package com.graphhopper;
 
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.reader.gtfs.GraphHopperGtfs;
 import com.graphhopper.reader.gtfs.GtfsStorage;
 import com.graphhopper.reader.gtfs.PtFlagEncoder;
@@ -63,7 +64,8 @@ public class GraphHopperGtfsIT {
         EncodingManager encodingManager = new EncodingManager.Builder().addAll(Arrays.asList(ptFlagEncoder), 8).build();
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
-        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, false, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, new GHJsonFactory().create(), ptFlagEncoder,
+                gtfsStorage, false, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage, ptFlagEncoder);
         graphHopper = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage)
                 .createWithoutRealtimeFeed();
@@ -71,8 +73,10 @@ public class GraphHopperGtfsIT {
 
     @AfterClass
     public static void close() {
-        graphHopperStorage.close();
-        locationIndex.close();
+        if (graphHopperStorage != null)
+            graphHopperStorage.close();
+        if (locationIndex != null)
+            locationIndex.close();
     }
 
     @Test
@@ -83,7 +87,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 1, 0, 0, 0).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         GHResponse route = graphHopper.route(ghRequest);
 
@@ -100,7 +104,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,54).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 1, 6, 54).atZone(zoneId).toInstant());
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());
@@ -116,7 +120,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,7,44).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 1, 7, 44).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
 
         GHResponse response = graphHopper.route(ghRequest);
@@ -124,7 +128,6 @@ public class GraphHopperGtfsIT {
         assertEquals(1, response.getAll().size());
         assertEquals("Expected travel time == scheduled arrival time", time(0, 5), response.getBest().getTime(), 0.1);
     }
-
 
 
     @Test
@@ -135,7 +138,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6, 49).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 1, 6, 49).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.ARRIVE_BY, true);
 
         GHResponse route = graphHopper.route(ghRequest);
@@ -155,7 +158,7 @@ public class GraphHopperGtfsIT {
                 TO_LAT, TO_LON
         );
         // Tests that it also works when the query arrival time is not exactly the scheduled arrival time of the solution
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6, 50).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 1, 6, 50).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.ARRIVE_BY, true);
 
         GHResponse route = graphHopper.route(ghRequest);
@@ -175,7 +178,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.PROFILE_QUERY, true);
         ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         ghRequest.getHints().put(Parameters.PT.LIMIT_SOLUTIONS, 21);
@@ -200,7 +203,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,2,13,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 2, 13, 0).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.ARRIVE_BY, true);
         ghRequest.getHints().put(Parameters.PT.PROFILE_QUERY, true);
         // TODO: Find the problem with 1.1.2007
@@ -247,7 +250,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
         GHResponse route = graphHopper.route(ghRequest);
 
         assertFalse(route.hasErrors());
@@ -274,7 +277,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,10, 1).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 1, 10, 1).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
         GHResponse route = graphHopper.route(ghRequest);
 
@@ -291,7 +294,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant()); // Monday morning
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant()); // Monday morning
 
 
         GHResponse route = graphHopper.route(ghRequest);
@@ -301,7 +304,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,0,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 6, 0, 0).atZone(zoneId).toInstant());
         route = graphHopper.route(ghRequest);
         assertFalse(route.getAll().isEmpty());
         assertEquals("Expected travel time == scheduled travel time", time(9, 0), route.getBest().getTime());
@@ -318,10 +321,10 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,8,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 1, 8, 0).atZone(zoneId).toInstant());
         GHResponse response = graphHopper.route(ghRequest);
         assertEquals("Only find one solution. If blocks wouldn't work, there would be two. (There is a slower alternative without transfer.)", 1, response.getAll().size());
-        assertEquals("Expected travel time == scheduled travel time", time(1,20), response.getBest().getTime());
+        assertEquals("Expected travel time == scheduled travel time", time(1, 20), response.getBest().getTime());
         assertEquals("Two legs: pt, pt, but the two pt legs are in one vehicle, so...", 2, response.getBest().getLegs().size());
         assertEquals("...one boarding instruction", 1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_START_TRIP).count());
         assertEquals("...and one alighting instruction", 1, response.getBest().getInstructions().stream().filter(i -> i.getSign() == Instruction.PT_END_TRIP).count());
@@ -337,7 +340,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO1_LAT, TO1_LON
         );
-        request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,7,30).atZone(zoneId).toInstant());
+        request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
 
         GHResponse response = graphHopper.route(request);
         assertEquals("Ignoring transfer rules (free walking): Will be there at 9.", time(1, 30), response.getBest().getTime());
@@ -346,7 +349,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO1_LAT, TO1_LON
         );
-        request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,7,30).atZone(zoneId).toInstant());
+        request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
         request.getHints().put(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, 0.0);
 
         response = graphHopper.route(request);
@@ -356,7 +359,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO2_LAT, TO2_LON
         );
-        request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,7,30).atZone(zoneId).toInstant());
+        request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
 
         response = graphHopper.route(request);
         assertEquals("Ignoring transfer rules (free walking): Will be there at 8:10.", time(0, 40), response.getBest().getTime());
@@ -365,7 +368,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO2_LAT, TO2_LON
         );
-        request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,7,30).atZone(zoneId).toInstant());
+        request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 6, 7, 30).atZone(zoneId).toInstant());
         request.getHints().put(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, 0.0);
 
         response = graphHopper.route(request);
@@ -375,7 +378,7 @@ public class GraphHopperGtfsIT {
                 TO2_LAT, TO2_LON,
                 FROM_LAT, FROM_LON
         );
-        request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,6,12,5).atZone(zoneId).toInstant());
+        request.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 6, 12, 5).atZone(zoneId).toInstant());
         request.getHints().put(Parameters.PT.MAX_TRANSFER_DISTANCE_PER_LEG, 0.0);
 
         response = graphHopper.route(request);
@@ -388,7 +391,7 @@ public class GraphHopperGtfsIT {
                 FROM_LAT, FROM_LON,
                 TO_LAT, TO_LON
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
         GHResponse route = graphHopper.route(ghRequest);
 
@@ -402,7 +405,7 @@ public class GraphHopperGtfsIT {
                 from_lat, from_lon,
                 to_lat, to_lon
         );
-        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007, 1, 1, 0, 0).atZone(zoneId).toInstant());
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         GHResponse route = graphHopper.route(ghRequest);
