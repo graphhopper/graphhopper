@@ -73,6 +73,19 @@ public class Polygon {
     }
 
     /**
+     * Lossy conversion to a GraphHopper Polygon.
+     */
+    public static Polygon create(com.vividsolutions.jts.geom.Polygon polygon) {
+        double[] lats = new double[polygon.getNumPoints()];
+        double[] lons = new double[polygon.getNumPoints()];
+        for (int i = 0; i < polygon.getNumPoints(); i++) {
+            lats[i] = polygon.getCoordinates()[i].y;
+            lons[i] = polygon.getCoordinates()[i].x;
+        }
+        return new Polygon(lats, lons);
+    }
+
+    /**
      * Wrapper method for {@link Polygon#contains(double, double)}.
      */
     public boolean contains(GHPoint point) {

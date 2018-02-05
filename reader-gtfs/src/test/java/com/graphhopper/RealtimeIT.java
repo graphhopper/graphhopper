@@ -48,6 +48,8 @@ import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SKIPPED;
 import static com.graphhopper.reader.gtfs.GtfsHelper.time;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class RealtimeIT {
 
@@ -93,7 +95,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         // But the 6:00 departure of my line is going to skip my departure stop :-(
@@ -108,9 +109,13 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
-        assertEquals(1, response.getAll().size());
+        assertEquals(2, response.getAll().size());
 
         assertEquals("I have to wait half an hour for the next one (and ride 5 minutes)", time(0, 35), response.getBest().getTime(), 0.1);
+
+        PathWrapper impossibleAlternative = response.getAll().get(1);
+        assertTrue(impossibleAlternative.isImpossible());
+        assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(0).departureCancelled);
     }
 
     @Test
@@ -124,7 +129,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         // But the 6:00 departure of my line is going to skip my arrival stop :-(
@@ -139,9 +143,13 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
-        assertEquals(1, response.getAll().size());
+        assertEquals(3, response.getAll().size());
 
         assertEquals("I have to continue to STAGECOACH and then go back one stop with the 07:00 bus.", time(0, 21), response.getBest().getTime(), 0.1);
+
+        PathWrapper impossibleAlternative = response.getAll().get(2);
+        assertTrue(impossibleAlternative.isImpossible());
+        assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(1).arrivalCancelled);
     }
 
     @Test
@@ -155,7 +163,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         // But the 6:00 departure of my line is going to skip my transfer stop :-(
@@ -170,9 +177,13 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
-        assertEquals(1, response.getAll().size());
+        assertEquals(2, response.getAll().size());
 
         assertEquals("The 6:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
+
+        PathWrapper impossibleAlternative = response.getAll().get(1);
+        assertTrue(impossibleAlternative.isImpossible());
+        assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(2).departureCancelled);
     }
 
     @Test @Ignore //Pending feature
@@ -375,6 +386,39 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals("I can still use the AB1 trip", "AB1", (((Trip.PtLeg) response.getBest().getLegs().get(0)).trip_id));
         assertEquals("It takes", time(1,20), response.getBest().getTime());
+    }
+
+    @Test
+    public void testBlockTripSkipsStop() {
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
+        feedMessageBuilder.addEntityBuilder()
+                .setId("1")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("AB1").setStartTime("00:00:00"))
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(2)
+                .setScheduleRelationship(SKIPPED);
+
+        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
+        final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
+        GHResponse route = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
+
+        assertFalse(route.hasErrors());
+        assertEquals(2, route.getAll().size()); // I want to get the impossible route as well.
+        assertTrue(route.getAll().get(1).isImpossible());
+
+        // Note that my stop (BULLFROG), which is skipped, is a switch of "block legs", so even though it looks like I (impossibly) transfer there,
+        // this is not a real transfer. The bus drives through BULLFROG without stopping.
+        // Very untypical example, but seems correct.
+        Trip.PtLeg ptLeg = (Trip.PtLeg) route.getBest().getLegs().get(4);
+        assertEquals("I have to continue on AB1 which skips my stop, go all the way to the end, and ride back.", LocalDateTime.parse("2007-01-01T12:00:00").atZone(zoneId).toInstant(), ptLeg.stops.get(ptLeg.stops.size()-1).plannedArrivalTime.toInstant());
+        assertEquals("Using expected route", "BFC2", ptLeg.trip_id);
     }
 
 

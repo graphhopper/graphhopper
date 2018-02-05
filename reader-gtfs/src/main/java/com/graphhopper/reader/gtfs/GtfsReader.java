@@ -54,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -67,15 +68,19 @@ class GtfsReader {
     private LocalDate endDate;
 
     static class TripWithStopTimes {
-        public TripWithStopTimes(Trip trip, List<StopTime> stopTimes, BitSet validOnDay) {
+        public TripWithStopTimes(Trip trip, List<StopTime> stopTimes, BitSet validOnDay, Set<Integer> cancelledArrivals, Set<Integer> cancelledDepartures) {
             this.trip = trip;
             this.stopTimes = stopTimes;
             this.validOnDay = validOnDay;
+            this.cancelledArrivals = cancelledArrivals;
+            this.cancelledDeparture = cancelledDepartures;
         }
 
         Trip trip;
         List<StopTime> stopTimes;
         BitSet validOnDay;
+        Set<Integer> cancelledArrivals;
+        Set<Integer> cancelledDeparture;
     }
 
     private static class EnterAndExitNodeIdWithStopId {
@@ -203,7 +208,7 @@ class GtfsReader {
                         }
                         ArrayList<StopTime> stopTimes = new ArrayList<>();
                         getInterpolatedStopTimesForTrip(trip.trip_id).forEach(stopTimes::add);
-                        return new TripWithStopTimes(trip, stopTimes, validOnDay);
+                        return new TripWithStopTimes(trip, stopTimes, validOnDay, Collections.emptySet(), Collections.emptySet());
                     })
                     .sorted(Comparator.comparingInt(trip -> trip.stopTimes.iterator().next().departure_time))
                     .collect(Collectors.toList());
