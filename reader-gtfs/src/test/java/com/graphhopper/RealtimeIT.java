@@ -48,6 +48,7 @@ import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SKIPPED;
 import static com.graphhopper.reader.gtfs.GtfsHelper.time;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 
 public class RealtimeIT {
 
@@ -375,6 +376,38 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals("I can still use the AB1 trip", "AB1", (((Trip.PtLeg) response.getBest().getLegs().get(0)).trip_id));
         assertEquals("It takes", time(1,20), response.getBest().getTime());
+    }
+
+    @Test
+    public void testBlockTripSkipsStop() {
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
+        feedMessageBuilder.addEntityBuilder()
+                .setId("1")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("AB1").setStartTime("00:00:00"))
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(2)
+                .setScheduleRelationship(SKIPPED);
+
+        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
+        final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
+        GHResponse route = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
+
+        assertFalse(route.hasErrors());
+        assertFalse(route.getAll().isEmpty());
+
+        // Note that my stop (BULLFROG), which is skipped, is a switch of "block legs", so even though it looks like I (impossibly) transfer there,
+        // this is not a real transfer. The bus drives through BULLFROG without stopping.
+        // Very untypical example, but seems correct.
+        Trip.PtLeg ptLeg = (Trip.PtLeg) route.getBest().getLegs().get(4);
+        assertEquals("I have to continue on AB1 which skips my stop, go all the way to the end, and ride back.", LocalDateTime.parse("2007-01-01T12:00:00").atZone(zoneId).toInstant(), ptLeg.stops.get(ptLeg.stops.size()-1).plannedArrivalTime.toInstant());
+        assertEquals("Using expected route", "BFC2", ptLeg.trip_id);
     }
 
 
