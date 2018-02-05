@@ -112,6 +112,10 @@ public class RealtimeIT {
         assertEquals(2, response.getAll().size());
 
         assertEquals("I have to wait half an hour for the next one (and ride 5 minutes)", time(0, 35), response.getBest().getTime(), 0.1);
+
+        PathWrapper impossibleAlternative = response.getAll().get(1);
+        assertTrue(impossibleAlternative.isImpossible());
+        assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(0).departureCancelled);
     }
 
     @Test
@@ -142,6 +146,10 @@ public class RealtimeIT {
         assertEquals(3, response.getAll().size());
 
         assertEquals("I have to continue to STAGECOACH and then go back one stop with the 07:00 bus.", time(0, 21), response.getBest().getTime(), 0.1);
+
+        PathWrapper impossibleAlternative = response.getAll().get(2);
+        assertTrue(impossibleAlternative.isImpossible());
+        assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(1).arrivalCancelled);
     }
 
     @Test
@@ -172,6 +180,10 @@ public class RealtimeIT {
         assertEquals(2, response.getAll().size());
 
         assertEquals("The 6:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
+
+        PathWrapper impossibleAlternative = response.getAll().get(1);
+        assertTrue(impossibleAlternative.isImpossible());
+        assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(2).departureCancelled);
     }
 
     @Test @Ignore //Pending feature

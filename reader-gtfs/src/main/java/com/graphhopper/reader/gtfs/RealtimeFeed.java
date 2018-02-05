@@ -48,8 +48,10 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -271,7 +273,7 @@ public class RealtimeFeed {
                     BitSet validOnDay = new BitSet();
                     LocalDate startDate = feed.calculateStats().getStartDate();
                     validOnDay.set((int) DAYS.between(startDate, dateToChange));
-                    return new GtfsReader.TripWithStopTimes(trip, stopTimes, validOnDay);
+                    return new GtfsReader.TripWithStopTimes(trip, stopTimes, validOnDay, Collections.emptySet(), Collections.emptySet());
                 })
                 .forEach(trip -> gtfsReader.addTrips(ZoneId.of(agency.agency_timezone), Collections.singletonList(trip), 0));
         gtfsReader.wireUpStops();
@@ -303,6 +305,8 @@ public class RealtimeFeed {
     public static GtfsReader.TripWithStopTimes toTripWithStopTimes(GTFSFeed feed, Agency agency, GtfsRealtime.TripUpdate tripUpdate) {
         logger.trace("{}", tripUpdate.getTrip());
         final List<StopTime> stopTimes = new ArrayList<>();
+        Set<Integer> cancelledArrivals = new HashSet<>();
+        Set<Integer> cancelledDepartures = new HashSet<>();
         Trip originalTrip = feed.trips.get(tripUpdate.getTrip().getTripId());
         Trip trip = new Trip();
         if (originalTrip != null) {
@@ -363,6 +367,10 @@ public class RealtimeFeed {
                 time = updatedStopTime.departure_time;
                 stopTimes.add(updatedStopTime);
                 logger.trace("Number of stop times: {}", stopTimes.size());
+                if (stopTimeUpdate.getScheduleRelationship() == SKIPPED) {
+                    cancelledArrivals.add(stopTimeUpdate.getStopSequence());
+                    cancelledDepartures.add(stopTimeUpdate.getStopSequence());
+                }
             } else if (stopTimeUpdate.getScheduleRelationship() == NO_DATA) {
             } else if (tripUpdate.getTrip().getScheduleRelationship() == GtfsRealtime.TripDescriptor.ScheduleRelationship.ADDED) {
                 final StopTime stopTime = new StopTime();
@@ -381,7 +389,8 @@ public class RealtimeFeed {
         }
         logger.trace("Number of stop times: {}", stopTimes.size());
         BitSet validOnDay = new BitSet(); // Not valid on any day. Just a template.
-        return new GtfsReader.TripWithStopTimes(trip, stopTimes, validOnDay);
+
+        return new GtfsReader.TripWithStopTimes(trip, stopTimes, validOnDay, cancelledArrivals, cancelledDepartures);
     }
 
 

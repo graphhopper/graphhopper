@@ -199,6 +199,7 @@ class TripFromLabel {
         private Optional<Instant> updatedArrival;
         private StopTime stopTime = null;
         private final GtfsReader.TripWithStopTimes tripUpdate;
+        private int stopSequence = 0;
 
         StopsFromBoardHopDwellEdges(String feedId, GtfsRealtime.TripDescriptor tripDescriptor) {
             this.tripDescriptor = tripDescriptor;
@@ -212,16 +213,16 @@ class TripFromLabel {
         void next(Label.Transition t) {
             switch (t.edge.edgeType) {
                 case BOARD: {
-                    int stopSequence = gtfsStorage.getStopSequences().get(t.edge.edgeIteratorState.getEdge());
+                    stopSequence = gtfsStorage.getStopSequences().get(t.edge.edgeIteratorState.getEdge());
                     stopTime = gtfsFeed.stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), stopSequence));
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
                     Optional<Instant> updatedDeparture = getDepartureDelay(stopSequence).map(delay -> plannedDeparture.plus(delay, SECONDS));
                     Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), null, null, null, updatedDeparture.map(Date::from).orElse(Date.from(plannedDeparture)), Date.from(plannedDeparture), updatedDeparture.map(Date::from).orElse(null)));
+                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), null, null, null, isArrivalCancelled(stopSequence), updatedDeparture.map(Date::from).orElse(Date.from(plannedDeparture)), Date.from(plannedDeparture), updatedDeparture.map(Date::from).orElse(null), isDepartureCancelled(stopSequence)));
                     break;
                 }
                 case HOP: {
-                    int stopSequence = gtfsStorage.getStopSequences().get(t.edge.edgeIteratorState.getEdge());
+                    stopSequence = gtfsStorage.getStopSequences().get(t.edge.edgeIteratorState.getEdge());
                     stopTime = gtfsFeed.stop_times.get(new Fun.Tuple2<>(tripDescriptor.getTripId(), stopSequence));
                     arrivalTimeFromHopEdge = Instant.ofEpochMilli(t.label.currentTime);
                     updatedArrival = getArrivalDelay(stopSequence).map(delay -> arrivalTimeFromHopEdge.plus(delay, SECONDS));
@@ -231,7 +232,7 @@ class TripFromLabel {
                     Instant plannedDeparture = Instant.ofEpochMilli(t.label.currentTime);
                     Optional<Instant> updatedDeparture = getDepartureDelay(stopTime.stop_sequence).map(delay -> plannedDeparture.plus(delay, SECONDS));
                     Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), updatedArrival.map(Date::from).orElse(Date.from(arrivalTimeFromHopEdge)), Date.from(arrivalTimeFromHopEdge), updatedArrival.map(Date::from).orElse(null), updatedDeparture.map(Date::from).orElse(Date.from(plannedDeparture)), Date.from(plannedDeparture), updatedDeparture.map(Date::from).orElse(null)));
+                    stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), updatedArrival.map(Date::from).orElse(Date.from(arrivalTimeFromHopEdge)), Date.from(arrivalTimeFromHopEdge), updatedArrival.map(Date::from).orElse(null), isArrivalCancelled(stopSequence), updatedDeparture.map(Date::from).orElse(Date.from(plannedDeparture)), Date.from(plannedDeparture), updatedDeparture.map(Date::from).orElse(null), isDepartureCancelled(stopSequence)));
                     break;
                 }
                 default: {
@@ -250,6 +251,14 @@ class TripFromLabel {
             }
         }
 
+        private boolean isArrivalCancelled(int stopSequence) {
+            if (tripUpdate != null) {
+                return tripUpdate.cancelledArrivals.contains(stopSequence);
+            } else {
+                return false;
+            }
+        }
+
         private Optional<Integer> getDepartureDelay(int stopSequence) {
             if (tripUpdate != null) {
                 int departure_time = tripUpdate.stopTimes.stream().filter(st -> st.stop_sequence == stopSequence).findFirst().orElseThrow(() -> new RuntimeException("Stop time not found.")).departure_time;
@@ -260,9 +269,17 @@ class TripFromLabel {
             }
         }
 
+        private boolean isDepartureCancelled(int stopSequence) {
+            if (tripUpdate != null) {
+                return tripUpdate.cancelledDeparture.contains(stopSequence);
+            } else {
+                return false;
+            }
+        }
+
         void finish() {
             Stop stop = gtfsFeed.stops.get(stopTime.stop_id);
-            stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), updatedArrival.map(Date::from).orElse(Date.from(arrivalTimeFromHopEdge)), Date.from(arrivalTimeFromHopEdge), updatedArrival.map(Date::from).orElse(null), null, null, null));
+            stops.add(new Trip.Stop(stop.stop_id, stop.stop_name, geometryFactory.createPoint(new Coordinate(stop.stop_lon, stop.stop_lat)), updatedArrival.map(Date::from).orElse(Date.from(arrivalTimeFromHopEdge)), Date.from(arrivalTimeFromHopEdge), updatedArrival.map(Date::from).orElse(null), isArrivalCancelled(stopSequence),null, null, null, isDepartureCancelled(stopSequence)));
             for (Trip.Stop tripStop : stops) {
                 logger.trace("{}", tripStop);
             }
