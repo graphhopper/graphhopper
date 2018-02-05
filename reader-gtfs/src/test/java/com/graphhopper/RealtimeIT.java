@@ -95,7 +95,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         // But the 6:00 departure of my line is going to skip my departure stop :-(
@@ -110,7 +109,7 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
-        assertEquals(1, response.getAll().size());
+        assertEquals(2, response.getAll().size());
 
         assertEquals("I have to wait half an hour for the next one (and ride 5 minutes)", time(0, 35), response.getBest().getTime(), 0.1);
     }
@@ -126,7 +125,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         // But the 6:00 departure of my line is going to skip my arrival stop :-(
@@ -141,7 +139,7 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
-        assertEquals(1, response.getAll().size());
+        assertEquals(3, response.getAll().size());
 
         assertEquals("I have to continue to STAGECOACH and then go back one stop with the 07:00 bus.", time(0, 21), response.getBest().getTime(), 0.1);
     }
@@ -157,7 +155,6 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         // But the 6:00 departure of my line is going to skip my transfer stop :-(
@@ -172,7 +169,7 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
-        assertEquals(1, response.getAll().size());
+        assertEquals(2, response.getAll().size());
 
         assertEquals("The 6:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
     }
