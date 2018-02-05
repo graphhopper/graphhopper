@@ -49,6 +49,7 @@ import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate
 import static com.graphhopper.reader.gtfs.GtfsHelper.time;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class RealtimeIT {
 
@@ -401,6 +402,7 @@ public class RealtimeIT {
 
         assertFalse(route.hasErrors());
         assertEquals(2, route.getAll().size()); // I want to get the impossible route as well.
+        assertTrue(route.getAll().get(1).isImpossible());
 
         // Note that my stop (BULLFROG), which is skipped, is a switch of "block legs", so even though it looks like I (impossibly) transfer there,
         // this is not a real transfer. The bus drives through BULLFROG without stopping.
