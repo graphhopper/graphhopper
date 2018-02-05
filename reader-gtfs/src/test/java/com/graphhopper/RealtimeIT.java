@@ -400,7 +400,7 @@ public class RealtimeIT {
         GHResponse route = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
 
         assertFalse(route.hasErrors());
-        assertFalse(route.getAll().isEmpty());
+        assertEquals(2, route.getAll().size()); // I want to get the impossible route as well.
 
         // Note that my stop (BULLFROG), which is skipped, is a switch of "block legs", so even though it looks like I (impossibly) transfer there,
         // this is not a real transfer. The bus drives through BULLFROG without stopping.

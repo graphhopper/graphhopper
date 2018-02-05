@@ -48,6 +48,7 @@ public class PathWrapper {
     private final List<Trip.Leg> legs = new ArrayList<>();
     private Map<String, List<PathDetail>> pathDetails = new HashMap<>();
     private BigDecimal fare;
+    private boolean impossible = false;
 
     /**
      * @return the description of this route alternative to make it meaningful for the user e.g. it
@@ -313,5 +314,13 @@ public class PathWrapper {
 
     public BigDecimal getFare() {
         return fare;
+    }
+
+    public boolean isImpossible() {
+        return impossible;
+    }
+
+    public void setImpossible(boolean impossible) {
+        this.impossible = impossible;
     }
 }

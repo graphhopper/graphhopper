@@ -222,11 +222,23 @@ public final class GraphHopperGtfs implements GraphHopperAPI {
                     legs.addAll(walkPaths.get(egressNode(solution)).getLegs());
                 }
                 final PathWrapper pathWrapper = tripFromLabel.createPathWrapper(translation, waypoints, legs);
+                pathWrapper.setImpossible(isImpossible(solution));
                 // TODO: remove
                 pathWrapper.setTime((solution.currentTime - initialTime.toEpochMilli()) * (arriveBy ? -1 : 1));
                 response.add(pathWrapper);
             }
-            response.getAll().sort(Comparator.comparingDouble(PathWrapper::getTime));
+            Comparator<PathWrapper> c = Comparator.comparingInt(p -> (p.isImpossible() ? 1 : 0));
+            Comparator<PathWrapper> d = Comparator.comparingDouble(PathWrapper::getTime);
+            response.getAll().sort(c.thenComparing(d));
+        }
+
+        private boolean isImpossible(Label solution) {
+            for (Label i = solution; i != null; i = i.parent) {
+                if (i.impossible) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private int accessNode(Label solution) {

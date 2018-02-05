@@ -121,6 +121,10 @@ final class GraphExplorer {
         }
     }
 
+    public boolean isBlocked(EdgeIteratorState edge) {
+        return realtimeFeed.isBlocked(edge.getEdge());
+    }
+
     private long waitingTime(EdgeIteratorState edge, long earliestStartTime) {
         return flagEncoder.getTime(edge.getFlags()) * 1000 - millisOnTravelDay(edge, earliestStartTime);
     }
@@ -180,9 +184,6 @@ final class GraphExplorer {
                 return false;
             }
             if (!isValidOn(edgeIterator, label.currentTime)) {
-                return false;
-            }
-            if (realtimeFeed.isBlocked(edgeIterator.getEdge())) {
                 return false;
             }
             if (edgeType == GtfsStorage.EdgeType.WAIT_ARRIVAL && !reverse) {
