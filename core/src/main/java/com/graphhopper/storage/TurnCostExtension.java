@@ -45,8 +45,6 @@ public class TurnCostExtension implements GraphExtension {
     private int turnCostsCount;
     private NodeAccess nodeAccess;
 
-    private FlagsMergeStrategy mergeStrategy = new OverwriteStrategy();
-
     public TurnCostExtension() {
         TC_FROM = nextTurnCostEntryIndex();
         TC_TO = nextTurnCostEntryIndex();
@@ -115,26 +113,7 @@ public class TurnCostExtension implements GraphExtension {
      * method if another entry of the same turn has been written already.
      */
     public void addTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags) {
-        // no need to store turn information
-        addTurnInfo(fromEdge, viaNode, toEdge, turnFlags, false);
-    }
-
-    /**
-     * Add a new entry which is a turn restriction or cost information via the turnFlags.
-     *
-     * Keep in mind that the methods to read turn cost information will only return the flags which
-     * have been written first.
-     *
-     * @param checkExistingEntries If true, existing entries of the same turn will be overwritten.
-     * Existing entries of the same turn will not be overwritten if this parameter is false.
-     */
-    public void addTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags,
-            boolean checkExistingEntries) {
-        if (checkExistingEntries) {
-            setAndMergeTurnInfo(fromEdge, viaNode, toEdge, turnFlags, mergeStrategy);
-        } else {
-            setAndMergeTurnInfo(fromEdge, viaNode, toEdge, turnFlags, null);
-        }
+        setAndMergeTurnInfo(fromEdge, viaNode, toEdge, turnFlags, false, false);
     }
 
     /**
@@ -146,11 +125,14 @@ public class TurnCostExtension implements GraphExtension {
      * @param viaNode node ID
      * @param toEdge edge ID
      * @param turnFlags flags to be written
-     * @param mergeStrategy strategy to merge the old and the new flags. It comes into play
-     * if the turn cost extension stores already flags for this turn.
+     * @param checkExistingEntries If true, existing entries of the same turn will be overwritten.
+     * Otherwise the new flag will just be written without checking existing entries.
+     * @param mergeBitwiseOr Only relevant if checkExistingEntries is set to true. Don't overwrite
+     * existing entries with the new flag but do a bitwise OR of the old and new flags and write
+     * this merged flag.
      */
     public void setAndMergeTurnInfo(int fromEdge, int viaNode, int toEdge, long turnFlags,
-            FlagsMergeStrategy mergeStrategy) {
+            boolean checkExistingEntries, boolean mergeBitwiseOr) {
         // no need to store turn information
         if (turnFlags == EMPTY_FLAGS) {
             return;
@@ -173,7 +155,7 @@ public class TurnCostExtension implements GraphExtension {
             next = turnCosts.getInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT);
             while (true) {
                 long costsIdx = (long) previousEntryIndex * turnCostsEntryBytes;
-                if (mergeStrategy != null && fromEdge == turnCosts.getInt(costsIdx + TC_FROM)
+                if (checkExistingEntries && fromEdge == turnCosts.getInt(costsIdx + TC_FROM)
                     && toEdge == turnCosts.getInt(costsIdx + TC_TO)) {
                     // there is already an entry for this turn
                     oldEntryFound = true;
@@ -190,12 +172,12 @@ public class TurnCostExtension implements GraphExtension {
                 // get index of next turn cost entry
                 next = turnCosts.getInt((long) next * turnCostsEntryBytes + TC_NEXT);
             }
-            if (!oldEntryFound || mergeStrategy == null) {
+            if (!oldEntryFound || !checkExistingEntries) {
                 // set next-pointer to this new cost entry
                 turnCosts.setInt((long) previousEntryIndex * turnCostsEntryBytes + TC_NEXT,
                         newEntryIndex);
-            } else {
-                newFlags = mergeStrategy.apply(existingFlags, newFlags);
+            } else if (mergeBitwiseOr) {
+                newFlags = existingFlags | newFlags;
             }
         }
         long costsBase; // where to (over)write
@@ -294,51 +276,6 @@ public class TurnCostExtension implements GraphExtension {
     @Override
     public String toString() {
         return "turn_cost";
-    }
-
-    /**
-     * This interfaces enables you to implement your preferred merge strategy to merge turn flags of
-     * turn which are already stored in the TurnCostExtension with the flags which should be stored.
-     *
-     * @author Michael Reichert
-     */
-    public static interface FlagsMergeStrategy {
-
-        /**
-         * Merge old and new flags
-         * @param oldFlags flags already stored by the TurnCostExtension
-         * @param newFlags flags which should be written
-         * @return what will actually be written
-         */
-        public long apply(long oldFlags, long newFlags);
-    }
-
-    /**
-     * Overwrite existing turn flags.
-     *
-     * @author Michael Reichert
-     */
-    public static class OverwriteStrategy implements FlagsMergeStrategy {
-
-        @Override
-        public long apply(long oldFlags, long newFlags) {
-            return newFlags;
-        }
-    }
-
-    /**
-     * Overwrite existing turn flags with the bitwise OR of the old and the new flags. This is a good
-     * idea if you use multiple flag encoders and want to store their turn costs of the same turn.
-     * Each flag encoder has usually its own bits in the flags.
-     *
-     * @author Michael Reichert
-     */
-    public static class OrStrategy implements FlagsMergeStrategy {
-
-        @Override
-        public long apply(long oldFlags, long newFlags) {
-            return oldFlags | newFlags;
-        }
     }
 }
 

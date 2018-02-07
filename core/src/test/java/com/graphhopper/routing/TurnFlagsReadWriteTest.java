@@ -51,14 +51,6 @@ public class TurnFlagsReadWriteTest {
         long tflags2 = carEncoder2.getTurnFlags(true, 0);
         long tflags2Less = carEncoder2.getTurnFlags(false, 2);
 
-        // merge functions
-        // overwrite
-        TurnCostExtension.FlagsMergeStrategy overwrite = new TurnCostExtension.OverwriteStrategy();
-        // binary OR
-        // This is a suitable merge strategy if you have multiple flag encoders
-        // and all flag encoders use their own bits in the integer which stores the flags.
-        TurnCostExtension.FlagsMergeStrategy bitwiseOr = new TurnCostExtension.OrStrategy();
-
         int edge42 = getEdge(g, 4, 2).getEdge();
         int edge23 = getEdge(g, 2, 3).getEdge();
         int edge31 = getEdge(g, 3, 1).getEdge();
@@ -66,18 +58,18 @@ public class TurnFlagsReadWriteTest {
         int edge02 = getEdge(g, 0, 2).getEdge();
         int edge24 = getEdge(g, 2, 4).getEdge();
 
-        tcs.setAndMergeTurnInfo(edge42, 2, edge23, tflags, bitwiseOr);
-        tcs.setAndMergeTurnInfo(edge42, 2, edge23, tflags2, bitwiseOr);
-        tcs.setAndMergeTurnInfo(edge23, 3, edge31, tflags, bitwiseOr);
-        tcs.setAndMergeTurnInfo(edge23, 3, edge31, tflags2Less, bitwiseOr);
-        tcs.setAndMergeTurnInfo(edge31, 1, edge10, tflagsLess, bitwiseOr);
-        tcs.setAndMergeTurnInfo(edge31, 1, edge10, tflags2, bitwiseOr);
-        tcs.setAndMergeTurnInfo(edge02, 2, edge24, tflags, overwrite);
-        tcs.setAndMergeTurnInfo(edge02, 2, edge24, tflags2, overwrite);
+        tcs.setAndMergeTurnInfo(edge42, 2, edge23, tflags, true, true);
+        tcs.setAndMergeTurnInfo(edge42, 2, edge23, tflags2, true, true);
+        tcs.setAndMergeTurnInfo(edge23, 3, edge31, tflags, true, true);
+        tcs.setAndMergeTurnInfo(edge23, 3, edge31, tflags2Less, true, true);
+        tcs.setAndMergeTurnInfo(edge31, 1, edge10, tflagsLess, true, true);
+        tcs.setAndMergeTurnInfo(edge31, 1, edge10, tflags2, true, true);
+        tcs.setAndMergeTurnInfo(edge02, 2, edge24, tflags, true, false);
+        tcs.setAndMergeTurnInfo(edge02, 2, edge24, tflags2, true, false);
 
         // check backward compatibilty (existing methods did not change their behavior)
-        tcs.addTurnInfo(edge02, 2, edge23, tflags, false);
-        tcs.addTurnInfo(edge02, 2, edge23, tflags2, false);
+        tcs.addTurnInfo(edge02, 2, edge23, tflags);
+        tcs.addTurnInfo(edge02, 2, edge23, tflags2);
 
         long flags423 = tcs.getTurnCostFlags(edge42, 2, edge23);
         long flags231 = tcs.getTurnCostFlags(edge23, 3, edge31);
