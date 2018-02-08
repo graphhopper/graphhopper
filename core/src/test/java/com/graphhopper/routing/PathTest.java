@@ -551,10 +551,10 @@ public class PathTest {
         //   1 ->- 2 ->- 3
         //        /
         //      4
-        na.setNode(1, 48.630647,9.459041);
-        na.setNode(2, 48.630586,9.459604);
-        na.setNode(3, 48.630558,9.459851);
-        na.setNode(4, 48.63054,9.459406);
+        na.setNode(1, 48.630647, 9.459041);
+        na.setNode(2, 48.630586, 9.459604);
+        na.setNode(3, 48.630558, 9.459851);
+        na.setNode(4, 48.63054, 9.459406);
 
         g.edge(1, 2, 5, false).setName("A 8");
         g.edge(2, 3, 5, false).setName("A 8");
@@ -570,6 +570,34 @@ public class PathTest {
     }
 
     @Test
+    public void testCalcInstructionsMotowayJunction() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Actual example: point=48.70672%2C9.164266&point=48.706805%2C9.162995
+        // A typical motorway junction, when following 1-2-3, there should be a keep right at 2
+        //             -- 4
+        //          /
+        //   1 -- 2 -- 3
+        na.setNode(1, 48.70672, 9.164266);
+        na.setNode(2, 48.706741, 9.163719);
+        na.setNode(3, 48.706805, 9.162995);
+        na.setNode(4, 48.706705, 9.16329);
+
+        g.edge(1, 2, 5, false).setName("A 8");
+        g.edge(2, 3, 5, false).setName("A 8");
+        g.edge(4, 2, 5, false).setName("A 8");
+
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(1, 3);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        // TODO this should be 3, the second should be a keep right
+        assertEquals(2, wayList.size());
+    }
+
+    @Test
     public void testCalcInstructionsOntoOneway() {
         final Graph g = new GraphBuilder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
@@ -579,10 +607,10 @@ public class PathTest {
         //   1 ->- 2 ->- 3
         //         |
         //         4
-        na.setNode(1, -33.824245,151.187866);
-        na.setNode(2, -33.824335,151.188017);
-        na.setNode(3, -33.824415,151.188177);
-        na.setNode(4, -33.824437,151.187925);
+        na.setNode(1, -33.824245, 151.187866);
+        na.setNode(2, -33.824335, 151.188017);
+        na.setNode(3, -33.824415, 151.188177);
+        na.setNode(4, -33.824437, 151.187925);
 
         g.edge(1, 2, 5, false).setName("Pacific Highway");
         g.edge(2, 3, 5, false).setName("Pacific Highway");
@@ -699,13 +727,13 @@ public class PathTest {
         //  4----5----6
         //       |
         //  3----2----1
-        na.setNode(1, -33.885758,151.181472);
-        na.setNode(2, -33.885852,151.180968);
-        na.setNode(3, -33.885968,151.180501);
-        na.setNode(4, -33.885883,151.180442);
-        na.setNode(5, -33.885772,151.180941);
-        na.setNode(6, -33.885692,151.181445);
-        na.setNode(7, -33.885692,151.181445);
+        na.setNode(1, -33.885758, 151.181472);
+        na.setNode(2, -33.885852, 151.180968);
+        na.setNode(3, -33.885968, 151.180501);
+        na.setNode(4, -33.885883, 151.180442);
+        na.setNode(5, -33.885772, 151.180941);
+        na.setNode(6, -33.885692, 151.181445);
+        na.setNode(7, -33.885692, 151.181445);
 
         g.edge(1, 2, 5, false).setName("Parramatta Road");
         g.edge(2, 3, 5, false).setName("Parramatta Road");
