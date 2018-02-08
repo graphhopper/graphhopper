@@ -12,5 +12,6 @@ exports.options = {
     environment: "development",
     routing: {host: '', api_key: ''},
     geocoding: {host: '', api_key: ''},
-    thunderforest: {api_key: ''}
+    thunderforest: {api_key: ''},
+    omniscale: {api_key: ''}
 };

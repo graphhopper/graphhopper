@@ -90,12 +90,12 @@ paths[0].instructions[0].street_name          | The name of the street to turn o
 paths[0].instructions[0].distance             | The distance for this instruction, in meter
 paths[0].instructions[0].time                 | The duration for this instruction, in ms
 paths[0].instructions[0].interval             | An array containing the first and the last index (relative to paths[0].points) of the points for this instruction. This is useful to know for which part of the route the instructions are valid.
-paths[0].instructions[0].sign                 | A number which specifies the sign to show e.g. for right turn etc <br>TURN_SHARP_LEFT = -3<br>TURN_LEFT = -2<br>TURN_SLIGHT_LEFT = -1<br>CONTINUE_ON_STREET = 0<br>TURN_SLIGHT_RIGHT = 1<br>TURN_RIGHT = 2<br>TURN_SHARP_RIGHT = 3<br>FINISH = 4<br>VIA_REACHED = 5<br>USE_ROUNDABOUT = 6
+paths[0].instructions[0].sign                 | A number which specifies the sign to show e.g. 2 for a right turn.<br>KEEP_LEFT=-7<br>TURN_SHARP_LEFT = -3<br>TURN_LEFT = -2<br>TURN_SLIGHT_LEFT = -1<br>CONTINUE_ON_STREET = 0<br>TURN_SLIGHT_RIGHT = 1<br>TURN_RIGHT = 2<br>TURN_SHARP_RIGHT = 3<br>FINISH = 4<br>REACHED_VIA = 5<br>USE_ROUNDABOUT = 6<br>KEEP_RIGHT=7<br>implement some default for all other
 paths[0].instructions[0].annotation_text      | [optional] A text describing the instruction in more detail, e.g. like surface of the way, warnings or involved costs
 paths[0].instructions[0].annotation_importance| [optional] 0 stands for INFO, 1 for warning, 2 for costs, 3 for costs and warning
 paths[0].instructions[0].exit_number          | [optional] Only available for USE_ROUNDABOUT instructions. The count of exits at which the route leaves the roundabout.
 paths[0].instructions[0].exited               | [optional] Only available for USE_ROUNDABOUT instructions. True if the roundabout should be exited. False if a via point or end is placed in the roundabout, thus, the roundabout should not be exited due to this instruction.
-paths[0].instructions[0].turn_angle           | [optional] Only available for USE_ROUNDABOUT instructions. The radian of the route within the roundabout: 0<r<2*PI for clockwise and -2PI<r<0 for counterclockwise transit. Null if the direction of rotation is undefined.
+paths[0].instructions[0].turn_angle           | [optional] Only available for USE_ROUNDABOUT instructions. The radian of the route within the roundabout: `0 < r < 2*PI` for clockwise and `-2PI < r < 0` for counterclockwise transit. `NaN` if the direction of rotation is undefined.
 
 ```json
 {
@@ -161,6 +161,9 @@ paths[0].instructions[0].turn_angle           | [optional] Only available for US
     ],
     "points": "oxg_Iy|ppAl@wCdE}LfFsN|@_Ej@eEtAaMh@sGVuDNcDb@{PFyGdAi]FoC?q@sXQ_@?",
     "points_encoded": true,
+    "details":{
+        "street_name":[[0,1,"Rue Principale"],[1,13,"D19E"],[13,18,"D19"],..]
+    },
     "time": 129290
   }]
 }

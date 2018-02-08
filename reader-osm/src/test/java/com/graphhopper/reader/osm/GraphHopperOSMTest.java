@@ -26,7 +26,6 @@ import com.graphhopper.reader.DataReader;
 import com.graphhopper.routing.*;
 import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.routing.ch.PrepareContractionHierarchies;
-import com.graphhopper.routing.lm.LandmarkStorage;
 import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.*;
 import com.graphhopper.routing.weighting.AbstractWeighting;
@@ -558,7 +557,7 @@ public class GraphHopperOSMTest {
         assertFalse("should find 1->2->3", grsp.hasErrors());
         PathWrapper rsp = grsp.getBest();
         assertEquals(rsp12.getBest().getDistance() + rsp23.getBest().getDistance(), rsp.getDistance(), 1e-6);
-        assertEquals(5, rsp.getPoints().getSize());
+        assertEquals(4, rsp.getPoints().getSize());
         assertEquals(5, rsp.getInstructions().size());
         assertEquals(Instruction.REACHED_VIA, rsp.getInstructions().get(1).getSign());
     }

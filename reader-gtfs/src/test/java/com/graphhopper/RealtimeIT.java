@@ -30,18 +30,26 @@ import com.graphhopper.util.Helper;
 import com.graphhopper.util.Parameters;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.File;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 
+import static com.google.transit.realtime.GtfsRealtime.TripDescriptor.ScheduleRelationship.ADDED;
+import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SCHEDULED;
 import static com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate.ScheduleRelationship.SKIPPED;
 import static com.graphhopper.reader.gtfs.GtfsHelper.time;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class RealtimeIT {
 
@@ -52,12 +60,18 @@ public class RealtimeIT {
     private static LocationIndex locationIndex;
 
     @BeforeClass
-    public static void init() {
+    public static void init() throws InterruptedException {
         Helper.removeDir(new File(GRAPH_LOC));
         final PtFlagEncoder ptFlagEncoder = new PtFlagEncoder();
         EncodingManager encodingManager = new EncodingManager(Arrays.asList(ptFlagEncoder), 8);
         GHDirectory directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         GtfsStorage gtfsStorage = GraphHopperGtfs.createGtfsStorage();
+        graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, true, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
+        locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage, ptFlagEncoder);
+        graphHopperStorage.close();
+        locationIndex.close();
+        // Re-load read only
+        directory = GraphHopperGtfs.createGHDirectory(GRAPH_LOC);
         graphHopperStorage = GraphHopperGtfs.createOrLoad(directory, encodingManager, ptFlagEncoder, gtfsStorage, true, Collections.singleton("files/sample-feed.zip"), Collections.emptyList());
         locationIndex = GraphHopperGtfs.createOrLoadIndex(directory, graphHopperStorage, ptFlagEncoder);
         graphHopperFactory = GraphHopperGtfs.createFactory(ptFlagEncoder, GraphHopperGtfs.createTranslationMap(), graphHopperStorage, locationIndex, gtfsStorage);
@@ -68,6 +82,7 @@ public class RealtimeIT {
         graphHopperStorage.close();
         locationIndex.close();
     }
+
 
     @Test
     public void testSkipDepartureStop() {
@@ -80,14 +95,13 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         // But the 6:00 departure of my line is going to skip my departure stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("wurst"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
         feedMessageBuilder.addEntityBuilder()
-                .setId("pups")
+                .setId("1")
                 .getTripUpdateBuilder()
                 .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
                 .addStopTimeUpdateBuilder()
@@ -95,9 +109,13 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
-        assertEquals(1, response.getAll().size());
+        assertEquals(2, response.getAll().size());
 
         assertEquals("I have to wait half an hour for the next one (and ride 5 minutes)", time(0, 35), response.getBest().getTime(), 0.1);
+
+        PathWrapper impossibleAlternative = response.getAll().get(1);
+        assertTrue(impossibleAlternative.isImpossible());
+        assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(0).departureCancelled);
     }
 
     @Test
@@ -111,14 +129,13 @@ public class RealtimeIT {
 
         // I want to go at 6:44
         ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
-        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
         ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
 
         // But the 6:00 departure of my line is going to skip my arrival stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("wurst"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
         feedMessageBuilder.addEntityBuilder()
-                .setId("pups")
+                .setId("1")
                 .getTripUpdateBuilder()
                 .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
                 .addStopTimeUpdateBuilder()
@@ -126,13 +143,51 @@ public class RealtimeIT {
                 .setScheduleRelationship(SKIPPED);
 
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
-        assertEquals(1, response.getAll().size());
+        assertEquals(3, response.getAll().size());
 
         assertEquals("I have to continue to STAGECOACH and then go back one stop with the 07:00 bus.", time(0, 21), response.getBest().getTime(), 0.1);
+
+        PathWrapper impossibleAlternative = response.getAll().get(2);
+        assertTrue(impossibleAlternative.isImpossible());
+        assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(1).arrivalCancelled);
     }
 
     @Test
     public void testSkipTransferStop() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+
+        // I want to go at 6:44
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
+
+        // But the 6:00 departure of my line is going to skip my transfer stop :-(
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
+        feedMessageBuilder.addEntityBuilder()
+                .setId("1")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(5)
+                .setScheduleRelationship(SKIPPED);
+
+        GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
+        assertEquals(2, response.getAll().size());
+
+        assertEquals("The 6:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
+
+        PathWrapper impossibleAlternative = response.getAll().get(1);
+        assertTrue(impossibleAlternative.isImpossible());
+        assertTrue(((Trip.PtLeg) impossibleAlternative.getLegs().get(1)).stops.get(2).departureCancelled);
+    }
+
+    @Test @Ignore //Pending feature
+    public void testExtraTrip() {
         final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
         final double TO_LAT = 36.868446, TO_LON = -116.784582; // BEATTY_AIRPORT stop
         GHRequest ghRequest = new GHRequest(
@@ -147,19 +202,161 @@ public class RealtimeIT {
 
         // But the 6:00 departure of my line is going to skip my transfer stop :-(
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("wurst"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
+                .setGtfsRealtimeVersion("1")
+                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
+
+
         feedMessageBuilder.addEntityBuilder()
-                .setId("pups")
+                .setId("1")
                 .getTripUpdateBuilder()
                 .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
                 .addStopTimeUpdateBuilder()
                 .setStopSequence(5)
                 .setScheduleRelationship(SKIPPED);
 
+        final GtfsRealtime.TripUpdate.Builder extraTripUpdate = feedMessageBuilder.addEntityBuilder()
+                .setId("2")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setScheduleRelationship(ADDED).setTripId("EXTRA").setRouteId("CITY").setStartTime("06:45:00"));
+        extraTripUpdate
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(1)
+                .setStopId("NADAV")
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45).atZone(zoneId).toEpochSecond()))
+                .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,6,45).atZone(zoneId).toEpochSecond()));
+        extraTripUpdate
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(2)
+                .setStopId("BEATTY_AIRPORT")
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15).atZone(zoneId).toEpochSecond()))
+                .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setTime(LocalDateTime.of(2007,1,1,7,15).atZone(zoneId).toEpochSecond()));
+
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals(1, response.getAll().size());
 
-        assertEquals("The 6:44 bus will not call at STAGECOACH, so I will be 30 min late at the airport.", time(1, 6), response.getBest().getTime(), 0.1);
+        assertEquals("Luckily, there is an extra service directly from my stop to the airport, at 6:45, taking 30 minutes", time(0, 31), response.getBest().getTime(), 0.1);
+    }
+
+    @Test
+    public void testZeroDelay() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+
+        // I want to go at 6:44
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,6,44).atZone(zoneId).toInstant());
+        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
+        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
+
+        GHResponse responseWithoutRealtimeUpdate = graphHopperFactory.createWithoutRealtimeFeed().route(ghRequest);
+
+        // The 6:00 departure of my line is going to be "late" by 0 minutes
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
+                .setGtfsRealtimeVersion("1")
+                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
+
+
+        feedMessageBuilder.addEntityBuilder()
+                .setId("1")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(5)
+                .setScheduleRelationship(SCHEDULED)
+                .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(0).build());
+
+        GHResponse responseWithRealtimeUpdate = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
+        assertEquals(1, responseWithRealtimeUpdate.getAll().size());
+
+        Trip.PtLeg responseWithRealtimeUpdateBest = (Trip.PtLeg) responseWithRealtimeUpdate.getBest().getLegs().get(responseWithRealtimeUpdate.getBest().getLegs().size()-2);
+        Trip.PtLeg responseWithoutRealtimeUpdateBest = (Trip.PtLeg) responseWithoutRealtimeUpdate.getBest().getLegs().get(responseWithoutRealtimeUpdate.getBest().getLegs().size()-2);
+        assertEquals("My planned arrival time is correct.", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), responseWithRealtimeUpdateBest.stops.get(responseWithRealtimeUpdateBest.stops.size()-1).plannedArrivalTime.toInstant());
+        assertEquals("My expected arrival time is the same.", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), responseWithRealtimeUpdateBest.stops.get(responseWithRealtimeUpdateBest.stops.size()-1).predictedArrivalTime.toInstant());
+        assertEquals("The trip without realtime update does not have an expected arrival time.", null, responseWithoutRealtimeUpdateBest.stops.get(responseWithoutRealtimeUpdateBest.stops.size()-1).predictedArrivalTime);
+
+//        assertEquals(responseWithoutRealtimeUpdateBest.toString(), responseWithRealtimeUpdateBest.toString());
+    }
+
+    @Test
+    public void testDelayWithoutTransfer() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+
+        // I want to go at 6:44
+        Instant initialTime = LocalDateTime.of(2007, 1, 1, 6, 44).atZone(zoneId).toInstant();
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, initialTime);
+        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
+        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
+
+        // The 6:00 departure of my line is going to be late by 3 minutes
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
+                .setGtfsRealtimeVersion("1")
+                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
+
+
+        feedMessageBuilder.addEntityBuilder()
+                .setId("1")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(4)
+                .setScheduleRelationship(SCHEDULED)
+                .setArrival(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(180).build());
+
+        GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
+        assertEquals(1, response.getAll().size());
+
+        assertEquals("My line run is 3 minutes late.", time(0, 8), response.getBest().getLegs().get(response.getBest().getLegs().size() - 1).getArrivalTime().toInstant().toEpochMilli() - initialTime.toEpochMilli(), 0.1);
+    }
+
+
+    @Test
+    public void testDelayFromBeginningWithoutTransfer() {
+        final double FROM_LAT = 36.914893, FROM_LON = -116.76821; // NADAV stop
+        final double TO_LAT = 36.914944, TO_LON = -116.761472; // NANAA stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+
+        // I want to go at 6:44
+        Instant initialTime = LocalDateTime.of(2007, 1, 1, 6, 44).atZone(zoneId).toInstant();
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, initialTime);
+        ghRequest.getHints().put(Parameters.PT.IGNORE_TRANSFERS, true);
+        ghRequest.getHints().put(Parameters.PT.MAX_WALK_DISTANCE_PER_LEG, 30);
+
+        // The 6:00 departure of my line is going to be "late" by 0 minutes
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder()
+                .setGtfsRealtimeVersion("1")
+                .setTimestamp(ZonedDateTime.of(LocalDate.of(2007,1,1), LocalTime.of(0,0), zoneId).toEpochSecond()));
+
+
+        feedMessageBuilder.addEntityBuilder()
+                .setId("1")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("CITY2").setStartTime("06:00:00"))
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(1)
+                .setScheduleRelationship(SCHEDULED)
+                .setDeparture(GtfsRealtime.TripUpdate.StopTimeEvent.newBuilder().setDelay(180).build());
+
+        GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
+        assertEquals(1, response.getAll().size());
+
+        Trip.PtLeg ptLeg = ((Trip.PtLeg) response.getBest().getLegs().get(response.getBest().getLegs().size() - 2));
+        assertEquals("My line run is 3 minutes late.", LocalDateTime.parse("2007-01-01T06:52:00").atZone(zoneId).toInstant(), ptLeg.getArrivalTime().toInstant());
+        assertEquals("It is still reporting its original, scheduled time.", LocalDateTime.parse("2007-01-01T06:49:00").atZone(zoneId).toInstant(), ptLeg.stops.get(ptLeg.stops.size()-1).plannedArrivalTime.toInstant());
     }
 
     @Test
@@ -177,9 +374,9 @@ public class RealtimeIT {
         // My line does not stop at Bullfrog today. If this was a real transfer, I would not be
         // able to change lines there. But it is not a real transfer, so I can go on as planned.
         final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
-        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("wurst"));
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
         feedMessageBuilder.addEntityBuilder()
-                .setId("pups")
+                .setId("1")
                 .getTripUpdateBuilder()
                 .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("AB1").setStartTime("00:00:00"))
                 .addStopTimeUpdateBuilder()
@@ -189,6 +386,39 @@ public class RealtimeIT {
         GHResponse response = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
         assertEquals("I can still use the AB1 trip", "AB1", (((Trip.PtLeg) response.getBest().getLegs().get(0)).trip_id));
         assertEquals("It takes", time(1,20), response.getBest().getTime());
+    }
+
+    @Test
+    public void testBlockTripSkipsStop() {
+        final GtfsRealtime.FeedMessage.Builder feedMessageBuilder = GtfsRealtime.FeedMessage.newBuilder();
+        feedMessageBuilder.setHeader(GtfsRealtime.FeedHeader.newBuilder().setGtfsRealtimeVersion("1"));
+        feedMessageBuilder.addEntityBuilder()
+                .setId("1")
+                .getTripUpdateBuilder()
+                .setTrip(GtfsRealtime.TripDescriptor.newBuilder().setTripId("AB1").setStartTime("00:00:00"))
+                .addStopTimeUpdateBuilder()
+                .setStopSequence(2)
+                .setScheduleRelationship(SKIPPED);
+
+        final double FROM_LAT = 36.915682, FROM_LON = -116.751677; // STAGECOACH stop
+        final double TO_LAT = 36.88108, TO_LON = -116.81797; // BULLFROG stop
+        GHRequest ghRequest = new GHRequest(
+                FROM_LAT, FROM_LON,
+                TO_LAT, TO_LON
+        );
+        ghRequest.getHints().put(Parameters.PT.EARLIEST_DEPARTURE_TIME, LocalDateTime.of(2007,1,1,0,0).atZone(zoneId).toInstant());
+        GHResponse route = graphHopperFactory.createWith(feedMessageBuilder.build()).route(ghRequest);
+
+        assertFalse(route.hasErrors());
+        assertEquals(2, route.getAll().size()); // I want to get the impossible route as well.
+        assertTrue(route.getAll().get(1).isImpossible());
+
+        // Note that my stop (BULLFROG), which is skipped, is a switch of "block legs", so even though it looks like I (impossibly) transfer there,
+        // this is not a real transfer. The bus drives through BULLFROG without stopping.
+        // Very untypical example, but seems correct.
+        Trip.PtLeg ptLeg = (Trip.PtLeg) route.getBest().getLegs().get(4);
+        assertEquals("I have to continue on AB1 which skips my stop, go all the way to the end, and ride back.", LocalDateTime.parse("2007-01-01T12:00:00").atZone(zoneId).toInstant(), ptLeg.stops.get(ptLeg.stops.size()-1).plannedArrivalTime.toInstant());
+        assertEquals("Using expected route", "BFC2", ptLeg.trip_id);
     }
 
 

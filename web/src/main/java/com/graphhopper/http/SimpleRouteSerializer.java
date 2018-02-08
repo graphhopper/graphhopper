@@ -108,7 +108,7 @@ public class SimpleRouteSerializer implements RouteSerializer {
 
                 jsonPath.put("snapped_waypoints", createPoints(ar.getWaypoints(), pointsEncoded, includeElevation));
                 if (ar.getFare() != null) {
-                    jsonPath.put("fare", NumberFormat.getCurrencyInstance().format(ar.getFare()));
+                    jsonPath.put("fare", NumberFormat.getCurrencyInstance(Locale.ROOT).format(ar.getFare()));
                 }
                 jsonPathList.add(jsonPath);
             }

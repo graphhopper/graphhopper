@@ -80,6 +80,11 @@ public final class ShallowImmutablePointList extends PointList {
         return wrappedPointList.getElevation(fromOffset + index);
     }
 
+    @Override
+    public void setElevation(int index, double ele) {
+        wrappedPointList.setElevation(fromOffset + index, ele);
+    }
+
     public void makeImmutable() {
         this.wrappedPointList.makeImmutable();
     }
@@ -135,6 +140,11 @@ public final class ShallowImmutablePointList extends PointList {
 
     @Override
     public void add(PointList points) {
+        throw new UnsupportedOperationException(IMMUTABLE_ERR);
+    }
+
+    @Override
+    public void removeLastPoint() {
         throw new UnsupportedOperationException(IMMUTABLE_ERR);
     }
 

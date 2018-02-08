@@ -17,12 +17,15 @@
  */
 package com.graphhopper.util;
 
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class Instruction {
     public static final int UNKNOWN = -99;
+    public static final int U_TURN_UNKNOWN = -98;
+    public static final int U_TURN_LEFT = -8;
+    public static final int KEEP_LEFT = -7;
     public static final int LEAVE_ROUNDABOUT = -6; // for future use
     public static final int TURN_SHARP_LEFT = -3;
     public static final int TURN_LEFT = -2;
@@ -35,8 +38,8 @@ public class Instruction {
     public static final int REACHED_VIA = 5;
     public static final int USE_ROUNDABOUT = 6;
     public static final int IGNORE = Integer.MIN_VALUE;
-    public static final int KEEP_LEFT = -7;
     public static final int KEEP_RIGHT = 7;
+    public static final int U_TURN_RIGHT = 8;
     public static final int PT_START_TRIP = 101;
     public static final int PT_TRANSFER = 102;
     public static final int PT_END_TRIP = 103;
@@ -48,6 +51,7 @@ public class Instruction {
     protected String name;
     protected double distance;
     protected long time;
+    protected Map<String, Object> extraInfo = new HashMap<>(3);
 
     /**
      * The points, distances and times have exactly the same count. The last point of this
@@ -79,6 +83,10 @@ public class Instruction {
         return sign;
     }
 
+    public void setSign(int sign) {
+        this.sign = sign;
+    }
+
     public String getName() {
         return name;
     }
@@ -88,11 +96,11 @@ public class Instruction {
     }
 
     public Map<String, Object> getExtraInfoJSON() {
-        return Collections.<String, Object>emptyMap();
+        return extraInfo;
     }
 
     public void setExtraInfo(String key, Object value) {
-        throw new IllegalArgumentException("Key" + key + " is not a valid option");
+        extraInfo.put(key, value);
     }
 
     /**
@@ -238,6 +246,20 @@ public class Instruction {
             throw new IllegalStateException("Instruction must contain at least one point " + toString());
     }
 
+    /**
+     * This method returns the length of an Instruction. The length of an instruction is defined by [the
+     * index of the first point of the next instruction] - [the index of the first point of this instruction].
+     * <p>
+     * In general this will just resolve to the size of the PointList, except for {@link ViaInstruction} and
+     * {@link FinishInstruction}, which are only virtual instructions, in a sense that they don't provide
+     * a turn instruction, but only an info ("reached via point or destination").
+     * <p>
+     * See #1216 and #1138
+     */
+    public int getLength() {
+        return points.getSize();
+    }
+
     public String getTurnDescription(Translation tr) {
         if (rawName)
             return getName();
@@ -256,6 +278,15 @@ public class Instruction {
         } else {
             String dir = null;
             switch (indi) {
+                case Instruction.U_TURN_UNKNOWN:
+                    dir = tr.tr("u_turn");
+                    break;
+                case Instruction.U_TURN_LEFT:
+                    dir = tr.tr("u_turn");
+                    break;
+                case Instruction.U_TURN_RIGHT:
+                    dir = tr.tr("u_turn");
+                    break;
                 case Instruction.KEEP_LEFT:
                     dir = tr.tr("keep_left");
                     break;

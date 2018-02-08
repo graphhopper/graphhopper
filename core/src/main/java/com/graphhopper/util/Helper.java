@@ -88,6 +88,14 @@ public class Helper {
         return new Locale(param.substring(0, index), param.substring(index + 1));
     }
 
+    public static String toLowerCase(String string){
+        return string.toLowerCase(Locale.ROOT);
+    }
+
+    public static String toUpperCase(String string){
+        return string.toUpperCase(Locale.ROOT);
+    }
+
     static String packageToPath(Package pkg) {
         return pkg.getName().replaceAll("\\.", File.separator);
     }
@@ -374,15 +382,13 @@ public class Helper {
                     if (Constants.JRE_IS_MINIMUM_JAVA9) {
                         // >=JDK9 class sun.misc.Unsafe { void invokeCleaner(ByteBuffer buf) }
                         final Class<?> unsafeClass = Class.forName("sun.misc.Unsafe");
-                        // we do not need to check for a specific class, we can call the Unsafe method with any buffer class
-                        MethodHandle unmapper = MethodHandles.lookup().findVirtual(unsafeClass, "invokeCleaner",
-                                MethodType.methodType(void.class, ByteBuffer.class));
                         // fetch the unsafe instance and bind it to the virtual MethodHandle
                         final Field f = unsafeClass.getDeclaredField("theUnsafe");
                         f.setAccessible(true);
                         final Object theUnsafe = f.get(null);
+                        final Method method = unsafeClass.getDeclaredMethod("invokeCleaner", ByteBuffer.class);
                         try {
-                            unmapper.bindTo(theUnsafe).invokeExact(buffer);
+                            method.invoke(theUnsafe, buffer);
                             return null;
                         } catch (Throwable t) {
                             throw new RuntimeException(t);

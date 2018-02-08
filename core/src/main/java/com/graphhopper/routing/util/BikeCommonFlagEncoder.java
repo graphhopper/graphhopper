@@ -325,8 +325,8 @@ abstract public class BikeCommonFlagEncoder extends AbstractFlagEncoder {
      * just only 90%.
      * <p>
      *
-     * @param way:   needed to retrieve tags
-     * @param speed: speed guessed e.g. from the road type or other tags
+     * @param way   needed to retrieve tags
+     * @param speed speed guessed e.g. from the road type or other tags
      * @return The assumed average speed.
      */
     @Override

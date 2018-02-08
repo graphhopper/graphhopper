@@ -7,7 +7,11 @@ import com.vividsolutions.jts.geom.Geometry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import static com.graphhopper.util.Helper.toLowerCase;
 
 public class SpatialRuleLookupBuilder {
 
@@ -39,7 +43,7 @@ public class SpatialRuleLookupBuilder {
 
         for (int jsonFeatureIdx = 0; jsonFeatureIdx < jsonFeatureCollection.getFeatures().size(); jsonFeatureIdx++) {
             JsonFeature jsonFeature = jsonFeatureCollection.getFeatures().get(jsonFeatureIdx);
-            String id = jsonIdField.isEmpty() || jsonIdField.toLowerCase().equals("id") ? jsonFeature.getId() : (String) jsonFeature.getProperty(jsonIdField);
+            String id = jsonIdField.isEmpty() || toLowerCase(jsonIdField).equals("id") ? jsonFeature.getId() : (String) jsonFeature.getProperty(jsonIdField);
             if (id == null || id.isEmpty())
                 throw new IllegalArgumentException("ID cannot be empty but was for JsonFeature " + jsonFeatureIdx);
 
@@ -47,7 +51,7 @@ public class SpatialRuleLookupBuilder {
             for (int i = 0; i < jsonFeature.getGeometry().getNumGeometries(); i++) {
                 Geometry poly = jsonFeature.getGeometry().getGeometryN(i);
                 if (poly instanceof com.vividsolutions.jts.geom.Polygon)
-                    borders.add(ghPolygonFromJTS((com.vividsolutions.jts.geom.Polygon) poly));
+                    borders.add(Polygon.create((com.vividsolutions.jts.geom.Polygon) poly));
                 else
                     throw new IllegalArgumentException("Geometry for " + id + " (" + i + ") not supported " + poly.getClass().getSimpleName());
             }
@@ -83,15 +87,4 @@ public class SpatialRuleLookupBuilder {
     public static SpatialRuleLookup buildIndex(JsonFeatureCollection jsonFeatureCollection, String jsonIdField, SpatialRuleFactory spatialRuleFactory) {
         return buildIndex(jsonFeatureCollection, jsonIdField, spatialRuleFactory, .1, new BBox(-180, 180, -90, 90));
     }
-
-    private static Polygon ghPolygonFromJTS(com.vividsolutions.jts.geom.Polygon polygon) {
-        double[] lats = new double[polygon.getNumPoints()];
-        double[] lons = new double[polygon.getNumPoints()];
-        for (int i = 0; i < polygon.getNumPoints(); i++) {
-            lats[i] = polygon.getCoordinates()[i].y;
-            lons[i] = polygon.getCoordinates()[i].x;
-        }
-        return new Polygon(lats, lons);
-    }
-
 }

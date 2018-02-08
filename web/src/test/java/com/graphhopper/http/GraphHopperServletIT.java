@@ -180,6 +180,17 @@ public class GraphHopperServletIT extends BaseServletTester {
     }
 
     @Test
+    public void testPathDetailsSamePoint() throws Exception {
+        GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
+        assertTrue(hopper.load(getTestRouteAPIUrl()));
+        GHRequest request = new GHRequest(42.554851, 1.536198, 42.554851, 1.536198);
+        request.setPathDetails(Arrays.asList("average_speed", "edge_id", "time"));
+        GHResponse rsp = hopper.route(request);
+        assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
+        assertTrue(rsp.getErrors().toString(), rsp.getErrors().isEmpty());
+    }
+
+    @Test
     public void testPathDetailsNoConnection() throws Exception {
         GraphHopperAPI hopper = new com.graphhopper.api.GraphHopperWeb();
         assertTrue(hopper.load(getTestRouteAPIUrl()));

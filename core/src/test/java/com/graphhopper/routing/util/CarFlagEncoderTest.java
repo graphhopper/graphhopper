@@ -447,7 +447,7 @@ public class CarFlagEncoderTest {
         // accept
         assertTrue(encoder.acceptWay(way) > 0);
         // We have ignored the unrealisitc long duration and take the unknown speed
-        assertEquals(5, encoder.getFerrySpeed(way), 1e-1);
+        assertEquals(2.5, encoder.getFerrySpeed(way), 1e-1);
     }
 
     @Test
@@ -618,5 +618,17 @@ public class CarFlagEncoderTest {
         way.setTag("surface", "unpaved");
         assertEquals(30, encoder.applyBadSurfaceSpeed(way, 90), 1e-1);
 
+    }
+
+    @Test
+    public void testIssue_1256() {
+        ReaderWay way = new ReaderWay(1);
+        way.setTag("route", "ferry");
+        way.setTag("estimated_distance", 257);
+
+        CarFlagEncoder lowFactorCar = new CarFlagEncoder(10, 1, 0);
+        lowFactorCar.defineWayBits(0,0);
+        assertEquals(2.5, encoder.getFerrySpeed(way), .1);
+        assertEquals(.5, lowFactorCar.getFerrySpeed(way), .1);
     }
 }

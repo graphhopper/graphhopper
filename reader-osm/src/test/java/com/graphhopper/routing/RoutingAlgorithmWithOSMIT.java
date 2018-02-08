@@ -309,7 +309,7 @@ public class RoutingAlgorithmWithOSMIT {
         OneRun run = new OneRun();
         run.add(50.016923, 11.514187, 0, 0);
         run.add(50.019129, 11.500325, 0, 0);
-        run.add(50.023623, 11.56929, 7069, 180);
+        run.add(50.023623, 11.56929, 7069, 178);
         list.add(run);
 
         runAlgo(testCollector, DIR + "/north-bayreuth.osm.gz", "target/north-bayreuth-gh",
@@ -486,6 +486,19 @@ public class RoutingAlgorithmWithOSMIT {
         assertEquals(testCollector.toString(), 0, testCollector.errors.size());
     }
 
+    @Test
+    public void testDisconnectedAreaAndMultiplePoints() {
+        List<OneRun> list = new ArrayList<OneRun>();
+        OneRun oneRun = new OneRun();
+        oneRun.add(53.753177, 9.435968, 10, 10);
+        oneRun.add(53.751299, 9.386959, 10, 10);
+        oneRun.add(53.751299, 9.3869, 10, 10);
+        list.add(oneRun);
+
+        runAlgo(testCollector, DIR + "/krautsand.osm.gz", "target/krautsand-gh",
+                list, "car", true, "car", "fastest", true);
+    }
+
     /**
      * @param withCH if true also the CH and LM algorithms will be tested which need
      *               preparation and takes a bit longer
@@ -509,6 +522,8 @@ public class RoutingAlgorithmWithOSMIT {
                     setGraphHopperLocation(graphFile).
                     setEncodingManager(new EncodingManager(importVehicles));
 
+            if (osmFile.contains("krautsand"))
+                hopper.setMinNetworkSize(0, 0);
             // avoid that path.getDistance is too different to path.getPoint.calcDistance
             hopper.setWayPointMaxDistance(0);
 
@@ -521,7 +536,7 @@ public class RoutingAlgorithmWithOSMIT {
                         setEnabled(true).setDisablingAllowed(true);
 
             if (is3D)
-                hopper.setElevationProvider(new SRTMProvider().setCacheDir(new File(DIR)));
+                hopper.setElevationProvider(new SRTMProvider(DIR));
 
             hopper.importOrLoad();
 

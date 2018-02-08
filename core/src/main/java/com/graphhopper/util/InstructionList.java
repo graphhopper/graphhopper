@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 import java.text.DateFormat;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 
 /**
@@ -79,7 +80,8 @@ public class InstructionList extends AbstractList<Instruction> {
         instructions.set(instructions.size() - 1, instr);
     }
 
-    @JsonValue public List<Map<String, Object>> createJson() {
+    @JsonValue
+    public List<Map<String, Object>> createJson() {
         List<Map<String, Object>> instrList = new ArrayList<>(instructions.size());
         int pointsIndex = 0;
         int counter = 0;
@@ -103,11 +105,7 @@ public class InstructionList extends AbstractList<Instruction> {
             instrJson.put("sign", instruction.getSign());
             instrJson.putAll(instruction.getExtraInfoJSON());
 
-            int tmpIndex = pointsIndex + instruction.getPoints().size();
-            // the last instruction should not point to the next instruction
-            if (counter + 1 == instructions.size())
-                tmpIndex--;
-
+            int tmpIndex = pointsIndex + instruction.getLength();
             instrJson.put("interval", Arrays.asList(pointsIndex, tmpIndex));
             pointsIndex = tmpIndex;
 
@@ -119,7 +117,6 @@ public class InstructionList extends AbstractList<Instruction> {
     /**
      * @return This method returns a list of gpx entries where the time (in millis) is relative to
      * the first which is 0.
-     * <p>
      */
     public List<GPXEntry> createGPXList() {
         if (isEmpty())
@@ -177,7 +174,7 @@ public class InstructionList extends AbstractList<Instruction> {
     public String createGPX(String trackName, long startTimeMillis, boolean includeElevation, boolean withRoute, boolean withTrack, boolean withWayPoints) {
         DateFormat formatter = Helper.createFormatter();
 
-        DecimalFormat decimalFormat = new DecimalFormat("#");
+        DecimalFormat decimalFormat = new DecimalFormat("#", DecimalFormatSymbols.getInstance(Locale.ROOT));
         decimalFormat.setMinimumFractionDigits(1);
         decimalFormat.setMaximumFractionDigits(6);
         decimalFormat.setMinimumIntegerDigits(1);

@@ -453,10 +453,10 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
         }
         // seconds to hours
         double durationInHours = duration / 60d / 60d;
+        // Check if our graphhopper specific artificially created estimated_distance way tag is present
+        Number estimatedLength = way.getTag("estimated_distance", null);
         if (durationInHours > 0)
             try {
-                // Check if our graphhopper specific artificially created estimated_distance way tag is present
-                Number estimatedLength = way.getTag("estimated_distance", null);
                 if (estimatedLength != null) {
                     double estimatedLengthInKm = estimatedLength.doubleValue() / 1000;
                     // If duration AND distance is available we can calculate the speed more precisely
@@ -487,6 +487,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
             }
 
         if (durationInHours == 0) {
+            if(estimatedLength != null && estimatedLength.doubleValue() <= 300)
+                return speedEncoder.factor / 2;
             // unknown speed -> put penalty on ferry transport
             return UNKNOWN_DURATION_FERRY_SPEED;
         } else if (durationInHours > 1) {
@@ -674,8 +676,8 @@ public abstract class AbstractFlagEncoder implements FlagEncoder, TurnCostEncode
     }
 
     /**
-     * @param way:   needed to retrieve tags
-     * @param speed: speed guessed e.g. from the road type or other tags
+     * @param way   needed to retrieve tags
+     * @param speed speed guessed e.g. from the road type or other tags
      * @return The assumed speed.
      */
     protected double applyMaxSpeed(ReaderWay way, double speed) {

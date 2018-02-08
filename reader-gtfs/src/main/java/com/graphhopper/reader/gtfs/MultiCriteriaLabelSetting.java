@@ -65,7 +65,8 @@ class MultiCriteriaLabelSetting {
         this.mindTransfers = mindTransfers;
         this.profileQuery = profileQuery;
 
-        queueComparator = Comparator.<Label>comparingLong(l2 -> currentTimeCriterion(l2))
+        queueComparator = Comparator.<Label>comparingLong(l2 -> l2.impossible ? 1 : 0)
+                .thenComparing(Comparator.comparingLong(l2 -> currentTimeCriterion(l2)))
                 .thenComparing(Comparator.comparingLong(l1 -> l1.nTransfers))
                 .thenComparing(Comparator.comparingLong(l1 -> l1.nWalkDistanceConstraintViolations))
                 .thenComparing(Comparator.comparingLong(l -> departureTimeCriterion(l) != null ? departureTimeCriterion(l) : 0));
@@ -89,7 +90,7 @@ class MultiCriteriaLabelSetting {
             super(0, 0);
             this.to = to;
             targetLabels = new HashSet<>();
-            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, null, 0, null);
+            Label label = new Label(startTime, EdgeIterator.NO_EDGE, from, 0, 0, 0.0, null, 0, false,null);
             fromMap.put(from, label);
             fromHeap.add(label);
             if (to == from) {
@@ -129,7 +130,7 @@ class MultiCriteriaLabelSetting {
                     int nWalkDistanceConstraintViolations = Math.min(1, label.nWalkDistanceConstraintViolations + (
                             isTryingToReEnterPtAfterTransferWalking ? 1 : (label.walkDistanceOnCurrentLeg <= maxWalkDistancePerLeg && walkDistanceOnCurrentLeg > maxWalkDistancePerLeg ? 1 : 0)));
                     Set<Label> sptEntries = fromMap.get(edge.getAdjNode());
-                    Label nEdge = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, nWalkDistanceConstraintViolations, walkDistanceOnCurrentLeg, firstPtDepartureTime, walkTime, label);
+                    Label nEdge = new Label(nextTime, edge.getEdge(), edge.getAdjNode(), nTransfers, nWalkDistanceConstraintViolations, walkDistanceOnCurrentLeg, firstPtDepartureTime, walkTime, label.impossible || explorer.isBlocked(edge), label);
                     if (isNotDominatedByAnyOf(nEdge, sptEntries) && isNotDominatedByAnyOf(nEdge, targetLabels)) {
                         removeDominated(nEdge, sptEntries);
                         if (to == edge.getAdjNode()) {
@@ -189,6 +190,8 @@ class MultiCriteriaLabelSetting {
         if (mindTransfers && me.nTransfers > they.nTransfers)
             return false;
         if (me.nWalkDistanceConstraintViolations  > they.nWalkDistanceConstraintViolations)
+            return false;
+        if (me.impossible && !they.impossible)
             return false;
 
         if (profileQuery) {

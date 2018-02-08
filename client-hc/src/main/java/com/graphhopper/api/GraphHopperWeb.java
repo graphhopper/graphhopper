@@ -37,6 +37,8 @@ import org.slf4j.LoggerFactory;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
+import static com.graphhopper.util.Helper.*;
+
 /**
  * Main wrapper of the GraphHopper Directions API for a simple and efficient
  * usage.
@@ -116,6 +118,28 @@ public class GraphHopperWeb implements GraphHopperAPI {
             pathWrapper.setWaypoints(snappedPoints);
         }
 
+        if (path.has("ascend")) {
+            pathWrapper.setAscend(path.get("ascend").asDouble());
+        }
+        if (path.has("descend")) {
+            pathWrapper.setDescend(path.get("descend").asDouble());
+        }
+        if (path.has("weight")) {
+            pathWrapper.setRouteWeight(path.get("weight").asDouble());
+        }
+        if (path.has("description")) {
+            JsonNode descriptionNode = path.get("description");
+            if (descriptionNode.isArray()) {
+                List<String> description = new ArrayList<>(descriptionNode.size());
+                for (JsonNode descNode: descriptionNode) {
+                    description.add(descNode.asText());
+                }
+                pathWrapper.setDescription(description);
+            } else {
+                throw new IllegalStateException("Description has to be an array");
+            }
+        }
+
         if (tmpCalcPoints) {
             String pointStr = path.get("points").asText();
             PointList pointList = WebHelper.decodePolyline(pointStr, 100, tmpElevation);
@@ -174,6 +198,11 @@ public class GraphHopperWeb implements GraphHopperAPI {
                         instr = new FinishInstruction(text, instPL, 0);
                     } else {
                         instr = new Instruction(sign, text, ia, instPL);
+                        if (sign == Instruction.CONTINUE_ON_STREET) {
+                            if (jsonObj.has("heading")) {
+                                instr.setExtraInfo("heading", jsonObj.get("heading").asDouble());
+                            }
+                        }
                     }
 
                     // Usually, the translation is done from the routing service so just use the provided string
@@ -411,7 +440,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
 
         String places = "";
         for (GHPoint p : request.getPoints()) {
-            places += "point=" + Helper.round6(p.lat) + "," + Helper.round6(p.lon) + "&";
+            places += "point=" + round6(p.lat) + "," + round6(p.lon) + "&";
         }
 
         String type = request.getHints().get("type", "json");
@@ -445,7 +474,7 @@ public class GraphHopperWeb implements GraphHopperAPI {
             String urlValue = entry.getValue();
 
             // use lower case conversion for check only!
-            if (ignoreSet.contains(urlKey.toLowerCase())) {
+            if (ignoreSet.contains(toLowerCase(urlKey))) {
                 continue;
             }
 
