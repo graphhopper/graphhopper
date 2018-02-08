@@ -69,9 +69,6 @@ public class BaseServletTester {
      * This method will start jetty with andorra area loaded as OSM.
      */
     public void setUpJetty(CmdArgs args) {
-        if (injector != null)
-            throw new UnsupportedOperationException("Do not call guice before");
-
         bootJetty(args, 3);
     }
 
@@ -83,7 +80,7 @@ public class BaseServletTester {
         if (server != null)
             return;
 
-        server = getServer(args);
+        server = new GHServer(args);
 
         if (injector == null)
             setUpGuice(server.createModule());
@@ -107,10 +104,6 @@ public class BaseServletTester {
         if (!started) {
             throw new IllegalStateException("Unable to start the server");
         }
-    }
-
-    GHServer getServer(CmdArgs args) {
-        return new GHServer(args);
     }
 
     protected String getTestRouteAPIUrl() {

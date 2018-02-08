@@ -18,7 +18,6 @@
 package com.graphhopper.http;
 
 import com.google.inject.AbstractModule;
-import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
@@ -65,111 +64,102 @@ public class GraphHopper500IT extends BaseServletTester {
                 put("prepare.min_one_way_network_size", "0").
                 put("datareader.file", "../core/files/andorra.osm.pbf").
                 put("graph.location", DIR);
+
+        setUpGuice(new AbstractModule() {
+            @Override
+            protected void configure() {
+                binder().requireExplicitBindings();
+                install(new AbstractModule() {
+                    private final Logger logger = LoggerFactory.getLogger(getClass());
+
+                    @Override
+                    protected void configure() {
+                        install(new CmdArgsModule(args));
+                        bind(GHJson.class).toInstance(new GHJsonFactory().create());
+                        bind(GraphHopperAPI.class).to(GraphHopper.class);
+                    }
+
+                    @Provides
+                    @Singleton
+                    GraphHopper createGraphHopper(CmdArgs args) {
+                        GraphHopper graphHopper = new GraphHopperOSM() {
+                            @Override
+                            public GHResponse route(GHRequest request) {
+                                if (request.getWeighting().equals("illegalargument")) {
+                                    throw new IllegalArgumentException("This was expected, why would you pass this?");
+                                }
+                                throw new RuntimeException("Very bad and unexpected exception");
+                            }
+                        }.forServer();
+                        graphHopper.init(args);
+                        return graphHopper;
+                    }
+
+                    @Provides
+                    @Singleton
+                    TranslationMap getTranslationMap(GraphHopper graphHopper) {
+                        return graphHopper.getTranslationMap();
+                    }
+
+                    @Provides
+                    @Singleton
+                    RouteSerializer getRouteSerializer(GraphHopper graphHopper) {
+                        return new SimpleRouteSerializer(graphHopper.getGraphHopperStorage().getBounds());
+                    }
+
+                    @Provides
+                    @Singleton
+                    GraphHopperStorage getGraphHopperStorage(GraphHopper graphHopper) {
+                        return graphHopper.getGraphHopperStorage();
+                    }
+
+                    @Provides
+                    @Singleton
+                    EncodingManager getEncodingManager(GraphHopper graphHopper) {
+                        return graphHopper.getEncodingManager();
+                    }
+
+                    @Provides
+                    @Singleton
+                    LocationIndex getLocationIndex(GraphHopper graphHopper) {
+                        return graphHopper.getLocationIndex();
+                    }
+
+                    @Provides
+                    @Singleton
+                    @Named("hasElevation")
+                    boolean hasElevation(GraphHopper graphHopper) {
+                        return graphHopper.hasElevation();
+                    }
+
+                    @Provides
+                    GraphHopperService getGraphHopperService(GraphHopper graphHopper) {
+                        return new GraphHopperService() {
+                            @Override
+                            public void start() {
+                                graphHopper.importOrLoad();
+                                logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
+                                        + ", data_reader_file:" + graphHopper.getDataReaderFile()
+                                        + ", flag_encoders:" + graphHopper.getEncodingManager()
+                                        + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
+
+                            }
+
+                            @Override
+                            public void close() throws Exception {
+                                graphHopper.close();
+                            }
+                        };
+                    }
+
+                });
+                install(new GraphHopperServletModule(args));
+            }
+        });
+
         setUpJetty(args);
     }
 
-
-    @Override
-    GHServer getServer(CmdArgs args) {
-        // This method injects an invalid GraphHopper class that can reply with a RuntimeException or an IllegalArgumentException
-        final CmdArgs finalArgs = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
-        return new GHServer(args) {
-            @Override
-            protected Module createModule() {
-                return new AbstractModule() {
-                    @Override
-                    protected void configure() {
-                        binder().requireExplicitBindings();
-                        install(new AbstractModule() {
-                            private final Logger logger = LoggerFactory.getLogger(getClass());
-
-                            @Override
-                            protected void configure() {
-                                install(new CmdArgsModule(finalArgs));
-                                bind(GHJson.class).toInstance(new GHJsonFactory().create());
-                                bind(GraphHopperAPI.class).to(GraphHopper.class);
-                            }
-
-                            @Provides
-                            @Singleton
-                            GraphHopper createGraphHopper(CmdArgs args) {
-                                GraphHopper graphHopper = new GraphHopperOSM() {
-                                    @Override
-                                    public GHResponse route(GHRequest request) {
-                                        if (request.getWeighting().equals("illegalargument")) {
-                                            throw new IllegalArgumentException("This was expected, why would you pass this?");
-                                        }
-                                        throw new RuntimeException("Very bad and unexpected exception");
-                                    }
-                                }.forServer();
-                                graphHopper.init(args);
-                                return graphHopper;
-                            }
-
-                            @Provides
-                            @Singleton
-                            TranslationMap getTranslationMap(GraphHopper graphHopper) {
-                                return graphHopper.getTranslationMap();
-                            }
-
-                            @Provides
-                            @Singleton
-                            RouteSerializer getRouteSerializer(GraphHopper graphHopper) {
-                                return new SimpleRouteSerializer(graphHopper.getGraphHopperStorage().getBounds());
-                            }
-
-                            @Provides
-                            @Singleton
-                            GraphHopperStorage getGraphHopperStorage(GraphHopper graphHopper) {
-                                return graphHopper.getGraphHopperStorage();
-                            }
-
-                            @Provides
-                            @Singleton
-                            EncodingManager getEncodingManager(GraphHopper graphHopper) {
-                                return graphHopper.getEncodingManager();
-                            }
-
-                            @Provides
-                            @Singleton
-                            LocationIndex getLocationIndex(GraphHopper graphHopper) {
-                                return graphHopper.getLocationIndex();
-                            }
-
-                            @Provides
-                            @Singleton
-                            @Named("hasElevation")
-                            boolean hasElevation(GraphHopper graphHopper) {
-                                return graphHopper.hasElevation();
-                            }
-
-                            @Provides
-                            GraphHopperService getGraphHopperService(GraphHopper graphHopper) {
-                                return new GraphHopperService() {
-                                    @Override
-                                    public void start() {
-                                        graphHopper.importOrLoad();
-                                        logger.info("loaded graph at:" + graphHopper.getGraphHopperLocation()
-                                                + ", data_reader_file:" + graphHopper.getDataReaderFile()
-                                                + ", flag_encoders:" + graphHopper.getEncodingManager()
-                                                + ", " + graphHopper.getGraphHopperStorage().toDetailsString());
-
-                                    }
-
-                                    @Override
-                                    public void close() throws Exception {
-                                        graphHopper.close();
-                                    }
-                                };
-                            }
-
-                        });
-                        install(new GraphHopperServletModule(args));
-                    }
-                };
-            }
-        };
-    }
 
     @Test
     public void testExceptions() throws Exception {
