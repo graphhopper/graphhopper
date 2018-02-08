@@ -318,6 +318,13 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
 
         // there is no other turn possible
         if (nrOfPossibleTurns <= 1) {
+            if (Math.abs(sign) > 1 && surroundingEdges.nrOfSurroundingEdges() > 1) {
+                // This is an actual turn because |sign| > 1
+                // There could be some confusion, if we would not create a turn instruction, even though it is the only
+                // possible turn, also see #1048
+                // TODO if we see issue with this approach we could consider checking if the edge is a oneway
+                return sign;
+            }
             return returnForcedInstructionOrIgnore(forceInstruction, sign);
         }
 

@@ -90,6 +90,15 @@ class InstructionsSurroundingEdges {
     }
 
     /**
+     * Calculates the Number of surrounding edges, including the current turn.
+     * This includes oneways in the wrong direction that are no possible turn.
+     */
+    public int nrOfSurroundingEdges() {
+        return 1 + surroundingEdges.size();
+    }
+
+
+    /**
      * Checks if the surrounding streets are slower. If they are, this indicates, that we are staying
      * on the prominent street that one would follow anyway.
      */

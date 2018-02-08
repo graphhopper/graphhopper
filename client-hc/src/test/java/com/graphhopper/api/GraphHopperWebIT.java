@@ -67,9 +67,9 @@ public class GraphHopperWebIT {
 
     @Test
     public void testAlternativeRoute() {
-        // https://graphhopper.com/maps/?point=52.044124%2C10.378346&point=52.043847%2C10.381994&algorithm=alternative_route&ch.disable=true
+        // https://graphhopper.com/maps/?point=52.044098%2C10.378368&point=52.043847%2C10.381994&algorithm=alternative_route&ch.disable=true
         GHRequest req = new GHRequest().
-                addPoint(new GHPoint(52.044124,10.378346)).
+                addPoint(new GHPoint(52.044098,10.378368)).
                 addPoint(new GHPoint(52.043847,10.381994));
         req.setAlgorithm("alternative_route");
         req.getHints().put("instructions", true);

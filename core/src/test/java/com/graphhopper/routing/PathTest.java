@@ -542,6 +542,62 @@ public class PathTest {
     }
 
     @Test
+    public void testCalcInstructionsEnterMotoway() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Actual example: point=48.630533%2C9.459416&point=48.630544%2C9.459829
+        // 1 -2 -3 is a motorway and tagged as oneway
+        //   1 ->- 2 ->- 3
+        //        /
+        //      4
+        na.setNode(1, 48.630647,9.459041);
+        na.setNode(2, 48.630586,9.459604);
+        na.setNode(3, 48.630558,9.459851);
+        na.setNode(4, 48.63054,9.459406);
+
+        g.edge(1, 2, 5, false).setName("A 8");
+        g.edge(2, 3, 5, false).setName("A 8");
+        g.edge(4, 2, 5, false).setName("A 8");
+
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(4, 3);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        // no turn instruction for entering the highway
+        assertEquals(2, wayList.size());
+    }
+
+    @Test
+    public void testCalcInstructionsOntoOneway() {
+        final Graph g = new GraphBuilder(carManager).create();
+        final NodeAccess na = g.getNodeAccess();
+
+        // Actual example: point=-33.824566%2C151.187834&point=-33.82441%2C151.188231
+        // 1 -2 -3 is a oneway
+        //   1 ->- 2 ->- 3
+        //         |
+        //         4
+        na.setNode(1, -33.824245,151.187866);
+        na.setNode(2, -33.824335,151.188017);
+        na.setNode(3, -33.824415,151.188177);
+        na.setNode(4, -33.824437,151.187925);
+
+        g.edge(1, 2, 5, false).setName("Pacific Highway");
+        g.edge(2, 3, 5, false).setName("Pacific Highway");
+        g.edge(4, 2, 5, true).setName("Greenwich Road");
+
+        Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
+                .calcPath(4, 3);
+        assertTrue(p.isFound());
+        InstructionList wayList = p.calcInstructions(tr);
+
+        assertEquals(3, wayList.size());
+        assertEquals(2, wayList.get(1).getSign());
+    }
+
+    @Test
     public void testCalcInstructionContinueLeavingStreet() {
         final Graph g = new GraphBuilder(carManager).create();
         final NodeAccess na = g.getNodeAccess();
