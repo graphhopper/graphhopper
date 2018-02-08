@@ -378,6 +378,7 @@ public class InstructionsFromEdges implements Path.EdgeVisitor {
                 GHPoint tmpPoint = InstructionsHelper.getPointForOrientationCalculation(otherContinue, nodeAccess);
                 double otherDelta = InstructionsHelper.calculateOrientationDelta(prevLat, prevLon, tmpPoint.getLat(), tmpPoint.getLon(), prevOrientation);
 
+                // This is required to avoid keep left/right on the motorway at off-ramps/motorway_links
                 if (Math.abs(delta) < .1 && Math.abs(otherDelta) > .15 && InstructionsHelper.isNameSimilar(name, prevName)) {
                     return Instruction.CONTINUE_ON_STREET;
                 }

@@ -586,15 +586,16 @@ public class PathTest {
 
         g.edge(1, 2, 5, false).setName("A 8");
         g.edge(2, 3, 5, false).setName("A 8");
-        g.edge(4, 2, 5, false).setName("A 8");
+        g.edge(2, 4, 5, false).setName("A 8");
 
         Path p = new Dijkstra(g, new ShortestWeighting(encoder), TraversalMode.NODE_BASED)
                 .calcPath(1, 3);
         assertTrue(p.isFound());
         InstructionList wayList = p.calcInstructions(tr);
 
-        // TODO this should be 3, the second should be a keep right
-        assertEquals(2, wayList.size());
+        assertEquals(3, wayList.size());
+        // TODO this should be a keep_right
+        assertEquals(0, wayList.get(1).getSign());
     }
 
     @Test
