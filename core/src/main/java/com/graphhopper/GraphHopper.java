@@ -17,6 +17,8 @@
  */
 package com.graphhopper;
 
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.GHJsonFactory;
 import com.graphhopper.json.geo.JsonFeature;
 import com.graphhopper.reader.DataReader;
 import com.graphhopper.reader.dem.*;
@@ -30,6 +32,7 @@ import com.graphhopper.routing.template.RoundTripRoutingTemplate;
 import com.graphhopper.routing.template.RoutingTemplate;
 import com.graphhopper.routing.template.ViaRoutingTemplate;
 import com.graphhopper.routing.util.*;
+import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.routing.weighting.*;
 import com.graphhopper.storage.*;
 import com.graphhopper.storage.change.ChangeGraphHelper;
@@ -103,10 +106,10 @@ public class GraphHopper implements GraphHopperAPI {
     private int minOneWayNetworkSize = 0;
 
     // for LM prepare
-    private final LMAlgoFactoryDecorator lmFactoryDecorator = new LMAlgoFactoryDecorator();
+    private final LMAlgoFactoryDecorator lmFactoryDecorator;
 
     // for CH prepare
-    private final CHAlgoFactoryDecorator chFactoryDecorator = new CHAlgoFactoryDecorator();
+    private final CHAlgoFactoryDecorator chFactoryDecorator;
 
     // for data reader
     private String dataReaderFile;
@@ -117,9 +120,19 @@ public class GraphHopper implements GraphHopperAPI {
     private FlagEncoderFactory flagEncoderFactory = FlagEncoderFactory.DEFAULT;
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
     private PathDetailsBuilderFactory pathBuilderFactory = new PathDetailsBuilderFactory();
+    private final GHJson json;
 
     public GraphHopper() {
+        this(new GHJsonFactory().create());
+    }
+
+    public GraphHopper(GHJson json) {
+        this.json = json;
+
+        chFactoryDecorator = new CHAlgoFactoryDecorator();
         chFactoryDecorator.setEnabled(true);
+
+        lmFactoryDecorator = new LMAlgoFactoryDecorator(json);
         lmFactoryDecorator.setEnabled(false);
 
         // order is important to use CH as base algo and set the approximation in the followed lm factory decorator
@@ -145,6 +158,10 @@ public class GraphHopper implements GraphHopperAPI {
             throw new IllegalStateException("No encoding manager specified or loaded");
 
         return encodingManager.fetchEdgeEncoders().get(0);
+    }
+
+    public GHJson getGHJson() {
+        return json;
     }
 
     public EncodingManager getEncodingManager() {
@@ -534,6 +551,9 @@ public class GraphHopper implements GraphHopperAPI {
 
             graphHopperFolder = pruneFileEnd(dataReaderFile) + "-gh";
         }
+
+        // spatial rules needs to come before first EncodingManager
+        SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(this, args);
 
         // graph
         setGraphHopperLocation(graphHopperFolder);

@@ -15,28 +15,20 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.tools;
+package com.graphhopper.android;
 
-import com.graphhopper.GraphHopper;
-import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupHelper;
-import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Parameters;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.google.gson.Gson;
+import com.graphhopper.json.GHJson;
+import java.io.Reader;
 
-/**
- * @author Peter Karich
- */
-public class Import {
-    private static final Logger logger = LoggerFactory.getLogger(Import.class);
+class GHJsonGson implements GHJson {
+    final Gson gson;
 
-    public static void main(String[] strs) throws Exception {
-        CmdArgs args = CmdArgs.read(strs);
-        args = CmdArgs.readFromConfigAndMerge(args, "config", "graphhopper.config");
-        GraphHopper hopper = new GraphHopperOSM();
-        hopper.init(args);
-        hopper.importOrLoad();
-        hopper.close();
+    GHJsonGson(Gson gson) {
+        this.gson = gson;
+    }
+
+    public <T> T fromJson(Reader source, Class<T> aClass) {
+        return (T) gson.fromJson(source, aClass);
     }
 }

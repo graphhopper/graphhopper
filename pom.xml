@@ -78,7 +78,6 @@
         <module>core</module>
         <module>reader-osm</module>
         <module>reader-gtfs</module>
-        <module>reader-json</module>
         <module>tools</module>
         <module>web</module>
         <module>client-hc</module>

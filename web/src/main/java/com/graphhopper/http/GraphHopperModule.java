@@ -20,35 +20,20 @@ package com.graphhopper.http;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.graphhopper.GraphHopper;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookupBuilder;
 import com.graphhopper.GraphHopperAPI;
 import com.graphhopper.json.GHJson;
 import com.graphhopper.json.GHJsonFactory;
-import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.reader.osm.GraphHopperOSM;
-import com.graphhopper.routing.lm.LandmarkStorage;
-import com.graphhopper.routing.lm.PrepareLandmarks;
 import com.graphhopper.routing.util.EncodingManager;
-import com.graphhopper.routing.util.spatialrules.DefaultSpatialRule;
-import com.graphhopper.routing.util.spatialrules.Polygon;
-import com.graphhopper.routing.util.spatialrules.SpatialRule;
-import com.graphhopper.routing.util.spatialrules.SpatialRuleLookup;
-import com.graphhopper.spatialrules.SpatialRuleLookupHelper;
 import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Parameters;
 import com.graphhopper.util.TranslationMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.inject.Named;
 import javax.inject.Singleton;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.util.List;
 
 public class GraphHopperModule extends AbstractModule {
     protected final CmdArgs args;
@@ -68,13 +53,7 @@ public class GraphHopperModule extends AbstractModule {
     @Provides
     @Singleton
     GraphHopper createGraphHopper(CmdArgs args) {
-        GraphHopper graphHopper = new GraphHopperOSM(
-                SpatialRuleLookupHelper.createLandmarkSplittingFeatureCollection(args.get(Parameters.Landmark.PREPARE + "split_area_location", ""))
-        ).forServer();
-        SpatialRuleLookupHelper.buildAndInjectSpatialRuleIntoGH(graphHopper, args);
-
-        graphHopper.init(args);
-        return graphHopper;
+        return new GraphHopperOSM().forServer().init(args);
     }
 
     @Provides

@@ -15,9 +15,9 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.graphhopper.json;
+package com.graphhopper.json.geo;
 
-import com.graphhopper.json.geo.JsonFeatureCollection;
+import com.graphhopper.json.GHJson;
 import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.storage.change.ChangeGraphHelper;
 
@@ -33,11 +33,11 @@ import static com.graphhopper.util.Helper.UTF_CS;
  */
 public class JsonFeatureConverter {
     private final ChangeGraphHelper changeGraphHelper;
-    private final GHJson ghson;
+    private final GHJson json;
     private final EncodingManager encodingManager;
 
-    public JsonFeatureConverter(GHJson ghson, ChangeGraphHelper changeGraphHelper, EncodingManager encodingManager) {
-        this.ghson = ghson;
+    public JsonFeatureConverter(GHJson json, ChangeGraphHelper changeGraphHelper, EncodingManager encodingManager) {
+        this.json = json;
         this.changeGraphHelper = changeGraphHelper;
         this.encodingManager = encodingManager;
     }
@@ -76,7 +76,7 @@ public class JsonFeatureConverter {
      */
     public long applyChanges(Reader reader) {
         // read full file, later support one json feature or collection per line to avoid high mem consumption
-        JsonFeatureCollection data = ghson.fromJson(reader, JsonFeatureCollection.class);
+        JsonFeatureCollection data = json.fromJson(reader, JsonFeatureCollection.class);
         return changeGraphHelper.applyChanges(encodingManager, data.getFeatures());
     }
 }

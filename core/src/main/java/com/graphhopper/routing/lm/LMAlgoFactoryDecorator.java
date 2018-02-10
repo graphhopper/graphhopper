@@ -19,11 +19,14 @@ package com.graphhopper.routing.lm;
 
 import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
+import com.graphhopper.json.GHJson;
+import com.graphhopper.json.geo.JsonFeatureCollection;
 import com.graphhopper.routing.AlgorithmOptions;
 import com.graphhopper.routing.RoutingAlgorithm;
 import com.graphhopper.routing.RoutingAlgorithmFactory;
 import com.graphhopper.routing.RoutingAlgorithmFactoryDecorator;
 import com.graphhopper.routing.util.HintsMap;
+import com.graphhopper.routing.util.spatialrules.*;
 import com.graphhopper.routing.weighting.AbstractWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -31,14 +34,16 @@ import com.graphhopper.storage.GraphHopperStorage;
 import com.graphhopper.storage.StorableProperties;
 import com.graphhopper.storage.index.LocationIndex;
 import com.graphhopper.util.CmdArgs;
-import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 import com.graphhopper.util.Parameters;
 import com.graphhopper.util.Parameters.Landmark;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.*;
 import java.util.concurrent.ExecutorCompletionService;
 import java.util.concurrent.ExecutorService;
@@ -69,8 +74,11 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
     private int preparationThreads;
     private ExecutorService threadPool;
     private boolean logDetails = false;
+    private final GHJson json;
+    private JsonFeatureCollection landmarkSplittingFeatureCollection;
 
-    public LMAlgoFactoryDecorator() {
+    public LMAlgoFactoryDecorator(GHJson json) {
+        this.json = json;
         setPreparationThreads(1);
     }
 
@@ -97,6 +105,19 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
         setEnabled(enableThis);
         if (enableThis)
             setDisablingAllowed(args.getBool(Landmark.INIT_DISABLING_ALLOWED, isDisablingAllowed()));
+
+        String location = args.get(Parameters.Landmark.PREPARE + "split_area_location", "");
+        try {
+            Reader splittingReader = location.isEmpty() ? new InputStreamReader(getClass().getResource("map.geo.json").openStream(), UTF_CS) : new InputStreamReader(new FileInputStream(location), UTF_CS);
+            landmarkSplittingFeatureCollection = json.fromJson(splittingReader, JsonFeatureCollection.class);
+        } catch (IOException ex) {
+            LOGGER.warn("Problem while loading landmark-splitting collection from " + location);
+        }
+    }
+
+    public LMAlgoFactoryDecorator setLandmarkSplittingFeatureCollection(JsonFeatureCollection landmarkSplittingFeatureCollection) {
+        this.landmarkSplittingFeatureCollection = landmarkSplittingFeatureCollection;
+        return this;
     }
 
     public int getLandmarks() {
@@ -271,6 +292,7 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
      * @see com.graphhopper.routing.ch.CHAlgoFactoryDecorator#prepare(StorableProperties) for a very similar method
      */
     public boolean loadOrDoWork(final StorableProperties properties) {
+        setupSplittingCollection();
         ExecutorCompletionService completionService = new ExecutorCompletionService<>(threadPool);
         int counter = 0;
         final AtomicBoolean prepared = new AtomicBoolean(false);
@@ -340,6 +362,28 @@ public class LMAlgoFactoryDecorator implements RoutingAlgorithmFactoryDecorator 
             if (minNodes > 1)
                 tmpPrepareLM.setMinimumNodes(minNodes);
             addPreparation(tmpPrepareLM);
+        }
+    }
+
+    private void setupSplittingCollection() {
+        if (landmarkSplittingFeatureCollection != null && !landmarkSplittingFeatureCollection.getFeatures().isEmpty()) {
+            SpatialRuleLookup ruleLookup = SpatialRuleLookupBuilder.buildIndex(landmarkSplittingFeatureCollection, "area", new SpatialRuleLookupBuilder.SpatialRuleFactory() {
+                @Override
+                public SpatialRule createSpatialRule(final String id, List<Polygon> polygons) {
+                    return new DefaultSpatialRule() {
+                        @Override
+                        public String getId() {
+                            return id;
+                        }
+                    }.setBorders(polygons);
+                }
+            });
+            for (PrepareLandmarks prep : getPreparations()) {
+                // the ruleLookup splits certain areas from each other but avoids making this a permanent change so that other algorithms still can route through these regions.
+                if (ruleLookup != null && ruleLookup.size() > 0) {
+                    prep.setSpatialRuleLookup(ruleLookup);
+                }
+            }
         }
     }
 }
