@@ -342,4 +342,86 @@ public class InstructionList extends AbstractList<Instruction> {
         return get(foundInstruction);
     }
 
+    /**
+     * Update the InstructionList using the the available context and order of instructions to improve the instructions.
+     * If the requests contains a heading, this method can transform the first continue to a u-turn if the heading
+     * points into the opposite direction of the route.
+     * At a waypoint it can transform the continue to a u-turn if the route involves turning.
+     * Consecutive continue instruction can be merged if they are close and use the same street name.
+     *
+     * @param favoredHeading The favored heading of the request, which can create an initial u-turn
+     */
+    public void updateInstructionsWithContext(double favoredHeading) {
+        Instruction instruction;
+        Instruction nextInstruction;
+
+        final int MERGE_CONTINUE_INSTRUCTIONS_DISTANCE = 40;
+
+        for (int i = 0; i < this.size() - 1; i++) {
+            instruction = this.get(i);
+            nextInstruction = this.get(i + 1);
+
+            if (i == 0 && !Double.isNaN(favoredHeading) && instruction.getExtraInfoJSON().containsKey("heading")) {
+                double heading = (double) instruction.getExtraInfoJSON().get("heading");
+                double diff = Math.abs(heading - favoredHeading) % 360;
+                if (diff > 170 && diff < 190) {
+                    // The requested heading points into the opposite direction of the calculated heading
+                    // therefore we change the continue instruction to a u-turn
+                    instruction.setSign(Instruction.U_TURN_UNKNOWN);
+                }
+            }
+
+            if (instruction.getSign() == Instruction.REACHED_VIA) {
+                if (nextInstruction.getSign() != Instruction.CONTINUE_ON_STREET
+                        || !instruction.getExtraInfoJSON().containsKey("last_heading")
+                        || !nextInstruction.getExtraInfoJSON().containsKey("heading")) {
+                    // TODO throw exception?
+                    continue;
+                }
+                double lastHeading = (double) instruction.getExtraInfoJSON().get("last_heading");
+                double heading = (double) nextInstruction.getExtraInfoJSON().get("heading");
+
+                // Since it's supposed to go back the same edge, we can be very strict with the diff
+                double diff = Math.abs(lastHeading - heading) % 360;
+                if (diff > 179 && diff < 181) {
+                    nextInstruction.setSign(Instruction.U_TURN_UNKNOWN);
+                }
+            }
+
+            if (i > 0
+                    && instruction.sign == Instruction.CONTINUE_ON_STREET
+                    && nextInstruction.sign == Instruction.CONTINUE_ON_STREET
+                    && instruction.getDistance() <= MERGE_CONTINUE_INSTRUCTIONS_DISTANCE
+                    && instruction.getName().equals(nextInstruction.getName())
+                    && (instruction.getAnnotation() == null || instruction.getAnnotation().isEmpty())
+                    && (nextInstruction.getAnnotation() == null || nextInstruction.getAnnotation().isEmpty())) {
+                mergeInstruction(instruction, nextInstruction);
+                instructions.remove(i+1);
+            }
+        }
+    }
+
+    /**
+     * Merge the second instruction into the first instruction. Only works if both instructions are similar.
+     */
+    private Instruction mergeInstruction(Instruction firstInstruction, Instruction secondInstruction) {
+        if(firstInstruction.getSign() != secondInstruction.getSign())
+            throw new IllegalArgumentException("Merging instructions is only possible if they have the same sign");
+
+        //TODO we could consider merging them if either both have the same annotation or if only one has an annotation
+        if((firstInstruction.getAnnotation() != null && !firstInstruction.getAnnotation().isEmpty())
+                || (secondInstruction.getAnnotation() != null && !secondInstruction.getAnnotation().isEmpty()))
+            throw new IllegalArgumentException("Cannot merge instructions that have annotations");
+
+        if(!firstInstruction.getName().equals(secondInstruction.getName()))
+            throw new IllegalArgumentException("Cannot merge instructions that have different names");
+
+        firstInstruction.points.add(secondInstruction.points);
+        firstInstruction.distance += secondInstruction.distance;
+        firstInstruction.extraInfo.putAll(secondInstruction.extraInfo);
+        firstInstruction.time += secondInstruction.time;
+
+        return firstInstruction;
+    }
+
 }

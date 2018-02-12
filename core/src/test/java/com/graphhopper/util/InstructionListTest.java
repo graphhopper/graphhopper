@@ -237,6 +237,40 @@ public class InstructionListTest {
                 tmpList);
     }
 
+    @Test
+    public void testMergeContinueInstruction() {
+        PointList pl = new PointList(3, true);
+        pl.add(1,1,1);
+        pl.add(2,2,2);
+        pl.add(3,3,3);
+
+        InstructionList il = new InstructionList(usTR);
+        Instruction instruction = new Instruction(Instruction.CONTINUE_ON_STREET,
+                "Continue onto Lane Cove Road Exit",
+                null,
+                pl);
+        instruction.setDistance(20);
+        instruction.setTime(10);
+        // Add the same instruction 3 times
+        // The first is the start instruction, don't merge
+        il.add(instruction);
+        // These two should be merged
+        il.add(instruction);
+        il.add(instruction);
+        il.add(new FinishInstruction(0, 0, 0));
+
+        assertEquals(4, il.size());
+        il.updateInstructionsWithContext(0);
+        assertEquals(3, il.size());
+
+        Instruction mergedInstruction = il.get(1);
+
+        assertEquals(40, mergedInstruction.getDistance(), .1);
+        assertEquals(20, mergedInstruction.getTime());
+        assertEquals(6, mergedInstruction.getPoints().getSize());
+        assertEquals(1, mergedInstruction.getPoints().getLat(3), .1);
+    }
+
     // TODO is this problem fixed with the new instructions?
     // problem: we normally don't want instructions if streetname stays but here it is suboptimal:
     @Test

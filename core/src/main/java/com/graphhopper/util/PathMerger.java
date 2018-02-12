@@ -137,7 +137,7 @@ public class PathMerger {
         }
 
         if (enableInstructions) {
-            fullInstructions = updateInstructionsWithContext(fullInstructions);
+            fullInstructions.updateInstructionsWithContext(favoredHeading);
             altRsp.setInstructions(fullInstructions);
         }
 
@@ -174,51 +174,6 @@ public class PathMerger {
         }
 
         pathDetails.addAll(otherDetails);
-    }
-
-    /**
-     * This method iterates over all instructions and uses the available context to improve the instructions.
-     * If the requests contains a heading, this method can transform the first continue to a u-turn if the heading
-     * points into the opposite direction of the route.
-     * At a waypoint it can transform the continue to a u-turn if the route involves turning.
-     */
-    private InstructionList updateInstructionsWithContext(InstructionList instructions) {
-        Instruction instruction;
-        Instruction nextInstruction;
-
-        for (int i = 0; i < instructions.size() - 1; i++) {
-            instruction = instructions.get(i);
-
-            if (i == 0 && !Double.isNaN(favoredHeading) && instruction.extraInfo.containsKey("heading")) {
-                double heading = (double) instruction.extraInfo.get("heading");
-                double diff = Math.abs(heading - favoredHeading) % 360;
-                if (diff > 170 && diff < 190) {
-                    // The requested heading points into the opposite direction of the calculated heading
-                    // therefore we change the continue instruction to a u-turn
-                    instruction.setSign(Instruction.U_TURN_UNKNOWN);
-                }
-            }
-
-            if (instruction.getSign() == Instruction.REACHED_VIA) {
-                nextInstruction = instructions.get(i + 1);
-                if (nextInstruction.getSign() != Instruction.CONTINUE_ON_STREET
-                        || !instruction.extraInfo.containsKey("last_heading")
-                        || !nextInstruction.extraInfo.containsKey("heading")) {
-                    // TODO throw exception?
-                    continue;
-                }
-                double lastHeading = (double) instruction.extraInfo.get("last_heading");
-                double heading = (double) nextInstruction.extraInfo.get("heading");
-
-                // Since it's supposed to go back the same edge, we can be very strict with the diff
-                double diff = Math.abs(lastHeading - heading) % 360;
-                if (diff > 179 && diff < 181) {
-                    nextInstruction.setSign(Instruction.U_TURN_UNKNOWN);
-                }
-            }
-        }
-
-        return instructions;
     }
 
     private void calcAscendDescend(final PathWrapper rsp, final PointList pointList) {
