@@ -22,14 +22,14 @@ import com.graphhopper.util.BitUtil;
 import java.util.TreeMap;
 
 /**
- * A priority queue implemented by a TreeMap. As the tree map does not allow duplicated we compose
+ * A priority queue implemented by a TreeMap. As the tree map does not allow duplicates we compose
  * the key via priority | nodeId.
  * <p>
  *
  * @author Peter Karich
  */
 public class GHTreeMapComposed {
-    private static final Integer NOT_EMPTY = new Integer(-3);
+    private static final Integer NOT_EMPTY = -3;
     private final BitUtil bitUtil = BitUtil.BIG;
     private final TreeMap<Long, Integer> map;
 

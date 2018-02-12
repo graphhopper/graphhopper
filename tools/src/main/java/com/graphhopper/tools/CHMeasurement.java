@@ -21,6 +21,7 @@ import com.graphhopper.GHRequest;
 import com.graphhopper.GHResponse;
 import com.graphhopper.GraphHopper;
 import com.graphhopper.reader.osm.GraphHopperOSM;
+import com.graphhopper.routing.ch.CHAlgoFactoryDecorator;
 import com.graphhopper.storage.Graph;
 import com.graphhopper.storage.NodeAccess;
 import com.graphhopper.util.CmdArgs;
@@ -57,8 +58,15 @@ public class CHMeasurement {
             cmdArgs.put("graph.flag_encoders", "car");
             cmdArgs.put("prepare.ch.weightings", "no");
         }
-        graphHopper.getCHFactoryDecorator().setDisablingAllowed(true);
+        CHAlgoFactoryDecorator decorator = graphHopper.getCHFactoryDecorator();
+        decorator.setDisablingAllowed(true);
+        decorator.setPreparationPeriodicUpdates(20); // default: 20
+        decorator.setPreparationLazyUpdates(100);     // default: 10
+        decorator.setPreparationNeighborUpdates(4); // default: 20
+        decorator.setPreparationContractedNodes(100);// default: 100
+        decorator.setPreparationLogMessages(20); // default: 20
         graphHopper.init(cmdArgs);
+
         // remove previous data
         graphHopper.clean();
 
@@ -102,16 +110,14 @@ public class CHMeasurement {
                 if (!warmup)
                     noChTime += System.nanoTime() - start;
 
-                getRealErrors(chRoute);
-
-                if (!getRealErrors(chRoute).isEmpty() || !getRealErrors(nonChRoute).isEmpty()) {
-                    LOGGER.warn("there were errors: \n with CH: {} \n without CH: {}", chRoute.getErrors(), nonChRoute.getErrors());
-                    return chRoute.getErrors().size();
+                if (connectionNotFound(chRoute) && connectionNotFound(nonChRoute)) {
+                    // random query was not well defined -> ignore
+                    return 0;
                 }
 
-                if (chRoute.hasErrors() || nonChRoute.hasErrors()) {
-                    // probably some connection not found error
-                    return 0;
+                if (!chRoute.getErrors().isEmpty() || !nonChRoute.getErrors().isEmpty()) {
+                    LOGGER.warn("there were errors: \n with CH: {} \n without CH: {}", chRoute.getErrors(), nonChRoute.getErrors());
+                    return chRoute.getErrors().size();
                 }
 
                 if (!chRoute.getBest().getPoints().equals(nonChRoute.getBest().getPoints())) {
@@ -157,6 +163,15 @@ public class CHMeasurement {
 
 
         graphHopper.close();
+    }
+
+    private static boolean connectionNotFound(GHResponse response) {
+        for (Throwable t : response.getErrors()) {
+            if (t instanceof ConnectionNotFoundException) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static List<Throwable> getRealErrors(GHResponse response) {
